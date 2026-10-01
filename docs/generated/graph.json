@@ -13180,7 +13180,8 @@
             "worktree-ownership"
           ],
           "cockpit": [
-            "worktrees"
+            "worktrees",
+            "integration"
           ],
           "commands": [
             "start",
@@ -13190,14 +13191,16 @@
           "docs": [
             "docs/WORKTREES.md",
             "docs/MCP.md",
-            "docs/ADOPTION.md"
+            "docs/ADOPTION.md",
+            "docs/INTEGRATION.md"
           ],
           "featured": true,
           "headline": "Every worker declares the paths it may touch, every session can see who else is attached and what they announced, and a collision is reported before it is committed.",
           "modules": [
             "peers",
             "server",
-            "worktree"
+            "worktree",
+            "integration"
           ],
           "related": [
             "worktrees",
@@ -36432,6 +36435,27 @@
         "source": "test/cases/73_knowledge_nodes.sh"
       },
       {
+        "id": "majordomus://test/test/cases/740_integration_is_visible_where_a_person_looks.sh",
+        "kind": "test",
+        "label": "test/cases/740_integration_is_visible_where_a_person_looks.sh",
+        "route": "/cockpit/objects/test/test-cases-740-integration-is-visible-where-a-person-looks-sh",
+        "source": "test/cases/740_integration_is_visible_where_a_person_looks.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
+        "kind": "test",
+        "label": "test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
+        "route": "/cockpit/objects/test/test-cases-741-a-continuous-drain-stops-cleanly-and-alone-sh",
+        "source": "test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/742_only_an_outage_is_asked_again.sh",
+        "kind": "test",
+        "label": "test/cases/742_only_an_outage_is_asked_again.sh",
+        "route": "/cockpit/objects/test/test-cases-742-only-an-outage-is-asked-again-sh",
+        "source": "test/cases/742_only_an_outage_is_asked_again.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/74_knowledge_edges.sh",
         "kind": "test",
         "label": "test/cases/74_knowledge_edges.sh",
@@ -57454,6 +57478,21 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/740_integration_is_visible_where_a_person_looks.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/742_only_an_outage_is_asked_again.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/74_knowledge_edges.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -61115,8 +61154,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1957,
-      "edges": 4423,
+      "nodes": 1960,
+      "edges": 4426,
       "acyclic": true,
       "truncated": false
     }

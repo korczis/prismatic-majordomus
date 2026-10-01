@@ -46,8 +46,10 @@ pub mod drain;
 pub mod forge;
 pub mod model;
 pub mod relation;
+pub mod retry;
 #[cfg(test)]
 mod tests;
+pub mod wait;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
@@ -192,6 +194,11 @@ pub struct IntegrationQueue {
     pub tallies: QueueTallies,
     /// What makes this queue less than a full answer.
     pub diagnostics: Vec<String>,
+    /// The actionable pull requests the executor has passed over at least
+    /// [`wait::STARVING_AFTER`] times in their current wait, in rank order. Visible, never
+    /// promoted: see [`wait`].
+    #[serde(default)]
+    pub starving: Vec<u64>,
 }
 
 impl IntegrationQueue {
@@ -340,6 +347,7 @@ pub fn build_queue(
         assessments,
         tallies,
         diagnostics,
+        starving: Vec::new(),
     }
 }
 
@@ -365,7 +373,7 @@ pub fn queue_of(root: &Path) -> Result<IntegrationQueue, String> {
     cache
         .entries
         .retain(|k, _| k.starts_with(&format!("{master}..")));
-    let queue = build_queue(&obs, &master, |p| {
+    let mut queue = build_queue(&obs, &master, |p| {
         let head = format!("{PR_REF_PREFIX}{}", p.number);
         // the fetched ref must still be the observed head: a head that moved since is
         // decided against the SHA the forge reported, which the fetch brought in
@@ -379,7 +387,62 @@ pub fn queue_of(root: &Path) -> Result<IntegrationQueue, String> {
     if let Ok(text) = serde_json::to_string(&cache) {
         let _ = write_atomic(&cache_path, &text);
     }
+    wait::annotate(&mut queue, &drain::events(root));
+    // the summary a briefing reads without deciding a single relation (QueueSummary)
+    if let Ok(text) = serde_json::to_string_pretty(&QueueSummary::of(&queue)) {
+        let _ = write_atomic(&state_path(root, SUMMARY_FILE), &(text + "\n"));
+    }
     Ok(queue)
+}
+
+/// The last queue built in this checkout, summarised.
+pub const SUMMARY_FILE: &str = "summary.json";
+
+/// What the last queue built said, in a few numbers: what a session briefing prints without
+/// building a queue, which would decide every relation again. Written by [`queue_of`] every
+/// time it builds one, so it is exactly as current as the last read of the queue, and says
+/// when that was.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct QueueSummary {
+    /// The integration base.
+    pub base: String,
+    /// The master commit the queue was decided against.
+    pub master_sha: String,
+    /// When the forge was observed.
+    pub observed_at: String,
+    /// When the queue was built, RFC 3339.
+    pub built_at: String,
+    /// The counts.
+    pub tallies: QueueTallies,
+    /// The next merge, when anything was ready.
+    pub next_merge: Option<u64>,
+    /// The starving pull requests.
+    pub starving: Vec<u64>,
+    /// Whether the queue carried diagnostics (a stale observation first).
+    pub diagnostics: usize,
+}
+
+impl QueueSummary {
+    /// The summary of a queue, built now.
+    pub fn of(q: &IntegrationQueue) -> Self {
+        QueueSummary {
+            base: q.base.clone(),
+            master_sha: q.master_sha.clone(),
+            observed_at: q.observed_at.clone(),
+            built_at: crate::peers::rfc3339(std::time::SystemTime::now()),
+            tallies: q.tallies.clone(),
+            next_merge: q.next_merge,
+            starving: q.starving.clone(),
+            diagnostics: q.diagnostics.len(),
+        }
+    }
+
+    /// The summary recorded in this checkout, if any.
+    pub fn load(root: &Path) -> Option<Self> {
+        std::fs::read_to_string(state_path(root, SUMMARY_FILE))
+            .ok()
+            .and_then(|t| serde_json::from_str(&t).ok())
+    }
 }
 
 /// Observe the forge, fetch what it names, and record the observation. The network step;

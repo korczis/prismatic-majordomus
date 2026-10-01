@@ -798,3 +798,227 @@ fn every_disposition_has_one_word_and_one_lane() {
         crate::integration::IntegrationLane::Ready
     );
 }
+
+// ---------------------------------------------------------------- waiting and starvation
+
+use crate::integration::wait;
+
+#[test]
+fn the_executor_records_who_waited_and_who_was_passed_over() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1), sim(3)],
+        ..Default::default()
+    };
+    let report = drain::drain(&root, &mut w, 1, false, false).unwrap();
+    assert_eq!(report.merged, vec![1]);
+    let trail = drain::events(&root);
+    let became: Vec<u64> = trail
+        .iter()
+        .filter(|e| e.action == wait::BECAME_ACTIONABLE)
+        .filter_map(|e| e.pr)
+        .collect();
+    assert_eq!(
+        became,
+        vec![1, 3],
+        "both were actionable when first observed"
+    );
+    let selected = trail.iter().find(|e| e.action == "selected").unwrap();
+    assert_eq!(selected.pr, Some(1));
+    assert_eq!(selected.passed_over, vec![3], "#3 was ready and not chosen");
+
+    let waits = wait::waits(&trail);
+    assert!(
+        !waits.contains_key(&1),
+        "a merged pull request waits for nothing"
+    );
+    let w3 = &waits[&3];
+    assert_eq!(w3.passed_over, 1);
+    assert_eq!(w3.last_passed_over.as_ref().unwrap().for_pr, 1);
+
+    // the next step: #3 is behind now but still the executor's (refreshable), so its wait
+    // goes on — it is not restarted by the change of disposition
+    drain::drain(&root, &mut w, 1, false, false).unwrap();
+    let trail = drain::events(&root);
+    assert!(!trail
+        .iter()
+        .any(|e| e.action == wait::LEFT_ACTIONABLE && e.pr == Some(3)));
+    let mut q = w.queue();
+    wait::annotate(&mut q, &trail);
+    assert_eq!(q.get(3).unwrap().wait.as_ref().unwrap().passed_over, 1);
+}
+
+#[test]
+fn a_pull_request_that_stops_being_actionable_leaves_its_wait() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(5)],
+        ..Default::default()
+    };
+    wait::record_transitions(&root, &w.queue());
+    assert!(wait::waits(&drain::events(&root)).contains_key(&5));
+    // its check fails on the next look: it needs repair, a person's work, not the executor's
+    w.open[0].failing = true;
+    assert_eq!(wait::record_transitions(&root, &w.queue()), 1);
+    let trail = drain::events(&root);
+    let left = trail.last().unwrap();
+    assert_eq!(left.action, wait::LEFT_ACTIONABLE);
+    assert_eq!(left.detail, "it is needs_repair now");
+    assert!(wait::waits(&trail).is_empty());
+    // and nothing is recorded when nothing changed
+    assert_eq!(wait::record_transitions(&root, &w.queue()), 0);
+}
+
+#[test]
+fn starvation_is_visible_and_changes_no_rank() {
+    let root = scratch();
+    let w = World {
+        open: vec![sim(1), sim(2)],
+        ..Default::default()
+    };
+    let q = w.queue();
+    wait::record_transitions(&root, &q);
+    for _ in 0..wait::STARVING_AFTER {
+        drain::record(
+            &root,
+            drain::IntegrationEvent {
+                at: String::new(),
+                actor: String::new(),
+                action: "selected".into(),
+                pr: Some(1),
+                master_before: None,
+                head_sha: None,
+                master_after: None,
+                reasons: Vec::new(),
+                detail: String::new(),
+                passed_over: vec![2],
+            },
+        );
+    }
+    let mut annotated = q.clone();
+    wait::annotate(&mut annotated, &drain::events(&root));
+    assert_eq!(annotated.starving, vec![2]);
+    assert_eq!(
+        annotated.get(2).unwrap().wait.as_ref().unwrap().passed_over,
+        wait::STARVING_AFTER
+    );
+    let order = |q: &IntegrationQueue| q.assessments.iter().map(|a| a.number).collect::<Vec<_>>();
+    assert_eq!(order(&annotated), order(&q), "a long wait reorders nothing");
+    assert_eq!(annotated.next_merge, q.next_merge);
+}
+
+// ---------------------------------------------------------------- continuous
+
+fn continuous_opts(cycles: Option<usize>) -> drain::ContinuousOptions {
+    drain::ContinuousOptions {
+        max_per_cycle: 1,
+        allow_refresh: false,
+        interval: std::time::Duration::from_secs(60),
+        cycles,
+    }
+}
+
+#[test]
+fn a_continuous_drain_observes_afresh_in_every_cycle() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1), sim(3)],
+        ..Default::default()
+    };
+    let stop = std::sync::atomic::AtomicBool::new(false);
+    let mut slept = std::time::Duration::ZERO;
+    let mut heard = Vec::new();
+    let report = drain::continuous(
+        &root,
+        &mut w,
+        continuous_opts(Some(3)),
+        &stop,
+        &mut |d| slept += d,
+        &mut |n, r| heard.push((n, r.merged.clone())),
+    );
+    assert_eq!(report.cycles, 3);
+    assert_eq!(
+        report.merged,
+        vec![1],
+        "#3 is behind after #1 and refresh is not allowed"
+    );
+    assert!(report.failure.is_none());
+    assert!(report.stopped.contains("3 cycle(s)"), "{}", report.stopped);
+    assert_eq!(heard, vec![(1, vec![1]), (2, vec![]), (3, vec![])]);
+    // waited between cycles and not after the last, in slices that add up to the interval
+    assert_eq!(slept, std::time::Duration::from_secs(120));
+    // the merge cycle observed twice, each idle cycle once: nothing was carried over
+    assert_eq!(w.observations, 4);
+}
+
+#[test]
+fn a_stop_is_honoured_at_the_next_safe_point() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1)],
+        ..Default::default()
+    };
+    let stop = std::sync::atomic::AtomicBool::new(false);
+    let report = drain::continuous(
+        &root,
+        &mut w,
+        continuous_opts(None),
+        &stop,
+        // a signal arrives during the first wait
+        &mut |_| stop.store(true, std::sync::atomic::Ordering::SeqCst),
+        &mut |_, _| {},
+    );
+    assert_eq!(report.cycles, 1);
+    assert_eq!(report.merged, vec![1]);
+    assert!(
+        report.stopped.starts_with("asked to stop"),
+        "{}",
+        report.stopped
+    );
+
+    // a stop before anything ran runs nothing
+    let mut w = World {
+        open: vec![sim(1)],
+        ..Default::default()
+    };
+    let stop = std::sync::atomic::AtomicBool::new(true);
+    let report = drain::continuous(
+        &root,
+        &mut w,
+        continuous_opts(None),
+        &stop,
+        &mut |_| {},
+        &mut |_, _| {},
+    );
+    assert_eq!((report.cycles, w.observations), (0, 0));
+}
+
+#[test]
+fn a_repository_that_cannot_be_read_ends_a_continuous_drain() {
+    struct Down;
+    impl Integrator for Down {
+        fn observe(&mut self) -> Result<IntegrationQueue, String> {
+            Err("HTTP 401: Bad credentials".into())
+        }
+        fn merge(&mut self, _: u64, _: &str, _: &str) -> Result<(), String> {
+            unreachable!()
+        }
+        fn verify(&mut self, _: u64, _: &str) -> Result<String, String> {
+            unreachable!()
+        }
+        fn refresh_branch(&mut self, _: &PullRequestAssessment, _: &str) -> Result<String, String> {
+            unreachable!()
+        }
+    }
+    let stop = std::sync::atomic::AtomicBool::new(false);
+    let report = drain::continuous(
+        &scratch(),
+        &mut Down,
+        continuous_opts(None),
+        &stop,
+        &mut |_| panic!("waited after a systemic failure"),
+        &mut |_, _| {},
+    );
+    assert_eq!(report.cycles, 0);
+    assert_eq!(report.failure.as_deref(), Some("HTTP 401: Bad credentials"));
+}

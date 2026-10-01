@@ -13812,6 +13812,12 @@
           "command": "majordomus prs events",
           "name": "events",
           "route": "/docs/cli/prs/events/"
+        },
+        {
+          "about": "One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease, and the last merge. Offline, decides no relation, and prints nothing where the forge was never observed",
+          "command": "majordomus prs brief",
+          "name": "brief",
+          "route": "/docs/cli/prs/brief/"
         }
       ],
       "command": "majordomus prs",
@@ -14428,6 +14434,34 @@
           "value_name": "REFRESH"
         },
         {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Drain, wait `--interval` seconds, and drain again until stopped, holding the lease throughout; each cycle is bounded by `--max` and observes before every step. Ctrl-C or SIGTERM lets the step in progress finish, then releases the lease; a second signal ends it at once. Never with `--dry-run`",
+          "long": "continuous",
+          "name": "continuous",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "CONTINUOUS"
+        },
+        {
+          "defaults": [
+            "300"
+          ],
+          "global": false,
+          "help": "With `--continuous`: seconds between cycles, 30 to 900",
+          "long": "interval",
+          "name": "interval",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "INTERVAL"
+        },
+        {
           "defaults": [],
           "global": true,
           "help": "Start the search for the repository root here (default: the current directory)",
@@ -14813,6 +14847,135 @@
       ],
       "route": "/docs/cli/prs/events/",
       "usage": "majordomus prs events [OPTIONS]"
+    },
+    {
+      "about": "One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease, and the last merge. Offline, decides no relation, and prints nothing where the forge was never observed",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus prs",
+          "name": "prs",
+          "route": "/docs/cli/prs/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus prs brief",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "prs",
+            "brief"
+          ],
+          "command": "majordomus prs brief",
+          "description": "What `majordomus context` prints under INTEGRATION: the last queue this checkout built, the lease and the last merge, in one line, read from files and never from the network. A checkout whose forge was never observed has nothing to say, prints nothing, and exits 0 — a briefing does not grow a section about an empty queue.",
+          "expectation": "exits 0",
+          "id": "prs-brief-unobserved",
+          "setup": [],
+          "title": "The briefing line, where nothing was observed"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "brief",
+      "parent_route": "/docs/cli/prs/",
+      "path": [
+        "majordomus",
+        "prs",
+        "brief"
+      ],
+      "route": "/docs/cli/prs/brief/",
+      "usage": "majordomus prs brief [OPTIONS]"
     },
     {
       "about": "The commit as a value: what the working tree would commit and how it divides, the scope vocabulary this repository's history yields, and the verdict on one message against the commit policy",
@@ -27604,10 +27767,10 @@
     }
   ],
   "counts": {
-    "arguments": 1196,
-    "commands": 174,
-    "examples": 175,
-    "runnable": 154
+    "arguments": 1203,
+    "commands": 175,
+    "examples": 176,
+    "runnable": 155
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.11.0",

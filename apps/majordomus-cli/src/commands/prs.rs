@@ -1,9 +1,10 @@
 //! `majordomus prs`: the command line's rendering of [`crate::integration`].
 //!
-//! Nothing is decided here. `status`, `plan`, `explain` and `events` render the queue the
-//! integration module builds from the last recorded observation — the same value the HTTP
-//! route, the MCP tool and the Cockpit render — and never reach the network. `refresh`,
-//! `drain` and `cleanup` are the three that do, and each says so in its help.
+//! Nothing is decided here. `status`, `plan`, `explain`, `events` and `brief` render the
+//! queue the integration module builds from the last recorded observation — the same value
+//! the HTTP route, the MCP tool and the Cockpit page (`/cockpit/integration`) render — and
+//! never reach the network. `refresh`, `drain` and `cleanup` are the three that do, and each
+//! says so in its help.
 //!
 //! Exit codes: 0 when the answer is complete; 10 when it is a finding (a stale or absent
 //! observation, a drain that stopped on a verification failure, a pull request that is not
@@ -139,8 +140,77 @@ pub fn run(args: PrsArgs) -> Result<u8> {
         }
         PrsCommand::Drain {
             max,
+            dry_run: false,
+            refresh,
+            continuous: true,
+            interval,
+        } => {
+            let base = integration::load_observation(&root)
+                .ok()
+                .flatten()
+                .map(|o| o.base)
+                .unwrap_or_else(|| "master".into());
+            // the lease for the whole run: a second worker is refused here, before it acts
+            let lease = IntegrationLease::acquire(&root, &base).map_err(unusable)?;
+            let stop = drain::stop_on_signals();
+            let mut integrator = ForgeIntegrator {
+                root: &root,
+                lease: Some(&lease),
+            };
+            let text = format != OutputFormat::Json;
+            let report = drain::continuous(
+                &root,
+                &mut integrator,
+                drain::ContinuousOptions {
+                    max_per_cycle: max,
+                    allow_refresh: refresh,
+                    interval: std::time::Duration::from_secs(interval),
+                    cycles: None,
+                },
+                stop,
+                &mut std::thread::sleep,
+                &mut |n, r| {
+                    if text {
+                        // as each cycle ends, not at the end of a run that may last days
+                        let _ = writeln!(out, "cycle {n}:");
+                        for s in &r.steps {
+                            let _ = writeln!(out, "  {}", describe(s));
+                        }
+                        let _ = writeln!(out, "  stopped: {}", r.stopped);
+                        let _ = out.flush();
+                    }
+                },
+            );
+            drop(lease);
+            if text {
+                w(
+                    &mut out,
+                    format!(
+                        "continuous drain stopped after {} cycle(s), {} merge(s): {}",
+                        report.cycles,
+                        report.merged.len(),
+                        report.stopped
+                    ),
+                )?;
+                if let Some(f) = &report.failure {
+                    w(&mut out, format!("! {f}"))?;
+                }
+            } else {
+                json(&mut out, &report)?;
+            }
+            Ok(if report.failure.is_some() {
+                UNUSABLE
+            } else if report.stopped.contains("could not be verified") {
+                FINDING
+            } else {
+                0
+            })
+        }
+        PrsCommand::Drain {
+            max,
             dry_run,
             refresh,
+            ..
         } => {
             // a dry run changes nothing, and observers never contend with the executor
             let base = integration::load_observation(&root)
@@ -212,6 +282,12 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             }
             Ok(0)
         }
+        PrsCommand::Brief => {
+            if let Some(line) = brief(&root) {
+                w(&mut out, line)?;
+            }
+            Ok(0)
+        }
         PrsCommand::Events => {
             let events = drain::events(&root);
             if format == OutputFormat::Json {
@@ -238,6 +314,109 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             Ok(0)
         }
     }
+}
+
+/// "12 min ago" for an RFC 3339 instant, or nothing when it does not parse.
+fn ago(at: &str) -> String {
+    let Some(then) = crate::peers::epoch_seconds(at) else {
+        return String::new();
+    };
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .unwrap_or(0);
+    match (now - then).max(0) {
+        s @ 0..=119 => format!("{s} s ago"),
+        s @ 120..=7199 => format!("{} min ago", s / 60),
+        s @ 7200..=172_799 => format!("{} h ago", s / 3600),
+        s => format!("{} d ago", s / 86_400),
+    }
+}
+
+/// The briefing line: what the last queue built here said, who holds the lease, and the last
+/// merge — from files alone. `None` when this checkout never observed the forge, so that a
+/// briefing does not grow a section about nothing.
+fn brief(root: &std::path::Path) -> Option<String> {
+    let obs = integration::load_observation(root).ok().flatten()?;
+    let mut parts = Vec::new();
+    match integration::QueueSummary::load(root) {
+        Some(s) => {
+            let lanes: Vec<String> = s
+                .tallies
+                .by_lane
+                .iter()
+                .map(|(k, v)| format!("{k} {v}"))
+                .collect();
+            parts.push(format!(
+                "{} at {} observed {} ({}): {} open — {}",
+                s.base,
+                short(&s.master_sha),
+                ago(&s.observed_at),
+                s.observed_at,
+                s.tallies.open,
+                lanes.join(", ")
+            ));
+            parts.push(match s.next_merge {
+                Some(n) => format!("next merge #{n}"),
+                None => "nothing ready".into(),
+            });
+            if !s.starving.is_empty() {
+                let list: Vec<String> = s.starving.iter().map(|n| format!("#{n}")).collect();
+                parts.push(format!("starving {}", list.join(" ")));
+            }
+            if s.diagnostics > 0 {
+                parts.push(format!(
+                    "{} diagnostic(s): majordomus prs status",
+                    s.diagnostics
+                ));
+            }
+        }
+        None => parts.push(format!(
+            "observed {} at {}; no queue built since — majordomus prs status",
+            obs.repository, obs.observed_at
+        )),
+    }
+    parts.push(match IntegrationLease::read(root, &obs.base) {
+        Ok(Some(l)) => match (&l.holder, l.stale) {
+            (_, true) => format!(
+                "lease stale (renewed {} s ago; the next executor takes it over)",
+                l.renewed_seconds_ago
+            ),
+            (Some(h), false) => format!("lease held by pid {} on {}", h.pid, h.host),
+            (None, false) => "lease held (holder unreadable)".into(),
+        },
+        Ok(None) => "lease free".into(),
+        Err(_) => "lease unknown".into(),
+    });
+    if let Some(m) = drain::events(root)
+        .iter()
+        .rev()
+        .find(|e| e.action == "merge_succeeded")
+    {
+        parts.push(format!(
+            "last merge #{} {}",
+            m.pr.unwrap_or_default(),
+            ago(&m.at)
+        ));
+    }
+    Some(parts.join("; "))
+}
+
+/// "since 2026-10-01T10:00:00Z (3 h ago), passed over 2× (last for #12)" for an actionable
+/// pull request's wait.
+fn waited(wait: &integration::ExecutorWait) -> String {
+    let mut s = format!(
+        "actionable since {} ({})",
+        wait.actionable_since,
+        ago(&wait.actionable_since)
+    );
+    if wait.passed_over > 0 {
+        s.push_str(&format!(", passed over {}×", wait.passed_over));
+        if let Some(p) = &wait.last_passed_over {
+            s.push_str(&format!(" (last for #{} at {})", p.for_pr, p.at));
+        }
+    }
+    s
 }
 
 fn describe(s: &DrainStepOutcome) -> String {
@@ -334,6 +513,11 @@ fn status(q: &IntegrationQueue, format: OutputFormat, out: &mut impl Write) -> R
                 trunc(&a.title, 60)
             ),
         )?;
+    }
+    for n in &q.starving {
+        if let Some(w_) = q.get(*n).and_then(|a| a.wait.as_ref()) {
+            w(out, format!("starving: #{n} {}", waited(w_)))?;
+        }
     }
     Ok(())
 }
@@ -449,6 +633,9 @@ fn explain(
         out,
         format!("  rank:         {rank} of {}", q.assessments.len()),
     )?;
+    if let Some(wait) = &a.wait {
+        w(out, format!("  waiting:      {}", waited(wait)))?;
+    }
     w(
         out,
         format!(

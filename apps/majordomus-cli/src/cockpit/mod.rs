@@ -175,6 +175,7 @@ impl Cockpit {
             "/cockpit/graphs/topology" => pages::topology(ctx),
             "/cockpit/continuity" => pages::continuity(ctx),
             "/cockpit/worktrees" => pages::worktrees(ctx),
+            "/cockpit/integration" => pages::integration(ctx),
             "/cockpit/mesh" => pages::mesh(ctx),
             "/cockpit/models" => pages::models(ctx),
             "/cockpit/economics" => pages::economics(ctx),
