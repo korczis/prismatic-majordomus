@@ -373,6 +373,38 @@ pub struct PullRequestAssessment {
     pub evidence: Vec<IntegrationEvidence>,
     /// When it was opened.
     pub created_at: String,
+    /// How long it has been the executor's to act on, and how often another was chosen
+    /// instead — derived from the audit trail ([`super::wait`]), present only while it is
+    /// ready or refreshable.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub wait: Option<ExecutorWait>,
+}
+
+/// How long a pull request has waited for the executor, from the audit trail. Starvation is
+/// made visible here, never resolved by changing the rank: the rank's age tie-break already
+/// prefers the older of two otherwise equal candidates, and a wait this long is a fact a
+/// person reads, not a reason to merge anything less safe.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct ExecutorWait {
+    /// When it was first observed ready or refreshable in its current run of being so,
+    /// RFC 3339.
+    pub actionable_since: String,
+    /// How many times the executor selected another pull request while this one was ready
+    /// or refreshable.
+    pub passed_over: u32,
+    /// The last of those times.
+    pub last_passed_over: Option<PassedOver>,
+}
+
+/// One time the executor chose another pull request.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct PassedOver {
+    /// When, RFC 3339.
+    pub at: String,
+    /// The pull request chosen instead.
+    pub for_pr: u64,
+    /// What it was chosen for (`selected` to merge, `refresh_selected` to bring master in).
+    pub action: String,
 }
 
 /// Shared authored paths with one other open pull request.

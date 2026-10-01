@@ -73,6 +73,24 @@ work) and number. Every key is a value of the assessment, so the order is total 
 not depend on the order the forge listed them. `src/integration/tests.rs` proves this as a
 property.
 
+## Waiting and starvation
+
+Every `ready` or `needs_refresh` pull request carries how long it has been the executor's to
+act on, and how often the executor chose another instead (`wait` on the assessment). Both
+are folded from the audit trail (`crate::integration::wait`) and from nothing else:
+
+- each executor step records the transitions since the trail's last word, as
+  `became_actionable` and `left_actionable` (with the disposition it has now, or that it is no
+  longer open);
+- each selection records the other actionable pull requests it `passed_over`.
+
+A pull request passed over three times in its current wait is listed as `starving`. That
+shows on `prs status`, `prs explain`, the Cockpit and the briefing, and it never changes the
+rank. The age tie-break already prefers the older of two otherwise equal candidates, and a
+long wait is never a reason to merge something less safe sooner. A dry run records neither
+the transitions nor the selection, so a dry run still leaves no trace. A wait starts when the
+executor first sees the pull request as actionable, not when the forge was first observed.
+
 ## One merge at a time
 
 `prs drain` loops over one step and holds nothing between steps:
@@ -114,10 +132,18 @@ repository's own setting decides that.
 - Every act is appended to `.ai/local/state/integration/events.jsonl`: `selected`,
   `stale_decision`, `merge_attempted`, `merge_succeeded`, `merge_failed`,
   `verification_failed`, `refresh_selected`, `refreshed`, `refresh_failed`,
-  `closed_superseded`, `idle`.
+  `closed_superseded`, `idle`, and the two transitions of a wait, `became_actionable` and
+  `left_actionable`.
 - A dry run observes and decides, and changes and records nothing.
 - A refused merge and a stale decision are specific to the candidate: the next step
   re-plans. A verification failure stops the drain.
+- Transient failures of the forge are asked again (`crate::integration::retry`): a timeout,
+  a 5xx, a rate limit or a dropped connection, at most four attempts with waits of 2, 4 and
+  8 seconds. Anything else, such as a refusal, a 401, a 404 or a moved head, is the answer and
+  is returned at once. The observation, the fetch and the post-merge verification are
+  retried. The merge itself is never retried: a merge that timed out may have landed, and
+  the verification is what finds out. A drain that decides again after a refused merge is
+  taking a new decision from a new observation, within its step bound, and is not retrying.
 
 ## Commands
 
@@ -129,17 +155,39 @@ repository's own setting decides that.
 | `majordomus prs plan` | no | the next merge, the next refresh, and the other lanes |
 | `majordomus prs explain <n>` | no | one pull request's evidence and rank |
 | `majordomus prs events` | no | the audit trail |
+| `majordomus prs brief` | no | one line for a briefing: the last queue built here, the lease, the last merge; nothing where the forge was never observed |
 | `majordomus prs refresh` | yes | observe the forge and fetch every open head |
 | `majordomus prs drain [--max N] [--dry-run] [--refresh]` | yes | integrate, one merge at a time |
+| `majordomus prs drain --continuous [--interval S] [--max N] [--refresh]` | yes | drain, wait, drain again until stopped |
 | `majordomus prs cleanup [--apply]` | yes | close what is provably on master |
 
 </div>
 
 
-The same queue is `GET /api/v1/pull-requests` (MCP `majordomus_pull_requests`). One pull
-request is `GET /api/v1/pull-requests/explain?number=` (`majordomus_pull_request_explain`),
-and the trail is `GET /api/v1/pull-requests/events` (`majordomus_integration_events`). All
-three are declared once in `capability/builtin/integration.rs`.
+The same queue is `GET /api/v1/pull-requests` (MCP `majordomus_pull_requests`), with the
+lease and the last merge beside it. One pull request is
+`GET /api/v1/pull-requests/explain?number=` (`majordomus_pull_request_explain`), and the
+trail is `GET /api/v1/pull-requests/events` (`majordomus_integration_events`). All three are
+declared once in `capability/builtin/integration.rs`.
+
+The Cockpit renders those two answers at `/cockpit/integration`. It shows the counts by lane,
+the master every decision was taken against, the next merge, who holds the lease, the last
+merge, a table per lane with each pull request's reasons, next action and wait, and the
+executor's recent actions. With nothing observed, it says so and names `prs refresh`.
+`majordomus context` carries `prs brief` under `INTEGRATION`, so a session that continues
+drain work starts knowing what was merged, what remains, and whether an executor is
+running.
+
+## Continuous mode
+
+`prs drain --continuous` drains, waits `--interval` seconds (300 by default, 30 to 900),
+and drains again. It holds the base branch's lease for the whole run, so a second executor is
+refused while observers are not. The ceiling keeps the wait well inside the 30 minutes after
+which a lease is called stale. Every cycle is an ordinary bounded drain: `--max` merges, each
+from a fresh observation, and nothing is carried between cycles. Ctrl-C or SIGTERM lets the
+step in progress finish, then the drain stops and releases the lease. A second signal ends
+it at once. A verification failure stops it for a person, and so does a forge or git that
+cannot be read after its retries. It never runs with `--dry-run`.
 
 ## Rollout
 
@@ -147,5 +195,7 @@ three are declared once in `capability/builtin/integration.rs`.
    repository. The classification was checked on 2026-09-30 against 70 open pull requests.
 2. **One merge.** `prs drain --max 1` once a pull request is `ready`.
 3. **Bounded.** `prs drain --refresh --max 3`.
-4. **Continuous.** Only after the audit trail shows several verified cycles.
+4. **Continuous.** `prs drain --continuous` exists and is gated by its own explicit flag;
+   it is to be run only after the audit trail shows several verified bounded cycles. It
+   has not been run against this repository yet.
 {% endraw %}

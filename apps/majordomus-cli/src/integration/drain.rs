@@ -148,6 +148,37 @@ impl IntegrationLease {
     pub fn renew(&self) {
         let _ = fs::write(&self.path, &self.token);
     }
+
+    /// Who holds the lease of `base` now, read without taking it: what an observer shows.
+    /// `None` when nobody does.
+    pub fn read(root: &Path, base: &str) -> Result<Option<IntegrationLeaseState>, String> {
+        let path = Self::path_for(&common_dir(root)?, base);
+        let Ok(text) = fs::read_to_string(&path) else {
+            return Ok(None);
+        };
+        let age = fs::metadata(&path)
+            .and_then(|m| m.modified())
+            .ok()
+            .and_then(|m| SystemTime::now().duration_since(m).ok())
+            .unwrap_or_default();
+        Ok(Some(IntegrationLeaseState {
+            holder: serde_json::from_str(text.trim()).ok(),
+            renewed_seconds_ago: age.as_secs(),
+            stale: age > LEASE_STALE_AFTER,
+        }))
+    }
+}
+
+/// The lease of a base as an observer reads it.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct IntegrationLeaseState {
+    /// Who holds it; `None` when the file does not say in a form this reads.
+    pub holder: Option<LeaseHolder>,
+    /// How long ago the holder last renewed it.
+    pub renewed_seconds_ago: u64,
+    /// Whether it is older than [`LEASE_STALE_AFTER`]: its holder stopped without releasing
+    /// it, and the next executor takes it over.
+    pub stale: bool,
 }
 
 impl Drop for IntegrationLease {
@@ -165,8 +196,10 @@ pub struct IntegrationEvent {
     pub at: String,
     /// Who: the git identity, the process and the machine.
     pub actor: String,
-    /// What (`selected`, `stale_decision`, `merge_attempted`, `merge_succeeded`,
-    /// `merge_failed`, `verification_failed`, `closed_superseded`, `idle`).
+    /// What (`selected`, `refresh_selected`, `stale_decision`, `merge_attempted`,
+    /// `merge_succeeded`, `merge_failed`, `verification_failed`, `refreshed`,
+    /// `refresh_failed`, `closed_superseded`, `idle`, and the two transitions the wait is
+    /// folded from: `became_actionable`, `left_actionable`).
     pub action: String,
     /// The pull request, when one.
     pub pr: Option<u64>,
@@ -180,6 +213,10 @@ pub struct IntegrationEvent {
     pub reasons: Vec<String>,
     /// What happened, for a person.
     pub detail: String,
+    /// On a selection: the other actionable pull requests the executor chose this one over,
+    /// in rank order. The wait of each is folded from it ([`super::wait`]).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub passed_over: Vec<u64>,
 }
 
 fn actor() -> String {
@@ -238,7 +275,19 @@ fn event(
         master_after: None,
         reasons: pr.map(|a| a.reasons.clone()).unwrap_or_default(),
         detail: detail.into(),
+        passed_over: Vec::new(),
     }
+}
+
+/// The other pull requests of `queue` with disposition `d`, in rank order, except `chosen`:
+/// what a selection passes over.
+fn others(queue: &IntegrationQueue, d: PullRequestDisposition, chosen: u64) -> Vec<u64> {
+    queue
+        .assessments
+        .iter()
+        .filter(|a| a.disposition == d && a.number != chosen)
+        .map(|a| a.number)
+        .collect()
 }
 
 /// What one step did.
@@ -339,6 +388,11 @@ pub fn step(
     allow_refresh: bool,
 ) -> Result<DrainStepOutcome, String> {
     let first = integrator.observe()?;
+    if !dry_run {
+        // what became or stopped being actionable since the trail's last word: the wait
+        // of every pull request is folded from these, so a dry run leaves them out too
+        super::wait::record_transitions(root, &first);
+    }
     let Some(candidate) = first.next_merge.and_then(|n| first.get(n).cloned()) else {
         if allow_refresh {
             if let Some(outcome) = refresh_step(root, integrator, &first, dry_run)? {
@@ -372,10 +426,9 @@ pub fn step(
             pr: candidate.number,
         });
     }
-    record(
-        root,
-        event("selected", Some(&candidate), "the first ready pull request"),
-    );
+    let mut selected = event("selected", Some(&candidate), "the first ready pull request");
+    selected.passed_over = others(&first, PullRequestDisposition::Ready, candidate.number);
+    record(root, selected);
     // the decision is re-taken from a new observation; acting on the first one would be
     // acting on a picture of the repository that may already be wrong
     let second = integrator.observe()?;
@@ -482,14 +535,17 @@ fn refresh_step(
             pr: candidate.number,
         }));
     }
-    record(
-        root,
-        event(
-            "refresh_selected",
-            Some(&candidate),
-            "the first pull request that needs master",
-        ),
+    let mut selected = event(
+        "refresh_selected",
+        Some(&candidate),
+        "the first pull request that needs master",
     );
+    selected.passed_over = others(
+        first,
+        PullRequestDisposition::NeedsRefresh,
+        candidate.number,
+    );
+    record(root, selected);
     let second = integrator.observe()?;
     let fresh = second.get(candidate.number);
     let stale = match fresh {
@@ -615,6 +671,156 @@ pub fn drain(
     Ok(report)
 }
 
+/// The polling interval a continuous drain accepts, in seconds. The floor keeps a drain from
+/// hammering the forge; the ceiling keeps it well inside [`LEASE_STALE_AFTER`], so a worker
+/// waiting between cycles is never taken for a dead one.
+pub const INTERVAL_SECONDS: std::ops::RangeInclusive<u64> = 30..=900;
+
+/// What a continuous drain did.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct ContinuousReport {
+    /// Cycles run; each is a bounded [`drain`] that observes before every step.
+    pub cycles: usize,
+    /// Pull requests merged, in order, across every cycle.
+    pub merged: Vec<u64>,
+    /// Why it stopped.
+    pub stopped: String,
+    /// The systemic failure it stopped on, when one: the forge or git could not be read even
+    /// after the bounded retries.
+    pub failure: Option<String>,
+}
+
+/// How a continuous drain is bounded.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ContinuousOptions {
+    /// Merges per cycle at most.
+    pub max_per_cycle: usize,
+    /// Whether a cycle may bring master into a pull request.
+    pub allow_refresh: bool,
+    /// The wait between cycles; inside [`INTERVAL_SECONDS`].
+    pub interval: Duration,
+    /// Stop after this many cycles; `None` runs until stopped.
+    pub cycles: Option<usize>,
+}
+
+/// Drain, wait, and drain again, until `stop` is set, a cycle bound is reached, a merge
+/// could not be verified, or the repository cannot be read. Every cycle is a [`drain`], so
+/// every action is preceded by a fresh observation and no plan outlives a merge; the wait
+/// is taken in one-second slices so a stop is honoured within a second of the step in
+/// progress finishing. `sleep` takes the waits (a test records them); `on_cycle` hears each
+/// cycle's report as it ends. The caller holds the lease for the whole run.
+pub fn continuous(
+    root: &Path,
+    integrator: &mut dyn Integrator,
+    opts: ContinuousOptions,
+    stop: &std::sync::atomic::AtomicBool,
+    sleep: &mut dyn FnMut(Duration),
+    on_cycle: &mut dyn FnMut(usize, &DrainReport),
+) -> ContinuousReport {
+    use std::sync::atomic::Ordering;
+    let mut out = ContinuousReport {
+        cycles: 0,
+        merged: Vec::new(),
+        stopped: String::new(),
+        failure: None,
+    };
+    loop {
+        if stop.load(Ordering::SeqCst) {
+            out.stopped = "asked to stop; the step in progress finished first".into();
+            break;
+        }
+        let report = match drain(
+            root,
+            integrator,
+            opts.max_per_cycle,
+            false,
+            opts.allow_refresh,
+        ) {
+            Ok(r) => r,
+            Err(e) => {
+                out.stopped =
+                    "the repository could not be read; nothing further is attempted".into();
+                out.failure = Some(e);
+                break;
+            }
+        };
+        out.cycles += 1;
+        out.merged.extend(report.merged.iter().copied());
+        on_cycle(out.cycles, &report);
+        if let Some(DrainStepOutcome::VerificationFailed { pr, reason }) = report
+            .steps
+            .iter()
+            .find(|s| matches!(s, DrainStepOutcome::VerificationFailed { .. }))
+        {
+            out.stopped = format!(
+                "#{pr} could not be verified after merging ({reason}); a person looks before anything else merges"
+            );
+            break;
+        }
+        if opts.cycles.is_some_and(|n| out.cycles >= n) {
+            out.stopped = format!("{} cycle(s), the bound asked for", out.cycles);
+            break;
+        }
+        let mut left = opts.interval;
+        while !left.is_zero() && !stop.load(Ordering::SeqCst) {
+            let slice = left.min(Duration::from_secs(1));
+            sleep(slice);
+            left = left.saturating_sub(slice);
+        }
+    }
+    out
+}
+
+/// Ask this process to stop at the next safe point on SIGINT or SIGTERM: the returned flag
+/// is set by the first signal, and a second one ends the process at once the way the signal
+/// would have. Installed once per process; the handler does only async-signal-safe work.
+pub fn stop_on_signals() -> &'static std::sync::atomic::AtomicBool {
+    signals::install()
+}
+
+#[cfg(unix)]
+mod signals {
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::Once;
+
+    static STOP: AtomicBool = AtomicBool::new(false);
+    static INSTALL: Once = Once::new();
+
+    pub fn install() -> &'static AtomicBool {
+        INSTALL.call_once(|| {
+            let handler = on_signal as extern "C" fn(libc::c_int) as libc::sighandler_t;
+            for signal in [libc::SIGTERM, libc::SIGINT] {
+                // SAFETY: the handler only touches an atomic and, on a second signal, calls
+                // async-signal-safe libc functions
+                unsafe { libc::signal(signal, handler) };
+            }
+        });
+        &STOP
+    }
+
+    extern "C" fn on_signal(signal: libc::c_int) {
+        if STOP.swap(true, Ordering::SeqCst) {
+            // the second signal: the person means it
+            // SAFETY: restoring the default disposition and re-raising are async-signal-safe
+            unsafe {
+                libc::signal(signal, libc::SIG_DFL);
+                libc::raise(signal);
+            }
+        }
+    }
+}
+
+#[cfg(not(unix))]
+mod signals {
+    use std::sync::atomic::AtomicBool;
+
+    static STOP: AtomicBool = AtomicBool::new(false);
+
+    pub fn install() -> &'static AtomicBool {
+        &STOP
+    }
+}
+
 /// The forge and git of this checkout.
 pub struct ForgeIntegrator<'a> {
     /// The repository root.
@@ -646,7 +852,10 @@ impl Integrator for ForgeIntegrator<'_> {
     }
 
     fn merge(&mut self, pr: u64, head_sha: &str, method: &str) -> Result<(), String> {
-        // never --admin: a refusal by the branch protection is the answer, not an obstacle
+        // never --admin: a refusal by the branch protection is the answer, not an obstacle.
+        // Never retried either: a merge that timed out may have landed, and asking again
+        // would be a second merge request; the verification after it finds out
+        // (retry::forge there).
         gh(
             self.root,
             &[
@@ -664,18 +873,22 @@ impl Integrator for ForgeIntegrator<'_> {
     fn verify(&mut self, pr: u64, head_sha: &str) -> Result<String, String> {
         let deadline = Instant::now() + MERGE_VISIBLE_WITHIN;
         loop {
-            let state = gh(
-                self.root,
-                &[
-                    "pr",
-                    "view",
-                    &pr.to_string(),
-                    "--json",
-                    "state",
-                    "--jq",
-                    ".state",
-                ],
-            )?;
+            // a read, so asked again on an outage: the merge before it is never retried,
+            // and this is what finds out whether a merge that timed out landed after all
+            let state = super::retry::forge(|| {
+                gh(
+                    self.root,
+                    &[
+                        "pr",
+                        "view",
+                        &pr.to_string(),
+                        "--json",
+                        "state",
+                        "--jq",
+                        ".state",
+                    ],
+                )
+            })?;
             if state.trim() == "MERGED" {
                 break;
             }
@@ -690,21 +903,28 @@ impl Integrator for ForgeIntegrator<'_> {
         }
         let obs = super::load_observation(self.root)?
             .ok_or_else(|| "no observation to verify against".to_string())?;
-        let fetch = Command::new("git")
-            .arg("-C")
-            .arg(self.root)
-            .args([
-                "fetch",
-                "--quiet",
-                "--no-tags",
-                "origin",
-                &format!("+refs/heads/{0}:refs/remotes/origin/{0}", obs.base),
-            ])
-            .status()
-            .map_err(|e| e.to_string())?;
-        if !fetch.success() {
-            return Err("git fetch of the base failed after the merge".into());
-        }
+        super::retry::forge(|| {
+            let fetch = Command::new("git")
+                .arg("-C")
+                .arg(self.root)
+                .args([
+                    "fetch",
+                    "--quiet",
+                    "--no-tags",
+                    "origin",
+                    &format!("+refs/heads/{0}:refs/remotes/origin/{0}", obs.base),
+                ])
+                .output()
+                .map_err(|e| e.to_string())?;
+            if fetch.status.success() {
+                Ok(())
+            } else {
+                Err(format!(
+                    "git fetch of the base failed after the merge: {}",
+                    String::from_utf8_lossy(&fetch.stderr).trim()
+                ))
+            }
+        })?;
         let master = local_master(self.root, &obs.base)
             .ok_or_else(|| "master is unreadable after the merge".to_string())?;
         let contained = Command::new("git")

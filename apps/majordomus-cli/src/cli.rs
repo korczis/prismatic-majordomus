@@ -2587,8 +2587,14 @@ pub struct PrsArgs {
 /// let Command::Prs(args) = cli.command else { panic!("not the prs command") };
 /// assert!(matches!(
 ///     args.command,
-///     Some(PrsCommand::Drain { max: 3, dry_run: false, refresh: true })
+///     Some(PrsCommand::Drain { max: 3, dry_run: false, refresh: true, continuous: false, .. })
 /// ));
+/// // continuous: drain, wait, drain again — never together with a dry run
+/// let cli = Cli::try_parse_from(["majordomus", "prs", "drain", "--continuous", "--interval", "60"]).unwrap();
+/// let Command::Prs(args) = cli.command else { panic!() };
+/// assert!(matches!(args.command, Some(PrsCommand::Drain { continuous: true, interval: 60, .. })));
+/// assert!(Cli::try_parse_from(["majordomus", "prs", "drain", "--continuous", "--dry-run"]).is_err());
+/// assert!(Cli::try_parse_from(["majordomus", "prs", "drain", "--continuous", "--interval", "5"]).is_err());
 /// // with no subcommand it is `status`
 /// let cli = Cli::try_parse_from(["majordomus", "prs"]).unwrap();
 /// let Command::Prs(args) = cli.command else { panic!() };
@@ -2617,6 +2623,12 @@ pub enum PrsCommand {
         /// When nothing is ready, bring master into the first pull request that needs it (a merge commit with the derived driver and a fresh derive, pushed as a fast-forward), so that its checks run against the current master
         #[arg(long)]
         refresh: bool,
+        /// Drain, wait `--interval` seconds, and drain again until stopped, holding the lease throughout; each cycle is bounded by `--max` and observes before every step. Ctrl-C or SIGTERM lets the step in progress finish, then releases the lease; a second signal ends it at once. Never with `--dry-run`
+        #[arg(long, conflicts_with = "dry_run")]
+        continuous: bool,
+        /// With `--continuous`: seconds between cycles, 30 to 900
+        #[arg(long, default_value_t = 300, value_parser = clap::value_parser!(u64).range(crate::integration::drain::INTERVAL_SECONDS))]
+        interval: u64,
     },
     /// Close the pull requests whose work is provably on master already; without `--apply` it only lists them
     Cleanup {
@@ -2626,6 +2638,8 @@ pub enum PrsCommand {
     },
     /// The audit trail: every selection, merge, refusal, stale decision and closure this checkout's executor recorded
     Events,
+    /// One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease, and the last merge. Offline, decides no relation, and prints nothing where the forge was never observed
+    Brief,
 }
 
 #[derive(Debug, Args)]
@@ -4106,6 +4120,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["prs", "drain", "--dry-run"],
             setup: &[],
             expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "prs brief",
+        examples: &[ExampleDoc {
+            id: "prs-brief-unobserved",
+            title: "The briefing line, where nothing was observed",
+            description: "What `majordomus context` prints under INTEGRATION: the last queue this checkout built, the lease and the last merge, in one line, read from files and never from the network. A checkout whose forge was never observed has nothing to say, prints nothing, and exits 0 — a briefing does not grow a section about an empty queue.",
+            argv: &["prs", "brief"],
+            setup: &[],
+            expect: Expect::ExitCode(0),
         }],
     },
     CommandExamples {

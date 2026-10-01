@@ -4,7 +4,7 @@ description = "Whether a deployment serves the commit it was meant to: observe t
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 157
+weight = 158
 [extra]
 route = "/docs/cli/served/"
 command = "majordomus served"

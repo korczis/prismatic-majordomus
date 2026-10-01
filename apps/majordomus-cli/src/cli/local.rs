@@ -218,6 +218,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "renders the queue's next merge, next refresh and lanes for a person; the value is `integration.queue`'s.",
     },
     LocalCommand {
+        command: "prs brief",
+        reason: LocalReason::RendersCapability("integration.queue"),
+        note: "renders the last `integration.queue` answer this checkout built, summarised in one line for `majordomus context`, without building a queue again.",
+    },
+    LocalCommand {
         command: "prs refresh",
         reason: LocalReason::WritesRepository,
         note: "observes the forge over the network, fetches every open head into refs/majordomus/prs/ and records the observation; the shared server never reaches the network (ADR 0101).",

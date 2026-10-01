@@ -83,8 +83,22 @@ fn gh(root: &Path, args: &[&str]) -> Result<(bool, String, String), ForgeError> 
     ))
 }
 
+/// `gh`, asked again on a transient failure ([`super::retry`]): every call here is a read,
+/// so asking twice is harmless. A refusal is returned as it came, for the caller to read.
+fn gh_retrying(root: &Path, args: &[&str]) -> Result<(bool, String, String), ForgeError> {
+    super::retry::forge(|| {
+        let (ok, out, err) = gh(root, args).map_err(|e| e.0)?;
+        if !ok && super::retry::transient(&err) {
+            Err(format!("gh {} failed: {}", args.join(" "), err.trim()))
+        } else {
+            Ok((ok, out, err))
+        }
+    })
+    .map_err(ForgeError)
+}
+
 fn gh_json(root: &Path, args: &[&str]) -> Result<Value, ForgeError> {
-    let (ok, out, err) = gh(root, args)?;
+    let (ok, out, err) = gh_retrying(root, args)?;
     if !ok {
         return Err(ForgeError(format!(
             "gh {} failed: {}",
@@ -252,7 +266,7 @@ impl Forge for GhForge<'_> {
         .to_string();
         // an unprotected branch is a 404 whose message says so: nothing is required, which
         // is a reading, not a failure; any other refusal leaves the requirement unread
-        let (ok, out, err) = gh(
+        let (ok, out, err) = gh_retrying(
             root,
             &[
                 "api",
@@ -323,15 +337,149 @@ pub fn fetch(root: &Path, obs: &ForgeObservation) -> Result<(), ForgeError> {
     for p in &obs.pull_requests {
         args.push(format!("+refs/pull/{0}/head:{PR_REF_PREFIX}{0}", p.number));
     }
-    let out = Command::new("git")
-        .args(&args)
-        .output()
-        .map_err(|e| ForgeError(format!("git fetch could not run: {e}")))?;
-    if !out.status.success() {
-        return Err(ForgeError(format!(
-            "git fetch failed: {}",
-            String::from_utf8_lossy(&out.stderr).trim()
-        )));
+    // a fetch is a read: a dropped connection is asked again, a refusal is not
+    super::retry::forge(|| {
+        let out = Command::new("git")
+            .args(&args)
+            .output()
+            .map_err(|e| format!("git fetch could not run: {e}"))?;
+        if out.status.success() {
+            Ok(())
+        } else {
+            Err(format!(
+                "git fetch failed: {}",
+                String::from_utf8_lossy(&out.stderr).trim()
+            ))
+        }
+    })
+    .map_err(ForgeError)
+}
+
+#[cfg(test)]
+mod tests {
+    //! The forge's JSON, read into the observation: every state word a rollup entry can
+    //! carry, a pull request with every field and one with none, and a branch protection in
+    //! each of its shapes.
+
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn every_rollup_state_word_has_one_meaning() {
+        let ctx = |s: &str| json!({"__typename": "StatusContext", "state": s});
+        assert_eq!(check_state(&ctx("success")), CheckRunState::Passed);
+        assert_eq!(check_state(&ctx("PENDING")), CheckRunState::Pending);
+        assert_eq!(check_state(&ctx("EXPECTED")), CheckRunState::Pending);
+        assert_eq!(check_state(&ctx("ERROR")), CheckRunState::Failed);
+        assert_eq!(check_state(&ctx("FAILURE")), CheckRunState::Failed);
+        let run = |status: &str, conclusion: &str| json!({"__typename": "CheckRun", "status": status, "conclusion": conclusion});
+        assert_eq!(check_state(&run("IN_PROGRESS", "")), CheckRunState::Pending);
+        assert_eq!(check_state(&run("QUEUED", "")), CheckRunState::Pending);
+        assert_eq!(
+            check_state(&run("COMPLETED", "SUCCESS")),
+            CheckRunState::Passed
+        );
+        assert_eq!(
+            check_state(&run("completed", "skipped")),
+            CheckRunState::Skipped
+        );
+        assert_eq!(
+            check_state(&run("COMPLETED", "NEUTRAL")),
+            CheckRunState::Skipped
+        );
+        assert_eq!(
+            check_state(&run("COMPLETED", "FAILURE")),
+            CheckRunState::Failed
+        );
+        assert_eq!(
+            check_state(&run("COMPLETED", "CANCELLED")),
+            CheckRunState::Failed
+        );
+        assert_eq!(
+            check_state(&run("COMPLETED", "TIMED_OUT")),
+            CheckRunState::Failed
+        );
+        // an entry that says nothing has not completed, so it has not passed
+        assert_eq!(check_state(&json!({})), CheckRunState::Pending);
     }
-    Ok(())
+
+    #[test]
+    fn a_pull_request_is_read_with_every_field_and_without_any() {
+        let full = json!({
+            "number": 42,
+            "title": "a change",
+            "author": {"login": "someone"},
+            "headRefName": "feature/x",
+            "headRefOid": "abc",
+            "baseRefName": "master",
+            "isDraft": true,
+            "labels": [{"name": "hold"}, {"name": "docs"}],
+            "createdAt": "2026-09-01T00:00:00Z",
+            "updatedAt": "2026-09-02T00:00:00Z",
+            "body": "Depends on #7.",
+            "statusCheckRollup": [
+                {"__typename": "CheckRun", "name": "ci", "status": "COMPLETED", "conclusion": "SUCCESS"},
+                {"__typename": "StatusContext", "context": "legacy", "state": "PENDING"}
+            ],
+            "reviewDecision": "APPROVED",
+            "autoMergeRequest": {"enabledAt": "2026-09-03T00:00:00Z"},
+            "isCrossRepository": true
+        });
+        let p = pull_request_of(&full).expect("read");
+        assert_eq!(p.number, 42);
+        assert_eq!(p.author, "someone");
+        assert!(p.draft && p.auto_merge && p.cross_repository);
+        assert_eq!(p.labels, ["hold", "docs"]);
+        assert_eq!(p.checks.len(), 2);
+        assert_eq!(p.checks[0].name, "ci");
+        assert_eq!(p.checks[0].state, CheckRunState::Passed);
+        assert_eq!(
+            p.checks[1].name, "legacy",
+            "a status context is named by its context"
+        );
+        assert_eq!(p.checks[1].state, CheckRunState::Pending);
+        assert_eq!(p.review_decision, "APPROVED");
+
+        let bare = pull_request_of(&json!({"number": 1})).expect("a number is enough");
+        assert!(!bare.draft && !bare.auto_merge && !bare.cross_repository);
+        assert!(bare.labels.is_empty() && bare.checks.is_empty());
+        assert_eq!(bare.title, "");
+        let disarmed = pull_request_of(&json!({"number": 2, "autoMergeRequest": null})).unwrap();
+        assert!(
+            !disarmed.auto_merge,
+            "a null auto-merge request is not armed"
+        );
+        assert!(pull_request_of(&json!({"title": "no number"})).is_none());
+    }
+
+    #[test]
+    fn a_protection_names_its_contexts_once_and_its_review_requirement() {
+        let both = json!({
+            "required_status_checks": {
+                "contexts": ["ci", "lint"],
+                "checks": [{"context": "ci"}, {"context": "docs"}]
+            },
+            "required_pull_request_reviews": {"required_approving_review_count": 1}
+        });
+        let (contexts, reviews) = protection_of(&both);
+        assert_eq!(contexts.unwrap(), ["ci", "docs", "lint"]);
+        assert_eq!(reviews, Some(true));
+
+        let none_required = json!({
+            "required_status_checks": {"contexts": []},
+            "required_pull_request_reviews": {"required_approving_review_count": 0}
+        });
+        assert_eq!(protection_of(&none_required).1, Some(false));
+
+        let reviews_without_count = json!({"required_pull_request_reviews": {}});
+        let (contexts, reviews) = protection_of(&reviews_without_count);
+        assert_eq!(contexts.unwrap(), Vec::<String>::new());
+        assert_eq!(
+            reviews,
+            Some(true),
+            "a review section without a count still asks for one"
+        );
+
+        assert_eq!(protection_of(&json!({})).1, Some(false));
+    }
 }

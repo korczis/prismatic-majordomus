@@ -417,6 +417,7 @@
     "schema-ExecutionPolicy": "docs/api/capabilities/",
     "schema-ExecutionState": "docs/api/executions/",
     "schema-ExecutionView": "docs/api/executions/",
+    "schema-ExecutorWait": "docs/api/integration/",
     "schema-Exemption": "docs/api/quality/",
     "schema-ExplainInput": "docs/api/shared/",
     "schema-Explanation": "docs/api/devcontext/",
@@ -484,6 +485,7 @@
     "schema-IntegrationEvidence": "docs/api/integration/",
     "schema-IntegrationExplanation": "docs/api/integration/",
     "schema-IntegrationLane": "docs/api/integration/",
+    "schema-IntegrationLeaseState": "docs/api/integration/",
     "schema-IntegrationPolicy": "docs/api/integration/",
     "schema-IntegrationQueue": "docs/api/integration/",
     "schema-IntegrationRisk": "docs/api/integration/",
@@ -498,6 +500,7 @@
     "schema-KindList": "docs/api/entity/",
     "schema-KindRef": "docs/api/product/",
     "schema-LayerSummary": "docs/api/environment/",
+    "schema-LeaseHolder": "docs/api/integration/",
     "schema-LeaseView": "docs/api/server/",
     "schema-Libc": "docs/api/distribution/",
     "schema-LimitsView": "docs/api/executions/",
@@ -570,6 +573,7 @@
     "schema-OverlapPath": "docs/api/peers/",
     "schema-ParallelSet": "docs/api/devtask/",
     "schema-ParameterView": "docs/api/executions/",
+    "schema-PassedOver": "docs/api/integration/",
     "schema-PathChange": "docs/api/commit/",
     "schema-PathOverlap": "docs/api/integration/",
     "schema-Peer": "docs/api/peers/",
@@ -921,7 +925,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 150,
-    "schemas": 722,
+    "schemas": 726,
     "tags": 45
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1428,6 +1432,7 @@
     "ExecutionPolicy": "capabilities",
     "ExecutionState": "executions",
     "ExecutionView": "executions",
+    "ExecutorWait": "integration",
     "Exemption": "quality",
     "ExplainInput": "shared",
     "Explanation": "devcontext",
@@ -1495,6 +1500,7 @@
     "IntegrationEvidence": "integration",
     "IntegrationExplanation": "integration",
     "IntegrationLane": "integration",
+    "IntegrationLeaseState": "integration",
     "IntegrationPolicy": "integration",
     "IntegrationQueue": "integration",
     "IntegrationRisk": "integration",
@@ -1509,6 +1515,7 @@
     "KindList": "entity",
     "KindRef": "product",
     "LayerSummary": "environment",
+    "LeaseHolder": "integration",
     "LeaseView": "server",
     "Libc": "distribution",
     "LimitsView": "executions",
@@ -1581,6 +1588,7 @@
     "OverlapPath": "peers",
     "ParallelSet": "devtask",
     "ParameterView": "executions",
+    "PassedOver": "integration",
     "PathChange": "commit",
     "PathOverlap": "integration",
     "Peer": "peers",
@@ -17511,6 +17519,44 @@
       "variants": []
     },
     {
+      "description": "How long a pull request has waited for the executor, from the audit trail. Starvation is\nmade visible here, never resolved by changing the rank: the rank's age tie-break already\nprefers the older of two otherwise equal candidates, and a wait this long is a fact a\nperson reads, not a reason to merge anything less safe.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "ExecutorWait",
+      "properties": [
+        {
+          "description": "When it was first observed ready or refreshable in its current run of being so,\nRFC 3339.",
+          "name": "actionable_since",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many times the executor selected another pull request while this one was ready\nor refreshable.",
+          "name": "passed_over",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "The last of those times.",
+          "name": "last_passed_over",
+          "refs": [
+            "PassedOver"
+          ],
+          "required": false,
+          "type": "PassedOver | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PullRequestAssessment"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "A group of items the example policy does not apply to, with the reason it does not.",
       "home": "quality",
       "is_enum": false,
@@ -20728,7 +20774,7 @@
           "type": "string"
         },
         {
-          "description": "What (`selected`, `stale_decision`, `merge_attempted`, `merge_succeeded`,\n`merge_failed`, `verification_failed`, `closed_superseded`, `idle`).",
+          "description": "What (`selected`, `refresh_selected`, `stale_decision`, `merge_attempted`,\n`merge_succeeded`, `merge_failed`, `verification_failed`, `refreshed`,\n`refresh_failed`, `closed_superseded`, `idle`, and the two transitions the wait is\nfolded from: `became_actionable`, `left_actionable`).",
           "name": "action",
           "refs": [],
           "required": true,
@@ -20775,12 +20821,20 @@
           "refs": [],
           "required": true,
           "type": "string"
+        },
+        {
+          "description": "On a selection: the other actionable pull requests the executor chose this one over,\nin rank order. The wait of each is folded from it (`super::wait`).",
+          "name": "passed_over",
+          "refs": [],
+          "required": false,
+          "type": "array of integer (uint64)"
         }
       ],
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
-        "IntegrationEvents"
+        "IntegrationEvents",
+        "IntegrationStatus"
       ],
       "values": [],
       "variants": []
@@ -20940,6 +20994,44 @@
       "variants": []
     },
     {
+      "description": "The lease of a base as an observer reads it.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "IntegrationLeaseState",
+      "properties": [
+        {
+          "description": "Who holds it; `None` when the file does not say in a form this reads.",
+          "name": "holder",
+          "refs": [
+            "LeaseHolder"
+          ],
+          "required": false,
+          "type": "LeaseHolder | null"
+        },
+        {
+          "description": "How long ago the holder last renewed it.",
+          "name": "renewed_seconds_ago",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Whether it is older than `LEASE_STALE_AFTER`: its holder stopped without releasing\nit, and the next executor takes it over.",
+          "name": "stale",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "What the repository requires before a merge, as observed from the forge and the\nrepository — never a list kept here beside it.",
       "home": "integration",
       "is_enum": false,
@@ -21077,6 +21169,13 @@
           "refs": [],
           "required": true,
           "type": "array of string"
+        },
+        {
+          "description": "The actionable pull requests the executor has passed over at least\n`wait::STARVING_AFTER` times in their current wait, in rank order. Visible, never\npromoted: see `wait`.",
+          "name": "starving",
+          "refs": [],
+          "required": false,
+          "type": "array of integer (uint64)"
         }
       ],
       "type": "object",
@@ -21142,6 +21241,24 @@
           ],
           "required": false,
           "type": "IntegrationQueue | null"
+        },
+        {
+          "description": "The base branch's integration lease as an observer reads it: `None` when nobody\nholds it (or nothing is observed, so no base is known).",
+          "name": "lease",
+          "refs": [
+            "IntegrationLeaseState"
+          ],
+          "required": false,
+          "type": "IntegrationLeaseState | null"
+        },
+        {
+          "description": "The last merge the executor recorded, from the audit trail.",
+          "name": "last_merge",
+          "refs": [
+            "IntegrationEvent"
+          ],
+          "required": false,
+          "type": "IntegrationEvent | null"
         }
       ],
       "type": "object",
@@ -21629,6 +21746,49 @@
       "used_by": [],
       "used_by_schemas": [
         "RepositoryEnvironment"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Who holds the lease.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "LeaseHolder",
+      "properties": [
+        {
+          "description": "The process.",
+          "name": "pid",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "The machine.",
+          "name": "host",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The base branch.",
+          "name": "base",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When it was taken, seconds since the epoch.",
+          "name": "since",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationLeaseState"
       ],
       "values": [],
       "variants": []
@@ -25661,6 +25821,42 @@
       "variants": []
     },
     {
+      "description": "One time the executor chose another pull request.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "PassedOver",
+      "properties": [
+        {
+          "description": "When, RFC 3339.",
+          "name": "at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The pull request chosen instead.",
+          "name": "for_pr",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "What it was chosen for (`selected` to merge, `refresh_selected` to bring master in).",
+          "name": "action",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ExecutorWait"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One path, and where it stands.\n```\nuse majordomus_cli::commit::ChangeStage;\nuse majordomus_cli::commit::plan::PathChange;\n// staged and modified again since: the commit would carry the staged half only\nlet c = PathChange {\n    path: \"src/a.rs\".into(), stage: ChangeStage::Staged, status: \"MM\".into(), partial: true,\n};\nassert!(c.partial);\n```",
       "home": "commit",
       "is_enum": false,
@@ -29214,6 +29410,15 @@
           "refs": [],
           "required": true,
           "type": "string"
+        },
+        {
+          "description": "How long it has been the executor's to act on, and how often another was chosen\ninstead — derived from the audit trail (`super::wait`), present only while it is\nready or refreshable.",
+          "name": "wait",
+          "refs": [
+            "ExecutorWait"
+          ],
+          "required": false,
+          "type": "ExecutorWait | null"
         }
       ],
       "type": "object",
@@ -46877,7 +47082,7 @@
           "cache_detail": "",
           "cli": "prs status",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/pull-requests\"",
-          "description": "The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection's required checks and reviews, the blocking labels, the merge method), every open pull request's assessment in rank order, the next merge, the pull requests that need master brought in, the tallies by disposition and lane, and the diagnostics — a stale observation first. `observed: false` with the reason when this checkout has recorded no observation.",
+          "description": "The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection's required checks and reviews, the blocking labels, the merge method), every open pull request's assessment in rank order — an actionable one with how long it has waited for the executor and how often another was chosen instead — the next merge, the pull requests that need master brought in, the starving ones, the tallies by disposition and lane, and the diagnostics, a stale observation first; beside it, who holds the base branch's integration lease and the last merge the executor recorded. `observed: false` with the reason when this checkout has recorded no observation.",
           "home": "integration",
           "id": "integration.queue",
           "kind": "query",

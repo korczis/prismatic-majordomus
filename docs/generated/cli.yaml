@@ -9173,6 +9173,28 @@ cli:
               possible_values: []
               defaults:
                 - "false"
+            - name: continuous
+              long: continuous
+              positional: false
+              help: "Drain, wait `--interval` seconds, and drain again until stopped, holding the lease throughout; each cycle is bounded by `--max` and observes before every step. Ctrl-C or SIGTERM lets the step in progress finish, then releases the lease; a second signal ends it at once. Never with `--dry-run`"
+              value_name: CONTINUOUS
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: interval
+              long: interval
+              positional: false
+              help: "With `--continuous`: seconds between cycles, 30 to 900"
+              value_name: INTERVAL
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "300"
             - name: repo
               long: repo
               positional: false
@@ -9418,6 +9440,87 @@ cli:
               command: majordomus prs events
               setup: []
               expectation: exits 0; prints no integration action
+          subcommands: []
+        - path:
+            - majordomus
+            - prs
+            - brief
+          route: /docs/cli/prs/brief/
+          executable: true
+          usage: "majordomus prs brief [OPTIONS]"
+          about: "One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease, and the last merge. Offline, decides no relation, and prints nothing where the forge was never observed"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: prs-brief-unobserved
+              title: "The briefing line, where nothing was observed"
+              description: "What `majordomus context` prints under INTEGRATION: the last queue this checkout built, the lease and the last merge, in one line, read from files and never from the network. A checkout whose forge was never observed has nothing to say, prints nothing, and exits 0 — a briefing does not grow a section about an empty queue."
+              argv:
+                - prs
+                - brief
+              command: majordomus prs brief
+              setup: []
+              expectation: exits 0
           subcommands: []
     - path:
         - majordomus

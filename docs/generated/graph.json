@@ -1447,20 +1447,6 @@
         "external": true
       },
       {
-        "id": "command:checkpoint",
-        "kind": "command",
-        "label": "checkpoint",
-        "summary": "named by the layer; not an object of this index",
-        "external": true
-      },
-      {
-        "id": "command:context",
-        "kind": "command",
-        "label": "context",
-        "summary": "named by the layer; not an object of this index",
-        "external": true
-      },
-      {
         "id": "command:doctor",
         "kind": "command",
         "label": "doctor",
@@ -1492,13 +1478,6 @@
         "id": "command:question",
         "kind": "command",
         "label": "question",
-        "summary": "named by the layer; not an object of this index",
-        "external": true
-      },
-      {
-        "id": "command:start",
-        "kind": "command",
-        "label": "start",
         "summary": "named by the layer; not an object of this index",
         "external": true
       },
@@ -13488,7 +13467,8 @@
             "worktree-ownership"
           ],
           "cockpit": [
-            "worktrees"
+            "worktrees",
+            "integration"
           ],
           "commands": [
             "start",
@@ -13498,14 +13478,16 @@
           "docs": [
             "docs/WORKTREES.md",
             "docs/MCP.md",
-            "docs/ADOPTION.md"
+            "docs/ADOPTION.md",
+            "docs/INTEGRATION.md"
           ],
           "featured": true,
           "headline": "Every worker declares the paths it may touch, every session can see who else is attached and what they announced, and a collision is reported before it is committed.",
           "modules": [
             "peers",
             "server",
-            "worktree"
+            "worktree",
+            "integration"
           ],
           "related": [
             "worktrees",
@@ -37044,6 +37026,27 @@
         "source": "test/cases/73_knowledge_nodes.sh"
       },
       {
+        "id": "majordomus://test/test/cases/740_integration_is_visible_where_a_person_looks.sh",
+        "kind": "test",
+        "label": "test/cases/740_integration_is_visible_where_a_person_looks.sh",
+        "route": "/cockpit/objects/test/test-cases-740-integration-is-visible-where-a-person-looks-sh",
+        "source": "test/cases/740_integration_is_visible_where_a_person_looks.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
+        "kind": "test",
+        "label": "test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
+        "route": "/cockpit/objects/test/test-cases-741-a-continuous-drain-stops-cleanly-and-alone-sh",
+        "source": "test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/742_only_an_outage_is_asked_again.sh",
+        "kind": "test",
+        "label": "test/cases/742_only_an_outage_is_asked_again.sh",
+        "route": "/cockpit/objects/test/test-cases-742-only-an-outage-is-asked-again-sh",
+        "source": "test/cases/742_only_an_outage_is_asked_again.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/74_knowledge_edges.sh",
         "kind": "test",
         "label": "test/cases/74_knowledge_edges.sh",
@@ -58651,6 +58654,21 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/740_integration_is_visible_where_a_person_looks.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/742_only_an_outage_is_asked_again.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/74_knowledge_edges.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -59162,27 +59180,7 @@
       },
       {
         "source": "majordomus://use-case/carry-a-blocker-across-a-handover",
-        "target": "command:check",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/carry-a-blocker-across-a-handover",
-        "target": "command:finish",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/carry-a-blocker-across-a-handover",
         "target": "command:handover",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/carry-a-blocker-across-a-handover",
-        "target": "command:question",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/carry-a-blocker-across-a-handover",
-        "target": "command:start",
         "kind": "runs"
       },
       {
@@ -59239,21 +59237,6 @@
         "source": "majordomus://use-case/carry-a-blocker-across-a-handover",
         "target": "majordomus://rule/majordomus.questions-store-integrity@1",
         "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/checkpoint-long-work",
-        "target": "command:check",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/checkpoint-long-work",
-        "target": "command:checkpoint",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/checkpoint-long-work",
-        "target": "command:context",
-        "kind": "runs"
       },
       {
         "source": "majordomus://use-case/checkpoint-long-work",
@@ -59464,16 +59447,6 @@
         "source": "majordomus://use-case/document-every-directory-of-the-layer",
         "target": "capability:directories.list",
         "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/document-every-directory-of-the-layer",
-        "target": "command:context",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/document-every-directory-of-the-layer",
-        "target": "command:doctor",
-        "kind": "runs"
       },
       {
         "source": "majordomus://use-case/document-every-directory-of-the-layer",
@@ -59804,26 +59777,6 @@
         "source": "majordomus://use-case/hand-the-repository-to-a-reader",
         "target": "majordomus://claim/no-network",
         "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/hand-work-between-sessions",
-        "target": "command:check",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/hand-work-between-sessions",
-        "target": "command:checkpoint",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/hand-work-between-sessions",
-        "target": "command:context",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/hand-work-between-sessions",
-        "target": "command:handover",
-        "kind": "runs"
       },
       {
         "source": "majordomus://use-case/hand-work-between-sessions",
@@ -60412,11 +60365,6 @@
       },
       {
         "source": "majordomus://use-case/prove-what-a-task-owed-before-calling-it-done",
-        "target": "command:start",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/prove-what-a-task-owed-before-calling-it-done",
         "target": "kind:use-case",
         "kind": "is_a"
       },
@@ -60484,16 +60432,6 @@
         "source": "majordomus://use-case/read-back-what-happened",
         "target": "majordomus://rule/majordomus.retention-caps@1",
         "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/read-only-the-context-that-fits",
-        "target": "command:check",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/read-only-the-context-that-fits",
-        "target": "command:context",
-        "kind": "runs"
       },
       {
         "source": "majordomus://use-case/read-only-the-context-that-fits",
@@ -60682,11 +60620,6 @@
       },
       {
         "source": "majordomus://use-case/resume-in-the-right-worktree",
-        "target": "command:context",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/resume-in-the-right-worktree",
         "target": "command:handover",
         "kind": "runs"
       },
@@ -60734,21 +60667,6 @@
         "source": "majordomus://use-case/resume-in-the-right-worktree",
         "target": "majordomus://rule/majordomus.state-consistency@1",
         "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/run-several-workers-at-once",
-        "target": "command:check",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/run-several-workers-at-once",
-        "target": "command:finish",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/run-several-workers-at-once",
-        "target": "command:start",
-        "kind": "runs"
       },
       {
         "source": "majordomus://use-case/run-several-workers-at-once",
@@ -60834,11 +60752,6 @@
         "source": "majordomus://use-case/say-what-the-tool-is-for",
         "target": "capability:why.validate",
         "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "command:context",
-        "kind": "runs"
       },
       {
         "source": "majordomus://use-case/say-what-the-tool-is-for",
@@ -61082,16 +60995,6 @@
       },
       {
         "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "command:context",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "command:doctor",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
         "target": "kind:use-case",
         "kind": "is_a"
       },
@@ -61214,11 +61117,6 @@
         "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
         "target": "capability:worktree.topology",
         "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "command:context",
-        "kind": "runs"
       },
       {
         "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
@@ -62033,7 +61931,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4483,
+      "edges": 4462,
       "acyclic": true,
       "truncated": true
     }

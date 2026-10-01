@@ -505,6 +505,8 @@ pub fn classify(
         risk_factors,
         evidence,
         created_at: pr.created_at.clone(),
+        // the audit trail's to say, not the observation's: queue_of adds it
+        wait: None,
     }
 }
 

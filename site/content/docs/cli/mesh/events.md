@@ -1,7 +1,7 @@
 +++
 title = "majordomus mesh events"
 description = "The cooperation journal's events after a Lamport stamp, in Lamport order"
-weight = 129
+weight = 130
 [extra]
 route = "/docs/cli/mesh/events/"
 command = "majordomus mesh events"

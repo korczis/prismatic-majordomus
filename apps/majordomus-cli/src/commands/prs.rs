@@ -1,9 +1,10 @@
 //! `majordomus prs`: the command line's rendering of [`crate::integration`].
 //!
-//! Nothing is decided here. `status`, `plan`, `explain` and `events` render the queue the
-//! integration module builds from the last recorded observation — the same value the HTTP
-//! route, the MCP tool and the Cockpit render — and never reach the network. `refresh`,
-//! `drain` and `cleanup` are the three that do, and each says so in its help.
+//! Nothing is decided here. `status`, `plan`, `explain`, `events` and `brief` render the
+//! queue the integration module builds from the last recorded observation — the same value
+//! the HTTP route, the MCP tool and the Cockpit page (`/cockpit/integration`) render — and
+//! never reach the network. `refresh`, `drain` and `cleanup` are the three that do, and each
+//! says so in its help.
 //!
 //! Exit codes: 0 when the answer is complete; 10 when it is a finding (a stale or absent
 //! observation, a drain that stopped on a verification failure, a pull request that is not
@@ -139,8 +140,77 @@ pub fn run(args: PrsArgs) -> Result<u8> {
         }
         PrsCommand::Drain {
             max,
+            dry_run: false,
+            refresh,
+            continuous: true,
+            interval,
+        } => {
+            let base = integration::load_observation(&root)
+                .ok()
+                .flatten()
+                .map(|o| o.base)
+                .unwrap_or_else(|| "master".into());
+            // the lease for the whole run: a second worker is refused here, before it acts
+            let lease = IntegrationLease::acquire(&root, &base).map_err(unusable)?;
+            let stop = drain::stop_on_signals();
+            let mut integrator = ForgeIntegrator {
+                root: &root,
+                lease: Some(&lease),
+            };
+            let text = format != OutputFormat::Json;
+            let report = drain::continuous(
+                &root,
+                &mut integrator,
+                drain::ContinuousOptions {
+                    max_per_cycle: max,
+                    allow_refresh: refresh,
+                    interval: std::time::Duration::from_secs(interval),
+                    cycles: None,
+                },
+                stop,
+                &mut std::thread::sleep,
+                &mut |n, r| {
+                    if text {
+                        // as each cycle ends, not at the end of a run that may last days
+                        let _ = writeln!(out, "cycle {n}:");
+                        for s in &r.steps {
+                            let _ = writeln!(out, "  {}", describe(s));
+                        }
+                        let _ = writeln!(out, "  stopped: {}", r.stopped);
+                        let _ = out.flush();
+                    }
+                },
+            );
+            drop(lease);
+            if text {
+                w(
+                    &mut out,
+                    format!(
+                        "continuous drain stopped after {} cycle(s), {} merge(s): {}",
+                        report.cycles,
+                        report.merged.len(),
+                        report.stopped
+                    ),
+                )?;
+                if let Some(f) = &report.failure {
+                    w(&mut out, format!("! {f}"))?;
+                }
+            } else {
+                json(&mut out, &report)?;
+            }
+            Ok(if report.failure.is_some() {
+                UNUSABLE
+            } else if report.stopped.contains("could not be verified") {
+                FINDING
+            } else {
+                0
+            })
+        }
+        PrsCommand::Drain {
+            max,
             dry_run,
             refresh,
+            ..
         } => {
             // a dry run changes nothing, and observers never contend with the executor
             let base = integration::load_observation(&root)
@@ -212,6 +282,12 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             }
             Ok(0)
         }
+        PrsCommand::Brief => {
+            if let Some(line) = brief(&root) {
+                w(&mut out, line)?;
+            }
+            Ok(0)
+        }
         PrsCommand::Events => {
             let events = drain::events(&root);
             if format == OutputFormat::Json {
@@ -238,6 +314,109 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             Ok(0)
         }
     }
+}
+
+/// "12 min ago" for an RFC 3339 instant, or nothing when it does not parse.
+fn ago(at: &str) -> String {
+    let Some(then) = crate::peers::epoch_seconds(at) else {
+        return String::new();
+    };
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs() as i64)
+        .unwrap_or(0);
+    match (now - then).max(0) {
+        s @ 0..=119 => format!("{s} s ago"),
+        s @ 120..=7199 => format!("{} min ago", s / 60),
+        s @ 7200..=172_799 => format!("{} h ago", s / 3600),
+        s => format!("{} d ago", s / 86_400),
+    }
+}
+
+/// The briefing line: what the last queue built here said, who holds the lease, and the last
+/// merge — from files alone. `None` when this checkout never observed the forge, so that a
+/// briefing does not grow a section about nothing.
+fn brief(root: &std::path::Path) -> Option<String> {
+    let obs = integration::load_observation(root).ok().flatten()?;
+    let mut parts = Vec::new();
+    match integration::QueueSummary::load(root) {
+        Some(s) => {
+            let lanes: Vec<String> = s
+                .tallies
+                .by_lane
+                .iter()
+                .map(|(k, v)| format!("{k} {v}"))
+                .collect();
+            parts.push(format!(
+                "{} at {} observed {} ({}): {} open — {}",
+                s.base,
+                short(&s.master_sha),
+                ago(&s.observed_at),
+                s.observed_at,
+                s.tallies.open,
+                lanes.join(", ")
+            ));
+            parts.push(match s.next_merge {
+                Some(n) => format!("next merge #{n}"),
+                None => "nothing ready".into(),
+            });
+            if !s.starving.is_empty() {
+                let list: Vec<String> = s.starving.iter().map(|n| format!("#{n}")).collect();
+                parts.push(format!("starving {}", list.join(" ")));
+            }
+            if s.diagnostics > 0 {
+                parts.push(format!(
+                    "{} diagnostic(s): majordomus prs status",
+                    s.diagnostics
+                ));
+            }
+        }
+        None => parts.push(format!(
+            "observed {} at {}; no queue built since — majordomus prs status",
+            obs.repository, obs.observed_at
+        )),
+    }
+    parts.push(match IntegrationLease::read(root, &obs.base) {
+        Ok(Some(l)) => match (&l.holder, l.stale) {
+            (_, true) => format!(
+                "lease stale (renewed {} s ago; the next executor takes it over)",
+                l.renewed_seconds_ago
+            ),
+            (Some(h), false) => format!("lease held by pid {} on {}", h.pid, h.host),
+            (None, false) => "lease held (holder unreadable)".into(),
+        },
+        Ok(None) => "lease free".into(),
+        Err(_) => "lease unknown".into(),
+    });
+    if let Some(m) = drain::events(root)
+        .iter()
+        .rev()
+        .find(|e| e.action == "merge_succeeded")
+    {
+        parts.push(format!(
+            "last merge #{} {}",
+            m.pr.unwrap_or_default(),
+            ago(&m.at)
+        ));
+    }
+    Some(parts.join("; "))
+}
+
+/// "since 2026-10-01T10:00:00Z (3 h ago), passed over 2× (last for #12)" for an actionable
+/// pull request's wait.
+fn waited(wait: &integration::ExecutorWait) -> String {
+    let mut s = format!(
+        "actionable since {} ({})",
+        wait.actionable_since,
+        ago(&wait.actionable_since)
+    );
+    if wait.passed_over > 0 {
+        s.push_str(&format!(", passed over {}×", wait.passed_over));
+        if let Some(p) = &wait.last_passed_over {
+            s.push_str(&format!(" (last for #{} at {})", p.for_pr, p.at));
+        }
+    }
+    s
 }
 
 fn describe(s: &DrainStepOutcome) -> String {
@@ -334,6 +513,11 @@ fn status(q: &IntegrationQueue, format: OutputFormat, out: &mut impl Write) -> R
                 trunc(&a.title, 60)
             ),
         )?;
+    }
+    for n in &q.starving {
+        if let Some(w_) = q.get(*n).and_then(|a| a.wait.as_ref()) {
+            w(out, format!("starving: #{n} {}", waited(w_)))?;
+        }
     }
     Ok(())
 }
@@ -449,6 +633,9 @@ fn explain(
         out,
         format!("  rank:         {rank} of {}", q.assessments.len()),
     )?;
+    if let Some(wait) = &a.wait {
+        w(out, format!("  waiting:      {}", waited(wait)))?;
+    }
     w(
         out,
         format!(
@@ -505,4 +692,279 @@ fn explain(
         )?;
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    //! The renderings of `majordomus prs`, over a queue built the way the command builds
+    //! it: a recorded observation and git's answer about each head, in a scratch clone.
+
+    use super::*;
+    use crate::integration::{
+        drain::IntegrationEvent, store_observation, wait, CheckObservation, CheckRunState,
+        ForgeObservation, PullRequestObservation, OBSERVATION_SCHEMA,
+    };
+
+    struct Scratch(std::path::PathBuf);
+    impl Drop for Scratch {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.0);
+        }
+    }
+
+    fn git(root: &std::path::Path, args: &[&str]) -> String {
+        let out = std::process::Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .args(args)
+            .env("GIT_AUTHOR_NAME", "t")
+            .env("GIT_AUTHOR_EMAIL", "t@example.com")
+            .env("GIT_COMMITTER_NAME", "t")
+            .env("GIT_COMMITTER_EMAIL", "t@example.com")
+            .output()
+            .expect("git");
+        assert!(out.status.success(), "git {args:?}: {out:?}");
+        String::from_utf8_lossy(&out.stdout).trim().to_string()
+    }
+
+    fn pr(n: u64, sha: &str, state: CheckRunState) -> PullRequestObservation {
+        PullRequestObservation {
+            number: n,
+            title: format!("change number {n} with a title long enough to be cut short somewhere"),
+            author: "someone".into(),
+            head_ref: format!("feature/{n}"),
+            head_sha: sha.into(),
+            base_ref: "master".into(),
+            draft: false,
+            labels: vec![],
+            created_at: format!("2026-09-0{n}T00:00:00Z"),
+            updated_at: format!("2026-09-0{n}T00:00:00Z"),
+            body: String::new(),
+            checks: vec![CheckObservation {
+                name: "ci".into(),
+                state,
+            }],
+            review_decision: String::new(),
+            auto_merge: false,
+            cross_repository: false,
+        }
+    }
+
+    /// A clone with an origin/master, an observation of five pull requests in five
+    /// dispositions, and a trail in which #1 has been passed over until it is starving.
+    fn world() -> (Scratch, IntegrationQueue) {
+        // tests run on parallel threads: the clock alone named two scratch clones alike
+        static NEXT: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+        let root = std::env::temp_dir().join(format!(
+            "mj-prs-{}-{}-{}",
+            std::process::id(),
+            NEXT.fetch_add(1, std::sync::atomic::Ordering::SeqCst),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&root).unwrap();
+        git(&root, &["init", "-q", "-b", "master"]);
+        git(&root, &["commit", "-q", "--allow-empty", "-m", "base"]);
+        let sha = git(&root, &["rev-parse", "HEAD"]);
+        git(&root, &["update-ref", "refs/remotes/origin/master", &sha]);
+
+        // every pull request's head is a commit of its own on top of master: a head master
+        // already contains would be superseded, not open work
+        let head = |n: u64| {
+            git(
+                &root,
+                &["checkout", "-q", "-B", &format!("feature/{n}"), &sha],
+            );
+            std::fs::write(root.join(format!("{n}.md")), format!("change {n}\n")).unwrap();
+            git(&root, &["add", &format!("{n}.md")]);
+            git(&root, &["commit", "-q", "-m", &format!("change {n}")]);
+            git(&root, &["rev-parse", "HEAD"])
+        };
+        let heads: Vec<String> = (1..=6).map(head).collect();
+        git(&root, &["checkout", "-q", "master"]);
+        let mut draft = pr(4, &heads[3], CheckRunState::Passed);
+        draft.draft = true;
+        let mut held = pr(5, &heads[4], CheckRunState::Passed);
+        held.labels = vec!["blocked".into()];
+        let mut dependent = pr(6, &heads[5], CheckRunState::Passed);
+        dependent.body = "Depends on #2.".into();
+        store_observation(
+            &root,
+            &ForgeObservation {
+                schema: OBSERVATION_SCHEMA,
+                repository: "owner/repo".into(),
+                base: "master".into(),
+                base_sha: sha.clone(),
+                observed_at: "2026-10-01T00:00:00Z".into(),
+                required_checks: Some(vec!["ci".into()]),
+                reviews_required: Some(false),
+                merge_methods: vec!["merge".into()],
+                pull_requests: vec![
+                    pr(1, &heads[0], CheckRunState::Passed),
+                    pr(2, &heads[1], CheckRunState::Failed),
+                    pr(3, &heads[2], CheckRunState::Pending),
+                    draft,
+                    held,
+                    dependent,
+                ],
+            },
+        )
+        .unwrap();
+        let event = |action: &str, pr: u64, over: Vec<u64>| IntegrationEvent {
+            at: "2026-10-01T00:00:00Z".into(),
+            actor: "test".into(),
+            action: action.into(),
+            pr: Some(pr),
+            master_before: Some(sha.clone()),
+            head_sha: Some(sha.clone()),
+            master_after: None,
+            reasons: vec![],
+            detail: String::new(),
+            passed_over: over,
+        };
+        drain::record(&root, event(wait::BECAME_ACTIONABLE, 1, vec![]));
+        for _ in 0..wait::STARVING_AFTER {
+            drain::record(&root, event("selected", 9, vec![1]));
+        }
+        let q = integration::queue_of(&root).expect("a queue");
+        (Scratch(root), q)
+    }
+
+    fn text(f: impl FnOnce(&mut Vec<u8>) -> Result<()>) -> String {
+        let mut out = Vec::new();
+        f(&mut out).expect("rendered");
+        String::from_utf8(out).unwrap()
+    }
+
+    #[test]
+    fn status_lists_every_pull_request_in_rank_order_and_names_the_starving() {
+        let (_s, q) = world();
+        let t = text(|o| status(&q, OutputFormat::Text, o));
+        assert!(t.starts_with("owner/repo · master at "), "{t}");
+        assert!(t.contains("lanes: "), "{t}");
+        for n in 1..=6 {
+            assert!(t.contains(&format!("#{n} ")), "#{n} missing:\n{t}");
+        }
+        assert!(t.contains("starving: #1 actionable since"), "{t}");
+        assert!(t.contains("passed over 3×"), "{t}");
+        assert!(t.contains('…') || t.lines().all(|l| l.chars().count() < 160));
+        let j: serde_json::Value =
+            serde_json::from_str(&text(|o| status(&q, OutputFormat::Json, o))).unwrap();
+        assert_eq!(j["assessments"].as_array().unwrap().len(), 6);
+        assert_eq!(j["starving"], serde_json::json!([1]));
+    }
+
+    #[test]
+    fn the_plan_names_the_next_merge_and_every_lane() {
+        let (_s, q) = world();
+        let t = text(|o| plan(&q, OutputFormat::Text, o));
+        assert!(t.contains("#1"), "{t}");
+        let j: serde_json::Value =
+            serde_json::from_str(&text(|o| plan(&q, OutputFormat::Json, o))).unwrap();
+        assert_eq!(j["next_merge"], 1, "{j}");
+        assert!(j["repair"]
+            .as_array()
+            .unwrap()
+            .contains(&serde_json::json!(2)));
+    }
+
+    #[test]
+    fn explain_says_why_each_pull_request_is_where_it_is() {
+        let (_s, q) = world();
+        for (rank, a) in q.assessments.iter().enumerate() {
+            let t = text(|o| explain(&q, a, rank + 1, OutputFormat::Text, o));
+            assert!(t.starts_with(&format!("#{} ", a.number)), "{t}");
+            assert!(t.contains(a.disposition.as_str()), "{t}");
+            let j: serde_json::Value =
+                serde_json::from_str(&text(|o| explain(&q, a, rank + 1, OutputFormat::Json, o)))
+                    .unwrap();
+            assert_eq!(j["rank"], rank + 1);
+            assert_eq!(j["assessment"]["number"], a.number);
+        }
+    }
+
+    #[test]
+    fn the_brief_is_one_line_from_files_and_absent_without_an_observation() {
+        let (s, _q) = world();
+        let b = brief(&s.0).expect("a brief");
+        assert!(b.contains("master at "), "{b}");
+        assert!(b.contains("next merge #1"), "{b}");
+        assert!(b.contains("starving #1"), "{b}");
+        let empty = std::env::temp_dir().join(format!("mj-prs-empty-{}", std::process::id()));
+        std::fs::create_dir_all(&empty).unwrap();
+        assert!(
+            brief(&empty).is_none(),
+            "a checkout that never observed says nothing"
+        );
+        let _ = std::fs::remove_dir_all(&empty);
+    }
+
+    #[test]
+    fn every_drain_outcome_has_its_own_sentence() {
+        let outcomes = [
+            DrainStepOutcome::Idle {
+                why: "nothing".into(),
+            },
+            DrainStepOutcome::WouldMerge { pr: 1 },
+            DrainStepOutcome::StaleDecision {
+                pr: 2,
+                what: "master moved".into(),
+            },
+            DrainStepOutcome::Merged {
+                pr: 3,
+                master_before: "a".repeat(40),
+                master_after: "b".repeat(40),
+            },
+            DrainStepOutcome::MergeRefused {
+                pr: 4,
+                reason: "protected".into(),
+            },
+            DrainStepOutcome::VerificationFailed {
+                pr: 5,
+                reason: "absent".into(),
+            },
+            DrainStepOutcome::WouldRefresh { pr: 6 },
+            DrainStepOutcome::Refreshed {
+                pr: 7,
+                head_before: "c".repeat(40),
+                head_after: "d".repeat(40),
+            },
+            DrainStepOutcome::AwaitingChecks { pr: 8 },
+            DrainStepOutcome::RefreshFailed {
+                pr: 9,
+                reason: "conflict".into(),
+            },
+        ];
+        let said: std::collections::BTreeSet<String> = outcomes.iter().map(describe).collect();
+        assert_eq!(
+            said.len(),
+            outcomes.len(),
+            "two outcomes read alike: {said:?}"
+        );
+        assert!(describe(&outcomes[3]).contains("aaaaaaaaaa -> bbbbbbbbbb"));
+    }
+
+    #[test]
+    fn a_moment_is_said_as_how_long_ago() {
+        assert_eq!(ago("not a time"), "", "an unreadable moment says nothing");
+        let at = |secs: u64| {
+            crate::peers::rfc3339(
+                std::time::SystemTime::now() - std::time::Duration::from_secs(secs),
+            )
+        };
+        assert!(ago(&at(5)).ends_with(" s ago"), "{}", ago(&at(5)));
+        assert!(ago(&at(600)).ends_with(" min ago"), "{}", ago(&at(600)));
+        assert!(
+            ago(&at(5 * 3600)).ends_with(" h ago"),
+            "{}",
+            ago(&at(5 * 3600))
+        );
+        assert!(
+            ago(&at(3 * 86_400)).ends_with(" d ago"),
+            "{}",
+            ago(&at(3 * 86_400))
+        );
+    }
 }
