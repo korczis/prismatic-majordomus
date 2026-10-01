@@ -1,3 +1,4 @@
+# majordomus-exclusive: times a gate, and three neighbours' load would be measured instead
 # majordomus-covers: none
 # majordomus-negative: doctor
 # claims: derived-data-current
@@ -52,9 +53,10 @@ case "$(field outcome)" in pass|partial) ;; *) echo "    a current tree was reco
 [ -z "$(git -C "$W" status --porcelain)" ] || { echo "    recording dirtied the tree"; git -C "$W" status --porcelain; exit 1; }
 
 # it is fast enough to sit in front of every commit — the whole point of the fingerprint.
-# The faster of two runs is judged: the suite runs four cases on one runner, and a single run
-# measured the neighbours' load (21s on CI, #702) as often as the gate's. A gate that is slow
-# is slow twice; the bound is unchanged.
+# The case runs exclusive, alone on its runner: among three parallel neighbours it measured
+# their load (21 s on #702, 51 s on a shard of #698) rather than the gate. The faster of two
+# runs is judged as well, against noise on a quiet runner. A gate that is slow is slow twice;
+# the bound is unchanged.
 best=""
 for _ in 1 2; do
   t0=$(date +%s); (cd "$W" && scripts/pages current >/dev/null 2>&1); t1=$(date +%s)
