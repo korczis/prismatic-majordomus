@@ -2,6 +2,32 @@
   "version": 1,
   "executions": [
     {
+      "test": "crate:intent",
+      "runner": "crate",
+      "source": "apps/majordomus-cli/tests/intent.rs",
+      "outcome": "pass",
+      "seconds": 4,
+      "commit": "94ca72a022df5adfe6003c4da70523895f986e25",
+      "working_tree": "clean",
+      "digest": "sha256:7c17307fea5b9ec5bbc1dea4f8850064d1ee7cc68f8108c7ba5118c425ab5939",
+      "at": "2026-09-16T20:54:33Z",
+      "origin": "local",
+      "command": "cargo test --test intent"
+    },
+    {
+      "test": "crate:intent_plan",
+      "runner": "crate",
+      "source": "apps/majordomus-cli/tests/intent_plan.rs",
+      "outcome": "pass",
+      "seconds": 3,
+      "commit": "94ca72a022df5adfe6003c4da70523895f986e25",
+      "working_tree": "clean",
+      "digest": "sha256:7fe759fee5e3853438659fd2b0c20674ca06f9c9e5625d197baa67844337eee2",
+      "at": "2026-09-16T20:54:33Z",
+      "origin": "local",
+      "command": "cargo test --test intent_plan"
+    },
+    {
       "test": "suite:124_evidence",
       "runner": "suite",
       "source": "test/cases/124_evidence.sh",
@@ -78,6 +104,32 @@
       "at": "2026-09-12T10:36:18Z",
       "origin": "local",
       "command": "bash test/run.sh 274_commit_policy"
+    },
+    {
+      "test": "suite:367_an_intent_is_satisfied_only_by_evidence",
+      "runner": "suite",
+      "source": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
+      "outcome": "pass",
+      "seconds": 9,
+      "commit": "94ca72a022df5adfe6003c4da70523895f986e25",
+      "working_tree": "clean",
+      "digest": "sha256:254eab42eda15adbed13b35eeab7221b54161c47876435cda7a62f2f9f5604fa",
+      "at": "2026-09-16T20:54:33Z",
+      "origin": "local",
+      "command": "bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence"
+    },
+    {
+      "test": "suite:386_a_plan_is_held_to_its_intent",
+      "runner": "suite",
+      "source": "test/cases/386_a_plan_is_held_to_its_intent.sh",
+      "outcome": "pass",
+      "seconds": 32,
+      "commit": "94ca72a022df5adfe6003c4da70523895f986e25",
+      "working_tree": "clean",
+      "digest": "sha256:393c03b360f045661046d5ba110384063f580a4196db17ac16f860038df314a2",
+      "at": "2026-09-16T20:54:33Z",
+      "origin": "local",
+      "command": "bash test/run.sh 386_a_plan_is_held_to_its_intent"
     }
   ]
 }
