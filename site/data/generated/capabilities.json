@@ -2614,6 +2614,45 @@
       "test_case": "506_a_crate_binary_that_ran_nothing_is_not_a_pass"
     },
     {
+      "id": "evidence-tree-is-measured-by-the-run",
+      "claim": "A recorded execution carries the commit and the tree that its run's own measurement stated, a measurement that names the report it belongs to and never hides a tracked change; a measurement of another commit or another report is refused, a local measurement that names no report is refused, a CI report without a measurement is refused, and a report recorded without one carries an unknown tree, which never reads proven",
+      "source": "docs/EVIDENCE.md",
+      "implementation": "apps/majordomus-cli/src/evidence/record.rs",
+      "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh",
+      "status": "guaranteed",
+      "note": "evidence stamp measures the checkout as the run left it, the evidence ledger ignored and only the run''s own untracked outputs excluded; evidence record --provenance carries that measurement into the report''s executions and takes the digest of a clean run from the commit. The stamp measures when it is taken, not while the run executed, and a CI job''s tree file names no report until CI stamps with its report.",
+      "responsibility": "none",
+      "source_route": "/docs/evidence/",
+      "command": null,
+      "test_case": "505_a_recording_carries_what_its_run_measured"
+    },
+    {
+      "id": "evidence-a-recording-is-a-typed-run",
+      "claim": "Every recording yields a run record naming its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary joins it only bound to the commit and tree it was measured on",
+      "source": "docs/EVIDENCE.md",
+      "implementation": "apps/majordomus-cli/src/evidence/run.rs",
+      "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh",
+      "status": "guaranteed",
+      "note": "evidence record returns an EvidenceRunRecord and writes it with --run-record; --coverage binds the scripts/rust-coverage summary to its commit and measured tree with the floors the threshold files state. A run record decides no verdict; it can only withhold proven through the one monotone rule, which no surface applies yet.",
+      "responsibility": "none",
+      "source_route": "/docs/evidence/",
+      "command": null,
+      "test_case": "505_a_recording_carries_what_its_run_measured"
+    },
+    {
+      "id": "evidence-local-recording-stays-local",
+      "claim": "A recording made with --ledger local writes only the ignored local ledger, changes no tracked file and moves no verdict",
+      "source": "docs/EVIDENCE.md",
+      "implementation": "apps/majordomus-cli/src/evidence/ledger.rs",
+      "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh",
+      "status": "guaranteed",
+      "note": "The local ledger lives under .ai/local/evidence/, which the repository ignores; the tracked ledger stays the only authority a verdict is derived from.",
+      "responsibility": "none",
+      "source_route": "/docs/evidence/",
+      "command": null,
+      "test_case": "505_a_recording_carries_what_its_run_measured"
+    },
+    {
       "id": "a-skipped-case-is-not-a-proof",
       "claim": "A test case that declines to run is reported as a skip and recorded as one, so the evidence ledger can never read a case that asserted nothing as the proof of the claim it names",
       "source": "docs/EVIDENCE.md",

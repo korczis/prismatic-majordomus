@@ -796,6 +796,33 @@
       "tool": "majordomus_evidence"
     },
     {
+      "api_anchor": null,
+      "claims": [
+        {
+          "id": "evidence-navigates-both-ways",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+          "route": "/guarantees/evidence-navigates-both-ways/",
+          "status": "guaranteed",
+          "test": "test/cases/124_evidence.sh"
+        }
+      ],
+      "cli": "majordomus evidence stamp",
+      "id": "evidence.stamp",
+      "kind": "query",
+      "module": "evidence",
+      "module_route": "/registry/modules/evidence/",
+      "resource": null,
+      "route": "/registry/capabilities/evidence-stamp/",
+      "slug": "evidence-stamp",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "tests": [
+        "test/cases/124_evidence.sh"
+      ],
+      "title": "Measure the tree a run left behind",
+      "tool": null
+    },
+    {
       "api_anchor": "/docs/api/evidence/#op-evidence-test",
       "claims": [
         {
@@ -3121,6 +3148,27 @@
         "test": "test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh"
       },
       {
+        "id": "evidence-tree-is-measured-by-the-run",
+        "implementation": "apps/majordomus-cli/src/evidence/record.rs",
+        "route": "/guarantees/evidence-tree-is-measured-by-the-run/",
+        "status": "guaranteed",
+        "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
+      },
+      {
+        "id": "evidence-a-recording-is-a-typed-run",
+        "implementation": "apps/majordomus-cli/src/evidence/run.rs",
+        "route": "/guarantees/evidence-a-recording-is-a-typed-run/",
+        "status": "guaranteed",
+        "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
+      },
+      {
+        "id": "evidence-local-recording-stays-local",
+        "implementation": "apps/majordomus-cli/src/evidence/ledger.rs",
+        "route": "/guarantees/evidence-local-recording-stays-local/",
+        "status": "guaranteed",
+        "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
+      },
+      {
         "id": "reasoning-works-with-no-advisor",
         "implementation": "apps/majordomus-cli/src/reasoning/policy.rs",
         "route": "/guarantees/reasoning-works-with-no-advisor/",
@@ -3218,8 +3266,8 @@
     ]
   },
   "counts": {
-    "capabilities": 152,
-    "claims": 73,
+    "capabilities": 153,
+    "claims": 76,
     "modules": 45
   },
   "generator": "majordomus-cli 0.11.0",
@@ -3626,6 +3674,11 @@
           "id": "evidence.report",
           "route": "/registry/capabilities/evidence-report/",
           "slug": "evidence-report"
+        },
+        {
+          "id": "evidence.stamp",
+          "route": "/registry/capabilities/evidence-stamp/",
+          "slug": "evidence-stamp"
         },
         {
           "id": "evidence.test",

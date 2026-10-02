@@ -16,9 +16,9 @@
 # (scripts/rust-coverage --export). The suite and the crate each hand over, beside the report,
 # their job's measurement of the tree it ran in (--suite-tree, --crate-tree: the commit, the
 # working tree, and the outputs the run itself named and so excluded). A report whose job
-# measured a commit other than this checkout's is refused: it is not recorded, and it is named.
-# The rest are recorded through `majordomus evidence record --origin ci`, which stamps each
-# execution with the commit and the run. Those rows are a run record, kept as `ledger.json`
+# measured a commit other than this checkout's is refused: it is not recorded, and it is named;
+# so is one whose job left no measurement. The rest are recorded through `majordomus evidence
+# record --origin ci`, which carries each job's measurement into its executions with the run. Those rows are a run record, kept as `ledger.json`
 # and counted in the manifest; they decide no verdict here or on the site, and a trunk run's
 # rows reach the tracked ledger only through ADR 0080's recording pull request. The export is
 # summarised through `scripts/rust-coverage --summary-json`.
@@ -26,9 +26,11 @@
 # The manifest names the commit that ran (for a pull request, GitHub's merge commit), the head
 # it was built from (MJ_RUN_HEAD_SHA), the event, the run, the outcomes, the producers'
 # measurements, the working tree derived from them, the tree the report was derived in, and
-# what was absent or refused. The only logic of its own is that join of the producers'
-# measurements, which a later slice replaces with the executable's typed provenance; every
-# other decision is the executable's or the coverage script's.
+# what was absent or refused. The recorder refuses a CI report without the measurement its own
+# job made, so the collector passes each job's tree file as that report's provenance, and reads
+# the run's totals, tree and absences from the run record rather than computing them again; a
+# later slice replaces the tree files with `majordomus evidence stamp`. Every other decision is
+# the executable's or the coverage script's.
 #
 # Every input is optional, because a job the plan skipped, or one that died before writing its
 # report, leaves nothing; what is absent is named in the manifest and never read as a pass, and
@@ -103,23 +105,26 @@ crate_tree="$(measurement "$CRATE_TREE")"
 # Which reports are recorded. One whose job measured another commit ran somewhere else: it is
 # refused, named, and never recorded against this one.
 set --
-absent="" given="" recorded="" refused="[]"
+absent="" given="" refused="[]"
 for runner in suite crate; do
   case "$runner" in
-    suite) report="$SUITE" option=--suite tree="$suite_tree" ;;
-    crate) report="$CRATE_OUT" option=--crate-output tree="$crate_tree" ;;
+    suite) report="$SUITE" option=--suite tree="$suite_tree" tree_file="$SUITE_TREE" ;;
+    crate) report="$CRATE_OUT" option=--crate-output tree="$crate_tree" tree_file="$CRATE_TREE" ;;
   esac
-  if ! present "$report"; then absent="$absent $runner"; continue; fi
+  present "$report" || continue
   given="$given $runner"
   measured="$(jq -r '.commit? // empty' <<<"$tree")"
-  if [ -n "$measured" ] && [ "$measured" != "$commit" ]; then
-    refused="$(jq -c --arg r "$runner" --arg why "its job measured commit ${measured:0:12}, not ${commit:0:12}" \
-      '. + [{runner: $r, reason: $why}]' <<<"$refused")"
-    absent="$absent $runner"
+  why=""
+  if [ -z "$measured" ]; then
+    why="no measurement"
+  elif [ "$measured" != "$commit" ]; then
+    why="its job measured commit ${measured:0:12}, not ${commit:0:12}"
+  fi
+  if [ -n "$why" ]; then
+    refused="$(jq -c --arg r "$runner" --arg why "$why" '. + [{runner: $r, reason: $why}]' <<<"$refused")"
     continue
   fi
-  set -- "$@" "$option" "$(abs "$report")"
-  recorded="$recorded $runner"
+  set -- "$@" "$option" "$(abs "$report")" --provenance "$runner=$(abs "$tree_file")"
 done
 [ -n "$given" ] || { echo "evidence-collect: no report to record: the suite and the crate both left none" >&2; exit 12; }
 [ $# -gt 0 ] || {
@@ -171,19 +176,18 @@ what="every claim against the tracked ledger as committed at this commit, derive
 what="$what executions were recorded; the run's executions are counted beside it and decide no verdict"
 jq -n --arg commit "$commit" --arg head "${MJ_RUN_HEAD_SHA:-}" --arg event "${GITHUB_EVENT_NAME:-}" \
   --arg what "$what" \
-  --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg absent "$absent" --arg recorded "$recorded" \
+  --arg at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg absent "$absent" \
   --argjson refused "$refused" --argjson suite_tree "$suite_tree" --argjson crate_tree "$crate_tree" \
   --arg report_tree "$report_tree" --argjson report_exit "$report_exit" --arg cov_exit "$cov_exit" \
-  --slurpfile ledger "$ledger" '
+  --slurpfile ledger "$ledger" --slurpfile record "$OUT/record.json" '
   (($ledger[0].executions // []) | map(select(.origin == "ci" and .commit == $commit))) as $here
   | ($here | map(.run) | map(select(. != null)) | .[0]) as $run
   | ($here | map(select($run == null or .run.id == $run.id))) as $mine
   | {suite: $suite_tree, crate: $crate_tree} as $producers
-  | ($recorded | split(" ") | map(select(. != ""))) as $took
-  # a report that was recorded and yielded no execution at this commit is absent as well
-  | ($took | map(select(. as $r | $mine | any(.[]; .runner == $r) | not))) as $empty
-  | (($absent | split(" ") | map(select(. != ""))) + $empty) as $missing
-  | ($took | map($producers[.])) as $measured
+  | $record[0].run_record as $rr
+  # the run record names the suite and the crate it lacked; the collector names coverage
+  | ([$rr.absent[].producer | select(. != "coverage")]
+     + ($absent | split(" ") | map(select(. != "")))) as $missing
   | {
       schema: 1,
       commit: $commit,
@@ -192,20 +196,13 @@ jq -n --arg commit "$commit" --arg head "${MJ_RUN_HEAD_SHA:-}" --arg event "${GI
       produced_at: $at,
       run: $run,
       producers: $producers,
-      working_tree: (
-        if any($measured[]; . != null and .working_tree == "dirty") then "dirty"
-        elif ($measured | length) > 0 and all($measured[]; . != null and .working_tree == "clean") then "clean"
-        else "unknown" end),
+      working_tree: ($rr.working_tree // "unknown"),
       rows_working_tree: ($mine | map(.working_tree) | unique
         | if length == 1 then .[0] elif length == 0 then null else "mixed" end),
       report_tree: $report_tree,
       absent: (["suite", "crate", "coverage"] | map(select(. as $r | $missing | any(.[]; . == $r)))),
       refused: $refused,
-      totals: {
-        executions: ($mine | length),
-        outcomes: ($mine | group_by(.outcome) | map({key: .[0].outcome, value: length}) | from_entries),
-        runners: ($mine | group_by(.runner) | map({key: .[0].runner, value: length}) | from_entries)
-      },
+      totals: $rr.totals,
       panels: (
         [{label: "evidence", command: "majordomus evidence show", exit: $report_exit, file: "report.txt",
           what: $what}]

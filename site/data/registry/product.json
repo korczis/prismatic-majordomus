@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.11.0"
   },
-  "fingerprint": "98b31bf126176024d42ad0b95773e6604147d14cb390ff4a49799a1745ab1a3c",
+  "fingerprint": "f919b9453f70b875004d797c13fc20ce9781a53fc25d84c2eacf2ffe140dc588",
   "route": "/features/",
   "counts": {
     "features": 26,
@@ -304,7 +304,7 @@
         },
         {
           "name": "claim",
-          "objects": 208
+          "objects": 211
         }
       ],
       "rule_refs": [
@@ -568,11 +568,11 @@
       "counts": {
         "capabilities": 11,
         "mcp_tools": 11,
-        "mcp_resources": 272,
+        "mcp_resources": 275,
         "http_routes": 11,
         "cli_paths": 10,
         "commands": 2,
-        "objects": 266,
+        "objects": 269,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -3760,7 +3760,7 @@
         },
         {
           "name": "document",
-          "objects": 291
+          "objects": 294
         }
       ],
       "rule_refs": [
@@ -4009,11 +4009,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 364,
+        "mcp_resources": 367,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 363,
+        "objects": 366,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -8142,7 +8142,10 @@
         "evidence-judged-at-the-presented-revision",
         "evidence-a-skip-is-not-run",
         "evidence-a-failure-outranks-an-absence",
-        "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass"
+        "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "evidence-tree-is-measured-by-the-run",
+        "evidence-a-recording-is-a-typed-run",
+        "evidence-local-recording-stays-local"
       ],
       "use_cases": [],
       "cockpit": [],
@@ -8201,6 +8204,13 @@
               "resource": "majordomus://evidence",
               "route": "GET /api/v1/evidence",
               "cli": "majordomus evidence show"
+            },
+            {
+              "id": "evidence.stamp",
+              "title": "Measure the tree a run left behind",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "cli": "majordomus evidence stamp"
             },
             {
               "id": "evidence.test",
@@ -8283,6 +8293,21 @@
           "id": "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
           "claim": "A crate test binary that ran no test or only a filtered subset is recorded as a skip, one with a failed test as a failure and one that printed no result as an error, whatever colour codes its output carries, and what no claim can name yet is listed as dropped",
           "status": "guaranteed"
+        },
+        {
+          "id": "evidence-tree-is-measured-by-the-run",
+          "claim": "A recorded execution carries the commit and the tree that its run's own measurement stated, a measurement that names the report it belongs to and never hides a tracked change; a measurement of another commit or another report is refused, a local measurement that names no report is refused, a CI report without a measurement is refused, and a report recorded without one carries an unknown tree, which never reads proven",
+          "status": "guaranteed"
+        },
+        {
+          "id": "evidence-a-recording-is-a-typed-run",
+          "claim": "Every recording yields a run record naming its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary joins it only bound to the commit and tree it was measured on",
+          "status": "guaranteed"
+        },
+        {
+          "id": "evidence-local-recording-stays-local",
+          "claim": "A recording made with --ledger local writes only the ignored local ledger, changes no tracked file and moves no verdict",
+          "status": "guaranteed"
         }
       ],
       "use_case_refs": [],
@@ -8293,24 +8318,24 @@
         "economics"
       ],
       "counts": {
-        "capabilities": 4,
+        "capabilities": 5,
         "mcp_tools": 3,
         "mcp_resources": 1,
         "http_routes": 3,
-        "cli_paths": 4,
+        "cli_paths": 5,
         "commands": 1,
         "objects": 0,
         "rules": 0,
         "enforced_rules": 0,
         "docs": 1,
         "adrs": 1,
-        "claims": 9,
+        "claims": 12,
         "use_cases": 0,
         "moments": 0
       },
       "evidence": {
         "claims": {
-          "guaranteed": 9
+          "guaranteed": 12
         },
         "modules": {
           "behaviorally_verified": 1
@@ -10408,7 +10433,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (208)",
+        "title": "claim (211)",
         "features": [
           "declare-once"
         ]
@@ -11374,28 +11399,28 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1732,
-    "builtin": 152,
-    "declarative": 1580,
+    "capabilities": 1740,
+    "builtin": 153,
+    "declarative": 1587,
     "modules": 45,
     "mcp_tools": 146,
-    "mcp_resources": 1627,
+    "mcp_resources": 1634,
     "http_routes": 150,
-    "cli_commands": 161,
+    "cli_commands": 162,
     "shell_commands": 30,
     "kinds": 29,
-    "objects": 1580,
+    "objects": 1587,
     "by_kind": {
       "adr": 71,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 208,
+      "claim": 211,
       "command": 31,
       "context": 31,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 291,
+      "document": 294,
       "feature": 27,
       "implementation": 49,
       "issue": 238,
@@ -11412,7 +11437,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 303,
+      "test": 304,
       "use-case": 46,
       "workspace": 1
     },
@@ -11429,7 +11454,7 @@
       "executions": 6,
       "newest": "2026-09-12T10:36:18Z"
     },
-    "declared": 192,
+    "declared": 195,
     "supported": 0,
     "claims": {
       "a-finding-names-how-to-see-it-again": {
@@ -11798,6 +11823,12 @@
         "label": "not run",
         "supported": false
       },
+      "evidence-a-recording-is-a-typed-run": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
       "evidence-a-skip-is-not-run": {
         "status": "guaranteed",
         "state": "not-run",
@@ -11822,6 +11853,12 @@
         "label": "not run",
         "supported": false
       },
+      "evidence-local-recording-stays-local": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
       "evidence-navigates-both-ways": {
         "status": "guaranteed",
         "state": "stale",
@@ -11841,6 +11878,12 @@
         "supported": false
       },
       "evidence-recorded-in-ci": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "evidence-tree-is-measured-by-the-run": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",

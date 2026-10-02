@@ -470,6 +470,15 @@
         "status": "query"
       },
       {
+        "id": "capability:evidence.stamp",
+        "kind": "capability",
+        "label": "evidence.stamp",
+        "summary": "Measure the tree a run left behind",
+        "route": "/cockpit/capabilities/evidence.stamp",
+        "source": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:evidence.test",
         "kind": "capability",
         "label": "evidence.test",
@@ -1529,14 +1538,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/benches/projections.rs",
-        "kind": "file",
-        "label": "projections.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/benches/projections.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/bench/coverage.rs",
         "kind": "file",
         "label": "coverage.rs",
@@ -1614,14 +1615,6 @@
         "label": "integration.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
-        "kind": "file",
-        "label": "lifecycle.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
         "external": true
       },
       {
@@ -1889,6 +1882,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/evidence/run.rs",
+        "kind": "file",
+        "label": "run.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/evidence/run.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/execution/engine.rs",
         "kind": "file",
         "label": "engine.rs",
@@ -2081,14 +2082,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/metadata/mod.rs",
-        "kind": "file",
-        "label": "mod.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/metadata/mod.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/models/mod.rs",
         "kind": "file",
         "label": "mod.rs",
@@ -2158,14 +2151,6 @@
         "label": "policy.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/quality/policy.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/quality/rustdoc.rs",
-        "kind": "file",
-        "label": "rustdoc.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/quality/rustdoc.rs",
         "external": true
       },
       {
@@ -2257,14 +2242,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/scope.rs",
-        "kind": "file",
-        "label": "scope.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/scope.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/session/mod.rs",
         "kind": "file",
         "label": "mod.rs",
@@ -2302,14 +2279,6 @@
         "label": "html.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/web/html.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/web/model.rs",
-        "kind": "file",
-        "label": "model.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/web/model.rs",
         "external": true
       },
       {
@@ -2438,14 +2407,6 @@
         "label": "product.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/tests/product.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/tests/projections.rs",
-        "kind": "file",
-        "label": "projections.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/tests/projections.rs",
         "external": true
       },
       {
@@ -2625,14 +2586,6 @@
         "external": true
       },
       {
-        "id": "file:scripts/generate-site-data",
-        "kind": "file",
-        "label": "generate-site-data",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/generate-site-data",
-        "external": true
-      },
-      {
         "id": "file:scripts/github-sync",
         "kind": "file",
         "label": "github-sync",
@@ -2758,14 +2711,6 @@
         "label": "site-check",
         "summary": "named by the layer; not an object of this index",
         "source": "scripts/site-check",
-        "external": true
-      },
-      {
-        "id": "file:scripts/site-deploy",
-        "kind": "file",
-        "label": "site-deploy",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/site-deploy",
         "external": true
       },
       {
@@ -6406,6 +6351,21 @@
         }
       },
       {
+        "id": "majordomus://claim/evidence-a-recording-is-a-typed-run",
+        "kind": "claim",
+        "label": "evidence-a-recording-is-a-typed-run",
+        "summary": "Every recording yields a run record naming its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary joins it only bound to the commit and tree it was measured on",
+        "route": "/cockpit/objects/claim/evidence-a-recording-is-a-typed-run",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/evidence/run.rs",
+          "responsibility": "none",
+          "source": "docs/EVIDENCE.md",
+          "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/evidence-a-skip-is-not-run",
         "kind": "claim",
         "label": "evidence-a-skip-is-not-run",
@@ -6470,6 +6430,23 @@
         }
       },
       {
+        "id": "majordomus://claim/evidence-local-recording-stays-local",
+        "kind": "claim",
+        "label": "evidence-local-recording-stays-local",
+        "summary": "A recording made with --ledger local writes only the ignored local ledger, changes no tracked file and moves no verdict",
+        "route": "/cockpit/objects/claim/evidence-local-recording-stays-local",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A recording made with --ledger local writes only the ignored local ledger, changes no tracked file and moves no verdict",
+          "implementation": "apps/majordomus-cli/src/evidence/ledger.rs",
+          "note": "The local ledger lives under .ai/local/evidence/, which the repository ignores; the tracked ledger stays the only authority a verdict is derived from.",
+          "responsibility": "none",
+          "source": "docs/EVIDENCE.md",
+          "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/evidence-navigates-both-ways",
         "kind": "claim",
         "label": "evidence-navigates-both-ways",
@@ -6530,6 +6507,21 @@
           "responsibility": "none",
           "source": "docs/EVIDENCE.md",
           "test": "test/cases/357_ci_records_evidence.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/evidence-tree-is-measured-by-the-run",
+        "kind": "claim",
+        "label": "evidence-tree-is-measured-by-the-run",
+        "summary": "A recorded execution carries the commit and the tree that its run's own measurement stated, a measurement that names the report it belongs to and never hides a tracked change; a measurement of another commit or another report is refused, a local measurement that names no report is refused, a CI report without a measurement is refused, and a report recorded without one carries an unknown tree, which never reads proven",
+        "route": "/cockpit/objects/claim/evidence-tree-is-measured-by-the-run",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/evidence/record.rs",
+          "responsibility": "none",
+          "source": "docs/EVIDENCE.md",
+          "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
         }
       },
       {
@@ -11793,6 +11785,14 @@
         "source": "docs/claims/evidence-a-failure-outranks-an-absence.md"
       },
       {
+        "id": "majordomus://document/docs/claims/evidence-a-recording-is-a-typed-run.md",
+        "kind": "document",
+        "label": "docs/claims/evidence-a-recording-is-a-typed-run.md",
+        "summary": "Every recording yields a run record naming its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary joins it only bound to the commit and tree it was measured on",
+        "route": "/cockpit/objects/document/docs-claims-evidence-a-recording-is-a-typed-run-md",
+        "source": "docs/claims/evidence-a-recording-is-a-typed-run.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/evidence-a-skip-is-not-run.md",
         "kind": "document",
         "label": "docs/claims/evidence-a-skip-is-not-run.md",
@@ -11825,6 +11825,14 @@
         "source": "docs/claims/evidence-judged-at-the-presented-revision.md"
       },
       {
+        "id": "majordomus://document/docs/claims/evidence-local-recording-stays-local.md",
+        "kind": "document",
+        "label": "docs/claims/evidence-local-recording-stays-local.md",
+        "summary": "A recording made with --ledger local writes only the ignored local ledger, changes no tracked file and moves no verdict",
+        "route": "/cockpit/objects/document/docs-claims-evidence-local-recording-stays-local-md",
+        "source": "docs/claims/evidence-local-recording-stays-local.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/evidence-navigates-both-ways.md",
         "kind": "document",
         "label": "docs/claims/evidence-navigates-both-ways.md",
@@ -11855,6 +11863,14 @@
         "summary": "CI records what it ran, with the run it happened in, and the site publishes it with the commit it proves",
         "route": "/cockpit/objects/document/docs-claims-evidence-recorded-in-ci-md",
         "source": "docs/claims/evidence-recorded-in-ci.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/evidence-tree-is-measured-by-the-run.md",
+        "kind": "document",
+        "label": "docs/claims/evidence-tree-is-measured-by-the-run.md",
+        "summary": "A recorded execution carries the commit and the tree that its run's own measurement stated, a measurement that names the report it belongs to and never hides a tracked change; a measurement of another commit or another report is refused, a local measurement that names no report is refused, a CI report without a measurement is refused, and a report recorded without one carries an unknown tree, which never reads proven",
+        "route": "/cockpit/objects/document/docs-claims-evidence-tree-is-measured-by-the-run-md",
+        "source": "docs/claims/evidence-tree-is-measured-by-the-run.md"
       },
       {
         "id": "majordomus://document/docs/claims/evidence-unsupported-guarantee-is-reported.md",
@@ -13740,7 +13756,10 @@
             "evidence-judged-at-the-presented-revision",
             "evidence-a-skip-is-not-run",
             "evidence-a-failure-outranks-an-absence",
-            "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass"
+            "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+            "evidence-tree-is-measured-by-the-run",
+            "evidence-a-recording-is-a-typed-run",
+            "evidence-local-recording-stays-local"
           ],
           "commands": [
             "evidence"
@@ -36905,6 +36924,13 @@
         "source": "test/cases/504_public_text_is_redacted_once.sh"
       },
       {
+        "id": "majordomus://test/test/cases/505_a_recording_carries_what_its_run_measured.sh",
+        "kind": "test",
+        "label": "test/cases/505_a_recording_carries_what_its_run_measured.sh",
+        "route": "/cockpit/objects/test/test-cases-505-a-recording-carries-what-its-run-measured-sh",
+        "source": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
         "kind": "test",
         "label": "test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
@@ -40739,6 +40765,16 @@
       {
         "source": "capability:evidence.report",
         "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:evidence.stamp",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:evidence.stamp",
+        "target": "projection:cockpit",
         "kind": "projects"
       },
       {
@@ -46442,6 +46478,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/evidence-a-recording-is-a-typed-run",
+        "target": "file:apps/majordomus-cli/src/evidence/run.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-recording-is-a-typed-run",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-recording-is-a-typed-run",
+        "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-recording-is-a-typed-run",
+        "target": "majordomus://test/test/cases/505_a_recording_carries_what_its_run_measured.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/evidence-a-skip-is-not-run",
         "target": "file:apps/majordomus-cli/src/evidence/freshness.rs",
         "kind": "implemented_by"
@@ -46522,6 +46578,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/evidence-local-recording-stays-local",
+        "target": "file:apps/majordomus-cli/src/evidence/ledger.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-local-recording-stays-local",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/evidence-local-recording-stays-local",
+        "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/evidence-local-recording-stays-local",
+        "target": "majordomus://test/test/cases/505_a_recording_carries_what_its_run_measured.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/evidence-navigates-both-ways",
         "target": "file:apps/majordomus-cli/src/capability/builtin/evidence.rs",
         "kind": "implemented_by"
@@ -46599,6 +46675,26 @@
       {
         "source": "majordomus://claim/evidence-recorded-in-ci",
         "target": "majordomus://test/test/cases/357_ci_records_evidence.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-tree-is-measured-by-the-run",
+        "target": "file:apps/majordomus-cli/src/evidence/record.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-tree-is-measured-by-the-run",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/evidence-tree-is-measured-by-the-run",
+        "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/evidence-tree-is-measured-by-the-run",
+        "target": "majordomus://test/test/cases/505_a_recording_carries_what_its_run_measured.sh",
         "kind": "tested_by"
       },
       {
@@ -48523,11 +48619,6 @@
       },
       {
         "source": "majordomus://claim/rust-hot-path-benchmarks",
-        "target": "file:apps/majordomus-cli/benches/projections.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/rust-hot-path-benchmarks",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -48540,11 +48631,6 @@
         "source": "majordomus://claim/rust-hot-path-benchmarks",
         "target": "majordomus://test/test/cases/77_rust_evidence.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/rustdoc-complete",
-        "target": "file:apps/majordomus-cli/src/quality/rustdoc.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/rustdoc-complete",
@@ -48603,11 +48689,6 @@
       },
       {
         "source": "majordomus://claim/rustdoc-published",
-        "target": "file:scripts/site-deploy",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/rustdoc-published",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -48663,11 +48744,6 @@
       },
       {
         "source": "majordomus://claim/schema-driven-kinds",
-        "target": "file:apps/majordomus-cli/src/metadata/mod.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/schema-driven-kinds",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -48680,11 +48756,6 @@
         "source": "majordomus://claim/schema-driven-kinds",
         "target": "majordomus://test/test/cases/76_capabilities_projections.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/scope-declared",
-        "target": "file:apps/majordomus-cli/src/scope.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/scope-declared",
@@ -48773,11 +48844,6 @@
       },
       {
         "source": "majordomus://claim/session-observability",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/session-observability",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -48823,11 +48889,6 @@
       },
       {
         "source": "majordomus://claim/site-deploy-one-path",
-        "target": "file:scripts/site-deploy",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/site-deploy-one-path",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -48865,11 +48926,6 @@
         "source": "majordomus://claim/site-registry-dataset",
         "target": "file:apps/majordomus-cli/src/site.rs",
         "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/site-registry-dataset",
-        "target": "file:apps/majordomus-cli/tests/projections.rs",
-        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/site-registry-dataset",
@@ -48920,11 +48976,6 @@
         "source": "majordomus://claim/skill-check",
         "target": "majordomus://test/test/cases/95_skills.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/skill-site-projection",
-        "target": "file:scripts/generate-site-data",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/skill-site-projection",
@@ -49140,11 +49191,6 @@
         "source": "majordomus://claim/web-namespaces-reserved",
         "target": "majordomus://test/test/cases/89_web_surface.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/web-surface-declared-once",
-        "target": "file:apps/majordomus-cli/src/web/model.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/web-surface-declared-once",
@@ -50437,6 +50483,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/evidence-a-recording-is-a-typed-run.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/evidence-a-skip-is-not-run.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -50457,6 +50508,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/evidence-local-recording-stays-local.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/evidence-navigates-both-ways.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -50473,6 +50529,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/evidence-recorded-in-ci.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/evidence-tree-is-measured-by-the-run.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -58757,6 +58818,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/505_a_recording_carries_what_its_run_measured.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -61658,6 +61724,11 @@
       },
       {
         "source": "module:evidence",
+        "target": "capability:evidence.stamp",
+        "kind": "composes"
+      },
+      {
+        "source": "module:evidence",
         "target": "capability:evidence.test",
         "kind": "composes"
       },
@@ -62194,7 +62265,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4452,
+      "edges": 4461,
       "acyclic": true,
       "truncated": true
     }

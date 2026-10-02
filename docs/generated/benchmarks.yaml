@@ -6,10 +6,10 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.11.0
 coverage:
   - scope: direct
-    required: 152
+    required: 153
     covered: 134
     missing: 0
-    waived: 18
+    waived: 19
     inapplicable: 0
   - scope: http
     required: 150
@@ -30,10 +30,10 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 461
+    required: 462
     covered: 411
     missing: 0
-    waived: 50
+    waived: 51
     inapplicable: 0
 capabilities:
   - id: artifacts.list
@@ -459,6 +459,14 @@ capabilities:
     cases:
       - all
       - findings
+  - id: evidence.stamp
+    module: evidence
+    kind: query
+    cache: "—"
+    direct: waived
+    mcp: none
+    http: none
+    cases: []
   - id: evidence.test
     module: evidence
     kind: query

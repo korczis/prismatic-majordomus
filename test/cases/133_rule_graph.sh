@@ -152,7 +152,8 @@ jqe all '[.findings[].rule] | index("project.alpha") == null' \
 # ---------------------------------------------------------------- 3. a recorded pass
 # the runner's report is name<TAB>result<TAB>seconds<TAB>phase, which is what CI writes
 printf '01_alpha\tok\t1\tcase\n02_beta\tok\t1\tcase\n' > "$W/report.tsv"
-run_quiet "$W/rec1.err" "$MJB" evidence --repo "$T" record --suite "$W/report.tsv"
+run_quiet "$W/stamp1.err" "$MJB" evidence --repo "$T" stamp --producer suite --report "$W/report.tsv" --out "$W/report.provenance.json" > /dev/null
+run_quiet "$W/rec1.err" "$MJB" evidence --repo "$T" record --suite "$W/report.tsv" --provenance "suite=$W/report.provenance.json"
 rr alpha2 show project.alpha
 jqe alpha2 '.proof.state == "proven"' "a pass recorded against this very tree is not proven"
 jqe alpha2 '.proof.tests[0].execution.outcome == "pass"' "the execution behind the state is not carried"
@@ -300,7 +301,8 @@ jqe v2 '.verdict == "unproven" and .satisfied == true' \
 # Commit the narrowing and record alpha's pass again, at the new HEAD: now the one blocking
 # rule is proven, and so is the corpus.
 git add -A >/dev/null && git commit -qm narrowed
-run_quiet "$W/rec2.err" "$MJB" evidence --repo "$T" record --suite "$W/report.tsv"
+run_quiet "$W/stamp2.err" "$MJB" evidence --repo "$T" stamp --producer suite --report "$W/report.tsv" --out "$W/report2.provenance.json" > /dev/null
+run_quiet "$W/rec2.err" "$MJB" evidence --repo "$T" record --suite "$W/report.tsv" --provenance "suite=$W/report2.provenance.json"
 rr v2b report
 jqe v2b '[.rules[].rule.id] == ["project.alpha"] and .rules[0].state == "proven"' \
   "a pass recorded at this commit on a clean tree is not proven"

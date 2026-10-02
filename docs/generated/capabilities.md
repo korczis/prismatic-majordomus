@@ -25,7 +25,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `economics` | Token economics | behaviorally_verified | 4 | [`modules/economics.md`](modules/economics.md) |
 | `entity` | Entities | implemented | 2 | [`modules/entity.md`](modules/entity.md) |
 | `environment` | Repository environment | behaviorally_verified | 3 | [`modules/environment.md`](modules/environment.md) |
-| `evidence` | Evidence | behaviorally_verified | 4 | [`modules/evidence.md`](modules/evidence.md) |
+| `evidence` | Evidence | behaviorally_verified | 5 | [`modules/evidence.md`](modules/evidence.md) |
 | `executions` | Executions | behaviorally_verified | 7 | [`modules/executions.md`](modules/executions.md) |
 | `gates` | Completion gates | behaviorally_verified | 2 | [`modules/gates.md`](modules/gates.md) |
 | `graph` | Graphs | behaviorally_verified | 2 | [`modules/graph.md`](modules/graph.md) |
@@ -104,6 +104,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `evidence.claim` | `evidence` | query | behaviorally_verified | `majordomus_evidence_claim` | — | `GET /api/v1/evidence/claim` | `majordomus evidence claim` | — | required |
 | `evidence.record` | `evidence` | command | behaviorally_verified | — | — | — | `majordomus evidence record` | — | waived (destructive) |
 | `evidence.report` | `evidence` | query | behaviorally_verified | `majordomus_evidence` | `majordomus://evidence` | `GET /api/v1/evidence` | `majordomus evidence show` | — | required |
+| `evidence.stamp` | `evidence` | query | behaviorally_verified | — | — | — | `majordomus evidence stamp` | — | waived (external_dependency) |
 | `evidence.test` | `evidence` | query | behaviorally_verified | `majordomus_evidence_test` | — | `GET /api/v1/evidence/test` | `majordomus evidence proves` | — | required |
 | `executions.cancel` | `executions` | command | behaviorally_verified | `majordomus_execution_cancel` | — | `POST /api/v1/executions/cancel` | `majordomus executions cancel` | — | waived (transient_state) |
 | `executions.demonstrate` | `executions` | query | behaviorally_verified | `majordomus_demonstrate_execution` | — | `GET /api/v1/executions/demonstrate` | — | — | required |
