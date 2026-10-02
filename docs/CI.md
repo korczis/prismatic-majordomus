@@ -287,9 +287,12 @@ seconds.
 
 Concurrency: a pull request's runs here are superseded by its next commit; every other run of
 this workflow is its own group and neither waits for nor cancels another, so a run held up by
-a scarce runner does not hold up the next commit's evidence. Deployments are the opposite —
-`pages.yml` cancels a superseded deployment, because the site is a projection of the newest
-commit and finishing an older one would publish an older tree.
+a scarce runner does not hold up the next commit's evidence. Deployments are serialised —
+`pages.yml` runs one deployment at a time and never cancels the one in flight; GitHub keeps only
+the newest pending run of the group, so a burst of merges costs at most one extra deploy of an
+intermediate commit, and an older tree can never land after a newer one. Cancelling the run in
+flight starved publication on 2026-09-12: each superseding run was itself superseded, and the
+site stood 34 commits behind master for three hours.
 
 ### The three ways a deploy fails, and who reports each
 
@@ -304,11 +307,12 @@ it is also by far the most frequent: both failures of 2026-09-11 (runs 345490013
 before the merge — the pull request's own `site` gate had been red and the merge happened
 anyway, because `master` has no required status check.
 
-**The run is cancelled.** `cancel-in-progress` is a push's privilege and a cancelled run is not
-a failure; `gh run list` says `cancelled` whether gh-pages was pushed or not. A run is only
-ever cancelled by a newer run of a newer commit starting, so the chain always ends in a run
-that publishes or one that goes red — a cancelled run cannot be made red from inside, so what
-acts on it is `pages-live` on the next validation of master.
+**The run is cancelled.** Nothing in the group cancels a deployment in flight, but a run can
+still end `cancelled` — a pending run dropped for a newer one, or a job killed by its own bound —
+and a cancelled run is not a failure; `gh run list` says `cancelled` whether gh-pages was pushed
+or not. A pending run is only ever dropped for a newer run of a newer commit, so the chain
+always ends in a run that publishes or one that goes red — a cancelled run cannot be made red
+from inside, so what acts on it is `pages-live` on the next validation of master.
 
 **GitHub's own build errors.** This was the silent one. Publishing is two steps and the second
 is GitHub's: `pages build and deployment` turns the pushed branch into the served bytes, and it
