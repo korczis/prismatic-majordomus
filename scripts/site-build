@@ -179,6 +179,9 @@ else
   echo "== css (skipped: an empty stylesheet, so the pages resolve it)"
   printf '/* --no-css: no Tailwind build. This file exists because every page links it. */\n' \
     > "$SITE/static/app.css"
+  # and the kit's sheet, for the same reason: every page composed of the kit links it
+  printf '/* --no-css: no Tailwind build. This file exists because every kit page links it. */\n' \
+    > "$SITE/static/kit.css"
 fi
 echo "== zola"
 # an absolute output path, because zola resolves --output-dir against the site directory

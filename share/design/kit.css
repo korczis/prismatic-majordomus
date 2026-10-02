@@ -177,11 +177,20 @@
     background: linear-gradient(180deg, var(--mj-tone-bg, var(--mj-sunken)) 0%, var(--mj-raised) 70%);
     border-color: var(--mj-tone-line, var(--mj-line));
   }
+<<<<<<< HEAD
   /* a well inside a quiet panel would vanish into it: it takes the card's ground instead */
   .mj-panel--quiet .mj-cmd,
   .mj-panel--quiet .mj-code {
     background: var(--mj-raised);
   }
+||||||| 04791d266e
+=======
+  /* the same for the secondary text of a toned panel, whose ground starts at the tone's */
+  .mj-panel--toned .mj-panel-sub,
+  .mj-panel--toned .mj-point-text {
+    color: var(--mj-body);
+  }
+>>>>>>> feature/ui-kit
   .mj-panel-head {
     @apply mb-4 flex min-w-0 items-start gap-3;
   }
@@ -984,9 +993,10 @@
     @apply block text-sm font-semibold;
     color: var(--mj-tone-fg, var(--mj-fg));
   }
+  /* body, not muted: muted grey on a tone's pale ground measured 4.3:1 (axe, /kit/) */
   .mj-layer-text {
     @apply block text-xs;
-    color: var(--mj-muted);
+    color: var(--mj-body);
   }
   .mj-stack--mono .mj-layer-title {
     @apply font-mono font-medium;

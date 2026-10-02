@@ -77,7 +77,7 @@
         <div class="flex flex-col items-center text-center">
           {{ <glyph icon="database" size="lg" icon_size="lg" /> }}
           <p class="mj-panel-title mt-3">The registry index</p>
-          <p class="mj-panel-sub">each file of the layer becomes a typed object of one of {{ kinds | length }} kinds, or a diagnostic</p>
+          <p class="mj-panel-sub">each file the sources classify becomes a typed object of one of {{ kinds | length }} kinds, or a diagnostic</p>
         </div>
         <div class="mt-5">{{ <pills words={kinds | keys} tones={tones} center={true} /> }}</div>
       {% </panel> %}
@@ -85,7 +85,7 @@
         {{ <routes items={[{"name": "Command line", "path": "majordomus", "icon": "terminal", "tone": "violet", "href": kb ~ "docs/cli/"}, {"name": "HTTP API", "path": "/api/v1/", "icon": "code", "tone": "violet", "href": kb ~ "docs/api/"}, {"name": "OpenAPI · Swagger UI", "path": "/openapi.json · /swagger", "icon": "file-text", "tone": "violet"}, {"name": "MCP", "path": "majordomus mcp", "icon": "nodes", "tone": "violet", "href": kb ~ "registry/mcp/"}, {"name": "Cockpit", "path": "/cockpit", "icon": "monitor", "tone": "violet", "href": kb ~ "docs/cockpit/"}, {"name": "Instruction files", "path": "AGENTS.md, CLAUDE.md, …", "icon": "users", "tone": "violet"}, {"name": "This site", "path": "GitHub Pages", "icon": "book", "tone": "violet", "href": kb ~ "docs/"}]} /> }}
       {% </panel> %}
       {% <panel title="Use" sub="Work from what is known" step={4} tone="green" variant="toned" cls="mj-stage"> %}
-        {{ <points items={[{"icon": "check-circle", "tone": "green", "title": "Consistent", "text": "every surface reads one registry"}, {"icon": "list", "tone": "green", "title": "Deterministic", "text": "sorted, with no timestamps"}, {"icon": "search", "tone": "green", "title": "Discovered", "text": "enumerated from the tracked tree"}, {"icon": "refresh", "tone": "green", "title": "Current", "text": "derived files are compared with their inputs"}, {"icon": "shield-check", "tone": "green", "title": "Refused", "text": "finish fails while the checks fail"}]} /> }}
+        {{ <points items={[{"icon": "check-circle", "tone": "green", "title": "Consistent", "text": "every surface asks the same executor"}, {"icon": "list", "tone": "green", "title": "Deterministic", "text": "sorted, with no timestamps"}, {"icon": "search", "tone": "green", "title": "Discovered", "text": "enumerated from the tracked tree"}, {"icon": "refresh", "tone": "green", "title": "Current", "text": "derived files are compared with their inputs"}, {"icon": "shield-check", "tone": "green", "title": "Refused", "text": "finish fails while the checks fail"}]} /> }}
       {% </panel> %}
     {% </stages> %}
 

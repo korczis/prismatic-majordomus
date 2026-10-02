@@ -3,7 +3,7 @@
      Generator: majordomus-cli 0.12.0 -->
 # The design system
 
-One declaration, `share/design/tokens.yaml`, projected into every surface. Fingerprint `8636d22b59709398a6ceb960c99cf3bfeadf0fbeb74f7d2aa69b3dc9cb165516` (`--mj-design: "8636d22b5970"` on every page that carries it). Explain any token with `majordomus_design_explain`, `GET /api/v1/design/explain?token=<name>` or the Cockpit's Design page.
+One declaration, `share/design/tokens.yaml`, projected into every surface. Fingerprint `944a896b2646060d5dc100adcc36737fd5d8086e2f53d43d6858ac6fdad39540` (`--mj-design: "944a896b2646"` on every page that carries it). Explain any token with `majordomus_design_explain`, `GET /api/v1/design/explain?token=<name>` or the Cockpit's Design page.
 
 ## Type
 
@@ -161,3 +161,9 @@ Internal. A role or a status names an entry; nothing else does.
 | `lime-600` | `oklch(64.8% 0.2 131.684)` |
 | `fuchsia-400` | `oklch(74% 0.238 322.16)` |
 | `fuchsia-600` | `oklch(59.1% 0.293 322.896)` |
+| `blue-tint` | `oklch(98.5% 0.008 254.604)` |
+| `violet-tint` | `oklch(98.5% 0.010 293.756)` |
+| `emerald-tint` | `oklch(98.5% 0.012 166.113)` |
+| `orange-tint` | `oklch(98.5% 0.010 73.684)` |
+| `rose-tint` | `oklch(98.5% 0.009 12.422)` |
+| `cyan-tint` | `oklch(98.5% 0.011 200.873)` |

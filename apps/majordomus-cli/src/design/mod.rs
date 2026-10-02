@@ -657,6 +657,25 @@ impl DesignSystem {
                 }
             }
         }
+        for (name, _) in self.tones.iter() {
+            for (_, suffix) in TONE_PARTS.iter().filter(|(_, s)| !s.is_empty()) {
+                if let Some(other) = name.strip_suffix(suffix) {
+                    if self.tones.get(other).is_some() {
+                        refuse(format!(
+                            "tones.{name}: --mj-tone-{name} would be the {} of the tone '{other}'",
+                            &suffix[1..]
+                        ));
+                    }
+                }
+            }
+        }
+        for name in self.status.roles.keys() {
+            if name == "tone" || name.starts_with("tone-") {
+                refuse(format!(
+                    "status.roles.{name}: --mj-tone-* belongs to the tones; a status may not take it"
+                ));
+            }
+        }
         for name in self.roles.keys() {
             if name == "tone" || name.starts_with("tone-") {
                 refuse(format!(
@@ -1353,6 +1372,22 @@ alias:
         )))
         .unwrap_err();
         assert!(err.contains("tones.sky.fg.light"), "{err}");
+        let two = format!("{SKY}{}", SKY.replace("  sky:", "  sky-bg:"));
+        let err = DesignSystem::parse(&with_tones(&two)).unwrap_err();
+        assert!(
+            err.contains("tones.sky-bg: --mj-tone-sky-bg would be the bg of the tone 'sky'"),
+            "{err}"
+        );
+        let err = DesignSystem::parse(
+            &small()
+                .replace(
+                    "    neutral:\n      about: nothing",
+                    "    tone-x:\n      about: nothing",
+                )
+                .replace("neutral: [unknown]", "tone-x: [unknown]"),
+        )
+        .unwrap_err();
+        assert!(err.contains("status.roles.tone-x"), "{err}");
         let err = DesignSystem::parse(&small().replace(
             "\nroles:\n",
             "\nroles:\n  tone-x:\n    about: x\n    light: white\n    dark: gray-900\n",
