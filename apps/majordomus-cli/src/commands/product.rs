@@ -360,8 +360,14 @@ fn providers_text(v: &Value) -> String {
         .max()
         .unwrap_or(8)
         .max(8);
+    // EPISODE and PROMPTS are the declared capability — what the vendor offers, cited in
+    // share/providers.yaml — and not what this repository has wired. HOOKS beside them is
+    // the wiring the policy declares, and the two being adjacent is deliberate: a provider
+    // with `hooks` under EPISODE and nothing under HOOKS is a gap in this distribution, and
+    // it used to be invisible because neither column existed. `majordomus capture status`
+    // is the reading that resolves it into one word per aspect.
     let mut out = vec![format!(
-        "{:<width$}  {:<36}  BOOTSTRAPS  CLIENT CONFIG  HOOKS  SCRATCH ROOTS",
+        "{:<width$}  {:<36}  EPISODE     PROMPTS  BOOTSTRAPS  CLIENT CONFIG  HOOKS  SCRATCH ROOTS",
         "PROVIDER",
         "TITLE",
         width = width
@@ -389,10 +395,28 @@ fn providers_text(v: &Value) -> String {
                 r.join(",")
             }
         };
+        let episode = {
+            let v = s(&p["offers"], "episode");
+            if v.is_empty() {
+                "-".to_string()
+            } else {
+                v
+            }
+        };
+        let prompts = {
+            let v = s(&p["offers"], "prompts");
+            if v.is_empty() {
+                "-".to_string()
+            } else {
+                v
+            }
+        };
         out.push(format!(
-            "{:<width$}  {:<36}  {:<10}  {:<13}  {:<5}  {}",
+            "{:<width$}  {:<36}  {:<10}  {:<7}  {:<10}  {:<13}  {:<5}  {}",
             s(p, "id"),
             s(p, "title"),
+            episode,
+            prompts,
             if boots.is_empty() {
                 "-".to_string()
             } else {
@@ -444,4 +468,49 @@ fn validation_text(v: &Value) -> String {
         v["warnings"]
     ));
     out.join("\n")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    /// EPISODE and PROMPTS print what the provider is declared to offer, and a provider that
+    /// declares nothing prints a dash in both, never an empty cell that shifts the columns.
+    #[test]
+    fn the_offers_columns_print_the_declaration_or_a_dash() {
+        let v = json!({ "providers": [
+            {
+                "id": "offering", "title": "Declares both",
+                "offers": { "episode": "hooks", "prompts": "hook" },
+                "bootstraps": [{ "target": "CLAUDE.md" }], "client_config": ".mcp.json",
+                "hooks": ["start", "end"], "scratch_roots": ["/tmp/x"]
+            },
+            { "id": "silent", "title": "Declares nothing" }
+        ]});
+        let text = providers_text(&v);
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(
+            lines[1],
+            format!(
+                "{:<8}  {:<36}  {:<10}  {:<7}  {:<10}  {:<13}  {:<5}  {}",
+                "offering",
+                "Declares both",
+                "hooks",
+                "hook",
+                "CLAUDE.md",
+                ".mcp.json",
+                "start,end",
+                "/tmp/x"
+            )
+        );
+        assert_eq!(
+            lines[2],
+            format!(
+                "{:<8}  {:<36}  {:<10}  {:<7}  {:<10}  {:<13}  {:<5}  {}",
+                "silent", "Declares nothing", "-", "-", "-", "-", "-", "-"
+            )
+        );
+        assert_eq!(lines.last(), Some(&"2 provider(s)"));
+    }
 }

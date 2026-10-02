@@ -41,9 +41,11 @@ git add -A >/dev/null && git commit -q -m notes
 
 # --- the refused notes yield no node, and the refusal names the file and the constraint
 expect_exit 10 "$MJ" knowledge nodes --kind knowledge
-expect_grep 'knowledge:\.ai/repo/knowledge/curated/valid\.md'
-expect_no_grep '^knowledge .*knowledge:\.ai/repo/knowledge/curated/classless\.md'
-expect_no_grep '^knowledge .*knowledge:\.ai/repo/knowledge/curated/rumour\.md'
+# A knowledge record is a node under the id it declares, not its path (ADR 0091), so the
+# refused notes are looked for under both: neither identity may carry a node.
+expect_grep '^knowledge .*knowledge:valid '
+expect_no_grep '^knowledge .*knowledge:(classless|\.ai/repo/knowledge/curated/classless\.md) '
+expect_no_grep '^knowledge .*knowledge:(rumour|\.ai/repo/knowledge/curated/rumour\.md) '
 expect_grep 'curated/classless\.md — the index refused it \(schema_violation\).*"class" is a required property'
 expect_grep 'curated/rumour\.md — the index refused it \(schema_violation\).*"rumour"'
 

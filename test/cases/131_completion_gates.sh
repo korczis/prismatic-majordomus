@@ -99,7 +99,7 @@ expect_exit 0 "$MJ" evidence --gate unit --exit 1 --command 'sh test/unit.sh'
 expect_grep 'reported exit 1'
 [ "$(status_of unit)" = fail ] || { echo "    a failing run reads $(status_of unit)"; exit 1; }
 [ "$(completion | jq -r .finishable)" = false ] || { echo "    a known failure left the task finishable"; exit 1; }
-expect_exit 10 "$MJ" finish --outcome completed --verify-command true --note "$S/note.md"
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai" --note "$S/note.md"
 expect_grep 'FAIL gate +unit — fail: exit 1'
 # an honest outcome is never refused over a gate
 expect_exit 0 "$MJ" check
@@ -130,7 +130,7 @@ echo 'c() { :; }' >> lib/a.sh
 git add -A >/dev/null && git commit -qm moved
 [ "$(status_of unit)" = stale ] || { echo "    a passing run over an old tree reads $(status_of unit), not stale"; exit 1; }
 [ "$(status_of docs-check)" = exempt ] || { echo "    a lib/ edit touched docs-check"; exit 1; }
-expect_exit 10 "$MJ" finish --outcome completed --verify-command true --note "$S/note.md"
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai" --note "$S/note.md"
 expect_grep 'FAIL gate +unit — stale: the run was taken over inputs'
 # an uncommitted edit is part of the change set too: staleness does not wait for a commit
 expect_exit 0 "$MJ" evidence --gate unit --exit 0 --command 'sh test/unit.sh'
@@ -173,7 +173,7 @@ completion | jq -r '.obligations[] | select(.id == "deploy") | .reason' | grep -
   || { echo "    not-applicable did not say why"; exit 1; }
 
 # ---------------------------------------------------------------- finished, then reopened
-expect_exit 0 "$MJ" finish --outcome completed --verify-command true --note "$S/note.md"
+expect_exit 0 "$MJ" finish --outcome completed --verify-command "test -d .ai" --note "$S/note.md"
 expect_grep 'finish: .* completed'
 # a new task on the same tree inherits no verdict: the runs belonged to the task before
 expect_exit 0 "$MJ" start "reopened, and deploys" --scope docs/ --requires deploy
@@ -185,7 +185,7 @@ completion | jq -e '.obligations[] | select(.id == "docs") | .applicable' >/dev/
 completion | jq -e '.obligations[] | select(.id == "deploy") | .applicable and .declared' >/dev/null \
   || { echo "    a task that declares a deployment was not told it owes one"; exit 1; }
 # deployment required, and nothing here can establish it: finish refuses on the obligation
-expect_exit 10 "$MJ" finish --outcome completed --verify-command true --note "$S/note.md"
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai" --note "$S/note.md"
 expect_grep 'FAIL obligation +deploy'
 
 # ---------------------------------------------------------------- no model, no verdict

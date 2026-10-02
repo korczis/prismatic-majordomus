@@ -83,6 +83,17 @@ gates:
     runs: scripts/development-semantics-check
     summary: a mutating development command is backed by a capability of the canonical runtime and a Cockpit tree reaches into no layer path; the debt ratchets down and may not grow
 
+  # A tool that says what somebody else's product can do is making a claim about a third
+  # party, and this repository was making two of them wrong at once until ADR 0103: it
+  # reported one of the six providers it declares, and the omission had gone stale because
+  # two of the five had shipped hook systems since. The gate reads share/providers.yaml and
+  # runs `capture status`; no build, so it belongs with the other structure checks.
+  - id: provider-evidence
+    job: structure
+    always: true
+    runs: scripts/provider-evidence-check
+    summary: every declared provider's session and prompt capability is declared with the citation it was verified from, and every one of them is reported
+
   - id: core-check
     job: structure
     always: true
@@ -208,6 +219,16 @@ gates:
     always: true
     runs: scripts/ci/finding-reproduce-check
     summary: every finding a command reports names the command that reproduces it; a reporting call with too few arguments, or one this gate cannot parse, is a finding of its own
+
+  # A skill is a capability only when something proves it: a test names it and the evidence
+  # ledger holds a run of that test, a surface invokes it, a doctrine and this gate hold it
+  # (project.skills-are-proven-capabilities, ADR 0076). The verdict is the executable's
+  # `skills verify`, the same derivation the command line, HTTP and MCP answer with; an
+  # orphan fails, evidence that is not current is reported and does not.
+  - id: skills-proof
+    job: structure
+    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- skills verify
+    summary: every active skill is named by a test and invoked by a workflow, prompt, profile, provider template, recipe or CI workflow; no test or invocation names a skill that does not exist
 
   - id: rule-proof
     job: structure
@@ -688,6 +709,12 @@ classes:
   - id: mcp-surface
     paths: [scripts/ci/mcp-tool-run-check, .ai/repo/mcp-tool-run-baseline.txt, test/cases/620_mcp_tools_are_invoked_and_answer.sh]
     gates: [mcp-tool-run, shell-suite]
+
+  # the skills: every active skill is a proven capability (project.skills-are-proven-capabilities);
+  # a change to a skill, to a surface that invokes one, or to the derivation runs the proof.
+  - id: skills
+    paths: [.ai/repo/skills/**, .ai/repo/prompts/**, .ai/repo/workflows/**, .ai/repo/profiles/**, .ai/repo/providers/**, .just/**, justfile, apps/majordomus-cli/src/skill/**, apps/majordomus-cli/src/capability/builtin/skills.rs, apps/majordomus-cli/src/commands/skills.rs, apps/majordomus-cli/tests/skills.rs, lib/skills.sh, test/cases/95_skills.sh, test/cases/391_skills_are_proven_capabilities.sh, .ai/repo/rules/project/skills-are-proven-capabilities.v1.md]
+    gates: [skills-proof, shell-suite, rust-integration]
 
   # the commit policy: the subsystem that judges a message, the gate that reads the history
   # through it, the hook that refuses with it, and the baseline of the commits that predate

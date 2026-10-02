@@ -148,19 +148,20 @@
       ],
       "command": "majordomus check",
       "decision": [
+        "OK   knowledge   records — 0 record(s) valid against knowledge/v1; every reference resolves  [reproduce: majordomus knowledge check]",
         "OK   records     ledger.jsonl — every line is a well-formed event",
         "OK   blockers    t-<id> — none open",
         "OK   records     decisions.md — every entry is attributable",
         "FAIL scope       docs/d — outside claimed scope (lib)  [reproduce: git status --porcelain; git log --first-parent --no-merges --name-only --format= <sha>..HEAD]",
         "OK   state       t-<id> — exact (head <head>)",
-        "check: 10 finding(s), 1 failing"
+        "check: 11 finding(s), 1 failing"
       ],
       "exit": 10,
       "id": "check-refuses-the-stray-file",
       "n": 3,
       "note": "check names the file outside the claimed scope and exits non-zero. It is a failure, not a warning.",
       "outcome": "refused",
-      "output": "·    checkpoint  t-<id> — <timed against the checkpoint interval>\nOK   records     ledger.jsonl — every line is a well-formed event\nOK   blockers    t-<id> — none open\nOK   records     decisions.md — every entry is attributable\nFAIL scope       docs/d — outside claimed scope (lib)  [reproduce: git status --porcelain; git log --first-parent --no-merges --name-only --format= <sha>..HEAD]\nOK   state       t-<id> — exact (head <head>)\nINFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]\nOK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)\nINFO obligation  t-<id> — the task declares no obligations\nINFO gate        t-<id> — this repository declares no CI model at .ai/repo/ci/gates.yaml; nothing can be planned\ncheck: 10 finding(s), 1 failing",
+      "output": "OK   knowledge   records — 0 record(s) valid against knowledge/v1; every reference resolves  [reproduce: majordomus knowledge check]\n·    checkpoint  t-<id> — <timed against the checkpoint interval>\nOK   records     ledger.jsonl — every line is a well-formed event\nOK   blockers    t-<id> — none open\nOK   records     decisions.md — every entry is attributable\nFAIL scope       docs/d — outside claimed scope (lib)  [reproduce: git status --porcelain; git log --first-parent --no-merges --name-only --format= <sha>..HEAD]\nOK   state       t-<id> — exact (head <head>)\nINFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]\nOK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)\nINFO obligation  t-<id> — the task declares no obligations\nINFO gate        t-<id> — this repository declares no CI model at .ai/repo/ci/gates.yaml; nothing can be planned\ncheck: 11 finding(s), 1 failing",
       "stdin": null,
       "stdin_source": null
     },
@@ -260,6 +261,8 @@
         "output       outcome, changes, verification, blockers, next_action",
         "## CONTEXT DOCUMENTS (for the scope, root first; majordomus context explain <path>)",
         "lib  ai.layer",
+        "## KNOWLEDGE (candidates awaiting review on this branch; majordomus knowledge candidates)",
+        "No knowledge candidates await review on this branch. That is an answer, not a gap: `majordomus knowledge candidates` lists every branch.",
         "## DECISIONS (5 most recent for this task)",
         "(none)",
         "## LATEST COMPATIBLE HANDOVER (.ai/local/state/handovers/<time>--main--<head>--<hash>.md)",
@@ -278,14 +281,14 @@
         "## EXCLUDED",
         "- history — profile implementation sets context.recent_history_depth: 0",
         "## BUDGET",
-        "54 of 300 lines"
+        "57 of 300 lines"
       ],
       "exit": 0,
       "id": "the-next-session-resumes",
       "n": 7,
       "note": "A new session asks the repository what it needs to know, and gets the task, its scope and the handover back.",
       "outcome": "accepted",
-      "output": "# Majordomus context — <time>\n# a projection of durable state, not a source of truth: validate every line against git\n\n## GIT\nrepository   <repo>\nbranch       main\nhead         <sha>\nworking_tree dirty\ntask_record  exact (recorded head <head>)\n\n## TASK\nid           t-<id>\ntask         refuse tabs in the parser\nprofile      implementation\nowner        <owner>\noutcome      active\nscope        lib\nstarted      <time> (<age> ago)\ncheckpoint   <time> (<age> ago, interval 15m)\n\n## PROFILE implementation\ncapability   standard\neffort       medium\nverbosity    concise\npresentation engineering\nverification verify command\noutput       outcome, changes, verification, blockers, next_action\n\n## CONTEXT DOCUMENTS (for the scope, root first; majordomus context explain <path>)\nlib  ai.layer\n\n## DECISIONS (5 most recent for this task)\n(none)\n\n## LATEST COMPATIBLE HANDOVER (.ai/local/state/handovers/<time>--main--<head>--<hash>.md)\nmatch        same_worktree_same_branch\ngit state    exact\ncreated      <time> (<age> ago)\ntask         t-<id>\n# Objective\nrefuse tabs in the parser\n# Current State\ntabs are refused; the stray note under docs is reverted; the parser's test still fails\n# Next Action\nmake the message name the column, then run the parser's test again\n\n## FILES TOUCHED IN SCOPE (1)\nlib/a\n\n## EXCLUDED\n- history — profile implementation sets context.recent_history_depth: 0\n\n## BUDGET\n54 of 300 lines",
+      "output": "# Majordomus context — <time>\n# a projection of durable state, not a source of truth: validate every line against git\n\n## GIT\nrepository   <repo>\nbranch       main\nhead         <sha>\nworking_tree dirty\ntask_record  exact (recorded head <head>)\n\n## TASK\nid           t-<id>\ntask         refuse tabs in the parser\nprofile      implementation\nowner        <owner>\noutcome      active\nscope        lib\nstarted      <time> (<age> ago)\ncheckpoint   <time> (<age> ago, interval 15m)\n\n## PROFILE implementation\ncapability   standard\neffort       medium\nverbosity    concise\npresentation engineering\nverification verify command\noutput       outcome, changes, verification, blockers, next_action\n\n## CONTEXT DOCUMENTS (for the scope, root first; majordomus context explain <path>)\nlib  ai.layer\n\n## KNOWLEDGE (candidates awaiting review on this branch; majordomus knowledge candidates)\nNo knowledge candidates await review on this branch. That is an answer, not a gap: `majordomus knowledge candidates` lists every branch.\n\n## DECISIONS (5 most recent for this task)\n(none)\n\n## LATEST COMPATIBLE HANDOVER (.ai/local/state/handovers/<time>--main--<head>--<hash>.md)\nmatch        same_worktree_same_branch\ngit state    exact\ncreated      <time> (<age> ago)\ntask         t-<id>\n# Objective\nrefuse tabs in the parser\n# Current State\ntabs are refused; the stray note under docs is reverted; the parser's test still fails\n# Next Action\nmake the message name the column, then run the parser's test again\n\n## FILES TOUCHED IN SCOPE (1)\nlib/a\n\n## EXCLUDED\n- history — profile implementation sets context.recent_history_depth: 0\n\n## BUDGET\n57 of 300 lines",
       "stdin": null,
       "stdin_source": null
     },

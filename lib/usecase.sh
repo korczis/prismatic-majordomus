@@ -484,6 +484,10 @@ mj_uc_cmd_validate() {
 # differed by that line. Hiding the line made the artifacts agree without making the
 # recording reproducible (#713). The scenario environment decides the question instead (see
 # mj_uc_run_one), and the line it then prints is the same on every machine.
+#
+# `session context` (#220) prints the fixture's commit as `- head: <7 hex>`, followed by
+# `(opened at <7 hex>)` when the head moved. A fixture commit's hash differs on every run, so
+# the catalogue that recorded it was never reproducible; both forms become `<head>`.
 mj_uc_normalise() { # repo-path
   local real; real="$(cd "$1" 2>/dev/null && pwd -P)"
   sed -E \
@@ -502,6 +506,8 @@ mj_uc_normalise() { # repo-path
     -e 's/(policy|match the last update \(|inputs )[0-9a-f]{12}/\1<hash12>/g' \
     -e 's/(head +)[0-9a-f]{7}/\1<head>/g' \
     -e 's/\(head [0-9a-f]{7}\)/(head <head>)/g' \
+    -e 's/^- head: [0-9a-f]{7}( |$)/- head: <head>\1/' \
+    -e 's/\(opened at [0-9a-f]{7}\)/(opened at <head>)/g' \
     -e 's/(  +)[0-9a-f]{7}(  |$)/\1<head>\2/g' \
     -e 's/( at | moved to )[0-9a-f]{7}([,;. ]|$)/\1<head>\2/g' \
     -e 's/^(> )?At [0-9a-f]{7}([,;. ]|$)/\1At <head>\2/g' \

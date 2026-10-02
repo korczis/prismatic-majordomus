@@ -37,7 +37,10 @@ export default {
       if (reveal.tab) {
         await page.locator('[data-mj-reveal="1"]').click();
         await page.evaluate(() => document.querySelector('[data-mj-reveal="1"]').removeAttribute('data-mj-reveal'));
-        await page.waitForFunction((sel) => document.querySelector(sel).getClientRects().length > 0, sel, { timeout: 2000 }).catch(() => {});
+        // x-show shows a panel on the next animation frame, not in the click, and a loaded runner can hold that frame
+        // back for seconds: the bound is generous, because it costs nothing when the panel appears and only a region
+        // that stays hidden waits it out
+        await page.waitForFunction((sel) => document.querySelector(sel).getClientRects().length > 0, sel, { timeout: 10000 }).catch(() => {});
       }
       const m = await page.evaluate((sel) => {
         const el = document.querySelector(sel);

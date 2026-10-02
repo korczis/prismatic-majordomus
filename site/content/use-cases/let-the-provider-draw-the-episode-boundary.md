@@ -1,7 +1,7 @@
 +++
 title = "Have the session opened and closed without anybody remembering to"
 description = "Wire the provider''s own session events, and the episode opens when the sitting begins, hands the worker what the last one left, records what a compaction is about to discard, and closes with a continuation record beside its envelope."
-weight = 41
+weight = 42
 [extra]
 id = "let-the-provider-draw-the-episode-boundary"
 source = ".ai/repo/use-cases/let-the-provider-draw-the-episode-boundary.md"
@@ -42,13 +42,19 @@ steps:
       stdout_contains: ['claude-code:session +verified']
   - id: open
     run: ['session', 'start']
-    note: 'the open freezes the context the builder resolved into the store the layer names'
+    note: 'the open freezes the context the builder resolved into the store the layer names — as a snapshot of what this worker was told, not as its working context'
     expect:
       exit: 0
       stdout_contains: ['working context: \.ai/local/session-contexts/']
-  - id: where-it-is
+  - id: what-is-true-now
     run: ['session', 'context']
-    note: 'the path, not the document: local evidence is never poured into a terminal where a context can pick it up'
+    note: 'the document, composed on this read: the episode, git now against git at the open, and what the episode has recorded since. It used to answer with the snapshot path, which is a file written before the worker had done anything'
+    expect:
+      exit: 0
+      stdout_contains: ['^# Working context of session s-', '## Repository now', '## Recorded in this episode']
+  - id: where-the-snapshot-is
+    run: ['session', 'context', '--path']
+    note: 'the frozen opening snapshot is still addressable by name, for a caller that wants the file rather than the answer'
     expect:
       exit: 0
       stdout_contains: ['^\.ai/local/session-contexts/2[0-9]+T[0-9]+Z--s-']
