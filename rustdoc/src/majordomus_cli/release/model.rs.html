@@ -384,52 +384,180 @@
 <a href=#384 id=384 data-nosnippet>384</a>    </span><span class="kw">pub </span>produced_by: <span class="prelude-ty">Option</span>&lt;ProducedBy&gt;,
 <a href=#385 id=385 data-nosnippet>385</a>}
 <a href=#386 id=386 data-nosnippet>386</a>
-<a href=#387 id=387 data-nosnippet>387</a><span class="doccomment">/// What the version is, and what the commits since the last release imply it should become.
-<a href=#388 id=388 data-nosnippet>388</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-<a href=#389 id=389 data-nosnippet>389</a>#[schemars(rename = <span class="string">"ReleaseVersionReport"</span>)]
-<a href=#390 id=390 data-nosnippet>390</a></span><span class="kw">pub struct </span>VersionReport {
-<a href=#391 id=391 data-nosnippet>391</a>    <span class="doccomment">/// The version the crate manifest declares — the one place it is authored.
-<a href=#392 id=392 data-nosnippet>392</a>    </span><span class="kw">pub </span>declared: String,
-<a href=#393 id=393 data-nosnippet>393</a>    <span class="doccomment">/// The version `bin/majordomus` prints: what its projection, `share/version.txt`, states.
-<a href=#394 id=394 data-nosnippet>394</a>    </span><span class="kw">pub </span>tool: String,
-<a href=#395 id=395 data-nosnippet>395</a>    <span class="doccomment">/// Whether that projection is current. `generate --check` refuses a stale one and
-<a href=#396 id=396 data-nosnippet>396</a>    /// `scripts/release-version --check` proves the tool prints it; this is the same question
-<a href=#397 id=397 data-nosnippet>397</a>    /// asked by the executable, so every surface can show the answer.
-<a href=#398 id=398 data-nosnippet>398</a>    </span><span class="kw">pub </span>agree: bool,
-<a href=#399 id=399 data-nosnippet>399</a>    <span class="attr">#[serde(skip_serializing_if = <span class="string">"Option::is_none"</span>)]
-<a href=#400 id=400 data-nosnippet>400</a>    </span><span class="doccomment">/// The last release the layer records.
-<a href=#401 id=401 data-nosnippet>401</a>    </span><span class="kw">pub </span>last_release: <span class="prelude-ty">Option</span>&lt;String&gt;,
-<a href=#402 id=402 data-nosnippet>402</a>    <span class="doccomment">/// What the commits since it imply: `major`, `minor`, `patch`, or `none`.
-<a href=#403 id=403 data-nosnippet>403</a>    </span><span class="kw">pub </span>bump: String,
-<a href=#404 id=404 data-nosnippet>404</a>    <span class="attr">#[serde(skip_serializing_if = <span class="string">"Option::is_none"</span>)]
-<a href=#405 id=405 data-nosnippet>405</a>    </span><span class="doccomment">/// The version that bump would produce.
-<a href=#406 id=406 data-nosnippet>406</a>    </span><span class="kw">pub </span>next: <span class="prelude-ty">Option</span>&lt;String&gt;,
-<a href=#407 id=407 data-nosnippet>407</a>    <span class="doccomment">/// How many commits since the last release, and of what kind — the evidence for the
-<a href=#408 id=408 data-nosnippet>408</a>    /// bump, so that a surprising answer can be checked rather than believed.
-<a href=#409 id=409 data-nosnippet>409</a>    </span><span class="kw">pub </span>changes: Vec&lt;Change&gt;,
-<a href=#410 id=410 data-nosnippet>410</a>}
-<a href=#411 id=411 data-nosnippet>411</a>
-<a href=#412 id=412 data-nosnippet>412</a><span class="attr">#[cfg(test)]
-<a href=#413 id=413 data-nosnippet>413</a></span><span class="kw">mod </span>tests {
-<a href=#414 id=414 data-nosnippet>414</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#415 id=415 data-nosnippet>415</a>
-<a href=#416 id=416 data-nosnippet>416</a>    <span class="attr">#[test]
-<a href=#417 id=417 data-nosnippet>417</a>    </span><span class="kw">fn </span>the_type_vocabulary_reads_the_same_in_both_directions() {
-<a href=#418 id=418 data-nosnippet>418</a>        <span class="comment">// `WORDS` is what a validator quotes and `TABLE` is what the parser reads. They are
-<a href=#419 id=419 data-nosnippet>419</a>        // two spellings of one list, and this is the assertion that keeps them one: a type
-<a href=#420 id=420 data-nosnippet>420</a>        // added to the table and forgotten in the words, or the reverse, fails here rather
-<a href=#421 id=421 data-nosnippet>421</a>        // than in a validator that quietly stops mentioning it.
-<a href=#422 id=422 data-nosnippet>422</a>        </span><span class="kw">let </span>from_table: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = ChangeKind::TABLE.iter().map(|(w, <span class="kw">_</span>)| <span class="kw-2">*</span>w).collect();
-<a href=#423 id=423 data-nosnippet>423</a>        <span class="macro">assert_eq!</span>(from_table, ChangeKind::WORDS);
-<a href=#424 id=424 data-nosnippet>424</a>        <span class="kw">for </span>word <span class="kw">in </span>ChangeKind::WORDS {
-<a href=#425 id=425 data-nosnippet>425</a>            <span class="kw">let </span>kind = ChangeKind::parse(word);
-<a href=#426 id=426 data-nosnippet>426</a>            <span class="macro">assert_ne!</span>(kind, ChangeKind::Other, <span class="string">"{word} parses to nothing"</span>);
-<a href=#427 id=427 data-nosnippet>427</a>            <span class="macro">assert_eq!</span>(kind.word(), <span class="prelude-val">Some</span>(<span class="kw-2">*</span>word), <span class="string">"{word} does not render back"</span>);
-<a href=#428 id=428 data-nosnippet>428</a>        }
-<a href=#429 id=429 data-nosnippet>429</a>        <span class="comment">// every kind but `Other` is reachable from a word, so no variant is orphaned
-<a href=#430 id=430 data-nosnippet>430</a>        </span><span class="macro">assert_eq!</span>(ChangeKind::TABLE.len(), ChangeKind::WORDS.len());
-<a href=#431 id=431 data-nosnippet>431</a>        <span class="macro">assert_eq!</span>(ChangeKind::Other.word(), <span class="prelude-val">None</span>);
-<a href=#432 id=432 data-nosnippet>432</a>        <span class="macro">assert_eq!</span>(ChangeKind::parse(<span class="string">"wip"</span>), ChangeKind::Other);
-<a href=#433 id=433 data-nosnippet>433</a>    }
-<a href=#434 id=434 data-nosnippet>434</a>}
+<a href=#387 id=387 data-nosnippet>387</a><span class="doccomment">/// Who answered a version report's `next`: the public contract, the contract with the
+<a href=#388 id=388 data-nosnippet>388</a>/// commits — or no one, because the contract could not be measured.
+<a href=#389 id=389 data-nosnippet>389</a>///
+<a href=#390 id=390 data-nosnippet>390</a>/// ADR 0051 makes the contract the authority and demotes conventional commits to evidence,
+<a href=#391 id=391 data-nosnippet>391</a>/// so [`DecidedBy::Contract`] is the normal answer. An unmeasurable contract is refused, not
+<a href=#392 id=392 data-nosnippet>392</a>/// guessed: [`DecidedBy::Undecided`] leaves `next` absent and carries the reason, and the
+<a href=#393 id=393 data-nosnippet>393</a>/// commit inference stays what it always is, evidence — never the answer in its place.
+<a href=#394 id=394 data-nosnippet>394</a>///
+<a href=#395 id=395 data-nosnippet>395</a>/// ```
+<a href=#396 id=396 data-nosnippet>396</a>/// use majordomus_cli::release::model::DecidedBy;
+<a href=#397 id=397 data-nosnippet>397</a>/// assert_eq!(serde_json::to_value(DecidedBy::Contract).unwrap(), "contract");
+<a href=#398 id=398 data-nosnippet>398</a>/// assert_eq!(DecidedBy::Undecided.as_str(), "undecided");
+<a href=#399 id=399 data-nosnippet>399</a>/// assert_eq!(DecidedBy::default(), DecidedBy::Undecided);
+<a href=#400 id=400 data-nosnippet>400</a>/// ```
+<a href=#401 id=401 data-nosnippet>401</a></span><span class="attr">#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#402 id=402 data-nosnippet>402</a>#[serde(rename_all = <span class="string">"snake_case"</span>)]
+<a href=#403 id=403 data-nosnippet>403</a>#[schemars(rename = <span class="string">"ReleaseVersionDecidedBy"</span>)]
+<a href=#404 id=404 data-nosnippet>404</a></span><span class="kw">pub enum </span>DecidedBy {
+<a href=#405 id=405 data-nosnippet>405</a>    <span class="doccomment">/// `release analyze` measured the public contract against the last release, and `next`
+<a href=#406 id=406 data-nosnippet>406</a>    /// is the version it requires: the declared version when that already satisfies the
+<a href=#407 id=407 data-nosnippet>407</a>    /// contract, otherwise the smallest one it allows.
+<a href=#408 id=408 data-nosnippet>408</a>    </span>Contract,
+<a href=#409 id=409 data-nosnippet>409</a>    <span class="doccomment">/// The contract was measured and requires no release over the last one — only behaviour
+<a href=#410 id=410 data-nosnippet>410</a>    /// behind the public boundary changed — while the commits carry changes: `next` is the
+<a href=#411 id=411 data-nosnippet>411</a>    /// smallest release above the last, a patch, however much the commit subjects claim.
+<a href=#412 id=412 data-nosnippet>412</a>    </span>ContractAndCommits,
+<a href=#413 id=413 data-nosnippet>413</a>    <span class="doccomment">/// The contract could not be measured — no published baseline carries a registry, or a
+<a href=#414 id=414 data-nosnippet>414</a>    /// version is not three numbers — so nothing decides `next`: it is absent, the reason is
+<a href=#415 id=415 data-nosnippet>415</a>    /// in `contract_unreadable`, and `release bump` without an explicit target refuses.
+<a href=#416 id=416 data-nosnippet>416</a>    </span><span class="attr">#[default]
+<a href=#417 id=417 data-nosnippet>417</a>    </span>Undecided,
+<a href=#418 id=418 data-nosnippet>418</a>}
+<a href=#419 id=419 data-nosnippet>419</a>
+<a href=#420 id=420 data-nosnippet>420</a><span class="kw">impl </span>DecidedBy {
+<a href=#421 id=421 data-nosnippet>421</a>    <span class="doccomment">/// The word the JSON value carries for who answered.
+<a href=#422 id=422 data-nosnippet>422</a>    ///
+<a href=#423 id=423 data-nosnippet>423</a>    /// ```
+<a href=#424 id=424 data-nosnippet>424</a>    /// use majordomus_cli::release::model::DecidedBy;
+<a href=#425 id=425 data-nosnippet>425</a>    /// for by in [DecidedBy::Contract, DecidedBy::ContractAndCommits, DecidedBy::Undecided] {
+<a href=#426 id=426 data-nosnippet>426</a>    ///     assert_eq!(serde_json::to_value(by).unwrap(), by.as_str());
+<a href=#427 id=427 data-nosnippet>427</a>    /// }
+<a href=#428 id=428 data-nosnippet>428</a>    /// ```
+<a href=#429 id=429 data-nosnippet>429</a>    </span><span class="kw">pub fn </span>as_str(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str {
+<a href=#430 id=430 data-nosnippet>430</a>        <span class="kw">match </span><span class="self">self </span>{
+<a href=#431 id=431 data-nosnippet>431</a>            DecidedBy::Contract =&gt; <span class="string">"contract"</span>,
+<a href=#432 id=432 data-nosnippet>432</a>            DecidedBy::ContractAndCommits =&gt; <span class="string">"contract_and_commits"</span>,
+<a href=#433 id=433 data-nosnippet>433</a>            DecidedBy::Undecided =&gt; <span class="string">"undecided"</span>,
+<a href=#434 id=434 data-nosnippet>434</a>        }
+<a href=#435 id=435 data-nosnippet>435</a>    }
+<a href=#436 id=436 data-nosnippet>436</a>
+<a href=#437 id=437 data-nosnippet>437</a>    <span class="doccomment">/// Who answered, as the text renderings print it in parentheses after `next`.
+<a href=#438 id=438 data-nosnippet>438</a>    ///
+<a href=#439 id=439 data-nosnippet>439</a>    /// ```
+<a href=#440 id=440 data-nosnippet>440</a>    /// use majordomus_cli::release::model::DecidedBy;
+<a href=#441 id=441 data-nosnippet>441</a>    /// assert_eq!(DecidedBy::Contract.phrase(), "decided by the contract");
+<a href=#442 id=442 data-nosnippet>442</a>    /// let both = DecidedBy::ContractAndCommits.phrase();
+<a href=#443 id=443 data-nosnippet>443</a>    /// assert_eq!(both, "decided by the contract and the commits");
+<a href=#444 id=444 data-nosnippet>444</a>    /// let none = DecidedBy::Undecided.phrase();
+<a href=#445 id=445 data-nosnippet>445</a>    /// assert_eq!(none, "undecided: the contract could not be measured");
+<a href=#446 id=446 data-nosnippet>446</a>    /// ```
+<a href=#447 id=447 data-nosnippet>447</a>    </span><span class="kw">pub fn </span>phrase(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str {
+<a href=#448 id=448 data-nosnippet>448</a>        <span class="kw">match </span><span class="self">self </span>{
+<a href=#449 id=449 data-nosnippet>449</a>            DecidedBy::Contract =&gt; <span class="string">"decided by the contract"</span>,
+<a href=#450 id=450 data-nosnippet>450</a>            DecidedBy::ContractAndCommits =&gt; <span class="string">"decided by the contract and the commits"</span>,
+<a href=#451 id=451 data-nosnippet>451</a>            DecidedBy::Undecided =&gt; <span class="string">"undecided: the contract could not be measured"</span>,
+<a href=#452 id=452 data-nosnippet>452</a>        }
+<a href=#453 id=453 data-nosnippet>453</a>    }
+<a href=#454 id=454 data-nosnippet>454</a>}
+<a href=#455 id=455 data-nosnippet>455</a>
+<a href=#456 id=456 data-nosnippet>456</a><span class="doccomment">/// What the version is, what the public contract requires it to become, and what the
+<a href=#457 id=457 data-nosnippet>457</a>/// commits since the last release say about themselves.
+<a href=#458 id=458 data-nosnippet>458</a>///
+<a href=#459 id=459 data-nosnippet>459</a>/// `next` is the contract's answer (ADR 0051): the analysis' `required_version`, or the
+<a href=#460 id=460 data-nosnippet>460</a>/// smallest release above the last when that requirement is the last release itself. The
+<a href=#461 id=461 data-nosnippet>461</a>/// commit inference is evidence — `bump` and `commits_imply` — and never the answer: when the
+<a href=#462 id=462 data-nosnippet>462</a>/// contract cannot be measured `next` is absent, `decided_by` is `undecided` and
+<a href=#463 id=463 data-nosnippet>463</a>/// `contract_unreadable` says why. The selection is [`crate::release::version::select`], the
+<a href=#464 id=464 data-nosnippet>464</a>/// one function `release bump` also takes its default target from.
+<a href=#465 id=465 data-nosnippet>465</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#466 id=466 data-nosnippet>466</a>#[schemars(rename = <span class="string">"ReleaseVersionReport"</span>)]
+<a href=#467 id=467 data-nosnippet>467</a></span><span class="kw">pub struct </span>VersionReport {
+<a href=#468 id=468 data-nosnippet>468</a>    <span class="doccomment">/// The version the crate manifest declares — the one place it is authored.
+<a href=#469 id=469 data-nosnippet>469</a>    </span><span class="kw">pub </span>declared: String,
+<a href=#470 id=470 data-nosnippet>470</a>    <span class="doccomment">/// The version `bin/majordomus` prints: what its projection, `share/version.txt`, states.
+<a href=#471 id=471 data-nosnippet>471</a>    </span><span class="kw">pub </span>tool: String,
+<a href=#472 id=472 data-nosnippet>472</a>    <span class="doccomment">/// Whether that projection is current. `generate --check` refuses a stale one and
+<a href=#473 id=473 data-nosnippet>473</a>    /// `scripts/release-version --check` proves the tool prints it; this is the same question
+<a href=#474 id=474 data-nosnippet>474</a>    /// asked by the executable, so every surface can show the answer.
+<a href=#475 id=475 data-nosnippet>475</a>    </span><span class="kw">pub </span>agree: bool,
+<a href=#476 id=476 data-nosnippet>476</a>    <span class="attr">#[serde(skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#477 id=477 data-nosnippet>477</a>    </span><span class="doccomment">/// The last release: the highest version the layer records (the newest version tag when
+<a href=#478 id=478 data-nosnippet>478</a>    /// it records none) — the baseline `release analyze` measures the contract from, so the
+<a href=#479 id=479 data-nosnippet>479</a>    /// contract and the commit evidence describe one window.
+<a href=#480 id=480 data-nosnippet>480</a>    </span><span class="kw">pub </span>last_release: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#481 id=481 data-nosnippet>481</a>    <span class="doccomment">/// What the commit subjects since it imply: `major`, `minor`, `patch`, or `none`.
+<a href=#482 id=482 data-nosnippet>482</a>    /// Evidence only — the contract decides `next`; `release analyze` reports where the two
+<a href=#483 id=483 data-nosnippet>483</a>    /// disagree.
+<a href=#484 id=484 data-nosnippet>484</a>    </span><span class="kw">pub </span>bump: String,
+<a href=#485 id=485 data-nosnippet>485</a>    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#486 id=486 data-nosnippet>486</a>    </span><span class="doccomment">/// The version that bump would produce from the last release (from the declared version
+<a href=#487 id=487 data-nosnippet>487</a>    /// when nothing was released yet). Evidence only, even when the contract cannot answer.
+<a href=#488 id=488 data-nosnippet>488</a>    </span><span class="kw">pub </span>commits_imply: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#489 id=489 data-nosnippet>489</a>    <span class="attr">#[serde(skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#490 id=490 data-nosnippet>490</a>    </span><span class="doccomment">/// The next version. When the contract could be measured, the version it requires: the
+<a href=#491 id=491 data-nosnippet>491</a>    /// declared version when that already satisfies it, otherwise the smallest one it allows
+<a href=#492 id=492 data-nosnippet>492</a>    /// — and, when that is the last release itself, the smallest release above it. Absent
+<a href=#493 id=493 data-nosnippet>493</a>    /// when nothing would be released, and when the contract could not be measured
+<a href=#494 id=494 data-nosnippet>494</a>    /// (`decided_by: undecided`): an unmeasurable baseline is refused, not guessed.
+<a href=#495 id=495 data-nosnippet>495</a>    </span><span class="kw">pub </span>next: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#496 id=496 data-nosnippet>496</a>    <span class="attr">#[serde(default)]
+<a href=#497 id=497 data-nosnippet>497</a>    </span><span class="doccomment">/// Who answered `next`.
+<a href=#498 id=498 data-nosnippet>498</a>    </span><span class="kw">pub </span>decided_by: DecidedBy,
+<a href=#499 id=499 data-nosnippet>499</a>    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#500 id=500 data-nosnippet>500</a>    </span><span class="doccomment">/// Why the contract could not answer, when `decided_by` is `undecided`.
+<a href=#501 id=501 data-nosnippet>501</a>    </span><span class="kw">pub </span>contract_unreadable: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#502 id=502 data-nosnippet>502</a>    <span class="doccomment">/// How many commits since the last release, and of what kind — the evidence for the
+<a href=#503 id=503 data-nosnippet>503</a>    /// bump, so that a surprising answer can be checked rather than believed.
+<a href=#504 id=504 data-nosnippet>504</a>    </span><span class="kw">pub </span>changes: Vec&lt;Change&gt;,
+<a href=#505 id=505 data-nosnippet>505</a>}
+<a href=#506 id=506 data-nosnippet>506</a>
+<a href=#507 id=507 data-nosnippet>507</a><span class="attr">#[cfg(test)]
+<a href=#508 id=508 data-nosnippet>508</a></span><span class="kw">mod </span>tests {
+<a href=#509 id=509 data-nosnippet>509</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#510 id=510 data-nosnippet>510</a>
+<a href=#511 id=511 data-nosnippet>511</a>    <span class="attr">#[test]
+<a href=#512 id=512 data-nosnippet>512</a>    </span><span class="kw">fn </span>the_type_vocabulary_reads_the_same_in_both_directions() {
+<a href=#513 id=513 data-nosnippet>513</a>        <span class="comment">// `WORDS` is what a validator quotes and `TABLE` is what the parser reads. They are
+<a href=#514 id=514 data-nosnippet>514</a>        // two spellings of one list, and this is the assertion that keeps them one: a type
+<a href=#515 id=515 data-nosnippet>515</a>        // added to the table and forgotten in the words, or the reverse, fails here rather
+<a href=#516 id=516 data-nosnippet>516</a>        // than in a validator that quietly stops mentioning it.
+<a href=#517 id=517 data-nosnippet>517</a>        </span><span class="kw">let </span>from_table: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = ChangeKind::TABLE.iter().map(|(w, <span class="kw">_</span>)| <span class="kw-2">*</span>w).collect();
+<a href=#518 id=518 data-nosnippet>518</a>        <span class="macro">assert_eq!</span>(from_table, ChangeKind::WORDS);
+<a href=#519 id=519 data-nosnippet>519</a>        <span class="kw">for </span>word <span class="kw">in </span>ChangeKind::WORDS {
+<a href=#520 id=520 data-nosnippet>520</a>            <span class="kw">let </span>kind = ChangeKind::parse(word);
+<a href=#521 id=521 data-nosnippet>521</a>            <span class="macro">assert_ne!</span>(kind, ChangeKind::Other, <span class="string">"{word} parses to nothing"</span>);
+<a href=#522 id=522 data-nosnippet>522</a>            <span class="macro">assert_eq!</span>(kind.word(), <span class="prelude-val">Some</span>(<span class="kw-2">*</span>word), <span class="string">"{word} does not render back"</span>);
+<a href=#523 id=523 data-nosnippet>523</a>        }
+<a href=#524 id=524 data-nosnippet>524</a>        <span class="comment">// every kind but `Other` is reachable from a word, so no variant is orphaned
+<a href=#525 id=525 data-nosnippet>525</a>        </span><span class="macro">assert_eq!</span>(ChangeKind::TABLE.len(), ChangeKind::WORDS.len());
+<a href=#526 id=526 data-nosnippet>526</a>        <span class="macro">assert_eq!</span>(ChangeKind::Other.word(), <span class="prelude-val">None</span>);
+<a href=#527 id=527 data-nosnippet>527</a>        <span class="macro">assert_eq!</span>(ChangeKind::parse(<span class="string">"wip"</span>), ChangeKind::Other);
+<a href=#528 id=528 data-nosnippet>528</a>    }
+<a href=#529 id=529 data-nosnippet>529</a>
+<a href=#530 id=530 data-nosnippet>530</a>    <span class="doccomment">/// Who decided `next` is one word on the wire and one phrase in the text renderings, and
+<a href=#531 id=531 data-nosnippet>531</a>    /// the word is the serialization itself: a variant renamed in one place and not the
+<a href=#532 id=532 data-nosnippet>532</a>    /// other would make the JSON and the terminal name different deciders.
+<a href=#533 id=533 data-nosnippet>533</a>    </span><span class="attr">#[test]
+<a href=#534 id=534 data-nosnippet>534</a>    </span><span class="kw">fn </span>who_decided_reads_the_same_on_the_wire_and_in_the_text() {
+<a href=#535 id=535 data-nosnippet>535</a>        <span class="kw">let </span>all = [
+<a href=#536 id=536 data-nosnippet>536</a>            DecidedBy::Contract,
+<a href=#537 id=537 data-nosnippet>537</a>            DecidedBy::ContractAndCommits,
+<a href=#538 id=538 data-nosnippet>538</a>            DecidedBy::Undecided,
+<a href=#539 id=539 data-nosnippet>539</a>        ];
+<a href=#540 id=540 data-nosnippet>540</a>        <span class="kw">for </span>by <span class="kw">in </span>all {
+<a href=#541 id=541 data-nosnippet>541</a>            <span class="macro">assert_eq!</span>(serde_json::to_value(by).unwrap(), by.as_str());
+<a href=#542 id=542 data-nosnippet>542</a>            <span class="kw">let </span>back: DecidedBy = serde_json::from_value(by.as_str().into()).unwrap();
+<a href=#543 id=543 data-nosnippet>543</a>            <span class="macro">assert_eq!</span>(back, by);
+<a href=#544 id=544 data-nosnippet>544</a>        }
+<a href=#545 id=545 data-nosnippet>545</a>        <span class="macro">assert_eq!</span>(
+<a href=#546 id=546 data-nosnippet>546</a>            all.map(DecidedBy::as_str),
+<a href=#547 id=547 data-nosnippet>547</a>            [<span class="string">"contract"</span>, <span class="string">"contract_and_commits"</span>, <span class="string">"undecided"</span>]
+<a href=#548 id=548 data-nosnippet>548</a>        );
+<a href=#549 id=549 data-nosnippet>549</a>        <span class="macro">assert_eq!</span>(DecidedBy::Contract.phrase(), <span class="string">"decided by the contract"</span>);
+<a href=#550 id=550 data-nosnippet>550</a>        <span class="macro">assert_eq!</span>(
+<a href=#551 id=551 data-nosnippet>551</a>            DecidedBy::ContractAndCommits.phrase(),
+<a href=#552 id=552 data-nosnippet>552</a>            <span class="string">"decided by the contract and the commits"
+<a href=#553 id=553 data-nosnippet>553</a>        </span>);
+<a href=#554 id=554 data-nosnippet>554</a>        <span class="comment">// the undecided phrase says why nothing was decided, never a version's provenance
+<a href=#555 id=555 data-nosnippet>555</a>        </span><span class="macro">assert_eq!</span>(
+<a href=#556 id=556 data-nosnippet>556</a>            DecidedBy::Undecided.phrase(),
+<a href=#557 id=557 data-nosnippet>557</a>            <span class="string">"undecided: the contract could not be measured"
+<a href=#558 id=558 data-nosnippet>558</a>        </span>);
+<a href=#559 id=559 data-nosnippet>559</a>        <span class="comment">// the absent field is the undecided one: an answer that names no decider decided nothing
+<a href=#560 id=560 data-nosnippet>560</a>        </span><span class="macro">assert_eq!</span>(DecidedBy::default(), DecidedBy::Undecided);
+<a href=#561 id=561 data-nosnippet>561</a>    }
+<a href=#562 id=562 data-nosnippet>562</a>}
 </code></pre></div></section></main></body></html>

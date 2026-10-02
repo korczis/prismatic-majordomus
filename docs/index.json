@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "c50c9d9d17f7c547b70bacf74bc5434425d705a4",
+  "commit": "1271a2ecd977a27b08dc20697e67d7ffcc4f0b61",
   "source_version": "0.11.0",
-  "registry_fingerprint": "bb6c676b10f4a862e3e3ef65b0f62ae68cd4111ef26765e4b5a95c2101a5401c"
+  "registry_fingerprint": "4b129238abdf70dfc6f68ac778de3f72c2064e23342c761185e5bf778728e093"
  },
  "counts": {
   "pages": 1697,
-  "capabilities": 1729,
+  "capabilities": 1735,
   "cli_commands": 74,
   "http_routes": 150,
   "mcp_tools": 146,
-  "mcp_resources": 1624,
+  "mcp_resources": 1630,
   "modules": 74
  },
  "kinds": [
@@ -230,7 +230,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 302
+   "count": 308
   },
   {
    "kind": "use-case",
@@ -1226,7 +1226,7 @@
   {
    "route": "/docs/api/release/",
    "title": "HTTP API: release",
-   "description": "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the commits since the last release imply it should become."
+   "description": "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the public contract requires it to become — or that it cannot be measured, and so decides nothing — with what the commits since the last release imply beside it as evidence."
   },
   {
    "route": "/docs/api/repository/",
@@ -5946,7 +5946,7 @@
   {
    "route": "/registry/capabilities/release-version/",
    "title": "release.version",
-   "description": "The version the crate manifest declares — the one place it is authored — the version the shell tool prints from its projection `share/version.txt`, and whether that projection is current — the question `generate --check` refuses and `scripts/release-version --check` gates on. Then the bump the conventional commits since the last release imply, the version it would produce, and the commits themselves as the evidence for it."
+   "description": "The version the crate manifest declares — the one place it is authored — the version the shell tool prints from its projection `share/version.txt`, and whether that projection is current — the question `generate --check` refuses and `scripts/release-version --check` gates on. Then the next version, which is the public contract's answer: the version `release analyze` requires against the last release — the declared version when it already satisfies the contract, otherwise the smallest one it allows, and the smallest release above the last when the contract requires none over it — with `decided_by` naming who answered. It is the one release selection `release bump` also raises to when no target is named, so the report and the writer cannot disagree. When the contract cannot be measured — no published baseline, a version that is not three numbers, or any other error that makes the plan unsound, the plan `release bump` refuses to write from — the baseline is refused, not guessed: `next` is absent, `decided_by` is `undecided` and `contract_unreadable` carries every error, one per line. The bump the conventional commits since the last release imply, the version it would produce and the commits themselves are carried beside it as evidence, and never answer `next` in the contract's place."
   },
   {
    "route": "/registry/capabilities/repository-info/",
@@ -6271,7 +6271,7 @@
   {
    "route": "/registry/modules/release/",
    "title": "Release",
-   "description": "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the commits since the last release imply it should become."
+   "description": "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the public contract requires it to become — or that it cannot be measured, and so decides nothing — with what the commits since the last release imply beside it as evidence."
   },
   {
    "route": "/registry/modules/repository/",
@@ -7525,7 +7525,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 0.11.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.11.0, built from commit c50c9d9d17f7c547b70bacf74bc5434425d705a4: the public items of the library and of the executable, and the source they were built from."
+   "description": "The rustdoc reference of majordomus-cli 0.11.0, built from commit 1271a2ecd977a27b08dc20697e67d7ffcc4f0b61: the public items of the library and of the executable, and the source they were built from."
   },
   {
    "route": "/rustdoc/majordomus/",
@@ -8475,7 +8475,7 @@
   {
    "route": "/rustdoc/majordomus_cli/release/version/",
    "title": "majordomus_cli::release::version - Rust",
-   "description": "The version: the one place it is authored, what is derived from that place, what the commits imply, and the one writer that raises it."
+   "description": "The version: the one place it is authored, what is derived from that place, what the contract requires next and what the commits imply as evidence, and the one writer that raises it."
   },
   {
    "route": "/rustdoc/majordomus_cli/repository/",

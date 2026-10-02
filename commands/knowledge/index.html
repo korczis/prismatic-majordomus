@@ -370,6 +370,15 @@ that reads the index disagreed about what applies to a path;
 <p>A class marked <code>required</code> that discovers nothing is reported as a <code>WARN</code>. The cost of a
 curated list is that a path can be forgotten, and a forgotten path is indistinguishable
 from a repository that does not have that file unless something says so.</p>
+<p>Whether a file conforms to the schema of its kind is the executable's index's verdict, not the
+reader's: <code>knowledge nodes</code> asks the index which files it refused, drops them and reports each
+refusal as a <code>FAIL</code> (<code>test/cases/405_the_knowledge_reader_honours_the_schema.sh</code>). With no
+executable built, or no <code>jq</code>, it reports a <code>WARN</code> that the schema went unchecked; it never
+reads as a pass. <code>MAJORDOMUS_KNOWLEDGE_SCHEMA=unasked</code> says not to ask, and the reader then
+reports an <code>INFO</code> that the check was not asked for. That is what a recorded use-case scenario
+sets: whether the index <em>could</em> be asked is a fact about the recording machine, and evidence
+that must read the same on every machine cannot carry it (#713,
+<code>test/cases/777_a_recorded_scenario_does_not_depend_on_the_recorder.sh</code>).</p>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>$ majordomus knowledge sources --scope shared</span></span>
 <span class="giallo-l"><span>policy      shared      policy     4f2a9c1d8b30  .ai/repo/policy.yaml</span></span>
 <span class="giallo-l"><span>profile     shared      profile    a1b2c3d4e5f6  .ai/repo/profiles/debugging.yaml</span></span>
@@ -382,7 +391,7 @@ from a repository that does not have that file unless something says so.</p>
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Behaviour</h3>
-        <ul class="mt-2 space-y-1 text-sm"><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/405_the_knowledge_reader_honours_the_schema.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">405_the_knowledge_reader_honours_the_schema</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/64_knowledge_discovery.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">64_knowledge_discovery</a></li></ul>
+        <ul class="mt-2 space-y-1 text-sm"><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/405_the_knowledge_reader_honours_the_schema.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">405_the_knowledge_reader_honours_the_schema</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/64_knowledge_discovery.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">64_knowledge_discovery</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/777_a_recorded_scenario_does_not_depend_on_the_recorder.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">777_a_recorded_scenario_does_not_depend_on_the_recorder</a></li></ul>
       </div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Failure modes</h3>
@@ -476,7 +485,7 @@ from a repository that does not have that file unless something says so.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.11.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/c50c9d9d17f7c547b70bacf74bc5434425d705a4" class="font-mono underline">c50c9d9</a> · inputs <span class="font-mono">a3dfe7ece1c3</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.11.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1271a2ecd977a27b08dc20697e67d7ffcc4f0b61" class="font-mono underline">1271a2e</a> · inputs <span class="font-mono">a4683cf4bd36</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

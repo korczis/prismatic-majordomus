@@ -176,150 +176,151 @@
 <a href=#176 id=176 data-nosnippet>176</a>            <span class="string">"/cockpit/graphs/topology" </span>=&gt; pages::topology(ctx),
 <a href=#177 id=177 data-nosnippet>177</a>            <span class="string">"/cockpit/continuity" </span>=&gt; pages::continuity(ctx),
 <a href=#178 id=178 data-nosnippet>178</a>            <span class="string">"/cockpit/worktrees" </span>=&gt; pages::worktrees(ctx),
-<a href=#179 id=179 data-nosnippet>179</a>            <span class="string">"/cockpit/integration" </span>=&gt; pages::integration(ctx),
-<a href=#180 id=180 data-nosnippet>180</a>            <span class="string">"/cockpit/mesh" </span>=&gt; pages::mesh(ctx),
-<a href=#181 id=181 data-nosnippet>181</a>            <span class="string">"/cockpit/models" </span>=&gt; pages::models(ctx),
-<a href=#182 id=182 data-nosnippet>182</a>            <span class="string">"/cockpit/reasoning" </span>=&gt; reasoning::page(ctx),
-<a href=#183 id=183 data-nosnippet>183</a>            <span class="string">"/cockpit/economics" </span>=&gt; pages::economics(ctx),
-<a href=#184 id=184 data-nosnippet>184</a>            <span class="string">"/cockpit/directories" </span>=&gt; pages::directories(ctx, query),
-<a href=#185 id=185 data-nosnippet>185</a>            <span class="string">"/cockpit/health" </span>=&gt; pages::health(ctx),
-<a href=#186 id=186 data-nosnippet>186</a>            <span class="string">"/cockpit/quality" </span>=&gt; pages::quality(ctx),
-<a href=#187 id=187 data-nosnippet>187</a>            <span class="string">"/cockpit/artifacts" </span>=&gt; pages::artifacts(ctx),
-<a href=#188 id=188 data-nosnippet>188</a>            <span class="string">"/cockpit/release" </span>=&gt; pages::release(ctx),
-<a href=#189 id=189 data-nosnippet>189</a>            <span class="string">"/cockpit/design" </span>=&gt; pages::design(ctx),
-<a href=#190 id=190 data-nosnippet>190</a>            <span class="string">"/cockpit/api" </span>=&gt; pages::api(ctx),
-<a href=#191 id=191 data-nosnippet>191</a>            <span class="string">"/cockpit/search" </span>=&gt; pages::search(ctx, query),
-<a href=#192 id=192 data-nosnippet>192</a>            <span class="string">"/cockpit/activity" </span>=&gt; pages::activity(ctx),
-<a href=#193 id=193 data-nosnippet>193</a>            other =&gt; {
-<a href=#194 id=194 data-nosnippet>194</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>(id) = other.strip_prefix(<span class="string">"/cockpit/executions/"</span>) {
-<a href=#195 id=195 data-nosnippet>195</a>                    pages::execution(ctx, <span class="kw-2">&amp;</span>percent_decode(id))
-<a href=#196 id=196 data-nosnippet>196</a>                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(id) = other.strip_prefix(<span class="string">"/cockpit/capabilities/"</span>) {
-<a href=#197 id=197 data-nosnippet>197</a>                    pages::capability(ctx, <span class="kw-2">&amp;</span>percent_decode(id))
-<a href=#198 id=198 data-nosnippet>198</a>                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(id) = other.strip_prefix(<span class="string">"/cockpit/commands/"</span>) {
-<a href=#199 id=199 data-nosnippet>199</a>                    pages::command(ctx, <span class="kw-2">&amp;</span>percent_decode(id))
-<a href=#200 id=200 data-nosnippet>200</a>                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(id) = other.strip_prefix(<span class="string">"/cockpit/graphs/"</span>) {
-<a href=#201 id=201 data-nosnippet>201</a>                    pages::graph(ctx, <span class="kw-2">&amp;</span>percent_decode(id), query)
-<a href=#202 id=202 data-nosnippet>202</a>                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(rest) = other.strip_prefix(<span class="string">"/cockpit/objects/"</span>) {
-<a href=#203 id=203 data-nosnippet>203</a>                    <span class="comment">// one kind per segment, one entity per two. No kind and no entity is
-<a href=#204 id=204 data-nosnippet>204</a>                    // named here: both are read from the index, which is what makes adding
-<a href=#205 id=205 data-nosnippet>205</a>                    // an object add its page.
-<a href=#206 id=206 data-nosnippet>206</a>                    </span><span class="kw">let </span>rest = percent_decode(rest);
-<a href=#207 id=207 data-nosnippet>207</a>                    <span class="kw">match </span>rest.split_once(<span class="string">'/'</span>) {
-<a href=#208 id=208 data-nosnippet>208</a>                        <span class="prelude-val">Some</span>((kind, slug)) =&gt; pages::entity(ctx, kind, slug),
-<a href=#209 id=209 data-nosnippet>209</a>                        <span class="prelude-val">None </span>=&gt; pages::objects_of_kind(ctx, <span class="kw-2">&amp;</span>rest, query),
-<a href=#210 id=210 data-nosnippet>210</a>                    }
-<a href=#211 id=211 data-nosnippet>211</a>                } <span class="kw">else </span>{
-<a href=#212 id=212 data-nosnippet>212</a>                    pages::not_found(other)
-<a href=#213 id=213 data-nosnippet>213</a>                }
-<a href=#214 id=214 data-nosnippet>214</a>            }
-<a href=#215 id=215 data-nosnippet>215</a>        }
-<a href=#216 id=216 data-nosnippet>216</a>    }
-<a href=#217 id=217 data-nosnippet>217</a>}
-<a href=#218 id=218 data-nosnippet>218</a>
-<a href=#219 id=219 data-nosnippet>219</a><span class="doccomment">/// The content-security policy every page carries. Scripts come from this origin and from
-<a href=#220 id=220 data-nosnippet>220</a>/// nowhere else; the one inline script is allowed by the digest of its own bytes, so an
-<a href=#221 id=221 data-nosnippet>221</a>/// injected inline script is refused even if one ever got through the escaping. No
-<a href=#222 id=222 data-nosnippet>222</a>/// `unsafe-eval`, no remote origin, and nothing may frame the page.
-<a href=#223 id=223 data-nosnippet>223</a>///
-<a href=#224 id=224 data-nosnippet>224</a>/// `style-src` allows `unsafe-inline` and `script-src` does not, which is the one asymmetry
-<a href=#225 id=225 data-nosnippet>225</a>/// here and it is deliberate. A drawing library sets `style` attributes on the elements it
-<a href=#226 id=226 data-nosnippet>226</a>/// creates — that is how Cytoscape sizes its canvas — and a policy that forbids them makes
-<a href=#227 id=227 data-nosnippet>227</a>/// the optional views silently misrender rather than fail. The exposure is a style
-<a href=#228 id=228 data-nosnippet>228</a>/// injection, which needs the escaping to have already failed and which cannot execute; the
-<a href=#229 id=229 data-nosnippet>229</a>/// exposure `script-src 'unsafe-inline'` would carry is arbitrary code, and that stays shut.
-<a href=#230 id=230 data-nosnippet>230</a>///
-<a href=#231 id=231 data-nosnippet>231</a>/// The digest is computed from `view::theme_bootstrap()` itself, so the policy cannot
-<a href=#232 id=232 data-nosnippet>232</a>/// drift from the script it allows.
-<a href=#233 id=233 data-nosnippet>233</a>///
-<a href=#234 id=234 data-nosnippet>234</a>/// ```
-<a href=#235 id=235 data-nosnippet>235</a>/// let policy = majordomus_cli::cockpit::csp();
-<a href=#236 id=236 data-nosnippet>236</a>/// assert!(policy.starts_with("default-src 'none'"));
-<a href=#237 id=237 data-nosnippet>237</a>/// assert!(!policy.contains("unsafe-eval"));
-<a href=#238 id=238 data-nosnippet>238</a>/// ```
-<a href=#239 id=239 data-nosnippet>239</a></span><span class="kw">pub fn </span>csp() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str {
-<a href=#240 id=240 data-nosnippet>240</a>    <span class="kw">static </span>POLICY: std::sync::OnceLock&lt;String&gt; = std::sync::OnceLock::new();
-<a href=#241 id=241 data-nosnippet>241</a>    POLICY.get_or_init(|| {
-<a href=#242 id=242 data-nosnippet>242</a>        <span class="kw">use </span>sha2::{Digest, Sha256};
-<a href=#243 id=243 data-nosnippet>243</a>        <span class="kw">let </span><span class="kw-2">mut </span>hasher = Sha256::new();
-<a href=#244 id=244 data-nosnippet>244</a>        hasher.update(view::theme_bootstrap().as_bytes());
-<a href=#245 id=245 data-nosnippet>245</a>        <span class="kw">let </span>digest = base64(<span class="kw-2">&amp;</span>hasher.finalize());
-<a href=#246 id=246 data-nosnippet>246</a>        <span class="macro">format!</span>(
-<a href=#247 id=247 data-nosnippet>247</a>            <span class="string">"default-src 'none'; script-src 'self' 'sha256-{digest}'; \
-<a href=#248 id=248 data-nosnippet>248</a>             style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; \
-<a href=#249 id=249 data-nosnippet>249</a>             font-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"
-<a href=#250 id=250 data-nosnippet>250</a>        </span>)
-<a href=#251 id=251 data-nosnippet>251</a>    })
-<a href=#252 id=252 data-nosnippet>252</a>}
-<a href=#253 id=253 data-nosnippet>253</a>
-<a href=#254 id=254 data-nosnippet>254</a><span class="doccomment">/// Standard base64, for the one digest the policy names. Four characters per three bytes,
-<a href=#255 id=255 data-nosnippet>255</a>/// padded; no dependency for twenty lines.
-<a href=#256 id=256 data-nosnippet>256</a>///
-<a href=#257 id=257 data-nosnippet>257</a>/// ```
-<a href=#258 id=258 data-nosnippet>258</a>/// use majordomus_cli::cockpit::base64;
-<a href=#259 id=259 data-nosnippet>259</a>/// assert_eq!(base64(b""), "");
-<a href=#260 id=260 data-nosnippet>260</a>/// assert_eq!(base64(b"f"), "Zg==");
-<a href=#261 id=261 data-nosnippet>261</a>/// assert_eq!(base64(b"fo"), "Zm8=");
-<a href=#262 id=262 data-nosnippet>262</a>/// assert_eq!(base64(b"foo"), "Zm9v");
-<a href=#263 id=263 data-nosnippet>263</a>/// assert_eq!(base64(b"foobar"), "Zm9vYmFy");
-<a href=#264 id=264 data-nosnippet>264</a>/// ```
-<a href=#265 id=265 data-nosnippet>265</a></span><span class="kw">pub fn </span>base64(bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; String {
-<a href=#266 id=266 data-nosnippet>266</a>    <span class="kw">const </span>ALPHABET: <span class="kw-2">&amp;</span>[u8; <span class="number">64</span>] = <span class="string">b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"</span>;
-<a href=#267 id=267 data-nosnippet>267</a>    <span class="kw">let </span><span class="kw-2">mut </span>out = String::with_capacity(bytes.len().div_ceil(<span class="number">3</span>) * <span class="number">4</span>);
-<a href=#268 id=268 data-nosnippet>268</a>    <span class="kw">for </span>chunk <span class="kw">in </span>bytes.chunks(<span class="number">3</span>) {
-<a href=#269 id=269 data-nosnippet>269</a>        <span class="kw">let </span>n = ((chunk[<span class="number">0</span>] <span class="kw">as </span>u32) &lt;&lt; <span class="number">16</span>)
-<a href=#270 id=270 data-nosnippet>270</a>            | ((<span class="kw-2">*</span>chunk.get(<span class="number">1</span>).unwrap_or(<span class="kw-2">&amp;</span><span class="number">0</span>) <span class="kw">as </span>u32) &lt;&lt; <span class="number">8</span>)
-<a href=#271 id=271 data-nosnippet>271</a>            | <span class="kw-2">*</span>chunk.get(<span class="number">2</span>).unwrap_or(<span class="kw-2">&amp;</span><span class="number">0</span>) <span class="kw">as </span>u32;
-<a href=#272 id=272 data-nosnippet>272</a>        out.push(ALPHABET[(n &gt;&gt; <span class="number">18 </span>&amp; <span class="number">63</span>) <span class="kw">as </span>usize] <span class="kw">as </span>char);
-<a href=#273 id=273 data-nosnippet>273</a>        out.push(ALPHABET[(n &gt;&gt; <span class="number">12 </span>&amp; <span class="number">63</span>) <span class="kw">as </span>usize] <span class="kw">as </span>char);
-<a href=#274 id=274 data-nosnippet>274</a>        out.push(<span class="kw">if </span>chunk.len() &gt; <span class="number">1 </span>{
-<a href=#275 id=275 data-nosnippet>275</a>            ALPHABET[(n &gt;&gt; <span class="number">6 </span>&amp; <span class="number">63</span>) <span class="kw">as </span>usize] <span class="kw">as </span>char
-<a href=#276 id=276 data-nosnippet>276</a>        } <span class="kw">else </span>{
-<a href=#277 id=277 data-nosnippet>277</a>            <span class="string">'='
-<a href=#278 id=278 data-nosnippet>278</a>        </span>});
-<a href=#279 id=279 data-nosnippet>279</a>        out.push(<span class="kw">if </span>chunk.len() &gt; <span class="number">2 </span>{
-<a href=#280 id=280 data-nosnippet>280</a>            ALPHABET[(n &amp; <span class="number">63</span>) <span class="kw">as </span>usize] <span class="kw">as </span>char
-<a href=#281 id=281 data-nosnippet>281</a>        } <span class="kw">else </span>{
-<a href=#282 id=282 data-nosnippet>282</a>            <span class="string">'='
-<a href=#283 id=283 data-nosnippet>283</a>        </span>});
-<a href=#284 id=284 data-nosnippet>284</a>    }
-<a href=#285 id=285 data-nosnippet>285</a>    out
-<a href=#286 id=286 data-nosnippet>286</a>}
-<a href=#287 id=287 data-nosnippet>287</a>
-<a href=#288 id=288 data-nosnippet>288</a><span class="attr">#[cfg(test)]
-<a href=#289 id=289 data-nosnippet>289</a></span><span class="kw">mod </span>tests {
-<a href=#290 id=290 data-nosnippet>290</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#291 id=291 data-nosnippet>291</a>
-<a href=#292 id=292 data-nosnippet>292</a>    <span class="attr">#[test]
-<a href=#293 id=293 data-nosnippet>293</a>    </span><span class="kw">fn </span>the_policy_allows_no_remote_origin_and_no_unsafe_source() {
-<a href=#294 id=294 data-nosnippet>294</a>        <span class="kw">let </span>policy = csp();
-<a href=#295 id=295 data-nosnippet>295</a>        <span class="macro">assert!</span>(policy.contains(<span class="string">"script-src 'self' 'sha256-"</span>), <span class="string">"{policy}"</span>);
-<a href=#296 id=296 data-nosnippet>296</a>        <span class="macro">assert!</span>(!policy.contains(<span class="string">"unsafe-eval"</span>), <span class="string">"{policy}"</span>);
-<a href=#297 id=297 data-nosnippet>297</a>        <span class="comment">// the asymmetry, asserted rather than assumed: styles may be inline, scripts never
-<a href=#298 id=298 data-nosnippet>298</a>        </span><span class="macro">assert!</span>(
-<a href=#299 id=299 data-nosnippet>299</a>            policy.contains(<span class="string">"style-src 'self' 'unsafe-inline'"</span>),
-<a href=#300 id=300 data-nosnippet>300</a>            <span class="string">"{policy}"
-<a href=#301 id=301 data-nosnippet>301</a>        </span>);
-<a href=#302 id=302 data-nosnippet>302</a>        <span class="kw">let </span>script_src = policy
-<a href=#303 id=303 data-nosnippet>303</a>            .split(<span class="string">"script-src "</span>)
-<a href=#304 id=304 data-nosnippet>304</a>            .nth(<span class="number">1</span>)
-<a href=#305 id=305 data-nosnippet>305</a>            .and_then(|s| s.split(<span class="string">';'</span>).next())
-<a href=#306 id=306 data-nosnippet>306</a>            .expect(<span class="string">"a script-src directive"</span>);
-<a href=#307 id=307 data-nosnippet>307</a>        <span class="macro">assert!</span>(!script_src.contains(<span class="string">"unsafe-inline"</span>), <span class="string">"{script_src}"</span>);
-<a href=#308 id=308 data-nosnippet>308</a>        <span class="macro">assert!</span>(!policy.contains(<span class="string">"http"</span>), <span class="string">"{policy}"</span>);
-<a href=#309 id=309 data-nosnippet>309</a>        <span class="macro">assert!</span>(policy.contains(<span class="string">"frame-ancestors 'none'"</span>), <span class="string">"{policy}"</span>);
-<a href=#310 id=310 data-nosnippet>310</a>    }
-<a href=#311 id=311 data-nosnippet>311</a>
-<a href=#312 id=312 data-nosnippet>312</a>    <span class="attr">#[test]
-<a href=#313 id=313 data-nosnippet>313</a>    </span><span class="kw">fn </span>the_policy_names_the_digest_of_the_script_it_allows() {
-<a href=#314 id=314 data-nosnippet>314</a>        <span class="kw">use </span>sha2::{Digest, Sha256};
-<a href=#315 id=315 data-nosnippet>315</a>        <span class="kw">let </span><span class="kw-2">mut </span>h = Sha256::new();
-<a href=#316 id=316 data-nosnippet>316</a>        h.update(view::theme_bootstrap().as_bytes());
-<a href=#317 id=317 data-nosnippet>317</a>        <span class="kw">let </span>expected = base64(<span class="kw-2">&amp;</span>h.finalize());
-<a href=#318 id=318 data-nosnippet>318</a>        <span class="macro">assert!</span>(
-<a href=#319 id=319 data-nosnippet>319</a>            csp().contains(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"'sha256-{expected}'"</span>)),
-<a href=#320 id=320 data-nosnippet>320</a>            <span class="string">"the policy names the digest of the bootstrap it ships"
-<a href=#321 id=321 data-nosnippet>321</a>        </span>);
-<a href=#322 id=322 data-nosnippet>322</a>        <span class="macro">assert_eq!</span>(expected.len(), <span class="number">44</span>, <span class="string">"base64 of 32 bytes"</span>);
-<a href=#323 id=323 data-nosnippet>323</a>    }
-<a href=#324 id=324 data-nosnippet>324</a>}
+<a href=#179 id=179 data-nosnippet>179</a>            <span class="string">"/cockpit/peers" </span>=&gt; pages::peers(ctx),
+<a href=#180 id=180 data-nosnippet>180</a>            <span class="string">"/cockpit/integration" </span>=&gt; pages::integration(ctx),
+<a href=#181 id=181 data-nosnippet>181</a>            <span class="string">"/cockpit/mesh" </span>=&gt; pages::mesh(ctx),
+<a href=#182 id=182 data-nosnippet>182</a>            <span class="string">"/cockpit/models" </span>=&gt; pages::models(ctx),
+<a href=#183 id=183 data-nosnippet>183</a>            <span class="string">"/cockpit/reasoning" </span>=&gt; reasoning::page(ctx),
+<a href=#184 id=184 data-nosnippet>184</a>            <span class="string">"/cockpit/economics" </span>=&gt; pages::economics(ctx),
+<a href=#185 id=185 data-nosnippet>185</a>            <span class="string">"/cockpit/directories" </span>=&gt; pages::directories(ctx, query),
+<a href=#186 id=186 data-nosnippet>186</a>            <span class="string">"/cockpit/health" </span>=&gt; pages::health(ctx),
+<a href=#187 id=187 data-nosnippet>187</a>            <span class="string">"/cockpit/quality" </span>=&gt; pages::quality(ctx),
+<a href=#188 id=188 data-nosnippet>188</a>            <span class="string">"/cockpit/artifacts" </span>=&gt; pages::artifacts(ctx),
+<a href=#189 id=189 data-nosnippet>189</a>            <span class="string">"/cockpit/release" </span>=&gt; pages::release(ctx),
+<a href=#190 id=190 data-nosnippet>190</a>            <span class="string">"/cockpit/design" </span>=&gt; pages::design(ctx),
+<a href=#191 id=191 data-nosnippet>191</a>            <span class="string">"/cockpit/api" </span>=&gt; pages::api(ctx),
+<a href=#192 id=192 data-nosnippet>192</a>            <span class="string">"/cockpit/search" </span>=&gt; pages::search(ctx, query),
+<a href=#193 id=193 data-nosnippet>193</a>            <span class="string">"/cockpit/activity" </span>=&gt; pages::activity(ctx),
+<a href=#194 id=194 data-nosnippet>194</a>            other =&gt; {
+<a href=#195 id=195 data-nosnippet>195</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>(id) = other.strip_prefix(<span class="string">"/cockpit/executions/"</span>) {
+<a href=#196 id=196 data-nosnippet>196</a>                    pages::execution(ctx, <span class="kw-2">&amp;</span>percent_decode(id))
+<a href=#197 id=197 data-nosnippet>197</a>                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(id) = other.strip_prefix(<span class="string">"/cockpit/capabilities/"</span>) {
+<a href=#198 id=198 data-nosnippet>198</a>                    pages::capability(ctx, <span class="kw-2">&amp;</span>percent_decode(id))
+<a href=#199 id=199 data-nosnippet>199</a>                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(id) = other.strip_prefix(<span class="string">"/cockpit/commands/"</span>) {
+<a href=#200 id=200 data-nosnippet>200</a>                    pages::command(ctx, <span class="kw-2">&amp;</span>percent_decode(id))
+<a href=#201 id=201 data-nosnippet>201</a>                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(id) = other.strip_prefix(<span class="string">"/cockpit/graphs/"</span>) {
+<a href=#202 id=202 data-nosnippet>202</a>                    pages::graph(ctx, <span class="kw-2">&amp;</span>percent_decode(id), query)
+<a href=#203 id=203 data-nosnippet>203</a>                } <span class="kw">else if let </span><span class="prelude-val">Some</span>(rest) = other.strip_prefix(<span class="string">"/cockpit/objects/"</span>) {
+<a href=#204 id=204 data-nosnippet>204</a>                    <span class="comment">// one kind per segment, one entity per two. No kind and no entity is
+<a href=#205 id=205 data-nosnippet>205</a>                    // named here: both are read from the index, which is what makes adding
+<a href=#206 id=206 data-nosnippet>206</a>                    // an object add its page.
+<a href=#207 id=207 data-nosnippet>207</a>                    </span><span class="kw">let </span>rest = percent_decode(rest);
+<a href=#208 id=208 data-nosnippet>208</a>                    <span class="kw">match </span>rest.split_once(<span class="string">'/'</span>) {
+<a href=#209 id=209 data-nosnippet>209</a>                        <span class="prelude-val">Some</span>((kind, slug)) =&gt; pages::entity(ctx, kind, slug),
+<a href=#210 id=210 data-nosnippet>210</a>                        <span class="prelude-val">None </span>=&gt; pages::objects_of_kind(ctx, <span class="kw-2">&amp;</span>rest, query),
+<a href=#211 id=211 data-nosnippet>211</a>                    }
+<a href=#212 id=212 data-nosnippet>212</a>                } <span class="kw">else </span>{
+<a href=#213 id=213 data-nosnippet>213</a>                    pages::not_found(other)
+<a href=#214 id=214 data-nosnippet>214</a>                }
+<a href=#215 id=215 data-nosnippet>215</a>            }
+<a href=#216 id=216 data-nosnippet>216</a>        }
+<a href=#217 id=217 data-nosnippet>217</a>    }
+<a href=#218 id=218 data-nosnippet>218</a>}
+<a href=#219 id=219 data-nosnippet>219</a>
+<a href=#220 id=220 data-nosnippet>220</a><span class="doccomment">/// The content-security policy every page carries. Scripts come from this origin and from
+<a href=#221 id=221 data-nosnippet>221</a>/// nowhere else; the one inline script is allowed by the digest of its own bytes, so an
+<a href=#222 id=222 data-nosnippet>222</a>/// injected inline script is refused even if one ever got through the escaping. No
+<a href=#223 id=223 data-nosnippet>223</a>/// `unsafe-eval`, no remote origin, and nothing may frame the page.
+<a href=#224 id=224 data-nosnippet>224</a>///
+<a href=#225 id=225 data-nosnippet>225</a>/// `style-src` allows `unsafe-inline` and `script-src` does not, which is the one asymmetry
+<a href=#226 id=226 data-nosnippet>226</a>/// here and it is deliberate. A drawing library sets `style` attributes on the elements it
+<a href=#227 id=227 data-nosnippet>227</a>/// creates — that is how Cytoscape sizes its canvas — and a policy that forbids them makes
+<a href=#228 id=228 data-nosnippet>228</a>/// the optional views silently misrender rather than fail. The exposure is a style
+<a href=#229 id=229 data-nosnippet>229</a>/// injection, which needs the escaping to have already failed and which cannot execute; the
+<a href=#230 id=230 data-nosnippet>230</a>/// exposure `script-src 'unsafe-inline'` would carry is arbitrary code, and that stays shut.
+<a href=#231 id=231 data-nosnippet>231</a>///
+<a href=#232 id=232 data-nosnippet>232</a>/// The digest is computed from `view::theme_bootstrap()` itself, so the policy cannot
+<a href=#233 id=233 data-nosnippet>233</a>/// drift from the script it allows.
+<a href=#234 id=234 data-nosnippet>234</a>///
+<a href=#235 id=235 data-nosnippet>235</a>/// ```
+<a href=#236 id=236 data-nosnippet>236</a>/// let policy = majordomus_cli::cockpit::csp();
+<a href=#237 id=237 data-nosnippet>237</a>/// assert!(policy.starts_with("default-src 'none'"));
+<a href=#238 id=238 data-nosnippet>238</a>/// assert!(!policy.contains("unsafe-eval"));
+<a href=#239 id=239 data-nosnippet>239</a>/// ```
+<a href=#240 id=240 data-nosnippet>240</a></span><span class="kw">pub fn </span>csp() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str {
+<a href=#241 id=241 data-nosnippet>241</a>    <span class="kw">static </span>POLICY: std::sync::OnceLock&lt;String&gt; = std::sync::OnceLock::new();
+<a href=#242 id=242 data-nosnippet>242</a>    POLICY.get_or_init(|| {
+<a href=#243 id=243 data-nosnippet>243</a>        <span class="kw">use </span>sha2::{Digest, Sha256};
+<a href=#244 id=244 data-nosnippet>244</a>        <span class="kw">let </span><span class="kw-2">mut </span>hasher = Sha256::new();
+<a href=#245 id=245 data-nosnippet>245</a>        hasher.update(view::theme_bootstrap().as_bytes());
+<a href=#246 id=246 data-nosnippet>246</a>        <span class="kw">let </span>digest = base64(<span class="kw-2">&amp;</span>hasher.finalize());
+<a href=#247 id=247 data-nosnippet>247</a>        <span class="macro">format!</span>(
+<a href=#248 id=248 data-nosnippet>248</a>            <span class="string">"default-src 'none'; script-src 'self' 'sha256-{digest}'; \
+<a href=#249 id=249 data-nosnippet>249</a>             style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; \
+<a href=#250 id=250 data-nosnippet>250</a>             font-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"
+<a href=#251 id=251 data-nosnippet>251</a>        </span>)
+<a href=#252 id=252 data-nosnippet>252</a>    })
+<a href=#253 id=253 data-nosnippet>253</a>}
+<a href=#254 id=254 data-nosnippet>254</a>
+<a href=#255 id=255 data-nosnippet>255</a><span class="doccomment">/// Standard base64, for the one digest the policy names. Four characters per three bytes,
+<a href=#256 id=256 data-nosnippet>256</a>/// padded; no dependency for twenty lines.
+<a href=#257 id=257 data-nosnippet>257</a>///
+<a href=#258 id=258 data-nosnippet>258</a>/// ```
+<a href=#259 id=259 data-nosnippet>259</a>/// use majordomus_cli::cockpit::base64;
+<a href=#260 id=260 data-nosnippet>260</a>/// assert_eq!(base64(b""), "");
+<a href=#261 id=261 data-nosnippet>261</a>/// assert_eq!(base64(b"f"), "Zg==");
+<a href=#262 id=262 data-nosnippet>262</a>/// assert_eq!(base64(b"fo"), "Zm8=");
+<a href=#263 id=263 data-nosnippet>263</a>/// assert_eq!(base64(b"foo"), "Zm9v");
+<a href=#264 id=264 data-nosnippet>264</a>/// assert_eq!(base64(b"foobar"), "Zm9vYmFy");
+<a href=#265 id=265 data-nosnippet>265</a>/// ```
+<a href=#266 id=266 data-nosnippet>266</a></span><span class="kw">pub fn </span>base64(bytes: <span class="kw-2">&amp;</span>[u8]) -&gt; String {
+<a href=#267 id=267 data-nosnippet>267</a>    <span class="kw">const </span>ALPHABET: <span class="kw-2">&amp;</span>[u8; <span class="number">64</span>] = <span class="string">b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"</span>;
+<a href=#268 id=268 data-nosnippet>268</a>    <span class="kw">let </span><span class="kw-2">mut </span>out = String::with_capacity(bytes.len().div_ceil(<span class="number">3</span>) * <span class="number">4</span>);
+<a href=#269 id=269 data-nosnippet>269</a>    <span class="kw">for </span>chunk <span class="kw">in </span>bytes.chunks(<span class="number">3</span>) {
+<a href=#270 id=270 data-nosnippet>270</a>        <span class="kw">let </span>n = ((chunk[<span class="number">0</span>] <span class="kw">as </span>u32) &lt;&lt; <span class="number">16</span>)
+<a href=#271 id=271 data-nosnippet>271</a>            | ((<span class="kw-2">*</span>chunk.get(<span class="number">1</span>).unwrap_or(<span class="kw-2">&amp;</span><span class="number">0</span>) <span class="kw">as </span>u32) &lt;&lt; <span class="number">8</span>)
+<a href=#272 id=272 data-nosnippet>272</a>            | <span class="kw-2">*</span>chunk.get(<span class="number">2</span>).unwrap_or(<span class="kw-2">&amp;</span><span class="number">0</span>) <span class="kw">as </span>u32;
+<a href=#273 id=273 data-nosnippet>273</a>        out.push(ALPHABET[(n &gt;&gt; <span class="number">18 </span>&amp; <span class="number">63</span>) <span class="kw">as </span>usize] <span class="kw">as </span>char);
+<a href=#274 id=274 data-nosnippet>274</a>        out.push(ALPHABET[(n &gt;&gt; <span class="number">12 </span>&amp; <span class="number">63</span>) <span class="kw">as </span>usize] <span class="kw">as </span>char);
+<a href=#275 id=275 data-nosnippet>275</a>        out.push(<span class="kw">if </span>chunk.len() &gt; <span class="number">1 </span>{
+<a href=#276 id=276 data-nosnippet>276</a>            ALPHABET[(n &gt;&gt; <span class="number">6 </span>&amp; <span class="number">63</span>) <span class="kw">as </span>usize] <span class="kw">as </span>char
+<a href=#277 id=277 data-nosnippet>277</a>        } <span class="kw">else </span>{
+<a href=#278 id=278 data-nosnippet>278</a>            <span class="string">'='
+<a href=#279 id=279 data-nosnippet>279</a>        </span>});
+<a href=#280 id=280 data-nosnippet>280</a>        out.push(<span class="kw">if </span>chunk.len() &gt; <span class="number">2 </span>{
+<a href=#281 id=281 data-nosnippet>281</a>            ALPHABET[(n &amp; <span class="number">63</span>) <span class="kw">as </span>usize] <span class="kw">as </span>char
+<a href=#282 id=282 data-nosnippet>282</a>        } <span class="kw">else </span>{
+<a href=#283 id=283 data-nosnippet>283</a>            <span class="string">'='
+<a href=#284 id=284 data-nosnippet>284</a>        </span>});
+<a href=#285 id=285 data-nosnippet>285</a>    }
+<a href=#286 id=286 data-nosnippet>286</a>    out
+<a href=#287 id=287 data-nosnippet>287</a>}
+<a href=#288 id=288 data-nosnippet>288</a>
+<a href=#289 id=289 data-nosnippet>289</a><span class="attr">#[cfg(test)]
+<a href=#290 id=290 data-nosnippet>290</a></span><span class="kw">mod </span>tests {
+<a href=#291 id=291 data-nosnippet>291</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#292 id=292 data-nosnippet>292</a>
+<a href=#293 id=293 data-nosnippet>293</a>    <span class="attr">#[test]
+<a href=#294 id=294 data-nosnippet>294</a>    </span><span class="kw">fn </span>the_policy_allows_no_remote_origin_and_no_unsafe_source() {
+<a href=#295 id=295 data-nosnippet>295</a>        <span class="kw">let </span>policy = csp();
+<a href=#296 id=296 data-nosnippet>296</a>        <span class="macro">assert!</span>(policy.contains(<span class="string">"script-src 'self' 'sha256-"</span>), <span class="string">"{policy}"</span>);
+<a href=#297 id=297 data-nosnippet>297</a>        <span class="macro">assert!</span>(!policy.contains(<span class="string">"unsafe-eval"</span>), <span class="string">"{policy}"</span>);
+<a href=#298 id=298 data-nosnippet>298</a>        <span class="comment">// the asymmetry, asserted rather than assumed: styles may be inline, scripts never
+<a href=#299 id=299 data-nosnippet>299</a>        </span><span class="macro">assert!</span>(
+<a href=#300 id=300 data-nosnippet>300</a>            policy.contains(<span class="string">"style-src 'self' 'unsafe-inline'"</span>),
+<a href=#301 id=301 data-nosnippet>301</a>            <span class="string">"{policy}"
+<a href=#302 id=302 data-nosnippet>302</a>        </span>);
+<a href=#303 id=303 data-nosnippet>303</a>        <span class="kw">let </span>script_src = policy
+<a href=#304 id=304 data-nosnippet>304</a>            .split(<span class="string">"script-src "</span>)
+<a href=#305 id=305 data-nosnippet>305</a>            .nth(<span class="number">1</span>)
+<a href=#306 id=306 data-nosnippet>306</a>            .and_then(|s| s.split(<span class="string">';'</span>).next())
+<a href=#307 id=307 data-nosnippet>307</a>            .expect(<span class="string">"a script-src directive"</span>);
+<a href=#308 id=308 data-nosnippet>308</a>        <span class="macro">assert!</span>(!script_src.contains(<span class="string">"unsafe-inline"</span>), <span class="string">"{script_src}"</span>);
+<a href=#309 id=309 data-nosnippet>309</a>        <span class="macro">assert!</span>(!policy.contains(<span class="string">"http"</span>), <span class="string">"{policy}"</span>);
+<a href=#310 id=310 data-nosnippet>310</a>        <span class="macro">assert!</span>(policy.contains(<span class="string">"frame-ancestors 'none'"</span>), <span class="string">"{policy}"</span>);
+<a href=#311 id=311 data-nosnippet>311</a>    }
+<a href=#312 id=312 data-nosnippet>312</a>
+<a href=#313 id=313 data-nosnippet>313</a>    <span class="attr">#[test]
+<a href=#314 id=314 data-nosnippet>314</a>    </span><span class="kw">fn </span>the_policy_names_the_digest_of_the_script_it_allows() {
+<a href=#315 id=315 data-nosnippet>315</a>        <span class="kw">use </span>sha2::{Digest, Sha256};
+<a href=#316 id=316 data-nosnippet>316</a>        <span class="kw">let </span><span class="kw-2">mut </span>h = Sha256::new();
+<a href=#317 id=317 data-nosnippet>317</a>        h.update(view::theme_bootstrap().as_bytes());
+<a href=#318 id=318 data-nosnippet>318</a>        <span class="kw">let </span>expected = base64(<span class="kw-2">&amp;</span>h.finalize());
+<a href=#319 id=319 data-nosnippet>319</a>        <span class="macro">assert!</span>(
+<a href=#320 id=320 data-nosnippet>320</a>            csp().contains(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"'sha256-{expected}'"</span>)),
+<a href=#321 id=321 data-nosnippet>321</a>            <span class="string">"the policy names the digest of the bootstrap it ships"
+<a href=#322 id=322 data-nosnippet>322</a>        </span>);
+<a href=#323 id=323 data-nosnippet>323</a>        <span class="macro">assert_eq!</span>(expected.len(), <span class="number">44</span>, <span class="string">"base64 of 32 bytes"</span>);
+<a href=#324 id=324 data-nosnippet>324</a>    }
+<a href=#325 id=325 data-nosnippet>325</a>}
 </code></pre></div></section></main></body></html>

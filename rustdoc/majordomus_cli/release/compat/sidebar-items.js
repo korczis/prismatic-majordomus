@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["POLICY_SCHEMA"],"enum":["Direction","Impact","Mode","Severity","Status","SurfaceKind"],"fn":["analyze","declared_impact","diff"],"struct":["Baseline","CommitEvidence","Diagnostic","Policy","SurfaceChange","VersionPlan"]};
+window.SIDEBAR_ITEMS = {"constant":["POLICY_SCHEMA"],"enum":["Direction","Impact","Mode","Severity","Status","SurfaceKind"],"fn":["analyze","declared_impact","diff","last_release"],"struct":["Baseline","CommitEvidence","Diagnostic","LastRelease","Policy","SurfaceChange","VersionPlan"]};

@@ -350,510 +350,584 @@
 <a href=#350 id=350 data-nosnippet>350</a>}
 <a href=#351 id=351 data-nosnippet>351</a>
 <a href=#352 id=352 data-nosnippet>352</a><span class="kw">fn </span>next_version(v: <span class="kw-2">&amp;</span>Value, answer: <span class="kw-2">&amp;</span>Value) -&gt; (HealthStatus, String) {
-<a href=#353 id=353 data-nosnippet>353</a>    <span class="kw">match </span>v.as_str() {
-<a href=#354 id=354 data-nosnippet>354</a>        <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; (
-<a href=#355 id=355 data-nosnippet>355</a>            HealthStatus::Ok,
-<a href=#356 id=356 data-nosnippet>356</a>            <span class="macro">format!</span>(
-<a href=#357 id=357 data-nosnippet>357</a>                <span class="string">"what the {} bump would produce; `release analyze` measures the contract"</span>,
-<a href=#358 id=358 data-nosnippet>358</a>                answer[<span class="string">"bump"</span>].as_str().unwrap_or(<span class="string">"?"</span>)
-<a href=#359 id=359 data-nosnippet>359</a>            ),
-<a href=#360 id=360 data-nosnippet>360</a>        ),
-<a href=#361 id=361 data-nosnippet>361</a>        <span class="prelude-val">None </span>=&gt; (HealthStatus::Ok, <span class="string">"nothing would be released"</span>.to_string()),
-<a href=#362 id=362 data-nosnippet>362</a>    }
-<a href=#363 id=363 data-nosnippet>363</a>}
-<a href=#364 id=364 data-nosnippet>364</a>
-<a href=#365 id=365 data-nosnippet>365</a><span class="kw">fn </span>blocked_issues(v: <span class="kw-2">&amp;</span>Value, answer: <span class="kw-2">&amp;</span>Value) -&gt; (HealthStatus, String) {
-<a href=#366 id=366 data-nosnippet>366</a>    <span class="kw">if </span>v.is_null() {
-<a href=#367 id=367 data-nosnippet>367</a>        <span class="kw">return </span>(
-<a href=#368 id=368 data-nosnippet>368</a>            HealthStatus::Unknown,
-<a href=#369 id=369 data-nosnippet>369</a>            <span class="string">"the plan's vocabulary declares no BLOCKED status"</span>.to_string(),
-<a href=#370 id=370 data-nosnippet>370</a>        );
-<a href=#371 id=371 data-nosnippet>371</a>    }
-<a href=#372 id=372 data-nosnippet>372</a>    (
-<a href=#373 id=373 data-nosnippet>373</a>        some_or(v, HealthStatus::Ok, HealthStatus::Warn),
-<a href=#374 id=374 data-nosnippet>374</a>        <span class="macro">format!</span>(
-<a href=#375 id=375 data-nosnippet>375</a>            <span class="string">"of {} issue(s), waiting on a dependency that is not done"</span>,
-<a href=#376 id=376 data-nosnippet>376</a>            answer[<span class="string">"counts"</span>][<span class="string">"total"</span>].as_u64().unwrap_or(<span class="number">0</span>)
-<a href=#377 id=377 data-nosnippet>377</a>        ),
-<a href=#378 id=378 data-nosnippet>378</a>    )
-<a href=#379 id=379 data-nosnippet>379</a>}
-<a href=#380 id=380 data-nosnippet>380</a>
-<a href=#381 id=381 data-nosnippet>381</a><span class="kw">fn </span>repository_errors(v: <span class="kw-2">&amp;</span>Value, <span class="kw">_</span>: <span class="kw-2">&amp;</span>Value) -&gt; (HealthStatus, String) {
-<a href=#382 id=382 data-nosnippet>382</a>    (
-<a href=#383 id=383 data-nosnippet>383</a>        some_or(v, HealthStatus::Ok, HealthStatus::Fail),
-<a href=#384 id=384 data-nosnippet>384</a>        <span class="string">"error-level diagnostics across the whole worktree topology"</span>.to_string(),
-<a href=#385 id=385 data-nosnippet>385</a>    )
-<a href=#386 id=386 data-nosnippet>386</a>}
-<a href=#387 id=387 data-nosnippet>387</a>
-<a href=#388 id=388 data-nosnippet>388</a><span class="kw">fn </span>canonical(v: <span class="kw-2">&amp;</span>Value, answer: <span class="kw-2">&amp;</span>Value) -&gt; (HealthStatus, String) {
-<a href=#389 id=389 data-nosnippet>389</a>    <span class="kw">let </span>path = answer[<span class="string">"worktree"</span>][<span class="string">"path"</span>].as_str().unwrap_or(<span class="string">"?"</span>);
-<a href=#390 id=390 data-nosnippet>390</a>    <span class="kw">if </span>v.as_bool() == <span class="prelude-val">Some</span>(<span class="bool-val">true</span>) {
-<a href=#391 id=391 data-nosnippet>391</a>        (
-<a href=#392 id=392 data-nosnippet>392</a>            HealthStatus::Ok,
-<a href=#393 id=393 data-nosnippet>393</a>            <span class="macro">format!</span>(<span class="string">"{path} is where its branch belongs"</span>),
-<a href=#394 id=394 data-nosnippet>394</a>        )
-<a href=#395 id=395 data-nosnippet>395</a>    } <span class="kw">else </span>{
-<a href=#396 id=396 data-nosnippet>396</a>        (
-<a href=#397 id=397 data-nosnippet>397</a>            HealthStatus::Fail,
-<a href=#398 id=398 data-nosnippet>398</a>            <span class="macro">format!</span>(<span class="string">"{path} is not where its branch belongs; the guard refuses a commit there"</span>),
-<a href=#399 id=399 data-nosnippet>399</a>        )
-<a href=#400 id=400 data-nosnippet>400</a>    }
-<a href=#401 id=401 data-nosnippet>401</a>}
-<a href=#402 id=402 data-nosnippet>402</a>
-<a href=#403 id=403 data-nosnippet>403</a><span class="kw">fn </span>next_issue(v: <span class="kw-2">&amp;</span>Value, answer: <span class="kw-2">&amp;</span>Value) -&gt; (HealthStatus, String) {
-<a href=#404 id=404 data-nosnippet>404</a>    <span class="kw">let </span>milestone = answer[<span class="string">"active_milestone"</span>].as_str().unwrap_or(<span class="string">"?"</span>);
-<a href=#405 id=405 data-nosnippet>405</a>    <span class="kw">if </span>answer[<span class="string">"issue"</span>].is_object() {
-<a href=#406 id=406 data-nosnippet>406</a>        (
-<a href=#407 id=407 data-nosnippet>407</a>            HealthStatus::Ok,
-<a href=#408 id=408 data-nosnippet>408</a>            <span class="macro">format!</span>(
-<a href=#409 id=409 data-nosnippet>409</a>                <span class="string">"{} (active milestone {milestone})"</span>,
-<a href=#410 id=410 data-nosnippet>410</a>                answer[<span class="string">"issue"</span>][<span class="string">"title"</span>]
-<a href=#411 id=411 data-nosnippet>411</a>                    .as_str()
-<a href=#412 id=412 data-nosnippet>412</a>                    .unwrap_or(<span class="string">"the next ready issue"</span>)
-<a href=#413 id=413 data-nosnippet>413</a>            ),
-<a href=#414 id=414 data-nosnippet>414</a>        )
-<a href=#415 id=415 data-nosnippet>415</a>    } <span class="kw">else if </span>v.is_null() {
-<a href=#416 id=416 data-nosnippet>416</a>        (
-<a href=#417 id=417 data-nosnippet>417</a>            HealthStatus::Warn,
-<a href=#418 id=418 data-nosnippet>418</a>            <span class="macro">format!</span>(<span class="string">"nothing is executable and no reason was given (active milestone {milestone})"</span>),
-<a href=#419 id=419 data-nosnippet>419</a>        )
-<a href=#420 id=420 data-nosnippet>420</a>    } <span class="kw">else </span>{
-<a href=#421 id=421 data-nosnippet>421</a>        (
-<a href=#422 id=422 data-nosnippet>422</a>            HealthStatus::Warn,
-<a href=#423 id=423 data-nosnippet>423</a>            <span class="macro">format!</span>(<span class="string">"nothing is executable (active milestone {milestone})"</span>),
-<a href=#424 id=424 data-nosnippet>424</a>        )
-<a href=#425 id=425 data-nosnippet>425</a>    }
-<a href=#426 id=426 data-nosnippet>426</a>}
-<a href=#427 id=427 data-nosnippet>427</a>
-<a href=#428 id=428 data-nosnippet>428</a><span class="kw">fn </span>blockers(v: <span class="kw-2">&amp;</span>Value, <span class="kw">_</span>: <span class="kw-2">&amp;</span>Value) -&gt; (HealthStatus, String) {
-<a href=#429 id=429 data-nosnippet>429</a>    (
-<a href=#430 id=430 data-nosnippet>430</a>        some_or(v, HealthStatus::Ok, HealthStatus::Fail),
-<a href=#431 id=431 data-nosnippet>431</a>        <span class="string">"unresolved questions on this branch; every one refuses `finish --outcome completed`"
-<a href=#432 id=432 data-nosnippet>432</a>            </span>.to_string(),
-<a href=#433 id=433 data-nosnippet>433</a>    )
-<a href=#434 id=434 data-nosnippet>434</a>}
-<a href=#435 id=435 data-nosnippet>435</a>
-<a href=#436 id=436 data-nosnippet>436</a><span class="kw">fn </span>overlaps(v: <span class="kw-2">&amp;</span>Value, answer: <span class="kw-2">&amp;</span>Value) -&gt; (HealthStatus, String) {
-<a href=#437 id=437 data-nosnippet>437</a>    (
-<a href=#438 id=438 data-nosnippet>438</a>        some_or(v, HealthStatus::Ok, HealthStatus::Warn),
-<a href=#439 id=439 data-nosnippet>439</a>        <span class="macro">format!</span>(
-<a href=#440 id=440 data-nosnippet>440</a>            <span class="string">"pairs of workers whose claimed scopes meet, on this checkout's board of {} peer(s)"</span>,
-<a href=#441 id=441 data-nosnippet>441</a>            answer[<span class="string">"count"</span>].as_u64().unwrap_or(<span class="number">0</span>)
-<a href=#442 id=442 data-nosnippet>442</a>        ),
-<a href=#443 id=443 data-nosnippet>443</a>    )
-<a href=#444 id=444 data-nosnippet>444</a>}
-<a href=#445 id=445 data-nosnippet>445</a>
-<a href=#446 id=446 data-nosnippet>446</a><span class="doccomment">/// Every card of the Overview, in the order it is read.
-<a href=#447 id=447 data-nosnippet>447</a></span><span class="kw">const </span>CARDS: <span class="kw-2">&amp;</span>[Spec] = <span class="kw-2">&amp;</span>[
-<a href=#448 id=448 data-nosnippet>448</a>    Spec {
-<a href=#449 id=449 data-nosnippet>449</a>        question: <span class="string">"healthy"</span>,
-<a href=#450 id=450 data-nosnippet>450</a>        id: <span class="string">"health-status"</span>,
-<a href=#451 id=451 data-nosnippet>451</a>        title: <span class="string">"Health of this process"</span>,
-<a href=#452 id=452 data-nosnippet>452</a>        capability: <span class="string">"health.report"</span>,
-<a href=#453 id=453 data-nosnippet>453</a>        input: <span class="string">"{}"</span>,
-<a href=#454 id=454 data-nosnippet>454</a>        pointers: <span class="kw-2">&amp;</span>[<span class="string">"/status"</span>],
-<a href=#455 id=455 data-nosnippet>455</a>        measure: DashboardMeasure::Exact,
-<a href=#456 id=456 data-nosnippet>456</a>        route: <span class="string">"/cockpit/health"</span>,
-<a href=#457 id=457 data-nosnippet>457</a>        action: <span class="prelude-val">Some</span>(<span class="string">"majordomus doctor"</span>),
-<a href=#458 id=458 data-nosnippet>458</a>        judge: health_status,
-<a href=#459 id=459 data-nosnippet>459</a>    },
-<a href=#460 id=460 data-nosnippet>460</a>    Spec {
-<a href=#461 id=461 data-nosnippet>461</a>        question: <span class="string">"healthy"</span>,
-<a href=#462 id=462 data-nosnippet>462</a>        id: <span class="string">"health-failing"</span>,
-<a href=#463 id=463 data-nosnippet>463</a>        title: <span class="string">"Failing checks"</span>,
-<a href=#464 id=464 data-nosnippet>464</a>        capability: <span class="string">"health.report"</span>,
-<a href=#465 id=465 data-nosnippet>465</a>        input: <span class="string">"{}"</span>,
-<a href=#466 id=466 data-nosnippet>466</a>        pointers: <span class="kw-2">&amp;</span>[<span class="string">"/tallies/fail"</span>],
-<a href=#467 id=467 data-nosnippet>467</a>        measure: DashboardMeasure::Count,
-<a href=#468 id=468 data-nosnippet>468</a>        route: <span class="string">"/cockpit/health"</span>,
-<a href=#469 id=469 data-nosnippet>469</a>        action: <span class="prelude-val">Some</span>(<span class="string">"majordomus doctor"</span>),
-<a href=#470 id=470 data-nosnippet>470</a>        judge: health_failing,
-<a href=#471 id=471 data-nosnippet>471</a>    },
+<a href=#353 id=353 data-nosnippet>353</a>    <span class="kw">let </span>bump = answer[<span class="string">"bump"</span>].as_str().unwrap_or(<span class="string">"?"</span>);
+<a href=#354 id=354 data-nosnippet>354</a>    <span class="kw">match </span>(v.as_str(), answer[<span class="string">"decided_by"</span>].as_str()) {
+<a href=#355 id=355 data-nosnippet>355</a>        (<span class="prelude-val">Some</span>(<span class="kw">_</span>), <span class="prelude-val">Some</span>(<span class="string">"contract"</span>)) =&gt; (
+<a href=#356 id=356 data-nosnippet>356</a>            HealthStatus::Ok,
+<a href=#357 id=357 data-nosnippet>357</a>            <span class="macro">format!</span>(
+<a href=#358 id=358 data-nosnippet>358</a>                <span class="string">"the version the public contract requires: the declared one when it already \
+<a href=#359 id=359 data-nosnippet>359</a>                 satisfies the contract, otherwise the smallest it allows; the commits imply a \
+<a href=#360 id=360 data-nosnippet>360</a>                 {bump} (evidence)"
+<a href=#361 id=361 data-nosnippet>361</a>            </span>),
+<a href=#362 id=362 data-nosnippet>362</a>        ),
+<a href=#363 id=363 data-nosnippet>363</a>        (<span class="prelude-val">Some</span>(<span class="kw">_</span>), <span class="prelude-val">Some</span>(<span class="string">"contract_and_commits"</span>)) =&gt; (
+<a href=#364 id=364 data-nosnippet>364</a>            HealthStatus::Ok,
+<a href=#365 id=365 data-nosnippet>365</a>            <span class="macro">format!</span>(
+<a href=#366 id=366 data-nosnippet>366</a>                <span class="string">"the contract requires no release over the last one and the commits imply a \
+<a href=#367 id=367 data-nosnippet>367</a>                 {bump}: the smallest release above it, a patch"
+<a href=#368 id=368 data-nosnippet>368</a>            </span>),
+<a href=#369 id=369 data-nosnippet>369</a>        ),
+<a href=#370 id=370 data-nosnippet>370</a>        (<span class="kw">_</span>, <span class="prelude-val">Some</span>(<span class="string">"undecided"</span>)) =&gt; (
+<a href=#371 id=371 data-nosnippet>371</a>            HealthStatus::Unknown,
+<a href=#372 id=372 data-nosnippet>372</a>            <span class="macro">format!</span>(
+<a href=#373 id=373 data-nosnippet>373</a>                <span class="string">"undecided: the public contract could not be measured ({}), so no version is \
+<a href=#374 id=374 data-nosnippet>374</a>                 selected; the commits imply a {bump} (evidence only), and `release bump` needs \
+<a href=#375 id=375 data-nosnippet>375</a>                 an explicit target"</span>,
+<a href=#376 id=376 data-nosnippet>376</a>                answer[<span class="string">"contract_unreadable"</span>]
+<a href=#377 id=377 data-nosnippet>377</a>                    .as_str()
+<a href=#378 id=378 data-nosnippet>378</a>                    .unwrap_or(<span class="string">"no reason given"</span>)
+<a href=#379 id=379 data-nosnippet>379</a>            ),
+<a href=#380 id=380 data-nosnippet>380</a>        ),
+<a href=#381 id=381 data-nosnippet>381</a>        (<span class="prelude-val">Some</span>(<span class="kw">_</span>), <span class="kw">_</span>) =&gt; (
+<a href=#382 id=382 data-nosnippet>382</a>            HealthStatus::Ok,
+<a href=#383 id=383 data-nosnippet>383</a>            <span class="string">"the version the public contract requires"</span>.to_string(),
+<a href=#384 id=384 data-nosnippet>384</a>        ),
+<a href=#385 id=385 data-nosnippet>385</a>        (<span class="prelude-val">None</span>, <span class="kw">_</span>) =&gt; (HealthStatus::Ok, <span class="string">"nothing would be released"</span>.to_string()),
+<a href=#386 id=386 data-nosnippet>386</a>    }
+<a href=#387 id=387 data-nosnippet>387</a>}
+<a href=#388 id=388 data-nosnippet>388</a>
+<a href=#389 id=389 data-nosnippet>389</a><span class="kw">fn </span>blocked_issues(v: <span class="kw-2">&amp;</span>Value, answer: <span class="kw-2">&amp;</span>Value) -&gt; (HealthStatus, String) {
+<a href=#390 id=390 data-nosnippet>390</a>    <span class="kw">if </span>v.is_null() {
+<a href=#391 id=391 data-nosnippet>391</a>        <span class="kw">return </span>(
+<a href=#392 id=392 data-nosnippet>392</a>            HealthStatus::Unknown,
+<a href=#393 id=393 data-nosnippet>393</a>            <span class="string">"the plan's vocabulary declares no BLOCKED status"</span>.to_string(),
+<a href=#394 id=394 data-nosnippet>394</a>        );
+<a href=#395 id=395 data-nosnippet>395</a>    }
+<a href=#396 id=396 data-nosnippet>396</a>    (
+<a href=#397 id=397 data-nosnippet>397</a>        some_or(v, HealthStatus::Ok, HealthStatus::Warn),
+<a href=#398 id=398 data-nosnippet>398</a>        <span class="macro">format!</span>(
+<a href=#399 id=399 data-nosnippet>399</a>            <span class="string">"of {} issue(s), waiting on a dependency that is not done"</span>,
+<a href=#400 id=400 data-nosnippet>400</a>            answer[<span class="string">"counts"</span>][<span class="string">"total"</span>].as_u64().unwrap_or(<span class="number">0</span>)
+<a href=#401 id=401 data-nosnippet>401</a>        ),
+<a href=#402 id=402 data-nosnippet>402</a>    )
+<a href=#403 id=403 data-nosnippet>403</a>}
+<a href=#404 id=404 data-nosnippet>404</a>
+<a href=#405 id=405 data-nosnippet>405</a><span class="kw">fn </span>repository_errors(v: <span class="kw-2">&amp;</span>Value, <span class="kw">_</span>: <span class="kw-2">&amp;</span>Value) -&gt; (HealthStatus, String) {
+<a href=#406 id=406 data-nosnippet>406</a>    (
+<a href=#407 id=407 data-nosnippet>407</a>        some_or(v, HealthStatus::Ok, HealthStatus::Fail),
+<a href=#408 id=408 data-nosnippet>408</a>        <span class="string">"error-level diagnostics across the whole worktree topology"</span>.to_string(),
+<a href=#409 id=409 data-nosnippet>409</a>    )
+<a href=#410 id=410 data-nosnippet>410</a>}
+<a href=#411 id=411 data-nosnippet>411</a>
+<a href=#412 id=412 data-nosnippet>412</a><span class="kw">fn </span>canonical(v: <span class="kw-2">&amp;</span>Value, answer: <span class="kw-2">&amp;</span>Value) -&gt; (HealthStatus, String) {
+<a href=#413 id=413 data-nosnippet>413</a>    <span class="kw">let </span>path = answer[<span class="string">"worktree"</span>][<span class="string">"path"</span>].as_str().unwrap_or(<span class="string">"?"</span>);
+<a href=#414 id=414 data-nosnippet>414</a>    <span class="kw">if </span>v.as_bool() == <span class="prelude-val">Some</span>(<span class="bool-val">true</span>) {
+<a href=#415 id=415 data-nosnippet>415</a>        (
+<a href=#416 id=416 data-nosnippet>416</a>            HealthStatus::Ok,
+<a href=#417 id=417 data-nosnippet>417</a>            <span class="macro">format!</span>(<span class="string">"{path} is where its branch belongs"</span>),
+<a href=#418 id=418 data-nosnippet>418</a>        )
+<a href=#419 id=419 data-nosnippet>419</a>    } <span class="kw">else </span>{
+<a href=#420 id=420 data-nosnippet>420</a>        (
+<a href=#421 id=421 data-nosnippet>421</a>            HealthStatus::Fail,
+<a href=#422 id=422 data-nosnippet>422</a>            <span class="macro">format!</span>(<span class="string">"{path} is not where its branch belongs; the guard refuses a commit there"</span>),
+<a href=#423 id=423 data-nosnippet>423</a>        )
+<a href=#424 id=424 data-nosnippet>424</a>    }
+<a href=#425 id=425 data-nosnippet>425</a>}
+<a href=#426 id=426 data-nosnippet>426</a>
+<a href=#427 id=427 data-nosnippet>427</a><span class="kw">fn </span>next_issue(v: <span class="kw-2">&amp;</span>Value, answer: <span class="kw-2">&amp;</span>Value) -&gt; (HealthStatus, String) {
+<a href=#428 id=428 data-nosnippet>428</a>    <span class="kw">let </span>milestone = answer[<span class="string">"active_milestone"</span>].as_str().unwrap_or(<span class="string">"?"</span>);
+<a href=#429 id=429 data-nosnippet>429</a>    <span class="kw">if </span>answer[<span class="string">"issue"</span>].is_object() {
+<a href=#430 id=430 data-nosnippet>430</a>        (
+<a href=#431 id=431 data-nosnippet>431</a>            HealthStatus::Ok,
+<a href=#432 id=432 data-nosnippet>432</a>            <span class="macro">format!</span>(
+<a href=#433 id=433 data-nosnippet>433</a>                <span class="string">"{} (active milestone {milestone})"</span>,
+<a href=#434 id=434 data-nosnippet>434</a>                answer[<span class="string">"issue"</span>][<span class="string">"title"</span>]
+<a href=#435 id=435 data-nosnippet>435</a>                    .as_str()
+<a href=#436 id=436 data-nosnippet>436</a>                    .unwrap_or(<span class="string">"the next ready issue"</span>)
+<a href=#437 id=437 data-nosnippet>437</a>            ),
+<a href=#438 id=438 data-nosnippet>438</a>        )
+<a href=#439 id=439 data-nosnippet>439</a>    } <span class="kw">else if </span>v.is_null() {
+<a href=#440 id=440 data-nosnippet>440</a>        (
+<a href=#441 id=441 data-nosnippet>441</a>            HealthStatus::Warn,
+<a href=#442 id=442 data-nosnippet>442</a>            <span class="macro">format!</span>(<span class="string">"nothing is executable and no reason was given (active milestone {milestone})"</span>),
+<a href=#443 id=443 data-nosnippet>443</a>        )
+<a href=#444 id=444 data-nosnippet>444</a>    } <span class="kw">else </span>{
+<a href=#445 id=445 data-nosnippet>445</a>        (
+<a href=#446 id=446 data-nosnippet>446</a>            HealthStatus::Warn,
+<a href=#447 id=447 data-nosnippet>447</a>            <span class="macro">format!</span>(<span class="string">"nothing is executable (active milestone {milestone})"</span>),
+<a href=#448 id=448 data-nosnippet>448</a>        )
+<a href=#449 id=449 data-nosnippet>449</a>    }
+<a href=#450 id=450 data-nosnippet>450</a>}
+<a href=#451 id=451 data-nosnippet>451</a>
+<a href=#452 id=452 data-nosnippet>452</a><span class="kw">fn </span>blockers(v: <span class="kw-2">&amp;</span>Value, <span class="kw">_</span>: <span class="kw-2">&amp;</span>Value) -&gt; (HealthStatus, String) {
+<a href=#453 id=453 data-nosnippet>453</a>    (
+<a href=#454 id=454 data-nosnippet>454</a>        some_or(v, HealthStatus::Ok, HealthStatus::Fail),
+<a href=#455 id=455 data-nosnippet>455</a>        <span class="string">"unresolved questions on this branch; every one refuses `finish --outcome completed`"
+<a href=#456 id=456 data-nosnippet>456</a>            </span>.to_string(),
+<a href=#457 id=457 data-nosnippet>457</a>    )
+<a href=#458 id=458 data-nosnippet>458</a>}
+<a href=#459 id=459 data-nosnippet>459</a>
+<a href=#460 id=460 data-nosnippet>460</a><span class="kw">fn </span>overlaps(v: <span class="kw-2">&amp;</span>Value, answer: <span class="kw-2">&amp;</span>Value) -&gt; (HealthStatus, String) {
+<a href=#461 id=461 data-nosnippet>461</a>    (
+<a href=#462 id=462 data-nosnippet>462</a>        some_or(v, HealthStatus::Ok, HealthStatus::Warn),
+<a href=#463 id=463 data-nosnippet>463</a>        <span class="macro">format!</span>(
+<a href=#464 id=464 data-nosnippet>464</a>            <span class="string">"pairs of workers whose claimed scopes meet, on this checkout's board of {} peer(s)"</span>,
+<a href=#465 id=465 data-nosnippet>465</a>            answer[<span class="string">"count"</span>].as_u64().unwrap_or(<span class="number">0</span>)
+<a href=#466 id=466 data-nosnippet>466</a>        ),
+<a href=#467 id=467 data-nosnippet>467</a>    )
+<a href=#468 id=468 data-nosnippet>468</a>}
+<a href=#469 id=469 data-nosnippet>469</a>
+<a href=#470 id=470 data-nosnippet>470</a><span class="doccomment">/// Every card of the Overview, in the order it is read.
+<a href=#471 id=471 data-nosnippet>471</a></span><span class="kw">const </span>CARDS: <span class="kw-2">&amp;</span>[Spec] = <span class="kw-2">&amp;</span>[
 <a href=#472 id=472 data-nosnippet>472</a>    Spec {
-<a href=#473 id=473 data-nosnippet>473</a>        question: <span class="string">"changed"</span>,
-<a href=#474 id=474 data-nosnippet>474</a>        id: <span class="string">"version-declared"</span>,
-<a href=#475 id=475 data-nosnippet>475</a>        title: <span class="string">"Declared version"</span>,
-<a href=#476 id=476 data-nosnippet>476</a>        capability: <span class="string">"release.version"</span>,
+<a href=#473 id=473 data-nosnippet>473</a>        question: <span class="string">"healthy"</span>,
+<a href=#474 id=474 data-nosnippet>474</a>        id: <span class="string">"health-status"</span>,
+<a href=#475 id=475 data-nosnippet>475</a>        title: <span class="string">"Health of this process"</span>,
+<a href=#476 id=476 data-nosnippet>476</a>        capability: <span class="string">"health.report"</span>,
 <a href=#477 id=477 data-nosnippet>477</a>        input: <span class="string">"{}"</span>,
-<a href=#478 id=478 data-nosnippet>478</a>        pointers: <span class="kw-2">&amp;</span>[<span class="string">"/declared"</span>],
+<a href=#478 id=478 data-nosnippet>478</a>        pointers: <span class="kw-2">&amp;</span>[<span class="string">"/status"</span>],
 <a href=#479 id=479 data-nosnippet>479</a>        measure: DashboardMeasure::Exact,
-<a href=#480 id=480 data-nosnippet>480</a>        route: <span class="string">"/cockpit/release"</span>,
-<a href=#481 id=481 data-nosnippet>481</a>        action: <span class="prelude-val">Some</span>(<span class="string">"majordomus release version"</span>),
-<a href=#482 id=482 data-nosnippet>482</a>        judge: version_declared,
+<a href=#480 id=480 data-nosnippet>480</a>        route: <span class="string">"/cockpit/health"</span>,
+<a href=#481 id=481 data-nosnippet>481</a>        action: <span class="prelude-val">Some</span>(<span class="string">"majordomus doctor"</span>),
+<a href=#482 id=482 data-nosnippet>482</a>        judge: health_status,
 <a href=#483 id=483 data-nosnippet>483</a>    },
 <a href=#484 id=484 data-nosnippet>484</a>    Spec {
-<a href=#485 id=485 data-nosnippet>485</a>        question: <span class="string">"changed"</span>,
-<a href=#486 id=486 data-nosnippet>486</a>        id: <span class="string">"last-release"</span>,
-<a href=#487 id=487 data-nosnippet>487</a>        title: <span class="string">"Last release"</span>,
-<a href=#488 id=488 data-nosnippet>488</a>        capability: <span class="string">"release.version"</span>,
+<a href=#485 id=485 data-nosnippet>485</a>        question: <span class="string">"healthy"</span>,
+<a href=#486 id=486 data-nosnippet>486</a>        id: <span class="string">"health-failing"</span>,
+<a href=#487 id=487 data-nosnippet>487</a>        title: <span class="string">"Failing checks"</span>,
+<a href=#488 id=488 data-nosnippet>488</a>        capability: <span class="string">"health.report"</span>,
 <a href=#489 id=489 data-nosnippet>489</a>        input: <span class="string">"{}"</span>,
-<a href=#490 id=490 data-nosnippet>490</a>        pointers: <span class="kw-2">&amp;</span>[<span class="string">"/last_release"</span>],
-<a href=#491 id=491 data-nosnippet>491</a>        measure: DashboardMeasure::Exact,
-<a href=#492 id=492 data-nosnippet>492</a>        route: <span class="string">"/cockpit/release"</span>,
-<a href=#493 id=493 data-nosnippet>493</a>        action: <span class="prelude-val">Some</span>(<span class="string">"majordomus release changelog"</span>),
-<a href=#494 id=494 data-nosnippet>494</a>        judge: last_release,
+<a href=#490 id=490 data-nosnippet>490</a>        pointers: <span class="kw-2">&amp;</span>[<span class="string">"/tallies/fail"</span>],
+<a href=#491 id=491 data-nosnippet>491</a>        measure: DashboardMeasure::Count,
+<a href=#492 id=492 data-nosnippet>492</a>        route: <span class="string">"/cockpit/health"</span>,
+<a href=#493 id=493 data-nosnippet>493</a>        action: <span class="prelude-val">Some</span>(<span class="string">"majordomus doctor"</span>),
+<a href=#494 id=494 data-nosnippet>494</a>        judge: health_failing,
 <a href=#495 id=495 data-nosnippet>495</a>    },
 <a href=#496 id=496 data-nosnippet>496</a>    Spec {
 <a href=#497 id=497 data-nosnippet>497</a>        question: <span class="string">"changed"</span>,
-<a href=#498 id=498 data-nosnippet>498</a>        id: <span class="string">"pending-bump"</span>,
-<a href=#499 id=499 data-nosnippet>499</a>        title: <span class="string">"Bump the commits imply"</span>,
+<a href=#498 id=498 data-nosnippet>498</a>        id: <span class="string">"version-declared"</span>,
+<a href=#499 id=499 data-nosnippet>499</a>        title: <span class="string">"Declared version"</span>,
 <a href=#500 id=500 data-nosnippet>500</a>        capability: <span class="string">"release.version"</span>,
 <a href=#501 id=501 data-nosnippet>501</a>        input: <span class="string">"{}"</span>,
-<a href=#502 id=502 data-nosnippet>502</a>        pointers: <span class="kw-2">&amp;</span>[<span class="string">"/bump"</span>],
+<a href=#502 id=502 data-nosnippet>502</a>        pointers: <span class="kw-2">&amp;</span>[<span class="string">"/declared"</span>],
 <a href=#503 id=503 data-nosnippet>503</a>        measure: DashboardMeasure::Exact,
 <a href=#504 id=504 data-nosnippet>504</a>        route: <span class="string">"/cockpit/release"</span>,
-<a href=#505 id=505 data-nosnippet>505</a>        action: <span class="prelude-val">Some</span>(<span class="string">"majordomus release analyze"</span>),
-<a href=#506 id=506 data-nosnippet>506</a>        judge: pending_bump,
+<a href=#505 id=505 data-nosnippet>505</a>        action: <span class="prelude-val">Some</span>(<span class="string">"majordomus release version"</span>),
+<a href=#506 id=506 data-nosnippet>506</a>        judge: version_declared,
 <a href=#507 id=507 data-nosnippet>507</a>    },
 <a href=#508 id=508 data-nosnippet>508</a>    Spec {
 <a href=#509 id=509 data-nosnippet>509</a>        question: <span class="string">"changed"</span>,
-<a href=#510 id=510 data-nosnippet>510</a>        id: <span class="string">"next-version"</span>,
-<a href=#511 id=511 data-nosnippet>511</a>        title: <span class="string">"Next version"</span>,
+<a href=#510 id=510 data-nosnippet>510</a>        id: <span class="string">"last-release"</span>,
+<a href=#511 id=511 data-nosnippet>511</a>        title: <span class="string">"Last release"</span>,
 <a href=#512 id=512 data-nosnippet>512</a>        capability: <span class="string">"release.version"</span>,
 <a href=#513 id=513 data-nosnippet>513</a>        input: <span class="string">"{}"</span>,
-<a href=#514 id=514 data-nosnippet>514</a>        pointers: <span class="kw-2">&amp;</span>[<span class="string">"/next"</span>],
+<a href=#514 id=514 data-nosnippet>514</a>        pointers: <span class="kw-2">&amp;</span>[<span class="string">"/last_release"</span>],
 <a href=#515 id=515 data-nosnippet>515</a>        measure: DashboardMeasure::Exact,
 <a href=#516 id=516 data-nosnippet>516</a>        route: <span class="string">"/cockpit/release"</span>,
-<a href=#517 id=517 data-nosnippet>517</a>        action: <span class="prelude-val">Some</span>(<span class="string">"majordomus release bump"</span>),
-<a href=#518 id=518 data-nosnippet>518</a>        judge: next_version,
+<a href=#517 id=517 data-nosnippet>517</a>        action: <span class="prelude-val">Some</span>(<span class="string">"majordomus release changelog"</span>),
+<a href=#518 id=518 data-nosnippet>518</a>        judge: last_release,
 <a href=#519 id=519 data-nosnippet>519</a>    },
 <a href=#520 id=520 data-nosnippet>520</a>    Spec {
-<a href=#521 id=521 data-nosnippet>521</a>        question: <span class="string">"broken"</span>,
-<a href=#522 id=522 data-nosnippet>522</a>        id: <span class="string">"blocked-issues"</span>,
-<a href=#523 id=523 data-nosnippet>523</a>        title: <span class="string">"Blocked issues"</span>,
-<a href=#524 id=524 data-nosnippet>524</a>        capability: <span class="string">"plan.status"</span>,
+<a href=#521 id=521 data-nosnippet>521</a>        question: <span class="string">"changed"</span>,
+<a href=#522 id=522 data-nosnippet>522</a>        id: <span class="string">"pending-bump"</span>,
+<a href=#523 id=523 data-nosnippet>523</a>        title: <span class="string">"Bump the commits imply"</span>,
+<a href=#524 id=524 data-nosnippet>524</a>        capability: <span class="string">"release.version"</span>,
 <a href=#525 id=525 data-nosnippet>525</a>        input: <span class="string">"{}"</span>,
-<a href=#526 id=526 data-nosnippet>526</a>        pointers: <span class="kw-2">&amp;</span>[<span class="string">"/counts/by_status/BLOCKED"</span>],
+<a href=#526 id=526 data-nosnippet>526</a>        pointers: <span class="kw-2">&amp;</span>[<span class="string">"/bump"</span>],
 <a href=#527 id=527 data-nosnippet>527</a>        measure: DashboardMeasure::Exact,
-<a href=#528 id=528 data-nosnippet>528</a>        route: <span class="string">"/cockpit/capabilities/plan.status"</span>,
-<a href=#529 id=529 data-nosnippet>529</a>        action: <span class="prelude-val">Some</span>(<span class="string">"majordomus plan blocked"</span>),
-<a href=#530 id=530 data-nosnippet>530</a>        judge: blocked_issues,
+<a href=#528 id=528 data-nosnippet>528</a>        route: <span class="string">"/cockpit/release"</span>,
+<a href=#529 id=529 data-nosnippet>529</a>        action: <span class="prelude-val">Some</span>(<span class="string">"majordomus release analyze"</span>),
+<a href=#530 id=530 data-nosnippet>530</a>        judge: pending_bump,
 <a href=#531 id=531 data-nosnippet>531</a>    },
 <a href=#532 id=532 data-nosnippet>532</a>    Spec {
-<a href=#533 id=533 data-nosnippet>533</a>        question: <span class="string">"broken"</span>,
-<a href=#534 id=534 data-nosnippet>534</a>        id: <span class="string">"worktree-errors"</span>,
-<a href=#535 id=535 data-nosnippet>535</a>        title: <span class="string">"Worktree topology errors"</span>,
-<a href=#536 id=536 data-nosnippet>536</a>        capability: <span class="string">"worktree.status"</span>,
+<a href=#533 id=533 data-nosnippet>533</a>        question: <span class="string">"changed"</span>,
+<a href=#534 id=534 data-nosnippet>534</a>        id: <span class="string">"next-version"</span>,
+<a href=#535 id=535 data-nosnippet>535</a>        title: <span class="string">"Next version"</span>,
+<a href=#536 id=536 data-nosnippet>536</a>        capability: <span class="string">"release.version"</span>,
 <a href=#537 id=537 data-nosnippet>537</a>        input: <span class="string">"{}"</span>,
-<a href=#538 id=538 data-nosnippet>538</a>        pointers: <span class="kw-2">&amp;</span>[<span class="string">"/repository_errors"</span>],
+<a href=#538 id=538 data-nosnippet>538</a>        pointers: <span class="kw-2">&amp;</span>[<span class="string">"/next"</span>],
 <a href=#539 id=539 data-nosnippet>539</a>        measure: DashboardMeasure::Exact,
-<a href=#540 id=540 data-nosnippet>540</a>        route: <span class="string">"/cockpit/worktrees"</span>,
-<a href=#541 id=541 data-nosnippet>541</a>        action: <span class="prelude-val">Some</span>(<span class="string">"majordomus worktree topology"</span>),
-<a href=#542 id=542 data-nosnippet>542</a>        judge: repository_errors,
+<a href=#540 id=540 data-nosnippet>540</a>        route: <span class="string">"/cockpit/release"</span>,
+<a href=#541 id=541 data-nosnippet>541</a>        action: <span class="prelude-val">Some</span>(<span class="string">"majordomus release bump"</span>),
+<a href=#542 id=542 data-nosnippet>542</a>        judge: next_version,
 <a href=#543 id=543 data-nosnippet>543</a>    },
 <a href=#544 id=544 data-nosnippet>544</a>    Spec {
 <a href=#545 id=545 data-nosnippet>545</a>        question: <span class="string">"broken"</span>,
-<a href=#546 id=546 data-nosnippet>546</a>        id: <span class="string">"worktree-canonical"</span>,
-<a href=#547 id=547 data-nosnippet>547</a>        title: <span class="string">"This worktree is where it belongs"</span>,
-<a href=#548 id=548 data-nosnippet>548</a>        capability: <span class="string">"worktree.status"</span>,
+<a href=#546 id=546 data-nosnippet>546</a>        id: <span class="string">"blocked-issues"</span>,
+<a href=#547 id=547 data-nosnippet>547</a>        title: <span class="string">"Blocked issues"</span>,
+<a href=#548 id=548 data-nosnippet>548</a>        capability: <span class="string">"plan.status"</span>,
 <a href=#549 id=549 data-nosnippet>549</a>        input: <span class="string">"{}"</span>,
-<a href=#550 id=550 data-nosnippet>550</a>        pointers: <span class="kw-2">&amp;</span>[<span class="string">"/canonical"</span>],
+<a href=#550 id=550 data-nosnippet>550</a>        pointers: <span class="kw-2">&amp;</span>[<span class="string">"/counts/by_status/BLOCKED"</span>],
 <a href=#551 id=551 data-nosnippet>551</a>        measure: DashboardMeasure::Exact,
-<a href=#552 id=552 data-nosnippet>552</a>        route: <span class="string">"/cockpit/worktrees"</span>,
-<a href=#553 id=553 data-nosnippet>553</a>        action: <span class="prelude-val">Some</span>(<span class="string">"majordomus worktree migrate"</span>),
-<a href=#554 id=554 data-nosnippet>554</a>        judge: canonical,
+<a href=#552 id=552 data-nosnippet>552</a>        route: <span class="string">"/cockpit/capabilities/plan.status"</span>,
+<a href=#553 id=553 data-nosnippet>553</a>        action: <span class="prelude-val">Some</span>(<span class="string">"majordomus plan blocked"</span>),
+<a href=#554 id=554 data-nosnippet>554</a>        judge: blocked_issues,
 <a href=#555 id=555 data-nosnippet>555</a>    },
 <a href=#556 id=556 data-nosnippet>556</a>    Spec {
-<a href=#557 id=557 data-nosnippet>557</a>        question: <span class="string">"action"</span>,
-<a href=#558 id=558 data-nosnippet>558</a>        id: <span class="string">"next-issue"</span>,
-<a href=#559 id=559 data-nosnippet>559</a>        title: <span class="string">"Next issue"</span>,
-<a href=#560 id=560 data-nosnippet>560</a>        capability: <span class="string">"plan.next"</span>,
+<a href=#557 id=557 data-nosnippet>557</a>        question: <span class="string">"broken"</span>,
+<a href=#558 id=558 data-nosnippet>558</a>        id: <span class="string">"worktree-errors"</span>,
+<a href=#559 id=559 data-nosnippet>559</a>        title: <span class="string">"Worktree topology errors"</span>,
+<a href=#560 id=560 data-nosnippet>560</a>        capability: <span class="string">"worktree.status"</span>,
 <a href=#561 id=561 data-nosnippet>561</a>        input: <span class="string">"{}"</span>,
-<a href=#562 id=562 data-nosnippet>562</a>        pointers: <span class="kw-2">&amp;</span>[<span class="string">"/issue/id"</span>, <span class="string">"/reason"</span>],
+<a href=#562 id=562 data-nosnippet>562</a>        pointers: <span class="kw-2">&amp;</span>[<span class="string">"/repository_errors"</span>],
 <a href=#563 id=563 data-nosnippet>563</a>        measure: DashboardMeasure::Exact,
-<a href=#564 id=564 data-nosnippet>564</a>        route: <span class="string">"/cockpit/capabilities/plan.next"</span>,
-<a href=#565 id=565 data-nosnippet>565</a>        action: <span class="prelude-val">Some</span>(<span class="string">"majordomus plan next"</span>),
-<a href=#566 id=566 data-nosnippet>566</a>        judge: next_issue,
+<a href=#564 id=564 data-nosnippet>564</a>        route: <span class="string">"/cockpit/worktrees"</span>,
+<a href=#565 id=565 data-nosnippet>565</a>        action: <span class="prelude-val">Some</span>(<span class="string">"majordomus worktree topology"</span>),
+<a href=#566 id=566 data-nosnippet>566</a>        judge: repository_errors,
 <a href=#567 id=567 data-nosnippet>567</a>    },
 <a href=#568 id=568 data-nosnippet>568</a>    Spec {
-<a href=#569 id=569 data-nosnippet>569</a>        question: <span class="string">"action"</span>,
-<a href=#570 id=570 data-nosnippet>570</a>        id: <span class="string">"open-blockers"</span>,
-<a href=#571 id=571 data-nosnippet>571</a>        title: <span class="string">"Questions refusing completion"</span>,
-<a href=#572 id=572 data-nosnippet>572</a>        capability: <span class="string">"continuity.state"</span>,
+<a href=#569 id=569 data-nosnippet>569</a>        question: <span class="string">"broken"</span>,
+<a href=#570 id=570 data-nosnippet>570</a>        id: <span class="string">"worktree-canonical"</span>,
+<a href=#571 id=571 data-nosnippet>571</a>        title: <span class="string">"This worktree is where it belongs"</span>,
+<a href=#572 id=572 data-nosnippet>572</a>        capability: <span class="string">"worktree.status"</span>,
 <a href=#573 id=573 data-nosnippet>573</a>        input: <span class="string">"{}"</span>,
-<a href=#574 id=574 data-nosnippet>574</a>        pointers: <span class="kw-2">&amp;</span>[<span class="string">"/tallies/blockers"</span>],
-<a href=#575 id=575 data-nosnippet>575</a>        measure: DashboardMeasure::Count,
-<a href=#576 id=576 data-nosnippet>576</a>        route: <span class="string">"/cockpit/continuity"</span>,
-<a href=#577 id=577 data-nosnippet>577</a>        action: <span class="prelude-val">Some</span>(<span class="string">"majordomus question list"</span>),
-<a href=#578 id=578 data-nosnippet>578</a>        judge: blockers,
+<a href=#574 id=574 data-nosnippet>574</a>        pointers: <span class="kw-2">&amp;</span>[<span class="string">"/canonical"</span>],
+<a href=#575 id=575 data-nosnippet>575</a>        measure: DashboardMeasure::Exact,
+<a href=#576 id=576 data-nosnippet>576</a>        route: <span class="string">"/cockpit/worktrees"</span>,
+<a href=#577 id=577 data-nosnippet>577</a>        action: <span class="prelude-val">Some</span>(<span class="string">"majordomus worktree migrate"</span>),
+<a href=#578 id=578 data-nosnippet>578</a>        judge: canonical,
 <a href=#579 id=579 data-nosnippet>579</a>    },
 <a href=#580 id=580 data-nosnippet>580</a>    Spec {
 <a href=#581 id=581 data-nosnippet>581</a>        question: <span class="string">"action"</span>,
-<a href=#582 id=582 data-nosnippet>582</a>        id: <span class="string">"peer-overlaps"</span>,
-<a href=#583 id=583 data-nosnippet>583</a>        title: <span class="string">"Overlapping claims"</span>,
-<a href=#584 id=584 data-nosnippet>584</a>        capability: <span class="string">"peers.list"</span>,
-<a href=#585 id=585 data-nosnippet>585</a>        input: <span class="string">r#"{"checkouts":"this"}"#</span>,
-<a href=#586 id=586 data-nosnippet>586</a>        pointers: <span class="kw-2">&amp;</span>[<span class="string">"/overlaps"</span>],
-<a href=#587 id=587 data-nosnippet>587</a>        measure: DashboardMeasure::Count,
-<a href=#588 id=588 data-nosnippet>588</a>        route: <span class="string">"/cockpit/capabilities/peers.list"</span>,
-<a href=#589 id=589 data-nosnippet>589</a>        action: <span class="prelude-val">None</span>,
-<a href=#590 id=590 data-nosnippet>590</a>        judge: overlaps,
+<a href=#582 id=582 data-nosnippet>582</a>        id: <span class="string">"next-issue"</span>,
+<a href=#583 id=583 data-nosnippet>583</a>        title: <span class="string">"Next issue"</span>,
+<a href=#584 id=584 data-nosnippet>584</a>        capability: <span class="string">"plan.next"</span>,
+<a href=#585 id=585 data-nosnippet>585</a>        input: <span class="string">"{}"</span>,
+<a href=#586 id=586 data-nosnippet>586</a>        pointers: <span class="kw-2">&amp;</span>[<span class="string">"/issue/id"</span>, <span class="string">"/reason"</span>],
+<a href=#587 id=587 data-nosnippet>587</a>        measure: DashboardMeasure::Exact,
+<a href=#588 id=588 data-nosnippet>588</a>        route: <span class="string">"/cockpit/capabilities/plan.next"</span>,
+<a href=#589 id=589 data-nosnippet>589</a>        action: <span class="prelude-val">Some</span>(<span class="string">"majordomus plan next"</span>),
+<a href=#590 id=590 data-nosnippet>590</a>        judge: next_issue,
 <a href=#591 id=591 data-nosnippet>591</a>    },
-<a href=#592 id=592 data-nosnippet>592</a>];
-<a href=#593 id=593 data-nosnippet>593</a>
-<a href=#594 id=594 data-nosnippet>594</a><span class="comment">// ---------------------------------------------------------------- the handler
-<a href=#595 id=595 data-nosnippet>595</a>
-<a href=#596 id=596 data-nosnippet>596</a></span><span class="doccomment">/// The overview: each source asked once, through the executor, and every card read out of
-<a href=#597 id=597 data-nosnippet>597</a>/// its answer.
-<a href=#598 id=598 data-nosnippet>598</a></span><span class="kw">fn </span>overview(ctx: <span class="kw-2">&amp;</span>Context, <span class="kw">_</span>: Empty) -&gt; <span class="prelude-ty">Result</span>&lt;DashboardOverview, CapabilityError&gt; {
-<a href=#599 id=599 data-nosnippet>599</a>    <span class="comment">// one execution per (capability, input): four cards of `release.version` are one call
-<a href=#600 id=600 data-nosnippet>600</a>    </span><span class="kw">let </span><span class="kw-2">mut </span>answers: BTreeMap&lt;(<span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str), <span class="prelude-ty">Result</span>&lt;Value, String&gt;&gt; = BTreeMap::new();
-<a href=#601 id=601 data-nosnippet>601</a>    <span class="kw">for </span>spec <span class="kw">in </span>CARDS {
-<a href=#602 id=602 data-nosnippet>602</a>        answers
-<a href=#603 id=603 data-nosnippet>603</a>            .entry((spec.capability, spec.input))
-<a href=#604 id=604 data-nosnippet>604</a>            .or_insert_with(|| {
-<a href=#605 id=605 data-nosnippet>605</a>                <span class="kw">let </span>input: Value = serde_json::from_str(spec.input)
-<a href=#606 id=606 data-nosnippet>606</a>                    .map_err(|e| <span class="macro">format!</span>(<span class="string">"the card's own input does not parse: {e}"</span>))<span class="question-mark">?</span>;
-<a href=#607 id=607 data-nosnippet>607</a>                <span class="kw">let </span>answer = ctx
-<a href=#608 id=608 data-nosnippet>608</a>                    .execute(spec.capability, input)
-<a href=#609 id=609 data-nosnippet>609</a>                    .map_err(|e| e.to_string());
-<a href=#610 id=610 data-nosnippet>610</a>                ctx.progress
-<a href=#611 id=611 data-nosnippet>611</a>                    .step_done(spec.capability, answer.is_ok(), <span class="prelude-val">None</span>);
-<a href=#612 id=612 data-nosnippet>612</a>                answer
-<a href=#613 id=613 data-nosnippet>613</a>            });
-<a href=#614 id=614 data-nosnippet>614</a>    }
-<a href=#615 id=615 data-nosnippet>615</a>
-<a href=#616 id=616 data-nosnippet>616</a>    <span class="kw">let </span>questions: Vec&lt;DashboardQuestion&gt; = QUESTIONS
-<a href=#617 id=617 data-nosnippet>617</a>        .iter()
-<a href=#618 id=618 data-nosnippet>618</a>        .map(|(id, title)| {
-<a href=#619 id=619 data-nosnippet>619</a>            <span class="kw">let </span>cards: Vec&lt;DashboardCard&gt; = CARDS
-<a href=#620 id=620 data-nosnippet>620</a>                .iter()
-<a href=#621 id=621 data-nosnippet>621</a>                .filter(|s| s.question == <span class="kw-2">*</span>id)
-<a href=#622 id=622 data-nosnippet>622</a>                .map(|spec| card(spec, <span class="kw-2">&amp;</span>answers[<span class="kw-2">&amp;</span>(spec.capability, spec.input)]))
-<a href=#623 id=623 data-nosnippet>623</a>                .collect();
-<a href=#624 id=624 data-nosnippet>624</a>            DashboardQuestion {
-<a href=#625 id=625 data-nosnippet>625</a>                id: (<span class="kw-2">*</span>id).into(),
-<a href=#626 id=626 data-nosnippet>626</a>                title: (<span class="kw-2">*</span>title).into(),
-<a href=#627 id=627 data-nosnippet>627</a>                status: cards
-<a href=#628 id=628 data-nosnippet>628</a>                    .iter()
-<a href=#629 id=629 data-nosnippet>629</a>                    .fold(HealthStatus::Ok, |acc, c| acc.worse(c.status)),
-<a href=#630 id=630 data-nosnippet>630</a>                cards,
-<a href=#631 id=631 data-nosnippet>631</a>            }
-<a href=#632 id=632 data-nosnippet>632</a>        })
-<a href=#633 id=633 data-nosnippet>633</a>        .collect();
-<a href=#634 id=634 data-nosnippet>634</a>    <span class="prelude-val">Ok</span>(DashboardOverview {
-<a href=#635 id=635 data-nosnippet>635</a>        status: questions
-<a href=#636 id=636 data-nosnippet>636</a>            .iter()
-<a href=#637 id=637 data-nosnippet>637</a>            .fold(HealthStatus::Ok, |acc, q| acc.worse(q.status)),
-<a href=#638 id=638 data-nosnippet>638</a>        questions,
-<a href=#639 id=639 data-nosnippet>639</a>    })
-<a href=#640 id=640 data-nosnippet>640</a>}
-<a href=#641 id=641 data-nosnippet>641</a>
-<a href=#642 id=642 data-nosnippet>642</a><span class="doccomment">/// One card from its declaration and its source's answer — or, when the source could not
-<a href=#643 id=643 data-nosnippet>643</a>/// answer, an `unknown` card that says why. Never a pass in place of an answer.
-<a href=#644 id=644 data-nosnippet>644</a></span><span class="kw">fn </span>card(spec: <span class="kw-2">&amp;</span>Spec, answer: <span class="kw-2">&amp;</span><span class="prelude-ty">Result</span>&lt;Value, String&gt;) -&gt; DashboardCard {
-<a href=#645 id=645 data-nosnippet>645</a>    <span class="kw">let </span>input: Value = serde_json::from_str(spec.input).unwrap_or(Value::Null);
-<a href=#646 id=646 data-nosnippet>646</a>    <span class="kw">let </span><span class="kw-2">mut </span>source = DashboardSource {
-<a href=#647 id=647 data-nosnippet>647</a>        capability: spec.capability.into(),
-<a href=#648 id=648 data-nosnippet>648</a>        input,
-<a href=#649 id=649 data-nosnippet>649</a>        pointer: spec.pointers[<span class="number">0</span>].into(),
-<a href=#650 id=650 data-nosnippet>650</a>        measure: spec.measure,
-<a href=#651 id=651 data-nosnippet>651</a>    };
-<a href=#652 id=652 data-nosnippet>652</a>    <span class="kw">let </span>(value, status, detail) = <span class="kw">match </span>answer {
-<a href=#653 id=653 data-nosnippet>653</a>        <span class="prelude-val">Ok</span>(answer) =&gt; {
-<a href=#654 id=654 data-nosnippet>654</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(p) = spec.pointers.iter().find(|p| answer.pointer(p).is_some()) {
-<a href=#655 id=655 data-nosnippet>655</a>                source.pointer = (<span class="kw-2">*</span>p).into();
-<a href=#656 id=656 data-nosnippet>656</a>            }
-<a href=#657 id=657 data-nosnippet>657</a>            <span class="kw">let </span>value = spec.measure.read(answer, <span class="kw-2">&amp;</span>source.pointer);
-<a href=#658 id=658 data-nosnippet>658</a>            <span class="kw">let </span>(status, detail) = (spec.judge)(<span class="kw-2">&amp;</span>value, answer);
-<a href=#659 id=659 data-nosnippet>659</a>            (value, status, detail)
-<a href=#660 id=660 data-nosnippet>660</a>        }
-<a href=#661 id=661 data-nosnippet>661</a>        <span class="prelude-val">Err</span>(reason) =&gt; (
-<a href=#662 id=662 data-nosnippet>662</a>            Value::Null,
-<a href=#663 id=663 data-nosnippet>663</a>            HealthStatus::Unknown,
-<a href=#664 id=664 data-nosnippet>664</a>            <span class="macro">format!</span>(
-<a href=#665 id=665 data-nosnippet>665</a>                <span class="string">"{} could not answer, so this is unknown rather than a pass: {reason}"</span>,
-<a href=#666 id=666 data-nosnippet>666</a>                spec.capability
-<a href=#667 id=667 data-nosnippet>667</a>            ),
-<a href=#668 id=668 data-nosnippet>668</a>        ),
-<a href=#669 id=669 data-nosnippet>669</a>    };
-<a href=#670 id=670 data-nosnippet>670</a>    DashboardCard {
-<a href=#671 id=671 data-nosnippet>671</a>        id: spec.id.into(),
-<a href=#672 id=672 data-nosnippet>672</a>        title: spec.title.into(),
-<a href=#673 id=673 data-nosnippet>673</a>        value,
-<a href=#674 id=674 data-nosnippet>674</a>        status,
-<a href=#675 id=675 data-nosnippet>675</a>        detail,
-<a href=#676 id=676 data-nosnippet>676</a>        source,
-<a href=#677 id=677 data-nosnippet>677</a>        route: spec.route.into(),
-<a href=#678 id=678 data-nosnippet>678</a>        action: spec.action.map(str::to_string),
-<a href=#679 id=679 data-nosnippet>679</a>    }
-<a href=#680 id=680 data-nosnippet>680</a>}
-<a href=#681 id=681 data-nosnippet>681</a>
-<a href=#682 id=682 data-nosnippet>682</a><span class="comment">// ---------------------------------------------------------------- the module
-<a href=#683 id=683 data-nosnippet>683</a>
-<a href=#684 id=684 data-nosnippet>684</a></span><span class="doccomment">/// The `dashboard` module: the Dashboard Suite's pages, each a projection of the
-<a href=#685 id=685 data-nosnippet>685</a>/// capabilities that hold its facts. The Overview is the first.
-<a href=#686 id=686 data-nosnippet>686</a>///
-<a href=#687 id=687 data-nosnippet>687</a>/// ```
-<a href=#688 id=688 data-nosnippet>688</a>/// use majordomus_cli::capability::builtin::dashboard::module;
-<a href=#689 id=689 data-nosnippet>689</a>/// let m = module();
-<a href=#690 id=690 data-nosnippet>690</a>/// assert_eq!(m.id.as_str(), "dashboard");
-<a href=#691 id=691 data-nosnippet>691</a>/// let tool = m.capabilities[0].capability.exposure.mcp.as_ref().and_then(|m| m.tool.clone());
-<a href=#692 id=692 data-nosnippet>692</a>/// assert_eq!(tool.as_deref(), Some("majordomus_dashboard_overview"));
-<a href=#693 id=693 data-nosnippet>693</a>/// ```
-<a href=#694 id=694 data-nosnippet>694</a></span><span class="kw">pub fn </span>module() -&gt; ModuleDescriptor {
-<a href=#695 id=695 data-nosnippet>695</a>    <span class="macro">module!</span> {
-<a href=#696 id=696 data-nosnippet>696</a>        id: <span class="string">"dashboard"</span>,
-<a href=#697 id=697 data-nosnippet>697</a>        title: <span class="string">"Dashboards"</span>,
-<a href=#698 id=698 data-nosnippet>698</a>        description: <span class="string">"The Dashboard Suite as a projection of the canonical state: every card is one fact read out of an existing capability's answer, carrying the capability it asked, the input, the JSON pointer its value was read from, the Cockpit page that holds the evidence and the command that acts on it. No dashboard stores, counts or judges anything of its own (ADR 0088)."</span>,
-<a href=#699 id=699 data-nosnippet>699</a>        stability: Stability::BehaviorallyVerified,
-<a href=#700 id=700 data-nosnippet>700</a>        capabilities: [
-<a href=#701 id=701 data-nosnippet>701</a>            <span class="macro">capability!</span> {
-<a href=#702 id=702 data-nosnippet>702</a>                id: <span class="string">"dashboard.overview"</span>,
-<a href=#703 id=703 data-nosnippet>703</a>                title: <span class="string">"The Overview: four questions"</span>,
-<a href=#704 id=704 data-nosnippet>704</a>                description: <span class="string">"Is it healthy, what changed, what is broken, what needs action — each answered by cards read out of `health.report`, `release.version`, `plan.status`, `worktree.status`, `plan.next`, `continuity.state` and `peers.list` (this checkout's board), asked once each through the executor. Every card carries its source capability, input and RFC 6901 pointer, so asking the source the same question yields the same value; a source that cannot answer makes its cards `unknown`, never `ok`. Nothing here rebuilds canonical state or asks anything beyond this process and its checkout."</span>,
-<a href=#705 id=705 data-nosnippet>705</a>                input: Empty,
-<a href=#706 id=706 data-nosnippet>706</a>                output: DashboardOverview,
-<a href=#707 id=707 data-nosnippet>707</a>                stability: Stability::BehaviorallyVerified,
-<a href=#708 id=708 data-nosnippet>708</a>                exposure: Exposure {
-<a href=#709 id=709 data-nosnippet>709</a>                    mcp: mcp(<span class="string">"majordomus_dashboard_overview"</span>),
-<a href=#710 id=710 data-nosnippet>710</a>                    http: get(<span class="string">"/api/v1/dashboard/overview"</span>),
-<a href=#711 id=711 data-nosnippet>711</a>                    cli: <span class="prelude-val">Some</span>(CliExposure { path: <span class="macro">vec!</span>[<span class="string">"dashboard"</span>.into(), <span class="string">"overview"</span>.into()] }),
-<a href=#712 id=712 data-nosnippet>712</a>                },
-<a href=#713 id=713 data-nosnippet>713</a>                tags: [<span class="string">"dashboard"</span>, <span class="string">"overview"</span>, <span class="string">"introspection"</span>],
-<a href=#714 id=714 data-nosnippet>714</a>                <span class="comment">// every source carries its own cache policy; caching the composition would
-<a href=#715 id=715 data-nosnippet>715</a>                // serve a card older than the source a reader drills into
-<a href=#716 id=716 data-nosnippet>716</a>                </span>cache: CachePolicy::Disabled,
-<a href=#717 id=717 data-nosnippet>717</a>                handler: overview,
-<a href=#718 id=718 data-nosnippet>718</a>            },
-<a href=#719 id=719 data-nosnippet>719</a>        ],
-<a href=#720 id=720 data-nosnippet>720</a>    }
-<a href=#721 id=721 data-nosnippet>721</a>}
-<a href=#722 id=722 data-nosnippet>722</a>
-<a href=#723 id=723 data-nosnippet>723</a><span class="attr">#[cfg(test)]
-<a href=#724 id=724 data-nosnippet>724</a></span><span class="kw">mod </span>tests {
-<a href=#725 id=725 data-nosnippet>725</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#726 id=726 data-nosnippet>726</a>    <span class="kw">use </span><span class="kw">crate</span>::synthetic::{Shape, SyntheticRepository};
-<a href=#727 id=727 data-nosnippet>727</a>
-<a href=#728 id=728 data-nosnippet>728</a>    <span class="doccomment">/// The declaration is the only place the projections are named; a refactor that
-<a href=#729 id=729 data-nosnippet>729</a>    /// dropped one would still compile, and this is the assertion that would not.
-<a href=#730 id=730 data-nosnippet>730</a>    </span><span class="attr">#[test]
-<a href=#731 id=731 data-nosnippet>731</a>    </span><span class="kw">fn </span>the_declaration_yields_the_projections_it_claims() {
-<a href=#732 id=732 data-nosnippet>732</a>        <span class="kw">let </span>m = module();
-<a href=#733 id=733 data-nosnippet>733</a>        <span class="kw">let </span>ids: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = m
-<a href=#734 id=734 data-nosnippet>734</a>            .capabilities
-<a href=#735 id=735 data-nosnippet>735</a>            .iter()
-<a href=#736 id=736 data-nosnippet>736</a>            .map(|e| e.capability.id.as_str())
-<a href=#737 id=737 data-nosnippet>737</a>            .collect();
-<a href=#738 id=738 data-nosnippet>738</a>        <span class="macro">assert_eq!</span>(ids, [<span class="string">"dashboard.overview"</span>]);
-<a href=#739 id=739 data-nosnippet>739</a>        <span class="kw">let </span>exposure = <span class="kw-2">&amp;</span>m.capabilities[<span class="number">0</span>].capability.exposure;
-<a href=#740 id=740 data-nosnippet>740</a>        <span class="macro">assert_eq!</span>(
-<a href=#741 id=741 data-nosnippet>741</a>            exposure.http.as_ref().unwrap().path,
-<a href=#742 id=742 data-nosnippet>742</a>            <span class="string">"/api/v1/dashboard/overview"
-<a href=#743 id=743 data-nosnippet>743</a>        </span>);
-<a href=#744 id=744 data-nosnippet>744</a>        <span class="macro">assert_eq!</span>(
-<a href=#745 id=745 data-nosnippet>745</a>            exposure.cli.as_ref().unwrap().path,
-<a href=#746 id=746 data-nosnippet>746</a>            [<span class="string">"dashboard"</span>, <span class="string">"overview"</span>]
-<a href=#747 id=747 data-nosnippet>747</a>        );
-<a href=#748 id=748 data-nosnippet>748</a>    }
-<a href=#749 id=749 data-nosnippet>749</a>
-<a href=#750 id=750 data-nosnippet>750</a>    <span class="doccomment">/// Every card answers one of the four questions, has an id of its own, and names a
-<a href=#751 id=751 data-nosnippet>751</a>    /// source that is not one of the expensive or refusing capabilities.
-<a href=#752 id=752 data-nosnippet>752</a>    </span><span class="attr">#[test]
-<a href=#753 id=753 data-nosnippet>753</a>    </span><span class="kw">fn </span>every_card_is_declared_once_and_reads_a_cheap_source() {
-<a href=#754 id=754 data-nosnippet>754</a>        <span class="kw">let </span><span class="kw-2">mut </span>seen = std::collections::BTreeSet::new();
-<a href=#755 id=755 data-nosnippet>755</a>        <span class="kw">for </span>spec <span class="kw">in </span>CARDS {
-<a href=#756 id=756 data-nosnippet>756</a>            <span class="macro">assert!</span>(seen.insert(spec.id), <span class="string">"{} is declared twice"</span>, spec.id);
-<a href=#757 id=757 data-nosnippet>757</a>            <span class="macro">assert!</span>(
-<a href=#758 id=758 data-nosnippet>758</a>                QUESTIONS.iter().any(|(q, <span class="kw">_</span>)| <span class="kw-2">*</span>q == spec.question),
-<a href=#759 id=759 data-nosnippet>759</a>                <span class="string">"{} answers no question"</span>,
-<a href=#760 id=760 data-nosnippet>760</a>                spec.id
-<a href=#761 id=761 data-nosnippet>761</a>            );
-<a href=#762 id=762 data-nosnippet>762</a>            <span class="macro">assert!</span>(!spec.pointers.is_empty(), <span class="string">"{} reads nowhere"</span>, spec.id);
-<a href=#763 id=763 data-nosnippet>763</a>            <span class="kw">for </span>p <span class="kw">in </span>spec.pointers {
-<a href=#764 id=764 data-nosnippet>764</a>                <span class="macro">assert!</span>(p.starts_with(<span class="string">'/'</span>), <span class="string">"{}: {p} is not a JSON pointer"</span>, spec.id);
-<a href=#765 id=765 data-nosnippet>765</a>            }
-<a href=#766 id=766 data-nosnippet>766</a>            serde_json::from_str::&lt;Value&gt;(spec.input)
-<a href=#767 id=767 data-nosnippet>767</a>                .unwrap_or_else(|e| <span class="macro">panic!</span>(<span class="string">"{}: input does not parse: {e}"</span>, spec.id));
-<a href=#768 id=768 data-nosnippet>768</a>            <span class="kw">for </span>refused <span class="kw">in </span>[<span class="string">"delivery."</span>, <span class="string">"release.analysis"</span>, <span class="string">"evidence."</span>] {
-<a href=#769 id=769 data-nosnippet>769</a>                <span class="macro">assert!</span>(
-<a href=#770 id=770 data-nosnippet>770</a>                    !spec.capability.starts_with(refused),
-<a href=#771 id=771 data-nosnippet>771</a>                    <span class="string">"{} reads {}, which the Overview must not ask"</span>,
-<a href=#772 id=772 data-nosnippet>772</a>                    spec.id,
-<a href=#773 id=773 data-nosnippet>773</a>                    spec.capability
-<a href=#774 id=774 data-nosnippet>774</a>                );
-<a href=#775 id=775 data-nosnippet>775</a>            }
-<a href=#776 id=776 data-nosnippet>776</a>        }
-<a href=#777 id=777 data-nosnippet>777</a>        <span class="kw">for </span>(q, <span class="kw">_</span>) <span class="kw">in </span>QUESTIONS {
-<a href=#778 id=778 data-nosnippet>778</a>            <span class="macro">assert!</span>(
-<a href=#779 id=779 data-nosnippet>779</a>                CARDS.iter().any(|s| s.question == q),
-<a href=#780 id=780 data-nosnippet>780</a>                <span class="string">"the question {q} has no card"
-<a href=#781 id=781 data-nosnippet>781</a>            </span>);
-<a href=#782 id=782 data-nosnippet>782</a>        }
-<a href=#783 id=783 data-nosnippet>783</a>    }
-<a href=#784 id=784 data-nosnippet>784</a>
-<a href=#785 id=785 data-nosnippet>785</a>    <span class="doccomment">/// Against a real registry: every source exists, every card's value is its source's
-<a href=#786 id=786 data-nosnippet>786</a>    /// value at its pointer, and a source that could not answer is unknown — never ok.
-<a href=#787 id=787 data-nosnippet>787</a>    </span><span class="attr">#[test]
-<a href=#788 id=788 data-nosnippet>788</a>    </span><span class="kw">fn </span>every_card_is_its_sources_value_or_unknown() {
-<a href=#789 id=789 data-nosnippet>789</a>        <span class="kw">let </span>repo = SyntheticRepository::new(Shape::default()).expect(<span class="string">"a synthetic repository"</span>);
-<a href=#790 id=790 data-nosnippet>790</a>        <span class="kw">let </span>ctx = repo.context().expect(<span class="string">"a context"</span>);
-<a href=#791 id=791 data-nosnippet>791</a>        <span class="kw">for </span>spec <span class="kw">in </span>CARDS {
-<a href=#792 id=792 data-nosnippet>792</a>            <span class="macro">assert!</span>(
-<a href=#793 id=793 data-nosnippet>793</a>                ctx.registry.get(spec.capability).is_some(),
-<a href=#794 id=794 data-nosnippet>794</a>                <span class="string">"{} reads {}, which the registry does not hold"</span>,
-<a href=#795 id=795 data-nosnippet>795</a>                spec.id,
-<a href=#796 id=796 data-nosnippet>796</a>                spec.capability
-<a href=#797 id=797 data-nosnippet>797</a>            );
-<a href=#798 id=798 data-nosnippet>798</a>        }
-<a href=#799 id=799 data-nosnippet>799</a>        <span class="kw">let </span>o = overview(<span class="kw-2">&amp;</span>ctx, Empty {}).expect(<span class="string">"the overview answers"</span>);
-<a href=#800 id=800 data-nosnippet>800</a>        <span class="kw">let </span>ids: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = o.questions.iter().map(|q| q.id.as_str()).collect();
-<a href=#801 id=801 data-nosnippet>801</a>        <span class="macro">assert_eq!</span>(ids, [<span class="string">"healthy"</span>, <span class="string">"changed"</span>, <span class="string">"broken"</span>, <span class="string">"action"</span>]);
-<a href=#802 id=802 data-nosnippet>802</a>        <span class="kw">for </span>card <span class="kw">in </span>o.questions.iter().flat_map(|q| <span class="kw-2">&amp;</span>q.cards) {
-<a href=#803 id=803 data-nosnippet>803</a>            <span class="kw">match </span>ctx.execute(<span class="kw-2">&amp;</span>card.source.capability, card.source.input.clone()) {
-<a href=#804 id=804 data-nosnippet>804</a>                <span class="prelude-val">Ok</span>(answer) =&gt; <span class="macro">assert_eq!</span>(
-<a href=#805 id=805 data-nosnippet>805</a>                    card.source.measure.read(<span class="kw-2">&amp;</span>answer, <span class="kw-2">&amp;</span>card.source.pointer),
-<a href=#806 id=806 data-nosnippet>806</a>                    card.value,
-<a href=#807 id=807 data-nosnippet>807</a>                    <span class="string">"{} is not its source's value"</span>,
-<a href=#808 id=808 data-nosnippet>808</a>                    card.id
-<a href=#809 id=809 data-nosnippet>809</a>                ),
-<a href=#810 id=810 data-nosnippet>810</a>                <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {
-<a href=#811 id=811 data-nosnippet>811</a>                    <span class="macro">assert_eq!</span>(card.status, HealthStatus::Unknown, <span class="string">"{}"</span>, card.id);
-<a href=#812 id=812 data-nosnippet>812</a>                    <span class="macro">assert!</span>(card.value.is_null(), <span class="string">"{}"</span>, card.id);
-<a href=#813 id=813 data-nosnippet>813</a>                }
-<a href=#814 id=814 data-nosnippet>814</a>            }
-<a href=#815 id=815 data-nosnippet>815</a>        }
-<a href=#816 id=816 data-nosnippet>816</a>    }
-<a href=#817 id=817 data-nosnippet>817</a>
-<a href=#818 id=818 data-nosnippet>818</a>    <span class="doccomment">/// A source that refuses turns its cards unknown with the reason, and the whole
-<a href=#819 id=819 data-nosnippet>819</a>    /// overview with them: absence of an answer is never reported as a pass.
-<a href=#820 id=820 data-nosnippet>820</a>    </span><span class="attr">#[test]
-<a href=#821 id=821 data-nosnippet>821</a>    </span><span class="kw">fn </span>an_unanswered_source_is_unknown_with_its_reason() {
-<a href=#822 id=822 data-nosnippet>822</a>        <span class="kw">let </span>spec = <span class="kw-2">&amp;</span>CARDS[<span class="number">0</span>];
-<a href=#823 id=823 data-nosnippet>823</a>        <span class="kw">let </span>c = card(spec, <span class="kw-2">&amp;</span><span class="prelude-val">Err</span>(<span class="string">"no such thing"</span>.into()));
-<a href=#824 id=824 data-nosnippet>824</a>        <span class="macro">assert_eq!</span>(c.status, HealthStatus::Unknown);
-<a href=#825 id=825 data-nosnippet>825</a>        <span class="macro">assert!</span>(c.value.is_null());
-<a href=#826 id=826 data-nosnippet>826</a>        <span class="macro">assert!</span>(c.detail.contains(<span class="string">"no such thing"</span>), <span class="string">"{}"</span>, c.detail);
-<a href=#827 id=827 data-nosnippet>827</a>        <span class="macro">assert!</span>(
-<a href=#828 id=828 data-nosnippet>828</a>            c.detail.contains(<span class="string">"unknown rather than a pass"</span>),
-<a href=#829 id=829 data-nosnippet>829</a>            <span class="string">"{}"</span>,
-<a href=#830 id=830 data-nosnippet>830</a>            c.detail
-<a href=#831 id=831 data-nosnippet>831</a>        );
-<a href=#832 id=832 data-nosnippet>832</a>        <span class="macro">assert_eq!</span>(c.source.capability, spec.capability);
-<a href=#833 id=833 data-nosnippet>833</a>    }
-<a href=#834 id=834 data-nosnippet>834</a>
-<a href=#835 id=835 data-nosnippet>835</a>    <span class="doccomment">/// The fallback pointer is taken only when the first resolves to nothing, and the card
-<a href=#836 id=836 data-nosnippet>836</a>    /// names the pointer it actually read.
-<a href=#837 id=837 data-nosnippet>837</a>    </span><span class="attr">#[test]
-<a href=#838 id=838 data-nosnippet>838</a>    </span><span class="kw">fn </span>a_card_names_the_pointer_it_read() {
-<a href=#839 id=839 data-nosnippet>839</a>        <span class="kw">let </span>spec = CARDS
-<a href=#840 id=840 data-nosnippet>840</a>            .iter()
-<a href=#841 id=841 data-nosnippet>841</a>            .find(|s| s.id == <span class="string">"next-issue"</span>)
-<a href=#842 id=842 data-nosnippet>842</a>            .expect(<span class="string">"declared"</span>);
-<a href=#843 id=843 data-nosnippet>843</a>        <span class="kw">let </span>with = card(
-<a href=#844 id=844 data-nosnippet>844</a>            spec,
-<a href=#845 id=845 data-nosnippet>845</a>            <span class="kw-2">&amp;</span><span class="prelude-val">Ok</span>(<span class="macro">json!</span>({ <span class="string">"issue"</span>: { <span class="string">"id"</span>: <span class="string">"I0001" </span>}, <span class="string">"active_milestone"</span>: <span class="string">"M1" </span>})),
-<a href=#846 id=846 data-nosnippet>846</a>        );
-<a href=#847 id=847 data-nosnippet>847</a>        <span class="macro">assert_eq!</span>(with.source.pointer, <span class="string">"/issue/id"</span>);
-<a href=#848 id=848 data-nosnippet>848</a>        <span class="macro">assert_eq!</span>(with.value, <span class="macro">json!</span>(<span class="string">"I0001"</span>));
-<a href=#849 id=849 data-nosnippet>849</a>        <span class="macro">assert_eq!</span>(with.status, HealthStatus::Ok);
-<a href=#850 id=850 data-nosnippet>850</a>        <span class="kw">let </span>without = card(
-<a href=#851 id=851 data-nosnippet>851</a>            spec,
-<a href=#852 id=852 data-nosnippet>852</a>            <span class="kw-2">&amp;</span><span class="prelude-val">Ok</span>(<span class="macro">json!</span>({ <span class="string">"reason"</span>: <span class="string">"run plan blocked"</span>, <span class="string">"active_milestone"</span>: <span class="string">"M1" </span>})),
-<a href=#853 id=853 data-nosnippet>853</a>        );
-<a href=#854 id=854 data-nosnippet>854</a>        <span class="macro">assert_eq!</span>(without.source.pointer, <span class="string">"/reason"</span>);
-<a href=#855 id=855 data-nosnippet>855</a>        <span class="macro">assert_eq!</span>(without.value, <span class="macro">json!</span>(<span class="string">"run plan blocked"</span>));
-<a href=#856 id=856 data-nosnippet>856</a>        <span class="macro">assert_eq!</span>(without.status, HealthStatus::Warn);
+<a href=#592 id=592 data-nosnippet>592</a>    Spec {
+<a href=#593 id=593 data-nosnippet>593</a>        question: <span class="string">"action"</span>,
+<a href=#594 id=594 data-nosnippet>594</a>        id: <span class="string">"open-blockers"</span>,
+<a href=#595 id=595 data-nosnippet>595</a>        title: <span class="string">"Questions refusing completion"</span>,
+<a href=#596 id=596 data-nosnippet>596</a>        capability: <span class="string">"continuity.state"</span>,
+<a href=#597 id=597 data-nosnippet>597</a>        input: <span class="string">"{}"</span>,
+<a href=#598 id=598 data-nosnippet>598</a>        pointers: <span class="kw-2">&amp;</span>[<span class="string">"/tallies/blockers"</span>],
+<a href=#599 id=599 data-nosnippet>599</a>        measure: DashboardMeasure::Count,
+<a href=#600 id=600 data-nosnippet>600</a>        route: <span class="string">"/cockpit/continuity"</span>,
+<a href=#601 id=601 data-nosnippet>601</a>        action: <span class="prelude-val">Some</span>(<span class="string">"majordomus question list"</span>),
+<a href=#602 id=602 data-nosnippet>602</a>        judge: blockers,
+<a href=#603 id=603 data-nosnippet>603</a>    },
+<a href=#604 id=604 data-nosnippet>604</a>    Spec {
+<a href=#605 id=605 data-nosnippet>605</a>        question: <span class="string">"action"</span>,
+<a href=#606 id=606 data-nosnippet>606</a>        id: <span class="string">"peer-overlaps"</span>,
+<a href=#607 id=607 data-nosnippet>607</a>        title: <span class="string">"Overlapping claims"</span>,
+<a href=#608 id=608 data-nosnippet>608</a>        capability: <span class="string">"peers.list"</span>,
+<a href=#609 id=609 data-nosnippet>609</a>        input: <span class="string">r#"{"checkouts":"this"}"#</span>,
+<a href=#610 id=610 data-nosnippet>610</a>        pointers: <span class="kw-2">&amp;</span>[<span class="string">"/overlaps"</span>],
+<a href=#611 id=611 data-nosnippet>611</a>        measure: DashboardMeasure::Count,
+<a href=#612 id=612 data-nosnippet>612</a>        route: <span class="string">"/cockpit/capabilities/peers.list"</span>,
+<a href=#613 id=613 data-nosnippet>613</a>        action: <span class="prelude-val">None</span>,
+<a href=#614 id=614 data-nosnippet>614</a>        judge: overlaps,
+<a href=#615 id=615 data-nosnippet>615</a>    },
+<a href=#616 id=616 data-nosnippet>616</a>];
+<a href=#617 id=617 data-nosnippet>617</a>
+<a href=#618 id=618 data-nosnippet>618</a><span class="comment">// ---------------------------------------------------------------- the handler
+<a href=#619 id=619 data-nosnippet>619</a>
+<a href=#620 id=620 data-nosnippet>620</a></span><span class="doccomment">/// The overview: each source asked once, through the executor, and every card read out of
+<a href=#621 id=621 data-nosnippet>621</a>/// its answer.
+<a href=#622 id=622 data-nosnippet>622</a></span><span class="kw">fn </span>overview(ctx: <span class="kw-2">&amp;</span>Context, <span class="kw">_</span>: Empty) -&gt; <span class="prelude-ty">Result</span>&lt;DashboardOverview, CapabilityError&gt; {
+<a href=#623 id=623 data-nosnippet>623</a>    <span class="comment">// one execution per (capability, input): four cards of `release.version` are one call
+<a href=#624 id=624 data-nosnippet>624</a>    </span><span class="kw">let </span><span class="kw-2">mut </span>answers: BTreeMap&lt;(<span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str), <span class="prelude-ty">Result</span>&lt;Value, String&gt;&gt; = BTreeMap::new();
+<a href=#625 id=625 data-nosnippet>625</a>    <span class="kw">for </span>spec <span class="kw">in </span>CARDS {
+<a href=#626 id=626 data-nosnippet>626</a>        answers
+<a href=#627 id=627 data-nosnippet>627</a>            .entry((spec.capability, spec.input))
+<a href=#628 id=628 data-nosnippet>628</a>            .or_insert_with(|| {
+<a href=#629 id=629 data-nosnippet>629</a>                <span class="kw">let </span>input: Value = serde_json::from_str(spec.input)
+<a href=#630 id=630 data-nosnippet>630</a>                    .map_err(|e| <span class="macro">format!</span>(<span class="string">"the card's own input does not parse: {e}"</span>))<span class="question-mark">?</span>;
+<a href=#631 id=631 data-nosnippet>631</a>                <span class="kw">let </span>answer = ctx
+<a href=#632 id=632 data-nosnippet>632</a>                    .execute(spec.capability, input)
+<a href=#633 id=633 data-nosnippet>633</a>                    .map_err(|e| e.to_string());
+<a href=#634 id=634 data-nosnippet>634</a>                ctx.progress
+<a href=#635 id=635 data-nosnippet>635</a>                    .step_done(spec.capability, answer.is_ok(), <span class="prelude-val">None</span>);
+<a href=#636 id=636 data-nosnippet>636</a>                answer
+<a href=#637 id=637 data-nosnippet>637</a>            });
+<a href=#638 id=638 data-nosnippet>638</a>    }
+<a href=#639 id=639 data-nosnippet>639</a>
+<a href=#640 id=640 data-nosnippet>640</a>    <span class="kw">let </span>questions: Vec&lt;DashboardQuestion&gt; = QUESTIONS
+<a href=#641 id=641 data-nosnippet>641</a>        .iter()
+<a href=#642 id=642 data-nosnippet>642</a>        .map(|(id, title)| {
+<a href=#643 id=643 data-nosnippet>643</a>            <span class="kw">let </span>cards: Vec&lt;DashboardCard&gt; = CARDS
+<a href=#644 id=644 data-nosnippet>644</a>                .iter()
+<a href=#645 id=645 data-nosnippet>645</a>                .filter(|s| s.question == <span class="kw-2">*</span>id)
+<a href=#646 id=646 data-nosnippet>646</a>                .map(|spec| card(spec, <span class="kw-2">&amp;</span>answers[<span class="kw-2">&amp;</span>(spec.capability, spec.input)]))
+<a href=#647 id=647 data-nosnippet>647</a>                .collect();
+<a href=#648 id=648 data-nosnippet>648</a>            DashboardQuestion {
+<a href=#649 id=649 data-nosnippet>649</a>                id: (<span class="kw-2">*</span>id).into(),
+<a href=#650 id=650 data-nosnippet>650</a>                title: (<span class="kw-2">*</span>title).into(),
+<a href=#651 id=651 data-nosnippet>651</a>                status: cards
+<a href=#652 id=652 data-nosnippet>652</a>                    .iter()
+<a href=#653 id=653 data-nosnippet>653</a>                    .fold(HealthStatus::Ok, |acc, c| acc.worse(c.status)),
+<a href=#654 id=654 data-nosnippet>654</a>                cards,
+<a href=#655 id=655 data-nosnippet>655</a>            }
+<a href=#656 id=656 data-nosnippet>656</a>        })
+<a href=#657 id=657 data-nosnippet>657</a>        .collect();
+<a href=#658 id=658 data-nosnippet>658</a>    <span class="prelude-val">Ok</span>(DashboardOverview {
+<a href=#659 id=659 data-nosnippet>659</a>        status: questions
+<a href=#660 id=660 data-nosnippet>660</a>            .iter()
+<a href=#661 id=661 data-nosnippet>661</a>            .fold(HealthStatus::Ok, |acc, q| acc.worse(q.status)),
+<a href=#662 id=662 data-nosnippet>662</a>        questions,
+<a href=#663 id=663 data-nosnippet>663</a>    })
+<a href=#664 id=664 data-nosnippet>664</a>}
+<a href=#665 id=665 data-nosnippet>665</a>
+<a href=#666 id=666 data-nosnippet>666</a><span class="doccomment">/// One card from its declaration and its source's answer — or, when the source could not
+<a href=#667 id=667 data-nosnippet>667</a>/// answer, an `unknown` card that says why. Never a pass in place of an answer.
+<a href=#668 id=668 data-nosnippet>668</a></span><span class="kw">fn </span>card(spec: <span class="kw-2">&amp;</span>Spec, answer: <span class="kw-2">&amp;</span><span class="prelude-ty">Result</span>&lt;Value, String&gt;) -&gt; DashboardCard {
+<a href=#669 id=669 data-nosnippet>669</a>    <span class="kw">let </span>input: Value = serde_json::from_str(spec.input).unwrap_or(Value::Null);
+<a href=#670 id=670 data-nosnippet>670</a>    <span class="kw">let </span><span class="kw-2">mut </span>source = DashboardSource {
+<a href=#671 id=671 data-nosnippet>671</a>        capability: spec.capability.into(),
+<a href=#672 id=672 data-nosnippet>672</a>        input,
+<a href=#673 id=673 data-nosnippet>673</a>        pointer: spec.pointers[<span class="number">0</span>].into(),
+<a href=#674 id=674 data-nosnippet>674</a>        measure: spec.measure,
+<a href=#675 id=675 data-nosnippet>675</a>    };
+<a href=#676 id=676 data-nosnippet>676</a>    <span class="kw">let </span>(value, status, detail) = <span class="kw">match </span>answer {
+<a href=#677 id=677 data-nosnippet>677</a>        <span class="prelude-val">Ok</span>(answer) =&gt; {
+<a href=#678 id=678 data-nosnippet>678</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(p) = spec.pointers.iter().find(|p| answer.pointer(p).is_some()) {
+<a href=#679 id=679 data-nosnippet>679</a>                source.pointer = (<span class="kw-2">*</span>p).into();
+<a href=#680 id=680 data-nosnippet>680</a>            }
+<a href=#681 id=681 data-nosnippet>681</a>            <span class="kw">let </span>value = spec.measure.read(answer, <span class="kw-2">&amp;</span>source.pointer);
+<a href=#682 id=682 data-nosnippet>682</a>            <span class="kw">let </span>(status, detail) = (spec.judge)(<span class="kw-2">&amp;</span>value, answer);
+<a href=#683 id=683 data-nosnippet>683</a>            (value, status, detail)
+<a href=#684 id=684 data-nosnippet>684</a>        }
+<a href=#685 id=685 data-nosnippet>685</a>        <span class="prelude-val">Err</span>(reason) =&gt; (
+<a href=#686 id=686 data-nosnippet>686</a>            Value::Null,
+<a href=#687 id=687 data-nosnippet>687</a>            HealthStatus::Unknown,
+<a href=#688 id=688 data-nosnippet>688</a>            <span class="macro">format!</span>(
+<a href=#689 id=689 data-nosnippet>689</a>                <span class="string">"{} could not answer, so this is unknown rather than a pass: {reason}"</span>,
+<a href=#690 id=690 data-nosnippet>690</a>                spec.capability
+<a href=#691 id=691 data-nosnippet>691</a>            ),
+<a href=#692 id=692 data-nosnippet>692</a>        ),
+<a href=#693 id=693 data-nosnippet>693</a>    };
+<a href=#694 id=694 data-nosnippet>694</a>    DashboardCard {
+<a href=#695 id=695 data-nosnippet>695</a>        id: spec.id.into(),
+<a href=#696 id=696 data-nosnippet>696</a>        title: spec.title.into(),
+<a href=#697 id=697 data-nosnippet>697</a>        value,
+<a href=#698 id=698 data-nosnippet>698</a>        status,
+<a href=#699 id=699 data-nosnippet>699</a>        detail,
+<a href=#700 id=700 data-nosnippet>700</a>        source,
+<a href=#701 id=701 data-nosnippet>701</a>        route: spec.route.into(),
+<a href=#702 id=702 data-nosnippet>702</a>        action: spec.action.map(str::to_string),
+<a href=#703 id=703 data-nosnippet>703</a>    }
+<a href=#704 id=704 data-nosnippet>704</a>}
+<a href=#705 id=705 data-nosnippet>705</a>
+<a href=#706 id=706 data-nosnippet>706</a><span class="comment">// ---------------------------------------------------------------- the module
+<a href=#707 id=707 data-nosnippet>707</a>
+<a href=#708 id=708 data-nosnippet>708</a></span><span class="doccomment">/// The `dashboard` module: the Dashboard Suite's pages, each a projection of the
+<a href=#709 id=709 data-nosnippet>709</a>/// capabilities that hold its facts. The Overview is the first.
+<a href=#710 id=710 data-nosnippet>710</a>///
+<a href=#711 id=711 data-nosnippet>711</a>/// ```
+<a href=#712 id=712 data-nosnippet>712</a>/// use majordomus_cli::capability::builtin::dashboard::module;
+<a href=#713 id=713 data-nosnippet>713</a>/// let m = module();
+<a href=#714 id=714 data-nosnippet>714</a>/// assert_eq!(m.id.as_str(), "dashboard");
+<a href=#715 id=715 data-nosnippet>715</a>/// let tool = m.capabilities[0].capability.exposure.mcp.as_ref().and_then(|m| m.tool.clone());
+<a href=#716 id=716 data-nosnippet>716</a>/// assert_eq!(tool.as_deref(), Some("majordomus_dashboard_overview"));
+<a href=#717 id=717 data-nosnippet>717</a>/// ```
+<a href=#718 id=718 data-nosnippet>718</a></span><span class="kw">pub fn </span>module() -&gt; ModuleDescriptor {
+<a href=#719 id=719 data-nosnippet>719</a>    <span class="macro">module!</span> {
+<a href=#720 id=720 data-nosnippet>720</a>        id: <span class="string">"dashboard"</span>,
+<a href=#721 id=721 data-nosnippet>721</a>        title: <span class="string">"Dashboards"</span>,
+<a href=#722 id=722 data-nosnippet>722</a>        description: <span class="string">"The Dashboard Suite as a projection of the canonical state: every card is one fact read out of an existing capability's answer, carrying the capability it asked, the input, the JSON pointer its value was read from, the Cockpit page that holds the evidence and the command that acts on it. No dashboard stores, counts or judges anything of its own (ADR 0088)."</span>,
+<a href=#723 id=723 data-nosnippet>723</a>        stability: Stability::BehaviorallyVerified,
+<a href=#724 id=724 data-nosnippet>724</a>        capabilities: [
+<a href=#725 id=725 data-nosnippet>725</a>            <span class="macro">capability!</span> {
+<a href=#726 id=726 data-nosnippet>726</a>                id: <span class="string">"dashboard.overview"</span>,
+<a href=#727 id=727 data-nosnippet>727</a>                title: <span class="string">"The Overview: four questions"</span>,
+<a href=#728 id=728 data-nosnippet>728</a>                description: <span class="string">"Is it healthy, what changed, what is broken, what needs action — each answered by cards read out of `health.report`, `release.version`, `plan.status`, `worktree.status`, `plan.next`, `continuity.state` and `peers.list` (this checkout's board), asked once each through the executor. Every card carries its source capability, input and RFC 6901 pointer, so asking the source the same question yields the same value; a source that cannot answer makes its cards `unknown`, never `ok`. Nothing here rebuilds canonical state or asks anything beyond this process and its checkout."</span>,
+<a href=#729 id=729 data-nosnippet>729</a>                input: Empty,
+<a href=#730 id=730 data-nosnippet>730</a>                output: DashboardOverview,
+<a href=#731 id=731 data-nosnippet>731</a>                stability: Stability::BehaviorallyVerified,
+<a href=#732 id=732 data-nosnippet>732</a>                exposure: Exposure {
+<a href=#733 id=733 data-nosnippet>733</a>                    mcp: mcp(<span class="string">"majordomus_dashboard_overview"</span>),
+<a href=#734 id=734 data-nosnippet>734</a>                    http: get(<span class="string">"/api/v1/dashboard/overview"</span>),
+<a href=#735 id=735 data-nosnippet>735</a>                    cli: <span class="prelude-val">Some</span>(CliExposure { path: <span class="macro">vec!</span>[<span class="string">"dashboard"</span>.into(), <span class="string">"overview"</span>.into()] }),
+<a href=#736 id=736 data-nosnippet>736</a>                },
+<a href=#737 id=737 data-nosnippet>737</a>                tags: [<span class="string">"dashboard"</span>, <span class="string">"overview"</span>, <span class="string">"introspection"</span>],
+<a href=#738 id=738 data-nosnippet>738</a>                <span class="comment">// every source carries its own cache policy; caching the composition would
+<a href=#739 id=739 data-nosnippet>739</a>                // serve a card older than the source a reader drills into
+<a href=#740 id=740 data-nosnippet>740</a>                </span>cache: CachePolicy::Disabled,
+<a href=#741 id=741 data-nosnippet>741</a>                handler: overview,
+<a href=#742 id=742 data-nosnippet>742</a>            },
+<a href=#743 id=743 data-nosnippet>743</a>        ],
+<a href=#744 id=744 data-nosnippet>744</a>    }
+<a href=#745 id=745 data-nosnippet>745</a>}
+<a href=#746 id=746 data-nosnippet>746</a>
+<a href=#747 id=747 data-nosnippet>747</a><span class="attr">#[cfg(test)]
+<a href=#748 id=748 data-nosnippet>748</a></span><span class="kw">mod </span>tests {
+<a href=#749 id=749 data-nosnippet>749</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#750 id=750 data-nosnippet>750</a>    <span class="kw">use </span><span class="kw">crate</span>::synthetic::{Shape, SyntheticRepository};
+<a href=#751 id=751 data-nosnippet>751</a>
+<a href=#752 id=752 data-nosnippet>752</a>    <span class="doccomment">/// The next-version card names who answered: the contract, or the contract with the
+<a href=#753 id=753 data-nosnippet>753</a>    /// commits — and, when the contract cannot be measured, that no one did: the commit
+<a href=#754 id=754 data-nosnippet>754</a>    /// inference is never passed off as the answer.
+<a href=#755 id=755 data-nosnippet>755</a>    </span><span class="attr">#[test]
+<a href=#756 id=756 data-nosnippet>756</a>    </span><span class="kw">fn </span>the_next_version_card_names_who_answered() {
+<a href=#757 id=757 data-nosnippet>757</a>        <span class="kw">let </span>v = Value::from(<span class="string">"0.11.0"</span>);
+<a href=#758 id=758 data-nosnippet>758</a>        <span class="kw">let </span>by = |decided_by: <span class="kw-2">&amp;</span>str| {
+<a href=#759 id=759 data-nosnippet>759</a>            next_version(
+<a href=#760 id=760 data-nosnippet>760</a>                <span class="kw-2">&amp;</span>v,
+<a href=#761 id=761 data-nosnippet>761</a>                <span class="kw-2">&amp;</span><span class="macro">serde_json::json!</span>({ <span class="string">"bump"</span>: <span class="string">"major"</span>, <span class="string">"decided_by"</span>: decided_by }),
+<a href=#762 id=762 data-nosnippet>762</a>            )
+<a href=#763 id=763 data-nosnippet>763</a>        };
+<a href=#764 id=764 data-nosnippet>764</a>        <span class="kw">let </span>(status, contract) = by(<span class="string">"contract"</span>);
+<a href=#765 id=765 data-nosnippet>765</a>        <span class="macro">assert_eq!</span>(status, HealthStatus::Ok);
+<a href=#766 id=766 data-nosnippet>766</a>        <span class="macro">assert!</span>(contract.starts_with(<span class="string">"the version the public contract requires"</span>));
+<a href=#767 id=767 data-nosnippet>767</a>        <span class="macro">assert!</span>(contract.contains(<span class="string">"the commits imply a major (evidence)"</span>));
+<a href=#768 id=768 data-nosnippet>768</a>        <span class="kw">let </span>(<span class="kw">_</span>, both) = by(<span class="string">"contract_and_commits"</span>);
+<a href=#769 id=769 data-nosnippet>769</a>        <span class="macro">assert!</span>(both.starts_with(<span class="string">"the contract requires no release over the last one"</span>));
+<a href=#770 id=770 data-nosnippet>770</a>        <span class="comment">// unmeasurable: no version is selected, and the card neither passes the commit
+<a href=#771 id=771 data-nosnippet>771</a>        // inference off as the answer nor reports `ok`
+<a href=#772 id=772 data-nosnippet>772</a>        </span><span class="kw">let </span>(status, undecided) = next_version(
+<a href=#773 id=773 data-nosnippet>773</a>            <span class="kw-2">&amp;</span>Value::Null,
+<a href=#774 id=774 data-nosnippet>774</a>            <span class="kw-2">&amp;</span><span class="macro">serde_json::json!</span>({
+<a href=#775 id=775 data-nosnippet>775</a>                <span class="string">"bump"</span>: <span class="string">"major"</span>,
+<a href=#776 id=776 data-nosnippet>776</a>                <span class="string">"decided_by"</span>: <span class="string">"undecided"</span>,
+<a href=#777 id=777 data-nosnippet>777</a>                <span class="string">"contract_unreadable"</span>: <span class="string">"no release to compare with"</span>,
+<a href=#778 id=778 data-nosnippet>778</a>            }),
+<a href=#779 id=779 data-nosnippet>779</a>        );
+<a href=#780 id=780 data-nosnippet>780</a>        <span class="macro">assert_eq!</span>(status, HealthStatus::Unknown);
+<a href=#781 id=781 data-nosnippet>781</a>        <span class="macro">assert!</span>(undecided.starts_with(<span class="string">"undecided: the public contract could not be measured"</span>));
+<a href=#782 id=782 data-nosnippet>782</a>        <span class="macro">assert!</span>(undecided.contains(<span class="string">"no release to compare with"</span>));
+<a href=#783 id=783 data-nosnippet>783</a>        <span class="macro">assert!</span>(undecided.contains(<span class="string">"needs an explicit target"</span>));
+<a href=#784 id=784 data-nosnippet>784</a>        <span class="kw">let </span>(<span class="kw">_</span>, nothing) = next_version(
+<a href=#785 id=785 data-nosnippet>785</a>            <span class="kw-2">&amp;</span>Value::Null,
+<a href=#786 id=786 data-nosnippet>786</a>            <span class="kw-2">&amp;</span><span class="macro">serde_json::json!</span>({ <span class="string">"decided_by"</span>: <span class="string">"contract" </span>}),
+<a href=#787 id=787 data-nosnippet>787</a>        );
+<a href=#788 id=788 data-nosnippet>788</a>        <span class="macro">assert_eq!</span>(nothing, <span class="string">"nothing would be released"</span>);
+<a href=#789 id=789 data-nosnippet>789</a>        <span class="comment">// an answer that names no one, or a word this card does not know (an older or a
+<a href=#790 id=790 data-nosnippet>790</a>        // newer executable): the version is still the contract's, and the card claims no
+<a href=#791 id=791 data-nosnippet>791</a>        // more than that — neither the commits nor "undecided" are read into it
+<a href=#792 id=792 data-nosnippet>792</a>        </span><span class="kw">for </span>answer <span class="kw">in </span>[
+<a href=#793 id=793 data-nosnippet>793</a>            <span class="macro">serde_json::json!</span>({ <span class="string">"bump"</span>: <span class="string">"minor" </span>}),
+<a href=#794 id=794 data-nosnippet>794</a>            <span class="macro">serde_json::json!</span>({ <span class="string">"bump"</span>: <span class="string">"minor"</span>, <span class="string">"decided_by"</span>: <span class="string">"a-later-word" </span>}),
+<a href=#795 id=795 data-nosnippet>795</a>        ] {
+<a href=#796 id=796 data-nosnippet>796</a>            <span class="kw">let </span>(status, plain) = next_version(<span class="kw-2">&amp;</span>v, <span class="kw-2">&amp;</span>answer);
+<a href=#797 id=797 data-nosnippet>797</a>            <span class="macro">assert_eq!</span>(status, HealthStatus::Ok);
+<a href=#798 id=798 data-nosnippet>798</a>            <span class="macro">assert_eq!</span>(plain, <span class="string">"the version the public contract requires"</span>);
+<a href=#799 id=799 data-nosnippet>799</a>        }
+<a href=#800 id=800 data-nosnippet>800</a>    }
+<a href=#801 id=801 data-nosnippet>801</a>
+<a href=#802 id=802 data-nosnippet>802</a>    <span class="doccomment">/// The declaration is the only place the projections are named; a refactor that
+<a href=#803 id=803 data-nosnippet>803</a>    /// dropped one would still compile, and this is the assertion that would not.
+<a href=#804 id=804 data-nosnippet>804</a>    </span><span class="attr">#[test]
+<a href=#805 id=805 data-nosnippet>805</a>    </span><span class="kw">fn </span>the_declaration_yields_the_projections_it_claims() {
+<a href=#806 id=806 data-nosnippet>806</a>        <span class="kw">let </span>m = module();
+<a href=#807 id=807 data-nosnippet>807</a>        <span class="kw">let </span>ids: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = m
+<a href=#808 id=808 data-nosnippet>808</a>            .capabilities
+<a href=#809 id=809 data-nosnippet>809</a>            .iter()
+<a href=#810 id=810 data-nosnippet>810</a>            .map(|e| e.capability.id.as_str())
+<a href=#811 id=811 data-nosnippet>811</a>            .collect();
+<a href=#812 id=812 data-nosnippet>812</a>        <span class="macro">assert_eq!</span>(ids, [<span class="string">"dashboard.overview"</span>]);
+<a href=#813 id=813 data-nosnippet>813</a>        <span class="kw">let </span>exposure = <span class="kw-2">&amp;</span>m.capabilities[<span class="number">0</span>].capability.exposure;
+<a href=#814 id=814 data-nosnippet>814</a>        <span class="macro">assert_eq!</span>(
+<a href=#815 id=815 data-nosnippet>815</a>            exposure.http.as_ref().unwrap().path,
+<a href=#816 id=816 data-nosnippet>816</a>            <span class="string">"/api/v1/dashboard/overview"
+<a href=#817 id=817 data-nosnippet>817</a>        </span>);
+<a href=#818 id=818 data-nosnippet>818</a>        <span class="macro">assert_eq!</span>(
+<a href=#819 id=819 data-nosnippet>819</a>            exposure.cli.as_ref().unwrap().path,
+<a href=#820 id=820 data-nosnippet>820</a>            [<span class="string">"dashboard"</span>, <span class="string">"overview"</span>]
+<a href=#821 id=821 data-nosnippet>821</a>        );
+<a href=#822 id=822 data-nosnippet>822</a>    }
+<a href=#823 id=823 data-nosnippet>823</a>
+<a href=#824 id=824 data-nosnippet>824</a>    <span class="doccomment">/// Every card answers one of the four questions, has an id of its own, and names a
+<a href=#825 id=825 data-nosnippet>825</a>    /// source that is not one of the expensive or refusing capabilities.
+<a href=#826 id=826 data-nosnippet>826</a>    </span><span class="attr">#[test]
+<a href=#827 id=827 data-nosnippet>827</a>    </span><span class="kw">fn </span>every_card_is_declared_once_and_reads_a_cheap_source() {
+<a href=#828 id=828 data-nosnippet>828</a>        <span class="kw">let </span><span class="kw-2">mut </span>seen = std::collections::BTreeSet::new();
+<a href=#829 id=829 data-nosnippet>829</a>        <span class="kw">for </span>spec <span class="kw">in </span>CARDS {
+<a href=#830 id=830 data-nosnippet>830</a>            <span class="macro">assert!</span>(seen.insert(spec.id), <span class="string">"{} is declared twice"</span>, spec.id);
+<a href=#831 id=831 data-nosnippet>831</a>            <span class="macro">assert!</span>(
+<a href=#832 id=832 data-nosnippet>832</a>                QUESTIONS.iter().any(|(q, <span class="kw">_</span>)| <span class="kw-2">*</span>q == spec.question),
+<a href=#833 id=833 data-nosnippet>833</a>                <span class="string">"{} answers no question"</span>,
+<a href=#834 id=834 data-nosnippet>834</a>                spec.id
+<a href=#835 id=835 data-nosnippet>835</a>            );
+<a href=#836 id=836 data-nosnippet>836</a>            <span class="macro">assert!</span>(!spec.pointers.is_empty(), <span class="string">"{} reads nowhere"</span>, spec.id);
+<a href=#837 id=837 data-nosnippet>837</a>            <span class="kw">for </span>p <span class="kw">in </span>spec.pointers {
+<a href=#838 id=838 data-nosnippet>838</a>                <span class="macro">assert!</span>(p.starts_with(<span class="string">'/'</span>), <span class="string">"{}: {p} is not a JSON pointer"</span>, spec.id);
+<a href=#839 id=839 data-nosnippet>839</a>            }
+<a href=#840 id=840 data-nosnippet>840</a>            serde_json::from_str::&lt;Value&gt;(spec.input)
+<a href=#841 id=841 data-nosnippet>841</a>                .unwrap_or_else(|e| <span class="macro">panic!</span>(<span class="string">"{}: input does not parse: {e}"</span>, spec.id));
+<a href=#842 id=842 data-nosnippet>842</a>            <span class="kw">for </span>refused <span class="kw">in </span>[<span class="string">"delivery."</span>, <span class="string">"release.analysis"</span>, <span class="string">"evidence."</span>] {
+<a href=#843 id=843 data-nosnippet>843</a>                <span class="macro">assert!</span>(
+<a href=#844 id=844 data-nosnippet>844</a>                    !spec.capability.starts_with(refused),
+<a href=#845 id=845 data-nosnippet>845</a>                    <span class="string">"{} reads {}, which the Overview must not ask"</span>,
+<a href=#846 id=846 data-nosnippet>846</a>                    spec.id,
+<a href=#847 id=847 data-nosnippet>847</a>                    spec.capability
+<a href=#848 id=848 data-nosnippet>848</a>                );
+<a href=#849 id=849 data-nosnippet>849</a>            }
+<a href=#850 id=850 data-nosnippet>850</a>        }
+<a href=#851 id=851 data-nosnippet>851</a>        <span class="kw">for </span>(q, <span class="kw">_</span>) <span class="kw">in </span>QUESTIONS {
+<a href=#852 id=852 data-nosnippet>852</a>            <span class="macro">assert!</span>(
+<a href=#853 id=853 data-nosnippet>853</a>                CARDS.iter().any(|s| s.question == q),
+<a href=#854 id=854 data-nosnippet>854</a>                <span class="string">"the question {q} has no card"
+<a href=#855 id=855 data-nosnippet>855</a>            </span>);
+<a href=#856 id=856 data-nosnippet>856</a>        }
 <a href=#857 id=857 data-nosnippet>857</a>    }
-<a href=#858 id=858 data-nosnippet>858</a>}
+<a href=#858 id=858 data-nosnippet>858</a>
+<a href=#859 id=859 data-nosnippet>859</a>    <span class="doccomment">/// Against a real registry: every source exists, every card's value is its source's
+<a href=#860 id=860 data-nosnippet>860</a>    /// value at its pointer, and a source that could not answer is unknown — never ok.
+<a href=#861 id=861 data-nosnippet>861</a>    </span><span class="attr">#[test]
+<a href=#862 id=862 data-nosnippet>862</a>    </span><span class="kw">fn </span>every_card_is_its_sources_value_or_unknown() {
+<a href=#863 id=863 data-nosnippet>863</a>        <span class="kw">let </span>repo = SyntheticRepository::new(Shape::default()).expect(<span class="string">"a synthetic repository"</span>);
+<a href=#864 id=864 data-nosnippet>864</a>        <span class="kw">let </span>ctx = repo.context().expect(<span class="string">"a context"</span>);
+<a href=#865 id=865 data-nosnippet>865</a>        <span class="kw">for </span>spec <span class="kw">in </span>CARDS {
+<a href=#866 id=866 data-nosnippet>866</a>            <span class="macro">assert!</span>(
+<a href=#867 id=867 data-nosnippet>867</a>                ctx.registry.get(spec.capability).is_some(),
+<a href=#868 id=868 data-nosnippet>868</a>                <span class="string">"{} reads {}, which the registry does not hold"</span>,
+<a href=#869 id=869 data-nosnippet>869</a>                spec.id,
+<a href=#870 id=870 data-nosnippet>870</a>                spec.capability
+<a href=#871 id=871 data-nosnippet>871</a>            );
+<a href=#872 id=872 data-nosnippet>872</a>        }
+<a href=#873 id=873 data-nosnippet>873</a>        <span class="kw">let </span>o = overview(<span class="kw-2">&amp;</span>ctx, Empty {}).expect(<span class="string">"the overview answers"</span>);
+<a href=#874 id=874 data-nosnippet>874</a>        <span class="kw">let </span>ids: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = o.questions.iter().map(|q| q.id.as_str()).collect();
+<a href=#875 id=875 data-nosnippet>875</a>        <span class="macro">assert_eq!</span>(ids, [<span class="string">"healthy"</span>, <span class="string">"changed"</span>, <span class="string">"broken"</span>, <span class="string">"action"</span>]);
+<a href=#876 id=876 data-nosnippet>876</a>        <span class="kw">for </span>card <span class="kw">in </span>o.questions.iter().flat_map(|q| <span class="kw-2">&amp;</span>q.cards) {
+<a href=#877 id=877 data-nosnippet>877</a>            <span class="kw">match </span>ctx.execute(<span class="kw-2">&amp;</span>card.source.capability, card.source.input.clone()) {
+<a href=#878 id=878 data-nosnippet>878</a>                <span class="prelude-val">Ok</span>(answer) =&gt; <span class="macro">assert_eq!</span>(
+<a href=#879 id=879 data-nosnippet>879</a>                    card.source.measure.read(<span class="kw-2">&amp;</span>answer, <span class="kw-2">&amp;</span>card.source.pointer),
+<a href=#880 id=880 data-nosnippet>880</a>                    card.value,
+<a href=#881 id=881 data-nosnippet>881</a>                    <span class="string">"{} is not its source's value"</span>,
+<a href=#882 id=882 data-nosnippet>882</a>                    card.id
+<a href=#883 id=883 data-nosnippet>883</a>                ),
+<a href=#884 id=884 data-nosnippet>884</a>                <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {
+<a href=#885 id=885 data-nosnippet>885</a>                    <span class="macro">assert_eq!</span>(card.status, HealthStatus::Unknown, <span class="string">"{}"</span>, card.id);
+<a href=#886 id=886 data-nosnippet>886</a>                    <span class="macro">assert!</span>(card.value.is_null(), <span class="string">"{}"</span>, card.id);
+<a href=#887 id=887 data-nosnippet>887</a>                }
+<a href=#888 id=888 data-nosnippet>888</a>            }
+<a href=#889 id=889 data-nosnippet>889</a>        }
+<a href=#890 id=890 data-nosnippet>890</a>    }
+<a href=#891 id=891 data-nosnippet>891</a>
+<a href=#892 id=892 data-nosnippet>892</a>    <span class="doccomment">/// A source that refuses turns its cards unknown with the reason, and the whole
+<a href=#893 id=893 data-nosnippet>893</a>    /// overview with them: absence of an answer is never reported as a pass.
+<a href=#894 id=894 data-nosnippet>894</a>    </span><span class="attr">#[test]
+<a href=#895 id=895 data-nosnippet>895</a>    </span><span class="kw">fn </span>an_unanswered_source_is_unknown_with_its_reason() {
+<a href=#896 id=896 data-nosnippet>896</a>        <span class="kw">let </span>spec = <span class="kw-2">&amp;</span>CARDS[<span class="number">0</span>];
+<a href=#897 id=897 data-nosnippet>897</a>        <span class="kw">let </span>c = card(spec, <span class="kw-2">&amp;</span><span class="prelude-val">Err</span>(<span class="string">"no such thing"</span>.into()));
+<a href=#898 id=898 data-nosnippet>898</a>        <span class="macro">assert_eq!</span>(c.status, HealthStatus::Unknown);
+<a href=#899 id=899 data-nosnippet>899</a>        <span class="macro">assert!</span>(c.value.is_null());
+<a href=#900 id=900 data-nosnippet>900</a>        <span class="macro">assert!</span>(c.detail.contains(<span class="string">"no such thing"</span>), <span class="string">"{}"</span>, c.detail);
+<a href=#901 id=901 data-nosnippet>901</a>        <span class="macro">assert!</span>(
+<a href=#902 id=902 data-nosnippet>902</a>            c.detail.contains(<span class="string">"unknown rather than a pass"</span>),
+<a href=#903 id=903 data-nosnippet>903</a>            <span class="string">"{}"</span>,
+<a href=#904 id=904 data-nosnippet>904</a>            c.detail
+<a href=#905 id=905 data-nosnippet>905</a>        );
+<a href=#906 id=906 data-nosnippet>906</a>        <span class="macro">assert_eq!</span>(c.source.capability, spec.capability);
+<a href=#907 id=907 data-nosnippet>907</a>    }
+<a href=#908 id=908 data-nosnippet>908</a>
+<a href=#909 id=909 data-nosnippet>909</a>    <span class="doccomment">/// The fallback pointer is taken only when the first resolves to nothing, and the card
+<a href=#910 id=910 data-nosnippet>910</a>    /// names the pointer it actually read.
+<a href=#911 id=911 data-nosnippet>911</a>    </span><span class="attr">#[test]
+<a href=#912 id=912 data-nosnippet>912</a>    </span><span class="kw">fn </span>a_card_names_the_pointer_it_read() {
+<a href=#913 id=913 data-nosnippet>913</a>        <span class="kw">let </span>spec = CARDS
+<a href=#914 id=914 data-nosnippet>914</a>            .iter()
+<a href=#915 id=915 data-nosnippet>915</a>            .find(|s| s.id == <span class="string">"next-issue"</span>)
+<a href=#916 id=916 data-nosnippet>916</a>            .expect(<span class="string">"declared"</span>);
+<a href=#917 id=917 data-nosnippet>917</a>        <span class="kw">let </span>with = card(
+<a href=#918 id=918 data-nosnippet>918</a>            spec,
+<a href=#919 id=919 data-nosnippet>919</a>            <span class="kw-2">&amp;</span><span class="prelude-val">Ok</span>(<span class="macro">json!</span>({ <span class="string">"issue"</span>: { <span class="string">"id"</span>: <span class="string">"I0001" </span>}, <span class="string">"active_milestone"</span>: <span class="string">"M1" </span>})),
+<a href=#920 id=920 data-nosnippet>920</a>        );
+<a href=#921 id=921 data-nosnippet>921</a>        <span class="macro">assert_eq!</span>(with.source.pointer, <span class="string">"/issue/id"</span>);
+<a href=#922 id=922 data-nosnippet>922</a>        <span class="macro">assert_eq!</span>(with.value, <span class="macro">json!</span>(<span class="string">"I0001"</span>));
+<a href=#923 id=923 data-nosnippet>923</a>        <span class="macro">assert_eq!</span>(with.status, HealthStatus::Ok);
+<a href=#924 id=924 data-nosnippet>924</a>        <span class="kw">let </span>without = card(
+<a href=#925 id=925 data-nosnippet>925</a>            spec,
+<a href=#926 id=926 data-nosnippet>926</a>            <span class="kw-2">&amp;</span><span class="prelude-val">Ok</span>(<span class="macro">json!</span>({ <span class="string">"reason"</span>: <span class="string">"run plan blocked"</span>, <span class="string">"active_milestone"</span>: <span class="string">"M1" </span>})),
+<a href=#927 id=927 data-nosnippet>927</a>        );
+<a href=#928 id=928 data-nosnippet>928</a>        <span class="macro">assert_eq!</span>(without.source.pointer, <span class="string">"/reason"</span>);
+<a href=#929 id=929 data-nosnippet>929</a>        <span class="macro">assert_eq!</span>(without.value, <span class="macro">json!</span>(<span class="string">"run plan blocked"</span>));
+<a href=#930 id=930 data-nosnippet>930</a>        <span class="macro">assert_eq!</span>(without.status, HealthStatus::Warn);
+<a href=#931 id=931 data-nosnippet>931</a>    }
+<a href=#932 id=932 data-nosnippet>932</a>}
 </code></pre></div></section></main></body></html>
