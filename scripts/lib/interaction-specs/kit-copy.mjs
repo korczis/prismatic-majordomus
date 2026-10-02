@@ -9,11 +9,6 @@ export default {
   async exercise({ controls, page, fail }) {
     let n = 0;
     for (const c of controls) {
-      const expected = await c.locator.evaluate((b) => {
-        const t = document.getElementById(b.getAttribute('data-copy'));
-        return t ? t.innerText.trim() : null;
-      });
-      if (expected === null) { fail(`a copy button names ${await c.locator.getAttribute('data-copy')}, which no element carries`); n++; continue; }
       if (await c.locator.evaluate((b) => b.hidden)) { fail('a copy button is still hidden after the script ran'); n++; continue; }
       // a button in a tab panel that is not selected is reached the way a reader reaches it
       const tab = await c.locator.evaluate((b) => {
@@ -21,13 +16,34 @@ export default {
         return panel && panel.hidden ? panel.getAttribute('aria-labelledby') : null;
       });
       if (tab) await page.locator(`[id="${tab}"]`).click();
+      const expected = await c.locator.evaluate((b) => {
+        const t = document.getElementById(b.getAttribute('data-copy'));
+        return t ? t.innerText.trim() : null;
+      });
+      if (expected === null) { fail(`a copy button names ${await c.locator.getAttribute('data-copy')}, which no element carries`); n++; continue; }
       await c.locator.scrollIntoViewIfNeeded();
+      // the button says Copied for 1.6 s and then reverts, and a stalled driver can arrive later than that:
+      // the page records the state the moment the script sets it, and the verdict reads the record
+      await c.locator.evaluate((b) => {
+        window.__mjClipboard = null;
+        const said = (b.__mjSaid = { label: false, copied: false });
+        new MutationObserver(() => {
+          if (b.getAttribute('aria-label') === 'Copied') said.label = true;
+          if (b.getAttribute('data-copied') === 'true') said.copied = true;
+        }).observe(b, { attributes: true, attributeFilter: ['aria-label', 'data-copied'] });
+      });
       await c.locator.click();
-      await page.waitForTimeout(60);
-      const got = await page.evaluate(() => window.__mjClipboard ?? '');
-      if (got !== expected) fail(`the clipboard holds ${JSON.stringify(got.slice(0, 60))}, not ${JSON.stringify(expected.slice(0, 60))}`);
-      if ((await c.locator.getAttribute('aria-label')) !== 'Copied') fail('after copying, the button is not named "Copied"');
-      if ((await c.locator.getAttribute('data-copied')) !== 'true') fail('after copying, the button does not carry data-copied="true"');
+      await c.locator.evaluate((b) => new Promise((done) => {
+        const until = Date.now() + 10000;
+        (function poll() {
+          if ((b.__mjSaid.label && b.__mjSaid.copied && window.__mjClipboard !== null) || Date.now() > until) done();
+          else setTimeout(poll, 50);
+        })();
+      }));
+      const r = await c.locator.evaluate((b) => ({ got: window.__mjClipboard ?? '', ...b.__mjSaid }));
+      if (r.got !== expected) fail(`the clipboard holds ${JSON.stringify(r.got.slice(0, 60))}, not ${JSON.stringify(expected.slice(0, 60))}`);
+      if (!r.label) fail('after copying, the button is not named "Copied"');
+      if (!r.copied) fail('after copying, the button does not carry data-copied="true"');
       n++;
     }
     return n;

@@ -13,9 +13,11 @@ export default {
       const from = page.url();
       await c.locator.scrollIntoViewIfNeeded();
       await c.locator.fill('decision');
-      await Promise.all([page.waitForLoadState('load'), c.locator.press('Enter')]);
+      await Promise.all([page.waitForURL((u) => u.searchParams.get('q') === 'decision', { waitUntil: 'load' }), c.locator.press('Enter')]);
+      // the hub fetches /docs/index.json before it lists anything, which a loaded runner can hold back for seconds;
+      // polled on an interval, because a starved renderer delays animation frames too
       await page.waitForFunction(() => document.querySelectorAll('[data-docs-search-results] a').length > 0,
-        null, { timeout: 5000 }).catch(() => {});
+        null, { timeout: 15000, polling: 100 }).catch(() => {});
       const box = await page.locator('#docs-search-input').inputValue().catch(() => null);
       if (box !== 'decision') fail(`the hub's search box holds ${JSON.stringify(box)}, not the query`);
       const results = page.locator('[data-docs-search-results] a');
