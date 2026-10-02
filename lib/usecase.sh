@@ -469,11 +469,12 @@ mj_uc_cmd_validate() {
 # derived differed by seven lines. The advisor lines and the passing check line go, and the
 # remaining line becomes one token; a FAIL is kept whole, since a finding is the repository's.
 #
-# `knowledge nodes` (#620) checks every file against the schema of its kind through the
-# executable's index, and says so with a WARN when the recording job has no executable to
-# ask: the site job has none, the suite job and a laptop do, and the catalogue each derived
-# differed by that one line. The line is about the recorder, and it goes; what the nodes are
-# is kept.
+# `knowledge nodes` (#620) is not masked here. It checks every file against the schema of its
+# kind through the executable's index, and it used to WARN when the recording job had none to
+# ask — the site job has none, the suite job and a laptop do — so the catalogue each derived
+# differed by that line. Hiding the line made the artifacts agree without making the
+# recording reproducible (#713). The scenario environment decides the question instead (see
+# mj_uc_run_one), and the line it then prints is the same on every machine.
 mj_uc_normalise() { # repo-path
   local real; real="$(cd "$1" 2>/dev/null && pwd -P)"
   sed -E \
@@ -498,7 +499,7 @@ mj_uc_normalise() { # repo-path
     -e 's/^([a-z_-]+ +(cold|warm) +[a-z]+ +[0-9]+) +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+/\1  <ms>  <ms>  <ms>  <ms>/' \
     -e 's/^(INFO|WARN) +budget +([a-z]+) — .*$/·    budget      \2 — <timed against the policy budget>/' \
     -e 's/^(OK|WARN|FAIL) +checkpoint +([^ ]+) — .*$/·    checkpoint  \2 — <timed against the checkpoint interval>/' \
-    -e 's/(exit [0-9]+, )[0-9]+s$/\1<s>s/' \
+    -e 's/(exit [0-9]+, )[0-9]+s(,|$)/\1<s>s\2/' \
     -e 's/[0-9]+ ms/<n> ms/g' \
     -e 's/[0-9]+ ms of/<n> ms of/g' \
     -e 's/\([0-9]+[mhd] ago/(<age> ago/g' \
@@ -510,7 +511,6 @@ mj_uc_normalise() { # repo-path
     -e 's/^( *owner=).*$/\1<owner>/' \
     -e 's/"owner":"[^"]*"/"owner":"<owner>"/g' \
     -e '/: printf: write error: Broken pipe$/d' \
-    -e '/^WARN knowledge +[^ ]+ — the index could not be asked /d' \
     -e '/^INFO advisor +[^ ]+ — .* — optional$/d' \
     -e '/^OK +reasoning +- — reasoning check: /d' \
     -e 's/^(OK|INFO) +reasoning +.*$/·    reasoning   <decided by the advisors and the executable of the recording machine>/'
@@ -530,6 +530,11 @@ mj_uc_run_one() { # index, evidence-file, keep(0|1)
   # has installed. Reasoning's ci mode admits no advisor whatever is on PATH (ADR 0098),
   # which makes every advisor line `doctor` prints the same on a laptop and on a runner.
   MAJORDOMUS_REASONING_MODE=ci; export MAJORDOMUS_REASONING_MODE
+  # The same holds for the schema check `knowledge nodes` asks the executable's index for:
+  # whether the recorder could ask it is whether this machine built an executable (#713).
+  # The scenario says it is not asked, and the reader reports that, the same everywhere; the
+  # check itself is the suite's (case 405), which runs where an executable is built.
+  MAJORDOMUS_KNOWLEDGE_SCHEMA=unasked; export MAJORDOMUS_KNOWLEDGE_SCHEMA
   fix="$(mj_uc_fixture_dir)"
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj-uc.XXXXXX")"
   W="$tmp/repo"; mkdir -p "$W"
