@@ -1,7 +1,7 @@
 +++
 title = "A working context is derived, not stored"
 description = "A working context is derived, not stored"
-weight = 141
+weight = 142
 [extra]
 kind = "rule"
 slug = "project-the-session-context-is-derived-1"

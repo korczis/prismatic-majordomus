@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 157 | 139 | 0 | 18 |
-| http | 155 | 139 | 0 | 16 |
-| mcp | 151 | 135 | 0 | 16 |
+| direct | 160 | 142 | 0 | 18 |
+| http | 158 | 142 | 0 | 16 |
+| mcp | 154 | 138 | 0 | 16 |
 | system | 13 | 13 | 0 | 0 |
-| total | 476 | 426 | 0 | 50 |
+| total | 485 | 435 | 0 | 50 |
 
 ## Capabilities
 
@@ -62,6 +62,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `environment.explain` | environment | query | — | covered | covered | covered | `all`, `one-field` |
 | `environment.preflight` | environment | query | — | covered | covered | covered | `sealed` |
 | `environment.status` | environment | query | — | covered | covered | covered | `default` |
+| `episodes.attach` | episodes | command | — | covered | covered | covered | `default` |
+| `episodes.detach` | episodes | command | — | covered | covered | covered | `default` |
+| `episodes.list` | episodes | query | — | covered | covered | covered | `default` |
 | `evidence.claim` | evidence | query | — | covered | covered | covered | `first-claim` |
 | `evidence.record` | evidence | command | — | waived | — | — | — |
 | `evidence.report` | evidence | query | — | covered | covered | covered | `all`, `findings` |

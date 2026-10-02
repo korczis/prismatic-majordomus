@@ -5,14 +5,14 @@
     "id": "majordomus-cli",
     "version": "0.11.0"
   },
-  "fingerprint": "d7f4cf1fa03b2111683d0d4837c75cadc762e1c8a4c1b62f8d588cb1ac960264",
+  "fingerprint": "48589d92215285ab1121cbb93239f2626b83214a1f2c4ade14ab579508def6ad",
   "route": "/features/",
   "counts": {
     "features": 26,
     "features_all": 27,
     "featured": 14,
     "providers": 6,
-    "modules": 47,
+    "modules": 48,
     "modules_covered": 39,
     "commands": 30,
     "commands_covered": 30,
@@ -304,7 +304,7 @@
         },
         {
           "name": "claim",
-          "objects": 207
+          "objects": 209
         }
       ],
       "rule_refs": [
@@ -577,11 +577,11 @@
       "counts": {
         "capabilities": 11,
         "mcp_tools": 11,
-        "mcp_resources": 271,
+        "mcp_resources": 273,
         "http_routes": 11,
         "cli_paths": 10,
         "commands": 2,
-        "objects": 265,
+        "objects": 267,
         "rules": 5,
         "enforced_rules": 5,
         "docs": 3,
@@ -3818,7 +3818,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 73
+          "objects": 74
         },
         {
           "name": "knowledge",
@@ -3826,7 +3826,7 @@
         },
         {
           "name": "document",
-          "objects": 291
+          "objects": 293
         }
       ],
       "rule_refs": [
@@ -4082,11 +4082,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 366,
+        "mcp_resources": 369,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 365,
+        "objects": 368,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -4296,7 +4296,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 152
+          "objects": 153
         }
       ],
       "rule_refs": [
@@ -4672,11 +4672,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 154,
+        "mcp_resources": 155,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 152,
+        "objects": 153,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -10179,6 +10179,11 @@
         ]
       },
       {
+        "id": "episodes",
+        "title": "Episodes",
+        "features": []
+      },
+      {
         "id": "evidence",
         "title": "Evidence",
         "features": [
@@ -10617,7 +10622,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (73)",
+        "title": "adr (74)",
         "features": [
           "knowledge"
         ]
@@ -10645,7 +10650,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (207)",
+        "title": "claim (209)",
         "features": [
           "declare-once"
         ]
@@ -10753,7 +10758,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (152)",
+        "title": "rule (153)",
         "features": [
           "doctrine"
         ]
@@ -10813,7 +10818,13 @@
         }
       ],
       "hooks": [],
-      "scratch_roots": []
+      "scratch_roots": [],
+      "offers": {
+        "episode": "none",
+        "episode_evidence": "not a product but a class of tools defined by the file they read (agents.md). A convention has no process and no events; the concrete tool's own entry in this file is what says what it can do.",
+        "prompts": "none",
+        "prompts_evidence": "as above: a convention hands nothing to anything."
+      }
     },
     {
       "id": "bb",
@@ -10828,7 +10839,13 @@
       "hooks": [],
       "scratch_roots": [
         "${BB_DATA_DIR:-~/.bb}/plugins/environment-git-worktree/host-data/worktrees"
-      ]
+      ],
+      "offers": {
+        "episode": "none",
+        "episode_evidence": "no conversation-lifecycle hook is published. Searched 2026-09-11: getbb.app; github.com/get-bb/bb docs/ (25 files), plugins/ (31 plugins), README.md; docs/configuration.md ('Repository worktree hooks') and docs/cli-guide-and-skill.md document only .bb-env-setup.sh / .bb-env-teardown.sh, which fire on environment provisioning and removal. docs/provider-plugin-api.md names an internal system/interaction/lifecycle event stream with no external-command contract. The @get-bb/plugin-sdk surface is rendered in-app and not published, so this is an absence of documentation, not a documented absence. ADR 0024 reached the same conclusion: the agent bb runs keeps the hook.",
+        "prompts": "none",
+        "prompts_evidence": "same search, same date, same caveat: nothing published hands a prompt to an external command before the model runs. Because bb runs Claude Code and Codex as child processes, each child's own prompt hook fires underneath it — the coverage is the agent's, never bb's."
+      }
     },
     {
       "id": "claude-code",
@@ -10847,7 +10864,13 @@
       ],
       "scratch_roots": [
         "<primary>/.claude/worktrees"
-      ]
+      ],
+      "offers": {
+        "episode": "hooks",
+        "episode_evidence": "https://code.claude.com/docs/en/hooks — SessionStart (source: startup, resume, clear, compact, fork), SessionEnd (reason: clear, resume, logout, prompt_input_exit, other), PreCompact and PostCompact (trigger: manual, auto). Verified 2026-09-11. This repository's shims are .claude/hooks/majordomus-session-{start,end,compact}.",
+        "prompts": "hook",
+        "prompts_evidence": "https://code.claude.com/docs/en/hooks — UserPromptSubmit, 'When you submit a prompt, before Claude processes it'; the raw text arrives as prompt_text. Verified 2026-09-11. The shim is .claude/hooks/majordomus-capture."
+      }
     },
     {
       "id": "codex",
@@ -10855,7 +10878,13 @@
       "bootstraps": [],
       "client_config": ".codex/config.toml",
       "hooks": [],
-      "scratch_roots": []
+      "scratch_roots": [],
+      "offers": {
+        "episode": "hooks",
+        "episode_evidence": "https://learn.chatgpt.com/docs/hooks (canonical; developers.openai.com/codex/hooks 308-redirects to it) — SessionStart (source: startup, resume, clear, compact), SessionEnd, PreCompact and PostCompact; PreCompact can block with continue:false. Configured in ~/.codex/hooks.json or an inline [hooks] table in .codex/config.toml. Verified 2026-09-11. The `notify` key is NOT this: https://learn.chatgpt.com/docs/config-file/config-advanced says it fires 'whenever Codex emits supported events (currently only agent-turn-complete)' — after a turn, never at a session boundary.",
+        "prompts": "hook",
+        "prompts_evidence": "https://learn.chatgpt.com/docs/hooks — UserPromptSubmit, 'Runs when a user submits a prompt, before model invocation, and can block the prompt'; the raw text arrives as `prompt` (not `prompt_text`, as Claude Code sends it). Verified 2026-09-11."
+      }
     },
     {
       "id": "gemini",
@@ -10863,14 +10892,26 @@
       "bootstraps": [],
       "client_config": ".gemini/settings.json",
       "hooks": [],
-      "scratch_roots": []
+      "scratch_roots": [],
+      "offers": {
+        "episode": "hooks",
+        "episode_evidence": "https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md and https://geminicli.com/docs/hooks/ — SessionStart (source: startup, resume, clear), SessionEnd (reason: exit, clear, logout, prompt_input_exit, other), PreCompress (trigger: auto, manual). Configured as a hooks block in settings.json. Tracker github.com/google-gemini/gemini-cli/issues/9070 'Comprehensive Hooking System' is closed, 34 of 34. Verified 2026-09-11. Two caveats an adapter must carry: the CLI does not wait for SessionEnd, and PreCompress is advisory and cannot block.",
+        "prompts": "hook",
+        "prompts_evidence": "https://github.com/google-gemini/gemini-cli/blob/main/docs/hooks/reference.md — BeforeAgent, 'Fires after a user submits a prompt, but before the agent begins planning'; the raw text arrives as `prompt`. BeforeModel fires later, on the assembled request. Verified 2026-09-11."
+      }
     },
     {
       "id": "generic",
       "title": "A worker with no convention of its own",
       "bootstraps": [],
       "hooks": [],
-      "scratch_roots": []
+      "scratch_roots": [],
+      "offers": {
+        "episode": "connection",
+        "episode_evidence": "ADR 0103 and this repository's own implementation: the episode is opened by episodes.attach over the shared MCP server, kept alive by the client's own traffic, and closed on disconnect or after the idle timeout. Proven end to end over the real transport by test/cases/200_generic_mcp_episode.sh.",
+        "prompts": "none",
+        "prompts_evidence": "no vendor documentation is involved: a worker with no convention of its own exposes no event, and the MCP connection cannot stand in. An MCP server receives initialize, tool calls and notifications; the person's prompt is never among them, in any version of the protocol (modelcontextprotocol.io/specification). Declared none rather than left blank so that no surface can imply otherwise."
+      }
     }
   ],
   "rules": [
@@ -11631,28 +11672,28 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1767,
-    "builtin": 157,
-    "declarative": 1610,
-    "modules": 47,
-    "mcp_tools": 151,
-    "mcp_resources": 1659,
-    "http_routes": 155,
+    "capabilities": 1777,
+    "builtin": 160,
+    "declarative": 1617,
+    "modules": 48,
+    "mcp_tools": 154,
+    "mcp_resources": 1666,
+    "http_routes": 158,
     "cli_commands": 166,
     "shell_commands": 30,
     "kinds": 30,
-    "objects": 1610,
+    "objects": 1617,
     "by_kind": {
-      "adr": 73,
+      "adr": 74,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 207,
+      "claim": 209,
       "command": 31,
       "context": 32,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 291,
+      "document": 293,
       "feature": 27,
       "implementation": 50,
       "intent": 1,
@@ -11665,12 +11706,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 7,
-      "rule": 152,
+      "rule": 153,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 321,
+      "test": 322,
       "use-case": 47,
       "workspace": 1
     },
@@ -11687,7 +11728,7 @@
       "executions": 6,
       "newest": "2026-09-12T10:36:18Z"
     },
-    "declared": 191,
+    "declared": 193,
     "supported": 0,
     "claims": {
       "a-finding-names-how-to-see-it-again": {
@@ -11886,6 +11927,12 @@
         "status": "guaranteed",
         "state": "stale",
         "label": "stale",
+        "supported": false
+      },
+      "connection-episode": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
         "supported": false
       },
       "consistency-check": {
@@ -12543,6 +12590,12 @@
         "supported": false
       },
       "prompt-continuity": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "provider-capability-evidence": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",

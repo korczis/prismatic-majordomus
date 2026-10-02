@@ -1,7 +1,7 @@
 +++
 title = "Never store or summarise transcripts"
 description = "Never store or summarise transcripts"
-weight = 108
+weight = 109
 [extra]
 kind = "rule"
 slug = "project-never-store-transcripts-1"

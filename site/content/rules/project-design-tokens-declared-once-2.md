@@ -1,7 +1,7 @@
 +++
 title = "The design is one typed declaration and every first-party surface consumes its projections"
 description = "The design is one typed declaration and every first-party surface consumes its projections"
-weight = 76
+weight = 77
 [extra]
 kind = "rule"
 slug = "project-design-tokens-declared-once-2"

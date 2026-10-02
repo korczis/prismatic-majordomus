@@ -6,20 +6,20 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.11.0
 coverage:
   - scope: direct
-    required: 157
-    covered: 139
+    required: 160
+    covered: 142
     missing: 0
     waived: 18
     inapplicable: 0
   - scope: http
-    required: 155
-    covered: 139
+    required: 158
+    covered: 142
     missing: 0
     waived: 16
     inapplicable: 0
   - scope: mcp
-    required: 151
-    covered: 135
+    required: 154
+    covered: 138
     missing: 0
     waived: 16
     inapplicable: 0
@@ -30,8 +30,8 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 476
-    covered: 426
+    required: 485
+    covered: 435
     missing: 0
     waived: 50
     inapplicable: 0
@@ -434,6 +434,33 @@ capabilities:
       - sealed
   - id: environment.status
     module: environment
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: episodes.attach
+    module: episodes
+    kind: command
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: episodes.detach
+    module: episodes
+    kind: command
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: episodes.list
+    module: episodes
     kind: query
     cache: "—"
     direct: covered

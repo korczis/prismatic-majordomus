@@ -1329,6 +1329,24 @@
       "note": "continuity.state answers the worker's question about one episode, which is right for a briefing and blind to the other windows open on the same worktree, because state/session-current.yaml is a symlink the most recent start event re-aims. The five lifecycle capabilities read the store, the ledger and the index instead, decide every standing from what the repository can observe, and carry a remedy with every finding. They never write, they judge no thresholds — age is session.freshness and continuity.state's to report — and they declare no command line, because they read .ai/local/ and are served rather than shipped. The Cockpit's Continuity page is their projection and holds no session model of its own."
     },
     {
+      "id": "claim:connection-episode",
+      "kind": "claim",
+      "label": "A client with no provider hooks gets an execution episode from the MCP connection, resumes its own after a crash, and never has its prompt claimed to be captured",
+      "status": "guaranteed",
+      "route": "/guarantees/connection-episode/",
+      "external": false,
+      "note": "The episode opens on episodes.attach and never on initialize, so a client that only reads the layer leaves no record; it is keyed by the external identity the client supplies and never by a peer id, which is handed out per connection; every message the client sends is its heartbeat; losing the connection detaches rather than closes, and a reconnect under the same identity resumes the same episode. Nothing here writes a session record - the board runs `capture session --provider generic`, the same command a provider hook's shim runs, and reports what it said. Prompt capture is declared impossible for the connection and is not attempted: an MCP server is handed tool calls, never the prompt that produced them. ADR 0103."
+    },
+    {
+      "id": "claim:provider-capability-evidence",
+      "kind": "claim",
+      "label": "What each provider can do about the session lifecycle and prompt capture is one declaration with a citation per cell, every surface projects it, and no provider the declaration names goes unreported",
+      "status": "guaranteed",
+      "route": "/guarantees/provider-capability-evidence/",
+      "external": false,
+      "note": "share/providers.yaml carries an offers block per provider - episode (hooks, connection, none), prompts (hook, none), and the citation each was verified from; a word outside either vocabulary fails the read of the file rather than degrading to none. share::ProviderDeclaration and product::ProductProvider carry it and every surface is a projection. `capture status` joins it with the tree and reports two facts per aspect, the vendor's capability and this checkout's state, over the union of the declared providers and the adapter tables; `unsupported` is reserved for a provider that cannot do the thing and `unadapted` names a gap in this distribution. scripts/provider-evidence-check is the gate and the case holds it to its own negative. ADR 0103, rule project.a-provider-capability-cites-its-evidence."
+    },
+    {
       "id": "claim:adr-catalogue",
       "kind": "claim",
       "label": "An architecture decision is one file under the layer's adrs section, validated against the decision contract, with an identity nothing else claims, reciprocal supersession, and every reference it makes resolving",
@@ -1997,6 +2015,13 @@
       "external": false
     },
     {
+      "id": "impl:apps/majordomus-cli/src/episodes.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/episodes.rs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:apps/majordomus-cli/src/evidence/freshness.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/evidence/freshness.rs",
@@ -2655,6 +2680,13 @@
       "external": false
     },
     {
+      "id": "impl:share/providers.yaml",
+      "kind": "implementation",
+      "label": "share/providers.yaml",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:site/templates/index.html",
       "kind": "implementation",
       "label": "site/templates/index.html",
@@ -3248,6 +3280,13 @@
       "label": "test/cases/18_doctrine_wiring.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/18_doctrine_wiring.sh"
+    },
+    {
+      "id": "test:test/cases/200_generic_mcp_episode.sh",
+      "kind": "test",
+      "label": "test/cases/200_generic_mcp_episode.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/200_generic_mcp_episode.sh"
     },
     {
       "id": "test:test/cases/20_checkpoint.sh",
@@ -4535,6 +4574,16 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:connection-episode",
+      "target": "source:docs/MCP.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:provider-capability-evidence",
+      "target": "source:docs/CONCEPTS.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:adr-catalogue",
       "target": "source:docs/SCHEMAS.md",
       "kind": "specified_by"
@@ -5520,6 +5569,16 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:connection-episode",
+      "target": "impl:apps/majordomus-cli/src/episodes.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:provider-capability-evidence",
+      "target": "impl:share/providers.yaml",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:adr-catalogue",
       "target": "impl:lib/adr.sh",
       "kind": "implemented_by"
@@ -6502,6 +6561,16 @@
     {
       "source": "claim:session-observability",
       "target": "test:test/cases/171_session_observability.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:connection-episode",
+      "target": "test:test/cases/200_generic_mcp_episode.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:provider-capability-evidence",
+      "target": "test:test/cases/200_generic_mcp_episode.sh",
       "kind": "proved_by"
     },
     {
