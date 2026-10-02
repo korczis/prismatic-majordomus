@@ -138,6 +138,11 @@ route = "/use-cases/"
 # ---------------------------------------------------------------- not published
 
 [[kinds]]
+kind = "critique"
+projection = "none"
+reason = "A critique is the adversarial pass over one intent's plan, written for the worker who must resolve its findings before work starts (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/."
+
+[[kinds]]
 kind = "deployment"
 projection = "none"
 reason = "A deployment object carries the target a release is published to. Its rendered artifacts are in the repository and its state is on the Cockpit; a public page would say only what /docs/install/ already says."
@@ -153,9 +158,19 @@ projection = "none"
 reason = "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent."
 
 [[kinds]]
+kind = "gap"
+projection = "none"
+reason = "A gap is what one worker observed of the repository against an intent's criteria at one commit (ADR 0073). It is a dated input to planning, superseded by the next observation, and the work it suggested is published on /plan/."
+
+[[kinds]]
 kind = "implementation"
 projection = "none"
 reason = "An implementation object is a source file a claim names. It is reachable from the claim that names it and from the repository; a page rendering a Rust module is the source browser GitHub already is."
+
+[[kinds]]
+kind = "intent"
+projection = "none"
+reason = "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` answers for the intent itself."
 
 [[kinds]]
 kind = "knowledge"

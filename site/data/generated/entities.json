@@ -88,6 +88,14 @@
       "count": 34
     },
     {
+      "kind": "critique",
+      "projection": "none",
+      "route": null,
+      "title": null,
+      "reason": "A critique is the adversarial pass over one intent's plan, written for the worker who must resolve its findings before work starts (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
+      "count": 1
+    },
+    {
       "kind": "deployment",
       "projection": "none",
       "route": null,
@@ -120,12 +128,28 @@
       "count": 27
     },
     {
+      "kind": "gap",
+      "projection": "none",
+      "route": null,
+      "title": null,
+      "reason": "A gap is what one worker observed of the repository against an intent's criteria at one commit (ADR 0073). It is a dated input to planning, superseded by the next observation, and the work it suggested is published on /plan/.",
+      "count": 1
+    },
+    {
       "kind": "implementation",
       "projection": "none",
       "route": null,
       "title": null,
       "reason": "An implementation object is a source file a claim names. It is reachable from the claim that names it and from the repository; a page rendering a Rust module is the source browser GitHub already is.",
       "count": 49
+    },
+    {
+      "kind": "intent",
+      "projection": "none",
+      "route": null,
+      "title": null,
+      "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` answers for the intent itself.",
+      "count": 2
     },
     {
       "kind": "issue",
