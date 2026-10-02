@@ -162,7 +162,7 @@ mj_validate_verification() {
   if [ -z "$MJ_FINISH_VERIFY" ]; then
     mj_doctrine_fail verification "$id" "profile $(mj_cur profile) requires --verify-command" "majordomus finish --outcome completed --verify-command \"<cmd>\""; return 0; fi
   if mj_verify_is_vacuous "$MJ_FINISH_VERIFY"; then
-    mj_doctrine_fail verification "$id" "\"$MJ_FINISH_VERIFY\" cannot verify anything: it is only a no-op or a print, so its exit 0 proves nothing (majordomus.verification-integrity)" "majordomus finish --outcome completed --verify-command \"<the project's own test or check, e.g. make test>\""; return 0; fi
+    mj_doctrine_fail verification "$id" "\"$MJ_FINISH_VERIFY\" cannot verify anything: it is only a no-op or a print, so its exit 0 proves nothing (majordomus.verification-integrity)" "majordomus finish --outcome completed --verify-command \"<a test or check of this project, e.g. make test>\""; return 0; fi
   # The tree is read on both sides of the run. An exit code alone says that some command
   # once exited zero; it does not say over what, and a checkout with more than one worker
   # in it — a second agent, a person saving a file, a watcher regenerating an artefact —
