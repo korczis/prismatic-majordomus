@@ -278,4 +278,30 @@ mod tests {
             assert_eq!(words, *cli);
         }
     }
+
+    /// An evidence ledger this executable cannot read is an internal error on every skills
+    /// question, never a derivation that reads it as empty and calls every skill untested.
+    #[test]
+    fn an_unreadable_evidence_ledger_refuses_every_question() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ledger = repo.root().join(crate::evidence::ledger::LEDGER_PATH);
+        std::fs::create_dir_all(ledger.parent().unwrap()).unwrap();
+        std::fs::write(&ledger, "this is not a ledger").unwrap();
+        let ctx = repo.context().unwrap();
+        for (id, input) in [
+            ("skills.status", serde_json::json!({})),
+            ("skills.explain", serde_json::json!({ "id": "alpha" })),
+            ("skills.verify", serde_json::json!({})),
+        ] {
+            match ctx.execute(id, input) {
+                Err(CapabilityError::Internal(m)) => {
+                    assert!(
+                        m.contains("not a ledger this version can read"),
+                        "{id}: {m}"
+                    )
+                }
+                other => panic!("{id} answered over an unreadable ledger: {other:?}"),
+            }
+        }
+    }
 }

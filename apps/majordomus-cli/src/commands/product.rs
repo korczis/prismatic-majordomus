@@ -469,3 +469,48 @@ fn validation_text(v: &Value) -> String {
     ));
     out.join("\n")
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    /// EPISODE and PROMPTS print what the provider is declared to offer, and a provider that
+    /// declares nothing prints a dash in both, never an empty cell that shifts the columns.
+    #[test]
+    fn the_offers_columns_print_the_declaration_or_a_dash() {
+        let v = json!({ "providers": [
+            {
+                "id": "offering", "title": "Declares both",
+                "offers": { "episode": "hooks", "prompts": "hook" },
+                "bootstraps": [{ "target": "CLAUDE.md" }], "client_config": ".mcp.json",
+                "hooks": ["start", "end"], "scratch_roots": ["/tmp/x"]
+            },
+            { "id": "silent", "title": "Declares nothing" }
+        ]});
+        let text = providers_text(&v);
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(
+            lines[1],
+            format!(
+                "{:<8}  {:<36}  {:<10}  {:<7}  {:<10}  {:<13}  {:<5}  {}",
+                "offering",
+                "Declares both",
+                "hooks",
+                "hook",
+                "CLAUDE.md",
+                ".mcp.json",
+                "start,end",
+                "/tmp/x"
+            )
+        );
+        assert_eq!(
+            lines[2],
+            format!(
+                "{:<8}  {:<36}  {:<10}  {:<7}  {:<10}  {:<13}  {:<5}  {}",
+                "silent", "Declares nothing", "-", "-", "-", "-", "-", "-"
+            )
+        );
+        assert_eq!(lines.last(), Some(&"2 provider(s)"));
+    }
+}

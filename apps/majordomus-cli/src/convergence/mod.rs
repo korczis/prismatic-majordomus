@@ -327,8 +327,7 @@ impl crate::order::Ordered for Holding {
 /// std::fs::remove_dir_all(&dir).unwrap();
 /// ```
 pub fn report(root: &Path) -> Result<ConvergenceReport> {
-    let service = WorktreeService::open(root)?;
-    let topology = service.topology(Detail::Full)?;
+    let topology = WorktreeService::open(root).and_then(|s| s.topology(Detail::Full))?;
     let primary = topology.repository.primary_worktree.clone();
     let unreachable = commits_no_remote_reaches(Path::new(&primary))?;
     let stashes = stash_entries(Path::new(&primary))?;
@@ -429,22 +428,30 @@ pub fn report(root: &Path) -> Result<ConvergenceReport> {
 /// deliberately *not* used — it drops the exclusion, and the probe then reports that
 /// nothing is unpublished no matter what is unpublished.
 fn commits_no_remote_reaches(primary: &Path) -> Result<BTreeSet<String>> {
-    let out = git::run(primary, &["rev-list", "--branches", "--not", "--remotes"])?;
-    Ok(out
-        .text()?
-        .lines()
-        .map(str::trim)
-        .filter(|l| !l.is_empty())
-        .map(str::to_string)
-        .collect())
+    text_of(primary, &["rev-list", "--branches", "--not", "--remotes"]).map(|text| {
+        text.lines()
+            .map(str::trim)
+            .filter(|l| !l.is_empty())
+            .map(str::to_string)
+            .collect()
+    })
 }
 
 /// Every stash entry: its ref and the subject git records for it.
 fn stash_entries(primary: &Path) -> Result<Vec<(String, String)>> {
-    let out = git::run(primary, &["stash", "list", "--format=%gd%x09%gs"])?;
-    Ok(out
-        .text()?
-        .lines()
+    text_of(primary, &["stash", "list", "--format=%gd%x09%gs"]).map(|text| stash_list(&text))
+}
+
+/// What git answered to `args`, as text. A command that failed and an answer that is not
+/// UTF-8 are both refusals: neither is an empty answer.
+fn text_of(primary: &Path, args: &[&str]) -> Result<String> {
+    git::run(primary, args)?.text()
+}
+
+/// The entries of `git stash list --format=%gd%x09%gs`: a reference and its subject per
+/// line. A line with no reference names no entry and is skipped rather than invented.
+fn stash_list(text: &str) -> Vec<(String, String)> {
+    text.lines()
         .filter_map(|line| {
             let (reference, subject) = line.split_once('\t')?;
             if reference.trim().is_empty() {
@@ -452,7 +459,7 @@ fn stash_entries(primary: &Path) -> Result<Vec<(String, String)>> {
             }
             Some((reference.trim().to_string(), subject.trim().to_string()))
         })
-        .collect())
+        .collect()
 }
 
 /// A commit, abbreviated the way git abbreviates it in prose.
@@ -529,5 +536,216 @@ mod tests {
         assert_eq!(short(""), "");
         assert_eq!(short("abc"), "abc");
         assert_eq!(short("0123456789abcdef"), "012345678");
+    }
+
+    /// Run git in `dir` and insist it succeeded: a fixture that half-built is a test that
+    /// asserts about something else.
+    fn git(dir: &Path, args: &[&str]) -> String {
+        let out = std::process::Command::new("git")
+            .current_dir(dir)
+            .args([
+                "-c",
+                "user.email=t@example.com",
+                "-c",
+                "user.name=t",
+                "-c",
+                "commit.gpgsign=false",
+            ])
+            .args(args)
+            .output()
+            .expect("git runs");
+        assert!(
+            out.status.success(),
+            "git {args:?}: {}",
+            String::from_utf8_lossy(&out.stderr)
+        );
+        String::from_utf8_lossy(&out.stdout).trim().to_string()
+    }
+
+    /// A repository with one commit on `master` and a tracked file to change.
+    fn repository() -> tempfile::TempDir {
+        let dir = tempfile::tempdir().unwrap();
+        let repo = dir.path().join("repo");
+        std::fs::create_dir_all(&repo).unwrap();
+        git(&repo, &["init", "-q", "-b", "master"]);
+        std::fs::write(repo.join("a.txt"), "one\n").unwrap();
+        git(&repo, &["add", "a.txt"]);
+        git(&repo, &["commit", "-q", "-m", "base"]);
+        dir
+    }
+
+    /// Point a ref at an object this repository does not have, the way a crashed write or a
+    /// half-copied `.git` leaves one.
+    fn break_ref(repo: &Path, name: &str) {
+        let path = repo.join(".git").join(name);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(path, "1111111111111111111111111111111111111111\n").unwrap();
+    }
+
+    /// Every kind of holding gets the disposition git's evidence gives it: the trunk is
+    /// integrated, a pushed branch is published, a branch no remote has seen is local only,
+    /// and a stash and a dirty work tree are uncommitted. A registered work tree whose
+    /// directory is gone holds nothing that could be lost and is not a holding.
+    #[test]
+    fn every_holding_is_given_the_disposition_its_evidence_supports() {
+        let dir = repository();
+        let repo = dir.path().join("repo");
+        let origin = dir.path().join("origin.git");
+        git(
+            dir.path(),
+            &["init", "-q", "--bare", origin.to_str().unwrap()],
+        );
+        git(
+            &repo,
+            &["remote", "add", "origin", origin.to_str().unwrap()],
+        );
+        git(&repo, &["push", "-q", "origin", "master"]);
+
+        git(&repo, &["checkout", "-q", "-b", "feature/pushed"]);
+        git(&repo, &["commit", "-q", "--allow-empty", "-m", "shared"]);
+        git(&repo, &["push", "-q", "-u", "origin", "feature/pushed"]);
+        git(&repo, &["checkout", "-q", "-b", "feature/local"]);
+        git(
+            &repo,
+            &[
+                "commit",
+                "-q",
+                "--allow-empty",
+                "-m",
+                "nobody else has this",
+            ],
+        );
+        let local_head = git(&repo, &["rev-parse", "HEAD"]);
+        git(&repo, &["checkout", "-q", "master"]);
+
+        // a registered work tree whose directory was removed by hand
+        let gone = dir.path().join("gone");
+        git(
+            &repo,
+            &[
+                "worktree",
+                "add",
+                "-q",
+                "-b",
+                "feature/gone",
+                gone.to_str().unwrap(),
+            ],
+        );
+        std::fs::remove_dir_all(&gone).unwrap();
+
+        std::fs::write(repo.join("a.txt"), "two\n").unwrap();
+        git(&repo, &["stash", "push", "-q", "-m", "parked work"]);
+        std::fs::write(repo.join("draft.txt"), "half written\n").unwrap();
+
+        let verdict = report(&repo).unwrap();
+        let of = |kind: HoldingKind, identity: &str| {
+            verdict
+                .holdings
+                .iter()
+                .find(|h| h.kind == kind && h.identity == identity)
+                .unwrap_or_else(|| panic!("no {identity}: {:#?}", verdict.holdings))
+                .clone()
+        };
+
+        let local = of(HoldingKind::Branch, "feature/local");
+        assert_eq!(local.disposition, Disposition::LocalOnly);
+        assert!(local.at_risk);
+        assert_eq!(
+            local.evidence,
+            format!(
+                "{} is on no remote-tracking ref of this checkout",
+                &local_head[..9]
+            )
+        );
+        assert_eq!(local.remedy, "git push -u origin feature/local");
+
+        let pushed = of(HoldingKind::Branch, "feature/pushed");
+        assert_eq!(pushed.disposition, Disposition::Published);
+        assert!(!pushed.at_risk);
+        assert!(
+            pushed
+                .evidence
+                .starts_with("a remote-tracking ref reaches "),
+            "{}",
+            pushed.evidence
+        );
+        assert_eq!(
+            pushed.remedy, "",
+            "nothing to do for what is already shared"
+        );
+
+        assert_eq!(
+            of(HoldingKind::Branch, "master").disposition,
+            Disposition::Integrated
+        );
+
+        let stash = of(HoldingKind::Stash, "stash@{0}");
+        assert_eq!(stash.disposition, Disposition::Uncommitted);
+        assert!(stash.at_risk);
+        assert_eq!(stash.evidence, "On master: parked work");
+        assert_eq!(stash.remedy, "git stash show -p stash@{0}");
+
+        let worktrees: Vec<&Holding> = verdict
+            .holdings
+            .iter()
+            .filter(|h| h.kind == HoldingKind::Worktree)
+            .collect();
+        assert_eq!(worktrees.len(), 1, "only the dirty one: {worktrees:#?}");
+        assert_eq!(worktrees[0].disposition, Disposition::Uncommitted);
+        assert!(!worktrees[0].identity.ends_with("gone"));
+
+        assert!(!verdict.converged);
+        assert_eq!(
+            verdict.at_risk, 3,
+            "the local branch, the stash, the work tree"
+        );
+        assert_eq!(verdict.tallies.get("local_only"), Some(&1));
+        assert_eq!(verdict.tallies.get("uncommitted"), Some(&2));
+        assert_eq!(verdict.tallies.get("published"), Some(&1));
+        // what is at risk is listed before what is not, and within the at-risk group the
+        // order is the kind's rank: the work tree, then the branch, then the stash
+        let at_risk: Vec<HoldingKind> = verdict
+            .holdings
+            .iter()
+            .take_while(|h| h.at_risk)
+            .map(|h| h.kind)
+            .collect();
+        assert_eq!(
+            at_risk,
+            vec![
+                HoldingKind::Worktree,
+                HoldingKind::Branch,
+                HoldingKind::Stash
+            ]
+        );
+    }
+
+    /// A repository git cannot read in full is an error, never a verdict over the part it
+    /// could read: a broken branch ref stops the topology, a broken remote-tracking ref stops
+    /// the reachability question, and a broken stash ref stops the stash list.
+    #[test]
+    fn a_repository_git_cannot_read_is_an_error_and_never_a_verdict() {
+        for broken in [
+            "refs/heads/broken",
+            "refs/remotes/origin/broken",
+            "refs/stash",
+        ] {
+            let dir = repository();
+            let repo = dir.path().join("repo");
+            break_ref(&repo, broken);
+            let refused = report(&repo).expect_err(broken);
+            assert_eq!(refused.code(), "GitCommandFailed", "{broken}: {refused}");
+        }
+    }
+
+    /// The stash list is read line by line; a line that carries no reference is not an
+    /// entry, and the subject keeps everything after the first tab.
+    #[test]
+    fn a_stash_line_without_a_reference_names_no_entry() {
+        assert_eq!(
+            stash_list("stash@{0}\tOn master: a\tb\nno tab here\n\tOn master: orphan\n"),
+            vec![("stash@{0}".to_string(), "On master: a\tb".to_string())]
+        );
+        assert!(stash_list("").is_empty());
     }
 }

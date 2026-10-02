@@ -708,6 +708,15 @@ mod tests {
 
     /// The report a person reads: the stated version, the release it is measured from, the
     /// `next` with who decided it, and the commits as evidence — in that order, one write.
+    /// Each severity prints as its own word, padded to one width so the messages after it
+    /// line up; a note is not printed as a warning nor a warning as an error.
+    #[test]
+    fn every_severity_prints_as_its_own_word_at_one_width() {
+        assert_eq!(severity_word(Severity::Error), "ERROR  ");
+        assert_eq!(severity_word(Severity::Warning), "WARNING");
+        assert_eq!(severity_word(Severity::Note), "NOTE   ");
+    }
+
     #[test]
     fn the_version_report_names_who_decided_next_and_labels_the_commits_as_evidence() {
         assert_eq!(

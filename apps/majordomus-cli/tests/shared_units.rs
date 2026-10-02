@@ -285,8 +285,19 @@ fn the_endpoint_opens_reaps_and_closes_sessions() {
     assert_eq!(after.status, 404);
     let again = post(&init().to_string(), None);
     assert_eq!(again.status, 200);
+    // the new connection carries an episode when the server stops: stopping is the last
+    // moment anything can close it, so it is closed then rather than left open for ever
+    let peer = app.context.peers.list()[0].id.clone();
+    app.context
+        .episodes
+        .attach(&peer, "unit-episode-at-stop", "generic");
+    assert_eq!(app.context.episodes.list().len(), 1);
     endpoint.close_all();
     assert_eq!(endpoint.active(), 0);
+    assert!(
+        app.context.episodes.list().is_empty(),
+        "a stopping server closes every episode it still holds"
+    );
     assert!(format!("{endpoint:?}").contains("McpEndpoint"));
 }
 

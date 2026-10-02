@@ -685,3 +685,32 @@ pub fn schema_identity(relative: &str) -> Option<String> {
     }
     Some(format!("{vendor}.{name}/{version}"))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The word each offer is printed as is the word it is declared and serialised as, so a
+    /// reader of the table and a reader of the JSON read one vocabulary.
+    #[test]
+    fn every_offer_prints_as_the_word_it_is_declared_as() {
+        for (source, word) in [
+            (EpisodeSource::Hooks, "hooks"),
+            (EpisodeSource::Connection, "connection"),
+            (EpisodeSource::None, "none"),
+        ] {
+            assert_eq!(source.as_str(), word);
+            assert_eq!(
+                serde_json::to_string(&source).unwrap(),
+                format!("\"{word}\"")
+            );
+        }
+        for (source, word) in [(PromptSource::Hook, "hook"), (PromptSource::None, "none")] {
+            assert_eq!(source.as_str(), word);
+            assert_eq!(
+                serde_json::to_string(&source).unwrap(),
+                format!("\"{word}\"")
+            );
+        }
+    }
+}

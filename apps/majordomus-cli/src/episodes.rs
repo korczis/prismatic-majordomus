@@ -77,7 +77,7 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Mutex;
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, Instant, SystemTime};
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -334,7 +334,18 @@ impl ToolDriver {
     }
 
     fn run(&self, provider: &str, event: &str, payload: &str) -> String {
-        let Some(tool) = self.tool() else {
+        self.run_tool(self.tool(), provider, event, payload)
+    }
+
+    /// Run `tool`'s `capture session` with `payload` on stdin, or say that there is no tool.
+    fn run_tool(
+        &self,
+        tool: Option<PathBuf>,
+        provider: &str,
+        event: &str,
+        payload: &str,
+    ) -> String {
+        let Some(tool) = tool else {
             return format!(
                 "no episode was recorded: neither bin/majordomus nor .majordomus/bin/majordomus is executable under {} and none is on the path",
                 self.root.display()
@@ -369,35 +380,43 @@ impl ToolDriver {
                 )
             }
         };
-        if let Some(mut stdin) = child.stdin.take() {
+        // stdin was asked for as a pipe, so it is there; it is closed when the write is done,
+        // and a tool that exited without reading it has answered all the same
+        let _ = child.stdin.take().map(|mut stdin| {
             use std::io::Write;
-            let _ = stdin.write_all(payload.as_bytes());
-        }
-        match child.wait_with_output() {
-            // `capture session` writes nothing to stdout by contract and reports what it did
-            // on stderr, because on a start event its stdout would be loaded into a model's
-            // context. Its last line is the one that says what happened.
-            Ok(out) => {
-                let text = String::from_utf8_lossy(&out.stderr);
-                let last = text
-                    .lines()
-                    .rev()
-                    .find(|l| !l.trim().is_empty())
-                    .unwrap_or("");
-                if last.is_empty() {
-                    format!(
-                        "`capture session --event {event}` exited {} and said nothing",
-                        out.status
-                    )
-                } else {
-                    last.trim().to_string()
-                }
+            stdin.write_all(payload.as_bytes())
+        });
+        reported(event, &tool, child.wait_with_output())
+    }
+}
+
+/// What a finished `capture session` run says happened: its last line on stderr, or, when it
+/// said nothing or could not be waited for, a sentence that says so and names the tool.
+fn reported(event: &str, tool: &Path, finished: std::io::Result<std::process::Output>) -> String {
+    match finished {
+        // `capture session` writes nothing to stdout by contract and reports what it did
+        // on stderr, because on a start event its stdout would be loaded into a model's
+        // context. Its last line is the one that says what happened.
+        Ok(out) => {
+            let text = String::from_utf8_lossy(&out.stderr);
+            let last = text
+                .lines()
+                .rev()
+                .find(|l| !l.trim().is_empty())
+                .unwrap_or("");
+            if last.is_empty() {
+                format!(
+                    "`capture session --event {event}` exited {} and said nothing",
+                    out.status
+                )
+            } else {
+                last.trim().to_string()
             }
-            Err(e) => format!(
-                "no episode was recorded: {} did not finish: {e}",
-                tool.display()
-            ),
         }
+        Err(e) => format!(
+            "no episode was recorded: {} did not finish: {e}",
+            tool.display()
+        ),
     }
 }
 
@@ -554,19 +573,12 @@ impl EpisodeBoard {
         // identity is not a second worker, it is the same connection changing its mind —
         // the first is released (and left detached, recoverable) rather than held by a peer
         // that has stopped speaking for it.
-        let previously_held: Vec<String> = episodes
-            .values()
-            .filter(|e| {
-                e.episode.peer.as_ref() == Some(peer) && e.episode.external_id != external_id
-            })
-            .map(|e| e.episode.external_id.clone())
-            .collect();
-        for id in previously_held {
-            if let Some(entry) = episodes.get_mut(&id) {
-                entry.episode.peer = None;
-                entry.episode.state = ConnectionEpisodeState::Detached;
-                entry.detached_since = Some(Instant::now());
-            }
+        for entry in episodes.values_mut().filter(|e| {
+            e.episode.peer.as_ref() == Some(peer) && e.episode.external_id != external_id
+        }) {
+            entry.episode.peer = None;
+            entry.episode.state = ConnectionEpisodeState::Detached;
+            entry.detached_since = Some(Instant::now());
         }
 
         if let Some(entry) = episodes.get_mut(external_id) {
@@ -598,7 +610,7 @@ impl EpisodeBoard {
             external_id: external_id.to_string(),
             provider: provider.to_string(),
             peer: Some(peer.clone()),
-            opened_at: now_rfc3339(),
+            opened_at: crate::peers::rfc3339(SystemTime::now()),
             last_activity_seconds_ago: 0,
             attachments: 1,
             state: ConnectionEpisodeState::Open,
@@ -817,40 +829,14 @@ fn is_executable(p: &Path) -> bool {
 }
 
 fn which(name: &str) -> Option<PathBuf> {
-    let path = std::env::var_os("PATH")?;
-    std::env::split_paths(&path)
+    std::env::var_os("PATH").and_then(|path| find_in(&path, name))
+}
+
+/// The first executable `name` in the directories of a `PATH`-shaped list.
+fn find_in(path: &std::ffi::OsStr, name: &str) -> Option<PathBuf> {
+    std::env::split_paths(path)
         .map(|d| d.join(name))
         .find(|p| is_executable(p))
-}
-
-fn now_rfc3339() -> String {
-    let secs = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_secs())
-        .unwrap_or(0);
-    let days = secs / 86_400;
-    let (y, m, d) = civil_from_days(days as i64);
-    let rest = secs % 86_400;
-    format!(
-        "{y:04}-{m:02}-{d:02}T{:02}:{:02}:{:02}Z",
-        rest / 3600,
-        (rest % 3600) / 60,
-        rest % 60
-    )
-}
-
-/// Howard Hinnant's `civil_from_days`, the same conversion the peer board uses.
-fn civil_from_days(z: i64) -> (i64, u32, u32) {
-    let z = z + 719_468;
-    let era = if z >= 0 { z } else { z - 146_096 } / 146_097;
-    let doe = (z - era * 146_097) as u64;
-    let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146_096) / 365;
-    let y = yoe as i64 + era * 400;
-    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
-    let mp = (5 * doy + 2) / 153;
-    let d = (doy - (153 * mp + 2) / 5 + 1) as u32;
-    let m = if mp < 10 { mp + 3 } else { mp - 9 } as u32;
-    (if m <= 2 { y + 1 } else { y }, m, d)
 }
 
 /// One JSON string, escaped. The payload is this tool's own and the identity in it came from
@@ -1021,5 +1007,206 @@ mod tests {
     fn an_external_identity_is_escaped_into_the_payload() {
         assert_eq!(json_string("a\"b\\c"), "\"a\\\"b\\\\c\"");
         assert_eq!(json_string("line\nbreak"), "\"line\\nbreak\"");
+    }
+
+    /// Every control character is escaped, the named ones by name and the rest by code, so
+    /// no identity can end the payload's line or smuggle a byte a JSON reader refuses.
+    #[test]
+    fn every_control_character_is_escaped() {
+        assert_eq!(json_string("a\rb\tc"), "\"a\\rb\\tc\"");
+        assert_eq!(json_string("\u{1}\u{1f}"), "\"\\u0001\\u001f\"");
+        let parsed: String = serde_json::from_str(&json_string("x\r\t\u{7}y")).unwrap();
+        assert_eq!(
+            parsed, "x\r\t\u{7}y",
+            "what is escaped reads back as it was"
+        );
+    }
+
+    /// A board built without a driver still keeps the episodes; what it reports for the
+    /// repository is that there is no driver, never a record that was not made.
+    #[test]
+    fn a_board_without_a_driver_keeps_episodes_and_says_none_was_recorded() {
+        for board in [EpisodeBoard::new(), EpisodeBoard::default()] {
+            let p = peers(1).remove(0);
+            let (episode, _) = board.attach(&p, "quiet", "generic");
+            assert_eq!(
+                episode.repository,
+                "no repository episode: this board is running without a driver"
+            );
+            assert_eq!(format!("{board:?}"), "EpisodeBoard { episodes: 1 }");
+            let closed = board.close("quiet", CloseReason::Detach).unwrap();
+            assert_eq!(closed.repository, episode.repository);
+            assert_eq!(format!("{board:?}"), "EpisodeBoard { episodes: 0 }");
+        }
+    }
+
+    /// Activity, a lost connection and a deliberate close each reach only the episode they
+    /// name; closing one nobody holds is nothing, not an error and not somebody else's.
+    #[test]
+    fn touch_detach_and_close_reach_only_their_own_episode() {
+        let (board, _) = board();
+        let ids = peers(2);
+        board.attach(&ids[0], "mine", "generic");
+        board.attach(&ids[1], "theirs", "generic");
+        let activity = |id: &str| board.lock().get(id).unwrap().last_activity;
+        let theirs_before = activity("theirs");
+        let mine_before = activity("mine");
+        std::thread::sleep(Duration::from_millis(5));
+        board.touch(&ids[0]);
+        assert!(
+            activity("mine") > mine_before,
+            "the toucher's episode moved"
+        );
+        assert_eq!(activity("theirs"), theirs_before, "the other did not");
+
+        let detached = board.detach(&ids[0]);
+        assert_eq!(detached.len(), 1);
+        assert_eq!(detached[0].external_id, "mine");
+        assert_eq!(
+            board.of_peer(&ids[1]).map(|e| e.state),
+            Some(ConnectionEpisodeState::Open),
+            "a detach of one connection leaves the other open"
+        );
+
+        assert!(board
+            .close("nobody-holds-this", CloseReason::Detach)
+            .is_none());
+        assert_eq!(board.list().len(), 2);
+    }
+
+    /// A thread that panicked while holding the board does not take the board with it: the
+    /// map it guarded is still whole and the next attach is served.
+    #[test]
+    fn a_poisoned_board_still_answers() {
+        let board = std::sync::Arc::new(EpisodeBoard::new());
+        let held = std::sync::Arc::clone(&board);
+        let _ = std::thread::spawn(move || {
+            let _guard = held.episodes.lock().unwrap();
+            panic!("a handler died holding the board");
+        })
+        .join();
+        assert!(board.episodes.is_poisoned());
+        let p = peers(1).remove(0);
+        board.attach(&p, "after", "generic");
+        assert_eq!(board.list().len(), 1);
+    }
+
+    /// The tool on the path is the first executable of that name, in path order; a file that
+    /// is there but cannot be run is not a tool.
+    #[test]
+    fn the_tool_on_the_path_is_the_first_executable_one() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempfile::tempdir().unwrap();
+        let (plain, runnable) = (dir.path().join("plain"), dir.path().join("runnable"));
+        for (d, mode) in [(&plain, 0o644), (&runnable, 0o755)] {
+            std::fs::create_dir_all(d).unwrap();
+            let tool = d.join("majordomus");
+            std::fs::write(&tool, "#!/bin/sh\n").unwrap();
+            std::fs::set_permissions(&tool, std::fs::Permissions::from_mode(mode)).unwrap();
+        }
+        let path = std::env::join_paths([&plain, &runnable]).unwrap();
+        assert_eq!(
+            find_in(&path, "majordomus"),
+            Some(runnable.join("majordomus"))
+        );
+        assert_eq!(find_in(&path, "absent"), None);
+        assert_eq!(
+            find_in(&std::env::join_paths([&plain]).unwrap(), "majordomus"),
+            None
+        );
+    }
+
+    /// Write `body` as the repository's own `bin/majordomus`, runnable.
+    fn tool_at(root: &Path, body: &str) -> PathBuf {
+        use std::os::unix::fs::PermissionsExt;
+        let tool = root.join("bin/majordomus");
+        std::fs::create_dir_all(tool.parent().unwrap()).unwrap();
+        std::fs::write(&tool, body).unwrap();
+        std::fs::set_permissions(&tool, std::fs::Permissions::from_mode(0o755)).unwrap();
+        tool
+    }
+
+    /// The repository's own tool is asked exactly as a provider hook asks it — the
+    /// repository, `capture session`, the provider and the event as arguments, the payload
+    /// on stdin — and what the episode reports is the last thing it said.
+    #[test]
+    fn the_repository_tool_is_asked_as_a_hook_asks_it_and_its_last_word_is_the_answer() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        tool_at(
+            root,
+            "#!/bin/sh\nprintf '%s\\n' \"$@\" > args.txt\ncat > stdin.txt\nprintf 'noise\\n\\n  episode e1 recorded  \\n\\n' >&2\n",
+        );
+        let driver = ToolDriver::new(root);
+        assert_eq!(driver.open("generic", "e1"), "episode e1 recorded");
+        let args = std::fs::read_to_string(root.join("args.txt")).unwrap();
+        assert_eq!(
+            args.lines().collect::<Vec<_>>(),
+            vec![
+                "--repo",
+                root.to_str().unwrap(),
+                "capture",
+                "session",
+                "--provider",
+                "generic",
+                "--event",
+                "start"
+            ]
+        );
+        assert_eq!(
+            std::fs::read_to_string(root.join("stdin.txt")).unwrap(),
+            "{\"session_id\":\"e1\",\"source\":\"attach\"}\n"
+        );
+        assert_eq!(
+            driver.close("generic", "e1", CloseReason::Expired),
+            "episode e1 recorded"
+        );
+        assert_eq!(
+            std::fs::read_to_string(root.join("stdin.txt")).unwrap(),
+            "{\"session_id\":\"e1\",\"reason\":\"expired\"}\n"
+        );
+    }
+
+    /// Every way the tool can fail to say what it did is said instead: no tool at all, a
+    /// tool that cannot start, a tool that said nothing, a tool that could not be waited for.
+    #[test]
+    fn every_way_the_tool_fails_to_answer_is_named() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        let driver = ToolDriver::new(root);
+
+        assert_eq!(
+            driver.run_tool(None, "generic", "start", "{}"),
+            format!(
+                "no episode was recorded: neither bin/majordomus nor .majordomus/bin/majordomus is executable under {} and none is on the path",
+                root.display()
+            )
+        );
+
+        tool_at(root, "#!/bin/sh\nexit 3\n");
+        assert_eq!(
+            driver.close("generic", "e1", CloseReason::Detach),
+            "`capture session --event end` exited exit status: 3 and said nothing"
+        );
+
+        // a tool that was found and is gone by the time it is started
+        let gone = root.join("bin/gone");
+        let refused = driver.run_tool(Some(gone.clone()), "generic", "start", "{}");
+        assert!(
+            refused.starts_with(&format!(
+                "no episode was recorded: {} did not start: ",
+                gone.display()
+            )),
+            "{refused}"
+        );
+
+        assert_eq!(
+            reported(
+                "end",
+                Path::new("/bin/majordomus"),
+                Err(std::io::Error::other("the pipe broke"))
+            ),
+            "no episode was recorded: /bin/majordomus did not finish: the pipe broke"
+        );
     }
 }

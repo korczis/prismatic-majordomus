@@ -362,4 +362,67 @@ mod tests {
             );
         }
     }
+
+    /// An attach is refused before anything is opened when the identity it would be
+    /// recognised by is blank or would split the driver's one-line payload.
+    #[test]
+    fn an_attach_with_a_blank_or_multi_line_identity_is_invalid_input() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        let peer = ctx.peers.attach(crate::peers::Transport::Stdio);
+        let caller = ctx.for_caller(peer);
+        for (id, says) in [
+            ("   ", "must not be blank"),
+            ("one\ntwo", "must be one line"),
+            ("one\rtwo", "must be one line"),
+        ] {
+            match episodes_attach(
+                &caller,
+                AttachInput {
+                    external_id: id.into(),
+                },
+            ) {
+                Err(CapabilityError::InvalidInput(m)) => assert!(m.contains(says), "{m}"),
+                other => panic!("{id:?} was attached: {other:?}"),
+            }
+        }
+        assert!(caller.episodes.list().is_empty(), "nothing was opened");
+    }
+
+    /// A detach that names its episode closes that one, from any interface; one that names
+    /// an episode this server does not hold is not found.
+    #[test]
+    fn a_named_detach_closes_that_episode_and_an_unknown_one_is_not_found() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        let peer = ctx.peers.attach(crate::peers::Transport::Stdio);
+        // the board's own driver is not this test's subject: attach through the board
+        // with a driver that records nothing, then detach through the capability
+        let board = std::sync::Arc::new(crate::episodes::EpisodeBoard::new());
+        let mut held = (*ctx).clone();
+        held.episodes = std::sync::Arc::clone(&board);
+        board.attach(&peer, "named", CONNECTION_PROVIDER);
+
+        let closed = episodes_detach(
+            &held,
+            DetachInput {
+                external_id: Some(" named ".into()),
+            },
+        )
+        .expect("a named episode is closed");
+        assert_eq!(closed.episode.external_id, "named");
+        assert!(board.list().is_empty());
+
+        match episodes_detach(
+            &held,
+            DetachInput {
+                external_id: Some("never-opened".into()),
+            },
+        ) {
+            Err(CapabilityError::NotFound(m)) => {
+                assert_eq!(m, "no episode 'never-opened' on this server")
+            }
+            other => panic!("an unknown episode was closed: {other:?}"),
+        }
+    }
 }

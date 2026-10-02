@@ -622,11 +622,10 @@ fn derivation_times(events: &[Value]) -> BTreeMap<String, String> {
 /// cannot answer — a candidate the hook just wrote is not yet in any commit, and that is an
 /// answer rather than an error.
 fn added_times(root: &Path, paths: &[&str]) -> BTreeMap<String, String> {
-    let mut out = BTreeMap::new();
     if paths.is_empty() {
-        return out;
+        return BTreeMap::new();
     }
-    let Ok(run) = crate::git::read_only(root)
+    match crate::git::read_only(root)
         .args([
             "log",
             "--diff-filter=A",
@@ -636,14 +635,19 @@ fn added_times(root: &Path, paths: &[&str]) -> BTreeMap<String, String> {
         ])
         .args(paths)
         .output()
-    else {
-        return out;
-    };
-    if !run.status.success() {
-        return out;
+    {
+        Ok(run) if run.status.success() => added_from_log(&String::from_utf8_lossy(&run.stdout)),
+        _ => BTreeMap::new(),
     }
+}
+
+/// The paths of a `git log --format=commit:%ct --name-only` and when each was added: each
+/// `commit:` line is the time of the names under it, and a name before any commit line, or
+/// under one whose time does not parse, has no time to give.
+fn added_from_log(text: &str) -> BTreeMap<String, String> {
+    let mut out = BTreeMap::new();
     let mut current: Option<u64> = None;
-    for line in String::from_utf8_lossy(&run.stdout).lines() {
+    for line in text.lines() {
         if let Some(secs) = line.strip_prefix("commit:") {
             current = secs.trim().parse().ok();
             continue;
@@ -1446,5 +1450,469 @@ mod tests {
             "e1"
         );
         assert_eq!(episode_of(&["task:t-1".into()]), "");
+    }
+
+    /// The words a reader filters on are the words the answer serialises.
+    #[test]
+    fn every_age_source_and_resolution_prints_as_the_word_it_serialises_to() {
+        for a in [AgeSource::Derivation, AgeSource::Commit, AgeSource::Date] {
+            assert_eq!(
+                serde_json::to_string(&a).unwrap(),
+                format!("\"{}\"", a.as_str())
+            );
+        }
+        for r in [
+            ReferenceResolution::Object,
+            ReferenceResolution::External,
+            ReferenceResolution::Missing,
+        ] {
+            assert_eq!(
+                serde_json::to_string(&r).unwrap(),
+                format!("\"{}\"", r.as_str())
+            );
+        }
+    }
+
+    /// A close that names no episode cannot be compared with any derivation, and a close
+    /// whose time does not parse cannot be aged: both are said, neither is a stopped writer.
+    #[test]
+    fn a_close_that_names_no_episode_or_no_readable_time_is_not_a_stopped_writer() {
+        let derived = line(
+            "knowledge.derived",
+            "2026-01-01T00:00:00Z",
+            json!({ "episode": "e1", "paths": "" }),
+        );
+        let nameless = [
+            derived.clone(),
+            line(
+                "session.closed",
+                "2026-01-02T00:00:00Z",
+                json!({ "outcome": "closed" }),
+            ),
+        ];
+        let j = judge(&nameless, true, T, NOW);
+        assert!(!j.judged && !j.stopped);
+        assert!(
+            j.findings[0].contains("names no episode"),
+            "{:?}",
+            j.findings
+        );
+
+        let unreadable = [
+            derived,
+            line("session.closed", "yesterday", json!({ "session": "e2" })),
+        ];
+        let j = judge(&unreadable, true, T, NOW);
+        assert!(j.judged && !j.stopped);
+        assert_eq!(j.verdict.0, Freshness::Invalid);
+        assert!(
+            j.findings[0].contains("cannot be judged"),
+            "{:?}",
+            j.findings
+        );
+    }
+
+    /// A derivation line without a time is skipped rather than dated to nothing.
+    #[test]
+    fn a_derivation_without_a_time_dates_nothing() {
+        let mut undated = line("knowledge.derived", "", json!({ "paths": "a.md" }));
+        undated.as_object_mut().unwrap().remove("ts");
+        assert!(derivation_times(&[undated]).is_empty());
+    }
+
+    /// The log's names take the time of the commit line above them; a name with no commit
+    /// line above it, or under one whose time does not parse, takes none.
+    #[test]
+    fn a_name_in_the_log_takes_the_time_of_its_commit_line() {
+        let added = added_from_log(
+            "orphan.md\ncommit:1788000000\n\na.md\ncommit:never\n\nb.md\ncommit:0\n\na.md\n",
+        );
+        assert_eq!(
+            added,
+            [("a.md".to_string(), "1970-01-01T00:00:00Z".to_string())]
+                .into_iter()
+                .collect(),
+            "the oldest addition wins and the undated names are left out"
+        );
+        assert!(added_from_log("").is_empty());
+        // and a directory git cannot read is no answer, not an error
+        let nowhere = tempfile::tempdir().unwrap();
+        assert!(added_times(nowhere.path(), &["a.md"]).is_empty());
+    }
+
+    fn object(kind: &str, identity: &str, path: &str, metadata: Value) -> Object {
+        Object {
+            kind: kind.into(),
+            identity: identity.into(),
+            uri: crate::model::uri_for(kind, identity),
+            title: None,
+            description: None,
+            metadata,
+            body: String::new(),
+            content: String::new(),
+            media_type: "text/markdown",
+            provenance: crate::model::Provenance {
+                path: path.into(),
+                directory: String::new(),
+                source_class: kind.into(),
+                section: None,
+                bytes: 0,
+                member: None,
+            },
+        }
+    }
+
+    /// A context over a synthetic repository whose index also holds `extra`.
+    fn context_with(repo: &crate::synthetic::SyntheticRepository, extra: Vec<Object>) -> Context {
+        let mut index = repo.index().unwrap();
+        index.objects.extend(extra);
+        index.objects.sort_by(|a, b| a.uri.cmp(&b.uri));
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_modules(super::super::modules())
+            .build()
+            .unwrap();
+        Context::new(std::sync::Arc::new(index), std::sync::Arc::new(registry))
+    }
+
+    /// Every prefix the schema admits resolves against the thing it names, or says why it
+    /// does not; a reference with no prefix, with nothing after it, or with a prefix the
+    /// schema does not admit resolves to nothing, with the reason.
+    #[test]
+    fn every_reference_resolves_against_what_it_names_or_says_why_not() {
+        use ReferenceResolution::{External, Missing, Object as Obj};
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let root = repo.root().to_path_buf();
+        let state = root.join(STATE_DIR);
+        std::fs::create_dir_all(state.join("completed")).unwrap();
+        std::fs::write(state.join("current.yaml"), "id: t-current\n").unwrap();
+        std::fs::write(state.join("completed/t-done.md"), "# done\n").unwrap();
+        std::fs::create_dir_all(root.join("notes")).unwrap();
+        std::fs::write(
+            root.join("notes/plain.txt"),
+            "on disk, in no source class\n",
+        )
+        .unwrap();
+        let ctx = context_with(
+            &repo,
+            vec![object(
+                "session",
+                "s1",
+                ".ai/repo/sessions/s1.md",
+                json!({ "session_id": "s1", "branch": "master" }),
+            )],
+        );
+        // the last rule, so that every rule before it is compared and passed over
+        let rule = ctx
+            .index
+            .objects
+            .iter()
+            .rev()
+            .find(|o| o.kind == "rule")
+            .expect("the synthetic repository holds rules")
+            .clone();
+        let document = ctx
+            .index
+            .objects
+            .iter()
+            .find(|o| o.provenance.path.starts_with("docs/"))
+            .expect("and documents")
+            .clone();
+        let events = [json!({ "session": "s2" }), json!({ "task_id": "t-ledger" })];
+        let resolve = |reference: &str| resolve(&ctx, &root, &events, reference);
+
+        let rule_ref = format!("rule:{}", rule.identity);
+        let document_ref = format!("file:{}", document.provenance.path);
+        let cases: Vec<(&str, ReferenceResolution, Option<&str>, &str)> = vec![
+            ("noprefix", Missing, None, "has no prefix"),
+            ("task:", Missing, None, "`task:` names nothing"),
+            ("session:s1", Obj, Some("majordomus://session/s1"), ""),
+            ("session:s2", External, Some("ledger"), ""),
+            (
+                "session:s3",
+                Missing,
+                None,
+                "no session record and no ledger line",
+            ),
+            ("task:t-ledger", External, Some("ledger"), ""),
+            ("decision:t-current", External, Some("task store"), ""),
+            ("task:t-done", External, Some("task store"), ""),
+            (
+                "task:t-nowhere",
+                Missing,
+                None,
+                "no ledger line and no task record",
+            ),
+            (
+                "commit:0123abc",
+                Missing,
+                None,
+                "this history has no commit 0123abc",
+            ),
+            (&document_ref, Obj, Some(document.uri.as_str()), ""),
+            (
+                "file:notes/plain.txt",
+                External,
+                Some("notes/plain.txt"),
+                "",
+            ),
+            (
+                "test:../outside.sh",
+                Missing,
+                None,
+                "no such path in the tree",
+            ),
+            ("file:nowhere.md", Missing, None, "no such path in the tree"),
+            (&rule_ref, Obj, Some(rule.uri.as_str()), ""),
+            (
+                "adr:0001",
+                Missing,
+                None,
+                "the index holds no adr with the identity 0001",
+            ),
+            (
+                "ticket:1",
+                Missing,
+                None,
+                "`ticket:` is not a reference prefix",
+            ),
+        ];
+        for (reference, resolution, target, reason) in cases {
+            let (got, at, why) = resolve(reference);
+            assert_eq!(got, resolution, "{reference}: {why}");
+            assert_eq!(at.as_deref(), target, "{reference}");
+            assert!(why.contains(reason), "{reference}: {why}");
+        }
+    }
+
+    /// A record whose every reference answers is resolved, its relations included; one
+    /// whose relation dangles is not, even when everything it was derived from answers.
+    #[test]
+    fn a_record_is_resolved_only_when_its_relations_answer_too() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let record_of = |target: &str| {
+            object(
+                KIND,
+                "k1",
+                ".ai/repo/knowledge/curated/k1.md",
+                json!({
+                    "status": "accepted",
+                    "provenance": { "derived_from": ["file:.ai/manifest.yaml"] },
+                    "relations": [{ "type": "relates_to", "target": target }]
+                }),
+            )
+        };
+        let ctx = context_with(&repo, vec![record_of("file:docs/DOC_0.md")]);
+        let r = record(&ctx, KnowledgeRecordInput { id: "k1".into() }).unwrap();
+        assert!(r.resolved, "{r:?}");
+        assert_eq!(r.relations[0].resolution, ReferenceResolution::Object);
+
+        let ctx = context_with(&repo, vec![record_of("file:gone.md")]);
+        let r = record(&ctx, KnowledgeRecordInput { id: "k1".into() }).unwrap();
+        assert!(!r.resolved);
+        assert_eq!(r.relations[0].resolution, ReferenceResolution::Missing);
+    }
+
+    /// The branch of a checkout git calls detached, or that git cannot read, is DETACHED;
+    /// a policy that cannot be read is no policy rather than an error.
+    #[test]
+    fn a_detached_head_and_an_unreadable_policy_are_named_not_guessed() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let mut index = repo.index().unwrap();
+        index.repository.git = GitState::Available(crate::git::GitInfo {
+            toplevel: repo.root().to_path_buf(),
+            head: Some("0123abc".into()),
+            branch: None,
+            working_tree: "clean".into(),
+        });
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_modules(super::super::modules())
+            .build()
+            .unwrap();
+        let ctx = Context::new(std::sync::Arc::new(index), std::sync::Arc::new(registry));
+        assert_eq!(branch_of(&ctx), "DETACHED");
+        assert!(policy_of(&ctx).is_some(), "the synthetic policy reads");
+
+        std::fs::write(
+            repo.root().join(".ai/repo/policy.yaml"),
+            "version: [unclosed\n",
+        )
+        .unwrap();
+        assert!(policy_of(&ctx).is_none(), "an unreadable policy is none");
+        std::fs::remove_file(repo.root().join(".ai/manifest.yaml")).unwrap();
+        assert!(
+            policy_of(&ctx).is_none(),
+            "and so is a root that is no repository"
+        );
+    }
+
+    /// The branch of an episode comes from the tracked record first and the ledger's start
+    /// line second; a line or a record that does not name both says nothing.
+    #[test]
+    fn an_episode_branch_needs_both_an_episode_and_a_branch() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = context_with(
+            &repo,
+            vec![
+                object(
+                    "session",
+                    "a",
+                    "s/a.md",
+                    json!({ "session_id": "a", "branch": "recorded" }),
+                ),
+                object("session", "b", "s/b.md", json!({ "session_id": "b" })),
+                object("session", "c", "s/c.md", json!({ "branch": "nobody" })),
+            ],
+        );
+        let events = [
+            json!({ "event": "session.started", "session": "a", "branch": "started" }),
+            json!({ "event": "session.started", "session": "d", "branch": "from-ledger" }),
+            json!({ "event": "session.started", "session": "e" }),
+            json!({ "event": "session.started", "branch": "orphan" }),
+        ];
+        let branches = episode_branches(&ctx, &events);
+        assert_eq!(
+            branches,
+            [
+                ("a".to_string(), "recorded".to_string()),
+                ("d".to_string(), "from-ledger".to_string()),
+            ]
+            .into_iter()
+            .collect()
+        );
+    }
+
+    /// Ledger lines that do not parse are counted in the status, never silently dropped.
+    #[test]
+    fn a_ledger_line_that_does_not_parse_is_reported() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ledger = Ledger::of(repo.root()).path().to_path_buf();
+        std::fs::create_dir_all(ledger.parent().unwrap()).unwrap();
+        std::fs::write(&ledger, "not json\n").unwrap();
+        let ctx = repo.context().unwrap();
+        let s = status(&ctx, Empty {}).unwrap();
+        assert!(
+            s.findings.iter().any(|f| f
+                == "1 ledger line(s) did not parse and were not judged; run `majordomus doctor`"),
+            "{:?}",
+            s.findings
+        );
+    }
+
+    /// A candidate's wait starts at the derivation that wrote it, else at the commit that
+    /// added it, else at its own date, and a candidate with none of the three has no age.
+    /// One whose episode this checkout does not know is unattributed, and a queue longer
+    /// than the policy's cap is a finding; the list is in the canonical order.
+    #[test]
+    fn a_candidate_is_aged_from_the_best_evidence_there_is_and_the_queue_is_held_to_its_cap() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let root = repo.root().to_path_buf();
+        let git = |args: &[&str]| {
+            let ok = std::process::Command::new("git")
+                .current_dir(&root)
+                .args([
+                    "-c",
+                    "user.email=t@example.com",
+                    "-c",
+                    "user.name=t",
+                    "-c",
+                    "commit.gpgsign=false",
+                ])
+                .args(args)
+                .status()
+                .unwrap()
+                .success();
+            assert!(ok, "git {args:?}");
+        };
+        let dir = ".ai/repo/knowledge/candidates";
+        git(&["init", "-q", "-b", "master"]);
+        std::fs::create_dir_all(root.join(dir)).unwrap();
+        std::fs::write(root.join(dir).join("c-committed.md"), "committed\n").unwrap();
+        git(&["add", "-A"]);
+        git(&["commit", "-q", "-m", "a hand-copied candidate"]);
+        let policy = root.join(".ai/repo/policy.yaml");
+        let text = std::fs::read_to_string(&policy).unwrap();
+        std::fs::write(
+            &policy,
+            format!(
+                "{text}session:\n  freshness:\n    fresh_minutes: 720\n    stale_minutes: 2880\nknowledge:\n  candidates_max_files: 2\n"
+            ),
+        )
+        .unwrap();
+
+        let candidate = |id: &str, date: Option<&str>, derived_from: &[&str]| {
+            let mut meta = json!({ "status": "candidate", "class": "fact",
+                                   "provenance": { "derived_from": derived_from } });
+            if let Some(d) = date {
+                meta["date"] = json!(d);
+            }
+            let mut o = object(KIND, id, &format!("{dir}/{id}.md"), meta);
+            o.provenance.source_class = CANDIDATES_CLASS.into();
+            o
+        };
+        let ctx = context_with(
+            &repo,
+            vec![
+                candidate("c-undated", None, &[]),
+                candidate("c-dated", Some("2026-03-01"), &[]),
+                candidate("c-derived", Some("2026-01-05"), &["session:e9"]),
+                candidate("c-committed", Some("2026-02-01"), &["session:unknown"]),
+            ],
+        );
+        let events = [
+            line(
+                "knowledge.derived",
+                "2026-01-01T00:00:00Z",
+                json!({ "episode": "e9", "paths": format!("{dir}/c-derived.md") }),
+            ),
+            line(
+                "session.started",
+                "2026-01-01T00:00:00Z",
+                json!({ "session": "e9", "branch": "feature" }),
+            ),
+        ];
+
+        let q = candidates_of(&ctx, &events, NOW);
+        let ids: Vec<&str> = q.candidates.iter().map(|c| c.id.as_str()).collect();
+        assert_eq!(ids, ["c-committed", "c-dated", "c-derived", "c-undated"]);
+        let by = |id: &str| q.candidates.iter().find(|c| c.id == id).unwrap();
+
+        assert_eq!(by("c-derived").age_source, AgeSource::Derivation);
+        assert_eq!(by("c-derived").branch.as_deref(), Some("feature"));
+        assert_eq!(by("c-committed").age_source, AgeSource::Commit);
+        assert_eq!(
+            by("c-committed").branch,
+            None,
+            "an episode nobody knows has no branch"
+        );
+        assert_eq!(by("c-dated").age_source, AgeSource::Date);
+        assert_eq!(
+            by("c-dated").freshness,
+            Freshness::Stale,
+            "{:?}",
+            by("c-dated")
+        );
+        assert_eq!(by("c-undated").age_source, AgeSource::Date);
+        assert_eq!(by("c-undated").freshness, Freshness::Unknown);
+        assert_eq!(by("c-undated").branch, None);
+
+        assert_eq!(q.total, 4);
+        assert_eq!(q.unattributed, 3);
+        assert_eq!(q.cap, Some(2));
+        assert!(q.over_cap);
+        assert!(
+            q.findings.iter().any(
+                |f| f.starts_with("3 candidate(s) name an episode this checkout does not know")
+            ),
+            "{:?}",
+            q.findings
+        );
+        assert!(
+            q.findings
+                .iter()
+                .any(|f| f
+                    .starts_with("4 candidates await review, over the 2 the policy calls the cap")),
+            "{:?}",
+            q.findings
+        );
     }
 }

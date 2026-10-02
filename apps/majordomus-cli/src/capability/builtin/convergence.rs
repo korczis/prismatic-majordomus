@@ -104,6 +104,35 @@ mod tests {
         );
     }
 
+    /// A worktree refusal keeps its meaning across the capability boundary: what is not
+    /// there is not found, what git could not do is internal, and anything else is a refusal.
+    #[test]
+    fn a_worktree_error_keeps_its_meaning_as_a_capability_error() {
+        let missing = refused(WorktreeError::NoSuchWorktree {
+            selector: "nope".into(),
+        });
+        assert!(
+            matches!(&missing, CapabilityError::NotFound(m) if m.contains("nope")),
+            "{missing:?}"
+        );
+        let internal = refused(WorktreeError::GitCommandFailed {
+            command: "rev-list --branches".into(),
+            status: "128".into(),
+            stderr: "fatal: bad object".into(),
+        });
+        assert!(
+            matches!(&internal, CapabilityError::Internal(m) if m.contains("bad object")),
+            "{internal:?}"
+        );
+        let refusal = refused(WorktreeError::NotInGitRepository {
+            start: std::path::PathBuf::from("/nowhere"),
+        });
+        assert!(
+            matches!(&refusal, CapabilityError::Refused(m) if m.contains("/nowhere")),
+            "{refusal:?}"
+        );
+    }
+
     /// The answer changes outside this process — a commit, a push, an editor's save — so
     /// caching it would serve a verdict about a repository that no longer exists.
     #[test]

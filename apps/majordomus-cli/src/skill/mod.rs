@@ -577,7 +577,7 @@ impl Skills {
                         message: format!(
                             "the latest recorded run of a test naming skill '{id}' did not pass"
                         ),
-                        reproduce: weakest_reproduce(&tests).unwrap_or_else(|| explain.clone()),
+                        reproduce: weakest_reproduce(&tests, &explain),
                     }),
                     e if !e.current() => own.push(SkillFinding {
                         level: SkillFindingLevel::Warn,
@@ -590,7 +590,7 @@ impl Skills {
                             tests.len(),
                             e.label()
                         ),
-                        reproduce: weakest_reproduce(&tests).unwrap_or_else(|| explain.clone()),
+                        reproduce: weakest_reproduce(&tests, &explain),
                     }),
                     _ => {}
                 }
@@ -868,11 +868,14 @@ fn provenance_of(meta: &Value) -> Option<SkillProvenance> {
     })
 }
 
-fn weakest_reproduce(tests: &[SkillTest]) -> Option<String> {
+/// The command that reproduces the weakest of `tests`, or `otherwise` when that test names
+/// no runner that could reproduce it.
+fn weakest_reproduce(tests: &[SkillTest], otherwise: &str) -> String {
     tests
         .iter()
         .max_by_key(|t| SkillEvidence::of(t.state))
         .and_then(|t| t.reproduce.clone())
+        .unwrap_or_else(|| otherwise.to_string())
 }
 
 fn is_skill_id(word: &str) -> bool {
@@ -1103,6 +1106,242 @@ mod tests {
         let worst = states.iter().map(|s| SkillEvidence::of(*s)).max().unwrap();
         assert_eq!(worst, SkillEvidence::NotRun);
         assert!(SkillEvidence::Unrunnable < SkillEvidence::Untested);
+    }
+
+    /// Every evidence state and every standing prints as the word it serialises to, and
+    /// every proof state of a test maps to the evidence word a skill carries.
+    #[test]
+    fn every_state_prints_as_the_word_it_serialises_to() {
+        for e in [
+            SkillEvidence::Proven,
+            SkillEvidence::InputsUnchanged,
+            SkillEvidence::Stale,
+            SkillEvidence::Failing,
+            SkillEvidence::NotRun,
+            SkillEvidence::Unrunnable,
+            SkillEvidence::Untested,
+        ] {
+            assert_eq!(
+                serde_json::to_string(&e).unwrap(),
+                format!("\"{}\"", e.label())
+            );
+        }
+        for s in [
+            SkillStanding::Proven,
+            SkillStanding::Partial,
+            SkillStanding::Orphan,
+            SkillStanding::Invalid,
+            SkillStanding::NotRequired,
+        ] {
+            assert_eq!(
+                serde_json::to_string(&s).unwrap(),
+                format!("\"{}\"", s.label())
+            );
+        }
+        for (state, evidence) in [
+            (ProofState::Proven, SkillEvidence::Proven),
+            (ProofState::InputsUnchanged, SkillEvidence::InputsUnchanged),
+            (ProofState::Stale, SkillEvidence::Stale),
+            (ProofState::Failing, SkillEvidence::Failing),
+            (ProofState::NotRun, SkillEvidence::NotRun),
+            (ProofState::Unrunnable, SkillEvidence::Unrunnable),
+            (ProofState::NoTest, SkillEvidence::Unrunnable),
+        ] {
+            assert_eq!(SkillEvidence::of(state), evidence, "{state:?}");
+        }
+    }
+
+    fn test_of(state: ProofState, reproduce: Option<&str>) -> SkillTest {
+        SkillTest {
+            path: "test/cases/01_x.sh".into(),
+            test: None,
+            state,
+            reproduce: reproduce.map(str::to_string),
+            recorded_at: None,
+        }
+    }
+
+    /// The finding's reproduce command is the weakest test's, because that is the run that
+    /// would change the verdict; with no runner to name, it is the explanation instead.
+    #[test]
+    fn the_weakest_test_names_the_reproduce_command_or_the_explanation_does() {
+        let explain = "majordomus skills explain x";
+        let tests = [
+            test_of(ProofState::Proven, Some("test/run.sh 01")),
+            test_of(ProofState::Failing, Some("test/run.sh 02")),
+        ];
+        assert_eq!(weakest_reproduce(&tests, explain), "test/run.sh 02");
+        let unrunnable = [
+            test_of(ProofState::Proven, Some("test/run.sh 01")),
+            test_of(ProofState::Unrunnable, None),
+        ];
+        assert_eq!(weakest_reproduce(&unrunnable, explain), explain);
+        assert_eq!(weakest_reproduce(&[], explain), explain);
+    }
+
+    /// A URI prefix followed by no id is no reference, and a skills directory with no parent
+    /// layer adds no provider surface.
+    #[test]
+    fn a_prefix_without_an_id_is_no_reference_and_a_bare_directory_has_no_layer() {
+        let p = ".ai/repo/skills/";
+        assert!(references_in("majordomus://skill/ and majordomus://skill/Upper", p).is_empty());
+        let surfaces = invocation_surfaces(&BTreeMap::new(), "skills");
+        assert!(
+            !surfaces.iter().any(|s| s.ends_with("providers/**")),
+            "{surfaces:?}"
+        );
+        assert!(surfaces.contains(&"justfile".to_string()));
+    }
+
+    /// A tracked test or surface that is gone from the disk contributes nothing, and a
+    /// tracked file under a test directory that is no test is never read for a marker.
+    #[test]
+    fn a_tracked_file_that_cannot_be_read_binds_and_invokes_nothing() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let index = repo.index().unwrap();
+        let root = repo.root();
+        let workflows = index
+            .repository
+            .sections
+            .get("workflows")
+            .cloned()
+            .expect("the synthetic manifest declares workflows");
+        let write = |rel: &str, text: &str| {
+            let p = root.join(rel);
+            std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+            std::fs::write(p, text).unwrap();
+        };
+        write("test/cases/02_present.sh", &format!("# {M} alpha\ntrue\n"));
+        write("test/cases/README.md", &format!("# {M} beta\n"));
+        write(
+            &format!("{workflows}/present.md"),
+            "Follow majordomus://skill/alpha.\n",
+        );
+        let tracked: Vec<String> = [
+            "test/cases/01_gone.sh",
+            "test/cases/02_present.sh",
+            "test/cases/README.md",
+            &format!("{workflows}/gone.md"),
+            &format!("{workflows}/present.md"),
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+
+        let markers = test_markers(root, &tracked);
+        assert_eq!(
+            markers.keys().collect::<Vec<_>>(),
+            ["test/cases/02_present.sh"]
+        );
+
+        let invoked = invocation_references(root, &tracked, &index, ".ai/repo/skills");
+        assert_eq!(invoked.len(), 1, "{invoked:?}");
+        assert_eq!(invoked[0].0, "alpha");
+        assert_eq!(invoked[0].1.path, format!("{workflows}/present.md"));
+        assert_eq!(invoked[0].1.line, 1);
+    }
+
+    /// A class that escalates selects every gate that verifies skills; a class that names
+    /// gates selects only the verifying ones it names; no model selects nothing.
+    #[test]
+    fn an_escalating_class_selects_every_verifying_gate() {
+        let model: GateModel = serde_json::from_value(serde_json::json!({
+            "version": 1,
+            "gates": [
+                { "id": "named", "job": "j", "runs": "majordomus skills verify" },
+                { "id": "unnamed", "job": "j", "runs": "x skills verify --strict" },
+                { "id": "other", "job": "j", "runs": "true" }
+            ],
+            "classes": [
+                { "id": "skills", "paths": [".ai/repo/skills/**"], "gates": ["named", "other"] },
+                { "id": "ci", "paths": [".ai/repo/ci/**"], "gates": "full" }
+            ]
+        }))
+        .unwrap();
+        assert_eq!(
+            verifying_gates(Some(&model), ".ai/repo/skills/a/SKILL.md"),
+            ["named"]
+        );
+        assert_eq!(
+            verifying_gates(Some(&model), ".ai/repo/ci/gates.yaml"),
+            ["named", "unnamed"]
+        );
+        assert!(verifying_gates(None, ".ai/repo/skills/a/SKILL.md").is_empty());
+    }
+
+    fn skill_object(path: &str, identity: &str, metadata: Value) -> crate::model::Object {
+        crate::model::Object {
+            kind: SKILL.into(),
+            identity: identity.into(),
+            uri: format!("majordomus://skill/{identity}"),
+            title: None,
+            description: None,
+            metadata,
+            body: String::new(),
+            content: String::new(),
+            media_type: "text/markdown",
+            provenance: crate::model::Provenance {
+                path: path.into(),
+                directory: path.rsplit_once('/').unwrap().0.into(),
+                source_class: "skill".into(),
+                section: None,
+                bytes: 0,
+                member: None,
+            },
+        }
+    }
+
+    /// A skill the index holds with an error against it is invalid and the error is its
+    /// finding; its id and title fall back to its identity when the file declares neither.
+    /// A skill file the index refused is listed as invalid too, under the skills directory
+    /// the layout implies when the manifest names none; an error elsewhere, or on a file
+    /// beside a skill, or on no file at all, is no skill.
+    #[test]
+    fn a_contract_error_makes_a_skill_invalid_and_nothing_else_is_a_skill() {
+        use crate::model::Diagnostic;
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let mut index = repo.index().unwrap();
+        index.repository.sections.remove("skills");
+        let plain = ".ai/repo/skills/plain/SKILL.md";
+        index.objects.push(skill_object(
+            plain,
+            "plain",
+            serde_json::json!({ "status": "active" }),
+        ));
+        for (path, message) in [
+            (Some(plain), "a field is wrong"),
+            (Some(".ai/repo/skills/refused/SKILL.md"), "refused outright"),
+            (Some(".ai/repo/skills/refused/notes.md"), "beside a skill"),
+            (Some(".ai/repo/skills/deep/er/SKILL.md"), "too deep"),
+            (Some(".ai/repo/rules/x.md"), "elsewhere"),
+            (None, "no file"),
+        ] {
+            index.diagnostics.push(Diagnostic::error(
+                "schema",
+                path.map(str::to_string),
+                message,
+            ));
+        }
+
+        let skills = Skills::build(&index, &Ledger::empty());
+        let ids: Vec<&str> = skills.skills.iter().map(|s| s.id.as_str()).collect();
+        assert_eq!(ids, ["plain", "refused"]);
+
+        let s = skills.skill("plain").unwrap();
+        assert_eq!(s.standing, SkillStanding::Invalid);
+        assert!(!s.valid);
+        assert_eq!(s.title, "plain", "no title: the id stands in");
+        let contract: Vec<&SkillFinding> =
+            s.findings.iter().filter(|f| f.code == "contract").collect();
+        assert_eq!(contract.len(), 1);
+        assert_eq!(contract[0].message, "schema: a field is wrong");
+        assert_eq!(contract[0].reproduce, "majordomus skills check");
+        assert_eq!(contract[0].level, SkillFindingLevel::Fail);
+
+        assert_eq!(
+            skills.skill("refused").unwrap().standing,
+            SkillStanding::Invalid
+        );
     }
 
     #[test]

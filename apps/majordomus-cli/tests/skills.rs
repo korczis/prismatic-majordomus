@@ -209,6 +209,104 @@ fn a_skill_is_tested_only_by_a_recorded_passing_run_of_the_test_that_names_it() 
     assert!(codes(&v).contains(&"fail:failing".to_string()), "{v}");
 }
 
+/// The rule that makes skills a doctrine: a dispatched rule whose validator is `skills`.
+fn doctrine() -> String {
+    common::rule("project.skills-checked", 1, "Skills are checked").replace(
+        "tags: [fixture]\n",
+        "tags: [fixture]\nx-majordomus:\n  validator: skills\n  category: skill\n  enforced_by: [doctor]\n  exit_code: 10\n",
+    )
+}
+
+/// A CI model in which a change to a skill selects the gate that verifies skills, and a
+/// change to the model itself escalates to every gate, a second verifying one included.
+const MODEL: &str = "version: 1
+gates:
+  - id: skills-proof
+    job: structure
+    runs: majordomus skills verify
+  - id: skills-again
+    job: structure
+    runs: majordomus skills verify --again
+  - id: unrelated
+    job: structure
+    runs: scripts/unrelated
+classes:
+  - id: skills
+    paths: [.ai/repo/skills/**]
+    gates: [skills-proof, unrelated]
+  - id: everything
+    paths: [.ai/**]
+    gates: full
+";
+
+#[test]
+fn a_skill_tested_documented_enforced_and_used_is_proven_and_each_debt_names_itself() {
+    let f = skilled();
+    let explain = |f: &Fixture| cli_json(&f.root(), &["skills", "explain", "alpha"]).1;
+    let messages = |s: &Value| -> Vec<String> {
+        s["findings"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|x| {
+                format!(
+                    "{}: {}",
+                    x["code"].as_str().unwrap(),
+                    x["message"].as_str().unwrap()
+                )
+            })
+            .collect()
+    };
+
+    // a doctrine and no gate: enforcement is owed, and the debt names the missing gate
+    f.write(".ai/repo/rules/project/skills-checked.v1.md", &doctrine());
+    f.commit("a doctrine for skills");
+    let s = explain(&f);
+    assert_eq!(s["enforced"]["doctrine"], "project.skills-checked", "{s}");
+    assert_eq!(s["enforced"]["enforced"], false);
+    assert!(
+        messages(&s).contains(
+            &"unenforced: skill 'alpha': no CI gate selected by a change to .ai/repo/skills/alpha/SKILL.md runs `skills verify`".to_string()
+        ),
+        "{s}"
+    );
+
+    // the gate model, a page, and a recorded passing run of the naming test
+    f.write(".ai/repo/ci/gates.yaml", MODEL);
+    f.write("site/content/skills/alpha.md", "# alpha\n\nThe page.\n");
+    f.commit("a gate, a page");
+    let id = TestId::of("test/cases/01_alpha.sh").unwrap();
+    let source = std::fs::read(f.path(&id.source())).unwrap();
+    let mut ledger = Ledger::empty();
+    ledger.merge([Execution {
+        test: id.as_string(),
+        runner: Runner::Suite,
+        source: id.source(),
+        outcome: Outcome::Pass,
+        seconds: 1,
+        commit: f.git(&["rev-parse", "HEAD"]).trim().to_string(),
+        working_tree: "clean".into(),
+        digest: digest_of(&source),
+        at: "2026-09-17T00:00:00Z".into(),
+        origin: Origin::Local,
+        command: id.reproduce(),
+        run: None,
+    }]);
+    ledger.save(&f.root()).unwrap();
+
+    let s = explain(&f);
+    assert_eq!(s["standing"], "proven", "{s}");
+    assert_eq!(s["enforced"]["enforced"], true);
+    // the class naming the gate selects only the verifying one it names; the class that
+    // escalates selects every verifying gate, the one no class names included
+    assert_eq!(
+        s["enforced"]["gates"],
+        json!(["skills-again", "skills-proof"])
+    );
+    assert_eq!(s["documented"]["documented"], true);
+    assert_eq!(s["findings"], json!([]), "a proven skill owes nothing");
+}
+
 #[test]
 fn an_orphan_a_binding_to_nothing_and_a_broken_contract_are_refused_naming_each_finding() {
     let f = skilled();

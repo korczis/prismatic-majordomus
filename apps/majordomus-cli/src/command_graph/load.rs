@@ -234,4 +234,28 @@ mod tests {
         std::fs::write(cache_path(dir.path()), br#"{"schema":"other/v9"}"#).unwrap();
         assert!(read_cache(dir.path()).is_none());
     }
+
+    /// With no cache, a caller that holds no registry pays for one and gets the same graph a
+    /// caller holding one gets: the registry describes the one executable either way. With a
+    /// cache, the cache is the answer and nothing is built.
+    #[test]
+    fn a_cold_graph_is_the_same_whoever_holds_the_registry() {
+        let dir = tempfile::tempdir().expect("a temporary directory");
+        let held = registry().expect("this executable's registry builds");
+        let built = fast_at(dir.path(), None);
+        assert!(
+            !built.commands.is_empty(),
+            "a cold graph is built, not empty"
+        );
+        assert_eq!(built, fast_with(dir.path(), None, Some(&held)));
+        assert!(
+            read_cache(dir.path()).is_none(),
+            "a fast read never writes the cache"
+        );
+
+        let cached = build(&Inputs::default());
+        write_cache(dir.path(), &cached).expect("the cache is written");
+        assert_eq!(fast_at(dir.path(), None), cached);
+        assert_eq!(fast_with(dir.path(), None, Some(&held)), cached);
+    }
 }
