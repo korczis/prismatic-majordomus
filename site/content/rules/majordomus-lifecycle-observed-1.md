@@ -1,7 +1,7 @@
 +++
 title = "Lifecycle observation"
 description = "Lifecycle observation"
-weight = 27
+weight = 30
 [extra]
 kind = "rule"
 slug = "majordomus-lifecycle-observed-1"

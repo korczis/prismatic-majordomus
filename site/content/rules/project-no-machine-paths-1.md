@@ -1,7 +1,7 @@
 +++
 title = "Nothing this repository commits names a path of the machine it was written on"
 description = "Nothing this repository commits names a path of the machine it was written on"
-weight = 110
+weight = 113
 [extra]
 kind = "rule"
 slug = "project-no-machine-paths-1"

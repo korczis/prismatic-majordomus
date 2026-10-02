@@ -6,20 +6,20 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.11.0
 coverage:
   - scope: direct
-    required: 153
-    covered: 135
+    required: 156
+    covered: 138
     missing: 0
     waived: 18
     inapplicable: 0
   - scope: http
-    required: 151
-    covered: 135
+    required: 154
+    covered: 138
     missing: 0
     waived: 16
     inapplicable: 0
   - scope: mcp
-    required: 147
-    covered: 131
+    required: 150
+    covered: 134
     missing: 0
     waived: 16
     inapplicable: 0
@@ -30,8 +30,8 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 464
-    covered: 414
+    required: 473
+    covered: 423
     missing: 0
     waived: 50
     inapplicable: 0
@@ -632,6 +632,33 @@ capabilities:
     module: integration
     kind: query
     cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: knowledge_base.candidates
+    module: knowledge_base
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: knowledge_base.record
+    module: knowledge_base
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - first-record
+  - id: knowledge_base.status
+    module: knowledge_base
+    kind: query
+    cache: "process, 2 entries, 2s"
     direct: covered
     mcp: covered
     http: covered

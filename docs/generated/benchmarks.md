@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 153 | 135 | 0 | 18 |
-| http | 151 | 135 | 0 | 16 |
-| mcp | 147 | 131 | 0 | 16 |
+| direct | 156 | 138 | 0 | 18 |
+| http | 154 | 138 | 0 | 16 |
+| mcp | 150 | 134 | 0 | 16 |
 | system | 13 | 13 | 0 | 0 |
-| total | 464 | 414 | 0 | 50 |
+| total | 473 | 423 | 0 | 50 |
 
 ## Capabilities
 
@@ -83,6 +83,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `integration.events` | integration | query | — | covered | covered | covered | `default` |
 | `integration.explain` | integration | query | — | covered | covered | covered | `a-number` |
 | `integration.queue` | integration | query | — | covered | covered | covered | `default` |
+| `knowledge_base.candidates` | knowledge_base | query | — | covered | covered | covered | `default` |
+| `knowledge_base.record` | knowledge_base | query | — | covered | covered | covered | `first-record` |
+| `knowledge_base.status` | knowledge_base | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `lifecycle.closed` | lifecycle | query | process, 2 entries, 30s | covered | covered | covered | `default` |
 | `lifecycle.episodes` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `lifecycle.providers` | lifecycle | query | process, 2 entries | covered | covered | covered | `default` |

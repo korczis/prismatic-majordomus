@@ -5,15 +5,15 @@
     "id": "majordomus-cli",
     "version": "0.11.0"
   },
-  "fingerprint": "b12c95e05d9ba676facb91c37c821c43180687884bedda2e08d0872ac7fa5ee2",
+  "fingerprint": "b9ae31c015ba495e4f68739bcbe94eac5c08d2811e9ce7abf5d9f8c7aad7a680",
   "route": "/features/",
   "counts": {
     "features": 26,
     "features_all": 27,
     "featured": 14,
     "providers": 6,
-    "modules": 46,
-    "modules_covered": 39,
+    "modules": 47,
+    "modules_covered": 40,
     "commands": 30,
     "commands_covered": 30,
     "kinds": 26,
@@ -304,7 +304,7 @@
         },
         {
           "name": "claim",
-          "objects": 207
+          "objects": 216
         }
       ],
       "rule_refs": [
@@ -568,11 +568,11 @@
       "counts": {
         "capabilities": 11,
         "mcp_tools": 11,
-        "mcp_resources": 271,
+        "mcp_resources": 280,
         "http_routes": 11,
         "cli_paths": 10,
         "commands": 2,
-        "objects": 265,
+        "objects": 274,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -3615,7 +3615,8 @@
       ],
       "audiences": [],
       "modules": [
-        "graph"
+        "graph",
+        "knowledge_base"
       ],
       "commands": [
         "decision",
@@ -3642,7 +3643,8 @@
       ],
       "adrs": [
         "adr-0010",
-        "adr-0020"
+        "adr-0020",
+        "adr-0091"
       ],
       "claims": [
         "decision-record",
@@ -3652,13 +3654,15 @@
         "adr-propose",
         "record-search",
         "semantic-retrieval",
-        "history-ledger-read"
+        "history-ledger-read",
+        "knowledge-served-on-every-surface"
       ],
       "use_cases": [
         "record-a-decision-before-it-is-forgotten",
         "keep-decisions-out-of-the-transcript",
         "read-back-what-happened",
-        "find-an-object-without-reading-everything"
+        "find-an-object-without-reading-everything",
+        "keep-what-an-episode-learned"
       ],
       "cockpit": [
         "graphs",
@@ -3709,6 +3713,44 @@
               "route": "GET /api/v1/graphs"
             }
           ]
+        },
+        {
+          "id": "knowledge_base",
+          "title": "Knowledge base",
+          "description": "What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion with the branch of the episode each came from, one record by id with every reference it names resolved against the index, the ledger and git, and the derivation status of this checkout judged against the policy's freshness thresholds. Read from the index and the ledger; written by nothing here — the deriver is the shell tool's, and a person promotes.",
+          "stability": "behaviorally_verified",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+          "capabilities": [
+            {
+              "id": "knowledge_base.candidates",
+              "title": "Candidates awaiting review",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_knowledge_candidates",
+              "resource": "majordomus://knowledge-candidates",
+              "route": "GET /api/v1/knowledge/candidates",
+              "cli": "majordomus knowledge candidates"
+            },
+            {
+              "id": "knowledge_base.record",
+              "title": "One knowledge record",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_knowledge_record",
+              "route": "GET /api/v1/knowledge/record",
+              "cli": "majordomus knowledge record"
+            },
+            {
+              "id": "knowledge_base.status",
+              "title": "Whether the deriver is still writing",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_knowledge_status",
+              "resource": "majordomus://knowledge-status",
+              "route": "GET /api/v1/knowledge/status",
+              "cli": "majordomus knowledge status"
+            }
+          ]
         }
       ],
       "command_refs": [
@@ -3726,9 +3768,9 @@
         },
         {
           "id": "knowledge",
-          "summary": "The compiled index over what this repository states.",
+          "summary": "The compiled index over what this repository states, and the candidate records it derives from what an episode did.",
           "stage": "inspect",
-          "read_only": true
+          "read_only": false
         },
         {
           "id": "search",
@@ -3752,7 +3794,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 71
+          "objects": 72
         },
         {
           "name": "knowledge",
@@ -3760,7 +3802,7 @@
         },
         {
           "name": "document",
-          "objects": 290
+          "objects": 300
         }
       ],
       "rule_refs": [
@@ -3819,6 +3861,12 @@
           "title": "The capability graph is composed, not centralised, and projected twice",
           "status": "proposed",
           "path": ".ai/repo/adrs/0020-the-capability-graph-is-composed-not-centralised-and-projecte.md"
+        },
+        {
+          "id": "adr-0091",
+          "title": "Knowledge is derived at the episode boundary, from the ledger and git, and a person promotes it",
+          "status": "proposed",
+          "path": ".ai/repo/adrs/0091-knowledge-is-derived-at-the-episode-boundary-and-a-person-promotes-it.md"
         }
       ],
       "claim_refs": [
@@ -3861,6 +3909,11 @@
           "id": "history-ledger-read",
           "claim": "The ledger is readable back as operational history, filtered by task, event and time",
           "status": "guaranteed"
+        },
+        {
+          "id": "knowledge-served-on-every-surface",
+          "claim": "The candidates awaiting review, one record by id with its references resolved, and the derivation status of the checkout are one declaration each and answer with the same content over the command line, HTTP and MCP",
+          "status": "guaranteed"
         }
       ],
       "use_case_refs": [
@@ -3883,6 +3936,11 @@
           "id": "find-an-object-without-reading-everything",
           "title": "Find an object of the layer without reading everything",
           "category": "mcp"
+        },
+        {
+          "id": "keep-what-an-episode-learned",
+          "title": "Keep what an episode learned, without a model and without a conversation",
+          "category": "knowledge"
         }
       ],
       "cockpit_refs": [
@@ -4007,29 +4065,29 @@
         "provenance"
       ],
       "counts": {
-        "capabilities": 2,
-        "mcp_tools": 2,
-        "mcp_resources": 363,
-        "http_routes": 2,
-        "cli_paths": 0,
+        "capabilities": 5,
+        "mcp_tools": 5,
+        "mcp_resources": 376,
+        "http_routes": 5,
+        "cli_paths": 3,
         "commands": 6,
-        "objects": 362,
+        "objects": 373,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
-        "adrs": 2,
-        "claims": 8,
-        "use_cases": 4,
+        "adrs": 3,
+        "claims": 9,
+        "use_cases": 5,
         "moments": 17
       },
       "evidence": {
         "claims": {
           "advisory": 1,
-          "guaranteed": 6,
+          "guaranteed": 7,
           "rejected": 1
         },
         "modules": {
-          "behaviorally_verified": 1
+          "behaviorally_verified": 2
         }
       }
     },
@@ -4223,7 +4281,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 148
+          "objects": 151
         }
       ],
       "rule_refs": [
@@ -4587,11 +4645,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 150,
+        "mcp_resources": 153,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 148,
+        "objects": 151,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -7230,7 +7288,7 @@
       "kind_refs": [
         {
           "name": "context",
-          "objects": 31
+          "objects": 32
         },
         {
           "name": "scope",
@@ -7510,11 +7568,11 @@
       "counts": {
         "capabilities": 7,
         "mcp_tools": 7,
-        "mcp_resources": 36,
+        "mcp_resources": 37,
         "http_routes": 7,
         "cli_paths": 4,
         "commands": 1,
-        "objects": 32,
+        "objects": 33,
         "rules": 6,
         "enforced_rules": 5,
         "docs": 2,
@@ -7608,7 +7666,7 @@
       "kind_refs": [
         {
           "name": "use-case",
-          "objects": 46
+          "objects": 47
         },
         {
           "name": "application",
@@ -7720,11 +7778,11 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 61,
+        "mcp_resources": 62,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 1,
-        "objects": 61,
+        "objects": 62,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -9989,6 +10047,13 @@
         ]
       },
       {
+        "id": "knowledge_base",
+        "title": "Knowledge base",
+        "features": [
+          "knowledge"
+        ]
+      },
+      {
         "id": "lifecycle",
         "title": "Session lifecycle",
         "features": [
@@ -10379,7 +10444,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (71)",
+        "title": "adr (72)",
         "features": [
           "knowledge"
         ]
@@ -10407,7 +10472,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (207)",
+        "title": "claim (216)",
         "features": [
           "declare-once"
         ]
@@ -10421,7 +10486,7 @@
       },
       {
         "id": "context",
-        "title": "context (31)",
+        "title": "context (32)",
         "features": [
           "context"
         ]
@@ -10510,7 +10575,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (148)",
+        "title": "rule (151)",
         "features": [
           "doctrine"
         ]
@@ -10546,7 +10611,7 @@
       },
       {
         "id": "use-case",
-        "title": "use-case (46)",
+        "title": "use-case (47)",
         "features": [
           "use-cases"
         ]
@@ -11373,28 +11438,28 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1731,
-    "builtin": 153,
-    "declarative": 1578,
-    "modules": 46,
-    "mcp_tools": 147,
-    "mcp_resources": 1626,
-    "http_routes": 151,
-    "cli_commands": 162,
+    "capabilities": 1767,
+    "builtin": 156,
+    "declarative": 1611,
+    "modules": 47,
+    "mcp_tools": 150,
+    "mcp_resources": 1661,
+    "http_routes": 154,
+    "cli_commands": 165,
     "shell_commands": 30,
     "kinds": 29,
-    "objects": 1578,
+    "objects": 1611,
     "by_kind": {
-      "adr": 71,
+      "adr": 72,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 207,
+      "claim": 216,
       "command": 31,
-      "context": 31,
+      "context": 32,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 290,
+      "document": 300,
       "feature": 27,
       "implementation": 49,
       "issue": 238,
@@ -11406,13 +11471,13 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 7,
-      "rule": 148,
+      "rule": 151,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 303,
-      "use-case": 46,
+      "test": 311,
+      "use-case": 47,
       "workspace": 1
     },
     "providers": 6,
@@ -11428,7 +11493,7 @@
       "executions": 6,
       "newest": "2026-09-12T10:36:18Z"
     },
-    "declared": 191,
+    "declared": 200,
     "supported": 0,
     "claims": {
       "a-finding-names-how-to-see-it-again": {
@@ -11528,6 +11593,18 @@
         "supported": false
       },
       "bootstrap-chain": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "briefing-names-candidates": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "candidates-reviewed-not-accumulated": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",
@@ -11948,6 +12025,48 @@
         "supported": false
       },
       "interfaces-are-projections": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "knowledge-derivation-is-idempotent": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "knowledge-derived-at-the-boundary": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "knowledge-failure-is-recorded": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "knowledge-integrity": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "knowledge-promotion-is-an-act": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "knowledge-served-on-every-surface": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "knowledge-writer-observed": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",

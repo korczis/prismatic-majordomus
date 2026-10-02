@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 71,
+      "count": 72,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 148,
+      "count": 151,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 71
+      "count": 72
     },
     {
       "kind": "application",
@@ -69,7 +69,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 207
+      "count": 216
     },
     {
       "kind": "command",
@@ -85,7 +85,7 @@
       "route": "/context/",
       "title": null,
       "reason": null,
-      "count": 31
+      "count": 32
     },
     {
       "kind": "deployment",
@@ -109,7 +109,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 290
+      "count": 300
     },
     {
       "kind": "feature",
@@ -205,7 +205,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 148
+      "count": 151
     },
     {
       "kind": "scope",
@@ -245,7 +245,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 303
+      "count": 311
     },
     {
       "kind": "use-case",
@@ -253,7 +253,7 @@
       "route": "/use-cases/",
       "title": null,
       "reason": null,
-      "count": 46
+      "count": 47
     },
     {
       "kind": "workspace",
@@ -4656,6 +4656,319 @@
     },
     {
       "kind": "adr",
+      "id": "majordomus://adr/adr-0091",
+      "identity": "adr-0091",
+      "slug": "adr-0091",
+      "cockpit": "/cockpit/objects/adr/adr-0091",
+      "title": "Knowledge is derived at the episode boundary, from the ledger and git, and a person promotes it",
+      "status": "proposed",
+      "tags": [
+        "knowledge",
+        "sessions",
+        "continuity",
+        "governance"
+      ],
+      "source": ".ai/repo/adrs/0091-knowledge-is-derived-at-the-episode-boundary-and-a-person-promotes-it.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": ".ai/repo/knowledge/sources.yaml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/events.yaml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/schemas/majordomus/knowledge/knowledge.v1.proto",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/skeleton/ai/repo/knowledge/candidates/README.md",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/standard/majordomus/rules/candidates-reviewed.v1.md",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/standard/majordomus/rules/knowledge-integrity.v1.md",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/standard/majordomus/rules/knowledge-observed.v1.md",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "briefing-names-candidates",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "candidates-reviewed-not-accumulated",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "knowledge-derivation-is-idempotent",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "knowledge-derived-at-the-boundary",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "knowledge-failure-is-recorded",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "knowledge-integrity",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "knowledge-promotion-is-an-act",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "knowledge-served-on-every-surface",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "knowledge-writer-observed",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "ai.repo.knowledge.candidates",
+          "kind": "context",
+          "route": "/context/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/KNOWLEDGE.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/capture.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/init.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/knowledge.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/session.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": ".ai/repo/policy.yaml",
+          "kind": "policy",
+          "route": "/policy/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "majordomus.candidates-reviewed@1",
+          "kind": "rule",
+          "route": "/rules/majordomus-candidates-reviewed-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "majordomus.knowledge-integrity@1",
+          "kind": "rule",
+          "route": "/rules/majordomus-knowledge-integrity-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "majordomus.knowledge-observed@1",
+          "kind": "rule",
+          "route": "/rules/majordomus-knowledge-observed-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "majordomus.lifecycle-observed@1",
+          "kind": "rule",
+          "route": "/rules/majordomus-lifecycle-observed-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.accumulation-is-measured@2",
+          "kind": "rule",
+          "route": "/rules/project-accumulation-is-measured-2/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.derived-files-regenerated@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-files-regenerated-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.never-store-transcripts@1",
+          "kind": "rule",
+          "route": "/rules/project-never-store-transcripts-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.no-network-no-eval@1",
+          "kind": "rule",
+          "route": "/rules/project-no-network-no-eval-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.no-new-nouns@1",
+          "kind": "rule",
+          "route": "/rules/project-no-new-nouns-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/563_knowledge_is_derived_at_the_boundary.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/564_knowledge_derivation_is_idempotent.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/565_knowledge_switch_and_failure_leave_evidence.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/707_knowledge_check_refuses_malformed_records.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/708_health_sees_a_stopped_knowledge_writer.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/709_knowledge_promotion_is_an_act.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/710_briefing_names_the_candidates.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/711_candidates_are_reviewed_not_accumulated.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/tests/knowledge_base.rs",
+          "kind": "test",
+          "route": null,
+          "external": true
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
       "id": "majordomus://adr/adr-0097",
       "identity": "adr-0097",
       "slug": "adr-0097",
@@ -5109,6 +5422,39 @@
           "label": "keep-the-bootstrap-thin-and-within-budget",
           "kind": "use-case",
           "route": "/use-cases/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/majordomus.candidates-reviewed@1",
+      "identity": "majordomus.candidates-reviewed@1",
+      "slug": "majordomus-candidates-reviewed-1",
+      "cockpit": "/cockpit/objects/rule/majordomus-candidates-reviewed-1",
+      "title": "Candidates are reviewed",
+      "status": "active",
+      "tags": [
+        "knowledge",
+        "health",
+        "accumulation"
+      ],
+      "source": ".ai/repo/rules/vendor/majordomus/rules/candidates-reviewed.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "majordomus.knowledge-integrity@1",
+          "kind": "rule",
+          "route": "/rules/majordomus-knowledge-integrity-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0091",
+          "kind": "adr",
+          "route": "/adrs/adr-0091/",
           "external": false
         }
       ]
@@ -5981,6 +6327,85 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/majordomus.knowledge-integrity@1",
+      "identity": "majordomus.knowledge-integrity@1",
+      "slug": "majordomus-knowledge-integrity-1",
+      "cockpit": "/cockpit/objects/rule/majordomus-knowledge-integrity-1",
+      "title": "Knowledge integrity",
+      "status": "active",
+      "tags": [
+        "knowledge",
+        "integrity"
+      ],
+      "source": ".ai/repo/rules/vendor/majordomus/rules/knowledge-integrity.v1.md",
+      "references": [],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0091",
+          "kind": "adr",
+          "route": "/adrs/adr-0091/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "majordomus.candidates-reviewed@1",
+          "kind": "rule",
+          "route": "/rules/majordomus-candidates-reviewed-1/",
+          "external": false
+        },
+        {
+          "edge": "exercises",
+          "label": "keep-what-an-episode-learned",
+          "kind": "use-case",
+          "route": "/use-cases/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/majordomus.knowledge-observed@1",
+      "identity": "majordomus.knowledge-observed@1",
+      "slug": "majordomus-knowledge-observed-1",
+      "cockpit": "/cockpit/objects/rule/majordomus-knowledge-observed-1",
+      "title": "Knowledge observation",
+      "status": "active",
+      "tags": [
+        "knowledge",
+        "sessions",
+        "continuity",
+        "health"
+      ],
+      "source": ".ai/repo/rules/vendor/majordomus/rules/knowledge-observed.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "majordomus.lifecycle-observed@1",
+          "kind": "rule",
+          "route": "/rules/majordomus-lifecycle-observed-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0091",
+          "kind": "adr",
+          "route": "/adrs/adr-0091/",
+          "external": false
+        },
+        {
+          "edge": "exercises",
+          "label": "keep-what-an-episode-learned",
+          "kind": "use-case",
+          "route": "/use-cases/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/majordomus.layout-integrity@1",
       "identity": "majordomus.layout-integrity@1",
       "slug": "majordomus-layout-integrity-1",
@@ -6099,6 +6524,20 @@
           "label": "adr-0052",
           "kind": "adr",
           "route": "/adrs/adr-0052/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0091",
+          "kind": "adr",
+          "route": "/adrs/adr-0091/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "majordomus.knowledge-observed@1",
+          "kind": "rule",
+          "route": "/rules/majordomus-knowledge-observed-1/",
           "external": false
         }
       ]
@@ -7727,6 +8166,13 @@
         },
         {
           "edge": "put_in_force",
+          "label": "adr-0091",
+          "kind": "adr",
+          "route": "/adrs/adr-0091/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "adr-0101",
           "kind": "adr",
           "route": "/adrs/adr-0101/",
@@ -8122,6 +8568,13 @@
           "label": "adr-0031",
           "kind": "adr",
           "route": "/adrs/adr-0031/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0091",
+          "kind": "adr",
+          "route": "/adrs/adr-0091/",
           "external": false
         },
         {
@@ -10120,6 +10573,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0014/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0091",
+          "kind": "adr",
+          "route": "/adrs/adr-0091/",
+          "external": false
         }
       ]
     },
@@ -10391,6 +10851,13 @@
         },
         {
           "edge": "put_in_force",
+          "label": "adr-0091",
+          "kind": "adr",
+          "route": "/adrs/adr-0091/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "adr-0101",
           "kind": "adr",
           "route": "/adrs/adr-0101/",
@@ -10459,6 +10926,13 @@
           "label": "adr-0039",
           "kind": "adr",
           "route": "/adrs/adr-0039/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0091",
+          "kind": "adr",
+          "route": "/adrs/adr-0091/",
           "external": false
         },
         {

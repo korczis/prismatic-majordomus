@@ -1,7 +1,7 @@
 +++
 title = "The roadmap is a projection, never a document"
 description = "The roadmap is a projection, never a document"
-weight = 44
+weight = 47
 [extra]
 kind = "rule"
 slug = "majordomus-roadmap-integrity-1"
