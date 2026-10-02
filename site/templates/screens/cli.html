@@ -28,7 +28,7 @@
 {%- set tiles_cli = [{"title": c.command, "text": c.about | split(pat=":") | first | split(pat=",") | first | truncate(length=48), "href": base ~ c.route[1:], "icon": "terminal", "tone": "blue"} for c in common_cli] -%}
 {%- set tiles_shell = [{"title": "majordomus " ~ c.name, "text": c.summary | split(pat=",") | first | truncate(length=48), "href": base ~ "commands/" ~ c.name ~ "/", "icon": "prompt", "tone": "violet"} for c in common_shell] -%}
 
-{% <hero kicker="CLI" title="One command line" accent="for the whole layer." lead="Every capability of the registry is a command of majordomus, the same capability the HTTP API and the MCP tools answer with. The task lifecycle is its portable-shell half: init, start, check, finish."> %}
+{% <hero kicker="CLI" title="One command line" accent="for the whole layer." lead="A capability that claims a command answers there through the same executor the HTTP API and the MCP tools ask; the clap tree is checked against the registry in both directions. The task lifecycle, start, check and finish, belongs to the shell tool, the other program that answers to majordomus."> %}
   {{ <quote text="A capability is declared once." by="One registry, every interface" href={base ~ "features/"} /> }}
 {% </hero> %}
 
@@ -51,7 +51,7 @@
     {% </tabs> %}
   {% </panel> %}
   {% <panel title="Consistent everywhere" sub="The same capability on the command line, over HTTP and as an MCP tool." icon="check-circle" tone="green" variant="toned" level="2"> %}
-    {{ <points variant="cards" glyphs={true} items={[{"icon": "check-circle", "tone": "green", "title": "One declaration", "text": "every surface reads the same registry"}, {"icon": "list-checks", "tone": "blue", "title": "Deterministic", "text": "the same input projects the same bytes"}, {"icon": "shield-check", "tone": "violet", "title": "Checked", "text": "a projection that disagrees fails the build"}, {"icon": "file-text", "tone": "orange", "title": "Documented", "text": cli.counts.arguments ~ " arguments in the reference", "href": base ~ "docs/cli/"}, {"icon": "puzzle", "tone": "rose", "title": "Discovered", "text": "nothing registered by hand"}]} /> }}
+    {{ <points variant="cards" glyphs={true} items={[{"icon": "check-circle", "tone": "green", "title": "One registry", "text": "every surface asks the same executor"}, {"icon": "list-checks", "tone": "blue", "title": "Deterministic", "text": "the same input projects the same bytes"}, {"icon": "shield-check", "tone": "violet", "title": "Checked", "text": "a projection that disagrees fails the build"}, {"icon": "file-text", "tone": "orange", "title": "Documented", "text": cli.counts.arguments ~ " arguments in the reference", "href": base ~ "docs/cli/"}, {"icon": "puzzle", "tone": "rose", "title": "Generated", "text": "the reference is rendered from the clap tree"}]} /> }}
   {% </panel> %}
   </div>
 </div>

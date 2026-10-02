@@ -11,14 +11,14 @@
 {%- set envop = [o for o in envtag.operations if o.path == "/api/v1/environment"] | first -%}
 {%- set repo = project.repository_url | split(pat="/") | last -%}
 
-{% <hero kicker="Architecture" title="One repository." accent="Many interfaces." lead={project.short_name ~ " discovers a repository once, reads it into typed models, and derives every interface from them: the command line, the HTTP API and its OpenAPI description, Swagger UI, MCP, the Cockpit and this site."}> %}
+{% <hero kicker="Architecture" title="One repository." accent="Many interfaces." lead={project.short_name ~ " discovers a repository once, reads it into typed models, and derives its interfaces from them: the HTTP API and its OpenAPI description, Swagger UI, MCP, the Cockpit's generic pages and this site. The command line is declared a second time, in clap, and checked against the registry."}> %}
   {{ <quote text="Discover and model a fact once, and derive every interface from it." by="docs/SURFACES.md · the invariant" href={base ~ "docs/surfaces/"} /> }}
 {% </hero> %}
 
 {#- ------------------------------------------- repository → model → interfaces · principles -#}
 <div class="mt-12 grid gap-6 xl:grid-cols-[minmax(0,16rem)_5rem_minmax(0,1fr)] xl:gap-x-2">
   {% <panel title="Repository" sub="The tracked tree is the source of truth" icon="github" cls="xl:row-span-2"> %}
-    {{ <tree root={repo ~ "/"} items={[{"name": ".ai/", "note": "the layer: policy, rules, ADRs, skills"}, {"name": "apps/", "note": "the Rust executable and its capabilities"}, {"name": "bin/", "note": "the entry points"}, {"name": "lib/", "note": "the shell tool"}, {"name": "share/", "note": "kinds, schemas, the design"}, {"name": "docs/", "note": "manuals and generated documents"}, {"name": "test/", "note": "the cases"}, {"name": "site/", "note": "this website, derived"}, {"name": "justfile", "note": "the workflows", "icon": "file-text"}]} /> }}
+    {{ <tree root={repo ~ "/"} items={[{"name": ".ai/", "note": "the layer: policy, rules, ADRs, skills"}, {"name": "apps/", "note": "the Rust executable and its capabilities"}, {"name": "bin/", "note": "the entry points"}, {"name": "lib/", "note": "the shell tool"}, {"name": "share/", "note": "kinds, schemas, the design"}, {"name": "docs/", "note": "manuals and generated documents"}, {"name": "test/", "note": "the cases"}, {"name": "site/", "note": "this website and the data derived for it"}, {"name": "justfile", "note": "the workflows", "icon": "file-text"}]} /> }}
   {% </panel> %}
 
   {{ <fan_wire n={1} side="in" dashed={true} label="discovered" /> }}
@@ -32,8 +32,8 @@
 
   {% <panel title="Key principles" icon="sparkles" tone="violet" cls="xl:col-start-3"> %}
     <div class="grid gap-x-8 md:grid-cols-3">
-      {{ <points glyphs={true} items={[{"icon": "circle", "tone": "blue", "title": "One declaration", "text": "every interface is a projection of it"}, {"icon": "bolt", "tone": "green", "title": "Discovered", "text": "enumerated through sources.yaml, never registered by hand"}]} /> }}
-      {{ <points glyphs={true} items={[{"icon": "shield", "tone": "violet", "title": "Typed", "text": "an object that does not validate is a diagnostic"}, {"icon": "list", "tone": "orange", "title": "Deterministic", "text": "maps sorted, no timestamp"}]} /> }}
+      {{ <points glyphs={true} items={[{"icon": "circle", "tone": "blue", "title": "One declaration", "text": "MCP, HTTP and OpenAPI are built from it; the CLI is checked against it"}, {"icon": "bolt", "tone": "green", "title": "Discovered", "text": "enumerated through sources.yaml, never registered by hand"}]} /> }}
+      {{ <points glyphs={true} items={[{"icon": "shield", "tone": "violet", "title": "Typed", "text": "an object that does not validate is a diagnostic"}, {"icon": "list", "tone": "orange", "title": "Deterministic", "text": "the OpenAPI document: maps sorted, no timestamp"}]} /> }}
       {{ <points glyphs={true} items={[{"icon": "search", "tone": "blue", "title": "Provenance", "text": "every field names where it came from"}, {"icon": "shield-check", "tone": "green", "title": "Checked", "text": "a hand edit of a derived file is refused or reported"}]} /> }}
     </div>
   {% </panel> %}
@@ -55,6 +55,7 @@
   layer, workflows,
   providers: [ .. ],
   services: [ .. ],
+  reasoning?,
   diagnostics: [ .. ],
   provenance: [ .. ],
 }" /> }}
@@ -67,7 +68,7 @@
   {% </panel> %}
 
   {% <panel title="Feedback loop" sub="Detect, regenerate, check" step={4}> %}
-    {% <cycle id="arch-cycle" stages={[{"title": "A commit", "tone": "blue"}, {"title": "Index rebuilt", "tone": "green"}, {"title": "majordomus generate", "tone": "violet"}, {"title": "derive-check", "tone": "orange"}]}> %}
+    {% <cycle id="arch-cycle" stages={[{"title": "The tree moves", "tone": "blue"}, {"title": "Index rebuilt", "tone": "green"}, {"title": "majordomus generate", "tone": "violet"}, {"title": "derive-check", "tone": "orange"}]}> %}
       {{ <glyph icon="database" size="lg" icon_size="lg" round={true} /> }}<span class="text-sm font-semibold text-heading">the model</span>
     {% </cycle> %}
   {% </panel> %}

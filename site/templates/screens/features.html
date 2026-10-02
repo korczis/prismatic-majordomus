@@ -20,14 +20,14 @@
 {% for p in report.properties %}  "{{ p.name }}": {{ p.type }}{% if not loop.last %},{% endif %}
 {% endfor %}}{%- endset -%}
 
-{% <hero kicker="Key features" title={["Multiple interfaces.", "One consistent reality."]} lead="The same repository state on every surface: the command line, the HTTP API, OpenAPI and Swagger UI, the Cockpit, MCP and this documentation. No surface keeps a catalogue of its own."> %}
+{% <hero kicker="Key features" title={["Multiple interfaces.", "One consistent reality."]} lead="The same repository state on every surface: the command line, the HTTP API, OpenAPI and Swagger UI, the Cockpit, MCP and this documentation. A surface may render a fact differently; it may not hold a second opinion about it."> %}
   {{ <quote text="Development semantics live in the canonical runtime; a surface only consumes them" by="project.development-semantics-are-canonical" href={base ~ "rules/project-development-semantics-are-canonical-1/"} /> }}
 {% </hero> %}
 
 <div class="mt-12 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
 
   {#- 1 · the command line -#}
-  {% <panel title="CLI" sub="Your daily companion" step={1} tone="blue" variant="toned" cls="min-w-0"> %}
+  {% <panel title="CLI" sub="The task lifecycle, recorded" step={1} tone="blue" variant="toned" cls="min-w-0"> %}
     <div class="mt-4">
     {% <terminal title="a recorded session"> %}
       {{ <term_line cmd="majordomus" args={start.command | replace(from="majordomus ", to="")} /> }}{{ <term_out text={start.output | trim} /> }}
@@ -81,7 +81,7 @@
       {% <tab_panel id="feat-mcp" i={1} label="Resources"> %}
         <ul class="m-0 grid list-none grid-cols-[minmax(0,1fr)] gap-2 p-0">
         {%- for r in resources %}<li>{{ <route name={r.uri} path={r.title} icon="box" tone="violet" /> }}</li>{% endfor %}
-          <li>{{ <route name={registry.mcp.resource_template} path="every object of the layer" icon="box" tone="violet" /> }}</li>
+          <li>{{ <route name={registry.mcp.resource_template} path="every object of the index" icon="box" tone="violet" /> }}</li>
         </ul>
       {% </tab_panel> %}
     {% </tabs> %}
@@ -112,11 +112,11 @@
   {% </panel> %}
 
   {#- 6 · the Cockpit, pictured: a window with its navigation, counts, a series and what changed -#}
-  {% <panel title="Cockpit" sub="Visual overview, served at /cockpit" step={6} tone="orange" variant="toned" cls="min-w-0 lg:col-span-2 xl:col-span-3"> %}
+  {% <panel title="Cockpit" sub="Visual overview, served at /cockpit; pictured here from the generated data" step={6} tone="orange" variant="toned" cls="min-w-0 lg:col-span-2 xl:col-span-3"> %}
     {%- set latest = cl.sections | first -%}
     {%- set changes = latest.groups[0].changes[:3] -%}
     <div class="mt-4">
-    {% <window title="Cockpit" brand={project.short_name} foot={"v" ~ project.release} nav={[{"title": "Overview", "href": base ~ "docs/cockpit/", "icon": "home", "current": true}, {"title": "Rules", "href": base ~ "rules/", "icon": "shield"}, {"title": "Decisions", "href": base ~ "adrs/", "icon": "book"}, {"title": "Skills", "href": base ~ "skills/", "icon": "box"}, {"title": "Sessions", "href": base ~ "sessions/", "icon": "users"}, {"title": "Use cases", "href": base ~ "use-cases/", "icon": "target"}]}> %}
+    {% <window title="Cockpit" brand={project.short_name} foot={"v" ~ project.release} nav={[{"title": "Overview", "href": base ~ "docs/cockpit/", "icon": "home", "current": true}, {"title": "Capabilities", "href": base ~ "registry/capabilities/", "icon": "puzzle"}, {"title": "Commands", "href": base ~ "commands/", "icon": "terminal"}, {"title": "Objects", "href": base ~ "registry/", "icon": "database"}, {"title": "Graphs", "href": base ~ "docs/api/graph/", "icon": "nodes"}, {"title": "Health", "href": base ~ "docs/api/health/", "icon": "activity"}]}> %}
       <p class="mj-point-title">Repository overview</p>
       <div class="mt-3">{{ <kpis items={[{"title": "Rules", "value": kinds.rule, "icon": "shield", "tone": "blue"}, {"title": "Decisions", "value": kinds.adr, "icon": "book", "tone": "violet"}, {"title": "Skills", "value": kinds.skill, "icon": "box", "tone": "green"}, {"title": "Tests", "value": kinds.test, "icon": "check-circle", "tone": "orange"}]} /> }}</div>
       <div class="mt-4 grid gap-4 lg:grid-cols-2">
@@ -134,6 +134,6 @@
 </div>
 
 <div class="mt-12">
-  {{ <strip items={[{"icon": "database", "tone": "blue", "title": "One declaration", "text": "each capability, once, in the executable"}, {"icon": "refresh", "tone": "violet", "title": "Projected", "text": "every surface reads the same registry"}, {"icon": "bolt", "tone": "orange", "title": "Discovered", "text": "the layer, from tracked files"}, {"icon": "shield-check", "tone": "green", "title": "Proven", "text": kinds.rule ~ " rules against their proof"}, {"icon": "puzzle", "tone": "blue", "title": "Extensible", "text": "a new capability is a declaration"}]} /> }}
+  {{ <strip items={[{"icon": "database", "tone": "blue", "title": "One declaration", "text": "each capability, once, in the executable"}, {"icon": "refresh", "tone": "violet", "title": "Projected", "text": "every surface reads the same registry"}, {"icon": "bolt", "tone": "orange", "title": "Discovered", "text": "the layer, from tracked files"}, {"icon": "shield-check", "tone": "green", "title": "Checked", "text": kinds.rule ~ " rules, each with a derived proof state"}, {"icon": "puzzle", "tone": "blue", "title": "Extensible", "text": "a new capability reaches MCP, HTTP and OpenAPI from its declaration"}]} /> }}
 </div>
 {% endblock screen %}
