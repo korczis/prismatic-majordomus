@@ -6,23 +6,23 @@
     "version": "0.11.0"
   },
   "registry": {
-    "fingerprint": "33c702a757c57feab0f669fef8c57503a61243f48dea7fdbfa6c4ce42e2477e1",
+    "fingerprint": "f7b097e7dfeb452e3fe453be4ae354aaab9020be6fb028a83704af62e83b94d7",
     "summary": {
-      "total": 1734,
+      "total": 1738,
       "builtin": 152,
-      "declarative": 1582,
+      "declarative": 1586,
       "by_kind": {
         "command": 20,
         "query": 132,
-        "resource": 1582
+        "resource": 1586
       },
       "by_stability": {
         "behaviorally_verified": 110,
         "experimental": 34,
-        "implemented": 1590
+        "implemented": 1594
       },
       "mcp_tools": 146,
-      "mcp_resources": 1629,
+      "mcp_resources": 1633,
       "http_routes": 150,
       "cli_commands": 74,
       "modules": 74,
@@ -39530,6 +39530,13 @@
                   "status": {
                     "type": "string",
                     "description": "`guaranteed`, `advisory`, `planned` or `rejected`."
+                  },
+                  "test": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The test that settles it, as `docs/CLAIMS.yaml` records it — the one field that makes a\nclaim checkable rather than stated. Absent where the claim declares none, and where it\ndeclares `-`: a planned or rejected claim has nothing to run yet, and rendering a dash\nas a test would be a projection inventing evidence."
                   }
                 },
                 "required": [
@@ -40482,6 +40489,18 @@
                       "type": "string"
                     },
                     "description": "The surface ids that are true."
+                  },
+                  "proven": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many of the claims this feature names are guaranteed *and* name the test that\nsettles them. A surface column says where a feature is reachable; this says what of it\nis proven, which is the question a reader of a compliance table is actually asking."
+                  },
+                  "claims": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many claims it names at all, so `proven` has its denominator beside it rather than\nin another table."
                   }
                 },
                 "required": [
@@ -40490,7 +40509,9 @@
                   "route",
                   "status",
                   "surfaces",
-                  "exposed"
+                  "exposed",
+                  "proven",
+                  "claims"
                 ],
                 "description": "One row of the matrix: a feature and the surfaces it is exposed through."
               },
@@ -59382,7 +59403,7 @@
         "title": "implementation",
         "description": "Declarative objects of kind 'implementation' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 49,
+        "capabilities": 50,
         "capability_ids": []
       },
       {
@@ -59865,7 +59886,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 307,
+        "capabilities": 310,
         "capability_ids": []
       },
       {
@@ -59955,7 +59976,7 @@
     ]
   },
   "index": {
-    "fingerprint": "41be999a7334b39d5a2564c60403b7fc47e5cb11accc45e2487208958803a862",
+    "fingerprint": "c190348909702c5e541325073f5e4fec9f3b71c83d218d1be51223134cb1c4d5",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -59989,7 +60010,7 @@
       "distribution-model": 1,
       "document": 290,
       "feature": 27,
-      "implementation": 49,
+      "implementation": 50,
       "issue": 238,
       "knowledge": 1,
       "mesh-declaration": 1,
@@ -60004,7 +60025,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 307,
+      "test": 310,
       "use-case": 46,
       "workspace": 1
     },
@@ -64374,7 +64395,7 @@
         "title": "Contributing",
         "path": "CONTRIBUTING.md",
         "source_class": "readme",
-        "bytes": 9497
+        "bytes": 11767
       },
       {
         "uri": "majordomus://document/README.md",
@@ -64383,7 +64404,7 @@
         "title": "Prismatic Majordomus",
         "path": "README.md",
         "source_class": "readme",
-        "bytes": 36266
+        "bytes": 36267
       },
       {
         "uri": "majordomus://document/SECURITY.md",
@@ -64716,7 +64737,7 @@
         "title": "Installing Majordomus",
         "path": "docs/INSTALL.md",
         "source_class": "document",
-        "bytes": 9837
+        "bytes": 9827
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION.md",
@@ -64770,7 +64791,7 @@
         "title": "Performance truth",
         "path": "docs/PERFORMANCE.md",
         "source_class": "document",
-        "bytes": 9511
+        "bytes": 9490
       },
       {
         "uri": "majordomus://document/docs/PLANNING.md",
@@ -64806,7 +64827,7 @@
         "title": "Product — the features, and the landing page as a projection of them",
         "path": "docs/PRODUCT.md",
         "source_class": "document",
-        "bytes": 13930
+        "bytes": 14712
       },
       {
         "uri": "majordomus://document/docs/QUALITY.md",
@@ -64869,7 +64890,7 @@
         "title": "File schemas — every file Majordomus reads or writes",
         "path": "docs/SCHEMAS.md",
         "source_class": "document",
-        "bytes": 71119
+        "bytes": 71111
       },
       {
         "uri": "majordomus://document/docs/SCOPE.md",
@@ -66219,7 +66240,7 @@
         "title": "Provider instruction files are generated from the one policy, deterministically",
         "path": "docs/claims/projection-generation.md",
         "source_class": "claim_page",
-        "bytes": 1951
+        "bytes": 1957
       },
       {
         "uri": "majordomus://document/docs/claims/prompt-asset.md",
@@ -66705,7 +66726,7 @@
         "title": "The tool runs read-only from any location, and two locations of one version agree about one repository",
         "path": "docs/claims/tool-location-independent.md",
         "source_class": "claim_page",
-        "bytes": 2161
+        "bytes": 2145
       },
       {
         "uri": "majordomus://document/docs/claims/typed-outcome.md",
@@ -67352,7 +67373,7 @@
         "identity": "lib/commands.sh",
         "path": "lib/commands.sh",
         "source_class": "library",
-        "bytes": 7341
+        "bytes": 12591
       },
       {
         "uri": "majordomus://implementation/lib/common.sh",
@@ -67360,7 +67381,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 78346
+        "bytes": 78012
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -67576,7 +67597,7 @@
         "identity": "lib/rules.sh",
         "path": "lib/rules.sh",
         "source_class": "library",
-        "bytes": 28709
+        "bytes": 28580
       },
       {
         "uri": "majordomus://implementation/lib/rust_bin.sh",
@@ -67609,6 +67630,14 @@
         "path": "lib/session_context.sh",
         "source_class": "library",
         "bytes": 17820
+      },
+      {
+        "uri": "majordomus://implementation/lib/sha256.sh",
+        "kind": "implementation",
+        "identity": "lib/sha256.sh",
+        "path": "lib/sha256.sh",
+        "source_class": "library",
+        "bytes": 2016
       },
       {
         "uri": "majordomus://implementation/lib/skills.sh",
@@ -70233,7 +70262,7 @@
         "path": ".ai/repo/project/issues/I1962.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2500
+        "bytes": 2468
       },
       {
         "uri": "majordomus://issue/I1963",
@@ -73150,7 +73179,7 @@
         "path": ".ai/repo/rules/project/product-surface-derived.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 5525,
+        "bytes": 5583,
         "tags": [
           "product",
           "site",
@@ -74088,7 +74117,7 @@
         "identity": "test/cases/03_update.sh",
         "path": "test/cases/03_update.sh",
         "source_class": "case",
-        "bytes": 6523
+        "bytes": 6493
       },
       {
         "uri": "majordomus://test/test/cases/04_start_check.sh",
@@ -74304,7 +74333,7 @@
         "identity": "test/cases/113_shared_server_survives_a_crash.sh",
         "path": "test/cases/113_shared_server_survives_a_crash.sh",
         "source_class": "case",
-        "bytes": 7675
+        "bytes": 7673
       },
       {
         "uri": "majordomus://test/test/cases/114_two_worktrees_one_repository.sh",
@@ -74416,7 +74445,7 @@
         "identity": "test/cases/12_site_build.sh",
         "path": "test/cases/12_site_build.sh",
         "source_class": "case",
-        "bytes": 9850
+        "bytes": 10863
       },
       {
         "uri": "majordomus://test/test/cases/12b_site_data_transactional.sh",
@@ -74568,7 +74597,7 @@
         "identity": "test/cases/13_region_projection.sh",
         "path": "test/cases/13_region_projection.sh",
         "source_class": "case",
-        "bytes": 4457
+        "bytes": 4427
       },
       {
         "uri": "majordomus://test/test/cases/140_prompt_continuity.sh",
@@ -74600,7 +74629,7 @@
         "identity": "test/cases/15_command_surface.sh",
         "path": "test/cases/15_command_surface.sh",
         "source_class": "case",
-        "bytes": 5704
+        "bytes": 5710
       },
       {
         "uri": "majordomus://test/test/cases/16_profiles.sh",
@@ -74648,7 +74677,7 @@
         "identity": "test/cases/181_local_is_never_published.sh",
         "path": "test/cases/181_local_is_never_published.sh",
         "source_class": "case",
-        "bytes": 9965
+        "bytes": 10125
       },
       {
         "uri": "majordomus://test/test/cases/182_sessions_published_are_the_records.sh",
@@ -74832,7 +74861,7 @@
         "identity": "test/cases/26_ci_wiring.sh",
         "path": "test/cases/26_ci_wiring.sh",
         "source_class": "case",
-        "bytes": 19937
+        "bytes": 20041
       },
       {
         "uri": "majordomus://test/test/cases/271_adr_allocation.sh",
@@ -75048,7 +75077,7 @@
         "identity": "test/cases/31_command_coverage.sh",
         "path": "test/cases/31_command_coverage.sh",
         "source_class": "case",
-        "bytes": 5962
+        "bytes": 6996
       },
       {
         "uri": "majordomus://test/test/cases/32_refusal_lifecycle.sh",
@@ -75104,7 +75133,7 @@
         "identity": "test/cases/335_every_link_resolves.sh",
         "path": "test/cases/335_every_link_resolves.sh",
         "source_class": "case",
-        "bytes": 9761
+        "bytes": 9785
       },
       {
         "uri": "majordomus://test/test/cases/336_every_control_is_claimed.sh",
@@ -75137,6 +75166,14 @@
         "path": "test/cases/33_stale_executable.sh",
         "source_class": "case",
         "bytes": 9054
+      },
+      {
+        "uri": "majordomus://test/test/cases/341_a_claim_shows_the_test_that_settles_it.sh",
+        "kind": "test",
+        "identity": "test/cases/341_a_claim_shows_the_test_that_settles_it.sh",
+        "path": "test/cases/341_a_claim_shows_the_test_that_settles_it.sh",
+        "source_class": "case",
+        "bytes": 5835
       },
       {
         "uri": "majordomus://test/test/cases/343_the_cockpit_shows_who_else_is_here.sh",
@@ -75312,7 +75349,7 @@
         "identity": "test/cases/401_the_rust_artifact_carries_its_provenance.sh",
         "path": "test/cases/401_the_rust_artifact_carries_its_provenance.sh",
         "source_class": "case",
-        "bytes": 9168
+        "bytes": 9190
       },
       {
         "uri": "majordomus://test/test/cases/402_argv_limit.sh",
@@ -75368,7 +75405,7 @@
         "identity": "test/cases/413_a_skipped_case_is_not_a_proof.sh",
         "path": "test/cases/413_a_skipped_case_is_not_a_proof.sh",
         "source_class": "case",
-        "bytes": 14726
+        "bytes": 14771
       },
       {
         "uri": "majordomus://test/test/cases/414_mesh_lab_evidence.sh",
@@ -75424,7 +75461,7 @@
         "identity": "test/cases/43_plan_command.sh",
         "path": "test/cases/43_plan_command.sh",
         "source_class": "case",
-        "bytes": 4711
+        "bytes": 4717
       },
       {
         "uri": "majordomus://test/test/cases/44_model_doctrine.sh",
@@ -75440,7 +75477,7 @@
         "identity": "test/cases/45_github_projection.sh",
         "path": "test/cases/45_github_projection.sh",
         "source_class": "case",
-        "bytes": 10040
+        "bytes": 10046
       },
       {
         "uri": "majordomus://test/test/cases/46_cross_surface.sh",
@@ -75616,7 +75653,7 @@
         "identity": "test/cases/52_generated_artifact_typing.sh",
         "path": "test/cases/52_generated_artifact_typing.sh",
         "source_class": "case",
-        "bytes": 8240
+        "bytes": 8225
       },
       {
         "uri": "majordomus://test/test/cases/531_an_entity_names_its_public_page.sh",
@@ -75787,6 +75824,14 @@
         "bytes": 4295
       },
       {
+        "uri": "majordomus://test/test/cases/575_nothing_runs_perl.sh",
+        "kind": "test",
+        "identity": "test/cases/575_nothing_runs_perl.sh",
+        "path": "test/cases/575_nothing_runs_perl.sh",
+        "source_class": "case",
+        "bytes": 6093
+      },
+      {
         "uri": "majordomus://test/test/cases/578_an_unknown_gate_refuses_completed.sh",
         "kind": "test",
         "identity": "test/cases/578_an_unknown_gate_refuses_completed.sh",
@@ -75875,6 +75920,14 @@
         "bytes": 8188
       },
       {
+        "uri": "majordomus://test/test/cases/617_a_case_can_name_what_it_covers.sh",
+        "kind": "test",
+        "identity": "test/cases/617_a_case_can_name_what_it_covers.sh",
+        "path": "test/cases/617_a_case_can_name_what_it_covers.sh",
+        "source_class": "case",
+        "bytes": 10873
+      },
+      {
         "uri": "majordomus://test/test/cases/61_session_envelope.sh",
         "kind": "test",
         "identity": "test/cases/61_session_envelope.sh",
@@ -75952,7 +76005,7 @@
         "identity": "test/cases/65_tool_root_independence.sh",
         "path": "test/cases/65_tool_root_independence.sh",
         "source_class": "case",
-        "bytes": 4434
+        "bytes": 4424
       },
       {
         "uri": "majordomus://test/test/cases/66_migrate_legacy.sh",
@@ -75960,7 +76013,7 @@
         "identity": "test/cases/66_migrate_legacy.sh",
         "path": "test/cases/66_migrate_legacy.sh",
         "source_class": "case",
-        "bytes": 12141
+        "bytes": 12121
       },
       {
         "uri": "majordomus://test/test/cases/67_rule_dag.sh",
@@ -75968,7 +76021,7 @@
         "identity": "test/cases/67_rule_dag.sh",
         "path": "test/cases/67_rule_dag.sh",
         "source_class": "case",
-        "bytes": 19275
+        "bytes": 19240
       },
       {
         "uri": "majordomus://test/test/cases/68_ai_discovery.sh",
@@ -75984,7 +76037,7 @@
         "identity": "test/cases/69_context_documents.sh",
         "path": "test/cases/69_context_documents.sh",
         "source_class": "case",
-        "bytes": 20027
+        "bytes": 20033
       },
       {
         "uri": "majordomus://test/test/cases/70_context_impact.sh",
@@ -76024,7 +76077,7 @@
         "identity": "test/cases/72_rust_mcp.sh",
         "path": "test/cases/72_rust_mcp.sh",
         "source_class": "case",
-        "bytes": 10806
+        "bytes": 10804
       },
       {
         "uri": "majordomus://test/test/cases/730_reasoning_works_with_no_advisor.sh",
@@ -76232,7 +76285,7 @@
         "identity": "test/cases/85_installer.sh",
         "path": "test/cases/85_installer.sh",
         "source_class": "case",
-        "bytes": 15526
+        "bytes": 17916
       },
       {
         "uri": "majordomus://test/test/cases/85_ui_conformance.sh",
@@ -76296,7 +76349,7 @@
         "identity": "test/cases/90_mcp_shared_server.sh",
         "path": "test/cases/90_mcp_shared_server.sh",
         "source_class": "case",
-        "bytes": 11476
+        "bytes": 11474
       },
       {
         "uri": "majordomus://test/test/cases/91_canonical_architecture.sh",
@@ -76304,7 +76357,7 @@
         "identity": "test/cases/91_canonical_architecture.sh",
         "path": "test/cases/91_canonical_architecture.sh",
         "source_class": "case",
-        "bytes": 9209
+        "bytes": 9207
       },
       {
         "uri": "majordomus://test/test/cases/92_openapi_reference.sh",
@@ -76320,7 +76373,7 @@
         "identity": "test/cases/93_rust_provider_projections.sh",
         "path": "test/cases/93_rust_provider_projections.sh",
         "source_class": "case",
-        "bytes": 3516
+        "bytes": 3471
       },
       {
         "uri": "majordomus://test/test/cases/93_schema_integrity.sh",
@@ -76336,7 +76389,7 @@
         "identity": "test/cases/93_scope_policy.sh",
         "path": "test/cases/93_scope_policy.sh",
         "source_class": "case",
-        "bytes": 9730
+        "bytes": 9728
       },
       {
         "uri": "majordomus://test/test/cases/93_workspace_kind.sh",
@@ -76352,7 +76405,7 @@
         "identity": "test/cases/94_ci_plan.sh",
         "path": "test/cases/94_ci_plan.sh",
         "source_class": "case",
-        "bytes": 23257
+        "bytes": 23361
       },
       {
         "uri": "majordomus://test/test/cases/94_use_cases.sh",
@@ -76440,7 +76493,7 @@
         "identity": "test/cases/97_product_features.sh",
         "path": "test/cases/97_product_features.sh",
         "source_class": "case",
-        "bytes": 9034
+        "bytes": 9032
       },
       {
         "uri": "majordomus://test/test/cases/97_site_probe_attribution.sh",
@@ -76480,7 +76533,7 @@
         "identity": "test/cases/98_why_catalogue.sh",
         "path": "test/cases/98_why_catalogue.sh",
         "source_class": "case",
-        "bytes": 9895
+        "bytes": 9893
       },
       {
         "uri": "majordomus://test/test/cases/99_adr.sh",
@@ -77144,7 +77197,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 49
+      "objects": 50
     },
     {
       "name": "issue",
@@ -77306,7 +77359,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 307
+      "objects": 310
     },
     {
       "name": "use-case",

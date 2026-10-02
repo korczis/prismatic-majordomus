@@ -11,8 +11,8 @@
 ## How to see it
 
 ```bash
-majordomus update && shasum CLAUDE.md
-majordomus update && shasum CLAUDE.md   # identical hash; output says "unchanged CLAUDE.md"
+majordomus update && sha256sum CLAUDE.md
+majordomus update && sha256sum CLAUDE.md   # identical hash; output says "unchanged CLAUDE.md"
 ```
 
 ## What it does not cover

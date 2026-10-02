@@ -1617,14 +1617,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
-        "kind": "file",
-        "label": "lifecycle.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/capability/builtin/objects.rs",
         "kind": "file",
         "label": "objects.rs",
@@ -2081,14 +2073,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/metadata/mod.rs",
-        "kind": "file",
-        "label": "mod.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/metadata/mod.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/models/mod.rs",
         "kind": "file",
         "label": "mod.rs",
@@ -2257,14 +2241,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/scope.rs",
-        "kind": "file",
-        "label": "scope.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/scope.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/session/mod.rs",
         "kind": "file",
         "label": "mod.rs",
@@ -2430,14 +2406,6 @@
         "label": "product.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/tests/product.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/tests/projections.rs",
-        "kind": "file",
-        "label": "projections.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/tests/projections.rs",
         "external": true
       },
       {
@@ -14908,6 +14876,13 @@
         "source": "lib/session_context.sh"
       },
       {
+        "id": "majordomus://implementation/lib/sha256.sh",
+        "kind": "implementation",
+        "label": "lib/sha256.sh",
+        "route": "/cockpit/objects/implementation/lib-sha256-sh",
+        "source": "lib/sha256.sh"
+      },
+      {
         "id": "majordomus://implementation/lib/skills.sh",
         "kind": "implementation",
         "label": "lib/skills.sh",
@@ -26076,7 +26051,6 @@
             "scripts/rust-coverage",
             "lib/commands.sh",
             "scripts/ci/command-furnished",
-            "scripts/ci/surface-coverage",
             "scripts/lib/evidence-widgets.mjs",
             "scripts/lib/interactions.mjs",
             "scripts/site-check",
@@ -36488,6 +36462,13 @@
         "source": "test/cases/33_stale_executable.sh"
       },
       {
+        "id": "majordomus://test/test/cases/341_a_claim_shows_the_test_that_settles_it.sh",
+        "kind": "test",
+        "label": "test/cases/341_a_claim_shows_the_test_that_settles_it.sh",
+        "route": "/cockpit/objects/test/test-cases-341-a-claim-shows-the-test-that-settles-it-sh",
+        "source": "test/cases/341_a_claim_shows_the_test_that_settles_it.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/343_the_cockpit_shows_who_else_is_here.sh",
         "kind": "test",
         "label": "test/cases/343_the_cockpit_shows_who_else_is_here.sh",
@@ -37055,6 +37036,13 @@
         "source": "test/cases/572_verification_records_the_tree_it_proved.sh"
       },
       {
+        "id": "majordomus://test/test/cases/575_nothing_runs_perl.sh",
+        "kind": "test",
+        "label": "test/cases/575_nothing_runs_perl.sh",
+        "route": "/cockpit/objects/test/test-cases-575-nothing-runs-perl-sh",
+        "source": "test/cases/575_nothing_runs_perl.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/578_an_unknown_gate_refuses_completed.sh",
         "kind": "test",
         "label": "test/cases/578_an_unknown_gate_refuses_completed.sh",
@@ -37130,6 +37118,13 @@
         "label": "test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh",
         "route": "/cockpit/objects/test/test-cases-611-the-reclaim-refuses-what-it-cannot-prove-sh",
         "source": "test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/617_a_case_can_name_what_it_covers.sh",
+        "kind": "test",
+        "label": "test/cases/617_a_case_can_name_what_it_covers.sh",
+        "route": "/cockpit/objects/test/test-cases-617-a-case-can-name-what-it-covers-sh",
+        "source": "test/cases/617_a_case_can_name_what_it_covers.sh"
       },
       {
         "id": "majordomus://test/test/cases/61_session_envelope.sh",
@@ -48632,11 +48627,6 @@
       },
       {
         "source": "majordomus://claim/schema-driven-kinds",
-        "target": "file:apps/majordomus-cli/src/metadata/mod.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/schema-driven-kinds",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -48649,11 +48639,6 @@
         "source": "majordomus://claim/schema-driven-kinds",
         "target": "majordomus://test/test/cases/76_capabilities_projections.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/scope-declared",
-        "target": "file:apps/majordomus-cli/src/scope.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/scope-declared",
@@ -48739,11 +48724,6 @@
         "source": "majordomus://claim/session-lifecycle",
         "target": "majordomus://test/test/cases/54_session_lifecycle_hooks.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/session-observability",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/session-observability",
@@ -48834,11 +48814,6 @@
         "source": "majordomus://claim/site-registry-dataset",
         "target": "file:apps/majordomus-cli/src/site.rs",
         "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/site-registry-dataset",
-        "target": "file:apps/majordomus-cli/tests/projections.rs",
-        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/site-registry-dataset",
@@ -51477,6 +51452,11 @@
       },
       {
         "source": "majordomus://implementation/lib/session_context.sh",
+        "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://implementation/lib/sha256.sh",
         "target": "kind:implementation",
         "kind": "is_a"
       },
@@ -58441,6 +58421,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/341_a_claim_shows_the_test_that_settles_it.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/343_the_cockpit_shows_who_else_is_here.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -58846,6 +58831,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/575_nothing_runs_perl.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/578_an_unknown_gate_refuses_completed.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -58897,6 +58887,11 @@
       },
       {
         "source": "majordomus://test/test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/617_a_case_can_name_what_it_covers.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
