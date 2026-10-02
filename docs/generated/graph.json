@@ -1654,14 +1654,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/capability/builtin/objects.rs",
-        "kind": "file",
-        "label": "objects.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/capability/builtin/objects.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/capability/builtin/peers.rs",
         "kind": "file",
         "label": "peers.rs",
@@ -1966,14 +1958,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/http/openapi.rs",
-        "kind": "file",
-        "label": "openapi.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/http/openapi.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/http/router.rs",
         "kind": "file",
         "label": "router.rs",
@@ -1995,14 +1979,6 @@
         "label": "ws.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/http/ws.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/index.rs",
-        "kind": "file",
-        "label": "index.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/index.rs",
         "external": true
       },
       {
@@ -2043,22 +2019,6 @@
         "label": "intent.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/intent.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/lease.rs",
-        "kind": "file",
-        "label": "lease.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/lease.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/mcp/protocol.rs",
-        "kind": "file",
-        "label": "protocol.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/mcp/protocol.rs",
         "external": true
       },
       {
@@ -2291,22 +2251,6 @@
         "label": "executor.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/tests/executor.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/tests/lease_lost.rs",
-        "kind": "file",
-        "label": "lease_lost.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/tests/lease_lost.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/tests/mcp_shared.rs",
-        "kind": "file",
-        "label": "mcp_shared.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/tests/mcp_shared.rs",
         "external": true
       },
       {
@@ -2715,6 +2659,30 @@
         "label": "lifecycle-observed.v1.md",
         "summary": "named by the layer; not an object of this index",
         "source": "share/standard/majordomus/rules/lifecycle-observed.v1.md",
+        "external": true
+      },
+      {
+        "id": "file:site/content-src/dokumentace-kterou-lze-odmitnout.md",
+        "kind": "file",
+        "label": "dokumentace-kterou-lze-odmitnout.md",
+        "summary": "named by the layer; not an object of this index",
+        "source": "site/content-src/dokumentace-kterou-lze-odmitnout.md",
+        "external": true
+      },
+      {
+        "id": "file:site/content-src/proof-carrying-documentation.md",
+        "kind": "file",
+        "label": "proof-carrying-documentation.md",
+        "summary": "named by the layer; not an object of this index",
+        "source": "site/content-src/proof-carrying-documentation.md",
+        "external": true
+      },
+      {
+        "id": "file:site/templates/base.html",
+        "kind": "file",
+        "label": "base.html",
+        "summary": "named by the layer; not an object of this index",
+        "source": "site/templates/base.html",
         "external": true
       },
       {
@@ -4390,6 +4358,38 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0077",
+        "kind": "adr",
+        "label": "adr-0077",
+        "summary": "Published content may be written in the reader's language; the repository's own artifacts may not",
+        "route": "/cockpit/objects/adr/adr-0077",
+        "source": ".ai/repo/adrs/0077-published-content-may-be-written-in-the-readers-language.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-17",
+          "related": [
+            "rule:project.english-only",
+            "claim:authored-files-are-english",
+            "claim:published-translation-is-declared",
+            "file:.ai/repo/rules/project/english-only.v2.md",
+            "file:scripts/ci/english-only-check",
+            "file:scripts/ci/english-only-allow.txt",
+            "file:docs/claims/authored-files-are-english.md",
+            "file:docs/claims/published-translation-is-declared.md",
+            "file:site/templates/base.html",
+            "file:site/content-src/proof-carrying-documentation.md",
+            "file:site/content-src/dokumentace-kterou-lze-odmitnout.md",
+            "test:test/cases/403_published_translation.sh"
+          ],
+          "tags": [
+            "language",
+            "governance",
+            "site",
+            "publication"
+          ]
+        }
+      },
+      {
         "id": "majordomus://adr/adr-0080",
         "kind": "adr",
         "label": "adr-0080",
@@ -5457,12 +5457,12 @@
         "id": "majordomus://claim/authored-files-are-english",
         "kind": "claim",
         "label": "authored-files-are-english",
-        "summary": "Every authored file in this repository is spelled in English, and a proper noun or a test fixture that is not carries its reason beside the check",
+        "summary": "Every authored file in this repository is spelled in English, and a proper noun, a test fixture or a published translation that is not carries its reason beside the check",
         "route": "/cockpit/objects/claim/authored-files-are-english",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
         "facts": {
-          "claim": "Every authored file in this repository is spelled in English, and a proper noun or a test fixture that is not carries its reason beside the check",
+          "claim": "Every authored file in this repository is spelled in English, and a proper noun, a test fixture or a published translation that is not carries its reason beside the check",
           "implementation": "scripts/ci/english-only-check",
           "responsibility": "none",
           "source": "docs/DOCTRINE.md",
@@ -7567,6 +7567,22 @@
           "responsibility": "projection",
           "source": "docs/CAPABILITIES.md",
           "test": "test/cases/93_rust_provider_projections.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/published-translation-is-declared",
+        "kind": "claim",
+        "label": "published-translation-is-declared",
+        "summary": "A page of the published site written in a reader's language is declared with that language and a reason, and is refused unless the page declares the same language itself",
+        "route": "/cockpit/objects/claim/published-translation-is-declared",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A page of the published site written in a reader's language is declared with that language and a reason, and is refused unless the page declares the same language itself",
+          "implementation": "scripts/ci/english-only-check",
+          "responsibility": "none",
+          "source": ".ai/repo/rules/project/english-only.v2.md",
+          "test": "test/cases/403_published_translation.sh"
         }
       },
       {
@@ -12313,6 +12329,14 @@
         "summary": "The provider bootstraps are a target of `majordomus generate`, rendered by one renderer, and `generate --check` refuses a stale one in CI",
         "route": "/cockpit/objects/document/docs-claims-provider-projections-one-renderer-md",
         "source": "docs/claims/provider-projections-one-renderer.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/published-translation-is-declared.md",
+        "kind": "document",
+        "label": "docs/claims/published-translation-is-declared.md",
+        "summary": "A published page in another language is declared, and declares itself",
+        "route": "/cockpit/objects/document/docs-claims-published-translation-is-declared-md",
+        "source": "docs/claims/published-translation-is-declared.md"
       },
       {
         "id": "majordomus://document/docs/claims/reasoning-survives-the-session.md",
@@ -32157,17 +32181,16 @@
         }
       },
       {
-        "id": "majordomus://rule/project.english-only@1",
+        "id": "majordomus://rule/project.english-only@2",
         "kind": "rule",
-        "label": "project.english-only@1",
+        "label": "project.english-only@2",
         "summary": "English only",
-        "route": "/cockpit/objects/rule/project-english-only-1",
-        "source": ".ai/repo/rules/project/english-only.v1.md",
+        "route": "/cockpit/objects/rule/project-english-only-2",
+        "source": ".ai/repo/rules/project/english-only.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
           "depends_on": [],
-          "statement": "Code, comments, commits, documents and governance records are written in English, with no exceptions.",
           "tags": [
             "language"
           ]
@@ -36825,6 +36848,13 @@
         "label": "test/cases/402_argv_limit.sh",
         "route": "/cockpit/objects/test/test-cases-402-argv-limit-sh",
         "source": "test/cases/402_argv_limit.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/403_published_translation.sh",
+        "kind": "test",
+        "label": "test/cases/403_published_translation.sh",
+        "route": "/cockpit/objects/test/test-cases-403-published-translation-sh",
+        "source": "test/cases/403_published_translation.sh"
       },
       {
         "id": "majordomus://test/test/cases/404_refused_files_are_named.sh",
@@ -44198,7 +44228,7 @@
       },
       {
         "source": "majordomus://adr/adr-0048",
-        "target": "majordomus://rule/project.english-only@1",
+        "target": "majordomus://rule/project.english-only@2",
         "kind": "put_in_force"
       },
       {
@@ -44829,6 +44859,66 @@
       {
         "source": "majordomus://adr/adr-0071",
         "target": "majordomus://test/test/cases/374_delivery_unknown_is_not_delivered.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0077",
+        "target": "file:scripts/ci/english-only-allow.txt",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0077",
+        "target": "file:scripts/ci/english-only-check",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0077",
+        "target": "file:site/content-src/dokumentace-kterou-lze-odmitnout.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0077",
+        "target": "file:site/content-src/proof-carrying-documentation.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0077",
+        "target": "file:site/templates/base.html",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0077",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0077",
+        "target": "majordomus://claim/authored-files-are-english",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0077",
+        "target": "majordomus://claim/published-translation-is-declared",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0077",
+        "target": "majordomus://document/docs/claims/authored-files-are-english.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0077",
+        "target": "majordomus://document/docs/claims/published-translation-is-declared.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0077",
+        "target": "majordomus://rule/project.english-only@2",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0077",
+        "target": "majordomus://test/test/cases/403_published_translation.sh",
         "kind": "put_in_force"
       },
       {
@@ -47323,11 +47413,6 @@
       },
       {
         "source": "majordomus://claim/interfaces-are-projections",
-        "target": "file:apps/majordomus-cli/src/http/openapi.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/interfaces-are-projections",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -47483,11 +47568,6 @@
       },
       {
         "source": "majordomus://claim/mcp-data-driven",
-        "target": "file:apps/majordomus-cli/src/index.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/mcp-data-driven",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -47500,11 +47580,6 @@
         "source": "majordomus://claim/mcp-data-driven",
         "target": "majordomus://test/test/cases/72_rust_mcp.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/mcp-degraded-not-silent",
-        "target": "file:apps/majordomus-cli/src/index.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/mcp-degraded-not-silent",
@@ -47523,16 +47598,6 @@
       },
       {
         "source": "majordomus://claim/mcp-lease-lost",
-        "target": "file:apps/majordomus-cli/src/lease.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/mcp-lease-lost",
-        "target": "file:apps/majordomus-cli/tests/lease_lost.rs",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/mcp-lease-lost",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -47540,16 +47605,6 @@
         "source": "majordomus://claim/mcp-lease-lost",
         "target": "majordomus://document/docs/MCP.md",
         "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/mcp-lease-resilience",
-        "target": "file:apps/majordomus-cli/src/lease.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/mcp-lease-resilience",
-        "target": "file:apps/majordomus-cli/tests/mcp_shared.rs",
-        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/mcp-lease-resilience",
@@ -47583,11 +47638,6 @@
       },
       {
         "source": "majordomus://claim/mcp-shared-server",
-        "target": "file:apps/majordomus-cli/src/lease.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/mcp-shared-server",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -47603,11 +47653,6 @@
       },
       {
         "source": "majordomus://claim/mcp-stdio-surface",
-        "target": "file:apps/majordomus-cli/src/mcp/protocol.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/mcp-stdio-surface",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -47620,11 +47665,6 @@
         "source": "majordomus://claim/mcp-stdio-surface",
         "target": "majordomus://test/test/cases/72_rust_mcp.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/mcp-uri-resolution",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/objects.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/mcp-uri-resolution",
@@ -47983,11 +48023,6 @@
       },
       {
         "source": "majordomus://claim/openapi-inferred",
-        "target": "file:apps/majordomus-cli/src/http/openapi.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/openapi-inferred",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -48329,6 +48364,26 @@
       {
         "source": "majordomus://claim/provider-projections-one-renderer",
         "target": "majordomus://test/test/cases/93_rust_provider_projections.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/published-translation-is-declared",
+        "target": "file:scripts/ci/english-only-check",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/published-translation-is-declared",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/published-translation-is-declared",
+        "target": "majordomus://rule/project.english-only@2",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/published-translation-is-declared",
+        "target": "majordomus://test/test/cases/403_published_translation.sh",
         "kind": "tested_by"
       },
       {
@@ -50978,6 +51033,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/provider-projections-one-renderer.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/published-translation-is-declared.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -56952,7 +57012,7 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.english-only@1",
+        "source": "majordomus://rule/project.english-only@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
@@ -58803,6 +58863,11 @@
       },
       {
         "source": "majordomus://test/test/cases/402_argv_limit.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/403_published_translation.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -62509,7 +62574,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4465,
+      "edges": 4472,
       "acyclic": true,
       "truncated": true
     }

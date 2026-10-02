@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.12.0"
   },
-  "fingerprint": "b0ba6ba807012b95e2cc4cb31acc4f311f6c1b46a4c842344e20031bdbff7a5b",
+  "fingerprint": "239af6af10a759272a765f2c55b840ba6ea5a096e6153feca2532764793f9305",
   "route": "/features/",
   "counts": {
     "features": 26,
@@ -304,7 +304,7 @@
         },
         {
           "name": "claim",
-          "objects": 207
+          "objects": 208
         }
       ],
       "rule_refs": [
@@ -577,11 +577,11 @@
       "counts": {
         "capabilities": 11,
         "mcp_tools": 11,
-        "mcp_resources": 271,
+        "mcp_resources": 272,
         "http_routes": 11,
         "cli_paths": 10,
         "commands": 2,
-        "objects": 265,
+        "objects": 266,
         "rules": 5,
         "enforced_rules": 5,
         "docs": 3,
@@ -3818,7 +3818,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 72
+          "objects": 73
         },
         {
           "name": "knowledge",
@@ -3826,7 +3826,7 @@
         },
         {
           "name": "document",
-          "objects": 291
+          "objects": 292
         }
       ],
       "rule_refs": [
@@ -4082,11 +4082,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 365,
+        "mcp_resources": 367,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 364,
+        "objects": 366,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -4342,11 +4342,11 @@
         },
         {
           "id": "project.english-only",
-          "identity": "project.english-only@1",
+          "identity": "project.english-only@2",
           "title": "English only",
           "class": "blocking",
           "enforced": true,
-          "path": ".ai/repo/rules/project/english-only.v1.md"
+          "path": ".ai/repo/rules/project/english-only.v2.md"
         },
         {
           "id": "project.finding-carries-reproduce",
@@ -4431,7 +4431,7 @@
         },
         {
           "id": "authored-files-are-english",
-          "claim": "Every authored file in this repository is spelled in English, and a proper noun or a test fixture that is not carries its reason beside the check",
+          "claim": "Every authored file in this repository is spelled in English, and a proper noun, a test fixture or a published translation that is not carries its reason beside the check",
           "status": "guaranteed",
           "test": "test/cases/138_governance_gates.sh"
         },
@@ -10612,7 +10612,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (72)",
+        "title": "adr (73)",
         "features": [
           "knowledge"
         ]
@@ -10640,7 +10640,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (207)",
+        "title": "claim (208)",
         "features": [
           "declare-once"
         ]
@@ -11263,11 +11263,11 @@
     },
     {
       "id": "project.english-only",
-      "identity": "project.english-only@1",
+      "identity": "project.english-only@2",
       "title": "English only",
       "class": "blocking",
       "enforced": true,
-      "path": ".ai/repo/rules/project/english-only.v1.md"
+      "path": ".ai/repo/rules/project/english-only.v2.md"
     },
     {
       "id": "project.finding-carries-reproduce",
@@ -11616,28 +11616,28 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1759,
+    "capabilities": 1763,
     "builtin": 156,
-    "declarative": 1603,
+    "declarative": 1607,
     "modules": 46,
     "mcp_tools": 150,
-    "mcp_resources": 1651,
+    "mcp_resources": 1655,
     "http_routes": 154,
     "cli_commands": 165,
     "shell_commands": 30,
     "kinds": 30,
-    "objects": 1603,
+    "objects": 1607,
     "by_kind": {
-      "adr": 72,
+      "adr": 73,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 207,
+      "claim": 208,
       "command": 31,
       "context": 32,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 291,
+      "document": 292,
       "feature": 27,
       "implementation": 50,
       "intent": 1,
@@ -11655,7 +11655,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 316,
+      "test": 317,
       "use-case": 47,
       "workspace": 1
     },
@@ -11672,7 +11672,7 @@
       "executions": 6,
       "newest": "2026-09-12T10:36:18Z"
     },
-    "declared": 191,
+    "declared": 192,
     "supported": 0,
     "claims": {
       "a-finding-names-how-to-see-it-again": {
@@ -12534,6 +12534,12 @@
         "supported": false
       },
       "provider-projections-one-renderer": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "published-translation-is-declared": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",

@@ -1,7 +1,7 @@
 +++
 title = "Compacting the cooperation journal changes nothing live — a handover nobody has taken keeps its stream for a bounded retention, who took a handover and who answered a review stay with them, and a compacted runtime that beats again is fetched again whole"
 description = "Every server restart is a new stream of the journal, so runtimes compact away streams that"
-weight = 203
+weight = 204
 [extra]
 claim_id = "mesh-compaction-keeps-what-is-live"
 status = "guaranteed"

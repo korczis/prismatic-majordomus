@@ -19,3 +19,7 @@
   {% endblock body %}
 </div>
 {% endblock content %}
+{#- A standalone page may carry diagrams too, and scripts/site-check refuses a page that has
+    them without the runtime that draws them. The same test docs-page.html uses: the runtime
+    ships only where there is something to draw. -#}
+{% block scripts %}{% if page is defined and 'class="mermaid"' in page.content %}{% include "partials/mermaid.html" %}{% endif %}{% endblock scripts %}
