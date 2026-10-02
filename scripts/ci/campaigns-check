@@ -166,8 +166,8 @@ if ! ( cd "$DIR" && find . -type f ! -path ./MANIFEST.sha256 -print0 | hash_path
   echo "  [reproduce: (cd $DIR && find . -type f ! -path ./MANIFEST.sha256 -print0 | xargs -0 $HASH_CMD >/dev/null)]" >&2
   exit 12
 fi
-awk '{ print substr($0, 67) "\t" substr($0, 1, 64) }' "$tmp/hashed" | sed 's|^\./||' | sort > "$tmp/present"
-awk '{ print substr($0, 67) "\t" substr($0, 1, 64) }' "$MAN" | sed 's|^\./||' | sort > "$tmp/declared"
+awk '{ print substr($0, 67) "\t" substr($0, 1, 64) }' "$tmp/hashed" | sed 's|^\./||' | LC_ALL=C sort > "$tmp/present"
+awk '{ print substr($0, 67) "\t" substr($0, 1, 64) }' "$MAN" | sed 's|^\./||' | LC_ALL=C sort > "$tmp/declared"
 
 TAB="$(printf '\t')"
 # One substitution per line, so `&` is the path itself (a second `s|$|...|` would see an empty match).
