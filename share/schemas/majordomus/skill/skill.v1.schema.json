@@ -89,6 +89,39 @@
           "items": {
             "type": "string"
           }
+        },
+        "provenance": {
+          "description": "Where the skill came from, when its concept was studied elsewhere before it was written here. An opaque marker only: the mapping to a source lives in a local import ledger that is never committed, so a public repository names no private material.",
+          "$ref": "#/$defs/Provenance"
+        }
+      }
+    },
+    "Provenance": {
+      "description": "An opaque pointer into the local import ledger (`.ai/local/imports/<date>.yaml`).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "origin",
+        "ledger",
+        "decision"
+      ],
+      "properties": {
+        "origin": {
+          "enum": [
+            "prior-art"
+          ]
+        },
+        "ledger": {
+          "description": "`import-<yyyy-mm-dd>#<n>`: the ledger and the entry in it.",
+          "type": "string",
+          "pattern": "^import-[0-9]{4}-[0-9]{2}-[0-9]{2}#[1-9][0-9]*$"
+        },
+        "decision": {
+          "enum": [
+            "adapted",
+            "reimplemented",
+            "merged"
+          ]
         }
       }
     },

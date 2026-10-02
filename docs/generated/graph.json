@@ -1380,6 +1380,33 @@
         "status": "query"
       },
       {
+        "id": "capability:skills.explain",
+        "kind": "capability",
+        "label": "skills.explain",
+        "summary": "One skill, with everything derived about it",
+        "route": "/cockpit/capabilities/skills.explain",
+        "source": "apps/majordomus-cli/src/capability/builtin/skills.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:skills.status",
+        "kind": "capability",
+        "label": "skills.status",
+        "summary": "Every skill, with its derived standing",
+        "route": "/cockpit/capabilities/skills.status",
+        "source": "apps/majordomus-cli/src/capability/builtin/skills.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:skills.verify",
+        "kind": "capability",
+        "label": "skills.verify",
+        "summary": "What the skills owe and do not have",
+        "route": "/cockpit/capabilities/skills.verify",
+        "source": "apps/majordomus-cli/src/capability/builtin/skills.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:trace.commit",
         "kind": "capability",
         "label": "trace.commit",
@@ -1602,14 +1629,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/bench/coverage.rs",
-        "kind": "file",
-        "label": "coverage.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/bench/coverage.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/capability/builtin/commit.rs",
         "kind": "file",
         "label": "commit.rs",
@@ -1738,35 +1757,19 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/skills.rs",
+        "kind": "file",
+        "label": "skills.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/skills.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/capability/builtin/worktree.rs",
         "kind": "file",
         "label": "worktree.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/capability/module.rs",
-        "kind": "file",
-        "label": "module.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/capability/module.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/capability/registry.rs",
-        "kind": "file",
-        "label": "registry.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/capability/registry.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/cli.rs",
-        "kind": "file",
-        "label": "cli.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/cli.rs",
         "external": true
       },
       {
@@ -1815,14 +1818,6 @@
         "label": "mod.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/commit/mod.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/commit/verdict.rs",
-        "kind": "file",
-        "label": "verdict.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/commit/verdict.rs",
         "external": true
       },
       {
@@ -2074,22 +2069,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/reasoning/availability.rs",
-        "kind": "file",
-        "label": "availability.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/reasoning/availability.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/reasoning/store.rs",
-        "kind": "file",
-        "label": "store.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/reasoning/store.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/release/commits.rs",
         "kind": "file",
         "label": "commits.rs",
@@ -2135,6 +2114,14 @@
         "label": "mod.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/session/mod.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/skill/mod.rs",
+        "kind": "file",
+        "label": "mod.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/skill/mod.rs",
         "external": true
       },
       {
@@ -2199,38 +2186,6 @@
         "label": "path.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/worktree/path.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/tests/bench_units.rs",
-        "kind": "file",
-        "label": "bench_units.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/tests/bench_units.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/tests/cli_examples.rs",
-        "kind": "file",
-        "label": "cli_examples.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/tests/cli_examples.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/tests/cockpit.rs",
-        "kind": "file",
-        "label": "cockpit.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/tests/cockpit.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/tests/registry.rs",
-        "kind": "file",
-        "label": "registry.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/tests/registry.rs",
         "external": true
       },
       {
@@ -2346,14 +2301,6 @@
         "external": true
       },
       {
-        "id": "file:scripts/ci/verdict",
-        "kind": "file",
-        "label": "verdict",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/ci/verdict",
-        "external": true
-      },
-      {
         "id": "file:scripts/ci/version-matches-surface",
         "kind": "file",
         "label": "version-matches-surface",
@@ -2383,14 +2330,6 @@
         "label": "evidence-check",
         "summary": "named by the layer; not an object of this index",
         "source": "scripts/evidence-check",
-        "external": true
-      },
-      {
-        "id": "file:scripts/lib/advisors/contract.mjs",
-        "kind": "file",
-        "label": "contract.mjs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/lib/advisors/contract.mjs",
         "external": true
       },
       {
@@ -2567,22 +2506,6 @@
         "label": "rule.v1.proto",
         "summary": "named by the layer; not an object of this index",
         "source": "share/schemas/majordomus/rule/rule.v1.proto",
-        "external": true
-      },
-      {
-        "id": "file:share/skeleton/policy.yaml",
-        "kind": "file",
-        "label": "policy.yaml",
-        "summary": "named by the layer; not an object of this index",
-        "source": "share/skeleton/policy.yaml",
-        "external": true
-      },
-      {
-        "id": "file:share/skeleton/profiles/deep-work.yaml",
-        "kind": "file",
-        "label": "deep-work.yaml",
-        "summary": "named by the layer; not an object of this index",
-        "source": "share/skeleton/profiles/deep-work.yaml",
         "external": true
       },
       {
@@ -4288,6 +4211,31 @@
             "features",
             "verification",
             "publication"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0076",
+        "kind": "adr",
+        "label": "adr-0076",
+        "summary": "A skill is a capability only when something proves it — tested, documented, enforced and used are derived, never authored",
+        "route": "/cockpit/objects/adr/adr-0076",
+        "source": ".ai/repo/adrs/0076-a-skill-is-a-capability-only-when-something-proves-it.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-17",
+          "related": [
+            "rule:project.skills-are-proven-capabilities",
+            "rule:majordomus.skill-integrity",
+            "file:apps/majordomus-cli/src/skill/mod.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/skills.rs",
+            "test:test/cases/391_skills_are_proven_capabilities.sh",
+            "test:test/cases/95_skills.sh"
+          ],
+          "tags": [
+            "skills",
+            "evidence",
+            "derivation"
           ]
         }
       },
@@ -10455,6 +10403,14 @@
         "source": "share/distribution.yaml"
       },
       {
+        "id": "majordomus://document/.ai/repo/skills/assess-before-deleting/examples/remove-stale-worktrees.md",
+        "kind": "document",
+        "label": ".ai/repo/skills/assess-before-deleting/examples/remove-stale-worktrees.md",
+        "summary": "Remove worktrees that look finished",
+        "route": "/cockpit/objects/document/ai-repo-skills-assess-before-deleting-examples-remove-stale-worktrees-md",
+        "source": ".ai/repo/skills/assess-before-deleting/examples/remove-stale-worktrees.md"
+      },
+      {
         "id": "majordomus://document/.ai/repo/skills/implement/examples/add-a-catalogue-item.md",
         "kind": "document",
         "label": ".ai/repo/skills/implement/examples/add-a-catalogue-item.md",
@@ -10495,6 +10451,14 @@
         "source": ".ai/repo/skills/implement/examples/refactor-without-behaviour-change.md"
       },
       {
+        "id": "majordomus://document/.ai/repo/skills/pack-for-review/examples/second-opinion-from-another-model.md",
+        "kind": "document",
+        "label": ".ai/repo/skills/pack-for-review/examples/second-opinion-from-another-model.md",
+        "summary": "A second opinion from a model without the checkout",
+        "route": "/cockpit/objects/document/ai-repo-skills-pack-for-review-examples-second-opinion-from-another-model-md",
+        "source": ".ai/repo/skills/pack-for-review/examples/second-opinion-from-another-model.md"
+      },
+      {
         "id": "majordomus://document/.ai/repo/skills/repo-review/examples/review-a-subsystem.md",
         "kind": "document",
         "label": ".ai/repo/skills/repo-review/examples/review-a-subsystem.md",
@@ -10533,6 +10497,14 @@
         "summary": "Review the whole repository's architecture",
         "route": "/cockpit/objects/document/ai-repo-skills-repo-review-examples-review-repository-architecture-md",
         "source": ".ai/repo/skills/repo-review/examples/review-repository-architecture.md"
+      },
+      {
+        "id": "majordomus://document/.ai/repo/skills/report-verification-state/examples/final-report-of-a-task.md",
+        "kind": "document",
+        "label": ".ai/repo/skills/report-verification-state/examples/final-report-of-a-task.md",
+        "summary": "Final report of a task",
+        "route": "/cockpit/objects/document/ai-repo-skills-report-verification-state-examples-final-report-of-a-task-md",
+        "source": ".ai/repo/skills/report-verification-state/examples/final-report-of-a-task.md"
       },
       {
         "id": "majordomus://document/.ai/repo/workflows/continuity.md",
@@ -33239,6 +33211,26 @@
         }
       },
       {
+        "id": "majordomus://rule/project.skills-are-proven-capabilities@1",
+        "kind": "rule",
+        "label": "project.skills-are-proven-capabilities@1",
+        "summary": "A skill is a capability only when something proves it",
+        "route": "/cockpit/objects/rule/project-skills-are-proven-capabilities-1",
+        "source": ".ai/repo/rules/project/skills-are-proven-capabilities.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.derived-once@1"
+          ],
+          "tags": [
+            "skills",
+            "evidence",
+            "derivation"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.tests-run-in-disposable-repos@1",
         "kind": "rule",
         "label": "project.tests-run-in-disposable-repos@1",
@@ -35506,6 +35498,36 @@
         }
       },
       {
+        "id": "majordomus://skill/assess-before-deleting",
+        "kind": "skill",
+        "label": "assess-before-deleting",
+        "summary": "Assess before deleting",
+        "route": "/cockpit/objects/skill/assess-before-deleting",
+        "source": ".ai/repo/skills/assess-before-deleting/SKILL.md",
+        "status": "active",
+        "facts": {
+          "inputs": [
+            "the candidates for removal, each named by its path, ref, record id or process id",
+            "a checkout with git history, the peer board and the repository's own diagnostics"
+          ],
+          "outputs": [
+            "a removal table naming each candidate, its class, the evidence behind the class, its risk and the action taken",
+            "a rescue ref or pushed branch for anything that held work not reachable elsewhere",
+            "the verification that ran after the removal, with its exit codes"
+          ],
+          "related": [
+            "implement",
+            "report-verification-state"
+          ],
+          "tags": [
+            "cleanup",
+            "safety",
+            "evidence",
+            "worktrees"
+          ]
+        }
+      },
+      {
         "id": "majordomus://skill/deploy-site",
         "kind": "skill",
         "label": "deploy-site",
@@ -35565,6 +35587,34 @@
         }
       },
       {
+        "id": "majordomus://skill/pack-for-review",
+        "kind": "skill",
+        "label": "pack-for-review",
+        "summary": "Pack the repository for an outside reviewer",
+        "route": "/cockpit/objects/skill/pack-for-review",
+        "source": ".ai/repo/skills/pack-for-review/SKILL.md",
+        "status": "active",
+        "facts": {
+          "inputs": [
+            "the question the outside review must answer, and the paths it concerns",
+            "a committed tree at the revision to be reviewed"
+          ],
+          "outputs": [
+            "an archive of the tracked tree at a named commit, with its file list and size",
+            "a brief for the reviewer naming the commit, the scope, the questions and what was left out"
+          ],
+          "related": [
+            "repo-review",
+            "report-verification-state"
+          ],
+          "tags": [
+            "review",
+            "archive",
+            "privacy"
+          ]
+        }
+      },
+      {
         "id": "majordomus://skill/repo-review",
         "kind": "skill",
         "label": "repo-review",
@@ -35587,6 +35637,34 @@
             "evidence",
             "invariants",
             "drift"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://skill/report-verification-state",
+        "kind": "skill",
+        "label": "report-verification-state",
+        "summary": "Report by verification state",
+        "route": "/cockpit/objects/skill/report-verification-state",
+        "source": ".ai/repo/skills/report-verification-state/SKILL.md",
+        "status": "active",
+        "facts": {
+          "inputs": [
+            "the work as it stands in the tree, with its commits and anything pushed",
+            "the commands that ran during the work, with their exit codes and the relevant output"
+          ],
+          "outputs": [
+            "a report whose every claim carries one of VERIFIED, PARTIAL or BLOCKED and the evidence for it",
+            "the gaps, each with the command or decision that would close it"
+          ],
+          "related": [
+            "implement",
+            "repo-review"
+          ],
+          "tags": [
+            "reporting",
+            "evidence",
+            "handover"
           ]
         }
       },
@@ -36850,6 +36928,13 @@
         "label": "test/cases/390_unresolved_relation_refuses_generation.sh",
         "route": "/cockpit/objects/test/test-cases-390-unresolved-relation-refuses-generation-sh",
         "source": "test/cases/390_unresolved_relation_refuses_generation.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/391_skills_are_proven_capabilities.sh",
+        "kind": "test",
+        "label": "test/cases/391_skills_are_proven_capabilities.sh",
+        "route": "/cockpit/objects/test/test-cases-391-skills-are-proven-capabilities-sh",
+        "source": "test/cases/391_skills_are_proven_capabilities.sh"
       },
       {
         "id": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
@@ -40182,6 +40267,11 @@
         "label": "shell"
       },
       {
+        "id": "module:skills",
+        "kind": "module",
+        "label": "skills"
+      },
+      {
         "id": "module:trace",
         "kind": "module",
         "label": "trace"
@@ -42747,6 +42837,66 @@
         "kind": "projects"
       },
       {
+        "source": "capability:skills.explain",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:skills.explain",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:skills.explain",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:skills.explain",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:skills.status",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:skills.status",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:skills.status",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:skills.status",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:skills.verify",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:skills.verify",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:skills.verify",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:skills.verify",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:trace.commit",
         "target": "projection:cockpit",
         "kind": "projects"
@@ -45002,6 +45152,41 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0076",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/skills.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0076",
+        "target": "file:apps/majordomus-cli/src/skill/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0076",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0076",
+        "target": "majordomus://rule/majordomus.skill-integrity@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0076",
+        "target": "majordomus://rule/project.skills-are-proven-capabilities@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0076",
+        "target": "majordomus://test/test/cases/391_skills_are_proven_capabilities.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0076",
+        "target": "majordomus://test/test/cases/95_skills.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://adr/adr-0080",
         "target": "file:.ai/repo/ci/gates.yaml",
         "kind": "put_in_force"
@@ -45963,11 +46148,6 @@
       },
       {
         "source": "majordomus://claim/advice-is-weighed-not-counted",
-        "target": "file:apps/majordomus-cli/src/reasoning/store.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/advice-is-weighed-not-counted",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -45983,11 +46163,6 @@
       },
       {
         "source": "majordomus://claim/advisor-failure-is-recorded-and-recovers",
-        "target": "file:apps/majordomus-cli/src/reasoning/availability.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/advisor-failure-is-recorded-and-recovers",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -46000,11 +46175,6 @@
         "source": "majordomus://claim/advisor-failure-is-recorded-and-recovers",
         "target": "majordomus://test/test/cases/733_advisor_failure_and_recovery.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/advisor-transports-share-one-contract",
-        "target": "file:scripts/lib/advisors/contract.mjs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/advisor-transports-share-one-contract",
@@ -46103,16 +46273,6 @@
       },
       {
         "source": "majordomus://claim/benchmark-coverage-derived",
-        "target": "file:apps/majordomus-cli/src/bench/coverage.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/benchmark-coverage-derived",
-        "target": "file:apps/majordomus-cli/tests/bench_units.rs",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/benchmark-coverage-derived",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -46183,11 +46343,6 @@
       },
       {
         "source": "majordomus://claim/capability-class",
-        "target": "file:share/skeleton/profiles/deep-work.yaml",
-        "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/capability-class",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -46203,16 +46358,6 @@
       },
       {
         "source": "majordomus://claim/capability-modules",
-        "target": "file:apps/majordomus-cli/src/capability/module.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/capability-modules",
-        "target": "file:apps/majordomus-cli/tests/registry.rs",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/capability-modules",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -46220,16 +46365,6 @@
         "source": "majordomus://claim/capability-modules",
         "target": "majordomus://document/docs/CAPABILITIES.md",
         "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/capability-registry",
-        "target": "file:apps/majordomus-cli/src/capability/registry.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/capability-registry",
-        "target": "file:apps/majordomus-cli/tests/registry.rs",
-        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/capability-registry",
@@ -46260,11 +46395,6 @@
         "source": "majordomus://claim/catalogue-resolves",
         "target": "majordomus://test/test/cases/28_catalogue.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/checkpoint-interval",
-        "target": "file:share/skeleton/policy.yaml",
-        "kind": "defined_in"
       },
       {
         "source": "majordomus://claim/checkpoint-interval",
@@ -46323,11 +46453,6 @@
       },
       {
         "source": "majordomus://claim/ci-verdict",
-        "target": "file:scripts/ci/verdict",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/ci-verdict",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -46353,16 +46478,6 @@
       },
       {
         "source": "majordomus://claim/cli-documentation-executable",
-        "target": "file:apps/majordomus-cli/src/cli.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/cli-documentation-executable",
-        "target": "file:apps/majordomus-cli/tests/cli_examples.rs",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/cli-documentation-executable",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -46375,11 +46490,6 @@
         "source": "majordomus://claim/cockpit-is-a-projection-of-the-registry",
         "target": "file:apps/majordomus-cli/src/cockpit/mod.rs",
         "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/cockpit-is-a-projection-of-the-registry",
-        "target": "file:apps/majordomus-cli/tests/cockpit.rs",
-        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/cockpit-is-a-projection-of-the-registry",
@@ -46430,11 +46540,6 @@
         "source": "majordomus://claim/command-surface",
         "target": "majordomus://test/test/cases/30_command_registry.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/commit-message-is-judged",
-        "target": "file:apps/majordomus-cli/src/commit/verdict.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/commit-message-is-judged",
@@ -46543,11 +46648,6 @@
       },
       {
         "source": "majordomus://claim/context-budget",
-        "target": "file:share/skeleton/policy.yaml",
-        "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/context-budget",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -46620,11 +46720,6 @@
         "source": "majordomus://claim/context-impact",
         "target": "majordomus://test/test/cases/70_context_impact.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/context-selection-budget",
-        "target": "file:share/skeleton/policy.yaml",
-        "kind": "defined_in"
       },
       {
         "source": "majordomus://claim/context-selection-budget",
@@ -48608,11 +48703,6 @@
       },
       {
         "source": "majordomus://claim/retention-caps",
-        "target": "file:share/skeleton/policy.yaml",
-        "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/retention-caps",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -49957,6 +50047,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/.ai/repo/skills/assess-before-deleting/examples/remove-stale-worktrees.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/.ai/repo/skills/implement/examples/add-a-catalogue-item.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -49982,6 +50077,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/.ai/repo/skills/pack-for-review/examples/second-opinion-from-another-model.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/.ai/repo/skills/repo-review/examples/review-a-subsystem.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -50003,6 +50103,11 @@
       },
       {
         "source": "majordomus://document/.ai/repo/skills/repo-review/examples/review-repository-architecture.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/.ai/repo/skills/report-verification-state/examples/final-report-of-a-task.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -57707,6 +57812,16 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.skills-are-proven-capabilities@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.skills-are-proven-capabilities@1",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.tests-run-in-disposable-repos@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -58077,6 +58192,21 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://skill/assess-before-deleting",
+        "target": "kind:skill",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://skill/assess-before-deleting",
+        "target": "majordomus://skill/implement",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/assess-before-deleting",
+        "target": "majordomus://skill/report-verification-state",
+        "kind": "related_to"
+      },
+      {
         "source": "majordomus://skill/deploy-site",
         "target": "kind:skill",
         "kind": "is_a"
@@ -58094,12 +58224,42 @@
       {
         "source": "majordomus://skill/implement",
         "target": "majordomus://skill/repo-review",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/pack-for-review",
+        "target": "kind:skill",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://skill/pack-for-review",
+        "target": "majordomus://skill/repo-review",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/pack-for-review",
+        "target": "majordomus://skill/report-verification-state",
         "kind": "related_to"
       },
       {
         "source": "majordomus://skill/repo-review",
         "target": "kind:skill",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://skill/report-verification-state",
+        "target": "kind:skill",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://skill/report-verification-state",
+        "target": "majordomus://skill/implement",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/report-verification-state",
+        "target": "majordomus://skill/repo-review",
+        "kind": "related_to"
       },
       {
         "source": "majordomus://taxonomy/adoption",
@@ -58963,6 +59123,11 @@
       },
       {
         "source": "majordomus://test/test/cases/390_unresolved_relation_refuses_generation.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/391_skills_are_proven_capabilities.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -62642,6 +62807,21 @@
         "kind": "composes"
       },
       {
+        "source": "module:skills",
+        "target": "capability:skills.explain",
+        "kind": "composes"
+      },
+      {
+        "source": "module:skills",
+        "target": "capability:skills.status",
+        "kind": "composes"
+      },
+      {
+        "source": "module:skills",
+        "target": "capability:skills.verify",
+        "kind": "composes"
+      },
+      {
         "source": "module:trace",
         "target": "capability:trace.commit",
         "kind": "composes"
@@ -62714,7 +62894,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4492,
+      "edges": 4510,
       "acyclic": true,
       "truncated": true
     }

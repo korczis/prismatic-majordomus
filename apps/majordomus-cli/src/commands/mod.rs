@@ -60,6 +60,7 @@ pub(crate) mod scope;
 pub(crate) mod serve;
 pub(crate) mod served;
 pub(crate) mod shell;
+pub(crate) mod skills;
 pub(crate) mod web;
 pub(crate) mod why;
 pub(crate) mod worktree;
@@ -105,6 +106,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Entity(args) => entity::run(args),
         Command::Shell(args) => shell::run(args),
         Command::Dashboard(args) => dashboard::run(args),
+        Command::Skills(args) => skills::run(args),
     }
 }
 
@@ -144,6 +146,9 @@ mod tests {
             }),
             (&["majordomus", "intent", "list"], |c| {
                 matches!(c, Command::Intent(_))
+            }),
+            (&["majordomus", "skills", "status"], |c| {
+                matches!(c, Command::Skills(_))
             }),
             (&["majordomus", "devtask", "issue", "I0001"], |c| {
                 matches!(c, Command::Devtask(_))

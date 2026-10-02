@@ -1,7 +1,7 @@
 +++
 title = "Work serves a declared intent, and an intent is satisfied only by evidence"
 description = "Work serves a declared intent, and an intent is satisfied only by evidence"
-weight = 152
+weight = 153
 [extra]
 kind = "rule"
 slug = "project-work-serves-a-declared-intent-1"

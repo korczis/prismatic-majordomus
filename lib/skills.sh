@@ -308,5 +308,45 @@ mj_validate_skills() {
   mj_skills_examine mj_skills_report_doctrine
   if [ "$MJ_SKILLS_N" = 0 ]; then mj_doctrine_skip skill "$(mj_rel "$MJ_SKILLS_DIR")/" "no skills; nothing to validate"
   elif [ "$MJ_FAILS" = "$before" ]; then mj_doctrine_ok skill "$MJ_SKILLS_N skill(s), $MJ_SKILLS_EXAMPLES example(s)" "every one valid; $MJ_SKILLS_REFS reference(s) resolve"; fi
+  [ "$MJ_SKILLS_N" = 0 ] || mj_skills_proof_doctrine
+  return 0
+}
+
+# ---------------------------------------------------------------- the proof half
+# Whether each skill is a proven capability — named by a test with evidence behind it,
+# invoked, documented, held by a gate — is not decided here. The Rust executable's
+# `skills.verify` decides it (apps/majordomus-cli/src/skill/), the same derivation the
+# command line, HTTP and MCP answer with; this reads that verdict and reports each finding
+# through the doctrine channel, a failure as a failure and a warning as a warning. When the
+# executable or jq is not there the half is skipped and says so: unknown, never a pass.
+mj_skills_proof_doctrine() {
+  local bin share out rc=0 n=0 fails=0 level code subject message reproduce
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_ROOT")"
+  if [ ! -x "$bin" ]; then
+    mj_doctrine_skip skill "proof" "the executable that derives skill proof is not built, so no skill's proof is judged here (unknown, never a pass)" "bin/majordomus-cli skills verify"
+    return 0
+  fi
+  if ! command -v jq >/dev/null 2>&1; then
+    mj_doctrine_skip skill "proof" "jq is not installed, so the skill proof verdict cannot be read here (unknown, never a pass)" "majordomus skills verify"
+    return 0
+  fi
+  share="$(mj_rust_share "$MJ_ROOT")"
+  [ -n "$share" ] || { [ -f "$MJ_BIN_DIR/../share/kinds.yaml" ] && share="$MJ_BIN_DIR/../share"; }
+  out="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+            "$bin" run skills.verify --input '{}' --quiet --format json --repo "$MJ_ROOT" ) 2>/dev/null \
+          | jq -c '.output // empty' 2>/dev/null )" || rc=$?
+  if [ "$rc" != 0 ] || [ -z "$out" ] || ! printf '%s' "$out" | jq -e 'has("valid")' >/dev/null 2>&1; then
+    mj_doctrine_skip skill "proof" "the executable could not answer skills.verify (exit $rc), so no skill's proof is judged here (unknown, never a pass)" "$bin run skills.verify --input '{}' --format json"
+    return 0
+  fi
+  while IFS=$'\037' read -r level code subject message reproduce; do
+    [ -n "$code" ] || continue
+    n=$((n + 1))
+    if [ "$level" = fail ]; then fails=$((fails + 1)); mj_doctrine_fail skill "$subject" "$code: $message" "$reproduce"
+    else mj_warn skill "$subject" "$code: $message" "$reproduce"; fi
+  done < <(printf '%s' "$out" | jq -r '.findings[] | [.level, .code, .subject, .message, .reproduce] | join("\u001f")')
+  [ "$fails" = 0 ] && mj_doctrine_ok skill "proof of $(printf '%s' "$out" | jq -r '.skills') skill(s)" "no orphan and no binding to nothing; $((n - fails)) debt(s) reported" "majordomus skills status"
   return 0
 }

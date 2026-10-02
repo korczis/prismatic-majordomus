@@ -75,6 +75,7 @@ pub mod served;
 pub mod server;
 pub mod session_domain;
 pub(crate) mod shell;
+pub mod skills;
 pub mod trace;
 mod views;
 pub mod web;
@@ -201,6 +202,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         distribution,
         why,
         intents,
+        skills,
         web,
         design,
         devtask,
