@@ -7,10 +7,10 @@
     generator wrote, a command from the HTTP API's own description of itself, a transcript
     from a run the generator recorded, a release from the changelog; where a component needs
     a value no dataset carries, the example says what it would show and shows no number. -#}
-{% block title %}{{ page.title }} — {{ project.name }}{% endblock title %}
-{% block ogtitle %}{{ page.title }} — {{ project.name }}{% endblock ogtitle %}
-{% block description %}{{ page.description }}{% endblock description %}
-{% block ogdescription %}{{ page.description }}{% endblock ogdescription %}
+{% block title %}{{ section.title }} — {{ project.name }}{% endblock title %}
+{% block ogtitle %}{{ section.title }} — {{ project.name }}{% endblock ogtitle %}
+{% block description %}{{ section.description }}{% endblock description %}
+{% block ogdescription %}{{ section.description }}{% endblock ogdescription %}
 {% block kit %}{% include "partials/kit-assets.html" %}{% endblock kit %}
 {% block content %}
 {%- set design = load_data(path="data/registry/design.json") -%}
@@ -30,7 +30,7 @@
 {%- set kit_source -%}{{ <source_tree path="site/templates/kit" /> }}{%- endset -%}
 
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
-  {% <hero kicker="Component kit" title="One vocabulary." accent="Every screen." lead={page.description} actions={[{"label": "The design system", "href": base ~ "docs/design/", "kind": "primary", "trail": "arrow-right"}, {"label": "Source", "href": kit_source | trim, "icon": "github"}]}> %}
+  {% <hero kicker="Component kit" title="One vocabulary." accent="Every screen." lead={section.description} actions={[{"label": "The design system", "href": base ~ "docs/design/", "kind": "primary", "trail": "arrow-right"}, {"label": "Source", "href": kit_source | trim, "icon": "github"}]}> %}
     {{ <quote text="A page says what a thing is — a badge, a table, a code block, a card — and this file says how that thing looks." by="share/design/primitives.css" /> }}
   {% </hero> %}
 
@@ -203,7 +203,7 @@
       <section id="docs" aria-labelledby="docs-title">
         {{ <section kicker="08 / documentation" title="Trail, search, contents, flow" lead="The parts of a documentation page: where it is, how to find another, what it holds, and the steps of a first run. The contents at the side of this page is the table-of-contents component, marking the section you are reading." /> }}
         <div class="mj-panel space-y-4">
-          {{ <trail items={[{"title": "Home", "href": base}, {"title": "How it works", "href": base ~ "method/"}, {"title": page.title, "href": ""}]} /> }}
+          {{ <trail items={[{"title": "Home", "href": base}, {"title": "How it works", "href": base ~ "method/"}, {"title": section.title, "href": ""}]} /> }}
           {{ <search placeholder="Search documentation" action={base ~ "docs/"} /> }}
           {{ <sidenav items={[{"title": "Getting started", "href": base ~ "getting-started/", "icon": "home"}, {"title": "How it works", "icon": "layers", "children": [{"title": "Method", "href": base ~ "method/"}, {"title": "Design", "href": base ~ "docs/design/"}, {"title": "Component kit", "href": base ~ "kit/", "current": true}]}, {"title": "Command reference", "href": base ~ "docs/cli/", "icon": "terminal"}]} /> }}
         </div>
@@ -238,10 +238,20 @@
         </div>
       </section>
 
+      {#- ---------------------------------------------------------------- screens -#}
+      <section id="screens" aria-labelledby="screens-title">
+        {{ <section kicker="10 / screens" title="Screens composed of the kit" lead="Whole pages built from nothing but these components, each rendering one of the page designs from this repository's own data." /> }}
+        <ul class="mj-tiles m-0 list-none p-0">
+          {%- for p in section.pages %}
+          <li>{{ <tile title={p.title} text={p.description} href={p.permalink} icon={p.extra.icon or "monitor"} tone={tones[loop.index0 % (tones | length)]} /> }}</li>
+          {%- endfor %}
+        </ul>
+      </section>
+
     </div>
     <aside class="hidden xl:block">
       <div class="sticky top-24">
-        {{ <toc items={[{"title": "Tones", "href": "#tones"}, {"title": "Atoms", "href": "#atoms"}, {"title": "Page heading", "href": "#headings"}, {"title": "Containers", "href": "#containers"}, {"title": "Lists", "href": "#lists"}, {"title": "Code", "href": "#code"}, {"title": "Dashboard", "href": "#dashboard"}, {"title": "Documentation", "href": "#docs"}, {"title": "Diagrams", "href": "#diagrams"}]} /> }}
+        {{ <toc items={[{"title": "Tones", "href": "#tones"}, {"title": "Atoms", "href": "#atoms"}, {"title": "Page heading", "href": "#headings"}, {"title": "Containers", "href": "#containers"}, {"title": "Lists", "href": "#lists"}, {"title": "Code", "href": "#code"}, {"title": "Dashboard", "href": "#dashboard"}, {"title": "Documentation", "href": "#docs"}, {"title": "Diagrams", "href": "#diagrams"}, {"title": "Screens", "href": "#screens"}]} /> }}
       </div>
     </aside>
   </div>
