@@ -187,7 +187,7 @@
 {#- A table of rows: `columns` is a list of `key`, `title` and optional `mono`; a row is a map
     by those keys, and a row that carries `href` links its first cell. -#}
 {% component table(columns, rows, caption="") %}
-<div class="mj-table-wrap" tabindex="0">
+<div class="mj-table-wrap overflow-x-auto" tabindex="0">
   <table class="mj-table">
     {%- if caption %}<caption class="mj-note text-left">{{ caption }}</caption>{% endif %}
     <thead><tr>{% for c in columns %}<th scope="col">{{ c.title }}</th>{% endfor %}</tr></thead>

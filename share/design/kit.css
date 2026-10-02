@@ -322,9 +322,11 @@
     background: var(--mj-raised);
     border: 1px solid var(--mj-line);
   }
+  /* a name can be one long identifier (an MCP tool): it breaks rather than widen the row */
   .mj-route-name {
     @apply block text-sm font-semibold;
     color: var(--mj-fg);
+    overflow-wrap: anywhere;
   }
   .mj-route-path {
     @apply block truncate font-mono text-xs;
