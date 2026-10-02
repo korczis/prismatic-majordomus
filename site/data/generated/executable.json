@@ -1112,6 +1112,40 @@
       "tool": "majordomus_pull_requests"
     },
     {
+      "api_anchor": "/docs/api/intent-realization/#op-intent_realization-explain",
+      "claims": [],
+      "cli": "majordomus intent explain",
+      "id": "intent_realization.explain",
+      "kind": "query",
+      "module": "intent_realization",
+      "module_route": "/registry/modules/intent-realization/",
+      "resource": null,
+      "route": "/registry/capabilities/intent-realization-explain/",
+      "slug": "intent-realization-explain",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
+      "tests": [],
+      "title": "Why an intent stands where it stands",
+      "tool": "majordomus_intent_explain"
+    },
+    {
+      "api_anchor": "/docs/api/intent-realization/#op-intent_realization-work",
+      "claims": [],
+      "cli": "majordomus intent realization",
+      "id": "intent_realization.work",
+      "kind": "query",
+      "module": "intent_realization",
+      "module_route": "/registry/modules/intent-realization/",
+      "resource": null,
+      "route": "/registry/capabilities/intent-realization-work/",
+      "slug": "intent-realization-work",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
+      "tests": [],
+      "title": "Which work realises which intent, and what each still lacks",
+      "tool": "majordomus_intent_realization"
+    },
+    {
       "api_anchor": "/docs/api/intents/#op-intents-coverage",
       "claims": [],
       "cli": "majordomus intent coverage",
@@ -3296,9 +3330,9 @@
     ]
   },
   "counts": {
-    "capabilities": 157,
+    "capabilities": 159,
     "claims": 72,
-    "modules": 46
+    "modules": 47
   },
   "generator": "majordomus-cli 0.11.0",
   "modules": [
@@ -3866,6 +3900,27 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/integration.rs",
       "title": "Pull-request integration"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "intent_realization.explain",
+          "route": "/registry/capabilities/intent-realization-explain/",
+          "slug": "intent-realization-explain"
+        },
+        {
+          "id": "intent_realization.work",
+          "route": "/registry/capabilities/intent-realization-work/",
+          "slug": "intent-realization-work"
+        }
+      ],
+      "claims": [],
+      "id": "intent_realization",
+      "route": "/registry/modules/intent-realization/",
+      "slug": "intent-realization",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
+      "title": "Intent realization"
     },
     {
       "capabilities": [

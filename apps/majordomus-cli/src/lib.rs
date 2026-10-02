@@ -46,6 +46,7 @@ pub mod index;
 pub(crate) mod integration;
 pub mod intent;
 pub mod intent_plan;
+pub mod intent_realization;
 pub mod intent_review;
 pub mod lease;
 pub mod ledger;

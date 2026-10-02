@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 73,
+      "count": 74,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 151,
+      "count": 152,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 73
+      "count": 74
     },
     {
       "kind": "application",
@@ -88,6 +88,14 @@
       "count": 34
     },
     {
+      "kind": "critique",
+      "projection": "none",
+      "route": null,
+      "title": null,
+      "reason": "A critique is the adversarial pass over one intent's plan, written for the worker who must resolve its findings before work starts (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
+      "count": 1
+    },
+    {
       "kind": "deployment",
       "projection": "none",
       "route": null,
@@ -120,6 +128,14 @@
       "count": 27
     },
     {
+      "kind": "gap",
+      "projection": "none",
+      "route": null,
+      "title": null,
+      "reason": "A gap is what one worker observed of the repository against an intent's criteria at one commit (ADR 0073). It is a dated input to planning, superseded by the next observation, and the work it suggested is published on /plan/.",
+      "count": 1
+    },
+    {
       "kind": "implementation",
       "projection": "none",
       "route": null,
@@ -141,7 +157,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 242
+      "count": 243
     },
     {
       "kind": "knowledge",
@@ -213,7 +229,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 151
+      "count": 152
     },
     {
       "kind": "scope",
@@ -253,7 +269,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 317
+      "count": 318
     },
     {
       "kind": "use-case",
@@ -3894,6 +3910,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0073/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0075",
+          "kind": "adr",
+          "route": "/adrs/adr-0075/",
+          "external": false
         }
       ]
     },
@@ -4041,6 +4064,89 @@
           "label": "project.derived-once@1",
           "kind": "rule",
           "route": "/rules/project-derived-once-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0075",
+          "kind": "adr",
+          "route": "/adrs/adr-0075/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0075",
+      "identity": "adr-0075",
+      "slug": "adr-0075",
+      "cockpit": "/cockpit/objects/adr/adr-0075",
+      "title": "Which work realises an intent is a join over the records the lifecycle already keeps, and closed work does not outrank evidence",
+      "status": "proposed",
+      "tags": [
+        "intent",
+        "session",
+        "handover",
+        "evidence"
+      ],
+      "source": ".ai/repo/adrs/0075-intent-realization-is-a-join-and-closed-work-does-not-outrank-evidence.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/intent_realization.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0070",
+          "kind": "adr",
+          "route": "/adrs/adr-0070/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0073",
+          "kind": "adr",
+          "route": "/adrs/adr-0073/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/session.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.an-intent-outlives-its-sessions@1",
+          "kind": "rule",
+          "route": "/rules/project-an-intent-outlives-its-sessions-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.work-serves-a-declared-intent@1",
+          "kind": "rule",
+          "route": "/rules/project-work-serves-a-declared-intent-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh",
+          "kind": "test",
+          "route": null,
           "external": false
         }
       ],
@@ -8001,6 +8107,48 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.an-intent-outlives-its-sessions@1",
+      "identity": "project.an-intent-outlives-its-sessions@1",
+      "slug": "project-an-intent-outlives-its-sessions-1",
+      "cockpit": "/cockpit/objects/rule/project-an-intent-outlives-its-sessions-1",
+      "title": "An intent outlives the sessions and providers that realise it, and closed work does not outrank evidence",
+      "status": "active",
+      "tags": [
+        "intent",
+        "session",
+        "handover",
+        "provenance",
+        "evidence"
+      ],
+      "source": ".ai/repo/rules/project/an-intent-outlives-its-sessions.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.derived-once@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-once-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.work-serves-a-declared-intent@1",
+          "kind": "rule",
+          "route": "/rules/project-work-serves-a-declared-intent-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0075",
+          "kind": "adr",
+          "route": "/adrs/adr-0075/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.benchmarkable-commands@1",
       "identity": "project.benchmarkable-commands@1",
       "slug": "project-benchmarkable-commands-1",
@@ -8483,6 +8631,13 @@
           "label": "project.a-plan-carries-the-intent-it-serves@1",
           "kind": "rule",
           "route": "/rules/project-a-plan-carries-the-intent-it-serves-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.an-intent-outlives-its-sessions@1",
+          "kind": "rule",
+          "route": "/rules/project-an-intent-outlives-its-sessions-1/",
           "external": false
         },
         {
@@ -12249,10 +12404,24 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0075",
+          "kind": "adr",
+          "route": "/adrs/adr-0075/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.a-plan-carries-the-intent-it-serves@1",
           "kind": "rule",
           "route": "/rules/project-a-plan-carries-the-intent-it-serves-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.an-intent-outlives-its-sessions@1",
+          "kind": "rule",
+          "route": "/rules/project-an-intent-outlives-its-sessions-1/",
           "external": false
         }
       ]

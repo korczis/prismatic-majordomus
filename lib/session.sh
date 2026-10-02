@@ -305,7 +305,10 @@ mj_session_start() {
   mv "$tmp" "$f"
   mj_session_point_at "$f"
   mj_lock_release
-  mj_ledger_append session.started "\"owner\":\"$(mj_json_esc "$owner")\"${worker:+,\"worker\":\"$(mj_json_esc "$worker")\"}"
+  # The provider rides on the ledger line too: the open file is removed at close and the ledger
+  # outlives it, so without this an episode's provider was forgotten the moment the episode
+  # ended, and intent realization could no longer say who carried the work (ADR 0075).
+  mj_ledger_append session.started "\"owner\":\"$(mj_json_esc "$owner")\"${worker:+,\"worker\":\"$(mj_json_esc "$worker")\"}${provider:+,\"provider\":\"$(mj_json_esc "$provider")\"}${psession:+,\"provider_session\":\"$(mj_json_esc "$psession")\"}"
 
   # The working context is written after the episode exists, and its failure never costs
   # one: a session whose context could not be frozen is still a session, and the store

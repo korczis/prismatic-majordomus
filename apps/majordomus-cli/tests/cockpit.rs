@@ -39,6 +39,8 @@ const PAGES: &[&str] = &[
     // the board, over `peers.list`: in a fixture the repository is this one checkout, read
     // from memory — the page's "every checkout answered" arm, with nobody on the board
     "/cockpit/peers",
+    "/cockpit/intents",
+    "/cockpit/intents/fixture-intent",
     "/cockpit/capabilities/repository.info",
     "/cockpit/capabilities?module=repository",
     "/cockpit/capabilities?kind=query",

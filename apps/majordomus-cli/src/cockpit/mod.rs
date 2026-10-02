@@ -23,6 +23,7 @@
 
 pub mod assets;
 pub mod html;
+pub(crate) mod intents;
 pub(crate) mod nav;
 pub(crate) mod pages;
 pub(crate) mod reasoning;
@@ -175,6 +176,7 @@ impl Cockpit {
             "/cockpit/graphs" => pages::graphs(ctx),
             "/cockpit/graphs/topology" => pages::topology(ctx),
             "/cockpit/continuity" => pages::continuity(ctx),
+            "/cockpit/intents" => intents::list(ctx),
             "/cockpit/worktrees" => pages::worktrees(ctx),
             "/cockpit/peers" => pages::peers(ctx),
             "/cockpit/integration" => pages::integration(ctx),
@@ -198,6 +200,8 @@ impl Cockpit {
                     pages::capability(ctx, &percent_decode(id))
                 } else if let Some(id) = other.strip_prefix("/cockpit/commands/") {
                     pages::command(ctx, &percent_decode(id))
+                } else if let Some(id) = other.strip_prefix("/cockpit/intents/") {
+                    intents::intent(ctx, &percent_decode(id))
                 } else if let Some(id) = other.strip_prefix("/cockpit/graphs/") {
                     pages::graph(ctx, &percent_decode(id), query)
                 } else if let Some(rest) = other.strip_prefix("/cockpit/objects/") {
