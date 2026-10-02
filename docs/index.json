@@ -2,18 +2,18 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "820e11c188257ab53d1daef4d355b54aef94f07f",
-  "source_version": "0.11.0",
-  "registry_fingerprint": "00203ee63d55c72e4d843f8f191536a1f457493092a74fa6ceb0ccce9db02291"
+  "commit": "376ae594afb1b045148b68264a501f30e387a654",
+  "source_version": "0.12.0",
+  "registry_fingerprint": "15e7669ec04aa15090d0261370360b7b37653ddfc99585168764811c625c50ab"
  },
  "counts": {
-  "pages": 1697,
-  "capabilities": 1736,
-  "cli_commands": 74,
-  "http_routes": 150,
-  "mcp_tools": 146,
-  "mcp_resources": 1631,
-  "modules": 74
+  "pages": 1719,
+  "capabilities": 1759,
+  "cli_commands": 78,
+  "http_routes": 154,
+  "mcp_tools": 150,
+  "mcp_resources": 1651,
+  "modules": 76
  },
  "kinds": [
   {
@@ -22,7 +22,7 @@
    "route": "/adrs/",
    "title": "Decisions",
    "reason": null,
-   "count": 71
+   "count": 72
   },
   {
    "kind": "application",
@@ -70,7 +70,7 @@
    "route": "/context/",
    "title": null,
    "reason": null,
-   "count": 31
+   "count": 32
   },
   {
    "kind": "deployment",
@@ -94,7 +94,7 @@
    "route": null,
    "title": null,
    "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-   "count": 290
+   "count": 291
   },
   {
    "kind": "feature",
@@ -110,7 +110,15 @@
    "route": null,
    "title": null,
    "reason": "An implementation object is a source file a claim names. It is reachable from the claim that names it and from the repository; a page rendering a Rust module is the source browser GitHub already is.",
-   "count": 49
+   "count": 50
+  },
+  {
+   "kind": "intent",
+   "projection": "none",
+   "route": null,
+   "title": null,
+   "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` answers for the intent itself.",
+   "count": 1
   },
   {
    "kind": "issue",
@@ -118,7 +126,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 238
+   "count": 239
   },
   {
    "kind": "knowledge",
@@ -142,7 +150,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 20
+   "count": 22
   },
   {
    "kind": "moment",
@@ -190,7 +198,7 @@
    "route": "/rules/",
    "title": "Rules",
    "reason": null,
-   "count": 148
+   "count": 150
   },
   {
    "kind": "scope",
@@ -230,7 +238,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 308
+   "count": 316
   },
   {
    "kind": "use-case",
@@ -238,7 +246,7 @@
    "route": "/use-cases/",
    "title": null,
    "reason": null,
-   "count": 46
+   "count": 47
   },
   {
    "kind": "workspace",
@@ -741,6 +749,14 @@
    "source": ".ai/repo/adrs/0068-ci-evidence-is-kept-where-the-run-happened-and-published-with-the-commit-it-proves.md"
   },
   {
+   "route": "/adrs/adr-0070/",
+   "title": "An intent is a typed record, and its stage and satisfaction are derived from the plan and the evidence",
+   "description": "An intent is a typed record, and its stage and satisfaction are derived from the plan and the evidence",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0070",
+   "source": ".ai/repo/adrs/0070-intent-is-a-typed-record-and-satisfaction-is-derived-from-evidence.md"
+  },
+  {
    "route": "/adrs/adr-0071/",
    "title": "A feature exists only when its delivery is computed and every dimension passes",
    "description": "A feature exists only when its delivery is computed and every dimension passes",
@@ -862,6 +878,11 @@
    "route": "/architecture/",
    "title": "How this site is derived",
    "description": "The website is a projection of the repository, built the way the tool asks projects to build their own instructions."
+  },
+  {
+   "route": "/challenge/",
+   "title": "The challenge: try to get unfinished work accepted",
+   "description": "A coding agent strays outside its scope, says it is done, hands over and comes back. Watch Majordomus refuse it twice and accept the work only when the repository's own test passes — a recorded run of the real tool."
   },
   {
    "route": "/changelog/",
@@ -1162,6 +1183,11 @@
    "route": "/docs/api/integration/",
    "title": "HTTP API: integration",
    "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network."
+  },
+  {
+   "route": "/docs/api/intents/",
+   "title": "HTTP API: intents",
+   "description": "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, and each criterion's state derived from the evidence ledger. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere."
   },
   {
    "route": "/docs/api/lifecycle/",
@@ -1702,6 +1728,31 @@
    "route": "/docs/cli/generate/",
    "title": "majordomus generate",
    "description": "Write the committed projections of the registry (docs/generated), or check that they are current"
+  },
+  {
+   "route": "/docs/cli/intent/",
+   "title": "majordomus intent",
+   "description": "What must become true above the milestones: every intent with its stage derived from the plan and its satisfaction from the recorded evidence, one intent, the model's own validation, and which intent a piece of work serves"
+  },
+  {
+   "route": "/docs/cli/intent/list/",
+   "title": "majordomus intent list",
+   "description": "Every intent, with the stage derived from its milestones and its evidence"
+  },
+  {
+   "route": "/docs/cli/intent/preflight/",
+   "title": "majordomus intent preflight",
+   "description": "Which intent the work on an issue, or on some paths, serves; exit 10 when it serves none"
+  },
+  {
+   "route": "/docs/cli/intent/show/",
+   "title": "majordomus intent show",
+   "description": "One intent in full: each milestone's derived status and each criterion's evidence state"
+  },
+  {
+   "route": "/docs/cli/intent/validate/",
+   "title": "majordomus intent validate",
+   "description": "Every finding over the intents; exit 10 when any is a failure"
   },
   {
    "route": "/docs/cli/mcp/",
@@ -2372,6 +2423,11 @@
    "route": "/docs/integration/",
    "title": "Pull-request integration",
    "description": "pull-request integration: every open pull request classified against the current master with its evidence, the thirteen dispositions, the deterministic rank, one merge at a time with a re-plan after each, refreshing a branch, the cleanup threshold, the lease and the audit trail (ADR 0101)"
+  },
+  {
+   "route": "/docs/launch/",
+   "title": "Launch kit",
+   "description": "what to paste when somebody asks what Majordomus is: the link to send, the install command, one-sentence and longer descriptions, three proof points with the page behind each, and what not to claim"
   },
   {
    "route": "/docs/mcp/",
@@ -3700,7 +3756,7 @@
   },
   {
    "route": "/guarantees/rule-proof-is-named-and-resolves/",
-   "title": "Every blocking rule names what proves it, and every path it names is in the tree",
+   "title": "Every rule names what proves it, and every path it names is in the tree",
    "description": "A rule of this repository declares a class. blocking means a gate refuses work that"
   },
   {
@@ -5104,6 +5160,11 @@
    "description": "Make a CI step that exceeds its time report a failure naming the bound and the elapsed time, instead of being killed by its job and reported by GitHub as a cancellation that every reader in this repository treats as not-a-failure."
   },
   {
+   "route": "/plan/i1600/",
+   "title": "I1600 — The challenge is one recorded run, and every public surface replays it",
+   "description": "Record one scenario in which a worker strays outside its scope, claims it is done, hands over, and is refused until the repository's own test passes; render that run on the homepage and on /challenge/; make README.md's first transcript a step of it; and verify the public site serves it after publication."
+  },
+  {
    "route": "/plan/i1945/",
    "title": "I1945 — The test-evidence decision and its plan are recorded",
    "description": "Record the test-evidence design as ADR 0087 with status proposed, create the milestone test-evidence, and give every slice of the design one issue, so that `majordomus plan` tracks the work and each slice is held to one written definition."
@@ -5209,6 +5270,11 @@
    "description": "Move the entry preflight's verification.tests check onto the freshness function and its verification.enforcement check onto the rules corpus verdict, ending the one known exception ADR 0087 names in decisions 3 and 4. It depends on PR #578 as well as on I1948, because the preflight exists only on #578."
   },
   {
+   "route": "/plan/intent-lifecycle/",
+   "title": "intent-lifecycle — Work is traceable to the intent it serves, and an intent is satisfied only by evidence",
+   "description": "An intent is a typed record above the milestones that realise it: a statement, its invariants, and satisfaction criteria each naming the evidence that settles it. Its stage is derived from the plan's milestone status and its satisfaction from the evidence ledger, never stored. A gate refuses an intent that names no milestone or evidence that resolves to nothing, a session's preflight names the intent its work serves or refuses, the Cockpit shows intents with measured and enforced coverage of its scripts, and a milestone closes on GitHub only when the intents it serves are satisfied."
+  },
+  {
    "route": "/plan/m000/",
    "title": "M000 — Milestone and DAG driven development",
    "description": "Every non-trivial change in this repository belongs to a milestone specification and to one dependency-linked issue execution contract, validated as a DAG, with status derived rather than asserted, and projected to GitHub and to the website from that one canonical model."
@@ -5232,6 +5298,11 @@
    "route": "/plan/m004/",
    "title": "M004 — Performance is executable evidence, and the hot path does no canonical work twice",
    "description": "Every public command can be benchmarked from the command registry with cold and warm distributions, the phases and work counters of any run can be printed, the caches and batch reads that remove repeated work preserve every observable result, an accepted baseline lives in the repository and a check refuses a regression by policy, and the pre-commit hook is fast enough that nobody routes around it."
+  },
+  {
+   "route": "/plan/public-proof/",
+   "title": "public-proof — A visitor sees the product prove itself, and can check every claim it makes",
+   "description": "One recorded scenario tells the whole story — a worker strays, claims it is done, hands over, and is refused until the repository's own test passes — and it drives the homepage hero, its own route, the README's first transcript and the live smoke check, each held to the recorded run by a gate rather than by care."
   },
   {
    "route": "/plan/routing-recommendations/",
@@ -5632,6 +5703,26 @@
    "route": "/registry/capabilities/integration-queue/",
    "title": "integration.queue",
    "description": "The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection's required checks and reviews, the blocking labels, the merge method), every open pull request's assessment in rank order — an actionable one with how long it has waited for the executor and how often another was chosen instead — the next merge, the pull requests that need master brought in, the starving ones, the tallies by disposition and lane, and the diagnostics, a stale observation first; beside it, who holds the base branch's integration lease and the last merge the executor recorded. `observed: false` with the reason when this checkout has recorded no observation."
+  },
+  {
+   "route": "/registry/capabilities/intents-list/",
+   "title": "intents.list",
+   "description": "Every intent the project model declares, each with the status the plan derives for its milestones, the state of the evidence behind each satisfaction criterion, and the stage those two derive: declared, planned, executing, verifying or satisfied — or cancelled or superseded, when the record says so."
+  },
+  {
+   "route": "/registry/capabilities/intents-preflight/",
+   "title": "intents.preflight",
+   "description": "Given the issue a piece of work executes, or the paths it will touch, the intents it serves — issue to milestone to intent, each link named — and the governance those intents load; or a refusal naming the first link that is missing: an issue that does not exist, paths no open issue covers, a milestone no intent names."
+  },
+  {
+   "route": "/registry/capabilities/intents-record/",
+   "title": "intents.record",
+   "description": "One intent in full: its statement and invariants as authored, each milestone with the status the plan derives, each satisfaction criterion with the state of its evidence and the command that reproduces it, and the stage. The record's own file stays at `majordomus://intent/<id>`."
+  },
+  {
+   "route": "/registry/capabilities/intents-validate/",
+   "title": "intents.validate",
+   "description": "Every finding over the intents: an intent naming no milestone or no criterion, a milestone that does not resolve, a criterion with no evidence reference or one that names nothing this repository holds, governance that does not resolve, a successor that is not an intent, a file name that disagrees with its id — each a failure — and a milestone no intent serves, a warning."
   },
   {
    "route": "/registry/capabilities/lifecycle-closed/",
@@ -6207,6 +6298,11 @@
    "route": "/registry/modules/integration/",
    "title": "Pull-request integration",
    "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network."
+  },
+  {
+   "route": "/registry/modules/intents/",
+   "title": "Intent",
+   "description": "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, and each criterion's state derived from the evidence ledger. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere."
   },
   {
    "route": "/registry/modules/lifecycle/",
@@ -6785,6 +6881,14 @@
    "kind": "rule",
    "id": "majordomus://rule/majordomus.verify-outcomes@1",
    "source": ".ai/repo/rules/vendor/majordomus/rules/principle-08-verify-outcomes.v1.md"
+  },
+  {
+   "route": "/rules/project-a-brief-is-kept-as-received-1/",
+   "title": "A campaign brief this repository keeps is the one it was handed",
+   "description": "A campaign brief this repository keeps is the one it was handed",
+   "kind": "rule",
+   "id": "majordomus://rule/project.a-brief-is-kept-as-received@1",
+   "source": ".ai/repo/rules/project/a-brief-is-kept-as-received.v1.md"
   },
   {
    "route": "/rules/project-a-diagram-is-drawn-not-typed-1/",
@@ -7515,6 +7619,14 @@
    "source": ".ai/repo/rules/project/work-is-claimed-before-it-is-built.v1.md"
   },
   {
+   "route": "/rules/project-work-serves-a-declared-intent-1/",
+   "title": "Work serves a declared intent, and an intent is satisfied only by evidence",
+   "description": "Work serves a declared intent, and an intent is satisfied only by evidence",
+   "kind": "rule",
+   "id": "majordomus://rule/project.work-serves-a-declared-intent@1",
+   "source": ".ai/repo/rules/project/work-serves-a-declared-intent.v1.md"
+  },
+  {
    "route": "/rules/project-worktree-topology-1/",
    "title": "A branch's worktree is at <repo>-wt/<branch>, derived from git, never registered",
    "description": "A branch's worktree is at <repo>-wt/<branch>, derived from git, never registered",
@@ -7524,8 +7636,8 @@
   },
   {
    "route": "/rustdoc/",
-   "title": "majordomus-cli 0.11.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.11.0, built from commit 820e11c188257ab53d1daef4d355b54aef94f07f: the public items of the library and of the executable, and the source they were built from."
+   "title": "majordomus-cli 0.12.0 — Rust API reference",
+   "description": "The rustdoc reference of majordomus-cli 0.12.0, built from commit 376ae594afb1b045148b68264a501f30e387a654: the public items of the library and of the executable, and the source they were built from."
   },
   {
    "route": "/rustdoc/majordomus/",
@@ -7636,6 +7748,11 @@
    "route": "/rustdoc/majordomus_cli/capability/builtin/health/",
    "title": "majordomus_cli::capability::builtin::health - Rust",
    "description": "The `health` module: whether what this process serves is healthy, answered by the engines that already decide it rather than by checks written a second time here."
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/capability/builtin/intents/",
+   "title": "majordomus_cli::capability::builtin::intents - Rust",
+   "description": "The `intents` module:"
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/lifecycle/",
@@ -8166,6 +8283,11 @@
    "route": "/rustdoc/majordomus_cli/index/",
    "title": "majordomus_cli::index - Rust",
    "description": "The index: every declarative object the repository declares, read, validated and identified, plus every diagnostic about what could not be read. Built once per invocation from a discovery pass; the MCP surface is a projection of it."
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/intent/",
+   "title": "majordomus_cli::intent - Rust",
+   "description": "Intents: what must become true above the milestones that realise it, and whether the recorded evidence says it has."
   },
   {
    "route": "/rustdoc/majordomus_cli/lease/",
@@ -8846,6 +8968,11 @@
    "route": "/use-cases/carry-a-blocker-across-a-handover/",
    "title": "Hand work over with a question still open, and keep it blocking",
    "description": "Close a task into a handover while a question is unresolved, start the follow-up task, and see the same question still refuse acceptance there."
+  },
+  {
+   "route": "/use-cases/catch-an-agent-that-says-it-is-done/",
+   "title": "Catch an agent that says it is done when it is not",
+   "description": "One task, start to finish: a worker strays outside its scope, claims it is finished, hands over, and is accepted only once the repository''s own verification passes."
   },
   {
    "route": "/use-cases/checkpoint-long-work/",

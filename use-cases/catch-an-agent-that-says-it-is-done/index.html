@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="edc7bf48e646">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catch an agent that says it is done when it is not — Prismatic Majordomus</title>
+<meta name="description" content="One task, start to finish: a worker strays outside its scope, claims it is finished, hands over, and is accepted only once the repository&#39;&#39;s own verification passes.">
+<link rel="canonical" href="https://majordomus.dev/use-cases/catch-an-agent-that-says-it-is-done/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="Catch an agent that says it is done when it is not — Prismatic Majordomus">
+<meta property="og:description" content="One task, start to finish: a worker strays outside its scope, claims it is finished, hands over, and is accepted only once the repository&#39;&#39;s own verification passes.">
+<meta property="og:url" content="https://majordomus.dev/use-cases/catch-an-agent-that-says-it-is-done/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=55454cf03079e0c42f3c">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.12.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.11.0</span>
+      
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Get started</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        <li><a href="https://majordomus.dev/challenge/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Challenge</a></li>
+        
+        
+        
+        
+        
+        <li><a href="https://majordomus.dev/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Product<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/features/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Product</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/features/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">How it works<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/method/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li><li><a href="https://majordomus.dev/docs/surfaces/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the surfaces are derived</a></li><li><a href="https://majordomus.dev/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the product page is derived</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">How it works</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/method/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li><li><a href="https://majordomus.dev/docs/surfaces/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the surfaces are derived</a></li><li><a href="https://majordomus.dev/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the product page is derived</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Docs<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://majordomus.dev/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://majordomus.dev/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://majordomus.dev/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Docs</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://majordomus.dev/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://majordomus.dev/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-6" data-dropdown-toggle="nav-menu-6" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Evidence<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-6" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-6">
+              <li><a href="https://majordomus.dev/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Evidence</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Get started</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/use-cases/" class="font-medium text-body hover:text-fg-brand">Use cases</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">Catch an agent that says it is done when it is not</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Catch an agent that says it is done when it is not</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">One task, start to finish: a worker strays outside its scope, claims it is finished, hands over, and is accepted only once the repository&#39;&#39;s own verification passes.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0"><div class="flex flex-wrap items-center gap-2 text-xs">
+      <span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span>
+      <a href="https://majordomus.dev/use-cases/completion/" class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-heading hover:bg-neutral-secondary-medium">Completion and quality gates</a><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">basic</span><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">agent</span><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">operator</span><span class="mj-badge mj-badge--neutral">writes state</span>
+    </div><article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-6 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full" tabindex="0"><h2 id="situation"><a class="zola-anchor" href="#situation" aria-label="Anchor link for: situation">Situation</a></h2>
+<p>A coding agent is asked for one change. It makes the change, edits a file nobody asked it to
+touch, and reports that it is done. Another agent is already working in the same paths. The
+session ends before anyone reads the diff, and the next session starts from whatever the chat
+remembered. Every one of those is ordinary, and none of them is a model problem.</p>
+<h2 id="what-you-run"><a class="zola-anchor" href="#what-you-run" aria-label="Anchor link for: what-you-run">What you run</a></h2>
+<ul>
+<li><code>start</code>: claims the paths the task may touch, and reports another worker already claiming them</li>
+<li><code>check</code>: refuses a touched file outside the claimed paths</li>
+<li><code>finish</code>: evaluates the finish contract line by line and writes nothing while a line fails</li>
+<li><code>handover</code>: writes the state the next session starts from, into the repository</li>
+<li><code>context</code>: gives the next worker that state back, without the conversation that produced it</li>
+</ul>
+<h2 id="scenario"><a class="zola-anchor" href="#scenario" aria-label="Anchor link for: scenario">Scenario</a></h2>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="yaml"><span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">etup</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> c</span><span class="z-l-8 z-d-8">hallenge</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">g</span><span class="z-l-4 z-d-1">iven</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">a repository with Majordomus installed, and a second worktree whose worker already claims lib</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">a test, test/parse.sh, that passes only when the parser message names the column</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">teps</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> c</span><span class="z-l-8 z-d-8">laim-the-work</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">The task claims lib. Another worker already claims lib in a second worktree, and start says so before any file is touched.</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">start</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">refuse tabs in the parser</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">--scope</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">lib</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">^started t-</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">INFO overlap</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">claims lib</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> t</span><span class="z-l-8 z-d-8">he-worker-strays</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">The worker makes the change it was asked for, and also edits a note under docs, which the task never claimed.</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    w</span><span class="z-l-4 z-d-1">orker</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">echo &quot;tabs are refused&quot; &gt;&gt; lib/a &amp;&amp; echo &quot;parser notes&quot; &gt;&gt; docs/d</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> c</span><span class="z-l-8 z-d-8">heck-refuses-the-stray-file</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">check names the file outside the claimed scope and exits non-zero. It is a failure, not a warning.</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">check</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 10</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">FAIL scope</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">docs/d</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> t</span><span class="z-l-8 z-d-8">he-worker-says-it-is-done</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">The worker reports the task finished. finish evaluates the contract instead of believing it, and refuses.</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">finish</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">--outcome</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">completed</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">--verify-command</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">sh test/parse.sh</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 10</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">FAIL scope</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">FAIL verification</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">refused</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> t</span><span class="z-l-8 z-d-8">he-worker-reverts-the-stray-file</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">The stray edit is taken back.</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    w</span><span class="z-l-4 z-d-1">orker</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">git checkout -- docs/d</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> h</span><span class="z-l-8 z-d-8">and-over</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">The session ends. What the next one needs is written into the repository, not left in a transcript.</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">handover</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    s</span><span class="z-l-4 z-d-1">tdin</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> c</span><span class="z-l-8 z-d-8">hallenge-handover.md</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      f</span><span class="z-l-4 z-d-1">iles_exist</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">.ai/local/state/handovers</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> t</span><span class="z-l-8 z-d-8">he-next-session-resumes</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">A new session asks the repository what it needs to know, and gets the task, its scope and the handover back.</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">context</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">## TASK</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">LATEST COMPATIBLE HANDOVER</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">name the column</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> f</span><span class="z-l-8 z-d-8">inish-refuses-a-failing-verification</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">Scope is clean now, but the repository</span><span class="z-l-3 z-d-7">&#39;&#39;</span><span class="z-l-8 z-d-8">s own test still fails. finish runs it and refuses again.</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">finish</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">--outcome</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">completed</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">--verify-command</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">sh test/parse.sh</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 10</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">OK +scope</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">FAIL verification</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">refused</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_not_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">FAIL scope</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> t</span><span class="z-l-8 z-d-8">he-worker-finishes-the-work</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">The worker does what the handover said was left.</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    w</span><span class="z-l-4 z-d-1">orker</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">echo &quot;the message names the column&quot; &gt;&gt; lib/a</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> f</span><span class="z-l-8 z-d-8">inish-accepts</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    n</span><span class="z-l-4 z-d-1">ote</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">Every line of the contract passes, so the outcome is recorded, with the verification that proved it.</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    r</span><span class="z-l-4 z-d-1">un</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">finish</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">--outcome</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">completed</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">--verify-command</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">sh test/parse.sh</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">    e</span><span class="z-l-4 z-d-1">xpect</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      e</span><span class="z-l-4 z-d-1">xit</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 0</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">OK +scope</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">OK +verification</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">completed</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">      s</span><span class="z-l-4 z-d-1">tdout_not_contains</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">FAIL</span><span class="z-l-8 z-d-8">&#39;</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">hen</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">a file outside the claimed scope is refused by check and by finish</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">a worker saying it is done is a claim finish evaluates, and a failing verification keeps it refused</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">the next session resumes from what the repository recorded, not from the conversation</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">the work is accepted only when every line of the contract passes</span><span class="z-l-8 z-d-8">&#39;</span></span></code></pre><h2 id="outcome"><a class="zola-anchor" href="#outcome" aria-label="Anchor link for: outcome">Outcome</a></h2>
+<p>The work is accepted exactly once, when the repository's own test passes and nothing outside
+the claimed paths changed. The two earlier claims of being done were refused with the reason
+named and the command that reproduces it. The next session started from the handover the
+repository held, and the other worker in the same paths was named before anything was edited.</p>
+</article>
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The scenario</h2>
+    <p class="mt-2 text-sm text-body">Executed against the real tool, in a repository prepared by <code class="font-mono text-heading">challenge</code>, every time this site is generated. What follows is not a description of what should happen; it is what happened.</p>
+    <div class="mt-4 grid gap-4 sm:grid-cols-3">
+      <div class="min-w-0 break-words rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">given</h3>
+        <ul class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span aria-hidden="true">·</span><span class="min-w-0 wrap-anywhere">a repository with Majordomus installed, and a second worktree whose worker already claims lib</span></li><li class="flex gap-2"><span aria-hidden="true">·</span><span class="min-w-0 wrap-anywhere">a test, test/parse.sh, that passes only when the parser message names the column</span></li></ul>
+      </div>
+      <div class="min-w-0 break-words rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">when</h3>
+        <ol class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">1</span><code class="min-w-0 break-all font-mono text-xs">majordomus start refuse tabs in the parser --scope lib</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">2</span><code class="min-w-0 break-all font-mono text-xs">worker: echo &quot;tabs are refused&quot; &gt;&gt; lib/a &amp;&amp; echo &quot;parser notes&quot; &gt;&gt; docs/d</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">3</span><code class="min-w-0 break-all font-mono text-xs">majordomus check</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">4</span><code class="min-w-0 break-all font-mono text-xs">majordomus finish --outcome completed --verify-command sh test/parse.sh</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">5</span><code class="min-w-0 break-all font-mono text-xs">worker: git checkout -- docs/d</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">6</span><code class="min-w-0 break-all font-mono text-xs">majordomus handover</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">7</span><code class="min-w-0 break-all font-mono text-xs">majordomus context</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">8</span><code class="min-w-0 break-all font-mono text-xs">majordomus finish --outcome completed --verify-command sh test/parse.sh</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">9</span><code class="min-w-0 break-all font-mono text-xs">worker: echo &quot;the message names the column&quot; &gt;&gt; lib/a</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">10</span><code class="min-w-0 break-all font-mono text-xs">majordomus finish --outcome completed --verify-command sh test/parse.sh</code></li></ol>
+      </div>
+      <div class="min-w-0 break-words rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">then</h3>
+        <ul class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span aria-hidden="true">·</span><span class="min-w-0 wrap-anywhere">a file outside the claimed scope is refused by check and by finish</span></li><li class="flex gap-2"><span aria-hidden="true">·</span><span class="min-w-0 wrap-anywhere">a worker saying it is done is a claim finish evaluates, and a failing verification keeps it refused</span></li><li class="flex gap-2"><span aria-hidden="true">·</span><span class="min-w-0 wrap-anywhere">the next session resumes from what the repository recorded, not from the conversation</span></li><li class="flex gap-2"><span aria-hidden="true">·</span><span class="min-w-0 wrap-anywhere">the work is accepted only when every line of the contract passes</span></li></ul>
+      </div>
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What the tool did</h2>
+    <p class="mt-2 text-sm text-body">Evidence of the run this page was generated from: <span class="font-mono">pass</span>, 10 step(s). Output is normalised: the repository's path, timestamps, ids and durations are placeholders; nothing else is edited.</p>
+    <ol class="mt-4 space-y-4"><li id="step-claim-the-work" class="min-w-0 scroll-mt-20 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">1</span><a href="https://majordomus.dev/commands/start/" class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus start &#39;refuse tabs in the parser&#39; --scope lib</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">The task claims lib. Another worker already claims lib in a second worktree, and start says so before any file is touched.</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>started t-&lt;id&gt;  profile=implementation  scope=lib
+INFO overlap     repo-other — claims lib — contains your lib  [reproduce: majordomus check --overlap]
+next: majordomus context; checkpoint every 15m; majordomus check before claiming anything</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^started t-/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /INFO overlap/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /claims lib/</li></ul>
+      </li><li id="step-the-worker-strays" class="min-w-0 scroll-mt-20 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">2</span><span class="min-w-0 break-all font-mono text-sm font-medium text-heading"><span class="me-2 rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 text-xs font-normal text-body">worker</span>$ echo &quot;tabs are refused&quot; &gt;&gt; lib/a &amp;&amp; echo &quot;parser notes&quot; &gt;&gt; docs/d</span>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">The worker makes the change it was asked for, and also edits a note under docs, which the task never claimed.</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code></code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li></ul>
+      </li><li id="step-check-refuses-the-stray-file" class="min-w-0 scroll-mt-20 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">3</span><a href="https://majordomus.dev/commands/check/" class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus check</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 10</span></div><p class="mt-2 text-sm text-body">check names the file outside the claimed scope and exits non-zero. It is a failure, not a warning.</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>·    checkpoint  t-&lt;id&gt; — &lt;timed against the checkpoint interval&gt;
+OK   records     ledger.jsonl — every line is a well-formed event
+OK   blockers    t-&lt;id&gt; — none open
+OK   records     decisions.md — every entry is attributable
+FAIL scope       docs/d — outside claimed scope (lib)  [reproduce: git status --porcelain; git log --first-parent --no-merges --name-only --format= &lt;sha&gt;..HEAD]
+OK   state       t-&lt;id&gt; — exact (head &lt;head&gt;)
+INFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]
+OK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
+INFO obligation  t-&lt;id&gt; — the task declares no obligations
+INFO gate        t-&lt;id&gt; — this repository declares no CI model at .ai/repo/ci/gates.yaml; nothing can be planned
+check: 10 finding(s), 1 failing</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 10</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /FAIL scope/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /docs/d/</li></ul>
+      </li><li id="step-the-worker-says-it-is-done" class="min-w-0 scroll-mt-20 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">4</span><a href="https://majordomus.dev/commands/finish/" class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus finish --outcome completed --verify-command &#39;sh test/parse.sh&#39;</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 10</span></div><p class="mt-2 text-sm text-body">The worker reports the task finished. finish evaluates the contract instead of believing it, and refuses.</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>OK   blockers    t-&lt;id&gt; — none open
+FAIL note        t-&lt;id&gt; — no --note file and no handover for this task  [reproduce: majordomus handover &lt; note.md]
+INFO regression  t-&lt;id&gt; — profile implementation adds no requirement beyond the shared contract
+FAIL scope       docs/d — outside claimed scope (lib)  [reproduce: git status --porcelain; git log --first-parent --no-merges --name-only --format= &lt;sha&gt;..HEAD]
+OK   state       t-&lt;id&gt; — exact (head &lt;head&gt;)
+INFO continuity  t-&lt;id&gt; — applies to partial and blocked
+INFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]
+OK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
+FAIL verification t-&lt;id&gt; — sh test/parse.sh — exit 1, &lt;s&gt;s  [reproduce: sh test/parse.sh]
+INFO obligation  t-&lt;id&gt; — the task declares no obligations
+INFO gate        t-&lt;id&gt; — this repository declares no CI model at .ai/repo/ci/gates.yaml; nothing can be planned
+INFO gate        t-&lt;id&gt; — not in verification.finish_requires
+finish: refused, 3 unmet
+blocking doctrines:
+- majordomus.note-integrity
+- majordomus.scope-integrity
+- majordomus.verification-integrity</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 10</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /FAIL scope/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /FAIL verification/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /refused/</li></ul>
+      </li><li id="step-the-worker-reverts-the-stray-file" class="min-w-0 scroll-mt-20 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">5</span><span class="min-w-0 break-all font-mono text-sm font-medium text-heading"><span class="me-2 rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 text-xs font-normal text-body">worker</span>$ git checkout -- docs/d</span>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">The stray edit is taken back.</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code></code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li></ul>
+      </li><li id="step-hand-over" class="min-w-0 scroll-mt-20 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">6</span><a href="https://majordomus.dev/commands/handover/" class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus handover</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span><span class="font-mono text-xs text-body-subtle">&lt; challenge-handover.md</span></div><p class="mt-2 text-sm text-body">The session ends. What the next one needs is written into the repository, not left in a transcript.</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>.ai/local/state/handovers/&lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">file_exists .ai/local/state/handovers</li></ul>
+      </li><li id="step-the-next-session-resumes" class="min-w-0 scroll-mt-20 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">7</span><a href="https://majordomus.dev/commands/context/" class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus context</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">A new session asks the repository what it needs to know, and gets the task, its scope and the handover back.</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code># Majordomus context — &lt;time&gt;
+# a projection of durable state, not a source of truth: validate every line against git
+
+## GIT
+repository   &lt;repo&gt;
+branch       main
+head         &lt;sha&gt;
+working_tree dirty
+task_record  exact (recorded head &lt;head&gt;)
+
+## TASK
+id           t-&lt;id&gt;
+task         refuse tabs in the parser
+profile      implementation
+owner        &lt;owner&gt;
+outcome      active
+scope        lib
+started      &lt;time&gt; (&lt;age&gt; ago)
+checkpoint   &lt;time&gt; (&lt;age&gt; ago, interval 15m)
+
+## PROFILE implementation
+capability   standard
+effort       medium
+verbosity    concise
+presentation engineering
+verification verify command
+output       outcome, changes, verification, blockers, next_action
+
+## CONTEXT DOCUMENTS (for the scope, root first; majordomus context explain &lt;path&gt;)
+lib  ai.layer
+
+## DECISIONS (5 most recent for this task)
+(none)
+
+## LATEST COMPATIBLE HANDOVER (.ai/local/state/handovers/&lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md)
+match        same_worktree_same_branch
+git state    exact
+created      &lt;time&gt; (&lt;age&gt; ago)
+task         t-&lt;id&gt;
+# Objective
+refuse tabs in the parser
+# Current State
+tabs are refused; the stray note under docs is reverted; the parser&#39;s test still fails
+# Next Action
+make the message name the column, then run the parser&#39;s test again
+
+## FILES TOUCHED IN SCOPE (1)
+lib/a
+
+## EXCLUDED
+- history — profile implementation sets context.recent_history_depth: 0
+
+## BUDGET
+54 of 300 lines</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /## TASK/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /LATEST COMPATIBLE HANDOVER/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /name the column/</li></ul>
+      </li><li id="step-finish-refuses-a-failing-verification" class="min-w-0 scroll-mt-20 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">8</span><a href="https://majordomus.dev/commands/finish/" class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus finish --outcome completed --verify-command &#39;sh test/parse.sh&#39;</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 10</span></div><p class="mt-2 text-sm text-body">Scope is clean now, but the repository&#39;&#39;s own test still fails. finish runs it and refuses again.</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>OK   blockers    t-&lt;id&gt; — none open
+OK   note        t-&lt;id&gt; — &lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md
+INFO regression  t-&lt;id&gt; — profile implementation adds no requirement beyond the shared contract
+OK   scope       t-&lt;id&gt; — 1 touched file(s), all within scope
+OK   state       t-&lt;id&gt; — exact (head &lt;head&gt;)
+INFO continuity  t-&lt;id&gt; — applies to partial and blocked
+INFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]
+OK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
+FAIL verification t-&lt;id&gt; — sh test/parse.sh — exit 1, &lt;s&gt;s  [reproduce: sh test/parse.sh]
+INFO obligation  t-&lt;id&gt; — the task declares no obligations
+INFO gate        t-&lt;id&gt; — this repository declares no CI model at .ai/repo/ci/gates.yaml; nothing can be planned
+INFO gate        t-&lt;id&gt; — not in verification.finish_requires
+finish: refused, 1 unmet
+blocking doctrines:
+- majordomus.verification-integrity</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 10</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /OK +scope/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /FAIL verification/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /refused/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_not_contains /FAIL scope/</li></ul>
+      </li><li id="step-the-worker-finishes-the-work" class="min-w-0 scroll-mt-20 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">9</span><span class="min-w-0 break-all font-mono text-sm font-medium text-heading"><span class="me-2 rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 text-xs font-normal text-body">worker</span>$ echo &quot;the message names the column&quot; &gt;&gt; lib/a</span>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">The worker does what the handover said was left.</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code></code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li></ul>
+      </li><li id="step-finish-accepts" class="min-w-0 scroll-mt-20 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">10</span><a href="https://majordomus.dev/commands/finish/" class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus finish --outcome completed --verify-command &#39;sh test/parse.sh&#39;</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">Every line of the contract passes, so the outcome is recorded, with the verification that proved it.</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>OK   blockers    t-&lt;id&gt; — none open
+OK   note        t-&lt;id&gt; — &lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md
+INFO regression  t-&lt;id&gt; — profile implementation adds no requirement beyond the shared contract
+OK   scope       t-&lt;id&gt; — 1 touched file(s), all within scope
+OK   state       t-&lt;id&gt; — exact (head &lt;head&gt;)
+INFO continuity  t-&lt;id&gt; — applies to partial and blocked
+INFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]
+OK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
+OK   verification t-&lt;id&gt; — sh test/parse.sh — exit 0, &lt;s&gt;s, tree &lt;tree&gt;
+INFO obligation  t-&lt;id&gt; — the task declares no obligations
+INFO gate        t-&lt;id&gt; — this repository declares no CI model at .ai/repo/ci/gates.yaml; nothing can be planned
+INFO gate        t-&lt;id&gt; — not in verification.finish_requires
+finish: t-&lt;id&gt; completed</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /OK +scope/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /OK +verification/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /completed/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_not_contains /FAIL/</li></ul>
+      </li></ol>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why the tool knows this</h2>
+    <p class="mt-2 text-sm text-body">The chain from this page to the code: the use case names commands, rules and claims; each rule is dispatched from the registry and each claim names the test that proves it; the scenario above executed the commands. Nothing in this chain is prose about intent.</p>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://majordomus.dev/commands/start/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="font-mono text-sm font-medium text-fg-brand">majordomus start</span><span class="text-sm text-body">Begin one scoped task under a profile, and refuse while another is active.</span></a></li><li><a href="https://majordomus.dev/commands/check/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="font-mono text-sm font-medium text-fg-brand">majordomus check</span><span class="text-sm text-body">Is the current task still consistent with its policy, its scope and this checkout?</span></a></li><li><a href="https://majordomus.dev/commands/finish/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="font-mono text-sm font-medium text-fg-brand">majordomus finish</span><span class="text-sm text-body">Evaluate the finish contract and refuse the outcome if any line of it is unmet.</span></a></li><li><a href="https://majordomus.dev/commands/handover/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="font-mono text-sm font-medium text-fg-brand">majordomus handover</span><span class="text-sm text-body">Write an append-only continuation record, and resolve the most relevant prior one.</span></a></li><li><a href="https://majordomus.dev/commands/context/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="font-mono text-sm font-medium text-fg-brand">majordomus context</span><span class="text-sm text-body">What the next worker needs to know now, in authority order and within a budget.</span></a></li></ul>
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The rules that make it hold</h2>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://majordomus.dev/doctrines/scope-integrity/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--blocking">blocking</span>
+</span><span class="text-sm font-medium text-heading">Scope integrity</span><span class="text-sm text-body">A task touches only the paths it claimed; work found elsewhere is not accepted as done.</span></a></li><li><a href="https://majordomus.dev/doctrines/state-consistency/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--blocking">blocking</span>
+</span><span class="text-sm font-medium text-heading">State consistency</span><span class="text-sm text-body">The task record still describes this checkout — same branch, and HEAD at or ahead of the recorded commit.</span></a></li></ul>
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Guarantees exercised</h2>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://majordomus.dev/guarantees/scoped-task/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span><span class="text-sm text-heading">A task is started with a declared file scope and a profile, and only one task is active per checkout</span></a></li><li><a href="https://majordomus.dev/guarantees/scope-enforcement/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span><span class="text-sm text-heading">A touched file outside the claimed scope is a failure, not a warning</span></a></li><li><a href="https://majordomus.dev/guarantees/overlap-report/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span><span class="text-sm text-heading">Overlap between parallel workers is computed on claimed paths in both containment directions</span></a></li><li><a href="https://majordomus.dev/guarantees/handover-record/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span><span class="text-sm text-heading">handover writes an append-only record with computed front matter and required sections</span></a></li><li><a href="https://majordomus.dev/guarantees/finish-contract/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span><span class="text-sm text-heading">finish evaluates the finish contract line by line and refuses when any line is unmet</span></a></li><li><a href="https://majordomus.dev/guarantees/typed-outcome/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span><span class="text-sm text-heading">An outcome is a value from a closed vocabulary, not free text</span></a></li></ul>
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Related use cases</h2>
+    <p class="mt-2 text-xs text-body-subtle">Computed from what they share: claims, rules, commands, category, applications. Nobody maintains this list.</p>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://majordomus.dev/use-cases/run-several-workers-at-once/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Run several workers in one repository without them colliding</span><span class="text-sm text-body">Give each worker a declared scope, and find out immediately when two of them claim the same paths.</span></a></li><li><a href="https://majordomus.dev/use-cases/carry-a-blocker-across-a-handover/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Hand work over with a question still open, and keep it blocking</span><span class="text-sm text-body">Close a task into a handover while a question is unresolved, start the follow-up task, and see the same question still refuse acceptance there.</span></a></li><li><a href="https://majordomus.dev/use-cases/accept-or-refuse-finished-work/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Decide whether finished work is actually finished</span><span class="text-sm text-body">Evaluate a contract line by line instead of accepting a sentence that says the work is done.</span></a></li><li><a href="https://majordomus.dev/use-cases/block-acceptance-on-an-open-question/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Block acceptance on a question nobody has answered</span><span class="text-sm text-body">Open a question against the task, watch finish refuse completion while it is unresolved, resolve it with the answer, and only then complete.</span></a></li><li><a href="https://majordomus.dev/use-cases/deliver-issues-in-waves/" class="flex h-full flex-col gap-1 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="text-sm font-medium text-heading">Deliver issues in waves the graph computes, and take the next one</span><span class="text-sm text-body">Validate the plan, read the execution waves the dependency graph yields, see which issues are ready and which are blocked on what, and take the one issue a worker should do now.</span></a></li></ul>
+
+  </div>
+
+  <aside class="min-w-0 space-y-4 lg:sticky lg:top-24 lg:self-start">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">provenance</h2>
+      <dl class="space-y-1 text-xs">
+        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">source</dt><dd class="min-w-0 break-words font-mono text-heading">.ai/repo/use-cases/catch-an-agent-that-says-it-is-done.md</dd></div>
+        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">status</dt><dd class="font-mono text-heading">active</dd></div>
+        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">target</dt><dd class="font-mono text-heading">guaranteed</dd></div>
+        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">observed</dt><dd class="font-mono text-heading">guaranteed</dd></div>
+      </dl>
+    </div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">responsibilities</h2>
+      <ul class="space-y-1 text-sm"><li><a href="https://majordomus.dev/supervises/scope/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Scope</a></li><li><a href="https://majordomus.dev/supervises/state/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">State</a></li></ul>
+    </div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
+      <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Completion and quality gates</h2>
+      <ul class="space-y-1 text-sm"><li><a href="https://majordomus.dev/use-cases/accept-or-refuse-finished-work/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Decide whether finished work is actually finished</a></li><li><a href="https://majordomus.dev/use-cases/block-acceptance-on-an-open-question/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Block acceptance on a question nobody has answered</a></li><li><a href="https://majordomus.dev/use-cases/catch-an-agent-that-says-it-is-done/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">Catch an agent that says it is done when it is not</a></li><li><a href="https://majordomus.dev/use-cases/complete-an-issue-only-with-its-evidence/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Complete an issue only when its evidence exists</a></li><li><a href="https://majordomus.dev/use-cases/know-whether-this-work-is-finished/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Know whether the work in this checkout is finished</a></li><li><a href="https://majordomus.dev/use-cases/prove-what-a-task-owed-before-calling-it-done/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Prove what a task owed before calling it done</a></li><li><a href="https://majordomus.dev/use-cases/say-what-reached-the-remote-and-what-did-not/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Say what reached the remote and what did not</a></li></ul>
+      <a href="https://majordomus.dev/use-cases/" class="mt-3 block text-xs text-fg-brand hover:underline">every use case, by category</a>
+    </div>
+  </aside>
+</div>
+
+</div>
+
+</main>
+
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/challenge/" class="hover:text-heading hover:underline">Challenge</a></h2>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/why/" class="hover:text-heading hover:underline">Why</a></h2>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Product</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="hover:text-heading hover:underline">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="hover:text-heading hover:underline">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="hover:text-heading hover:underline">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="hover:text-heading hover:underline">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="hover:text-heading hover:underline">What it supervises</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">How it works</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="hover:text-heading hover:underline">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="hover:text-heading hover:underline">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="hover:text-heading hover:underline">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="hover:text-heading hover:underline">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="hover:text-heading hover:underline">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="hover:text-heading hover:underline">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="hover:text-heading hover:underline">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/docs/surfaces/" class="hover:text-heading hover:underline">How the surfaces are derived</a></li><li><a href="https://majordomus.dev/architecture/" class="hover:text-heading hover:underline">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="hover:text-heading hover:underline">How the product page is derived</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">Docs</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="hover:text-heading hover:underline">Install</a></li><li><a href="https://majordomus.dev/commands/" class="hover:text-heading hover:underline">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="hover:text-heading hover:underline">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="hover:text-heading hover:underline">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="hover:text-heading hover:underline">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="hover:text-heading hover:underline">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="hover:text-heading hover:underline">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="hover:text-heading hover:underline">Registry</a></li><li><a href="https://majordomus.dev/map/" class="hover:text-heading hover:underline">Program map</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Evidence</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="hover:text-heading hover:underline">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="hover:text-heading hover:underline">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="hover:text-heading hover:underline">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="hover:text-heading hover:underline">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="hover:text-heading hover:underline">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="hover:text-heading hover:underline">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="hover:text-heading hover:underline">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="hover:text-heading hover:underline">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="hover:text-heading hover:underline">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="hover:text-heading hover:underline">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="hover:text-heading hover:underline">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/376ae594afb1b045148b68264a501f30e387a654" class="font-mono underline">376ae59</a> · inputs <span class="font-mono">1f52dc854a50</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="https://majordomus.dev/js/flowbite.min.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+
+</body>
+</html>
