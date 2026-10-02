@@ -1378,6 +1378,8 @@ alias:
             err.contains("tones.sky-bg: --mj-tone-sky-bg would be the bg of the tone 'sky'"),
             "{err}"
         );
+        // a name that ends like a part is fine while no tone carries the rest of it
+        assert!(DesignSystem::parse(&with_tones(&SKY.replace("  sky:", "  sea-line:"))).is_ok());
         let err = DesignSystem::parse(
             &small()
                 .replace(

@@ -865,6 +865,26 @@ mod tests {
     }
 
     #[test]
+    fn a_container_ground_is_ambient_for_a_tone_but_never_for_a_status() {
+        // a layer sets a tone's ground and carries no text; a dot sets a status's ground and
+        // carries none either; muted text floats with no ground of its own
+        let css = ".layer { background: var(--mj-tone-bg); }\n.dot { background: var(--mj-status-bg); }\n.note { color: var(--mj-muted); }";
+        let report = measure(design(), &[("fixture.css".into(), css.into())]);
+        let pairs: Vec<(&str, &str)> = report
+            .pairs
+            .iter()
+            .map(|p| (p.foreground.as_str(), p.ground.as_str()))
+            .collect();
+        assert!(pairs.contains(&("muted", "tone-violet-bg")), "{pairs:?}");
+        assert!(
+            !pairs
+                .iter()
+                .any(|(_, g)| g.starts_with("ok") || g.starts_with("bad")),
+            "{pairs:?}"
+        );
+    }
+
+    #[test]
     fn a_border_is_measured_but_not_enforced() {
         let css = ".thing { background: var(--mj-sunken); border: 1px solid var(--mj-line); }";
         let report = measure(design(), &[("fixture.css".into(), css.into())]);
