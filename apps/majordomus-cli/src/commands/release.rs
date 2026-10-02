@@ -224,6 +224,7 @@ fn severity_word(severity: Severity) -> &'static str {
     match severity {
         Severity::Error => "ERROR  ",
         Severity::Warning => "WARNING",
+        Severity::Note => "NOTE   ",
     }
 }
 

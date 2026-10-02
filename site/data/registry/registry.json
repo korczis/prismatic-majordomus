@@ -6,23 +6,23 @@
     "version": "0.11.0"
   },
   "registry": {
-    "fingerprint": "35ee23d3b517ce9df79ee5e2f57ff49d22e8231c2279006395c33f3f574ab03f",
+    "fingerprint": "5855a12213de329d3505a42969ae227ab1d714f3e81d6cb2d6d0dcd18812cbe0",
     "summary": {
-      "total": 1764,
+      "total": 1765,
       "builtin": 156,
-      "declarative": 1608,
+      "declarative": 1609,
       "by_kind": {
         "command": 20,
         "query": 136,
-        "resource": 1608
+        "resource": 1609
       },
       "by_stability": {
         "behaviorally_verified": 114,
         "experimental": 34,
-        "implemented": 1616
+        "implemented": 1617
       },
       "mcp_tools": 150,
-      "mcp_resources": 1656,
+      "mcp_resources": 1657,
       "http_routes": 154,
       "cli_commands": 78,
       "modules": 76,
@@ -48776,11 +48776,11 @@
                 "properties": {
                   "id": {
                     "type": "string",
-                    "description": "`tag-without-record`, `record-without-tag`, `tag-commit-mismatch`."
+                    "description": "`tag-without-record`, `tag-predates-records`, `record-without-tag`,\n`tag-commit-mismatch`."
                   },
                   "severity": {
                     "$ref": "#/$defs/ReleaseSeverity",
-                    "description": "Whether it stops a release or only warns."
+                    "description": "Whether it stops a release, only warns, or only informs."
                   },
                   "message": {
                     "type": "string",
@@ -48805,9 +48805,14 @@
                     "type": "string",
                     "const": "warning",
                     "description": "The plan stands, and something is still wrong."
+                  },
+                  {
+                    "type": "string",
+                    "const": "note",
+                    "description": "Nothing is wrong; the reader is told something about the release state anyway."
                   }
                 ],
-                "description": "How much a diagnostic matters.\n\nAn error says the plan itself cannot be trusted and blocks the verdict; a warning says\nsomething about the release state is wrong and the verdict stands anyway.\n\n```\nuse majordomus_cli::release::compat::Severity;\nassert_ne!(Severity::Error, Severity::Warning);\n```"
+                "description": "How much a diagnostic matters.\n\nAn error says the plan itself cannot be trusted and blocks the verdict; a warning says\nsomething about the release state is wrong and the verdict stands anyway; a note says\nsomething true and not wrong, so that the warnings keep meaning what they say.\n\n```\nuse majordomus_cli::release::compat::Severity;\nassert_ne!(Severity::Error, Severity::Warning);\nassert_ne!(Severity::Warning, Severity::Note);\n```"
               }
             }
           }
@@ -60872,7 +60877,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 319,
+        "capabilities": 320,
         "capability_ids": []
       },
       {
@@ -60962,7 +60967,7 @@
     ]
   },
   "index": {
-    "fingerprint": "a878c3568db812d7ba31007681a58a1ed068dc43b3861b2f4e17579c0769cfce",
+    "fingerprint": "ec0979253ca9e78d831eefcdd4f3923a8157926ebddf79e97bc086b409f16aea",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -61012,7 +61017,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 319,
+      "test": 320,
       "use-case": 47,
       "workspace": 1
     },
@@ -77407,6 +77412,14 @@
         "bytes": 2671
       },
       {
+        "uri": "majordomus://test/test/cases/763_a_tag_older_than_the_record_practice_is_a_note.sh",
+        "kind": "test",
+        "identity": "test/cases/763_a_tag_older_than_the_record_practice_is_a_note.sh",
+        "path": "test/cases/763_a_tag_older_than_the_record_practice_is_a_note.sh",
+        "source_class": "case",
+        "bytes": 5847
+      },
+      {
         "uri": "majordomus://test/test/cases/76_capabilities_projections.sh",
         "kind": "test",
         "identity": "test/cases/76_capabilities_projections.sh",
@@ -78603,7 +78616,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 319
+      "objects": 320
     },
     {
       "name": "use-case",
