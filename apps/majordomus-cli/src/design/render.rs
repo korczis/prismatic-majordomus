@@ -650,6 +650,19 @@ mod tests {
     }
 
     #[test]
+    fn a_declaration_without_tones_has_no_tones_section_and_one_with_them_lists_each() {
+        let mut d = design();
+        let with = reference_markdown(&d);
+        for name in d.tones.keys() {
+            assert!(with.contains(&format!("| `.mj-tone--{name}` |")), "{name}");
+        }
+        d.tones = Default::default();
+        let without = reference_markdown(&d);
+        assert!(!without.contains("## Tones"));
+        assert!(without.contains("## Layout, radius, motion"));
+    }
+
+    #[test]
     fn the_inline_block_answers_dark_by_media_and_by_class() {
         let css = tokens_css(&design());
         assert!(css.contains("@media (prefers-color-scheme: dark)"));
