@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 71,
+      "count": 72,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 148,
+      "count": 149,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 71
+      "count": 72
     },
     {
       "kind": "application",
@@ -69,7 +69,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 207
+      "count": 209
     },
     {
       "kind": "command",
@@ -109,7 +109,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 290
+      "count": 292
     },
     {
       "kind": "feature",
@@ -205,7 +205,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 148
+      "count": 149
     },
     {
       "kind": "scope",
@@ -245,7 +245,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 303
+      "count": 304
     },
     {
       "kind": "use-case",
@@ -342,6 +342,13 @@
           "label": "adr-0067",
           "kind": "adr",
           "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0103",
+          "kind": "adr",
+          "route": "/adrs/adr-0103/",
           "external": false
         }
       ]
@@ -1286,6 +1293,13 @@
           "label": "adr-0098",
           "kind": "adr",
           "route": "/adrs/adr-0098/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0103",
+          "kind": "adr",
+          "route": "/adrs/adr-0103/",
           "external": false
         }
       ]
@@ -4874,6 +4888,89 @@
       "referenced_by": []
     },
     {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0103",
+      "identity": "adr-0103",
+      "slug": "adr-0103",
+      "cockpit": "/cockpit/objects/adr/adr-0103",
+      "title": "Every client gets an episode, and every provider capability cites its evidence",
+      "status": "proposed",
+      "tags": [
+        "architecture",
+        "session",
+        "providers",
+        "mcp",
+        "governance"
+      ],
+      "source": ".ai/repo/adrs/0103-every-client-gets-an-episode-and-every-provider-capability-cites-its-evidence.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/episodes.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/providers.yaml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0003",
+          "kind": "adr",
+          "route": "/adrs/adr-0003/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0024",
+          "kind": "adr",
+          "route": "/adrs/adr-0024/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "connection-episode",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "provider-capability-evidence",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/capture.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.a-provider-capability-cites-its-evidence@1",
+          "kind": "rule",
+          "route": "/rules/project-a-provider-capability-cites-its-evidence-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/200_generic_mcp_episode.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
       "kind": "rule",
       "id": "majordomus://rule/majordomus.adr-integrity@1",
       "identity": "majordomus.adr-integrity@1",
@@ -7553,6 +7650,47 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.a-provider-capability-cites-its-evidence@1",
+      "identity": "project.a-provider-capability-cites-its-evidence@1",
+      "slug": "project-a-provider-capability-cites-its-evidence-1",
+      "cockpit": "/cockpit/objects/rule/project-a-provider-capability-cites-its-evidence-1",
+      "title": "A provider capability is declared once, with the citation it was verified from",
+      "status": "active",
+      "tags": [
+        "providers",
+        "session",
+        "capability",
+        "evidence"
+      ],
+      "source": ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.empty-is-not-failure@1",
+          "kind": "rule",
+          "route": "/rules/project-empty-is-not-failure-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.interfaces-are-projections@1",
+          "kind": "rule",
+          "route": "/rules/project-interfaces-are-projections-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0103",
+          "kind": "adr",
+          "route": "/adrs/adr-0103/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
       "identity": "project.a-tool-that-cannot-match-the-tree-refuses@1",
       "slug": "project-a-tool-that-cannot-match-the-tree-refuses-1",
@@ -8615,6 +8753,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.a-provider-capability-cites-its-evidence@1",
+          "kind": "rule",
+          "route": "/rules/project-a-provider-capability-cites-its-evidence-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.a-verdict-states-its-subject@1",
           "kind": "rule",
           "route": "/rules/project-a-verdict-states-its-subject-1/",
@@ -9563,6 +9708,13 @@
           "label": "project.a-diagram-is-drawn-not-typed@1",
           "kind": "rule",
           "route": "/rules/project-a-diagram-is-drawn-not-typed-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-provider-capability-cites-its-evidence@1",
+          "kind": "rule",
+          "route": "/rules/project-a-provider-capability-cites-its-evidence-1/",
           "external": false
         },
         {

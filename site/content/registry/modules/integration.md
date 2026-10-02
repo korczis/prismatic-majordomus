@@ -1,7 +1,7 @@
 +++
 title = "Pull-request integration"
 description = "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network."
-weight = 23
+weight = 24
 slug = "integration"
 [extra]
 id = "integration"

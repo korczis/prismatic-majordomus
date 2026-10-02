@@ -47,6 +47,7 @@ pub(crate) mod distribution;
 pub mod economics;
 pub mod entity;
 pub mod environment;
+pub(crate) mod episodes;
 pub mod evidence;
 pub(crate) mod executions;
 pub mod gates;
@@ -111,6 +112,7 @@ pub use distribution::{
     ReleaseArtifactInput, ReleaseArtifactView, ReleaseView, ReleasesReport, TargetView,
 };
 pub use environment::{EnvironmentInput, EnvironmentProvenance, ExplainInput, ENVIRONMENT_URI};
+pub use episodes::{AttachInput, DetachInput, EpisodeList};
 pub use executions::{
     CancelReport, EventHistory, ExecutionLinks, ExecutionList, ExecutionView, ProtocolReport,
     EXECUTIONS_URI, EXECUTION_PROTOCOL_URI,
@@ -181,6 +183,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         mesh,
         models,
         reasoning,
+        episodes,
         peers,
         server,
         session_domain,
