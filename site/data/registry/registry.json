@@ -6,7 +6,7 @@
     "version": "0.11.0"
   },
   "registry": {
-    "fingerprint": "d62eb42db9fb0507d922bbe3c7be59a72aca65fa54d320dd003dd85833b5c635",
+    "fingerprint": "970d64200105f22b733fdf6b455ae482a9acd03aeb15776b934cffeda2d7a09f",
     "summary": {
       "total": 1825,
       "builtin": 166,
@@ -18456,7 +18456,7 @@
             "required": [
               "external_id"
             ],
-            "description": "The input of `episodes.attach`: which piece of work this connection is carrying.",
+            "description": "The input of `episodes.attach`: which piece of work this connection is carrying.\n\nThe identity is the only field, and an unknown one is refused rather than ignored, so a\nclient that sends a peer id under another name learns it at once:\n\n```\nuse majordomus_cli::capability::builtin::episodes::AttachInput;\nlet input: AttachInput = serde_json::from_str(r#\"{\"external_id\":\"conv-42\"}\"#).unwrap();\nassert_eq!(input.external_id, \"conv-42\");\nassert!(serde_json::from_str::<AttachInput>(r#\"{\"external_id\":\"x\",\"peer\":\"p1\"}\"#).is_err());\nassert!(serde_json::from_str::<AttachInput>(\"{}\").is_err(), \"the identity is required\");\n```",
             "title": "AttachInput"
           }
         },
@@ -18485,7 +18485,7 @@
               "resumed",
               "reattach_grace_seconds"
             ],
-            "description": "The answer of `episodes.attach`.",
+            "description": "The answer of `episodes.attach`: the episode the connection now holds, whether it was\nresumed rather than opened, and how long it outlives a lost connection.\n\n```\nuse majordomus_cli::capability::builtin::episodes::Attached;\nlet schema = serde_json::to_value(schemars::schema_for!(Attached)).unwrap();\nfor field in [\"episode\", \"resumed\", \"reattach_grace_seconds\"] {\n    assert!(schema[\"required\"].as_array().unwrap().iter().any(|f| f == field), \"{field}\");\n}\n```",
             "title": "Attached",
             "$defs": {
               "ConnectionEpisode": {
@@ -18544,7 +18544,7 @@
                   "state",
                   "repository"
                 ],
-                "description": "One episode: what the client calls itself, which connection holds it now, and what the\nrepository did about it."
+                "description": "One episode: what the client calls itself, which connection holds it now, and what the\nrepository did about it.\n\n```\nuse majordomus_cli::episodes::{ConnectionEpisode, EpisodeBoard};\nuse majordomus_cli::peers::{PeerBoard, Transport};\nlet peer = PeerBoard::new().attach(Transport::Http);\nlet (episode, _) = EpisodeBoard::new().attach(&peer, \"conv-42\", \"generic\");\nlet episode: ConnectionEpisode = episode;\nassert_eq!((episode.external_id.as_str(), episode.provider.as_str()), (\"conv-42\", \"generic\"));\nassert_eq!(episode.peer.as_ref(), Some(&peer));\n// never empty: a board with no repository behind it says so\nassert!(episode.repository.contains(\"without a driver\"));\n```"
               },
               "PeerId": {
                 "type": "string",
@@ -18563,7 +18563,7 @@
                     "description": "The connection has gone; the episode is kept for `REATTACH_GRACE` so the client\ncan come back to it. This is the state a crash lands in, and the one a reconnect\nrecovers from."
                   }
                 ],
-                "description": "Where an episode stands."
+                "description": "Where an episode stands: held by a live connection, or waiting for its client to come\nback. There is no closed state, because a closed episode leaves the board; what survives\nit is the repository's own record.\n\n```\nuse majordomus_cli::episodes::{ConnectionEpisodeState, EpisodeBoard};\nuse majordomus_cli::peers::{PeerBoard, Transport};\nlet peer = PeerBoard::new().attach(Transport::Stdio);\nlet board = EpisodeBoard::new();\nassert_eq!(board.attach(&peer, \"w\", \"generic\").0.state, ConnectionEpisodeState::Open);\nassert_eq!(board.detach(&peer)[0].state, ConnectionEpisodeState::Detached);\nassert_eq!(serde_json::to_string(&ConnectionEpisodeState::Detached).unwrap(), \"\\\"detached\\\"\");\n```"
               }
             }
           }
@@ -18607,7 +18607,7 @@
         "module": "episodes",
         "kind": "command",
         "title": "Close this connection's episode",
-        "description": "Close an execution episode deliberately: the work is done, not merely interrupted, and the repository's record says so. Without 'external_id' it is whichever episode the calling connection holds. A client that simply goes away does not need this — its episode detaches and the reaper closes it as interrupted — and the difference between those two records is the one thing about an ended episode that changes what somebody does next.",
+        "description": "Close an execution episode deliberately: the work is done, not merely interrupted, and the repository's record says so. Without 'external_id' it is whichever episode the calling connection holds, which needs an MCP session: over plain HTTP there is no connection, so the call is refused and the episode must be named. A client that simply goes away does not need this — its episode detaches and the reaper closes it as interrupted — and the difference between those two records is the one thing about an ended episode that changes what somebody does next.",
         "input": {
           "name": "DetachInput",
           "schema": {
@@ -18622,7 +18622,7 @@
                 "description": "The episode to close. Omitted, it is whichever one this connection holds, which is\nwhat a client ending its own sitting means."
               }
             },
-            "description": "The input of `episodes.detach`: the episode to close.",
+            "description": "The input of `episodes.detach`: the episode to close.\n\nEmpty is a valid input, meaning the episode the calling connection holds; over an\ninterface with no connection that input is refused, since there is nothing to take\n\"this one's episode\" from.\n\n```\nuse majordomus_cli::capability::builtin::episodes::DetachInput;\nlet mine: DetachInput = serde_json::from_str(\"{}\").unwrap();\nassert!(mine.external_id.is_none());\nlet named: DetachInput = serde_json::from_str(r#\"{\"external_id\":\"conv-42\"}\"#).unwrap();\nassert_eq!(named.external_id.as_deref(), Some(\"conv-42\"));\nassert_eq!(serde_json::to_string(&mine).unwrap(), \"{}\", \"an omitted id is not written as null\");\n```",
             "title": "DetachInput"
           }
         },
@@ -18639,7 +18639,7 @@
             "required": [
               "episode"
             ],
-            "description": "The answer of `episodes.detach`.",
+            "description": "The answer of `episodes.detach`: the episode as it was closed, no longer held by any\nconnection, with what the repository's end event reported.\n\n```\nuse majordomus_cli::capability::builtin::episodes::Detached;\nlet schema = serde_json::to_value(schemars::schema_for!(Detached)).unwrap();\nassert_eq!(schema[\"required\"], serde_json::json!([\"episode\"]));\n```",
             "title": "Detached",
             "$defs": {
               "ConnectionEpisode": {
@@ -18698,7 +18698,7 @@
                   "state",
                   "repository"
                 ],
-                "description": "One episode: what the client calls itself, which connection holds it now, and what the\nrepository did about it."
+                "description": "One episode: what the client calls itself, which connection holds it now, and what the\nrepository did about it.\n\n```\nuse majordomus_cli::episodes::{ConnectionEpisode, EpisodeBoard};\nuse majordomus_cli::peers::{PeerBoard, Transport};\nlet peer = PeerBoard::new().attach(Transport::Http);\nlet (episode, _) = EpisodeBoard::new().attach(&peer, \"conv-42\", \"generic\");\nlet episode: ConnectionEpisode = episode;\nassert_eq!((episode.external_id.as_str(), episode.provider.as_str()), (\"conv-42\", \"generic\"));\nassert_eq!(episode.peer.as_ref(), Some(&peer));\n// never empty: a board with no repository behind it says so\nassert!(episode.repository.contains(\"without a driver\"));\n```"
               },
               "PeerId": {
                 "type": "string",
@@ -18717,7 +18717,7 @@
                     "description": "The connection has gone; the episode is kept for `REATTACH_GRACE` so the client\ncan come back to it. This is the state a crash lands in, and the one a reconnect\nrecovers from."
                   }
                 ],
-                "description": "Where an episode stands."
+                "description": "Where an episode stands: held by a live connection, or waiting for its client to come\nback. There is no closed state, because a closed episode leaves the board; what survives\nit is the repository's own record.\n\n```\nuse majordomus_cli::episodes::{ConnectionEpisodeState, EpisodeBoard};\nuse majordomus_cli::peers::{PeerBoard, Transport};\nlet peer = PeerBoard::new().attach(Transport::Stdio);\nlet board = EpisodeBoard::new();\nassert_eq!(board.attach(&peer, \"w\", \"generic\").0.state, ConnectionEpisodeState::Open);\nassert_eq!(board.detach(&peer)[0].state, ConnectionEpisodeState::Detached);\nassert_eq!(serde_json::to_string(&ConnectionEpisodeState::Detached).unwrap(), \"\\\"detached\\\"\");\n```"
               }
             }
           }
@@ -18812,7 +18812,7 @@
               "detached",
               "episodes"
             ],
-            "description": "The answer of `episodes.list`.",
+            "description": "The answer of `episodes.list`: every episode this server holds, counted by state, and the\none the caller holds. In memory only — it is the association between live connections and\nthe repository's records, which stops being true when the process stops.\n\nThe two counts partition the list, and `mine` is left out of the JSON rather than written\nas `null` when the caller holds nothing, which is always so over plain HTTP:\n\n```\nuse majordomus_cli::capability::builtin::episodes::EpisodeList;\nlet none = EpisodeList { open: 0, detached: 0, episodes: vec![], mine: None };\nlet json = serde_json::to_value(&none).unwrap();\nassert_eq!(json, serde_json::json!({\"open\": 0, \"detached\": 0, \"episodes\": []}));\nlet back: EpisodeList = serde_json::from_value(json).unwrap();\nassert_eq!(back.open + back.detached, back.episodes.len());\n```",
             "title": "EpisodeList",
             "$defs": {
               "ConnectionEpisode": {
@@ -18871,7 +18871,7 @@
                   "state",
                   "repository"
                 ],
-                "description": "One episode: what the client calls itself, which connection holds it now, and what the\nrepository did about it."
+                "description": "One episode: what the client calls itself, which connection holds it now, and what the\nrepository did about it.\n\n```\nuse majordomus_cli::episodes::{ConnectionEpisode, EpisodeBoard};\nuse majordomus_cli::peers::{PeerBoard, Transport};\nlet peer = PeerBoard::new().attach(Transport::Http);\nlet (episode, _) = EpisodeBoard::new().attach(&peer, \"conv-42\", \"generic\");\nlet episode: ConnectionEpisode = episode;\nassert_eq!((episode.external_id.as_str(), episode.provider.as_str()), (\"conv-42\", \"generic\"));\nassert_eq!(episode.peer.as_ref(), Some(&peer));\n// never empty: a board with no repository behind it says so\nassert!(episode.repository.contains(\"without a driver\"));\n```"
               },
               "PeerId": {
                 "type": "string",
@@ -18890,7 +18890,7 @@
                     "description": "The connection has gone; the episode is kept for `REATTACH_GRACE` so the client\ncan come back to it. This is the state a crash lands in, and the one a reconnect\nrecovers from."
                   }
                 ],
-                "description": "Where an episode stands."
+                "description": "Where an episode stands: held by a live connection, or waiting for its client to come\nback. There is no closed state, because a closed episode leaves the board; what survives\nit is the repository's own record.\n\n```\nuse majordomus_cli::episodes::{ConnectionEpisodeState, EpisodeBoard};\nuse majordomus_cli::peers::{PeerBoard, Transport};\nlet peer = PeerBoard::new().attach(Transport::Stdio);\nlet board = EpisodeBoard::new();\nassert_eq!(board.attach(&peer, \"w\", \"generic\").0.state, ConnectionEpisodeState::Open);\nassert_eq!(board.detach(&peer)[0].state, ConnectionEpisodeState::Detached);\nassert_eq!(serde_json::to_string(&ConnectionEpisodeState::Detached).unwrap(), \"\\\"detached\\\"\");\n```"
               }
             }
           }
@@ -43149,7 +43149,7 @@
                   "prompts",
                   "prompts_evidence"
                 ],
-                "description": "What one provider can do about the session lifecycle, and where that was verified.\n\n**Every cell carries its evidence.** A capability asserted with no citation is the defect\nthis type exists to make impossible: before it, a provider absent from a shell table was\nsilently unsupported and a provider present in one was silently capable, and no surface\ncould tell a reader which vendor page either answer came from — `capture status`\nenumerated the one provider that had an adapter and said nothing whatever about the\nother five this distribution declares. The rule\n`project.a-provider-capability-cites-its-evidence` refuses a declaration without one."
+                "description": "What one provider can do about the session lifecycle, and where that was verified.\n\n**Every cell carries its evidence.** A capability asserted with no citation is the defect\nthis type exists to make impossible: before it, a provider absent from a shell table was\nsilently unsupported and a provider present in one was silently capable, and no surface\ncould tell a reader which vendor page either answer came from — `capture status`\nenumerated the one provider that had an adapter and said nothing whatever about the\nother five this distribution declares. The rule\n`project.a-provider-capability-cites-its-evidence` refuses a declaration without one.\n\nA provider that declares nothing is `none` on both axes with empty evidence — the state\nthat rule refuses, so the gap is a finding rather than a silent \"unsupported\":\n\n```\nuse majordomus_cli::share::{EpisodeSource, PromptSource, ProviderOffers};\nlet undeclared = ProviderOffers::default();\nassert_eq!((undeclared.episode, undeclared.prompts), (EpisodeSource::None, PromptSource::None));\nassert!(undeclared.episode_evidence.is_empty() && undeclared.prompts_evidence.is_empty());\nlet generic: ProviderOffers = serde_json::from_value(serde_json::json!({\n    \"episode\": \"connection\", \"episode_evidence\": \"ADR 0103\",\n    \"prompts\": \"none\", \"prompts_evidence\": \"MCP carries no prompt\",\n})).unwrap();\nassert_eq!(generic.episode, EpisodeSource::Connection);\n```"
               },
               "EpisodeSource": {
                 "oneOf": [
@@ -43169,7 +43169,7 @@
                     "description": "Neither. Nothing can say when this provider's episode began or ended, and the tool\nreports that rather than implying a capability nobody has."
                   }
                 ],
-                "description": "How an episode boundary can be drawn for one provider.\n\nThree words, because three things are true of different providers and collapsing them\ninto \"supported / not supported\" is what let this tool report one provider and stay\nsilent about five others. A provider that fires its own events is not the same as one\nthat fires none but speaks MCP, and neither is the same as one that can do nothing."
+                "description": "How an episode boundary can be drawn for one provider.\n\nThree words, because three things are true of different providers and collapsing them\ninto \"supported / not supported\" is what let this tool report one provider and stay\nsilent about five others. A provider that fires its own events is not the same as one\nthat fires none but speaks MCP, and neither is the same as one that can do nothing.\n\nThe words are the declaration's own, and a word outside them is refused rather than read\nas `none`:\n\n```\nuse majordomus_cli::share::EpisodeSource;\nlet read: EpisodeSource = serde_json::from_str(\"\\\"connection\\\"\").unwrap();\nassert_eq!(read, EpisodeSource::Connection);\nassert_eq!(EpisodeSource::default(), EpisodeSource::None, \"undeclared reads as none\");\nassert!(serde_json::from_str::<EpisodeSource>(\"\\\"hook\\\"\").is_err(), \"hooks, plural\");\n```"
               },
               "PromptSource": {
                 "oneOf": [
@@ -43184,7 +43184,7 @@
                     "description": "It does not. Nothing this tool can do makes the prompt observable."
                   }
                 ],
-                "description": "Whether the person's raw prompt can be captured below the model for one provider.\n\nThere is no `connection` here and there must not be: an MCP server is handed tool calls,\nnever the prompt that produced them. Prompt capture is provider-specific and the\ndeclaration says so rather than pretending the connection can stand in for it."
+                "description": "Whether the person's raw prompt can be captured below the model for one provider.\n\nThere is no `connection` here and there must not be: an MCP server is handed tool calls,\nnever the prompt that produced them. Prompt capture is provider-specific and the\ndeclaration says so rather than pretending the connection can stand in for it.\n\n```\nuse majordomus_cli::share::PromptSource;\nassert_eq!(serde_json::from_str::<PromptSource>(\"\\\"hook\\\"\").unwrap(), PromptSource::Hook);\nassert!(serde_json::from_str::<PromptSource>(\"\\\"connection\\\"\").is_err(),\n        \"no connection can observe a prompt\");\nassert_eq!(PromptSource::default(), PromptSource::None);\n```"
               }
             }
           }
@@ -55855,7 +55855,7 @@
               "standing",
               "findings"
             ],
-            "description": "One skill with everything derived about it.\n\n```\nuse majordomus_cli::skill::{SkillStanding, SkillStatus};\n// the standing is the one field a listing sorts attention by\nfn attention(s: &SkillStatus) -> bool { s.standing == SkillStanding::Orphan }\nlet _ = attention;\n```",
+            "description": "One skill with everything derived about it.\n\n```\nuse majordomus_cli::skill::SkillStatus;\n// every fact is always present in the answer, so a client never has to tell \"absent\"\n// from \"false\"; only the provenance is optional\nlet schema = serde_json::to_value(schemars::schema_for!(SkillStatus)).unwrap();\nlet required = schema[\"required\"].as_array().unwrap();\nfor field in [\"id\", \"valid\", \"tested\", \"documented\", \"enforced\", \"used\", \"standing\"] {\n    assert!(required.iter().any(|f| f == field), \"{field}\");\n}\nassert!(!required.iter().any(|f| f == \"provenance\"));\n```",
             "title": "SkillStatus",
             "$defs": {
               "SkillProvenance": {
@@ -56383,7 +56383,7 @@
                   "standing",
                   "findings"
                 ],
-                "description": "One skill with everything derived about it.\n\n```\nuse majordomus_cli::skill::{SkillStanding, SkillStatus};\n// the standing is the one field a listing sorts attention by\nfn attention(s: &SkillStatus) -> bool { s.standing == SkillStanding::Orphan }\nlet _ = attention;\n```"
+                "description": "One skill with everything derived about it.\n\n```\nuse majordomus_cli::skill::SkillStatus;\n// every fact is always present in the answer, so a client never has to tell \"absent\"\n// from \"false\"; only the provenance is optional\nlet schema = serde_json::to_value(schemars::schema_for!(SkillStatus)).unwrap();\nlet required = schema[\"required\"].as_array().unwrap();\nfor field in [\"id\", \"valid\", \"tested\", \"documented\", \"enforced\", \"used\", \"standing\"] {\n    assert!(required.iter().any(|f| f == field), \"{field}\");\n}\nassert!(!required.iter().any(|f| f == \"provenance\"));\n```"
               },
               "SkillProvenance": {
                 "type": "object",
@@ -62974,7 +62974,12 @@
           "episodes.detach",
           "episodes.list"
         ],
-        "source_path": "apps/majordomus-cli/src/capability/builtin/episodes.rs"
+        "source_path": "apps/majordomus-cli/src/capability/builtin/episodes.rs",
+        "rustdoc": {
+          "surface": "rustdoc",
+          "module": "majordomus_cli::capability::builtin::episodes",
+          "path": "majordomus_cli/capability/builtin/episodes/index.html"
+        }
       },
       {
         "id": "evidence",
@@ -63716,7 +63721,7 @@
     ]
   },
   "index": {
-    "fingerprint": "9f4b055e4d7221c4938165c61e5816cc9fbe999e0db7aa4e717db165a3aa0769",
+    "fingerprint": "32ecf641cc0478f10265fe278014b232b252479cca0a2a6278f6714aecce1d0a",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -71774,7 +71779,7 @@
         "identity": "lib/usecase.sh",
         "path": "lib/usecase.sh",
         "source_class": "library",
-        "bytes": 68493
+        "bytes": 68880
       },
       {
         "uri": "majordomus://implementation/lib/watch.sh",
@@ -79086,7 +79091,7 @@
         "identity": "test/cases/200_generic_mcp_episode.sh",
         "path": "test/cases/200_generic_mcp_episode.sh",
         "source_class": "case",
-        "bytes": 16846
+        "bytes": 16798
       },
       {
         "uri": "majordomus://test/test/cases/20_checkpoint.sh",
@@ -79630,7 +79635,7 @@
         "identity": "test/cases/362_a_release_follows_the_ci_verdict.sh",
         "path": "test/cases/362_a_release_follows_the_ci_verdict.sh",
         "source_class": "case",
-        "bytes": 5518
+        "bytes": 5495
       },
       {
         "uri": "majordomus://test/test/cases/365_new_shell_is_refused.sh",
@@ -79742,7 +79747,7 @@
         "identity": "test/cases/391_skills_are_proven_capabilities.sh",
         "path": "test/cases/391_skills_are_proven_capabilities.sh",
         "source_class": "case",
-        "bytes": 9394
+        "bytes": 9489
       },
       {
         "uri": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
@@ -80374,7 +80379,7 @@
         "identity": "test/cases/620_mcp_tools_are_invoked_and_answer.sh",
         "path": "test/cases/620_mcp_tools_are_invoked_and_answer.sh",
         "source_class": "case",
-        "bytes": 19273
+        "bytes": 20057
       },
       {
         "uri": "majordomus://test/test/cases/623_a_ref_verdict_needs_the_refs.sh",
@@ -80686,7 +80691,7 @@
         "identity": "test/cases/760_the_cockpit_route_table_is_what_it_serves.sh",
         "path": "test/cases/760_the_cockpit_route_table_is_what_it_serves.sh",
         "source_class": "case",
-        "bytes": 2671
+        "bytes": 2689
       },
       {
         "uri": "majordomus://test/test/cases/763_a_tag_older_than_the_record_practice_is_a_note.sh",
@@ -80710,7 +80715,7 @@
         "identity": "test/cases/777_a_recorded_scenario_does_not_depend_on_the_recorder.sh",
         "path": "test/cases/777_a_recorded_scenario_does_not_depend_on_the_recorder.sh",
         "source_class": "case",
-        "bytes": 5833
+        "bytes": 6404
       },
       {
         "uri": "majordomus://test/test/cases/77_rust_evidence.sh",
@@ -108842,7 +108847,7 @@
         "name": "majordomus_session_detach",
         "id": "episodes.detach",
         "title": "Close this connection's episode",
-        "description": "Close an execution episode deliberately: the work is done, not merely interrupted, and the repository's record says so. Without 'external_id' it is whichever episode the calling connection holds. A client that simply goes away does not need this — its episode detaches and the reaper closes it as interrupted — and the difference between those two records is the one thing about an ended episode that changes what somebody does next.",
+        "description": "Close an execution episode deliberately: the work is done, not merely interrupted, and the repository's record says so. Without 'external_id' it is whichever episode the calling connection holds, which needs an MCP session: over plain HTTP there is no connection, so the call is refused and the episode must be named. A client that simply goes away does not need this — its episode detaches and the reaper closes it as interrupted — and the difference between those two records is the one thing about an ended episode that changes what somebody does next.",
         "kind": "command",
         "read_only": false,
         "input": "DetachInput",

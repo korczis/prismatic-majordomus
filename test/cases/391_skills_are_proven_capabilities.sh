@@ -11,7 +11,7 @@
 # this case among its tests, and no active skill is left out of the line.
 . "$ROOT/test/lib.sh"
 RB="$(rust_bin)" || rust_bin_exit $?
-command -v jq >/dev/null || { echo "    skip: jq absent"; exit 0; }
+command -v jq >/dev/null || skip "jq absent"
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 MAJORDOMUS_BIN="$RB"; export MAJORDOMUS_BIN
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj391.XXXXXX")"; trap 'rm -rf "$S"' EXIT
@@ -81,8 +81,10 @@ printf 'majordomus://skill/alpha\n' > .ai/repo/workflows/uses-alpha.md
 printf 'true\n' > test/cases/01_alpha.sh; commit "no test names alpha"
 verify; has fail:untested; lacks fail:unused
 expect_exit 10 "$RB" skills verify
-# a marker written as data binds nothing
-printf "cat > fixture.sh <<'FIXTURE'\n%s alpha\nFIXTURE\n" "$M" > test/cases/01_alpha.sh; commit "a marker as data"
+# a marker written as data binds nothing; the terminator is a printf argument so that this line
+# does not read as an unclosed heredoc to case 413's scan
+printf "cat > fixture.sh <<'%s'\n%s alpha\n%s\n" FIXTURE "$M" FIXTURE > test/cases/01_alpha.sh
+commit "a marker as data"
 verify; has fail:untested
 
 # ---------------------------------------------------------------- bindings to nothing

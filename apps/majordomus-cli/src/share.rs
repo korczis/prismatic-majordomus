@@ -292,6 +292,17 @@ fn offers_of(e: &ProviderOffersEntry) -> ProviderOffers {
 /// into "supported / not supported" is what let this tool report one provider and stay
 /// silent about five others. A provider that fires its own events is not the same as one
 /// that fires none but speaks MCP, and neither is the same as one that can do nothing.
+///
+/// The words are the declaration's own, and a word outside them is refused rather than read
+/// as `none`:
+///
+/// ```
+/// use majordomus_cli::share::EpisodeSource;
+/// let read: EpisodeSource = serde_json::from_str("\"connection\"").unwrap();
+/// assert_eq!(read, EpisodeSource::Connection);
+/// assert_eq!(EpisodeSource::default(), EpisodeSource::None, "undeclared reads as none");
+/// assert!(serde_json::from_str::<EpisodeSource>("\"hook\"").is_err(), "hooks, plural");
+/// ```
 #[derive(
     Debug,
     Clone,
@@ -318,7 +329,15 @@ pub enum EpisodeSource {
 }
 
 impl EpisodeSource {
-    /// The word as the declaration writes it.
+    /// The word as the declaration writes it, which is also how it serialises; `capture
+    /// status` prints it beside the evidence that backs it.
+    ///
+    /// ```
+    /// use majordomus_cli::share::EpisodeSource;
+    /// for s in [EpisodeSource::Hooks, EpisodeSource::Connection, EpisodeSource::None] {
+    ///     assert_eq!(serde_json::to_string(&s).unwrap(), format!("\"{}\"", s.as_str()));
+    /// }
+    /// ```
     pub fn as_str(self) -> &'static str {
         match self {
             EpisodeSource::Hooks => "hooks",
@@ -333,6 +352,14 @@ impl EpisodeSource {
 /// There is no `connection` here and there must not be: an MCP server is handed tool calls,
 /// never the prompt that produced them. Prompt capture is provider-specific and the
 /// declaration says so rather than pretending the connection can stand in for it.
+///
+/// ```
+/// use majordomus_cli::share::PromptSource;
+/// assert_eq!(serde_json::from_str::<PromptSource>("\"hook\"").unwrap(), PromptSource::Hook);
+/// assert!(serde_json::from_str::<PromptSource>("\"connection\"").is_err(),
+///         "no connection can observe a prompt");
+/// assert_eq!(PromptSource::default(), PromptSource::None);
+/// ```
 #[derive(
     Debug,
     Clone,
@@ -354,7 +381,13 @@ pub enum PromptSource {
 }
 
 impl PromptSource {
-    /// The word as the declaration writes it.
+    /// The word as the declaration writes it, which is also how it serialises.
+    ///
+    /// ```
+    /// use majordomus_cli::share::PromptSource;
+    /// assert_eq!(PromptSource::Hook.as_str(), "hook");
+    /// assert_eq!(serde_json::to_string(&PromptSource::None).unwrap(), "\"none\"");
+    /// ```
     pub fn as_str(self) -> &'static str {
         match self {
             PromptSource::Hook => "hook",
@@ -372,6 +405,21 @@ impl PromptSource {
 /// enumerated the one provider that had an adapter and said nothing whatever about the
 /// other five this distribution declares. The rule
 /// `project.a-provider-capability-cites-its-evidence` refuses a declaration without one.
+///
+/// A provider that declares nothing is `none` on both axes with empty evidence — the state
+/// that rule refuses, so the gap is a finding rather than a silent "unsupported":
+///
+/// ```
+/// use majordomus_cli::share::{EpisodeSource, PromptSource, ProviderOffers};
+/// let undeclared = ProviderOffers::default();
+/// assert_eq!((undeclared.episode, undeclared.prompts), (EpisodeSource::None, PromptSource::None));
+/// assert!(undeclared.episode_evidence.is_empty() && undeclared.prompts_evidence.is_empty());
+/// let generic: ProviderOffers = serde_json::from_value(serde_json::json!({
+///     "episode": "connection", "episode_evidence": "ADR 0103",
+///     "prompts": "none", "prompts_evidence": "MCP carries no prompt",
+/// })).unwrap();
+/// assert_eq!(generic.episode, EpisodeSource::Connection);
+/// ```
 #[derive(
     Debug, Clone, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize, schemars::JsonSchema,
 )]

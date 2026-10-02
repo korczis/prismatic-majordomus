@@ -16,7 +16,7 @@ SRV=""; trap 'rm -rf "$S"; [ -n "$SRV" ] && kill "$SRV" 2>/dev/null' EXIT
 # the plain routes the table documents: no identifier placeholder, no query string, no assets
 awk '/^## What is on it/{on=1; next} on && /^## /{exit} on' "$ROOT/docs/COCKPIT.md" \
   | grep -oE '^\| `/cockpit[^`]*`' | sed -E 's/^\| `//; s/`$//; s/\?.*$//' \
-  | grep -v '<' | grep -v '^/cockpit/assets' | sort -u > "$S/documented.txt"
+  | grep -v '<' | grep -v '^/cockpit/assets' | LC_ALL=C sort -u > "$S/documented.txt"
 n="$(wc -l < "$S/documented.txt" | tr -d ' ')"
 [ "$n" -gt 10 ] || {
   echo "    the route table was not found in docs/COCKPIT.md ($n routes)"; exit 1; }
@@ -37,7 +37,7 @@ done < "$S/documented.txt"
 # the sidebar's area links: one segment under /cockpit, nothing after it
 curl -s -m 60 "$U/cockpit" > "$S/overview.html"
 grep -oE 'href="/cockpit(/[a-z-]+)?"' "$S/overview.html" | sed -E 's/^href="//; s/"$//' \
-  | sort -u > "$S/linked.txt"
+  | LC_ALL=C sort -u > "$S/linked.txt"
 [ -s "$S/linked.txt" ] || { echo "    the overview links to no area"; exit 1; }
 while read -r href; do
   grep -qxF "$href" "$S/documented.txt" \

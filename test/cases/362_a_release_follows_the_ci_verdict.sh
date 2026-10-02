@@ -16,7 +16,7 @@
 . "$ROOT/test/lib.sh"
 GATE="$ROOT/scripts/ci/release-verdict"
 [ -x "$GATE" ] || { echo "    scripts/ci/release-verdict is missing or not executable"; exit 1; }
-command -v jq >/dev/null 2>&1 || { echo "    skip: jq is required"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip "jq is required"
 
 # A repository with a tagged commit, so --tag resolves exactly as it does in the workflow.
 R="$T/repo"; mkdir -p "$R"

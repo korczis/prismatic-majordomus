@@ -47,7 +47,7 @@ pub(crate) mod distribution;
 pub mod economics;
 pub mod entity;
 pub mod environment;
-pub(crate) mod episodes;
+pub mod episodes;
 pub mod evidence;
 pub(crate) mod executions;
 pub mod gates;

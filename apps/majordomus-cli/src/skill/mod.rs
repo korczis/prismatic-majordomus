@@ -159,7 +159,8 @@ impl SkillEvidence {
         matches!(self, SkillEvidence::Proven | SkillEvidence::InputsUnchanged)
     }
 
-    /// The word every surface prints.
+    /// The word every surface prints for this evidence state: the text listing, the JSON
+    /// answer and the site page all read it here, so they cannot spell a state two ways.
     ///
     /// ```
     /// use majordomus_cli::skill::SkillEvidence;
@@ -221,7 +222,8 @@ pub enum SkillStanding {
 }
 
 impl SkillStanding {
-    /// The word every surface prints.
+    /// The word every surface prints for this standing, the same snake_case word the JSON
+    /// answer serialises, so a script filtering on it and a person reading it agree.
     ///
     /// ```
     /// use majordomus_cli::skill::SkillStanding;
@@ -404,10 +406,15 @@ pub struct SkillUsed {
 /// One skill with everything derived about it.
 ///
 /// ```
-/// use majordomus_cli::skill::{SkillStanding, SkillStatus};
-/// // the standing is the one field a listing sorts attention by
-/// fn attention(s: &SkillStatus) -> bool { s.standing == SkillStanding::Orphan }
-/// let _ = attention;
+/// use majordomus_cli::skill::SkillStatus;
+/// // every fact is always present in the answer, so a client never has to tell "absent"
+/// // from "false"; only the provenance is optional
+/// let schema = serde_json::to_value(schemars::schema_for!(SkillStatus)).unwrap();
+/// let required = schema["required"].as_array().unwrap();
+/// for field in ["id", "valid", "tested", "documented", "enforced", "used", "standing"] {
+///     assert!(required.iter().any(|f| f == field), "{field}");
+/// }
+/// assert!(!required.iter().any(|f| f == "provenance"));
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct SkillStatus {
@@ -792,7 +799,9 @@ impl Skills {
         Skills { skills, findings }
     }
 
-    /// One skill by id.
+    /// One skill by id, the directory name under `.ai/repo/skills/`; `None` only when the
+    /// repository has no skill of that name, since one the index refused is still listed,
+    /// standing `invalid`.
     ///
     /// ```
     /// use majordomus_cli::skill::Skills;
@@ -803,7 +812,8 @@ impl Skills {
         self.skills.iter().find(|s| s.id == id)
     }
 
-    /// How many findings refuse.
+    /// How many findings refuse: `skills verify` is valid only when this is zero. Warnings
+    /// are counted apart, by [`Skills::warnings`], and never make it invalid.
     ///
     /// ```
     /// use majordomus_cli::skill::Skills;
@@ -816,7 +826,8 @@ impl Skills {
             .count()
     }
 
-    /// How many findings are warnings.
+    /// How many findings are warnings: debts a skill still owes that do not refuse the
+    /// verdict, such as a partial standing. Refusals are counted by [`Skills::failures`].
     ///
     /// ```
     /// use majordomus_cli::skill::Skills;

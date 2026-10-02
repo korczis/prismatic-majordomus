@@ -104,4 +104,10 @@ grep -q 'index could not be asked' "$ROOT/lib/usecase.sh" \
 # reads "exit 0, 0s, tree <sha>", and a recorder that took 1s wrote a different catalogue
 norm="$(MJ_BIN_DIR="$ROOT/bin" MJ_LIB_DIR="$ROOT/lib" bash -c '. "$1/lib/usecase.sh" && printf "%s\n" "OK verification t-1 — true — exit 0, 7s, tree a9eff10ec68c" "OK verification t-1 — true — exit 0, 12s" | mj_uc_normalise "$2"' _ "$ROOT" "$T")"
 case "$norm" in *"7s"*|*"12s"*) echo "    a recorded duration is not masked:"; printf '%s\n' "$norm"; exit 1 ;; esac
+# and the fixture commit `session context` prints (#220) is masked, alone and with the head
+# the session opened at: a fixture's hash differs on every run, so the catalogue did too
+norm="$(MJ_BIN_DIR="$ROOT/bin" MJ_LIB_DIR="$ROOT/lib" bash -c '. "$1/lib/usecase.sh" && printf "%s\n" "- head: 02060ee" "- head: 30ae9d5 (opened at 868871e)" | mj_uc_normalise "$2"' _ "$ROOT" "$T")"
+want="$(printf '%s\n' '- head: <head>' '- head: <head> (opened at <head>)')"
+[ "$norm" = "$want" ] || {
+  echo "    the session context head is not masked:"; printf '%s\n' "$norm"; exit 1; }
 exit 0

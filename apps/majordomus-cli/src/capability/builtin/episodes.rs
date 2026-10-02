@@ -14,6 +14,16 @@
 //! is the heartbeat, losing the connection detaches rather than closes, and coming back under
 //! the same identity resumes. See [`crate::episodes`] for why a peer id cannot be that
 //! identity.
+//!
+//! ```
+//! use majordomus_cli::capability::builtin::episodes;
+//! let m = episodes::module();
+//! let ids: Vec<&str> = m.capabilities.iter().map(|e| e.capability.id.as_str()).collect();
+//! assert_eq!(ids, ["episodes.list", "episodes.attach", "episodes.detach"]);
+//! // only the listing reads; attaching and detaching are commands with an effect
+//! let reads: Vec<bool> = m.capabilities.iter().map(|e| e.capability.kind.is_read_only()).collect();
+//! assert_eq!(reads, [true, false, false]);
+//! ```
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -43,6 +53,17 @@ pub const CONNECTION_PROVIDER: &str = "generic";
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 /// The input of `episodes.attach`: which piece of work this connection is carrying.
+///
+/// The identity is the only field, and an unknown one is refused rather than ignored, so a
+/// client that sends a peer id under another name learns it at once:
+///
+/// ```
+/// use majordomus_cli::capability::builtin::episodes::AttachInput;
+/// let input: AttachInput = serde_json::from_str(r#"{"external_id":"conv-42"}"#).unwrap();
+/// assert_eq!(input.external_id, "conv-42");
+/// assert!(serde_json::from_str::<AttachInput>(r#"{"external_id":"x","peer":"p1"}"#).is_err());
+/// assert!(serde_json::from_str::<AttachInput>("{}").is_err(), "the identity is required");
+/// ```
 pub struct AttachInput {
     /// The client's own durable name for this episode — its conversation id, thread id, or
     /// whatever it calls the sitting it is in.
@@ -67,7 +88,16 @@ impl BenchmarkCases for AttachInput {
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
-/// The answer of `episodes.attach`.
+/// The answer of `episodes.attach`: the episode the connection now holds, whether it was
+/// resumed rather than opened, and how long it outlives a lost connection.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::episodes::Attached;
+/// let schema = serde_json::to_value(schemars::schema_for!(Attached)).unwrap();
+/// for field in ["episode", "resumed", "reattach_grace_seconds"] {
+///     assert!(schema["required"].as_array().unwrap().iter().any(|f| f == field), "{field}");
+/// }
+/// ```
 pub struct Attached {
     /// The episode this connection now holds.
     pub episode: ConnectionEpisode,
@@ -115,6 +145,19 @@ fn episodes_attach(ctx: &Context, input: AttachInput) -> Result<Attached, Capabi
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 /// The input of `episodes.detach`: the episode to close.
+///
+/// Empty is a valid input, meaning the episode the calling connection holds; over an
+/// interface with no connection that input is refused, since there is nothing to take
+/// "this one's episode" from.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::episodes::DetachInput;
+/// let mine: DetachInput = serde_json::from_str("{}").unwrap();
+/// assert!(mine.external_id.is_none());
+/// let named: DetachInput = serde_json::from_str(r#"{"external_id":"conv-42"}"#).unwrap();
+/// assert_eq!(named.external_id.as_deref(), Some("conv-42"));
+/// assert_eq!(serde_json::to_string(&mine).unwrap(), "{}", "an omitted id is not written as null");
+/// ```
 pub struct DetachInput {
     /// The episode to close. Omitted, it is whichever one this connection holds, which is
     /// what a client ending its own sitting means.
@@ -129,7 +172,14 @@ impl BenchmarkCases for DetachInput {
 }
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
-/// The answer of `episodes.detach`.
+/// The answer of `episodes.detach`: the episode as it was closed, no longer held by any
+/// connection, with what the repository's end event reported.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::episodes::Detached;
+/// let schema = serde_json::to_value(schemars::schema_for!(Detached)).unwrap();
+/// assert_eq!(schema["required"], serde_json::json!(["episode"]));
+/// ```
 pub struct Detached {
     /// The episode as it was closed, its `repository` field carrying what the repository's
     /// own end event reported.
@@ -140,9 +190,11 @@ fn episodes_detach(ctx: &Context, input: DetachInput) -> Result<Detached, Capabi
     let id = match input.external_id.as_deref().map(str::trim) {
         Some(id) if !id.is_empty() => id.to_string(),
         _ => {
+            // Refused, as `attach` is over the same interface: the input is well formed, and
+            // what is missing is a connection to take "this one's episode" from.
             let Some(caller) = &ctx.caller else {
-                return Err(CapabilityError::InvalidInput(
-                    "argument 'external_id' is required here: this call came through an interface with no connection, so there is no 'whichever episode this one holds'".into(),
+                return Err(CapabilityError::Refused(
+                    "detach without 'external_id' needs an MCP session: this call came through an interface with no connection, so there is no 'whichever episode this one holds'; name the episode to close".into(),
                 ));
             };
             ctx.episodes
@@ -165,7 +217,21 @@ fn episodes_detach(ctx: &Context, input: DetachInput) -> Result<Detached, Capabi
 // ---------------------------------------------------------------- episodes.list
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
-/// The answer of `episodes.list`.
+/// The answer of `episodes.list`: every episode this server holds, counted by state, and the
+/// one the caller holds. In memory only — it is the association between live connections and
+/// the repository's records, which stops being true when the process stops.
+///
+/// The two counts partition the list, and `mine` is left out of the JSON rather than written
+/// as `null` when the caller holds nothing, which is always so over plain HTTP:
+///
+/// ```
+/// use majordomus_cli::capability::builtin::episodes::EpisodeList;
+/// let none = EpisodeList { open: 0, detached: 0, episodes: vec![], mine: None };
+/// let json = serde_json::to_value(&none).unwrap();
+/// assert_eq!(json, serde_json::json!({"open": 0, "detached": 0, "episodes": []}));
+/// let back: EpisodeList = serde_json::from_value(json).unwrap();
+/// assert_eq!(back.open + back.detached, back.episodes.len());
+/// ```
 pub struct EpisodeList {
     /// How many are open — held by a connection that is still there.
     pub open: usize,
@@ -195,7 +261,16 @@ fn episodes_list(ctx: &Context, _: Empty) -> Result<EpisodeList, CapabilityError
     })
 }
 
-/// The module.
+/// The module the registry composes: one read and two commands, each declared once here and
+/// projected to HTTP and MCP; none to the command line, since a command-line call has no
+/// connection to hold an episode.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::episodes;
+/// let m = episodes::module();
+/// assert_eq!(m.id.as_str(), "episodes");
+/// assert!(m.capabilities.iter().all(|e| e.capability.id.as_str().starts_with("episodes.")));
+/// ```
 pub fn module() -> ModuleDescriptor {
     module! {
         id: "episodes",
@@ -230,7 +305,7 @@ pub fn module() -> ModuleDescriptor {
                 id: "episodes.detach",
                 kind: CapabilityKind::Command,
                 title: "Close this connection's episode",
-                description: "Close an execution episode deliberately: the work is done, not merely interrupted, and the repository's record says so. Without 'external_id' it is whichever episode the calling connection holds. A client that simply goes away does not need this — its episode detaches and the reaper closes it as interrupted — and the difference between those two records is the one thing about an ended episode that changes what somebody does next.",
+                description: "Close an execution episode deliberately: the work is done, not merely interrupted, and the repository's record says so. Without 'external_id' it is whichever episode the calling connection holds, which needs an MCP session: over plain HTTP there is no connection, so the call is refused and the episode must be named. A client that simply goes away does not need this — its episode detaches and the reaper closes it as interrupted — and the difference between those two records is the one thing about an ended episode that changes what somebody does next.",
                 input: DetachInput,
                 output: Detached,
                 stability: Stability::BehaviorallyVerified,

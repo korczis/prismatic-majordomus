@@ -44,6 +44,34 @@
 //! the person's prompt is never among them, in any version of the protocol. Prompt capture
 //! stays provider-specific, `share/providers.yaml` declares `prompts: none` for the generic
 //! provider with that reasoning written down, and no surface implies otherwise.
+//!
+//! # The lifecycle, end to end
+//!
+//! A client attaches under its own name, its connection drops, it comes back as a different
+//! peer under the same name and gets the same episode, and then it says it is done:
+//!
+//! ```
+//! use majordomus_cli::episodes::{CloseReason, ConnectionEpisodeState, EpisodeBoard};
+//! use majordomus_cli::peers::{PeerBoard, Transport};
+//!
+//! let peers = PeerBoard::new();
+//! let board = EpisodeBoard::new(); // records nothing in a repository
+//! let first = peers.attach(Transport::Http);
+//! let (opened, resumed) = board.attach(&first, "thread-7", "generic");
+//! assert!(!resumed);
+//!
+//! board.detach(&first); // the socket went; the work did not
+//! assert_eq!(board.list()[0].state, ConnectionEpisodeState::Detached);
+//!
+//! let second = peers.attach(Transport::Http); // a new peer id, the same worker
+//! let (again, resumed) = board.attach(&second, "thread-7", "generic");
+//! assert!(resumed);
+//! assert_eq!((again.opened_at.as_str(), again.attachments), (opened.opened_at.as_str(), 2));
+//!
+//! let closed = board.close("thread-7", CloseReason::Detach).unwrap();
+//! assert_eq!(closed.external_id, "thread-7");
+//! assert!(board.list().is_empty());
+//! ```
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -70,6 +98,16 @@ pub const REATTACH_GRACE: Duration = Duration::from_secs(15 * 60);
 /// `share/providers.yaml`'s deliberate-end list decides whether the record says `closed` or
 /// `interrupted` — the same table the provider hooks are read through, so a connection
 /// episode and a hook episode cannot disagree about what "ended deliberately" means.
+///
+/// The serialised word and [`CloseReason::as_str`] are one vocabulary:
+///
+/// ```
+/// use majordomus_cli::episodes::CloseReason;
+/// for reason in [CloseReason::Detach, CloseReason::Shutdown, CloseReason::Expired] {
+///     let json = serde_json::to_string(&reason).unwrap();
+///     assert_eq!(json, format!("\"{}\"", reason.as_str()));
+/// }
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum CloseReason {
@@ -85,7 +123,14 @@ pub enum CloseReason {
 }
 
 impl CloseReason {
-    /// The word sent to the repository's end event.
+    /// The word sent to the repository's end event, as its `reason`. Only `expired` is
+    /// outside the deliberate-end list, so only it records the episode as interrupted.
+    ///
+    /// ```
+    /// use majordomus_cli::episodes::CloseReason;
+    /// assert_eq!(CloseReason::Detach.as_str(), "detach");
+    /// assert_eq!(CloseReason::Expired.as_str(), "expired");
+    /// ```
     pub fn as_str(self) -> &'static str {
         match self {
             CloseReason::Detach => "detach",
@@ -95,7 +140,19 @@ impl CloseReason {
     }
 }
 
-/// Where an episode stands.
+/// Where an episode stands: held by a live connection, or waiting for its client to come
+/// back. There is no closed state, because a closed episode leaves the board; what survives
+/// it is the repository's own record.
+///
+/// ```
+/// use majordomus_cli::episodes::{ConnectionEpisodeState, EpisodeBoard};
+/// use majordomus_cli::peers::{PeerBoard, Transport};
+/// let peer = PeerBoard::new().attach(Transport::Stdio);
+/// let board = EpisodeBoard::new();
+/// assert_eq!(board.attach(&peer, "w", "generic").0.state, ConnectionEpisodeState::Open);
+/// assert_eq!(board.detach(&peer)[0].state, ConnectionEpisodeState::Detached);
+/// assert_eq!(serde_json::to_string(&ConnectionEpisodeState::Detached).unwrap(), "\"detached\"");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ConnectionEpisodeState {
@@ -109,6 +166,18 @@ pub enum ConnectionEpisodeState {
 
 /// One episode: what the client calls itself, which connection holds it now, and what the
 /// repository did about it.
+///
+/// ```
+/// use majordomus_cli::episodes::{ConnectionEpisode, EpisodeBoard};
+/// use majordomus_cli::peers::{PeerBoard, Transport};
+/// let peer = PeerBoard::new().attach(Transport::Http);
+/// let (episode, _) = EpisodeBoard::new().attach(&peer, "conv-42", "generic");
+/// let episode: ConnectionEpisode = episode;
+/// assert_eq!((episode.external_id.as_str(), episode.provider.as_str()), ("conv-42", "generic"));
+/// assert_eq!(episode.peer.as_ref(), Some(&peer));
+/// // never empty: a board with no repository behind it says so
+/// assert!(episode.repository.contains("without a driver"));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ConnectionEpisode {
     /// The client's own durable name for this piece of work, and the key everything here is
@@ -141,6 +210,20 @@ pub struct ConnectionEpisode {
 /// the repository's own record, written by the same command a provider hook runs. This board
 /// holds only the association between a live connection and that record, which is a fact
 /// about now and stops being true when the process does.
+///
+/// ```
+/// use majordomus_cli::episodes::EpisodeBoard;
+/// use majordomus_cli::peers::{PeerBoard, Transport};
+/// let peers = PeerBoard::new();
+/// let (a, b) = (peers.attach(Transport::Stdio), peers.attach(Transport::Http));
+/// let board = EpisodeBoard::default();
+/// board.attach(&b, "zeta", "generic");
+/// board.attach(&a, "alpha", "generic");
+/// // listed by external identity, never by peer or attachment order
+/// let ids: Vec<String> = board.list().into_iter().map(|e| e.external_id).collect();
+/// assert_eq!(ids, ["alpha", "zeta"]);
+/// assert_eq!(board.close_all().len(), 2);
+/// ```
 pub struct EpisodeBoard {
     episodes: Mutex<BTreeMap<String, Entry>>,
     /// How the repository's episode boundary is driven. Injected so that the unit suites can
@@ -161,11 +244,46 @@ struct Entry {
 /// hooks already write is exactly the repeated semantic definition this repository refuses
 /// (ADR 0004). [`ToolDriver`] runs `majordomus capture session`, the same command, with the
 /// same payload shape, through the same adapter resolution.
+///
+/// A driver of one's own is how a board is driven without a repository; what it returns is
+/// what the episode's `repository` field carries:
+///
+/// ```
+/// use majordomus_cli::episodes::{CloseReason, EpisodeBoard, EpisodeDriver};
+/// use majordomus_cli::peers::{PeerBoard, Transport};
+///
+/// struct Echo;
+/// impl EpisodeDriver for Echo {
+///     fn open(&self, provider: &str, id: &str) -> String { format!("opened {provider} {id}") }
+///     fn close(&self, _: &str, id: &str, reason: CloseReason) -> String {
+///         format!("closed {id} ({})", reason.as_str())
+///     }
+/// }
+///
+/// let board = EpisodeBoard::with_driver(Box::new(Echo));
+/// let peer = PeerBoard::new().attach(Transport::Stdio);
+/// assert_eq!(board.attach(&peer, "t1", "generic").0.repository, "opened generic t1");
+/// assert_eq!(board.close("t1", CloseReason::Shutdown).unwrap().repository, "closed t1 (shutdown)");
+/// ```
 pub trait EpisodeDriver: Send + Sync {
     /// Open the episode for `external_id` under `provider`. Returns what to record in
     /// [`ConnectionEpisode::repository`] — a description of what happened, successful or not.
+    /// It is called once per episode, on the first attach; a resume does not call it again.
+    ///
+    /// ```
+    /// use majordomus_cli::episodes::{EpisodeDriver, NullDriver};
+    /// let said = NullDriver.open("generic", "t1");
+    /// assert!(said.starts_with("no repository episode"), "a driver never answers blank");
+    /// ```
     fn open(&self, provider: &str, external_id: &str) -> String;
-    /// Close it, with the reason the record is to carry.
+    /// Close it, with the reason the record is to carry. Returns what the repository did,
+    /// which replaces the episode's `repository` field on the way out.
+    ///
+    /// ```
+    /// use majordomus_cli::episodes::{CloseReason, EpisodeDriver, NullDriver};
+    /// let said = NullDriver.close("generic", "t1", CloseReason::Expired);
+    /// assert!(said.contains("without a driver"));
+    /// ```
     fn close(&self, provider: &str, external_id: &str, reason: CloseReason) -> String;
 }
 
@@ -175,13 +293,31 @@ pub trait EpisodeDriver: Send + Sync {
 /// repository's `bin/majordomus`, an installation under `.majordomus/`, then whatever is on
 /// the path — because a second resolution order would be a second answer to "which tool is
 /// this repository's", and the shims are the ones that have been right about it for months.
+///
+/// When no tool is found it records nothing and says why, in the episode's own field:
+///
+/// ```
+/// use majordomus_cli::episodes::{EpisodeDriver, ToolDriver};
+/// let empty = std::env::temp_dir().join("mj-tooldriver-doctest-no-tool");
+/// std::env::remove_var("PATH"); // nor any majordomus on the path
+/// let said = ToolDriver::new(&empty).open("generic", "t1");
+/// assert!(said.starts_with("no episode was recorded"), "{said}");
+/// ```
 #[derive(Debug, Clone)]
 pub struct ToolDriver {
     root: PathBuf,
 }
 
 impl ToolDriver {
-    /// A driver for the repository at `root`.
+    /// A driver for the repository at `root`. Nothing is resolved or run here: the tool is
+    /// looked for on every event, so a `bin/majordomus` built after the server started is the
+    /// one used.
+    ///
+    /// ```
+    /// use majordomus_cli::episodes::ToolDriver;
+    /// let driver = ToolDriver::new("/srv/repo");
+    /// assert!(format!("{driver:?}").contains("/srv/repo"));
+    /// ```
     pub fn new(root: impl Into<PathBuf>) -> Self {
         ToolDriver { root: root.into() }
     }
@@ -296,6 +432,15 @@ impl EpisodeDriver for ToolDriver {
 /// says so in every episode's `repository` field rather than leaving it blank, because an
 /// episode that quietly recorded nothing is indistinguishable, to a reader, from one that
 /// recorded everything.
+///
+/// ```
+/// use majordomus_cli::episodes::{EpisodeBoard, NullDriver};
+/// use majordomus_cli::peers::{PeerBoard, Transport};
+/// let board = EpisodeBoard::with_driver(Box::new(NullDriver));
+/// let peer = PeerBoard::new().attach(Transport::Stdio);
+/// let (episode, _) = board.attach(&peer, "t1", "generic");
+/// assert_eq!(episode.repository, "no repository episode: this board is running without a driver");
+/// ```
 #[derive(Debug, Clone, Default)]
 pub struct NullDriver;
 
@@ -323,7 +468,14 @@ impl Default for EpisodeBoard {
 }
 
 impl EpisodeBoard {
-    /// A board that records nothing in the repository.
+    /// A board that records nothing in the repository: every episode's `repository` field
+    /// says so. The board the unit suites and a repository-less server use.
+    ///
+    /// ```
+    /// use majordomus_cli::episodes::EpisodeBoard;
+    /// let board = EpisodeBoard::new();
+    /// assert!(board.list().is_empty(), "a new board holds no episode");
+    /// ```
     pub fn new() -> Self {
         EpisodeBoard {
             episodes: Mutex::new(BTreeMap::new()),
@@ -331,7 +483,15 @@ impl EpisodeBoard {
         }
     }
 
-    /// A board that drives the repository at `root` through its own `capture session`.
+    /// A board that drives the repository at `root` through its own `capture session`, by
+    /// a [`ToolDriver`]. Constructing it runs nothing; the first attach does.
+    ///
+    /// ```
+    /// use majordomus_cli::episodes::EpisodeBoard;
+    /// let board = EpisodeBoard::for_repository(std::env::temp_dir());
+    /// assert!(board.list().is_empty(), "no command ran and no episode exists yet");
+    /// assert_eq!(board.close_all().len(), 0);
+    /// ```
     pub fn for_repository(root: impl Into<PathBuf>) -> Self {
         EpisodeBoard {
             episodes: Mutex::new(BTreeMap::new()),
@@ -339,7 +499,21 @@ impl EpisodeBoard {
         }
     }
 
-    /// A board over an arbitrary driver.
+    /// A board over an arbitrary driver: the seam a test, or a server with another way of
+    /// recording, plugs into. The driver is asked once per opened and once per closed episode.
+    ///
+    /// ```
+    /// use majordomus_cli::episodes::{CloseReason, EpisodeBoard, EpisodeDriver};
+    /// use majordomus_cli::peers::{PeerBoard, Transport};
+    /// struct Fixed;
+    /// impl EpisodeDriver for Fixed {
+    ///     fn open(&self, _: &str, _: &str) -> String { "opened".into() }
+    ///     fn close(&self, _: &str, _: &str, _: CloseReason) -> String { "closed".into() }
+    /// }
+    /// let board = EpisodeBoard::with_driver(Box::new(Fixed));
+    /// let peer = PeerBoard::new().attach(Transport::Stdio);
+    /// assert_eq!(board.attach(&peer, "t", "generic").0.repository, "opened");
+    /// ```
     pub fn with_driver(driver: Box<dyn EpisodeDriver>) -> Self {
         EpisodeBoard {
             episodes: Mutex::new(BTreeMap::new()),
@@ -356,6 +530,19 @@ impl EpisodeBoard {
     /// gap belong to one episode, which is what makes the record of it true.
     ///
     /// Returns the episode and whether it was resumed rather than opened.
+    ///
+    /// ```
+    /// use majordomus_cli::episodes::EpisodeBoard;
+    /// use majordomus_cli::peers::{PeerBoard, Transport};
+    /// let peers = PeerBoard::new();
+    /// let board = EpisodeBoard::new();
+    /// let (p1, p2) = (peers.attach(Transport::Stdio), peers.attach(Transport::Http));
+    /// assert!(!board.attach(&p1, "work", "generic").1, "first: opened");
+    /// let (episode, resumed) = board.attach(&p2, "work", "generic");
+    /// assert!(resumed, "same identity, another peer: resumed");
+    /// assert_eq!((episode.attachments, episode.peer.as_ref()), (2, Some(&p2)));
+    /// assert_eq!(board.list().len(), 1, "one episode, not two");
+    /// ```
     pub fn attach(
         &self,
         peer: &PeerId,
@@ -431,6 +618,18 @@ impl EpisodeBoard {
     /// The client spoke. Every message on a connection holding an episode is a heartbeat for
     /// it, so a working client never has its episode reaped and no client has to send
     /// anything it would not otherwise send.
+    ///
+    /// ```
+    /// use std::time::Duration;
+    /// use majordomus_cli::episodes::EpisodeBoard;
+    /// use majordomus_cli::peers::{PeerBoard, Transport};
+    /// let peer = PeerBoard::new().attach(Transport::Http);
+    /// let board = EpisodeBoard::new();
+    /// board.attach(&peer, "busy", "generic");
+    /// board.touch(&peer);
+    /// assert_eq!(board.list()[0].last_activity_seconds_ago, 0);
+    /// assert!(board.reap(Duration::ZERO).is_empty(), "a held episode is never reaped");
+    /// ```
     pub fn touch(&self, peer: &PeerId) {
         let mut episodes = self.lock();
         for entry in episodes.values_mut() {
@@ -446,6 +645,19 @@ impl EpisodeBoard {
     /// This is the difference between a lifecycle and a session counter. Closing here would
     /// publish a record saying the work ended every time a socket dropped, and the work
     /// almost never ends when a socket drops.
+    ///
+    /// ```
+    /// use majordomus_cli::episodes::{ConnectionEpisodeState, EpisodeBoard};
+    /// use majordomus_cli::peers::{PeerBoard, Transport};
+    /// let peer = PeerBoard::new().attach(Transport::Http);
+    /// let board = EpisodeBoard::new();
+    /// board.attach(&peer, "kept", "generic");
+    /// let detached = board.detach(&peer);
+    /// assert_eq!(detached.len(), 1);
+    /// assert!(detached[0].peer.is_none());
+    /// assert_eq!(board.list()[0].state, ConnectionEpisodeState::Detached, "still on the board");
+    /// assert!(board.detach(&peer).is_empty(), "nothing is held twice");
+    /// ```
     pub fn detach(&self, peer: &PeerId) -> Vec<ConnectionEpisode> {
         let mut episodes = self.lock();
         let mut out = Vec::new();
@@ -461,6 +673,18 @@ impl EpisodeBoard {
     }
 
     /// Close one episode deliberately, by name: the client said it was done.
+    ///
+    /// ```
+    /// use majordomus_cli::episodes::{CloseReason, EpisodeBoard};
+    /// use majordomus_cli::peers::{PeerBoard, Transport};
+    /// let peer = PeerBoard::new().attach(Transport::Stdio);
+    /// let board = EpisodeBoard::new();
+    /// board.attach(&peer, "done", "generic");
+    /// let closed = board.close("done", CloseReason::Detach).expect("it was open");
+    /// assert!(closed.peer.is_none());
+    /// assert!(board.close("done", CloseReason::Detach).is_none(), "closed once only");
+    /// assert!(board.of_peer(&peer).is_none());
+    /// ```
     pub fn close(&self, external_id: &str, reason: CloseReason) -> Option<ConnectionEpisode> {
         let mut episodes = self.lock();
         let entry = episodes.remove(external_id)?;
@@ -474,7 +698,21 @@ impl EpisodeBoard {
     }
 
     /// Close every episode detached longer than `grace`. The reaper, and the answer to the
-    /// client that never comes back.
+    /// client that never comes back. Returns what it closed, each as
+    /// [`CloseReason::Expired`], which the record reads as interrupted.
+    ///
+    /// ```
+    /// use std::time::Duration;
+    /// use majordomus_cli::episodes::EpisodeBoard;
+    /// use majordomus_cli::peers::{PeerBoard, Transport};
+    /// let peer = PeerBoard::new().attach(Transport::Http);
+    /// let board = EpisodeBoard::new();
+    /// board.attach(&peer, "gone", "generic");
+    /// board.detach(&peer);
+    /// assert!(board.reap(Duration::from_secs(3600)).is_empty(), "inside the grace it waits");
+    /// assert_eq!(board.reap(Duration::ZERO).len(), 1);
+    /// assert!(board.list().is_empty());
+    /// ```
     pub fn reap(&self, grace: Duration) -> Vec<ConnectionEpisode> {
         let expired: Vec<String> = {
             let episodes = self.lock();
@@ -495,6 +733,19 @@ impl EpisodeBoard {
     /// An episode left open by a server that has gone is an episode nothing will ever close,
     /// and the repository would carry it as open for ever — the failure ADR 0041 names on
     /// the hook side, reached here by a different road.
+    ///
+    /// ```
+    /// use majordomus_cli::episodes::EpisodeBoard;
+    /// use majordomus_cli::peers::{PeerBoard, Transport};
+    /// let peers = PeerBoard::new();
+    /// let board = EpisodeBoard::new();
+    /// board.attach(&peers.attach(Transport::Stdio), "held", "generic");
+    /// let detached = peers.attach(Transport::Http);
+    /// board.attach(&detached, "waiting", "generic");
+    /// board.detach(&detached);
+    /// assert_eq!(board.close_all().len(), 2, "held and detached alike");
+    /// assert!(board.list().is_empty());
+    /// ```
     pub fn close_all(&self) -> Vec<ConnectionEpisode> {
         let ids: Vec<String> = self.lock().keys().cloned().collect();
         ids.into_iter()
@@ -502,7 +753,22 @@ impl EpisodeBoard {
             .collect()
     }
 
-    /// Every episode this server holds, open and detached, in external-identity order.
+    /// Every episode this server holds, open and detached, in external-identity order, each
+    /// with its idle time measured now rather than when it was last written.
+    ///
+    /// ```
+    /// use majordomus_cli::episodes::{ConnectionEpisodeState, EpisodeBoard};
+    /// use majordomus_cli::peers::{PeerBoard, Transport};
+    /// let peers = PeerBoard::new();
+    /// let board = EpisodeBoard::new();
+    /// let p = peers.attach(Transport::Stdio);
+    /// board.attach(&p, "b", "generic");
+    /// board.detach(&p);
+    /// board.attach(&peers.attach(Transport::Http), "a", "generic");
+    /// let states: Vec<_> = board.list().into_iter().map(|e| (e.external_id, e.state)).collect();
+    /// assert_eq!(states, [("a".to_string(), ConnectionEpisodeState::Open),
+    ///                     ("b".to_string(), ConnectionEpisodeState::Detached)]);
+    /// ```
     pub fn list(&self) -> Vec<ConnectionEpisode> {
         let episodes = self.lock();
         episodes
@@ -515,7 +781,18 @@ impl EpisodeBoard {
             .collect()
     }
 
-    /// The episode a connection holds, if it holds one.
+    /// The episode a connection holds, if it holds one. A connection that only initialised
+    /// holds none, and neither does one whose episode was detached from it.
+    ///
+    /// ```
+    /// use majordomus_cli::episodes::EpisodeBoard;
+    /// use majordomus_cli::peers::{PeerBoard, Transport};
+    /// let peer = PeerBoard::new().attach(Transport::Http);
+    /// let board = EpisodeBoard::new();
+    /// assert!(board.of_peer(&peer).is_none(), "a peer is not a worker until it attaches");
+    /// board.attach(&peer, "mine", "generic");
+    /// assert_eq!(board.of_peer(&peer).map(|e| e.external_id).as_deref(), Some("mine"));
+    /// ```
     pub fn of_peer(&self, peer: &PeerId) -> Option<ConnectionEpisode> {
         self.list()
             .into_iter()

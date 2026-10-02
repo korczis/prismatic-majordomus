@@ -271,11 +271,17 @@ pub enum ShellCommand {
 ///
 /// ```
 /// use clap::Parser;
-/// use majordomus_cli::cli::{Cli, Command, SkillsCommand};
+/// use majordomus_cli::cli::{Cli, Command, OutputFormat, SkillsArgs, SkillsCommand};
 ///
 /// let cli = Cli::try_parse_from(["majordomus", "skills", "explain", "implement"]).unwrap();
 /// let Command::Skills(args) = cli.command else { panic!("skills") };
+/// let args: SkillsArgs = args;
 /// assert!(matches!(args.command, SkillsCommand::Explain { .. }));
+/// assert_eq!(args.format, OutputFormat::Text, "text unless a person asks for json");
+/// // `--format` is global, so it is read after the subcommand as well as before it
+/// let cli = Cli::try_parse_from(["majordomus", "skills", "status", "--format", "json"]).unwrap();
+/// let Command::Skills(SkillsArgs { format, .. }) = cli.command else { panic!("skills") };
+/// assert_eq!(format, OutputFormat::Json);
 /// // the group runs nothing of its own: every runnable path here is a capability's
 /// assert!(Cli::try_parse_from(["majordomus", "skills"]).is_err());
 /// ```

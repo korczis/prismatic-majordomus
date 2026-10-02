@@ -25,8 +25,8 @@
 #
 # Skips itself when there is neither cargo nor MAJORDOMUS_BIN, as the other Rust cases do.
 . "$ROOT/test/lib.sh"
-[ -n "${MAJORDOMUS_BIN:-}" ] || command -v cargo >/dev/null 2>&1 || { echo "    skip: no cargo and no MAJORDOMUS_BIN"; exit 0; }
-command -v jq >/dev/null 2>&1 || { echo "    skip: jq not installed"; exit 0; }
+[ -n "${MAJORDOMUS_BIN:-}" ] || command -v cargo >/dev/null 2>&1 || skip "no cargo and no MAJORDOMUS_BIN"
+command -v jq >/dev/null 2>&1 || skip "jq not installed"
 LAUNCHER="$ROOT/bin/majordomus-mcp"
 [ -x "$LAUNCHER" ] || { echo "    bin/majordomus-mcp is missing or not executable"; exit 1; }
 
@@ -112,7 +112,7 @@ grep -qF 'prompts_evidence is empty' "$S/gate.out" \
 # A client that reads the layer is a peer and not a worker with a record. This is also what
 # keeps case 90's guarantee true — serving changes the repository not at all — and it is why
 # `attach` is a call the client makes rather than something `initialize` does behind it.
-before="$(git status --porcelain; git ls-files -s | shasum -a 256)"
+before="$(git status --porcelain; git ls-files -s | mj_sha256sum)"
 { req 1 initialize "$(hello case200-reader)"
   printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
   call 2 majordomus_episodes '{}'
@@ -122,7 +122,7 @@ must "the reader session exited $rc" [ "$rc" = 0 ]
 sed -n 2p "$S/reader.out" | jq -e '.result.structuredContent.open == 0 and (.result.structuredContent.mine | not)' >/dev/null \
   || { echo "    initialize alone opened an episode"; sed -n 2p "$S/reader.out"; exit 1; }
 must "reading the layer opened an episode in the store" [ ! -d "$OPEN" ] || [ -z "$(ls -A "$OPEN" 2>/dev/null)" ]
-after="$(git status --porcelain; git ls-files -s | shasum -a 256)"
+after="$(git status --porcelain; git ls-files -s | mj_sha256sum)"
 must "a client that only read the layer changed the repository" [ "$before" = "$after" ]
 
 # ---------------------------------------------------------------- attach, activity, close
