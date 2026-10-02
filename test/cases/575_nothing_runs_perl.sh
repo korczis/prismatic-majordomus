@@ -25,14 +25,18 @@
 P="pe""rl"; S="sha""sum"
 
 # <file>\t<exact line>: data that names the command without running it. Case 100's
-# forbidden-command list, and the token economics' marker for a command an agent ran that
-# rewrites a file in place (it classifies another program's command line, and runs nothing).
+# forbidden-command list, the token economics' marker for a command an agent ran that
+# rewrites a file in place (it classifies another program's command line, and runs nothing),
+# and case 340's proof that campaigns-check refuses the Perl hasher when it is asked for by
+# name (the checker exits 12 before any hashing; the value is a refused input, not a call).
 EXEMPT="$T/exempt"
 printf '%s\t%s\n' \
   "test/cases/100_environment.sh" \
   "  local forbidden='git|grep|sed|awk|find|jq|wc|curl|wget|cargo|npm|pnpm|yarn|docker|make|xargs|$P|python|python3|ruby|node'" \
   "apps/majordomus-cli/src/economics/usage.rs" \
   "        \"$P -i\"," \
+  "test/cases/340_a_brief_is_kept_as_received.sh" \
+  "rc=0; LAST_OUT=\"\$(MJ_SHA256=$S MJ_ROOT=\"\$F\" \"\$CHK\" 2>&1)\" || rc=\$?" \
   > "$EXEMPT"
 
 # scan <repository>: prints <path>:<line>: <text> for every use, from the files git tracks.

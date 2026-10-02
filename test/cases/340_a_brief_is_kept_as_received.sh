@@ -212,10 +212,10 @@ for h in sha256sum openssl; do
 done
 [ "$ran" -gt 0 ] || { echo "    neither sha256sum nor openssl is here, so no hasher branch was proven"; exit 1; }
 rc=0; LAST_OUT="$(MJ_SHA256=shasum MJ_ROOT="$F" "$CHK" 2>&1)" || rc=$?
-[ "$rc" = 12 ] || { echo "    MJ_SHA256=shasum exited $rc, not 12 (refusal)"; exit 1; }
+[ "$rc" = 12 ] || { echo "    MJ_SHA256 naming the Perl hasher exited $rc, not 12 (refusal)"; exit 1; }
 rm -f "$F/campaigns/alpha-pack/phases/03 spaced name.md"
 manifest
-echo "    each hasher decides the same set, a spaced name is one row, and shasum is refused"
+echo "    each hasher decides the same set, a spaced name is one row, and the Perl hasher is refused"
 
 # ---------------------------------------------------------------- 10. names and entries no row can carry
 # Each plant here passed the check before it refused them: the internal tables are
