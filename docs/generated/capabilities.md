@@ -31,6 +31,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `graph` | Graphs | behaviorally_verified | 2 | [`modules/graph.md`](modules/graph.md) |
 | `health` | Health | behaviorally_verified | 3 | [`modules/health.md`](modules/health.md) |
 | `integration` | Pull-request integration | experimental | 3 | [`modules/integration.md`](modules/integration.md) |
+| `intent_realization` | Intent realization | behaviorally_verified | 2 | [`modules/intent_realization.md`](modules/intent_realization.md) |
 | `intents` | Intent | behaviorally_verified | 5 | [`modules/intents.md`](modules/intents.md) |
 | `lifecycle` | Session lifecycle | behaviorally_verified | 5 | [`modules/lifecycle.md`](modules/lifecycle.md) |
 | `mesh` | Mesh | experimental | 21 | [`modules/mesh.md`](modules/mesh.md) |
@@ -123,6 +124,8 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `integration.events` | `integration` | query | experimental | `majordomus_integration_events` | — | `GET /api/v1/pull-requests/events` | `majordomus prs events` | — | required |
 | `integration.explain` | `integration` | query | experimental | `majordomus_pull_request_explain` | — | `GET /api/v1/pull-requests/explain` | `majordomus prs explain` | — | required |
 | `integration.queue` | `integration` | query | experimental | `majordomus_pull_requests` | — | `GET /api/v1/pull-requests` | `majordomus prs status` | — | required |
+| `intent_realization.explain` | `intent_realization` | query | behaviorally_verified | `majordomus_intent_explain` | — | `GET /api/v1/intents/explain` | `majordomus intent explain` | — | required |
+| `intent_realization.work` | `intent_realization` | query | behaviorally_verified | `majordomus_intent_realization` | — | `GET /api/v1/intents/realization` | `majordomus intent realization` | — | required |
 | `intents.coverage` | `intents` | query | behaviorally_verified | `majordomus_intent_coverage` | — | `GET /api/v1/intents/coverage` | `majordomus intent coverage` | — | required |
 | `intents.list` | `intents` | query | behaviorally_verified | `majordomus_intents` | `majordomus://intents` | `GET /api/v1/intents` | `majordomus intent list` | — | required |
 | `intents.preflight` | `intents` | query | behaviorally_verified | `majordomus_intent_preflight` | — | `GET /api/v1/intents/preflight` | `majordomus intent preflight` | — | required |

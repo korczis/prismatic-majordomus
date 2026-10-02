@@ -6,20 +6,20 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.11.0
 coverage:
   - scope: direct
-    required: 157
-    covered: 139
+    required: 159
+    covered: 141
     missing: 0
     waived: 18
     inapplicable: 0
   - scope: http
-    required: 155
-    covered: 139
+    required: 157
+    covered: 141
     missing: 0
     waived: 16
     inapplicable: 0
   - scope: mcp
-    required: 151
-    covered: 135
+    required: 153
+    covered: 137
     missing: 0
     waived: 16
     inapplicable: 0
@@ -30,8 +30,8 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 476
-    covered: 426
+    required: 482
+    covered: 432
     missing: 0
     waived: 50
     inapplicable: 0
@@ -628,6 +628,25 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: intent_realization.explain
+    module: intent_realization
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - first-intent
+  - id: intent_realization.work
+    module: intent_realization
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - every-intent
+      - first-intent
   - id: intents.coverage
     module: intents
     kind: query

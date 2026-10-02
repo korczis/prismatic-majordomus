@@ -52,6 +52,7 @@ pub mod gates;
 pub(crate) mod graph;
 pub mod health;
 pub(crate) mod integration;
+pub mod intent_realization;
 pub mod intents;
 pub mod lifecycle;
 pub(crate) mod mesh;
@@ -197,6 +198,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         distribution,
         why,
         intents,
+        intent_realization,
         web,
         design,
         devtask,

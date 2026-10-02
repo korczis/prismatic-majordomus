@@ -36,6 +36,8 @@ const PAGES: &[&str] = &[
     // the integration queue: in the fixture nothing is observed, so this is the page's
     // "no queue" arm, which must still render and still cost nothing canonical
     "/cockpit/integration",
+    "/cockpit/intents",
+    "/cockpit/intents/fixture-intent",
     "/cockpit/capabilities/repository.info",
     "/cockpit/capabilities?module=repository",
     "/cockpit/capabilities?kind=query",

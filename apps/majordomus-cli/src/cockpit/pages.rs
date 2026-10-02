@@ -78,7 +78,7 @@ impl Page {
         self.subtitle = Some(subtitle.into());
         self
     }
-    fn trail(mut self, trail: Vec<(&str, Option<&str>)>) -> Self {
+    pub(super) fn trail(mut self, trail: Vec<(&str, Option<&str>)>) -> Self {
         self.breadcrumbs = trail
             .into_iter()
             .map(|(l, h)| (l.to_string(), h.map(str::to_string)))
@@ -89,7 +89,7 @@ impl Page {
         self.scripts.push(name);
         self
     }
-    fn status(mut self, status: u16) -> Self {
+    pub(super) fn status(mut self, status: u16) -> Self {
         self.status = status;
         self
     }
