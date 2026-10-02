@@ -565,8 +565,9 @@
   }
 
   /* A command on one line with a copy button: what a reader types next. */
+  /* clipped to itself: the command scrolls inside its own text, never past the row */
   .mj-cmd {
-    @apply flex min-w-0 items-center gap-2 rounded-lg px-3 py-2 font-mono text-xs;
+    @apply flex min-w-0 max-w-full items-center gap-2 overflow-hidden rounded-lg px-3 py-2 font-mono text-xs;
     color: var(--mj-fg);
     background: var(--mj-sunken);
     border: 1px solid var(--mj-line);

@@ -20,6 +20,7 @@
 {%- set dist = load_data(path="data/registry/distribution.json") -%}
 {%- set x = load_data(path="data/manifesto.toml") -%}
 {%- set term = load_data(path="data/generated/terminal.json") -%}
+{%- set ch = load_data(path="data/generated/challenge.json") -%}
 {%- set caps = load_data(path="data/generated/capabilities.json") -%}
 {%- set why = load_data(path="data/registry/why.json") -%}
 {%- set cat = load_data(path="data/generated/catalogue.json") -%}
@@ -41,11 +42,14 @@
     briefing `majordomus context` printed when the generator recorded it. -#}
 <section id="hero" class="scroll-mt-20">
   <div class="mx-auto max-w-screen-xl px-4 pb-12 pt-10 sm:px-6 sm:pt-14 lg:px-8 lg:pb-16 lg:pt-20">
-    {% <hero kicker={m.hero.eyebrow} title={["One repository.", "Many perspectives."]} accent="One source of truth." lead={m.hero.lead} actions={[{"label": m.hero.cta_primary, "href": get_url(path="/challenge/", trailing_slash=true), "kind": "primary", "trail": "arrow-right"}, {"label": m.hero.cta_install, "href": "#install", "icon": "arrow-down"}]}> %}
-      {% <terminal title={run.command}> %}{{ <term_line cmd="majordomus" args={run.command | replace(from="majordomus ", to="")} /> }}{%- set lines = run.output | trim | split(pat="
-") -%}{{ <term_out text={lines[:17] | join(sep="
-")} /> }}{% </terminal> %}
-      <p class="mj-figure-source mt-3">A recorded run, not a mockup: the machine and the clock are redacted. <a href="{{ get_url(path="/challenge/", trailing_slash=true) }}" class="mj-link">Watch a whole task, refused and finished &rarr;</a></p>
+    {% <hero kicker={m.hero.eyebrow} title={["One repository.", "Many perspectives."]} accent="One source of truth." lead={m.hero.lead} actions={[{"label": m.hero.cta_primary, "href": get_url(path="/challenge/", trailing_slash=true), "kind": "primary", "trail": "arrow-right", "cta": "challenge"}, {"label": m.hero.cta_install, "href": "#install", "icon": "arrow-down", "cta": "install"}]}> %}
+      {%- set rp_id = "hero-replay" -%}
+      {% include "partials/challenge-replay.html" %}
+      <p class="mt-3 text-sm text-body-subtle">{{ m.hero.replay_caption }}</p>
+      <p class="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
+        <a href="{{ get_url(path="/challenge/", trailing_slash=true) }}" class="text-fg-brand hover:underline">The whole challenge, and how to run it yourself &rarr;</a>
+        <a href="{{ get_url(path="/features/matrix/", trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ m.hero.cta_secondary }} &rarr;</a>
+      </p>
     {% </hero> %}
     <div class="mt-8 max-w-xl">{{ <cmd id="hero-install" text={dist.install_command} /> }}</div>
   </div>
@@ -82,7 +86,7 @@
         <div class="mt-5">{{ <pills words={kinds | keys} tones={tones} center={true} /> }}</div>
       {% </panel> %}
       {% <panel title="Derive" sub="Generated from the declarations, or checked against them" step={3} cls="mj-stage"> %}
-        {{ <routes items={[{"name": "Command line", "path": "majordomus", "icon": "terminal", "tone": "violet", "href": kb ~ "docs/cli/"}, {"name": "HTTP API", "path": "/api/v1/", "icon": "code", "tone": "violet", "href": kb ~ "docs/api/"}, {"name": "OpenAPI · Swagger UI", "path": "/openapi.json · /swagger", "icon": "file-text", "tone": "violet"}, {"name": "MCP", "path": "majordomus mcp", "icon": "nodes", "tone": "violet", "href": kb ~ "registry/mcp/"}, {"name": "Cockpit", "path": "/cockpit", "icon": "monitor", "tone": "violet", "href": kb ~ "docs/cockpit/"}, {"name": "Instruction files", "path": "AGENTS.md, CLAUDE.md, …", "icon": "users", "tone": "violet"}, {"name": "This site", "path": "GitHub Pages", "icon": "book", "tone": "violet", "href": kb ~ "docs/"}]} /> }}
+        {{ <routes items={[{"name": "Command line", "path": "majordomus", "icon": "terminal", "tone": "violet", "href": kb ~ "docs/cli/"}, {"name": "HTTP API", "path": "/api/v1/", "icon": "code", "tone": "violet", "href": kb ~ "docs/api/"}, {"name": "OpenAPI · Swagger UI", "path": "/openapi.json · /swagger", "icon": "file-text", "tone": "violet"}, {"name": "MCP", "path": "majordomus mcp", "icon": "nodes", "tone": "violet", "href": kb ~ "registry/mcp/"}, {"name": "Cockpit", "path": "/cockpit", "icon": "monitor", "tone": "violet", "href": kb ~ "docs/cockpit/"}, {"name": "Instruction files", "path": "one per worker tool: " ~ ([pv.title for pv in model.providers] | join(sep=", ")), "icon": "users", "tone": "violet"}, {"name": "This site", "path": "GitHub Pages", "icon": "book", "tone": "violet", "href": kb ~ "docs/"}]} /> }}
       {% </panel> %}
       {% <panel title="Use" sub="Work from what is known" step={4} tone="green" variant="toned" cls="mj-stage"> %}
         {{ <points items={[{"icon": "check-circle", "tone": "green", "title": "Consistent", "text": "every surface asks the same executor"}, {"icon": "list", "tone": "green", "title": "Deterministic", "text": "sorted, with no timestamps"}, {"icon": "search", "tone": "green", "title": "Discovered", "text": "enumerated from the tracked tree"}, {"icon": "refresh", "tone": "green", "title": "Current", "text": "derived files are compared with their inputs"}, {"icon": "shield-check", "tone": "green", "title": "Refused", "text": "finish fails while the checks fail"}]} /> }}
@@ -115,31 +119,37 @@
     <div class="mt-8 mj-panel">
       <p class="mj-panel-title">The lifecycle, replayed</p>
       <p class="mj-panel-sub">{{ m.hero.console_caption }}</p>
-      <div class="mt-4">
-        {% <tabs id="home-lifecycle" labels={[w.label for w in term.walkthrough]} variant="pills" label="The lifecycle's commands"> %}
-          {%- for w in term.walkthrough %}
-          {% <tab_panel id="home-lifecycle" i={loop.index0} label={w.label}> %}{% <terminal title={w.command}> %}{{ <term_line cmd="majordomus" args={w.command | replace(from="majordomus ", to="")} /> }}{{ <term_out text={w.output | trim} /> }}{% </terminal> %}{% </tab_panel> %}
-          {%- endfor %}
-        {% </tabs> %}
+      <div class="mt-4 min-w-0">
+      {%- set tx = term.walkthrough -%}
+      {%- set tx_id = "how-term" -%}
+      {%- set tx_label = m.hero.console_caption -%}
+      {%- set tx_default = term.default -%}
+      {% include "partials/terminal.html" %}
       </div>
     </div>
   </div>
 </section>
 
 {#- 4. what it refuses — the half a reader cannot get from a model. Each card is a recorded
-    run of a lifecycle command that exited non-zero, and the line in it is the verdict that run
-    printed; a run that repeats the verdict of the one before it is not shown twice. -#}
+    run of a lifecycle command that exited non-zero, in full, with the scenario it was recorded
+    in (site-check holds every recorded run to the page). -#}
 <section id="refuses" class="scroll-mt-20">
   <div class="mx-auto max-w-screen-xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
     {{ <section kicker={"03 / " ~ m.refuses.kicker} title={m.refuses.title} lead={m.refuses.lead} /> }}
-    <ol class="m-0 grid list-none gap-4 p-0 lg:grid-cols-2">
+    <ol class="mt-8 grid gap-4 lg:grid-cols-2">
       {%- for r in term.refusals %}
-      {%- if loop.first or r.what != term.refusals[loop.index0 - 1].what %}
-      <li class="flex min-w-0 flex-col gap-2">
-        {% <terminal title={"exit " ~ r.exit}> %}{{ <term_line cmd="majordomus" args={r.command | replace(from="majordomus ", to="")} /> }}{{ <term_out text={r.what} /> }}{% </terminal> %}
-        <a href="{{ base }}{{ r.route }}" class="mj-link text-sm">{{ r.use_case_title }} &rarr;</a>
+      <li class="min-w-0">
+        <figure class="h-full overflow-hidden rounded-base border border-default bg-neutral-primary shadow-xs">
+          <figcaption class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-default px-4 py-2">
+            <span class="min-w-0 break-all font-mono text-xs text-heading">$ {{ r.command }}</span>
+            <span class="shrink-0 font-mono text-xs"><span class="text-body-subtle">exit</span> <span class="ms-1 rounded bg-danger-soft px-1.5 py-0.5 font-semibold text-fg-danger-strong">{{ r.exit }}</span></span>
+          </figcaption>
+          <div class="h-64 overflow-x-auto overflow-y-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body">{{ r.output }}</pre></div>
+          <figcaption class="border-t border-default px-4 py-2 text-xs">
+            <a href="{{ base }}{{ r.route }}" class="text-fg-brand hover:underline">{{ r.use_case_title }} &rarr;</a>
+          </figcaption>
+        </figure>
       </li>
-      {%- endif %}
       {%- endfor %}
     </ol>
     <p class="mj-section-lead mt-6">{{ m.refuses.closing }}</p>
@@ -291,7 +301,7 @@
 <section id="install" class="scroll-mt-20">
   <div class="mx-auto max-w-screen-xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
     {{ <section kicker="07 / get started" title="Try it on a repository you already have" lead={m.install.layer} /> }}
-    {{ <flow id="home-install" columns={2} steps={[{"title": "Install", "text": "one archive for your machine, its digest verified before anything is unpacked, into " ~ dist.install_dir, "icon": "arrow-down", "tone": "blue", "commands": [dist.install_command]}, {"title": "Confirm", "text": "the version you installed", "icon": "check-circle", "tone": "violet", "commands": [dist.verify_command]}, {"title": "Supervise", "text": "in the repository you want supervised: writes .ai/ and nothing else", "icon": "folder", "tone": "green", "commands": [dist.next_command]}, {"title": "Point your agents at it", "text": "generates CLAUDE.md, AGENTS.md and the other bootstraps from the policy", "icon": "users", "tone": "orange", "commands": ["majordomus update"]}]} /> }}
+    {{ <flow id="home-install" columns={2} steps={[{"title": "Install", "text": "one archive for your machine, its digest verified before anything is unpacked, into " ~ dist.install_dir, "icon": "arrow-down", "tone": "blue", "commands": [dist.install_command]}, {"title": "Confirm", "text": "the version you installed", "icon": "check-circle", "tone": "violet", "commands": [dist.verify_command]}, {"title": "Supervise", "text": "in the repository you want supervised: writes .ai/ and nothing else", "icon": "folder", "tone": "green", "commands": [dist.next_command]}, {"title": "Point your agents at it", "text": "generates every worker tool's instruction file from the policy", "icon": "users", "tone": "orange", "commands": ["majordomus update"]}]} /> }}
     <div class="mt-12 grid items-center gap-6 xl:grid-cols-[auto_minmax(0,1fr)]">
       <div class="flex flex-wrap items-center gap-3">
         {{ <btn label="Get started" href={get_url(path="/getting-started/", trailing_slash=true)} kind="primary" trail="arrow-right" /> }}

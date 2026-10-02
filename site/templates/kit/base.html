@@ -31,9 +31,10 @@
 {% component kicker(text) %}<p class="mj-kicker">{{ text }}</p>{% endcomponent kicker %}
 
 {#- A link that looks like a button. `kind` is primary (the page's one action), accent, or
-    nothing for the quiet one; `icon` leads, `trail` follows. -#}
-{% component btn(label, href, kind="", icon="", trail="", size="", block=false) %}
-<a href="{{ href }}" class="mj-btn{% if kind %} mj-btn--{{ kind }}{% endif %}{% if size %} mj-btn--{{ size }}{% endif %}{% if block %} mj-btn--block{% endif %}">{% if icon %}{{ <icon name={icon} size="sm" /> }}{% endif %}<span>{{ label }}</span>{% if trail %}{{ <icon name={trail} size="sm" /> }}{% endif %}</a>
+    nothing for the quiet one; `icon` leads, `trail` follows; `cta` names it for the page's
+    checks (`data-cta`). -#}
+{% component btn(label, href, kind="", icon="", trail="", size="", block=false, cta="") %}
+<a href="{{ href }}"{% if cta %} data-cta="{{ cta }}"{% endif %} class="mj-btn{% if kind %} mj-btn--{{ kind }}{% endif %}{% if size %} mj-btn--{{ size }}{% endif %}{% if block %} mj-btn--block{% endif %}">{% if icon %}{{ <icon name={icon} size="sm" /> }}{% endif %}<span>{{ label }}</span>{% if trail %}{{ <icon name={trail} size="sm" /> }}{% endif %}</a>
 {%- endcomponent btn %}
 
 {#- A word of a vocabulary on its tone. -#}

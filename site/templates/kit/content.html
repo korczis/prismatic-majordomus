@@ -18,7 +18,7 @@
     {%- if lead %}<p class="mj-hero-lead">{{ lead }}</p>{% endif %}
     {%- if actions | length > 0 %}
     <div class="mj-hero-actions">
-      {%- for a in actions %}{{ <btn label={a.label} href={a.href} kind={a.kind or ""} icon={a.icon or ""} trail={a.trail or ""} /> }}{% endfor %}
+      {%- for a in actions %}{{ <btn label={a.label} href={a.href} kind={a.kind or ""} icon={a.icon or ""} trail={a.trail or ""} cta={a.cta or ""} /> }}{% endfor %}
     </div>
     {%- endif %}
   </div>
