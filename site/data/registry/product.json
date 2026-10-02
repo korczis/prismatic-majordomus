@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.11.0"
   },
-  "fingerprint": "b0ba6ba807012b95e2cc4cb31acc4f311f6c1b46a4c842344e20031bdbff7a5b",
+  "fingerprint": "79e31711460353714cef51971ad8a0720a51d667e2cb3f41a1c9c7fdc6287bd0",
   "route": "/features/",
   "counts": {
     "features": 26,
@@ -16,7 +16,7 @@
     "modules_covered": 39,
     "commands": 30,
     "commands_covered": 30,
-    "kinds": 27,
+    "kinds": 29,
     "kinds_covered": 24
   },
   "surfaces": [
@@ -3818,7 +3818,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 72
+          "objects": 73
         },
         {
           "name": "knowledge",
@@ -4082,11 +4082,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 365,
+        "mcp_resources": 366,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 364,
+        "objects": 365,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -4296,7 +4296,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 150
+          "objects": 151
         }
       ],
       "rule_refs": [
@@ -4672,11 +4672,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 152,
+        "mcp_resources": 153,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 150,
+        "objects": 151,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -7007,11 +7007,11 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 22
+          "objects": 23
         },
         {
           "name": "issue",
-          "objects": 239
+          "objects": 242
         }
       ],
       "rule_refs": [
@@ -7161,11 +7161,11 @@
       "counts": {
         "capabilities": 14,
         "mcp_tools": 14,
-        "mcp_resources": 263,
+        "mcp_resources": 267,
         "http_routes": 14,
         "cli_paths": 2,
         "commands": 1,
-        "objects": 261,
+        "objects": 265,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -7366,7 +7366,7 @@
       "kind_refs": [
         {
           "name": "context",
-          "objects": 32
+          "objects": 34
         },
         {
           "name": "scope",
@@ -7655,11 +7655,11 @@
       "counts": {
         "capabilities": 7,
         "mcp_tools": 7,
-        "mcp_resources": 37,
+        "mcp_resources": 39,
         "http_routes": 7,
         "cli_paths": 4,
         "commands": 1,
-        "objects": 33,
+        "objects": 35,
         "rules": 6,
         "enforced_rules": 5,
         "docs": 2,
@@ -10612,7 +10612,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (72)",
+        "title": "adr (73)",
         "features": [
           "knowledge"
         ]
@@ -10654,10 +10654,15 @@
       },
       {
         "id": "context",
-        "title": "context (32)",
+        "title": "context (34)",
         "features": [
           "context"
         ]
+      },
+      {
+        "id": "critique",
+        "title": "critique (1)",
+        "features": []
       },
       {
         "id": "deployment",
@@ -10679,13 +10684,18 @@
         ]
       },
       {
+        "id": "gap",
+        "title": "gap (1)",
+        "features": []
+      },
+      {
         "id": "intent",
-        "title": "intent (1)",
+        "title": "intent (2)",
         "features": []
       },
       {
         "id": "issue",
-        "title": "issue (239)",
+        "title": "issue (242)",
         "features": [
           "planning"
         ]
@@ -10706,7 +10716,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (22)",
+        "title": "milestone (23)",
         "features": [
           "planning"
         ]
@@ -10748,7 +10758,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (150)",
+        "title": "rule (151)",
         "features": [
           "doctrine"
         ]
@@ -11616,46 +11626,48 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1759,
-    "builtin": 156,
-    "declarative": 1603,
+    "capabilities": 1772,
+    "builtin": 157,
+    "declarative": 1615,
     "modules": 46,
-    "mcp_tools": 150,
-    "mcp_resources": 1651,
-    "http_routes": 154,
-    "cli_commands": 165,
+    "mcp_tools": 151,
+    "mcp_resources": 1663,
+    "http_routes": 155,
+    "cli_commands": 166,
     "shell_commands": 30,
-    "kinds": 30,
-    "objects": 1603,
+    "kinds": 32,
+    "objects": 1615,
     "by_kind": {
-      "adr": 72,
+      "adr": 73,
       "application": 5,
       "area": 9,
       "audience": 8,
       "claim": 207,
       "command": 31,
-      "context": 32,
+      "context": 34,
+      "critique": 1,
       "deployment": 1,
       "distribution-model": 1,
       "document": 291,
       "feature": 27,
+      "gap": 1,
       "implementation": 50,
-      "intent": 1,
-      "issue": 239,
+      "intent": 2,
+      "issue": 242,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 22,
+      "milestone": 23,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
       "release-record": 8,
-      "rule": 150,
+      "rule": 151,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 316,
+      "test": 317,
       "use-case": 47,
       "workspace": 1
     },
@@ -11669,8 +11681,8 @@
     "complete": true,
     "ledger": {
       "path": ".ai/repo/evidence/ledger.json",
-      "executions": 6,
-      "newest": "2026-09-12T10:36:18Z"
+      "executions": 10,
+      "newest": "2026-09-16T20:54:33Z"
     },
     "declared": 191,
     "supported": 0,

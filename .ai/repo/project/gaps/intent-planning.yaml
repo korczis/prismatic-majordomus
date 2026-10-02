@@ -1,0 +1,47 @@
+intent: intent-planning
+observed_at: 1d11762cb
+recorded_by: claude-code (session 9dde131e, board p22)
+recorded_at: 2026-09-15
+observations:
+  - id: no-serves-field
+    statement: The issue schema declares no field linking an issue to an intent criterion
+    source: file:share/schemas/majordomus/issue/issue.v1.schema.json
+  - id: plan-validate-is-plan-local
+    statement: plan validate derives dependencies, waves, cycles and scope overlap from issues and milestones only, and reads no intent
+    source: file:apps/majordomus-cli/src/plan.rs
+  - id: no-gap-or-critique-kind
+    statement: share/kinds.yaml declares no kind for a gap analysis or a plan critique
+    source: file:share/kinds.yaml
+  - id: engines-held-identical
+    statement: Case 99 compares the awk and Rust plan engines finding for finding, so a finding added to one engine alone breaks it
+    source: test:test/cases/99_plan_capabilities.sh
+conditions:
+  - criterion: criteria-are-covered
+    state: missing
+    because: nothing relates a criterion to an issue, so coverage cannot be derived
+    observations: [no-serves-field, plan-validate-is-plan-local]
+  - criterion: work-has-a-purpose
+    state: missing
+    because: an issue's purpose is prose in objective and why, and no reader can join it to an intent
+    observations: [no-serves-field]
+  - criterion: gap-is-recorded
+    state: missing
+    because: there is no kind to record a gap in
+    observations: [no-gap-or-critique-kind]
+  - criterion: critique-precedes-execution
+    state: missing
+    because: there is no kind to record a critique in, and nothing reads one before execution
+    observations: [no-gap-or-critique-kind]
+risks:
+  - Adding a finding to plan.rs alone would fork the two plan engines (observation engines-held-identical); coverage must live in the intent engine
+  - An uncovered-criterion failure makes an intent declared ahead of its issues invalid, including intent-lifecycle, whose issue is authored in the same change
+work:
+  - id: serves-and-coverage
+    title: An issue names the criterion it serves, and coverage is derived by the intent engine
+    serves: [criteria-are-covered, work-has-a-purpose]
+    why: the join must be derived where intents are read, and the plan must carry the link as data only
+    issue: I1901
+  - id: gap-and-critique-records
+    title: Gap and critique are typed kinds validated against the intent and the plan
+    serves: [gap-is-recorded, critique-precedes-execution]
+    issue: I1902

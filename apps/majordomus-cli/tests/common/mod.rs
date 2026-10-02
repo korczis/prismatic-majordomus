@@ -97,6 +97,18 @@ sources:
     pathspec: ':(glob).ai/repo/project/intents/*.yaml'
     required: false
 
+  - id: gap
+    kind: gap
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/project/gaps/*.yaml'
+    required: false
+
+  - id: critique
+    kind: critique
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/project/critiques/*.yaml'
+    required: false
+
   - id: document
     kind: document
     discovery: vcs
@@ -495,6 +507,8 @@ profile: implementation
 objective: \"Do the bounded piece of work.\"
 scope:
   - lib
+serves:
+  - fixture-intent#the-case-passes
 acceptance_criteria:
   - The work is done
 validation:

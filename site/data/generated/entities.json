@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 72,
+      "count": 73,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 150,
+      "count": 151,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 72
+      "count": 73
     },
     {
       "kind": "application",
@@ -85,7 +85,7 @@
       "route": "/context/",
       "title": null,
       "reason": null,
-      "count": 32
+      "count": 34
     },
     {
       "kind": "deployment",
@@ -133,7 +133,7 @@
       "route": null,
       "title": null,
       "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` answers for the intent itself.",
-      "count": 1
+      "count": 2
     },
     {
       "kind": "issue",
@@ -141,7 +141,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 239
+      "count": 242
     },
     {
       "kind": "knowledge",
@@ -165,7 +165,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 22
+      "count": 23
     },
     {
       "kind": "moment",
@@ -213,7 +213,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 150
+      "count": 151
     },
     {
       "kind": "scope",
@@ -253,7 +253,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 316
+      "count": 317
     },
     {
       "kind": "use-case",
@@ -3887,7 +3887,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0073",
+          "kind": "adr",
+          "route": "/adrs/adr-0073/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -3980,6 +3988,59 @@
           "label": "test/cases/374_delivery_unknown_is_not_delivered.sh",
           "kind": "test",
           "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0073",
+      "identity": "adr-0073",
+      "slug": "adr-0073",
+      "cockpit": "/cockpit/objects/adr/adr-0073",
+      "title": "An issue names the intent criterion it serves, and the coverage of every criterion is derived from the plan",
+      "status": "proposed",
+      "tags": [
+        "intent",
+        "project",
+        "planning"
+      ],
+      "source": ".ai/repo/adrs/0073-an-issue-names-the-intent-criterion-it-serves-and-coverage-is-derived.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/intent_plan.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/plan.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/schemas/majordomus/issue/issue.v1.schema.json",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0070",
+          "kind": "adr",
+          "route": "/adrs/adr-0070/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.derived-once@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-once-1/",
           "external": false
         }
       ],
@@ -7683,6 +7744,39 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.a-plan-carries-the-intent-it-serves@1",
+      "identity": "project.a-plan-carries-the-intent-it-serves@1",
+      "slug": "project-a-plan-carries-the-intent-it-serves-1",
+      "cockpit": "/cockpit/objects/rule/project-a-plan-carries-the-intent-it-serves-1",
+      "title": "A plan carries the intent it serves, and is reviewed before it is executed",
+      "status": "active",
+      "tags": [
+        "intent",
+        "project",
+        "planning",
+        "projections"
+      ],
+      "source": ".ai/repo/rules/project/a-plan-carries-the-intent-it-serves.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.derived-once@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-once-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.work-serves-a-declared-intent@1",
+          "kind": "rule",
+          "route": "/rules/project-work-serves-a-declared-intent-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
       "identity": "project.a-tool-that-cannot-match-the-tree-refuses@1",
       "slug": "project-a-tool-that-cannot-match-the-tree-refuses-1",
@@ -8365,6 +8459,13 @@
         },
         {
           "edge": "put_in_force",
+          "label": "adr-0073",
+          "kind": "adr",
+          "route": "/adrs/adr-0073/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "adr-0089",
           "kind": "adr",
           "route": "/adrs/adr-0089/",
@@ -8375,6 +8476,13 @@
           "label": "project.a-diagram-is-drawn-not-typed@1",
           "kind": "rule",
           "route": "/rules/project-a-diagram-is-drawn-not-typed-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-plan-carries-the-intent-it-serves@1",
+          "kind": "rule",
+          "route": "/rules/project-a-plan-carries-the-intent-it-serves-1/",
           "external": false
         },
         {
@@ -12138,6 +12246,13 @@
           "label": "adr-0070",
           "kind": "adr",
           "route": "/adrs/adr-0070/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-plan-carries-the-intent-it-serves@1",
+          "kind": "rule",
+          "route": "/rules/project-a-plan-carries-the-intent-it-serves-1/",
           "external": false
         }
       ]

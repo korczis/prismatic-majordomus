@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 156 | 138 | 0 | 18 |
-| http | 154 | 138 | 0 | 16 |
-| mcp | 150 | 134 | 0 | 16 |
+| direct | 157 | 139 | 0 | 18 |
+| http | 155 | 139 | 0 | 16 |
+| mcp | 151 | 135 | 0 | 16 |
 | system | 13 | 13 | 0 | 0 |
-| total | 473 | 423 | 0 | 50 |
+| total | 476 | 426 | 0 | 50 |
 
 ## Capabilities
 
@@ -82,6 +82,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `integration.events` | integration | query | — | covered | covered | covered | `default` |
 | `integration.explain` | integration | query | — | covered | covered | covered | `a-number` |
 | `integration.queue` | integration | query | — | covered | covered | covered | `default` |
+| `intents.coverage` | intents | query | — | covered | covered | covered | `default` |
 | `intents.list` | intents | query | — | covered | covered | covered | `default` |
 | `intents.preflight` | intents | query | — | covered | covered | covered | `first-issue` |
 | `intents.record` | intents | query | — | covered | covered | covered | `first-intent` |
