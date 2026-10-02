@@ -83,7 +83,7 @@ pub enum IntentLinkProvenance {
 }
 
 impl IntentLinkProvenance {
-    /// The word every surface prints.
+    /// The word every surface prints for how this link is known.
     ///
     /// ```
     /// use majordomus_cli::intent_realization::IntentLinkProvenance;
@@ -121,7 +121,7 @@ pub enum IntentWorkKind {
 }
 
 impl IntentWorkKind {
-    /// The word every surface prints.
+    /// The word every surface prints for the record this work came from.
     ///
     /// ```
     /// use majordomus_cli::intent_realization::IntentWorkKind;
@@ -159,7 +159,7 @@ pub enum IntentLinkVia {
 }
 
 impl IntentLinkVia {
-    /// The word every surface prints.
+    /// The word every surface prints for the fact this link was read from.
     ///
     /// ```
     /// use majordomus_cli::intent_realization::IntentLinkVia;
@@ -412,10 +412,9 @@ pub fn link(unit: IntentWorkUnit, intents: &Intents, plan: &Plan) -> IntentReali
         if !ids.iter().any(|i| i == issue) {
             return;
         }
+        // the strongest fact an issue is offered by is its link, whatever the order offered
         let slot = best.entry(issue.to_string()).or_insert(via);
-        if via.provenance() < slot.provenance() {
-            *slot = via;
-        }
+        *slot = std::cmp::min_by_key(*slot, via, |v| v.provenance());
     };
     for i in &unit.named_issues {
         offer(i, IntentLinkVia::NamedIssue);
@@ -444,10 +443,12 @@ pub fn link(unit: IntentWorkUnit, intents: &Intents, plan: &Plan) -> IntentReali
 
     let mut links = Vec::new();
     let mut unserved: BTreeMap<String, Vec<String>> = BTreeMap::new();
-    for (issue, via) in &best {
-        let Some(pi) = plan.issue(issue) else {
-            continue;
-        };
+    // every candidate is an issue of the plan: `offer` and the scope walk only take those
+    for (pi, via) in best
+        .iter()
+        .filter_map(|(id, via)| plan.issue(id).map(|pi| (pi, via)))
+    {
+        let issue = &pi.id;
         let serving = intents.serving(&pi.milestone);
         if serving.is_empty() {
             unserved
@@ -1143,10 +1144,9 @@ pub fn tasks_from_ledger(
         } else if e.event.starts_with("plan_") {
             let issue = payload_str(e, "issue");
             let owner = e.session.as_ref().and_then(|s| current.get(s));
-            if let (Some(t), false) = (owner, issue.is_empty()) {
-                if let Some(unit) = units.get_mut(t) {
-                    push_once(&mut unit.moved_issues, &issue);
-                }
+            // `current` only ever names a task `units` holds
+            if let (Some(unit), false) = (owner.and_then(|t| units.get_mut(t)), issue.is_empty()) {
+                push_once(&mut unit.moved_issues, &issue);
             }
         }
     }
@@ -1303,4 +1303,684 @@ pub fn gather(root: &Path, index: &Index, peers: &[Peer]) -> (Vec<IntentWorkUnit
         }
     }
     (units, skipped)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::intent::{IntentCriterion, IntentMilestone};
+    use crate::intent_plan::CoveringIssue;
+    use crate::plan::{PlanIssue, PlanProject, PlanVocabulary};
+    use serde_json::json;
+
+    fn issue(
+        id: &str,
+        milestone: &str,
+        status: &str,
+        scope: &[&str],
+        serves: &[&str],
+    ) -> PlanIssue {
+        PlanIssue {
+            id: id.into(),
+            milestone: milestone.into(),
+            status: status.into(),
+            wave: 0,
+            priority: "p1".into(),
+            profile: "implementation".into(),
+            parallel_safe: true,
+            title: id.into(),
+            slug: id.into(),
+            depends_on: vec![],
+            blocked_by: vec![],
+            dependents: vec![],
+            scope: scope.iter().map(|s| s.to_string()).collect(),
+            serves: serves.iter().map(|s| s.to_string()).collect(),
+            objective: String::new(),
+            evidence_have: 0,
+            evidence_need: 0,
+            started_at: String::new(),
+            verified_at: String::new(),
+            completed_at: String::new(),
+        }
+    }
+
+    fn plan(issues: Vec<PlanIssue>) -> Plan {
+        Plan {
+            project: PlanProject {
+                name: "p".into(),
+                repository: "o/p".into(),
+                default_branch: "master".into(),
+                active_milestone: String::new(),
+            },
+            statuses: PlanVocabulary {
+                issue: vec![],
+                milestone: vec![],
+            },
+            milestones: vec![],
+            issues,
+            waves: vec![],
+            edges: vec![],
+            milestone_edges: vec![],
+            findings: vec![],
+        }
+    }
+
+    fn criterion(id: &str, state: IntentEvidenceState) -> IntentCriterion {
+        IntentCriterion {
+            id: id.into(),
+            criterion: format!("{id} holds"),
+            evidence: "test".into(),
+            reference: format!("suite:{id}"),
+            state,
+            met: state == IntentEvidenceState::Current,
+            reproduce: None,
+        }
+    }
+
+    fn view(id: &str, stage: IntentStage, milestones: &[(&str, Option<&str>)]) -> IntentView {
+        IntentView {
+            id: id.into(),
+            title: id.to_uppercase(),
+            statement: String::new(),
+            invariants: vec![],
+            stage,
+            milestones: milestones
+                .iter()
+                .map(|(m, s)| IntentMilestone {
+                    id: m.to_string(),
+                    resolved: s.is_some(),
+                    status: s.map(str::to_string),
+                })
+                .collect(),
+            satisfaction: vec![],
+            met: 0,
+            governance: vec![],
+            non_goals: vec![],
+            superseded_by: None,
+            source: String::new(),
+        }
+    }
+
+    fn intents(views: Vec<IntentView>) -> Intents {
+        Intents {
+            intents: views,
+            findings: vec![],
+        }
+    }
+
+    fn entry(ts: &str, event: &str, session: Option<&str>, payload: serde_json::Value) -> Entry {
+        Entry {
+            ts: ts.into(),
+            event: event.into(),
+            head: "h".into(),
+            branch: "feature/I0001-x".into(),
+            by: "majordomus/0".into(),
+            session: session.map(str::to_string),
+            payload: payload
+                .as_object()
+                .unwrap()
+                .iter()
+                .map(|(k, v)| (k.clone(), v.clone()))
+                .collect(),
+        }
+    }
+
+    fn codes(f: &[IntentFinding]) -> Vec<&str> {
+        f.iter().map(|f| f.code.as_str()).collect()
+    }
+
+    #[test]
+    fn every_word_is_the_one_serde_writes() {
+        for p in [
+            IntentLinkProvenance::Declared,
+            IntentLinkProvenance::Observed,
+            IntentLinkProvenance::Derived,
+            IntentLinkProvenance::Inferred,
+        ] {
+            assert_eq!(serde_json::to_value(p).unwrap(), p.as_str());
+        }
+        for k in [
+            IntentWorkKind::Task,
+            IntentWorkKind::PeerClaim,
+            IntentWorkKind::SessionRecord,
+        ] {
+            assert_eq!(serde_json::to_value(k).unwrap(), k.as_str());
+        }
+        for v in [
+            IntentLinkVia::NamedIssue,
+            IntentLinkVia::MovedIssue,
+            IntentLinkVia::BranchIssue,
+            IntentLinkVia::ScopeOverlap,
+        ] {
+            assert_eq!(serde_json::to_value(v).unwrap(), v.as_str());
+        }
+        // each fact grades to exactly one provenance, and the four are four
+        let graded: BTreeSet<IntentLinkProvenance> = [
+            IntentLinkVia::NamedIssue,
+            IntentLinkVia::MovedIssue,
+            IntentLinkVia::BranchIssue,
+            IntentLinkVia::ScopeOverlap,
+        ]
+        .iter()
+        .map(|v| v.provenance())
+        .collect();
+        assert_eq!(graded.len(), 4);
+    }
+
+    #[test]
+    fn a_link_keeps_the_strongest_fact_per_issue_and_the_criteria_it_serves() {
+        let p = plan(vec![
+            issue("I0001", "m1", "ACTIVE", &["lib"], &["x#a", "y#b", "x#c"]),
+            issue("I0002", "m2", "READY", &["docs"], &[]),
+        ]);
+        let i = intents(vec![
+            view("x", IntentStage::Executing, &[("m1", Some("ACTIVE"))]),
+            view("y", IntentStage::Planned, &[("m2", Some("READY"))]),
+        ]);
+        let mut u = IntentWorkUnit::new(IntentWorkKind::Task, "t-1");
+        // the same issue offered by an event and by the branch: the event's link is kept
+        u.branches = vec!["feature/I0001-work".into()];
+        u.moved_issues = vec!["I0001".into(), "I9999".into()];
+        u.named_issues = vec!["I0002".into()];
+        let w = link(u, &i, &p);
+        assert_eq!(w.unlinked, None);
+        let got: Vec<(&str, &str, IntentLinkVia)> = w
+            .links
+            .iter()
+            .map(|l| (l.intent.as_str(), l.issue.as_str(), l.via))
+            .collect();
+        // declared sorts before observed; I9999 is no issue of the plan and links nothing
+        assert_eq!(
+            got,
+            [
+                ("y", "I0002", IntentLinkVia::NamedIssue),
+                ("x", "I0001", IntentLinkVia::MovedIssue),
+            ]
+        );
+        assert_eq!(w.links[1].criteria, ["a", "c"]);
+        assert!(w.links[0].criteria.is_empty());
+        assert!(w.links.iter().all(|l| l.provenance == l.via.provenance()));
+
+        // only the branch names it: derived
+        let mut u = IntentWorkUnit::new(IntentWorkKind::Task, "t-2");
+        u.branches = vec!["feature/I0001-work".into()];
+        let w = link(u, &i, &p);
+        assert_eq!(w.links[0].provenance, IntentLinkProvenance::Derived);
+    }
+
+    #[test]
+    fn a_scope_overlap_is_inferred_and_only_from_open_issues() {
+        let p = plan(vec![
+            issue("I0001", "m1", "ACTIVE", &["lib"], &[]),
+            issue("I0002", "m1", "DONE", &["lib"], &[]),
+            issue("I0003", "m1", "CANCELLED", &["lib"], &[]),
+        ]);
+        let i = intents(vec![view("x", IntentStage::Executing, &[("m1", None)])]);
+        let mut u = IntentWorkUnit::new(IntentWorkKind::PeerClaim, "p1/c");
+        u.scope = vec!["lib/a.rs".into()];
+        let w = link(u, &i, &p);
+        let issues: Vec<&str> = w.links.iter().map(|l| l.issue.as_str()).collect();
+        assert_eq!(issues, ["I0001"]);
+        assert_eq!(w.links[0].provenance, IntentLinkProvenance::Inferred);
+    }
+
+    #[test]
+    fn unlinked_work_says_which_link_is_missing() {
+        let p = plan(vec![issue(
+            "I0001",
+            "orphan-milestone",
+            "ACTIVE",
+            &["lib"],
+            &[],
+        )]);
+        let i = intents(vec![view("x", IntentStage::Executing, &[("m1", None)])]);
+
+        let mut u = IntentWorkUnit::new(IntentWorkKind::Task, "t-1");
+        u.branches = vec!["feature/no-issue".into()];
+        u.scope = vec!["docs".into()];
+        let why = link(u, &i, &p).unlinked.unwrap();
+        assert!(
+            why.contains("its branch feature/no-issue names none"),
+            "{why}"
+        );
+        assert!(why.contains("no open issue's scope covers docs"), "{why}");
+
+        let why = link(IntentWorkUnit::new(IntentWorkKind::Task, "t-2"), &i, &p)
+            .unlinked
+            .unwrap();
+        assert!(why.contains("it ran on no recorded branch"), "{why}");
+        assert!(why.contains("it claims no scope"), "{why}");
+
+        // the issue exists, but no intent names its milestone
+        let mut u = IntentWorkUnit::new(IntentWorkKind::Task, "t-3");
+        u.named_issues = vec!["I0001".into()];
+        let w = link(u, &i, &p);
+        assert!(w.links.is_empty());
+        assert_eq!(
+            w.unlinked.unwrap(),
+            "its issues belong to milestones no intent names: orphan-milestone (I0001)"
+        );
+    }
+
+    #[test]
+    fn drift_names_closed_work_reality_contradicts_or_never_proved() {
+        let p = plan(vec![
+            issue("I0001", "m1", "DONE", &[], &["x#a"]),
+            issue("I0002", "m1", "DONE", &[], &["x#a"]),
+            issue("I0003", "m1", "ACTIVE", &[], &["x#b"]),
+        ]);
+        let mut v = view("x", IntentStage::Verifying, &[("m1", Some("DONE"))]);
+        v.satisfaction = vec![
+            criterion("a", IntentEvidenceState::Stale),
+            criterion("b", IntentEvidenceState::Failing),
+            criterion("c", IntentEvidenceState::NotRun),
+            criterion("d", IntentEvidenceState::Current),
+        ];
+        let found = drift(&v, &p);
+        assert_eq!(
+            codes(&found),
+            [
+                "closed_work_contradicted",
+                "closed_work_contradicted",
+                "closed_work_unproven"
+            ]
+        );
+        assert!(found[0].message.contains("a source that has changed"));
+        assert!(found[1].message.contains("did not pass"));
+        assert!(found[2].message.contains("no recorded run"));
+        assert!(found
+            .iter()
+            .all(|f| f.level == WARN && f.reproduce == REPRODUCE));
+
+        // still executing: only a criterion every serving issue closed is drift
+        v.stage = IntentStage::Executing;
+        let found = drift(&v, &p);
+        assert_eq!(codes(&found), ["criterion_closed_unmet"]);
+        assert!(found[0].message.contains("(I0001, I0002)"));
+        assert!(found[0].message.contains("criterion `a`"));
+
+        // a planned intent is held the same way: closing every issue that serves a criterion
+        // does not meet it
+        v.stage = IntentStage::Planned;
+        assert_eq!(codes(&drift(&v, &p)), ["criterion_closed_unmet"]);
+
+        // a declared intent has no closure to drift from
+        v.stage = IntentStage::Declared;
+        assert!(drift(&v, &p).is_empty());
+    }
+
+    #[test]
+    fn every_evidence_state_and_coverage_strength_has_its_own_words() {
+        let states = [
+            IntentEvidenceState::Current,
+            IntentEvidenceState::Stale,
+            IntentEvidenceState::Failing,
+            IntentEvidenceState::NotRun,
+            IntentEvidenceState::NotDerivable,
+            IntentEvidenceState::Unresolved,
+        ];
+        let words: BTreeSet<&str> = states.iter().map(|s| state_words(*s)).collect();
+        assert_eq!(words.len(), states.len());
+        assert!(state_words(IntentEvidenceState::NotDerivable).contains("never met by itself"));
+        assert!(state_words(IntentEvidenceState::Unresolved).contains("names nothing"));
+        let strengths = [
+            CoverageStrength::Uncovered,
+            CoverageStrength::Observed,
+            CoverageStrength::Weak,
+            CoverageStrength::Covered,
+        ];
+        let words: BTreeSet<&str> = strengths.iter().map(|s| strength_words(*s)).collect();
+        assert_eq!(words.len(), strengths.len());
+    }
+
+    #[test]
+    fn realize_joins_work_to_intents_and_names_live_orphans_only() {
+        let p = plan(vec![issue("I0001", "m1", "ACTIVE", &["lib"], &["x#a"])]);
+        let mut v = view("x", IntentStage::Executing, &[("m1", Some("ACTIVE"))]);
+        let mut a = criterion("a", IntentEvidenceState::NotRun);
+        a.reproduce = Some("test/run.sh a".into());
+        v.satisfaction = vec![a, criterion("b", IntentEvidenceState::Current)];
+        v.met = 1;
+        let i = intents(vec![v]);
+
+        let mut t = IntentWorkUnit::new(IntentWorkKind::Task, "t-1");
+        t.named_issues = vec!["I0001".into()];
+        t.handovers = vec!["h1.md".into(), "h2.md".into()];
+        for p in ["claude-code", "codex"] {
+            t.episodes.push(IntentEpisode {
+                session: format!("s-{p}"),
+                provider: p.into(),
+                provider_session: String::new(),
+            });
+        }
+        let mut claim = IntentWorkUnit::new(IntentWorkKind::PeerClaim, "p1/c");
+        claim.scope = vec!["lib".into()];
+        claim.episodes.push(IntentEpisode {
+            session: String::new(),
+            provider: "codex".into(),
+            provider_session: String::new(),
+        });
+        let mut live_task = IntentWorkUnit::new(IntentWorkKind::Task, "t-orphan");
+        live_task.outcome = "active".into();
+        let mut finished_task = IntentWorkUnit::new(IntentWorkKind::Task, "t-old");
+        finished_task.outcome = "completed".into();
+        let mut live_claim = IntentWorkUnit::new(IntentWorkKind::PeerClaim, "p2/c");
+        live_claim.outcome = "attached".into();
+        let mut gone_claim = IntentWorkUnit::new(IntentWorkKind::PeerClaim, "p3/c");
+        gone_claim.outcome = "departed".into();
+        let mut record = IntentWorkUnit::new(IntentWorkKind::SessionRecord, "s-r");
+        record.outcome = "active".into();
+
+        let r = realize(
+            &i,
+            &p,
+            vec![
+                t,
+                claim,
+                live_task,
+                finished_task,
+                live_claim,
+                gone_claim,
+                record,
+            ],
+        );
+        assert_eq!(r.orphans, 5);
+        assert_eq!(
+            r.findings
+                .iter()
+                .map(|f| f.subject.as_str())
+                .collect::<Vec<_>>(),
+            ["t-orphan", "p2/c"],
+            "only live work is named; a finished task, a departed claim and a closed session \
+             record are history"
+        );
+        let x = &r.intents[0];
+        assert_eq!((x.criteria, x.met), (2, 1));
+        assert_eq!(x.unmet.len(), 1);
+        assert_eq!(x.unmet[0].issues, ["I0001"]);
+        assert_eq!(x.unmet[0].reproduce.as_deref(), Some("test/run.sh a"));
+        let work: Vec<(&str, IntentLinkProvenance, usize)> = x
+            .work
+            .iter()
+            .map(|w| (w.id.as_str(), w.provenance, w.handovers))
+            .collect();
+        assert_eq!(
+            work,
+            [
+                ("t-1", IntentLinkProvenance::Declared, 2),
+                ("p1/c", IntentLinkProvenance::Inferred, 0),
+            ]
+        );
+        assert_eq!(x.providers, ["claude-code", "codex"]);
+    }
+
+    #[test]
+    fn explain_gives_one_sentence_per_fact_for_every_stage() {
+        let r = IntentRealization {
+            intents: vec![],
+            work: vec![],
+            orphans: 0,
+            findings: vec![],
+        };
+        let none = IntentCoverage {
+            criteria: vec![],
+            issues: vec![],
+            findings: vec![],
+        };
+        let cases = [
+            (
+                IntentStage::Declared,
+                vec![],
+                "declared: it names no milestone",
+            ),
+            (
+                IntentStage::Declared,
+                vec![("m1", None)],
+                "declared: m1 does not resolve",
+            ),
+            (
+                IntentStage::Planned,
+                vec![("m1", Some("READY"))],
+                "planned: every milestone resolves and none has started (m1 is READY)",
+            ),
+            (
+                IntentStage::Executing,
+                vec![("m1", Some("ACTIVE"))],
+                "executing: m1 is ACTIVE",
+            ),
+            (
+                IntentStage::Verifying,
+                vec![],
+                "verifying: every milestone is DONE and 0 of 0",
+            ),
+            (
+                IntentStage::Satisfied,
+                vec![],
+                "satisfied: every milestone is DONE and all 0",
+            ),
+            (
+                IntentStage::Cancelled,
+                vec![],
+                "cancelled: the record says so",
+            ),
+            (IntentStage::Superseded, vec![], "superseded by y"),
+        ];
+        for (stage, milestones, first) in cases {
+            let mut v = view("x", stage, &milestones);
+            v.superseded_by = Some("y".into());
+            let e = explain(&v, &none, &r);
+            assert!(
+                e.because[0].starts_with(first),
+                "{stage:?}: {}",
+                e.because[0]
+            );
+            // an intent the realization never saw is realised by nothing, and says so
+            assert_eq!(
+                e.because.last().unwrap(),
+                "no recorded task, session or live claim realises it"
+            );
+            assert_eq!(e.realization.intent, "x");
+        }
+    }
+
+    #[test]
+    fn explain_reads_each_criterion_with_its_coverage_and_the_work() {
+        let p = plan(vec![
+            issue("I0001", "m1", "DONE", &[], &["x#a"]),
+            issue("I0002", "m1", "DONE", &[], &["x#b"]),
+        ]);
+        let mut v = view("x", IntentStage::Verifying, &[("m1", Some("DONE"))]);
+        let mut b = criterion("b", IntentEvidenceState::Failing);
+        b.reproduce = Some("test/run.sh b".into());
+        let mut c = criterion("c", IntentEvidenceState::NotRun);
+        c.reproduce = None;
+        let mut met = criterion("a", IntentEvidenceState::Current);
+        met.reproduce = Some("never printed for a met criterion".into());
+        v.satisfaction = vec![met, b, c];
+        v.met = 1;
+        let mut t = IntentWorkUnit::new(IntentWorkKind::Task, "t-1");
+        t.moved_issues = vec!["I0001".into()];
+        t.handovers = vec!["h.md".into()];
+        t.episodes.push(IntentEpisode {
+            session: "s-1".into(),
+            provider: "codex".into(),
+            provider_session: String::new(),
+        });
+        let mut quiet = IntentWorkUnit::new(IntentWorkKind::Task, "t-2");
+        quiet.moved_issues = vec!["I0002".into()];
+        let unrelated = IntentWorkUnit::new(IntentWorkKind::Task, "t-3");
+        let r = realize(&intents(vec![v.clone()]), &p, vec![t, quiet, unrelated]);
+        let coverage = IntentCoverage {
+            criteria: vec![
+                CriterionCoverage {
+                    intent: "x".into(),
+                    criterion: "a".into(),
+                    strength: CoverageStrength::Covered,
+                    issues: vec![CoveringIssue {
+                        id: "I0001".into(),
+                        milestone: "m1".into(),
+                        status: "DONE".into(),
+                        evidence_need: 1,
+                    }],
+                    milestones: vec!["m1".into()],
+                },
+                CriterionCoverage {
+                    intent: "x".into(),
+                    criterion: "b".into(),
+                    strength: CoverageStrength::Uncovered,
+                    issues: vec![],
+                    milestones: vec![],
+                },
+                CriterionCoverage {
+                    intent: "other".into(),
+                    criterion: "c".into(),
+                    strength: CoverageStrength::Weak,
+                    issues: vec![],
+                    milestones: vec![],
+                },
+            ],
+            issues: vec![],
+            findings: vec![],
+        };
+        let e = explain(&v, &coverage, &r);
+        assert_eq!(
+            e.because[1],
+            "`a` is met: its test `suite:a` has current evidence; an issue serving it owes \
+             evidence before it is DONE (I0001)"
+        );
+        assert_eq!(
+            e.because[2],
+            "`b` is not met: its test `suite:b` has a latest recorded run that did not pass; no \
+             live issue serves it; reproduce: test/run.sh b"
+        );
+        // another intent's coverage of a criterion with the same id is not this one's
+        assert_eq!(
+            e.because[3],
+            "`c` is not met: its test `suite:c` has no recorded run"
+        );
+        assert_eq!(
+            e.because[4],
+            "2 unit(s) of work realise it across 1 handover(s), run by codex"
+        );
+        assert!(e.because[5].starts_with("closed_work_contradicted: "));
+        assert!(e.because[6].starts_with("closed_work_unproven: "));
+        assert_eq!(e.coverage.len(), 2);
+        let ids: Vec<&str> = e.work.iter().map(|w| w.work.id.as_str()).collect();
+        assert_eq!(ids, ["t-1", "t-2"]);
+
+        // work without a provider names none
+        let mut v2 = v.clone();
+        v2.satisfaction.clear();
+        let r2 = realize(
+            &intents(vec![v2.clone()]),
+            &p,
+            vec![{
+                let mut u = IntentWorkUnit::new(IntentWorkKind::Task, "t-9");
+                u.moved_issues = vec!["I0001".into()];
+                u
+            }],
+        );
+        let e2 = explain(&v2, &coverage, &r2);
+        assert_eq!(
+            e2.because.last().unwrap(),
+            "1 unit(s) of work realise it across 0 handover(s)"
+        );
+    }
+
+    #[test]
+    fn a_ledger_attributes_each_task_its_episodes_providers_and_outcome() {
+        let mut opened = BTreeMap::new();
+        opened.insert("s-b".to_string(), ("gemini".to_string(), "g-1".to_string()));
+        let entries = vec![
+            entry(
+                "1",
+                "session.started",
+                Some("s-a"),
+                json!({ "provider": "codex" }),
+            ),
+            // a later provider event does not overwrite what the start line named
+            entry(
+                "2",
+                "provider.event.received",
+                Some("s-a"),
+                json!({ "provider": "claude-code", "provider_session": "x" }),
+            ),
+            entry(
+                "3",
+                "session.started",
+                None,
+                json!({ "provider": "orphan" }),
+            ),
+            entry("4", "session.started", Some("s-c"), json!({})),
+            entry(
+                "5",
+                "task.started",
+                Some("s-a"),
+                json!({ "task_id": "t-1", "scope": "lib lib docs" }),
+            ),
+            // a plan transition before any task ran in the episode belongs to none
+            entry("6", "plan_start", Some("s-b"), json!({ "issue": "I0009" })),
+            entry("7", "plan_start", None, json!({ "issue": "I0008" })),
+            entry(
+                "8",
+                "task.checkpoint",
+                Some("s-b"),
+                json!({ "task_id": "t-1" }),
+            ),
+            entry("9", "plan_done", Some("s-b"), json!({ "issue": "I0001" })),
+            entry("10", "plan_done", Some("s-b"), json!({ "issue": "" })),
+            entry(
+                "11",
+                "task.finished",
+                Some("s-b"),
+                json!({ "task_id": "t-1" }),
+            ),
+            entry("12", "task.started", None, json!({ "task_id": "t-2" })),
+            entry(
+                "13",
+                "task.finished",
+                None,
+                json!({ "task_id": "t-2", "outcome": "abandoned" }),
+            ),
+            entry("14", "task.started", Some("s-c"), json!({ "task_id": "" })),
+            entry(
+                "15",
+                "task.unknown",
+                Some("s-c"),
+                json!({ "task_id": "t-3" }),
+            ),
+        ];
+        let tasks = tasks_from_ledger(&entries, &opened);
+        let ids: Vec<&str> = tasks.iter().map(|t| t.id.as_str()).collect();
+        assert_eq!(ids, ["t-1", "t-2", "t-3"]);
+        let t1 = &tasks[0];
+        assert_eq!(t1.outcome, "finished");
+        assert_eq!(t1.scope, ["lib", "docs"]);
+        assert_eq!(t1.moved_issues, ["I0001"]);
+        assert_eq!(t1.branches, ["feature/I0001-x"]);
+        assert_eq!(t1.providers(), ["codex", "gemini"]);
+        assert_eq!(t1.episodes[1].provider_session, "g-1");
+        assert_eq!(tasks[1].outcome, "abandoned");
+        assert!(tasks[1].episodes.is_empty());
+        // an event of the task family that moves no outcome still records the episode
+        assert_eq!(tasks[2].outcome, "");
+        assert_eq!(tasks[2].episodes[0].session, "s-c");
+        assert_eq!(tasks[2].episodes[0].provider, "");
+        // an episode without a provider names none, and a provider is named once
+        assert!(tasks[2].providers().is_empty());
+        let mut twice = tasks[0].clone();
+        twice.episodes.push(tasks[0].episodes[0].clone());
+        twice.episodes.push(tasks[2].episodes[0].clone());
+        assert_eq!(twice.providers(), ["codex", "gemini"]);
+    }
+
+    #[test]
+    fn issue_tokens_are_whole_words_each_once() {
+        let ids = ["I0001".to_string(), "I0002".to_string()];
+        assert_eq!(
+            issue_tokens("I0002 then I0001, again I0002; I0001x _I0001 I0001-y", &ids),
+            ["I0002", "I0001"]
+        );
+        assert!(issue_tokens("", &ids).is_empty());
+    }
 }

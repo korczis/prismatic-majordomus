@@ -12,7 +12,9 @@ use serde_json::json;
 use crate::capability::Context;
 use crate::http::router::percent_encode;
 use crate::intent::{IntentEvidenceState, IntentStage};
-use crate::intent_realization::{IntentExplanation, IntentLinkProvenance, IntentRealization};
+use crate::intent_realization::{
+    IntentExplanation, IntentLinkProvenance, IntentRealization, IntentRealizedWork,
+};
 
 use super::html::{el, El, Node};
 use super::nav::Area;
@@ -96,6 +98,30 @@ fn criteria_bar(met: usize, total: usize) -> El {
                 .class("mj-progress-text")
                 .text(format!("{met}/{total}")),
         )
+}
+
+/// One unit of work as one intent sees it: its strongest link to that intent and the issues it
+/// links through. A unit with no link to the intent shows a dash rather than a grade.
+fn work_row(intent: &str, w: &IntentRealizedWork) -> El {
+    let links: Vec<&crate::intent_realization::IntentLink> =
+        w.links.iter().filter(|l| l.intent == intent).collect();
+    let strongest = links.iter().map(|l| l.provenance).min();
+    let issues: Vec<String> = links
+        .iter()
+        .map(|l| format!("{} ({})", l.issue, l.via.as_str()))
+        .collect();
+    row(vec![
+        text_cell(w.work.kind.as_str()),
+        cell(mono(w.work.id.clone())),
+        text_cell(w.work.outcome.clone()),
+        cell(match strongest {
+            Some(p) => provenance_badge(p),
+            None => el("span").text("—"),
+        }),
+        text_cell(issues.join(", ")),
+        text_cell(w.work.providers().join(", ")),
+        text_cell(w.work.handovers.len().to_string()),
+    ])
 }
 
 fn intent_href(id: &str) -> String {
@@ -312,31 +338,7 @@ pub fn intent(ctx: &Context, id: &str) -> Page {
         table(&["Milestone", "Status"], milestone_rows),
     );
 
-    let work_rows: Vec<El> = e
-        .work
-        .iter()
-        .map(|w| {
-            let links: Vec<&crate::intent_realization::IntentLink> =
-                w.links.iter().filter(|l| l.intent == i.id).collect();
-            let strongest = links.iter().map(|l| l.provenance).min();
-            let issues: Vec<String> = links
-                .iter()
-                .map(|l| format!("{} ({})", l.issue, l.via.as_str()))
-                .collect();
-            row(vec![
-                text_cell(w.work.kind.as_str()),
-                cell(mono(w.work.id.clone())),
-                text_cell(w.work.outcome.clone()),
-                cell(match strongest {
-                    Some(p) => provenance_badge(p),
-                    None => el("span").text("—"),
-                }),
-                text_cell(issues.join(", ")),
-                text_cell(w.work.providers().join(", ")),
-                text_cell(w.work.handovers.len().to_string()),
-            ])
-        })
-        .collect();
+    let work_rows: Vec<El> = e.work.iter().map(|w| work_row(&i.id, w)).collect();
     let work = card(
         "Work realising it",
         if work_rows.is_empty() {
@@ -379,4 +381,137 @@ pub fn intent(ctx: &Context, id: &str) -> Page {
             ("Intents", Some("/cockpit/intents")),
             (&i.id, None),
         ])
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::intent::{IntentFinding, FAIL, WARN};
+    use crate::intent_realization::{IntentLink, IntentLinkVia, IntentWorkKind, IntentWorkUnit};
+    use crate::synthetic::SyntheticRepository;
+
+    #[test]
+    fn every_stage_state_and_provenance_is_read_in_its_own_colour() {
+        for (stage, status) in [
+            (IntentStage::Declared, "neutral"),
+            (IntentStage::Planned, "neutral"),
+            (IntentStage::Executing, "info"),
+            (IntentStage::Verifying, "warn"),
+            (IntentStage::Satisfied, "ok"),
+            (IntentStage::Cancelled, "warn"),
+            (IntentStage::Superseded, "bad"),
+        ] {
+            let html = stage_badge(stage).render();
+            assert_eq!(html, badge(status, stage.as_str()).render(), "{stage:?}");
+        }
+        for (state, status, label) in [
+            (IntentEvidenceState::Current, "ok", "current"),
+            (IntentEvidenceState::Stale, "warn", "stale"),
+            (IntentEvidenceState::Failing, "bad", "failing"),
+            (IntentEvidenceState::NotRun, "neutral", "not run"),
+            (
+                IntentEvidenceState::NotDerivable,
+                "neutral",
+                "not derivable",
+            ),
+            (IntentEvidenceState::Unresolved, "bad", "unresolved"),
+        ] {
+            assert_eq!(
+                evidence_badge(state).render(),
+                badge(status, label).render(),
+                "{state:?}"
+            );
+        }
+        for (p, status) in [
+            (IntentLinkProvenance::Declared, "ok"),
+            (IntentLinkProvenance::Observed, "info"),
+            (IntentLinkProvenance::Derived, "neutral"),
+            (IntentLinkProvenance::Inferred, "warn"),
+        ] {
+            assert_eq!(
+                provenance_badge(p).render(),
+                badge(status, p.as_str()).render(),
+                "{p:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_reference_the_index_does_not_hold_is_text_and_never_a_link() {
+        let repo = SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        let absent = object_link(&ctx, "test", "test/cases/00_absent.sh", "00_absent").render();
+        assert!(!absent.contains("href"), "{absent}");
+        assert!(absent.contains("00_absent"), "{absent}");
+        let held = ctx.index.objects.first().unwrap();
+        let present = object_link(&ctx, &held.kind, &held.identity, "here").render();
+        assert!(present.contains(&object_href(&held.uri)), "{present}");
+    }
+
+    #[test]
+    fn a_repository_without_intents_says_how_to_declare_one() {
+        let repo = SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        let page = list(&ctx);
+        assert_eq!(page.status, 200);
+        let html = page.main.render();
+        assert!(
+            html.contains("This repository declares no intent"),
+            "{html}"
+        );
+        assert!(!html.contains("Findings"), "{html}");
+        // an intent it does not hold is a 404, and says why
+        let page = intent(&ctx, "absent");
+        assert_eq!(page.status, 404);
+        assert!(page.main.render().contains("no intent"));
+    }
+
+    #[test]
+    fn a_failure_is_read_as_a_failure_and_anything_else_as_a_warning() {
+        let finding = |level: &str| IntentFinding {
+            level: level.into(),
+            code: "c".into(),
+            subject: "x".into(),
+            message: "m".into(),
+            reproduce: "r".into(),
+        };
+        let html = findings_card(&[finding(FAIL), finding(WARN)]).render();
+        let fail = html.find(&alert("fail", "c — x: m").render());
+        let warn = html.find(&alert("warn", "c — x: m").render());
+        assert!(fail.is_some() && warn.is_some() && fail < warn, "{html}");
+    }
+
+    #[test]
+    fn work_with_no_link_to_the_intent_is_shown_without_a_grade() {
+        let mut w = IntentRealizedWork {
+            work: IntentWorkUnit::new(IntentWorkKind::Task, "t-1"),
+            links: vec![IntentLink {
+                intent: "other".into(),
+                stage: IntentStage::Executing,
+                milestone: "m".into(),
+                issue: "I0001".into(),
+                criteria: vec![],
+                via: IntentLinkVia::NamedIssue,
+                provenance: IntentLinkProvenance::Declared,
+            }],
+            unlinked: None,
+        };
+        let html = work_row("x", &w).render();
+        assert!(html.contains("—"), "{html}");
+        assert!(!html.contains("I0001"), "{html}");
+        w.links[0].intent = "x".into();
+        let html = work_row("x", &w).render();
+        assert!(html.contains("I0001 (named_issue)"), "{html}");
+        assert!(
+            html.contains(&provenance_badge(IntentLinkProvenance::Declared).render()),
+            "{html}"
+        );
+    }
+
+    #[test]
+    fn a_bar_of_no_criteria_is_empty_rather_than_a_division_by_zero() {
+        let html = criteria_bar(0, 0).render();
+        assert!(html.contains("width:0%"), "{html}");
+        assert!(criteria_bar(1, 2).render().contains("width:50%"));
+    }
 }

@@ -41,11 +41,11 @@ pub fn run(args: IntentArgs) -> Result<u8> {
                 EXIT_INVALID
             })
         }
-        IntentCommand::Coverage => {
-            let v = call(&app.context, &["intent", "coverage"], json!({}))?;
-            emit(format, &v, coverage_text)?;
-            Ok(0)
-        }
+        // the coverage is a projection of records the load already read: it has no refusal
+        // of its own, so the only failure is the write, which is returned as it is
+        IntentCommand::Coverage => call(&app.context, &["intent", "coverage"], json!({}))
+            .and_then(|v| emit(format, &v, coverage_text))
+            .map(|()| 0),
         IntentCommand::Preflight { issue, paths } => {
             let mut input = json!({ "paths": paths.join(",") });
             if let Some(issue) = issue {

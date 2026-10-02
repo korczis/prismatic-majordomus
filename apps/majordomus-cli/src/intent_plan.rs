@@ -381,7 +381,9 @@ pub fn coverage(intents: &[IntentOutline], plan: &Plan) -> IntentCoverage {
         let mut serves_live = false;
         let mut seen: BTreeSet<&str> = BTreeSet::new();
         for token in &issue.serves {
-            if !serves_token(token) {
+            // the one place a token is split: a token that is not `<intent>#<criterion>` is
+            // refused here, so no later step can read a half of it as the whole
+            let Some((iid, cid)) = token.split_once('#').filter(|_| serves_token(token)) else {
                 f.push(
                     FAIL,
                     "malformed_serves",
@@ -389,7 +391,7 @@ pub fn coverage(intents: &[IntentOutline], plan: &Plan) -> IntentCoverage {
                     format!("serves {token}, which is not <intent-id>#<criterion-id>"),
                 );
                 continue;
-            }
+            };
             if !seen.insert(token.as_str()) {
                 f.push(
                     WARN,
@@ -399,9 +401,6 @@ pub fn coverage(intents: &[IntentOutline], plan: &Plan) -> IntentCoverage {
                 );
                 continue;
             }
-            let Some((iid, cid)) = token.split_once('#') else {
-                continue;
-            };
             let Some(intent) = by_id.get(iid) else {
                 f.push(
                     FAIL,
@@ -584,6 +583,24 @@ pub fn coverage(intents: &[IntentOutline], plan: &Plan) -> IntentCoverage {
 mod tests {
     use super::*;
     use crate::plan::{PlanProject, PlanVocabulary};
+
+    #[test]
+    fn a_serves_token_is_two_slugs_that_may_start_with_a_digit_but_never_a_capital() {
+        for (token, ok) in [
+            ("intent-lifecycle#stage-is-derived", true),
+            ("0intent#1-criterion", true),
+            ("Intent#x", false),
+            ("x#Criterion", false),
+            ("-x#y", false),
+            ("x#", false),
+            ("#y", false),
+            ("x_y#z", false),
+            ("a#b#c", false),
+            ("no-hash", false),
+        ] {
+            assert_eq!(serves_token(token), ok, "{token}");
+        }
+    }
 
     fn issue(id: &str, milestone: &str, serves: &[&str], scope: &[&str], need: u32) -> PlanIssue {
         PlanIssue {

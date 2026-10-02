@@ -290,13 +290,13 @@ impl ResolutionState {
 /// module does not know, and the `_text` fields keep what was written.
 ///
 /// ```
-/// use majordomus_cli::intent_review::{CritiqueRecord, ResolutionState};
+/// use majordomus_cli::intent_review::{CritiqueFinding, CritiqueRecord, ResolutionState};
 /// let c = CritiqueRecord::from_metadata("c.yaml", &serde_json::json!({
 ///     "intent": "x",
 ///     "findings": [{"id": "f1", "class": "regression_risk", "subject": "x#a",
 ///                   "blocking": true, "resolution": {"state": "planned", "issue": "I1"}}],
 /// }));
-/// let finding = &c.findings[0];
+/// let finding: &CritiqueFinding = &c.findings[0];
 /// assert!(finding.blocking);
 /// assert_eq!(finding.resolution, Some(ResolutionState::Planned));
 /// assert_eq!(finding.issue, "I1");
@@ -880,6 +880,47 @@ mod tests {
     use super::*;
     use crate::plan::{PlanIssue, PlanProject, PlanVocabulary};
     use serde_json::json;
+
+    #[test]
+    fn every_word_a_record_spells_is_read_and_an_unknown_one_is_not_guessed() {
+        for (word, state) in [
+            ("satisfied", ConditionState::Satisfied),
+            ("missing", ConditionState::Missing),
+            ("conflicting", ConditionState::Conflicting),
+            ("unknown", ConditionState::Unknown),
+        ] {
+            assert_eq!(ConditionState::parse(word), Some(state), "{word}");
+        }
+        assert_eq!(ConditionState::parse("Satisfied"), None);
+        for (word, class) in [
+            ("missed_requirement", CritiqueClass::MissedRequirement),
+            ("unproven_assumption", CritiqueClass::UnprovenAssumption),
+            ("insufficient_work", CritiqueClass::InsufficientWork),
+            ("unnecessary_work", CritiqueClass::UnnecessaryWork),
+            ("regression_risk", CritiqueClass::RegressionRisk),
+            ("surface_missing", CritiqueClass::SurfaceMissing),
+            ("delivery_verification", CritiqueClass::DeliveryVerification),
+        ] {
+            assert_eq!(CritiqueClass::parse(word), Some(class), "{word}");
+        }
+        assert_eq!(CritiqueClass::parse("nitpick"), None);
+    }
+
+    #[test]
+    fn a_scalar_is_read_as_its_text_and_a_lone_string_as_a_list_of_one() {
+        let meta = json!({
+            "s": "words", "b": true, "n": 42, "nothing": null, "list": ["a", 1, "b"],
+        });
+        assert_eq!(text(&meta, "s"), "words");
+        assert_eq!(text(&meta, "b"), "true");
+        assert_eq!(text(&meta, "n"), "42");
+        assert_eq!(text(&meta, "nothing"), "");
+        assert_eq!(text(&meta, "absent"), "");
+        assert_eq!(texts(&meta, "list"), ["a", "b"]);
+        assert_eq!(texts(&meta, "s"), ["words"]);
+        assert!(texts(&meta, "n").is_empty());
+        assert!(texts(&meta, "absent").is_empty());
+    }
 
     fn issue(id: &str, serves: &[&str], status: &str) -> PlanIssue {
         PlanIssue {
