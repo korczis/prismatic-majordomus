@@ -4,6 +4,32 @@
 // A region inside a hidden tab panel is revealed the way a reader would reveal it, by choosing that tab; one that
 // nothing on the page can reveal is the finding.
 const OTHER = /^data-(collapse|dropdown|modal|drawer|tabs|accordion|tooltip|popover)-(toggle|target)$/;
+// The keys start a smooth scroll that outlives the wait below, which ends at the first pixel. A box the previous step
+// scrolled (this region's other axis, or a <pre> sharing its wrapper's box) can still be animating, and a reset and
+// keys pressed into that animation are lost with it: on a loaded runner the box then never moves. Such a box is first
+// let finish, until its scrollend (or, without one, until neither offset has changed for 200 ms), polled on a timer
+// and bounded at 10 s
+const settle = (page) => page.evaluate(() => new Promise((done) => {
+  const b = document.querySelector('[data-mj-box="1"]');
+  if (b !== window.__mjScrolled) { done(); return; }
+  const ends = 'onscrollend' in window;
+  const t0 = Date.now(); let last = '', same = 0;
+  const tick = () => {
+    const v = `${b.scrollLeft},${b.scrollTop}`; same = v === last ? same + 1 : 0; last = v;
+    if ((ends ? !b.__mjMoving && same >= 1 : same >= 4) || Date.now() - t0 > 10000) done(); else setTimeout(tick, 50);
+  };
+  tick();
+}));
+// the box is marked as the one this step scrolls, and from then on says whether it is moving
+const mark = (page, prop) => page.evaluate((prop) => {
+  const b = document.querySelector('[data-mj-box="1"]');
+  if (!b.__mjTracked) {
+    b.__mjTracked = true;
+    b.addEventListener('scroll', () => { b.__mjMoving = true; });
+    b.addEventListener('scrollend', () => { b.__mjMoving = false; });
+  }
+  b[prop] = 0; window.__mjScrolled = b;
+}, prop);
 export default {
   id: 'scroll-region',
   title: 'a scroll region can be reached, takes focus, and scrolls from the keyboard when it overflows',
@@ -39,8 +65,10 @@ export default {
         await page.evaluate(() => document.querySelector('[data-mj-reveal="1"]').removeAttribute('data-mj-reveal'));
         // x-show shows a panel on the next animation frame, not in the click, and a loaded runner can hold that frame
         // back for seconds: the bound is generous, because it costs nothing when the panel appears and only a region
-        // that stays hidden waits it out
-        await page.waitForFunction((sel) => document.querySelector(sel).getClientRects().length > 0, sel, { timeout: 10000 }).catch(() => {});
+        // that stays hidden waits it out. The wait polls on an interval, not on animation frames (Playwright's
+        // default), because a starved renderer delays the polls as much as the panel
+        await page.waitForFunction((sel) => document.querySelector(sel).getClientRects().length > 0, sel,
+          { timeout: 10000, polling: 100 }).catch(() => {});
       }
       const m = await page.evaluate((sel) => {
         const el = document.querySelector(sel);
@@ -62,10 +90,14 @@ export default {
       else {
         for (const [axis, key, prop] of [['h', 'ArrowRight', 'scrollLeft'], ['v', 'ArrowDown', 'scrollTop']]) {
           if (!m[axis]) continue;
-          await page.evaluate((prop) => { const b = document.querySelector('[data-mj-box="1"]'); b[prop] = 0; }, prop);
+          await settle(page);
+          await mark(page, prop);
           await page.locator(sel).focus();
           await page.keyboard.press(key); await page.keyboard.press(key);
-          const moved = await page.waitForFunction((prop) => document.querySelector('[data-mj-box="1"]')[prop] > 0, prop, { timeout: 1500 }).then(() => true, () => false);
+          // the keys scroll on the renderer's frames, which a loaded runner delays by seconds: the wait polls on an
+          // interval, since polling on those same frames sees a region that has scrolled as one that has not
+          const moved = await page.waitForFunction((prop) => document.querySelector('[data-mj-box="1"]')[prop] > 0, prop,
+            { timeout: 10000, polling: 100 }).then(() => true, () => false);
           if (!moved) fail(`a ${m.label} scroll region overflows ${axis === 'h' ? 'sideways' : 'downwards'} and ${key} does not scroll it`);
         }
       }
