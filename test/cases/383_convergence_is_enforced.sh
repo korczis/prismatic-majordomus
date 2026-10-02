@@ -20,6 +20,7 @@
 . "$ROOT/test/lib.sh"
 
 RB="$(rust_bin)" || rust_bin_exit $?
+command -v jq >/dev/null 2>&1 || { echo "    jq is required by this case"; exit 1; }
 
 WORK="$(mktemp -d "${TMPDIR:-/tmp}/mj-convergence.XXXXXX")"
 trap 'rm -rf "$WORK"' EXIT
@@ -87,6 +88,48 @@ printf '%s' "$OUT" | grep -q 'git push -u origin feature/never-pushed' || {
   echo "    the command exited $STATUS, not 10: a verdict nothing can refuse on is a report"
   exit 1; }
 echo "    a branch on no remote is local_only, named, and carries its remedy"
+
+# --- 2b. the MCP tool gives the same verdict, about the same holdings
+# The capability is projected as the MCP tool majordomus_convergence, and a tool nothing
+# sends a tools/call is indistinguishable from one that does not work
+# (scripts/ci/mcp-tool-run-check). It is asked here, over the same unconverged fixture, by
+# one standalone session — no port, no lease, nothing written — and its typed answer must
+# agree with the command's: the same verdict, the same at-risk count and tallies, the same
+# holdings with the same dispositions, and the branch named with the remedy that would
+# converge it. MAJORDOMUS_SHARE is unset for the child so that an exported one cannot make
+# the answer another checkout's.
+{ printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case383","version":"0"}}}\n'
+  printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
+  printf '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_convergence","arguments":{}}}\n'
+} | env -u MAJORDOMUS_SHARE "$RB" mcp --standalone --repo "$REPO" --share "$ROOT/share" 2>"$WORK/mcp.err" \
+  | sed -n 2p > "$WORK/mcp.json" || true
+jq -e '.result.isError != true and (.result.structuredContent | type) == "object"' \
+  "$WORK/mcp.json" >/dev/null 2>&1 || {
+  echo "    majordomus_convergence returned no typed answer over MCP:"
+  head -c 600 "$WORK/mcp.json" | sed 's/^/      /'; echo
+  sed 's/^/      | /' "$WORK/mcp.err" | head -5; exit 1; }
+jq '.result.structuredContent' "$WORK/mcp.json" > "$WORK/mcp.answer.json"
+jq -e '.schema == "convergence/v1" and .converged == false and .at_risk >= 1
+       and ([.holdings[] | select(.kind == "branch" and .identity == "feature/never-pushed"
+             and .disposition == "local_only" and .at_risk == true
+             and .remedy == "git push -u origin feature/never-pushed")] | length) == 1' \
+  "$WORK/mcp.answer.json" >/dev/null || {
+  echo "    majordomus_convergence does not report feature/never-pushed as local_only, at risk,"
+  echo "    with the push that would converge it:"
+  jq -c . "$WORK/mcp.answer.json" | head -c 600 | sed 's/^/      /'; echo; exit 1; }
+STATUS=0
+(cd "$REPO" && env -u MAJORDOMUS_SHARE "$RB" convergence --share "$ROOT/share" --format json) \
+  > "$WORK/cli.json" 2>/dev/null || STATUS=$?
+[ "$STATUS" = 10 ] || {
+  echo "    the command exited $STATUS over the unconverged fixture, not 10"; exit 1; }
+view='{converged, at_risk, tallies,
+       holdings: ([.holdings[] | {kind, identity, disposition, at_risk}] | sort_by(.kind, .identity))}'
+jq -e --slurpfile cli "$WORK/cli.json" "($view) == (\$cli[0] | $view)" \
+  "$WORK/mcp.answer.json" >/dev/null || {
+  echo "    majordomus_convergence over MCP and \`majordomus convergence\` disagree:"
+  echo "      mcp: $(jq -c "$view" "$WORK/mcp.answer.json" | head -c 400)"
+  echo "      cli: $(jq -c "$view" "$WORK/cli.json" | head -c 400)"; exit 1; }
+echo "    majordomus_convergence over MCP gives the command's verdict about the same holdings"
 
 # --- 3. pushing it is what converges it
 git -C "$REPO" push -q origin feature/never-pushed
