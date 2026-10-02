@@ -1983,4 +1983,85 @@ mod tests {
         );
         assert!(issue_tokens("", &ids).is_empty());
     }
+
+    #[test]
+    fn gather_names_providers_from_open_episodes_and_branches_from_peer_checkouts() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let root = repo.root();
+        let state = root.join(STATE_DIR);
+        let open = state.join("sessions-open");
+        std::fs::create_dir_all(open.join("not-a-document")).unwrap();
+        // the one open episode that names itself gives its task a provider
+        std::fs::write(
+            open.join("s-x.yaml"),
+            "session_id: s-x\nprovider: gemini\nprovider_session: g-1\n",
+        )
+        .unwrap();
+        // a document without a session id, and an entry that is no document, name nobody
+        std::fs::write(open.join("anonymous.yaml"), "owner: nobody\n").unwrap();
+        std::fs::write(
+            state.join("ledger.jsonl"),
+            concat!(
+                r#"{"ts":"1","event":"task.started","head":"abc","branch":"master","#,
+                r#""by":"majordomus/0.7.0","session":"s-x","task_id":"t-1","scope":"lib"}"#,
+                "\n",
+                r#"{"ts":"2","event":"task.started","head":"abc","branch":"master","#,
+                r#""by":"majordomus/0.7.0","session":"s-anon","task_id":"t-2"}"#,
+                "\n",
+            ),
+        )
+        .unwrap();
+        let peer = |id: &str, checkout: serde_json::Value| -> Peer {
+            let mut p = json!({
+                "id": id,
+                "client": { "name": "codex", "version": "1" },
+                "transport": "http",
+                "connected_at": "2026-10-02T00:00:00Z",
+                "last_seen_seconds_ago": 0,
+                "attached": id == "p1",
+                "claims": [{ "name": "work", "intent": "finish it", "scope": ["lib"],
+                             "at": "2026-10-02T00:00:00Z" }],
+            });
+            if !checkout.is_null() {
+                p["checkout"] = checkout;
+            }
+            serde_json::from_value(p).unwrap()
+        };
+        let peers = [
+            peer(
+                "p1",
+                json!({ "id": "c1", "worktree": "/r-wt/feature/x", "branch": "feature/x",
+                        "this_checkout": false }),
+            ),
+            // a checkout whose branch could not be read, and a peer read without a checkout,
+            // name no branch
+            peer(
+                "p2",
+                json!({ "id": "c2", "worktree": "/r", "this_checkout": true }),
+            ),
+            peer("p3", serde_json::Value::Null),
+        ];
+
+        let (units, skipped) = gather(root, &repo.index().unwrap(), &peers);
+        assert_eq!(skipped, 0);
+        let unit = |id: &str| {
+            units
+                .iter()
+                .find(|u| u.id == id)
+                .unwrap_or_else(|| panic!("no unit {id}: {units:?}"))
+        };
+        assert_eq!(unit("t-1").providers(), ["gemini"]);
+        assert_eq!(unit("t-1").episodes[0].provider_session, "g-1");
+        assert!(unit("t-2").providers().is_empty());
+
+        let claim = unit("p1/work");
+        assert_eq!(claim.kind, IntentWorkKind::PeerClaim);
+        assert_eq!(claim.outcome, "attached");
+        assert_eq!(claim.branches, ["feature/x"]);
+        assert_eq!(claim.scope, ["lib"]);
+        assert_eq!(claim.providers(), ["codex"]);
+        assert_eq!(unit("p2/work").outcome, "departed");
+        assert!(unit("p2/work").branches.is_empty());
+        assert!(unit("p3/work").branches.is_empty());
+    }
 }

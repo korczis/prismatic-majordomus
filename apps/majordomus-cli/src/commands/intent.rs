@@ -423,4 +423,34 @@ mod tests {
             other => panic!("a preflight of nothing answered: {other:?}"),
         }
     }
+
+    #[test]
+    fn realization_text_separates_work_from_intents_only_when_there_is_work() {
+        let intent = json!({ "intent": "I1", "stage": "proposed", "met": 0, "criteria": 1,
+                             "title": "Ship it" });
+        let idle = json!({ "intents": [intent], "work": [], "findings": [], "orphans": 0 });
+        assert_eq!(
+            realization_text(&idle),
+            "I1  proposed  0/1 met  Ship it\n\
+             1 intent(s), 0 unit(s) of work, 0 serving no intent"
+        );
+
+        let busy = json!({
+            "intents": [intent],
+            "work": [{
+                "work": { "kind": "task", "id": "t-1", "outcome": "active" },
+                "links": [],
+                "unlinked": "names no issue",
+            }],
+            "findings": [],
+            "orphans": 1,
+        });
+        assert_eq!(
+            realization_text(&busy),
+            "I1  proposed  0/1 met  Ship it\n\
+             \n\
+             task t-1  active  unlinked: names no issue\n\
+             1 intent(s), 1 unit(s) of work, 1 serving no intent"
+        );
+    }
 }
