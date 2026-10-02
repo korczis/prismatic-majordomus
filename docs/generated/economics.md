@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the token-economics methodology and every benchmark run committed under .ai/repo/benchmarks/economics; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.11.0 -->
+     Generator: majordomus-cli 0.12.0 -->
 # Token economics: benchmark report
 
 Generated from recorded evidence by `majordomus generate economics`. Every figure below is computed by one calculator (`apps/majordomus-cli/src/economics`) from the raw runs under `.ai/repo/benchmarks/economics/runs/`; nothing here is typed by hand.
@@ -37,7 +37,7 @@ At least 30 valid matched pairs; at least 4 task categories with 5 valid pairs e
 
 | suite | kind | freshness | runs | valid pairs | attempted | control failed | treatment failed | both failed | other | revisions | harness | models |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| context | context | current | 3 | 0 | 0 | 0 | 0 | 0 | 0 | `1cc12af61de4` `78f09f8af8e3` `a588b8eb5fac` |  |  |
+| context | context | current | 4 | 0 | 0 | 0 | 0 | 0 | 0 | `1cc12af61de4` `78f09f8af8e3` `8183164ade2d` `a588b8eb5fac` |  |  |
 | pilot | live | no evidence | 0 | 0 | 0 | 0 | 0 | 0 | 0 |  |  |  |
 
 
@@ -117,6 +117,7 @@ This is context *selection*, not total token savings: it says what the compiler 
 |---|---|---|---|---|---|---|
 | context | 1 | `1cc12af61de4` | 2026-09-26T12:29:55Z | `context_reduction_ratio` | +96.2% | 216 |
 | context | 1 | `a588b8eb5fac` | 2026-10-02T02:22:32Z | `context_reduction_ratio` | +97.1% | 238 |
+| context | 1 | `8183164ade2d` | 2026-10-02T09:55:23Z | `context_reduction_ratio` | +97.2% | 239 |
 | context | 1 | `78f09f8af8e3` | 2026-10-02T12:48:07Z | `context_reduction_ratio` | +97.3% | 239 |
 
 ## Hypotheses

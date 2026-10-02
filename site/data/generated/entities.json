@@ -128,6 +128,14 @@
       "count": 50
     },
     {
+      "kind": "intent",
+      "projection": "none",
+      "route": null,
+      "title": null,
+      "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` answers for the intent itself.",
+      "count": 1
+    },
+    {
       "kind": "issue",
       "projection": "section",
       "route": "/plan/",
@@ -197,7 +205,7 @@
       "route": "/changelog/",
       "title": null,
       "reason": null,
-      "count": 7
+      "count": 8
     },
     {
       "kind": "rule",
@@ -3505,13 +3513,6 @@
       "references": [
         {
           "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/mesh/doctor.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
           "label": "adr-0044",
           "kind": "adr",
           "route": "/adrs/adr-0044/",
@@ -3533,13 +3534,6 @@
         },
         {
           "edge": "put_in_force",
-          "label": "mesh-declared-is-held",
-          "kind": "claim",
-          "route": "/guarantees/",
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
           "label": "docs/MESH.md",
           "kind": "document",
           "route": null,
@@ -3547,29 +3541,8 @@
         },
         {
           "edge": "put_in_force",
-          "label": "lib/capture.sh",
-          "kind": "implementation",
-          "route": null,
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
           "label": "majordomus",
           "kind": "mesh-declaration",
-          "route": null,
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "test/cases/491_the_mesh_is_on_here.sh",
-          "kind": "test",
-          "route": null,
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "test/cases/494_the_mesh_is_declared_and_held.sh",
-          "kind": "test",
           "route": null,
           "external": false
         }
