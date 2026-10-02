@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 71,
+      "count": 72,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 148,
+      "count": 149,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 71
+      "count": 72
     },
     {
       "kind": "application",
@@ -109,7 +109,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 290
+      "count": 293
     },
     {
       "kind": "feature",
@@ -205,7 +205,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 148
+      "count": 149
     },
     {
       "kind": "scope",
@@ -229,7 +229,7 @@
       "route": "/skills/",
       "title": null,
       "reason": null,
-      "count": 3
+      "count": 6
     },
     {
       "kind": "taxonomy",
@@ -245,7 +245,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 303
+      "count": 304
     },
     {
       "kind": "use-case",
@@ -3897,6 +3897,66 @@
     },
     {
       "kind": "adr",
+      "id": "majordomus://adr/adr-0076",
+      "identity": "adr-0076",
+      "slug": "adr-0076",
+      "cockpit": "/cockpit/objects/adr/adr-0076",
+      "title": "A skill is a capability only when something proves it — tested, documented, enforced and used are derived, never authored",
+      "status": "proposed",
+      "tags": [
+        "skills",
+        "evidence",
+        "derivation"
+      ],
+      "source": ".ai/repo/adrs/0076-a-skill-is-a-capability-only-when-something-proves-it.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/skills.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/skill/mod.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "majordomus.skill-integrity@1",
+          "kind": "rule",
+          "route": "/rules/majordomus-skill-integrity-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.skills-are-proven-capabilities@1",
+          "kind": "rule",
+          "route": "/rules/project-skills-are-proven-capabilities-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/391_skills_are_proven_capabilities.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/95_skills.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
       "id": "majordomus://adr/adr-0080",
       "identity": "adr-0080",
       "slug": "adr-0080",
@@ -7236,6 +7296,13 @@
       ],
       "referenced_by": [
         {
+          "edge": "put_in_force",
+          "label": "adr-0076",
+          "kind": "adr",
+          "route": "/adrs/adr-0076/",
+          "external": false
+        },
+        {
           "edge": "exercises",
           "label": "follow-a-skill-the-repository-defines",
           "kind": "use-case",
@@ -8301,6 +8368,13 @@
           "label": "project.providers-are-data@1",
           "kind": "rule",
           "route": "/rules/project-providers-are-data-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.skills-are-proven-capabilities@1",
+          "kind": "rule",
+          "route": "/rules/project-skills-are-proven-capabilities-1/",
           "external": false
         },
         {
@@ -11297,6 +11371,39 @@
           "label": "project.entry-converges@2",
           "kind": "rule",
           "route": "/rules/project-entry-converges-2/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.skills-are-proven-capabilities@1",
+      "identity": "project.skills-are-proven-capabilities@1",
+      "slug": "project-skills-are-proven-capabilities-1",
+      "cockpit": "/cockpit/objects/rule/project-skills-are-proven-capabilities-1",
+      "title": "A skill is a capability only when something proves it",
+      "status": "active",
+      "tags": [
+        "skills",
+        "evidence",
+        "derivation"
+      ],
+      "source": ".ai/repo/rules/project/skills-are-proven-capabilities.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.derived-once@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-once-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0076",
+          "kind": "adr",
+          "route": "/adrs/adr-0076/",
           "external": false
         }
       ]

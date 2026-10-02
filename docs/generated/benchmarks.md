@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 153 | 135 | 0 | 18 |
-| http | 151 | 135 | 0 | 16 |
-| mcp | 147 | 131 | 0 | 16 |
+| direct | 156 | 138 | 0 | 18 |
+| http | 154 | 138 | 0 | 16 |
+| mcp | 150 | 134 | 0 | 16 |
 | system | 13 | 13 | 0 | 0 |
-| total | 464 | 414 | 0 | 50 |
+| total | 473 | 423 | 0 | 50 |
 
 ## Capabilities
 
@@ -158,6 +158,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `session_domain.identity` | session_domain | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `session_domain.machine` | session_domain | query | process, 1 entries, 600s | covered | covered | covered | `default` |
 | `shell.check` | shell | query | — | covered | covered | covered | `default` |
+| `skills.explain` | skills | query | — | covered | covered | covered | `first-skill` |
+| `skills.status` | skills | query | — | covered | covered | covered | `default` |
+| `skills.verify` | skills | query | — | covered | covered | covered | `default` |
 | `trace.commit` | trace | query | — | covered | covered | covered | `head` |
 | `trace.issue` | trace | query | — | covered | covered | covered | `first-issue` |
 | `trace.report` | trace | query | — | covered | covered | covered | `default`, `ten` |
