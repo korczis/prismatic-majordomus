@@ -3819,4 +3819,213 @@ mod tests {
         let never = run(Some(proven), &ledger(&[&failed]));
         assert_eq!(route(&never[0], Via::Behaviour).state, ProofState::Failing);
     }
+
+    #[test]
+    fn a_planned_or_rejected_claim_carries_no_proof_joined_or_not() {
+        let repo = Repo::new();
+        let mut d = small();
+        d.claims.extend([
+            claim("beta", "planned", "lib/alpha.sh", CASE),
+            claim("gamma", "rejected", "lib/alpha.sh", CASE),
+            claim("delta", "guaranteed", "lib/alpha.sh", CASE),
+        ]);
+        let p = Presented::WorkingTree;
+        // alpha and beta are in the claim join; gamma and delta are not
+        let claims = claims_report(
+            vec![
+                claim_proof("alpha", "guaranteed", ProofState::NotRun, None),
+                claim_proof("beta", "planned", ProofState::NotRun, None),
+            ],
+            &p,
+        );
+        let rules = rules_report(&[]);
+        let empty = Ledger::empty();
+        let g = Given {
+            claims: &claims,
+            rules: &rules,
+            ledger: &empty,
+            uncommitted: &[],
+        };
+        let keys = ["claim:alpha", "claim:beta", "claim:gamma", "claim:delta"];
+        let a = judged(&d, &g, repo.root(), &p, &keys);
+        let carries: Vec<bool> = a
+            .iter()
+            .map(|s| route(s, Via::Claim).carries_proof)
+            .collect();
+        assert_eq!(carries, [true, false, false, true], "{keys:?}");
+        for unjoined in &a[2..] {
+            let r = route(unjoined, Via::Claim);
+            assert_eq!(r.state, ProofState::NoTest, "{}", unjoined.subject);
+            assert!(r.detail.as_deref().unwrap().contains("this claim"));
+        }
+        assert!(!a[1].carries_proof && !a[2].carries_proof);
+    }
+
+    #[test]
+    fn a_proven_rule_test_with_no_run_reads_stale_on_a_dirty_presented_tree() {
+        let repo = Repo::new();
+        let rules = rules_report(&[(
+            "project.alpha",
+            RuleState::Proven,
+            vec![test_proof(ProofState::Proven, None)],
+        )]);
+        let empty = Ledger::empty();
+        let at = |tree: TreeState| {
+            let p = repo.presented(tree);
+            let claims = claims_report(vec![], &p);
+            let g = Given {
+                claims: &claims,
+                rules: &rules,
+                ledger: &empty,
+                uncommitted: &[],
+            };
+            let a = judged(&small(), &g, repo.root(), &p, &["rule:project.alpha"]);
+            route(&a[0], Via::Rule).clone()
+        };
+        let dirty = at(TreeState::Dirty);
+        assert_eq!(dirty.state, ProofState::Stale);
+        assert_eq!(dirty.detail.as_deref(), Some(NO_EXECUTION_DETAIL));
+        assert!(dirty.changed.is_empty());
+        assert!(dirty.execution.is_none());
+        // the control: a clean presented tree keeps the report's own state and no reason
+        let clean = at(TreeState::Clean);
+        assert_eq!((clean.state, clean.detail), (ProofState::Proven, None));
+    }
+
+    #[test]
+    fn a_rule_the_report_does_not_carry_is_untested_and_carries_nothing() {
+        let repo = Repo::new();
+        let p = Presented::WorkingTree;
+        let claims = claims_report(vec![], &p);
+        let rules = rules_report(&[]);
+        let empty = Ledger::empty();
+        let g = Given {
+            claims: &claims,
+            rules: &rules,
+            ledger: &empty,
+            uncommitted: &[],
+        };
+        let a = &judged(&small(), &g, repo.root(), &p, &["rule:project.alpha"])[0];
+        assert_eq!(
+            (a.verdict, a.carries_proof, a.rule_state),
+            (ProofState::NoTest, false, None)
+        );
+        let r = route(a, Via::Rule);
+        assert_eq!(r.state, ProofState::NoTest);
+        assert!(r.detail.as_deref().unwrap().contains("this rule"));
+    }
+
+    #[test]
+    fn an_adjuster_never_sees_a_route_that_names_no_test() {
+        let repo = Repo::new();
+        let mut d = small();
+        d.claims = vec![claim("alpha", "guaranteed", "lib/alpha.sh", "-")];
+        let p = Presented::WorkingTree;
+        let mut proof = claim_proof("alpha", "guaranteed", ProofState::NoTest, None);
+        proof["test_path"] = Value::Null;
+        proof["test"] = Value::Null;
+        let claims = claims_report(vec![proof], &p);
+        let rules = rules_report(&[]);
+        let empty = Ledger::empty();
+        let s = derive(&d);
+        let asked = std::cell::Cell::new(0);
+        let failing: &Adjust<'_> = &|_, _, _| {
+            asked.set(asked.get() + 1);
+            Judgement {
+                state: ProofState::Failing,
+                changed: Vec::new(),
+                detail: Some("the adjuster".into()),
+            }
+        };
+        let mut judge =
+            Judge::new(&s, &claims, &rules, &empty, &[], repo.root(), &p).with_adjust(failing);
+        let a = judge.subject("claim:alpha").unwrap();
+        let r = route(&a, Via::Claim);
+        assert!(r.route.test.is_none(), "{:?}", r.route);
+        assert_eq!(
+            r.state,
+            ProofState::NoTest,
+            "a route without a test keeps its state"
+        );
+        assert_eq!(
+            asked.get(),
+            0,
+            "the adjuster is asked about a test, and there is none"
+        );
+        // the control: the same adjuster weakens the command route, which names a test
+        let c = judge.subject("command:version").unwrap();
+        assert_eq!(route(&c, Via::Behaviour).state, ProofState::Failing);
+        assert_eq!(asked.get(), 1);
+    }
+
+    #[test]
+    fn a_member_the_index_does_not_hold_is_no_part_of_the_verdict() {
+        // an index read from elsewhere (it is deserialisable) can name a member it does not
+        // carry, or a key that is not a key at all; the judge skips both rather than failing
+        let repo = Repo::new();
+        let c1 = repo.git(&["rev-parse", "HEAD"]);
+        let failed = ran("suite:01_alpha", "fail", &c1, "clean", &repo.digest());
+        let l = ledger(&[&failed]);
+        let p = Presented::WorkingTree;
+        let claims = claims_report(
+            vec![claim_proof("alpha", "guaranteed", ProofState::Proven, None)],
+            &p,
+        );
+        let rules = rules_report(&[]);
+        let mut s = derive(&small());
+        let feature = s.subjects.get_mut("feature:alpha").unwrap();
+        let declared = feature.members.clone();
+        feature
+            .members
+            .extend(["claim:no-such".to_string(), "nonsense".to_string()]);
+        let mut judge = Judge::new(&s, &claims, &rules, &l, &[], repo.root(), &p);
+        let a = judge.subject("feature:alpha").unwrap();
+        let named: Vec<&str> = a.members.iter().map(|m| m.subject.as_str()).collect();
+        let expected: Vec<&str> = declared.iter().map(String::as_str).collect();
+        assert!(expected.contains(&"command:version"), "{expected:?}");
+        assert_eq!(named, expected, "only members the index holds are judged");
+        assert_eq!(
+            a.verdict,
+            ProofState::Failing,
+            "the held members still decide"
+        );
+        let counted: usize = a.totals.values().sum();
+        assert_eq!(counted, a.members.len(), "{:?}", a.totals);
+    }
+
+    #[test]
+    fn answer_is_the_judge_over_the_reports_of_the_given_ledger() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        let (ledger, p) = (Ledger::empty(), Presented::WorkingTree);
+        let ask = |key: &str| {
+            answer(
+                &ctx.index,
+                &ctx.product,
+                &ctx.registry,
+                &ledger,
+                &[],
+                &p,
+                key,
+            )
+        };
+        let err = ask("feature:no-such").unwrap_err();
+        assert_eq!(err.key, "feature:no-such");
+        let key = "capability:capabilities.list";
+        let got = ask(key).unwrap();
+        assert_eq!(
+            (got.subject.as_str(), got.kind),
+            (key, SubjectKind::Capability)
+        );
+        assert_eq!(got.presented.revision, "working_tree");
+        // the same answer a judge built by hand gives, over the same two reports
+        let s = index(&ctx.index, &ctx.product, &ctx.registry);
+        let claims = crate::evidence::report_at(&ctx.index, &ledger, &p, &[]);
+        let rules = crate::rules::report(&ctx.index, &ledger);
+        let root = PathBuf::from(&ctx.index.repository.root);
+        let mut judge = Judge::new(&s, &claims, &rules, &ledger, &[], &root, &p);
+        assert_eq!(got, judge.subject(key).unwrap());
+        let tool = ask("mcp:majordomus_capabilities").unwrap();
+        assert_eq!(tool.members.len(), 1, "an alias is made of its capability");
+    }
 }
