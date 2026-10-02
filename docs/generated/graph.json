@@ -2641,14 +2641,6 @@
         "external": true
       },
       {
-        "id": "file:scripts/release-package",
-        "kind": "file",
-        "label": "release-package",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/release-package",
-        "external": true
-      },
-      {
         "id": "file:scripts/release-version",
         "kind": "file",
         "label": "release-version",
@@ -30297,6 +30289,29 @@
         }
       },
       {
+        "id": "majordomus://release-record/v0.11.0",
+        "kind": "release-record",
+        "label": "v0.11.0",
+        "summary": "v0.11.0",
+        "route": "/cockpit/objects/release-record/v0-11-0",
+        "source": ".ai/repo/releases/v0.11.0.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "1271a2ecd977a27b08dc20697e67d7ffcc4f0b61",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.11.0",
+          "published_at": "2026-10-02T04:59:47Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.11.0"
+        }
+      },
+      {
         "id": "majordomus://release-record/v0.3.1",
         "kind": "release-record",
         "label": "v0.3.1",
@@ -48263,11 +48278,6 @@
       },
       {
         "source": "majordomus://claim/release-archive-shape",
-        "target": "file:scripts/release-package",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/release-archive-shape",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -55853,6 +55863,11 @@
       },
       {
         "source": "majordomus://release-record/v0.10.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://release-record/v0.11.0",
         "target": "kind:release-record",
         "kind": "is_a"
       },
