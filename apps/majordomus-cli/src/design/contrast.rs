@@ -530,7 +530,13 @@ fn derive(
 
     // A ground a container sets — a rule that carries no text of its own — is a ground any
     // floating foreground can land on.
-    let mut ambient: BTreeSet<String> = BTreeSet::new();
+    //
+    // A tone's ground counts too: a layer of a stack sets `--mj-tone-bg` and the text inside it
+    // is whatever its own rule says, so muted text on a tone's pale ground is a pair the screen
+    // shows and this measurement must see (axe found one at 4.3:1 that this module had not). Only
+    // the `-bg` part is collected: a fill carries `on-accent` by declaration, and a fill a rule
+    // paints with no text of its own is a dot or a bar, not a ground anything is read on.
+    let mut ambient: BTreeSet<(Variant, String)> = BTreeSet::new();
     for rule in &coloured {
         let has_text = rule.slots.iter().any(|(s, _)| *s == Slot::Text);
         if has_text {
@@ -541,10 +547,16 @@ fn derive(
                 continue;
             }
             for binding in bound {
-                if matches!(binding.variant, Variant::Any | Variant::Fallback)
-                    && !edges.contains(&binding.token)
-                {
-                    ambient.insert(binding.token.clone());
+                if edges.contains(&binding.token) {
+                    continue;
+                }
+                let collected = match &binding.variant {
+                    Variant::Any | Variant::Fallback => true,
+                    Variant::Tone(_) => binding.token.ends_with("-bg"),
+                    Variant::Status(_) => false,
+                };
+                if collected {
+                    ambient.insert((binding.variant.clone(), binding.token.clone()));
                 }
             }
         }
@@ -583,8 +595,18 @@ fn derive(
                 if landed {
                     continue;
                 }
-                // nothing under it here: it lands on whatever a container gave it
-                for ground in &ambient {
+                // nothing under it here: it lands on whatever a container gave it — a tone's
+                // ground only when the text carries no tone or the same one
+                for (variant, ground) in &ambient {
+                    let lands = match variant {
+                        Variant::Tone(_) => {
+                            matches!(binding.variant, Variant::Any) || binding.variant == *variant
+                        }
+                        _ => true,
+                    };
+                    if !lands {
+                        continue;
+                    }
                     pairs
                         .entry(Derived {
                             carries_text,
@@ -897,9 +919,16 @@ mod tests {
     #[test]
     fn the_declaration_this_executable_carries_is_readable() {
         let sources = consumers();
-        if sources.len() < CONSUMERS.len() {
-            return; // an installed crate without the distribution beside it
+        // inside this repository every consumer is beside the crate; only an installed crate
+        // without its distribution has fewer, and there is no share/ next to it at all
+        if !share_dir().join("design").is_dir() {
+            return;
         }
+        assert_eq!(
+            sources.len(),
+            CONSUMERS.len(),
+            "a consumer of the declaration is missing from share/: {CONSUMERS:?}"
+        );
         let report = measure(design(), &sources);
         assert!(
             report.readable,
@@ -925,9 +954,18 @@ mod tests {
             ("on-accent", "accent-fill"),
             ("ok", "ok-bg"),
             ("bad", "bg"),
+            // the tones: an ink on its own ground, the fill under on-accent, and text that
+            // carries no tone on a tone's ground a container sets (kit.css)
+            ("tone-violet", "tone-violet-bg"),
+            ("on-accent", "tone-blue-fill"),
+            ("muted", "tone-rose-bg"),
         ] {
             assert!(light.contains(&pair), "{pair:?} was not derived");
         }
         assert!(report.pairs.iter().any(|p| p.theme == "dark"));
+        // a tone resolves per theme: its dark ground is the family's 950, not its light tint
+        assert!(report.pairs.iter().any(|p| p.theme == "dark"
+            && p.ground == "tone-violet-bg"
+            && p.ground_entry == "violet-950"));
     }
 }

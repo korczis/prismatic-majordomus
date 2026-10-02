@@ -122,6 +122,17 @@ palette:
   lime-600: oklch(64.8% 0.2 131.684)
   fuchsia-400: oklch(74% 0.238 322.16)
   fuchsia-600: oklch(59.1% 0.293 322.896)
+  # The tints: a tone's light ground. Not Tailwind steps, and named so. Each family's 50 step
+  # read 4.40-4.44:1 under the muted role (gray-500) for blue, violet and rose, and muted text
+  # does sit on a tone's ground (a tree's notes in a toned stage), so the ground is lifted to
+  # gray-50's lightness, on which muted is already measured to pass, keeping the family's hue
+  # and a reduced chroma. The contrast measurement holds every one of them (design-check).
+  blue-tint: oklch(98.5% 0.008 254.604)
+  violet-tint: oklch(98.5% 0.010 293.756)
+  emerald-tint: oklch(98.5% 0.012 166.113)
+  orange-tint: oklch(98.5% 0.010 73.684)
+  rose-tint: oklch(98.5% 0.009 12.422)
+  cyan-tint: oklch(98.5% 0.011 200.873)
 
 # The semantic surface. Each role has a light and a dark value, each the name of a palette
 # entry; a consumer reads `--mj-<role>` and gets the right one for the theme in force.
@@ -318,7 +329,7 @@ status:
 # `on-accent` text. A component reads `--mj-tone-fg`, `-bg`, `-line` and `-fill`; the class
 # `.mj-tone--<tone>` on it or an ancestor — generated into the status sheet beside the state
 # words — says which tone those are. The contrast measurement pairs a tone with itself only.
-# Ink is each family's 700 step on its 50 ground in light and its 400 on its 950 in dark;
+# Ink is each family's 700 step on its tint in light and its 400 on its 950 in dark;
 # the fill is the 700 step in both themes, because white reads on it in both.
 tones:
   blue:
@@ -327,7 +338,7 @@ tones:
       light: blue-700
       dark: blue-400
     bg:
-      light: blue-50
+      light: blue-tint
       dark: blue-950
     line:
       light: blue-200
@@ -341,7 +352,7 @@ tones:
       light: violet-700
       dark: violet-400
     bg:
-      light: violet-50
+      light: violet-tint
       dark: violet-950
     line:
       light: violet-200
@@ -355,7 +366,7 @@ tones:
       light: emerald-700
       dark: emerald-400
     bg:
-      light: emerald-50
+      light: emerald-tint
       dark: emerald-950
     line:
       light: emerald-200
@@ -369,7 +380,7 @@ tones:
       light: orange-700
       dark: orange-400
     bg:
-      light: orange-50
+      light: orange-tint
       dark: orange-950
     line:
       light: orange-200
@@ -383,7 +394,7 @@ tones:
       light: rose-700
       dark: rose-400
     bg:
-      light: rose-50
+      light: rose-tint
       dark: rose-950
     line:
       light: rose-200
@@ -397,7 +408,7 @@ tones:
       light: cyan-700
       dark: cyan-400
     bg:
-      light: cyan-50
+      light: cyan-tint
       dark: cyan-950
     line:
       light: cyan-200

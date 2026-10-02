@@ -4,8 +4,8 @@
 schema: majordomus/design-system/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: share/design/tokens.yaml, the one declaration of the design; regenerate with `majordomus generate`"
 generator: majordomus-cli 0.12.0
-fingerprint: 8636d22b59709398a6ceb960c99cf3bfeadf0fbeb74f7d2aa69b3dc9cb165516
-design: 8636d22b5970
+fingerprint: 944a896b2646060d5dc100adcc36737fd5d8086e2f53d43d6858ac6fdad39540
+design: 944a896b2646
 source: share/design/tokens.yaml
 projections:
   - share/design/theme.css
@@ -30,7 +30,7 @@ counts:
   radius: 3
   motion: 1
   theme: 1
-  palette: 60
+  palette: 66
 tokens:
   - name: sans
     kind: font
@@ -2534,9 +2534,9 @@ tokens:
       - part: bg
         css: "--mj-tone-blue-bg"
         light:
-          reference: blue-50
-          css: "oklch(97% 0.014 254.604)"
-          literal: "oklch(97% 0.014 254.604)"
+          reference: blue-tint
+          css: "oklch(98.5% 0.008 254.604)"
+          literal: "oklch(98.5% 0.008 254.604)"
         dark:
           reference: blue-950
           css: "oklch(28.2% 0.091 267.935)"
@@ -2593,9 +2593,9 @@ tokens:
       - part: bg
         css: "--mj-tone-violet-bg"
         light:
-          reference: violet-50
-          css: "oklch(96.9% 0.016 293.756)"
-          literal: "oklch(96.9% 0.016 293.756)"
+          reference: violet-tint
+          css: "oklch(98.5% 0.010 293.756)"
+          literal: "oklch(98.5% 0.010 293.756)"
         dark:
           reference: violet-950
           css: "oklch(28.3% 0.141 291.089)"
@@ -2652,9 +2652,9 @@ tokens:
       - part: bg
         css: "--mj-tone-green-bg"
         light:
-          reference: emerald-50
-          css: "oklch(97.9% 0.021 166.113)"
-          literal: "oklch(97.9% 0.021 166.113)"
+          reference: emerald-tint
+          css: "oklch(98.5% 0.012 166.113)"
+          literal: "oklch(98.5% 0.012 166.113)"
         dark:
           reference: emerald-950
           css: "oklch(26.2% 0.051 172.552)"
@@ -2711,9 +2711,9 @@ tokens:
       - part: bg
         css: "--mj-tone-orange-bg"
         light:
-          reference: orange-50
-          css: "oklch(98% 0.016 73.684)"
-          literal: "oklch(98% 0.016 73.684)"
+          reference: orange-tint
+          css: "oklch(98.5% 0.010 73.684)"
+          literal: "oklch(98.5% 0.010 73.684)"
         dark:
           reference: orange-950
           css: "oklch(26.6% 0.079 36.259)"
@@ -2770,9 +2770,9 @@ tokens:
       - part: bg
         css: "--mj-tone-rose-bg"
         light:
-          reference: rose-50
-          css: "oklch(96.9% 0.015 12.422)"
-          literal: "oklch(96.9% 0.015 12.422)"
+          reference: rose-tint
+          css: "oklch(98.5% 0.009 12.422)"
+          literal: "oklch(98.5% 0.009 12.422)"
         dark:
           reference: rose-950
           css: "oklch(27.1% 0.105 12.094)"
@@ -2829,9 +2829,9 @@ tokens:
       - part: bg
         css: "--mj-tone-cyan-bg"
         light:
-          reference: cyan-50
-          css: "oklch(98.4% 0.019 200.873)"
-          literal: "oklch(98.4% 0.019 200.873)"
+          reference: cyan-tint
+          css: "oklch(98.5% 0.011 200.873)"
+          literal: "oklch(98.5% 0.011 200.873)"
         dark:
           reference: cyan-950
           css: "oklch(30.2% 0.056 229.695)"
@@ -3661,6 +3661,66 @@ tokens:
       - docs/generated/design.json
       - docs/generated/design.yaml
       - docs/generated/design.md
+  - name: blue-tint
+    kind: palette
+    about: "a raw palette entry; roles and statuses name it, consumers never do"
+    css: []
+    value: "oklch(98.5% 0.008 254.604)"
+    projections:
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
+  - name: violet-tint
+    kind: palette
+    about: "a raw palette entry; roles and statuses name it, consumers never do"
+    css: []
+    value: "oklch(98.5% 0.010 293.756)"
+    projections:
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
+  - name: emerald-tint
+    kind: palette
+    about: "a raw palette entry; roles and statuses name it, consumers never do"
+    css: []
+    value: "oklch(98.5% 0.012 166.113)"
+    projections:
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
+  - name: orange-tint
+    kind: palette
+    about: "a raw palette entry; roles and statuses name it, consumers never do"
+    css: []
+    value: "oklch(98.5% 0.010 73.684)"
+    projections:
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
+  - name: rose-tint
+    kind: palette
+    about: "a raw palette entry; roles and statuses name it, consumers never do"
+    css: []
+    value: "oklch(98.5% 0.009 12.422)"
+    projections:
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
+  - name: cyan-tint
+    kind: palette
+    about: "a raw palette entry; roles and statuses name it, consumers never do"
+    css: []
+    value: "oklch(98.5% 0.011 200.873)"
+    projections:
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
 declaration:
   schema: 2
   identity:
@@ -3732,6 +3792,12 @@ declaration:
     lime-600: "oklch(64.8% 0.2 131.684)"
     fuchsia-400: "oklch(74% 0.238 322.16)"
     fuchsia-600: "oklch(59.1% 0.293 322.896)"
+    blue-tint: "oklch(98.5% 0.008 254.604)"
+    violet-tint: "oklch(98.5% 0.010 293.756)"
+    emerald-tint: "oklch(98.5% 0.012 166.113)"
+    orange-tint: "oklch(98.5% 0.010 73.684)"
+    rose-tint: "oklch(98.5% 0.009 12.422)"
+    cyan-tint: "oklch(98.5% 0.011 200.873)"
   roles:
     bg:
       about: the page
@@ -4001,7 +4067,7 @@ declaration:
         light: blue-700
         dark: blue-400
       bg:
-        light: blue-50
+        light: blue-tint
         dark: blue-950
       line:
         light: blue-200
@@ -4015,7 +4081,7 @@ declaration:
         light: violet-700
         dark: violet-400
       bg:
-        light: violet-50
+        light: violet-tint
         dark: violet-950
       line:
         light: violet-200
@@ -4029,7 +4095,7 @@ declaration:
         light: emerald-700
         dark: emerald-400
       bg:
-        light: emerald-50
+        light: emerald-tint
         dark: emerald-950
       line:
         light: emerald-200
@@ -4043,7 +4109,7 @@ declaration:
         light: orange-700
         dark: orange-400
       bg:
-        light: orange-50
+        light: orange-tint
         dark: orange-950
       line:
         light: orange-200
@@ -4057,7 +4123,7 @@ declaration:
         light: rose-700
         dark: rose-400
       bg:
-        light: rose-50
+        light: rose-tint
         dark: rose-950
       line:
         light: rose-200
@@ -4071,7 +4137,7 @@ declaration:
         light: cyan-700
         dark: cyan-400
       bg:
-        light: cyan-50
+        light: cyan-tint
         dark: cyan-950
       line:
         light: cyan-200
