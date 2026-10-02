@@ -2649,14 +2649,6 @@
         "external": true
       },
       {
-        "id": "file:scripts/release-record",
-        "kind": "file",
-        "label": "release-record",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/release-record",
-        "external": true
-      },
-      {
         "id": "file:scripts/release-version",
         "kind": "file",
         "label": "release-version",
@@ -37186,6 +37178,13 @@
         "source": "test/cases/635_the_runtime_names_its_commit.sh"
       },
       {
+        "id": "majordomus://test/test/cases/638_a_documented_command_is_run.sh",
+        "kind": "test",
+        "label": "test/cases/638_a_documented_command_is_run.sh",
+        "route": "/cockpit/objects/test/test-cases-638-a-documented-command-is-run-sh",
+        "source": "test/cases/638_a_documented_command_is_run.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/63_session_records.sh",
         "kind": "test",
         "label": "test/cases/63_session_records.sh",
@@ -48284,11 +48283,6 @@
       },
       {
         "source": "majordomus://claim/release-is-complete-or-absent",
-        "target": "file:scripts/release-record",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/release-is-complete-or-absent",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -58959,6 +58953,11 @@
       },
       {
         "source": "majordomus://test/test/cases/635_the_runtime_names_its_commit.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/638_a_documented_command_is_run.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
