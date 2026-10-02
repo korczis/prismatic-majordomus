@@ -7,7 +7,7 @@
 # no link fails. A tile that states no fact of its own declares `none` and a reason — that
 # is the only accepted way to carry no proof, so "no proof" cannot become the silent default.
 . "$ROOT/test/lib.sh"
-command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
+command -v jq >/dev/null || skip "jq absent"
 
 D="$ROOT/site/data/proofs.toml"
 [ -f "$D" ] || { echo "    no site/data/proofs.toml: nothing declares what proves a tile"; exit 1; }
@@ -49,7 +49,7 @@ done
 # 3. The rendered site: every surface whose tile declares tests carries the link. Without a
 #    build there is nothing to read, and a case that cannot reach its subject says so.
 P="$ROOT/site/public"
-[ -f "$P/index.html" ] || { echo "    site not built; skipping the rendered half"; exit 0; }
+[ -f "$P/index.html" ] || skip "site not built; the rendered half cannot be read"
 
 cli_test="apps/majordomus-cli/tests/cli_examples.rs"
 api_test="apps/majordomus-cli/tests/http_serve.rs"
