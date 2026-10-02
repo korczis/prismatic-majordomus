@@ -42,7 +42,7 @@ for t in $tiles; do
 done
 # 2. Every template that names a tile key names one that is declared. A key with a typo
 #    would render nothing at all, silently.
-for k in $(grep -rhoE 'set tile = "[a-z0-9-]+"' "$ROOT/site/templates" | sed 's/.*"\(.*\)"/\1/' | sort -u); do
+for k in $(grep -rhoE 'set tile = "[a-z0-9-]+"' "$ROOT/site/templates" | sed 's/.*"\(.*\)"/\1/' | LC_ALL=C sort -u); do
   printf '%s\n' "$tiles" | grep -qx "$k" || { echo "    a template names tile '$k', which proofs.toml does not declare"; exit 1; }
 done
 

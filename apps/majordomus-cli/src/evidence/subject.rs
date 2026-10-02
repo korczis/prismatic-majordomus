@@ -34,10 +34,10 @@
 //!   covers and negative header of every case — the index reads the same first line, and
 //!   case 507 holds the two equal;
 //! * the command-coverage doctrine (`lib/commands.sh`) reads the same first line;
-//! * the `command-furnished` gate and the use-case impact trace match a command anywhere in
-//!   *any* header line, between word boundaries, so they would read a second header of a
-//!   kind, and `commit` inside a word such as `capability:commit.plan`, where the index
-//!   reads neither — case 507 holds every case to one header of each kind, and every header
+//! * the `command-furnished` gate and the use-case impact trace match a command as a whole
+//!   word of *any* header line, so they would read a second header of a kind where the index
+//!   reads only the first; a prefixed word such as `capability:commit.plan` is a command for
+//!   none of them — case 507 holds every case to one header of each kind, and every header
 //!   to naming the same public commands under both readings, so they cannot yet disagree;
 //! * the capability pages (`scripts/lib/executable-site.jq`) give every capability the
 //!   claims implemented in its module's file — the index gives `capability:<id>` the same

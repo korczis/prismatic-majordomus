@@ -335,12 +335,13 @@ jqe "$R" '[$cmds[0].commands[] | . as $c | $idx[0].subjects["command:" + $c.name
 
 # R7: every header reader reads the same public commands out of every case. The index and
 # the command pages take the exact words of the first line of a kind; `command-furnished`
-# and the use-case impact trace take a command anywhere in any covers line between word
-# boundaries (`grep "^# majordomus-covers:.*\b<command>\b"`). Those agree only while each
-# case has one header of each kind AND its first covers line names, as a whole word, exactly
-# the public commands that line holds between boundaries: a word such as
-# `capability:commit.plan` holds `plan` for the boundary readers and for no exact one. The
-# awk below applies both readings to every case and names each case where they differ.
+# and the use-case impact trace take a command as a whole whitespace-separated word of any
+# covers line (`grep -E "^# majordomus-covers:(.*[[:space:]])?<command>([[:space:]]|$)"`).
+# They read word boundaries once (`\b<command>\b`), and then `script:scripts/ci/link-check`
+# held `check` for them and for no exact reader; a prefixed name is never a command. The
+# two readings agree only while each case has one header of each kind AND its first covers
+# line names exactly the public commands its covers lines hold as words. The awk below
+# applies both readings to every case and names each case where they differ.
 jq -r '.commands[].name' "$CMDS" > "$S/public.txt"
 r7="$(awk '
   function flush(   i, c) {
@@ -349,7 +350,7 @@ r7="$(awk '
     for (i = 1; i <= n; i++) {
       c = cmd[i]
       if ((c in first) != (c in any))
-        print file ": the exact and the word-boundary readings disagree about `" c "`"
+        print file ": the exact and the any-line readings disagree about `" c "`"
     }
   }
   NR == FNR { cmd[++n] = $0; next }
@@ -362,7 +363,7 @@ r7="$(awk '
       for (j = 1; j <= k; j++) if (w[j] != "") first[w[j]] = 1
     }
     for (j = 1; j <= n; j++)
-      if (match(" " words " ", "[^A-Za-z0-9_]" cmd[j] "[^A-Za-z0-9_]")) any[cmd[j]] = 1
+      if (match(" " words " ", "[ \t]" cmd[j] "[ \t]")) any[cmd[j]] = 1
   }
   /^# majordomus-negative:/ { negs++ }
   END { flush() }

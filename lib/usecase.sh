@@ -960,8 +960,9 @@ mj_uc_cmd_impact() {
   done
   cmds="$(printf '%s\n' $cmds | LC_ALL=C sort -u | tr '\n' ' ')"; rules="$(printf '%s\n' $rules | LC_ALL=C sort -u | tr '\n' ' ')"; ucs="$(printf '%s\n' $ucs | LC_ALL=C sort -u | tr '\n' ' ')"
   cmds="${cmds% }"; rules="${rules% }"; ucs="${ucs% }"
-  # behavioural cases that declare coverage of an affected command, and the rules' tests
-  for c in $cmds; do cases="$cases $(grep -lE "^# majordomus-covers:.*\b$c\b" "$MJ_ROOT"/test/cases/*.sh 2>/dev/null | sed "s#^$MJ_ROOT/##" | tr '\n' ' ')"; done
+  # behavioural cases that declare coverage of an affected command, and the rules' tests. A
+  # command is a whole word of the header; a prefixed name (`script:.../link-check`) is not one.
+  for c in $cmds; do cases="$cases $(grep -lE "^# majordomus-covers:(.*[[:space:]])?$c([[:space:]]|\$)" "$MJ_ROOT"/test/cases/*.sh 2>/dev/null | sed "s#^$MJ_ROOT/##" | tr '\n' ' ')"; done
   # a changed rule's own proof: the cases its x-majordomus block names. Read from the resolved
   # rule set, which carries every rule, and not from the doctrine table, which carries only the
   # dispatched ones and was never loaded here — so a changed rule used to name no case at all.
