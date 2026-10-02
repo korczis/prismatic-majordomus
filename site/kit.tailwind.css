@@ -1,0 +1,11 @@
+/* The kit's entry point, compiled by scripts/site-build into static/kit.css. The kit
+   (share/design/kit.css) is a second sheet rather than a part of app.css because a page
+   pays for it only when it is composed of the kit's components: they include
+   templates/partials/kit-assets.html, and every other page — the homepage has a byte
+   budget — loads none of it.
+
+   `@reference` gives the kit's `@apply` the whole of the site's design system, its theme,
+   its variants and the tokens' projections, without emitting any of it a second time; the
+   kit's `@layer components` joins the layer app.css declared, so a utility still wins. */
+@reference "./tailwind.css";
+@import "../share/design/kit.css";

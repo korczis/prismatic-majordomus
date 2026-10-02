@@ -182,6 +182,10 @@ pub struct DesignSystem {
     pub roles: Ordered<Role>,
     /// The status meanings and the vocabulary filed under them.
     pub status: Status,
+    /// The tones: hues that carry identity, never meaning. A declaration without the
+    /// section declares none.
+    #[serde(default)]
+    pub tones: Ordered<Tone>,
     /// The named type scale and letter-spacings.
     #[serde(rename = "type")]
     pub type_: TypeScale,
@@ -267,6 +271,57 @@ pub struct Status {
     pub roles: Ordered<StatusRole>,
     /// The vocabulary: a meaning to the state words that carry it.
     pub states: Ordered<Vec<String>>,
+}
+
+/// One tone: a hue a component carries for identity and never for meaning — the colour of
+/// the third step of a sequence, of one surface's card — with its ink, its ground, its
+/// border and its solid fill, per theme. `series-3` colours a vocabulary a drawing cannot
+/// know in advance; a tone is chosen by the page that names it, and neither says "ok".
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct Tone {
+    /// What the tone is for, in a line.
+    pub about: String,
+    /// The ink, text and icons in the tone: `--mj-tone-<tone>`.
+    pub fg: Pair,
+    /// The ground: `--mj-tone-<tone>-bg`.
+    pub bg: Pair,
+    /// The border: `--mj-tone-<tone>-line`.
+    pub line: Pair,
+    /// The solid fill, which always carries `on-accent` text: `--mj-tone-<tone>-fill`.
+    pub fill: Pair,
+}
+
+/// The parts of a tone, each with the suffix its custom property carries after
+/// `--mj-tone-<tone>`. The same four names are the indirection a `.mj-tone--<tone>` class
+/// sets (`--mj-tone-fg`, `--mj-tone-bg`, ...), so no tone may take one of them as its name.
+pub const TONE_PARTS: &[(&str, &str)] = &[
+    ("fg", ""),
+    ("bg", "-bg"),
+    ("line", "-line"),
+    ("fill", "-fill"),
+];
+
+/// A tone colour reference, parsed: `tone-blue` is the ink, `tone-blue-bg` the ground,
+/// `tone-blue-line` the border and `tone-blue-fill` the solid fill.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ToneRef<'a> {
+    /// The tone.
+    pub tone: &'a str,
+    /// `fg`, `bg`, `line` or `fill`.
+    pub part: &'static str,
+}
+
+impl Tone {
+    /// The value of one part by its name.
+    pub fn part(&self, part: &str) -> &Pair {
+        match part {
+            "bg" => &self.bg,
+            "line" => &self.line,
+            "fill" => &self.fill,
+            _ => &self.fg,
+        }
+    }
 }
 
 /// One step of the type scale.
@@ -363,6 +418,8 @@ pub enum TokenKind {
     Status,
     /// A state word, filed under a status.
     State,
+    /// A tone: a hue for identity, never for meaning.
+    Tone,
     /// A step of the type scale.
     Type,
     /// A letter-spacing.
@@ -387,6 +444,7 @@ impl TokenKind {
             TokenKind::Role => "role",
             TokenKind::Status => "status",
             TokenKind::State => "state",
+            TokenKind::Tone => "tone",
             TokenKind::Type => "type",
             TokenKind::Tracking => "tracking",
             TokenKind::Layout => "layout",
@@ -402,6 +460,7 @@ impl TokenKind {
         TokenKind::Role,
         TokenKind::Status,
         TokenKind::State,
+        TokenKind::Tone,
         TokenKind::Type,
         TokenKind::Tracking,
         TokenKind::Layout,
@@ -575,6 +634,34 @@ impl DesignSystem {
                 seen.push((word.as_str(), role));
             }
         }
+        for (name, tone) in self.tones.iter() {
+            if !is_name(name) {
+                refuse(format!("tones.{name}: not a token name ({NAME_PATTERN})"));
+            }
+            if TONE_PARTS.iter().any(|(part, _)| *part == name) {
+                refuse(format!(
+                    "tones.{name}: the name of a part; --mj-tone-{name} is the indirection every tone sets"
+                ));
+            }
+            for (part, _) in TONE_PARTS {
+                let pair = tone.part(part);
+                for (theme, reference) in [("light", &pair.light), ("dark", &pair.dark)] {
+                    if self.palette.get(reference).is_none() && self.roles.get(reference).is_none()
+                    {
+                        refuse(format!(
+                            "tones.{name}.{part}.{theme}: '{reference}' is neither a palette entry nor a role"
+                        ));
+                    }
+                }
+            }
+        }
+        for name in self.roles.keys() {
+            if name == "tone" || name.starts_with("tone-") {
+                refuse(format!(
+                    "roles.{name}: --mj-tone-* belongs to the tones; a role may not take it"
+                ));
+            }
+        }
         for (name, step) in self.type_.scale.iter() {
             if !is_name(name) {
                 refuse(format!(
@@ -612,7 +699,11 @@ impl DesignSystem {
             }
         }
         for name in self.layout.keys() {
-            if self.roles.get(name).is_some() || self.status.roles.get(name).is_some() {
+            if self.roles.get(name).is_some()
+                || self.status.roles.get(name).is_some()
+                || name == "tone"
+                || name.starts_with("tone-")
+            {
                 refuse(format!(
                     "layout.{name}: collides with a colour token of the same name; both would be --mj-{name}"
                 ));
@@ -681,9 +772,32 @@ impl DesignSystem {
         None
     }
 
-    /// The custom property a colour token — a role or a status colour — is read as.
+    /// Parse a tone colour reference: `tone-blue` is the ink, `tone-blue-bg` the ground,
+    /// `tone-blue-line` the border, `tone-blue-fill` the solid fill.
+    pub fn tone_ref<'a>(&'a self, token: &'a str) -> Option<ToneRef<'a>> {
+        let rest = token.strip_prefix("tone-")?;
+        for (part, suffix) in TONE_PARTS.iter().rev() {
+            let Some(tone) = (if suffix.is_empty() {
+                Some(rest)
+            } else {
+                rest.strip_suffix(suffix)
+            }) else {
+                continue;
+            };
+            if let Some((tone, _)) = self.tones.iter().find(|(k, _)| *k == tone) {
+                return Some(ToneRef { tone, part });
+            }
+        }
+        None
+    }
+
+    /// The custom property a colour token — a role, a status colour or a tone colour — is
+    /// read as.
     pub fn colour_css(&self, token: &str) -> Option<String> {
-        if self.roles.get(token).is_some() || self.status_ref(token).is_some() {
+        if self.roles.get(token).is_some()
+            || self.status_ref(token).is_some()
+            || self.tone_ref(token).is_some()
+        {
             Some(format!("{PREFIX}{token}"))
         } else {
             None
@@ -856,6 +970,40 @@ impl DesignSystem {
                     projections: render::projections_of(TokenKind::State),
                 });
             }
+        }
+        for (name, tone) in self.tones.iter() {
+            let parts: Vec<ColourPart> = TONE_PARTS
+                .iter()
+                .map(|(part, suffix)| {
+                    let pair = tone.part(part);
+                    ColourPart {
+                        part: (*part).into(),
+                        css: format!("{PREFIX}tone-{name}{suffix}"),
+                        light: self
+                            .resolve(&pair.light, false)
+                            .unwrap_or_else(|| unresolved(&pair.light)),
+                        dark: self
+                            .resolve(&pair.dark, true)
+                            .unwrap_or_else(|| unresolved(&pair.dark)),
+                    }
+                })
+                .collect();
+            out.push(Token {
+                name: name.into(),
+                kind: TokenKind::Tone,
+                about: tone.about.clone(),
+                css: parts
+                    .iter()
+                    .map(|p| p.css.clone())
+                    .chain([format!(".mj-tone--{name}")])
+                    .collect(),
+                parts,
+                value: None,
+                role: None,
+                states: Vec::new(),
+                aliases: Vec::new(),
+                projections: render::projections_of(TokenKind::Tone),
+            });
         }
         for (name, step) in self.type_.scale.iter() {
             out.push(Token {
@@ -1156,6 +1304,58 @@ alias:
         let err = DesignSystem::parse(&text).unwrap_err();
         assert!(err.contains("roles.sunken.light"), "{err}");
         assert!(err.contains("gray-51"), "{err}");
+    }
+
+    fn with_tones(tones: &str) -> String {
+        small().replace(
+            "type:\n  scale:",
+            &format!("tones:\n{tones}type:\n  scale:"),
+        )
+    }
+
+    const SKY: &str = "  sky:\n    about: a hue\n    fg:\n      light: green-9\n      dark: green-1\n    bg:\n      light: green-1\n      dark: green-9\n    line:\n      light: green-1\n      dark: green-9\n    fill:\n      light: green-9\n      dark: green-9\n";
+
+    #[test]
+    fn a_tone_is_four_colours_read_through_one_class() {
+        let d = DesignSystem::parse(&with_tones(SKY)).expect("valid");
+        assert_eq!(d.tones.keys().collect::<Vec<_>>(), ["sky"]);
+        assert_eq!(
+            d.tone_ref("tone-sky-fill"),
+            Some(ToneRef {
+                tone: "sky",
+                part: "fill"
+            })
+        );
+        assert_eq!(d.tone_ref("tone-sky").map(|r| r.part), Some("fg"));
+        assert_eq!(d.tone_ref("tone-cloud"), None);
+        assert_eq!(
+            d.colour_css("tone-sky-bg").as_deref(),
+            Some("--mj-tone-sky-bg")
+        );
+        let token = d.explain("sky").expect("a tone is explained by name");
+        assert_eq!(token.kind, TokenKind::Tone);
+        assert_eq!(token.parts.len(), 4);
+        assert!(token.css.contains(&".mj-tone--sky".to_string()));
+        // a declaration with no tones section has none, and is still valid
+        assert!(DesignSystem::parse(&small()).unwrap().tones.is_empty());
+    }
+
+    #[test]
+    fn a_tone_may_not_take_a_part_name_and_a_role_may_not_take_the_family() {
+        let err = DesignSystem::parse(&with_tones(&SKY.replace("  sky:", "  fill:"))).unwrap_err();
+        assert!(err.contains("tones.fill"), "{err}");
+        let err = DesignSystem::parse(&with_tones(&SKY.replace(
+            "light: green-9\n      dark: green-1\n    bg",
+            "light: green-7\n      dark: green-1\n    bg",
+        )))
+        .unwrap_err();
+        assert!(err.contains("tones.sky.fg.light"), "{err}");
+        let err = DesignSystem::parse(&small().replace(
+            "\nroles:\n",
+            "\nroles:\n  tone-x:\n    about: x\n    light: white\n    dark: gray-900\n",
+        ))
+        .unwrap_err();
+        assert!(err.contains("roles.tone-x"), "{err}");
     }
 
     #[test]

@@ -81,6 +81,7 @@ pub const MINIMUM_NON_TEXT: f64 = 3.0;
 /// generated sheets declare values and pair nothing.
 pub const CONSUMERS: &[&str] = &[
     "design/primitives.css",
+    "design/kit.css",
     "design/base.css",
     "cockpit/src/cockpit.css",
 ];
@@ -277,6 +278,7 @@ fn slot(property: &str) -> Option<Slot> {
 enum Variant {
     Any,
     Status(String),
+    Tone(String),
     Fallback,
 }
 
@@ -377,13 +379,24 @@ fn references(value: &str) -> Vec<String> {
     out
 }
 
-/// The part of a status a `--mj-status-*` indirection stands for, and the suffix that
-/// names it on a status: `ok`, `ok-bg`, `ok-line`.
-fn indirection(token: &str) -> Option<&'static str> {
+/// The family an indirection belongs to and the suffix that names its part on a member:
+/// `--mj-status-bg` stands for `ok-bg`, `bad-bg`, ...; `--mj-tone-fill` for
+/// `tone-blue-fill`, `tone-violet-fill`, ...
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Family {
+    Status,
+    Tone,
+}
+
+fn indirection(token: &str) -> Option<(Family, &'static str)> {
     match token {
-        "status-fg" => Some(""),
-        "status-bg" => Some("-bg"),
-        "status-line" => Some("-line"),
+        "status-fg" => Some((Family::Status, "")),
+        "status-bg" => Some((Family::Status, "-bg")),
+        "status-line" => Some((Family::Status, "-line")),
+        "tone-fg" => Some((Family::Tone, "")),
+        "tone-bg" => Some((Family::Tone, "-bg")),
+        "tone-line" => Some((Family::Tone, "-line")),
+        "tone-fill" => Some((Family::Tone, "-fill")),
         _ => None,
     }
 }
@@ -393,12 +406,24 @@ fn bindings(design: &DesignSystem, value: &str) -> Vec<Binding> {
     let mut first = true;
     let mut primary_is_status = false;
     for token in references(value) {
-        if let Some(suffix) = indirection(&token) {
-            for (role, _) in design.status.roles.iter() {
-                out.push(Binding {
-                    variant: Variant::Status(role.to_string()),
-                    token: format!("{role}{suffix}"),
-                });
+        if let Some((family, suffix)) = indirection(&token) {
+            match family {
+                Family::Status => {
+                    for (role, _) in design.status.roles.iter() {
+                        out.push(Binding {
+                            variant: Variant::Status(role.to_string()),
+                            token: format!("{role}{suffix}"),
+                        });
+                    }
+                }
+                Family::Tone => {
+                    for (tone, _) in design.tones.iter() {
+                        out.push(Binding {
+                            variant: Variant::Tone(tone.to_string()),
+                            token: format!("tone-{tone}{suffix}"),
+                        });
+                    }
+                }
             }
             primary_is_status = primary_is_status || first;
             first = false;
@@ -583,7 +608,10 @@ fn derive(
 /// a role names a palette entry, so the references are followed until one of them is an
 /// entry — what a person would have to edit to move the colour.
 fn colour(design: &DesignSystem, token: &str, dark: bool) -> Option<(String, String)> {
-    let mut reference = if let Some(status) = design.status_ref(token) {
+    let mut reference = if let Some(tone) = design.tone_ref(token) {
+        let pair = design.tones.get(tone.tone)?.part(tone.part);
+        (if dark { &pair.dark } else { &pair.light }).clone()
+    } else if let Some(status) = design.status_ref(token) {
         let role = design.status.roles.get(status.role)?;
         let pair = match status.part {
             "bg" => &role.bg,
@@ -790,6 +818,28 @@ mod tests {
         assert!(!light.contains(&("ok", "bad-bg")));
         assert!(!light.contains(&("ok", "sunken")));
         assert!(!light.contains(&("fg", "ok-bg")));
+    }
+
+    #[test]
+    fn a_tone_is_measured_against_itself_and_its_fill_carries_on_accent() {
+        let css = ".mj-step { color: var(--mj-on-accent); background: var(--mj-tone-fill); }\n.mj-chip { color: var(--mj-tone-fg); background: var(--mj-tone-bg); }";
+        let report = measure(design(), &[("fixture.css".into(), css.into())]);
+        let light: Vec<(&str, &str)> = report
+            .pairs
+            .iter()
+            .filter(|p| p.theme == "light")
+            .map(|p| (p.foreground.as_str(), p.ground.as_str()))
+            .collect();
+        assert!(light.contains(&("tone-violet", "tone-violet-bg")));
+        assert!(light.contains(&("on-accent", "tone-orange-fill")));
+        assert!(!light.contains(&("tone-violet", "tone-orange-bg")));
+        let unreadable: Vec<&Measured> = report
+            .pairs
+            .iter()
+            .filter(|p| p.foreground.starts_with("tone-") || p.ground.starts_with("tone-"))
+            .filter(|p| !p.passes)
+            .collect();
+        assert!(unreadable.is_empty(), "{unreadable:?}");
     }
 
     #[test]
