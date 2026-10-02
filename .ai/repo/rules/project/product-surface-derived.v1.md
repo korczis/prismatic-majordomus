@@ -11,7 +11,7 @@ depends_on: [project.interfaces-are-projections@1, project.derived-files-regener
 tags: [product, site, projections, documentation]
 
 x-majordomus:
-  tests: [scripts/derive-check, scripts/site-check, test/cases/97_product_features.sh]
+  tests: [scripts/derive-check, scripts/site-check, test/cases/97_product_features.sh, test/cases/341_a_claim_shows_the_test_that_settles_it.sh]
 ---
 
 # Rationale
