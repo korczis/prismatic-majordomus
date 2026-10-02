@@ -1323,10 +1323,13 @@ reason `capture prompt` never does.
 `.ai/local/session-contexts/<stamp>--<session-id>.md`: front matter carrying
 `schema: session-context/v1`, the episode's identity, the provider and the provider's own
 session id — the same string the prompt records carry — then the context builder's output
-verbatim, then a `## Notes` section for the worker. `session close` appends a `## Close`
-section naming the outcome and the record it wrote. The document is appended to and never
-rewritten, so what a worker typed into it survives the close; `majordomus session context`
-prints its path.
+verbatim. `session close` appends a `## Close` section naming the outcome and the record it
+wrote. That file is the opening snapshot, evidence of what the worker was told, and
+`majordomus session context --path` prints its path. `majordomus session context` itself
+composes the live working context on every read: the episode's identity, git now against
+git at the open, and the checkpoints, decisions and questions the episode recorded, read
+from the ledger lines stamped with its own session id. Nothing caches it, so it cannot be
+stale; `--json` carries it beside the snapshot's freshness label.
 
 That store is local and stays local. It names this machine, and it is a snapshot of a
 projection — re-resolving it later gives a different document — so it is never published,
