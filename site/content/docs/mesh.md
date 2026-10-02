@@ -1,7 +1,7 @@
 +++
 title = "Majordomus Mesh"
 description = "the mesh: how running Majordomus instances discover each other — Ed25519 node identity, one signed bounded envelope over multicast, broadcast and rendezvous, one registry, deny-unknown trust, the off-by-default declaration, the threat model, and how to operate and extend it"
-weight = 54
+weight = 55
 [extra]
 source = "docs/MESH.md"
 +++

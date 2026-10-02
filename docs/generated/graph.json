@@ -1529,14 +1529,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/benches/projections.rs",
-        "kind": "file",
-        "label": "projections.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/benches/projections.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/bench/coverage.rs",
         "kind": "file",
         "label": "coverage.rs",
@@ -2145,14 +2137,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/quality/rustdoc.rs",
-        "kind": "file",
-        "label": "rustdoc.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/quality/rustdoc.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/quality/source.rs",
         "kind": "file",
         "label": "source.rs",
@@ -2166,14 +2150,6 @@
         "label": "availability.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/reasoning/availability.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/reasoning/check.rs",
-        "kind": "file",
-        "label": "check.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/reasoning/check.rs",
         "external": true
       },
       {
@@ -2665,14 +2641,6 @@
         "external": true
       },
       {
-        "id": "file:scripts/release-record",
-        "kind": "file",
-        "label": "release-record",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/release-record",
-        "external": true
-      },
-      {
         "id": "file:scripts/release-version",
         "kind": "file",
         "label": "release-version",
@@ -2710,14 +2678,6 @@
         "label": "site-check",
         "summary": "named by the layer; not an object of this index",
         "source": "scripts/site-check",
-        "external": true
-      },
-      {
-        "id": "file:scripts/site-deploy",
-        "kind": "file",
-        "label": "site-deploy",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/site-deploy",
         "external": true
       },
       {
@@ -11026,6 +10986,14 @@
         "source": "docs/INTEGRATION.md"
       },
       {
+        "id": "majordomus://document/docs/LAUNCH.md",
+        "kind": "document",
+        "label": "docs/LAUNCH.md",
+        "summary": "Launch kit",
+        "route": "/cockpit/objects/document/docs-launch-md",
+        "source": "docs/LAUNCH.md"
+      },
+      {
         "id": "majordomus://document/docs/MCP.md",
         "kind": "document",
         "label": "docs/MCP.md",
@@ -13757,6 +13725,7 @@
             "accept-or-refuse-finished-work",
             "block-acceptance-on-an-open-question",
             "carry-a-blocker-across-a-handover",
+            "catch-an-agent-that-says-it-is-done",
             "know-whether-this-work-is-finished",
             "prove-what-a-task-owed-before-calling-it-done",
             "say-what-reached-the-remote-and-what-did-not"
@@ -25096,6 +25065,61 @@
         }
       },
       {
+        "id": "majordomus://issue/I1600",
+        "kind": "issue",
+        "label": "I1600",
+        "summary": "The challenge is one recorded run, and every public surface replays it",
+        "route": "/cockpit/objects/issue/i1600",
+        "source": ".ai/repo/project/issues/I1600.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "usecase validate refuses a worker step in a live scenario, beside run, and without an exit code",
+            "the challenge scenario's recorded run shows a scope refusal, a finish refusal on a failing verification, a handover resumed through context, and an accepted finish",
+            "scripts/site-check fails when /challenge/ or the homepage misses a recorded line, renders a different number of steps, or does not link a guarantee a comparison row stands on",
+            "scripts/generate-site-data refuses a challenge that does not pass, refuses nothing, does not end accepted, leans on a claim that is not guaranteed, or whose README transcript is not a recorded step",
+            "finish prints one blocking doctrine per line"
+          ],
+          "created_at": "2026-09-15",
+          "depends_on": [],
+          "evidence_required": [
+            "challenge_recorded",
+            "site_holds_the_run",
+            "public_site_serves_it"
+          ],
+          "milestone": "public-proof",
+          "non_scope": [
+            "Analytics, testimonials, adoption numbers, or any claim the repository cannot derive",
+            "Per-page generated social images"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/usecase.sh",
+            "lib/finish.sh",
+            "share/schemas/majordomus/use-case",
+            ".ai/repo/use-cases",
+            "test",
+            "scripts",
+            "site",
+            "README.md",
+            "docs/USE_CASES.md",
+            "docs/LAUNCH.md",
+            "docs/README.md",
+            ".ai/repo/ci/pages.yaml",
+            ".github/workflows/pages.yml"
+          ],
+          "slug": "the-challenge-is-one-recorded-run",
+          "updated_at": "2026-09-30",
+          "validation": [
+            "bash test/run.sh 632_a_scenario_shows_the_worker_it_judges",
+            "bash test/run.sh 103_obligations",
+            "scripts/generate-site-data --check",
+            "scripts/site-check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I1945",
         "kind": "issue",
         "label": "I1945",
@@ -26952,6 +26976,65 @@
           "validation": [
             "bash test/run.sh",
             "bin/majordomus doctor"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/public-proof",
+        "kind": "milestone",
+        "label": "public-proof",
+        "summary": "A visitor sees the product prove itself, and can check every claim it makes",
+        "route": "/cockpit/objects/milestone/public-proof",
+        "source": ".ai/repo/project/milestones/public-proof.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fixture scenario can carry a worker step, recorded with actor worker, refused in a live scenario and beside run or obligation",
+            "The challenge scenario passes against the tree's own tool, refuses at least once and ends with the work accepted, and the derivation refuses to publish it otherwise",
+            "/challenge/ and the homepage carry every recorded command and decision line of the run, and nothing else stands in for them",
+            "README.md's first transcript is a recorded step of the challenge, and the derivation refuses it otherwise",
+            "catalogue.json carries each use case's scenario and maturity is derived from it",
+            "The public site serves the merged commit and its smoke routes after the Pages workflow publishes it"
+          ],
+          "created_at": "2026-09-15",
+          "depends_on": [],
+          "evidence_required": [
+            "challenge_recorded",
+            "site_holds_the_run",
+            "public_site_serves_it"
+          ],
+          "non_scope": [
+            "Analytics or any third-party script on the site; the offline rule refuses one, and nothing here needs one",
+            "Fabricated adoption figures, testimonials, logos or benchmark comparisons",
+            "A new command that audits a repository Majordomus is not installed in; doctor needs init, and that is a product decision, not a page",
+            "Generated social images per page; the existing card stays until a generator exists for it"
+          ],
+          "order": 110,
+          "priority": "p1",
+          "scope": [
+            "lib/usecase.sh",
+            "lib/finish.sh",
+            "share/schemas/majordomus/use-case",
+            ".ai/repo/use-cases",
+            "test/fixtures/commands",
+            "test/cases",
+            "scripts/generate-site-data",
+            "scripts/site-check",
+            "scripts/pages",
+            "scripts/lib/interaction-specs",
+            "site",
+            "README.md",
+            "docs",
+            ".ai/repo/ci/pages.yaml",
+            ".github/workflows/pages.yml"
+          ],
+          "slug": "public-proof",
+          "updated_at": "2026-09-15",
+          "validation": [
+            "bash test/run.sh 632_a_scenario_shows_the_worker_it_judges",
+            "bash test/run.sh 103_obligations",
+            "scripts/generate-site-data --check",
+            "scripts/site-check",
+            "scripts/pages verify --commit <master sha> --smoke"
           ]
         }
       },
@@ -37169,6 +37252,13 @@
         "source": "test/cases/62_session_divergence.sh"
       },
       {
+        "id": "majordomus://test/test/cases/632_a_scenario_shows_the_worker_it_judges.sh",
+        "kind": "test",
+        "label": "test/cases/632_a_scenario_shows_the_worker_it_judges.sh",
+        "route": "/cockpit/objects/test/test-cases-632-a-scenario-shows-the-worker-it-judges-sh",
+        "source": "test/cases/632_a_scenario_shows_the_worker_it_judges.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/635_the_runtime_names_its_commit.sh",
         "kind": "test",
         "label": "test/cases/635_the_runtime_names_its_commit.sh",
@@ -37936,6 +38026,49 @@
           "summary": "Close a task into a handover while a question is unresolved, start the follow-up task, and see the same question still refuse acceptance there.",
           "target": "guaranteed",
           "weight": 27
+        }
+      },
+      {
+        "id": "majordomus://use-case/catch-an-agent-that-says-it-is-done",
+        "kind": "use-case",
+        "label": "catch-an-agent-that-says-it-is-done",
+        "summary": "Catch an agent that says it is done when it is not",
+        "route": "/cockpit/objects/use-case/catch-an-agent-that-says-it-is-done",
+        "source": ".ai/repo/use-cases/catch-an-agent-that-says-it-is-done.md",
+        "status": "active",
+        "facts": {
+          "actors": [
+            "agent",
+            "operator"
+          ],
+          "category": "completion",
+          "claims": [
+            "scoped-task",
+            "overlap-report",
+            "scope-enforcement",
+            "finish-contract",
+            "handover-record",
+            "typed-outcome"
+          ],
+          "commands": [
+            "start",
+            "check",
+            "finish",
+            "handover",
+            "context"
+          ],
+          "difficulty": "basic",
+          "doctrines": [
+            "majordomus.scope-integrity",
+            "majordomus.state-consistency"
+          ],
+          "responsibilities": [
+            "scope",
+            "state"
+          ],
+          "summary": "One task, start to finish: a worker strays outside its scope, claims it is finished, hands over, and is accepted only once the repository''s own verification passes.",
+          "target": "guaranteed",
+          "weight": 1
         }
       },
       {
@@ -48227,11 +48360,6 @@
       },
       {
         "source": "majordomus://claim/release-is-complete-or-absent",
-        "target": "file:scripts/release-record",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/release-is-complete-or-absent",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -48284,11 +48412,6 @@
         "source": "majordomus://claim/retention-caps",
         "target": "majordomus://test/test/cases/02_doctor_basic.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/review-is-never-fabricated",
-        "target": "file:apps/majordomus-cli/src/reasoning/check.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/review-is-never-fabricated",
@@ -48487,11 +48610,6 @@
       },
       {
         "source": "majordomus://claim/rust-hot-path-benchmarks",
-        "target": "file:apps/majordomus-cli/benches/projections.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/rust-hot-path-benchmarks",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -48504,11 +48622,6 @@
         "source": "majordomus://claim/rust-hot-path-benchmarks",
         "target": "majordomus://test/test/cases/77_rust_evidence.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/rustdoc-complete",
-        "target": "file:apps/majordomus-cli/src/quality/rustdoc.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/rustdoc-complete",
@@ -48564,11 +48677,6 @@
         "source": "majordomus://claim/rustdoc-discoverable",
         "target": "majordomus://test/test/cases/488_rustdoc_discoverable.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/rustdoc-published",
-        "target": "file:scripts/site-deploy",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/rustdoc-published",
@@ -48769,11 +48877,6 @@
         "source": "majordomus://claim/shared-policy",
         "target": "majordomus://document/docs/DESIGN.md",
         "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/site-deploy-one-path",
-        "target": "file:scripts/site-deploy",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/site-deploy-one-path",
@@ -49927,6 +50030,11 @@
       },
       {
         "source": "majordomus://document/docs/INTEGRATION.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/LAUNCH.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -55066,6 +55174,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I1600",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1600",
+        "target": "majordomus://milestone/public-proof",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I1945",
         "target": "kind:issue",
         "kind": "is_a"
@@ -55517,6 +55635,11 @@
       },
       {
         "source": "majordomus://milestone/foundation",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/public-proof",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -58926,6 +59049,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/632_a_scenario_shows_the_worker_it_judges.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/635_the_runtime_names_its_commit.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -59553,6 +59681,51 @@
       {
         "source": "majordomus://use-case/carry-a-blocker-across-a-handover",
         "target": "majordomus://rule/majordomus.questions-store-integrity@1",
+        "kind": "exercises"
+      },
+      {
+        "source": "majordomus://use-case/catch-an-agent-that-says-it-is-done",
+        "target": "kind:use-case",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://use-case/catch-an-agent-that-says-it-is-done",
+        "target": "majordomus://claim/finish-contract",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/catch-an-agent-that-says-it-is-done",
+        "target": "majordomus://claim/handover-record",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/catch-an-agent-that-says-it-is-done",
+        "target": "majordomus://claim/overlap-report",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/catch-an-agent-that-says-it-is-done",
+        "target": "majordomus://claim/scope-enforcement",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/catch-an-agent-that-says-it-is-done",
+        "target": "majordomus://claim/scoped-task",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/catch-an-agent-that-says-it-is-done",
+        "target": "majordomus://claim/typed-outcome",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/catch-an-agent-that-says-it-is-done",
+        "target": "majordomus://rule/majordomus.scope-integrity@1",
+        "kind": "exercises"
+      },
+      {
+        "source": "majordomus://use-case/catch-an-agent-that-says-it-is-done",
+        "target": "majordomus://rule/majordomus.state-consistency@1",
         "kind": "exercises"
       },
       {
@@ -62163,7 +62336,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4449,
+      "edges": 4457,
       "acyclic": true,
       "truncated": true
     }
