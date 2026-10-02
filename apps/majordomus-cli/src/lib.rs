@@ -22,6 +22,7 @@ pub mod cockpit;
 pub mod command_graph;
 pub mod commands;
 pub mod commit;
+pub mod convergence;
 pub(crate) mod delivery;
 pub mod deploy;
 pub(crate) mod design;

@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 152 | 134 | 0 | 18 |
-| http | 150 | 134 | 0 | 16 |
-| mcp | 146 | 130 | 0 | 16 |
+| direct | 153 | 135 | 0 | 18 |
+| http | 151 | 135 | 0 | 16 |
+| mcp | 147 | 131 | 0 | 16 |
 | system | 13 | 13 | 0 | 0 |
-| total | 461 | 411 | 0 | 50 |
+| total | 464 | 414 | 0 | 50 |
 
 ## Capabilities
 
@@ -31,6 +31,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `commit.scopes` | commit | query | — | covered | covered | covered | `default` |
 | `commit.validate` | commit | query | — | covered | covered | covered | `conventional`, `not-conventional`, `merge` |
 | `continuity.state` | continuity | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `convergence.report` | convergence | query | — | covered | covered | covered | `default` |
 | `dashboard.overview` | dashboard | query | — | covered | covered | covered | `default` |
 | `delivery.feature` | delivery | query | — | waived | waived | waived | — |
 | `delivery.report` | delivery | query | — | waived | waived | waived | — |

@@ -173,6 +173,15 @@
         "status": "query"
       },
       {
+        "id": "capability:convergence.report",
+        "kind": "capability",
+        "label": "convergence.report",
+        "summary": "Is any work held where it can be lost?",
+        "route": "/cockpit/capabilities/convergence.report",
+        "source": "apps/majordomus-cli/src/capability/builtin/convergence.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:dashboard.overview",
         "kind": "capability",
         "label": "dashboard.overview",
@@ -1841,14 +1850,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/economics",
-        "kind": "file",
-        "label": "economics",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/economics",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/economics/claims.rs",
         "kind": "file",
         "label": "claims.rs",
@@ -2465,14 +2466,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/tests/why.rs",
-        "kind": "file",
-        "label": "why.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/tests/why.rs",
-        "external": true
-      },
-      {
         "id": "file:scripts/ci-plan",
         "kind": "file",
         "label": "ci-plan",
@@ -2926,14 +2919,6 @@
         "label": "index.html",
         "summary": "named by the layer; not an object of this index",
         "source": "site/templates/index.html",
-        "external": true
-      },
-      {
-        "id": "file:test/fixtures/economics",
-        "kind": "file",
-        "label": "economics",
-        "summary": "named by the layer; not an object of this index",
-        "source": "test/fixtures/economics",
         "external": true
       },
       {
@@ -31655,19 +31640,18 @@
         }
       },
       {
-        "id": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@1",
+        "id": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@2",
         "kind": "rule",
-        "label": "project.a-worker-that-stops-leaves-its-work-behind@1",
+        "label": "project.a-worker-that-stops-leaves-its-work-behind@2",
         "summary": "A worker that stops leaves its work where somebody else can find it",
-        "route": "/cockpit/objects/rule/project-a-worker-that-stops-leaves-its-work-behind-1",
-        "source": ".ai/repo/rules/project/a-worker-that-stops-leaves-its-work-behind.v1.md",
+        "route": "/cockpit/objects/rule/project-a-worker-that-stops-leaves-its-work-behind-2",
+        "source": ".ai/repo/rules/project/a-worker-that-stops-leaves-its-work-behind.v2.md",
         "status": "active",
         "facts": {
-          "class": "advisory",
+          "class": "blocking",
           "depends_on": [
             "project.work-is-claimed-before-it-is-built@1"
           ],
-          "statement": "Work is committed and pushed at the last point it was coherent, not at the point it was finished; whoever fans work out checkpoints it before it is lost.",
           "tags": [
             "process",
             "integration"
@@ -32928,7 +32912,7 @@
         "facts": {
           "class": "advisory",
           "depends_on": [
-            "project.a-worker-that-stops-leaves-its-work-behind@1",
+            "project.a-worker-that-stops-leaves-its-work-behind@2",
             "project.destructive-sweeps-fail-closed@1"
           ],
           "statement": "Recovery resumes from the last deterministic state a worker can establish, never from the assumption that nothing happened; work is not retried until it has been shown not to have succeeded.",
@@ -36632,6 +36616,13 @@
         "source": "test/cases/37_responsibility_surface.sh"
       },
       {
+        "id": "majordomus://test/test/cases/383_convergence_is_enforced.sh",
+        "kind": "test",
+        "label": "test/cases/383_convergence_is_enforced.sh",
+        "route": "/cockpit/objects/test/test-cases-383-convergence-is-enforced-sh",
+        "source": "test/cases/383_convergence_is_enforced.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/384_a_deployment_is_evidence.sh",
         "kind": "test",
         "label": "test/cases/384_a_deployment_is_evidence.sh",
@@ -39675,6 +39666,11 @@
         "label": "continuity"
       },
       {
+        "id": "module:convergence",
+        "kind": "module",
+        "label": "convergence"
+      },
+      {
         "id": "module:dashboard",
         "kind": "module",
         "label": "dashboard"
@@ -40136,6 +40132,26 @@
       },
       {
         "source": "capability:continuity.state",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:convergence.report",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:convergence.report",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:convergence.report",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:convergence.report",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -43526,7 +43542,7 @@
       },
       {
         "source": "majordomus://adr/adr-0039",
-        "target": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@1",
+        "target": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@2",
         "kind": "put_in_force"
       },
       {
@@ -49141,11 +49157,6 @@
       },
       {
         "source": "majordomus://claim/why-catalogue-discovered",
-        "target": "file:apps/majordomus-cli/tests/why.rs",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/why-catalogue-discovered",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -49161,11 +49172,6 @@
       },
       {
         "source": "majordomus://claim/why-diagnosis-explainable",
-        "target": "file:apps/majordomus-cli/tests/why.rs",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/why-diagnosis-explainable",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -49178,11 +49184,6 @@
         "source": "majordomus://claim/why-references-resolve",
         "target": "file:apps/majordomus-cli/src/why.rs",
         "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/why-references-resolve",
-        "target": "file:apps/majordomus-cli/tests/why.rs",
-        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/why-references-resolve",
@@ -49458,16 +49459,6 @@
         "source": "majordomus://context/ai.repo.benchmarks",
         "target": "kind:context",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://context/ai.repo.benchmarks.economics",
-        "target": "file:apps/majordomus-cli/src/economics",
-        "kind": "tracks"
-      },
-      {
-        "source": "majordomus://context/ai.repo.benchmarks.economics",
-        "target": "file:test/fixtures/economics",
-        "kind": "tracks"
       },
       {
         "source": "majordomus://context/ai.repo.benchmarks.economics",
@@ -56520,12 +56511,12 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@1",
+        "source": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@1",
+        "source": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@2",
         "target": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
         "kind": "depends_on"
       },
@@ -57281,7 +57272,7 @@
       },
       {
         "source": "majordomus://rule/project.recovery-is-idempotent@1",
-        "target": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@1",
+        "target": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@2",
         "kind": "depends_on"
       },
       {
@@ -58551,6 +58542,11 @@
       },
       {
         "source": "majordomus://test/test/cases/37_responsibility_surface.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/383_convergence_is_enforced.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -61480,6 +61476,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:convergence",
+        "target": "capability:convergence.report",
+        "kind": "composes"
+      },
+      {
         "source": "module:dashboard",
         "target": "capability:dashboard.overview",
         "kind": "composes"
@@ -62182,7 +62183,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4451,
+      "edges": 4452,
       "acyclic": true,
       "truncated": true
     }

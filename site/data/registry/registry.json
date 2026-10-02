@@ -6,27 +6,27 @@
     "version": "0.11.0"
   },
   "registry": {
-    "fingerprint": "bb6c676b10f4a862e3e3ef65b0f62ae68cd4111ef26765e4b5a95c2101a5401c",
+    "fingerprint": "1bba2cf1015d0a30badfb39e165a07d2bab0f14e80179871a1f9304be97d7196",
     "summary": {
-      "total": 1729,
-      "builtin": 152,
-      "declarative": 1577,
+      "total": 1731,
+      "builtin": 153,
+      "declarative": 1578,
       "by_kind": {
         "command": 20,
-        "query": 132,
-        "resource": 1577
+        "query": 133,
+        "resource": 1578
       },
       "by_stability": {
-        "behaviorally_verified": 110,
+        "behaviorally_verified": 111,
         "experimental": 34,
-        "implemented": 1585
+        "implemented": 1586
       },
-      "mcp_tools": 146,
-      "mcp_resources": 1624,
-      "http_routes": 150,
-      "cli_commands": 74,
-      "modules": 74,
-      "benchmark_required": 134,
+      "mcp_tools": 147,
+      "mcp_resources": 1626,
+      "http_routes": 151,
+      "cli_commands": 75,
+      "modules": 75,
+      "benchmark_required": 135,
       "benchmark_waived": 18,
       "cached": 39
     },
@@ -5453,6 +5453,208 @@
           "concurrency": "unrestricted"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs"
+      },
+      {
+        "id": "convergence.report",
+        "module": "convergence",
+        "kind": "query",
+        "title": "Is any work held where it can be lost?",
+        "description": "Every holding of this repository with its disposition, the evidence read for it and the command that would move it out of danger, the tallies per disposition, how many holdings exist on one disk only, and the one verdict over them. Read from git on every call: a commit, a push or an editor's save changes the answer between two calls.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "ConvergenceReport",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "schema": {
+                "type": "string",
+                "description": "`SCHEMA`."
+              },
+              "repository": {
+                "type": "string",
+                "description": "The primary checkout this was measured from."
+              },
+              "trunk": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The trunk the containment was decided against, when there is one."
+              },
+              "holdings": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Holding"
+                },
+                "description": "Every holding, at-risk ones first, then by kind and identity."
+              },
+              "tallies": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0
+                },
+                "description": "How many holdings carry each disposition, by its word."
+              },
+              "at_risk": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "The holdings that exist on one disk only."
+              },
+              "converged": {
+                "type": "boolean",
+                "description": "Nothing is held where it can be lost."
+              }
+            },
+            "required": [
+              "schema",
+              "repository",
+              "holdings",
+              "tallies",
+              "at_risk",
+              "converged"
+            ],
+            "description": "The repository's convergence: every holding, and the one verdict over them.\n\n```\nuse majordomus_cli::convergence::{ConvergenceReport, SCHEMA};\n\nlet empty = ConvergenceReport {\n    schema: SCHEMA.into(),\n    repository: \"/tmp/r\".into(),\n    trunk: Some(\"master\".into()),\n    holdings: vec![],\n    tallies: Default::default(),\n    at_risk: 0,\n    converged: true,\n};\n// the verdict is the one word a gate reads; the count is what a person reads next to it\nassert!(empty.converged && empty.at_risk == 0);\nassert_eq!(serde_json::to_value(&empty).unwrap()[\"schema\"], \"convergence/v1\");\n```",
+            "title": "ConvergenceReport",
+            "$defs": {
+              "Holding": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "$ref": "#/$defs/HoldingKind",
+                    "description": "What kind of thing holds it."
+                  },
+                  "identity": {
+                    "type": "string",
+                    "description": "How it is named: a branch name, an absolute worktree path, a stash ref."
+                  },
+                  "disposition": {
+                    "$ref": "#/$defs/Disposition",
+                    "description": "Where the work can be reached from."
+                  },
+                  "evidence": {
+                    "type": "string",
+                    "description": "What was actually read — never a restatement of the disposition."
+                  },
+                  "remedy": {
+                    "type": "string",
+                    "description": "The command that would move it out of danger. Empty when it is not at risk."
+                  },
+                  "at_risk": {
+                    "type": "boolean",
+                    "description": "This holding's work exists on one disk only."
+                  }
+                },
+                "required": [
+                  "kind",
+                  "identity",
+                  "disposition",
+                  "evidence",
+                  "at_risk"
+                ],
+                "description": "One thing holding work, and what is known about where that work can be reached from.\n\n```\nuse majordomus_cli::convergence::{Disposition, Holding, HoldingKind};\n\nlet branch = Holding {\n    kind: HoldingKind::Branch,\n    identity: \"feature/x\".into(),\n    disposition: Disposition::LocalOnly,\n    evidence: \"abc123 is on no remote-tracking ref of this checkout\".into(),\n    remedy: \"git push -u origin feature/x\".into(),\n    at_risk: true,\n};\n// an at-risk holding always carries the command that would move it out of danger\nassert!(branch.at_risk && !branch.remedy.is_empty());\n// and a reachable one carries none, so the field is left out of the document\nlet safe = Holding { disposition: Disposition::Published, remedy: String::new(), at_risk: false, ..branch };\nassert!(!serde_json::to_string(&safe).unwrap().contains(\"remedy\"));\n```"
+              },
+              "HoldingKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "worktree",
+                    "description": "A registered work tree, holding files that are not committed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "branch",
+                    "description": "A local branch, holding commits."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stash",
+                    "description": "An entry of `git stash`."
+                  }
+                ],
+                "description": "What kind of thing is holding the work.\n\n```\nuse majordomus_cli::convergence::HoldingKind;\n\n// the word a report and a persisted record use; renaming a variant must not rename it\nassert_eq!(HoldingKind::Worktree.as_str(), \"worktree\");\nassert_eq!(serde_json::to_string(&HoldingKind::Stash).unwrap(), \"\\\"stash\\\"\");\n```"
+              },
+              "Disposition": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "integrated",
+                    "description": "The trunk reaches it: it is in the repository's own history."
+                  },
+                  {
+                    "type": "string",
+                    "const": "published",
+                    "description": "A remote reaches it: another checkout can fetch it, and it survives this disk."
+                  },
+                  {
+                    "type": "string",
+                    "const": "local_only",
+                    "description": "Committed here and nowhere else. One disk away from being lost."
+                  },
+                  {
+                    "type": "string",
+                    "const": "uncommitted",
+                    "description": "Not committed at all: files in a work tree, or a stash entry."
+                  }
+                ],
+                "description": "Where the work a holding carries can be reached from.\n\nThe order is the order of safety: everything above `Disposition::LocalOnly` is\nreachable by somebody who is not the worker that made it.\n\n```\nuse majordomus_cli::convergence::Disposition;\n\n// declared in the order of safety, so the derived order says which is worse\nassert!(Disposition::Integrated < Disposition::Published);\nassert!(Disposition::Published < Disposition::LocalOnly);\nassert_eq!(serde_json::to_string(&Disposition::LocalOnly).unwrap(), \"\\\"local_only\\\"\");\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::convergence"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_convergence",
+            "resource": {
+              "uri": "majordomus://convergence",
+              "name": "convergence"
+            }
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/convergence"
+          },
+          "cli": {
+            "path": [
+              "convergence"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "convergence",
+          "git",
+          "worktree",
+          "integration"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/convergence.rs"
       },
       {
         "id": "dashboard.overview",
@@ -59043,6 +59245,18 @@
         }
       },
       {
+        "id": "convergence",
+        "title": "Convergence",
+        "description": "Whether every unit of work in this repository is somewhere another worker could find it. A holding is anything that can hold work — a work tree with uncommitted files, a branch with commits, a stash — and each carries a disposition read from git: integrated (the trunk reaches it), published (a remote-tracking ref reaches it), local_only (committed on this disk and nowhere else) or uncommitted. The last two are at risk: they are invisible to every other worker, and a worker that stops is not a rollback. Measured offline, from this checkout alone; whether a pull request exists for a branch is a question for the forge and is not asked here.",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 1,
+        "capability_ids": [
+          "convergence.report"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/convergence.rs"
+      },
+      {
         "id": "dashboard",
         "title": "Dashboards",
         "description": "The Dashboard Suite as a projection of the canonical state: every card is one fact read out of an existing capability's answer, carrying the capability it asked, the input, the JSON pointer its value was read from, the Cockpit page that holds the evidence and the command that acts on it. No dashboard stores, counts or judges anything of its own (ADR 0088).",
@@ -59826,7 +60040,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 302,
+        "capabilities": 303,
         "capability_ids": []
       },
       {
@@ -59916,7 +60130,7 @@
     ]
   },
   "index": {
-    "fingerprint": "b6a25f5a43c17110885b3513df22566c4735c32ae09714020205bf8a855fb081",
+    "fingerprint": "47100feae7e344541f3c2a94698893cebcd74a197a9d5f69a9843b63bf5a0a92",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -59965,7 +60179,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 302,
+      "test": 303,
       "use-case": 46,
       "workspace": 1
     },
@@ -72187,15 +72401,15 @@
         ]
       },
       {
-        "uri": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@1",
+        "uri": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@2",
         "kind": "rule",
-        "identity": "project.a-worker-that-stops-leaves-its-work-behind@1",
+        "identity": "project.a-worker-that-stops-leaves-its-work-behind@2",
         "title": "A worker that stops leaves its work where somebody else can find it",
-        "description": "Work that exists only in one worker's working tree is invisible to every other and dies with the worker; anyone who fans work out is responsible for checkpointing it, because a worker's death is not a rollback.",
-        "path": ".ai/repo/rules/project/a-worker-that-stops-leaves-its-work-behind.v1.md",
+        "description": "Work that exists only in one worker's working tree is invisible to every other and dies with the worker; anyone who fans work out is responsible for checkpointing it, because a worker's death is not a rollback. Where every unit of work is held is measured — a holding is a work tree, a branch or a stash, and each carries a disposition — and work held on one disk only is a finding of the completion invariant rather than a thing somebody might notice.",
+        "path": ".ai/repo/rules/project/a-worker-that-stops-leaves-its-work-behind.v2.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 4018,
+        "bytes": 7056,
         "tags": [
           "process",
           "integration"
@@ -75220,6 +75434,14 @@
         "bytes": 7771
       },
       {
+        "uri": "majordomus://test/test/cases/383_convergence_is_enforced.sh",
+        "kind": "test",
+        "identity": "test/cases/383_convergence_is_enforced.sh",
+        "path": "test/cases/383_convergence_is_enforced.sh",
+        "source_class": "case",
+        "bytes": 6114
+      },
+      {
         "uri": "majordomus://test/test/cases/384_a_deployment_is_evidence.sh",
         "kind": "test",
         "identity": "test/cases/384_a_deployment_is_evidence.sh",
@@ -77227,7 +77449,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 302
+      "objects": 303
     },
     {
       "name": "use-case",
@@ -90146,6 +90368,132 @@
       {
         "path": [
           "majordomus",
+          "convergence"
+        ],
+        "route": "/docs/cli/convergence/",
+        "executable": true,
+        "usage": "majordomus convergence [OPTIONS]",
+        "about": "Is any of this repository's work held where it can be lost? Every holding — a work tree with uncommitted files, a branch with commits, a stash — with the disposition read from git, and one verdict over them",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract)"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "How to render the verdict",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": false,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          },
+          {
+            "name": "all",
+            "long": "all",
+            "positional": false,
+            "help": "List every holding, not only the ones whose work exists on one disk",
+            "value_name": "ALL",
+            "takes_value": false,
+            "required": false,
+            "global": false,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          }
+        ],
+        "examples": [
+          {
+            "id": "convergence-report-json",
+            "title": "Is any work held where it can be lost?",
+            "description": "Every holding of this repository — a work tree with uncommitted files, a branch with commits, a stash — with the disposition read from git for each: integrated when the trunk reaches it, published when a remote-tracking ref does, local_only when nothing but this disk has it, uncommitted when it was never committed at all. The last two are at risk, and the verdict over them is what the completion invariant's `no-stale-topology` question reads. Measured offline: a remote-tracking ref is what this checkout last fetched, which is exactly the question — whether the work left this disk.",
+            "argv": [
+              "convergence",
+              "--format",
+              "json"
+            ],
+            "command": "majordomus convergence --format json",
+            "setup": [],
+            "expectation": "exits 0; prints one JSON document carrying /schema, /converged, /at_risk, /tallies"
+          }
+        ],
+        "subcommands": []
+      },
+      {
+        "path": [
+          "majordomus",
           "commit"
         ],
         "route": "/docs/cli/commit/",
@@ -102205,6 +102553,16 @@
         "output": "Continuity"
       },
       {
+        "name": "majordomus_convergence",
+        "id": "convergence.report",
+        "title": "Is any work held where it can be lost?",
+        "description": "Every holding of this repository with its disposition, the evidence read for it and the command that would move it out of danger, the tallies per disposition, how many holdings exist on one disk only, and the one verdict over them. Read from git on every call: a commit, a push or an editor's save changes the answer between two calls.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "ConvergenceReport"
+      },
+      {
         "name": "majordomus_dashboard_overview",
         "id": "dashboard.overview",
         "title": "The Overview: four questions",
@@ -103582,6 +103940,13 @@
         "kind": "query"
       },
       {
+        "uri": "majordomus://convergence",
+        "name": "convergence",
+        "id": "convergence.report",
+        "title": "Is any work held where it can be lost?",
+        "kind": "query"
+      },
+      {
         "uri": "majordomus://deployments",
         "name": "deployments",
         "id": "deploy.list",
@@ -103950,6 +104315,12 @@
         "method": "GET",
         "path": "/api/v1/continuity",
         "id": "continuity.state",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/convergence",
+        "id": "convergence.report",
         "kind": "query"
       },
       {
@@ -105379,6 +105750,35 @@
         "case": "default",
         "cached": true,
         "route": "GET /api/v1/continuity"
+      },
+      {
+        "key": "convergence.report|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "convergence.report",
+        "module": "convergence",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "convergence.report|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "convergence.report",
+        "module": "convergence",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_convergence"
+      },
+      {
+        "key": "convergence.report|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "convergence.report",
+        "module": "convergence",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/convergence"
       },
       {
         "key": "dashboard.overview|direct|default",
@@ -110734,6 +111134,27 @@
           "cases": 1
         },
         {
+          "subject": "convergence.report",
+          "module": "convergence",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "convergence.report",
+          "module": "convergence",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "convergence.report",
+          "module": "convergence",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "dashboard.overview",
           "module": "dashboard",
           "transport": "direct",
@@ -113761,22 +114182,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 152,
-          "covered": 134,
+          "required": 153,
+          "covered": 135,
           "missing": 0,
           "waived": 18,
           "inapplicable": 0
         },
         "http": {
-          "required": 150,
-          "covered": 134,
+          "required": 151,
+          "covered": 135,
           "missing": 0,
           "waived": 16,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 146,
-          "covered": 130,
+          "required": 147,
+          "covered": 131,
           "missing": 0,
           "waived": 16,
           "inapplicable": 0
@@ -113789,8 +114210,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 461,
-          "covered": 411,
+          "required": 464,
+          "covered": 414,
           "missing": 0,
           "waived": 50,
           "inapplicable": 0
