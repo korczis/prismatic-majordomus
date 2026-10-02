@@ -37,10 +37,9 @@ At least 30 valid matched pairs; at least 4 task categories with 5 valid pairs e
 
 | suite | kind | freshness | runs | valid pairs | attempted | control failed | treatment failed | both failed | other | revisions | harness | models |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| context | context | stale | 1 | 0 | 0 | 0 | 0 | 0 | 0 | `1cc12af61de4` |  |  |
+| context | context | current | 2 | 0 | 0 | 0 | 0 | 0 | 0 | `1cc12af61de4` `8183164ade2d` |  |  |
 | pilot | live | no evidence | 0 | 0 | 0 | 0 | 0 | 0 | 0 |  |  |  |
 
-- `context`: 1 record(s) were measured against inputs that have changed since: .ai/repo/benchmarks/economics/methodology.yaml, .ai/repo/benchmarks/economics/suites/context.yaml, apps/majordomus-cli/src/devcontext, .ai/repo/knowledge/sources.yaml
 
 ## Metrics
 
@@ -57,8 +56,8 @@ At least 30 valid matched pairs; at least 4 task categories with 5 valid pairs e
 | `completion_rate.majordomus` | not measured | not measured | derived from observed | 0 | — | not a quality score: a run passes the gates or it does not |
 | `tokens_per_completed_task.majordomus` | not measured | not measured | observed | 0 | — |  |
 | `transcript_resume_avoided.majordomus` | not measured | not measured | counterfactual from observed | 0 | — | not a saving of Majordomus: both arms start the next session fresh; this is the modelled cost of resuming a transcript instead |
-| `context_reduction_ratio` | +96.2% | measured | derived from counted | 216 | 95%: +96.1% to +96.2% | not total token savings: it says what the compiler selected from what it found relevant, not what a session consumed, and a session remains free to read anything |
-| `context_cost_model_error` | -2.6% | measured | derived from counted | 216 | — | not a saving: it says how far the budget's unit is from counted tokens |
+| `context_reduction_ratio` | +97.2% | measured | derived from counted | 239 | 95%: +97.2% to +97.2% | not total token savings: it says what the compiler selected from what it found relevant, not what a session consumed, and a session remains free to read anything |
+| `context_cost_model_error` | -1.9% | measured | derived from counted | 239 | — | not a saving: it says how far the budget's unit is from counted tokens |
 
 Formulas and warnings:
 
@@ -79,9 +78,7 @@ Formulas and warnings:
   - interval: percentile bootstrap of the median, each value resampled independently with replacement; 10000 resamples, seed 20260924.
   - tokens counted with o200k_base (tiktoken-rs 0.12.0), which is not the tokenizer of every model
   - the candidates are what the compiler's own graph walk judged relevant; a worker without the compiler would not necessarily have read them, so this ratio describes the selection, not a session's saving
-  - stale: a measured mechanism changed since this record
 - `context_cost_model_error`: counted selected tokens / the compiler's own estimate of them - 1, over all seeds.
-  - stale: a measured mechanism changed since this record
 
 ## Pairs
 
@@ -110,7 +107,7 @@ Every declared pair, valid or not. Tokens are the provider-reported totals of ev
 
 ## Context selection (deterministic)
 
-At revision `1cc12af61de4`, 216 seeds (the issues of this repository's plan) were compiled by `majordomus devcontext` under its default budget of 24000 (bytes-over-four) tokens. Counted with o200k_base (tiktoken-rs 0.12.0): 153167979 candidate tokens (files the compiler judged relevant), 5048264 selected; 153167979 tokens reached in all. The compiler's own estimate of the selected tokens was 5183282; 56 seed(s) exceed the budget when counted.
+At revision `8183164ade2d`, 239 seeds (the issues of this repository's plan) were compiled by `majordomus devcontext` under its default budget of 24000 (bytes-over-four) tokens. Counted with o200k_base (tiktoken-rs 0.12.0): 218842565 candidate tokens (files the compiler judged relevant), 5624943 selected; 218842565 tokens reached in all. The compiler's own estimate of the selected tokens was 5735749; 86 seed(s) exceed the budget when counted.
 
 This is context *selection*, not total token savings: it says what the compiler put in front of a worker out of what it found relevant, not what a session consumed.
 
@@ -119,6 +116,7 @@ This is context *selection*, not total token savings: it says what the compiler 
 | suite | methodology | revision | recorded | metric | value | n |
 |---|---|---|---|---|---|---|
 | context | 1 | `1cc12af61de4` | 2026-09-26T12:29:55Z | `context_reduction_ratio` | +96.2% | 216 |
+| context | 1 | `8183164ade2d` | 2026-10-02T09:55:23Z | `context_reduction_ratio` | +97.2% | 239 |
 
 ## Hypotheses
 
