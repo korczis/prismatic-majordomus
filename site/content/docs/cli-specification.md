@@ -1517,6 +1517,16 @@ A class marked `required` that discovers nothing is reported as a `WARN`. The co
 curated list is that a path can be forgotten, and a forgotten path is indistinguishable
 from a repository that does not have that file unless something says so.
 
+Whether a file conforms to the schema of its kind is the executable's index's verdict, not the
+reader's: `knowledge nodes` asks the index which files it refused, drops them and reports each
+refusal as a `FAIL` (`test/cases/405_the_knowledge_reader_honours_the_schema.sh`). With no
+executable built, or no `jq`, it reports a `WARN` that the schema went unchecked; it never
+reads as a pass. `MAJORDOMUS_KNOWLEDGE_SCHEMA=unasked` says not to ask, and the reader then
+reports an `INFO` that the check was not asked for. That is what a recorded use-case scenario
+sets: whether the index *could* be asked is a fact about the recording machine, and evidence
+that must read the same on every machine cannot carry it (#713,
+`test/cases/777_a_recorded_scenario_does_not_depend_on_the_recorder.sh`).
+
 ```
 $ majordomus knowledge sources --scope shared
 policy      shared      policy     4f2a9c1d8b30  .ai/repo/policy.yaml

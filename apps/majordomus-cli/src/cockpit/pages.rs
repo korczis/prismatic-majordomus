@@ -4796,11 +4796,16 @@ pub fn worktrees(ctx: &Context) -> Page {
 /// gave. Rendering silence for an unreachable server is the failure the capability was
 /// written to avoid, and a page is the easiest place to reintroduce it.
 pub fn peers(ctx: &Context) -> Page {
-    let b: PeerList = match ask(ctx, "peers.list", json!({})) {
-        Ok(b) => b,
-        Err(e) => return failed(Area::Peers, "Peers", e),
-    };
+    match ask(ctx, "peers.list", json!({})) {
+        Ok(b) => peers_of(&b),
+        Err(e) => failed(Area::Peers, "Peers", e),
+    }
+}
 
+/// The Peers page of one `peers.list` answer: the rendering, apart from the asking, so that
+/// a board that could not be read — which no single process can produce on demand — is
+/// rendered by the same code as one that could.
+fn peers_of(b: &PeerList) -> Page {
     let attached = b.peers.iter().filter(|p| p.attached).count();
     let unread = b.boards.iter().filter(|v| v.reason.is_some()).count();
 
@@ -7329,5 +7334,228 @@ mod tests {
             "an observed queue says nothing is observed"
         );
         drop(lease);
+    }
+
+    /// One `peers.list` answer, from the JSON the capability serves: the page renders what
+    /// arrives over the wire, so the fixture is written in that shape and not in Rust's.
+    fn peer_list(value: Value) -> PeerList {
+        serde_json::from_value(value).expect("a peers.list answer")
+    }
+
+    /// A peer as a board serializes it, attached or not.
+    fn board_peer(id: &str, attached: bool) -> Value {
+        json!({
+            "id": id,
+            "client": { "name": format!("client-{id}"), "version": "1" },
+            "transport": "http",
+            "connected_at": "2026-10-01T00:00:00Z",
+            "last_seen_seconds_ago": 3,
+            "attached": attached,
+        })
+    }
+
+    /// Absent is not empty: a board that could not be read is named, with its reason, before
+    /// the workers — and a list with nobody on it says that it is not the whole repository,
+    /// rather than "nobody is here".
+    #[test]
+    fn the_peers_page_names_a_board_it_could_not_read_and_never_renders_it_as_nobody() {
+        let page = peers_of(&peer_list(json!({
+            "count": 0,
+            "peers": [],
+            "complete": false,
+            "boards": [
+                {
+                    "id": "repo-a", "worktree": "/work/repo", "branch": "master",
+                    "this_checkout": true, "standing": "ready",
+                    "url": "http://127.0.0.1:4100", "attached": 0,
+                },
+                {
+                    "id": "repo-b", "worktree": "/work/repo-wt/feature/x",
+                    "this_checkout": false, "standing": "stale", "attached": 0,
+                    "reason": "http://127.0.0.1:4200 did not answer (connection refused)",
+                },
+            ],
+        })));
+        assert_eq!(page.status, 200);
+        let html = page.main.render();
+        assert!(html.contains("1 checkout(s) could not be asked"), "{html}");
+        assert!(html.contains("Boards that could not be asked"), "{html}");
+        assert!(html.contains("/work/repo-wt/feature/x"), "{html}");
+        assert!(
+            html.contains("did not answer (connection refused)"),
+            "{html}"
+        );
+        // a checkout with no branch is said to be detached, not left blank
+        assert!(html.contains("(detached)"), "{html}");
+        // nobody on the boards that answered is not the same as nobody in the repository
+        assert!(html.contains("not the whole repository"), "{html}");
+        assert!(!html.contains("none of them holds a worker"), "{html}");
+        // the reachable checkout carries its server's address, the unread one a dash
+        assert!(html.contains("http://127.0.0.1:4100"), "{html}");
+        assert!(html.contains("not on the board"), "{html}");
+        // the unread boards come before the workers: a reader who stops early has read them
+        let unread = html.find("Boards that could not be asked").unwrap();
+        let workers = html.find("Workers").unwrap();
+        assert!(
+            unread < workers,
+            "the unread boards follow the workers: {html}"
+        );
+        assert!(
+            !html.contains("Two workers, one scope"),
+            "an overlap was invented"
+        );
+    }
+
+    /// A whole board: every worker with where it is, whether it is still here, what it
+    /// announced and where it claimed — and every pair whose claims meet, before the workers.
+    #[test]
+    fn a_whole_board_shows_every_worker_and_where_two_of_them_meet() {
+        let mut here = board_peer("p1", true);
+        here["checkout"] = json!({
+            "id": "repo-a", "worktree": "/work/repo", "branch": "feature/peers",
+            "this_checkout": true,
+        });
+        here["announcement"] = json!({
+            "intent": "renders the board", "scope": ["src/cockpit", "docs"],
+            "at": "2026-10-01T00:00:00Z",
+        });
+        let mut silent = board_peer("p2", false);
+        silent["checkout"] = Value::Null;
+        let mut unscoped = board_peer("p3", true);
+        unscoped["announcement"] = json!({
+            "intent": "reads only", "scope": [], "at": "2026-10-01T00:00:00Z",
+        });
+        let page = peers_of(&peer_list(json!({
+            "count": 2,
+            "caller": "p1",
+            "peers": [here, silent, unscoped],
+            "overlaps": [
+                {
+                    "peer": "p4", "attached": true, "intent": "edits the cockpit",
+                    "paths": [
+                        { "yours": "src/cockpit", "theirs": "src/cockpit/pages.rs" },
+                        { "yours": "docs", "theirs": "docs" },
+                    ],
+                },
+                {
+                    "peer": "p5", "attached": false, "intent": "left",
+                    "paths": [{ "yours": "docs", "theirs": "docs/x.md" }],
+                },
+            ],
+            "complete": true,
+            "boards": [{
+                "id": "repo-a", "worktree": "/work/repo", "branch": "feature/peers",
+                "this_checkout": true, "standing": "ready", "attached": 2,
+            }],
+        })));
+        let html = page.main.render();
+        assert!(html.contains("every checkout answered"), "{html}");
+        assert!(!html.contains("Boards that could not be asked"), "{html}");
+        // the caller is told what its id is: a position, not an identity
+        assert!(
+            html.contains("handed out again after a reconnect"),
+            "{html}"
+        );
+        // the workers, each as the board knows it
+        assert!(html.contains("feature/peers"), "{html}");
+        assert!(
+            html.contains(">here<"),
+            "this checkout is not marked: {html}"
+        );
+        assert!(
+            html.contains("(unknown)"),
+            "a peer with no checkout: {html}"
+        );
+        assert!(html.contains("announced nothing"), "{html}");
+        assert!(html.contains("renders the board"), "{html}");
+        assert!(
+            html.contains(">gone<"),
+            "a detached peer is not marked gone: {html}"
+        );
+        assert!(html.contains("reads only"), "{html}");
+        // the overlaps: a path both claimed once, two that meet as the pair they are
+        assert!(html.contains("Two workers, one scope"), "{html}");
+        assert!(
+            html.contains("src/cockpit / src/cockpit/pages.rs"),
+            "{html}"
+        );
+        assert!(
+            html.contains("<code class=\"mj-mono\">docs</code>"),
+            "a path both claimed is not named once, as itself: {html}"
+        );
+        assert!(
+            !html.contains("docs / docs<"),
+            "a shared path is named twice: {html}"
+        );
+        assert!(html.contains("docs / docs/x.md"), "{html}");
+        let overlap = html.find("Two workers, one scope").unwrap();
+        let workers = html.find("Workers").unwrap();
+        assert!(overlap < workers, "the overlaps follow the workers: {html}");
+    }
+
+    /// A board that answered and holds nobody says so in words, and only then.
+    #[test]
+    fn an_empty_whole_board_says_nobody_is_here() {
+        let html = peers_of(&peer_list(json!({
+            "count": 0, "peers": [], "complete": true, "boards": [],
+        })))
+        .main
+        .render();
+        assert!(html.contains("none of them holds a worker"), "{html}");
+        assert!(!html.contains("not the whole repository"), "{html}");
+        assert!(!html.contains("Two workers, one scope"), "{html}");
+    }
+
+    /// The page asks the capability every other surface asks: the workers this process's
+    /// own board holds are on it, with their claims and the pair they make — and when the
+    /// capability cannot answer, the page is a failure that says so, never an empty board.
+    #[test]
+    fn the_peers_page_renders_the_board_the_capability_answers_and_fails_when_it_cannot() {
+        use crate::peers::Transport;
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        let mine = ctx.peers.attach(Transport::Http);
+        let theirs = ctx.peers.attach(Transport::Http);
+        ctx.peers
+            .announce(&mine, "draws the peers page", vec!["src/cockpit".into()]);
+        ctx.peers.announce(
+            &theirs,
+            "edits one page",
+            vec!["src/cockpit/pages.rs".into()],
+        );
+
+        let page = peers(&ctx.for_caller(mine.clone()));
+        assert_eq!(page.status, 200);
+        let html = page.main.render();
+        assert!(html.contains("draws the peers page"), "{html}");
+        assert!(html.contains("edits one page"), "{html}");
+        assert!(html.contains("every checkout answered"), "{html}");
+        assert!(html.contains("Two workers, one scope"), "{html}");
+        // the pair the board found, as one path against the other, whichever side is whose
+        assert!(
+            html.contains("src/cockpit/pages.rs / src/cockpit<")
+                || html.contains("src/cockpit / src/cockpit/pages.rs<"),
+            "{html}"
+        );
+        assert!(html.contains(mine.as_str()), "{html}");
+
+        // a registry with no peers.list: the capability cannot be asked at all
+        let index = repo.index().expect("an index");
+        let bare = Context::new(
+            std::sync::Arc::new(index),
+            std::sync::Arc::new(
+                crate::capability::registry::CapabilityRegistry::builder()
+                    .build()
+                    .expect("an empty registry"),
+            ),
+        );
+        let page = peers(&bare);
+        assert_eq!(page.status, 500);
+        let html = page.main.render();
+        assert!(html.contains("did not answer"), "{html}");
+        assert!(
+            !html.contains("Workers"),
+            "a failure rendered a board: {html}"
+        );
     }
 }

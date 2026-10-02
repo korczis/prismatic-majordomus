@@ -46,11 +46,11 @@ expect_grep 'policy +shared +[0-9a-f]{12} +policy:\.ai/repo/policy\.yaml'
 
 mkdir -p .ai/repo/adrs
 for f in 0007-one-decision 0007-another-decision; do
-  printf -- '---\nid: ADR-0007\nstatus: proposed\n---\n# %s\n\nTwo records, one decision number.\n' "$f" \
+  printf -- '---\nschema: adr/v1\nid: adr-0007\nkind: adr\ntitle: %s\nstatus: proposed\ndate: 2026-10-01\n---\n# %s\n\nTwo records, one decision number.\n' "$f" "$f" \
     > ".ai/repo/adrs/$f.md"
 done
 git add .ai/repo/adrs >/dev/null
 expect_exit 10 bash -c "$gate"
-expect_grep 'FAIL +knowledge +adr:ADR-0007 — claimed by \.ai/repo/adrs/0007-[a-z-]+\.md and by \.ai/repo/adrs/0007-[a-z-]+\.md'
+expect_grep 'FAIL +knowledge +\.ai/repo/adrs/0007-[a-z-]+\.md — the index refused it \(duplicate_identity\): majordomus://adr/adr-0007 is claimed by \.ai/repo/adrs/0007-[a-z-]+\.md and \.ai/repo/adrs/0007-[a-z-]+\.md'
 
 echo "    ok: the knowledge graph's refusal is a gate on every plan, and a planted collision fails it"

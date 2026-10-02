@@ -2212,4 +2212,179 @@ mod tests {
         let once = normalise(&v);
         assert_eq!(normalise(&once), once);
     }
+
+    // ------------------------------------------------------------------- the baseline
+
+    /// A record as [`records`] reads it: the version, its raw spelling, its tag, its commit.
+    fn record(
+        raw: &str,
+        tag: Option<&str>,
+        commit: Option<&str>,
+    ) -> (Version, String, Option<String>, Option<String>) {
+        (
+            Version::parse(raw).expect("three numbers"),
+            raw.to_string(),
+            tag.map(str::to_string),
+            commit.map(str::to_string),
+        )
+    }
+
+    /// The baseline is the newest release the layer records, read at the commit the record
+    /// names; a tag stands in only when nothing is recorded, and says that it did.
+    #[test]
+    fn the_newest_release_is_the_layers_record_and_a_tag_only_stands_in_for_none() {
+        let tags = vec!["v0.1.0".to_string(), "v0.9.0".to_string()];
+        // a record wins over a newer tag, and is read at its own commit, named by its tag
+        let recorded = latest(&[record("0.5.0", Some("v0.5.0"), Some("abc123"))], &tags);
+        assert_eq!(
+            recorded,
+            Some(LastRelease {
+                version: "0.5.0".into(),
+                reference: "v0.5.0".into(),
+                read_at: "abc123".into(),
+                recorded: true,
+            })
+        );
+        // the newest of several records, by version
+        let newest = latest(
+            &[
+                record("0.2.0", Some("v0.2.0"), Some("aaa")),
+                record("0.3.0", Some("v0.3.0"), Some("bbb")),
+            ],
+            &[],
+        );
+        assert_eq!(newest.map(|l| l.read_at), Some("bbb".to_string()));
+        // a record that names no commit is read at its tag
+        let at_tag = latest(&[record("0.5.0", Some("v0.5.0"), None)], &[]).unwrap();
+        assert_eq!(
+            (at_tag.reference.as_str(), at_tag.read_at.as_str()),
+            ("v0.5.0", "v0.5.0")
+        );
+        // and one that names neither is the tag its version spells
+        let bare = latest(&[record("0.5.0", None, None)], &[]).unwrap();
+        assert_eq!(
+            (bare.reference.as_str(), bare.read_at.as_str()),
+            ("v0.5.0", "v0.5.0")
+        );
+        assert!(bare.recorded);
+        // nothing recorded: the newest tag, read at itself, and not a record
+        assert_eq!(
+            latest(&[], &tags),
+            Some(LastRelease {
+                version: "0.9.0".into(),
+                reference: "v0.9.0".into(),
+                read_at: "v0.9.0".into(),
+                recorded: false,
+            })
+        );
+        // nothing published at all
+        assert_eq!(latest(&[], &[]), None);
+    }
+
+    /// A git repository whose one commit carries `registry` at the registry's path and a
+    /// manifest declaring `version`, tagged `v<version>`: a release known only from git.
+    fn tagged(registry: Value, version: &str) -> tempfile::TempDir {
+        let dir = tempfile::tempdir().expect("a temporary directory");
+        let root = dir.path();
+        let git = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .current_dir(root)
+                .args(args)
+                .output()
+                .expect("git runs");
+            assert!(out.status.success(), "git {args:?}: {out:?}");
+        };
+        git(&["init", "-q"]);
+        git(&["config", "user.email", "t@example.com"]);
+        git(&["config", "user.name", "t"]);
+        let write = |rel: &str, text: &str| {
+            let p = root.join(rel);
+            std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+            std::fs::write(p, text).unwrap();
+        };
+        write(
+            crate::release::surface::REGISTRY,
+            &serde_json::to_string(&registry).unwrap(),
+        );
+        write(
+            crate::release::version::MANIFEST,
+            &format!("[package]\nname = \"majordomus-cli\"\nversion = \"{version}\"\n"),
+        );
+        git(&["add", "-A"]);
+        git(&["commit", "-q", "-m", "release"]);
+        git(&["tag", &format!("v{version}")]);
+        dir
+    }
+
+    /// With no `--since`, and a release git knows and the layer does not record, the
+    /// baseline is the tag — measured, at the tag's tree — and the answer says it was taken
+    /// from the tags alone rather than passing a tag off as a record.
+    #[test]
+    fn a_release_known_only_from_its_tag_is_the_baseline_and_says_so() {
+        let empty = json!({"schema": "majordomus/capability-registry/v1", "capabilities": []});
+        let dir = tagged(empty, "0.1.0");
+        let mut diagnostics = Vec::new();
+        let baseline =
+            resolve_baseline(dir.path(), &[], None, &mut diagnostics).expect("a baseline");
+        assert_eq!(baseline.version, "0.1.0");
+        assert_eq!(baseline.reference, "v0.1.0");
+        assert_eq!(baseline.read_at, "v0.1.0");
+        assert!(!baseline.recorded);
+        assert_eq!(
+            baseline.commit.len(),
+            40,
+            "the tag's commit: {}",
+            baseline.commit
+        );
+        let from_tag = diagnostics
+            .iter()
+            .find(|d| d.id == "baseline-from-tag")
+            .expect("the baseline says it came from a tag");
+        assert_eq!(from_tag.severity, Severity::Warning);
+        assert!(from_tag.message.contains("v0.1.0"), "{}", from_tag.message);
+        assert!(
+            diagnostics.iter().any(|d| d.id == "tag-without-record"),
+            "{diagnostics:?}"
+        );
+        assert!(diagnostics.iter().all(|d| d.severity == Severity::Warning));
+    }
+
+    /// The contract's answer is the plan's required version exactly when the plan is
+    /// sound: every error refuses, all of them named, and a required version that is not
+    /// three numbers is no answer either.
+    #[test]
+    fn the_measured_version_is_the_plans_answer_only_when_the_plan_is_sound() {
+        let empty = json!({"schema": "majordomus/capability-registry/v1", "capabilities": []});
+        let dir = tagged(empty, "0.1.0");
+        let registry = crate::capability::registry::CapabilityRegistry::builder()
+            .build()
+            .expect("an empty registry");
+        let plan = analyze(dir.path(), &registry, &[], None).expect("a plan");
+        // nothing moved since the tag: the contract requires the release already made
+        assert!(!plan.has_errors(), "{:?}", plan.diagnostics);
+        assert_eq!(plan.required_version, "0.1.0");
+        assert_eq!(plan.measured_version(), Ok("0.1.0".to_string()));
+
+        let error = |message: &str| Diagnostic {
+            id: "tag-commit-mismatch".into(),
+            severity: Severity::Error,
+            message: message.into(),
+        };
+        let mut unsound = plan.clone();
+        unsound.diagnostics.push(error("the tag moved"));
+        unsound
+            .diagnostics
+            .push(error("the record names another commit"));
+        assert_eq!(
+            unsound.measured_version(),
+            Err("the tag moved\nthe record names another commit".to_string())
+        );
+
+        let mut guessed = plan;
+        guessed.required_version = "0.1".into();
+        assert_eq!(
+            guessed.measured_version(),
+            Err("the contract's required version '0.1' is not three numbers".to_string())
+        );
+    }
 }

@@ -786,6 +786,17 @@ mod tests {
             &serde_json::json!({ "decided_by": "contract" }),
         );
         assert_eq!(nothing, "nothing would be released");
+        // an answer that names no one, or a word this card does not know (an older or a
+        // newer executable): the version is still the contract's, and the card claims no
+        // more than that — neither the commits nor "undecided" are read into it
+        for answer in [
+            serde_json::json!({ "bump": "minor" }),
+            serde_json::json!({ "bump": "minor", "decided_by": "a-later-word" }),
+        ] {
+            let (status, plain) = next_version(&v, &answer);
+            assert_eq!(status, HealthStatus::Ok);
+            assert_eq!(plain, "the version the public contract requires");
+        }
     }
 
     /// The declaration is the only place the projections are named; a refactor that

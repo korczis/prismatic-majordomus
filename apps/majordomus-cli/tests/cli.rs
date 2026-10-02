@@ -349,3 +349,241 @@ fn the_share_directory_is_found_in_the_repository_when_no_override_is_given() {
     assert_eq!(code, 12, "{err}");
     assert!(err.contains("no share directory holds kinds.yaml"), "{err}");
 }
+
+// ------------------------------------------------------------------- release version, bump
+
+/// A fixture laid out as the tool's own tree — the manifest, its lock and the projection
+/// the shell tool reads, all stating `version` — with `registry` committed as the registry
+/// projection and the commit tagged `v<version>`: a release git knows of.
+fn released(f: &Fixture, registry: &serde_json::Value, version: &str) {
+    use majordomus_cli::release::{surface, version as v};
+    f.write(
+        v::MANIFEST,
+        &format!("[package]\nname = \"majordomus-cli\"\nversion = \"{version}\"\n"),
+    );
+    f.write(
+        v::LOCK,
+        &format!("[[package]]\nname = \"majordomus-cli\"\nversion = \"{version}\"\n"),
+    );
+    f.write(v::PROJECTION, &v::render_projection(version));
+    f.write(surface::REGISTRY, &serde_json::to_string(registry).unwrap());
+    f.commit(&format!("chore: release {version}"));
+    f.git(&["tag", &format!("v{version}")]);
+}
+
+/// A fix, committed after the release.
+fn fix_since(f: &Fixture) {
+    f.write("notes.txt", "repaired\n");
+    f.commit("fix: repair the thing");
+}
+
+fn release(f: &Fixture, args: &[&str]) -> (i32, String) {
+    let mut all = vec!["release"];
+    all.extend_from_slice(args);
+    let (code, out, err) = run_in(&f.root(), &all, "");
+    (code, format!("{out}{err}"))
+}
+
+/// The surface grew since the release — every capability is new against an empty registry
+/// — and the commits say only "fix": the contract decides a minor, the commits are shown as
+/// the evidence they are, and the writer raises to the report's `next`, refuses to go under
+/// it, carries an explicit override's provenance, and says when there is nothing to write.
+#[test]
+fn release_version_and_bump_take_the_contracts_answer_over_the_commits() {
+    let f = Fixture::new();
+    let empty =
+        serde_json::json!({"schema": "majordomus/capability-registry/v1", "capabilities": []});
+    released(&f, &empty, "0.1.0");
+    fix_since(&f);
+
+    let (code, out) = release(&f, &["version"]);
+    assert_eq!(code, 0, "{out}");
+    assert!(out.contains("last release 0.1.0"), "{out}");
+    assert!(out.contains("commits      1 since it"), "{out}");
+    assert!(
+        out.contains("next         0.2.0 (decided by the contract)"),
+        "{out}"
+    );
+    assert!(
+        out.contains("commits imply patch -> 0.1.1 (evidence; the contract decides)"),
+        "{out}"
+    );
+    assert!(
+        !out.contains("because"),
+        "a measured contract gave a reason not to: {out}"
+    );
+
+    let (code, out) = release(&f, &["bump", "--dry-run"]);
+    assert_eq!(code, 0, "{out}");
+    assert!(
+        out.contains(
+            "release: 0.1.0 -> 0.2.0 (minor required since v0.1.0, from the public contract)"
+        ),
+        "{out}"
+    );
+    // the commit subjects understate the window, and the writer says so
+    assert!(
+        out.contains("classify this window as patch and the contract moved by minor"),
+        "{out}"
+    );
+    assert!(out.contains("(unwritten)"), "{out}");
+    assert!(!out.contains("explicit override"), "{out}");
+
+    // an override under the contract's floor is refused, and nothing is written
+    let (code, out) = release(&f, &["bump", "--level", "patch"]);
+    assert_eq!(code, 10, "{out}");
+    assert!(out.contains("REFUSED 0.1.1 is below 0.2.0"), "{out}");
+    let manifest = std::fs::read_to_string(f.path("apps/majordomus-cli/Cargo.toml")).unwrap();
+    assert!(manifest.contains("version = \"0.1.0\""), "{manifest}");
+
+    // one above it is allowed, and never silent about what was measured
+    let (code, out) = release(&f, &["bump", "--exact", "0.3.0", "--dry-run"]);
+    assert_eq!(code, 0, "{out}");
+    assert!(out.contains("from explicit --exact"), "{out}");
+    assert!(
+        out.contains("required 0.2.0, selected 0.3.0; source: explicit override"),
+        "{out}"
+    );
+
+    // the write: the report's `next`, in the manifest and the lock
+    let (code, out) = release(&f, &["bump"]);
+    assert_eq!(code, 0, "{out}");
+    assert!(out.contains("now declares 0.2.0"), "{out}");
+    let manifest = std::fs::read_to_string(f.path("apps/majordomus-cli/Cargo.toml")).unwrap();
+    assert!(manifest.contains("version = \"0.2.0\""), "{manifest}");
+
+    // and again: the version already covers what the contract requires
+    let (code, out) = release(&f, &["bump"]);
+    assert_eq!(code, 0, "{out}");
+    assert!(
+        out.contains(
+            "the version is already 0.2.0, which covers the minor the contract requires since v0.1.0; nothing written"
+        ),
+        "{out}"
+    );
+}
+
+/// The surface is the release's to the byte and a fix landed since: the contract requires
+/// no release, so the commits make it a patch — and both the report and the writer name the
+/// two of them as the deciders.
+#[test]
+fn an_unchanged_contract_and_a_fix_are_a_patch_decided_by_both() {
+    let f = Fixture::new();
+    let surface =
+        majordomus_cli::generate::registry_manifest(&common::load_app(&f).context.registry);
+    released(&f, &surface, "0.1.0");
+    fix_since(&f);
+
+    let (code, out) = release(&f, &["version"]);
+    assert_eq!(code, 0, "{out}");
+    assert!(
+        out.contains("next         0.1.1 (decided by the contract and the commits)"),
+        "{out}"
+    );
+    assert!(
+        out.contains("(evidence; the contract requires no release, so a patch carries them)"),
+        "{out}"
+    );
+
+    let (code, out) = release(&f, &["bump", "--dry-run"]);
+    assert_eq!(code, 0, "{out}");
+    assert!(
+        out.contains(
+            "0.1.0 -> 0.1.1 (none required since v0.1.0, from the public contract and the commits)"
+        ),
+        "{out}"
+    );
+}
+
+/// Nothing published: the contract cannot be measured, so `release version` decides nothing
+/// and says why, the commit inference is labelled as evidence only, and `release bump`
+/// without a target refuses to guess rather than raising to what the commits say.
+#[test]
+fn with_nothing_published_the_report_decides_nothing_and_the_writer_refuses_to_guess() {
+    let f = Fixture::new();
+    use majordomus_cli::release::version as v;
+    f.write(
+        v::MANIFEST,
+        "[package]\nname = \"majordomus-cli\"\nversion = \"0.1.0\"\n",
+    );
+    f.write(v::PROJECTION, &v::render_projection("0.1.0"));
+    f.commit("feat: the first feature");
+
+    let (code, out) = release(&f, &["version"]);
+    assert_eq!(code, 0, "{out}");
+    assert!(
+        out.contains("next         — (undecided: the contract could not be measured)"),
+        "{out}"
+    );
+    assert!(out.contains("             because "), "{out}");
+    assert!(out.contains("name it deliberately"), "{out}");
+    assert!(
+        out.contains("(evidence only; it does not answer in the contract's place)"),
+        "{out}"
+    );
+
+    let (code, out) = release(&f, &["bump"]);
+    assert_eq!(code, 12, "{out}");
+    assert!(
+        out.contains("the public contract cannot be measured here, so there is no bump to derive"),
+        "{out}"
+    );
+    assert!(out.contains("name the version deliberately"), "{out}");
+    let manifest = std::fs::read_to_string(f.path("apps/majordomus-cli/Cargo.toml")).unwrap();
+    assert!(
+        manifest.contains("version = \"0.1.0\""),
+        "nothing is written: {manifest}"
+    );
+}
+
+/// Runs `majordomus <args>` in the fixture with a stdout whose reader is already gone: the
+/// other end of a socket pair, closed before the process starts, so its first write fails
+/// with a broken pipe — every time, with no race against a reader that closes late.
+#[cfg(unix)]
+fn with_stdout_gone(f: &Fixture, args: &[&str]) -> (i32, String) {
+    use std::os::fd::OwnedFd;
+    use std::os::unix::net::UnixStream;
+    use std::process::Stdio;
+    let (stdout, reader) = UnixStream::pair().expect("a socket pair");
+    drop(reader);
+    let out = Command::new(BIN)
+        .args(args)
+        .current_dir(f.root())
+        .env("MAJORDOMUS_SHARE", common::dist_share())
+        .stdin(Stdio::null())
+        .stdout(Stdio::from(OwnedFd::from(stdout)))
+        .stderr(Stdio::piped())
+        .output()
+        .expect("spawn majordomus");
+    (
+        out.status.code().unwrap_or(-1),
+        String::from_utf8(out.stderr).expect("stderr is UTF-8"),
+    )
+}
+
+/// A reader that has gone away is a failure the exit code states, never a success: the
+/// report and the refusal are each one write, so the broken pipe meets the one write and
+/// comes back as the transport failure it is — and the writer, refusing, writes nothing.
+#[cfg(unix)]
+#[test]
+fn release_version_and_bump_fail_when_nobody_reads_what_they_print() {
+    let f = Fixture::new();
+    use majordomus_cli::release::version as v;
+    f.write(
+        v::MANIFEST,
+        "[package]\nname = \"majordomus-cli\"\nversion = \"0.1.0\"\n",
+    );
+    f.write(v::PROJECTION, &v::render_projection("0.1.0"));
+    f.commit("feat: the first feature");
+
+    for args in [&["release", "version"][..], &["release", "bump"][..]] {
+        let (code, err) = with_stdout_gone(&f, args);
+        assert_eq!(code, 13, "{args:?}: {err}");
+        assert!(err.contains("majordomus: transport:"), "{args:?}: {err}");
+    }
+    let manifest = std::fs::read_to_string(f.path("apps/majordomus-cli/Cargo.toml")).unwrap();
+    assert!(
+        manifest.contains("version = \"0.1.0\""),
+        "nothing is written: {manifest}"
+    );
+}
