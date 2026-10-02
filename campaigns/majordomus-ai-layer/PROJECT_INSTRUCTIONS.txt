@@ -1,0 +1,82 @@
+# Majordomus Project Instructions
+
+You are operating inside the Majordomus project.
+
+Majordomus is an independent project for policy-driven control, diagnostics, and governance of AI-assisted software engineering workflows.
+
+## Repository AI context
+
+The repository uses `.ai/` as the canonical provider-neutral AI/LLM instruction layer.
+
+When repository files are available, treat `.ai/` as the source of truth for shared agent rules. Read `.ai/00_README.md` and its mandatory files before substantive architecture, implementation, or review work.
+
+`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, and future provider files are adapters only. They must not become independent rule sets.
+
+Shared rules belong in `.ai/`; provider files may contain only native loading/bootstrap mechanics and unavoidable provider-specific guidance.
+
+## Non-negotiable Prismatic boundary
+
+Prismatic may be used as prior art, inspiration, implementation reference, or source of lessons learned.
+
+Majordomus MUST NEVER directly depend on Prismatic.
+
+Never introduce:
+- imports from Prismatic modules/apps,
+- package/repository dependencies on Prismatic,
+- Git submodules pointing to Prismatic,
+- shared mutable runtime state,
+- undocumented Prismatic API/internal calls,
+- a requirement for a running Prismatic service,
+- deployment coupling to Prismatic.
+
+When useful functionality exists in Prismatic:
+1. understand the concept and invariant,
+2. extract only what Majordomus needs,
+3. redesign it for Majordomus,
+4. port or independently reimplement it locally,
+5. remove Prismatic-specific assumptions,
+6. add Majordomus-native APIs, tests, docs, and lifecycle.
+
+Majordomus must remain buildable, testable, and understandable without Prismatic.
+
+## Engineering priorities
+
+Optimize for correctness, explicit invariants, behavioral guarantees, failure transparency, testability, observability, maintainability, performance, then elegance.
+
+Prefer explicit interfaces, typed contracts, deterministic behavior, durable state where needed, idempotent operations, provider-neutral concepts, adapters, and policy/execution separation.
+
+Avoid fake success states, swallowed errors, hidden global state, accidental coupling, speculative abstractions, premature distributed systems, and provider assumptions leaking into core code.
+
+## Guarantees over claims
+
+Always distinguish implemented, behaviorally verified, experimental, planned, and unsupported.
+
+A guarantee requires executable evidence, preferably a behavioral/integration test. Never describe roadmap intent as existing behavior.
+
+Preferred progression:
+
+invariant -> observable behavior -> minimal implementation -> behavioral test -> diagnostics -> documentation -> higher-level feature
+
+Each roadmap stage is gated by the previous stage being demonstrably real.
+
+## Review discipline
+
+Actively look for success without meaningful checks, persistence gaps, partial reconciliation, stale projections, non-idempotent mutations, undocumented fallbacks, provider leakage, mocks hiding integration failures, and tests asserting implementation details instead of behavior.
+
+For each issue state what is wrong, why it matters, the likely failure mode, the smallest correct fix, and the test proving the fix.
+
+## Provider neutrality
+
+Core concepts must not be shaped around OpenAI, Anthropic, Claude Code, Codex, Gemini, Antigravity, GitHub, or any single agent framework.
+
+Provider-specific behavior belongs behind adapters. Unavailable telemetry, limits, runtime control, or execution metadata must remain explicitly unavailable. Label estimates.
+
+## Evidence and working style
+
+Never fabricate repository state, APIs, commits, issues, tests, provider capabilities, or Prismatic functionality.
+
+Clearly distinguish observed fact, inference, recommendation, and speculation.
+
+Prefer concrete patches, file-level changes, acceptance criteria, behavioral tests, ADRs, and executable verification over generic advice.
+
+Keep Majordomus focused. It is not a universal agent framework.

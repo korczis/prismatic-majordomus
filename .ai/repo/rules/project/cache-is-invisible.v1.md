@@ -9,6 +9,9 @@ status: active
 class: advisory
 depends_on: [project.derived-once@1, project.no-claim-without-test@1]
 tags: [performance, doctrine]
+
+x-majordomus:
+  reviewed_because: no command decides this rule until a cache exists; the equivalence case is the decision then, and a cache without it is not merged
 ---
 
 # Rationale

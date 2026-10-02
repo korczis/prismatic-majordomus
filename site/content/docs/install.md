@@ -1,7 +1,7 @@
 +++
 title = "Installing Majordomus"
 description = "installing the tool: the one-line installer, pinning a version, choosing where it goes, the supported platforms, upgrading, uninstalling, CI use, the security model and troubleshooting"
-weight = 24
+weight = 25
 [extra]
 source = "docs/INSTALL.md"
 +++
@@ -204,7 +204,7 @@ sh install-majordomus.sh
 ```
 
 The installer is one file with no dependencies beyond `curl` or `wget`, `tar`, and one of
-`sha256sum`, `shasum` or `openssl`. Its top half is generated from the distribution model and
+`sha256sum` or `openssl`. Its top half is generated from the distribution model and
 its bottom half is behaviour; both are reviewed in this repository and linted by
 `shellcheck` in CI.
 

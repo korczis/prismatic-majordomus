@@ -633,7 +633,7 @@ mj_recover_strays() {
   # shellcheck source=rust_bin.sh
   # shellcheck disable=SC1091
   . "$MJ_LIB_DIR/rust_bin.sh"
-  bin="$(mj_rust_bin "$MJ_ROOT")"
+  bin="$(mj_rust_bin "$MJ_HOME")"
   [ -x "$bin" ] || mj_die "$MJ_EX_CONTRACT" \
     "recover: the runtime that classifies a stray file is not built, and nothing here decides it a second time (build it: bin/majordomus-cli --help)"
   command -v jq >/dev/null 2>&1 || mj_die "$MJ_EX_CONTRACT" \

@@ -9,6 +9,9 @@ status: active
 class: advisory
 depends_on: [project.derived-files-regenerated@1]
 tags: [performance, doctrine]
+
+x-majordomus:
+  reviewed_because: no command decides this rule, a reviewer does, with the counters in front of them; no case holds those counts yet, and the one that does will hold the pre-commit hook's commands to the number of distinct canonical files they read
 ---
 
 # Rationale

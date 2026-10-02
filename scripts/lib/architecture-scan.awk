@@ -21,7 +21,7 @@
 
 BEGIN {
   split("mv cp rm mkdir touch chmod install ln", cw, " "); for (i in cw) writers[cw[i]] = 1
-  split("cat grep sed awk head tail wc sort jq cut test [ read source . ls find diff cmp shasum", cr, " ")
+  split("cat grep sed awk head tail wc sort jq cut test [ read source . ls find diff cmp sha256sum", cr, " ")
   for (i in cr) readers[cr[i]] = 1
   rank["uses"] = 1; rank["reads"] = 2; rank["writes"] = 3; rank["sources"] = 4
   # the layout table: base[VAR] = repository-relative path; roots = its top-level directories

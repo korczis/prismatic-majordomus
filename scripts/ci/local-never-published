@@ -173,9 +173,12 @@ for tree in $TREES; do
   lh="$(mktemp "${TMPDIR:-/tmp}/mj-local.XXXXXX")"
   ph="$(mktemp "${TMPDIR:-/tmp}/mj-pub.XXXXXX")"
   # an empty file is the same bytes everywhere and names nothing; it is not evidence of a leak
-  find "$LOCAL_ABS" -type f -size +0 -exec shasum -a 256 {} + 2>/dev/null | awk '{print $1}' | LC_ALL=C sort -u > "$lh" || true
-  find "$tree" -type f -size +0 -exec shasum -a 256 {} + 2>/dev/null | LC_ALL=C sort > "$ph" || true
-  shared="$(awk 'NR==FNR{h[$1];next} ($1 in h){print $2}' "$lh" "$ph" | head -10 || true)"
+  # No digest tool is a refusal, not an empty comparison that reads as "nothing leaked". The
+  # "-" line is GNU xargs hashing its own empty stdin when find names nothing.
+  mj_sha256_tool 2>/dev/null || { rm -f "$lh" "$ph"; mj_die "$MJ_EX_MISSING" "local-never-published: $MJ_SHA256_MISSING"; }
+  find "$LOCAL_ABS" -type f -size +0 -print0 2>/dev/null | mj_sha256_xargs -0 2>/dev/null | awk '{print $1}' | LC_ALL=C sort -u > "$lh" || true
+  find "$tree" -type f -size +0 -print0 2>/dev/null | mj_sha256_xargs -0 2>/dev/null | LC_ALL=C sort > "$ph" || true
+  shared="$(awk 'NR==FNR{h[$1];next} ($1 in h) && $2 != "-" {print $2}' "$lh" "$ph" | head -10 || true)"
   rm -f "$lh" "$ph"
   if [ -n "$shared" ]; then
     bad "$tree/ publishes file(s) byte-identical to records under $LOCAL/:"
