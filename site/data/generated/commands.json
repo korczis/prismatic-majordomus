@@ -2613,7 +2613,7 @@
           },
           {
             "id": "working-context",
-            "title": "Where the episode's working context is",
+            "title": "The episode's working context, composed now",
             "given": {
               "session open": true
             },
@@ -2625,10 +2625,33 @@
             "expect": {
               "exit": 0,
               "stdout_contains": [
+                "^# Working context of session s-",
+                "not stored and is not a snapshot"
+              ]
+            },
+            "explain": "`session context` composes the live working context on every read: the episode's own record, git now against git at the open, and the episode's ledger lines. Nothing in it is a stored document somebody had to write.",
+            "setup_sh": "# Installed, with one execution episode open in this worktree.\n. \"$FIXTURE_SETUP/installed.sh\"\n\"$MJ\" session start --worker some-provider/some-model >/dev/null",
+            "stdin_body": null
+          },
+          {
+            "id": "working-context-path",
+            "title": "Where the episode's opening snapshot is",
+            "given": {
+              "session open": true
+            },
+            "setup": "session-open",
+            "run": [
+              "session",
+              "context",
+              "--path"
+            ],
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
                 "^\\.ai/local/session-contexts/"
               ]
             },
-            "explain": "`start` freezes what the context builder resolved into the local working-context store, and this prints the path rather than the document: local evidence is never poured into a terminal where a context can pick it up.",
+            "explain": "`start` freezes what the context builder resolved into the local working-context store, and `--path` prints where that snapshot is rather than its contents.",
             "setup_sh": "# Installed, with one execution episode open in this worktree.\n. \"$FIXTURE_SETUP/installed.sh\"\n\"$MJ\" session start --worker some-provider/some-model >/dev/null",
             "stdin_body": null
           }

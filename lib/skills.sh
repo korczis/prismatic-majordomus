@@ -323,7 +323,7 @@ mj_skills_proof_doctrine() {
   local bin share out rc=0 n=0 fails=0 level code subject message reproduce
   # shellcheck source=rust_bin.sh
   . "$MJ_LIB_DIR/rust_bin.sh"
-  bin="$(mj_rust_bin "$MJ_ROOT")"
+  bin="$(mj_rust_bin "$MJ_HOME")"
   if [ ! -x "$bin" ]; then
     mj_doctrine_skip skill "proof" "the executable that derives skill proof is not built, so no skill's proof is judged here (unknown, never a pass)" "bin/majordomus-cli skills verify"
     return 0
