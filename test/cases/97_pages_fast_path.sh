@@ -191,26 +191,43 @@ expect_grep 'current for this tree'
 # 8. skipping the generation changes nothing about the site. This is the whole premise of the
 #    fast path: the committed derived data is the projection, so rendering it is rendering the
 #    canonical sources. A build without --no-data and a build with it must agree byte for byte.
+#
+#    Both builds run in a disposable worktree of HEAD, never in $ROOT: the generating build
+#    rewrites site/data/generated, and this case runs in the parallel phase, so building in the
+#    checkout rewrote catalogue.json and terminal.json under every neighbour and run.sh refused
+#    the shard ("the checkout changed during the parallel phase", batch H, #711).
+PUB="$ROOT/site/public"
 if command -v zola >/dev/null 2>&1 && [ -d "$ROOT/node_modules/tailwindcss" ]; then
   a="$(mktemp -d "${TMPDIR:-/tmp}/mj-pages-a.XXXXXX")"; b="$(mktemp -d "${TMPDIR:-/tmp}/mj-pages-b.XXXXXX")"
-  ( cd "$ROOT" && scripts/site-build >/dev/null 2>&1 ) || { echo "    scripts/site-build failed"; exit 1; }
-  cp -R "$ROOT/site/public/." "$a/"
-  ( cd "$ROOT" && scripts/site-build --no-data >/dev/null 2>&1 ) || { echo "    scripts/site-build --no-data failed"; exit 1; }
-  cp -R "$ROOT/site/public/." "$b/"
+  wt="$(mktemp -d "${TMPDIR:-/tmp}/mj-pages-wt.XXXXXX")/tree"
+  drop_wt() { git -C "$ROOT" worktree remove --force "$wt" >/dev/null 2>&1; rm -rf "$(dirname "$wt")"; }
+  git -C "$ROOT" -c core.hooksPath=/dev/null worktree add -q --detach "$wt" HEAD >/dev/null 2>&1 \
+    || { echo "    could not check out a disposable worktree of HEAD to build in"; exit 1; }
+  ln -s "$ROOT/node_modules" "$wt/node_modules"
+  # the surfaces a build composes (the crate's reference, ADR 0086) are untracked artifacts of
+  # this checkout, so the disposable tree reads them from here rather than rebuilding them
+  if [ -d "$ROOT/target/web" ]; then mkdir -p "$wt/target"; ln -s "$ROOT/target/web" "$wt/target/web"; fi
+  ( cd "$wt" && scripts/site-build >/dev/null 2>&1 ) || { echo "    scripts/site-build failed"; drop_wt; exit 1; }
+  cp -R "$wt/site/public/." "$a/"
+  ( cd "$wt" && scripts/site-build --no-data >/dev/null 2>&1 ) || { echo "    scripts/site-build --no-data failed"; drop_wt; exit 1; }
+  cp -R "$wt/site/public/." "$b/"
+  drop_wt
   # build.json carries this build's own generation moment in source.json; the site's bytes do not
   if ! diff -r "$a" "$b" > sitediff.txt 2>&1; then
     echo "    a build that skipped the generation differs from one that did not:"; head -20 sitediff.txt; rm -rf "$a" "$b"; exit 1
   fi
-  rm -rf "$a" "$b"
+  rm -rf "$a"
+  PUB="$b"
 else
   echo "    (zola or node_modules absent: the build equivalence is CI's)"
 fi
 
 # 9. the identity the probe reads is served, and names the commit the site was built from
-[ -f "$ROOT/site/public/$(sed -n 's/^  identity: //p' "$MODEL")" ] \
+[ -f "$PUB/$(sed -n 's/^  identity: //p' "$MODEL")" ] \
   || { echo "    the site does not serve $(sed -n 's/^  identity: //p' "$MODEL"); a deployment could not be verified from outside"; exit 1; }
-jq -e '.commit | strings' "$ROOT/site/public/$(sed -n 's/^  identity: //p' "$MODEL")" >/dev/null \
+jq -e '.commit | strings' "$PUB/$(sed -n 's/^  identity: //p' "$MODEL")" >/dev/null \
   || { echo "    the served identity carries no commit"; exit 1; }
+[ "$PUB" = "$ROOT/site/public" ] || rm -rf "$PUB"
 
 # 9a. THE VERDICT OF A RUN IS ITS PUBLICATION; THE BUDGET IS A REPORT ON IT.
 #

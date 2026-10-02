@@ -153,7 +153,7 @@ jobs:
         env:
           ACTIONLINT_VERSION: "1.7.7"
         run: |
-          curl -sSL "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" | sudo tar xz -C /usr/local/bin actionlint
+          curl -sSL --max-time 120 "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" | sudo tar xz -C /usr/local/bin actionlint
           actionlint -version
       - uses: actions/download-artifact@v4
         with:
@@ -504,12 +504,28 @@ jobs:
         working-directory: apps/majordomus-cli
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The differential gate diffs against the merge-base with the trunk. A shallow
+          # clone has no merge-base, and this gate answers UNKNOWN rather than passing
+          # silently, so the history it reads has to be here.
+          fetch-depth: 0
       - id: rust
         uses: ./.github/actions/setup-rust
         with:
           components: llvm-tools-preview
       - uses: taiki-e/install-action@cargo-llvm-cov
-      - run: ../../scripts/rust-coverage --export ../../coverage.json
+      # One instrumented run, one export, two verdicts read from it: the measurement exists
+      # once (docs/COVERAGE.md) and neither gate re-instruments. This step holds nothing —
+      # --report measures and exits 0 — so a floor failure cannot hide the differential's
+      # answer, and the differential's cannot hide the floor's.
+      - run: ../../scripts/rust-coverage --report --export ../../coverage.json
+      - if: needs.plan.outputs.coverage_differential == 'true'
+        env:
+          MJ_COVERAGE_EXPORT: ${{ github.workspace }}/coverage.json
+          MJ_COVERAGE_BASE: ${{ github.event.pull_request.base.sha }}
+        run: ../../scripts/ci/coverage-differential
+      - if: ${{ !cancelled() && needs.plan.outputs.rust_coverage == 'true' }}
+        run: ../../scripts/rust-coverage --from ../../coverage.json
       - if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -620,7 +636,11 @@ jobs:
   # the same bytes become the Pages artifact the deploy job publishes; nothing rebuilds them.
   site:
     needs: plan
-    if: needs.plan.outputs.site_build == 'true'
+    # Every gate this job carries, not only the first: the build is a prerequisite of the
+    # probe, so a plan that asks for the probe or the Cockpit stylesheet and not for
+    # site-build must still open the job — otherwise the gate is planned and the job that
+    # would run it never starts. The UI audit is the ui job's, not this one's.
+    if: needs.plan.outputs.site_build == 'true' || needs.plan.outputs.cockpit_assets == 'true' || needs.plan.outputs.site_probe == 'true'
     timeout-minutes: 50
     runs-on: ubuntu-latest
     steps:
@@ -643,6 +663,7 @@ jobs:
         if: needs.plan.outputs.cockpit_assets == 'true'
         run: scripts/ci/timed --bound 2700 cockpit-assets "cockpit-assets --check" timings.tsv scripts/cockpit-assets --check
       - name: derived site data in sync
+        if: needs.plan.outputs.site_build == 'true'
         run: scripts/ci/timed --bound 2700 site-build "generate-site-data --check" timings.tsv scripts/generate-site-data --check
       # The crate's Rust API reference, produced the one way it is produced everywhere
       # (.github/actions/rustdoc: the rust gate's own rustdoc step and its handoff). The build
@@ -659,6 +680,7 @@ jobs:
       # internal link resolving, no remote asset, no credential, and the generated data
       # still matching its canonical sources.
       - name: check the site
+        if: needs.plan.outputs.site_build == 'true'
         run: scripts/ci/timed --bound 2700 site-build site-check timings.tsv scripts/site-check --no-sync
       # Browser-measured: no horizontal overflow at 320/390/1280 on every route, the mobile
       # menu, the dropdowns, the theme toggle, Mermaid rendering. The full sweep, deliberately:
@@ -772,7 +794,7 @@ jobs:
   cockpit:
     needs: plan
     if: needs.plan.outputs.cockpit_probe == 'true'
-    timeout-minutes: 20
+    timeout-minutes: 25
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -787,7 +809,7 @@ jobs:
       - name: vendor the lazy-loaded libraries the probe expects to find
         run: scripts/ci/timed --bound 900 cockpit-assets cockpit-assets timings.tsv scripts/cockpit-assets
       - name: probe the Cockpit
-        run: CHROME_BIN=google-chrome scripts/ci/timed --bound 900 cockpit-probe cockpit-probe timings.tsv scripts/cockpit-probe
+        run: CHROME_BIN=google-chrome scripts/ci/timed --bound 1200 cockpit-probe cockpit-probe timings.tsv scripts/cockpit-probe
       - if: always()
         run: scripts/ci/summary --job cockpit --timings timings.tsv --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}" --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}"
       - if: always()

@@ -401,7 +401,16 @@ mj_knowledge_flat_rows() {
 #
 # Never a build: an executable that is not there is not compiled for a read, as `context`
 # does not. The caller says the schema went unchecked rather than implying it passed.
+#
+# Returns 3, printing nothing, when the caller's environment said not to ask:
+# MAJORDOMUS_KNOWLEDGE_SCHEMA=unasked. Whether the index *could* be asked is a fact about
+# the machine — an executable built, jq installed — and a record that must read the same
+# on every machine (a use-case scenario's evidence, #713) cannot carry it. That environment
+# decides the question for itself instead, as it decides reasoning's mode (ADR 0098), and
+# the reader says the check was not asked for, which is neither a pass nor a machine's
+# shortfall. Any other value, or none, asks the index.
 mj_knowledge_refused() {
+  [ "${MAJORDOMUS_KNOWLEDGE_SCHEMA:-index}" = unasked ] && return 3
   mj_has jq || return 2
   local bin share out
   # shellcheck source=rust_bin.sh
@@ -439,6 +448,8 @@ mj_knowledge_nodes() {
   {
     if [ "$rc" = 0 ]; then
       awk -F'\t' '{ printf "X\tFAIL\trefused_source\t%s\tthe index refused it (%s): %s; no node was extracted from it\n", $1, $2, $3 }' "$refused"
+    elif [ "$rc" = 3 ]; then
+      printf 'X\tINFO\tschema_unasked\t.\tthe schema check was not asked for (MAJORDOMUS_KNOWLEDGE_SCHEMA=unasked), so no file was checked against the schema of its kind\n'
     else
       printf 'X\tWARN\tschema_unchecked\t.\tthe index could not be asked (no executable built, or no jq), so no file was checked against the schema of its kind; run bin/majordomus-cli once to build it\n'
     fi
@@ -501,6 +512,7 @@ mj_knowledge_nodes_cmd() {
     while IFS="$MJ_TAB" read -r t a b c d; do
       [ "$t" = X ] || continue
       case "$a" in FAIL) mj_fail knowledge "$c" "$d" "majordomus knowledge nodes --json"; fails=$((fails + 1)) ;;
+                   INFO) mj_info knowledge "$c" "$d" ;;
                    *)    mj_warn knowledge "$c" "$d" "majordomus knowledge nodes --json" ;; esac
     done < "$out"
   fi
@@ -551,6 +563,7 @@ mj_knowledge_edges_cmd() {
     while IFS="$MJ_TAB" read -r t a b c d; do
       [ "$t" = X ] || continue
       case "$a" in FAIL) mj_fail knowledge "$c" "$d" "majordomus knowledge edges --json"; fails=$((fails + 1)) ;;
+                   INFO) mj_info knowledge "$c" "$d" ;;
                    *)    mj_warn knowledge "$c" "$d" "majordomus knowledge edges --json" ;; esac
     done < "$out"
   fi

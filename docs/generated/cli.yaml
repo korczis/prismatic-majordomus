@@ -11164,8 +11164,8 @@ cli:
                 - text
           examples:
             - id: release-version
-              title: "The version, and the one the commits imply"
-              description: "The version is authored in one place, the crate manifest, and the shell tool reads its projection, share/version.txt, because an installed tree has no Cargo.toml. This says what the manifest declares, whether the projection states it, and — exit 10 — any version written down by hand where the tool's own files live. What the next version must be is a different question, measured from the public contract by `release analyze`."
+              title: "The version, and the one the contract requires next"
+              description: "The version is authored in one place, the crate manifest, and the shell tool reads its projection, share/version.txt, because an installed tree has no Cargo.toml. This says what the manifest declares, whether the projection states it, and — exit 10 — any version written down by hand where the tool's own files live. `next` is the public contract's answer, the version `release analyze` requires (the declared version when it already satisfies the contract, otherwise the smallest one it allows); `decided_by` names who answered, and the bump the commit subjects imply is carried as evidence. This fixture has published no release with a registry, so the contract cannot be measured: `next` is absent and `decided_by` is `undecided`, with the reason in `contract_unreadable` — an unmeasurable baseline is refused, not guessed."
               argv:
                 - release
                 - version
@@ -11173,7 +11173,7 @@ cli:
                 - json
               command: majordomus release version --format json
               setup: []
-              expectation: "exits 0; prints one JSON document carrying /declared, /agree, /bump"
+              expectation: "exits 0; prints one JSON document carrying /declared, /agree, /bump, /decided_by"
           subcommands: []
         - path:
             - majordomus

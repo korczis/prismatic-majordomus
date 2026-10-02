@@ -1193,7 +1193,7 @@
         "id": "capability:release.version",
         "kind": "capability",
         "label": "release.version",
-        "summary": "The version, and the one the commits imply",
+        "summary": "The version, and the one the contract requires next",
         "route": "/cockpit/capabilities/release.version",
         "source": "apps/majordomus-cli/src/capability/builtin/release.rs",
         "status": "query"
@@ -1841,14 +1841,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/economics",
-        "kind": "file",
-        "label": "economics",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/economics",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/economics/claims.rs",
         "kind": "file",
         "label": "claims.rs",
@@ -2313,14 +2305,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/web/model.rs",
-        "kind": "file",
-        "label": "model.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/web/model.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/web/report/ui.rs",
         "kind": "file",
         "label": "ui.rs",
@@ -2449,27 +2433,11 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/tests/projections.rs",
-        "kind": "file",
-        "label": "projections.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/tests/projections.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/tests/registry.rs",
         "kind": "file",
         "label": "registry.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/tests/registry.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/tests/why.rs",
-        "kind": "file",
-        "label": "why.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/tests/why.rs",
         "external": true
       },
       {
@@ -2638,14 +2606,6 @@
         "label": "evidence-check",
         "summary": "named by the layer; not an object of this index",
         "source": "scripts/evidence-check",
-        "external": true
-      },
-      {
-        "id": "file:scripts/generate-site-data",
-        "kind": "file",
-        "label": "generate-site-data",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/generate-site-data",
         "external": true
       },
       {
@@ -2926,14 +2886,6 @@
         "label": "index.html",
         "summary": "named by the layer; not an object of this index",
         "source": "site/templates/index.html",
-        "external": true
-      },
-      {
-        "id": "file:test/fixtures/economics",
-        "kind": "file",
-        "label": "economics",
-        "summary": "named by the layer; not an object of this index",
-        "source": "test/fixtures/economics",
         "external": true
       },
       {
@@ -13383,6 +13335,7 @@
           ],
           "cockpit": [
             "worktrees",
+            "peers",
             "integration"
           ],
           "commands": [
@@ -36471,6 +36424,13 @@
         "source": "test/cases/330_a_contract_is_the_kind_it_declares.sh"
       },
       {
+        "id": "majordomus://test/test/cases/331_knowledge_nodes_is_gated.sh",
+        "kind": "test",
+        "label": "test/cases/331_knowledge_nodes_is_gated.sh",
+        "route": "/cockpit/objects/test/test-cases-331-knowledge-nodes-is-gated-sh",
+        "source": "test/cases/331_knowledge_nodes_is_gated.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/333_homepage_narrative.sh",
         "kind": "test",
         "label": "test/cases/333_homepage_narrative.sh",
@@ -36518,6 +36478,13 @@
         "label": "test/cases/33_stale_executable.sh",
         "route": "/cockpit/objects/test/test-cases-33-stale-executable-sh",
         "source": "test/cases/33_stale_executable.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/343_the_cockpit_shows_who_else_is_here.sh",
+        "kind": "test",
+        "label": "test/cases/343_the_cockpit_shows_who_else_is_here.sh",
+        "route": "/cockpit/objects/test/test-cases-343-the-cockpit-shows-who-else-is-here-sh",
+        "source": "test/cases/343_the_cockpit_shows_who_else_is_here.sh"
       },
       {
         "id": "majordomus://test/test/cases/349_a_step_reports_its_own_time.sh",
@@ -36686,6 +36653,13 @@
         "label": "test/cases/405_the_knowledge_reader_honours_the_schema.sh",
         "route": "/cockpit/objects/test/test-cases-405-the-knowledge-reader-honours-the-schema-sh",
         "source": "test/cases/405_the_knowledge_reader_honours_the_schema.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/406_one_declaration_every_surface.sh",
+        "kind": "test",
+        "label": "test/cases/406_one_declaration_every_surface.sh",
+        "route": "/cockpit/objects/test/test-cases-406-one-declaration-every-surface-sh",
+        "source": "test/cases/406_one_declaration_every_surface.sh"
       },
       {
         "id": "majordomus://test/test/cases/408_a_receipt_is_provider_neutral.sh",
@@ -37045,6 +37019,13 @@
         "source": "test/cases/560_a_case_number_names_one_case.sh"
       },
       {
+        "id": "majordomus://test/test/cases/566_the_collision_guard_has_a_caller.sh",
+        "kind": "test",
+        "label": "test/cases/566_the_collision_guard_has_a_caller.sh",
+        "route": "/cockpit/objects/test/test-cases-566-the-collision-guard-has-a-caller-sh",
+        "source": "test/cases/566_the_collision_guard_has_a_caller.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/569_independent_of_prismatic.sh",
         "kind": "test",
         "label": "test/cases/569_independent_of_prismatic.sh",
@@ -37353,6 +37334,13 @@
         "source": "test/cases/742_only_an_outage_is_asked_again.sh"
       },
       {
+        "id": "majordomus://test/test/cases/743_release_version_answers_with_the_contract.sh",
+        "kind": "test",
+        "label": "test/cases/743_release_version_answers_with_the_contract.sh",
+        "route": "/cockpit/objects/test/test-cases-743-release-version-answers-with-the-contract-sh",
+        "source": "test/cases/743_release_version_answers_with_the_contract.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/74_knowledge_edges.sh",
         "kind": "test",
         "label": "test/cases/74_knowledge_edges.sh",
@@ -37372,6 +37360,13 @@
         "label": "test/cases/76_capabilities_projections.sh",
         "route": "/cockpit/objects/test/test-cases-76-capabilities-projections-sh",
         "source": "test/cases/76_capabilities_projections.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/777_a_recorded_scenario_does_not_depend_on_the_recorder.sh",
+        "kind": "test",
+        "label": "test/cases/777_a_recorded_scenario_does_not_depend_on_the_recorder.sh",
+        "route": "/cockpit/objects/test/test-cases-777-a-recorded-scenario-does-not-depend-on-the-recorder-sh",
+        "source": "test/cases/777_a_recorded_scenario_does_not_depend_on_the_recorder.sh"
       },
       {
         "id": "majordomus://test/test/cases/77_rust_evidence.sh",
@@ -48841,11 +48836,6 @@
       },
       {
         "source": "majordomus://claim/site-registry-dataset",
-        "target": "file:apps/majordomus-cli/tests/projections.rs",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/site-registry-dataset",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -48893,11 +48883,6 @@
         "source": "majordomus://claim/skill-check",
         "target": "majordomus://test/test/cases/95_skills.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/skill-site-projection",
-        "target": "file:scripts/generate-site-data",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/skill-site-projection",
@@ -49116,11 +49101,6 @@
       },
       {
         "source": "majordomus://claim/web-surface-declared-once",
-        "target": "file:apps/majordomus-cli/src/web/model.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/web-surface-declared-once",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -49141,11 +49121,6 @@
       },
       {
         "source": "majordomus://claim/why-catalogue-discovered",
-        "target": "file:apps/majordomus-cli/tests/why.rs",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/why-catalogue-discovered",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -49161,11 +49136,6 @@
       },
       {
         "source": "majordomus://claim/why-diagnosis-explainable",
-        "target": "file:apps/majordomus-cli/tests/why.rs",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/why-diagnosis-explainable",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -49178,11 +49148,6 @@
         "source": "majordomus://claim/why-references-resolve",
         "target": "file:apps/majordomus-cli/src/why.rs",
         "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/why-references-resolve",
-        "target": "file:apps/majordomus-cli/tests/why.rs",
-        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/why-references-resolve",
@@ -49458,16 +49423,6 @@
         "source": "majordomus://context/ai.repo.benchmarks",
         "target": "kind:context",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://context/ai.repo.benchmarks.economics",
-        "target": "file:apps/majordomus-cli/src/economics",
-        "kind": "tracks"
-      },
-      {
-        "source": "majordomus://context/ai.repo.benchmarks.economics",
-        "target": "file:test/fixtures/economics",
-        "kind": "tracks"
       },
       {
         "source": "majordomus://context/ai.repo.benchmarks.economics",
@@ -58440,6 +58395,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/331_knowledge_nodes_is_gated.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/333_homepage_narrative.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -58471,6 +58431,11 @@
       },
       {
         "source": "majordomus://test/test/cases/33_stale_executable.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/343_the_cockpit_shows_who_else_is_here.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -58591,6 +58556,11 @@
       },
       {
         "source": "majordomus://test/test/cases/405_the_knowledge_reader_honours_the_schema.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/406_one_declaration_every_surface.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -58850,6 +58820,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/566_the_collision_guard_has_a_caller.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/569_independent_of_prismatic.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -59070,6 +59045,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/743_release_version_answers_with_the_contract.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/74_knowledge_edges.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -59081,6 +59061,11 @@
       },
       {
         "source": "majordomus://test/test/cases/76_capabilities_projections.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/777_a_recorded_scenario_does_not_depend_on_the_recorder.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -62182,7 +62167,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4451,
+      "edges": 4449,
       "acyclic": true,
       "truncated": true
     }

@@ -1383,6 +1383,7 @@
       ],
       "cockpit": [
         "worktrees",
+        "peers",
         "integration"
       ],
       "web": [
@@ -1673,6 +1674,11 @@
           "id": "worktrees",
           "title": "Worktrees",
           "route": "/cockpit/worktrees"
+        },
+        {
+          "id": "peers",
+          "title": "Peers",
+          "route": "/cockpit/peers"
         },
         {
           "id": "integration",
@@ -6433,7 +6439,7 @@
         {
           "id": "release",
           "title": "Release",
-          "description": "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the commits since the last release imply it should become.",
+          "description": "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the public contract requires it to become — or that it cannot be measured, and so decides nothing — with what the commits since the last release imply beside it as evidence.",
           "stability": "implemented",
           "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
           "capabilities": [
@@ -6456,7 +6462,7 @@
             },
             {
               "id": "release.version",
-              "title": "The version, and the one the commits imply",
+              "title": "The version, and the one the contract requires next",
               "kind": "query",
               "stability": "implemented",
               "tool": "majordomus_release_version",
@@ -11317,6 +11323,11 @@
       "route": "/cockpit/worktrees"
     },
     {
+      "id": "peers",
+      "title": "Peers",
+      "route": "/cockpit/peers"
+    },
+    {
       "id": "integration",
       "title": "Integration",
       "route": "/cockpit/integration"
@@ -11368,17 +11379,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1729,
+    "capabilities": 1735,
     "builtin": 152,
-    "declarative": 1577,
+    "declarative": 1583,
     "modules": 45,
     "mcp_tools": 146,
-    "mcp_resources": 1624,
+    "mcp_resources": 1630,
     "http_routes": 150,
     "cli_commands": 161,
     "shell_commands": 30,
     "kinds": 29,
-    "objects": 1577,
+    "objects": 1583,
     "by_kind": {
       "adr": 71,
       "application": 5,
@@ -11406,7 +11417,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 302,
+      "test": 308,
       "use-case": 46,
       "workspace": 1
     },
