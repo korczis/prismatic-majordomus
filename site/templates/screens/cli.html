@@ -1,0 +1,74 @@
+{% extends "screen.html" %}
+{#- The command-line screen: the owner's "CLI Control Plane Landing Page" design, composed of
+    the kit. A hero with a quote; four cards wired to a terminal that holds a recorded run and
+    the top-level commands read from the generated reference; examples by tab; the points the
+    surfaces share; and the common commands, each linking to its page.
+
+    Every command is read from a dataset: the top-level commands and their lines from
+    cli.json (the Rust executable's reference, generated from its declaration), the examples
+    from the same file's documented examples, the lifecycle commands from `commands` (the
+    shell tool's declared commands), the transcript from terminal.json. -#}
+{% block screen %}
+{%- set root = [c for c in cli.commands if c.depth == 0] | first -%}
+{%- set run = [w for w in term.walkthrough if w.label == "start"] | first -%}
+{#- every documented example, as one delimited string: a pick below is shown only when the
+    reference documents it, so a renamed command drops out instead of being shown stale -#}
+{%- set examples -%}|{% for c in cli.commands %}{% for e in c.examples %}{{ e.command }}|{% endfor %}{% endfor %}{%- endset -%}
+{%- set listed = ["env", "rules", "mcp", "serve", "generate", "capabilities", "commands", "completion", "worktree", "release", "evidence", "dashboard"] -%}
+{%- set top = [c for c in root.children if c.name in listed] -%}
+{%- set tab_picks = [
+  {"label": "Overview", "icon": "eye", "picks": ["majordomus env", "majordomus product", "majordomus why", "majordomus distribution", "majordomus release", "majordomus worktree"]},
+  {"label": "Inspect", "icon": "search", "picks": ["majordomus mcp --inspect", "majordomus product matrix", "majordomus web list", "majordomus models list", "majordomus env explain project.version", "majordomus commands graph --format json"]},
+  {"label": "Run", "icon": "play", "picks": ["majordomus serve --port 0", "majordomus serve status", "majordomus executions", "majordomus generate", "majordomus mcp --standalone", "majordomus serve stop"]},
+  {"label": "Check", "icon": "check-circle", "picks": ["majordomus generate --check", "majordomus capabilities validate", "majordomus product validate", "majordomus worktree validate", "majordomus web validate", "majordomus bench coverage --check"]},
+  {"label": "Output", "icon": "code", "picks": ["majordomus env status --format json", "majordomus capabilities list --format json", "majordomus rules report --format json", "majordomus release changelog --format json", "majordomus executions list --format json", "majordomus entity kinds --format json"]}
+] -%}
+{%- set common_cli = [c for c in root.children if c.name in ["env", "mcp", "serve", "worktree"]] -%}
+{%- set common_shell = [c for c in commands.commands if c.name in ["init", "context", "check", "doctor"]] -%}
+{%- set tiles_cli = [{"title": c.command, "text": c.about | split(pat=":") | first | split(pat=",") | first | truncate(length=48), "href": base ~ c.route[1:], "icon": "terminal", "tone": "blue"} for c in common_cli] -%}
+{%- set tiles_shell = [{"title": "majordomus " ~ c.name, "text": c.summary | split(pat=",") | first | truncate(length=48), "href": base ~ "commands/" ~ c.name ~ "/", "icon": "prompt", "tone": "violet"} for c in common_shell] -%}
+
+{% <hero kicker="CLI" title="One command line" accent="for the whole layer." lead="Every capability of the registry is a command of majordomus, the same capability the HTTP API and the MCP tools answer with. The task lifecycle is its portable-shell half: init, start, check, finish."> %}
+  {{ <quote text="A capability is declared once." by="One registry, every interface" href={base ~ "features/"} /> }}
+{% </hero> %}
+
+<div class="mt-12 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+  <div class="min-w-0">
+  {% <fan left={[{"icon": "database", "tone": "blue", "title": "Instant overview", "text": "majordomus env: the project, version control, the toolchains, the layer and the local services."}, {"icon": "bolt", "tone": "violet", "title": "A documented reference", "text": cli.counts.commands ~ " commands and " ~ cli.counts.examples ~ " examples, generated from " ~ cli.declaration ~ "."}, {"icon": "terminal", "tone": "green", "title": "Shell integration", "text": "majordomus completion answers a shell from the command graph."}, {"icon": "cog", "tone": "orange", "title": "Built for automation", "text": "Machine-readable output where a command takes --format json or --json."}]} left_kind="card" wiring="parallel" hub="wide"> %}
+    {% <terminal title="majordomus"> %}
+      {{ <term_line cmd="majordomus" args={run.command | replace(from="majordomus ", to="")} /> }}{{ <term_out text={run.output | trim} /> }}
+      {{ <term_box sections={[{"heading": root.command, "aside": "usage: " ~ root.usage, "note": root.about}, {"rows": [{"k": c.name, "v": c.about, "href": base ~ c.route[1:]} for c in top]}]} foot={(top | length) ~ " of " ~ (root.children | length) ~ " top-level commands · from cli.json"} /> }}
+    {% </terminal> %}
+  {% </fan> %}
+  </div>
+  <div class="grid min-w-0 gap-6 lg:grid-cols-2 xl:grid-cols-1">
+  {% <panel title="See it in action" sub="Examples the command reference documents, by what they do." icon="play" tone="blue" level="2"> %}
+    {% <tabs id="cli-tabs" labels={[t.label for t in tab_picks]} icons={[t.icon for t in tab_picks]} label="Examples by purpose"> %}
+      {%- for t in tab_picks %}
+      {%- set shown = [p for p in t.picks if ("|" ~ p ~ "|") in examples] -%}
+      {% <tab_panel id="cli-tabs" i={loop.index0} label={t.label}> %}{{ <cmd_list id={"cli-ex-" ~ loop.index0} commands={shown} /> }}{% </tab_panel> %}
+      {%- endfor %}
+    {% </tabs> %}
+  {% </panel> %}
+  {% <panel title="Consistent everywhere" sub="The same capability on the command line, over HTTP and as an MCP tool." icon="check-circle" tone="green" variant="toned" level="2"> %}
+    {{ <points variant="cards" glyphs={true} items={[{"icon": "check-circle", "tone": "green", "title": "One declaration", "text": "every surface reads the same registry"}, {"icon": "list-checks", "tone": "blue", "title": "Deterministic", "text": "the same input projects the same bytes"}, {"icon": "shield-check", "tone": "violet", "title": "Checked", "text": "a projection that disagrees fails the build"}, {"icon": "file-text", "tone": "orange", "title": "Documented", "text": cli.counts.arguments ~ " arguments in the reference", "href": base ~ "docs/cli/"}, {"icon": "puzzle", "tone": "rose", "title": "Discovered", "text": "nothing registered by hand"}]} /> }}
+  {% </panel> %}
+  </div>
+</div>
+
+<section class="mt-8" aria-labelledby="cli-common">
+  <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
+    <h2 id="cli-common" class="m-0">{{ <kicker text="Common commands" /> }}</h2>
+    <div class="flex flex-wrap gap-2">
+      {{ <btn label="Command reference" href={base ~ "docs/cli/"} trail="arrow-right" size="sm" /> }}
+      {{ <btn label="Shell commands" href={base ~ "commands/"} trail="arrow-right" size="sm" /> }}
+    </div>
+  </div>
+  {#- the kit's `tiles`, opened up: one grid over two lists, the executable's commands and the
+      shell tool's (Tera 2 has no array concatenation) -#}
+  <div class="mj-tiles mj-tiles--compact">
+    {%- for t in tiles_cli %}{{ <tile title={t.title} href={t.href} text={t.text} icon={t.icon} tone={t.tone} compact={true} /> }}{% endfor %}
+    {%- for t in tiles_shell %}{{ <tile title={t.title} href={t.href} text={t.text} icon={t.icon} tone={t.tone} compact={true} /> }}{% endfor %}
+  </div>
+</section>
+{% endblock screen %}

@@ -1,0 +1,49 @@
+{% extends "screen.html" %}
+{#- Landing: the product's front page. The design's regions in order: a hero in three lines
+    beside a terminal; four numbered stages, Discover, Build, Derive and Use; and a band with
+    the two actions and the claims. The terminal is a transcript the generator recorded, the
+    kinds of the Build stage are the registry's index, and every source and surface named is
+    one docs/ENVIRONMENT.md and docs/SURFACES.md describe. -#}
+{% block screen %}
+{%- set run = [w for w in term.walkthrough if w.label == "context"] | first -%}
+{%- set lines = run.output | trim | split(pat="
+") -%}
+
+{% <hero kicker="Supervisory control layer" title={["One repository.", "Many perspectives."]} accent="One source of truth." lead={project.tagline ~ " It reads the repository's .ai/ layer into typed models and serves them the same way to the command line, the HTTP API, MCP, the Cockpit and this site."}> %}
+  {% <terminal title={run.command}> %}{{ <term_line cmd="majordomus" args={run.command | replace(from="majordomus ", to="")} /> }}{{ <term_out text={lines[:17] | join(sep="
+")} /> }}{% </terminal> %}
+{% </hero> %}
+
+<div class="mt-12">
+{% <stages count={4}> %}
+  {% <panel title="Discover" sub="Read what the repository already states" step={1} cls="mj-stage"> %}
+    {{ <routes items={[{"name": ".ai/", "path": "rules, ADRs, skills, sessions", "icon": "folder", "tone": "blue"}, {"name": "git", "path": "branch, head, working tree", "icon": "branch", "tone": "blue"}, {"name": "share/", "path": "kinds, schemas, the design", "icon": "box", "tone": "blue"}, {"name": "capabilities", "path": "declared in the Rust sources", "icon": "code", "tone": "blue"}, {"name": "justfile", "path": "the workflows", "icon": "list-checks", "tone": "blue"}, {"name": "toolchains", "path": "the manifests that declare them", "icon": "wrench", "tone": "blue"}, {"name": "services", "path": "the shared server's lease", "icon": "server", "tone": "blue"}]} /> }}
+  {% </panel> %}
+
+  {% <panel title="Build" sub="One typed model of the repository" step={2} cls="mj-stage"> %}
+    <div class="flex flex-col items-center text-center">
+      {{ <glyph icon="database" size="lg" icon_size="lg" /> }}
+      <p class="mj-panel-title mt-3">The registry index</p>
+      <p class="mj-panel-sub">each file of the layer becomes a typed object of one of {{ kinds | length }} kinds, or a diagnostic</p>
+    </div>
+    <div class="mt-5">{{ <pills words={kinds | keys} tones={tones} center={true} /> }}</div>
+  {% </panel> %}
+
+  {% <panel title="Derive" sub="Every surface a projection" step={3} cls="mj-stage"> %}
+    {{ <routes items={[{"name": "Command line", "path": "majordomus", "icon": "terminal", "tone": "violet", "href": base ~ "docs/cli/"}, {"name": "HTTP API", "path": "/api/v1/", "icon": "code", "tone": "violet", "href": base ~ "docs/api/"}, {"name": "OpenAPI · Swagger UI", "path": "/openapi.json · /swagger", "icon": "file-text", "tone": "violet"}, {"name": "MCP", "path": "majordomus mcp", "icon": "nodes", "tone": "violet", "href": base ~ "registry/mcp/"}, {"name": "Cockpit", "path": "/cockpit", "icon": "monitor", "tone": "violet", "href": base ~ "docs/cockpit/"}, {"name": "Documentation", "path": "GitHub Pages", "icon": "book", "tone": "violet", "href": base ~ "docs/"}, {"name": "Generated files", "path": "docs/generated/", "icon": "box", "tone": "violet", "href": base ~ "registry/artifacts/"}]} /> }}
+  {% </panel> %}
+
+  {% <panel title="Use" sub="Work from what is known" step={4} tone="green" variant="toned" cls="mj-stage"> %}
+    {{ <points items={[{"icon": "check-circle", "tone": "green", "title": "Consistent", "text": "every surface renders the same value"}, {"icon": "list", "tone": "green", "title": "Deterministic", "text": "the same input, the same bytes"}, {"icon": "search", "tone": "green", "title": "Discovered", "text": "nothing registered by hand"}, {"icon": "refresh", "tone": "green", "title": "Current", "text": "derived files are compared with their inputs"}, {"icon": "plus", "tone": "green", "title": "Extensible", "text": "a new kind reaches every surface"}, {"icon": "shield-check", "tone": "green", "title": "Provenance", "text": "every value names where it came from"}]} /> }}
+  {% </panel> %}
+{% </stages> %}
+</div>
+
+<div class="mt-12 grid items-center gap-6 xl:grid-cols-[auto_minmax(0,1fr)]">
+  <div class="flex flex-wrap items-center gap-3">
+    {{ <btn label="Get started" href={base ~ "getting-started/"} kind="primary" trail="arrow-right" /> }}
+    {{ <btn label="View documentation" href={base ~ "docs/"} icon="book" /> }}
+  </div>
+  {{ <strip items={[{"icon": "branch", "tone": "blue", "title": "Fits your workflow", "text": "git, just and direnv"}, {"icon": "refresh", "tone": "violet", "title": "No manual catalogues", "text": "discovered from the tracked tree"}, {"icon": "users", "tone": "green", "title": "For people and agents", "text": "CLI, HTTP, MCP, Cockpit, docs"}, {"icon": "github", "tone": "orange", "title": "Open source", "text": project.license ~ " licence, on GitHub"}]} /> }}
+</div>
+{% endblock screen %}

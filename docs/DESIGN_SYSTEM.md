@@ -156,7 +156,7 @@ diagrams — a stack of layers, a fan that joins rows to a hub, and a cycle of f
 | file | what it holds |
 |---|---|
 | `share/design/kit.css` | how each component looks, as `.mj-*` classes over the roles, the status indirection and the tone indirection; measured by the contrast check like the primitives |
-| `site/templates/kit/*.html` | what each component is, as a Tera component: `base` (icon, glyph, step, button, pill, state, copy), `content` (hero, quote, section, panel, stages, tree, points, routes, tiles, links, strip, figure), `code` (terminal, term_line, term_out, term_box, cmd, cmd_list, tabs, tab_panel, method, request, endpoint), `dashboard` (window, sidenav, kpis, chart, legend, feed, actions, health), `docs` (trail, search, toc, flow), `diagrams` (stack, fan, cycle) |
+| `site/templates/kit/*.html` | what each component is, as a Tera component: `base` (icon, glyph, step, button, pill, state, copy), `content` (hero, quote, section, panel, stages, tree, points, routes, tiles, links, strip, figure, claims, table), `code` (terminal, term_line, term_out, term_box, cmd, cmd_list, tabs, tab_panel, method, request, endpoint, listing), `dashboard` (window, sidenav, kpis, chart, legend, feed, actions, health), `docs` (trail, search, toc, flow), `diagrams` (stack, fan, cycle) |
 | `site/data/kit/icons.toml` | the outline glyphs a component names by key; an unknown key fails the build |
 | `site/kit.js` | the three behaviours markup cannot carry: copy, switch tabs, mark the section being read |
 | `site/kit.tailwind.css`, `site/templates/partials/kit-assets.html` | the kit's own sheet and script, which a page opts into |
@@ -178,6 +178,17 @@ Conventions a component keeps, so that a page composes them without reading thei
 - **The kit is a page's choice.** A page composed of it includes
   `{% block kit %}{% include "partials/kit-assets.html" %}{% endblock kit %}`; every other
   page loads none of it, which keeps the homepage within its byte budget.
+
+**Screens.** A screen is a whole page composed of nothing but the kit, rendering one of the
+owner's page designs (architecture, integrations, documentation, CLI, Cockpit, features, how it
+works, landing) from this repository's data at `/kit/<screen>/`. A screen template
+(`site/templates/screens/<name>.html`) extends `site/templates/screen.html`, which loads the
+datasets a screen may read under one set of names — `design`, `registry`, `kinds`, `oas`, `cl`,
+`term`, `cli`, `commands`, `tones`, `base` — and its page is `site/content-src/kit/<name>.md`.
+The designs carried values nobody measured (a version never released, counts of objects that do
+not exist, latencies, an issue number, a port); a screen shows none of them, and
+`test/cases/791_a_screen_is_composed_of_the_kit_and_of_real_data.sh` refuses one that does, one
+that chooses a colour, a style or a class of its own, and one outside the frame.
 
 To add a component: write its classes in `share/design/kit.css`, its markup in the file of
 `site/templates/kit/` it belongs to, and an example on `site/templates/kit-page.html` from

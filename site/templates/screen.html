@@ -7,8 +7,9 @@
     The data every screen may read is loaded here once, under the same names everywhere:
     `design` (the declaration's site projection), `registry` (the registry dataset) and
     `kinds` (its object counts by kind), `oas` (the HTTP API's description), `cl` (the
-    changelog), `term` (recorded transcripts), `cli` (the command tree) and `base` (the
-    site root). -#}
+    changelog), `term` (recorded transcripts), `cli` (the Rust executable's command tree),
+    `commands` (the lifecycle commands of the shell tool: start, check, finish, context…) and
+    `base` (the site root). -#}
 {% block title %}{{ page.title }} — {{ project.name }}{% endblock title %}
 {% block ogtitle %}{{ page.title }} — {{ project.name }}{% endblock ogtitle %}
 {% block description %}{{ page.description }}{% endblock description %}
@@ -22,6 +23,7 @@
 {%- set cl = load_data(path="data/generated/changelog.json") -%}
 {%- set term = load_data(path="data/generated/terminal.json") -%}
 {%- set cli = load_data(path="data/generated/cli.json") -%}
+{%- set commands = load_data(path="data/generated/commands.json") -%}
 {%- set tones = [t.name for t in design.tones] -%}
 {%- set base = get_url(path="/", trailing_slash=true) -%}
 <div class="mx-auto max-w-screen-xl px-4 py-8 sm:px-6 lg:px-8">

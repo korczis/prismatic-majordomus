@@ -101,7 +101,7 @@
 {% component request(method, path, status="", state="ok") %}
 <div class="mj-request">
   {{ <method name={method} /> }}
-  <code class="mj-request-path">{{ path }}</code>
+  <code class="mj-request-path" title="{{ path }}">{{ path }}</code>
   {%- if status %}<span class="mj-badge mj-badge--{{ state }}">{{ status }}</span>{% endif %}
 </div>
 {%- endcomponent request %}
@@ -114,3 +114,12 @@
   {%- if body | trim %}<div class="mj-endpoint-body">{{ body }}</div>{% endif %}
 </details>
 {%- endcomponent endpoint %}
+
+{#- A listing on the page's own ground, for text that is read rather than run: a struct, a
+    JSON shape. It scrolls sideways rather than wrapping, like a transcript. -#}
+{% component listing(text, title="") %}
+<figure class="mj-code">
+  {%- if title %}<figcaption class="mj-code-title">{{ title }}</figcaption>{% endif %}
+  <div class="overflow-x-auto" tabindex="0"><pre>{{ text }}</pre></div>
+</figure>
+{%- endcomponent listing %}

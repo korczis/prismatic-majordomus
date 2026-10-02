@@ -60,10 +60,11 @@
 
 {#- A fan: `left` rows, the hub (the body), `right` rows, joined by wires. Either side may
     be empty. `left_kind` and `right_kind` say how a row is drawn (see `fan_cell`). On a
-    narrow screen the parts stack, with an arrow between them for the wire. -#}
-{% component fan(left=[], right=[], left_kind="route", right_kind="route", wiring="converge", dashed=false, left_label="", right_label="") %}
+    narrow screen the parts stack, with an arrow between them for the wire. `hub="wide"`
+    gives the hub the width and the sides a narrow column, for cards that annotate a window. -#}
+{% component fan(left=[], right=[], left_kind="route", right_kind="route", wiring="converge", dashed=false, left_label="", right_label="", hub="") %}
 {%- set mode = "both" if left | length > 0 and right | length > 0 else ("in" if left | length > 0 else "out") -%}
-<div class="mj-fan mj-fan--{{ mode }}">
+<div class="mj-fan mj-fan--{{ mode }}{% if hub == "wide" %} mj-fan--wide{% endif %}">
   {%- if left | length > 0 %}
   <ul class="mj-fan-side m-0 list-none p-0">
     {%- for c in left %}<li class="mj-fan-cell">{{ <fan_cell item={c} kind={left_kind} /> }}</li>{% endfor %}

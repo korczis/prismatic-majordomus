@@ -1,0 +1,86 @@
+{% extends "screen.html" %}
+{#- The documentation screen: the owner's "Documentation Dashboard" design, composed of the
+    kit. A hero with a quote and four claims; a three-column documentation page (a sidebar of
+    real documentation routes and a search that submits to the hub, the first commands of a
+    supervised repository with a briefing the generator recorded, and the page's own contents
+    beside related links); a band of claims under it.
+
+    Every command is read from a dataset: the installer from the distribution model, the
+    lifecycle commands and their summaries from `commands` (the shell tool's declared
+    commands), the transcript from terminal.json. -#}
+{% block screen %}
+{%- set dist = load_data(path="data/registry/distribution.json") -%}
+{%- set c_init = [c for c in commands.commands if c.name == "init"] | first -%}
+{%- set c_update = [c for c in commands.commands if c.name == "update"] | first -%}
+{%- set c_context = [c for c in commands.commands if c.name == "context"] | first -%}
+{%- set c_doctor = [c for c in commands.commands if c.name == "doctor"] | first -%}
+{%- set c_version = [c for c in commands.commands if c.name == "version"] | first -%}
+{%- set brief = [w for w in term.walkthrough if w.command == "majordomus context"] | first -%}
+{%- set brief_lines = brief.output | trim | split(pat="\n") -%}
+{%- set doc_src -%}{{ <source_blob path="site/templates/screens/documentation.html" /> }}{%- endset -%}
+
+{% <hero kicker="Documentation" title="Written once." accent="Generated from the repository." lead="Every document is rendered from the same Markdown the repository holds, beside the references the generator writes from the code itself: the command line, the HTTP API and the MCP surface."> %}
+  <div class="grid gap-6">
+    {{ <quote text="Then either the implementation changes or the claim does. Reality wins." by="The argument · claims must match reality" href={base ~ "method/argument/"} /> }}
+    {{ <claims items={[{"icon": "refresh", "tone": "green", "title": "Generated", "text": "from the repository"}, {"icon": "shield-check", "tone": "violet", "title": "Checked", "text": "by gates in CI"}, {"icon": "database", "tone": "blue", "title": "One source", "text": "the layer under .ai/"}, {"icon": "users", "tone": "orange", "title": "People and agents", "text": "the same contract"}]} /> }}
+  </div>
+{% </hero> %}
+
+<div class="mt-12 grid items-start gap-6 lg:grid-cols-[13rem_minmax(0,1fr)] xl:grid-cols-[13rem_minmax(0,1fr)_13rem]">
+
+  {#- ---------------------------------------------------------------- main -#}
+  <article class="mj-panel min-w-0 lg:col-start-2 lg:row-start-1">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      {{ <trail items={[{"title": "Docs", "href": base ~ "docs/"}, {"title": "Getting started", "href": ""}]} /> }}
+      {{ <btn label="Source" href={doc_src | trim} icon="github" size="sm" /> }}
+    </div>
+
+    <div id="overview" class="mt-4">
+      {{ <section title="Getting started" lead="From nothing to a supervised repository: install the tool, create the layer, project every worker's instruction file from the one policy, and read the briefing the next worker is given." /> }}
+    </div>
+
+    <div id="steps" class="mt-8">
+      {{ <flow id="docs-flow" columns={2} steps={[{"title": "Install", "text": "Nothing outside two places, and never as root.", "icon": "arrow-down", "tone": "blue", "commands": [dist.install_command]}, {"title": "Create the layer", "text": "Writes .ai/ and refuses an existing one.", "icon": "folder", "tone": "violet", "commands": ["majordomus " ~ c_init.name]}, {"title": "Project", "text": "Every instruction file from the one policy.", "icon": "refresh", "tone": "green", "commands": ["majordomus " ~ c_update.name]}, {"title": "Brief", "text": "What the next worker needs to know now.", "icon": "play", "tone": "orange", "commands": ["majordomus " ~ c_context.name]}]} /> }}
+    </div>
+
+    <div id="verify" class="mt-8">
+      {% <panel title="Verify the install" sub={c_doctor.summary} icon="check-circle" tone="green"> %}
+        {{ <cmd_list id="docs-verify" commands={["majordomus " ~ c_version.name, "majordomus " ~ c_doctor.name]} /> }}
+      {% </panel> %}
+    </div>
+
+    <div id="briefing" class="mt-8">
+      {{ <section title="The first briefing" lead="What majordomus context printed in a run the generator recorded, with the machine and the clock redacted." level="3" /> }}
+      <div class="mt-4">
+        {% <terminal title={brief.label}> %}{{ <term_line cmd="majordomus" args={brief.command | replace(from="majordomus ", to="")} /> }}{{ <term_out text={brief_lines[:19] | join(sep="\n")} /> }}{% </terminal> %}
+      </div>
+    </div>
+  </article>
+
+  {#- ------------------------------------------------------------- sidebar -#}
+  <aside class="mj-panel min-w-0 lg:col-start-1 lg:row-start-1" aria-label="Documentation">
+    <p class="mj-panel-title flex items-center gap-2">{{ <icon name="book" /> }}<span>{{ project.short_name }} docs</span></p>
+    <div class="mt-4">{{ <search placeholder="Search docs" action={base ~ "docs/"} /> }}</div>
+    <nav class="mt-4" aria-label="Documentation sections">
+      {{ <sidenav items={[{"title": "Getting started", "href": base ~ "getting-started/", "icon": "home"}, {"title": "Installing", "href": base ~ "docs/install/", "icon": "arrow-down"}, {"title": "Concepts", "icon": "layers", "open": true, "children": [{"title": "Concepts", "href": base ~ "docs/concepts/"}, {"title": "The repository environment", "href": base ~ "docs/environment/"}, {"title": "Scoped context", "href": base ~ "docs/context/"}, {"title": "Continuity", "href": base ~ "docs/continuity/"}, {"title": "Worktrees", "href": base ~ "docs/worktrees/"}, {"title": "Doctrine", "href": base ~ "docs/doctrine/"}, {"title": "Repository contract", "href": base ~ "docs/contract/"}]}, {"title": "Reference", "icon": "list", "children": [{"title": "Command line", "href": base ~ "docs/cli/"}, {"title": "Shell commands", "href": base ~ "commands/"}, {"title": "HTTP API", "href": base ~ "docs/api/"}, {"title": "MCP surface", "href": base ~ "docs/mcp/"}, {"title": "File schemas", "href": base ~ "docs/schemas/"}]}, {"title": "The Cockpit", "href": base ~ "docs/cockpit/", "icon": "monitor"}, {"title": "The design system", "href": base ~ "docs/design-system/", "icon": "grid"}, {"title": "All documents", "href": base ~ "docs/", "icon": "book"}]} /> }}
+    </nav>
+  </aside>
+
+  {#- ---------------------------------------------------------- right rail -#}
+  <aside class="grid min-w-0 gap-6 lg:col-start-2 xl:col-start-3 xl:row-start-1" aria-label="On this page and related">
+    <div class="mj-panel">
+      {{ <toc items={[{"title": "Overview", "href": "#overview"}, {"title": "Install and run", "href": "#steps"}, {"title": "Verify the install", "href": "#verify"}, {"title": "The first briefing", "href": "#briefing"}]} /> }}
+    </div>
+    {% <panel title="Related" icon="link" tone="violet" level="2"> %}
+      {{ <links items={[{"title": "Command line reference", "href": base ~ "docs/cli/"}, {"title": "HTTP API", "href": base ~ "docs/api/"}, {"title": "The Cockpit", "href": base ~ "docs/cockpit/"}, {"title": "MCP surface", "href": base ~ "docs/mcp/"}]} /> }}
+    {% </panel> %}
+    {% <panel title="Need help?" sub="Every document is listed and searchable on the documentation hub." icon="help" tone="violet" level="2"> %}
+      {{ <btn label="All documents" href={base ~ "docs/"} trail="arrow-right" block={true} /> }}
+    {% </panel> %}
+  </aside>
+</div>
+
+<div class="mt-12">
+  {{ <strip items={[{"icon": "book", "tone": "blue", "title": "Every document", "text": kinds.document ~ " documents in the layer"}, {"icon": "refresh", "tone": "green", "title": "Derived", "text": "regenerated, never edited"}, {"icon": "shield-check", "tone": "violet", "title": "Checked", "text": "a stale page fails the build"}, {"icon": "box", "tone": "orange", "title": "Several forms", "text": "this site, Markdown, OpenAPI"}, {"icon": "users", "tone": "rose", "title": "For people and agents", "text": "the same layer over MCP"}]} /> }}
+</div>
+{% endblock screen %}

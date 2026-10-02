@@ -33,7 +33,7 @@
   {%- for n in items %}
   <li>
     {%- if n.children %}
-    {%- set open = n.current or [c for c in n.children if c.current] | length > 0 -%}
+    {%- set open = n.open or n.current or [c for c in n.children if c.current] | length > 0 -%}
     <details class="mj-sidenav-group"{% if open %} open{% endif %}>
       <summary><span class="flex items-center gap-2">{% if n.icon %}{{ <icon name={n.icon} size="sm" /> }}{% endif %}{{ n.title }}</span><span class="mj-chevron">{{ <icon name="chevron-down" size="sm" /> }}</span></summary>
       <ul class="mj-sidenav">

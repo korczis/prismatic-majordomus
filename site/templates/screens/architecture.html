@@ -1,4 +1,75 @@
 {% extends "screen.html" %}
+{#- Architecture: one repository, many interfaces. The design's regions in order: a hero with
+    the doctrine it stands on; the repository, the model it is read into and the surfaces
+    rendered from that model, with the principles that hold them together; then the four
+    passes as numbered panels. The model is the real one, `RepositoryEnvironment`
+    (apps/majordomus-cli/src/environment/, docs/ENVIRONMENT.md), with its own field names;
+    the operation behind its HTTP and MCP rows is read from the API's description; the prose
+    restates docs/SURFACES.md and says nothing that file does not. -#}
 {% block screen %}
-{{ <section kicker="placeholder" title={page.title} /> }}
+{%- set envtag = [t for t in oas.tags if t.name == "environment"] | first -%}
+{%- set envop = [o for o in envtag.operations if o.path == "/api/v1/environment"] | first -%}
+{%- set repo = project.repository_url | split(pat="/") | last -%}
+
+{% <hero kicker="Architecture" title="One repository." accent="Many interfaces." lead={project.short_name ~ " discovers a repository once, reads it into typed models, and derives every interface from them: the command line, the HTTP API and its OpenAPI description, Swagger UI, MCP, the Cockpit and this site."}> %}
+  {{ <quote text="Discover and model a fact once, and derive every interface from it." by="docs/SURFACES.md · the invariant" href={base ~ "docs/surfaces/"} /> }}
+{% </hero> %}
+
+{#- ------------------------------------------- repository → model → interfaces · principles -#}
+<div class="mt-12 grid gap-6 xl:grid-cols-[minmax(0,16rem)_5rem_minmax(0,1fr)] xl:gap-x-2">
+  {% <panel title="Repository" sub="The tracked tree is the source of truth" icon="github" cls="xl:row-span-2"> %}
+    {{ <tree root={repo ~ "/"} items={[{"name": ".ai/", "note": "the layer: policy, rules, ADRs, skills"}, {"name": "apps/", "note": "the Rust executable and its capabilities"}, {"name": "bin/", "note": "the entry points"}, {"name": "lib/", "note": "the shell tool"}, {"name": "share/", "note": "kinds, schemas, the design"}, {"name": "docs/", "note": "manuals and generated documents"}, {"name": "test/", "note": "the cases"}, {"name": "site/", "note": "this website, derived"}, {"name": "justfile", "note": "the workflows", "icon": "file-text"}]} /> }}
+  {% </panel> %}
+
+  {{ <fan_wire n={1} side="in" dashed={true} label="discovered" /> }}
+  <div class="mj-fan-step xl:hidden" aria-hidden="true">{{ <icon name="arrow-down" /> }}</div>
+
+  <div class="min-w-0">
+    {% <fan right={[{"name": "Command line", "path": "majordomus env", "icon": "terminal", "tone": "blue", "href": base ~ "docs/cli/env/", "for": "Local work", "for_text": "the snapshot in a terminal"}, {"name": "HTTP API", "path": envop.path, "icon": "globe", "tone": "violet", "href": base ~ "docs/api/environment/", "for": "Programmatic access", "for_text": "JSON, described by OpenAPI"}, {"name": "Swagger UI", "path": "/swagger", "icon": "file-text", "tone": "violet", "for": "Try the API", "for_text": "a page over /openapi.json"}, {"name": "MCP", "path": "majordomus mcp", "icon": "nodes", "tone": "green", "href": base ~ "docs/mcp/", "for": "Tools for agents", "for_text": "the tool " ~ envop.mcp_tool}, {"name": "Cockpit", "path": "/cockpit", "icon": "monitor", "tone": "green", "href": base ~ "docs/cockpit/", "for": "Visual overview", "for_text": "rendered by the executable"}, {"name": "Shell entry", "path": ".envrc", "icon": "prompt", "tone": "orange", "href": base ~ "docs/entry/", "for": "Entering the directory", "for_text": "the banner, drawn on every cd"}, {"name": "Documentation", "path": "GitHub Pages", "icon": "book", "tone": "orange", "href": base ~ "docs/environment/", "for": "This site", "for_text": "generated from the repository"}]} right_kind="described" right_label="same value"> %}
+      {{ <stack title="RepositoryEnvironment" text="one typed value, built by one resolver" icon="database" mono={true} layers={[{"title": "project", "text": "the crate manifest", "tone": tones[0]}, {"title": "repository", "text": ".ai/manifest.yaml", "tone": tones[1]}, {"title": "vcs", "text": "one git status", "tone": tones[2]}, {"title": "toolchains", "text": "the manifests that declare them", "tone": tones[3]}, {"title": "layer", "text": "the index, counted per kind", "tone": tones[4 % (tones | length)]}, {"title": "workflows", "text": "just --dump", "tone": tones[5 % (tones | length)]}, {"title": "providers", "text": "the policy's projections", "tone": tones[0]}, {"title": "services", "text": "route constants and the lease", "tone": tones[1]}]} /> }}
+    {% </fan> %}
+  </div>
+
+  {% <panel title="Key principles" icon="sparkles" tone="violet" cls="xl:col-start-3"> %}
+    <div class="grid gap-x-8 md:grid-cols-3">
+      {{ <points glyphs={true} items={[{"icon": "circle", "tone": "blue", "title": "One declaration", "text": "every interface is a projection of it"}, {"icon": "bolt", "tone": "green", "title": "Discovered", "text": "enumerated through sources.yaml, never registered by hand"}]} /> }}
+      {{ <points glyphs={true} items={[{"icon": "shield", "tone": "violet", "title": "Typed", "text": "an object that does not validate is a diagnostic"}, {"icon": "list", "tone": "orange", "title": "Deterministic", "text": "maps sorted, no timestamp"}]} /> }}
+      {{ <points glyphs={true} items={[{"icon": "search", "tone": "blue", "title": "Provenance", "text": "every field names where it came from"}, {"icon": "shield-check", "tone": "green", "title": "Checked", "text": "a hand edit of a derived file is refused or reported"}]} /> }}
+    </div>
+  {% </panel> %}
+</div>
+
+{#- --------------------------------------------------------------- the four passes -#}
+<div class="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+  {% <panel title="Discovery" sub="Enumeration governed by a declaration" step={1}> %}
+    {{ <points items={[{"icon": "search", "tone": "blue", "title": "The root", "text": "the executable finds the repository"}, {"icon": "file-text", "tone": "violet", "title": "The manifest", "text": ".ai/manifest.yaml names the layer"}, {"icon": "layers", "tone": "green", "title": "Kinds and schemas", "text": "share/kinds.yaml and share/schemas/"}, {"icon": "list", "tone": "orange", "title": "Sources", "text": "sources.yaml classes, read from the git index"}, {"icon": "alert", "tone": "rose", "title": "Diagnostics", "text": "a file that does not validate is excluded and named"}]} /> }}
+  {% </panel> %}
+
+  {% <panel title="Canonical model" sub="Typed, with provenance" step={2}> %}
+    {{ <listing title="environment/mod.rs" text="RepositoryEnvironment {
+  schema, generated_at,
+  resolution,
+  project, repository,
+  vcs,
+  toolchains: [ .. ],
+  layer, workflows,
+  providers: [ .. ],
+  services: [ .. ],
+  diagnostics: [ .. ],
+  provenance: [ .. ],
+}" /> }}
+    <p class="mj-panel-sub mt-3">Resolved in full or fast; both produce the same type, and a value nothing resolved is absent, never zero.</p>
+  {% </panel> %}
+
+  {% <panel title="Derived interfaces" sub="Same registry, every surface" step={3}> %}
+    {{ <table columns={[{"key": "surface", "title": "Surface"}, {"key": "where", "title": "Where", "mono": true}]} rows={[{"surface": "CLI", "where": "majordomus", "href": base ~ "docs/cli/"}, {"surface": "HTTP", "where": "/api/v1/", "href": base ~ "docs/api/"}, {"surface": "OpenAPI", "where": "/openapi.json"}, {"surface": "Swagger", "where": "/swagger"}, {"surface": "MCP", "where": "majordomus mcp", "href": base ~ "registry/mcp/"}, {"surface": "Cockpit", "where": "/cockpit", "href": base ~ "docs/cockpit/"}, {"surface": "Docs", "where": "GitHub Pages", "href": base ~ "docs/"}]} /> }}
+    <p class="mj-panel-sub mt-3">{{ oas.counts.operations }} operations in {{ oas.counts.tags }} modules, described by one OpenAPI document.</p>
+  {% </panel> %}
+
+  {% <panel title="Feedback loop" sub="Detect, regenerate, check" step={4}> %}
+    {% <cycle id="arch-cycle" stages={[{"title": "A commit", "tone": "blue"}, {"title": "Index rebuilt", "tone": "green"}, {"title": "majordomus generate", "tone": "violet"}, {"title": "derive-check", "tone": "orange"}]}> %}
+      {{ <glyph icon="database" size="lg" icon_size="lg" round={true} /> }}<span class="text-sm font-semibold text-heading">the model</span>
+    {% </cycle> %}
+  {% </panel> %}
+</div>
 {% endblock screen %}

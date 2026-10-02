@@ -1,0 +1,68 @@
+{% extends "screen.html" %}
+{#- How it works: the five stages of docs/HOW_IT_WORKS.md, from the files a repository holds
+    to the surfaces that show them, then the measured figures. Discover is the tree the layer
+    reads, Build the index and the registry it builds (counts from registry.index), Derive
+    the projections, Present a small preview of each surface (a recorded transcript, the
+    layer counted, an operation of the API's own description), Use what that buys. The
+    figures are the one measured token-economics value and real counts, each with its
+    source; the design's percentages were not measured and are not shown. -#}
+{% block screen %}
+{%- set econ = load_data(path="data/generated/economics.json") -%}
+{%- set ctx = [m for m in econ.summary.metrics if m.id == "context_reduction_ratio"] | first -%}
+{%- set pilot = [s for s in econ.summary.suites if s.id == "pilot"] | first -%}
+{%- set run = [w for w in term.walkthrough if w.label == "context"] | first -%}
+{%- set repo_tag = [t for t in oas.tags if t.name == "repository"] | first -%}
+{%- set repo_op = [o for o in repo_tag.operations if o.path == "/api/v1/repository"] | first -%}
+{%- set series = [s.decisions | length for s in cl.sections] | reverse -%}
+{%- set repo_name = project.repository_url | split(pat="/") | last -%}
+
+{% <hero kicker="How it works" title="From repository" accent="to every surface." lead="Majordomus discovers what a repository declares, builds one typed index and capability registry from it, and derives every interface from that: the command line, an HTTP API described by OpenAPI, MCP, the Cockpit and this site. One model, many projections." actions={[{"label": "How it works, in full", "href": base ~ "docs/how-it-works/", "kind": "primary", "trail": "arrow-right"}, {"label": "Architecture", "href": base ~ "architecture/", "icon": "layers"}]}> %}
+  {{ <quote text="Majordomus should discover and model a fact once, then derive every relevant interface from that canonical representation." by="docs/HOW_IT_WORKS.md" href={base ~ "docs/how-it-works/"} /> }}
+{% </hero> %}
+
+<div class="mt-12">
+{% <stages count={5}> %}
+  {% <panel title="Discover" sub="Read what the repository declares" step={1} tone="blue" variant="toned" cls="mj-stage"> %}
+    {{ <tree root={repo_name ~ "/"} items={[{"name": ".git/", "note": "branch, head, history", "icon": "branch"}, {"name": ".ai/", "note": "policy, rules, prompts, workflows"}, {"name": "apps/", "note": "the Rust executable"}, {"name": "docs/", "note": "decisions, manuals, generated"}, {"name": "share/", "note": "kinds.yaml, schemas, design"}, {"name": "test/", "note": kinds.test ~ " test objects"}, {"name": "justfile", "note": "the recipes a person runs", "icon": "file-text"}]} /> }}
+  {% </panel> %}
+
+  {% <panel title="Build" sub="One typed index, one registry" step={2} tone="violet" variant="toned" cls="mj-stage"> %}
+    {{ <stack title="Object index" text={"state " ~ (registry.index.state | lower) ~ " · " ~ (kinds | keys | length) ~ " kinds"} icon="database" mono={true} layers={[{"title": "kinds · sources", "text": "discovery, declared", "tone": "blue"}, {"title": "typed objects", "text": "canonical identity", "tone": "violet"}, {"title": "capabilities", "text": "one descriptor each", "tone": "green"}, {"title": "one executor", "text": "Context::execute", "tone": "orange"}, {"title": "derived state", "text": "proof, evidence, plan", "tone": "rose"}]} /> }}
+    <div class="mt-4">{{ <pills words={["rule", "adr", "feature", "test", "use-case", "claim"]} tones={tones} center={true} /> }}</div>
+  {% </panel> %}
+
+  {% <panel title="Derive" sub="Every interface, projected" step={3} tone="green" variant="toned" cls="mj-stage"> %}
+    {{ <routes items={[{"name": "CLI", "path": cli.counts.commands ~ " commands", "icon": "terminal", "tone": "blue", "href": base ~ "docs/cli/"}, {"name": "HTTP API", "path": "/api/v1/", "icon": "code", "tone": "violet", "href": base ~ "docs/api/"}, {"name": "OpenAPI · Swagger", "path": "/swagger", "icon": "book", "tone": "violet"}, {"name": "MCP", "path": "majordomus mcp", "icon": "nodes", "tone": "green", "href": base ~ "registry/mcp/"}, {"name": "Cockpit", "path": "/cockpit", "icon": "monitor", "tone": "green", "href": base ~ "kit/cockpit/"}, {"name": "Documentation", "path": "GitHub Pages", "icon": "file-text", "tone": "orange", "href": base ~ "docs/"}, {"name": "Generated", "path": "docs/generated/", "icon": "box", "tone": "rose", "href": base ~ "registry/artifacts/"}]} /> }}
+  {% </panel> %}
+
+  {% <panel title="Present" sub="The same facts on each surface" step={4} tone="orange" variant="toned" cls="mj-stage"> %}
+    <div class="grid gap-3">
+      {% <terminal title="recorded · context"> %}{{ <term_line cmd="majordomus" args={run.command | replace(from="majordomus ", to="")} /> }}{{ <term_out text={(run.output | split(pat="\n"))[3:9] | join(sep="\n")} /> }}{% </terminal> %}
+      {% <window title="Cockpit"> %}
+        {{ <kpis items={[{"title": "Rules", "value": kinds.rule, "icon": "shield", "tone": "blue"}, {"title": "ADRs", "value": kinds.adr, "icon": "book", "tone": "violet"}]} /> }}
+        <div class="mt-3">{{ <chart values={series} label={"Decisions recorded per release, oldest first: " ~ (series | join(sep=", "))} tone="green" /> }}</div>
+      {% </window> %}
+      {{ <request method={repo_op.method} path={repo_op.path} /> }}
+      {{ <route name="Documentation" path={repo_op.summary} icon="file-text" tone="orange" href={base ~ "docs/api/repository/"} /> }}
+    </div>
+  {% </panel> %}
+
+  {% <panel title="Use" sub="What one model buys" step={5} tone="cyan" variant="toned" cls="mj-stage"> %}
+    {{ <points variant="" items={[{"icon": "check-circle", "tone": "green", "title": "Consistent", "text": "every surface reads one registry"}, {"icon": "list", "tone": "blue", "title": "Deterministic", "text": "the same input, the same bytes"}, {"icon": "search", "tone": "green", "title": "Discovered", "text": "nothing registered by hand"}, {"icon": "refresh", "tone": "green", "title": "Regenerated", "text": "derived files are never edited"}, {"icon": "shield-check", "tone": "orange", "title": "Checked", "text": "generate --check refuses drift"}, {"icon": "users", "tone": "blue", "title": "People and agents", "text": "CLI, API, MCP, pages, docs"}, {"icon": "puzzle", "tone": "blue", "title": "Extensible", "text": "a capability declared once is projected"}]} /> }}
+  {% </panel> %}
+{% </stages> %}
+</div>
+
+<div class="mt-14 grid gap-8 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)] lg:items-center">
+  <div class="min-w-0">
+  {{ <section kicker="Real impact" title="Measured, or counted." lead="One token figure is measured so far: how much relevant context the context compiler leaves out. Whether a whole session uses fewer tokens is not yet measured, and the page says so." /> }}
+    <div class="mt-4">{{ <btn label="Token economics" href={base ~ "economics/"} icon="chart" trail="arrow-right" /> }}</div>
+  </div>
+  <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+    {{ <figure value={((ctx.value * 1000) | round / 10) ~ "%"} label={"of the relevant context left out of the budget, median of " ~ ctx.n ~ " seeds"} source="economics.json · context_reduction_ratio · not total-token savings" share={(ctx.value * 100) | round | int} icon="target" tone="blue" /> }}
+    {{ <figure value={pilot.pairs.valid ~ " of " ~ econ.summary.publication.min_valid_pairs} label="valid matched pairs for a total-token claim" source="economics.json · verdict: not publishable" icon="clock" tone="orange" /> }}
+    {{ <figure value={oas.counts.operations} label="HTTP operations, each described once by OpenAPI" source="openapi.json · counts" icon="code" tone="violet" /> }}
+    {{ <figure value={cli.counts.commands} label="commands in the CLI tree, from the same declarations" source="cli.json · counts" icon="terminal" tone="green" /> }}
+  </div>
+</div>
+{% endblock screen %}

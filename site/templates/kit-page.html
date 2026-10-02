@@ -123,6 +123,13 @@
           {%- endfor %}
         </div>
         <div class="mj-panel mt-4">
+          {{ <claims items={[{"icon": "refresh", "tone": "green", "title": "Regenerated", "text": "never edited by hand"}, {"icon": "shield-check", "tone": "violet", "title": "Checked", "text": "by gates in CI"}, {"icon": "database", "tone": "blue", "title": "One source", "text": "the layer under .ai/"}, {"icon": "users", "tone": "orange", "title": "For people and agents", "text": "the same contract"}]} /> }}
+        </div>
+        <div class="mj-panel mt-4">
+          <p class="mj-panel-title">A table of rows</p>
+          <div class="mt-3">{{ <table caption={"The first operations of the " ~ tag.name ~ " tag"} columns={[{"key": "path", "title": "path", "mono": true}, {"key": "method", "title": "method", "mono": true}, {"key": "summary", "title": "what it does"}]} rows={ops[:4]} /> }}</div>
+        </div>
+        <div class="mj-panel mt-4">
           <p class="mj-panel-title">Every kind the layer holds</p>
           <p class="mj-panel-sub">A cloud of words, each on the tone of its place in the list; from the registry's index.</p>
           <div class="mt-4">{{ <pills words={kinds | keys} tones={tones} /> }}</div>
@@ -141,7 +148,8 @@
           {% </terminal> %}
         </div>
         <div class="mt-4 grid gap-4 lg:grid-cols-2">
-          {% <panel title="Commands" sub="Copy buttons appear when the script runs" icon="terminal"> %}
+          {% <panel title="Commands" sub="Copy buttons appear when the script runs; a listing is read, not run" icon="terminal"> %}
+            <div class="mb-3">{{ <listing title="design.json · tones" text={design.tones | json_encode(pretty=true) | truncate(length=400)} /> }}</div>
             {{ <cmd_list id="kit-cmds" commands={["majordomus context", "majordomus check", "majordomus " ~ op.cli]} /> }}
           {% </panel> %}
           {% <panel title={op.summary} sub="One capability, three surfaces" icon="code" tone="violet"> %}

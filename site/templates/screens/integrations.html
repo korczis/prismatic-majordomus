@@ -1,0 +1,90 @@
+{% extends "screen.html" %}
+{#- Integrations: one repository, every interface. The design "Majordomus Integration
+    Ecosystem": a hero with a doctrine, the repository joined to the snapshot it builds and the
+    interfaces that read it, a tabbed panel with one real thing per interface, a tile per
+    surface and a band of claims. Every value is read from a generated dataset. -#}
+{% block screen %}
+{#- the operations the panel shows, found by tag first (one `for` per comprehension) -#}
+{%- set env_tag = [t for t in oas.tags if t.name == "environment"] | first -%}
+{%- set env = env_tag.operations | first -%}
+{%- set dash_tag = [t for t in oas.tags if t.name == "dashboard"] | first -%}
+{%- set dash = dash_tag.operations | first -%}
+{%- set gates_tag = [t for t in oas.tags if t.name == "gates"] | first -%}
+{%- set gates = gates_tag.operations | first -%}
+{%- set run = [w for w in term.walkthrough if w.label == "context"] | first -%}
+{%- set run_lines = run.output | trim | split(pat="\n") -%}
+{%- set serve = [c for c in cli.commands if c.path | join(sep=" ") == "majordomus serve"] | first -%}
+{%- set mcp_cmd = [c for c in cli.commands if c.path | join(sep=" ") == "majordomus mcp"] | first -%}
+{%- set env_cmd = [c for c in cli.commands if c.path | join(sep=" ") == "majordomus env"] | first -%}
+{%- set mcp_tools = registry.mcp.tools | length -%}
+{%- set mcp_resources = registry.mcp.resources | length -%}
+
+{% <hero kicker="Integrations" title={["One ecosystem.", "Seamless"]} accent="integrations." inline={true} lead={"The same repository state reaches the command line, the HTTP API under /api/v1/, Swagger UI, the Cockpit, MCP and this site. Each capability is declared once and projected to all of them."}> %}
+  {{ <quote text="A command is declared once, and every surface that shows it is a projection" by="project.commands-are-projections" href={base ~ "rules/project-commands-are-projections-1/"} /> }}
+{% </hero> %}
+
+{#- the repository, the snapshot it builds, and the interfaces that read it -#}
+<section class="mt-12" aria-label="From the repository to every interface">
+  {% <panel title={project.repository_url | split(pat="/") | last} sub="What the snapshot is read from, and who reads it" icon="github" level="2"> %}
+    <div class="mt-6">
+    {% <fan left={[{"name": ".git/", "path": "branch, head, working tree", "icon": "branch", "tone": "blue"}, {"name": ".ai/", "path": kinds.rule ~ " rules, " ~ kinds.adr ~ " decisions, " ~ kinds.skill ~ " skills", "icon": "folder", "tone": "blue"}, {"name": "apps/", "path": "the Rust executable", "icon": "folder", "tone": "blue"}, {"name": "docs/", "path": "manuals and generated documents", "icon": "folder", "tone": "blue"}, {"name": "share/", "path": "schemas, design, kinds", "icon": "folder", "tone": "blue"}, {"name": "test/", "path": kinds.test ~ " test objects", "icon": "folder", "tone": "blue"}]} right={[{"name": "CLI", "path": "majordomus", "icon": "terminal", "tone": "blue", "href": base ~ "docs/cli/"}, {"name": "HTTP API", "path": "/api/v1/", "icon": "globe", "tone": "violet", "href": base ~ "docs/api/"}, {"name": "Swagger / OpenAPI", "path": "/swagger", "icon": "book", "tone": "violet", "href": base ~ "docs/api/"}, {"name": "Cockpit", "path": "/cockpit", "icon": "monitor", "tone": "green", "href": base ~ "docs/cockpit/"}, {"name": "MCP", "path": "majordomus mcp", "icon": "nodes", "tone": "green", "href": base ~ "docs/mcp/"}, {"name": "Documentation", "path": "GitHub Pages", "icon": "file-text", "tone": "orange", "href": base ~ "docs/"}, {"name": "CI", "path": "GitHub Actions", "icon": "cog", "tone": "rose", "href": base ~ "docs/ci/"}]} left_label="indexed" right_label="projected"> %}
+      {{ <stack title={env.result_schema} text="one snapshot of this checkout, each value with where it came from" icon="database" mono={true} layers={[{"title": "project", "text": "identity and release", "tone": "blue"}, {"title": "version control", "text": "branch, head, working tree", "tone": "violet"}, {"title": "toolchains", "text": "what the checkout declares", "tone": "green"}, {"title": "the layer", "text": "objects counted per kind", "tone": "orange"}, {"title": "services", "text": "the address a server published", "tone": "rose"}]} /> }}
+    {% </fan> %}
+    </div>
+  {% </panel> %}
+</section>
+
+{#- one real thing per interface -#}
+<section class="mt-6">
+  {% <panel title="One snapshot, seven readers" sub={env.summary ~ ", as each interface serves it"} icon="layers" tone="violet" id="int-each"> %}
+    {% <tabs id="int-tabs" labels={["CLI", "API", "Swagger", "Cockpit", "MCP", "Docs", "CI"]} icons={["terminal", "code", "book", "monitor", "nodes", "file-text", "cog"]} label="Interfaces of the repository"> %}
+      {% <tab_panel id="int-tabs" i={0} label="CLI"> %}
+        {% <terminal title={"recorded: " ~ run.command}> %}{{ <term_line cmd="majordomus" args={run.command | replace(from="majordomus ", to="")} /> }}{{ <term_out text={run_lines[:14] | join(sep="\n")} /> }}{% </terminal> %}
+        <p class="mj-point-text mt-3">A transcript the generator recorded. For the snapshot itself: <code>{{ env_cmd.path | join(sep=" ") }}</code> — {{ env_cmd.about }}.</p>
+      {% </tab_panel> %}
+      {% <tab_panel id="int-tabs" i={1} label="API"> %}
+        {{ <request method={env.method} path={env.path} /> }}
+        <p class="mj-point-text mt-3">{{ env.description }}</p>
+        <div class="mt-3">{{ <cmd id="int-curl" text={env.curl} wrap={true} /> }}</div>
+      {% </tab_panel> %}
+      {% <tab_panel id="int-tabs" i={2} label="Swagger"> %}
+        <p class="mj-point-text mb-3">{{ serve.about }}. The operations of the {{ env_tag.name }} tag, as the OpenAPI {{ oas.openapi }} document describes them:</p>
+        {%- for o in env_tag.operations %}
+        {% <endpoint method={o.method} path={o.path} summary={o.summary} open={loop.first}> %}<p class="m-0">{{ o.description | truncate(length=220) }}</p>{% </endpoint> %}
+        {%- endfor %}
+      {% </tab_panel> %}
+      {% <tab_panel id="int-tabs" i={3} label="Cockpit"> %}
+        {{ <request method={dash.method} path={dash.path} /> }}
+        <p class="mj-point-text mt-3">The Cockpit at <code>/cockpit</code> asks the same server for its pages. Its overview: {{ dash.summary | lower }}.</p>
+        <div class="mt-3">{{ <cmd id="int-dash" text={"majordomus " ~ dash.cli} /> }}</div>
+      {% </tab_panel> %}
+      {% <tab_panel id="int-tabs" i={4} label="MCP"> %}
+        <p class="mj-point-text mb-3">{{ mcp_cmd.about }}: {{ mcp_tools }} tools and {{ mcp_resources }} resources. The snapshot is one tool and one resource.</p>
+        {{ <routes items={[{"name": env.mcp_tool, "path": "tool · " ~ env.summary, "icon": "wrench", "tone": "green"}, {"name": env.mcp_resource.uri, "path": "resource · " ~ env.mcp_resource.name, "icon": "database", "tone": "green"}]} /> }}
+        <div class="mt-3">{{ <cmd id="int-mcp" text={mcp_cmd.path | join(sep=" ")} /> }}</div>
+      {% </tab_panel> %}
+      {% <tab_panel id="int-tabs" i={5} label="Docs"> %}
+        <p class="mj-point-text mb-3">This site is built from the repository and published on GitHub Pages. The snapshot has a page on every surface:</p>
+        {{ <links items={[{"title": "The repository environment", "href": base ~ "docs/environment/"}, {"title": "majordomus env", "href": base ~ "docs/cli/env/"}, {"title": "HTTP API", "href": base ~ "docs/api/"}, {"title": "MCP surface", "href": base ~ "registry/mcp/"}]} /> }}
+      {% </tab_panel> %}
+      {% <tab_panel id="int-tabs" i={6} label="CI"> %}
+        {{ <request method={gates.method} path={gates.path} /> }}
+        <p class="mj-point-text mt-3">{{ gates.summary }}: {{ gates.description | truncate(length=240) }}</p>
+        <div class="mt-3">{{ <links items={[{"title": "Continuous integration", "href": base ~ "docs/ci/"}]} /> }}</div>
+      {% </tab_panel> %}
+    {% </tabs> %}
+  {% </panel> %}
+</section>
+
+{#- a tile per surface -#}
+<section class="mt-12">
+  {{ <section kicker="Surfaces" title="Where each one lives" /> }}
+  <div class="mt-6">
+    {{ <tiles items={[{"title": "Git and GitHub", "text": "pull requests classified against master", "href": base ~ "docs/integration/", "icon": "github", "tone": "blue"}, {"title": "CLI", "text": cli.counts.commands ~ " commands, each with a reference page", "href": base ~ "docs/cli/", "icon": "terminal", "tone": "green"}, {"title": "HTTP API", "text": oas.counts.operations ~ " operations under /api/v1/", "href": base ~ "docs/api/", "icon": "code", "tone": "violet"}, {"title": "Swagger / OpenAPI", "text": "OpenAPI " ~ oas.openapi ~ ", " ~ oas.counts.schemas ~ " schemas", "href": base ~ "docs/surfaces/", "icon": "book", "tone": "violet"}, {"title": "Cockpit", "text": "the overview the server renders at /cockpit", "href": base ~ "docs/cockpit/", "icon": "monitor", "tone": "orange"}, {"title": "MCP", "text": mcp_tools ~ " tools and " ~ mcp_resources ~ " resources", "href": base ~ "registry/mcp/", "icon": "nodes", "tone": "blue"}, {"title": "Documentation", "text": "built from the repository, on GitHub Pages", "href": base ~ "docs/", "icon": "file-text", "tone": "violet"}, {"title": "CI", "text": "the gates every change passes", "href": base ~ "docs/ci/", "icon": "cog", "tone": "blue"}]} /> }}
+  </div>
+</section>
+
+<div class="mt-12">
+  {{ <strip items={[{"icon": "refresh", "tone": "blue", "title": "One source", "text": "the layer under .ai/"}, {"icon": "shield", "tone": "green", "title": "Deterministic", "text": "generate --check is the byte-for-byte verdict"}, {"icon": "bolt", "tone": "orange", "title": "Discovered", "text": "tracked files, through the git index"}, {"icon": "users", "tone": "violet", "title": "For agents too", "text": mcp_tools ~ " MCP tools, " ~ mcp_resources ~ " resources"}, {"icon": "puzzle", "tone": "blue", "title": "Extensible", "text": "a capability is declared once and projected"}]} /> }}
+</div>
+{% endblock screen %}

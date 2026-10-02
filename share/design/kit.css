@@ -177,6 +177,11 @@
     background: linear-gradient(180deg, var(--mj-tone-bg, var(--mj-sunken)) 0%, var(--mj-raised) 70%);
     border-color: var(--mj-tone-line, var(--mj-line));
   }
+  /* a well inside a quiet panel would vanish into it: it takes the card's ground instead */
+  .mj-panel--quiet .mj-cmd,
+  .mj-panel--quiet .mj-code {
+    background: var(--mj-raised);
+  }
   .mj-panel-head {
     @apply mb-4 flex min-w-0 items-start gap-3;
   }
@@ -414,6 +419,31 @@
     @apply xl:ps-0;
   }
 
+  /* Claims stood on round glyphs: an icon over a title and a line, centred, in a row. */
+  .mj-claims {
+    @apply m-0 grid list-none grid-cols-2 gap-4 p-0 sm:grid-cols-4;
+  }
+  .mj-claim {
+    @apply flex min-w-0 flex-col items-center gap-2 text-center;
+  }
+
+  /* A listing on the page's own ground: a struct, a JSON shape, a list of steps. The
+     terminal is for a session; this is for text that is read, not run. */
+  .mj-code {
+    @apply m-0 min-w-0 overflow-hidden rounded-lg;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-code-title {
+    @apply px-3 py-1.5 font-mono text-xs;
+    color: var(--mj-muted);
+    border-bottom: 1px solid var(--mj-line);
+  }
+  .mj-code pre {
+    @apply m-0 bg-transparent p-3 font-mono text-xs leading-relaxed;
+    color: var(--mj-fg);
+  }
+
   /* A measured figure with what it measures and, when it is a share, a meter. */
   .mj-figure-value {
     @apply block text-2xl font-bold tracking-tight;
@@ -428,14 +458,12 @@
     color: var(--mj-muted);
   }
   .mj-meter {
-    @apply mt-3 h-1 w-full overflow-hidden rounded-full;
+    @apply mt-3 block h-1 w-full overflow-hidden rounded-full;
     background: var(--mj-sunken);
   }
-  /* No fallback on a ground that carries no text: a fallback role there would become a
-     ground every floating text is measured on. The template always names a tone. */
+  /* The share is an SVG rect whose width is the share out of 100: an attribute, never a style. */
   .mj-meter-fill {
-    @apply block h-full rounded-full;
-    background: var(--mj-tone-fill);
+    fill: var(--mj-tone-fill);
   }
 
   /* A cloud of kinds: each a monospace word on its tone. */
@@ -575,8 +603,9 @@
     color: var(--mj-fg);
   }
   /* underline: the strip a code sample or a section switches with */
+  /* one row, scrolled sideways in a narrow column rather than wrapped onto a second */
   .mj-tabs--line {
-    @apply gap-4;
+    @apply flex-nowrap gap-4 overflow-x-auto;
     border-bottom: 1px solid var(--mj-line);
   }
   .mj-tabs--line > .mj-tab {
@@ -633,7 +662,7 @@
     border: 1px solid var(--mj-line);
   }
   .mj-request-path {
-    @apply min-w-0 flex-1 break-all font-mono text-sm;
+    @apply min-w-0 flex-1 truncate font-mono text-sm;
     color: var(--mj-fg);
   }
   /* An operation that opens to show what it takes and returns; a native disclosure. */
@@ -752,8 +781,11 @@
   }
 
   /* A count with what it counts, on its tone's glyph. */
+  /* As many columns as the container holds: a row of counts sits in a full-width band and
+     in a quarter-width panel of a pictured window alike. */
   .mj-kpis {
-    @apply grid grid-cols-2 gap-3 lg:grid-cols-4;
+    @apply grid gap-3;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 9rem), 1fr));
   }
   .mj-kpi {
     @apply flex min-w-0 items-center gap-3 rounded-lg p-3;
@@ -861,7 +893,7 @@
     color: var(--mj-fg);
   }
   .mj-health-measure {
-    @apply w-14 shrink-0 text-right font-mono text-xs;
+    @apply shrink-0 whitespace-nowrap text-right font-mono text-xs;
     color: var(--mj-muted);
   }
   /* A state word with a dot before it, coloured by the status it is filed under. */
@@ -975,6 +1007,16 @@
   }
   .mj-fan--out {
     @apply lg:grid-cols-[minmax(0,1fr)_4.5rem_minmax(0,1.4fr)] lg:gap-0;
+  }
+  /* a hub that is the subject (a window, a terminal) takes the width; the sides annotate it */
+  .mj-fan--wide.mj-fan--both {
+    @apply lg:grid-cols-[minmax(0,13rem)_3.5rem_minmax(0,1fr)_3.5rem_minmax(0,13rem)] xl:grid-cols-[minmax(0,11rem)_3rem_minmax(0,1fr)_3rem_minmax(0,11rem)];
+  }
+  .mj-fan--wide.mj-fan--in {
+    @apply lg:grid-cols-[minmax(0,15rem)_3.5rem_minmax(0,1fr)];
+  }
+  .mj-fan--wide.mj-fan--out {
+    @apply lg:grid-cols-[minmax(0,1fr)_3.5rem_minmax(0,15rem)];
   }
   .mj-fan-side {
     @apply grid min-w-0 auto-rows-fr gap-2;
