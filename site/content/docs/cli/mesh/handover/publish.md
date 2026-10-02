@@ -1,7 +1,7 @@
 +++
 title = "majordomus mesh handover publish"
 description = "Publish this checkout's newest handover record (or the one named) to every linked runtime"
-weight = 138
+weight = 139
 [extra]
 route = "/docs/cli/mesh/handover/publish/"
 command = "majordomus mesh handover publish"

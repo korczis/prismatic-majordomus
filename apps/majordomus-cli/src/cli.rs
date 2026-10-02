@@ -67,6 +67,8 @@ pub enum Command {
     /// Pull-request integration: every open pull request classified against the current master with its evidence, the ranked plan, and the executor that merges the next provably safe one — one at a time, re-planning after each (ADR 0101)
     #[command(alias = "pr")]
     Prs(PrsArgs),
+    /// Is any of this repository's work held where it can be lost? Every holding — a work tree with uncommitted files, a branch with commits, a stash — with the disposition read from git, and one verdict over them
+    Convergence(ConvergenceArgs),
     /// The commit as a value: what the working tree would commit and how it divides, the scope vocabulary this repository's history yields, and the verdict on one message against the commit policy
     Commit(CommitArgs),
     /// The product: what this repository's tool does for a person, as the features under the layer declare it, with every surface, count and moment derived; the matrix of features against interfaces; the providers; and the model's own validation
@@ -1298,6 +1300,42 @@ pub struct QualityRustdocArgs {
     /// Judge this directory instead of the rustdoc surface's artifact, e.g. site/public/rustdoc
     #[arg(long, value_name = "DIR")]
     pub tree: Option<std::path::PathBuf>,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus convergence`: whether any of this repository's work is held where only one
+/// disk can see it. It exits 10 when it is, so a hook or a script refuses on the verdict
+/// rather than on a parsed report.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, ConvergenceArgs, OutputFormat};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "convergence", "--format", "json", "--all"])
+///     .unwrap();
+/// let args: ConvergenceArgs = match cli.command {
+///     Command::Convergence(args) => args,
+///     other => panic!("expected `convergence`, parsed {other:?}"),
+/// };
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// assert!(args.all);
+///
+/// // a person asks the question with nothing after it, and reads only what is at risk
+/// let bare = Cli::try_parse_from(["majordomus", "convergence"]).unwrap();
+/// assert!(matches!(bare.command, Command::Convergence(ConvergenceArgs { all: false, .. })));
+/// ```
+pub struct ConvergenceArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// How to render the verdict
+    pub format: OutputFormat,
+
+    #[arg(long)]
+    /// List every holding, not only the ones whose work exists on one disk
+    pub all: bool,
 }
 
 #[derive(Debug, Args)]
@@ -4238,6 +4276,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["prs", "cleanup"],
             setup: &[],
             expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "convergence",
+        examples: &[ExampleDoc {
+            id: "convergence-report-json",
+            title: "Is any work held where it can be lost?",
+            description: "Every holding of this repository — a work tree with uncommitted files, a branch with commits, a stash — with the disposition read from git for each: integrated when the trunk reaches it, published when a remote-tracking ref does, local_only when nothing but this disk has it, uncommitted when it was never committed at all. The last two are at risk, and the verdict over them is what the completion invariant's `no-stale-topology` question reads. Measured offline: a remote-tracking ref is what this checkout last fetched, which is exactly the question — whether the work left this disk.",
+            argv: &["convergence", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/schema", "/converged", "/at_risk", "/tallies"]),
         }],
     },
     CommandExamples {
