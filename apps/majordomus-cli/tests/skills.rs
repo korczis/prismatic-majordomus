@@ -137,6 +137,8 @@ fn the_command_line_http_and_mcp_answer_the_same_skills() {
         &one, alpha,
         "skills.explain answers what skills.status lists"
     );
+    let mcp_one = tool(&f, "majordomus_skill_explain", json!({ "id": "alpha" }));
+    assert_eq!(one, mcp_one, "HTTP and MCP disagree about one skill");
     let (status, _) = served.get("/api/v1/skills/explain?id=absent");
     assert_eq!(status, 404);
     let (code, _, _) = run_in(&f.root(), &["skills", "explain", "absent"], "");
