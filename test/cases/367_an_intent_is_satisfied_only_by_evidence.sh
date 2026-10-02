@@ -95,6 +95,41 @@ milestone 'evidence:
 git add -A >/dev/null && git commit -qm "close the milestone"
 same "a closed milestone and current evidence" "satisfied" "$(stage)"
 
+# --- the MCP tool answers the same record the command shows
+# intents.record is projected as the MCP tool majordomus_intent_record, and a tool nothing
+# sends a tools/call is indistinguishable from one that does not work
+# (scripts/ci/mcp-tool-run-check). One standalone session — no port, no lease, nothing
+# written — asks it for the probe and for an id the repository does not hold: the first
+# answer must be the record `intent show` derives, stage and criterion states alike; the
+# second a refusal, not an empty record. Its files stay outside the fixture repository.
+M="$(mktemp -d "${TMPDIR:-/tmp}/mj-367-mcp.XXXXXX")"; trap 'rm -rf "$M"' EXIT
+mcp_intent() { # <id>
+  { printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case367","version":"0"}}}\n'
+    printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
+    printf '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"majordomus_intent_record","arguments":{"id":"%s"}}}\n' "$1"
+  } | "$RB" mcp --standalone --repo "$PWD" --share "$ROOT/share" 2>"$M/mcp.err" \
+    | jq -c 'select(.id == 2)' 2>/dev/null || true
+}
+mcp_intent probe > "$M/mcp.json"
+jq -e '.result.isError != true and (.result.structuredContent | type) == "object"' \
+  "$M/mcp.json" >/dev/null 2>&1 || {
+  echo "    majordomus_intent_record returned no typed answer over MCP:"
+  head -c 600 "$M/mcp.json" | sed 's/^/      /'; echo
+  sed 's/^/      | /' "$M/mcp.err" | head -5; exit 1; }
+"$RB" intent show probe --format json > "$M/cli.json"
+view='{id, stage, criteria: [.satisfaction[] | {id, state}]}'
+jq -e --slurpfile cli "$M/cli.json" \
+  "(.result.structuredContent | $view) == (\$cli[0] | $view) and .result.structuredContent.stage == \"satisfied\"" \
+  "$M/mcp.json" >/dev/null || {
+  echo "    majordomus_intent_record over MCP and \`intent show\` disagree:"
+  echo "      mcp: $(jq -c ".result.structuredContent | $view" "$M/mcp.json" | head -c 400)"
+  echo "      cli: $(jq -c "$view" "$M/cli.json" | head -c 400)"; exit 1; }
+mcp_intent absent > "$M/mcp-absent.json"
+jq -e '.result.isError == true or .error != null' "$M/mcp-absent.json" >/dev/null || {
+  echo "    majordomus_intent_record answered an intent the repository does not hold:"
+  head -c 400 "$M/mcp-absent.json" | sed 's/^/      /'; echo; exit 1; }
+echo "    majordomus_intent_record over MCP answers the record intent show derives, and refuses an absent id"
+
 # --- the test changes after its run: the run proves nothing about the test that is there
 printf '. "$ROOT/test/lib.sh"\nfalse\n' > test/cases/01_probe.sh
 git add -A >/dev/null && git commit -qm "change the probe"
