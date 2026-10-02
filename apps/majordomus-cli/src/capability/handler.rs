@@ -183,7 +183,8 @@ impl Context {
     /// A reload is not a restart. The index, the registry and everything derived from them
     /// — the Why catalogue, the product model, the web topology — are pictures of the
     /// repository and are replaced wholesale, which is the point. The peer board, the
-    /// executions this process is running and the capability executor are not pictures of
+    /// executions this process is running, the episodes its clients opened and the capability
+    /// executor are not pictures of
     /// anything: they are this process's own life, and a peer that announced its intent
     /// must not vanish from the board because somebody else committed. The executor is
     /// carried because its cache is keyed by the registry's fingerprint, so the entries of
@@ -196,6 +197,7 @@ impl Context {
     /// # fn example(before: Arc<Context>, after: Arc<Context>) {
     /// let renewed = after.continuing(&before);
     /// assert!(Arc::ptr_eq(&renewed.peers, &before.peers), "the board survives a reload");
+    /// assert!(Arc::ptr_eq(&renewed.episodes, &before.episodes), "so do the episodes");
     /// assert!(Arc::ptr_eq(&renewed.index, &after.index), "the picture does not");
     /// # }
     /// ```
@@ -204,6 +206,11 @@ impl Context {
             peers: Arc::clone(&previous.peers),
             executions: Arc::clone(&previous.executions),
             executor: Arc::clone(&previous.executor),
+            // The episode board is this process's life too: the episodes its clients opened
+            // and the ones a lost connection detached. A reload that handed out a fresh board
+            // would forget every one of them because the repository moved, and an index
+            // refresh by `git status` is enough to move it.
+            episodes: Arc::clone(&previous.episodes),
             // The mesh runtime is this process's, not this generation's: it holds the
             // sockets that are already announcing and the registry every observation has
             // converged into. A rebuild that handed the surfaces a fresh one would leave

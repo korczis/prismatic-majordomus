@@ -231,6 +231,11 @@ req 1 initialize "$(hello case200-holder)" >&3
 rc=0; "$LAUNCHER" < "$S/visit1.in" > "$S/visit1.out" 2> "$S/visit1.err" || rc=$?
 must "the first visit exited $rc" [ "$rc" = 0 ]
 grep -q 'bridging this stdio session to it' "$S/visit1.err" || { echo "    the first visit did not bridge to the holder's server"; cat "$S/visit1.err"; exit 1; }
+# The repository moves while the episode waits: the shared server follows it with a new
+# generation (Live), and a reload is not a restart. Episodes are the process's life, not a
+# picture of the tree, so the board must come through it. Left to chance, an index that
+# `git status` rewrote did this only sometimes, and the case failed only sometimes.
+git commit -q --allow-empty -m "the repository moves between the visits"
 
 # It has gone. The episode is detached and waiting, not closed: a dropped connection is the
 # most ordinary thing that happens to work in progress and is not the end of it.
