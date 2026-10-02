@@ -1712,4 +1712,119 @@ mod tests {
         assert_eq!(closed.verdict, "refused");
         assert!(closed.refusal.unwrap().contains("no open issue"));
     }
+
+    #[test]
+    fn every_stage_is_printed_as_the_word_it_serialises_to() {
+        for stage in [
+            IntentStage::Declared,
+            IntentStage::Planned,
+            IntentStage::Executing,
+            IntentStage::Verifying,
+            IntentStage::Satisfied,
+            IntentStage::Cancelled,
+            IntentStage::Superseded,
+        ] {
+            assert_eq!(
+                serde_json::to_value(stage).unwrap(),
+                serde_json::Value::from(stage.as_str()),
+                "{stage:?} is spelled one way by serde and another by as_str"
+            );
+        }
+    }
+
+    #[test]
+    fn a_named_test_is_a_suite_case_or_a_crate_test_and_no_other_runner() {
+        assert_eq!(
+            test_id("suite:1_x"),
+            TestId::named(evidence::Runner::Suite, "1_x")
+        );
+        assert_eq!(
+            test_id("crate:intent"),
+            TestId::named(evidence::Runner::Crate, "intent")
+        );
+        assert_ne!(test_id("crate:intent"), test_id("suite:intent"));
+        assert_eq!(test_id("pytest:intent"), None);
+        assert_eq!(test_id("no-prefix-at-all"), None);
+
+        // and a criterion naming a crate test is met by that test's current run
+        let p = plan(vec![milestone("m", "DONE")], vec![]);
+        let ev = Table::new().with_test(
+            &TestId::named(evidence::Runner::Crate, "intent")
+                .unwrap()
+                .as_string(),
+            IntentEvidenceState::Current,
+        );
+        let i = Intents::derive(
+            vec![record("x", &["m"], &[("c", "test", "crate:intent")])],
+            &p,
+            &ev,
+        );
+        assert_eq!(codes(&i), Vec::<&str>::new());
+        assert_eq!(i.intents[0].stage, IntentStage::Satisfied);
+        let i = Intents::derive(
+            vec![record("x", &["m"], &[("c", "test", "pytest:intent")])],
+            &p,
+            &ev,
+        );
+        assert_eq!(codes(&i), ["unresolved_evidence_ref"]);
+    }
+
+    #[test]
+    fn governance_resolves_only_a_known_kind_naming_what_the_repository_holds() {
+        let ev = Table::new()
+            .with_claim("known", ProofState::Proven)
+            .with_test("suite:1_x", IntentEvidenceState::Current);
+        for (entry, resolves) in [
+            ("rule:project.alpha", true),
+            ("rule:project.beta", false),
+            ("claim:known", true),
+            ("claim:unknown", false),
+            ("file:docs/INTENT.md", true),
+            ("file:docs/OTHER.md", false),
+            ("adr:adr-0001", false),
+            ("no-kind-at-all", false),
+            ("ticket:42", false),
+        ] {
+            assert_eq!(governance_resolves(entry, &ev), resolves, "{entry}");
+        }
+        let p = plan(vec![milestone("m", "DONE")], vec![]);
+        let mut x = record("x", &["m"], &[CASE]);
+        x.governance = vec![
+            "claim:known".into(),
+            "no-kind-at-all".into(),
+            "ticket:42".into(),
+        ];
+        let i = Intents::derive(vec![x], &p, &ev);
+        assert_eq!(
+            codes(&i),
+            ["unresolved_governance", "unresolved_governance"]
+        );
+        assert!(i.findings[0].message.contains("`no-kind-at-all`"));
+        assert!(i.findings[1].message.contains("`ticket:42`"));
+    }
+
+    #[test]
+    fn preflight_names_a_governance_entry_two_serving_intents_share_once() {
+        let p = plan(
+            vec![milestone("m", "ACTIVE")],
+            vec![issue("I1", "m", "ACTIVE", &["lib"])],
+        );
+        let mut a = record("a", &["m"], &[CASE]);
+        a.governance = vec!["rule:project.alpha".into(), "file:docs/INTENT.md".into()];
+        let mut b = record("b", &["m"], &[CASE]);
+        b.governance = vec!["file:docs/INTENT.md".into(), "rule:project.alpha@1".into()];
+        let i = Intents::derive(vec![a, b], &p, &Table::new());
+        let answer = i.preflight(&p, Some("I1"), &[]);
+        assert_eq!(answer.verdict, "serves");
+        let served: Vec<&str> = answer.matches.iter().map(|m| m.intent.as_str()).collect();
+        assert_eq!(served, ["a", "b"]);
+        assert_eq!(
+            answer.governance,
+            [
+                "rule:project.alpha",
+                "file:docs/INTENT.md",
+                "rule:project.alpha@1"
+            ]
+        );
+    }
 }

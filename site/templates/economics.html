@@ -94,7 +94,7 @@
           <td class="p-2 font-mono">{{ v.runs }}</td>
           <td class="p-2 font-mono">{% if v.kind == "live" %}{{ v.pairs.valid }} / {{ v.pairs.attempted }}{% else %}—{% endif %}</td>
           <td class="p-2 font-mono">{% if v.kind == "live" %}{{ v.pairs.control_failed }} / {{ v.pairs.treatment_failed }} / {{ v.pairs.both_failed }}{% else %}—{% endif %}</td>
-          <td class="p-2 font-mono text-xs">{% for r in v.revisions %}<a class="underline" href="{{ project.repository_url }}/tree/{{ r }}">{{ r | truncate(length=12, end="") }}</a> {% endfor %}</td>
+          <td class="p-2 font-mono text-xs">{% for r in v.revisions %}<a class="underline inline-block py-1" href="{{ project.repository_url }}/tree/{{ r }}">{{ r | truncate(length=12, end="") }}</a> {% endfor %}</td>
           <td class="p-2 text-xs">{{ v.models_reported | join(sep=", ") }}</td>
         </tr>
       {%- endfor %}

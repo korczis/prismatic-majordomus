@@ -10,7 +10,7 @@ use std::io::Write;
 use serde_json::{json, Value};
 
 use crate::app::App;
-use crate::capability::CapabilityError;
+use crate::capability::{CapabilityError, Context};
 use crate::cli::{IntentArgs, IntentCommand, OutputFormat};
 use crate::error::{Error, Result};
 
@@ -23,17 +23,17 @@ pub fn run(args: IntentArgs) -> Result<u8> {
     let format = args.format;
     match &args.command {
         IntentCommand::List => {
-            let v = call(&app, &["intent", "list"], json!({}))?;
+            let v = call(&app.context, &["intent", "list"], json!({}))?;
             emit(format, &v, list_text)?;
             Ok(0)
         }
         IntentCommand::Show { id } => {
-            let v = call(&app, &["intent", "show"], json!({ "id": id }))?;
+            let v = call(&app.context, &["intent", "show"], json!({ "id": id }))?;
             emit(format, &v, show_text)?;
             Ok(0)
         }
         IntentCommand::Validate => {
-            let v = call(&app, &["intent", "validate"], json!({}))?;
+            let v = call(&app.context, &["intent", "validate"], json!({}))?;
             emit(format, &v, validate_text)?;
             Ok(if v["valid"].as_bool() == Some(true) {
                 0
@@ -42,7 +42,7 @@ pub fn run(args: IntentArgs) -> Result<u8> {
             })
         }
         IntentCommand::Coverage => {
-            let v = call(&app, &["intent", "coverage"], json!({}))?;
+            let v = call(&app.context, &["intent", "coverage"], json!({}))?;
             emit(format, &v, coverage_text)?;
             Ok(0)
         }
@@ -51,7 +51,7 @@ pub fn run(args: IntentArgs) -> Result<u8> {
             if let Some(issue) = issue {
                 input["issue"] = json!(issue);
             }
-            let v = call(&app, &["intent", "preflight"], input)?;
+            let v = call(&app.context, &["intent", "preflight"], input)?;
             emit(format, &v, preflight_text)?;
             Ok(if v["verdict"] == "serves" {
                 0
@@ -64,7 +64,7 @@ pub fn run(args: IntentArgs) -> Result<u8> {
             if let Some(intent) = intent {
                 input["intent"] = json!(intent);
             }
-            let v = call(&app, &["intent", "realization"], input)?;
+            let v = call(&app.context, &["intent", "realization"], input)?;
             emit(format, &v, realization_text)?;
             let regressed = v["findings"]
                 .as_array()
@@ -74,7 +74,7 @@ pub fn run(args: IntentArgs) -> Result<u8> {
             Ok(if regressed { EXIT_INVALID } else { 0 })
         }
         IntentCommand::Explain { id } => {
-            let v = call(&app, &["intent", "explain"], json!({ "id": id }))?;
+            let v = call(&app.context, &["intent", "explain"], json!({ "id": id }))?;
             emit(format, &v, explain_text)?;
             Ok(0)
         }
@@ -181,8 +181,7 @@ fn explain_text(v: &Value) -> String {
     out.join("\n")
 }
 
-fn call(app: &App, path: &[&str], input: Value) -> Result<Value> {
-    let ctx = &app.context;
+fn call(ctx: &Context, path: &[&str], input: Value) -> Result<Value> {
     let words: Vec<String> = path.iter().map(|w| w.to_string()).collect();
     let id = ctx
         .registry
@@ -204,7 +203,9 @@ fn call(app: &App, path: &[&str], input: Value) -> Result<Value> {
 
 fn emit(format: OutputFormat, v: &Value, text: impl Fn(&Value) -> String) -> Result<()> {
     let body = match format {
-        OutputFormat::Json => serde_json::to_string_pretty(v).unwrap_or_else(|_| v.to_string()),
+        // `{:#}` is serde_json's own pretty writer, the one `to_string_pretty` runs, so the
+        // bytes are the same; serialising a `Value` cannot fail, so there is no fallback
+        OutputFormat::Json => format!("{v:#}"),
         OutputFormat::Text => text(v),
     };
     writeln!(std::io::stdout().lock(), "{body}").map_err(Error::Transport)
@@ -376,4 +377,50 @@ fn preflight_text(v: &Value) -> String {
         out.push(format!("refusal     {r}"));
     }
     out.join("\n")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::synthetic::SyntheticRepository;
+
+    #[test]
+    fn each_verb_reaches_its_capability_and_an_unexposed_one_is_named() {
+        let repo = SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+
+        // a repository with no intent answers the list, and validates
+        let list = call(&ctx, &["intent", "list"], json!({})).unwrap();
+        assert_eq!(list["count"], 0);
+        // the JSON the command prints is byte for byte serde_json's pretty rendering
+        assert_eq!(
+            format!("{list:#}"),
+            serde_json::to_string_pretty(&list).unwrap()
+        );
+        let valid = call(&ctx, &["intent", "validate"], json!({})).unwrap();
+        assert_eq!(valid["valid"], true);
+
+        match call(&ctx, &["intent", "absent"], json!({})) {
+            Err(Error::Protocol { reason }) => assert_eq!(
+                reason,
+                "no capability is exposed as `majordomus intent absent`"
+            ),
+            other => panic!("an unexposed verb answered: {other:?}"),
+        }
+        // the capability's own not-found is the command line's not-found, exit 12
+        match call(&ctx, &["intent", "show"], json!({ "id": "absent" })) {
+            Err(e @ Error::NotFound { .. }) => {
+                assert_eq!(e.exit_code(), 12);
+                assert!(e.to_string().contains("no intent 'absent'"), "{e}");
+            }
+            other => panic!("an absent intent answered: {other:?}"),
+        }
+        // every other refusal is a protocol error carrying the capability's message
+        match call(&ctx, &["intent", "preflight"], json!({ "paths": "" })) {
+            Err(Error::Protocol { reason }) => {
+                assert!(reason.contains("name the issue"), "{reason}")
+            }
+            other => panic!("a preflight of nothing answered: {other:?}"),
+        }
+    }
 }

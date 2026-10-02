@@ -223,3 +223,225 @@ fn preflight_names_the_intent_the_work_serves_or_the_missing_link() {
     assert_ne!(code, 0, "a preflight of nothing is refused");
     assert!(err.contains("name the issue"), "{err}");
 }
+
+/// The four verbs of `majordomus intent`, each over the fixture's one intent and one issue.
+const VERBS: [&[&str]; 4] = [
+    &["intent", "list"],
+    &["intent", "show", "fixture-intent"],
+    &["intent", "validate"],
+    &["intent", "preflight", "--issue", "I0001"],
+];
+
+/// Run the executable with its stdout a pipe whose reading end is already closed, so that
+/// writing the answer fails; the exit code and stderr.
+fn run_into_a_closed_pipe(f: &Fixture, args: &[&str]) -> (i32, String) {
+    // `std::io::pipe` is newer than the crate's rust-version. The writing end of a pipe whose
+    // only reader has exited is the stdin std made for a process that is gone: std opens it
+    // close-on-exec, so no process another test spawns meanwhile inherits either end.
+    let mut gone = Command::new(BIN)
+        .arg("--version")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .unwrap();
+    let writer = gone.stdin.take().unwrap();
+    assert!(gone.wait().unwrap().success());
+    let child = Command::new(BIN)
+        .args(args)
+        .current_dir(f.root())
+        .env("MAJORDOMUS_SHARE", common::dist_share())
+        .stdin(Stdio::null())
+        .stdout(Stdio::from(writer))
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    let out = child.wait_with_output().unwrap();
+    (
+        out.status.code().unwrap_or(-1),
+        String::from_utf8(out.stderr).unwrap(),
+    )
+}
+
+#[test]
+fn an_answer_that_cannot_be_written_is_a_transport_failure_and_never_a_success() {
+    let f = Fixture::new();
+    for args in VERBS {
+        // each verb answers 0 over this fixture when its answer can be written
+        let (code, _, err) = run_in(&f.root(), args, "");
+        assert_eq!(code, 0, "{args:?}: {err}");
+        let (code, err) = run_into_a_closed_pipe(&f, args);
+        assert_eq!(
+            code, 13,
+            "{args:?} reported success it could not deliver: {err}"
+        );
+        assert!(err.contains("majordomus: transport:"), "{args:?}: {err}");
+    }
+}
+
+#[test]
+fn a_ledger_this_executable_cannot_read_refuses_every_verb_rather_than_reading_as_not_run() {
+    let f = Fixture::new();
+    f.write(
+        ".ai/repo/evidence/ledger.json",
+        "{ \"this is\": not a ledger",
+    );
+    f.commit("an unreadable ledger");
+    for args in VERBS {
+        let (code, out, err) = run_in(&f.root(), args, "");
+        assert_eq!(
+            code, 13,
+            "{args:?} answered over an unreadable ledger:\n{out}"
+        );
+        assert!(out.is_empty(), "{args:?} printed an answer:\n{out}");
+        assert!(
+            err.contains("is not a ledger this version can read"),
+            "{args:?}: {err}"
+        );
+    }
+    // the repository itself loads: the refusal is the derivation's, reached only past it
+    let (code, _, err) = run_in(&f.root(), &["intent", "preflight"], "");
+    assert_ne!(code, 0);
+    assert!(err.contains("name the issue"), "{err}");
+}
+
+#[test]
+fn an_intent_the_repository_does_not_hold_is_not_found_on_the_command_line() {
+    let f = Fixture::new();
+    let (code, out, err) = run_in(&f.root(), &["intent", "show", "absent"], "");
+    assert_eq!(
+        code, 12,
+        "a missing intent is the missing-artifact code:\n{out}"
+    );
+    assert!(err.contains("no intent 'absent'"), "{err}");
+    assert!(err.contains("`intents.list`"), "{err}");
+}
+
+#[test]
+fn outside_a_repository_no_intent_verb_answers() {
+    let f = Fixture::plain_dir();
+    for args in VERBS {
+        let (code, out, _) = run_in(&f.root(), args, "");
+        assert_eq!(code, 12, "{args:?} outside a repository:\n{out}");
+        assert!(out.is_empty(), "{args:?}:\n{out}");
+    }
+}
+
+#[test]
+fn the_text_preflight_names_the_verdict_and_the_refusal_or_the_issues_it_followed() {
+    let f = Fixture::new();
+    let (code, out, _) = run_in(&f.root(), &["intent", "preflight", "--issue", "I9999"], "");
+    assert_eq!(code, 10, "{out}");
+    let lines: Vec<&str> = out.lines().collect();
+    assert_eq!(lines[0], "verdict     refused");
+    assert_eq!(
+        lines[1],
+        "refusal     `I9999` is not an issue under .ai/repo/project/issues/"
+    );
+    assert_eq!(
+        lines.len(),
+        2,
+        "a refusal names no issue and no intent:\n{out}"
+    );
+
+    let (code, out, _) = run_in(&f.root(), &["intent", "preflight", "--issue", "I0001"], "");
+    assert_eq!(code, 0, "{out}");
+    let lines: Vec<&str> = out.lines().collect();
+    assert_eq!(
+        lines,
+        [
+            "verdict     serves",
+            "issues      I0001",
+            "intent      fixture-intent  planned  via milestone fixture-milestone and issue I0001",
+            "governance  rule:project.alpha",
+        ]
+    );
+}
+
+#[test]
+fn governance_claims_files_and_deployments_resolve_against_the_repository_itself() {
+    let f = Fixture::new();
+    f.write(
+        ".ai/repo/project/intents/fixture-intent.yaml",
+        &common::INTENT
+            .replace(
+                "governance:\n  - rule:project.alpha\n",
+                "governance:
+  - rule:project.alpha
+  - claim:policy-parse
+  - claim:no-such-claim
+  - file:README.md
+  - file:docs/../README.md
+  - file:no/such/file.md
+",
+            )
+            .replace(
+                "    ref: test/cases/00_x.sh\n",
+                "    ref: test/cases/00_x.sh
+  - id: it-is-deployed
+    criterion: The fixture's deployment answers
+    evidence: deployment
+    ref: fixture-deployment
+  - id: it-is-deployed-nowhere
+    criterion: A deployment the repository does not declare answers
+    evidence: deployment
+    ref: nowhere
+",
+            ),
+    );
+    f.commit("governance and deployments");
+
+    let (code, v) = cli_json(&f, &["intent", "validate"]);
+    assert_eq!(code, 10, "{v:#}");
+    let messages = |code: &str| -> Vec<String> {
+        v["findings"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter(|x| x["code"] == code)
+            .map(|x| x["message"].as_str().unwrap().to_string())
+            .collect()
+    };
+    let governance = messages("unresolved_governance");
+    for unresolved in [
+        "claim:no-such-claim",
+        "file:docs/../README.md",
+        "file:no/such/file.md",
+    ] {
+        assert!(
+            governance
+                .iter()
+                .any(|m| m.contains(&format!("`{unresolved}`"))),
+            "{unresolved} is not reported: {governance:?}"
+        );
+    }
+    for resolved in ["rule:project.alpha", "claim:policy-parse", "file:README.md"] {
+        assert!(
+            !governance
+                .iter()
+                .any(|m| m.contains(&format!("`{resolved}`"))),
+            "{resolved} names something the repository holds: {governance:?}"
+        );
+    }
+    assert_eq!(governance.len(), 3, "{governance:?}");
+    let refs = messages("unresolved_evidence_ref");
+    assert_eq!(refs.len(), 1, "{refs:?}");
+    assert!(
+        refs[0].contains("`nowhere` is not a deployment"),
+        "{refs:?}"
+    );
+
+    let (_, shown) = cli_json(&f, &["intent", "show", "fixture-intent"]);
+    let state = |id: &str| {
+        shown["satisfaction"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|c| c["id"] == id)
+            .map(|c| c["state"].clone())
+            .unwrap()
+    };
+    // a declared deployment resolves, and is still nothing this executable can derive
+    assert_eq!(state("it-is-deployed"), "not_derivable");
+    assert_eq!(state("it-is-deployed-nowhere"), "unresolved");
+}
