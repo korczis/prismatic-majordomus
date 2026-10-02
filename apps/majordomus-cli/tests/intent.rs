@@ -371,7 +371,7 @@ fn governance_claims_files_and_deployments_resolve_against_the_repository_itself
   - claim:policy-parse
   - claim:no-such-claim
   - file:README.md
-  - file:../README.md
+  - file:docs/../README.md
   - file:no/such/file.md
 ",
             )
@@ -405,7 +405,7 @@ fn governance_claims_files_and_deployments_resolve_against_the_repository_itself
     let governance = messages("unresolved_governance");
     for unresolved in [
         "claim:no-such-claim",
-        "file:../README.md",
+        "file:docs/../README.md",
         "file:no/such/file.md",
     ] {
         assert!(
