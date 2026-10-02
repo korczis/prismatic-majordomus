@@ -262,16 +262,15 @@ conditions:
     let (code, out, _) = run_in(&f.root(), &["intent", "validate"], "");
     assert_eq!(code, 0, "{out}");
 
-    // the work starts, and the plan was never critiqued
-    f.write(
-        ".ai/repo/project/issues/I0001.yaml",
-        &std::fs::read_to_string(f.path(".ai/repo/project/issues/I0001.yaml"))
-            .unwrap()
-            .replace(
-                "evidence_required:",
-                "started_at: 2026-09-16\nevidence_required:",
-            ),
+    // the work starts, and the plan was never critiqued. The start is the transition's, not
+    // a hand-written `started_at`: a stamp without the seal the transition writes beside it
+    // moves no status (ADR 0097), so a hand-written one would leave the issue READY.
+    let moved = tool(
+        &f,
+        "majordomus_plan_transition",
+        json!({ "issue": "I0001", "transition": "start" }),
     );
+    assert_eq!(moved["to"], "ACTIVE", "{moved}");
     f.commit("start the work");
     assert!(
         has(&f, "executing_without_critique", "fixture-intent"),

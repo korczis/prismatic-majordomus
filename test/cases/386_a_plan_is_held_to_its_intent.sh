@@ -24,6 +24,8 @@ for kind in intent gap critique; do
     || { echo "    init did not seed the $kind source class"; exit 1; }
 done
 
+# the project model `plan start` moves an issue in (test/lib.sh)
+pj_init
 mkdir -p .ai/repo/project/milestones .ai/repo/project/issues .ai/repo/project/intents \
   .ai/repo/project/gaps .ai/repo/project/critiques test/cases
 printf '. "$ROOT/test/lib.sh"\ntrue\n' > test/cases/01_probe.sh
@@ -172,9 +174,12 @@ YAML
 commit "a complete gap"
 clean "a complete gap"
 
-# --- work starts before the plan was critiqued: refused
-issue I0001 'serves:
-  - probe#works' 'started_at: 2026-09-16'
+# --- work starts before the plan was critiqued: refused. The start is the transition's, not a
+#     hand-written started_at: a stamp without the seal `plan start` writes beside it moves no
+#     status (ADR 0097), so a hand-written one would leave I0001 READY and prove nothing here
+expect_exit 0 "$MJ" plan start I0001
+grep -q '^started_event: sha256:' .ai/repo/project/issues/I0001.yaml \
+  || { echo "    plan start wrote no started_event seal"; exit 1; }
 commit "start without a critique"
 refused "execution before critique" executing_without_critique
 
