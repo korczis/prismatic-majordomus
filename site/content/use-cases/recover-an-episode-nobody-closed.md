@@ -1,7 +1,7 @@
 +++
 title = "Close an episode whose client never came back"
 description = "A killed provider sends no end event. Close the episode it left open by evidence, exactly once, without claiming work it did not do."
-weight = 7
+weight = 8
 [extra]
 id = "recover-an-episode-nobody-closed"
 source = ".ai/repo/use-cases/recover-an-episode-nobody-closed.md"

@@ -94,11 +94,67 @@ mj_validate_command_surface() {
   return 0
 }
 
+# ---------------------------------------------------------------- mj_covers_resolve
+# mj_covers_resolve <root> <name>
+# Resolves one prefixed name of a `# majordomus-covers:` or `# majordomus-negative:` header
+# against the models under <root>. Exit 0: it names something that exists. Exit 1: it does
+# not, and stdout says why. Exit 2: it is a bare name, which the caller checks against the
+# public command surface. Exit 3: <root> does not carry the model that kind is resolved
+# against at all (an installed distribution ships bin/, lib/, share/ and test/, not scripts/
+# or .ai/), so the name can be neither confirmed nor refuted there, and stdout says which. The doctor check and test/cases/31 both call this one function, so
+# the rule cannot drift between them.
+#
+# Every match is literal. A name is data, not a pattern: `gate:.*` names no gate, and a
+# regular expression built from it would have matched every one. A script is an executable
+# under scripts/, never a path that climbs out of it.
+mj_covers_resolve() {
+  local root="$1" c="$2" v
+  case "$c" in
+    gate:*)
+      v="${c#gate:}"
+      [ -f "$root/.ai/repo/ci/gates.yaml" ] || { echo ".ai/repo/ci/gates.yaml"; return 3; }
+      [ -n "$v" ] && grep -Fxq "  - id: $v" "$root/.ai/repo/ci/gates.yaml" 2>/dev/null && return 0
+      echo "a test case declares coverage of gate '$v', which the model does not declare"
+      return 1 ;;
+    capability:*)
+      # The registry projection rather than the executable: this runs where the executable
+      # may not be built, and the projection is committed and gate-held current.
+      v="${c#capability:}"
+      [ -f "$root/docs/generated/registry.json" ] || { echo "docs/generated/registry.json"; return 3; }
+      [ -n "$v" ] && grep -Fq "\"id\": \"$v\"" "$root/docs/generated/registry.json" 2>/dev/null && return 0
+      echo "a test case declares coverage of capability '$v', which the registry does not carry"
+      return 1 ;;
+    workflow:*)
+      v="${c#workflow:}"
+      [ -d "$root/.github/workflows" ] || { echo ".github/workflows/"; return 3; }
+      case "$v" in ''|*/*|.*) ;; *) [ -f "$root/.github/workflows/$v" ] && return 0 ;; esac
+      echo "a test case declares coverage of workflow '$v', which is not a file under .github/workflows/"
+      return 1 ;;
+    script:*)
+      v="${c#script:}"
+      [ -d "$root/scripts" ] || { echo "scripts/"; return 3; }
+      case "$v" in
+        */../*|*/..|*/./*) ;;
+        scripts/?*) [ -f "$root/$v" ] && [ -x "$root/$v" ] && return 0 ;;
+      esac
+      echo "a test case declares coverage of script '$v', which is not an executable under scripts/"
+      return 1 ;;
+    *:*)
+      echo "a test case declares coverage under an unknown vocabulary: '$c'; the kinds are gate:, script:, workflow: and capability:, or a bare public command"
+      return 1 ;;
+  esac
+  return 2
+}
+
 # ---------------------------------------------------------------- command_coverage_complete
 # Every public command is exercised and refuted by a test that declares it. This is a rule
 # about Majordomus's own suite, so it applies only in the repository that carries one.
 mj_validate_command_coverage() {
-  local cases="$MJ_BIN_DIR/../test/cases"
+  # The installation's own suite and the installation's own models: `MJ_ROOT` is the
+  # repository under supervision, which is not necessarily this one, and a coverage check that
+  # read its gates from there would be measuring a different tree than the cases it read.
+  local root="$MJ_BIN_DIR/.."
+  local cases="$root/test/cases"
   if ! mj_cmdreg_load || [ ! -d "$cases" ]; then
     MJ_DOCTRINE_SKIPPED=1
     mj_doctrine_skip command "coverage" "this installation carries no test suite to measure" "ls test/cases"
@@ -124,12 +180,45 @@ mj_validate_command_coverage() {
       *) mj_doctrine_fail command "$c" "no test case declares a failure mode of it" "grep -rn 'majordomus-negative' test/cases/"; bad=1 ;;
     esac
   done
-  # a header naming a command that does not exist is a broken reference, not documentation
+  # A header naming something that does not exist is a broken reference, not documentation.
+  #
+  # Two vocabularies, because this header had one and it could name exactly one kind of thing:
+  # a public command of the shell tool. Every case about a gate, a script, a workflow or a
+  # capability of the Rust executable therefore declared `none` — not out of neglect, but
+  # because there was no word for its subject. On 2026-09-15 that was 74 of 215 cases, and the
+  # doctrine line read "command coverage", which a reader takes for "test coverage". The check
+  # was right about the world it could see and the world had grown past it.
+  #
+  #   a bare name        a public command, as before
+  #   gate:<id>          an entry of .ai/repo/ci/gates.yaml
+  #   script:<path>      an executable under scripts/, named as the repository names it
+  #   workflow:<name>    a workflow file under .github/workflows/
+  #   capability:<id>    a capability of the Rust executable, from docs/generated/registry.json
+  #
+  # A prefixed name is not a command and is deliberately not counted as command coverage: the
+  # loop above still requires every public command to be named by a bare one, so widening the
+  # vocabulary cannot be used to satisfy the narrower obligation. mj_covers_resolve holds the
+  # rule for the prefixed names; test/cases/31 calls the same function.
+  local why rc undecided="" absent=""
   for c in $(printf '%s\n' $behaviour $negative | LC_ALL=C sort -u); do
     [ "$c" = none ] && continue
+    rc=0; why="$(mj_covers_resolve "$root" "$c")" || rc=$?
+    case "$rc" in
+      0) continue ;;
+      1) mj_doctrine_fail command "$c" "$why" "grep -rn '$c' test/cases/ | grep majordomus-"; bad=1
+         continue ;;
+      3) undecided="$undecided $c"
+         case " $absent " in *" $why "*) ;; *) absent="$absent $why" ;; esac
+         continue ;;
+    esac
     grep -Fxq "$c" <<<"$public" || {
       mj_doctrine_fail command "$c" "a test case declares coverage of it, but it is not a public command" "grep -rn '$c' test/cases/ | grep majordomus-"; bad=1; }
   done
+  # A name this installation cannot resolve is reported as undecided, never as resolved and
+  # never as broken: the suite was copied without the models it names (case 28 and case 65
+  # run from such a copy), and the repository's own run of case 31 decides it.
+  [ -z "$undecided" ] || mj_doctrine_skip command "coverage" \
+    "not resolved here, this installation carries no${absent}:${undecided}" "bash test/run.sh 31_command_coverage"
 
   [ "$bad" = 0 ] && mj_doctrine_ok command "coverage" "every public command is exercised and refuted" "bash test/run.sh 31_command_coverage"
   return 0

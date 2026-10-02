@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+ROOT="${1:-.}"
+M="$ROOT/.majordomo"
+fail=0
+need_file(){ if [ ! -f "$1" ]; then printf 'ERROR missing required file: %s\n' "$1" >&2; fail=1; fi; }
+need_file "$M/README.md"
+need_file "$M/VERSION"
+need_file "$M/manifest.yaml"
+need_file "$M/policy.yaml"
+need_file "$M/state/current.md"
+need_file "$M/state/decisions.md"
+need_file "$M/state/open-questions.md"
+for p in routine implementation debugging deep-work; do need_file "$M/profiles/$p.yaml"; done
+for w in task-lifecycle verification handover; do need_file "$M/workflows/$w.md"; done
+if [ "$fail" -ne 0 ]; then exit 1; fi
+printf 'Majordomus doctor: OK\n'

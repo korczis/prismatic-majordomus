@@ -44,6 +44,7 @@ pub mod graph;
 pub mod http;
 pub mod index;
 pub(crate) mod integration;
+pub mod intent;
 pub mod lease;
 pub mod ledger;
 pub mod live;

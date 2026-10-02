@@ -61,25 +61,27 @@ fixture() {
 }
 
 # ---------------------------------------------------------------- 1. the rule gate
-# Two rules that are proven, each by a different mode, and one advisory rule with no proof at
-# all — advisory is outside the population and must not be counted.
+# Two blocking rules that are proven, each by a different mode, and one advisory rule that is
+# proven too. Advisory is not an exemption from naming proof (an advisory rule with none is
+# refused, and case 125 proves that); what it still is, is outside the *blocking* denominator.
 F="$(fixture 0)"
 rule "$F" dispatched project.dispatched blocking 'validator: d' 'category: c' 'exit_code: 10' \
   'enforced_by: [doctor]' 'tests: [test/cases/42_named_by_path.sh]'
 rule "$F" gated      project.gated      blocking 'tests: [test/cases/42_named_by_path.sh]'
-rule "$F" advisory-no-proof project.advisory-no-proof advisory
+rule "$F" advisory-proven project.advisory-proven advisory 'tests: [test/cases/42_named_by_path.sh]'
 expect_exit 0 env MJ_ROOT="$F" "$RGATE" --strict
 expect_grep 'blocking rules: +2 of 3 rule\(s\) in'
-expect_grep 'every one of 2 blocking rule\(s\) names what proves it'
-# the advisory rule was never in the denominator: 2 blocking rules, not 3
-expect_no_grep 'advisory-no-proof'
+# proof is owed by every rule of either class, so the summary's denominator is all three
+expect_grep 'every one of 3 rule\(s\) names what proves it'
+# the advisory rule is not in the blocking denominator: 2 blocking rules, not 3
+expect_no_grep 'advisory-proven'
 # and the gate says, on the same run, which population it is not a verdict about
 expect_grep '^guaranteed claims: +not measured here'
 
 # --- a body that quotes the rule's own subject does not make the rule its own subject.
 # This is lease-reader-check's defect in miniature: the gate reads front matter, never the
 # body, so a rule whose prose contains "class: blocking" is classed by its front matter.
-p="$F/.ai/repo/rules/project/advisory-no-proof.v1.md"
+p="$F/.ai/repo/rules/project/advisory-proven.v1.md"
 printf 'A rule that says `class: blocking` in its body is still advisory.\n' >> "$p"
 expect_exit 0 env MJ_ROOT="$F" "$RGATE" --strict
 expect_grep 'blocking rules: +2 of 3 rule\(s\) in'

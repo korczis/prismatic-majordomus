@@ -1,0 +1,48 @@
+schema: majordomus-transform-decisions/v1
+status: operator-approved
+target:
+  tool_distribution:
+    repository_mutable_state: forbidden
+    install_locations:
+      - path
+      - global_package
+      - external_checkout
+      - symlink
+      - optional_repo_submodule_at_.majordomus
+  ai_layer:
+    portable_without_majordomus: true
+    provider_neutral: true
+    implementation_code_allowed: false
+  repo:
+    path: .ai/repo
+    tracked: true
+  local:
+    path: .ai/local
+    tracked: false
+    implicit_context: false
+    sections:
+      - prompts
+      - cache
+      - session-contexts
+      - state
+  rules:
+    vendor_strategy: vendored
+    baseline_path: .ai/repo/rules/vendor/majordomus
+    project_path: .ai/repo/rules/project
+    overrides_v1: forbidden
+    dependency_graph: required
+    frontmatter: required
+    majordomus_extension: x-majordomus
+  bootstrap:
+    readme_mentions_agents: true
+    agents_backlinks_readme: true
+    agents_loads_ai_readme: true
+    provider_files_are_thin: true
+  init:
+    creates_ai: true
+    creates_project_data_under_.majordomus: false
+    modifies_envrc_implicitly: false
+  discovery:
+    recursive_filesystem_walk_as_authority: false
+    manifest_driven: true
+    local_excluded: true

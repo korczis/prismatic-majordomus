@@ -1,7 +1,7 @@
 +++
 title = "Work lands often and small, and what is published is master and only master"
 description = "Work lands often and small, and what is published is master and only master"
-weight = 99
+weight = 100
 [extra]
 kind = "rule"
 slug = "project-land-and-publish-1"

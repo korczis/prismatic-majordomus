@@ -34,7 +34,7 @@ trap cleanup EXIT
 
 "$MJ" init >/dev/null
 git add -A >/dev/null && git commit -qm install
-before="$(git status --porcelain; git ls-files -s | shasum -a 256)"
+before="$(git status --porcelain; git ls-files -s | mj_sha256sum)"
 MAJORDOMUS_BIN="$RB"; export MAJORDOMUS_BIN
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 
@@ -116,7 +116,7 @@ sed -n 3p "$S/out2.txt" | jq -e '.result.structuredContent.count == 1 and .resul
 expect_exit 0 "$RB" serve status --repo "$T"
 expect_grep '^standing   absent'
 
-after="$(git status --porcelain; git ls-files -s | shasum -a 256)"
+after="$(git status --porcelain; git ls-files -s | mj_sha256sum)"
 [ "$before" = "$after" ] || { echo "    the crash and the recovery changed the repository"; git status --porcelain; exit 1; }
 
 echo "    a killed server leaves a stale lease, the repository names it, and the next client takes it over"
