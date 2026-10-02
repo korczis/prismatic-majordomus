@@ -34,6 +34,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `health` | Health | behaviorally_verified | 3 | [`modules/health.md`](modules/health.md) |
 | `integration` | Pull-request integration | experimental | 3 | [`modules/integration.md`](modules/integration.md) |
 | `intents` | Intent | behaviorally_verified | 4 | [`modules/intents.md`](modules/intents.md) |
+| `knowledge_base` | Knowledge base | behaviorally_verified | 3 | [`modules/knowledge_base.md`](modules/knowledge_base.md) |
 | `lifecycle` | Session lifecycle | behaviorally_verified | 5 | [`modules/lifecycle.md`](modules/lifecycle.md) |
 | `mesh` | Mesh | experimental | 21 | [`modules/mesh.md`](modules/mesh.md) |
 | `models` | Models | experimental | 2 | [`modules/models.md`](modules/models.md) |
@@ -134,6 +135,9 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `intents.preflight` | `intents` | query | behaviorally_verified | `majordomus_intent_preflight` | — | `GET /api/v1/intents/preflight` | `majordomus intent preflight` | — | required |
 | `intents.record` | `intents` | query | behaviorally_verified | `majordomus_intent_record` | — | `GET /api/v1/intents/record` | `majordomus intent show` | — | required |
 | `intents.validate` | `intents` | query | behaviorally_verified | `majordomus_intent_validate` | — | `GET /api/v1/intents/validate` | `majordomus intent validate` | — | required |
+| `knowledge_base.candidates` | `knowledge_base` | query | behaviorally_verified | `majordomus_knowledge_candidates` | `majordomus://knowledge-candidates` | `GET /api/v1/knowledge/candidates` | `majordomus knowledge candidates` | — | required |
+| `knowledge_base.record` | `knowledge_base` | query | behaviorally_verified | `majordomus_knowledge_record` | — | `GET /api/v1/knowledge/record` | `majordomus knowledge record` | — | required |
+| `knowledge_base.status` | `knowledge_base` | query | behaviorally_verified | `majordomus_knowledge_status` | `majordomus://knowledge-status` | `GET /api/v1/knowledge/status` | `majordomus knowledge status` | process, 2 entries, 2s | required |
 | `lifecycle.closed` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_closed` | — | `GET /api/v1/lifecycle/closed` | — | process, 2 entries, 30s | required |
 | `lifecycle.episodes` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_episodes` | `majordomus://lifecycle/episodes` | `GET /api/v1/lifecycle/episodes` | — | process, 2 entries, 2s | required |
 | `lifecycle.providers` | `lifecycle` | query | behaviorally_verified | `majordomus_lifecycle_providers` | — | `GET /api/v1/lifecycle/providers` | — | process, 2 entries | required |

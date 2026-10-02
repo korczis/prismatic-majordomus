@@ -1,7 +1,7 @@
 +++
 title = "The shared server's lease has one reader"
 description = "The shared server's lease has one reader"
-weight = 141
+weight = 144
 [extra]
 kind = "rule"
 slug = "project-the-lease-is-read-once-1"

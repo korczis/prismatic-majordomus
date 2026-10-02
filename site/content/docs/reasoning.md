@@ -1,7 +1,7 @@
 +++
 title = "Reasoning"
 description = "provider-independent reasoning: material uncertainty assessed with evidence, optional advisors discovered by capability and consulted through one transport contract, disagreement settled by experiment rather than count, conclusions and review recorded, and the state carried across sessions, with no advisor required"
-weight = 57
+weight = 58
 [extra]
 source = "docs/REASONING.md"
 +++
