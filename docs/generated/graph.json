@@ -1841,14 +1841,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/economics",
-        "kind": "file",
-        "label": "economics",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/economics",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/economics/claims.rs",
         "kind": "file",
         "label": "claims.rs",
@@ -2465,14 +2457,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/tests/why.rs",
-        "kind": "file",
-        "label": "why.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/tests/why.rs",
-        "external": true
-      },
-      {
         "id": "file:scripts/ci-plan",
         "kind": "file",
         "label": "ci-plan",
@@ -2926,14 +2910,6 @@
         "label": "index.html",
         "summary": "named by the layer; not an object of this index",
         "source": "site/templates/index.html",
-        "external": true
-      },
-      {
-        "id": "file:test/fixtures/economics",
-        "kind": "file",
-        "label": "economics",
-        "summary": "named by the layer; not an object of this index",
-        "source": "test/fixtures/economics",
         "external": true
       },
       {
@@ -6396,6 +6372,21 @@
           "responsibility": "state",
           "source": "docs/SCHEMAS.md",
           "test": "test/cases/33_event_registry.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "kind": "claim",
+        "label": "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "summary": "A crate test binary that ran no test or only a filtered subset is recorded as a skip, one with a failed test as a failure and one that printed no result as an error, whatever colour codes its output carries, and what no claim can name yet is listed as dropped",
+        "route": "/cockpit/objects/claim/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/evidence/record.rs",
+          "responsibility": "none",
+          "source": "docs/EVIDENCE.md",
+          "test": "test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh"
         }
       },
       {
@@ -11786,6 +11777,14 @@
         "source": "docs/claims/event-vocabulary.md"
       },
       {
+        "id": "majordomus://document/docs/claims/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass.md",
+        "kind": "document",
+        "label": "docs/claims/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass.md",
+        "summary": "A crate test binary that ran no test or only a filtered subset is recorded as a skip, one with a failed test as a failure and one that printed no result as an error, whatever colour codes its output carries, and what no claim can name yet is listed as dropped",
+        "route": "/cockpit/objects/document/docs-claims-evidence-a-crate-binary-that-ran-nothing-is-not-a-pass-md",
+        "source": "docs/claims/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/evidence-a-failure-outranks-an-absence.md",
         "kind": "document",
         "label": "docs/claims/evidence-a-failure-outranks-an-absence.md",
@@ -13740,7 +13739,8 @@
             "evidence-unsupported-guarantee-is-reported",
             "evidence-judged-at-the-presented-revision",
             "evidence-a-skip-is-not-run",
-            "evidence-a-failure-outranks-an-absence"
+            "evidence-a-failure-outranks-an-absence",
+            "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass"
           ],
           "commands": [
             "evidence"
@@ -36905,6 +36905,13 @@
         "source": "test/cases/504_public_text_is_redacted_once.sh"
       },
       {
+        "id": "majordomus://test/test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+        "kind": "test",
+        "label": "test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+        "route": "/cockpit/objects/test/test-cases-506-a-crate-binary-that-ran-nothing-is-not-a-pass-sh",
+        "source": "test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/50_blocker_across_handover.sh",
         "kind": "test",
         "label": "test/cases/50_blocker_across_handover.sh",
@@ -46395,6 +46402,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "target": "file:apps/majordomus-cli/src/evidence/record.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "target": "majordomus://test/test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/evidence-a-failure-outranks-an-absence",
         "target": "file:apps/majordomus-cli/src/evidence/freshness.rs",
         "kind": "implemented_by"
@@ -49141,11 +49168,6 @@
       },
       {
         "source": "majordomus://claim/why-catalogue-discovered",
-        "target": "file:apps/majordomus-cli/tests/why.rs",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/why-catalogue-discovered",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -49161,11 +49183,6 @@
       },
       {
         "source": "majordomus://claim/why-diagnosis-explainable",
-        "target": "file:apps/majordomus-cli/tests/why.rs",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/why-diagnosis-explainable",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -49178,11 +49195,6 @@
         "source": "majordomus://claim/why-references-resolve",
         "target": "file:apps/majordomus-cli/src/why.rs",
         "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/why-references-resolve",
-        "target": "file:apps/majordomus-cli/tests/why.rs",
-        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/why-references-resolve",
@@ -49458,16 +49470,6 @@
         "source": "majordomus://context/ai.repo.benchmarks",
         "target": "kind:context",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://context/ai.repo.benchmarks.economics",
-        "target": "file:apps/majordomus-cli/src/economics",
-        "kind": "tracks"
-      },
-      {
-        "source": "majordomus://context/ai.repo.benchmarks.economics",
-        "target": "file:test/fixtures/economics",
-        "kind": "tracks"
       },
       {
         "source": "majordomus://context/ai.repo.benchmarks.economics",
@@ -50421,6 +50423,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/event-vocabulary.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -58750,6 +58757,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/50_blocker_across_handover.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -62182,7 +62194,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4451,
+      "edges": 4452,
       "acyclic": true,
       "truncated": true
     }

@@ -2601,6 +2601,19 @@
       "test_case": "274_commit_policy"
     },
     {
+      "id": "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+      "claim": "A crate test binary that ran no test or only a filtered subset is recorded as a skip, one with a failed test as a failure and one that printed no result as an error, whatever colour codes its output carries, and what no claim can name yet is listed as dropped",
+      "source": "docs/EVIDENCE.md",
+      "implementation": "apps/majordomus-cli/src/evidence/record.rs",
+      "test": "test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+      "status": "guaranteed",
+      "note": "The result line of cargo test says ok for a binary that ran nothing, so the recorder reads its counts. A failed count is a failure, a binary that passed nothing or ran a filtered subset is a skip, a line with no count or a binary with no result line is an error, and escape sequences are stripped first. The unit-test binary of the crate, its doctests, binaries outside tests/ and result lines no Running line named are listed in the recording as dropped, with the reason, because no claim can name them until a runner records them one by one.",
+      "responsibility": "none",
+      "source_route": "/docs/evidence/",
+      "command": null,
+      "test_case": "506_a_crate_binary_that_ran_nothing_is_not_a_pass"
+    },
+    {
       "id": "a-skipped-case-is-not-a-proof",
       "claim": "A test case that declines to run is reported as a skip and recorded as one, so the evidence ledger can never read a case that asserted nothing as the proof of the claim it names",
       "source": "docs/EVIDENCE.md",

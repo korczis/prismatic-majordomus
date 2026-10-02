@@ -76,8 +76,8 @@ use crate::capability::model::{
 };
 use crate::capability::module::ModuleDescriptor;
 use crate::evidence::{
-    self, freshness, ClaimProof, EvidenceReport, Execution, Ledger, Origin, ProofState,
-    RecordRequest, TreeState,
+    self, freshness, ClaimProof, EvidenceDropped, EvidenceReport, Execution, Ledger, Origin,
+    ProofState, RecordRequest, TreeState,
 };
 use crate::{capability, module};
 
@@ -418,6 +418,7 @@ pub struct TestEvidence {
 ///     commit: "06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f".to_string(),
 ///     working_tree: "clean".to_string(),
 ///     unknown: vec!["docs/CLAIMS.yaml".to_string()],
+///     dropped: vec![],
 ///     ledger: majordomus_cli::evidence::LEDGER_PATH.to_string(),
 /// };
 /// // the failing test is one of the three recorded, not a fourth thing that was dropped
@@ -427,6 +428,8 @@ pub struct TestEvidence {
 /// let json = serde_json::to_value(&report).unwrap();
 /// assert_eq!(json["unknown"].as_array().unwrap().len(), 1);
 /// assert_eq!(json["working_tree"], "clean");
+/// // a suite-only recording listed nothing, and its document is what it always was
+/// assert!(json.get("dropped").is_none());
 /// ```
 pub struct RecordReport {
     /// How many executions were written.
@@ -439,6 +442,10 @@ pub struct RecordReport {
     pub working_tree: String,
     /// Results the run named that no runner in this repository owns.
     pub unknown: Vec<String>,
+    /// What the reports held that no claim can name yet: the crate's unit-test binary, its
+    /// doctests. Listed rather than ignored, and absent from the document when empty.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub dropped: Vec<EvidenceDropped>,
     /// Where the ledger was written.
     pub ledger: String,
 }
@@ -610,6 +617,7 @@ fn record(ctx: &Context, input: EvidenceRecordInput) -> Result<RecordReport, Cap
         commit: got.commit,
         working_tree: got.working_tree,
         unknown: got.unknown,
+        dropped: got.dropped,
         ledger: evidence::LEDGER_PATH.to_string(),
     })
 }
@@ -711,7 +719,7 @@ pub fn module() -> ModuleDescriptor {
                 id: "evidence.record",
                 kind: CapabilityKind::Command,
                 title: "Record a run that happened",
-                description: "Reads what the runs already wrote — the suite's TSV report, cargo test's output — stamps each result with the provenance the run itself did not carry (the commit, the tree state, the digest of the test's own source, the time, the origin) and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. A tree with no commit to name is refused, because an execution with no commit proves nothing.",
+                description: "Reads what the runs already wrote — the suite's TSV report, cargo test's output — stamps each result with the provenance the run itself did not carry (the commit, the tree state, the digest of the test's own source, the time, the origin) and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. A tree with no commit to name is refused, because an execution with no commit proves nothing. A crate binary that ran no test, or only a filtered subset, is recorded as a skip, and what no claim can name yet (the crate's own unit tests, its doctests) is listed as dropped.",
                 input: EvidenceRecordInput,
                 output: RecordReport,
                 stability: Stability::BehaviorallyVerified,
@@ -877,6 +885,75 @@ mod tests {
             .execute("evidence.report", serde_json::json!({}))
             .unwrap();
         assert_eq!(v["presented"]["revision"], "working_tree");
+    }
+
+    /// What a crate run held that no claim can name yet reaches the recording's answer, in
+    /// the order the output held it, and a recording with nothing dropped carries no
+    /// `dropped` at all, so a suite-only recording answers as it did before the list existed.
+    #[test]
+    fn the_recording_answers_with_what_it_dropped() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let git = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(repo.root())
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}");
+        };
+        git(&["init", "-q"]);
+        git(&["config", "user.email", "t@example.com"]);
+        git(&["config", "user.name", "t"]);
+        git(&["add", "-A"]);
+        git(&["commit", "-q", "-m", "fixture"]);
+        let ctx = repo.context().unwrap();
+
+        let reports = tempfile::tempdir().unwrap();
+        let log = reports.path().join("crate.log");
+        std::fs::write(
+            &log,
+            "     Running unittests src/lib.rs (target/debug/deps/majordomus_cli-1)\n\
+             test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n\
+                Doc-tests majordomus_cli\n\
+             test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n",
+        )
+        .unwrap();
+        let v = ctx
+            .execute(
+                "evidence.record",
+                serde_json::json!({ "crate_output": log.to_string_lossy() }),
+            )
+            .unwrap();
+        assert_eq!(v["recorded"], 0, "{v}");
+        let dropped: Vec<(&str, &str)> = v["dropped"]
+            .as_array()
+            .unwrap_or_else(|| panic!("no dropped list: {v}"))
+            .iter()
+            .map(|d| {
+                (
+                    d["producer"].as_str().unwrap_or("?"),
+                    d["what"].as_str().unwrap_or("?"),
+                )
+            })
+            .collect();
+        assert_eq!(
+            dropped,
+            [
+                ("crate", "unittests src/lib.rs"),
+                ("crate", "doc-tests majordomus_cli")
+            ]
+        );
+
+        let tsv = reports.path().join("run.tsv");
+        std::fs::write(&tsv, "99_ghost\tok\t1\tparallel\n").unwrap();
+        let v = ctx
+            .execute(
+                "evidence.record",
+                serde_json::json!({ "suite": tsv.to_string_lossy() }),
+            )
+            .unwrap();
+        assert!(v.get("dropped").is_none(), "{v}");
     }
 
     /// Each ledger a report reads — the one a presented commit holds, the working copy
