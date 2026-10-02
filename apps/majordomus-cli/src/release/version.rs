@@ -1457,4 +1457,104 @@ mod tests {
         assert!(!leads_with_version("x1.2.3"));
         assert!(!leads_with_version(""));
     }
+
+    /// One selection, made against a real release: a tree tagged `v0.1.0` whose surface has
+    /// not moved, with a fix committed since. The analysis is sound, so the contract decides
+    /// — it requires no release over the last one — and the commits make it a patch; the
+    /// report's commit window is the one since that release, and the writer's default
+    /// target is exactly the `next` the report states.
+    #[test]
+    fn a_sound_analysis_decides_the_report_and_the_writers_target_from_the_last_release() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        tree(root, "0.1.0");
+        let registry_file = root.join(crate::release::surface::REGISTRY);
+        std::fs::create_dir_all(registry_file.parent().unwrap()).unwrap();
+        std::fs::write(
+            &registry_file,
+            r#"{"schema": "majordomus/capability-registry/v1", "capabilities": []}"#,
+        )
+        .unwrap();
+        let git = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .current_dir(root)
+                .args(args)
+                .output()
+                .expect("git runs");
+            assert!(out.status.success(), "git {args:?}: {out:?}");
+        };
+        git(&["init", "-q"]);
+        git(&["config", "user.email", "t@example.com"]);
+        git(&["config", "user.name", "t"]);
+        git(&["add", "-A"]);
+        git(&["commit", "-q", "-m", "chore: release 0.1.0"]);
+        git(&["tag", "v0.1.0"]);
+        std::fs::write(root.join("notes.txt"), "repaired\n").unwrap();
+        git(&["add", "-A"]);
+        git(&["commit", "-q", "-m", "fix: repair the thing"]);
+
+        let registry = crate::capability::registry::CapabilityRegistry::builder()
+            .build()
+            .unwrap();
+        let selection = select(root, &registry, &[]);
+        let plan = selection.plan.as_ref().expect("a sound plan");
+        assert_eq!(plan.baseline.reference, "v0.1.0");
+        assert_eq!(plan.measured_version(), Ok("0.1.0".to_string()));
+
+        let report = &selection.report;
+        assert_eq!(report.last_release.as_deref(), Some("0.1.0"));
+        // the window is the one since the release: the fix, and not the release commit
+        let subjects: Vec<&str> = report.changes.iter().map(|c| c.subject.as_str()).collect();
+        assert_eq!(subjects, ["repair the thing"], "{:?}", report.changes);
+        assert_eq!(report.bump, "patch");
+        assert_eq!(report.next.as_deref(), Some("0.1.1"));
+        assert_eq!(report.decided_by, DecidedBy::ContractAndCommits);
+        assert_eq!(report.contract_unreadable, None);
+        let current = Version::parse("0.1.0").unwrap();
+        assert_eq!(
+            default_target(report, current).map(|v| v.to_string()),
+            Ok("0.1.1".to_string())
+        );
+    }
+
+    /// The writer's default target refuses what it cannot raise to, and says why: an
+    /// undecided report with or without a reason, a selected version that is not three
+    /// numbers — and with nothing to release it stays where it is.
+    #[test]
+    fn the_default_target_refuses_what_it_cannot_raise_to() {
+        let current = Version::parse("0.4.0").unwrap();
+        let report = |next: Option<&str>, decided_by, why: Option<&str>| VersionReport {
+            declared: "0.4.0".into(),
+            tool: "0.4.0".into(),
+            agree: true,
+            last_release: Some("0.4.0".into()),
+            bump: "none".into(),
+            commits_imply: None,
+            next: next.map(Into::into),
+            decided_by,
+            contract_unreadable: why.map(Into::into),
+            changes: Vec::new(),
+        };
+        // undecided and no reason given: the refusal still says what was not measured
+        assert_eq!(
+            default_target(&report(None, DecidedBy::Undecided, None), current),
+            Err("the public contract could not be measured".to_string())
+        );
+        // undecided wins over a stray `next`: no one decided it, so nothing is raised to it
+        assert_eq!(
+            default_target(
+                &report(Some("0.5.0"), DecidedBy::Undecided, Some("why")),
+                current
+            ),
+            Err("why".to_string())
+        );
+        assert_eq!(
+            default_target(&report(Some("0.5"), DecidedBy::Contract, None), current),
+            Err("the selected version '0.5' is not three numbers".to_string())
+        );
+        assert_eq!(
+            default_target(&report(None, DecidedBy::Contract, None), current),
+            Ok(current)
+        );
+    }
 }

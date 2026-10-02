@@ -526,4 +526,37 @@ mod tests {
         assert_eq!(ChangeKind::Other.word(), None);
         assert_eq!(ChangeKind::parse("wip"), ChangeKind::Other);
     }
+
+    /// Who decided `next` is one word on the wire and one phrase in the text renderings, and
+    /// the word is the serialization itself: a variant renamed in one place and not the
+    /// other would make the JSON and the terminal name different deciders.
+    #[test]
+    fn who_decided_reads_the_same_on_the_wire_and_in_the_text() {
+        let all = [
+            DecidedBy::Contract,
+            DecidedBy::ContractAndCommits,
+            DecidedBy::Undecided,
+        ];
+        for by in all {
+            assert_eq!(serde_json::to_value(by).unwrap(), by.as_str());
+            let back: DecidedBy = serde_json::from_value(by.as_str().into()).unwrap();
+            assert_eq!(back, by);
+        }
+        assert_eq!(
+            all.map(DecidedBy::as_str),
+            ["contract", "contract_and_commits", "undecided"]
+        );
+        assert_eq!(DecidedBy::Contract.phrase(), "decided by the contract");
+        assert_eq!(
+            DecidedBy::ContractAndCommits.phrase(),
+            "decided by the contract and the commits"
+        );
+        // the undecided phrase says why nothing was decided, never a version's provenance
+        assert_eq!(
+            DecidedBy::Undecided.phrase(),
+            "undecided: the contract could not be measured"
+        );
+        // the absent field is the undecided one: an answer that names no decider decided nothing
+        assert_eq!(DecidedBy::default(), DecidedBy::Undecided);
+    }
 }

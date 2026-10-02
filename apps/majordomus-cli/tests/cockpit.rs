@@ -36,6 +36,9 @@ const PAGES: &[&str] = &[
     // the integration queue: in the fixture nothing is observed, so this is the page's
     // "no queue" arm, which must still render and still cost nothing canonical
     "/cockpit/integration",
+    // the board, over `peers.list`: in a fixture the repository is this one checkout, read
+    // from memory — the page's "every checkout answered" arm, with nobody on the board
+    "/cockpit/peers",
     "/cockpit/capabilities/repository.info",
     "/cockpit/capabilities?module=repository",
     "/cockpit/capabilities?kind=query",

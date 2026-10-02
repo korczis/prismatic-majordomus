@@ -124,67 +124,10 @@ fn render_version(args: &ReleaseArgs) -> Result<u8> {
             }
         }
         OutputFormat::Text => {
-            writeln!(out, "declared     {}", report.declared).map_err(Error::Transport)?;
-            writeln!(out, "tool         {}", report.tool).map_err(Error::Transport)?;
-            writeln!(
-                out,
-                "agree        {}",
-                if report.agree { "yes" } else { "NO" }
-            )
-            .map_err(Error::Transport)?;
-            writeln!(
-                out,
-                "last release {}",
-                report.last_release.as_deref().unwrap_or("—")
-            )
-            .map_err(Error::Transport)?;
-            writeln!(out, "commits      {} since it", report.changes.len())
+            // Rendered whole and handed to stdout at once, so a reader that has gone away
+            // is one transport failure, reported — the exit says so, not a success.
+            out.write_all(version_text(&report, &findings).as_bytes())
                 .map_err(Error::Transport)?;
-            writeln!(
-                out,
-                "next         {} ({})",
-                report.next.as_deref().unwrap_or("—"),
-                report.decided_by.phrase()
-            )
-            .map_err(Error::Transport)?;
-            if let Some(why) = report.contract_unreadable.as_deref() {
-                // One line per error, as `release bump` prints them when it refuses.
-                for line in why.lines() {
-                    writeln!(out, "             because {line}").map_err(Error::Transport)?;
-                }
-                writeln!(
-                    out,
-                    "             name it deliberately: `majordomus release bump --level <level>` \
-                     or `--exact <version>`"
-                )
-                .map_err(Error::Transport)?;
-            }
-            writeln!(out, "bump         {}", report.bump).map_err(Error::Transport)?;
-            writeln!(
-                out,
-                "             commits imply {}{} ({})",
-                report.bump,
-                report
-                    .commits_imply
-                    .as_deref()
-                    .map(|v| format!(" -> {v}"))
-                    .unwrap_or_default(),
-                match report.decided_by {
-                    release::model::DecidedBy::Contract => "evidence; the contract decides",
-                    release::model::DecidedBy::ContractAndCommits => {
-                        "evidence; the contract requires no release, so a patch carries them"
-                    }
-                    release::model::DecidedBy::Undecided => {
-                        "evidence only; it does not answer in the contract's place"
-                    }
-                }
-            )
-            .map_err(Error::Transport)?;
-            for d in &findings {
-                writeln!(out).map_err(Error::Transport)?;
-                writeln!(out, "{} {}: {}", severity_word(d.severity), d.id, d.message)
-                    .map_err(Error::Transport)?;
-            }
         }
     }
     Ok(if report.agree && findings.is_empty() {
@@ -192,6 +135,88 @@ fn render_version(args: &ReleaseArgs) -> Result<u8> {
     } else {
         EXIT_DISAGREE
     })
+}
+
+/// What `release bump` says when it is asked to derive a version and the contract could not
+/// be measured: that there is nothing to derive one from, why — a line per reason, as
+/// `release version` gives them — and how to name the version deliberately instead.
+fn unmeasured_refusal(why: &str) -> String {
+    let mut lines = vec![
+        "release: the public contract cannot be measured here, so there is no bump to derive"
+            .to_string(),
+    ];
+    lines.extend(why.lines().map(|line| format!("         {line}")));
+    lines.push(
+        "         name the version deliberately: `majordomus release bump --level minor` or \
+         `--exact <version>`"
+            .to_string(),
+    );
+    lines.join("\n") + "\n"
+}
+
+/// The text rendering of `release version`: the version where it is stated, the release
+/// it is measured from, the `next` that was decided and who decided it — with the reason,
+/// line by line, when nobody could — and what the commits imply, labelled as the evidence
+/// it is. The findings follow, each after a blank line.
+fn version_text(
+    report: &release::model::VersionReport,
+    findings: &[release::compat::Diagnostic],
+) -> String {
+    use release::model::DecidedBy;
+    let mut lines = vec![
+        format!("declared     {}", report.declared),
+        format!("tool         {}", report.tool),
+        format!("agree        {}", if report.agree { "yes" } else { "NO" }),
+        format!(
+            "last release {}",
+            report.last_release.as_deref().unwrap_or("—")
+        ),
+        format!("commits      {} since it", report.changes.len()),
+        format!(
+            "next         {} ({})",
+            report.next.as_deref().unwrap_or("—"),
+            report.decided_by.phrase()
+        ),
+    ];
+    if let Some(why) = report.contract_unreadable.as_deref() {
+        // One line per error, as `release bump` prints them when it refuses.
+        lines.extend(
+            why.lines()
+                .map(|line| format!("             because {line}")),
+        );
+        lines.push(
+            "             name it deliberately: `majordomus release bump --level <level>` \
+             or `--exact <version>`"
+                .to_string(),
+        );
+    }
+    lines.push(format!("bump         {}", report.bump));
+    lines.push(format!(
+        "             commits imply {}{} ({})",
+        report.bump,
+        report
+            .commits_imply
+            .as_deref()
+            .map(|v| format!(" -> {v}"))
+            .unwrap_or_default(),
+        match report.decided_by {
+            DecidedBy::Contract => "evidence; the contract decides",
+            DecidedBy::ContractAndCommits => {
+                "evidence; the contract requires no release, so a patch carries them"
+            }
+            DecidedBy::Undecided => "evidence only; it does not answer in the contract's place",
+        }
+    ));
+    for d in findings {
+        lines.push(String::new());
+        lines.push(format!(
+            "{} {}: {}",
+            severity_word(d.severity),
+            d.id,
+            d.message
+        ));
+    }
+    lines.join("\n") + "\n"
 }
 
 /// How a diagnostic's severity is printed, the same word in every rendering.
@@ -522,19 +547,8 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
                 },
             ),
             Err(why) => {
-                writeln!(
-                    out,
-                    "release: the public contract cannot be measured here, so there is no bump to derive"
-                )
-                .map_err(Error::Transport)?;
-                for line in why.lines() {
-                    writeln!(out, "         {line}").map_err(Error::Transport)?;
-                }
-                writeln!(
-                    out,
-                    "         name the version deliberately: `majordomus release bump --level minor` or `--exact <version>`"
-                )
-                .map_err(Error::Transport)?;
+                out.write_all(unmeasured_refusal(&why).as_bytes())
+                    .map_err(Error::Transport)?;
                 return Ok(EXIT_UNREADABLE);
             }
         },
@@ -668,4 +682,118 @@ fn derived_after(to: &str) -> String {
         version::PROJECTION,
         version::PROJECTION
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::release::compat::Diagnostic;
+    use crate::release::model::{DecidedBy, VersionReport};
+
+    fn report(decided_by: DecidedBy) -> VersionReport {
+        VersionReport {
+            declared: "0.4.0".into(),
+            tool: "0.4.0".into(),
+            agree: true,
+            last_release: Some("0.4.0".into()),
+            bump: "patch".into(),
+            commits_imply: Some("0.4.1".into()),
+            next: Some("0.5.0".into()),
+            decided_by,
+            contract_unreadable: None,
+            changes: Vec::new(),
+        }
+    }
+
+    /// The report a person reads: the stated version, the release it is measured from, the
+    /// `next` with who decided it, and the commits as evidence — in that order, one write.
+    #[test]
+    fn the_version_report_names_who_decided_next_and_labels_the_commits_as_evidence() {
+        assert_eq!(
+            version_text(&report(DecidedBy::Contract), &[]),
+            "declared     0.4.0\n\
+             tool         0.4.0\n\
+             agree        yes\n\
+             last release 0.4.0\n\
+             commits      0 since it\n\
+             next         0.5.0 (decided by the contract)\n\
+             bump         patch\n\
+             \x20            commits imply patch -> 0.4.1 (evidence; the contract decides)\n"
+        );
+
+        let mut both = report(DecidedBy::ContractAndCommits);
+        both.next = Some("0.4.1".into());
+        let text = version_text(&both, &[]);
+        assert!(
+            text.contains("next         0.4.1 (decided by the contract and the commits)\n"),
+            "{text}"
+        );
+        assert!(
+            text.contains("(evidence; the contract requires no release, so a patch carries them)"),
+            "{text}"
+        );
+        assert!(!text.contains("because"), "{text}");
+    }
+
+    /// Nobody decided: `next` is a dash, every reason is its own line, the way out is named,
+    /// and the commits are evidence only — never an answer in the contract's place. A
+    /// disagreement and the findings are not hidden behind a decision either.
+    #[test]
+    fn an_undecided_report_says_why_line_by_line_and_the_findings_follow() {
+        let mut undecided = report(DecidedBy::Undecided);
+        undecided.next = None;
+        undecided.commits_imply = None;
+        undecided.agree = false;
+        undecided.last_release = None;
+        undecided.contract_unreadable =
+            Some("the tag v0.4.0 moved\nthe record names another commit".into());
+        let findings = [Diagnostic {
+            id: "projection-stale".into(),
+            severity: Severity::Error,
+            message: "bin/majordomus states 0.3.0".into(),
+        }];
+        let text = version_text(&undecided, &findings);
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(lines[2], "agree        NO");
+        assert_eq!(lines[3], "last release —");
+        assert_eq!(
+            lines[5],
+            "next         — (undecided: the contract could not be measured)"
+        );
+        assert_eq!(lines[6], "             because the tag v0.4.0 moved");
+        assert_eq!(
+            lines[7],
+            "             because the record names another commit"
+        );
+        assert!(lines[8].contains("name it deliberately"), "{text}");
+        assert_eq!(
+            lines[10],
+            "             commits imply patch (evidence only; it does not answer in the \
+             contract's place)"
+        );
+        // each finding after a blank line, with the same severity word every rendering uses
+        assert_eq!(lines[11], "");
+        assert_eq!(
+            lines[12],
+            format!(
+                "{} projection-stale: bin/majordomus states 0.3.0",
+                severity_word(Severity::Error)
+            )
+        );
+        assert_eq!(lines.len(), 13, "{text}");
+        assert!(text.ends_with('\n'));
+    }
+
+    /// The writer's refusal to guess names every reason it was given, a line each, between
+    /// what it refuses and how to name a version instead.
+    #[test]
+    fn the_refusal_to_derive_names_every_reason_and_the_way_out() {
+        assert_eq!(
+            unmeasured_refusal("nothing is published\nno tag names a release"),
+            "release: the public contract cannot be measured here, so there is no bump to \
+             derive\n         nothing is published\n         no tag names a release\n         \
+             name the version deliberately: `majordomus release bump --level minor` or \
+             `--exact <version>`\n"
+        );
+    }
 }
