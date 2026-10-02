@@ -474,6 +474,11 @@ mj_uc_cmd_validate() {
 # ask: the site job has none, the suite job and a laptop do, and the catalogue each derived
 # differed by that one line. The line is about the recorder, and it goes; what the nodes are
 # is kept.
+#
+# A verification line names the tree it measured after its duration (`exit 0, 1s, tree
+# a9eff10ec68c`), and the duration mask anchored at the end of the line missed it: a loaded
+# machine took one second where an idle one took none, the catalogue differed by that digit,
+# and the refusal count, grouped by output, by one. The duration goes; the tree stays.
 mj_uc_normalise() { # repo-path
   local real; real="$(cd "$1" 2>/dev/null && pwd -P)"
   sed -E \
@@ -498,7 +503,7 @@ mj_uc_normalise() { # repo-path
     -e 's/^([a-z_-]+ +(cold|warm) +[a-z]+ +[0-9]+) +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+/\1  <ms>  <ms>  <ms>  <ms>/' \
     -e 's/^(INFO|WARN) +budget +([a-z]+) — .*$/·    budget      \2 — <timed against the policy budget>/' \
     -e 's/^(OK|WARN|FAIL) +checkpoint +([^ ]+) — .*$/·    checkpoint  \2 — <timed against the checkpoint interval>/' \
-    -e 's/(exit [0-9]+, )[0-9]+s$/\1<s>s/' \
+    -e 's/(exit [0-9]+, )[0-9]+s(, tree [0-9a-f]+)?$/\1<s>s\2/' \
     -e 's/[0-9]+ ms/<n> ms/g' \
     -e 's/[0-9]+ ms of/<n> ms of/g' \
     -e 's/\([0-9]+[mhd] ago/(<age> ago/g' \
