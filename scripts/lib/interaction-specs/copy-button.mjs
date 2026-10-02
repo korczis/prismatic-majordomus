@@ -14,12 +14,34 @@ export default {
       });
       if (expected === null) { fail('a copy button has no x-ref="src" snippet in its component'); n++; continue; }
       await c.locator.scrollIntoViewIfNeeded();
+      // "Copied" lasts 1600 ms before the button says Copy again, and a stalled driver can read past it: an observer
+      // set before the click records the label when it changes, so the check judges what the button said, not what
+      // it says when the driver gets round to reading it
+      await c.locator.evaluate((b) => {
+        window.__mjClipboard = null;
+        const seen = window.__mjCopySeen = { said: null };
+        if (window.__mjCopyObserver) window.__mjCopyObserver.disconnect();
+        window.__mjCopyObserver = new MutationObserver(() => {
+          if (seen.said === null && b.textContent.trim() === 'Copied') seen.said = 'Copied';
+        });
+        window.__mjCopyObserver.observe(b, { subtree: true, childList: true, characterData: true, attributes: true });
+      });
       await c.locator.click();
-      await page.waitForTimeout(60);
-      const got = await page.evaluate(() => window.__mjClipboard ?? '');
+      // the wait polls on a timer inside the page, not on animation frames, which a starved renderer delays too
+      const r = await page.evaluate(() => new Promise((done) => {
+        const t0 = Date.now();
+        const tick = () => {
+          const seen = window.__mjCopySeen;
+          if ((seen.said !== null && window.__mjClipboard !== null) || Date.now() - t0 > 10000) {
+            window.__mjCopyObserver.disconnect();
+            done({ said: seen.said, clip: window.__mjClipboard });
+          } else setTimeout(tick, 50);
+        };
+        tick();
+      }));
+      const got = r.clip ?? '';
       if (got !== expected) fail(`the clipboard holds ${JSON.stringify(got.slice(0, 60))}, not the snippet ${JSON.stringify(expected.slice(0, 60))}`);
-      const label = (await c.locator.innerText()).trim();
-      if (label !== 'Copied') fail(`after copying the button says "${label}", not "Copied"`);
+      if (r.said !== 'Copied') fail(`after copying the button never says "Copied" (it says "${(await c.locator.innerText()).trim()}")`);
       n++;
     }
     return n;
