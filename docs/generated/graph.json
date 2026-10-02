@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.11.0",
+  "generator": "majordomus-cli 0.12.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -23,6 +23,7 @@
       "feature": "an object of kind `feature`",
       "file": "a file the layer names and does not hold as an object",
       "implementation": "an object of kind `implementation`",
+      "intent": "an object of kind `intent`",
       "issue": "an object of kind `issue`",
       "kind": "one kind of object the layer indexed",
       "knowledge": "an object of kind `knowledge`",
@@ -629,6 +630,42 @@
         "summary": "The integration queue",
         "route": "/cockpit/capabilities/integration.queue",
         "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:intents.list",
+        "kind": "capability",
+        "label": "intents.list",
+        "summary": "Every intent, with its derived stage",
+        "route": "/cockpit/capabilities/intents.list",
+        "source": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:intents.preflight",
+        "kind": "capability",
+        "label": "intents.preflight",
+        "summary": "Which intent a piece of work serves",
+        "route": "/cockpit/capabilities/intents.preflight",
+        "source": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:intents.record",
+        "kind": "capability",
+        "label": "intents.record",
+        "summary": "One intent, with everything derived about it",
+        "route": "/cockpit/capabilities/intents.record",
+        "source": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:intents.validate",
+        "kind": "capability",
+        "label": "intents.validate",
+        "summary": "What the intent model refuses",
+        "route": "/cockpit/capabilities/intents.validate",
+        "source": "apps/majordomus-cli/src/capability/builtin/intents.rs",
         "status": "query"
       },
       {
@@ -1609,11 +1646,11 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/capability/builtin/objects.rs",
+        "id": "file:apps/majordomus-cli/src/capability/builtin/intents.rs",
         "kind": "file",
-        "label": "objects.rs",
+        "label": "intents.rs",
         "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/capability/builtin/objects.rs",
+        "source": "apps/majordomus-cli/src/capability/builtin/intents.rs",
         "external": true
       },
       {
@@ -1929,14 +1966,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/http/openapi.rs",
-        "kind": "file",
-        "label": "openapi.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/http/openapi.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/http/router.rs",
         "kind": "file",
         "label": "router.rs",
@@ -1958,14 +1987,6 @@
         "label": "ws.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/http/ws.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/index.rs",
-        "kind": "file",
-        "label": "index.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/index.rs",
         "external": true
       },
       {
@@ -2001,27 +2022,11 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/lease.rs",
+        "id": "file:apps/majordomus-cli/src/intent.rs",
         "kind": "file",
-        "label": "lease.rs",
+        "label": "intent.rs",
         "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/lease.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/mcp/protocol.rs",
-        "kind": "file",
-        "label": "protocol.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/mcp/protocol.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/mesh/cooperation.rs",
-        "kind": "file",
-        "label": "cooperation.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/mesh/cooperation.rs",
+        "source": "apps/majordomus-cli/src/intent.rs",
         "external": true
       },
       {
@@ -2030,54 +2035,6 @@
         "label": "doctor.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/mesh/doctor.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/mesh/journal.rs",
-        "kind": "file",
-        "label": "journal.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/mesh/journal.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/mesh/registry.rs",
-        "kind": "file",
-        "label": "registry.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/mesh/registry.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/mesh/repository.rs",
-        "kind": "file",
-        "label": "repository.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/mesh/repository.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/mesh/state.rs",
-        "kind": "file",
-        "label": "state.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/mesh/state.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/mesh/trust.rs",
-        "kind": "file",
-        "label": "trust.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/mesh/trust.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/models/mod.rs",
-        "kind": "file",
-        "label": "mod.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/models/mod.rs",
         "external": true
       },
       {
@@ -2110,14 +2067,6 @@
         "label": "product.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/product.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/providers.rs",
-        "kind": "file",
-        "label": "providers.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/providers.rs",
         "external": true
       },
       {
@@ -2158,22 +2107,6 @@
         "label": "availability.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/reasoning/availability.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/reasoning/policy.rs",
-        "kind": "file",
-        "label": "policy.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/reasoning/policy.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/reasoning/state.rs",
-        "kind": "file",
-        "label": "state.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/reasoning/state.rs",
         "external": true
       },
       {
@@ -2230,22 +2163,6 @@
         "label": "mod.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/session/mod.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/shared.rs",
-        "kind": "file",
-        "label": "shared.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/shared.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/site.rs",
-        "kind": "file",
-        "label": "site.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/site.rs",
         "external": true
       },
       {
@@ -2342,54 +2259,6 @@
         "label": "executor.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/tests/executor.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/tests/http_serve.rs",
-        "kind": "file",
-        "label": "http_serve.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/tests/http_serve.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/tests/lease_lost.rs",
-        "kind": "file",
-        "label": "lease_lost.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/tests/lease_lost.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/tests/mcp_shared.rs",
-        "kind": "file",
-        "label": "mcp_shared.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/tests/mcp_shared.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/tests/mesh.rs",
-        "kind": "file",
-        "label": "mesh.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/tests/mesh.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/tests/mesh_cooperation.rs",
-        "kind": "file",
-        "label": "mesh_cooperation.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/tests/mesh_cooperation.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/tests/product.rs",
-        "kind": "file",
-        "label": "product.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/tests/product.rs",
         "external": true
       },
       {
@@ -2657,14 +2526,6 @@
         "external": true
       },
       {
-        "id": "file:scripts/rust-coverage",
-        "kind": "file",
-        "label": "rust-coverage",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/rust-coverage",
-        "external": true
-      },
-      {
         "id": "file:scripts/site-build",
         "kind": "file",
         "label": "site-build",
@@ -2729,14 +2590,6 @@
         "external": true
       },
       {
-        "id": "file:share/install/install.sh.in",
-        "kind": "file",
-        "label": "install.sh.in",
-        "summary": "named by the layer; not an object of this index",
-        "source": "share/install/install.sh.in",
-        "external": true
-      },
-      {
         "id": "file:share/kinds.yaml",
         "kind": "file",
         "label": "kinds.yaml",
@@ -2758,6 +2611,14 @@
         "label": "obligations.yaml",
         "summary": "named by the layer; not an object of this index",
         "source": "share/obligations.yaml",
+        "external": true
+      },
+      {
+        "id": "file:share/schemas/majordomus/intent/intent.v1.schema.json",
+        "kind": "file",
+        "label": "intent.v1.schema.json",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/schemas/majordomus/intent/intent.v1.schema.json",
         "external": true
       },
       {
@@ -2793,22 +2654,6 @@
         "external": true
       },
       {
-        "id": "file:share/skeleton/profiles/implementation.yaml",
-        "kind": "file",
-        "label": "implementation.yaml",
-        "summary": "named by the layer; not an object of this index",
-        "source": "share/skeleton/profiles/implementation.yaml",
-        "external": true
-      },
-      {
-        "id": "file:share/skeleton/profiles/routine.yaml",
-        "kind": "file",
-        "label": "routine.yaml",
-        "summary": "named by the layer; not an object of this index",
-        "source": "share/skeleton/profiles/routine.yaml",
-        "external": true
-      },
-      {
         "id": "file:share/standard/majordomus/rules/lifecycle-observed.v1.md",
         "kind": "file",
         "label": "lifecycle-observed.v1.md",
@@ -2822,14 +2667,6 @@
         "label": "index.html",
         "summary": "named by the layer; not an object of this index",
         "source": "site/templates/index.html",
-        "external": true
-      },
-      {
-        "id": "file:test/mesh-lab/run",
-        "kind": "file",
-        "label": "run",
-        "summary": "named by the layer; not an object of this index",
-        "source": "test/mesh-lab/run",
         "external": true
       },
       {
@@ -2911,6 +2748,12 @@
         "kind": "kind",
         "label": "implementation",
         "summary": "every object of kind `implementation`"
+      },
+      {
+        "id": "kind:intent",
+        "kind": "kind",
+        "label": "intent",
+        "summary": "every object of kind `intent`"
       },
       {
         "id": "kind:issue",
@@ -4427,6 +4270,35 @@
             "verification",
             "ci",
             "pages"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0070",
+        "kind": "adr",
+        "label": "adr-0070",
+        "summary": "An intent is a typed record, and its stage and satisfaction are derived from the plan and the evidence",
+        "route": "/cockpit/objects/adr/adr-0070",
+        "source": ".ai/repo/adrs/0070-intent-is-a-typed-record-and-satisfaction-is-derived-from-evidence.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-15",
+          "related": [
+            "rule:project.work-serves-a-declared-intent",
+            "rule:project.derived-once",
+            "rule:project.no-claim-without-test",
+            "file:share/schemas/majordomus/intent/intent.v1.schema.json",
+            "file:apps/majordomus-cli/src/intent.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/intents.rs",
+            "file:.ai/repo/project/intents/intent-lifecycle.yaml",
+            "file:.ai/repo/project/milestones/intent-lifecycle.yaml",
+            "test:test/cases/367_an_intent_is_satisfied_only_by_evidence.sh"
+          ],
+          "tags": [
+            "intent",
+            "project",
+            "evidence",
+            "governance"
           ]
         }
       },
@@ -7906,12 +7778,12 @@
         "id": "majordomus://claim/rule-proof-is-named-and-resolves",
         "kind": "claim",
         "label": "rule-proof-is-named-and-resolves",
-        "summary": "Every blocking rule names what proves it, and every path it names is in the tree",
+        "summary": "Every rule names what proves it, and every path it names is in the tree",
         "route": "/cockpit/objects/claim/rule-proof-is-named-and-resolves",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
         "facts": {
-          "claim": "Every blocking rule names what proves it, and every path it names is in the tree",
+          "claim": "Every rule names what proves it, and every path it names is in the tree",
           "implementation": "scripts/ci/rule-proof-check",
           "responsibility": "none",
           "source": "docs/DOCTRINE.md",
@@ -10235,6 +10107,31 @@
         }
       },
       {
+        "id": "majordomus://context/ai.repo.project.intents",
+        "kind": "context",
+        "label": "ai.repo.project.intents",
+        "summary": "Intents",
+        "route": "/cockpit/objects/context/ai-repo-project-intents",
+        "source": ".ai/repo/project/intents/README.md",
+        "status": "active",
+        "facts": {
+          "audience": [
+            "human",
+            "agent"
+          ],
+          "composition": "extend",
+          "order": 100,
+          "providers": [
+            "*"
+          ],
+          "scope": "subtree",
+          "tracks": [
+            "share/allow/intent.txt",
+            "share/schemas/majordomus/intent/intent.v1.schema.json"
+          ]
+        }
+      },
+      {
         "id": "majordomus://context/ai.repo.project.issues",
         "kind": "context",
         "label": "ai.repo.project.issues",
@@ -11015,6 +10912,14 @@
         "summary": "Pull-request integration",
         "route": "/cockpit/objects/document/docs-integration-md",
         "source": "docs/INTEGRATION.md"
+      },
+      {
+        "id": "majordomus://document/docs/LAUNCH.md",
+        "kind": "document",
+        "label": "docs/LAUNCH.md",
+        "summary": "Launch kit",
+        "route": "/cockpit/objects/document/docs-launch-md",
+        "source": "docs/LAUNCH.md"
       },
       {
         "id": "majordomus://document/docs/MCP.md",
@@ -12516,7 +12421,7 @@
         "id": "majordomus://document/docs/claims/rule-proof-is-named-and-resolves.md",
         "kind": "document",
         "label": "docs/claims/rule-proof-is-named-and-resolves.md",
-        "summary": "Every blocking rule names what proves it, and every path it names is in the tree",
+        "summary": "Every rule names what proves it, and every path it names is in the tree",
         "route": "/cockpit/objects/document/docs-claims-rule-proof-is-named-and-resolves-md",
         "source": "docs/claims/rule-proof-is-named-and-resolves.md"
       },
@@ -13764,6 +13669,7 @@
             "accept-or-refuse-finished-work",
             "block-acceptance-on-an-open-question",
             "carry-a-blocker-across-a-handover",
+            "catch-an-agent-that-says-it-is-done",
             "know-whether-this-work-is-finished",
             "prove-what-a-task-owed-before-calling-it-done",
             "say-what-reached-the-remote-and-what-did-not"
@@ -14883,6 +14789,13 @@
         "source": "lib/session_context.sh"
       },
       {
+        "id": "majordomus://implementation/lib/sha256.sh",
+        "kind": "implementation",
+        "label": "lib/sha256.sh",
+        "route": "/cockpit/objects/implementation/lib-sha256-sh",
+        "source": "lib/sha256.sh"
+      },
+      {
         "id": "majordomus://implementation/lib/skills.sh",
         "kind": "implementation",
         "label": "lib/skills.sh",
@@ -14916,6 +14829,35 @@
         "label": "lib/watch.sh",
         "route": "/cockpit/objects/implementation/lib-watch-sh",
         "source": "lib/watch.sh"
+      },
+      {
+        "id": "majordomus://intent/intent-lifecycle",
+        "kind": "intent",
+        "label": "intent-lifecycle",
+        "summary": "Every change can be traced to the intent it serves, and an intent reads satisfied only when evidence says so",
+        "route": "/cockpit/objects/intent/intent-lifecycle",
+        "source": ".ai/repo/project/intents/intent-lifecycle.yaml",
+        "facts": {
+          "created_at": "2026-09-15",
+          "governance": [
+            "rule:project.work-serves-a-declared-intent",
+            "rule:project.derived-once",
+            "adr:adr-0070"
+          ],
+          "invariants": [
+            "No intent status is stored and nothing transitions an intent; the plan remains the only lifecycle of work",
+            "Every intent capability is read-only on every surface",
+            "An intent whose milestones or evidence do not resolve is refused by a gate, never silently read as planned"
+          ],
+          "milestones": [
+            "intent-lifecycle"
+          ],
+          "non_goals": [
+            "Choosing what to build; a person declares an intent",
+            "Replacing issues or milestones"
+          ],
+          "updated_at": "2026-09-15"
+        }
       },
       {
         "id": "majordomus://issue/I0001",
@@ -25096,6 +25038,61 @@
         }
       },
       {
+        "id": "majordomus://issue/I1600",
+        "kind": "issue",
+        "label": "I1600",
+        "summary": "The challenge is one recorded run, and every public surface replays it",
+        "route": "/cockpit/objects/issue/i1600",
+        "source": ".ai/repo/project/issues/I1600.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "usecase validate refuses a worker step in a live scenario, beside run, and without an exit code",
+            "the challenge scenario's recorded run shows a scope refusal, a finish refusal on a failing verification, a handover resumed through context, and an accepted finish",
+            "scripts/site-check fails when /challenge/ or the homepage misses a recorded line, renders a different number of steps, or does not link a guarantee a comparison row stands on",
+            "scripts/generate-site-data refuses a challenge that does not pass, refuses nothing, does not end accepted, leans on a claim that is not guaranteed, or whose README transcript is not a recorded step",
+            "finish prints one blocking doctrine per line"
+          ],
+          "created_at": "2026-09-15",
+          "depends_on": [],
+          "evidence_required": [
+            "challenge_recorded",
+            "site_holds_the_run",
+            "public_site_serves_it"
+          ],
+          "milestone": "public-proof",
+          "non_scope": [
+            "Analytics, testimonials, adoption numbers, or any claim the repository cannot derive",
+            "Per-page generated social images"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/usecase.sh",
+            "lib/finish.sh",
+            "share/schemas/majordomus/use-case",
+            ".ai/repo/use-cases",
+            "test",
+            "scripts",
+            "site",
+            "README.md",
+            "docs/USE_CASES.md",
+            "docs/LAUNCH.md",
+            "docs/README.md",
+            ".ai/repo/ci/pages.yaml",
+            ".github/workflows/pages.yml"
+          ],
+          "slug": "the-challenge-is-one-recorded-run",
+          "updated_at": "2026-09-30",
+          "validation": [
+            "bash test/run.sh 632_a_scenario_shows_the_worker_it_judges",
+            "bash test/run.sh 103_obligations",
+            "scripts/generate-site-data --check",
+            "scripts/site-check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I1945",
         "kind": "issue",
         "label": "I1945",
@@ -26051,7 +26048,6 @@
             "scripts/rust-coverage",
             "lib/commands.sh",
             "scripts/ci/command-furnished",
-            "scripts/ci/surface-coverage",
             "scripts/lib/evidence-widgets.mjs",
             "scripts/lib/interactions.mjs",
             "scripts/site-check",
@@ -26953,6 +26949,108 @@
           "validation": [
             "bash test/run.sh",
             "bin/majordomus doctor"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/intent-lifecycle",
+        "kind": "milestone",
+        "label": "intent-lifecycle",
+        "summary": "Work is traceable to the intent it serves, and an intent is satisfied only by evidence",
+        "route": "/cockpit/objects/milestone/intent-lifecycle",
+        "source": ".ai/repo/project/milestones/intent-lifecycle.yaml",
+        "facts": {
+          "created_at": "2026-09-15",
+          "depends_on": [],
+          "evidence_required": [],
+          "non_scope": [
+            "A second task lifecycle beside the plan; the stage is derived and nothing transitions",
+            "Storing an intent status, or stamping an intent from a merge",
+            "Deriving a plan from an intent automatically"
+          ],
+          "order": 96,
+          "priority": "p1",
+          "risks": [
+            "An intent model that grows a status or a transition becomes a second lifecycle beside the plan, and the two would disagree the first time an issue is re-planned.",
+            "Satisfaction criteria backed by commands or deployments are not derivable from the ledger yet, so an intent resting only on them can never read satisfied; that is deliberate until slice 2."
+          ],
+          "scope": [
+            ".ai/repo/project",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/rules/project",
+            ".ai/repo/adrs",
+            "apps/majordomus-cli/src",
+            "share/schemas/majordomus/intent",
+            "share/kinds.yaml",
+            "share/cockpit",
+            "site/data",
+            "test/cases"
+          ],
+          "slug": "intent-lifecycle",
+          "updated_at": "2026-09-15",
+          "validation": [
+            "majordomus intent validate",
+            "cargo test --test intent",
+            "bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/public-proof",
+        "kind": "milestone",
+        "label": "public-proof",
+        "summary": "A visitor sees the product prove itself, and can check every claim it makes",
+        "route": "/cockpit/objects/milestone/public-proof",
+        "source": ".ai/repo/project/milestones/public-proof.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fixture scenario can carry a worker step, recorded with actor worker, refused in a live scenario and beside run or obligation",
+            "The challenge scenario passes against the tree's own tool, refuses at least once and ends with the work accepted, and the derivation refuses to publish it otherwise",
+            "/challenge/ and the homepage carry every recorded command and decision line of the run, and nothing else stands in for them",
+            "README.md's first transcript is a recorded step of the challenge, and the derivation refuses it otherwise",
+            "catalogue.json carries each use case's scenario and maturity is derived from it",
+            "The public site serves the merged commit and its smoke routes after the Pages workflow publishes it"
+          ],
+          "created_at": "2026-09-15",
+          "depends_on": [],
+          "evidence_required": [
+            "challenge_recorded",
+            "site_holds_the_run",
+            "public_site_serves_it"
+          ],
+          "non_scope": [
+            "Analytics or any third-party script on the site; the offline rule refuses one, and nothing here needs one",
+            "Fabricated adoption figures, testimonials, logos or benchmark comparisons",
+            "A new command that audits a repository Majordomus is not installed in; doctor needs init, and that is a product decision, not a page",
+            "Generated social images per page; the existing card stays until a generator exists for it"
+          ],
+          "order": 110,
+          "priority": "p1",
+          "scope": [
+            "lib/usecase.sh",
+            "lib/finish.sh",
+            "share/schemas/majordomus/use-case",
+            ".ai/repo/use-cases",
+            "test/fixtures/commands",
+            "test/cases",
+            "scripts/generate-site-data",
+            "scripts/site-check",
+            "scripts/pages",
+            "scripts/lib/interaction-specs",
+            "site",
+            "README.md",
+            "docs",
+            ".ai/repo/ci/pages.yaml",
+            ".github/workflows/pages.yml"
+          ],
+          "slug": "public-proof",
+          "updated_at": "2026-09-15",
+          "validation": [
+            "bash test/run.sh 632_a_scenario_shows_the_worker_it_judges",
+            "bash test/run.sh 103_obligations",
+            "scripts/generate-site-data --check",
+            "scripts/site-check",
+            "scripts/pages verify --commit <master sha> --smoke"
           ]
         }
       },
@@ -31528,6 +31626,28 @@
         }
       },
       {
+        "id": "majordomus://rule/project.a-brief-is-kept-as-received@1",
+        "kind": "rule",
+        "label": "project.a-brief-is-kept-as-received@1",
+        "summary": "A campaign brief this repository keeps is the one it was handed",
+        "route": "/cockpit/objects/rule/project-a-brief-is-kept-as-received-1",
+        "source": ".ai/repo/rules/project/a-brief-is-kept-as-received.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.no-claim-without-test@1"
+          ],
+          "statement": "Keep a campaign brief as it was received, record its bytes in the manifest and its pack in the index, and let the repository rather than the brief say what came of it.",
+          "tags": [
+            "provenance",
+            "campaigns",
+            "evidence",
+            "records"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
         "kind": "rule",
         "label": "project.a-diagram-is-drawn-not-typed@1",
@@ -33413,6 +33533,28 @@
         }
       },
       {
+        "id": "majordomus://rule/project.work-serves-a-declared-intent@1",
+        "kind": "rule",
+        "label": "project.work-serves-a-declared-intent@1",
+        "summary": "Work serves a declared intent, and an intent is satisfied only by evidence",
+        "route": "/cockpit/objects/rule/project-work-serves-a-declared-intent-1",
+        "source": ".ai/repo/rules/project/work-serves-a-declared-intent.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.derived-once@1",
+            "project.no-claim-without-test@1"
+          ],
+          "tags": [
+            "intent",
+            "project",
+            "evidence",
+            "projections"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.worktree-topology@1",
         "kind": "rule",
         "label": "project.worktree-topology@1",
@@ -33466,6 +33608,7 @@
             "tests/**",
             "config/**",
             "docs/**",
+            "campaigns/**",
             "examples/**",
             "priv/**/*.exs",
             "priv/**/*.sql",
@@ -36486,6 +36629,20 @@
         "source": "test/cases/33_stale_executable.sh"
       },
       {
+        "id": "majordomus://test/test/cases/340_a_brief_is_kept_as_received.sh",
+        "kind": "test",
+        "label": "test/cases/340_a_brief_is_kept_as_received.sh",
+        "route": "/cockpit/objects/test/test-cases-340-a-brief-is-kept-as-received-sh",
+        "source": "test/cases/340_a_brief_is_kept_as_received.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/341_a_claim_shows_the_test_that_settles_it.sh",
+        "kind": "test",
+        "label": "test/cases/341_a_claim_shows_the_test_that_settles_it.sh",
+        "route": "/cockpit/objects/test/test-cases-341-a-claim-shows-the-test-that-settles-it-sh",
+        "source": "test/cases/341_a_claim_shows_the_test_that_settles_it.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/343_the_cockpit_shows_who_else_is_here.sh",
         "kind": "test",
         "label": "test/cases/343_the_cockpit_shows_who_else_is_here.sh",
@@ -36570,6 +36727,13 @@
         "source": "test/cases/366_automation_inventory_agrees_with_the_tree.sh"
       },
       {
+        "id": "majordomus://test/test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
+        "kind": "test",
+        "label": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
+        "route": "/cockpit/objects/test/test-cases-367-an-intent-is-satisfied-only-by-evidence-sh",
+        "source": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/368_mesh_handover_resolves.sh",
         "kind": "test",
         "label": "test/cases/368_mesh_handover_resolves.sh",
@@ -36610,6 +36774,13 @@
         "label": "test/cases/384_a_deployment_is_evidence.sh",
         "route": "/cockpit/objects/test/test-cases-384-a-deployment-is-evidence-sh",
         "source": "test/cases/384_a_deployment_is_evidence.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/387_no_payload_is_passed_through_argv.sh",
+        "kind": "test",
+        "label": "test/cases/387_no_payload_is_passed_through_argv.sh",
+        "route": "/cockpit/objects/test/test-cases-387-no-payload-is-passed-through-argv-sh",
+        "source": "test/cases/387_no_payload_is_passed_through_argv.sh"
       },
       {
         "id": "majordomus://test/test/cases/389_cockpit_projection.sh",
@@ -37067,6 +37238,13 @@
         "source": "test/cases/572_verification_records_the_tree_it_proved.sh"
       },
       {
+        "id": "majordomus://test/test/cases/575_nothing_runs_perl.sh",
+        "kind": "test",
+        "label": "test/cases/575_nothing_runs_perl.sh",
+        "route": "/cockpit/objects/test/test-cases-575-nothing-runs-perl-sh",
+        "source": "test/cases/575_nothing_runs_perl.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/578_an_unknown_gate_refuses_completed.sh",
         "kind": "test",
         "label": "test/cases/578_an_unknown_gate_refuses_completed.sh",
@@ -37144,6 +37322,13 @@
         "source": "test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh"
       },
       {
+        "id": "majordomus://test/test/cases/617_a_case_can_name_what_it_covers.sh",
+        "kind": "test",
+        "label": "test/cases/617_a_case_can_name_what_it_covers.sh",
+        "route": "/cockpit/objects/test/test-cases-617-a-case-can-name-what-it-covers-sh",
+        "source": "test/cases/617_a_case_can_name_what_it_covers.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/61_session_envelope.sh",
         "kind": "test",
         "label": "test/cases/61_session_envelope.sh",
@@ -37184,6 +37369,13 @@
         "label": "test/cases/62_session_divergence.sh",
         "route": "/cockpit/objects/test/test-cases-62-session-divergence-sh",
         "source": "test/cases/62_session_divergence.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/632_a_scenario_shows_the_worker_it_judges.sh",
+        "kind": "test",
+        "label": "test/cases/632_a_scenario_shows_the_worker_it_judges.sh",
+        "route": "/cockpit/objects/test/test-cases-632-a-scenario-shows-the-worker-it-judges-sh",
+        "source": "test/cases/632_a_scenario_shows_the_worker_it_judges.sh"
       },
       {
         "id": "majordomus://test/test/cases/635_the_runtime_names_its_commit.sh",
@@ -37366,6 +37558,13 @@
         "label": "test/cases/743_release_version_answers_with_the_contract.sh",
         "route": "/cockpit/objects/test/test-cases-743-release-version-answers-with-the-contract-sh",
         "source": "test/cases/743_release_version_answers_with_the_contract.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/744_an_installed_tool_finds_its_own_executable.sh",
+        "kind": "test",
+        "label": "test/cases/744_an_installed_tool_finds_its_own_executable.sh",
+        "route": "/cockpit/objects/test/test-cases-744-an-installed-tool-finds-its-own-executable-sh",
+        "source": "test/cases/744_an_installed_tool_finds_its_own_executable.sh"
       },
       {
         "id": "majordomus://test/test/cases/74_knowledge_edges.sh",
@@ -37967,6 +38166,49 @@
           "summary": "Close a task into a handover while a question is unresolved, start the follow-up task, and see the same question still refuse acceptance there.",
           "target": "guaranteed",
           "weight": 27
+        }
+      },
+      {
+        "id": "majordomus://use-case/catch-an-agent-that-says-it-is-done",
+        "kind": "use-case",
+        "label": "catch-an-agent-that-says-it-is-done",
+        "summary": "Catch an agent that says it is done when it is not",
+        "route": "/cockpit/objects/use-case/catch-an-agent-that-says-it-is-done",
+        "source": ".ai/repo/use-cases/catch-an-agent-that-says-it-is-done.md",
+        "status": "active",
+        "facts": {
+          "actors": [
+            "agent",
+            "operator"
+          ],
+          "category": "completion",
+          "claims": [
+            "scoped-task",
+            "overlap-report",
+            "scope-enforcement",
+            "finish-contract",
+            "handover-record",
+            "typed-outcome"
+          ],
+          "commands": [
+            "start",
+            "check",
+            "finish",
+            "handover",
+            "context"
+          ],
+          "difficulty": "basic",
+          "doctrines": [
+            "majordomus.scope-integrity",
+            "majordomus.state-consistency"
+          ],
+          "responsibilities": [
+            "scope",
+            "state"
+          ],
+          "summary": "One task, start to finish: a worker strays outside its scope, claims it is finished, hands over, and is accepted only once the repository''s own verification passes.",
+          "target": "guaranteed",
+          "weight": 1
         }
       },
       {
@@ -39782,6 +40024,11 @@
         "label": "integration"
       },
       {
+        "id": "module:intents",
+        "kind": "module",
+        "label": "intents"
+      },
+      {
         "id": "module:lifecycle",
         "kind": "module",
         "label": "lifecycle"
@@ -41063,6 +41310,86 @@
       },
       {
         "source": "capability:integration.queue",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.list",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.list",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.list",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.list",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.preflight",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.preflight",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.preflight",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.preflight",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.record",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.record",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.record",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.record",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.validate",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.validate",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.validate",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intents.validate",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -44407,6 +44734,56 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0070",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/intents.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0070",
+        "target": "file:apps/majordomus-cli/src/intent.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0070",
+        "target": "file:share/schemas/majordomus/intent/intent.v1.schema.json",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0070",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0070",
+        "target": "majordomus://intent/intent-lifecycle",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0070",
+        "target": "majordomus://milestone/intent-lifecycle",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0070",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0070",
+        "target": "majordomus://rule/project.no-claim-without-test@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0070",
+        "target": "majordomus://rule/project.work-serves-a-declared-intent@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0070",
+        "target": "majordomus://test/test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://adr/adr-0071",
         "target": "file:.ai/repo/ci/pages.yaml",
         "kind": "put_in_force"
@@ -46978,11 +47355,6 @@
       },
       {
         "source": "majordomus://claim/installer-verifies-before-installing",
-        "target": "file:share/install/install.sh.in",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/installer-verifies-before-installing",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -46995,11 +47367,6 @@
         "source": "majordomus://claim/installer-verifies-before-installing",
         "target": "majordomus://test/test/cases/85_installer.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/interfaces-are-projections",
-        "target": "file:apps/majordomus-cli/src/http/openapi.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/interfaces-are-projections",
@@ -47158,11 +47525,6 @@
       },
       {
         "source": "majordomus://claim/mcp-data-driven",
-        "target": "file:apps/majordomus-cli/src/index.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/mcp-data-driven",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -47175,11 +47537,6 @@
         "source": "majordomus://claim/mcp-data-driven",
         "target": "majordomus://test/test/cases/72_rust_mcp.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/mcp-degraded-not-silent",
-        "target": "file:apps/majordomus-cli/src/index.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/mcp-degraded-not-silent",
@@ -47198,16 +47555,6 @@
       },
       {
         "source": "majordomus://claim/mcp-lease-lost",
-        "target": "file:apps/majordomus-cli/src/lease.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/mcp-lease-lost",
-        "target": "file:apps/majordomus-cli/tests/lease_lost.rs",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/mcp-lease-lost",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -47215,16 +47562,6 @@
         "source": "majordomus://claim/mcp-lease-lost",
         "target": "majordomus://document/docs/MCP.md",
         "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/mcp-lease-resilience",
-        "target": "file:apps/majordomus-cli/src/lease.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/mcp-lease-resilience",
-        "target": "file:apps/majordomus-cli/tests/mcp_shared.rs",
-        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/mcp-lease-resilience",
@@ -47258,11 +47595,6 @@
       },
       {
         "source": "majordomus://claim/mcp-shared-server",
-        "target": "file:apps/majordomus-cli/src/lease.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/mcp-shared-server",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -47275,11 +47607,6 @@
         "source": "majordomus://claim/mcp-shared-server",
         "target": "majordomus://test/test/cases/90_mcp_shared_server.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/mcp-stdio-surface",
-        "target": "file:apps/majordomus-cli/src/mcp/protocol.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/mcp-stdio-surface",
@@ -47298,16 +47625,6 @@
       },
       {
         "source": "majordomus://claim/mcp-uri-resolution",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/objects.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/mcp-uri-resolution",
-        "target": "file:apps/majordomus-cli/tests/http_serve.rs",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/mcp-uri-resolution",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -47318,16 +47635,6 @@
       },
       {
         "source": "majordomus://claim/mesh-claims-cross-runtime",
-        "target": "file:apps/majordomus-cli/src/mesh/state.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/mesh-claims-cross-runtime",
-        "target": "file:apps/majordomus-cli/tests/mesh_cooperation.rs",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/mesh-claims-cross-runtime",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -47335,11 +47642,6 @@
         "source": "majordomus://claim/mesh-claims-cross-runtime",
         "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
         "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/mesh-compaction-keeps-what-is-live",
-        "target": "file:apps/majordomus-cli/src/mesh/journal.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/mesh-compaction-keeps-what-is-live",
@@ -47354,16 +47656,6 @@
       {
         "source": "majordomus://claim/mesh-compaction-keeps-what-is-live",
         "target": "majordomus://test/test/cases/493_mesh_compaction_keeps_what_is_live.sh",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/mesh-cooperation-links",
-        "target": "file:apps/majordomus-cli/src/mesh/cooperation.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/mesh-cooperation-links",
-        "target": "file:apps/majordomus-cli/tests/mesh_cooperation.rs",
         "kind": "tested_by"
       },
       {
@@ -47398,16 +47690,6 @@
       },
       {
         "source": "majordomus://claim/mesh-liveness-expiry",
-        "target": "file:apps/majordomus-cli/src/mesh/cooperation.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/mesh-liveness-expiry",
-        "target": "file:apps/majordomus-cli/tests/mesh_cooperation.rs",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/mesh-liveness-expiry",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -47415,11 +47697,6 @@
         "source": "majordomus://claim/mesh-liveness-expiry",
         "target": "majordomus://document/docs/MESH.md",
         "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/mesh-network-acceptance",
-        "target": "file:test/mesh-lab/run",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/mesh-network-acceptance",
@@ -47438,16 +47715,6 @@
       },
       {
         "source": "majordomus://claim/mesh-observation-not-authority",
-        "target": "file:apps/majordomus-cli/src/mesh/trust.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/mesh-observation-not-authority",
-        "target": "file:apps/majordomus-cli/tests/mesh.rs",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/mesh-observation-not-authority",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -47458,16 +47725,6 @@
       },
       {
         "source": "majordomus://claim/mesh-off-by-default",
-        "target": "file:apps/majordomus-cli/src/shared.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/mesh-off-by-default",
-        "target": "file:apps/majordomus-cli/tests/mesh.rs",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/mesh-off-by-default",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -47478,16 +47735,6 @@
       },
       {
         "source": "majordomus://claim/mesh-one-registry",
-        "target": "file:apps/majordomus-cli/src/mesh/registry.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/mesh-one-registry",
-        "target": "file:apps/majordomus-cli/tests/mesh.rs",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/mesh-one-registry",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -47495,16 +47742,6 @@
         "source": "majordomus://claim/mesh-one-registry",
         "target": "majordomus://document/docs/MESH.md",
         "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/mesh-repository-isolation",
-        "target": "file:apps/majordomus-cli/src/mesh/repository.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/mesh-repository-isolation",
-        "target": "file:apps/majordomus-cli/tests/mesh_cooperation.rs",
-        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/mesh-repository-isolation",
@@ -47518,27 +47755,12 @@
       },
       {
         "source": "majordomus://claim/mesh-three-runtime-convergence",
-        "target": "file:apps/majordomus-cli/src/mesh/journal.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/mesh-three-runtime-convergence",
-        "target": "file:apps/majordomus-cli/tests/mesh_cooperation.rs",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/mesh-three-runtime-convergence",
         "target": "kind:claim",
         "kind": "is_a"
       },
       {
         "source": "majordomus://claim/mesh-three-runtime-convergence",
         "target": "majordomus://document/docs/MESH.md",
-        "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/minimum-context",
-        "target": "file:share/skeleton/profiles/routine.yaml",
         "kind": "defined_in"
       },
       {
@@ -47558,11 +47780,6 @@
       },
       {
         "source": "majordomus://claim/models-no-secret-fields",
-        "target": "file:apps/majordomus-cli/src/models/mod.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/models-no-secret-fields",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -47575,11 +47792,6 @@
         "source": "majordomus://claim/models-no-secret-fields",
         "target": "majordomus://test/test/cases/131_models.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/models-one-declaration",
-        "target": "file:apps/majordomus-cli/src/models/mod.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/models-one-declaration",
@@ -47598,11 +47810,6 @@
       },
       {
         "source": "majordomus://claim/models-routing-explains-itself",
-        "target": "file:apps/majordomus-cli/src/models/mod.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/models-routing-explains-itself",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -47615,11 +47822,6 @@
         "source": "majordomus://claim/models-routing-explains-itself",
         "target": "majordomus://test/test/cases/131_models.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/new-code-is-covered",
-        "target": "file:scripts/rust-coverage",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/new-code-is-covered",
@@ -47778,11 +47980,6 @@
       },
       {
         "source": "majordomus://claim/openapi-inferred",
-        "target": "file:apps/majordomus-cli/src/http/openapi.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/openapi-inferred",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -47878,16 +48075,6 @@
       },
       {
         "source": "majordomus://claim/product-projection-public-safe",
-        "target": "file:apps/majordomus-cli/src/site.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/product-projection-public-safe",
-        "target": "file:apps/majordomus-cli/tests/product.rs",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/product-projection-public-safe",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -47900,11 +48087,6 @@
         "source": "majordomus://claim/product-references-resolve",
         "target": "file:apps/majordomus-cli/src/product.rs",
         "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/product-references-resolve",
-        "target": "file:apps/majordomus-cli/tests/product.rs",
-        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/product-references-resolve",
@@ -47923,22 +48105,12 @@
       },
       {
         "source": "majordomus://claim/product-surfaces-derived",
-        "target": "file:apps/majordomus-cli/tests/product.rs",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/product-surfaces-derived",
         "target": "kind:claim",
         "kind": "is_a"
       },
       {
         "source": "majordomus://claim/product-surfaces-derived",
         "target": "majordomus://document/docs/PRODUCT.md",
-        "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/profile-axes",
-        "target": "file:share/skeleton/profiles/implementation.yaml",
         "kind": "defined_in"
       },
       {
@@ -48138,11 +48310,6 @@
       },
       {
         "source": "majordomus://claim/provider-projections-one-renderer",
-        "target": "file:apps/majordomus-cli/src/providers.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/provider-projections-one-renderer",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -48158,11 +48325,6 @@
       },
       {
         "source": "majordomus://claim/reasoning-survives-the-session",
-        "target": "file:apps/majordomus-cli/src/reasoning/state.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/reasoning-survives-the-session",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -48175,11 +48337,6 @@
         "source": "majordomus://claim/reasoning-survives-the-session",
         "target": "majordomus://test/test/cases/734_reasoning_survives_the_session.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/reasoning-works-with-no-advisor",
-        "target": "file:apps/majordomus-cli/src/reasoning/policy.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/reasoning-works-with-no-advisor",
@@ -48503,11 +48660,6 @@
       },
       {
         "source": "majordomus://claim/rust-coverage-floor",
-        "target": "file:scripts/rust-coverage",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/rust-coverage-floor",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -48625,11 +48777,6 @@
         "source": "majordomus://claim/rustdoc-published",
         "target": "majordomus://test/test/cases/489_rustdoc_deploy.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/rustdoc-referenced",
-        "target": "file:apps/majordomus-cli/src/site.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/rustdoc-referenced",
@@ -48845,11 +48992,6 @@
         "source": "majordomus://claim/site-deploys-from-verified-run",
         "target": "majordomus://test/test/cases/97_pages_fast_path.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/site-registry-dataset",
-        "target": "file:apps/majordomus-cli/src/site.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/site-registry-dataset",
@@ -49557,6 +49699,11 @@
         "kind": "tracks"
       },
       {
+        "source": "majordomus://context/ai.repo.project.intents",
+        "target": "kind:context",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://context/ai.repo.project.issues",
         "target": "kind:context",
         "kind": "is_a"
@@ -49963,6 +50110,11 @@
       },
       {
         "source": "majordomus://document/docs/INTEGRATION.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/LAUNCH.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -51502,6 +51654,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://implementation/lib/sha256.sh",
+        "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://implementation/lib/skills.sh",
         "target": "kind:implementation",
         "kind": "is_a"
@@ -51524,6 +51681,11 @@
       {
         "source": "majordomus://implementation/lib/watch.sh",
         "target": "kind:implementation",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://intent/intent-lifecycle",
+        "target": "kind:intent",
         "kind": "is_a"
       },
       {
@@ -55107,6 +55269,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I1600",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1600",
+        "target": "majordomus://milestone/public-proof",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I1945",
         "target": "kind:issue",
         "kind": "is_a"
@@ -55558,6 +55730,16 @@
       },
       {
         "source": "majordomus://milestone/foundation",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/intent-lifecycle",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/public-proof",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -56445,6 +56627,16 @@
         "source": "majordomus://rule/majordomus.verify-outcomes@1",
         "target": "kind:rule",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-brief-is-kept-as-received@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-brief-is-kept-as-received@1",
+        "target": "majordomus://rule/project.no-claim-without-test@1",
+        "kind": "depends_on"
       },
       {
         "source": "majordomus://rule/project.a-diagram-is-drawn-not-typed@1",
@@ -57582,6 +57774,21 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://rule/project.work-serves-a-declared-intent@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.work-serves-a-declared-intent@1",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.work-serves-a-declared-intent@1",
+        "target": "majordomus://rule/project.no-claim-without-test@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.worktree-topology@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -58467,6 +58674,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/340_a_brief_is_kept_as_received.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/341_a_claim_shows_the_test_that_settles_it.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/343_the_cockpit_shows_who_else_is_here.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -58527,6 +58744,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/368_mesh_handover_resolves.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -58553,6 +58775,11 @@
       },
       {
         "source": "majordomus://test/test/cases/384_a_deployment_is_evidence.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/387_no_payload_is_passed_through_argv.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -58882,6 +59109,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/575_nothing_runs_perl.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/578_an_unknown_gate_refuses_completed.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -58937,6 +59169,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/617_a_case_can_name_what_it_covers.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/61_session_envelope.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -58963,6 +59200,11 @@
       },
       {
         "source": "majordomus://test/test/cases/62_session_divergence.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/632_a_scenario_shows_the_worker_it_judges.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -59093,6 +59335,11 @@
       },
       {
         "source": "majordomus://test/test/cases/743_release_version_answers_with_the_contract.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/744_an_installed_tool_finds_its_own_executable.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -59604,6 +59851,51 @@
       {
         "source": "majordomus://use-case/carry-a-blocker-across-a-handover",
         "target": "majordomus://rule/majordomus.questions-store-integrity@1",
+        "kind": "exercises"
+      },
+      {
+        "source": "majordomus://use-case/catch-an-agent-that-says-it-is-done",
+        "target": "kind:use-case",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://use-case/catch-an-agent-that-says-it-is-done",
+        "target": "majordomus://claim/finish-contract",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/catch-an-agent-that-says-it-is-done",
+        "target": "majordomus://claim/handover-record",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/catch-an-agent-that-says-it-is-done",
+        "target": "majordomus://claim/overlap-report",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/catch-an-agent-that-says-it-is-done",
+        "target": "majordomus://claim/scope-enforcement",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/catch-an-agent-that-says-it-is-done",
+        "target": "majordomus://claim/scoped-task",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/catch-an-agent-that-says-it-is-done",
+        "target": "majordomus://claim/typed-outcome",
+        "kind": "evidences"
+      },
+      {
+        "source": "majordomus://use-case/catch-an-agent-that-says-it-is-done",
+        "target": "majordomus://rule/majordomus.scope-integrity@1",
+        "kind": "exercises"
+      },
+      {
+        "source": "majordomus://use-case/catch-an-agent-that-says-it-is-done",
+        "target": "majordomus://rule/majordomus.state-consistency@1",
         "kind": "exercises"
       },
       {
@@ -61767,6 +62059,26 @@
         "kind": "composes"
       },
       {
+        "source": "module:intents",
+        "target": "capability:intents.list",
+        "kind": "composes"
+      },
+      {
+        "source": "module:intents",
+        "target": "capability:intents.preflight",
+        "kind": "composes"
+      },
+      {
+        "source": "module:intents",
+        "target": "capability:intents.record",
+        "kind": "composes"
+      },
+      {
+        "source": "module:intents",
+        "target": "capability:intents.validate",
+        "kind": "composes"
+      },
+      {
         "source": "module:lifecycle",
         "target": "capability:lifecycle.closed",
         "kind": "composes"
@@ -62214,7 +62526,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4453,
+      "edges": 4466,
       "acyclic": true,
       "truncated": true
     }

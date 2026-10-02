@@ -91,6 +91,12 @@ sources:
     pathspec: ':(glob).ai/repo/project/issues/*.yaml'
     required: false
 
+  - id: intent
+    kind: intent
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/project/intents/*.yaml'
+    required: false
+
   - id: document
     kind: document
     discovery: vcs
@@ -464,6 +470,22 @@ evidence_required:
   - proof
 ";
 
+pub const INTENT: &str = "id: fixture-intent
+title: The fixture's outcome is true
+statement: \"The outcome the fixture milestone reaches is true for its users.\"
+invariants:
+  - The fixture stays a valid repository
+milestones:
+  - fixture-milestone
+satisfaction:
+  - id: the-case-passes
+    criterion: The fixture's own case passes
+    evidence: test
+    ref: test/cases/00_x.sh
+governance:
+  - rule:project.alpha
+";
+
 const ISSUE: &str = "id: I0001
 milestone: fixture-milestone
 title: The bounded piece of work
@@ -545,6 +567,7 @@ true
             MILESTONE,
         );
         f.write(".ai/repo/project/issues/I0001.yaml", ISSUE);
+        f.write(".ai/repo/project/intents/fixture-intent.yaml", INTENT);
         f.write(".ai/repo/knowledge/sources.yaml", SOURCES);
         f.write(
             ".ai/repo/workflows/task-lifecycle.md",

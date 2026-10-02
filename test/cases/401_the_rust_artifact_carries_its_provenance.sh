@@ -25,7 +25,7 @@ if command -v rustc >/dev/null 2>&1; then
   F="$T/fixture"; STUB="$T/stub"; LOG="$T/cargo.log"
   mkdir -p "$F/scripts" "$F/lib" "$F/apps/majordomus-cli" "$STUB"
   cp "$ROOT/scripts/rust-check" "$ROOT/scripts/rust-coverage-threshold" "$ROOT/scripts/session-coverage-threshold" "$F/scripts/"
-  cp "$ROOT/lib/rust_bin.sh" "$F/lib/"
+  cp "$ROOT/lib/rust_bin.sh" "$ROOT/lib/sha256.sh" "$F/lib/"
   # the pinned toolchain, so the toolchain the manifest records is the one this repository builds with
   for p in rust-toolchain.toml rust-toolchain; do [ -f "$ROOT/$p" ] && cp "$ROOT/$p" "$F/"; done
   cp "$ROOT/apps/majordomus-cli/Cargo.toml" "$ROOT/apps/majordomus-cli/Cargo.lock" "$F/apps/majordomus-cli/"

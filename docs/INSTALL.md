@@ -2,7 +2,7 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL);
      regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.11.0 -->
+     Generator: majordomus-cli 0.12.0 -->
 
 ## Quick install
 
@@ -186,7 +186,7 @@ sh install-majordomus.sh
 ```
 
 The installer is one file with no dependencies beyond `curl` or `wget`, `tar`, and one of
-`sha256sum`, `shasum` or `openssl`. Its top half is generated from the distribution model and
+`sha256sum` or `openssl`. Its top half is generated from the distribution model and
 its bottom half is behaviour; both are reviewed in this repository and linted by
 `shellcheck` in CI.
 

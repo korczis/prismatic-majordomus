@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.11.0"
+    "version": "0.12.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -356,6 +356,26 @@
       "kind": "capability",
       "subject": "capability:integration.queue",
       "path": "/evidence/capabilities/integration-queue/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:intents.list",
+      "path": "/evidence/capabilities/intents-list/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:intents.preflight",
+      "path": "/evidence/capabilities/intents-preflight/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:intents.record",
+      "path": "/evidence/capabilities/intents-record/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:intents.validate",
+      "path": "/evidence/capabilities/intents-validate/"
     },
     {
       "kind": "capability",
@@ -2259,6 +2279,26 @@
     },
     {
       "kind": "command",
+      "subject": "command:intent list",
+      "path": "/evidence/commands/intent-list/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:intent preflight",
+      "path": "/evidence/commands/intent-preflight/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:intent show",
+      "path": "/evidence/commands/intent-show/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:intent validate",
+      "path": "/evidence/commands/intent-validate/"
+    },
+    {
+      "kind": "command",
       "subject": "command:knowledge",
       "path": "/evidence/commands/knowledge/"
     },
@@ -2961,6 +3001,11 @@
       "kind": "use_case",
       "subject": "use_case:carry-a-blocker-across-a-handover",
       "path": "/evidence/use-cases/carry-a-blocker-across-a-handover/"
+    },
+    {
+      "kind": "use_case",
+      "subject": "use_case:catch-an-agent-that-says-it-is-done",
+      "path": "/evidence/use-cases/catch-an-agent-that-says-it-is-done/"
     },
     {
       "kind": "use_case",
@@ -3871,6 +3916,54 @@
       "programs": [],
       "members": [
         "command:prs status"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:intents.list": {
+      "kind": "capability",
+      "id": "intents.list",
+      "page": "/evidence/capabilities/intents-list/",
+      "programs": [],
+      "members": [
+        "command:intent list"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:intents.preflight": {
+      "kind": "capability",
+      "id": "intents.preflight",
+      "page": "/evidence/capabilities/intents-preflight/",
+      "programs": [],
+      "members": [
+        "command:intent preflight"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:intents.record": {
+      "kind": "capability",
+      "id": "intents.record",
+      "page": "/evidence/capabilities/intents-record/",
+      "programs": [],
+      "members": [
+        "command:intent show"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:intents.validate": {
+      "kind": "capability",
+      "id": "intents.validate",
+      "page": "/evidence/capabilities/intents-validate/",
+      "programs": [],
+      "members": [
+        "command:intent validate"
       ],
       "routes": [],
       "mechanisms": [],
@@ -12077,6 +12170,82 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:intent list": {
+      "kind": "command",
+      "id": "intent list",
+      "page": "/evidence/commands/intent-list/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:intent preflight": {
+      "kind": "command",
+      "id": "intent preflight",
+      "page": "/evidence/commands/intent-preflight/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:intent show": {
+      "kind": "command",
+      "id": "intent show",
+      "page": "/evidence/commands/intent-show/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:intent validate": {
+      "kind": "command",
+      "id": "intent validate",
+      "page": "/evidence/commands/intent-validate/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:knowledge": {
       "kind": "command",
       "id": "knowledge",
@@ -13972,6 +14141,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:632_a_scenario_shows_the_worker_it_judges",
+          "path": "test/cases/632_a_scenario_shows_the_worker_it_judges.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:777_a_recorded_scenario_does_not_depend_on_the_recorder",
           "path": "test/cases/777_a_recorded_scenario_does_not_depend_on_the_recorder.sh",
           "category": "e2e"
@@ -13986,6 +14161,12 @@
           "via": "negative",
           "test": "suite:359_live_scenarios",
           "path": "test/cases/359_live_scenarios.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:632_a_scenario_shows_the_worker_it_judges",
+          "path": "test/cases/632_a_scenario_shows_the_worker_it_judges.sh",
           "category": "e2e"
         },
         {
@@ -15086,6 +15267,7 @@
         "use_case:accept-or-refuse-finished-work",
         "use_case:block-acceptance-on-an-open-question",
         "use_case:carry-a-blocker-across-a-handover",
+        "use_case:catch-an-agent-that-says-it-is-done",
         "use_case:know-whether-this-work-is-finished",
         "use_case:prove-what-a-task-owed-before-calling-it-done",
         "use_case:say-what-reached-the-remote-and-what-did-not"
@@ -16123,6 +16305,54 @@
       "programs": [],
       "members": [
         "capability:integration.events"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_intent_preflight": {
+      "kind": "mcp",
+      "id": "majordomus_intent_preflight",
+      "alias_of": "capability:intents.preflight",
+      "programs": [],
+      "members": [
+        "capability:intents.preflight"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_intent_record": {
+      "kind": "mcp",
+      "id": "majordomus_intent_record",
+      "alias_of": "capability:intents.record",
+      "programs": [],
+      "members": [
+        "capability:intents.record"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_intent_validate": {
+      "kind": "mcp",
+      "id": "majordomus_intent_validate",
+      "alias_of": "capability:intents.validate",
+      "programs": [],
+      "members": [
+        "capability:intents.validate"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_intents": {
+      "kind": "mcp",
+      "id": "majordomus_intents",
+      "alias_of": "capability:intents.list",
+      "programs": [],
+      "members": [
+        "capability:intents.list"
       ],
       "routes": [],
       "mechanisms": [],
@@ -18278,6 +18508,29 @@
       "mechanisms": [],
       "findings": []
     },
+    "rule:project.a-brief-is-kept-as-received": {
+      "kind": "rule",
+      "id": "project.a-brief-is-kept-as-received",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:340_a_brief_is_kept_as_received",
+          "path": "test/cases/340_a_brief_is_kept_as_received.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/340_a_brief_is_kept_as_received.sh",
+            ".ai/repo/rules/project/a-brief-is-kept-as-received.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [
+        "scripts/ci/campaigns-check"
+      ],
+      "findings": []
+    },
     "rule:project.a-diagram-is-drawn-not-typed": {
       "kind": "rule",
       "id": "project.a-diagram-is-drawn-not-typed",
@@ -19110,7 +19363,28 @@
       "status": "active",
       "programs": [],
       "members": [],
-      "routes": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:121_liveness_doctrine",
+          "path": "test/cases/121_liveness_doctrine.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/121_liveness_doctrine.sh",
+            ".ai/repo/rules/project/execution-state-is-authoritative.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:122_liveness_gate",
+          "path": "test/cases/122_liveness_gate.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/122_liveness_gate.sh",
+            ".ai/repo/rules/project/execution-state-is-authoritative.v1.md"
+          ]
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -19772,6 +20046,16 @@
       "programs": [],
       "members": [],
       "routes": [
+        {
+          "via": "rule",
+          "test": "suite:341_a_claim_shows_the_test_that_settles_it",
+          "path": "test/cases/341_a_claim_shows_the_test_that_settles_it.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/341_a_claim_shows_the_test_that_settles_it.sh",
+            ".ai/repo/rules/project/product-surface-derived.v1.md"
+          ]
+        },
         {
           "via": "rule",
           "test": "suite:97_product_features",
@@ -20597,6 +20881,37 @@
       ],
       "findings": []
     },
+    "rule:project.work-serves-a-declared-intent": {
+      "kind": "rule",
+      "id": "project.work-serves-a-declared-intent",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "crate:intent",
+          "path": "apps/majordomus-cli/tests/intent.rs",
+          "category": "integration",
+          "inputs": [
+            "apps/majordomus-cli/tests/intent.rs",
+            ".ai/repo/rules/project/work-serves-a-declared-intent.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:367_an_intent_is_satisfied_only_by_evidence",
+          "path": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
+            ".ai/repo/rules/project/work-serves-a-declared-intent.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "rule:project.worktree-topology": {
       "kind": "rule",
       "id": "project.worktree-topology",
@@ -20775,6 +21090,37 @@
         {
           "via": "scenario",
           "path": ".ai/repo/use-cases/carry-a-blocker-across-a-handover.md",
+          "category": "scenario"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "use_case:catch-an-agent-that-says-it-is-done": {
+      "kind": "use_case",
+      "id": "catch-an-agent-that-says-it-is-done",
+      "status": "active",
+      "page": "/evidence/use-cases/catch-an-agent-that-says-it-is-done/",
+      "programs": [],
+      "members": [
+        "claim:finish-contract",
+        "claim:handover-record",
+        "claim:overlap-report",
+        "claim:scope-enforcement",
+        "claim:scoped-task",
+        "claim:typed-outcome",
+        "command:check",
+        "command:context",
+        "command:finish",
+        "command:handover",
+        "command:start",
+        "rule:majordomus.scope-integrity",
+        "rule:majordomus.state-consistency"
+      ],
+      "routes": [
+        {
+          "via": "scenario",
+          "path": ".ai/repo/use-cases/catch-an-agent-that-says-it-is-done.md",
           "category": "scenario"
         }
       ],
@@ -21956,6 +22302,7 @@
     "suite:374_delivery_unknown_is_not_delivered",
     "suite:37_responsibility_surface",
     "suite:384_a_deployment_is_evidence",
+    "suite:387_no_payload_is_passed_through_argv",
     "suite:390_unresolved_relation_refuses_generation",
     "suite:402_argv_limit",
     "suite:404_refused_files_are_named",
@@ -21982,9 +22329,11 @@
     "suite:545_every_answer_says_when_it_was_observed",
     "suite:546_a_statistic_names_the_capability_it_asked",
     "suite:552_coverage_is_recorded_for_the_preflight",
+    "suite:575_nothing_runs_perl",
     "suite:599_a_silent_check_is_not_a_pass",
     "suite:59_reference_integrity",
     "suite:611_the_reclaim_refuses_what_it_cannot_prove",
+    "suite:617_a_case_can_name_what_it_covers",
     "suite:620_mcp_tools_are_invoked_and_answer",
     "suite:623_a_ref_verdict_needs_the_refs",
     "suite:624_a_slow_publication_is_not_a_failed_one",
@@ -22000,6 +22349,7 @@
     "suite:741_a_continuous_drain_stops_cleanly_and_alone",
     "suite:742_only_an_outage_is_asked_again",
     "suite:743_release_version_answers_with_the_contract",
+    "suite:744_an_installed_tool_finds_its_own_executable",
     "suite:74_knowledge_edges",
     "suite:75_knowledge_mutation",
     "suite:85_deployment_bind",

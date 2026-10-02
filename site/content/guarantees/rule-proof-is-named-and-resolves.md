@@ -1,5 +1,5 @@
 +++
-title = "Every blocking rule names what proves it, and every path it names is in the tree"
+title = "Every rule names what proves it, and every path it names is in the tree"
 description = "A rule of this repository declares a class. blocking means a gate refuses work that"
 weight = 184
 [extra]
@@ -33,12 +33,16 @@ class. A proof that does not exist is worse than no proof, because the rule read
 and recording it in the baseline does not silence it: the baseline is about rules with no
 proof, not about rules whose proof is a lie.
 
-**`unproven`** — a blocking rule names neither a validator, nor a test, nor a reason why
-nothing executable can express it. This is the half nothing else in the repository can
-express. `scripts/ci/reference-check` already refuses a path named in any authored document
-that is not in the tree, and a rule's front matter is prose to it, so it catches the
-dangling half today — measured, not assumed. What no other check knows is that a blocking
-rule is *supposed* to name anything at all.
+**`unproven`** — a rule of either class names neither a validator, nor a test, nor a reason
+why nothing executable can express it. Advisory is not an exemption: an advisory rule that
+named nothing could stay documented-only forever. The one exemption is a vendored rule
+tagged `principle`, which the package pins by hash, and the gate prints how many it exempts.
+This is the half nothing else in the repository can express. `scripts/ci/reference-check`
+already refuses a path named in any authored document that is not in the tree, and a rule's
+front matter is prose to it, so it catches the dangling half today — measured, not assumed.
+What no other check knows is that a rule is *supposed* to name anything at all.
+`majordomus rules` reports the same `unproven` state for every class but calls it a finding
+only for a blocking rule; this gate is what refuses it for an advisory one.
 
 ## How to see it
 
@@ -48,13 +52,13 @@ scripts/ci/rule-proof-check --strict   fail on any finding, baseline ignored
 ```
 
 The `rule-proof` gate in `.ai/repo/ci/gates.yaml` runs the first on every change that
-touches a rule. The baseline is empty: every blocking rule in this repository names
-executable proof, or declares why a reader is the proof.
+touches a rule. The baseline is empty: every rule in this repository, less the exempt
+vendored principles, names executable proof or declares why a reader is the proof.
 
 ## What it does not cover
 
-That the proof is any *good*. The gate decides that a blocking rule names something and that
-what it names is in the tree. Whether the case it names actually exercises the behaviour the
+That the proof is any *good*. The gate decides that a rule names something and that what it
+names is in the tree. Whether the case it names actually exercises the behaviour the
 rule describes is not decidable here, and a case that asserted `true` would satisfy it.
 That judgement is review's, and it is the reason naming a proof is a floor rather than a
 ceiling.
@@ -74,7 +78,7 @@ green badge on every surface that asked.
 ## What proves it
 
 `test/cases/125_rule_proof.sh`, by mutation. The tree is green; one fact changes — a case is
-deleted while the rule still names it, a blocking rule is added naming nothing, a
+deleted while the rule still names it, a blocking or an advisory rule is added naming nothing, a
 declaration is written with no reason — the gate goes red naming that fact; the change is
 undone; the tree is green again. A mutation nothing survives is a guarantee nothing gives.
 {% endraw %}

@@ -1,7 +1,7 @@
 +++
 title = "GitHub Pages architecture"
 description = "how the website is derived from the repository and checked for drift"
-weight = 60
+weight = 61
 [extra]
 source = "docs/GITHUB_PAGES_ARCHITECTURE.md"
 +++

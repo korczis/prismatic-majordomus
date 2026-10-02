@@ -67,16 +67,23 @@ grep -q '^    - file:.ai/manifest.yaml$' "$adr2"
 grep -q '^status: proposed$' "$adr2"
 
 # ---------------------------------------------------------------- identity under concurrency
-# eight workers proposing at once. The identity is allocated under a lock over the section
-# directory, so the answer is eight identities, not one repeated.
+# sixteen workers proposing at once. The identity is allocated under a lock over the section
+# directory, so the answer is sixteen identities, not one repeated.
 #
 # Every proposer's exit and output are kept and every one is asserted. This section used to
 # background eight proposers with their output discarded, then `wait` with no pid — which
 # returns 0 whatever the jobs did — then bare `[ ]` tests, which under `set -e` end the case
 # having said nothing. CI printed `FAIL 99_adr` and no reason, for a proposer that had died
 # on the identity lock's budget.
+#
+# Sixteen and not eight because the race of issue #715 needs a waiter to poll while the lock
+# changes hands, and every extra proposer is another waiter: eight on a saturated runner
+# produced two 0005s and two 0006s, and passed on the next run of the same tree. Each
+# proposer's own answer is checked as well as the directory, so a proposer that reported an
+# identity another one also reported fails here even if a file name hid it.
+n=16
 pids=""
-for i in 1 2 3 4 5 6 7 8; do
+for i in $(seq 1 "$n"); do
   "$MJ" adr propose "Concurrent decision $i" >"$T/propose.$i.out" 2>&1 &
   pids="$pids $!"
 done
@@ -86,17 +93,24 @@ for p in $pids; do
   wait "$p" || rc=$?
   if [ "$rc" != 0 ]; then
     failed=$((failed + 1))
-    echo "    concurrent proposer $i of 8 exited $rc; it said:"
+    echo "    concurrent proposer $i of $n exited $rc; it said:"
     sed 's/^/    | /' "$T/propose.$i.out"
   fi
 done
-[ "$failed" = 0 ] || { echo "    $failed of 8 concurrent proposers failed"; exit 1; }
+[ "$failed" = 0 ] || { echo "    $failed of $n concurrent proposers failed"; exit 1; }
+want=$((n + 2))
 files="$(ls .ai/repo/adrs/[0-9]*.md | wc -l | tr -d ' ')"
 ids="$(ls .ai/repo/adrs/[0-9]*.md | sed 's|.*/||' | cut -c1-4 | LC_ALL=C sort -u | wc -l | tr -d ' ')"
-[ "$files" = 10 ] || { echo "    expected 10 records after 8 concurrent proposals, found $files:"; ls .ai/repo/adrs/; exit 1; }
-[ "$ids" = 10 ] || { echo "    10 records carry only $ids distinct identities:"; ls .ai/repo/adrs/; exit 1; }
+[ "$files" = "$want" ] || { echo "    expected $want records after $n concurrent proposals, found $files:"; ls .ai/repo/adrs/; exit 1; }
+[ "$ids" = "$want" ] || { echo "    $want records carry only $ids distinct identities:"; ls .ai/repo/adrs/; exit 1; }
+told="$(cat "$T"/propose.*.out | sed -n 's/^proposed: \(adr-[0-9]*\) .*/\1/p' | LC_ALL=C sort -u | wc -l | tr -d ' ')"
+[ "$told" = "$n" ] || { echo "    $n concurrent proposers reported only $told distinct identities:"; cat "$T"/propose.*.out; exit 1; }
+# the identities are contiguous: 0003 up to 0018, with nothing skipped and nothing repeated
+[ -n "$(ls .ai/repo/adrs/"$(printf '%04d' "$want")"-*.md 2>/dev/null)" ] \
+  || { echo "    the highest identity is not $(printf '%04d' "$want"):"; ls .ai/repo/adrs/; exit 1; }
 # and no lock was left behind
 [ ! -e .ai/repo/adrs/.id.lock ] || { echo "    the identity lock was left behind:"; ls -la .ai/repo/adrs/.id.lock; exit 1; }
+[ ! -e .ai/repo/adrs/.id.lock.break ] || { echo "    the break lock was left behind"; exit 1; }
 
 # ---------------------------------------------------------------- a lock outliving its holder
 # A proposer killed while holding the lock leaves it behind. A lock whose owner is provably
@@ -107,7 +121,7 @@ sleep 0 & dead=$!; wait "$dead"
 mkdir .ai/repo/adrs/.id.lock
 printf '%s %s\n' "$(uname -n)" "$dead" > .ai/repo/adrs/.id.lock/owner
 expect_exit 0 env MJ_ADR_LOCK_WAIT=20 "$MJ" adr propose "After a dead holder"
-expect_grep 'proposed: adr-0011'
+expect_grep "proposed: adr-$(printf %04d $((want + 1)))"
 [ ! -e .ai/repo/adrs/.id.lock ] || { echo "    the dead holder's lock is still there"; exit 1; }
 # a live holder on this host: refused, and nothing written
 mkdir .ai/repo/adrs/.id.lock
@@ -122,10 +136,27 @@ rm -f .ai/repo/adrs/.id.lock/owner
 expect_exit 13 env MJ_ADR_LOCK_WAIT=10 "$MJ" adr propose "Past an unnamed holder"
 expect_grep 'by an owner it does not name'
 [ -d .ai/repo/adrs/.id.lock ] || { echo "    a refused proposer removed a lock it did not hold"; exit 1; }
+# a dead holder behind a `.break` that outlived its breaker: not broken, because only a person
+# can tell an abandoned break from a slow one, and the refusal names both
+printf '%s %s\n' "$(uname -n)" "$dead" > .ai/repo/adrs/.id.lock/owner
+mkdir .ai/repo/adrs/.id.lock.break
+expect_exit 13 env MJ_ADR_LOCK_WAIT=10 "$MJ" adr propose "Past a stuck breaker"
+expect_grep 'id\.lock\.break, which stops a dead holder'
+[ -d .ai/repo/adrs/.id.lock ] || { echo "    a dead holder's lock was broken under a held .break"; exit 1; }
+rm -f .ai/repo/adrs/.id.lock/owner
 rmdir .ai/repo/adrs/.id.lock
+# Releasing is exclusive with breaking (issue #715), so a holder whose release finds `.break`
+# held keeps its record and leaves the lock, saying so, rather than release without it ...
+expect_exit 0 env MJ_ADR_LOCK_WAIT=10 "$MJ" adr propose "Released past a stuck breaker"
+expect_grep 'could not release the identity lock'
+[ -d .ai/repo/adrs/.id.lock ] || { echo "    a release went past a held .break"; exit 1; }
+rmdir .ai/repo/adrs/.id.lock.break
+# ... and the lock it left names a process that has ended, so the next proposer breaks it
+expect_exit 0 env MJ_ADR_LOCK_WAIT=20 "$MJ" adr propose "After a holder that could not release"
+[ ! -e .ai/repo/adrs/.id.lock ] || { echo "    the lock of a holder that could not release is still there"; exit 1; }
 after="$(ls .ai/repo/adrs/[0-9]*.md | wc -l | tr -d ' ')"
-[ "$after" = "$((before + 1))" ] \
-  || { echo "    expected one record from the four proposals against held locks, found $((after - before))"; ls .ai/repo/adrs/; exit 1; }
+[ "$after" = "$((before + 3))" ] \
+  || { echo "    expected three records from the seven proposals against held locks, found $((after - before))"; ls .ai/repo/adrs/; exit 1; }
 [ ! -e .ai/repo/adrs/.id.lock.break ] || { echo "    the break lock was left behind"; exit 1; }
 
 git add . && git commit -qm decisions
@@ -194,11 +225,11 @@ cp "$T/keep2.md" "$adr2"; git add . >/dev/null
 # ---------------------------------------------------------------- duplicate identity
 # The failure this whole doctrine exists for. Two records claiming one identity is caught
 # by identity and, separately, by file-name number, so neither check alone carries it.
-cp "$adr1" .ai/repo/adrs/0020-a-second-claim.md
+cp "$adr1" .ai/repo/adrs/0090-a-second-claim.md
 git add . >/dev/null
 expect_exit 10 "$MJ" adr check
 expect_grep 'identity adr-0001 is claimed by more than one record'
-rm -f .ai/repo/adrs/0020-a-second-claim.md; git add . >/dev/null
+rm -f .ai/repo/adrs/0090-a-second-claim.md; git add . >/dev/null
 
 # the same number under two file names, before either record is even parsed
 cp "$adr1" .ai/repo/adrs/0001-another-file.md

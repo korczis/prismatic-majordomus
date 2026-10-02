@@ -81,6 +81,7 @@ jobs:
       rust_bench: ${{ steps.plan.outputs.rust_bench }}
       command_graph: ${{ steps.plan.outputs.command_graph }}
       version_surface: ${{ steps.plan.outputs.version_surface }}
+      intent_check: ${{ steps.plan.outputs.intent_check }}
       cockpit_assets: ${{ steps.plan.outputs.cockpit_assets }}
       cockpit_probe: ${{ steps.plan.outputs.cockpit_probe }}
       site_build: ${{ steps.plan.outputs.site_build }}
@@ -362,7 +363,7 @@ jobs:
   # executable is the artifact majordomus-cli-<target> for a later job or a later phase.
   rust:
     needs: plan
-    if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true' || needs.plan.outputs.projection_closure == 'true' || needs.plan.outputs.web_topology == 'true' || needs.plan.outputs.command_graph == 'true' || needs.plan.outputs.version_surface == 'true' || needs.plan.outputs.rustdoc == 'true'
+    if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true' || needs.plan.outputs.projection_closure == 'true' || needs.plan.outputs.web_topology == 'true' || needs.plan.outputs.command_graph == 'true' || needs.plan.outputs.version_surface == 'true' || needs.plan.outputs.rustdoc == 'true' || needs.plan.outputs.intent_check == 'true'
     # The bound. 30 minutes was set on 2026-09-09 from the observed maximum of twenty runs
     # plus headroom, and the work grew into it: of the 110 rust jobs that reached a verdict
     # from 2026-09-20 to 09-28 the slowest took 29.9 minutes (feature/mesh-cooperation, runs
@@ -458,8 +459,8 @@ jobs:
           name: ci-plan
       # The other gates the model assigns to this job — the ones that need the executable
       # the step above built: projection-closure, web-topology, command-graph,
-      # version-surface, and rustdoc, which judges the tree the --ci run of the step above
-      # handed off into target/web/rustdoc (the gate requires rust-check, so the two are
+      # version-surface, intent-check, and rustdoc, which judges the tree the --ci run of the
+      # step above handed off into target/web/rustdoc (the gate requires rust-check, so the two are
       # always planned together). rust-check and rust-integration are the step above, with
       # the mode and the artifact argument the model's line does not carry, so they are the
       # only two skipped here.

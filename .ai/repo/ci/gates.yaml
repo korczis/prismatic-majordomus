@@ -306,6 +306,14 @@ gates:
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- web validate
     summary: the repository's web surfaces resolve into one topology with no collision, no nested claim and no directory outside the generated root
 
+  # An intent names the milestones that realise it and the evidence that settles it; a link
+  # that resolves to nothing would read as a planned intent forever. The executable decides
+  # it (ADR 0070, project.work-serves-a-declared-intent), so it runs where the toolchain is.
+  - id: intent-check
+    job: rust
+    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- intent validate
+    summary: every intent names a milestone and a criterion, and every milestone, evidence reference and governance entry it names resolves; a milestone no intent serves is reported
+
   - id: cockpit-assets
     job: site
     runs: scripts/cockpit-assets --check
@@ -563,6 +571,14 @@ gates:
     runs: MJ_TEST_JOBS=3 bash test/run.sh && cargo test --no-fail-fast --manifest-path apps/majordomus-cli/Cargo.toml
     summary: the behavioural suite under the stock macOS shell and userland, and the crate's suites on macOS
 
+  # The campaign briefs under campaigns/ are provenance: nothing reads them at run time, which is
+  # why nothing would notice one being edited, half-copied or quietly added to. File reads only —
+  # the manifest against the tree in both directions, and the index against the packs.
+  - id: campaigns-provenance
+    job: structure
+    runs: scripts/ci/campaigns-check
+    summary: every file under campaigns/ is the bytes the manifest recorded, every file present is declared, and every pack has a row in the index that names it
+
   # Box art in a published document: a picture nothing can render, link, theme, diff against
   # what it describes, or wrap on a phone. File reads only, so it belongs in the structure
   # job; the ratchet is meant to reach zero.
@@ -722,6 +738,13 @@ classes:
     paths: [.ai/**]
     gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit, providers-data, github-projection, entry-converges]
 
+  # the intents, the plan they are derived against, and the engine that derives them. `layer`
+  # and `rust` already select the suites; this class adds the one gate that reads intents as
+  # links between records rather than as files.
+  - id: intent
+    paths: [.ai/repo/project/**, share/schemas/majordomus/intent/**, apps/majordomus-cli/src/intent.rs, apps/majordomus-cli/src/capability/builtin/intents.rs, apps/majordomus-cli/src/plan.rs, test/cases/367_an_intent_is_satisfied_only_by_evidence.sh]
+    gates: [intent-check, rust-integration, shell-suite]
+
   # the decisions and the allocator that hands out their identities. `layer` already selects
   # the suite for anything under .ai/; this class is narrower and adds the one gate that reads
   # the decisions as a set spread across refs rather than as files of this tree. The planner
@@ -729,6 +752,12 @@ classes:
   - id: decisions
     paths: [.ai/repo/adrs/**, lib/adr.sh, test/cases/271_adr_allocation.sh, test/cases/99_adr.sh]
     gates: [adr-collision, core-check, shell-suite]
+
+  # the campaign briefs and what proves them: provenance, read by people rather than by the tool,
+  # so beyond the suite the only gate this class needs is the one that decides them
+  - id: campaigns
+    paths: [campaigns/**, scripts/ci/campaigns-check, test/cases/340_a_brief_is_kept_as_received.sh, .ai/repo/rules/project/a-brief-is-kept-as-received.v1.md]
+    gates: [campaigns-provenance, shell-suite]
 
   # the detector the collision-check gate calls. The gate runs on every plan already; this
   # class exists so that an edit to the detector selects its behavioural case instead of

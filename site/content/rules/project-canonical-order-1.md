@@ -1,7 +1,7 @@
 +++
 title = "A collection has one order, owned by one place, and it does not depend on who ran the command"
 description = "A collection has one order, owned by one place, and it does not depend on who ran the command"
-weight = 67
+weight = 68
 [extra]
 kind = "rule"
 slug = "project-canonical-order-1"

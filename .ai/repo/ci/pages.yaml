@@ -77,6 +77,20 @@ deploy:
     # shallow depth. This is a separate key because it is a separate failure: a clone can
     # carry the whole history and still have no tags.
     tags: required
+  # What a reader must find once the public site serves the commit: a route, and a marker the
+  # built page carries there. `scripts/pages verify --smoke` fetches each one after the
+  # identity matches, so "the right commit is served" and "the pages a visitor is sent to are
+  # there and work" are both measured on the public bytes. Markers are the data attributes the
+  # templates render for exactly this, never a sentence, so the words can change freely.
+  smoke:
+    - route: /
+      marker: data-challenge-replay
+    - route: /
+      marker: data-cta
+    - route: /challenge/
+      marker: data-challenge-replay
+    - route: /challenge/
+      marker: /guarantees/
 
 # ---------------------------------------------------------------- what the fast path may spend
 # Seconds, wall clock, on a GitHub-hosted Linux runner with the caches warm. Derived from
