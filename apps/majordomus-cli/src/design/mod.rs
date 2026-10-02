@@ -310,6 +310,8 @@ pub struct ToneRef<'a> {
     pub tone: &'a str,
     /// `fg`, `bg`, `line` or `fill`.
     pub part: &'static str,
+    /// The tone as declared, so a reader of the reference never looks it up again.
+    pub declared: &'a Tone,
 }
 
 impl Tone {
@@ -784,8 +786,12 @@ impl DesignSystem {
             }) else {
                 continue;
             };
-            if let Some((tone, _)) = self.tones.iter().find(|(k, _)| *k == tone) {
-                return Some(ToneRef { tone, part });
+            if let Some((tone, declared)) = self.tones.iter().find(|(k, _)| *k == tone) {
+                return Some(ToneRef {
+                    tone,
+                    part,
+                    declared,
+                });
             }
         }
         None
@@ -1319,13 +1325,10 @@ alias:
     fn a_tone_is_four_colours_read_through_one_class() {
         let d = DesignSystem::parse(&with_tones(SKY)).expect("valid");
         assert_eq!(d.tones.keys().collect::<Vec<_>>(), ["sky"]);
-        assert_eq!(
-            d.tone_ref("tone-sky-fill"),
-            Some(ToneRef {
-                tone: "sky",
-                part: "fill"
-            })
-        );
+        let fill = d.tone_ref("tone-sky-fill").expect("a tone's fill");
+        assert_eq!((fill.tone, fill.part), ("sky", "fill"));
+        assert_eq!(fill.declared.part("fill").light, "green-9");
+        assert_eq!(TokenKind::Tone.as_str(), "tone");
         assert_eq!(d.tone_ref("tone-sky").map(|r| r.part), Some("fg"));
         assert_eq!(d.tone_ref("tone-cloud"), None);
         assert_eq!(
@@ -1356,6 +1359,30 @@ alias:
         ))
         .unwrap_err();
         assert!(err.contains("roles.tone-x"), "{err}");
+    }
+
+    #[test]
+    fn a_tone_or_a_layout_value_may_not_take_a_name_outside_its_lane() {
+        let err = DesignSystem::parse(&with_tones(&SKY.replace("  sky:", "  Sky:"))).unwrap_err();
+        assert!(err.contains("tones.Sky: not a token name"), "{err}");
+        let err =
+            DesignSystem::parse(&small().replace("  measure:\n", "  tone-gap:\n")).unwrap_err();
+        assert!(err.contains("layout.tone-gap: collides"), "{err}");
+    }
+
+    #[test]
+    fn an_unresolved_tone_is_explained_as_unresolved_rather_than_dropped() {
+        // validate() refuses such a declaration; the inventory of one built by hand still
+        // names what it could not follow instead of losing the part
+        let mut d = DesignSystem::parse(&with_tones(SKY)).unwrap();
+        d.tones.0[0].1.fg = Pair {
+            light: "nowhere".into(),
+            dark: "nowhere-dark".into(),
+        };
+        let token = d.explain("sky").unwrap();
+        let fg = token.parts.iter().find(|p| p.part == "fg").unwrap();
+        assert_eq!(fg.light.reference, "nowhere");
+        assert_eq!(fg.dark.reference, "nowhere-dark");
     }
 
     #[test]

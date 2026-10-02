@@ -26,9 +26,11 @@
 {%- set ops = [o for o in tag.operations if o.cli and o.mcp_tool] -%}
 {%- set op = ops | first -%}
 {%- set base = get_url(path="/", trailing_slash=true) -%}
+{#- the kit's source, at the commit this page was built from -#}
+{%- set kit_source -%}{{ <source_tree path="site/templates/kit" /> }}{%- endset -%}
 
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
-  {% <hero kicker="Component kit" title="One vocabulary." accent="Every screen." lead={page.description} actions={[{"label": "The design system", "href": base ~ "docs/design/", "kind": "primary", "trail": "arrow-right"}, {"label": "Source", "href": project.repository_url ~ "/tree/master/site/templates/kit", "icon": "github"}]}> %}
+  {% <hero kicker="Component kit" title="One vocabulary." accent="Every screen." lead={page.description} actions={[{"label": "The design system", "href": base ~ "docs/design/", "kind": "primary", "trail": "arrow-right"}, {"label": "Source", "href": kit_source | trim, "icon": "github"}]}> %}
     {{ <quote text="A page says what a thing is — a badge, a table, a code block, a card — and this file says how that thing looks." by="share/design/primitives.css" /> }}
   {% </hero> %}
 

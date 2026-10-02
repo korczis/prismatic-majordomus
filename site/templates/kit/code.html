@@ -22,7 +22,7 @@
 
 {#- What a command printed, verbatim, in a box that scrolls sideways rather than wrapping: a
     transcript's columns are its meaning. -#}
-{% component term_out(text) %}<div class="overflow-x-auto"><pre class="mj-term-out">{{ text }}</pre></div>{% endcomponent term_out %}
+{% component term_out(text) %}<div class="overflow-x-auto" tabindex="0"><pre class="mj-term-out">{{ text }}</pre></div>{% endcomponent term_out %}
 
 {#- A structured block of output: sections of keys and values in a box. A section is
     `heading` and `aside` (the two ends of a title row) and `rows`, each `k` and `v` and an

@@ -507,20 +507,18 @@ pub fn reference_markdown(design: &DesignSystem) -> String {
     if !design.tones.is_empty() {
         out.push_str("\n## Tones\n\nHues that carry identity and never meaning: the colour of a step of a sequence, of one surface's card. A component reads `--mj-tone-fg`, `-bg`, `-line` and `-fill`; the class `.mj-tone--<tone>` on it or an ancestor says which tone they are.\n\n| tone | ink (light / dark) | ground | border | fill | for |\n|---|---|---|---|---|---|\n");
         for token in design.tokens().iter().filter(|t| t.kind == TokenKind::Tone) {
-            let part = |p: &str| token.parts.iter().find(|x| x.part == p).cloned();
-            let (Some(fg), Some(bg), Some(line), Some(fill)) =
-                (part("fg"), part("bg"), part("line"), part("fill"))
-            else {
-                continue;
-            };
+            // the parts are TONE_PARTS in order, fg first, by construction of `tokens()`
+            let fg = &token.parts[0];
+            let rest: Vec<String> = token.parts[1..]
+                .iter()
+                .map(|p| format!("`{}`", p.css))
+                .collect();
             out.push_str(&format!(
-                "| `.mj-tone--{}` | {} / {} | `{}` | `{}` | `{}` | {} |\n",
+                "| `.mj-tone--{}` | {} / {} | {} | {} |\n",
                 token.name,
                 reference(&fg.light),
                 reference(&fg.dark),
-                bg.css,
-                line.css,
-                fill.css,
+                rest.join(" | "),
                 token.about
             ));
         }

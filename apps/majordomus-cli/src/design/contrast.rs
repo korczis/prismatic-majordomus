@@ -609,7 +609,7 @@ fn derive(
 /// entry — what a person would have to edit to move the colour.
 fn colour(design: &DesignSystem, token: &str, dark: bool) -> Option<(String, String)> {
     let mut reference = if let Some(tone) = design.tone_ref(token) {
-        let pair = design.tones.get(tone.tone)?.part(tone.part);
+        let pair = tone.declared.part(tone.part);
         (if dark { &pair.dark } else { &pair.light }).clone()
     } else if let Some(status) = design.status_ref(token) {
         let role = design.status.roles.get(status.role)?;
