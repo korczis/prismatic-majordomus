@@ -472,6 +472,64 @@ fn a_live_owner_that_never_answers_is_still_taken_over() {
 }
 
 #[test]
+fn a_server_of_this_executable_replaced_on_disk_is_replaced() {
+    // The lease names a server that answers for this checkout, started from this very
+    // executable — but the file at that path is not the one it loaded (another mtime and
+    // size). It is serving code that is no longer on disk: `ensure` starts a server, whose
+    // election takes the superseded lease over, and the new one is what stands there.
+    let f = Fixture::new();
+    let old = TcpListener::bind("127.0.0.1:0").unwrap();
+    let old_url = format!("http://{}", old.local_addr().unwrap());
+    let body = serde_json::json!({
+        "name": "majordomus",
+        "repository_id": majordomus_cli::repository::identity(&f.root()),
+        "leaseholder": true,
+    })
+    .to_string();
+    std::thread::spawn(move || {
+        for stream in old.incoming() {
+            let Ok(mut s) = stream else { continue };
+            let mut request = [0u8; 4096];
+            let _ = s.read(&mut request);
+            let _ = write!(
+                s,
+                "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{}",
+                body.len(),
+                body
+            );
+        }
+    });
+    let exe = std::fs::canonicalize(BIN).unwrap();
+    let lease = lease_path(&f);
+    std::fs::create_dir_all(lease.parent().unwrap()).unwrap();
+    std::fs::write(
+        &lease,
+        serde_json::json!({
+            "schema": "majordomus-mcp-lease/v1",
+            "pid": std::process::id(),
+            "token": "replaced",
+            "root": f.root(),
+            "url": old_url,
+            "started_at": "2026-09-10T00:00:00Z",
+            "version": majordomus_cli::VERSION,
+            "executable": { "path": exe, "mtime": 1, "size": 1 },
+        })
+        .to_string(),
+    )
+    .unwrap();
+    let (code, a, err) = ensure(&f.root(), &["--idle", "120"]);
+    assert_eq!(code, 0, "{a}\n{err}");
+    assert_eq!(a["standing"], "ready", "{a}");
+    assert_eq!(
+        a["started"], true,
+        "the superseded server was replaced: {a}"
+    );
+    assert_ne!(a["url"].as_str().unwrap(), old_url, "{a}");
+    let (code, out, err) = mj(&f.root(), &["serve", "stop"]);
+    assert_eq!(code, 0, "serve stop: {out}{err}");
+}
+
+#[test]
 fn an_idle_server_ends_by_itself() {
     let f = Fixture::new();
     let (code, a, err) = ensure(&f.root(), &["--idle", "1"]);
