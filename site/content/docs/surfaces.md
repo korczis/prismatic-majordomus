@@ -1,7 +1,7 @@
 +++
 title = "How Majordomus derives its surfaces"
 description = "how the system fits together: canonical state, discovery, typed registries, derived models, governance and evidence, and every surface projected from them — what is authored, discovered, derived, observed and inferred, a capability and a rule traced end to end, the generation matrix, a claim audit with file references, and the architecture debt that remains"
-weight = 40
+weight = 41
 [extra]
 source = "docs/SURFACES.md"
 +++

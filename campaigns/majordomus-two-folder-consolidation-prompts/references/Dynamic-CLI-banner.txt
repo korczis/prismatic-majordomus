@@ -1,0 +1,385 @@
+Ano. Udělal bych z toho malý **repo-entry protocol**, ne jen ASCII art připlácnutý do `.envrc`. `.envrc` má být jen spouštěč. Data, rendering, schema, cache i diagnostika patří do Majordomusu.
+
+### Cílový UX
+
+Při:
+
+```bash id="zwe4g4"
+cd ~/dev/prismatic-majordomus
+```
+
+by se jednou při aktivaci `direnv` zobrazilo něco jako:
+
+```text id="yzpmjp"
+╭────────────────────────────────────────────────────────────────────╮
+│  MAJORDOMUS                                         v0.8.2         │
+│  AI development control plane                                      │
+├────────────────────────────────────────────────────────────────────┤
+│  repo       prismatic-majordomus          branch  master           │
+│  git        ✱ 3 modified · ↑2 · ↓0         issue   #184             │
+│  runtime    Rust 1.91 · Node 22.20         direnv  ✓                │
+│                                                                    │
+│  doctrines  18     rules  27     skills  14     ADRs  32          │
+│  providers  anthropic · openai · ollama                            │
+│                                                                    │
+│  cockpit    http://127.0.0.1:1111/                                 │
+│  swagger    http://127.0.0.1:1111/swagger/                         │
+│  docs       http://127.0.0.1:1111/docs/                            │
+├────────────────────────────────────────────────────────────────────┤
+│  just                    commands                                  │
+│  just dev                development stack                         │
+│  just check              repository gates                         │
+│  majordomus doctor       environment diagnostics                   │
+╰────────────────────────────────────────────────────────────────────╯
+```
+
+Ale ani **jedna z těch hodnot nesmí být ručně duplikovaná kvůli banneru**.
+
+## Architektura
+
+```text id="j4d8u2"
+.envrc
+   │
+   └── majordomus env enter
+             │
+             ├── RepositoryInspector
+             │     ├── git
+             │     ├── Cargo workspace
+             │     ├── runtime/toolchain
+             │     ├── .ai/**
+             │     ├── .majordomus/**
+             │     ├── generated registries
+             │     └── runtime endpoints
+             │
+             ├── EnvironmentSnapshot
+             │       typed schema
+             │
+             ├── cache
+             │
+             └── Renderer
+                    ├── ansi
+                    ├── plain
+                    ├── json
+                    └── maybe future HTML/API/MCP
+```
+
+Tedy klíčová věc:
+
+```text id="x59gzu"
+repo state
+    ↓
+EnvironmentSnapshot
+    ├── CLI banner
+    ├── majordomus env status --json
+    ├── REST API
+    ├── Swagger
+    ├── MCP
+    └── Cockpit
+```
+
+Ne:
+
+```text id="8bksn7"
+.envrc -> 47 grepů + awk + sed + cargo + git + curl
+```
+
+To je tradiční lidský způsob, jak si z dev ergonomie vyrobit archeologické naleziště.
+
+### `.envrc` musí zůstat stupidně malý
+
+Ideálně přibližně:
+
+```bash id="1o87e1"
+#!/usr/bin/env bash
+
+PATH_add "apps/majordomus-cli/target/debug"
+
+if command -v majordomus >/dev/null 2>&1; then
+  eval "$(majordomus env export --shell=direnv)"
+  majordomus env banner
+fi
+```
+
+Možná ještě bootstrap fallback, pokud binary není dostupná. Ale **žádná business logika**.
+
+`majordomus env export` a `majordomus env banner` přitom používají stejný snapshot.
+
+## Co inferovat
+
+Banner bych skládal automaticky minimálně z:
+
+| oblast | source of truth |
+|---|---|
+| project name | git root / workspace metadata |
+| version | Cargo workspace/package metadata |
+| description | existující canonical project metadata |
+| branch | git |
+| dirty state | git |
+| ahead/behind | git |
+| issue | branch / Majordomus issue state |
+| Rust version | toolchain |
+| Node version | runtime, pokud relevantní |
+| rules | typed `.ai/` registry |
+| doctrines | typed `.ai/` registry |
+| skills | skill registry |
+| ADR count | knowledge registry |
+| providers | provider registry + env availability |
+| cockpit URL | server configuration |
+| REST URL | server configuration |
+| Swagger URL | router/OpenAPI metadata |
+| docs URL | server routing metadata |
+| recommended commands | **just metadata**, ne banner config |
+
+Provider secrets samozřejmě nikdy neukazovat:
+
+```text id="efqj96"
+OPENAI     ✓ configured
+ANTHROPIC  ✓ configured
+OLLAMA     ○ unavailable
+```
+
+nikoli nějaký inteligentní pokus vypsat `sk-proj-...`, protože lidstvo má dost způsobů, jak si leaknout credentials.
+
+## `justfile` bych současně rozsekal
+
+Současný `just` podporuje jak `import`, tak stabilní moduly přes `mod`; moduly navíc tvoří přirozené namespaces typu `just dev foo` / `just dev::foo`. ([just.systems](https://just.systems/man/en/modules.html?utm_source=chatgpt.com))
+
+Třeba:
+
+```text id="qix9bs"
+justfile
+
+.just/
+├── dev.just
+├── test.just
+├── docs.just
+├── ci.just
+├── release.just
+├── deploy.just
+├── generated.just
+└── majordomus.just
+```
+
+Root:
+
+```text id="84bye9"
+mod dev '.just/dev.just'
+mod test '.just/test.just'
+mod docs '.just/docs.just'
+mod ci '.just/ci.just'
+mod release '.just/release.just'
+mod deploy '.just/deploy.just'
+```
+
+A root si nechá jen několik ergonomických aliases:
+
+```bash id="wmaq62"
+just
+just dev
+just check
+just test
+just docs
+just deploy
+```
+
+`just` umí navíc dumpnout parsed justfile jako JSON, takže Majordomus může jeho metadata **strojově introspektovat místo parsování textu vlastním polofunkčním parserem**. ([just.systems](https://just.systems/man/en/formatting-and-dumping-justfiles.html?utm_source=chatgpt.com))
+
+To se mi líbí ještě víc:
+
+```text id="rv5uis"
+just definitions
+      ↓
+just --dump --dump-format json
+      ↓
+Majordomus just registry
+      ├── banner suggestions
+      ├── CLI
+      ├── docs
+      ├── Cockpit
+      └── validations
+```
+
+### Ale pozor na „dynamic“
+
+Nedělal bych generátor, který při každém vstupu do adresáře přepisuje `justfile`.
+
+Lepší Majordomus princip je:
+
+```text id="9b7wn9"
+declarative files
+       +
+structural conventions
+       ↓
+discovery
+       ↓
+typed registry
+       ↓
+validation
+```
+
+Ne:
+
+```text id="8u165h"
+scan filesystem
+↓
+generate source
+↓
+commit generated garbage
+↓
+wonder why merge conflicts exist
+```
+
+Moduly jsou pro to vhodnější. `just` umí i optional modules, takže platform-specific nebo local části lze připojovat bez rozbití hlavního stromu. ([just.systems](https://just.systems/man/en/modules.html?utm_source=chatgpt.com))
+
+## Výkon je doctrine, ne přání
+
+`cd` nesmí čekat na Majordomus.
+
+Dal bych tvrdý budget:
+
+```text id="fkjja6"
+majordomus env banner
+
+warm:   < 50 ms target
+cold:   < 150 ms target
+hard:   < 250 ms
+network: forbidden
+build:   forbidden
+```
+
+Žádné:
+
+```bash id="a1j25m"
+cargo run ...
+npm ...
+curl ...
+docker ...
+```
+
+během `direnv allow`.
+
+Snapshot cache například:
+
+```text id="fl0eab"
+~/.cache/majordomus/repos/<repo-id>/environment-snapshot.json
+```
+
+Invalidace z:
+
+```text id="1e9kx2"
+.git/HEAD
+.git/index
+Cargo.toml
+rust-toolchain*
+.ai/**
+.majordomus/**
+justfile
+.just/**
+relevant config
+```
+
+Runtime stav serveru může mít extrémně krátký local socket probe. Pokud nestihne budget:
+
+```text id="1vn5cj"
+cockpit  ○ not detected
+```
+
+a jde se dál.
+
+## Přidal bych commands
+
+```bash id="0ylxp5"
+majordomus env
+majordomus env banner
+majordomus env status
+majordomus env status --json
+majordomus env export --shell direnv
+majordomus env doctor
+majordomus env explain
+```
+
+A potom automaticky:
+
+```http id="gnz9t6"
+GET /api/environment
+GET /api/environment/schema
+```
+
+plus OpenAPI, Swagger a MCP resource/tool.
+
+Tím už to není infantilní banner feature. Je to **canonical repository environment introspection**, jejíž první consumer je banner.
+
+## Schema
+
+Rozhodně explicitní typ:
+
+```rust id="i2rfy7"
+struct RepositoryEnvironment {
+    schema_version: String,
+    project: ProjectIdentity,
+    vcs: VcsState,
+    toolchains: Vec<ToolchainState>,
+    capabilities: CapabilitySummary,
+    providers: Vec<ProviderState>,
+    services: Vec<ServiceState>,
+    workflows: Vec<WorkflowHint>,
+    diagnostics: Vec<Diagnostic>,
+}
+```
+
+A JSON Schema generované ze stejného Rust typu.
+
+Potom platí:
+
+```text id="4jveqv"
+Rust type
+   ↓
+JSON Schema
+   ↓
+CLI JSON
+   ↓
+OpenAPI
+   ↓
+MCP
+   ↓
+Cockpit
+```
+
+Jedna pravda. Žádný ručně udržovaný schema soubor vedle implementace, protože proč mít drift zadarmo, když můžeme nemít drift vůbec.
+
+## Ještě jedna věc: intelligent banner levels
+
+Banner nemusí pokaždé řvát román.
+
+Například:
+
+```bash id="4bi0t2"
+MAJORDOMUS_BANNER=full
+MAJORDOMUS_BANNER=compact
+MAJORDOMUS_BANNER=auto
+MAJORDOMUS_BANNER=off
+```
+
+`auto`:
+
+```text id="2ky02v"
+first entry / changed repo state → full
+ordinary re-entry                → compact
+same shell/repo snapshot         → silent
+error/warning                    → force relevant diagnostics
+```
+
+A zase to není ručně konfigurovaný hack. Renderer pouze rozhoduje podle snapshotu.
+
+Kompaktní varianta:
+
+```text id="leqn66"
+◆ majordomus · master ✱3 ↑2 · Rust 1.91 · rules 27 · doctrines 18 · cockpit ✓
+  just dev · just check · majordomus doctor
+```
+
+Tohle je IMO správná implementační hranice:
+
+> **Nevytvářet „direnv banner“. Vytvořit typed `RepositoryEnvironment` subsystem a nechat `.envrc` být jedním z jeho consumerů.**
+
+A zároveň bych v tom samém zásahu rozložil `justfile` na namespaced modules, přidal schema, validation/gates, tests, benchmarks, CLI/API/OpenAPI/MCP/Cockpit exposure a doctrine, že `.envrc` nesmí obsahovat repository-domain logic. Tím je to Majordomus řešení, ne další roztomilý shell script, který za půl roku nikdo nesmí otevřít. ([just.systems](https://just.systems/man/en/modules.html?utm_source=chatgpt.com))

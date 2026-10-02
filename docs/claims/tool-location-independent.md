@@ -12,10 +12,10 @@ The distribution — `bin/`, `lib/`, `share/` — is not part of the repository'
 
 ```bash
 cp -R /path/to/majordomus /tmp/dist
-before=$(cd /tmp/dist && find . -type f | sort | xargs shasum -a 256 | shasum -a 256)
+before=$(cd /tmp/dist && find . -type f | sort | xargs sha256sum | sha256sum)
 /tmp/dist/bin/majordomus init && /tmp/dist/bin/majordomus doctor
 ( cd /elsewhere && PATH=/tmp/dist/bin:$PATH majordomus --repo /path/to/repo start "task" --scope docs )
-after=$(cd /tmp/dist && find . -type f | sort | xargs shasum -a 256 | shasum -a 256)
+after=$(cd /tmp/dist && find . -type f | sort | xargs sha256sum | sha256sum)
 [ "$before" = "$after" ]              # the distribution is byte for byte what it was
 ```
 

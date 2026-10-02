@@ -1,0 +1,52 @@
+# The challenge: the words around one recorded scenario, and nothing else.
+#
+# `use_case` names the scenario. Everything a reader sees happen on /challenge/ and in the
+# homepage replay is that use case's recorded run in site/data/generated/challenge.json:
+# the commands, the exit codes, the output and the note on each step come from
+# .ai/repo/use-cases/<use_case>.md and from executing it, never from this file. Each
+# comparison row names the claim that backs it; the generator refuses a row whose claim is
+# not guaranteed, and refuses the whole page when the scenario stops passing or stops
+# refusing anything.
+#
+# Same rules as marketing.toml: no numbers (scripts/site-check), no capability lists.
+
+use_case = "catch-an-agent-that-says-it-is-done"
+
+[page]
+kicker = "the challenge"
+title = "Try to get unfinished work accepted."
+lead = "A coding agent claims a directory, edits a file outside it, says it is done, hands over, and comes back. Majordomus refuses twice, names the reason each time, and accepts the work only when the repository's own test passes. Every line below is a recorded run of the real tool, executed when this page was generated."
+problem = "Coding agents are good at doing the work and bad at knowing when it is finished. They touch files nobody asked for, report success over a failing test, and forget the task when the session ends. A better prompt does not fix that, because the prompt is the part being ignored. What fixes it is a check the worker cannot talk its way past."
+replay_title = "The run, step by step"
+replay_lead = "Step through it, or read it straight down. A step marked worker is the change being judged; every other step is Majordomus answering it."
+compare_title = "Where the decision lives"
+compare_lead = "The same work, with and without a control plane. Each row links the guarantee that holds it and the test that proves the guarantee."
+reproduce_title = "Run it yourself"
+reproduce_lead = "The scenario is a file in the repository. Install the tool, clone the repository, and run the use case: it builds a disposable repository, replays every step against your build, and fails if any recorded exit code or pattern no longer holds."
+inspect_title = "Inspect how it works"
+inspect_lead = "Nothing here is staged. These are the files that define, prepare and run the scenario, and the guarantees it exercises."
+
+[[compare]]
+without = "The agent says the work is done."
+with = "finish evaluates a contract and writes nothing while any line fails."
+claim = "finish-contract"
+
+[[compare]]
+without = "Which files a task may touch is implied by the prompt."
+with = "The task claims its paths, and a touched file outside them is a failure."
+claim = "scope-enforcement"
+
+[[compare]]
+without = "Two agents edit the same paths and find out at merge time."
+with = "start reports another worker already claiming those paths."
+claim = "overlap-report"
+
+[[compare]]
+without = "The next session starts from a transcript, or from nothing."
+with = "The handover is a structured record in the repository, and context returns it."
+claim = "handover-record"
+
+[[compare]]
+without = "An outcome is whatever the last message said."
+with = "An outcome is one of a closed set, recorded with the verification that proved it."
+claim = "typed-outcome"

@@ -107,7 +107,7 @@ grep -qE '^started_event: sha256:[0-9a-f]{64}$' "$I/I0003.yaml" || note "the cap
 grep -q '"event":"plan_start","head":.*"issue":"I0003"' "$L" || note "the capability wrote a stamp without its event"
 # The seal is the digest of the event, the issue and the stamp — recomputed here, not read back.
 at="$(sed -n 's/^started_at: //p' "$I/I0003.yaml")"
-want="sha256:$(printf 'majordomus.plan-event/v1\nplan_start\nI0003\n%s\n' "$at" | { sha256sum 2>/dev/null || shasum -a 256; } | cut -d' ' -f1)"
+want="sha256:$(printf 'majordomus.plan-event/v1\nplan_start\nI0003\n%s\n' "$at" | mj_sha256_hex)"
 [ "$(sed -n 's/^started_event: //p' "$I/I0003.yaml")" = "$want" ] || note "the capability's seal is not the digest of plan_start, I0003 and $at"
 expect_exit 0 "$MJ" plan validate || fail=1
 

@@ -197,8 +197,10 @@ expect_grep 'selected no gate'
 # --- the parallel runner keeps the serial runner's semantics: a failing case turns the run
 #     red with its log rendered, the exclusive cases run after the pool, one at a time, the
 #     report carries every case, and a case that writes into the checkout is caught
-H="$T/harness"; mkdir -p "$H/test/cases" "$H/bin"
+H="$T/harness"; mkdir -p "$H/test/cases" "$H/bin" "$H/lib"
 cp "$ROOT/test/run.sh" "$H/test/run.sh"; cp "$ROOT/test/lib.sh" "$H/test/lib.sh"
+# test/lib.sh sources the tool's own lib/sha256.sh
+cp "$ROOT/lib/sha256.sh" "$H/lib/sha256.sh"
 git -C "$H" init -q . 2>/dev/null; git -C "$H" add -A >/dev/null; git -C "$H" -c user.email=t@e.com -c user.name=t commit -qm harness
 for i in 1 2 3 4 5; do printf 'sleep 1; echo "case %s ran"\n' "$i" > "$H/test/cases/p$i.sh"; done
 printf 'echo "this one explains itself"; exit 1\n' > "$H/test/cases/p_fails.sh"

@@ -1,25 +1,25 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.11.0
+# Generator: majordomus-cli 0.12.0
 schema: majordomus/benchmark-matrix/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.11.0
+generator: majordomus-cli 0.12.0
 coverage:
   - scope: direct
-    required: 152
-    covered: 134
+    required: 156
+    covered: 138
     missing: 0
     waived: 18
     inapplicable: 0
   - scope: http
-    required: 150
-    covered: 134
+    required: 154
+    covered: 138
     missing: 0
     waived: 16
     inapplicable: 0
   - scope: mcp
-    required: 146
-    covered: 130
+    required: 150
+    covered: 134
     missing: 0
     waived: 16
     inapplicable: 0
@@ -30,8 +30,8 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 461
-    covered: 411
+    required: 473
+    covered: 423
     missing: 0
     waived: 50
     inapplicable: 0
@@ -621,6 +621,42 @@ capabilities:
       - a-number
   - id: integration.queue
     module: integration
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: intents.list
+    module: intents
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: intents.preflight
+    module: intents
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - first-issue
+  - id: intents.record
+    module: intents
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - first-intent
+  - id: intents.validate
+    module: intents
     kind: query
     cache: "—"
     direct: covered

@@ -104,4 +104,7 @@ grep -q 'index could not be asked' "$ROOT/lib/usecase.sh" \
 # reads "exit 0, 0s, tree <sha>", and a recorder that took 1s wrote a different catalogue
 norm="$(MJ_BIN_DIR="$ROOT/bin" MJ_LIB_DIR="$ROOT/lib" bash -c '. "$1/lib/usecase.sh" && printf "%s\n" "OK verification t-1 — true — exit 0, 7s, tree a9eff10ec68c" "OK verification t-1 — true — exit 0, 12s" | mj_uc_normalise "$2"' _ "$ROOT" "$T")"
 case "$norm" in *"7s"*|*"12s"*) echo "    a recorded duration is not masked:"; printf '%s\n' "$norm"; exit 1 ;; esac
+# and so is the tree a verification proved: it is the hash of the fixture as this recorder
+# wrote it, so CI and a workstation record different ones for the same scenario
+case "$norm" in *a9eff10ec68c*) echo "    a recorded tree is not masked:"; printf '%s\n' "$norm"; exit 1 ;; esac
 exit 0
