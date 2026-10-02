@@ -73,6 +73,18 @@ pub const JOIN_TIMEOUT: Duration = Duration::from_secs(20);
 /// A `OnceLock`, because a process reads one policy: the repository is opened once and the
 /// answer must not change underneath a contest that is already being judged. Absent keys keep
 /// the constants, so a policy that cannot be read does not silently change behaviour.
+///
+/// ```
+/// use majordomus_cli::lease::{Timings, BIND_GRACE, BUSY_GRACE, JOIN_TIMEOUT, PROBE_TIMEOUT};
+/// // the defaults are the compiled constants, one for one
+/// let t = Timings::default();
+/// assert_eq!(t.bind_grace, BIND_GRACE);
+/// assert_eq!(t.probe_timeout, PROBE_TIMEOUT);
+/// assert_eq!(t.join_timeout, JOIN_TIMEOUT);
+/// assert_eq!(t.busy_grace, BUSY_GRACE);
+/// // a busy owner is given up on before the election that waits on it gives up itself
+/// assert!(t.busy_grace < t.join_timeout);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Timings {
     /// `server.bind_grace_seconds:`
@@ -100,6 +112,14 @@ static TIMINGS: OnceLock<Timings> = OnceLock::new();
 
 /// What this process judges a lease contest by. The declaration when one was read, the
 /// constants otherwise.
+///
+/// ```
+/// use majordomus_cli::lease::{timings, Timings};
+/// // this example's process declared nothing: it judges by the constants, and asking again
+/// // answers the same, because the first answer is the one the process keeps
+/// assert_eq!(timings(), Timings::default());
+/// assert_eq!(timings(), timings());
+/// ```
 pub fn timings() -> Timings {
     *TIMINGS.get_or_init(Timings::default)
 }
@@ -156,6 +176,18 @@ impl Timings {
 /// Declare the timings for this process from a repository's policy. The first call decides;
 /// later ones are ignored, which is what makes [`timings`] answer the same thing all the way
 /// through one contest.
+///
+/// ```
+/// use majordomus_cli::lease::{declare_timings, timings};
+/// use majordomus_cli::policy::ServerPolicy;
+/// use std::time::Duration;
+/// // the first declaration is the one in force
+/// declare_timings(&ServerPolicy { busy_grace_seconds: Some(4), ..ServerPolicy::default() });
+/// assert_eq!(timings().busy_grace, Duration::from_secs(4));
+/// // a later one cannot move a judgement already being made
+/// declare_timings(&ServerPolicy { busy_grace_seconds: Some(9), ..ServerPolicy::default() });
+/// assert_eq!(timings().busy_grace, Duration::from_secs(4));
+/// ```
 pub fn declare_timings(policy: &crate::policy::ServerPolicy) {
     let _ = TIMINGS.set(Timings::from_policy(policy));
 }
