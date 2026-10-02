@@ -186,7 +186,7 @@ mj_derive_sec_decisions() {
 mj_derive_sec_reasoning() {
   # shellcheck source=rust_bin.sh
   . "$MJ_LIB_DIR/rust_bin.sh"
-  local report; report="$(mj_rust_reasoning_report "$MJ_ROOT")"
+  local report; report="$(mj_rust_reasoning_report "$MJ_ROOT" "$MJ_HOME")"
   if [ -n "$report" ]; then printf '%s\n' "$report"
   else printf 'No reasoning was recorded for this task.\n'; fi
 }

@@ -1493,12 +1493,12 @@ mj_capture_ensure_server() {
   [ "$(mj_pol session.ensure_server_on_start)" = false ] && { printf 'not ensured: session.ensure_server_on_start is false\n'; return 0; }
   # shellcheck source=rust_bin.sh
   . "$MJ_LIB_DIR/rust_bin.sh"
-  bin="$(mj_rust_bin "$MJ_ROOT")"
+  bin="$(mj_rust_bin "$MJ_HOME")"
   if [ ! -x "$bin" ]; then
     mj_session_context_log "$provider start event: the executable is not built; no server ensured"
     printf 'not ensured: the executable is not built (run `just build`)\n'; return 0
   fi
-  if mj_rust_stale "$MJ_ROOT" "$bin"; then
+  if mj_rust_stale "$MJ_HOME" "$bin"; then
     mj_session_context_log "$provider start event: the executable is older than its sources; no server ensured"
     printf 'not ensured: the executable is older than its sources (run `just build`)\n'; return 0
   fi
@@ -1530,7 +1530,7 @@ mj_capture_mesh_line() {
   mj_has jq || return 0
   # shellcheck source=rust_bin.sh
   . "$MJ_LIB_DIR/rust_bin.sh"
-  bin="$(mj_rust_bin "$MJ_ROOT")"; [ -x "$bin" ] || return 0
+  bin="$(mj_rust_bin "$MJ_HOME")"; [ -x "$bin" ] || return 0
   share="$(mj_rust_share "$MJ_ROOT")"
   [ -n "$share" ] && export MAJORDOMUS_SHARE="$share"
   # exit 10 is a failed check, and the report is printed either way

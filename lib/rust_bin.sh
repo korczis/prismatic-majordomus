@@ -13,6 +13,17 @@
 #   MAJORDOMUS_BUILD_PROFILE  debug (default) or release
 #   CARGO_TARGET_DIR          where cargo builds; read, never assumed
 #
+# The root mj_rust_bin and mj_rust_stale take is the TOOL's — the distribution the
+# executable ships in — and not the repository the tool is working on. Inside the shell tool
+# that is $MJ_HOME, never $MJ_ROOT (lib/common.sh keeps the two apart). In this source
+# checkout the two are one directory, which is why passing $MJ_ROOT looked right: in a
+# packaged install (~/.local/share/majordomus/versions/<v>/{bin,lib,libexec,share}) serving
+# another repository, $MJ_ROOT has no libexec/ and no crate, so the executable was never
+# found and every Rust-backed feature of the shell tool degraded in silence (0.10.0). The
+# repository reaches the executable as `--repo "$MJ_ROOT"`; it never decides which
+# executable runs. test/cases/744_an_installed_tool_finds_its_own_executable.sh proves it
+# from a packaged layout, and refuses a lib/ call that passes $MJ_ROOT here again.
+#
 # Sourced by scripts that are not the shell tool, so it defines functions and sets nothing.
 
 # mj_cargo_target_dir <crate-directory> [ask-cargo]
@@ -48,7 +59,10 @@ mj_cargo_target_dir() {
   printf '%s\n' "$mj_ctd_crate/target"
 }
 
-# mj_rust_bin <repository-root>
+# mj_rust_bin <tool-root>
+#
+# The tool's root, as the header says: $MJ_HOME inside the shell tool, the launcher's own
+# directory in bin/majordomus-cli and bin/majordomus-env.
 mj_rust_bin() {
   mj_rb_root="$1"
   if [ -n "${MAJORDOMUS_BIN:-}" ]; then
@@ -65,7 +79,7 @@ mj_rust_bin() {
   printf '%s\n' "$mj_rb_target/${MAJORDOMUS_BUILD_PROFILE:-debug}/majordomus"
 }
 
-# mj_rust_stale <repository-root> <executable>
+# mj_rust_stale <tool-root> <executable>
 #
 # Is that executable missing, or older than any source, manifest or lock file of the crate?
 # True (0) for either. One question with two answers again: `bin/majordomus-cli` builds when
@@ -356,9 +370,15 @@ mj_rust_space_check() {
 # handover and every other surface say the same thing. Never a build, as for the peer
 # board: an executable that is not there yields nothing, and so does a task with no
 # reasoning records. Prints the report or nothing; always returns 0.
+#
+# mj_rust_reasoning_report <repository-root> [<tool-root>]
+#
+# Two roots, because the records are the repository's and the executable is the tool's.
+# The tool root defaults to the repository's only for a caller in this source checkout,
+# where they coincide; the shell tool passes "$MJ_ROOT" "$MJ_HOME".
 mj_rust_reasoning_report() {
   mj_rr_root="$1"
-  mj_rr_bin="$(mj_rust_bin "$mj_rr_root")"
+  mj_rr_bin="$(mj_rust_bin "${2:-$1}")"
   [ -x "$mj_rr_bin" ] || return 0
   [ -d "$mj_rr_root/.ai/local/state/reasoning" ] || return 0
   mj_rr_share="$(mj_rust_share "$mj_rr_root")"
