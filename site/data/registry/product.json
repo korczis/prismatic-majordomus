@@ -5,18 +5,18 @@
     "id": "majordomus-cli",
     "version": "0.11.0"
   },
-  "fingerprint": "0588cbf54308c9f15d42da3bf095934910515c5cee5c73c6c4ada77bd21a9c54",
+  "fingerprint": "81b1f9bbcabb363887e855d22d8dc159fa36dce2e9301a2deda7154dce7229fd",
   "route": "/features/",
   "counts": {
     "features": 26,
     "features_all": 27,
     "featured": 14,
     "providers": 6,
-    "modules": 45,
+    "modules": 46,
     "modules_covered": 39,
     "commands": 30,
     "commands_covered": 30,
-    "kinds": 26,
+    "kinds": 27,
     "kinds_covered": 24
   },
   "surfaces": [
@@ -345,7 +345,7 @@
           "identity": "project.derived-once@1",
           "title": "Derived state is computed once per state version",
           "class": "advisory",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/derived-once.v1.md"
         }
       ],
@@ -583,7 +583,7 @@
         "commands": 2,
         "objects": 265,
         "rules": 5,
-        "enforced_rules": 4,
+        "enforced_rules": 5,
         "docs": 3,
         "adrs": 4,
         "claims": 9,
@@ -3818,7 +3818,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 71
+          "objects": 72
         },
         {
           "name": "knowledge",
@@ -4082,11 +4082,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 364,
+        "mcp_resources": 365,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 363,
+        "objects": 364,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -4296,7 +4296,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 148
+          "objects": 150
         }
       ],
       "rule_refs": [
@@ -4413,7 +4413,7 @@
         },
         {
           "id": "rule-proof-is-named-and-resolves",
-          "claim": "Every blocking rule names what proves it, and every path it names is in the tree",
+          "claim": "Every rule names what proves it, and every path it names is in the tree",
           "status": "guaranteed",
           "test": "test/cases/125_rule_proof.sh"
         },
@@ -4672,11 +4672,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 150,
+        "mcp_resources": 152,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 148,
+        "objects": 150,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -7007,7 +7007,7 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 21
+          "objects": 22
         },
         {
           "name": "issue",
@@ -7161,11 +7161,11 @@
       "counts": {
         "capabilities": 14,
         "mcp_tools": 14,
-        "mcp_resources": 262,
+        "mcp_resources": 263,
         "http_routes": 14,
         "cli_paths": 2,
         "commands": 1,
-        "objects": 260,
+        "objects": 261,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -7366,7 +7366,7 @@
       "kind_refs": [
         {
           "name": "context",
-          "objects": 31
+          "objects": 32
         },
         {
           "name": "scope",
@@ -7655,11 +7655,11 @@
       "counts": {
         "capabilities": 7,
         "mcp_tools": 7,
-        "mcp_resources": 36,
+        "mcp_resources": 37,
         "http_routes": 7,
         "cli_paths": 4,
         "commands": 1,
-        "objects": 32,
+        "objects": 33,
         "rules": 6,
         "enforced_rules": 5,
         "docs": 2,
@@ -8573,7 +8573,7 @@
           "identity": "project.performance-evidence@1",
           "title": "A performance claim carries its measurement",
           "class": "advisory",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/performance-evidence.v1.md"
         },
         {
@@ -8605,7 +8605,7 @@
           "identity": "project.hot-path-reads-once@1",
           "title": "A command reads each canonical file at most once",
           "class": "advisory",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/hot-path-reads-once.v1.md"
         },
         {
@@ -8613,7 +8613,7 @@
           "identity": "project.derived-once@1",
           "title": "Derived state is computed once per state version",
           "class": "advisory",
-          "enforced": false,
+          "enforced": true,
           "path": ".ai/repo/rules/project/derived-once.v1.md"
         }
       ],
@@ -8729,7 +8729,7 @@
         "commands": 1,
         "objects": 0,
         "rules": 6,
-        "enforced_rules": 3,
+        "enforced_rules": 6,
         "docs": 1,
         "adrs": 1,
         "claims": 6,
@@ -10217,6 +10217,11 @@
         ]
       },
       {
+        "id": "intents",
+        "title": "Intent",
+        "features": []
+      },
+      {
         "id": "lifecycle",
         "title": "Session lifecycle",
         "features": [
@@ -10607,7 +10612,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (71)",
+        "title": "adr (72)",
         "features": [
           "knowledge"
         ]
@@ -10649,7 +10654,7 @@
       },
       {
         "id": "context",
-        "title": "context (31)",
+        "title": "context (32)",
         "features": [
           "context"
         ]
@@ -10674,6 +10679,11 @@
         ]
       },
       {
+        "id": "intent",
+        "title": "intent (1)",
+        "features": []
+      },
+      {
         "id": "issue",
         "title": "issue (239)",
         "features": [
@@ -10696,7 +10706,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (21)",
+        "title": "milestone (22)",
         "features": [
           "planning"
         ]
@@ -10738,7 +10748,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (148)",
+        "title": "rule (150)",
         "features": [
           "doctrine"
         ]
@@ -11240,7 +11250,7 @@
       "identity": "project.derived-once@1",
       "title": "Derived state is computed once per state version",
       "class": "advisory",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/derived-once.v1.md"
     },
     {
@@ -11280,7 +11290,7 @@
       "identity": "project.hot-path-reads-once@1",
       "title": "A command reads each canonical file at most once",
       "class": "advisory",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/hot-path-reads-once.v1.md"
     },
     {
@@ -11368,7 +11378,7 @@
       "identity": "project.performance-evidence@1",
       "title": "A performance claim carries its measurement",
       "class": "advisory",
-      "enforced": false,
+      "enforced": true,
       "path": ".ai/repo/rules/project/performance-evidence.v1.md"
     },
     {
@@ -11606,45 +11616,46 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1743,
-    "builtin": 152,
-    "declarative": 1591,
-    "modules": 45,
-    "mcp_tools": 146,
-    "mcp_resources": 1638,
-    "http_routes": 150,
-    "cli_commands": 161,
+    "capabilities": 1757,
+    "builtin": 156,
+    "declarative": 1601,
+    "modules": 46,
+    "mcp_tools": 150,
+    "mcp_resources": 1649,
+    "http_routes": 154,
+    "cli_commands": 165,
     "shell_commands": 30,
-    "kinds": 29,
-    "objects": 1591,
+    "kinds": 30,
+    "objects": 1601,
     "by_kind": {
-      "adr": 71,
+      "adr": 72,
       "application": 5,
       "area": 9,
       "audience": 8,
       "claim": 207,
       "command": 31,
-      "context": 31,
+      "context": 32,
       "deployment": 1,
       "distribution-model": 1,
       "document": 291,
       "feature": 27,
       "implementation": 50,
+      "intent": 1,
       "issue": 239,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 21,
+      "milestone": 22,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
       "release-record": 7,
-      "rule": 148,
+      "rule": 150,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 311,
+      "test": 315,
       "use-case": 47,
       "workspace": 1
     },

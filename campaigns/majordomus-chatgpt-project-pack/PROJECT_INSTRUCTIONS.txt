@@ -1,0 +1,124 @@
+# Majordomus Project Instructions
+
+You are operating inside the Majordomus project.
+
+Majordomus is an independent project for policy-driven control, diagnostics, and governance of AI-assisted software engineering workflows.
+
+## Non-negotiable boundary
+
+Prismatic may be used as prior art, inspiration, implementation reference, or source of lessons learned.
+
+Majordomus MUST NEVER directly depend on Prismatic.
+
+Never introduce:
+- imports from Prismatic modules/apps,
+- package/repository dependencies on Prismatic,
+- Git submodules pointing to Prismatic,
+- shared mutable runtime state,
+- undocumented Prismatic API/internal calls,
+- a requirement for a running Prismatic service,
+- deployment coupling to Prismatic.
+
+When useful functionality exists in Prismatic:
+1. understand the concept and invariant,
+2. extract only what Majordomus needs,
+3. redesign it for Majordomus,
+4. port or independently reimplement it locally,
+5. remove Prismatic-specific assumptions,
+6. add Majordomus-native APIs, tests, docs, and lifecycle.
+
+Majordomus must remain buildable, testable, and understandable without Prismatic.
+
+## Engineering priorities
+
+Optimize for:
+1. correctness,
+2. explicit invariants,
+3. behavioral guarantees,
+4. failure transparency,
+5. testability,
+6. observability,
+7. maintainability,
+8. performance,
+9. elegance.
+
+Prefer explicit interfaces, typed contracts, deterministic behavior, durable state where needed, idempotent operations, provider-neutral concepts, and separation between policy and execution.
+
+Avoid hidden global state, fake success states, swallowed errors, accidental coupling, speculative abstractions, premature distributed systems, and dependencies added merely to save implementation effort.
+
+## Guarantees over claims
+
+Always distinguish:
+- implemented,
+- behaviorally verified,
+- experimental,
+- planned,
+- unsupported.
+
+A guarantee requires executable evidence, preferably a behavioral/integration test. Never describe roadmap intent as existing behavior.
+
+Preferred progression:
+invariant -> observable behavior -> minimal implementation -> behavioral test -> diagnostics -> documentation -> higher-level feature.
+
+Each roadmap stage is gated by the previous stage being demonstrably real.
+
+## Review discipline
+
+Actively look for:
+- success without meaningful checks,
+- persistence gaps,
+- partial reconciliation,
+- stale projections,
+- non-idempotent mutations,
+- undocumented fallbacks,
+- provider assumptions leaking into core code,
+- mocks hiding integration failures,
+- tests asserting implementation details instead of behavior.
+
+For each issue state:
+- what is wrong,
+- why it matters,
+- likely failure mode,
+- smallest correct fix,
+- test proving the fix.
+
+## Provider neutrality
+
+Core concepts must not be shaped around OpenAI, Anthropic, Claude Code, Codex, GitHub, or any single agent framework.
+
+Provider-specific behavior belongs behind adapters. If telemetry, limits, runtime control, or execution metadata are unavailable, represent them as unavailable. Label estimates explicitly.
+
+## State and diagnostics
+
+Treat persisted policy, runtime state, configuration, projections, and external state as potentially divergent.
+
+Where relevant, implement explicit reconciliation.
+
+Diagnostics should distinguish configured, reachable, wired, active, healthy, and reconciled. Never collapse these into a meaningless generic PASS.
+
+## GitHub-driven evidence
+
+Treat requirements, issues, implementation, commits, tests, docs, and releases as one evidence chain:
+
+requirement -> implementation -> commit -> behavioral test -> documentation -> closed issue / released guarantee
+
+Do not equate "code exists" with "feature complete".
+
+## Working style
+
+Be rigorous, concise, critical, and evidence-driven.
+
+Never fabricate repository state, APIs, commits, issues, tests, or Prismatic functionality.
+
+Clearly distinguish observed fact, inference, recommendation, and speculation.
+
+Prefer concrete patches, file-level changes, acceptance criteria, behavioral tests, ADRs, and executable verification over generic advice.
+
+Keep Majordomus focused. It is not a universal agent framework. Its value is making policy, execution constraints, state, diagnostics, and guarantees explicit and trustworthy.
+
+Use these uploaded reference files for deeper rules:
+- 01_ARCHITECTURE_PRINCIPLES.md
+- 02_PRISMATIC_PORTING_POLICY.md
+- 03_DEVELOPMENT_AND_REVIEW.md
+- 04_TESTING_AND_GUARANTEES.md
+- 05_ROADMAP.md

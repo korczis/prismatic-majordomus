@@ -1,7 +1,7 @@
 +++
 title = "Unknown configuration keys are errors"
 description = "Unknown configuration keys are errors"
-weight = 142
+weight = 143
 [extra]
 kind = "rule"
 slug = "project-unknown-keys-are-errors-1"

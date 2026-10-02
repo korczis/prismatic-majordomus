@@ -1,7 +1,7 @@
 +++
 title = "Execution state is authoritative and the terminal is not"
 description = "Execution state is authoritative and the terminal is not"
-weight = 89
+weight = 90
 [extra]
 kind = "rule"
 slug = "project-execution-state-is-authoritative-1"
