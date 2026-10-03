@@ -1944,14 +1944,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/release/commits.rs",
-        "kind": "file",
-        "label": "commits.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/release/commits.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/release/compat.rs",
         "kind": "file",
         "label": "compat.rs",
@@ -26240,6 +26232,46 @@
         }
       },
       {
+        "id": "majordomus://issue/I1966",
+        "kind": "issue",
+        "label": "I1966",
+        "summary": "The composed graph is whole or its generation refuses",
+        "route": "/cockpit/objects/issue/i1966",
+        "source": ".ai/repo/project/issues/I1966.yaml",
+        "facts": {
+          "created_at": "2026-10-03",
+          "evidence_required": [
+            "composed_graph_complete_or_refused",
+            "truncation_refusal_case",
+            "size_budget_measured"
+          ],
+          "milestone": "capability-graph",
+          "non_scope": [
+            "The mesh registry's own MAX_NODES (apps/majordomus-cli/src/mesh/registry.rs), which is an unrelated bound on peers",
+            "The Cockpit's graph pages and the site's why-graph and product-graph, apart from keeping their existing truncation notice true",
+            "Changing which objects, claims or relations are composed: the inputs stay as they are, and only the completeness of the output is at stake",
+            "Pruning claims or index classes to get under the cap"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/graph.rs",
+            "apps/majordomus-cli/src/generate.rs",
+            "test/cases/390_unresolved_relation_refuses_generation.sh",
+            "docs/generated/graph.json",
+            "docs/generated/graph.schema.json"
+          ],
+          "slug": "the-composed-graph-is-whole-or-refused",
+          "updated_at": "2026-10-03",
+          "validation": [
+            "bash test/run.sh 390_unresolved_relation_refuses_generation",
+            "cargo test --lib graph::",
+            "scripts/derive-check"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -45039,11 +45071,6 @@
       },
       {
         "source": "majordomus://adr/adr-0054",
-        "target": "file:apps/majordomus-cli/src/release/commits.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0054",
         "target": "file:scripts/ci/commit-policy",
         "kind": "put_in_force"
       },
@@ -45051,11 +45078,6 @@
         "source": "majordomus://adr/adr-0054",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0054",
-        "target": "majordomus://adr/adr-0048",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0054",
@@ -45100,11 +45122,6 @@
       {
         "source": "majordomus://adr/adr-0054",
         "target": "majordomus://rule/project.no-claim-without-test@1",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0054",
-        "target": "majordomus://test/test/cases/274_commit_policy.sh",
         "kind": "put_in_force"
       },
       {
@@ -55943,6 +55960,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I1966",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1966",
+        "target": "majordomus://milestone/capability-graph",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -63085,7 +63112,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4504,
+      "edges": 4503,
       "acyclic": true,
       "truncated": true
     }
