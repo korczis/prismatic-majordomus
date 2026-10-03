@@ -745,10 +745,14 @@ jobs:
   # and 35156274863), and on most runs of 2026-09-16 and 17 the job reached its 50-minute bound
   # mid-audit and was reported cancelled with no finding. It drives the repository's own server,
   # so it needs the executable; the Rust cache makes that a restore in nearly every run.
+  # It grew with the site: on #723's run (int/batch-j be9f675f16) the audit took 2,345 s over
+  # 5,902 visits of 1,740 pages at 4 jobs, 55 s inside its 2,400 s bound, and on master's run of
+  # the same tree (37087514909) it was stopped at 2,400 s mid-audit. The bound is 3,600 s and
+  # the job's 75 minutes, so a third more site still finishes and reports.
   ui:
     needs: plan
     if: needs.plan.outputs.ui_audit == 'true'
-    timeout-minutes: 45
+    timeout-minutes: 75
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -770,7 +774,7 @@ jobs:
           RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml
           echo "MAJORDOMUS_BIN=$PWD/apps/majordomus-cli/target/debug/majordomus" >> "$GITHUB_ENV"
       - name: audit the UI in a browser
-        run: scripts/ci/timed --bound 2400 ui-audit ui-audit timings.tsv scripts/ui audit --report
+        run: scripts/ci/timed --bound 3600 ui-audit ui-audit timings.tsv scripts/ui audit --report
       - if: always()
         uses: actions/upload-artifact@v4
         with:
