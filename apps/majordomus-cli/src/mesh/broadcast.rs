@@ -240,21 +240,68 @@ mod tests {
         assert!(disabled.destinations().unwrap().is_empty());
     }
 
+    /// How many fresh ports a listening start may try before the test gives up.
+    const BIND_ATTEMPTS: usize = 8;
+
+    /// The text the host gives a bind that finds its address taken, read from a real
+    /// collision rather than written down: it differs between operating systems.
+    fn address_in_use() -> String {
+        let held = UdpSocket::bind((Ipv4Addr::UNSPECIFIED, 0)).unwrap();
+        let refused = UdpSocket::bind(held.local_addr().unwrap()).unwrap_err();
+        assert_eq!(refused.kind(), std::io::ErrorKind::AddrInUse, "{refused}");
+        refused.to_string()
+    }
+
+    /// Start a listening provider on a port nobody holds, and hand back the provider with
+    /// the port it holds.
+    ///
+    /// A free port can only be found by binding port 0 and letting it go, and between the
+    /// release and the provider's own bind any process on the host may take it: under load
+    /// one did, and the test failed with "cannot bind udp port 55932: Address already in
+    /// use". The provider binding the port it was configured with is what is under test,
+    /// so the port stays a configured one; a start that lost that race, and only that
+    /// race, is retried with a fresh port a bounded number of times. Any other failure of
+    /// the start fails the test at once.
+    fn start_listening_on_a_free_port(
+        ctx: &crate::mesh::provider::ProviderContext,
+    ) -> (BroadcastProvider, u16) {
+        let in_use = address_in_use();
+        let mut lost = Vec::new();
+        for _ in 0..BIND_ATTEMPTS {
+            let port = {
+                let probe = UdpSocket::bind((Ipv4Addr::UNSPECIFIED, 0)).unwrap();
+                probe.local_addr().unwrap().port()
+            };
+            let mut provider = BroadcastProvider::new(
+                BroadcastConfig {
+                    mode: BroadcastMode::Auto,
+                    port,
+                    interval_seconds: 1,
+                    ..BroadcastConfig::default()
+                },
+                true,
+            );
+            match provider.start(ctx) {
+                Ok(()) => {
+                    // Hard: the sole UDP provider binds its listening socket and reaches
+                    // Running.
+                    assert_eq!(provider.status().state, MeshProviderState::Running);
+                    return (provider, port);
+                }
+                Err(e)
+                    if e.to_string()
+                        .ends_with(&format!("cannot bind udp port {port}: {in_use}")) =>
+                {
+                    lost.push(port);
+                }
+                Err(e) => panic!("the listening provider did not start: {e}"),
+            }
+        }
+        panic!("every port probed was taken before the provider could bind it: {lost:?}");
+    }
+
     #[test]
     fn the_sole_udp_provider_listens_and_counts_what_it_hears() {
-        let port = {
-            let probe = UdpSocket::bind((Ipv4Addr::LOCALHOST, 0)).unwrap();
-            probe.local_addr().unwrap().port()
-        };
-        let mut provider = BroadcastProvider::new(
-            BroadcastConfig {
-                mode: BroadcastMode::Auto,
-                port,
-                interval_seconds: 1,
-                ..BroadcastConfig::default()
-            },
-            true,
-        );
         let (tx, rx) = std::sync::mpsc::channel();
         let stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
         let ctx = crate::mesh::provider::ProviderContext {
@@ -268,9 +315,7 @@ mod tests {
                 "test",
             )),
         };
-        // Hard: the sole UDP provider binds its listening socket and reaches Running.
-        provider.start(&ctx).unwrap();
-        assert_eq!(provider.status().state, MeshProviderState::Running);
+        let (_provider, port) = start_listening_on_a_free_port(&ctx);
         // Best-effort: a host that delivers the loopback datagram hands it up as a
         // broadcast observation; one that does not route it leaves the channel silent.
         // The bound socket was the invariant under test; delivery is the network's to

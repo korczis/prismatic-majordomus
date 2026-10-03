@@ -1,7 +1,7 @@
 +++
 title = "Derived state is computed once per state version"
 description = "Derived state is computed once per state version"
-weight = 79
+weight = 81
 [extra]
 kind = "rule"
 slug = "project-derived-once-1"

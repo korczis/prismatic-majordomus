@@ -41,6 +41,11 @@ pub fn run(args: IntentArgs) -> Result<u8> {
                 EXIT_INVALID
             })
         }
+        // the coverage is a projection of records the load already read: it has no refusal
+        // of its own, so the only failure is the write, which is returned as it is
+        IntentCommand::Coverage => call(&app.context, &["intent", "coverage"], json!({}))
+            .and_then(|v| emit(format, &v, coverage_text))
+            .map(|()| 0),
         IntentCommand::Preflight { issue, paths } => {
             let mut input = json!({ "paths": paths.join(",") });
             if let Some(issue) = issue {
@@ -54,7 +59,126 @@ pub fn run(args: IntentArgs) -> Result<u8> {
                 EXIT_INVALID
             })
         }
+        IntentCommand::Realization { intent } => {
+            let mut input = json!({});
+            if let Some(intent) = intent {
+                input["intent"] = json!(intent);
+            }
+            let v = call(&app.context, &["intent", "realization"], input)?;
+            emit(format, &v, realization_text)?;
+            let regressed = v["findings"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .any(|f| f["code"] == "closed_work_contradicted");
+            Ok(if regressed { EXIT_INVALID } else { 0 })
+        }
+        IntentCommand::Explain { id } => {
+            let v = call(&app.context, &["intent", "explain"], json!({ "id": id }))?;
+            emit(format, &v, explain_text)?;
+            Ok(0)
+        }
     }
+}
+
+/// Each intent with how far reality is from it and who realises it, then every unit of work
+/// with its strongest link or the reason it has none.
+fn realization_text(v: &Value) -> String {
+    let mut out = Vec::new();
+    for i in v["intents"].as_array().into_iter().flatten() {
+        out.push(format!(
+            "{}  {}  {}/{} met  {}",
+            s(i, "intent"),
+            s(i, "stage"),
+            i["met"],
+            i["criteria"],
+            s(i, "title")
+        ));
+        for c in i["unmet"].as_array().into_iter().flatten() {
+            let issues: Vec<&str> = c["issues"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter_map(Value::as_str)
+                .collect();
+            out.push(format!(
+                "  unmet     {}  {}{}",
+                s(c, "id"),
+                s(c, "state"),
+                if issues.is_empty() {
+                    String::new()
+                } else {
+                    format!("  served by {}", issues.join(" "))
+                }
+            ));
+        }
+        for w in i["work"].as_array().into_iter().flatten() {
+            let providers: Vec<&str> = w["providers"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter_map(Value::as_str)
+                .collect();
+            out.push(format!(
+                "  work      {} {}  {}  {}  handovers {}{}",
+                s(w, "kind"),
+                s(w, "id"),
+                s(w, "outcome"),
+                s(w, "provenance"),
+                w["handovers"],
+                if providers.is_empty() {
+                    String::new()
+                } else {
+                    format!("  by {}", providers.join(", "))
+                }
+            ));
+        }
+    }
+    let work = v["work"].as_array().cloned().unwrap_or_default();
+    if !work.is_empty() {
+        out.push(String::new());
+    }
+    for w in &work {
+        let unit = &w["work"];
+        let link = w["links"].as_array().and_then(|l| l.first()).map(|l| {
+            format!(
+                "{} via {} {} ({})",
+                s(l, "intent"),
+                s(l, "issue"),
+                s(l, "via"),
+                s(l, "provenance")
+            )
+        });
+        out.push(format!(
+            "{} {}  {}  {}",
+            s(unit, "kind"),
+            s(unit, "id"),
+            s(unit, "outcome"),
+            link.unwrap_or_else(|| format!("unlinked: {}", s(w, "unlinked")))
+        ));
+    }
+    findings_text(&mut out, &v["findings"]);
+    out.push(format!(
+        "{} intent(s), {} unit(s) of work, {} serving no intent",
+        v["intents"].as_array().map_or(0, Vec::len),
+        work.len(),
+        v["orphans"]
+    ));
+    out.join("\n")
+}
+
+fn explain_text(v: &Value) -> String {
+    let i = &v["intent"];
+    let mut out = vec![
+        format!("{}  {}", s(i, "id"), s(i, "title")),
+        String::new(),
+        format!("  {}", s(i, "statement")),
+        String::new(),
+    ];
+    for b in v["because"].as_array().into_iter().flatten() {
+        out.push(format!("  - {}", b.as_str().unwrap_or("")));
+    }
+    out.join("\n")
 }
 
 fn call(ctx: &Context, path: &[&str], input: Value) -> Result<Value> {
@@ -115,6 +239,47 @@ fn list_text(v: &Value) -> String {
     }
     out.push(String::new());
     out.push(format!("{} intent(s)", v["count"]));
+    out.join("\n")
+}
+
+/// Every criterion with the work that carries it, then every issue with the reason it exists.
+fn coverage_text(v: &Value) -> String {
+    let criteria = v["criteria"].as_array().cloned().unwrap_or_default();
+    let mut out = vec![format!("{:<28}  {:<9}  ISSUES", "CRITERION", "STRENGTH")];
+    for c in &criteria {
+        let issues: Vec<&str> = c["issues"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .map(|i| s(i, "id"))
+            .collect();
+        out.push(format!(
+            "{:<28}  {:<9}  {}",
+            format!("{}#{}", s(c, "intent"), s(c, "criterion")),
+            s(c, "strength"),
+            if issues.is_empty() {
+                "—".into()
+            } else {
+                issues.join(" ")
+            },
+        ));
+    }
+    let issues = v["issues"].as_array().cloned().unwrap_or_default();
+    let mut origins: std::collections::BTreeMap<&str, usize> = std::collections::BTreeMap::new();
+    for i in &issues {
+        *origins.entry(s(i, "origin")).or_default() += 1;
+    }
+    out.push(String::new());
+    out.push(format!(
+        "{} criterion(s); {} issue(s): {}",
+        criteria.len(),
+        issues.len(),
+        origins
+            .iter()
+            .map(|(o, n)| format!("{n} {o}"))
+            .collect::<Vec<_>>()
+            .join(", "),
+    ));
     out.join("\n")
 }
 
@@ -257,5 +422,35 @@ mod tests {
             }
             other => panic!("a preflight of nothing answered: {other:?}"),
         }
+    }
+
+    #[test]
+    fn realization_text_separates_work_from_intents_only_when_there_is_work() {
+        let intent = json!({ "intent": "I1", "stage": "proposed", "met": 0, "criteria": 1,
+                             "title": "Ship it" });
+        let idle = json!({ "intents": [intent], "work": [], "findings": [], "orphans": 0 });
+        assert_eq!(
+            realization_text(&idle),
+            "I1  proposed  0/1 met  Ship it\n\
+             1 intent(s), 0 unit(s) of work, 0 serving no intent"
+        );
+
+        let busy = json!({
+            "intents": [intent],
+            "work": [{
+                "work": { "kind": "task", "id": "t-1", "outcome": "active" },
+                "links": [],
+                "unlinked": "names no issue",
+            }],
+            "findings": [],
+            "orphans": 1,
+        });
+        assert_eq!(
+            realization_text(&busy),
+            "I1  proposed  0/1 met  Ship it\n\
+             \n\
+             task t-1  active  unlinked: names no issue\n\
+             1 intent(s), 1 unit(s) of work, 1 serving no intent"
+        );
     }
 }
