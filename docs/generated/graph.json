@@ -1917,14 +1917,6 @@
         "external": true
       },
       {
-        "id": "file:scripts/ci-plan",
-        "kind": "file",
-        "label": "ci-plan",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/ci-plan",
-        "external": true
-      },
-      {
         "id": "file:scripts/ci/design-check",
         "kind": "file",
         "label": "design-check",
@@ -38313,6 +38305,13 @@
         "source": "test/cases/81_bench_baseline.sh"
       },
       {
+        "id": "majordomus://test/test/cases/820_a_prose_heading_reads_as_a_heading.sh",
+        "kind": "test",
+        "label": "test/cases/820_a_prose_heading_reads_as_a_heading.sh",
+        "route": "/cockpit/objects/test/test-cases-820-a-prose-heading-reads-as-a-heading-sh",
+        "source": "test/cases/820_a_prose_heading_reads_as_a_heading.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/82_bench_check.sh",
         "kind": "test",
         "label": "test/cases/82_bench_check.sh",
@@ -44763,32 +44762,12 @@
       },
       {
         "source": "majordomus://adr/adr-0037",
-        "target": "file:scripts/ci-plan",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0037",
         "target": "kind:adr",
         "kind": "is_a"
       },
       {
         "source": "majordomus://adr/adr-0037",
         "target": "majordomus://adr/adr-0006",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0037",
-        "target": "majordomus://document/docs/CI.md",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0037",
-        "target": "majordomus://test/test/cases/26_ci_wiring.sh",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0037",
-        "target": "majordomus://test/test/cases/94_ci_plan.sh",
         "kind": "put_in_force"
       },
       {
@@ -46585,11 +46564,6 @@
         "source": "majordomus://claim/ci-planned-gates",
         "target": "file:.ai/repo/ci/gates.yaml",
         "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/ci-planned-gates",
-        "target": "file:scripts/ci-plan",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/ci-planned-gates",
@@ -50000,11 +49974,6 @@
         "source": "majordomus://context/ai.repo.benchmarks.rust",
         "target": "kind:context",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://context/ai.repo.ci",
-        "target": "file:scripts/ci-plan",
-        "kind": "tracks"
       },
       {
         "source": "majordomus://context/ai.repo.ci",
@@ -60202,6 +60171,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/820_a_prose_heading_reads_as_a_heading.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/82_bench_check.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -63439,7 +63413,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4501,
+      "edges": 4496,
       "acyclic": true,
       "truncated": true
     }
