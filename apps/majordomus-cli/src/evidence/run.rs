@@ -935,4 +935,24 @@ mod tests {
         );
         assert_eq!(j, proven);
     }
+
+    /// A presented commit is taken as given, and a working tree outside any git work tree
+    /// presents no commit: with no record to weigh, either leaves the judgement as it was.
+    #[test]
+    fn weakened_by_records_takes_a_presented_commit_and_no_head_outside_git() {
+        let dir = tempfile::tempdir().unwrap();
+        let proven = judged(ProofState::Proven);
+        let evidence = exec("suite:01_a", "pass", E, "clean", "local");
+        for presented in [
+            Presented::Commit {
+                commit: P.to_string(),
+                tree: TreeState::Clean,
+            },
+            Presented::WorkingTree,
+        ] {
+            let j =
+                weakened_by_records(proven.clone(), Some(&evidence), &[], dir.path(), &presented);
+            assert_eq!(j, proven, "{presented:?}");
+        }
+    }
 }

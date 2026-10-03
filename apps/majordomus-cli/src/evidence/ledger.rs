@@ -560,7 +560,7 @@ pub fn outcome_counts(executions: &[Execution]) -> BTreeMap<String, usize> {
         let k = serde_json::to_value(e.outcome)
             .ok()
             .and_then(|v| v.as_str().map(str::to_string))
-            .unwrap_or_else(|| "unknown".into());
+            .unwrap_or("unknown".into());
         *m.entry(k).or_insert(0) += 1;
     }
     m

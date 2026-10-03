@@ -2459,4 +2459,31 @@ mod tests {
             .unwrap()
             .contains("does not contain"));
     }
+
+    /// A CI run carries the pull request's head and its event when the job states them, and
+    /// drops a head that is not a full commit id rather than recording a guess.
+    #[test]
+    fn a_ci_run_carries_its_head_and_event_when_stated() {
+        let head = "0123456789abcdef0123456789abcdef01234567";
+        let env = |sha: &'static str| {
+            move |k: &str| {
+                let v = match k {
+                    "GITHUB_ACTIONS" => "true",
+                    "GITHUB_SERVER_URL" => "https://github.com",
+                    "GITHUB_REPOSITORY" => "o/r",
+                    "GITHUB_RUN_ID" => "7",
+                    "GITHUB_WORKFLOW" => "validate",
+                    "GITHUB_JOB" => "evidence",
+                    "MJ_RUN_HEAD_SHA" => sha,
+                    "GITHUB_EVENT_NAME" => "pull_request",
+                    _ => return None,
+                };
+                Some(v.to_string())
+            }
+        };
+        let run = RunRef::from_env(env(head)).unwrap();
+        assert_eq!(run.head_sha.as_deref(), Some(head));
+        assert_eq!(run.event.as_deref(), Some("pull_request"));
+        assert_eq!(RunRef::from_env(env("HEAD")).unwrap().head_sha, None);
+    }
 }
