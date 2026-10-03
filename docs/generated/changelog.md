@@ -11,7 +11,16 @@ Current version: **0.12.0**
 
 ### Decisions
 
+- **ADR-0098** Reasoning is provider-independent, advisors are optional, and review is a recorded fact rather than a claim _(proposed)_
+- **ADR-0101** Pull requests are integrated one at a time, each against a master observed a moment before _(proposed)_
+- **ADR-0059** The mesh is on for this repository, and every session start holds it _(proposed)_
+- **ADR-0089** An interface shows only what is derived, and unknown is never drawn as healthy _(proposed)_
 - **ADR-0088** A dashboard is a projection of capabilities, and every card names the answer it was read from _(proposed)_
+- **ADR-0097** A plan stamp carries the seal of its event, because the ledger never leaves the checkout _(proposed)_
+- **ADR-0064** A declared tool has a version, and a mismatch is a finding _(proposed)_
+- **ADR-0063** A peer's uncommitted work is part of its claim, and a commit that carries it is refused _(proposed)_
+- **ADR-0062** A verification is proved against a commit, and two attempts that disagree are not proof _(proposed)_
+- **ADR-0061** A gate's verdict is evidence, and a rule the repository enforces itself is proven by it _(proposed)_
 
 ### Added
 
