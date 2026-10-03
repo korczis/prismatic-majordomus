@@ -39,7 +39,8 @@ program can read, on every surface.
 
 ## What it does not do
 
-It measures no tokens and no cost; the ledger records the events that a cost model would
-need, and the economics document says what honest measurement would take. It makes no
+It measures no tokens and no cost itself: the ledger records the events that a cost model
+would need, and what is measured about tokens, from matched runs, is the economics
+feature's. It makes no
 compliance claim: what it provides is a trail with computed identities, and what an
 organisation does with it is the organisation's.
