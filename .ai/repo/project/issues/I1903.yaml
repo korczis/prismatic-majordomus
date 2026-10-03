@@ -1,0 +1,32 @@
+id: I1903
+milestone: intent-lifecycle
+title: The work realising an intent is joined across episodes, providers and handovers
+slug: intent-realization
+priority: p1
+profile: implementation
+parallel_safe: true
+serves:
+  - intent-lifecycle#lineage-survives-providers
+objective: "Join every ledger task, closed session record and peer claim to the intents it realises with each link's provenance, record each episode's provider on the ledger, explain an intent's standing, and refuse closed work the evidence contradicts."
+why: "An intent's lineage lived in whichever session was working on it, so a handover to another provider lost it, and an intent whose closed work regressed read as finished (ADR 0075)."
+current_state: "No capability says which task, episode, provider or handover realises an intent; a closed episode forgets its provider; verifying intents are silent."
+desired_state: "majordomus intent realization and intent explain answer the lineage and the drift on every surface, and the intent-realization gate refuses closed_work_contradicted."
+depends_on:
+  - I1900
+scope:
+  - apps/majordomus-cli/src/intent_realization.rs
+  - apps/majordomus-cli/src/capability/builtin/intent_realization.rs
+  - lib/session.sh
+  - test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh
+acceptance_criteria:
+  - One task carried by two providers across a handover is one unit of work linked to the intent, with both providers
+  - Each link is declared, observed, derived or inferred from one mapping, and the strongest per issue is kept
+  - An intent whose milestones are all DONE while a criterion's recorded run fails exits 10 naming the criterion, and a repair clears it
+validation:
+  - cargo test --test intent_realization
+  - bash test/run.sh 388_an_intent_is_realised_across_providers_and_held_to_reality
+evidence_required:
+  - intent_lineage_joined
+  - closed_work_contradicted_refused
+created_at: 2026-09-17
+updated_at: 2026-09-17

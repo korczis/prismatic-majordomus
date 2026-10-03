@@ -5,24 +5,24 @@
   "coverage": [
     {
       "scope": "direct",
-      "required": 166,
-      "covered": 148,
+      "required": 169,
+      "covered": 151,
       "missing": 0,
       "waived": 18,
       "inapplicable": 0
     },
     {
       "scope": "http",
-      "required": 164,
-      "covered": 148,
+      "required": 167,
+      "covered": 151,
       "missing": 0,
       "waived": 16,
       "inapplicable": 0
     },
     {
       "scope": "mcp",
-      "required": 160,
-      "covered": 144,
+      "required": 163,
+      "covered": 147,
       "missing": 0,
       "waived": 16,
       "inapplicable": 0
@@ -37,8 +37,8 @@
     },
     {
       "scope": "total",
-      "required": 503,
-      "covered": 453,
+      "required": 512,
+      "covered": 462,
       "missing": 0,
       "waived": 50,
       "inapplicable": 0
@@ -859,6 +859,43 @@
     {
       "id": "integration.queue",
       "module": "integration",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "intent_realization.explain",
+      "module": "intent_realization",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "first-intent"
+      ]
+    },
+    {
+      "id": "intent_realization.work",
+      "module": "intent_realization",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "every-intent",
+        "first-intent"
+      ]
+    },
+    {
+      "id": "intents.coverage",
+      "module": "intents",
       "kind": "query",
       "cache": "—",
       "direct": "covered",
