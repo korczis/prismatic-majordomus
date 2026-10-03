@@ -62,16 +62,14 @@ fn object_href(uri: &str) -> String {
 }
 
 /// The object page of an index object, when the index holds it; otherwise the reference as
-/// text, so a link never points at a page that would answer 404.
+/// text, so a link never points at a page that would answer 404. Whether it is held is asked
+/// of `objects.get`, the capability every surface resolves a URI with, rather than read from
+/// the index beside it (ADR 0012).
 fn object_link(ctx: &Context, kind: &str, identity: &str, label: &str) -> El {
-    match ctx
-        .index
-        .objects
-        .iter()
-        .find(|o| o.kind == kind && o.identity == identity)
-    {
-        Some(o) => link(object_href(&o.uri), label),
-        None => mono(label.to_string()),
+    let uri = format!("majordomus://{kind}/{identity}");
+    match ctx.execute("objects.get", json!({ "uri": uri })) {
+        Ok(_) => link(object_href(&uri), label),
+        Err(_) => mono(label.to_string()),
     }
 }
 
@@ -173,7 +171,7 @@ pub fn list(ctx: &Context) -> Page {
         .child(card(
             "Intents",
             if rows.is_empty() {
-                nothing("This repository declares no intent. One is a YAML file under .ai/repo/project/intents/.")
+                nothing("This repository declares no intent. One is a YAML record of the intent kind; `majordomus intent --help` says how to declare one.")
             } else {
                 table(
                     &["Intent", "Stage", "Met", "Work", "Providers", "Findings", "Title"],
@@ -443,9 +441,18 @@ mod tests {
         let absent = object_link(&ctx, "test", "test/cases/00_absent.sh", "00_absent").render();
         assert!(!absent.contains("href"), "{absent}");
         assert!(absent.contains("00_absent"), "{absent}");
-        let held = ctx.index.objects.first().unwrap();
-        let present = object_link(&ctx, &held.kind, &held.identity, "here").render();
-        assert!(present.contains(&object_href(&held.uri)), "{present}");
+        let listed: serde_json::Value = ask(&ctx, "objects.list", json!({})).unwrap();
+        let held = &listed["objects"][0];
+        let (kind, identity) = (
+            held["kind"].as_str().unwrap(),
+            held["identity"].as_str().unwrap(),
+        );
+        let present = object_link(&ctx, kind, identity, "here").render();
+        assert!(present.contains("href"), "{present}");
+        assert!(
+            present.contains(&object_href(held["uri"].as_str().unwrap())),
+            "{present}"
+        );
     }
 
     #[test]
