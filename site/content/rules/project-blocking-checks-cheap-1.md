@@ -1,7 +1,7 @@
 +++
 title = "Blocking checks are deterministic and cheap"
 description = "Blocking checks are deterministic and cheap"
-weight = 70
+weight = 72
 [extra]
 kind = "rule"
 slug = "project-blocking-checks-cheap-1"

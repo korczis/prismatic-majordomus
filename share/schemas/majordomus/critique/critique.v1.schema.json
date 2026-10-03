@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/critique/critique.v1.schema.json",
+  "x-majordomus-schema": "majordomus.critique/v1",
+  "title": "Critique",
+  "description": "The adversarial review of an intent's plan under .ai/repo/project/critiques/<intent>.yaml: structured findings, each resolved open, planned into an issue that serves the intent, or rejected with a reason. Work serving the intent may not start while the intent has no critique or a blocking finding is open.",
+  "x-majordomus-allow": "critique",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "intent",
+    "reviewed_at",
+    "reviewed_by",
+    "findings"
+  ],
+  "properties": {
+    "intent": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "description": "The intent whose plan was reviewed; also the file name."
+    },
+    "reviewed_at": {
+      "type": "string",
+      "description": "The commit the plan was reviewed at."
+    },
+    "reviewed_by": {
+      "type": "string"
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "class",
+          "subject",
+          "finding",
+          "blocking",
+          "resolution"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*$"
+          },
+          "class": {
+            "type": "string",
+            "enum": [
+              "missed_requirement",
+              "unproven_assumption",
+              "insufficient_work",
+              "unnecessary_work",
+              "regression_risk",
+              "surface_missing",
+              "delivery_verification"
+            ]
+          },
+          "subject": {
+            "type": "string",
+            "description": "<intent>#<criterion>, an issue id or a milestone id."
+          },
+          "finding": {
+            "type": "string"
+          },
+          "blocking": {
+            "type": "boolean"
+          },
+          "resolution": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "state"
+            ],
+            "properties": {
+              "state": {
+                "type": "string",
+                "enum": [
+                  "open",
+                  "planned",
+                  "rejected"
+                ]
+              },
+              "issue": {
+                "type": "string"
+              },
+              "because": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

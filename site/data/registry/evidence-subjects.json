@@ -379,6 +379,21 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:intent_realization.explain",
+      "path": "/evidence/capabilities/intent-realization-explain/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:intent_realization.work",
+      "path": "/evidence/capabilities/intent-realization-work/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:intents.coverage",
+      "path": "/evidence/capabilities/intents-coverage/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:intents.list",
       "path": "/evidence/capabilities/intents-list/"
     },
@@ -2394,6 +2409,16 @@
     },
     {
       "kind": "command",
+      "subject": "command:intent coverage",
+      "path": "/evidence/commands/intent-coverage/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:intent explain",
+      "path": "/evidence/commands/intent-explain/"
+    },
+    {
+      "kind": "command",
       "subject": "command:intent list",
       "path": "/evidence/commands/intent-list/"
     },
@@ -2401,6 +2426,11 @@
       "kind": "command",
       "subject": "command:intent preflight",
       "path": "/evidence/commands/intent-preflight/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:intent realization",
+      "path": "/evidence/commands/intent-realization/"
     },
     {
       "kind": "command",
@@ -4108,6 +4138,42 @@
       "programs": [],
       "members": [
         "command:prs status"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:intent_realization.explain": {
+      "kind": "capability",
+      "id": "intent_realization.explain",
+      "page": "/evidence/capabilities/intent-realization-explain/",
+      "programs": [],
+      "members": [
+        "command:intent explain"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:intent_realization.work": {
+      "kind": "capability",
+      "id": "intent_realization.work",
+      "page": "/evidence/capabilities/intent-realization-work/",
+      "programs": [],
+      "members": [
+        "command:intent realization"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:intents.coverage": {
+      "kind": "capability",
+      "id": "intents.coverage",
+      "page": "/evidence/capabilities/intents-coverage/",
+      "programs": [],
+      "members": [
+        "command:intent coverage"
       ],
       "routes": [],
       "mechanisms": [],
@@ -12834,6 +12900,44 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:intent coverage": {
+      "kind": "command",
+      "id": "intent coverage",
+      "page": "/evidence/commands/intent-coverage/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:intent explain": {
+      "kind": "command",
+      "id": "intent explain",
+      "page": "/evidence/commands/intent-explain/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:intent list": {
       "kind": "command",
       "id": "intent list",
@@ -12857,6 +12961,25 @@
       "kind": "command",
       "id": "intent preflight",
       "page": "/evidence/commands/intent-preflight/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:intent realization": {
+      "kind": "command",
+      "id": "intent realization",
+      "page": "/evidence/commands/intent-realization/",
       "programs": [
         "native"
       ],
@@ -17234,6 +17357,30 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_intent_coverage": {
+      "kind": "mcp",
+      "id": "majordomus_intent_coverage",
+      "alias_of": "capability:intents.coverage",
+      "programs": [],
+      "members": [
+        "capability:intents.coverage"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_intent_explain": {
+      "kind": "mcp",
+      "id": "majordomus_intent_explain",
+      "alias_of": "capability:intent_realization.explain",
+      "programs": [],
+      "members": [
+        "capability:intent_realization.explain"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_intent_preflight": {
       "kind": "mcp",
       "id": "majordomus_intent_preflight",
@@ -17241,6 +17388,18 @@
       "programs": [],
       "members": [
         "capability:intents.preflight"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_intent_realization": {
+      "kind": "mcp",
+      "id": "majordomus_intent_realization",
+      "alias_of": "capability:intent_realization.work",
+      "programs": [],
+      "members": [
+        "capability:intent_realization.work"
       ],
       "routes": [],
       "mechanisms": [],
@@ -19688,6 +19847,37 @@
       "mechanisms": [],
       "findings": []
     },
+    "rule:project.a-plan-carries-the-intent-it-serves": {
+      "kind": "rule",
+      "id": "project.a-plan-carries-the-intent-it-serves",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "crate:intent_plan",
+          "path": "apps/majordomus-cli/tests/intent_plan.rs",
+          "category": "integration",
+          "inputs": [
+            "apps/majordomus-cli/tests/intent_plan.rs",
+            ".ai/repo/rules/project/a-plan-carries-the-intent-it-serves.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:386_a_plan_is_held_to_its_intent",
+          "path": "test/cases/386_a_plan_is_held_to_its_intent.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/386_a_plan_is_held_to_its_intent.sh",
+            ".ai/repo/rules/project/a-plan-carries-the-intent-it-serves.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "rule:project.a-provider-capability-cites-its-evidence": {
       "kind": "rule",
       "id": "project.a-provider-capability-cites-its-evidence",
@@ -19850,6 +20040,37 @@
           "inputs": [
             "test/cases/735_a_new_advisor_needs_no_consumer_edit.sh",
             ".ai/repo/rules/project/advisors-are-optional.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "rule:project.an-intent-outlives-its-sessions": {
+      "kind": "rule",
+      "id": "project.an-intent-outlives-its-sessions",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "crate:intent_realization",
+          "path": "apps/majordomus-cli/tests/intent_realization.rs",
+          "category": "integration",
+          "inputs": [
+            "apps/majordomus-cli/tests/intent_realization.rs",
+            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:388_an_intent_is_realised_across_providers_and_held_to_reality",
+          "path": "test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh",
+            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v1.md"
           ]
         }
       ],

@@ -323,8 +323,13 @@ mod tests {
         // the manager's own tests (a_synthetic_provider_reaches_the_registry...) and by
         // the two-runtime rendezvous test in tests/mesh.rs; here they are a best-effort
         // observation, reported, never a failure.
+        //
+        // The probe binds the wildcard the provider binds (bind_shared), so the port it
+        // offers is free on every local address. A loopback probe may offer a port another
+        // socket holds on a host address: macOS lets the provider's SO_REUSEADDR wildcard
+        // bind share it, Linux refuses unless that other socket set SO_REUSEADDR too.
         let port = {
-            let probe = UdpSocket::bind((Ipv4Addr::LOCALHOST, 0)).unwrap();
+            let probe = UdpSocket::bind((Ipv4Addr::UNSPECIFIED, 0)).unwrap();
             probe.local_addr().unwrap().port()
         };
         let mut provider = MulticastProvider::new(MulticastConfig {
