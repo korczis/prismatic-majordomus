@@ -13,8 +13,8 @@ use std::collections::{BTreeMap, BTreeSet};
 use crate::integration::drain::{self, DrainStepOutcome, Integrator};
 use crate::integration::{
     build_queue, CheckObservation, CheckRunState, ForgeObservation, IntegrationQueue,
-    PullRequestAssessment, PullRequestDisposition, PullRequestObservation, RelationToMaster,
-    RequiredCheckState, OBSERVATION_SCHEMA,
+    PullRequestAssessment, PullRequestDisposition, PullRequestObservation, PullRequestReview,
+    RelationToMaster, RequiredCheckState, OBSERVATION_SCHEMA,
 };
 use proptest::prelude::*;
 
@@ -43,6 +43,10 @@ struct Sim {
     cross_repository: bool,
     /// The authored paths its merge would change.
     paths: Vec<String>,
+    /// Its required check is still running.
+    ci_pending: bool,
+    /// Its required check never reported on the head.
+    ci_unreported: bool,
 }
 
 fn sim(number: u64) -> Sim {
@@ -62,6 +66,8 @@ fn sim(number: u64) -> Sim {
         head_ref: format!("feature/{number}"),
         cross_repository: false,
         paths: vec![format!("docs/{number}.md")],
+        ci_pending: false,
+        ci_unreported: false,
     }
 }
 
@@ -74,6 +80,8 @@ enum Meanwhile {
     Closes(u64),
     /// Somebody puts a label on it.
     Labelled(u64, &'static str),
+    /// The forge's review decision becomes this.
+    Reviewed(u64, &'static str),
 }
 
 #[derive(Debug)]
@@ -169,6 +177,10 @@ impl World {
                 let s = self.open.iter_mut().find(|s| s.number == *n).expect("open");
                 s.labels.push((*label).to_string());
             }
+            Meanwhile::Reviewed(n, decision) => {
+                let s = self.open.iter_mut().find(|s| s.number == *n).expect("open");
+                s.review = decision;
+            }
         }
     }
 }
@@ -189,14 +201,20 @@ fn observe_pr(s: &Sim) -> PullRequestObservation {
             .depends_on
             .map(|d| format!("Depends on #{d}."))
             .unwrap_or_default(),
-        checks: vec![CheckObservation {
-            name: "ci".into(),
-            state: if s.failing {
-                CheckRunState::Failed
-            } else {
-                CheckRunState::Passed
-            },
-        }],
+        checks: if s.ci_unreported {
+            Vec::new()
+        } else {
+            vec![CheckObservation {
+                name: "ci".into(),
+                state: if s.failing {
+                    CheckRunState::Failed
+                } else if s.ci_pending {
+                    CheckRunState::Pending
+                } else {
+                    CheckRunState::Passed
+                },
+            }]
+        },
         review_decision: s.review.into(),
         auto_merge: false,
         cross_repository: s.cross_repository,
@@ -243,6 +261,10 @@ impl Integrator for World {
             "merged a head that does not contain the current master"
         );
         assert!(!self.open[i].failing, "merged a failing pull request");
+        assert!(
+            !self.open[i].ci_pending && !self.open[i].ci_unreported,
+            "merged a pull request whose required check has not passed"
+        );
         assert!(
             self.open[i].labels.is_empty(),
             "merged a pull request that carries a label"
@@ -621,6 +643,121 @@ fn a_merge_that_cannot_be_verified_stops_the_drain() {
 }
 
 #[test]
+fn each_review_state_has_its_disposition() {
+    use crate::integration::PullRequestReview as R;
+    use PullRequestDisposition as D;
+    for (decision, required, review, want) in [
+        ("APPROVED", Some(true), R::Approved, D::Ready),
+        ("APPROVED", Some(false), R::Approved, D::Ready),
+        ("APPROVED", None, R::Approved, D::Ready),
+        (
+            "CHANGES_REQUESTED",
+            Some(false),
+            R::ChangesRequested,
+            D::WaitingForReview,
+        ),
+        (
+            "CHANGES_REQUESTED",
+            None,
+            R::ChangesRequested,
+            D::WaitingForReview,
+        ),
+        // the forge says a review is required — a ruleset or code owners can require one
+        // the branch protection does not — and that is never "not required"
+        (
+            "REVIEW_REQUIRED",
+            Some(false),
+            R::Pending,
+            D::WaitingForReview,
+        ),
+        (
+            "REVIEW_REQUIRED",
+            Some(true),
+            R::Pending,
+            D::WaitingForReview,
+        ),
+        ("REVIEW_REQUIRED", None, R::Pending, D::WaitingForReview),
+        ("", Some(false), R::NotRequired, D::Ready),
+        ("", Some(true), R::Pending, D::WaitingForReview),
+        ("", None, R::Unknown, D::Unknown),
+    ] {
+        let mut s = sim(1);
+        s.review = decision;
+        let w = World {
+            open: vec![s],
+            reviews_required: required,
+            ..Default::default()
+        };
+        let q = w.queue();
+        let a = q.get(1).unwrap();
+        assert_eq!(
+            (a.review, a.disposition),
+            (review, want),
+            "{decision:?} under {required:?}"
+        );
+        assert_eq!(q.next_merge.is_some(), want == D::Ready);
+    }
+}
+
+#[test]
+fn a_review_withdrawn_meanwhile_merges_nothing() {
+    for decision in ["CHANGES_REQUESTED", "REVIEW_REQUIRED"] {
+        let mut s = sim(1);
+        s.review = "APPROVED";
+        let mut w = World {
+            open: vec![s],
+            ..Default::default()
+        };
+        let (out, actions) =
+            step_with_second_observation(&mut w, Meanwhile::Reviewed(1, decision), false);
+        assert!(
+            stale_with(&out, 1, "it is waiting_for_review now"),
+            "{decision}: {out:?}"
+        );
+        assert!(w.merged.is_empty(), "{decision}: merged");
+        assert!(
+            !actions.contains(&"merge_attempted".to_string()),
+            "{decision}: {actions:?}"
+        );
+    }
+}
+
+#[test]
+fn a_fork_whose_branch_is_named_like_the_base_stacks_nothing() {
+    let mut fork = sim(9);
+    fork.cross_repository = true;
+    fork.head_ref = "master".into();
+    let mut stacked = sim(3);
+    stacked.base = "feature/1";
+    let w = World {
+        open: vec![sim(1), stacked, fork],
+        ..Default::default()
+    };
+    let q = w.queue();
+    assert_eq!(
+        disposition(&q, 1),
+        PullRequestDisposition::Ready,
+        "{:?}",
+        q.get(1).unwrap().reasons
+    );
+    assert!(q.get(1).unwrap().dependencies.is_empty());
+    // the fork contains master and passed its check: it is not stacked on itself either
+    assert_eq!(
+        disposition(&q, 9),
+        PullRequestDisposition::Ready,
+        "{:?}",
+        q.get(9).unwrap().reasons
+    );
+    // a pull request stacked on a branch of this repository still waits for it
+    assert_eq!(
+        disposition(&q, 3),
+        PullRequestDisposition::WaitingForDependency
+    );
+    assert_eq!(q.get(3).unwrap().reasons, vec!["stacked_on:#1".to_string()]);
+    assert_eq!(q.next_merge, Some(1));
+}
+
+#[test]
 fn a_dry_run_changes_nothing_and_records_nothing() {
     let root = scratch();
     let mut w = World {
@@ -749,38 +886,55 @@ fn a_refreshed_pull_request_waiting_for_checks_holds_the_pipeline() {
         master: 1,
         ..Default::default()
     };
-    // #1 contains master but its check is still running
-    w.open[0].contains = 1;
-    let mut obs_pending = w.observation();
-    obs_pending.pull_requests[0].checks[0].state = CheckRunState::Pending;
-    let q = build_queue(&obs_pending, "m1", |p| w.relation(p.number));
-    assert_eq!(disposition(&q, 1), PullRequestDisposition::WaitingForChecks);
-    assert_eq!(disposition(&q, 2), PullRequestDisposition::NeedsRefresh);
-    struct Pending<'a>(&'a mut World);
-    impl Integrator for Pending<'_> {
-        fn observe(&mut self) -> Result<IntegrationQueue, String> {
-            self.0.observations += 1;
-            let mut obs = self.0.observation();
-            obs.pull_requests[0].checks[0].state = CheckRunState::Pending;
-            Ok(build_queue(&obs, &master_sha(self.0.master), |p| {
-                self.0.relation(p.number)
-            }))
-        }
-        fn merge(&mut self, _: u64, _: &str, _: &str) -> Result<(), String> {
-            panic!("nothing is ready")
-        }
-        fn verify(&mut self, _: u64, _: &str) -> Result<String, String> {
-            unreachable!()
-        }
-        fn refresh_branch(&mut self, _: &PullRequestAssessment, _: &str) -> Result<String, String> {
-            panic!("refreshed a second pull request while the first waits for its checks")
-        }
-    }
-    let report = drain::drain(&root, &mut Pending(&mut w), 1, false, true).unwrap();
+    // the executor brings master into #1, the older of the two
+    let out = drain::step(&root, &mut w, false, true).unwrap();
+    assert!(
+        matches!(out, DrainStepOutcome::Refreshed { pr: 1, .. }),
+        "{out:?}"
+    );
+    // and the required check now runs on the head it pushed
+    w.open[0].ci_pending = true;
+    assert_eq!(
+        disposition(&w.queue(), 1),
+        PullRequestDisposition::WaitingForChecks
+    );
+    let report = drain::drain(&root, &mut w, 1, false, true).unwrap();
     assert_eq!(
         report.steps,
         vec![DrainStepOutcome::AwaitingChecks { pr: 1 }]
     );
+    assert_eq!(
+        w.open[1].contains, 0,
+        "#2 was refreshed while the executor waits for #1's checks"
+    );
+}
+
+/// The pipeline waits only for a check it started: a required check that never reports
+/// would otherwise hold every refresh forever, and one running on a head the author pushed
+/// is not the executor's run to wait for.
+#[test]
+fn a_check_the_executor_did_not_start_does_not_hold_the_refresh_pipeline() {
+    for (unreported, pending) in [(true, false), (false, true)] {
+        let root = scratch();
+        let mut w = World {
+            open: vec![sim(1), sim(2)],
+            master: 1,
+            ..Default::default()
+        };
+        // #1 contains master, by its author's own merge; #2 does not
+        w.open[0].contains = 1;
+        w.open[0].ci_unreported = unreported;
+        w.open[0].ci_pending = pending;
+        assert_eq!(
+            disposition(&w.queue(), 1),
+            PullRequestDisposition::WaitingForChecks
+        );
+        let out = drain::step(&root, &mut w, false, true).unwrap();
+        assert!(
+            matches!(out, DrainStepOutcome::Refreshed { pr: 2, .. }),
+            "unreported {unreported}, pending {pending}: {out:?}"
+        );
+    }
 }
 
 #[test]
@@ -839,7 +993,7 @@ const CREATED: [&str; 3] = [
 const SHARED: [&str; 3] = ["docs/shared.md", "apps/x/src/lib.rs", "README.md"];
 
 /// Review decisions the forge reports.
-const REVIEWS: [&str; 3] = ["", "APPROVED", "CHANGES_REQUESTED"];
+const REVIEWS: [&str; 4] = ["", "APPROVED", "CHANGES_REQUESTED", "REVIEW_REQUIRED"];
 
 fn arb_sim() -> impl Strategy<Value = Sim> {
     (
@@ -879,6 +1033,10 @@ fn arb_sim() -> impl Strategy<Value = Sim> {
                 s.cross_repository = fork;
                 if base == 0 {
                     s.base = "release/1";
+                }
+                if fork && base == 1 {
+                    // a fork's branch may carry any name, the base's own included
+                    s.head_ref = "master".into();
                 }
                 s
             },
@@ -934,6 +1092,15 @@ proptest! {
             prop_assert!(!s.failing);
             prop_assert_eq!(s.contains, w.master);
             prop_assert_eq!(a.required_checks, RequiredCheckState::Passed);
+            let reviewed = matches!(
+                a.review,
+                PullRequestReview::Approved | PullRequestReview::NotRequired
+            );
+            prop_assert!(reviewed, "#{} is ready with review {:?}", a.number, a.review);
+            prop_assert!(
+                s.review != "CHANGES_REQUESTED" && s.review != "REVIEW_REQUIRED",
+                "#{} is ready while the forge says {}", a.number, s.review
+            );
             let up_to_date = matches!(a.relation, RelationToMaster::UpToDate { .. });
             prop_assert!(up_to_date);
             if let Some(d) = s.depends_on {
@@ -943,6 +1110,24 @@ proptest! {
         // the next merge, when any, is the first ready one in rank order
         let first_ready = q.assessments.iter().find(|a| a.disposition == PullRequestDisposition::Ready).map(|a| a.number);
         prop_assert_eq!(q.next_merge, first_ready);
+    }
+
+    #[test]
+    fn a_fork_is_never_what_another_is_stacked_on(w in arb_world()) {
+        let q = w.queue();
+        let forks: BTreeSet<u64> = w
+            .open
+            .iter()
+            .filter(|s| s.cross_repository)
+            .map(|s| s.number)
+            .collect();
+        for a in &q.assessments {
+            let s = w.open.iter().find(|s| s.number == a.number).unwrap();
+            for d in a.dependencies.iter().filter(|d| forks.contains(&d.number)) {
+                // only a declaration in the body makes a fork a dependency
+                prop_assert_eq!(Some(d.number), s.depends_on, "#{} on fork #{}", a.number, d.number);
+            }
+        }
     }
 
     #[test]
@@ -1177,6 +1362,42 @@ fn a_dependency_is_a_declaration_not_a_mention() {
         vec![644, 645]
     );
     assert!(declared_dependencies("fixes #12").is_empty());
+}
+
+/// A dependency marker opens its line, after at most a bullet, a quote or emphasis. A
+/// word in a sentence is prose: "thereafter #5" and "introduced after #540" declare nothing.
+#[test]
+fn a_dependency_marker_starts_its_line() {
+    use crate::integration::declared_dependencies as deps;
+    let none: Vec<u64> = Vec::new();
+    for (body, want) in [
+        ("- Depends on #7", vec![7]),
+        ("> **Depends on:** #7", vec![7]),
+        ("* Stacked on #8 and #9.", vec![8, 9]),
+        ("1. Requires #10", vec![10]),
+        ("Land after #11", vec![11]),
+        ("_Land after_ #12", vec![12]),
+        ("Depends on #14, #15 and #16", vec![14, 15, 16]),
+        ("thereafter #5", none.clone()),
+        ("Fixes the regression introduced after #540.", none.clone()),
+        ("After #3 landed, this became possible.", none.clone()),
+        (
+            "This change requires #9 to be reverted first.",
+            none.clone(),
+        ),
+        (
+            "See the discussion; it depends on #13 somewhat.",
+            none.clone(),
+        ),
+        ("Dependson #17", none.clone()),
+        ("Stacked onto #18", none.clone()),
+        ("Depends on #x", none.clone()),
+        ("Requires #20 & #21", vec![20, 21]),
+        ("+ Requires #22", vec![22]),
+        ("12 depends on #23", none.clone()),
+    ] {
+        assert_eq!(deps(body), want, "{body:?}");
+    }
 }
 
 #[test]
