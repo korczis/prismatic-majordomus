@@ -109,7 +109,8 @@ out="$(MAJORDOMUS_BIN="$RB" MAJORDOMUS_BANNER=compact MAJORDOMUS_RUNTIME=off bas
 # compared as the executable spells it: the canonical path, which on macOS puts /private
 # in front of a temporary directory the shell names without it
 printf '%s\n' "$out" | grep -q "^ROOT=$(cd "$T" && pwd -P)" || { echo "    .envrc exported no MAJORDOMUS_ROOT:"; printf '%s\n' "$out"; cat "$T/envrc.err"; exit 1; }
-grep -qE '^> ' "$T/envrc.err" || { echo "    entering drew no preflight:"; cat "$T/envrc.err"; exit 1; }
+[ "$(grep -cE '^> ' "$T/envrc.err")" = 1 ] || { echo "    entry must draw one repository heading:"; cat "$T/envrc.err"; exit 1; }
+grep -qE '^  (episode |no episode)' "$T/envrc.err" || { echo "    entry lost the episode:"; cat "$T/envrc.err"; exit 1; }
 server="$(verdicts | verdict_of integration.server)"
 case "$server" in
   unavailable) mark=o ;; failed) mark=x ;; *) echo "    unexpected server verdict $server"; exit 1 ;;
