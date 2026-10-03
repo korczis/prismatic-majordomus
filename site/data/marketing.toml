@@ -1,58 +1,58 @@
 # The only hand-written prose on the site: positioning sentences and button labels. No
-# capability claims (those are features under .ai/repo/features/ and claims in
-# docs/CLAIMS.yaml, both derived onto the page) and no numbers (the generator computes
-# every count). Budget: scripts/site-check fails when this file exceeds 60 lines.
-
+# capability claims (features, domains and claims are objects of the layer, derived onto the
+# page) and no numbers (the generator computes every count). Budget: scripts/site-check fails
+# when this file exceeds 60 lines.
 [hero]
 eyebrow = "A supervisory control layer for AI-assisted work"
 title = "AI coding agents do the work."
 subtitle = "Your repository decides whether it is done."
-lead = "Majordomus keeps the rules, the task and the paths it may touch, the handover and the definition of done in the repository instead of a chat window. It tells you when two agents claim the same files, and it refuses to call work finished until the repository's own checks pass. Local, portable shell, beside whichever coding agent you use; it never calls a model."
+lead = "Majordomus keeps the context, the paths each agent may touch, the rules and the definition of done in the repository instead of a chat window, and it refuses to record work as finished until the repository's own checks pass. It runs beside whichever coding agent you use, and it never calls a model."
 cta_primary = "Watch it refuse an agent"
 cta_install = "Install"
-cta_secondary = "Every feature against every interface"
-replay_caption = "A recorded run of the real tool, not a mockup: an agent strays outside its scope, says it is done, and is refused until the repository's own test passes. Step through it, or read the whole challenge."
-console_caption = "Recorded runs, not a mockup. The tabs are the lifecycle the tool declares, in its order; each panel is the stdout of a scenario this site executed while it was being generated, with the machine and the clock redacted and nothing else touched."
-
-[install]
-layer = "What init creates is the layer this site is generated from: one directory, tracked, readable without the tool. Everything above this section was derived from this repository's own."
-
+verdict_kicker = "recorded run · the worker says it is done"
+verdict_after = "It is accepted only when every line passes:"
+verdict_link = "Step through the whole run"
+console_caption = "Recorded runs, not a mockup: each panel is the stdout of a scenario this site executed while it was being generated, with the machine and the clock redacted and nothing else touched."
 [recognise]
-title = "Where AI-assisted work actually breaks down"
-closing = "None of these are model problems. They are operations problems, and operations is what Majordomus does."
-
-[chapters]
-kicker = "what it does"
-lead = "Every feature is one file under the layer, listed here under each area of work it serves. The areas, the membership and the routes are derived from what those files name; the words are the only thing a person wrote."
-
+title = "Where AI-assisted work breaks down"
+lead = "None of these are model problems. They are operations problems, and the repository is where operations belong."
+closing = "Majordomus turns each of them into repository state, a contract a machine checks and a record of what happened."
+more = "Recognise a specific moment? The failure modes it answers, by who meets them"
+[map]
+kicker = "what it controls"
+title = "One control layer, a few things it controls"
+lead = "Every feature is filed under exactly one domain. Open one for the failure it answers, the features in it and the evidence behind them; every member and every count is derived from the features' own files."
+from = "a worker's change"
+to = "a verified outcome"
+[workflow]
+kicker = "how it works"
+title = "One task, from start to finish"
+lead = "A worker claims a task and the paths it may touch, reads what the repository knows, records progress, is checked against policy, leaves a handover, and asks to finish. The repository answers each step."
+closing = "Nothing here asks a model to behave. Each command checks the repository's own state against the contract written before the work started, and an unmet line stops the command."
+inspect = "Inspect the recorded runs behind every step"
+[refuses]
+kicker = "the proof"
+title = "A worker's word is not proof"
+lead = "A worker strays outside its scope, says it is done, and is refused; fixes the scope and is refused again, because the repository's own test still fails; and is accepted only when every line of the contract passes. A recorded run of the real tool, stepped through."
+closing = "This is the difference between a tool that tells a worker what to do and one that decides whether what it did counts. A worker can always say it is finished; here that sentence is a claim the repository evaluates, line by line, and nothing is recorded while any line fails."
+more = "Every other refusal the lifecycle recorded"
+[surfaces]
+kicker = "one source, every surface"
+title = "Declared once, projected everywhere"
+lead = "A capability, a rule, a feature, a domain: each is declared once in the repository. The command line, the HTTP API and its OpenAPI document, MCP, the Cockpit, the reference and this site are projections of that declaration, and a projection that disagrees with it fails the build."
+source = ".ai/ declarations and the executable's capabilities"
+registry = "one registry, validated"
+[providers]
+title = "Repository intelligence is not a model provider."
+boundary = "Majordomus never invokes a model; it decides what a worker is told, what it may touch, and whether its claim of being done can be believed."
+[install]
+kicker = "get started"
+title = "Try it on a repository you already have"
+layer = "What init creates is the layer this site is generated from: one directory, tracked, readable without the tool."
 [write_once]
 title = "Write once. Surface everywhere."
 lead = "A rule, a skill, a decision, a use case, an operational moment, a feature: each is one file under the layer with a schema. Discovery finds it, the schema validates it, the index holds it, and every interface reads the index. Nothing registers anything."
-
-[providers]
-title = "Provider-neutral by construction"
-lead = "The policy is one file and every tool's instruction file is generated from it — an agent's, or an orchestrator's that runs agents over the repository. A worker's context, its worktree, its handovers and the repository's decisions belong to the repository, not to the vendor whose session happened to produce them."
-boundary = "Majordomus never invokes a model; it decides what a worker is told, what it may touch, and whether its claim of being done can be believed."
-
-[surfaces]
-title = "One registry, every interface"
-lead = "A capability is declared once. The command line, the HTTP API, the OpenAPI document and the Swagger UI over it, the MCP tools and resources, the Cockpit and this site are projections of that declaration; a projection that disagrees with it fails the build."
-
-[matrix]
-lead = "Every mark is derived. A feature is on an interface because a module, command or kind it names is projected there, never because a page says so; a gap is shown rather than hidden."
-
-[graph]
-lead = "The same model as a graph: features, what each is made of, and the interfaces that follow. Select a node to see what it touches; without a script, the features page carries the same graph as a list."
-
 [contract]
 caption = "The contract as the repository's own README shows it: a recorded run from the challenge, redacted and otherwise untouched, which the build refuses to publish if it stops matching. One line per check, each naming what it proved; a failing line carries the command that reproduces it, and nothing is written until every line passes."
-
 [architecture]
 lead = "This page is a projection of the repository it describes. Every feature, count, provider, interface and moment on it came out of the same executable that answers agents, and a stale page fails the build before it can be deployed."
-
-
-[refuses]
-kicker = "what it refuses"
-title = "The half a model cannot give you"
-lead = "Every transcript below is a run that happened, of a command of the declared lifecycle, that ended by declining to accept the work. None of it is written here: a command that stops refusing stops appearing, and the page cannot be built with nothing on this list."
-closing = "This is the difference between a tool that tells a worker what to do and one that decides whether what it did counts. A worker can always say it is finished. Here that sentence is a claim the repository evaluates, line by line, against a contract written before the work started — and nothing is recorded while any line of it fails."

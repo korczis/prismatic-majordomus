@@ -15,10 +15,10 @@
 {%- set map_level = map_heading or "h3" -%}
 {%- set shown = [d for d in model.domains if d.status == "stable" and d.features | length > 0] -%}
 <div data-domain-map class="min-w-0">
-  <ol class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label="The product, by domain">
+  <ol class="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label="The product, by domain">
     {%- for d in shown %}
     <li id="domain-{{ d.id }}" class="min-w-0 scroll-mt-24" data-domain="{{ d.id }}">
-      <details class="group h-full rounded-xl border border-default bg-neutral-primary-soft open:border-brand-subtle open:ring-1 open:ring-brand-subtle">
+      <details class="group rounded-xl border border-default bg-neutral-primary-soft open:border-brand-subtle open:ring-1 open:ring-brand-subtle">
         <summary class="flex cursor-pointer list-none flex-col gap-2 rounded-xl p-5 hover:bg-neutral-secondary-medium focus:outline-none focus-visible:ring-4 focus-visible:ring-brand-medium [&::-webkit-details-marker]:hidden">
           <span class="flex items-center justify-between gap-3">
             <span class="font-mono text-xs uppercase tracking-widest text-fg-brand">{{ loop.index }} &middot; {{ d.counts.features }} feature{% if d.counts.features != 1 %}s{% endif %}</span>
@@ -34,11 +34,10 @@
             <li class="min-w-0"><a href="{{ base }}{{ f.route }}" class="block min-w-0 rounded-base px-2 py-1 text-sm font-medium text-fg-brand hover:bg-neutral-secondary-medium hover:underline">{{ f.label }}</a></li>
             {%- endfor %}
           </ul>
-          <dl class="grid grid-cols-2 gap-3 border-t border-default pt-3 text-xs">
+          <dl class="grid grid-cols-2 gap-3 border-t border-default pt-3 text-xs sm:grid-cols-3">
             <div class="min-w-0"><dt class="text-body">guarantees naming a test</dt><dd class="font-mono text-base font-bold text-heading">{{ d.counts.tested }}<span class="font-normal text-body-subtle"> of {{ d.counts.claims }}</span></dd></div>
             <div class="min-w-0"><dt class="text-body">executable use cases</dt><dd class="font-mono text-base font-bold text-heading">{{ d.counts.use_cases }}</dd></div>
             <div class="min-w-0"><dt class="text-body">rules it rests on</dt><dd class="font-mono text-base font-bold text-heading">{{ d.counts.rules }}</dd></div>
-            <div class="min-w-0"><dt class="text-body">failure modes answered</dt><dd class="font-mono text-base font-bold text-heading">{{ d.counts.moments }}</dd></div>
           </dl>
           <a href="{{ base }}{{ d.route }}" class="inline-flex items-center gap-1 text-sm font-semibold text-fg-brand hover:underline">Explore {{ d.title | lower }} &rarr;</a>
         </div>

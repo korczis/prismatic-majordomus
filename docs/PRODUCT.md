@@ -161,20 +161,23 @@ hand fails the check rather than the reader.
 ## The homepage's story, and what search engines are shown
 
 The homepage is an argument with an order, and the order is data: `site/data/homepage.toml`
-lists the ids of the sections the page renders — hero, recognise, how, refuses, chapters, proof,
-built, install — which is what hurts, how this answers it, what it refuses, what it does for the
-part that hurts you, what proves it, what is not built, and how to try it. Nothing about the
-order is decided in `site/templates/index.html`.
+lists the ids of the sections the page renders — hero, recognise, map, how, refuses, surfaces,
+proof, install. It is told overview first: what this is, what goes wrong without it, what it
+controls, how one task moves through it, the proof that "done" can be refused, how one
+declaration reaches every interface, the evidence, and how to start. Reference-level material —
+the lifecycle transcripts, the full catalogue of failure modes, every recorded refusal, a
+capability on all its surfaces — stays on the page behind a disclosure rather than in the first
+reading of it. Nothing about the order is decided in `site/templates/index.html`.
 
 | Section | What it shows | Where it comes from |
 |---|---|---|
-| `hero` | the positioning, and the lifecycle replayed | `marketing.toml`, `terminal.json` |
-| `recognise` | the pain, in the first person | the Why catalogue's featured moments |
-| `how` | declare, derive, verify, each with a figure | `manifesto.toml` `[how]`, the rules, the product telemetry, the recorded refusals |
-| `refuses` | every recorded refusal of a lifecycle command | `terminal.json` |
-| `chapters` | every stable feature, grouped by the area it serves, and the composed graph | `product.json`, the Why catalogue's areas |
-| `proof` | the model's size and every claim counted by its real status | `product.json`, `docs/CLAIMS.yaml` |
-| `built` | each stage with its honest mark, the boundary, and what is not built | `manifesto.toml` |
+| `hero` | the positioning, one install command, and the verdict a worker that said it was done received, line by line | `marketing.toml`, `distribution.json`, `challenge.json` |
+| `recognise` | three failures, each a domain's `problem`; the featured moments behind a disclosure | `homepage.toml` `problems`, `product.json` domains, the Why catalogue |
+| `map` | the product's domains as disclosures: the failure each answers, its features, its counts | `product.json` domains (ADR 0104), via `partials/domain-map.html` |
+| `how` | the task lifecycle in its order; the recorded run of each step behind a disclosure | `terminal.json` |
+| `refuses` | the challenge stepped through, and every other recorded refusal behind a disclosure | `challenge.json`, `terminal.json` |
+| `surfaces` | declaration to interfaces, the model's size, the providers, one capability on every surface | `product.json`, `registry.json` |
+| `proof` | every claim counted by its declared status, what a recorded run supports, where the page came from, what is not built | `docs/CLAIMS.yaml`, `product.json` `evidence`, `manifesto.toml` |
 | `install` | the install, next-step and verification commands | `distribution.json` |
 
 The long-form argument the homepage used to carry section by section is `/method/argument/`,
@@ -192,10 +195,10 @@ homepage or a sitemap that drifts from its declaration is refused before the Pag
 publishes it. `test/cases/333_homepage_narrative.sh` proves each check by breaking it.
 
 The homepage's weight is declared in the same file, as `[budget]`: the scripts and stylesheets
-it loads from the site and the graph data it carries inline. The composed product graph is
-published at `/graphs/product.json` by `scripts/site-build` and fetched when the drawing first
-comes into view, with the node-by-node list one link away on `/features/`; and no page loads
-the Mermaid runtime unless it carries a diagram. The same check reports the current weight on
+it loads from the site and the graph data it carries inline. The homepage loads no graph
+runtime: its map is the domains, as native disclosures, and the composed product graph is on
+`/features/`, published at `/graphs/product.json` and fetched when the drawing first comes into
+view; no page loads the Mermaid runtime unless it carries a diagram. The same check reports the current weight on
 every build, so raising a budget is a reviewed change to `homepage.toml`, never a silent one.
 
 To add a homepage section: write it in `index.html` with an `id`, put that id where it belongs
