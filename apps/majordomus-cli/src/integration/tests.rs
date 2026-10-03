@@ -8,7 +8,7 @@
 //! property this subsystem exists for — *every merge is preceded by a fresh observation,
 //! and no plan survives a merge* — is asserted rather than trusted.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::integration::drain::{self, DrainStepOutcome, Integrator};
 use crate::integration::{
@@ -33,6 +33,16 @@ struct Sim {
     created: String,
     draft: bool,
     labels: Vec<String>,
+    /// The forge's review decision, verbatim.
+    review: &'static str,
+    /// The branch it asks to merge into.
+    base: &'static str,
+    /// The branch it asks to merge.
+    head_ref: String,
+    /// Whether the head lives in a fork.
+    cross_repository: bool,
+    /// The authored paths its merge would change.
+    paths: Vec<String>,
 }
 
 fn sim(number: u64) -> Sim {
@@ -47,10 +57,26 @@ fn sim(number: u64) -> Sim {
         created: format!("2026-09-{:02}T00:00:00Z", number.min(28)),
         draft: false,
         labels: Vec::new(),
+        review: "",
+        base: "master",
+        head_ref: format!("feature/{number}"),
+        cross_repository: false,
+        paths: vec![format!("docs/{number}.md")],
     }
 }
 
-#[derive(Debug, Default)]
+/// Something that happens on the forge between two of the executor's observations.
+#[derive(Debug, Clone)]
+enum Meanwhile {
+    /// The author pushes: the head moves, the master it contains does not.
+    HeadMoves(u64),
+    /// Somebody closes it.
+    Closes(u64),
+    /// Somebody puts a label on it.
+    Labelled(u64, &'static str),
+}
+
+#[derive(Debug)]
 struct World {
     master: u32,
     open: Vec<Sim>,
@@ -58,8 +84,33 @@ struct World {
     observations: usize,
     /// On this observation (1-based), somebody else merges into master first.
     master_moves_on: Option<usize>,
+    /// On each observation (1-based) named, what happens on the forge just before it.
+    meanwhile: Vec<(usize, Meanwhile)>,
     /// Observation counts at which each merge happened.
     merged_after_observation: Vec<usize>,
+    /// Whether the branch protection requires a review; `None` when it cannot be read.
+    reviews_required: Option<bool>,
+    /// The forge refuses to merge these.
+    merge_refuses: BTreeSet<u64>,
+    /// The forge does not show a merge it accepted.
+    verify_fails: bool,
+}
+
+impl Default for World {
+    fn default() -> Self {
+        World {
+            master: 0,
+            open: Vec::new(),
+            merged: Vec::new(),
+            observations: 0,
+            master_moves_on: None,
+            meanwhile: Vec::new(),
+            merged_after_observation: Vec::new(),
+            reviews_required: Some(false),
+            merge_refuses: BTreeSet::new(),
+            verify_fails: false,
+        }
+    }
 }
 
 fn master_sha(g: u32) -> String {
@@ -75,7 +126,7 @@ impl World {
             base_sha: master_sha(self.master),
             observed_at: format!("t{}", self.observations),
             required_checks: Some(vec!["ci".into()]),
-            reviews_required: Some(false),
+            reviews_required: self.reviews_required,
             merge_methods: vec!["merge".into()],
             pull_requests: self.open.iter().map(observe_pr).collect(),
         }
@@ -91,7 +142,7 @@ impl World {
                 paths: vec![format!("src/{n}.rs")],
             };
         }
-        let authored = vec![format!("docs/{n}.md")];
+        let authored = s.paths.clone();
         if s.contains == self.master {
             RelationToMaster::UpToDate { authored }
         } else {
@@ -106,6 +157,20 @@ impl World {
         let obs = self.observation();
         build_queue(&obs, &master_sha(self.master), |p| self.relation(p.number))
     }
+
+    fn happen(&mut self, what: &Meanwhile) {
+        match what {
+            Meanwhile::HeadMoves(n) => {
+                let s = self.open.iter_mut().find(|s| s.number == *n).expect("open");
+                s.head = format!("{}+", s.head);
+            }
+            Meanwhile::Closes(n) => self.open.retain(|s| s.number != *n),
+            Meanwhile::Labelled(n, label) => {
+                let s = self.open.iter_mut().find(|s| s.number == *n).expect("open");
+                s.labels.push((*label).to_string());
+            }
+        }
+    }
 }
 
 fn observe_pr(s: &Sim) -> PullRequestObservation {
@@ -113,9 +178,9 @@ fn observe_pr(s: &Sim) -> PullRequestObservation {
         number: s.number,
         title: format!("change {}", s.number),
         author: "someone".into(),
-        head_ref: format!("feature/{}", s.number),
+        head_ref: s.head_ref.clone(),
         head_sha: s.head.clone(),
-        base_ref: "master".into(),
+        base_ref: s.base.into(),
         draft: s.draft,
         labels: s.labels.clone(),
         created_at: s.created.clone(),
@@ -132,9 +197,9 @@ fn observe_pr(s: &Sim) -> PullRequestObservation {
                 CheckRunState::Passed
             },
         }],
-        review_decision: String::new(),
+        review_decision: s.review.into(),
         auto_merge: false,
-        cross_repository: false,
+        cross_repository: s.cross_repository,
     }
 }
 
@@ -145,11 +210,25 @@ impl Integrator for World {
             // somebody else's merge lands between this executor's two observations
             self.master += 1;
         }
+        let now: Vec<Meanwhile> = self
+            .meanwhile
+            .iter()
+            .filter(|(at, _)| *at == self.observations)
+            .map(|(_, what)| what.clone())
+            .collect();
+        for what in &now {
+            self.happen(what);
+        }
         Ok(self.queue())
     }
 
     fn merge(&mut self, pr: u64, head_sha: &str, method: &str) -> Result<(), String> {
         assert_eq!(method, "merge", "the repository's merge method");
+        if self.merge_refuses.contains(&pr) {
+            return Err(
+                "Pull request is not mergeable: the base branch policy prohibits the merge".into(),
+            );
+        }
         let i = self
             .open
             .iter()
@@ -164,6 +243,10 @@ impl Integrator for World {
             "merged a head that does not contain the current master"
         );
         assert!(!self.open[i].failing, "merged a failing pull request");
+        assert!(
+            self.open[i].labels.is_empty(),
+            "merged a pull request that carries a label"
+        );
         self.open.remove(i);
         self.merged.push(pr);
         self.master += 1;
@@ -173,6 +256,9 @@ impl Integrator for World {
 
     fn verify(&mut self, pr: u64, _head_sha: &str) -> Result<String, String> {
         assert!(self.merged.contains(&pr));
+        if self.verify_fails {
+            return Err(format!("the forge does not show #{pr} merged"));
+        }
         Ok(master_sha(self.master))
     }
 
@@ -184,6 +270,10 @@ impl Integrator for World {
             .find(|s| s.number == a.number)
             .ok_or("not open")?;
         assert_eq!(s.head, a.evaluated_against.head_sha);
+        assert!(
+            s.labels.is_empty(),
+            "refreshed a pull request that carries a label"
+        );
         s.contains = master;
         s.head = format!("h{}.{master}", s.number);
         Ok(s.head.clone())
@@ -367,6 +457,167 @@ fn a_decision_that_went_stale_merges_nothing() {
     let events = drain::events(&root);
     assert!(events.iter().any(|e| e.action == "stale_decision"));
     assert!(!events.iter().any(|e| e.action == "merge_attempted"));
+}
+
+/// One step against a world in which `what` happens just before the step's second
+/// observation, the one the executor acts on.
+fn step_with_second_observation(
+    w: &mut World,
+    what: Meanwhile,
+    allow_refresh: bool,
+) -> (DrainStepOutcome, Vec<String>) {
+    let root = scratch();
+    w.meanwhile.push((2, what));
+    let out = drain::step(&root, w, false, allow_refresh).unwrap();
+    let actions = drain::events(&root).into_iter().map(|e| e.action).collect();
+    (out, actions)
+}
+
+fn stale_with(out: &DrainStepOutcome, pr: u64, said: &str) -> bool {
+    matches!(out, DrainStepOutcome::StaleDecision { pr: p, what } if *p == pr && what.contains(said))
+}
+
+#[test]
+fn a_head_that_moved_merges_nothing() {
+    let mut w = World {
+        open: vec![sim(1)],
+        ..Default::default()
+    };
+    let (out, actions) = step_with_second_observation(&mut w, Meanwhile::HeadMoves(1), false);
+    assert!(stale_with(&out, 1, "its head moved"), "{out:?}");
+    assert!(w.merged.is_empty(), "merged a head nobody decided on");
+    assert!(actions.contains(&"stale_decision".to_string()));
+    assert!(
+        !actions.contains(&"merge_attempted".to_string()),
+        "{actions:?}"
+    );
+}
+
+#[test]
+fn a_pull_request_closed_meanwhile_merges_nothing() {
+    let mut w = World {
+        open: vec![sim(1)],
+        ..Default::default()
+    };
+    let (out, actions) = step_with_second_observation(&mut w, Meanwhile::Closes(1), false);
+    assert!(stale_with(&out, 1, "no longer open"), "{out:?}");
+    assert!(w.merged.is_empty());
+    assert!(
+        !actions.contains(&"merge_attempted".to_string()),
+        "{actions:?}"
+    );
+}
+
+#[test]
+fn a_changed_disposition_merges_nothing() {
+    let mut w = World {
+        open: vec![sim(1)],
+        ..Default::default()
+    };
+    let (out, actions) =
+        step_with_second_observation(&mut w, Meanwhile::Labelled(1, "hold"), false);
+    assert!(stale_with(&out, 1, "it is blocked now"), "{out:?}");
+    assert!(w.merged.is_empty());
+    assert!(
+        !actions.contains(&"merge_attempted".to_string()),
+        "{actions:?}"
+    );
+}
+
+/// A world in which nothing is ready and #1 needs master brought in.
+fn one_behind() -> World {
+    World {
+        open: vec![sim(1)],
+        master: 1,
+        ..Default::default()
+    }
+}
+
+fn refreshed_nothing(w: &World, actions: &[String]) -> bool {
+    w.open.iter().all(|s| s.contains == 0) && !actions.iter().any(|a| a == "refreshed")
+}
+
+#[test]
+fn a_head_that_moved_is_not_refreshed() {
+    let mut w = one_behind();
+    let (out, actions) = step_with_second_observation(&mut w, Meanwhile::HeadMoves(1), true);
+    assert!(stale_with(&out, 1, "its head moved"), "{out:?}");
+    assert!(refreshed_nothing(&w, &actions), "{actions:?}");
+    assert!(actions.contains(&"stale_decision".to_string()));
+}
+
+#[test]
+fn a_pull_request_closed_meanwhile_is_not_refreshed() {
+    let mut w = one_behind();
+    let (out, actions) = step_with_second_observation(&mut w, Meanwhile::Closes(1), true);
+    assert!(stale_with(&out, 1, "no longer open"), "{out:?}");
+    assert!(!actions.iter().any(|a| a == "refreshed"), "{actions:?}");
+}
+
+#[test]
+fn a_changed_disposition_is_not_refreshed() {
+    let mut w = one_behind();
+    let (out, actions) = step_with_second_observation(&mut w, Meanwhile::Labelled(1, "hold"), true);
+    assert!(stale_with(&out, 1, "it is blocked now"), "{out:?}");
+    assert!(refreshed_nothing(&w, &actions), "{actions:?}");
+}
+
+#[test]
+fn a_refused_merge_is_recorded_and_the_next_step_plans_again() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1), sim(2)],
+        merge_refuses: [1].into_iter().collect(),
+        ..Default::default()
+    };
+    let out = drain::step(&root, &mut w, false, false).unwrap();
+    assert!(
+        matches!(&out, DrainStepOutcome::MergeRefused { pr: 1, reason } if reason.contains("not mergeable")),
+        "{out:?}"
+    );
+    assert!(w.merged.is_empty());
+    let actions: Vec<String> = drain::events(&root).into_iter().map(|e| e.action).collect();
+    assert!(
+        actions.ends_with(&["merge_attempted".into(), "merge_failed".into()]),
+        "{actions:?}"
+    );
+}
+
+#[test]
+fn a_merge_that_cannot_be_verified_stops_the_drain() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1), sim(2)],
+        verify_fails: true,
+        ..Default::default()
+    };
+    let report = drain::drain(&root, &mut w, 5, false, false).unwrap();
+    assert!(
+        matches!(
+            report.steps.last(),
+            Some(DrainStepOutcome::VerificationFailed { pr: 1, .. })
+        ),
+        "{report:?}"
+    );
+    assert!(
+        report.merged.is_empty(),
+        "an unverified merge is not counted"
+    );
+    assert!(
+        report.stopped.contains("could not be verified"),
+        "{}",
+        report.stopped
+    );
+    assert_eq!(
+        w.merged,
+        vec![1],
+        "nothing after the unverified merge was merged"
+    );
+    let actions: Vec<String> = drain::events(&root).into_iter().map(|e| e.action).collect();
+    assert_eq!(
+        actions.last().map(String::as_str),
+        Some("verification_failed")
+    );
 }
 
 #[test]
@@ -576,43 +827,84 @@ fn cleanup_lists_only_what_is_provably_on_master() {
 
 // ---------------------------------------------------------------- properties
 
+/// Creation moments drawn from a few, so that two pull requests often share one and the
+/// number has to break the tie.
+const CREATED: [&str; 3] = [
+    "2026-09-01T00:00:00Z",
+    "2026-09-02T00:00:00Z",
+    "2026-09-03T00:00:00Z",
+];
+
+/// Paths several pull requests may author, so that overlaps occur.
+const SHARED: [&str; 3] = ["docs/shared.md", "apps/x/src/lib.rs", "README.md"];
+
+/// Review decisions the forge reports.
+const REVIEWS: [&str; 3] = ["", "APPROVED", "CHANGES_REQUESTED"];
+
 fn arb_sim() -> impl Strategy<Value = Sim> {
     (
-        1u64..40,
-        0u32..3,
-        any::<bool>(),
-        any::<bool>(),
-        proptest::option::of(1u64..40),
-        0usize..4,
+        (
+            1u64..40,
+            0u32..3,
+            any::<bool>(),
+            any::<bool>(),
+            proptest::option::of(1u64..40),
+            0usize..4,
+        ),
+        (
+            0usize..CREATED.len(),
+            proptest::sample::subsequence(SHARED.to_vec(), 0..=2),
+            0usize..REVIEWS.len(),
+            any::<bool>(),
+            0usize..4,
+        ),
     )
-        .prop_map(|(n, contains, failing, draft, depends_on, label)| {
-            let mut s = sim(n);
-            s.contains = contains;
-            s.failing = failing;
-            s.draft = draft;
-            s.depends_on = depends_on;
-            s.labels = match label {
-                0 => vec!["hold".into()],
-                _ => Vec::new(),
-            };
-            s
-        })
+        .prop_map(
+            |(
+                (n, contains, failing, draft, depends_on, label),
+                (created, shared, review, fork, base),
+            )| {
+                let mut s = sim(n);
+                s.contains = contains;
+                s.failing = failing;
+                s.draft = draft;
+                s.depends_on = depends_on;
+                s.labels = match label {
+                    0 => vec!["hold".into()],
+                    _ => Vec::new(),
+                };
+                s.created = CREATED[created].into();
+                s.paths.extend(shared.into_iter().map(String::from));
+                s.review = REVIEWS[review];
+                s.cross_repository = fork;
+                if base == 0 {
+                    s.base = "release/1";
+                }
+                s
+            },
+        )
 }
 
 fn arb_world() -> impl Strategy<Value = World> {
-    (proptest::collection::vec(arb_sim(), 0..12), 0u32..3).prop_map(|(mut open, master)| {
-        open.sort_by_key(|s| s.number);
-        open.dedup_by_key(|s| s.number);
-        // a head cannot contain a master that does not exist yet
-        for s in &mut open {
-            s.contains = s.contains.min(master);
-        }
-        World {
-            open,
-            master,
-            ..Default::default()
-        }
-    })
+    (
+        proptest::collection::vec(arb_sim(), 0..12),
+        0u32..3,
+        prop_oneof![Just(None), Just(Some(true)), Just(Some(false))],
+    )
+        .prop_map(|(mut open, master, reviews_required)| {
+            open.sort_by_key(|s| s.number);
+            open.dedup_by_key(|s| s.number);
+            // a head cannot contain a master that does not exist yet
+            for s in &mut open {
+                s.contains = s.contains.min(master);
+            }
+            World {
+                open,
+                master,
+                reviews_required,
+                ..Default::default()
+            }
+        })
 }
 
 proptest! {
@@ -652,6 +944,53 @@ proptest! {
         let first_ready = q.assessments.iter().find(|a| a.disposition == PullRequestDisposition::Ready).map(|a| a.number);
         prop_assert_eq!(q.next_merge, first_ready);
     }
+
+    #[test]
+    fn ties_are_broken_by_created_then_number(w in arb_world()) {
+        let q = w.queue();
+        let contenders: BTreeSet<u64> = q
+            .assessments
+            .iter()
+            .filter(|a| matches!(
+                a.disposition,
+                PullRequestDisposition::Ready | PullRequestDisposition::NeedsRefresh
+            ))
+            .map(|a| a.number)
+            .collect();
+        let before_age = |a: &PullRequestAssessment| {
+            let contention = a.overlaps.iter().filter(|o| contenders.contains(&o.number)).count();
+            (a.lane as u8, a.disposition as u8, a.risk as u8, contention)
+        };
+        for pair in q.assessments.windows(2) {
+            let (a, b) = (&pair[0], &pair[1]);
+            prop_assert!(before_age(a) <= before_age(b), "#{} before #{}", a.number, b.number);
+            if before_age(a) == before_age(b) {
+                // equal on everything before age: the older first, and of two opened in the
+                // same moment the lower number
+                prop_assert!(
+                    (a.created_at.as_str(), a.number) < (b.created_at.as_str(), b.number),
+                    "#{} ({}) before #{} ({})", a.number, a.created_at, b.number, b.created_at
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn build_queue_is_idempotent(w in arb_world(), seed in any::<u64>()) {
+        let obs = w.observation();
+        let master = master_sha(w.master);
+        let once = build_queue(&obs, &master, |p| w.relation(p.number));
+        let twice = build_queue(&obs, &master, |p| w.relation(p.number));
+        // the whole value: dispositions, the order of reasons and evidence, overlaps, tallies
+        prop_assert_eq!(&once, &twice);
+        let mut shuffled = obs.clone();
+        let len = shuffled.pull_requests.len();
+        if len > 1 {
+            shuffled.pull_requests.rotate_left((seed as usize) % len);
+            shuffled.pull_requests.reverse();
+        }
+        prop_assert_eq!(&once, &build_queue(&shuffled, &master, |p| w.relation(p.number)));
+    }
 }
 
 // ---------------------------------------------------------------- the relation, by real git
@@ -685,9 +1024,15 @@ fn commit_on(dir: &std::path::Path, branch: &str, from: &str, files: &[(&str, &s
     git(dir, &["rev-parse", "HEAD"])
 }
 
-#[test]
-fn the_relation_to_master_is_decided_by_git_with_the_derived_attribute() {
-    use crate::integration::relation_to_master;
+/// A repository in which every relation occurs: what each head is to `master` is named by
+/// its key.
+struct RelationFixture {
+    dir: std::path::PathBuf,
+    master: String,
+    heads: BTreeMap<&'static str, String>,
+}
+
+fn relation_fixture() -> RelationFixture {
     let dir = scratch();
     git(&dir, &["init", "-q", "-b", "master"]);
     std::fs::write(dir.join(".gitattributes"), "gen.json merge=derived\n").unwrap();
@@ -720,6 +1065,30 @@ fn the_relation_to_master_is_decided_by_git_with_the_derived_attribute() {
         &base,
         &[("a.txt", "ours\n"), ("gen.json", "{\"m\":1}\n")],
     );
+    let heads = BTreeMap::from([
+        ("base", base),
+        ("authored", authored),
+        ("derived_only", derived_only),
+        ("conflicting", conflicting),
+        ("derived_conflict", derived_conflict),
+        ("up_to_date", up_to_date),
+        ("same", same),
+        (
+            "absent",
+            "0000000000000000000000000000000000000000".to_string(),
+        ),
+    ]);
+    RelationFixture { dir, master, heads }
+}
+
+#[test]
+fn the_relation_to_master_is_decided_by_git_with_the_derived_attribute() {
+    use crate::integration::relation_to_master;
+    let RelationFixture { dir, master, heads } = relation_fixture();
+    let h = |k: &str| heads[k].clone();
+    let (base, same, authored, up_to_date) = (h("base"), h("same"), h("authored"), h("up_to_date"));
+    let (conflicting, derived_conflict, derived_only) =
+        (h("conflicting"), h("derived_conflict"), h("derived_only"));
 
     assert_eq!(
         relation_to_master(&dir, &master, &base),
@@ -766,6 +1135,34 @@ fn the_relation_to_master_is_decided_by_git_with_the_derived_attribute() {
         relation_to_master(&dir, &master, "0000000000000000000000000000000000000000"),
         RelationToMaster::Unknown { .. }
     ));
+}
+
+/// `project.cache-is-invisible`: the relation cache answers exactly what git answers, on a
+/// hit, on a miss, and after the round trip through the file `queue_of` keeps it in.
+#[test]
+fn relation_cache_equals_recomputation() {
+    use crate::integration::{relation_cached, relation_to_master, RelationCache};
+    let RelationFixture { dir, master, heads } = relation_fixture();
+    let mut cache = RelationCache::default();
+    for (name, head) in &heads {
+        let fresh = relation_to_master(&dir, &master, head);
+        let miss = relation_cached(&dir, &mut cache, &master, head);
+        let hit = relation_cached(&dir, &mut cache, &master, head);
+        assert_eq!(miss, fresh, "{name}: a miss differs from git");
+        assert_eq!(hit, fresh, "{name}: a hit differs from git");
+    }
+    // an unknown is not a fact about the pair, so it is not kept
+    assert_eq!(cache.entries.len(), heads.len() - 1);
+    assert!(!cache.entries.keys().any(|k| k.ends_with(&heads["absent"])));
+    let text = serde_json::to_string(&cache).unwrap();
+    let mut reread: RelationCache = serde_json::from_str(&text).unwrap();
+    for (name, head) in &heads {
+        assert_eq!(
+            relation_cached(&dir, &mut reread, &master, head),
+            relation_to_master(&dir, &master, head),
+            "{name}: the stored cache differs from git"
+        );
+    }
 }
 
 #[test]
