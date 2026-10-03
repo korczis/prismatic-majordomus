@@ -1,7 +1,7 @@
 +++
 title = "A page of the published site written in a reader's language is declared with that language and a reason, and is refused unless the page declares the same language itself"
 description = "project.english-only binds this repository to one working language, and version 2 names one"
-weight = 190
+weight = 192
 [extra]
 claim_id = "published-translation-is-declared"
 status = "guaranteed"

@@ -555,6 +555,11 @@ documents:
     source: share/distribution.yaml and the release records
     formats:
       - json
+  - id: site-evidence-subjects
+    schema: majordomus-site-evidence-subjects/v1
+    source: "the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases"
+    formats:
+      - json
   - id: site-product
     schema: majordomus-site-product/v1
     source: "the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology"
@@ -777,8 +782,8 @@ artifacts:
     format: json
     schema: majordomus/capability-graph/v1
     source: the composed graph of the registry and the index
-    bytes: 2375327
-    sha256: d9f38586a753a1f7e98f838a914ad17cb56204456819e560d8d08922d9eae218
+    bytes: 2376379
+    sha256: 351354f5e713c89c114b4631c15a8e20283c38c8ac33fd6f98158957c847a28b
   - path: docs/generated/graph.schema.json
     document: graph-schema
     format: json
@@ -1458,26 +1463,33 @@ artifacts:
     source: share/distribution.yaml and the release records
     bytes: 3005
     sha256: 9752125b492404fedd535d718bfdfe433935f42a6f92ac3f1adce1ba4b059a7a
+  - path: site/data/registry/evidence-subjects.json
+    document: site-evidence-subjects
+    format: json
+    schema: majordomus-site-evidence-subjects/v1
+    source: "the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases"
+    bytes: 657501
+    sha256: f5ede69b9b03d4f2b9416ab75fe426bded2e026cfdec79b33e6ef49b45fdfe31
   - path: site/data/registry/product-graph.json
     document: site-product-graph
     format: json
     source: "the features, what they are made of, and the interfaces that follow, as the derived `product` graph"
     bytes: 89303
-    sha256: fa6ab6634f62b00bebcddf18fe0669c543bc924665f56fc6106f4d7702fc69a9
+    sha256: 60f4c53f265e7a1a6dd7ba3c99805a9d8e5182f3b377beeee9ce06d29bf4f331
   - path: site/data/registry/product.json
     document: site-product
     format: json
     schema: majordomus-site-product/v1
     source: "the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology"
-    bytes: 466404
-    sha256: daaba9c2a218a90d44605b43a4f42793354ac65f0f9bcd41448636c196067203
+    bytes: 466759
+    sha256: f3861abb9d626bf1f6c1503e91278864d8db46d8ce82d71cefba18633c862f71
   - path: site/data/registry/registry.json
     document: site-registry
     format: json
     schema: majordomus-site-registry/v2
     source: "the capability registry and the index of this repository's layer"
-    bytes: 5279478
-    sha256: 5e7cf320677f09f6f2a1500c3be5ad0f615fd33796a9c20c8709b144aa842ed7
+    bytes: 5284350
+    sha256: ed6f48b331c938880dd90a7bbcd71f0378694e976dccd4288258f56d4d903c4a
   - path: site/data/registry/why-graph.json
     document: site-why-graph
     format: json

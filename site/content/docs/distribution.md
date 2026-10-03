@@ -173,10 +173,15 @@ scripts/derive                       # builds, then projects share/version.txt a
 scripts/release-version --check --tag v0.3.0
 
 # 2. commit, open the pull request, and merge it once `ci` is green
+```
 
+<!-- majordomus:unrun it asks GitHub for the commit's newest `ci` check-run, which needs the network and a token; case 362 runs it against a stubbed answer -->
+```bash
 # 3. the commit to be tagged passed ci — the same question the pipeline asks first
 scripts/ci/release-verdict --commit HEAD
+```
 
+```bash
 # 4. tag the merge on the default branch, and push the tag
 git tag v0.3.0 && git push origin v0.3.0
 

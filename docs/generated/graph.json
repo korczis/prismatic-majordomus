@@ -1600,14 +1600,6 @@
         "external": true
       },
       {
-        "id": "file:.ai/repo/rule-proof-baseline.txt",
-        "kind": "file",
-        "label": "rule-proof-baseline.txt",
-        "summary": "named by the layer; not an object of this index",
-        "source": ".ai/repo/rule-proof-baseline.txt",
-        "external": true
-      },
-      {
         "id": "file:.github/workflows/pages.yml",
         "kind": "file",
         "label": "pages.yml",
@@ -1912,14 +1904,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/release/surface.rs",
-        "kind": "file",
-        "label": "surface.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/release/surface.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/rules/mod.rs",
         "kind": "file",
         "label": "mod.rs",
@@ -2005,30 +1989,6 @@
         "label": "design-check",
         "summary": "named by the layer; not an object of this index",
         "source": "scripts/ci/design-check",
-        "external": true
-      },
-      {
-        "id": "file:scripts/ci/english-only-allow.txt",
-        "kind": "file",
-        "label": "english-only-allow.txt",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/ci/english-only-allow.txt",
-        "external": true
-      },
-      {
-        "id": "file:scripts/ci/english-only-check",
-        "kind": "file",
-        "label": "english-only-check",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/ci/english-only-check",
-        "external": true
-      },
-      {
-        "id": "file:scripts/ci/finding-reproduce-check",
-        "kind": "file",
-        "label": "finding-reproduce-check",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/ci/finding-reproduce-check",
         "external": true
       },
       {
@@ -2168,27 +2128,11 @@
         "external": true
       },
       {
-        "id": "file:share/models.yaml",
-        "kind": "file",
-        "label": "models.yaml",
-        "summary": "named by the layer; not an object of this index",
-        "source": "share/models.yaml",
-        "external": true
-      },
-      {
         "id": "file:share/obligations.yaml",
         "kind": "file",
         "label": "obligations.yaml",
         "summary": "named by the layer; not an object of this index",
         "source": "share/obligations.yaml",
-        "external": true
-      },
-      {
-        "id": "file:share/schemas/majordomus/rule/rule.v1.proto",
-        "kind": "file",
-        "label": "rule.v1.proto",
-        "summary": "named by the layer; not an object of this index",
-        "source": "share/schemas/majordomus/rule/rule.v1.proto",
         "external": true
       },
       {
@@ -6045,6 +5989,37 @@
           "responsibility": "none",
           "source": "docs/EVIDENCE.md",
           "test": "test/cases/357_ci_records_evidence.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/evidence-subject-commands-agree-with-the-command-pages",
+        "kind": "claim",
+        "label": "evidence-subject-commands-agree-with-the-command-pages",
+        "summary": "The behavioural and negative tests the subject index names for a command are exactly the ones its command page lists, both read from the first coverage and negative header of each case",
+        "route": "/cockpit/objects/claim/evidence-subject-commands-agree-with-the-command-pages",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "The behavioural and negative tests the subject index names for a command are exactly the ones its command page lists, both read from the first coverage and negative header of each case",
+          "implementation": "apps/majordomus-cli/src/evidence/subject.rs",
+          "responsibility": "none",
+          "source": "docs/EVIDENCE.md",
+          "test": "test/cases/507_evidence_subjects_are_derived.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/evidence-subjects-are-derived",
+        "kind": "claim",
+        "label": "evidence-subjects-are-derived",
+        "summary": "Every claim, rule, feature, command, capability, MCP tool and use case the repository declares is an evidence subject whose members and tests are derived from declarations that already exist, and a committed subject index that differs from that derivation is refused",
+        "route": "/cockpit/objects/claim/evidence-subjects-are-derived",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/evidence/subject.rs",
+          "responsibility": "none",
+          "source": "docs/EVIDENCE.md",
+          "test": "test/cases/507_evidence_subjects_are_derived.sh"
         }
       },
       {
@@ -11621,6 +11596,22 @@
         "summary": "CI records what it ran, with the run it happened in, and the site publishes it with the commit it proves",
         "route": "/cockpit/objects/document/docs-claims-evidence-recorded-in-ci-md",
         "source": "docs/claims/evidence-recorded-in-ci.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/evidence-subject-commands-agree-with-the-command-pages.md",
+        "kind": "document",
+        "label": "docs/claims/evidence-subject-commands-agree-with-the-command-pages.md",
+        "summary": "The behavioural and negative tests the subject index names for a command are exactly the ones its command page lists, both read from the first coverage and negative header of each case",
+        "route": "/cockpit/objects/document/docs-claims-evidence-subject-commands-agree-with-the-command-pages-md",
+        "source": "docs/claims/evidence-subject-commands-agree-with-the-command-pages.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/evidence-subjects-are-derived.md",
+        "kind": "document",
+        "label": "docs/claims/evidence-subjects-are-derived.md",
+        "summary": "Every claim, rule, feature, command, capability, MCP tool and use case the repository declares is an evidence subject whose members and tests are derived from declarations that already exist, and a committed subject index that differs from that derivation is refused",
+        "route": "/cockpit/objects/document/docs-claims-evidence-subjects-are-derived-md",
+        "source": "docs/claims/evidence-subjects-are-derived.md"
       },
       {
         "id": "majordomus://document/docs/claims/evidence-unsupported-guarantee-is-reported.md",
@@ -37127,6 +37118,13 @@
         "source": "test/cases/408_a_receipt_is_provider_neutral.sh"
       },
       {
+        "id": "majordomus://test/test/cases/409_every_tile_names_its_proof.sh",
+        "kind": "test",
+        "label": "test/cases/409_every_tile_names_its_proof.sh",
+        "route": "/cockpit/objects/test/test-cases-409-every-tile-names-its-proof-sh",
+        "source": "test/cases/409_every_tile_names_its_proof.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/40_project_model.sh",
         "kind": "test",
         "label": "test/cases/40_project_model.sh",
@@ -37335,6 +37333,13 @@
         "label": "test/cases/504_public_text_is_redacted_once.sh",
         "route": "/cockpit/objects/test/test-cases-504-public-text-is-redacted-once-sh",
         "source": "test/cases/504_public_text_is_redacted_once.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/507_evidence_subjects_are_derived.sh",
+        "kind": "test",
+        "label": "test/cases/507_evidence_subjects_are_derived.sh",
+        "route": "/cockpit/objects/test/test-cases-507-evidence-subjects-are-derived-sh",
+        "source": "test/cases/507_evidence_subjects_are_derived.sh"
       },
       {
         "id": "majordomus://test/test/cases/50_blocker_across_handover.sh",
@@ -37678,6 +37683,13 @@
         "label": "test/cases/635_the_runtime_names_its_commit.sh",
         "route": "/cockpit/objects/test/test-cases-635-the-runtime-names-its-commit-sh",
         "source": "test/cases/635_the_runtime_names_its_commit.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/638_a_documented_command_is_run.sh",
+        "kind": "test",
+        "label": "test/cases/638_a_documented_command_is_run.sh",
+        "route": "/cockpit/objects/test/test-cases-638-a-documented-command-is-run-sh",
+        "source": "test/cases/638_a_documented_command_is_run.sh"
       },
       {
         "id": "majordomus://test/test/cases/63_session_records.sh",
@@ -44734,11 +44746,6 @@
       },
       {
         "source": "majordomus://adr/adr-0048",
-        "target": "file:.ai/repo/rule-proof-baseline.txt",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0048",
         "target": "file:apps/majordomus-cli/src/capability/builtin/rules.rs",
         "kind": "put_in_force"
       },
@@ -44749,38 +44756,13 @@
       },
       {
         "source": "majordomus://adr/adr-0048",
-        "target": "file:scripts/ci/english-only-allow.txt",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0048",
-        "target": "file:scripts/ci/english-only-check",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0048",
-        "target": "file:scripts/ci/finding-reproduce-check",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0048",
         "target": "file:scripts/ci/rule-proof-check",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0048",
-        "target": "file:share/schemas/majordomus/rule/rule.v1.proto",
         "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0048",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0048",
-        "target": "majordomus://adr/adr-0041",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0048",
@@ -44814,11 +44796,6 @@
       },
       {
         "source": "majordomus://adr/adr-0048",
-        "target": "majordomus://implementation/lib/rules.sh",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0048",
         "target": "majordomus://rule/project.clean-room@1",
         "kind": "put_in_force"
       },
@@ -44840,26 +44817,6 @@
       {
         "source": "majordomus://adr/adr-0048",
         "target": "majordomus://rule/project.rule-is-a-doctrine@1",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0048",
-        "target": "majordomus://test/test/cases/125_rule_proof.sh",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0048",
-        "target": "majordomus://test/test/cases/133_rule_graph.sh",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0048",
-        "target": "majordomus://test/test/cases/138_governance_gates.sh",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0049",
-        "target": "file:share/models.yaml",
         "kind": "put_in_force"
       },
       {
@@ -44905,11 +44862,6 @@
       {
         "source": "majordomus://adr/adr-0050",
         "target": "majordomus://rule/project.mesh-is-observation-not-authority@1",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0051",
-        "target": "file:apps/majordomus-cli/src/release/surface.rs",
         "kind": "put_in_force"
       },
       {
@@ -45254,16 +45206,6 @@
       },
       {
         "source": "majordomus://adr/adr-0077",
-        "target": "file:scripts/ci/english-only-allow.txt",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0077",
-        "target": "file:scripts/ci/english-only-check",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0077",
         "target": "kind:adr",
         "kind": "is_a"
       },
@@ -45275,16 +45217,6 @@
       {
         "source": "majordomus://adr/adr-0077",
         "target": "majordomus://claim/published-translation-is-declared",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0077",
-        "target": "majordomus://document/docs/claims/authored-files-are-english.md",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0077",
-        "target": "majordomus://document/docs/claims/published-translation-is-declared.md",
         "kind": "put_in_force"
       },
       {
@@ -45944,11 +45876,6 @@
       },
       {
         "source": "majordomus://claim/a-finding-names-how-to-see-it-again",
-        "target": "file:scripts/ci/finding-reproduce-check",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/a-finding-names-how-to-see-it-again",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -46151,11 +46078,6 @@
         "source": "majordomus://claim/archive-fidelity",
         "target": "majordomus://test/test/cases/130_archive.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/authored-files-are-english",
-        "target": "file:scripts/ci/english-only-check",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/authored-files-are-english",
@@ -47170,6 +47092,36 @@
       {
         "source": "majordomus://claim/evidence-recorded-in-ci",
         "target": "majordomus://test/test/cases/357_ci_records_evidence.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-subject-commands-agree-with-the-command-pages",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/evidence-subject-commands-agree-with-the-command-pages",
+        "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/evidence-subject-commands-agree-with-the-command-pages",
+        "target": "majordomus://test/test/cases/507_evidence_subjects_are_derived.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-subjects-are-derived",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/evidence-subjects-are-derived",
+        "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/evidence-subjects-are-derived",
+        "target": "majordomus://test/test/cases/507_evidence_subjects_are_derived.sh",
         "kind": "tested_by"
       },
       {
@@ -48576,11 +48528,6 @@
         "source": "majordomus://claim/provider-projections-one-renderer",
         "target": "majordomus://test/test/cases/93_rust_provider_projections.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/published-translation-is-declared",
-        "target": "file:scripts/ci/english-only-check",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/published-translation-is-declared",
@@ -50859,6 +50806,16 @@
       },
       {
         "source": "majordomus://document/docs/claims/evidence-recorded-in-ci.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/evidence-subject-commands-agree-with-the-command-pages.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/evidence-subjects-are-derived.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -59288,6 +59245,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/409_every_tile_names_its_proof.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/40_project_model.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -59434,6 +59396,11 @@
       },
       {
         "source": "majordomus://test/test/cases/504_public_text_is_redacted_once.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/507_evidence_subjects_are_derived.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -59679,6 +59646,11 @@
       },
       {
         "source": "majordomus://test/test/cases/635_the_runtime_names_its_commit.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/638_a_documented_command_is_run.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -63115,7 +63087,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4505,
+      "edges": 4497,
       "acyclic": true,
       "truncated": true
     }

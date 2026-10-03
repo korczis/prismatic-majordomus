@@ -140,6 +140,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `sections/use-case` | `text` | — | the document schema `share/schemas/majordomus/use-case/use-case.v1.proto` |
 | `site-design` | `json` | `majordomus-site-design/v1` | share/design/tokens.yaml, the one declaration of the design |
 | `site-distribution` | `json` | — | share/distribution.yaml and the release records |
+| `site-evidence-subjects` | `json` | `majordomus-site-evidence-subjects/v1` | the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases |
 | `site-product` | `json` | `majordomus-site-product/v1` | the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology |
 | `site-product-graph` | `json` | — | the features, what they are made of, and the interfaces that follow, as the derived `product` graph |
 | `site-registry` | `json` | `majordomus-site-registry/v2` | the capability registry and the index of this repository's layer |
@@ -181,7 +182,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 26566 | `c67dda209b0ba3f7` |
 | `docs/generated/economics.md` | `economics` | markdown | 14566 | `ca1ff9c041c76f0e` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 22186 | `1ce412c279aa316d` |
-| `docs/generated/graph.json` | `graph` | json | 2375327 | `d9f38586a753a1f7` |
+| `docs/generated/graph.json` | `graph` | json | 2376379 | `351354f5e713c89c` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7618 | `53b604e27fc130c6` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1742 | `98ad38d220b99d7a` |
 | `docs/generated/modules/capabilities.md` | `modules/capabilities` | markdown | 3130 | `487726a98d97632c` |
@@ -294,9 +295,10 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/version.txt` | `version` | text | 231 | `b809f40aa3dda7dd` |
 | `site/data/registry/design.json` | `site-design` | json | 11587 | `86dece83133ddd5d` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `9752125b492404fe` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 89303 | `fa6ab6634f62b00b` |
-| `site/data/registry/product.json` | `site-product` | json | 466404 | `daaba9c2a218a90d` |
-| `site/data/registry/registry.json` | `site-registry` | json | 5279478 | `5e7cf320677f09f6` |
+| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 657501 | `f5ede69b9b03d4f2` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 89303 | `60f4c53f265e7a1a` |
+| `site/data/registry/product.json` | `site-product` | json | 466759 | `f3861abb9d626bf1` |
+| `site/data/registry/registry.json` | `site-registry` | json | 5284350 | `ed6f48b331c93888` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `05965e98b5dc0c58` |
 | `site/data/registry/why.json` | `site-why` | json | 349952 | `1064db74576aeadd` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `861ed5a4aa3e3f4d` |

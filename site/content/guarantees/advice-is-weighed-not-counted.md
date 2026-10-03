@@ -1,7 +1,7 @@
 +++
 title = "Advisors that disagree never decide by count: a conclusion is refused while a disagreement on its assessment is unsettled, a resolution needs evidence, and every answer received must be weighed"
 description = "When advice diverges, the divergence is a record — the positions, the assumptions they"
-weight = 229
+weight = 231
 [extra]
 claim_id = "advice-is-weighed-not-counted"
 status = "guaranteed"
