@@ -20,7 +20,7 @@
     </div>
 
     {#- the authored narrative: the body of the object, rendered as it was written -#}
-    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-6 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full" tabindex="0">{{ page.content | safe }}</article>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-6 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline" tabindex="0">{{ page.content | safe }}</article>
 
     {%- if u.scenario %}
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The scenario</h2>
