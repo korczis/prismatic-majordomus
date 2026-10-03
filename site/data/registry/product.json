@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.13.0"
   },
-  "fingerprint": "f2a58e69df36c5197c6438a635b2dfd799d05c7b951ea138d428448086d2278f",
+  "fingerprint": "826e2aa63c809e6889691e8b00fdec1d53777c6aaae0e11fcf1d474ba95f8c31",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1417,7 +1417,7 @@
         },
         {
           "id": "authored-files-are-english",
-          "claim": "Every authored file in this repository is spelled in English, and a proper noun or a test fixture that is not carries its reason beside the check",
+          "claim": "Every authored file in this repository is spelled in English, and a proper noun, a test fixture or a published translation that is not carries its reason beside the check",
           "status": "guaranteed",
           "test": "test/cases/138_governance_gates.sh"
         },
@@ -3384,7 +3384,7 @@
         },
         {
           "name": "claim",
-          "objects": 221
+          "objects": 222
         }
       ],
       "rule_refs": [
@@ -3657,11 +3657,11 @@
       "counts": {
         "capabilities": 12,
         "mcp_tools": 12,
-        "mcp_resources": 292,
+        "mcp_resources": 293,
         "http_routes": 12,
         "cli_paths": 11,
         "commands": 2,
-        "objects": 285,
+        "objects": 286,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -6994,7 +6994,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 79
+          "objects": 80
         },
         {
           "name": "knowledge",
@@ -7002,7 +7002,7 @@
         },
         {
           "name": "document",
-          "objects": 309
+          "objects": 310
         }
       ],
       "rule_refs": [
@@ -7275,11 +7275,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 392,
+        "mcp_resources": 394,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 389,
+        "objects": 391,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -7541,11 +7541,11 @@
         },
         {
           "id": "project.english-only",
-          "identity": "project.english-only@1",
+          "identity": "project.english-only@2",
           "title": "English only",
           "class": "blocking",
           "enforced": true,
-          "path": ".ai/repo/rules/project/english-only.v1.md"
+          "path": ".ai/repo/rules/project/english-only.v2.md"
         },
         {
           "id": "project.finding-carries-reproduce",
@@ -7630,7 +7630,7 @@
         },
         {
           "id": "authored-files-are-english",
-          "claim": "Every authored file in this repository is spelled in English, and a proper noun or a test fixture that is not carries its reason beside the check",
+          "claim": "Every authored file in this repository is spelled in English, and a proper noun, a test fixture or a published translation that is not carries its reason beside the check",
           "status": "guaranteed",
           "test": "test/cases/138_governance_gates.sh"
         },
@@ -14040,7 +14040,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (79)",
+        "title": "adr (80)",
         "features": [
           "knowledge"
         ]
@@ -14068,7 +14068,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (221)",
+        "title": "claim (222)",
         "features": [
           "declare-once"
         ]
@@ -14746,11 +14746,11 @@
     },
     {
       "id": "project.english-only",
-      "identity": "project.english-only@1",
+      "identity": "project.english-only@2",
       "title": "English only",
       "class": "blocking",
       "enforced": true,
-      "path": ".ai/repo/rules/project/english-only.v1.md"
+      "path": ".ai/repo/rules/project/english-only.v2.md"
     },
     {
       "id": "project.finding-carries-reproduce",
@@ -15114,29 +15114,29 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1868,
+    "capabilities": 1875,
     "builtin": 170,
-    "declarative": 1698,
+    "declarative": 1705,
     "modules": 51,
     "mcp_tools": 164,
-    "mcp_resources": 1751,
+    "mcp_resources": 1758,
     "http_routes": 168,
     "cli_commands": 176,
     "shell_commands": 30,
     "kinds": 33,
-    "objects": 1698,
+    "objects": 1705,
     "by_kind": {
-      "adr": 79,
+      "adr": 80,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 221,
+      "claim": 222,
       "command": 31,
       "context": 36,
       "critique": 1,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 309,
+      "document": 310,
       "domain": 6,
       "feature": 27,
       "gap": 1,
@@ -15156,7 +15156,7 @@
       "session": 22,
       "skill": 6,
       "taxonomy": 10,
-      "test": 339,
+      "test": 343,
       "use-case": 48,
       "workspace": 1
     },
@@ -15174,7 +15174,7 @@
       "executions": 14,
       "newest": "2026-09-17T01:14:59Z"
     },
-    "declared": 205,
+    "declared": 206,
     "supported": 0,
     "claims": {
       "a-finding-names-how-to-see-it-again": {
@@ -16120,6 +16120,12 @@
         "supported": false
       },
       "provider-projections-one-renderer": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "published-translation-is-declared": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",

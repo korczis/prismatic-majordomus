@@ -21,7 +21,7 @@
 #
 # What is deliberately allowed, and how. This repository's prose uses typographic
 # punctuation — the em dash, the curly apostrophe, the ellipsis — which is allowed by range
-# and never reaches the test. Two other things are allowed, and both are declared with a
+# and never reaches the test. Three other things are allowed, and each is declared with a
 # reason in the allow list beside this script rather than by weakening the test:
 #
 #   name <word>            a proper noun whose spelling is its own: a person, a place, an
@@ -33,10 +33,21 @@
 #                          the test doing its job, not prose in the wrong language. The
 #                          reason is required, so the exemption is auditable and a file
 #                          cannot acquire one by being added to a list.
+#   translation <path> <language> <why>
+#                          a page of the published site written for a reader in that
+#                          reader's language (project.english-only v2, ADR 0077). Three
+#                          conditions, all decided here: the path is under site/content-src/
+#                          or its projection under site/content/, the reason is required,
+#                          and the page declares the same language in its own front matter.
+#                          The last one is what keeps this from being a list an entry can be
+#                          added to in order to silence a finding — an entry nothing on the
+#                          page agrees with is refused rather than honoured.
 #
-# Neither exempts a sentence. A comment written in another language inside an exempted file
-# is still a finding of the rule; what the fixture exemption says is that this alphabet test
-# cannot tell the two apart in that file, which is a limit stated rather than hidden.
+# `name` and `fixture` do not exempt a sentence; `translation` exempts exactly one, and only
+# on a published page that says what it is. A comment written in another language inside an
+# exempted file is still a finding of the rule; what the fixture exemption says is that this
+# alphabet test cannot tell the two apart in that file, which is a limit stated rather than
+# hidden.
 #
 #   scripts/ci/english-only-check                  report, and fail on new debt
 #   MJ_ROOT=<dir> scripts/ci/english-only-check    measure another tree (the case does)
@@ -113,7 +124,7 @@ LETTERS='č|Č|ď|Ď|ě|Ě|ň|Ň|ř|Ř|š|Š|ť|Ť|ů|Ů|ž|Ž|ą|Ą|ć|Ć|ę|Ę
 SCRIPTS=$'[\xd0-\xd3][\x80-\xbf]|\xcd[\xb0-\xbf]|[\xce-\xcf][\x80-\xbf]|\xe3[\x81-\x83][\x80-\xbf]|[\xe4-\xe9][\x80-\xbf][\x80-\xbf]|[\xea-\xed][\x80-\xbf][\x80-\xbf]'
 
 ALLOW="$(dirname "$0")/english-only-allow.txt"
-names=""; fixtures=""
+names=""; fixtures=""; translations=""
 if [ -f "$ALLOW" ]; then
   names="$(awk '$1 == "name" && NF >= 2 { print $2 }' "$ALLOW" | tr '\n' '|' | sed 's/|$//')"
   # a fixture without a reason is not a declaration; it is a list entry, which is what this
@@ -125,12 +136,50 @@ if [ -f "$ALLOW" ]; then
     printf '  %s\n' $bare >&2
     exit 12
   fi
+
+  # The third kind, and the three conditions v2 confines it with. Every refusal below is a
+  # refusal to run: a malformed declaration is not a finding about the tree, it is a claim
+  # this check cannot honour, and passing the file while ignoring the entry is how an
+  # exemption becomes invisible.
+  translations="$(awk '$1 == "translation" && NF >= 4 { print $2 }' "$ALLOW" | LC_ALL=C sort -u)"
+  thin="$(awk '$1 == "translation" && NF < 4 { print $2 }' "$ALLOW" || true)"
+  if [ -n "$thin" ]; then
+    echo "english-only-check: a translation must name its language and say why; these do not:" >&2
+    printf '  %s\n' $thin >&2
+    exit 12
+  fi
+  # 1. the permission belongs to published content, not to a language
+  stray="$(printf '%s\n' "$translations" | grep -v '^$' | grep -vE '^site/(content-src|content)/' || true)"
+  if [ -n "$stray" ]; then
+    echo "english-only-check: a translation is a page of the published site; these are not:" >&2
+    printf '  %s\n' $stray >&2
+    echo "  Only site/content-src/ and its projection under site/content/ may carry one." >&2
+    exit 12
+  fi
+  # 2. the page declares the language the list claims for it, so the declaration is two-sided.
+  # A path that is not there yet cannot disagree and is left to the tree's own checks; a file
+  # that is there and says something else, or says nothing, is refused.
+  while IFS=' ' read -r tp tlang; do
+    [ -n "$tp" ] || continue
+    [ -f "$tp" ] || continue
+    grep -qE "^[[:space:]]*lang[[:space:]]*=[[:space:]]*\"$tlang\"" "$tp" && continue
+    echo "english-only-check: $tp is declared a $tlang translation and does not declare that language itself" >&2
+    echo "  Add  lang = \"$tlang\"  to the page's front matter, or remove the declaration." >&2
+    exit 12
+  done <<EOF
+$(awk '$1 == "translation" && NF >= 4 { print $2, $3 }' "$ALLOW")
+EOF
 fi
 
 findings=""
 for f in $files; do
   case "
 $fixtures
+" in *"
+$f
+"*) continue ;; esac
+  case "
+$translations
 " in *"
 $f
 "*) continue ;; esac
@@ -179,9 +228,10 @@ done
 count="$(count_lines "$findings")"
 measured="$(count_lines "$files")"
 exempt="$(count_lines "$fixtures")"
+declared="$(count_lines "$translations")"
 
 if [ "$MODE" = strict ]; then
-  [ "$count" -eq 0 ] && { echo "english-only-check: every authored file is spelled in English ($measured measured, $exempt declared fixtures)"; exit 0; }
+  [ "$count" -eq 0 ] && { echo "english-only-check: every authored file is spelled in English ($measured measured, $exempt declared fixtures, $declared declared translations)"; exit 0; }
   echo "english-only-check: $count file(s) are not spelled in English (--strict)" >&2
   exit 10
 fi
@@ -196,8 +246,9 @@ if [ -n "$new" ]; then
   echo "english-only-check: new debt, not in $BASELINE:" >&2
   printf '  %s\n' $new >&2
   echo "  This repository is written in English. Rewrite the passage, or — if the word is a" >&2
-  echo "  proper noun, or a string the file uses as data to prove the program handles one —" >&2
+  echo "  proper noun, a string the file uses as data to prove the program handles one, or a" >&2
+  echo "  published page written for a reader in that reader's language —" >&2
   echo "  declare it with its reason in scripts/ci/english-only-allow.txt." >&2
   exit 10
 fi
-echo "english-only-check: no new debt ($(count_lines "$known") file(s) known, $exempt declared fixtures, $measured file(s) measured)"
+echo "english-only-check: no new debt ($(count_lines "$known") file(s) known, $exempt declared fixtures, $declared declared translations, $measured file(s) measured)"

@@ -1,7 +1,7 @@
 +++
 title = "Every knowledge record is schema-valid with no unknown key, uniquely identified, evidenced when verified, resolves every reference it names, and carries no conversation; check, doctor and `majordomus knowledge check` refuse a record that is not"
 description = "A knowledge record under candidates/ or curated/ is refused when it is not what the schema says a record is: an unknown key, a class or status outside the enumeration, an id that differs from its file name or that another record also claims, a verified record with no provenance, an extracted record naming no evidence, a derived_from or relations target that resolves to nothing, a superseded record that names no replacement and records no rejection, a candidate that claims to be verified, or a title, description or body line that carries a conversation. check, doctor and majordomus knowledge check all refuse it with a FAIL knowledge finding and exit 10."
-weight = 218
+weight = 219
 [extra]
 claim_id = "knowledge-integrity"
 status = "guaranteed"
