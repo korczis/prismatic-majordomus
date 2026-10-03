@@ -241,10 +241,10 @@ OK   layout      .ai/local/ — ignored, and nothing under it is tracked
 OK   layout      .ai/ — every section the manifest names exists; the layer is readable without the tool
 INFO checkpoint  - — no active task
 OK   records     ledger.jsonl — every line is a well-formed event
-OK   policy      29 key(s) — every policy value the code reads is declared, with no reader-side default
+OK   policy      35 key(s) — every policy value the code reads is declared, with no reader-side default
 OK   bootstrap   3 projection(s) — each points at .ai/README.md and carries no rule of its own
 OK   catalogue   0 use case(s), 0 application(s) — every command, doctrine, claim, responsibility, category, setup and cross-reference resolves, both directions
-OK   context     .ai/ — 18 context document(s) carry the contract; ids unique, references resolve, no final document superseded, no cycle  [reproduce: majordomus context validate]
+OK   context     .ai/ — 19 context document(s) carry the contract; ids unique, references resolve, no final document superseded, no cycle  [reproduce: majordomus context validate]
 DRIFT policy      .ai/repo/policy.yaml — policy or profiles changed after the last update of AGENTS.md CLAUDE.md GEMINI.md  [reproduce: majordomus update --dry-run]
 INFO adr         .ai/repo/adrs/ — no decisions; nothing to validate
 OK   records     decisions.md — every entry is attributable
@@ -253,11 +253,13 @@ OK   command     surface — 30 public command(s), reconciled against the dispat
 OK   command     coverage — every public command is exercised and refuted  [reproduce: bash test/run.sh 31_command_coverage]
 OK   resolver    handovers — no record for this worktree and branch (absence, not a stale match)  [reproduce: majordomus handover --resolve]
 OK   lifecycle   activity — 0 episode(s) opened here; too few to judge whether the writers stopped
+OK   knowledge   wiring — the close path and the compaction adapter call the deriver
+OK   knowledge   deriver — no episode has closed here; nothing to judge
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
 OK   projection  AGENTS.md — content matches its stamp
 OK   projection  CLAUDE.md — content matches its stamp
 OK   projection  GEMINI.md — content matches its stamp
-OK   context     builder — 18 lines, budget 300  [reproduce: majordomus context]
+OK   context     builder — 21 lines, budget 300  [reproduce: majordomus context]
 OK   capture     share/schemas/majordomus/capture/capture.v1 — 2 file(s) describe majordomus.capture/v1 at the path the identifier derives: the record as JSON Schema, the document as protobuf
 OK   capture     .ai/local/prompts — ignored and untracked
 OK   capture     .ai/local/prompts — no records yet; the archive is empty
@@ -271,9 +273,9 @@ OK   retention   handovers — 0 files, cap 200
 OK   retention   checkpoints — 0 files, cap 500
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
 OK   rules       .ai/repo/rules/vendor/majordomus — every file matches the manifest (1 (0.6.0))
-OK   rules       56 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override — 46 carry a validator, 10 are normative text this tool does not check
-OK   rules       blocking — all 41 blocking rule(s) carry a validator
-OK   schema      rules — 56 rule(s) resolve in one order: the vendored baseline in manifest order, then the project&#39;s, as a dependency graph
+OK   rules       59 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override — 49 carry a validator, 10 are normative text this tool does not check
+OK   rules       blocking — all 43 blocking rule(s) carry a validator
+OK   schema      rules — 59 rule(s) resolve in one order: the vendored baseline in manifest order, then the project&#39;s, as a dependency graph
 OK   schema      share/kinds.yaml — 32 kind(s); every one that carries metadata declares a schema
 OK   schema      share/schemas — 48 schema(s), each valid JSON and each applied — by a kind, through an allow-list the tool reads, by a validator that names it, or as a generated document&#39;s contract (14)
 INFO scope       - — no active task
@@ -291,7 +293,7 @@ watch: 1 drift finding(s)</code></pre>
           <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">the projections are rendered again from the edited policy</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>update AGENTS.md
 update CLAUDE.md
 update GEMINI.md
-generated 3 target(s) from policy 44d5e4815fbc; each carries its own stamp</code></pre>
+generated 3 target(s) from policy aaee0fd7e133; each carries its own stamp</code></pre>
         <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /CLAUDE.md/</li></ul>
       </li><li id="step-clean" class="min-w-0 scroll-mt-20 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -302,10 +304,10 @@ OK   layout      .ai/local/ — ignored, and nothing under it is tracked
 OK   layout      .ai/ — every section the manifest names exists; the layer is readable without the tool
 INFO checkpoint  - — no active task
 OK   records     ledger.jsonl — every line is a well-formed event
-OK   policy      29 key(s) — every policy value the code reads is declared, with no reader-side default
+OK   policy      35 key(s) — every policy value the code reads is declared, with no reader-side default
 OK   bootstrap   3 projection(s) — each points at .ai/README.md and carries no rule of its own
 OK   catalogue   0 use case(s), 0 application(s) — every command, doctrine, claim, responsibility, category, setup and cross-reference resolves, both directions
-OK   context     .ai/ — 18 context document(s) carry the contract; ids unique, references resolve, no final document superseded, no cycle  [reproduce: majordomus context validate]
+OK   context     .ai/ — 19 context document(s) carry the contract; ids unique, references resolve, no final document superseded, no cycle  [reproduce: majordomus context validate]
 OK   policy      policy+profiles — match the last update (&lt;hash12&gt;)
 INFO adr         .ai/repo/adrs/ — no decisions; nothing to validate
 OK   records     decisions.md — every entry is attributable
@@ -314,11 +316,13 @@ OK   command     surface — 30 public command(s), reconciled against the dispat
 OK   command     coverage — every public command is exercised and refuted  [reproduce: bash test/run.sh 31_command_coverage]
 OK   resolver    handovers — no record for this worktree and branch (absence, not a stale match)  [reproduce: majordomus handover --resolve]
 OK   lifecycle   activity — 0 episode(s) opened here; too few to judge whether the writers stopped
+OK   knowledge   wiring — the close path and the compaction adapter call the deriver
+OK   knowledge   deriver — no episode has closed here; nothing to judge
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
 OK   projection  AGENTS.md — content matches its stamp
 OK   projection  CLAUDE.md — content matches its stamp
 OK   projection  GEMINI.md — content matches its stamp
-OK   context     builder — 18 lines, budget 300  [reproduce: majordomus context]
+OK   context     builder — 21 lines, budget 300  [reproduce: majordomus context]
 OK   capture     share/schemas/majordomus/capture/capture.v1 — 2 file(s) describe majordomus.capture/v1 at the path the identifier derives: the record as JSON Schema, the document as protobuf
 OK   capture     .ai/local/prompts — ignored and untracked
 OK   capture     .ai/local/prompts — no records yet; the archive is empty
@@ -332,9 +336,9 @@ OK   retention   handovers — 0 files, cap 200
 OK   retention   checkpoints — 0 files, cap 500
 INFO project     .ai/repo/project — no canonical project model here; nothing to validate
 OK   rules       .ai/repo/rules/vendor/majordomus — every file matches the manifest (1 (0.6.0))
-OK   rules       56 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override — 46 carry a validator, 10 are normative text this tool does not check
-OK   rules       blocking — all 41 blocking rule(s) carry a validator
-OK   schema      rules — 56 rule(s) resolve in one order: the vendored baseline in manifest order, then the project&#39;s, as a dependency graph
+OK   rules       59 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override — 49 carry a validator, 10 are normative text this tool does not check
+OK   rules       blocking — all 43 blocking rule(s) carry a validator
+OK   schema      rules — 59 rule(s) resolve in one order: the vendored baseline in manifest order, then the project&#39;s, as a dependency graph
 OK   schema      share/kinds.yaml — 32 kind(s); every one that carries metadata declares a schema
 OK   schema      share/schemas — 48 schema(s), each valid JSON and each applied — by a kind, through an allow-list the tool reads, by a validator that names it, or as a generated document&#39;s contract (14)
 INFO scope       - — no active task
@@ -490,7 +494,7 @@ watch: 0 drift finding(s)</code></pre>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2edd4a582ac4bc780185df45615e26e62c20350e" class="font-mono underline">2edd4a5</a> · inputs <span class="font-mono">1f52dc854a50</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3b938d55d14dac635dc7a03efd955b42a188d4c0" class="font-mono underline">3b938d5</a> · inputs <span class="font-mono">326da762016a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

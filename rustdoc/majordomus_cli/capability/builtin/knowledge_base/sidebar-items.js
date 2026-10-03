@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["KNOWLEDGE_CANDIDATES_URI","KNOWLEDGE_STATUS_URI"],"enum":["AgeSource","ReferenceResolution"],"fn":["module"],"struct":["KnowledgeCandidate","KnowledgeCandidates","KnowledgeRecord","KnowledgeRecordInput","KnowledgeStatus","LedgerMark","ResolvedReference","ResolvedRelation"]};

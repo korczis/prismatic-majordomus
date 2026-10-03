@@ -2,18 +2,18 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "2edd4a582ac4bc780185df45615e26e62c20350e",
+  "commit": "3b938d55d14dac635dc7a03efd955b42a188d4c0",
   "source_version": "0.12.0",
-  "registry_fingerprint": "15e7669ec04aa15090d0261370360b7b37653ddfc99585168764811c625c50ab"
+  "registry_fingerprint": "20fc75eb66fd415ac5f266c705df771bae44577214209c2fafc250455616b581"
  },
  "counts": {
-  "pages": 1719,
-  "capabilities": 1759,
-  "cli_commands": 78,
-  "http_routes": 154,
-  "mcp_tools": 150,
-  "mcp_resources": 1651,
-  "modules": 76
+  "pages": 1782,
+  "capabilities": 1826,
+  "cli_commands": 85,
+  "http_routes": 164,
+  "mcp_tools": 160,
+  "mcp_resources": 1712,
+  "modules": 80
  },
  "kinds": [
   {
@@ -22,7 +22,7 @@
    "route": "/adrs/",
    "title": "Decisions",
    "reason": null,
-   "count": 72
+   "count": 76
   },
   {
    "kind": "application",
@@ -54,7 +54,7 @@
    "route": "/guarantees/",
    "title": null,
    "reason": null,
-   "count": 207
+   "count": 218
   },
   {
    "kind": "command",
@@ -70,7 +70,7 @@
    "route": "/context/",
    "title": null,
    "reason": null,
-   "count": 32
+   "count": 33
   },
   {
    "kind": "deployment",
@@ -94,7 +94,7 @@
    "route": null,
    "title": null,
    "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-   "count": 291
+   "count": 306
   },
   {
    "kind": "feature",
@@ -198,7 +198,7 @@
    "route": "/rules/",
    "title": "Rules",
    "reason": null,
-   "count": 150
+   "count": 157
   },
   {
    "kind": "scope",
@@ -222,7 +222,7 @@
    "route": "/skills/",
    "title": null,
    "reason": null,
-   "count": 3
+   "count": 6
   },
   {
    "kind": "taxonomy",
@@ -238,7 +238,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 316
+   "count": 331
   },
   {
    "kind": "use-case",
@@ -246,7 +246,7 @@
    "route": "/use-cases/",
    "title": null,
    "reason": null,
-   "count": 47
+   "count": 48
   },
   {
    "kind": "workspace",
@@ -605,6 +605,14 @@
    "source": ".ai/repo/adrs/0044-cooperation-is-repository-wide-the-board-is-gathered-not-shared.md"
   },
   {
+   "route": "/adrs/adr-0046/",
+   "title": "A working context is derived and a closed record is composed; neither is a document somebody must remember to write",
+   "description": "A working context is derived and a closed record is composed; neither is a document somebody must remember to write",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0046",
+   "source": ".ai/repo/adrs/0046-a-working-context-is-derived-and-a-closed-record-is-composed.md"
+  },
+  {
    "route": "/adrs/adr-0047/",
    "title": "The session domain is typed, its identities are not interchangeable, and closing is exactly once",
    "description": "The session domain is typed, its identities are not interchangeable, and closing is exactly once",
@@ -765,6 +773,14 @@
    "source": ".ai/repo/adrs/0071-a-feature-exists-only-when-delivery-is-computed-and-every-dimension-passes.md"
   },
   {
+   "route": "/adrs/adr-0076/",
+   "title": "A skill is a capability only when something proves it — tested, documented, enforced and used are derived, never authored",
+   "description": "A skill is a capability only when something proves it — tested, documented, enforced and used are derived, never authored",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0076",
+   "source": ".ai/repo/adrs/0076-a-skill-is-a-capability-only-when-something-proves-it.md"
+  },
+  {
    "route": "/adrs/adr-0080/",
    "title": "A CI run reaches the tracked ledger through a recording branch, never through the run that produced it",
    "description": "A CI run reaches the tracked ledger through a recording branch, never through the run that produced it",
@@ -821,6 +837,14 @@
    "source": ".ai/repo/adrs/0089-an-interface-shows-only-what-is-derived-and-unknown-is-never-healthy.md"
   },
   {
+   "route": "/adrs/adr-0091/",
+   "title": "Knowledge is derived at the episode boundary, from the ledger and git, and a person promotes it",
+   "description": "Knowledge is derived at the episode boundary, from the ledger and git, and a person promotes it",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0091",
+   "source": ".ai/repo/adrs/0091-knowledge-is-derived-at-the-episode-boundary-and-a-person-promotes-it.md"
+  },
+  {
    "route": "/adrs/adr-0097/",
    "title": "A plan stamp carries the seal of its event, because the ledger never leaves the checkout",
    "description": "A plan stamp carries the seal of its event, because the ledger never leaves the checkout",
@@ -843,6 +867,14 @@
    "kind": "adr",
    "id": "majordomus://adr/adr-0101",
    "source": ".ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md"
+  },
+  {
+   "route": "/adrs/adr-0103/",
+   "title": "Every client gets an episode, and every provider capability cites its evidence",
+   "description": "Every client gets an episode, and every provider capability cites its evidence",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0103",
+   "source": ".ai/repo/adrs/0103-every-client-gets-an-episode-and-every-provider-capability-cites-its-evidence.md"
   },
   {
    "route": "/applications/",
@@ -972,7 +1004,7 @@
   {
    "route": "/commands/knowledge/",
    "title": "majordomus knowledge",
-   "description": "The compiled index over what this repository states."
+   "description": "The compiled index over what this repository states, and the candidate records it derives from what an episode did."
   },
   {
    "route": "/commands/migrate/",
@@ -1100,6 +1132,11 @@
    "description": "What this checkout's lifecycle is holding: the open episode, the record the next worker would resume from with the label that says how far to trust it, the newest progress note, and what is blocking acceptance. Read from the local half of the layer, which this process serves to the worker in front of it and never publishes."
   },
   {
+   "route": "/docs/api/convergence/",
+   "title": "HTTP API: convergence",
+   "description": "Whether every unit of work in this repository is somewhere another worker could find it. A holding is anything that can hold work — a work tree with uncommitted files, a branch with commits, a stash — and each carries a disposition read from git: integrated (the trunk reaches it), published (a remote-tracking ref reaches it), local_only (committed on this disk and nowhere else) or uncommitted. The last two are at risk: they are invisible to every other worker, and a worker that stops is not a rollback. Measured offline, from this checkout alone; whether a pull request exists for a branch is a question for the forge and is not asked here."
+  },
+  {
    "route": "/docs/api/dashboard/",
    "title": "HTTP API: dashboard",
    "description": "The Dashboard Suite as a projection of the canonical state: every card is one fact read out of an existing capability's answer, carrying the capability it asked, the input, the JSON pointer its value was read from, the Cockpit page that holds the evidence and the command that acts on it. No dashboard stores, counts or judges anything of its own (ADR 0088)."
@@ -1155,6 +1192,11 @@
    "description": "What this checkout is right now: the project and its version, the repository and its layer, version control, the toolchains it declares, what the layer holds, the workflows a person can run, the provider projections and the local services — one typed snapshot, with a provenance entry for every value in it. The direnv banner, the Cockpit's overview and this route are renderings of the same value."
   },
   {
+   "route": "/docs/api/episodes/",
+   "title": "HTTP API: episodes",
+   "description": "The execution episodes this shared server holds: one per client that asked for one, opened when the client attaches, kept alive by its own traffic, detached rather than closed when the connection goes, and closed on a deliberate detach, on shutdown, or by the reaper when nothing came back. The episode boundary for a client with no provider hooks of its own (ADR 0103)."
+  },
+  {
    "route": "/docs/api/evidence/",
    "title": "HTTP API: evidence",
    "description": "What actually ran, against which commit, and whether it still proves anything. The claims matrix binds a claim to a test by path; the ledger under .ai/repo/evidence records the latest execution of every test with the commit, the tree state, the digest of the test's own source, the time, the origin and the command that runs it again. Joining the two answers, per claim, whether the repository can honestly call it proven — and distinguishes a run recorded against this very commit from one whose inputs merely have not changed since, because collapsing those two is how a green badge stops meaning anything."
@@ -1188,6 +1230,11 @@
    "route": "/docs/api/intents/",
    "title": "HTTP API: intents",
    "description": "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, and each criterion's state derived from the evidence ledger. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere."
+  },
+  {
+   "route": "/docs/api/knowledge-base/",
+   "title": "HTTP API: knowledge_base",
+   "description": "What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion with the branch of the episode each came from, one record by id with every reference it names resolved against the index, the ledger and git, and the derivation status of this checkout judged against the policy's freshness thresholds. Read from the index and the ledger; written by nothing here — the deriver is the shell tool's, and a person promotes."
   },
   {
    "route": "/docs/api/lifecycle/",
@@ -1288,6 +1335,11 @@
    "route": "/docs/api/shell/",
    "title": "HTTP API: shell",
    "description": "The repository's shell automation measured against the tracked migration inventory: new shell is refused unless an exemption declares why it has to be shell and when it stops being, and an exemption whose file is gone is refused too, so the list only shrinks as units move into typed and scripted capabilities (ADR 0069)."
+  },
+  {
+   "route": "/docs/api/skills/",
+   "title": "HTTP API: skills",
+   "description": "Every skill the layer defines as a proven capability: whether a test names it and the evidence ledger holds a current passing run of that test, whether the site projects its page, whether a doctrine and a CI gate hold it, and whether a workflow, prompt, profile, provider template, recipe or CI workflow invokes it. All four are derived on every read and none is authored; an active skill no test names or nothing invokes is an orphan."
   },
   {
    "route": "/docs/api/trace/",
@@ -1468,6 +1520,11 @@
    "route": "/docs/cli/completion/query/",
    "title": "majordomus completion query",
    "description": "The candidates for one command line, from the command graph. What a shell adapter calls on every TAB"
+  },
+  {
+   "route": "/docs/cli/convergence/",
+   "title": "majordomus convergence",
+   "description": "Is any of this repository's work held where it can be lost? Every holding — a work tree with uncommitted files, a branch with commits, a stash — with the disposition read from git, and one verdict over them"
   },
   {
    "route": "/docs/cli/dashboard/",
@@ -1753,6 +1810,26 @@
    "route": "/docs/cli/intent/validate/",
    "title": "majordomus intent validate",
    "description": "Every finding over the intents; exit 10 when any is a failure"
+  },
+  {
+   "route": "/docs/cli/knowledge/",
+   "title": "majordomus knowledge",
+   "description": "What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion, one record by id with every reference it names resolved, and the derivation status of this checkout judged against the policy's freshness thresholds"
+  },
+  {
+   "route": "/docs/cli/knowledge/candidates/",
+   "title": "majordomus knowledge candidates",
+   "description": "The candidate records awaiting review, with the branch of the episode each came from and how long each has waited"
+  },
+  {
+   "route": "/docs/cli/knowledge/record/",
+   "title": "majordomus knowledge record",
+   "description": "One knowledge record by id: its front matter, and every reference it names resolved against the index, the ledger and git"
+  },
+  {
+   "route": "/docs/cli/knowledge/status/",
+   "title": "majordomus knowledge status",
+   "description": "Whether the deriver is still writing: the last derivation, the newest closed episode, and the stopped-writer judgement against session.freshness"
   },
   {
    "route": "/docs/cli/mcp/",
@@ -2105,6 +2182,26 @@
    "description": "Refuse every shell unit the inventory does not declare, and every declaration whose unit is gone; exit 10 on a finding, 12 when the tree cannot be measured"
   },
   {
+   "route": "/docs/cli/skills/",
+   "title": "majordomus skills",
+   "description": "Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans"
+  },
+  {
+   "route": "/docs/cli/skills/explain/",
+   "title": "majordomus skills explain",
+   "description": "One skill in full: each naming test and its evidence, its page, its gates, every invocation"
+  },
+  {
+   "route": "/docs/cli/skills/status/",
+   "title": "majordomus skills status",
+   "description": "Every skill with its derived standing: tested, documented, enforced, used"
+  },
+  {
+   "route": "/docs/cli/skills/verify/",
+   "title": "majordomus skills verify",
+   "description": "Every finding over the skills; exit 10 when any is a failure"
+  },
+  {
    "route": "/docs/cli/web/",
    "title": "majordomus web",
    "description": "The repository's web surfaces: what is exposed, where it is mounted, what produced it, and whether the topology is valid"
@@ -2425,6 +2522,11 @@
    "description": "pull-request integration: every open pull request classified against the current master with its evidence, the thirteen dispositions, the deterministic rank, one merge at a time with a re-plan after each, refreshing a branch, the cleanup threshold, the lease and the audit trail (ADR 0101)"
   },
   {
+   "route": "/docs/knowledge/",
+   "title": "Knowledge",
+   "description": "what a knowledge record is, how candidates are derived at every episode boundary from the ledger and git without a model, the promotion act, every command with its reads and writes, the rules that enforce it, and what the next worker is told"
+  },
+  {
    "route": "/docs/launch/",
    "title": "Launch kit",
    "description": "what to paste when somebody asks what Majordomus is: the link to send, the install command, one-sentence and longer descriptions, three proof points with the page behind each, and what not to claim"
@@ -2580,6 +2682,11 @@
    "description": "The path from a human reader to the AI layer is unbroken — README.md names AGENTS.md, every generated instruction file points at .ai/README.md, and none of them carries a rule of its own."
   },
   {
+   "route": "/doctrines/candidates-reviewed/",
+   "title": "Candidates are reviewed",
+   "description": "A review queue that grows without bound is not reviewed. More candidates than the policy cap, a candidate that has waited longer than the policy age, or a candidate the tree does not track, is reported, not stopped; both numbers are declared once in the policy."
+  },
+  {
    "route": "/doctrines/catalogue-integrity/",
    "title": "Catalogue integrity",
    "description": "Every use case and application describes the tool in terms the tool has — each command, doctrine and claim it names exists, and the two catalogues reference each other in both directions."
@@ -2643,6 +2750,16 @@
    "route": "/doctrines/handover-integrity/",
    "title": "Handover integrity",
    "description": "The resolver runs and reports either the record for this worktree and branch or its clean absence; a malformed record is never silently skipped, and a record describing a history this checkout no longer has is reported."
+  },
+  {
+   "route": "/doctrines/knowledge-integrity/",
+   "title": "Knowledge integrity",
+   "description": "Every knowledge record is one evidenced, well-formed assertion. It is valid against its schema with no unknown key, its identity is unique and equals its file name, a verified record carries provenance, every reference it names resolves, a superseded record says what replaced it or why it was rejected, a candidate never claims to be verified, and no record carries a conversation."
+  },
+  {
+   "route": "/doctrines/knowledge-observed/",
+   "title": "Knowledge observation",
+   "description": "While episodes keep closing, the knowledge they produced must keep being derived. A closed episode no derivation followed, once it is older than the freshness threshold, is a stopped writer; a lifecycle whose close path never calls the deriver while the policy switch is on is a writer that was never started."
   },
   {
    "route": "/doctrines/layout-integrity/",
@@ -3035,6 +3152,16 @@
    "description": "CLAUDE.md, AGENTS.md, GEMINI.md and any other target the policy names are generated, and each says the same short thing: read README.md, then .ai/README.md, follow its discovery protocol, run majordomus context, and find the lifecycle under the layer's workflows. No rule lives in a provider file. A person reaches the layer through README.md and AGENTS.md; a worker reaches it through its own bootstrap; both arrive at the same .ai/."
   },
   {
+   "route": "/guarantees/briefing-names-candidates/",
+   "title": "The start briefing names the candidates awaiting review on this branch, count and ids, bounded and within the briefing budget, and prints their absence rather than omitting it",
+   "description": "The briefing a new episode is handed (ADR 0017) gains one bounded section. It names the candidate records whose episode was on this branch, the count on one line and the ids beneath it, bounded the way the open-questions block is and within session.briefing_budget_lines. A candidate whose episode this checkout cannot place is named on its own line as unattributed rather than hidden. When there is nothing, the section says so in one sentence, because absence printed is an answer and absence omitted is a gap."
+  },
+  {
+   "route": "/guarantees/candidates-reviewed-not-accumulated/",
+   "title": "More candidates than the policy cap, or a candidate older than the policy age, is an advisory doctor finding that names them; both numbers are declared once in the policy",
+   "description": "The review queue is measured. doctor prints WARN knowledge and exits 0 when more records under candidates/ carry status: candidate than knowledge.candidates_max_files, when a candidate has waited longer than knowledge.candidate_max_age_minutes, or when a candidate is present on disk and not tracked by version control. Each finding names the paths. Both numbers are declared once in .ai/repo/policy.yaml and read by every surface, and a policy that declares neither is reported at the rule's own class, naming the missing key."
+  },
+  {
    "route": "/guarantees/capability-class/",
    "title": "A profile names a capability class rather than a vendor model",
    "description": "Profiles say fast, standard, strong or strongest, never a model identifier. The generated instructions tell the worker to pick the closest model its environment offers. The canonical layer stays provider-neutral; mapping a class to a concrete model is left to whoever runs the worker, or to a future adapter."
@@ -3113,6 +3240,11 @@
    "route": "/guarantees/commit-scopes-are-learned/",
    "title": "The scope vocabulary a commit is judged against is learned from this repository's own history rather than kept in a table, so a subsystem committed today is in the vocabulary today and a scope outside it is a warning rather than a refusal",
    "description": "The usual way to answer *\"what scope does this change belong to?\"* is a table of path"
+  },
+  {
+   "route": "/guarantees/connection-episode/",
+   "title": "A client with no provider hooks gets an execution episode from the MCP connection, resumes its own after a crash, and never has its prompt claimed to be captured",
+   "description": "Majordomus draws the episode boundary below the model, so that the episode which mattered — the one that ended in a crash, a compaction, or somebody closing the window — is recorded whether or not a model remembered to record it. Until ADR 0103 that was wired for one provider: Claude Code fires SessionStart and SessionEnd, a shim runs capture session, and the repository gets an episode. Every other client got nothing at all."
   },
   {
    "route": "/guarantees/consistency-check/",
@@ -3388,6 +3520,41 @@
    "route": "/guarantees/interfaces-are-projections/",
    "title": "MCP, HTTP, OpenAPI, Swagger UI, the capabilities commands and the generated reference are derived from the registry, and a change to one definition reaches every one of them",
    "description": "No interface of the Rust executable declares anything of its own. The MCP tools and resources, the HTTP routes and the OpenAPI operations, the Swagger UI page, majordomus capabilities list and describe, and docs/generated/capabilities.md are built from the registry when asked. Change a capability's description or input type in its descriptor, or add a declarative object to the layer, and every interface shows the change on the next start; nothing else is edited."
+  },
+  {
+   "route": "/guarantees/knowledge-derivation-is-idempotent/",
+   "title": "A second derivation over the same evidence writes nothing, says so, and leaves the working tree unchanged; the record id is derived from the episode and a digest of the evidence so the same fact always lands in the same file",
+   "description": "Running the deriver twice over the same ledger and the same git produces the same bytes the second time, reports every record as unchanged, and leaves nothing for git status to show. The end event, the compaction event and majordomus knowledge derive by hand all go through the same writer, so a compaction followed by a close, or a person re-running the command after a hook, never produces a second copy of a record."
+  },
+  {
+   "route": "/guarantees/knowledge-derived-at-the-boundary/",
+   "title": "A provider's end event and its compaction event derive the knowledge the episode produced into candidate records under the tracked tree, from the ledger and git and never from a conversation, whether or not a task is active, and record that they did so in the ledger",
+   "description": "When an episode ends, and when the conversation inside one is compacted, Majordomus reads the ledger lines the episode stamped — the decisions it recorded, the questions it resolved, the tasks it finished — and writes each one as a candidate knowledge record under .ai/repo/knowledge/candidates/. The record is one assertion with a class, a status of candidate, an epistemic stance and provenance naming the episode and the task or decision it came from. Nothing reads the conversation, a prompt or a handover, and no model is called. The ledger records that the derivation ran, with the episode, the counts and the paths, even when nothing was written."
+  },
+  {
+   "route": "/guarantees/knowledge-failure-is-recorded/",
+   "title": "A policy switch that is off derives nothing and says so; a derivation that fails inside a provider hook is recorded as provider.event.failed and the hook still exits 0",
+   "description": "Two things can stop a derivation, and neither is silent. When session.knowledge_on_end or session.knowledge_on_compact is false, the adapter derives nothing and says so on stderr; the ledger shows a closed episode with no derivation and the stopped-writer check treats the switch as deliberate. When the deriver fails — the directory is unwritable, the policy does not parse — the adapter writes a provider.event.failed line naming the reason, closes the episode as it would have anyway, and returns success to the provider."
+  },
+  {
+   "route": "/guarantees/knowledge-integrity/",
+   "title": "Every knowledge record is schema-valid with no unknown key, uniquely identified, evidenced when verified, resolves every reference it names, and carries no conversation; check, doctor and `majordomus knowledge check` refuse a record that is not",
+   "description": "A knowledge record under candidates/ or curated/ is refused when it is not what the schema says a record is: an unknown key, a class or status outside the enumeration, an id that differs from its file name or that another record also claims, a verified record with no provenance, an extracted record naming no evidence, a derived_from or relations target that resolves to nothing, a superseded record that names no replacement and records no rejection, a candidate that claims to be verified, or a title, description or body line that carries a conversation. check, doctor and majordomus knowledge check all refuse it with a FAIL knowledge finding and exit 10."
+  },
+  {
+   "route": "/guarantees/knowledge-promotion-is-an-act/",
+   "title": "verified is written only by promote with evidence on stdin or by a person editing the file, never by the deriver; promotion moves the record to curated/ and rejection supersedes it with a reason, each leaving a ledger line",
+   "description": "The deriver writes candidates and nothing else. A record becomes verified through majordomus knowledge promote <id> with evidence on standard input, which moves it to curated/, or through a person editing the file. majordomus knowledge reject <id> --reason \"<why>\" sets it aside as superseded in place with the reason recorded. Each act leaves a ledger line, knowledge.promoted or knowledge.rejected, and the deriver skips a promoted or superseded id at the next boundary so that neither act is undone."
+  },
+  {
+   "route": "/guarantees/knowledge-served-on-every-surface/",
+   "title": "The candidates awaiting review, one record by id with its references resolved, and the derivation status of the checkout are one declaration each and answer with the same content over the command line, HTTP and MCP",
+   "description": "Three capabilities of the Rust executable serve the knowledge base: knowledge_base.candidates lists the records awaiting review with their branch, freshness and the policy cap; knowledge_base.record serves one record by id with every derived_from and relations reference resolved to an object of the index, an external fact of the ledger or git, or missing; knowledge_base.status reports the last derivation, the newest close, the freshness against the policy and the stopped-writer judgement. Each is declared once and answers identically over bin/majordomus-cli knowledge candidates|record|status, GET /api/v1/knowledge/..., the MCP tools majordomus_knowledge_* and the resources majordomus://knowledge-candidates and majordomus://knowledge-status. A fresh checkout with no candidate answers absence, not an error."
+  },
+  {
+   "route": "/guarantees/knowledge-writer-observed/",
+   "title": "A repository in which episodes close and no knowledge derivation follows within the stale threshold is reported as a stopped writer by doctor and watch, and the finding clears when a derivation is written",
+   "description": "doctor and watch compare two facts nothing else owns together: that episodes are closing, and that derivations are following them. When the newest session.closed line names an episode no knowledge.derived line names, and that close is older than session.freshness.stale_minutes, the finding is FAIL knowledge naming the episode, with the read-only reproduce and the remedy after fix:. When session.knowledge_on_end is on and the lifecycle source never calls the deriver, the finding names the source file. A derivation for that episode clears the finding."
   },
   {
    "route": "/guarantees/landing-page-is-a-projection/",
@@ -3673,6 +3840,11 @@
    "route": "/guarantees/prompt-continuity/",
    "title": "A captured prompt names the episode it belongs to or records that none could be resolved; the archive is private, bounded and free of credential material",
    "description": "Every record under .ai/local/prompts/ says which execution episode it belongs to, and says how it knows. Where no episode can be established, it says that instead — it is never attached to whichever episode happened to be nearest in time. The archive is readable by its owner alone, directory included; it is bounded by a declared retention policy that takes prompt bodies and never records; and the credential shapes the writer knows are replaced before anything reaches the disk."
+  },
+  {
+   "route": "/guarantees/provider-capability-evidence/",
+   "title": "What each provider can do about the session lifecycle and prompt capture is one declaration with a citation per cell, every surface projects it, and no provider the declaration names goes unreported",
+   "description": "A tool that says what somebody else's product can do is making a claim about a third party. This repository was making two of them wrong at once."
   },
   {
    "route": "/guarantees/provider-projections-one-renderer/",
@@ -5450,6 +5622,11 @@
    "description": "The open episode, the active task, the handover and checkpoint that resolve for this worktree and branch, each with its divergence label, the unresolved questions that refuse completion, and the record tallies. Selection is two-tiered and never repository-wide: a record from an unrelated worktree or branch is not offered, because a briefing that is quietly about somebody else is worse than none. Absence is reported as absence."
   },
   {
+   "route": "/registry/capabilities/convergence-report/",
+   "title": "convergence.report",
+   "description": "Every holding of this repository with its disposition, the evidence read for it and the command that would move it out of danger, the tallies per disposition, how many holdings exist on one disk only, and the one verdict over them. Read from git on every call: a commit, a push or an editor's save changes the answer between two calls."
+  },
+  {
    "route": "/registry/capabilities/dashboard-overview/",
    "title": "dashboard.overview",
    "description": "Is it healthy, what changed, what is broken, what needs action — each answered by cards read out of `health.report`, `release.version`, `plan.status`, `worktree.status`, `plan.next`, `continuity.state` and `peers.list` (this checkout's board), asked once each through the executor. Every card carries its source capability, input and RFC 6901 pointer, so asking the source the same question yields the same value; a source that cannot answer makes its cards `unknown`, never `ok`. Nothing here rebuilds canonical state or asks anything beyond this process and its checkout."
@@ -5600,6 +5777,21 @@
    "description": "One snapshot of this checkout: project identity, repository identity, version control, declared toolchains, what the layer holds counted per kind, the workflows the runner describes, the provider projections against the policy that renders them, and the local services with the address a running server published. Every value carries where it came from."
   },
   {
+   "route": "/registry/capabilities/episodes-attach/",
+   "title": "episodes.attach",
+   "description": "Open an execution episode for the calling client, or resume the one it already had. 'external_id' is the client's own durable name for the sitting — its conversation or thread id — and must survive a reconnect: a client that comes back under the same identity is given its own episode again, under whatever peer id it now has, rather than a second one. This server's peer id will not do; it is handed out per connection. After this the client's own traffic keeps the episode alive, losing the connection detaches rather than closes it, and it is closed by majordomus_session_detach, by the server stopping, or by the reaper once the reattach grace has passed. The repository's episode is opened by the same command a provider hook runs, and what it reported is in the answer. Needs an MCP session: over plain HTTP there is no connection to bind to."
+  },
+  {
+   "route": "/registry/capabilities/episodes-detach/",
+   "title": "episodes.detach",
+   "description": "Close an execution episode deliberately: the work is done, not merely interrupted, and the repository's record says so. Without 'external_id' it is whichever episode the calling connection holds, which needs an MCP session: over plain HTTP there is no connection, so the call is refused and the episode must be named. A client that simply goes away does not need this — its episode detaches and the reaper closes it as interrupted — and the difference between those two records is the one thing about an ended episode that changes what somebody does next."
+  },
+  {
+   "route": "/registry/capabilities/episodes-list/",
+   "title": "episodes.list",
+   "description": "Every execution episode this shared server holds, open and detached, with the connection holding each, when its client last spoke, how many connections have carried it, and what the repository's own episode command reported. In-memory: what survives the process is the repository's session record."
+  },
+  {
    "route": "/registry/capabilities/evidence-claim/",
    "title": "evidence.claim",
    "description": "One claim with its proof state, the execution behind it — outcome, duration, commit, tree state, digest, time and origin — the command that reproduces it, and the other claims the same test proves. A claim the matrix does not declare is a not-found rather than an empty answer, because a typo that read as 'this claim has no evidence' is the one answer this capability must never give."
@@ -5723,6 +5915,21 @@
    "route": "/registry/capabilities/intents-validate/",
    "title": "intents.validate",
    "description": "Every finding over the intents: an intent naming no milestone or no criterion, a milestone that does not resolve, a criterion with no evidence reference or one that names nothing this repository holds, governance that does not resolve, a successor that is not an intent, a file name that disagrees with its id — each a failure — and a milestone no intent serves, a warning."
+  },
+  {
+   "route": "/registry/capabilities/knowledge-base-candidates/",
+   "title": "knowledge_base.candidates",
+   "description": "Every knowledge record with status candidate under the candidates source class: its class, its assertion, the episode it came from and that episode's branch, and how long it has waited — measured from the derivation that wrote it, then the commit that added it, then its own date — judged against session.freshness; against the policy's cap. A candidate whose episode this checkout does not know is reported with no branch rather than hidden. Ordered by id."
+  },
+  {
+   "route": "/registry/capabilities/knowledge-base-record/",
+   "title": "knowledge_base.record",
+   "description": "One knowledge record by id — candidate or curated — with every reference it names resolved: a session against the tracked session records and the ledger, a task or decision against the ledger and the task store, a commit against git, a file or test against the index and the tree, a rule, an ADR, an issue or another record against the index. Which references dangle is the question a reviewer asks before promoting, and the one the integrity validator asks of every record. A `task:none` or `decision:none` reference is refused by name."
+  },
+  {
+   "route": "/registry/capabilities/knowledge-base-status/",
+   "title": "knowledge_base.status",
+   "description": "The freshness half of the stopped-writer judgement (ADR 0052, applied to the knowledge deriver by ADR 0091): the newest knowledge.derived line, the newest session.closed line, how many closed episodes no derivation names, the candidate counts, and — once a derivation has run in this checkout and the switch is on — whether the newest closed episode went underived past session.freshness.stale_minutes. Episode ids are compared, never line order. Whether the close path still calls the deriver is read from the source by the shell validator, not here."
   },
   {
    "route": "/registry/capabilities/lifecycle-closed/",
@@ -6100,6 +6307,21 @@
    "description": "Every shell unit under bin/, lib/, scripts/, share/, .githooks/ and .claude/hooks/ — by interpreter line or by a .sh name, as git would commit it, links not followed — against .ai/repo/automation/inventory.jsonl: an undeclared unit, a record whose unit is gone, an exemption missing its reason or its removal condition, a disposition outside A-F, a duplicate and a record out of canonical order are each a finding that names the file and the remedy. Reads the tree and git's index only; no build and no network."
   },
   {
+   "route": "/registry/capabilities/skills-explain/",
+   "title": "skills.explain",
+   "description": "One skill in full: its authored identity, status and provenance marker, each test that names it with the state of its latest recorded run and the command that reproduces it, its page, its doctrine and gates, every invocation by path and line, its standing and the findings about it. The file itself stays at `majordomus://skill/<id>`."
+  },
+  {
+   "route": "/registry/capabilities/skills-status/",
+   "title": "skills.status",
+   "description": "Every skill the index holds, each with the tests that name it and the evidence state of their latest runs, its page projection, the doctrine and gates that hold it, every invocation that references it, and the standing those derive: proven, partial, orphan, invalid, or not_required for a draft or deprecated skill."
+  },
+  {
+   "route": "/registry/capabilities/skills-verify/",
+   "title": "skills.verify",
+   "description": "Every finding over the skills: a file that breaks the skill contract, an active skill no test names or nothing invokes, a test whose latest run failed, a test or an invocation naming a skill that does not exist — each a failure — and evidence that is not current, a missing page or a missing gate, each a warning."
+  },
+  {
    "route": "/registry/capabilities/trace-commit/",
    "title": "trace.commit",
    "description": "One commit with the issue and milestone it served, or the fact that none can be found. Attributed when exactly one issue's branches hold it, ambiguous when branches naming two issues do, and unattributed when no branch naming an issue holds it at all — which is either work committed without an execution contract or a branch deleted after its merge, and the answer says so rather than guessing between them."
@@ -6215,6 +6437,11 @@
    "description": "What this checkout's lifecycle is holding: the open episode, the record the next worker would resume from with the label that says how far to trust it, the newest progress note, and what is blocking acceptance. Read from the local half of the layer, which this process serves to the worker in front of it and never publishes."
   },
   {
+   "route": "/registry/modules/convergence/",
+   "title": "Convergence",
+   "description": "Whether every unit of work in this repository is somewhere another worker could find it. A holding is anything that can hold work — a work tree with uncommitted files, a branch with commits, a stash — and each carries a disposition read from git: integrated (the trunk reaches it), published (a remote-tracking ref reaches it), local_only (committed on this disk and nowhere else) or uncommitted. The last two are at risk: they are invisible to every other worker, and a worker that stops is not a rollback. Measured offline, from this checkout alone; whether a pull request exists for a branch is a question for the forge and is not asked here."
+  },
+  {
    "route": "/registry/modules/dashboard/",
    "title": "Dashboards",
    "description": "The Dashboard Suite as a projection of the canonical state: every card is one fact read out of an existing capability's answer, carrying the capability it asked, the input, the JSON pointer its value was read from, the Cockpit page that holds the evidence and the command that acts on it. No dashboard stores, counts or judges anything of its own (ADR 0088)."
@@ -6270,6 +6497,11 @@
    "description": "What this checkout is right now: the project and its version, the repository and its layer, version control, the toolchains it declares, what the layer holds, the workflows a person can run, the provider projections and the local services — one typed snapshot, with a provenance entry for every value in it. The direnv banner, the Cockpit's overview and this route are renderings of the same value."
   },
   {
+   "route": "/registry/modules/episodes/",
+   "title": "Episodes",
+   "description": "The execution episodes this shared server holds: one per client that asked for one, opened when the client attaches, kept alive by its own traffic, detached rather than closed when the connection goes, and closed on a deliberate detach, on shutdown, or by the reaper when nothing came back. The episode boundary for a client with no provider hooks of its own (ADR 0103)."
+  },
+  {
    "route": "/registry/modules/evidence/",
    "title": "Evidence",
    "description": "What actually ran, against which commit, and whether it still proves anything. The claims matrix binds a claim to a test by path; the ledger under .ai/repo/evidence records the latest execution of every test with the commit, the tree state, the digest of the test's own source, the time, the origin and the command that runs it again. Joining the two answers, per claim, whether the repository can honestly call it proven — and distinguishes a run recorded against this very commit from one whose inputs merely have not changed since, because collapsing those two is how a green badge stops meaning anything."
@@ -6303,6 +6535,11 @@
    "route": "/registry/modules/intents/",
    "title": "Intent",
    "description": "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, and each criterion's state derived from the evidence ledger. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere."
+  },
+  {
+   "route": "/registry/modules/knowledge-base/",
+   "title": "Knowledge base",
+   "description": "What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion with the branch of the episode each came from, one record by id with every reference it names resolved against the index, the ledger and git, and the derivation status of this checkout judged against the policy's freshness thresholds. Read from the index and the ledger; written by nothing here — the deriver is the shell tool's, and a person promotes."
   },
   {
    "route": "/registry/modules/lifecycle/",
@@ -6400,6 +6637,11 @@
    "description": "The repository's shell automation measured against the tracked migration inventory: new shell is refused unless an exemption declares why it has to be shell and when it stops being, and an exemption whose file is gone is refused too, so the list only shrinks as units move into typed and scripted capabilities (ADR 0069)."
   },
   {
+   "route": "/registry/modules/skills/",
+   "title": "Skills",
+   "description": "Every skill the layer defines as a proven capability: whether a test names it and the evidence ledger holds a current passing run of that test, whether the site projects its page, whether a doctrine and a CI gate hold it, and whether a workflow, prompt, profile, provider template, recipe or CI workflow invokes it. All four are derived on every read and none is authored; an active skill no test names or nothing invokes is an orphan."
+  },
+  {
    "route": "/registry/modules/trace/",
    "title": "Traceability",
    "description": "Which branches and commits realised an issue, and which issue and milestone a commit served — derived from git and from the canonical project model on every call, stored nowhere. A branch names an issue when one of its path components is an issue id; a commit belongs to the issue whose branches hold it; a commit no such branch holds is reported as unattributed rather than left out, because work with no execution contract is what a traceability report exists to make visible. Pull requests are a GitHub fact and this executable makes no network call: `scripts/traceability` reads them and joins them to this answer over the branch name."
@@ -6465,6 +6707,14 @@
    "kind": "rule",
    "id": "majordomus://rule/majordomus.bootstrap-integrity@1",
    "source": ".ai/repo/rules/vendor/majordomus/rules/bootstrap-integrity.v1.md"
+  },
+  {
+   "route": "/rules/majordomus-candidates-reviewed-1/",
+   "title": "Candidates are reviewed",
+   "description": "Candidates are reviewed",
+   "kind": "rule",
+   "id": "majordomus://rule/majordomus.candidates-reviewed@1",
+   "source": ".ai/repo/rules/vendor/majordomus/rules/candidates-reviewed.v1.md"
   },
   {
    "route": "/rules/majordomus-catalogue-integrity-1/",
@@ -6625,6 +6875,22 @@
    "kind": "rule",
    "id": "majordomus://rule/majordomus.justified-escalation@1",
    "source": ".ai/repo/rules/vendor/majordomus/rules/principle-05-justified-escalation.v1.md"
+  },
+  {
+   "route": "/rules/majordomus-knowledge-integrity-1/",
+   "title": "Knowledge integrity",
+   "description": "Knowledge integrity",
+   "kind": "rule",
+   "id": "majordomus://rule/majordomus.knowledge-integrity@1",
+   "source": ".ai/repo/rules/vendor/majordomus/rules/knowledge-integrity.v1.md"
+  },
+  {
+   "route": "/rules/majordomus-knowledge-observed-1/",
+   "title": "Knowledge observation",
+   "description": "Knowledge observation",
+   "kind": "rule",
+   "id": "majordomus://rule/majordomus.knowledge-observed@1",
+   "source": ".ai/repo/rules/vendor/majordomus/rules/knowledge-observed.v1.md"
   },
   {
    "route": "/rules/majordomus-layout-integrity-1/",
@@ -6907,6 +7173,14 @@
    "source": ".ai/repo/rules/project/a-number-names-one-case.v1.md"
   },
   {
+   "route": "/rules/project-a-provider-capability-cites-its-evidence-1/",
+   "title": "A provider capability is declared once, with the citation it was verified from",
+   "description": "A provider capability is declared once, with the citation it was verified from",
+   "kind": "rule",
+   "id": "majordomus://rule/project.a-provider-capability-cites-its-evidence@1",
+   "source": ".ai/repo/rules/project/a-provider-capability-cites-its-evidence.v1.md"
+  },
+  {
    "route": "/rules/project-a-tool-that-cannot-match-the-tree-refuses-1/",
    "title": "A generator that cannot match the tree refuses rather than rewriting it",
    "description": "A generator that cannot match the tree refuses rather than rewriting it",
@@ -6923,12 +7197,12 @@
    "source": ".ai/repo/rules/project/a-verdict-states-its-subject.v1.md"
   },
   {
-   "route": "/rules/project-a-worker-that-stops-leaves-its-work-behind-1/",
+   "route": "/rules/project-a-worker-that-stops-leaves-its-work-behind-2/",
    "title": "A worker that stops leaves its work where somebody else can find it",
    "description": "A worker that stops leaves its work where somebody else can find it",
    "kind": "rule",
-   "id": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@1",
-   "source": ".ai/repo/rules/project/a-worker-that-stops-leaves-its-work-behind.v1.md"
+   "id": "majordomus://rule/project.a-worker-that-stops-leaves-its-work-behind@2",
+   "source": ".ai/repo/rules/project/a-worker-that-stops-leaves-its-work-behind.v2.md"
   },
   {
    "route": "/rules/project-accumulation-is-measured-2/",
@@ -7121,6 +7395,14 @@
    "kind": "rule",
    "id": "majordomus://rule/project.envrc-is-an-adapter@2",
    "source": ".ai/repo/rules/project/envrc-is-an-adapter.v2.md"
+  },
+  {
+   "route": "/rules/project-episode-record-carries-its-episode-1/",
+   "title": "An episode record carries its episode",
+   "description": "An episode record carries its episode",
+   "kind": "rule",
+   "id": "majordomus://rule/project.episode-record-carries-its-episode@1",
+   "source": ".ai/repo/rules/project/an-episode-record-carries-its-episode.v1.md"
   },
   {
    "route": "/rules/project-every-link-and-control-is-tested-1/",
@@ -7507,6 +7789,14 @@
    "source": ".ai/repo/rules/project/shared-server-resilience.v1.md"
   },
   {
+   "route": "/rules/project-skills-are-proven-capabilities-1/",
+   "title": "A skill is a capability only when something proves it",
+   "description": "A skill is a capability only when something proves it",
+   "kind": "rule",
+   "id": "majordomus://rule/project.skills-are-proven-capabilities@1",
+   "source": ".ai/repo/rules/project/skills-are-proven-capabilities.v1.md"
+  },
+  {
    "route": "/rules/project-tests-run-in-disposable-repos-1/",
    "title": "Tests run in disposable repositories",
    "description": "Tests run in disposable repositories",
@@ -7545,6 +7835,14 @@
    "kind": "rule",
    "id": "majordomus://rule/project.the-server-sees-the-current-tree@1",
    "source": ".ai/repo/rules/project/the-server-sees-the-current-tree.v1.md"
+  },
+  {
+   "route": "/rules/project-the-session-context-is-derived-1/",
+   "title": "A working context is derived, not stored",
+   "description": "A working context is derived, not stored",
+   "kind": "rule",
+   "id": "majordomus://rule/project.the-session-context-is-derived@1",
+   "source": ".ai/repo/rules/project/the-session-context-is-derived.v1.md"
   },
   {
    "route": "/rules/project-the-version-is-measured-2/",
@@ -7637,7 +7935,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 0.12.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.12.0, built from commit 2edd4a582ac4bc780185df45615e26e62c20350e: the public items of the library and of the executable, and the source they were built from."
+   "description": "The rustdoc reference of majordomus-cli 0.12.0, built from commit 3b938d55d14dac635dc7a03efd955b42a188d4c0: the public items of the library and of the executable, and the source they were built from."
   },
   {
    "route": "/rustdoc/majordomus/",
@@ -7735,6 +8033,11 @@
    "description": "The `environment` module: what this checkout is, as a capability."
   },
   {
+   "route": "/rustdoc/majordomus_cli/capability/builtin/episodes/",
+   "title": "majordomus_cli::capability::builtin::episodes - Rust",
+   "description": "The `episodes` module: the execution episode of a client that has no provider hooks, opened and closed by the MCP connection itself (ADR 0103)."
+  },
+  {
    "route": "/rustdoc/majordomus_cli/capability/builtin/evidence/",
    "title": "majordomus_cli::capability::builtin::evidence - Rust",
    "description": "The `evidence` module: from a claim to the run that proves it, and back."
@@ -7753,6 +8056,11 @@
    "route": "/rustdoc/majordomus_cli/capability/builtin/intents/",
    "title": "majordomus_cli::capability::builtin::intents - Rust",
    "description": "The `intents` module:"
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/capability/builtin/knowledge_base/",
+   "title": "majordomus_cli::capability::builtin::knowledge_base - Rust",
+   "description": "The `knowledge_base` module: what the knowledge deriver left for review and whether it is still writing — the candidate records awaiting promotion, one record by id with every reference it names resolved, and the derivation status of this checkout judged against `session.freshness`."
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/lifecycle/",
@@ -7818,6 +8126,11 @@
    "route": "/rustdoc/majordomus_cli/capability/builtin/session_domain/",
    "title": "majordomus_cli::capability::builtin::session_domain - Rust",
    "description": "The `session_domain` module: the typed session domain, projected."
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/capability/builtin/skills/",
+   "title": "majordomus_cli::capability::builtin::skills - Rust",
+   "description": "The `skills` module: every skill as a proven capability, derived."
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/trace/",
@@ -7990,6 +8303,11 @@
    "description": "The judge: one commit message, against the policy, with every finding it earns."
   },
   {
+   "route": "/rustdoc/majordomus_cli/convergence/",
+   "title": "majordomus_cli::convergence - Rust",
+   "description": "Where the work of this repository is being held, and whether any of it is held somewhere it can be lost."
+  },
+  {
    "route": "/rustdoc/majordomus_cli/deploy/",
    "title": "majordomus_cli::deploy - Rust",
    "description": "The deployment objects of the layer, typed: `.ai/repo/deployments/*.yaml` parsed into values that cannot hold nonsense, and validated against what this repository actually contains before anything is built from them."
@@ -8158,6 +8476,11 @@
    "route": "/rustdoc/majordomus_cli/environment/workflows/",
    "title": "majordomus_cli::environment::workflows - Rust",
    "description": "Workflows: the recipes a person can run here, read from the workflow runner’s own structured description of them."
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/episodes/",
+   "title": "majordomus_cli::episodes - Rust",
+   "description": "Episodes: the execution episode of a client that has no provider hooks, drawn by the MCP connection itself (ADR 0103)."
   },
   {
    "route": "/rustdoc/majordomus_cli/evidence/",
@@ -8660,6 +8983,11 @@
    "description": "The site’s registry dataset: what GitHub Pages renders about the executable, derived from the registry, the index, the command line, the benchmark projection and the accepted baselines, and nothing else. The site has no content model of its own for any of it; its templates read `site/data/registry/registry.json` and lay it out, and the shell site generator reads `docs/generated/registry.json` for the ids it turns into routes."
   },
   {
+   "route": "/rustdoc/majordomus_cli/skill/",
+   "title": "majordomus_cli::skill - Rust",
+   "description": "Skills as proven capabilities: what the repository can show about each skill, derived."
+  },
+  {
    "route": "/rustdoc/majordomus_cli/synthetic/",
    "title": "majordomus_cli::synthetic - Rust",
    "description": "A synthetic repository: the layer `majordomus init` writes, with as many rules and documents as a test or a benchmark asks for, in a fresh temporary directory that is removed on drop. One generator for the property tests, the scaling benchmarks and the registry benchmarks, so that they measure and test the same shape of repository. Not a git repository: discovery goes through the filesystem, which is what a benchmark wants to measure and a property test wants to control."
@@ -8855,6 +9183,11 @@
    "description": "Provider-neutral procedures for one bounded kind of work each, read from the repository's skills section. Every page is the skill's own file; every listing is derived from it."
   },
   {
+   "route": "/skills/assess-before-deleting/",
+   "title": "Assess before deleting",
+   "description": "Remove a file, branch, worktree, record or process only after each candidate has been classified by what depends on it and what would be lost, and the reversible step has been taken first."
+  },
+  {
    "route": "/skills/deploy-site/",
    "title": "Deploy the site by hand",
    "description": "Publish the website to GitHub Pages from a terminal, through the one script the Pages workflow runs, when waiting for the Actions queue is not acceptable."
@@ -8865,9 +9198,19 @@
    "description": "Carry a requested change through the repository evidence-first, from the invariant it must keep to a verified, reconciled, documented and committed tree, without widening its scope."
   },
   {
+   "route": "/skills/pack-for-review/",
+   "title": "Pack the repository for an outside reviewer",
+   "description": "Prepare a bounded, reproducible snapshot of the tracked tree for a reviewer who cannot read the repository directly, with the local half and anything secret left out and the questions the review must answer written down."
+  },
+  {
    "route": "/skills/repo-review/",
    "title": "Repository review",
    "description": "An evidence-driven review of the actual state of the repository, or of one change to it, before meaningful engineering work is recommended or done."
+  },
+  {
+   "route": "/skills/report-verification-state/",
+   "title": "Report by verification state",
+   "description": "Write the outcome of a piece of work as claims each marked VERIFIED, PARTIAL or BLOCKED by the evidence actually observed, so a reader can tell what was proved from what was only done or intended."
   },
   {
    "route": "/supervises/",
@@ -9073,6 +9416,11 @@
    "route": "/use-cases/keep-the-bootstrap-thin-and-within-budget/",
    "title": "Keep every provider bootstrap thin, generated and within budget",
    "description": "Regenerate AGENTS.md, CLAUDE.md and the other provider files from one policy and prove they are stamped, point at the layer, stay under the line budget and resolve every reference."
+  },
+  {
+   "route": "/use-cases/keep-what-an-episode-learned/",
+   "title": "Keep what an episode learned, without a model and without a conversation",
+   "description": "Record a decision inside an episode, derive it into a candidate knowledge record from the ledger, read the evidence that the derivation ran, and watch a second derivation change nothing."
   },
   {
    "route": "/use-cases/know-whether-this-work-is-finished/",

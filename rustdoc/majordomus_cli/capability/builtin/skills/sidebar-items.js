@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["SKILLS_URI"],"fn":["module"],"struct":["SkillExplainInput","SkillStatusList","SkillVerification"]};

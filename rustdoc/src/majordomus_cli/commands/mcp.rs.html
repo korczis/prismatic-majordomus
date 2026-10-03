@@ -352,109 +352,114 @@
 <a href=#352 id=352 data-nosnippet>352</a>                    peer,
 <a href=#353 id=353 data-nosnippet>353</a>                    shared,
 <a href=#354 id=354 data-nosnippet>354</a>                } = <span class="kw-2">*</span>local;
-<a href=#355 id=355 data-nosnippet>355</a>                server.surface().context().peers.detach(<span class="kw-2">&amp;</span>peer);
-<a href=#356 id=356 data-nosnippet>356</a>                drop(server);
-<a href=#357 id=357 data-nosnippet>357</a>                shared.wait_until_peers_leave();
-<a href=#358 id=358 data-nosnippet>358</a>                shared.stop();
-<a href=#359 id=359 data-nosnippet>359</a>            }
-<a href=#360 id=360 data-nosnippet>360</a>            Backend::Remote { bridge, heartbeat } =&gt; {
-<a href=#361 id=361 data-nosnippet>361</a>                heartbeat.stop();
-<a href=#362 id=362 data-nosnippet>362</a>                lock(<span class="kw-2">&amp;</span>bridge).close();
-<a href=#363 id=363 data-nosnippet>363</a>                <span class="macro">tracing::info!</span>(<span class="string">"bridge closed"</span>);
+<a href=#355 id=355 data-nosnippet>355</a>                <span class="comment">// Detached, not closed: the stdio client that just went may be a client
+<a href=#356 id=356 data-nosnippet>356</a>                // somebody is restarting, and it comes back to its own episode by name.
+<a href=#357 id=357 data-nosnippet>357</a>                // `shared.stop()` below closes whatever is still held, which is the moment
+<a href=#358 id=358 data-nosnippet>358</a>                // at which nothing can come back any more (ADR 0103).
+<a href=#359 id=359 data-nosnippet>359</a>                </span>server.surface().context().episodes.detach(<span class="kw-2">&amp;</span>peer);
+<a href=#360 id=360 data-nosnippet>360</a>                server.surface().context().peers.detach(<span class="kw-2">&amp;</span>peer);
+<a href=#361 id=361 data-nosnippet>361</a>                drop(server);
+<a href=#362 id=362 data-nosnippet>362</a>                shared.wait_until_peers_leave();
+<a href=#363 id=363 data-nosnippet>363</a>                shared.stop();
 <a href=#364 id=364 data-nosnippet>364</a>            }
-<a href=#365 id=365 data-nosnippet>365</a>            Backend::Alone(<span class="kw">_</span>) =&gt; {}
-<a href=#366 id=366 data-nosnippet>366</a>        }
-<a href=#367 id=367 data-nosnippet>367</a>    }
-<a href=#368 id=368 data-nosnippet>368</a>}
-<a href=#369 id=369 data-nosnippet>369</a>
-<a href=#370 id=370 data-nosnippet>370</a><span class="doccomment">/// The JSON-RPC answer for a request that no server could take; nothing for a notification.
-<a href=#371 id=371 data-nosnippet>371</a></span><span class="kw">fn </span>unavailable(message: <span class="kw-2">&amp;</span>Value, reason: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;Reply&gt; {
-<a href=#372 id=372 data-nosnippet>372</a>    <span class="kw">let </span>id = message.get(<span class="string">"id"</span>).cloned().filter(|i| !i.is_null())<span class="question-mark">?</span>;
-<a href=#373 id=373 data-nosnippet>373</a>    <span class="prelude-val">Some</span>(Reply::Value(<span class="macro">json!</span>({
-<a href=#374 id=374 data-nosnippet>374</a>        <span class="string">"jsonrpc"</span>: <span class="string">"2.0"</span>,
-<a href=#375 id=375 data-nosnippet>375</a>        <span class="string">"id"</span>: id,
-<a href=#376 id=376 data-nosnippet>376</a>        <span class="string">"error"</span>: { <span class="string">"code"</span>: -<span class="number">32603</span>, <span class="string">"message"</span>: <span class="macro">format!</span>(<span class="string">"shared server unavailable: {reason}"</span>) }
-<a href=#377 id=377 data-nosnippet>377</a>    })))
-<a href=#378 id=378 data-nosnippet>378</a>}
-<a href=#379 id=379 data-nosnippet>379</a>
-<a href=#380 id=380 data-nosnippet>380</a><span class="kw">fn </span>lock&lt;T&gt;(m: <span class="kw-2">&amp;</span>Mutex&lt;T&gt;) -&gt; std::sync::MutexGuard&lt;<span class="lifetime">'_</span>, T&gt; {
-<a href=#381 id=381 data-nosnippet>381</a>    m.lock().unwrap_or_else(|e| e.into_inner())
-<a href=#382 id=382 data-nosnippet>382</a>}
-<a href=#383 id=383 data-nosnippet>383</a>
-<a href=#384 id=384 data-nosnippet>384</a><span class="kw">fn </span>inspect(surface: <span class="kw-2">&amp;</span>Surface, format: OutputFormat) -&gt; <span class="prelude-ty">Result</span>&lt;u8&gt; {
-<a href=#385 id=385 data-nosnippet>385</a>    <span class="kw">let </span>stdout = std::io::stdout();
-<a href=#386 id=386 data-nosnippet>386</a>    <span class="kw">let </span><span class="kw-2">mut </span>out = stdout.lock();
-<a href=#387 id=387 data-nosnippet>387</a>    <span class="kw">let </span>index = surface.index();
-<a href=#388 id=388 data-nosnippet>388</a>    <span class="kw">match </span>format {
-<a href=#389 id=389 data-nosnippet>389</a>        OutputFormat::Json =&gt; {
-<a href=#390 id=390 data-nosnippet>390</a>            <span class="kw">let </span>v = <span class="macro">json!</span>({
-<a href=#391 id=391 data-nosnippet>391</a>                <span class="string">"repository"</span>: surface.repository_info().map_err(|e| Error::Protocol { reason: e.to_string() })<span class="question-mark">?</span>,
-<a href=#392 id=392 data-nosnippet>392</a>                <span class="string">"resources"</span>: <span class="kw-2">&amp;*</span>surface.resources(),
-<a href=#393 id=393 data-nosnippet>393</a>                <span class="string">"tools"</span>: <span class="kw-2">&amp;*</span>surface.tools(),
-<a href=#394 id=394 data-nosnippet>394</a>            });
-<a href=#395 id=395 data-nosnippet>395</a>            <span class="macro">writeln!</span>(
-<a href=#396 id=396 data-nosnippet>396</a>                out,
-<a href=#397 id=397 data-nosnippet>397</a>                <span class="string">"{}"</span>,
-<a href=#398 id=398 data-nosnippet>398</a>                serde_json::to_string_pretty(<span class="kw-2">&amp;</span>v).map_err(|e| Error::Protocol {
-<a href=#399 id=399 data-nosnippet>399</a>                    reason: e.to_string()
-<a href=#400 id=400 data-nosnippet>400</a>                })<span class="question-mark">?
-<a href=#401 id=401 data-nosnippet>401</a>            </span>)
-<a href=#402 id=402 data-nosnippet>402</a>            .map_err(Error::Transport)<span class="question-mark">?</span>;
-<a href=#403 id=403 data-nosnippet>403</a>        }
-<a href=#404 id=404 data-nosnippet>404</a>        OutputFormat::Text =&gt; {
-<a href=#405 id=405 data-nosnippet>405</a>            <span class="kw">let </span>w = |out: <span class="kw-2">&amp;mut </span>std::io::StdoutLock&lt;<span class="lifetime">'_</span>&gt;, line: String| {
-<a href=#406 id=406 data-nosnippet>406</a>                <span class="macro">writeln!</span>(out, <span class="string">"{line}"</span>).map_err(Error::Transport)
-<a href=#407 id=407 data-nosnippet>407</a>            };
-<a href=#408 id=408 data-nosnippet>408</a>            w(<span class="kw-2">&amp;mut </span>out, <span class="macro">format!</span>(<span class="string">"repository  {}"</span>, index.repository.root))<span class="question-mark">?</span>;
-<a href=#409 id=409 data-nosnippet>409</a>            w(
-<a href=#410 id=410 data-nosnippet>410</a>                <span class="kw-2">&amp;mut </span>out,
-<a href=#411 id=411 data-nosnippet>411</a>                <span class="macro">format!</span>(<span class="string">"discovery   {}"</span>, index.repository.discovery),
-<a href=#412 id=412 data-nosnippet>412</a>            )<span class="question-mark">?</span>;
-<a href=#413 id=413 data-nosnippet>413</a>            w(
-<a href=#414 id=414 data-nosnippet>414</a>                <span class="kw-2">&amp;mut </span>out,
-<a href=#415 id=415 data-nosnippet>415</a>                <span class="macro">format!</span>(
-<a href=#416 id=416 data-nosnippet>416</a>                    <span class="string">"state       {}"</span>,
-<a href=#417 id=417 data-nosnippet>417</a>                    <span class="kw">match </span>index.state {
-<a href=#418 id=418 data-nosnippet>418</a>                        <span class="kw">crate</span>::index::State::Ok =&gt; <span class="string">"ok"</span>,
-<a href=#419 id=419 data-nosnippet>419</a>                        <span class="kw">crate</span>::index::State::Degraded =&gt; <span class="string">"degraded"</span>,
-<a href=#420 id=420 data-nosnippet>420</a>                    }
-<a href=#421 id=421 data-nosnippet>421</a>                ),
-<a href=#422 id=422 data-nosnippet>422</a>            )<span class="question-mark">?</span>;
-<a href=#423 id=423 data-nosnippet>423</a>            <span class="kw">for </span>(kind, n) <span class="kw">in </span>index.kinds() {
-<a href=#424 id=424 data-nosnippet>424</a>                w(<span class="kw-2">&amp;mut </span>out, <span class="macro">format!</span>(<span class="string">"kind        {kind:&lt;12} {n}"</span>))<span class="question-mark">?</span>;
-<a href=#425 id=425 data-nosnippet>425</a>            }
-<a href=#426 id=426 data-nosnippet>426</a>            <span class="kw">let </span>summary = surface.registry().summary();
-<a href=#427 id=427 data-nosnippet>427</a>            w(
-<a href=#428 id=428 data-nosnippet>428</a>                <span class="kw-2">&amp;mut </span>out,
-<a href=#429 id=429 data-nosnippet>429</a>                <span class="macro">format!</span>(
-<a href=#430 id=430 data-nosnippet>430</a>                    <span class="string">"capabilities {} ({} builtin, {} declarative)"</span>,
-<a href=#431 id=431 data-nosnippet>431</a>                    summary.total, summary.builtin, summary.declarative
-<a href=#432 id=432 data-nosnippet>432</a>                ),
-<a href=#433 id=433 data-nosnippet>433</a>            )<span class="question-mark">?</span>;
-<a href=#434 id=434 data-nosnippet>434</a>            <span class="kw">for </span>r <span class="kw">in </span>surface.resources().iter() {
-<a href=#435 id=435 data-nosnippet>435</a>                w(<span class="kw-2">&amp;mut </span>out, <span class="macro">format!</span>(<span class="string">"resource    {}"</span>, r.uri))<span class="question-mark">?</span>;
-<a href=#436 id=436 data-nosnippet>436</a>            }
-<a href=#437 id=437 data-nosnippet>437</a>            <span class="kw">for </span>t <span class="kw">in </span>surface.tools().iter() {
-<a href=#438 id=438 data-nosnippet>438</a>                w(<span class="kw-2">&amp;mut </span>out, <span class="macro">format!</span>(<span class="string">"tool        {}"</span>, t.name))<span class="question-mark">?</span>;
-<a href=#439 id=439 data-nosnippet>439</a>            }
-<a href=#440 id=440 data-nosnippet>440</a>            <span class="kw">for </span>d <span class="kw">in </span><span class="kw-2">&amp;</span>index.diagnostics {
-<a href=#441 id=441 data-nosnippet>441</a>                <span class="kw">let </span>level = <span class="kw">match </span>d.severity {
-<a href=#442 id=442 data-nosnippet>442</a>                    Severity::Error =&gt; <span class="string">"FAIL"</span>,
-<a href=#443 id=443 data-nosnippet>443</a>                    Severity::Warning =&gt; <span class="string">"WARN"</span>,
-<a href=#444 id=444 data-nosnippet>444</a>                    Severity::Info =&gt; <span class="string">"INFO"</span>,
-<a href=#445 id=445 data-nosnippet>445</a>                };
-<a href=#446 id=446 data-nosnippet>446</a>                w(
-<a href=#447 id=447 data-nosnippet>447</a>                    <span class="kw-2">&amp;mut </span>out,
-<a href=#448 id=448 data-nosnippet>448</a>                    <span class="macro">format!</span>(
-<a href=#449 id=449 data-nosnippet>449</a>                        <span class="string">"{level:&lt;4} {:&lt;22} {} — {}"</span>,
-<a href=#450 id=450 data-nosnippet>450</a>                        d.code,
-<a href=#451 id=451 data-nosnippet>451</a>                        d.path.as_deref().unwrap_or(<span class="string">"-"</span>),
-<a href=#452 id=452 data-nosnippet>452</a>                        d.message
-<a href=#453 id=453 data-nosnippet>453</a>                    ),
-<a href=#454 id=454 data-nosnippet>454</a>                )<span class="question-mark">?</span>;
-<a href=#455 id=455 data-nosnippet>455</a>            }
-<a href=#456 id=456 data-nosnippet>456</a>        }
-<a href=#457 id=457 data-nosnippet>457</a>    }
-<a href=#458 id=458 data-nosnippet>458</a>    <span class="prelude-val">Ok</span>(<span class="kw">if </span>index.errors() &gt; <span class="number">0 </span>{ <span class="number">10 </span>} <span class="kw">else </span>{ <span class="number">0 </span>})
-<a href=#459 id=459 data-nosnippet>459</a>}
+<a href=#365 id=365 data-nosnippet>365</a>            Backend::Remote { bridge, heartbeat } =&gt; {
+<a href=#366 id=366 data-nosnippet>366</a>                heartbeat.stop();
+<a href=#367 id=367 data-nosnippet>367</a>                lock(<span class="kw-2">&amp;</span>bridge).close();
+<a href=#368 id=368 data-nosnippet>368</a>                <span class="macro">tracing::info!</span>(<span class="string">"bridge closed"</span>);
+<a href=#369 id=369 data-nosnippet>369</a>            }
+<a href=#370 id=370 data-nosnippet>370</a>            Backend::Alone(<span class="kw">_</span>) =&gt; {}
+<a href=#371 id=371 data-nosnippet>371</a>        }
+<a href=#372 id=372 data-nosnippet>372</a>    }
+<a href=#373 id=373 data-nosnippet>373</a>}
+<a href=#374 id=374 data-nosnippet>374</a>
+<a href=#375 id=375 data-nosnippet>375</a><span class="doccomment">/// The JSON-RPC answer for a request that no server could take; nothing for a notification.
+<a href=#376 id=376 data-nosnippet>376</a></span><span class="kw">fn </span>unavailable(message: <span class="kw-2">&amp;</span>Value, reason: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;Reply&gt; {
+<a href=#377 id=377 data-nosnippet>377</a>    <span class="kw">let </span>id = message.get(<span class="string">"id"</span>).cloned().filter(|i| !i.is_null())<span class="question-mark">?</span>;
+<a href=#378 id=378 data-nosnippet>378</a>    <span class="prelude-val">Some</span>(Reply::Value(<span class="macro">json!</span>({
+<a href=#379 id=379 data-nosnippet>379</a>        <span class="string">"jsonrpc"</span>: <span class="string">"2.0"</span>,
+<a href=#380 id=380 data-nosnippet>380</a>        <span class="string">"id"</span>: id,
+<a href=#381 id=381 data-nosnippet>381</a>        <span class="string">"error"</span>: { <span class="string">"code"</span>: -<span class="number">32603</span>, <span class="string">"message"</span>: <span class="macro">format!</span>(<span class="string">"shared server unavailable: {reason}"</span>) }
+<a href=#382 id=382 data-nosnippet>382</a>    })))
+<a href=#383 id=383 data-nosnippet>383</a>}
+<a href=#384 id=384 data-nosnippet>384</a>
+<a href=#385 id=385 data-nosnippet>385</a><span class="kw">fn </span>lock&lt;T&gt;(m: <span class="kw-2">&amp;</span>Mutex&lt;T&gt;) -&gt; std::sync::MutexGuard&lt;<span class="lifetime">'_</span>, T&gt; {
+<a href=#386 id=386 data-nosnippet>386</a>    m.lock().unwrap_or_else(|e| e.into_inner())
+<a href=#387 id=387 data-nosnippet>387</a>}
+<a href=#388 id=388 data-nosnippet>388</a>
+<a href=#389 id=389 data-nosnippet>389</a><span class="kw">fn </span>inspect(surface: <span class="kw-2">&amp;</span>Surface, format: OutputFormat) -&gt; <span class="prelude-ty">Result</span>&lt;u8&gt; {
+<a href=#390 id=390 data-nosnippet>390</a>    <span class="kw">let </span>stdout = std::io::stdout();
+<a href=#391 id=391 data-nosnippet>391</a>    <span class="kw">let </span><span class="kw-2">mut </span>out = stdout.lock();
+<a href=#392 id=392 data-nosnippet>392</a>    <span class="kw">let </span>index = surface.index();
+<a href=#393 id=393 data-nosnippet>393</a>    <span class="kw">match </span>format {
+<a href=#394 id=394 data-nosnippet>394</a>        OutputFormat::Json =&gt; {
+<a href=#395 id=395 data-nosnippet>395</a>            <span class="kw">let </span>v = <span class="macro">json!</span>({
+<a href=#396 id=396 data-nosnippet>396</a>                <span class="string">"repository"</span>: surface.repository_info().map_err(|e| Error::Protocol { reason: e.to_string() })<span class="question-mark">?</span>,
+<a href=#397 id=397 data-nosnippet>397</a>                <span class="string">"resources"</span>: <span class="kw-2">&amp;*</span>surface.resources(),
+<a href=#398 id=398 data-nosnippet>398</a>                <span class="string">"tools"</span>: <span class="kw-2">&amp;*</span>surface.tools(),
+<a href=#399 id=399 data-nosnippet>399</a>            });
+<a href=#400 id=400 data-nosnippet>400</a>            <span class="macro">writeln!</span>(
+<a href=#401 id=401 data-nosnippet>401</a>                out,
+<a href=#402 id=402 data-nosnippet>402</a>                <span class="string">"{}"</span>,
+<a href=#403 id=403 data-nosnippet>403</a>                serde_json::to_string_pretty(<span class="kw-2">&amp;</span>v).map_err(|e| Error::Protocol {
+<a href=#404 id=404 data-nosnippet>404</a>                    reason: e.to_string()
+<a href=#405 id=405 data-nosnippet>405</a>                })<span class="question-mark">?
+<a href=#406 id=406 data-nosnippet>406</a>            </span>)
+<a href=#407 id=407 data-nosnippet>407</a>            .map_err(Error::Transport)<span class="question-mark">?</span>;
+<a href=#408 id=408 data-nosnippet>408</a>        }
+<a href=#409 id=409 data-nosnippet>409</a>        OutputFormat::Text =&gt; {
+<a href=#410 id=410 data-nosnippet>410</a>            <span class="kw">let </span>w = |out: <span class="kw-2">&amp;mut </span>std::io::StdoutLock&lt;<span class="lifetime">'_</span>&gt;, line: String| {
+<a href=#411 id=411 data-nosnippet>411</a>                <span class="macro">writeln!</span>(out, <span class="string">"{line}"</span>).map_err(Error::Transport)
+<a href=#412 id=412 data-nosnippet>412</a>            };
+<a href=#413 id=413 data-nosnippet>413</a>            w(<span class="kw-2">&amp;mut </span>out, <span class="macro">format!</span>(<span class="string">"repository  {}"</span>, index.repository.root))<span class="question-mark">?</span>;
+<a href=#414 id=414 data-nosnippet>414</a>            w(
+<a href=#415 id=415 data-nosnippet>415</a>                <span class="kw-2">&amp;mut </span>out,
+<a href=#416 id=416 data-nosnippet>416</a>                <span class="macro">format!</span>(<span class="string">"discovery   {}"</span>, index.repository.discovery),
+<a href=#417 id=417 data-nosnippet>417</a>            )<span class="question-mark">?</span>;
+<a href=#418 id=418 data-nosnippet>418</a>            w(
+<a href=#419 id=419 data-nosnippet>419</a>                <span class="kw-2">&amp;mut </span>out,
+<a href=#420 id=420 data-nosnippet>420</a>                <span class="macro">format!</span>(
+<a href=#421 id=421 data-nosnippet>421</a>                    <span class="string">"state       {}"</span>,
+<a href=#422 id=422 data-nosnippet>422</a>                    <span class="kw">match </span>index.state {
+<a href=#423 id=423 data-nosnippet>423</a>                        <span class="kw">crate</span>::index::State::Ok =&gt; <span class="string">"ok"</span>,
+<a href=#424 id=424 data-nosnippet>424</a>                        <span class="kw">crate</span>::index::State::Degraded =&gt; <span class="string">"degraded"</span>,
+<a href=#425 id=425 data-nosnippet>425</a>                    }
+<a href=#426 id=426 data-nosnippet>426</a>                ),
+<a href=#427 id=427 data-nosnippet>427</a>            )<span class="question-mark">?</span>;
+<a href=#428 id=428 data-nosnippet>428</a>            <span class="kw">for </span>(kind, n) <span class="kw">in </span>index.kinds() {
+<a href=#429 id=429 data-nosnippet>429</a>                w(<span class="kw-2">&amp;mut </span>out, <span class="macro">format!</span>(<span class="string">"kind        {kind:&lt;12} {n}"</span>))<span class="question-mark">?</span>;
+<a href=#430 id=430 data-nosnippet>430</a>            }
+<a href=#431 id=431 data-nosnippet>431</a>            <span class="kw">let </span>summary = surface.registry().summary();
+<a href=#432 id=432 data-nosnippet>432</a>            w(
+<a href=#433 id=433 data-nosnippet>433</a>                <span class="kw-2">&amp;mut </span>out,
+<a href=#434 id=434 data-nosnippet>434</a>                <span class="macro">format!</span>(
+<a href=#435 id=435 data-nosnippet>435</a>                    <span class="string">"capabilities {} ({} builtin, {} declarative)"</span>,
+<a href=#436 id=436 data-nosnippet>436</a>                    summary.total, summary.builtin, summary.declarative
+<a href=#437 id=437 data-nosnippet>437</a>                ),
+<a href=#438 id=438 data-nosnippet>438</a>            )<span class="question-mark">?</span>;
+<a href=#439 id=439 data-nosnippet>439</a>            <span class="kw">for </span>r <span class="kw">in </span>surface.resources().iter() {
+<a href=#440 id=440 data-nosnippet>440</a>                w(<span class="kw-2">&amp;mut </span>out, <span class="macro">format!</span>(<span class="string">"resource    {}"</span>, r.uri))<span class="question-mark">?</span>;
+<a href=#441 id=441 data-nosnippet>441</a>            }
+<a href=#442 id=442 data-nosnippet>442</a>            <span class="kw">for </span>t <span class="kw">in </span>surface.tools().iter() {
+<a href=#443 id=443 data-nosnippet>443</a>                w(<span class="kw-2">&amp;mut </span>out, <span class="macro">format!</span>(<span class="string">"tool        {}"</span>, t.name))<span class="question-mark">?</span>;
+<a href=#444 id=444 data-nosnippet>444</a>            }
+<a href=#445 id=445 data-nosnippet>445</a>            <span class="kw">for </span>d <span class="kw">in </span><span class="kw-2">&amp;</span>index.diagnostics {
+<a href=#446 id=446 data-nosnippet>446</a>                <span class="kw">let </span>level = <span class="kw">match </span>d.severity {
+<a href=#447 id=447 data-nosnippet>447</a>                    Severity::Error =&gt; <span class="string">"FAIL"</span>,
+<a href=#448 id=448 data-nosnippet>448</a>                    Severity::Warning =&gt; <span class="string">"WARN"</span>,
+<a href=#449 id=449 data-nosnippet>449</a>                    Severity::Info =&gt; <span class="string">"INFO"</span>,
+<a href=#450 id=450 data-nosnippet>450</a>                };
+<a href=#451 id=451 data-nosnippet>451</a>                w(
+<a href=#452 id=452 data-nosnippet>452</a>                    <span class="kw-2">&amp;mut </span>out,
+<a href=#453 id=453 data-nosnippet>453</a>                    <span class="macro">format!</span>(
+<a href=#454 id=454 data-nosnippet>454</a>                        <span class="string">"{level:&lt;4} {:&lt;22} {} — {}"</span>,
+<a href=#455 id=455 data-nosnippet>455</a>                        d.code,
+<a href=#456 id=456 data-nosnippet>456</a>                        d.path.as_deref().unwrap_or(<span class="string">"-"</span>),
+<a href=#457 id=457 data-nosnippet>457</a>                        d.message
+<a href=#458 id=458 data-nosnippet>458</a>                    ),
+<a href=#459 id=459 data-nosnippet>459</a>                )<span class="question-mark">?</span>;
+<a href=#460 id=460 data-nosnippet>460</a>            }
+<a href=#461 id=461 data-nosnippet>461</a>        }
+<a href=#462 id=462 data-nosnippet>462</a>    }
+<a href=#463 id=463 data-nosnippet>463</a>    <span class="prelude-val">Ok</span>(<span class="kw">if </span>index.errors() &gt; <span class="number">0 </span>{ <span class="number">10 </span>} <span class="kw">else </span>{ <span class="number">0 </span>})
+<a href=#464 id=464 data-nosnippet>464</a>}
 </code></pre></div></section></main></body></html>

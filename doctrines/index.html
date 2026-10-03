@@ -164,11 +164,11 @@
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
 
   <dl class="grid max-w-3xl grid-cols-1 gap-4 border-b border-default pb-8 sm:grid-cols-3">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">declared</dt><dd class="mt-1 text-2xl font-semibold text-heading">45</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocking</dt><dd class="mt-1 text-2xl font-semibold text-heading">40</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">advisory</dt><dd class="mt-1 text-2xl font-semibold text-heading">5</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">declared</dt><dd class="mt-1 text-2xl font-semibold text-heading">48</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">blocking</dt><dd class="mt-1 text-2xl font-semibold text-heading">42</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">advisory</dt><dd class="mt-1 text-2xl font-semibold text-heading">6</dd></div>
   </dl>
-  <p class="mt-4 max-w-3xl text-sm text-body">Counted from <a href="https://github.com/korczis/prismatic-majordomus/tree/2edd4a582ac4bc780185df45615e26e62c20350e/share/standard/majordomus/" class="text-fg-brand underline">the rule package</a> when this page was built. Every doctrine below resolves to a validator function, a command that dispatches it, a test, and a CI job — or the build fails and this page is not published.</p><div class="mt-8" x-data="{ q: '', cls: 'all' }">
+  <p class="mt-4 max-w-3xl text-sm text-body">Counted from <a href="https://github.com/korczis/prismatic-majordomus/tree/3b938d55d14dac635dc7a03efd955b42a188d4c0/share/standard/majordomus/" class="text-fg-brand underline">the rule package</a> when this page was built. Every doctrine below resolves to a validator function, a command that dispatches it, a test, and a CI job — or the build fails and this page is not published.</p><div class="mt-8" x-data="{ q: '', cls: 'all' }">
     <div class="flex flex-wrap items-center gap-3">
       <label class="sr-only" for="doctrine-filter">Filter doctrines</label>
       <input id="doctrine-filter" type="search" x-model="q" placeholder="Filter by name, validator or command" class="w-full max-w-sm rounded-base border border-default bg-neutral-primary-soft px-3 py-2 text-sm text-heading placeholder:text-body-subtle focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
@@ -180,7 +180,25 @@
     </div>
     <p class="mt-2 text-xs text-body-subtle">Filtering runs in the browser. Without JavaScript every doctrine below is still listed.</p>
 
-    <ul class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="list" aria-live="polite"><li data-cls="blocking" data-text="majordomus.ai-layout-integrity ai layer integrity ai_layout doctor watch"
+    <ul class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="list" aria-live="polite"><li data-cls="blocking" data-text="majordomus.knowledge-integrity knowledge integrity knowledge_integrity check doctor"
+          x-show="(cls === 'all' || cls === $el.dataset.cls) && $el.dataset.text.includes(q.toLowerCase())">
+        <a href="https://majordomus.dev/doctrines/knowledge-integrity/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <div class="mb-2 flex items-start justify-between gap-2"><span class="mj-badge mj-badge--blocking">blocking</span>
+<span class="font-mono text-xs text-body-subtle">check · doctor</span></div>
+          <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Knowledge integrity</h2>
+          <p class="text-sm leading-relaxed text-body">Every knowledge record is one evidenced, well-formed assertion. It is valid against its schema with no unknown key, its identity is unique and equals its file name, a verified record carries provenance, every reference it names resolves, a superseded record says what replaced it or why it was rejected, a candidate never claims to be verified, and no record carries a conversation.</p>
+          <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">mj_validate_knowledge_integrity</span>
+        </a>
+      </li><li data-cls="advisory" data-text="majordomus.candidates-reviewed candidates are reviewed knowledge_accumulation doctor"
+          x-show="(cls === 'all' || cls === $el.dataset.cls) && $el.dataset.text.includes(q.toLowerCase())">
+        <a href="https://majordomus.dev/doctrines/candidates-reviewed/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <div class="mb-2 flex items-start justify-between gap-2"><span class="mj-badge mj-badge--advisory">advisory</span>
+<span class="font-mono text-xs text-body-subtle">doctor</span></div>
+          <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Candidates are reviewed</h2>
+          <p class="text-sm leading-relaxed text-body">A review queue that grows without bound is not reviewed. More candidates than the policy cap, a candidate that has waited longer than the policy age, or a candidate the tree does not track, is reported, not stopped; both numbers are declared once in the policy.</p>
+          <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">mj_validate_knowledge_accumulation</span>
+        </a>
+      </li><li data-cls="blocking" data-text="majordomus.ai-layout-integrity ai layer integrity ai_layout doctor watch"
           x-show="(cls === 'all' || cls === $el.dataset.cls) && $el.dataset.text.includes(q.toLowerCase())">
         <a href="https://majordomus.dev/doctrines/ai-layout-integrity/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
           <div class="mb-2 flex items-start justify-between gap-2"><span class="mj-badge mj-badge--blocking">blocking</span>
@@ -350,6 +368,15 @@
           <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Lifecycle observation</h2>
           <p class="text-sm leading-relaxed text-body">A store that can be read is not a store that is being written. While episodes go on opening, the records a future worker resumes from must go on advancing, every lifecycle event received must leave evidence it arrived, and an episode that outlives the staleness threshold must be named rather than left open.</p>
           <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">mj_validate_lifecycle</span>
+        </a>
+      </li><li data-cls="blocking" data-text="majordomus.knowledge-observed knowledge observation knowledge_lifecycle doctor watch"
+          x-show="(cls === 'all' || cls === $el.dataset.cls) && $el.dataset.text.includes(q.toLowerCase())">
+        <a href="https://majordomus.dev/doctrines/knowledge-observed/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <div class="mb-2 flex items-start justify-between gap-2"><span class="mj-badge mj-badge--blocking">blocking</span>
+<span class="font-mono text-xs text-body-subtle">doctor · watch</span></div>
+          <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Knowledge observation</h2>
+          <p class="text-sm leading-relaxed text-body">While episodes keep closing, the knowledge they produced must keep being derived. A closed episode no derivation followed, once it is older than the freshness threshold, is a stopped writer; a lifecycle whose close path never calls the deriver while the policy switch is on is a writer that was never started.</p>
+          <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">mj_validate_knowledge_lifecycle</span>
         </a>
       </li><li data-cls="blocking" data-text="majordomus.note-integrity note integrity note finish"
           x-show="(cls === 'all' || cls === $el.dataset.cls) && $el.dataset.text.includes(q.toLowerCase())">
@@ -660,7 +687,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2edd4a582ac4bc780185df45615e26e62c20350e" class="font-mono underline">2edd4a5</a> · inputs <span class="font-mono">1f52dc854a50</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3b938d55d14dac635dc7a03efd955b42a188d4c0" class="font-mono underline">3b938d5</a> · inputs <span class="font-mono">326da762016a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

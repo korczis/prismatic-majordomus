@@ -234,6 +234,26 @@
     <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
     <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
   &quot;$defs&quot;: {
+    &quot;EpisodeSource&quot;: {
+      &quot;description&quot;: &quot;How an episode boundary can be drawn for one provider.\n\nThree words, because three things are true of different providers and collapsing them\ninto \&quot;supported / not supported\&quot; is what let this tool report one provider and stay\nsilent about five others. A provider that fires its own events is not the same as one\nthat fires none but speaks MCP, and neither is the same as one that can do nothing.\n\nThe words are the declaration&#39;s own, and a word outside them is refused rather than read\nas `none`:\n\n```\nuse majordomus_cli::share::EpisodeSource;\nlet read: EpisodeSource = serde_json::from_str(\&quot;\\\&quot;connection\\\&quot;\&quot;).unwrap();\nassert_eq!(read, EpisodeSource::Connection);\nassert_eq!(EpisodeSource::default(), EpisodeSource::None, \&quot;undeclared reads as none\&quot;);\nassert!(serde_json::from_str::&lt;EpisodeSource&gt;(\&quot;\\\&quot;hook\\\&quot;\&quot;).is_err(), \&quot;hooks, plural\&quot;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;hooks&quot;,
+          &quot;description&quot;: &quot;The provider fires its own session events and a hook this tool installs draws the\nboundary from them. The strongest form: it sees a window somebody closed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;connection&quot;,
+          &quot;description&quot;: &quot;The provider fires no session event, but its client attaches to this repository&#39;s\nshared MCP server, and the connection is the boundary (ADR 0103).&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;none&quot;,
+          &quot;description&quot;: &quot;Neither. Nothing can say when this provider&#39;s episode began or ended, and the tool\nreports that rather than implying a capability nobody has.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
     &quot;ProductProvider&quot;: {
       &quot;description&quot;: &quot;One provider the tool has an adapter for, discovered from the templates the distribution\nships and decorated with what this repository does with it.&quot;,
       &quot;properties&quot;: {
@@ -262,6 +282,16 @@
           &quot;description&quot;: &quot;The provider id: the template&#39;s file stem.&quot;,
           &quot;type&quot;: &quot;string&quot;
         },
+        &quot;offers&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ProviderOffers&quot;,
+          &quot;default&quot;: {
+            &quot;episode&quot;: &quot;none&quot;,
+            &quot;episode_evidence&quot;: &quot;&quot;,
+            &quot;prompts&quot;: &quot;none&quot;,
+            &quot;prompts_evidence&quot;: &quot;&quot;
+          },
+          &quot;description&quot;: &quot;What it can do about the session lifecycle, and where each answer was verified\n(`share/providers.yaml`, ADR 0103). The capability, never the wiring: `hooks` says\nthe vendor fires session events, not that this repository has installed anything to\nreceive them. The other half — what is wired here, and whether driving it produced\nanything — is `majordomus capture status`, which reads this same declaration and\njoins it with the tree. It is not restated here because only the shell tool holds\nthe adapter table and can run a shim, and a second account it could not compute\ncorrectly is worse than one reader more.&quot;
+        },
         &quot;scratch_roots&quot;: {
           &quot;default&quot;: [],
           &quot;description&quot;: &quot;The scratch roots this provider creates checkouts of its own under, as declared:\nthe worktree topology reports a checkout there as a session&#39;s scratch checkout and\nnever moves it (ADR 0024).&quot;,
@@ -283,6 +313,21 @@
       ],
       &quot;type&quot;: &quot;object&quot;
     },
+    &quot;PromptSource&quot;: {
+      &quot;description&quot;: &quot;Whether the person&#39;s raw prompt can be captured below the model for one provider.\n\nThere is no `connection` here and there must not be: an MCP server is handed tool calls,\nnever the prompt that produced them. Prompt capture is provider-specific and the\ndeclaration says so rather than pretending the connection can stand in for it.\n\n```\nuse majordomus_cli::share::PromptSource;\nassert_eq!(serde_json::from_str::&lt;PromptSource&gt;(\&quot;\\\&quot;hook\\\&quot;\&quot;).unwrap(), PromptSource::Hook);\nassert!(serde_json::from_str::&lt;PromptSource&gt;(\&quot;\\\&quot;connection\\\&quot;\&quot;).is_err(),\n        \&quot;no connection can observe a prompt\&quot;);\nassert_eq!(PromptSource::default(), PromptSource::None);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;hook&quot;,
+          &quot;description&quot;: &quot;The provider hands the raw prompt to a command before the model runs.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;none&quot;,
+          &quot;description&quot;: &quot;It does not. Nothing this tool can do makes the prompt observable.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
     &quot;ProviderBootstrap&quot;: {
       &quot;description&quot;: &quot;One bootstrap a provider renders.&quot;,
       &quot;properties&quot;: {
@@ -303,6 +348,34 @@
         &quot;target&quot;,
         &quot;mode&quot;,
         &quot;always_loaded&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ProviderOffers&quot;: {
+      &quot;description&quot;: &quot;What one provider can do about the session lifecycle, and where that was verified.\n\n**Every cell carries its evidence.** A capability asserted with no citation is the defect\nthis type exists to make impossible: before it, a provider absent from a shell table was\nsilently unsupported and a provider present in one was silently capable, and no surface\ncould tell a reader which vendor page either answer came from — `capture status`\nenumerated the one provider that had an adapter and said nothing whatever about the\nother five this distribution declares. The rule\n`project.a-provider-capability-cites-its-evidence` refuses a declaration without one.\n\nA provider that declares nothing is `none` on both axes with empty evidence — the state\nthat rule refuses, so the gap is a finding rather than a silent \&quot;unsupported\&quot;:\n\n```\nuse majordomus_cli::share::{EpisodeSource, PromptSource, ProviderOffers};\nlet undeclared = ProviderOffers::default();\nassert_eq!((undeclared.episode, undeclared.prompts), (EpisodeSource::None, PromptSource::None));\nassert!(undeclared.episode_evidence.is_empty() &amp;&amp; undeclared.prompts_evidence.is_empty());\nlet generic: ProviderOffers = serde_json::from_value(serde_json::json!({\n    \&quot;episode\&quot;: \&quot;connection\&quot;, \&quot;episode_evidence\&quot;: \&quot;ADR 0103\&quot;,\n    \&quot;prompts\&quot;: \&quot;none\&quot;, \&quot;prompts_evidence\&quot;: \&quot;MCP carries no prompt\&quot;,\n})).unwrap();\nassert_eq!(generic.episode, EpisodeSource::Connection);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;episode&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/EpisodeSource&quot;,
+          &quot;description&quot;: &quot;How the episode boundary is drawn for this provider.&quot;
+        },
+        &quot;episode_evidence&quot;: {
+          &quot;description&quot;: &quot;Where `episode` was verified: a vendor documentation URL, or the statement that no\nsuch documentation exists and what was searched for it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;prompts&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/PromptSource&quot;,
+          &quot;description&quot;: &quot;Whether the raw prompt can be captured below the model.&quot;
+        },
+        &quot;prompts_evidence&quot;: {
+          &quot;description&quot;: &quot;Where `prompts` was verified, on the same terms as `episode_evidence`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;episode&quot;,
+        &quot;episode_evidence&quot;,
+        &quot;prompts&quot;,
+        &quot;prompts_evidence&quot;
       ],
       &quot;type&quot;: &quot;object&quot;
     }
@@ -359,7 +432,7 @@
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::product</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ProviderList</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/2edd4a582ac4bc780185df45615e26e62c20350e/docs/generated/modules/product.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/product.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">15e7669ec04aa15090d0261370360b7b37653ddfc99585168764811c625c50ab</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/3b938d55d14dac635dc7a03efd955b42a188d4c0/docs/generated/modules/product.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/product.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">20fc75eb66fd415ac5f266c705df771bae44577214209c2fafc250455616b581</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.12.0</dd></div>
       </dl>
     </div>
@@ -435,7 +508,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2edd4a582ac4bc780185df45615e26e62c20350e" class="font-mono underline">2edd4a5</a> · inputs <span class="font-mono">1f52dc854a50</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3b938d55d14dac635dc7a03efd955b42a188d4c0" class="font-mono underline">3b938d5</a> · inputs <span class="font-mono">326da762016a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

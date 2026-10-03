@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["SCHEMA"],"enum":["Disposition","HoldingKind"],"fn":["report"],"struct":["ConvergenceReport","Holding"]};

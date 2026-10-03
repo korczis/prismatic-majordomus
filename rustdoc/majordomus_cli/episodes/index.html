@@ -1,0 +1,69 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Episodes: the execution episode of a client that has no provider hooks, drawn by the MCP connection itself (ADR 0103)."><title>majordomus_cli::episodes - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module episodes</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.12.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module episodes</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#the-defect-this-exists-for" title="The defect this exists for">The defect this exists for</a></li><li><a href="#a-peer-is-not-an-episode" title="A peer is not an episode">A peer is not an episode</a></li><li><a href="#what-is-honestly-not-here" title="What is honestly not here">What is honestly not here</a></li><li><a href="#the-lifecycle-end-to-end" title="The lifecycle, end to end">The lifecycle, end to end</a></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#constants" title="Constants">Constants</a></li><li><a href="#traits" title="Traits">Traits</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="../index.html">In crate majordomus_<wbr>cli</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">majordomus_cli</a></div><h1>Module <span>episodes</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/majordomus_cli/episodes.rs.html#1-1212">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Episodes: the execution episode of a client that has no provider hooks, drawn by the
+MCP connection itself (ADR 0103).</p>
+<h2 id="the-defect-this-exists-for"><a class="doc-anchor" href="#the-defect-this-exists-for">§</a>The defect this exists for</h2>
+<p>Majordomus draws the episode boundary below the model, so that the episode which
+mattered — the one that ended in a crash, a compaction, or somebody closing the window —
+is recorded whether or not a model remembered to record it. Until this module that was
+wired for exactly one provider. Claude Code fires <code>SessionStart</code> and <code>SessionEnd</code>, a
+shim runs <code>capture session</code>, and the repository gets an episode. Every other client got
+nothing at all, and the repository’s claim to draw the boundary below the model was a
+claim about one vendor.</p>
+<p>A client with no hooks still has a boundary, and this server is standing on it: the
+client speaks <code>initialize</code>, makes calls, and goes. That is an episode. The connection is
+the event source, the peer board already tracks attach, activity and detach, and the
+repository’s own <code>majordomus capture session</code> already opens and closes episodes for a
+provider that names its session. Nothing new needs inventing; the three had to be joined.</p>
+<h2 id="a-peer-is-not-an-episode"><a class="doc-anchor" href="#a-peer-is-not-an-episode">§</a>A peer is not an episode</h2>
+<p>They are deliberately separate types and the distinction has cost real time here. A peer
+id (<code>p1</code>, <code>p2</code>, …) is <em>this process’s</em> name for <em>this connection</em>, handed out in
+attachment order and reused by the next server. It is not a worker identity: a session
+that reconnects comes back as a different peer, and on 2026-09-09 a session in this
+repository announced, was re-established under a new id, and was invisible to eight
+others for three hours because everybody had been treating the id as durable.</p>
+<p>So an episode is keyed by an <strong>external identity</strong> the client supplies — its own
+conversation id, thread id, whatever it durably calls itself — and the peer holding it is
+a field that changes. The invariants:</p>
+<ul>
+<li>a connection holds <strong>zero or one</strong> episode: <code>initialize</code> alone opens nothing, and a
+client that never calls <code>episodes.attach</code> is a peer and not a worker with a record;</li>
+<li>a client that reconnects <strong>re-associates</strong> with its own episode by external identity,
+under whatever peer id it now has;</li>
+<li>an episode outlives the connection that opened it, for a bounded grace, because a
+dropped socket is not the end of somebody’s work — it is the most ordinary thing that
+happens to one.</li>
+</ul>
+<h2 id="what-is-honestly-not-here"><a class="doc-anchor" href="#what-is-honestly-not-here">§</a>What is honestly not here</h2>
+<p>Raw prompt capture. An MCP server is handed <code>initialize</code>, tool calls and notifications;
+the person’s prompt is never among them, in any version of the protocol. Prompt capture
+stays provider-specific, <code>share/providers.yaml</code> declares <code>prompts: none</code> for the generic
+provider with that reasoning written down, and no surface implies otherwise.</p>
+<h2 id="the-lifecycle-end-to-end"><a class="doc-anchor" href="#the-lifecycle-end-to-end">§</a>The lifecycle, end to end</h2>
+<p>A client attaches under its own name, its connection drops, it comes back as a different
+peer under the same name and gets the same episode, and then it says it is done:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::episodes::{CloseReason, ConnectionEpisodeState, EpisodeBoard};
+<span class="kw">use </span>majordomus_cli::peers::{PeerBoard, Transport};
+
+<span class="kw">let </span>peers = PeerBoard::new();
+<span class="kw">let </span>board = EpisodeBoard::new(); <span class="comment">// records nothing in a repository
+</span><span class="kw">let </span>first = peers.attach(Transport::Http);
+<span class="kw">let </span>(opened, resumed) = board.attach(<span class="kw-2">&amp;</span>first, <span class="string">"thread-7"</span>, <span class="string">"generic"</span>);
+<span class="macro">assert!</span>(!resumed);
+
+board.detach(<span class="kw-2">&amp;</span>first); <span class="comment">// the socket went; the work did not
+</span><span class="macro">assert_eq!</span>(board.list()[<span class="number">0</span>].state, ConnectionEpisodeState::Detached);
+
+<span class="kw">let </span>second = peers.attach(Transport::Http); <span class="comment">// a new peer id, the same worker
+</span><span class="kw">let </span>(again, resumed) = board.attach(<span class="kw-2">&amp;</span>second, <span class="string">"thread-7"</span>, <span class="string">"generic"</span>);
+<span class="macro">assert!</span>(resumed);
+<span class="macro">assert_eq!</span>((again.opened_at.as_str(), again.attachments), (opened.opened_at.as_str(), <span class="number">2</span>));
+
+<span class="kw">let </span>closed = board.close(<span class="string">"thread-7"</span>, CloseReason::Detach).unwrap();
+<span class="macro">assert_eq!</span>(closed.external_id, <span class="string">"thread-7"</span>);
+<span class="macro">assert!</span>(board.list().is_empty());</code></pre></div></div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.ConnectionEpisode.html" title="struct majordomus_cli::episodes::ConnectionEpisode">Connection<wbr>Episode</a></dt><dd>One episode: what the client calls itself, which connection holds it now, and what the
+repository did about it.</dd><dt><a class="struct" href="struct.EpisodeBoard.html" title="struct majordomus_cli::episodes::EpisodeBoard">Episode<wbr>Board</a></dt><dd>The episodes of one server.</dd><dt><a class="struct" href="struct.NullDriver.html" title="struct majordomus_cli::episodes::NullDriver">Null<wbr>Driver</a></dt><dd>A driver that records nothing: the board without a repository behind it.</dd><dt><a class="struct" href="struct.ToolDriver.html" title="struct majordomus_cli::episodes::ToolDriver">Tool<wbr>Driver</a></dt><dd>The driver that runs the repository’s own <code>majordomus capture session</code>.</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.CloseReason.html" title="enum majordomus_cli::episodes::CloseReason">Close<wbr>Reason</a></dt><dd>Why an episode was closed. Reported to the repository as the end event’s <code>reason</code>, where
+<code>share/providers.yaml</code>’s deliberate-end list decides whether the record says <code>closed</code> or
+<code>interrupted</code> — the same table the provider hooks are read through, so a connection
+episode and a hook episode cannot disagree about what “ended deliberately” means.</dd><dt><a class="enum" href="enum.ConnectionEpisodeState.html" title="enum majordomus_cli::episodes::ConnectionEpisodeState">Connection<wbr>Episode<wbr>State</a></dt><dd>Where an episode stands: held by a live connection, or waiting for its client to come
+back. There is no closed state, because a closed episode leaves the board; what survives
+it is the repository’s own record.</dd></dl><h2 id="constants" class="section-header">Constants<a href="#constants" class="anchor">§</a></h2><dl class="item-table"><dt><a class="constant" href="constant.REATTACH_GRACE.html" title="constant majordomus_cli::episodes::REATTACH_GRACE">REATTACH_<wbr>GRACE</a></dt><dd>How long an episode whose connection has gone is kept before it is closed.</dd></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.EpisodeDriver.html" title="trait majordomus_cli::episodes::EpisodeDriver">Episode<wbr>Driver</a></dt><dd>What opens and closes the repository’s own episode.</dd></dl></section></div></main></body></html>

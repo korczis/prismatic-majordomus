@@ -247,7 +247,7 @@ echo work &gt;&gt; lib/a</pre></div><p class="mt-4 font-mono text-xs uppercase t
         <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body" tabindex="0"># An active task scoped to lib, with a change made under docs that it never claimed.
 . &quot;$FIXTURE_SETUP/active-task.sh&quot;
 echo stray &gt;&gt; docs/d</pre></div><p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Run</p>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-sm text-heading" tabindex="0">$ majordomus finish --outcome completed --verify-command true</pre></div>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-sm text-heading" tabindex="0">$ majordomus finish --outcome completed --verify-command test -d .ai</pre></div>
 
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Output contains</p>
         <ul class="mt-2 space-y-1"><li class="break-all font-mono text-sm text-body">FAIL scope</li><li class="break-all font-mono text-sm text-body">outside claimed scope</li></ul>
@@ -276,7 +276,7 @@ echo stray &gt;&gt; docs/d</pre></div><p class="mt-4 font-mono text-xs uppercase
         <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body" tabindex="0"># An active task with an unresolved question open against it.
 . &quot;$FIXTURE_SETUP/active-task.sh&quot;
 &quot;$MJ&quot; question add &quot;does the parser need to accept tabs?&quot; &gt;/dev/null</pre></div><p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Run</p>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-sm text-heading" tabindex="0">$ majordomus finish --outcome completed --verify-command true</pre></div>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-sm text-heading" tabindex="0">$ majordomus finish --outcome completed --verify-command test -d .ai</pre></div>
 
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Output contains</p>
         <ul class="mt-2 space-y-1"><li class="break-all font-mono text-sm text-body">FAIL blockers</li></ul>
@@ -367,7 +367,7 @@ git add . &amp;&amp; git commit -qm base</pre></div><p class="mt-4 font-mono tex
         <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body" tabindex="0"># An active task with the note the outcome requires already written.
 . &quot;$FIXTURE_SETUP/active-task.sh&quot;
 printf &#39;# Objective\no\n# Current State\nc\n# Next Action\nn\n&#39; | &quot;$MJ&quot; handover &gt;/dev/null</pre></div><p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Run</p>
-        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-sm text-heading" tabindex="0">$ majordomus finish --outcome completed --verify-command true</pre></div>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-sm text-heading" tabindex="0">$ majordomus finish --outcome completed --verify-command test -d .ai</pre></div>
 
         <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Output contains</p>
         <ul class="mt-2 space-y-1"><li class="break-all font-mono text-sm text-body">completed</li></ul>
@@ -532,7 +532,7 @@ reported and refuses, rather than being ignored. See
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2edd4a582ac4bc780185df45615e26e62c20350e" class="font-mono underline">2edd4a5</a> · inputs <span class="font-mono">1f52dc854a50</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3b938d55d14dac635dc7a03efd955b42a188d4c0" class="font-mono underline">3b938d5</a> · inputs <span class="font-mono">326da762016a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

@@ -176,7 +176,7 @@
     </ul>
   </nav>
   <div class="min-w-0">
-    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/2edd4a582ac4bc780185df45615e26e62c20350e/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p><section id="tag-continuity" class="scroll-mt-24">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/3b938d55d14dac635dc7a03efd955b42a188d4c0/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p><section id="tag-continuity" class="scroll-mt-24">
       <h2 class="font-mono text-xl font-semibold tracking-tight text-heading">continuity</h2>
       <p class="mt-2 max-w-3xl text-sm text-body">What this checkout&#39;s lifecycle is holding: the open episode, the record the next worker would resume from with the label that says how far to trust it, the newest progress note, and what is blocking acceptance. Read from the local half of the layer, which this process serves to the worker in front of it and never publishes.</p><article id="op-continuity-state" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-center gap-2">
@@ -300,40 +300,6 @@ foreign open session, a malformed file that was skipped. Empty is the good case.
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/continuity/#op-continuity-state" class="font-mono text-fg-brand hover:underline">continuity.state</a></p></article>
-<article id="schema-Freshness" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-    <h3 class="font-mono text-base font-semibold text-heading">Freshness</h3>
-    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;fresh&quot; | &quot;aging&quot; | &quot;stale&quot; | &quot;unknown&quot; | &quot;invalid&quot;</span>
-  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">How old a record is, judged against <code>session.freshness</code> in the policy.</p>
-<p>This is the second of two independent judgements every record carries, and it exists
-because the first one cannot answer this question. <code>Divergence</code> says where a record's
-commit sits relative to HEAD; <code>advanced</code> means that commit is an ancestor of this one,
-which sounds like agreement and is identically true on the day the record is written and
-a month later. Between 2026-09-05 and 2026-09-11 this repository served a handover that
-was <code>advanced</code> and six days dead, and every surface that read this model — MCP, the HTTP
-API, the Cockpit — presented its <code>Next Action</code> as the thing to do (ADR 0052).</p>
-<p>The thresholds are policy and are read, never restated here: a constant in this file
-would be a second source of truth for a number the policy owns, and a repository whose
-policy predates the key is reported as <code>Freshness::Unknown</code> naming the missing key
-rather than judged against a default nobody declared.</p>
-<p>The five words divide into two groups, and the division is the one a caller acts on:
-<code>fresh</code> and <code>aging</code> are current and may be presented as the instruction, <code>stale</code> and
-<code>invalid</code> must be shown as history, and <code>unknown</code> is neither — a record nobody can date
-is not thereby an old record, and treating it as one would quietly discard a briefing
-that is perfectly good. <code>Freshness::history</code> is that division, and it is the only
-place it is decided.</p>
-<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::continuity::Freshness;</span></span>
-<span class="giallo-l"></span>
-<span class="giallo-l"><span>// the two renderings are one value: the serialised word is the word `as_str` gives,</span></span>
-<span class="giallo-l"><span>// so a reader who met `stale` from MCP and from the command line met one fact</span></span>
-<span class="giallo-l"><span>let stale = serde_json::to_value(Freshness::Stale).unwrap();</span></span>
-<span class="giallo-l"><span>assert_eq!(stale, serde_json::json!(&quot;stale&quot;));</span></span>
-<span class="giallo-l"><span>assert_eq!(stale.as_str(), Some(Freshness::Stale.as_str()));</span></span>
-<span class="giallo-l"></span>
-<span class="giallo-l"><span>// and the division a caller acts on: absence of a judgement is not a bad judgement</span></span>
-<span class="giallo-l"><span>assert!(Freshness::Stale.history() &amp;&amp; Freshness::Invalid.history());</span></span>
-<span class="giallo-l"><span>assert!(!Freshness::Unknown.history(), &quot;undated is not old&quot;);</span></span>
-<span class="giallo-l"><span>assert!(!Freshness::Fresh.history() &amp;&amp; !Freshness::Aging.history());</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">fresh</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Inside <code>session.freshness.fresh_minutes</code>. Current; act on it.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">aging</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Between the two thresholds. Still current, but its age is worth stating.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">stale</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">At or beyond <code>session.freshness.stale_minutes</code>. History, never current.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unknown</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Nothing to judge it by: no timestamp, or no thresholds declared.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">invalid</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A timestamp that does not parse, or one in the future.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/continuity/#schema-Record" class="font-mono text-fg-brand underline">Record</a></p></article>
 <article id="schema-Match" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">Match</h3>
@@ -453,7 +419,7 @@ to open the file.</div><div class="mt-3 overflow-x-auto rounded-base border bord
           <td class="px-3 py-2 text-body">How far its commit is from this one.</td>
         </tr><tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold text-heading">freshness</td>
-          <td class="px-3 py-2 font-mono text-body">Freshness <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/continuity/#schema-Freshness" class="text-fg-brand underline">Freshness</a></td>
+          <td class="px-3 py-2 font-mono text-body">Freshness <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/shared/#schema-Freshness" class="text-fg-brand underline">Freshness</a></td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
           <td class="px-3 py-2 text-body">How old it is, judged against <code>session.freshness</code>. Independent of <code>divergence</code>: a
 record is routinely <code>advanced</code> and <code>stale</code> at once, and that pair is what a reader
@@ -557,7 +523,7 @@ tell "there is nothing to do" from "what there was to do is six days old".</td>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2edd4a582ac4bc780185df45615e26e62c20350e" class="font-mono underline">2edd4a5</a> · inputs <span class="font-mono">1f52dc854a50</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3b938d55d14dac635dc7a03efd955b42a188d4c0" class="font-mono underline">3b938d5</a> · inputs <span class="font-mono">326da762016a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

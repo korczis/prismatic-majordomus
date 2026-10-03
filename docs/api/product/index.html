@@ -176,7 +176,7 @@
     </ul>
   </nav>
   <div class="min-w-0">
-    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/2edd4a582ac4bc780185df45615e26e62c20350e/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p><section id="tag-product" class="scroll-mt-24">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/3b938d55d14dac635dc7a03efd955b42a188d4c0/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p><section id="tag-product" class="scroll-mt-24">
       <h2 class="font-mono text-xl font-semibold tracking-tight text-heading">product</h2>
       <p class="mt-2 max-w-3xl text-sm text-body">What this repository&#39;s product does for a person, as the features under the layer&#39;s features section declare it: each feature made of modules, commands, kinds, rules, documents, decisions, claims, use cases, Cockpit areas and web surfaces it names, with the interfaces it is exposed through, every count, the moments it answers and what is guaranteed derived from those references. The matrix of features against interfaces, the providers the tool has an adapter for, and the model&#39;s own validation. The homepage is a reader of this module and holds no inventory of its own.</p><article id="op-product-feature" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-center gap-2">
@@ -652,6 +652,25 @@ declares it.</div><div class="mt-3 overflow-x-auto rounded-base border border-de
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/product/#schema-ResolvedRefs" class="font-mono text-fg-brand underline">ResolvedRefs</a></p></article>
+<article id="schema-EpisodeSource" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">EpisodeSource</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;hooks&quot; | &quot;connection&quot; | &quot;none&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">How an episode boundary can be drawn for one provider.</p>
+<p>Three words, because three things are true of different providers and collapsing them
+into "supported / not supported" is what let this tool report one provider and stay
+silent about five others. A provider that fires its own events is not the same as one
+that fires none but speaks MCP, and neither is the same as one that can do nothing.</p>
+<p>The words are the declaration's own, and a word outside them is refused rather than read
+as <code>none</code>:</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::share::EpisodeSource;</span></span>
+<span class="giallo-l"><span>let read: EpisodeSource = serde_json::from_str(&quot;\&quot;connection\&quot;&quot;).unwrap();</span></span>
+<span class="giallo-l"><span>assert_eq!(read, EpisodeSource::Connection);</span></span>
+<span class="giallo-l"><span>assert_eq!(EpisodeSource::default(), EpisodeSource::None, &quot;undeclared reads as none&quot;);</span></span>
+<span class="giallo-l"><span>assert!(serde_json::from_str::&lt;EpisodeSource&gt;(&quot;\&quot;hook\&quot;&quot;).is_err(), &quot;hooks, plural&quot;);</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">hooks</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The provider fires its own session events and a hook this tool installs draws the
+boundary from them. The strongest form: it sees a window somebody closed.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">connection</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The provider fires no session event, but its client attaches to this repository's
+shared MCP server, and the connection is the boundary (ADR 0103).</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">none</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Neither. Nothing can say when this provider's episode began or ended, and the tool
+reports that rather than implying a capability nobody has.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/product/#schema-ProviderOffers" class="font-mono text-fg-brand underline">ProviderOffers</a></p></article>
 <article id="schema-FeatureCounts" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">FeatureCounts</h3>
@@ -1233,6 +1252,18 @@ for this provider, when the repository carries it.</td>
           <td class="px-3 py-2 text-body">The scratch roots this provider creates checkouts of its own under, as declared:
 the worktree topology reports a checkout there as a session's scratch checkout and
 never moves it (ADR 0024).</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">offers</td>
+          <td class="px-3 py-2 font-mono text-body">ProviderOffers <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/product/#schema-ProviderOffers" class="text-fg-brand underline">ProviderOffers</a></td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">What it can do about the session lifecycle, and where each answer was verified
+(<code>share/providers.yaml</code>, ADR 0103). The capability, never the wiring: <code>hooks</code> says
+the vendor fires session events, not that this repository has installed anything to
+receive them. The other half — what is wired here, and whether driving it produced
+anything — is <code>majordomus capture status</code>, which reads this same declaration and
+joins it with the tree. It is not restated here because only the shell tool holds
+the adapter table and can run a shim, and a second account it could not compute
+correctly is worse than one reader more.</td>
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/product/#schema-ProviderList" class="font-mono text-fg-brand underline">ProviderList</a></p></article>
@@ -1271,6 +1302,19 @@ never moves it (ADR 0024).</td>
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/product/#op-product-validate" class="font-mono text-fg-brand hover:underline">product.validate</a></p></article>
+<article id="schema-PromptSource" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">PromptSource</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;hook&quot; | &quot;none&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Whether the person's raw prompt can be captured below the model for one provider.</p>
+<p>There is no <code>connection</code> here and there must not be: an MCP server is handed tool calls,
+never the prompt that produced them. Prompt capture is provider-specific and the
+declaration says so rather than pretending the connection can stand in for it.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::share::PromptSource;</span></span>
+<span class="giallo-l"><span>assert_eq!(serde_json::from_str::&lt;PromptSource&gt;(&quot;\&quot;hook\&quot;&quot;).unwrap(), PromptSource::Hook);</span></span>
+<span class="giallo-l"><span>assert!(serde_json::from_str::&lt;PromptSource&gt;(&quot;\&quot;connection\&quot;&quot;).is_err(),</span></span>
+<span class="giallo-l"><span>        &quot;no connection can observe a prompt&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(PromptSource::default(), PromptSource::None);</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">hook</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The provider hands the raw prompt to a command before the model runs.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">none</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">It does not. Nothing this tool can do makes the prompt observable.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/product/#schema-ProviderOffers" class="font-mono text-fg-brand underline">ProviderOffers</a></p></article>
 <article id="schema-ProviderBootstrap" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">ProviderBootstrap</h3>
@@ -1316,6 +1360,55 @@ never moves it (ADR 0024).</td>
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/product/#op-product-providers" class="font-mono text-fg-brand hover:underline">product.providers</a></p></article>
+<article id="schema-ProviderOffers" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">ProviderOffers</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What one provider can do about the session lifecycle, and where that was verified.</p>
+<p><strong>Every cell carries its evidence.</strong> A capability asserted with no citation is the defect
+this type exists to make impossible: before it, a provider absent from a shell table was
+silently unsupported and a provider present in one was silently capable, and no surface
+could tell a reader which vendor page either answer came from — <code>capture status</code>
+enumerated the one provider that had an adapter and said nothing whatever about the
+other five this distribution declares. The rule
+<code>project.a-provider-capability-cites-its-evidence</code> refuses a declaration without one.</p>
+<p>A provider that declares nothing is <code>none</code> on both axes with empty evidence — the state
+that rule refuses, so the gap is a finding rather than a silent "unsupported":</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::share::{EpisodeSource, PromptSource, ProviderOffers};</span></span>
+<span class="giallo-l"><span>let undeclared = ProviderOffers::default();</span></span>
+<span class="giallo-l"><span>assert_eq!((undeclared.episode, undeclared.prompts), (EpisodeSource::None, PromptSource::None));</span></span>
+<span class="giallo-l"><span>assert!(undeclared.episode_evidence.is_empty() &amp;&amp; undeclared.prompts_evidence.is_empty());</span></span>
+<span class="giallo-l"><span>let generic: ProviderOffers = serde_json::from_value(serde_json::json!({</span></span>
+<span class="giallo-l"><span>    &quot;episode&quot;: &quot;connection&quot;, &quot;episode_evidence&quot;: &quot;ADR 0103&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;prompts&quot;: &quot;none&quot;, &quot;prompts_evidence&quot;: &quot;MCP carries no prompt&quot;,</span></span>
+<span class="giallo-l"><span>})).unwrap();</span></span>
+<span class="giallo-l"><span>assert_eq!(generic.episode, EpisodeSource::Connection);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">episode</td>
+          <td class="px-3 py-2 font-mono text-body">EpisodeSource <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/product/#schema-EpisodeSource" class="text-fg-brand underline">EpisodeSource</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How the episode boundary is drawn for this provider.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">episode_evidence</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Where <code>episode</code> was verified: a vendor documentation URL, or the statement that no
+such documentation exists and what was searched for it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">prompts</td>
+          <td class="px-3 py-2 font-mono text-body">PromptSource <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/product/#schema-PromptSource" class="text-fg-brand underline">PromptSource</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether the raw prompt can be captured below the model.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">prompts_evidence</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Where <code>prompts</code> was verified, on the same terms as <code>episode_evidence</code>.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/product/#schema-ProductProvider" class="font-mono text-fg-brand underline">ProductProvider</a></p></article>
 <article id="schema-ResolvedRefs" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">ResolvedRefs</h3>
@@ -1763,7 +1856,7 @@ every capability has a Cockpit page; <code>docs</code> when it names a document.
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2edd4a582ac4bc780185df45615e26e62c20350e" class="font-mono underline">2edd4a5</a> · inputs <span class="font-mono">1f52dc854a50</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3b938d55d14dac635dc7a03efd955b42a188d4c0" class="font-mono underline">3b938d5</a> · inputs <span class="font-mono">326da762016a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

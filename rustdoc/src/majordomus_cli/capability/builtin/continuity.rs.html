@@ -790,13 +790,13 @@
 <a href=#790 id=790 data-nosnippet>790</a></span><span class="doccomment">/// The freshness thresholds this repository declares, read from the policy the manifest
 <a href=#791 id=791 data-nosnippet>791</a>/// names.
 <a href=#792 id=792 data-nosnippet>792</a>///
-<a href=#793 id=793 data-nosnippet>793</a>/// Read here rather than carried on the [`Context`] because nothing else in this process
-<a href=#794 id=794 data-nosnippet>794</a>/// needs them, and read from the policy rather than written down because a constant in this
-<a href=#795 id=795 data-nosnippet>795</a>/// file would be the second copy of a number the policy owns — the drift `session.freshness`
-<a href=#796 id=796 data-nosnippet>796</a>/// exists in one place to prevent. A repository whose policy predates the key, or whose
+<a href=#793 id=793 data-nosnippet>793</a>/// Read here rather than carried on the [`Context`] because only this module and
+<a href=#794 id=794 data-nosnippet>794</a>/// [`super::knowledge_base`] need them, and read from the policy rather than written down
+<a href=#795 id=795 data-nosnippet>795</a>/// because a constant in this file would be the second copy of a number the policy owns — the
+<a href=#796 id=796 data-nosnippet>796</a>/// drift `session.freshness` exists in one place to prevent. A repository whose policy predates the key, or whose
 <a href=#797 id=797 data-nosnippet>797</a>/// policy cannot be read at all, yields no thresholds; every record is then reported as
 <a href=#798 id=798 data-nosnippet>798</a>/// `unknown` naming the missing key, which is the honest answer and not a default.
-<a href=#799 id=799 data-nosnippet>799</a></span><span class="kw">fn </span>thresholds_of(ctx: <span class="kw-2">&amp;</span>Context) -&gt; Thresholds {
+<a href=#799 id=799 data-nosnippet>799</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>thresholds_of(ctx: <span class="kw-2">&amp;</span>Context) -&gt; Thresholds {
 <a href=#800 id=800 data-nosnippet>800</a>    <span class="kw">let </span>root = PathBuf::from(<span class="kw-2">&amp;</span>ctx.index.repository.root);
 <a href=#801 id=801 data-nosnippet>801</a>    <span class="kw">let </span><span class="prelude-val">Ok</span>(repo) = <span class="kw">crate</span>::repository::Repository::open(<span class="kw-2">&amp;</span>root) <span class="kw">else </span>{
 <a href=#802 id=802 data-nosnippet>802</a>        <span class="kw">return </span>Thresholds::default();

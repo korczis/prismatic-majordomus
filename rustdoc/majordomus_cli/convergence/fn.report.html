@@ -1,0 +1,35 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Measure the repository holding `root`."><title>report in majordomus_cli::convergence - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc fn"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">report</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.12.0</span></h2></div><div class="sidebar-elems"><div id="rustdoc-modnav"><h2><a href="index.html">In majordomus_<wbr>cli::<wbr>convergence</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">majordomus_cli</a>::<wbr><a href="index.html">convergence</a></div><h1>Function <span class="fn">report</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/majordomus_cli/convergence/mod.rs.html#329-422">Source</a> </span></div><pre class="rust item-decl"><code>pub fn report(root: &amp;<a class="struct" href="https://doc.rust-lang.org/1.98.1/std/path/struct.Path.html" title="struct std::path::Path">Path</a>) -&gt; <a class="type" href="../worktree/type.Result.html" title="type majordomus_cli::worktree::Result">Result</a>&lt;<a class="struct" href="struct.ConvergenceReport.html" title="struct majordomus_cli::convergence::ConvergenceReport">ConvergenceReport</a>&gt;</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Measure the repository holding <code>root</code>.</p>
+<p>One topology read (the same service the hooks and the Cockpit ask), one <code>git rev-list</code>
+for the commits no remote reaches, one <code>git stash list</code>. Nothing here writes, and
+nothing here reaches the network: a remote-tracking ref is what this checkout last
+fetched, which is exactly the question — whether the work left this disk, not whether
+the remote still has it.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::process::Command;
+<span class="kw">use </span>majordomus_cli::convergence::{report, Disposition};
+
+<span class="kw">let </span>dir = std::env::temp_dir().join(<span class="macro">format!</span>(<span class="string">"mj-convergence-doc-{}"</span>, std::process::id()));
+<span class="kw">let _ </span>= std::fs::remove_dir_all(<span class="kw-2">&amp;</span>dir);
+std::fs::create_dir_all(<span class="kw-2">&amp;</span>dir).unwrap();
+<span class="kw">let </span>git = |args: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]| {
+    <span class="kw">let </span>ok = Command::new(<span class="string">"git"</span>).current_dir(<span class="kw-2">&amp;</span>dir).args(args).status().unwrap().success();
+    <span class="macro">assert!</span>(ok, <span class="string">"git {args:?}"</span>);
+};
+git(<span class="kw-2">&amp;</span>[<span class="string">"init"</span>, <span class="string">"-q"</span>, <span class="string">"-b"</span>, <span class="string">"master"</span>]);
+<span class="kw">let </span>commit = |msg: <span class="kw-2">&amp;</span>str| git(<span class="kw-2">&amp;</span>[<span class="string">"-c"</span>, <span class="string">"user.email=d@example.com"</span>, <span class="string">"-c"</span>, <span class="string">"user.name=doc"</span>,
+                               <span class="string">"commit"</span>, <span class="string">"-q"</span>, <span class="string">"--allow-empty"</span>, <span class="string">"-m"</span>, msg]);
+commit(<span class="string">"base"</span>);
+git(<span class="kw-2">&amp;</span>[<span class="string">"checkout"</span>, <span class="string">"-q"</span>, <span class="string">"-b"</span>, <span class="string">"feature/doc"</span>]);
+commit(<span class="string">"work nobody else has"</span>);
+git(<span class="kw-2">&amp;</span>[<span class="string">"checkout"</span>, <span class="string">"-q"</span>, <span class="string">"master"</span>]);
+
+<span class="comment">// a commit on a branch the trunk does not reach and no remote has seen is on one disk
+</span><span class="kw">let </span>verdict = report(<span class="kw-2">&amp;</span>dir).unwrap();
+<span class="macro">assert!</span>(!verdict.converged);
+<span class="macro">assert!</span>(verdict.holdings.iter().any(|h| h.disposition == Disposition::LocalOnly));
+
+<span class="comment">// and a file never committed is the other half
+</span>std::fs::write(dir.join(<span class="string">"draft.txt"</span>), <span class="string">"half written"</span>).unwrap();
+<span class="kw">let </span>verdict = report(<span class="kw-2">&amp;</span>dir).unwrap();
+<span class="macro">assert!</span>(verdict.holdings.iter().any(|h| h.disposition == Disposition::Uncommitted));
+std::fs::remove_dir_all(<span class="kw-2">&amp;</span>dir).unwrap();</code></pre></div></div></details></section></div></main></body></html>

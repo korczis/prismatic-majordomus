@@ -268,18 +268,38 @@ prompts:
   retention_max_days: 90                 # a prompt body older than this is pruned
   retention_max_bytes: 8388608           # 8 MiB of bodies; the oldest are pruned first
 
-# The provider&#39;s episode events do three things beyond drawing the boundary. The start event
+# The provider&#39;s episode events do four things beyond drawing the boundary. The start event
 # hands the worker a briefing on standard output, which the provider adds to the context it
 # is about to build; the compaction event records a derived checkpoint, because a compaction
 # discards the conversation while the work continues; the end event writes a derived
-# continuation record when the task is still active.
+# continuation record; and both of the latter derive what the episode learned into candidate
+# knowledge records, because the ledger lines it stamped are about to outlive the
+# conversation that produced them (ADR 0091).
 session:
   briefing_on_start: true
+  # The sections a closed episode&#39;s record carries in its body. The front matter is what a
+  # machine can prove; these are what the episode was for and how it turned out, composed
+  # from the worker&#39;s own checkpoints and decisions where it left any and from git and the
+  # ledger where it did not. A section named here with no writer in lib/derive.sh is a
+  # configuration error reported by name, never a silently empty heading.
+  record_sections: [What Happened, Progress Notes, Decisions, Open Questions, Outcome]
+  # The lifecycle commits the record it writes. A record nobody committed reaches no
+  # surface — not the site, not the Rust index, not `session list` in another clone — so
+  # leaving it in the working tree is the same as not writing it.
+  commit_record_on_end: true
+  push_record_on_end: true
   briefing_budget_lines: 60              # cap on what the start event injects, per episode
   checkpoint_on_compact: true            # also the checkpoint the close records, for the
                                          # same reason: both are moments at which what the
                                          # episode knows stops being reachable
   handover_on_end: true
+  knowledge_on_end: true                 # the evidence the episode produced is about to stop
+                                         # being reachable; derive what it says as the
+                                         # episode closes, on every close path
+  knowledge_on_compact: true             # a compaction discards the conversation while the
+                                         # work goes on; the ledger lines it produced are
+                                         # derived now, whether or not the episode ever
+                                         # closes cleanly, and independently of the checkpoint
   ensure_server_on_start: true           # the start event converges on a ready shared server
   stranded_after: 12h                    # an open episode silent this long may be recovered
   # How old a continuation record may be before it stops being current. Divergence
@@ -290,6 +310,15 @@ session:
   freshness:
     fresh_minutes: 720                   # 12h: within a working day either side, current
     stale_minutes: 2880                  # 48h: beyond this it is history, never current
+
+# A candidate is a knowledge record the deriver wrote and nobody has judged. The queue is
+# measured, never emptied by a machine: more candidates than the cap, or one waiting longer
+# than the age, is a doctor finding that names them, because a review queue that grows
+# without bound is a queue nobody reviews. Declared once here and read by every surface.
+knowledge:
+  candidates_max_files: 40               # more candidates than this awaiting review is a WARN
+  candidate_max_age_minutes: 20160       # 14d: a candidate this old was not reviewed, it was
+                                         # ignored; doctor names it
 
 # `majordomus bench` samples every public command this many times after the warm-up runs;
 # `bench --check` refuses a regression larger than these fractions of the baseline&#39;s
@@ -439,7 +468,7 @@ projections:
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2edd4a582ac4bc780185df45615e26e62c20350e" class="font-mono underline">2edd4a5</a> · inputs <span class="font-mono">1f52dc854a50</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3b938d55d14dac635dc7a03efd955b42a188d4c0" class="font-mono underline">3b938d5</a> · inputs <span class="font-mono">326da762016a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

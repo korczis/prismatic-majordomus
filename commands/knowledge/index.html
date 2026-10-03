@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>majordomus knowledge — Prismatic Majordomus</title>
-<meta name="description" content="The compiled index over what this repository states.">
+<meta name="description" content="The compiled index over what this repository states, and the candidate records it derives from what an episode did.">
 <link rel="canonical" href="https://majordomus.dev/commands/knowledge/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
 <meta property="og:title" content="majordomus knowledge — Prismatic Majordomus">
-<meta property="og:description" content="The compiled index over what this repository states.">
+<meta property="og:description" content="The compiled index over what this repository states, and the candidate records it derives from what an episode did.">
 <meta property="og:url" content="https://majordomus.dev/commands/knowledge/">
 <meta property="og:image" content="https://majordomus.dev/images/social-card.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -164,25 +164,25 @@
 </nav>
 
     <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">majordomus knowledge</h1>
-    <p class="mt-3 max-w-3xl break-words text-lg text-body">The compiled index over what this repository states.</p>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">The compiled index over what this repository states, and the candidate records it derives from what an episode did.</p>
   </div>
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_16rem]">
-  <div class="min-w-0"><p class="text-lg text-body">The compiled index over what this repository states.</p>
+  <div class="min-w-0"><p class="text-lg text-body">The compiled index over what this repository states, and the candidate records it derives from what an episode did.</p>
     <ul class="mt-4 flex flex-wrap gap-2 text-xs">
-      <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">read-only</span></li>
-      <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">memory</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">--json</span></li></ul><p class="mt-4 min-w-0 break-words border-l-2 border-default pl-4 text-sm text-body">Discovery reads the version-control index with the declared pathspecs and never walks the tree. Nodes keep their identity across a rebuild, kinds are never guessed, and an edge exists only where a file states it.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Syntax</h2>
-    <div class="mt-3 overflow-x-auto rounded-base border border-default bg-neutral-primary-soft" tabindex="0"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading" tabindex="0">majordomus knowledge &lt;sources|nodes|edges&gt; [--scope shared|operational|all] [--kind &lt;kind&gt;] [--type &lt;type&gt;] [--json]</pre></div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Lifecycle</h2>
+      <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">state-mutating</span></li>
+      <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">memory</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">--json</span></li></ul><p class="mt-4 min-w-0 break-words border-l-2 border-default pl-4 text-sm text-body">Discovery reads the version-control index with the declared pathspecs and never walks the tree. Nodes keep their identity across a rebuild, kinds are never guessed, and an edge exists only where a file states it. sources, nodes, edges, candidates and check write nothing. derive turns the ledger lines one episode stamped into candidate records under the tracked knowledge section, deterministically and without a model; a second run over the same evidence writes nothing and says so. promote and reject are a person&#39;s acts on a candidate and each leaves a ledger line; nothing here stages a file (ADR 0091).</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Syntax</h2>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default bg-neutral-primary-soft" tabindex="0"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading" tabindex="0">majordomus knowledge &lt;sources|nodes|edges|derive|candidates|promote|reject|check&gt; [--scope shared|operational|all] [--kind &lt;kind&gt;] [--type &lt;type&gt;] [--episode &lt;id&gt;] [--dry-run] [--class &lt;class&gt;] [--reason &lt;why&gt;] [--by &lt;id&gt;] [--json]</pre></div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Lifecycle</h2>
     <ol class="mt-3 flex flex-wrap gap-2 text-sm"><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Set up</li><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Begin</li><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Work</li><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Verify</li><li class="rounded-base border px-3 py-1.5 border-default bg-neutral-primary-soft text-body-subtle">Conclude</li><li class="rounded-base border px-3 py-1.5 border-brand-subtle bg-brand-softer font-medium text-fg-brand-strong" aria-current="step">Inspect</li></ol>
     <p class="mt-3 text-sm text-body-subtle">Other commands at this stage:<a href="https://majordomus.dev/commands/doctor/" class="font-mono text-fg-brand hover:underline">doctor</a>, <a href="https://majordomus.dev/commands/watch/" class="font-mono text-fg-brand hover:underline">watch</a>, <a href="https://majordomus.dev/commands/history/" class="font-mono text-fg-brand hover:underline">history</a>, <a href="https://majordomus.dev/commands/search/" class="font-mono text-fg-brand hover:underline">search</a>, <a href="https://majordomus.dev/commands/doctrine/" class="font-mono text-fg-brand hover:underline">doctrine</a>, <a href="https://majordomus.dev/commands/version/" class="font-mono text-fg-brand hover:underline">version</a>, <a href="https://majordomus.dev/commands/rules/" class="font-mono text-fg-brand hover:underline">rules</a>, <a href="https://majordomus.dev/commands/bench/" class="font-mono text-fg-brand hover:underline">bench</a>, <a href="https://majordomus.dev/commands/archive/" class="font-mono text-fg-brand hover:underline">archive</a>.</p><div class="mt-10 grid gap-6 sm:grid-cols-2">
       <div class="min-w-0">
-        <h2 class="text-xl font-semibold tracking-tight text-heading">Reads</h2><ul class="mt-3 space-y-1 text-sm"><li class="break-all font-mono text-body">.ai/repo/knowledge/sources.yaml</li><li class="break-all font-mono text-body">share/knowledge-sources.yaml</li><li class="break-all font-mono text-body">.ai/local/state/</li></ul></div>
+        <h2 class="text-xl font-semibold tracking-tight text-heading">Reads</h2><ul class="mt-3 space-y-1 text-sm"><li class="break-all font-mono text-body">.ai/repo/knowledge/sources.yaml</li><li class="break-all font-mono text-body">share/knowledge-sources.yaml</li><li class="break-all font-mono text-body">.ai/local/state/</li><li class="break-all font-mono text-body">.ai/repo/knowledge/candidates/</li><li class="break-all font-mono text-body">.ai/repo/knowledge/curated/</li><li class="break-all font-mono text-body">.ai/local/state/ledger.jsonl</li><li class="break-all font-mono text-body">.ai/repo/policy.yaml</li><li class="break-all font-mono text-body">share/allow/knowledge.txt</li></ul></div>
       <div class="min-w-0">
-        <h2 class="text-xl font-semibold tracking-tight text-heading">Writes</h2><p class="mt-3 text-sm font-medium text-heading">Nothing. This command is read-only.</p></div>
+        <h2 class="text-xl font-semibold tracking-tight text-heading">Writes</h2><ul class="mt-3 space-y-1 text-sm"><li class="break-all font-mono text-body">.ai/repo/knowledge/candidates/</li><li class="break-all font-mono text-body">.ai/repo/knowledge/curated/</li><li class="break-all font-mono text-body">.ai/local/state/ledger.jsonl</li></ul></div>
     </div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Exit codes</h2>
     <p class="mt-2 text-sm text-body-subtle">Only the codes this command can produce. The full contract is on the <a href="https://majordomus.dev/commands/" class="text-fg-brand underline">commands index</a>.</p>
-    <ul class="mt-3 space-y-1 text-sm"><li><code class="font-mono font-semibold text-heading">0</code> <span class="text-body">ok</span></li><li><code class="font-mono font-semibold text-heading">2</code> <span class="text-body">usage</span></li><li><code class="font-mono font-semibold text-heading">10</code> <span class="text-body">contract unmet</span></li><li><code class="font-mono font-semibold text-heading">13</code> <span class="text-body">internal error</span></li></ul><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What the repository states, compiled</h2>
+    <ul class="mt-3 space-y-1 text-sm"><li><code class="font-mono font-semibold text-heading">0</code> <span class="text-body">ok</span></li><li><code class="font-mono font-semibold text-heading">2</code> <span class="text-body">usage</span></li><li><code class="font-mono font-semibold text-heading">10</code> <span class="text-body">contract unmet</span></li><li><code class="font-mono font-semibold text-heading">12</code> <span class="text-body">missing artifact</span></li><li><code class="font-mono font-semibold text-heading">13</code> <span class="text-body">internal error</span></li></ul><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What the repository states, compiled</h2>
     <p class="mt-2 text-sm text-body">knowledge discovers the declared source classes through the version-control index, derives one node per object it finds and one edge per relationship a file states, and reads no prose.</p>
     <div class="mt-4" x-data="{ s: 'sources' }">
       <div role="tablist" aria-label="Scenarios" class="flex flex-wrap gap-2"><button type="button" role="tab" x-on:click="s = 'sources'" :aria-selected="s === 'sources' ? 'true' : 'false'"
@@ -191,7 +191,9 @@
           class="rounded-base border px-3 py-1.5 text-left text-sm focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
           :class="s === 'nodes' ? 'border-brand-subtle bg-brand-softer text-fg-brand-strong font-medium' : 'border-default bg-neutral-primary-soft text-body hover:bg-neutral-secondary-medium hover:text-heading'">Nodes of one kind</button><button type="button" role="tab" x-on:click="s = 'refuses-unknown'" :aria-selected="s === 'refuses-unknown' ? 'true' : 'false'"
           class="rounded-base border px-3 py-1.5 text-left text-sm focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
-          :class="s === 'refuses-unknown' ? 'border-brand-subtle bg-brand-softer text-fg-brand-strong font-medium' : 'border-default bg-neutral-primary-soft text-body hover:bg-neutral-secondary-medium hover:text-heading'">A subcommand that does not exist</button></div><div x-show="s === 'sources'" class="mt-4 min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+          :class="s === 'refuses-unknown' ? 'border-brand-subtle bg-brand-softer text-fg-brand-strong font-medium' : 'border-default bg-neutral-primary-soft text-body hover:bg-neutral-secondary-medium hover:text-heading'">A subcommand that does not exist</button><button type="button" role="tab" x-on:click="s = 'derive-dry-run'" :aria-selected="s === 'derive-dry-run' ? 'true' : 'false'"
+          class="rounded-base border px-3 py-1.5 text-left text-sm focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
+          :class="s === 'derive-dry-run' ? 'border-brand-subtle bg-brand-softer text-fg-brand-strong font-medium' : 'border-default bg-neutral-primary-soft text-body hover:bg-neutral-secondary-medium hover:text-heading'">What an episode would yield, without writing it</button></div><div x-show="s === 'sources'" class="mt-4 min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
         <h3 class="text-base font-semibold text-heading">The declared sources, discovered</h3>
         <dl class="mt-3 flex flex-wrap gap-2 text-xs"><div class="flex items-center gap-1.5 rounded border border-default px-2 py-1 bg-success-soft">
             <dt class="text-body">installed</dt>
@@ -263,9 +265,30 @@ git add . &amp;&amp; git commit -qm base</pre></div><p class="mt-4 font-mono tex
           <code class="ml-1 rounded px-1.5 py-0.5 font-mono font-semibold bg-danger-soft text-fg-danger-strong">2</code>
         </p>
         <p class="mt-4 text-sm text-body">Usage errors exit 2 and name the help text; nothing is guessed from a near miss.</p>
+      </div><div x-show="s === 'derive-dry-run'" class="mt-4 min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <h3 class="text-base font-semibold text-heading">What an episode would yield, without writing it</h3>
+        <dl class="mt-3 flex flex-wrap gap-2 text-xs"><div class="flex items-center gap-1.5 rounded border border-default px-2 py-1 bg-success-soft">
+            <dt class="text-body">session open</dt>
+            <dd class="font-mono font-medium text-fg-success-strong">yes</dd>
+          </div></dl>
+
+        <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Given this repository</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-body" tabindex="0"># Installed, with one execution episode open in this worktree.
+. &quot;$FIXTURE_SETUP/installed.sh&quot;
+&quot;$MJ&quot; session start --worker some-provider/some-model &gt;/dev/null</pre></div><p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Run</p>
+        <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-sm text-heading" tabindex="0">$ majordomus knowledge derive --dry-run</pre></div>
+
+        <p class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Output contains</p>
+        <ul class="mt-2 space-y-1"><li class="break-all font-mono text-sm text-body">^knowledge derive:</li></ul>
+        <p class="mt-3 text-sm">
+          <span class="text-body-subtle">exit</span>
+          <code class="ml-1 rounded px-1.5 py-0.5 font-mono font-semibold bg-success-soft text-fg-success-strong">0</code>
+        </p>
+        <p class="mt-4 text-sm text-body">The deriver reads the open episode&#39;s ledger lines and says what it would write; with --dry-run no record and no ledger line is written, so it can be run anywhere.</p>
       </div></div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Reference</h2>
-    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto" tabindex="0"><p>A compiler over what this repository already states. Read-only in every subcommand
-documented here.</p>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_table]:block [&_table]:overflow-x-auto" tabindex="0"><p>A compiler over what this repository already states, and the writer of what an episode
+learned. <code>sources</code>, <code>nodes</code>, <code>edges</code>, <code>candidates</code> and <code>check</code> are read-only; <code>derive</code>,
+<code>promote</code> and <code>reject</code> write knowledge records and ledger lines, and nothing else.</p>
 <p>It is not a wiki, not a database, not a memory service, and not a second place to write
 things down. Every source it reads is a file somebody already maintains, everything it
 produces is derived and regenerable, and none of it outranks the file it came from. A
@@ -285,7 +308,55 @@ its kind, the source it came from and that source's hash. Exits <code>10</code> 
 claim one identity.</li>
 <li><code>edges [--scope ...] [--type &lt;t&gt;]</code> derives one edge per stated relationship, with the file
 and the field or line it was observed in.</li>
+<li><code>derive [--episode &lt;id&gt;] [--dry-run] [--json]</code> derives the knowledge the episode produced
+into candidate records under <code>.ai/repo/knowledge/candidates/</code>, from the ledger and git and
+never from a conversation: a recorded decision becomes a <code>convention</code>, a resolved question a
+<code>fact</code>, a blocked or failed task a <code>lesson</code>, a completion with a verification command a
+<code>fact</code>. The open episode, or the one named. Deterministic: same ledger, same git, same
+bytes, and a second run reports every record <code>unchanged</code>. <code>--dry-run</code> says what it would
+write and touches neither the tree nor the ledger.</li>
+<li><code>candidates [--json]</code> lists every record awaiting review — id, class, date, the branch of
+the episode it came from, title — reading the directory rather than the index, so a
+candidate the hook just wrote and nobody has added is listed.</li>
+<li><code>promote &lt;id&gt; [--class &lt;c&gt;] &lt; evidence.md</code> moves a candidate to <code>curated/</code> as <code>verified</code>,
+with the evidence on standard input appended under <code># Evidence</code> and the class the person
+chose. The deriver never writes <code>verified</code>; this is the act that does.</li>
+<li><code>reject &lt;id&gt; --reason "&lt;why&gt;" [--by &lt;id&gt;]</code> marks a candidate <code>superseded</code> in place with the
+reason under <code># Rejected</code>, naming the record that replaces it when <code>--by</code> gives one.</li>
+<li><code>check [--json]</code> validates every record under <code>candidates/</code> and <code>curated/</code>: the schema, no
+unknown key, unique ids equal to the file name, provenance beside <code>verified</code>, every
+reference resolving, a reason beside <code>superseded</code>, no candidate claiming <code>verified</code>, no
+conversation. The same check <code>check</code> and <code>doctor</code> dispatch.</li>
 </ul>
+<p>The read side of the same store is served by the executable — <code>bin/majordomus-cli knowledge candidates</code>, <code>knowledge record &lt;id&gt;</code> and <code>knowledge status</code>, each a capability declared once
+and answering identically over HTTP, MCP and the command line (<code>CAPABILITIES.md</code>); <code>status</code>
+reports the last derivation, the newest close and whether the writer has stopped.
+<a rel="external" href="https://majordomus.dev/docs/knowledge/"><code>KNOWLEDGE.md</code></a> has the derivation table, the two moments and the rules.</p>
+<p><strong>Writes:</strong> <code>derive</code> writes <code>.ai/repo/knowledge/candidates/&lt;id&gt;.md</code>, one per record, through a
+temporary file in the same directory renamed over the id-named file, never staged, and prints
+<code>written</code>, <code>unchanged</code> or <code>skipped</code> per record with the summary last; it appends
+<code>knowledge.derived</code> to the ledger — episode, counts, paths — even when it wrote nothing.
+<code>promote</code> writes <code>.ai/repo/knowledge/curated/&lt;id&gt;.md</code> the same way, removes the candidate,
+appends <code>knowledge.promoted</code> and prints the curated path last. <code>reject</code> rewrites the
+candidate in place and appends <code>knowledge.rejected</code>. The record id is the episode id and a
+digest of the evidence, so the same fact always lands in the same file.</p>
+<p><strong>Never</strong> stages, commits, or modifies any other file. Never reads a conversation, a prompt or
+a handover; never calls a model or a network. Never writes <code>verified</code>.</p>
+<p><strong>Refuses</strong> (<code>10</code>) <code>promote</code> with empty stdin, with stdin carrying a transcript marker, on a
+record whose status is not <code>candidate</code>, or with a class outside the enumeration; <code>reject</code> on a
+record whose status is not <code>candidate</code>, or when <code>--by</code> names no record; <code>derive</code> when the
+policy does not parse; <code>check</code> on any failing record. (<code>12</code>) <code>promote</code> or <code>reject</code> when no
+candidate carries the id. (<code>2</code>) <code>reject</code> without a non-empty <code>--reason</code>. (<code>13</code>) a write that
+did not complete. <code>derive</code> with no episode to derive from says so and exits <code>0</code>.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>$ majordomus decision add &quot;Tabs are refused in the parser&quot; --why &quot;two encodings of one thing&quot;</span></span>
+<span class="giallo-l"><span>$ majordomus knowledge derive</span></span>
+<span class="giallo-l"><span>written .ai/repo/knowledge/candidates/s-20260912101500-7f1a-3b9c2e4d1a05.md</span></span>
+<span class="giallo-l"><span>knowledge derive: 1 written, 0 unchanged, 0 skipped for episode s-20260912101500-7f1a</span></span>
+<span class="giallo-l"><span>$ majordomus knowledge derive</span></span>
+<span class="giallo-l"><span>unchanged .ai/repo/knowledge/candidates/s-20260912101500-7f1a-3b9c2e4d1a05.md</span></span>
+<span class="giallo-l"><span>knowledge derive: 0 written, 1 unchanged, 0 skipped for episode s-20260912101500-7f1a</span></span>
+<span class="giallo-l"><span>$ printf &#39;Verified by reading lib/yaml.sh.\n&#39; | majordomus knowledge promote s-20260912101500-7f1a-3b9c2e4d1a05 --class constraint</span></span>
+<span class="giallo-l"><span>.ai/repo/knowledge/curated/s-20260912101500-7f1a-3b9c2e4d1a05.md</span></span></code></pre>
 <p><strong>No edge without provenance.</strong> Every edge names where the relationship was stated, and an
 edge missing any of from, to, type or provenance is refused rather than emitted with a
 blank — a blank source reads as "unknown" and is indistinguishable from one nobody recorded.
@@ -397,11 +468,11 @@ that must read the same on every machine cannot carry it (#713,
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Behaviour</h3>
-        <ul class="mt-2 space-y-1 text-sm"><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/405_the_knowledge_reader_honours_the_schema.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">405_the_knowledge_reader_honours_the_schema</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/64_knowledge_discovery.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">64_knowledge_discovery</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/777_a_recorded_scenario_does_not_depend_on_the_recorder.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">777_a_recorded_scenario_does_not_depend_on_the_recorder</a></li></ul>
+        <ul class="mt-2 space-y-1 text-sm"><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/405_the_knowledge_reader_honours_the_schema.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">405_the_knowledge_reader_honours_the_schema</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/563_knowledge_is_derived_at_the_boundary.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">563_knowledge_is_derived_at_the_boundary</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/564_knowledge_derivation_is_idempotent.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">564_knowledge_derivation_is_idempotent</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/565_knowledge_switch_and_failure_leave_evidence.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">565_knowledge_switch_and_failure_leave_evidence</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/64_knowledge_discovery.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">64_knowledge_discovery</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/707_knowledge_check_refuses_malformed_records.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">707_knowledge_check_refuses_malformed_records</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/708_health_sees_a_stopped_knowledge_writer.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">708_health_sees_a_stopped_knowledge_writer</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/709_knowledge_promotion_is_an_act.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">709_knowledge_promotion_is_an_act</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/710_briefing_names_the_candidates.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">710_briefing_names_the_candidates</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/711_candidates_are_reviewed_not_accumulated.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">711_candidates_are_reviewed_not_accumulated</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/777_a_recorded_scenario_does_not_depend_on_the_recorder.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">777_a_recorded_scenario_does_not_depend_on_the_recorder</a></li></ul>
       </div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Failure modes</h3>
-        <ul class="mt-2 space-y-1 text-sm"><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/405_the_knowledge_reader_honours_the_schema.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">405_the_knowledge_reader_honours_the_schema</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/64_knowledge_discovery.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">64_knowledge_discovery</a></li></ul>
+        <ul class="mt-2 space-y-1 text-sm"><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/405_the_knowledge_reader_honours_the_schema.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">405_the_knowledge_reader_honours_the_schema</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/563_knowledge_is_derived_at_the_boundary.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">563_knowledge_is_derived_at_the_boundary</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/64_knowledge_discovery.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">64_knowledge_discovery</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/707_knowledge_check_refuses_malformed_records.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">707_knowledge_check_refuses_malformed_records</a></li><li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/709_knowledge_promotion_is_an_act.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">709_knowledge_promotion_is_an_act</a></li></ul>
       </div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">Implementation</h3>
@@ -416,7 +487,14 @@ that must read the same on every machine cannot carry it (#713,
           <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/34_command_fixtures.sh" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">34_command_fixtures</a></li>
         </ul>
       </div>
-    </div></div><aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
+    </div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Guarantees this command carries</h2>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://majordomus.dev/guarantees/knowledge-derived-at-the-boundary/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span><span class="text-sm text-heading">A provider&#39;s end event and its compaction event derive the knowledge the episode produced into candidate records under the tracked tree, from the ledger and git and never from a conversation, whether or not a task is active, and record that they did so in the ledger</span></a></li><li><a href="https://majordomus.dev/guarantees/knowledge-derivation-is-idempotent/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span><span class="text-sm text-heading">A second derivation over the same evidence writes nothing, says so, and leaves the working tree unchanged; the record id is derived from the episode and a digest of the evidence so the same fact always lands in the same file</span></a></li><li><a href="https://majordomus.dev/guarantees/knowledge-integrity/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span><span class="text-sm text-heading">Every knowledge record is schema-valid with no unknown key, uniquely identified, evidenced when verified, resolves every reference it names, and carries no conversation; check, doctor and `majordomus knowledge check` refuse a record that is not</span></a></li><li><a href="https://majordomus.dev/guarantees/knowledge-writer-observed/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span><span class="text-sm text-heading">A repository in which episodes close and no knowledge derivation follows within the stale threshold is reported as a stopped writer by doctor and watch, and the finding clears when a derivation is written</span></a></li><li><a href="https://majordomus.dev/guarantees/knowledge-promotion-is-an-act/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span><span class="text-sm text-heading">verified is written only by promote with evidence on stdin or by a person editing the file, never by the deriver; promotion moves the record to curated/ and rejection supersedes it with a reason, each leaving a ledger line</span></a></li><li><a href="https://majordomus.dev/guarantees/candidates-reviewed-not-accumulated/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span><span class="text-sm text-heading">More candidates than the policy cap, or a candidate older than the policy age, is an advisory doctor finding that names them; both numbers are declared once in the policy</span></a></li></ul></div><aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
       <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">commands</h2><p class="mb-1 mt-3 text-xs font-medium text-body-subtle">Set up</p>
         <ul class="space-y-1 text-sm"><li><a href="https://majordomus.dev/commands/init/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">init</a></li><li><a href="https://majordomus.dev/commands/update/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">update</a></li><li><a href="https://majordomus.dev/commands/migrate/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">migrate</a></li><li><a href="https://majordomus.dev/commands/recover/" class="block rounded px-2 py-1 font-mono text-body hover:bg-neutral-secondary-medium hover:text-heading">recover</a></li></ul><p class="mb-1 mt-3 text-xs font-medium text-body-subtle">Begin</p>
@@ -496,7 +574,7 @@ that must read the same on every machine cannot carry it (#713,
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2edd4a582ac4bc780185df45615e26e62c20350e" class="font-mono underline">2edd4a5</a> · inputs <span class="font-mono">1f52dc854a50</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3b938d55d14dac635dc7a03efd955b42a188d4c0" class="font-mono underline">3b938d5</a> · inputs <span class="font-mono">326da762016a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

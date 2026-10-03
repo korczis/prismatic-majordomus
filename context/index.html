@@ -164,9 +164,9 @@
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
 
   <dl class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="text-sm text-body">Directories in the tree</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading">51</dd></div>
-    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="text-sm text-body">Carrying a contract</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading">32</dd></div>
-    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="text-sm text-body">Exempt, by their governing contract</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading">19</dd></div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="text-sm text-body">Directories in the tree</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading">58</dd></div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="text-sm text-body">Carrying a contract</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading">33</dd></div>
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-5"><dt class="text-sm text-body">Exempt, by their governing contract</dt><dd class="mt-1 font-mono text-2xl font-semibold text-heading">25</dd></div>
   </dl><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The tree</h2>
   <p class="mt-2 max-w-3xl text-sm text-body">Each row is a directory of <code class="font-mono">.ai</code>. A directory carries its own contract, or the contract that governs its subtree exempts it — instances of a kind, such as a skill and its examples, owe no contract of their own. What applies to a path is <code class="font-mono">majordomus context resolve &lt;path&gt;</code>; this page is the shape that resolution walks.</p>
 
@@ -329,7 +329,14 @@
         <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">extend</span></div>
       <p class="mt-2 text-sm text-heading"><code class="break-all font-mono text-xs text-fg-brand">ai.repo.knowledge</code> — Knowledge</p>
       <p class="mt-1 text-sm leading-relaxed text-body">How repository knowledge is declared and discovered, never collected.</p>
-      <p class="mt-2 text-xs text-body-subtle">tracks <code class="break-all font-mono">lib/knowledge.sh</code>, <code class="break-all font-mono">share/knowledge-sources.yaml</code></p>
+      <p class="mt-2 text-xs text-body-subtle">tracks <code class="break-all font-mono">lib/knowledge.sh</code>, <code class="break-all font-mono">lib/capture.sh</code>, <code class="break-all font-mono">lib/session.sh</code>, <code class="break-all font-mono">share/knowledge-sources.yaml</code></p>
+    </li><li class="rounded-base border border-default bg-neutral-primary-soft p-4 sm:ml-9">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <code class="font-mono text-sm font-medium text-heading">candidates/</code>
+        <span class="min-w-0 break-all font-mono text-xs text-body-subtle">.ai/repo/knowledge/candidates</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">subtree</span>
+        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">extend</span></div>
+      <p class="mt-2 text-sm text-heading"><code class="break-all font-mono text-xs text-fg-brand">ai.repo.knowledge.candidates</code> — Candidate records</p>
+      <p class="mt-1 text-sm leading-relaxed text-body">What the tool derived from the ledger and git at an episode boundary and nobody has reviewed yet, discovered as a knowledge source class.</p>
     </li><li class="rounded-base border border-default bg-neutral-primary-soft p-4 sm:ml-9">
       <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <code class="font-mono text-sm font-medium text-heading">curated/</code>
@@ -440,6 +447,16 @@
       <p class="mt-1 text-sm leading-relaxed text-body">Reusable provider-neutral operational procedures, loaded only when the task is about them.</p>
     </li><li class="rounded-base border border-default bg-neutral-primary-soft p-4 sm:ml-9">
       <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <code class="font-mono text-sm font-medium text-heading">assess-before-deleting/</code>
+        <span class="min-w-0 break-all font-mono text-xs text-body-subtle">.ai/repo/skills/assess-before-deleting</span></div>
+      <p class="mt-2 text-sm text-body">No contract of its own; <code class="break-all font-mono text-xs">.ai/repo/skills/README.md</code> exempts the directories below it.</p>
+    </li><li class="rounded-base border border-default bg-neutral-primary-soft p-4 sm:ml-12">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <code class="font-mono text-sm font-medium text-heading">examples/</code>
+        <span class="min-w-0 break-all font-mono text-xs text-body-subtle">.ai/repo/skills/assess-before-deleting/examples</span></div>
+      <p class="mt-2 text-sm text-body">No contract of its own; <code class="break-all font-mono text-xs">.ai/repo/skills/README.md</code> exempts the directories below it.</p>
+    </li><li class="rounded-base border border-default bg-neutral-primary-soft p-4 sm:ml-9">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <code class="font-mono text-sm font-medium text-heading">deploy-site/</code>
         <span class="min-w-0 break-all font-mono text-xs text-body-subtle">.ai/repo/skills/deploy-site</span></div>
       <p class="mt-2 text-sm text-body">No contract of its own; <code class="break-all font-mono text-xs">.ai/repo/skills/README.md</code> exempts the directories below it.</p>
@@ -455,6 +472,16 @@
       <p class="mt-2 text-sm text-body">No contract of its own; <code class="break-all font-mono text-xs">.ai/repo/skills/README.md</code> exempts the directories below it.</p>
     </li><li class="rounded-base border border-default bg-neutral-primary-soft p-4 sm:ml-9">
       <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <code class="font-mono text-sm font-medium text-heading">pack-for-review/</code>
+        <span class="min-w-0 break-all font-mono text-xs text-body-subtle">.ai/repo/skills/pack-for-review</span></div>
+      <p class="mt-2 text-sm text-body">No contract of its own; <code class="break-all font-mono text-xs">.ai/repo/skills/README.md</code> exempts the directories below it.</p>
+    </li><li class="rounded-base border border-default bg-neutral-primary-soft p-4 sm:ml-12">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <code class="font-mono text-sm font-medium text-heading">examples/</code>
+        <span class="min-w-0 break-all font-mono text-xs text-body-subtle">.ai/repo/skills/pack-for-review/examples</span></div>
+      <p class="mt-2 text-sm text-body">No contract of its own; <code class="break-all font-mono text-xs">.ai/repo/skills/README.md</code> exempts the directories below it.</p>
+    </li><li class="rounded-base border border-default bg-neutral-primary-soft p-4 sm:ml-9">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <code class="font-mono text-sm font-medium text-heading">repo-review/</code>
         <span class="min-w-0 break-all font-mono text-xs text-body-subtle">.ai/repo/skills/repo-review</span></div>
       <p class="mt-2 text-sm text-body">No contract of its own; <code class="break-all font-mono text-xs">.ai/repo/skills/README.md</code> exempts the directories below it.</p>
@@ -462,6 +489,16 @@
       <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <code class="font-mono text-sm font-medium text-heading">examples/</code>
         <span class="min-w-0 break-all font-mono text-xs text-body-subtle">.ai/repo/skills/repo-review/examples</span></div>
+      <p class="mt-2 text-sm text-body">No contract of its own; <code class="break-all font-mono text-xs">.ai/repo/skills/README.md</code> exempts the directories below it.</p>
+    </li><li class="rounded-base border border-default bg-neutral-primary-soft p-4 sm:ml-9">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <code class="font-mono text-sm font-medium text-heading">report-verification-state/</code>
+        <span class="min-w-0 break-all font-mono text-xs text-body-subtle">.ai/repo/skills/report-verification-state</span></div>
+      <p class="mt-2 text-sm text-body">No contract of its own; <code class="break-all font-mono text-xs">.ai/repo/skills/README.md</code> exempts the directories below it.</p>
+    </li><li class="rounded-base border border-default bg-neutral-primary-soft p-4 sm:ml-12">
+      <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <code class="font-mono text-sm font-medium text-heading">examples/</code>
+        <span class="min-w-0 break-all font-mono text-xs text-body-subtle">.ai/repo/skills/report-verification-state/examples</span></div>
       <p class="mt-2 text-sm text-body">No contract of its own; <code class="break-all font-mono text-xs">.ai/repo/skills/README.md</code> exempts the directories below it.</p>
     </li><li class="rounded-base border border-default bg-neutral-primary-soft p-4 sm:ml-6">
       <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -580,7 +617,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2edd4a582ac4bc780185df45615e26e62c20350e" class="font-mono underline">2edd4a5</a> · inputs <span class="font-mono">1f52dc854a50</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3b938d55d14dac635dc7a03efd955b42a188d4c0" class="font-mono underline">3b938d5</a> · inputs <span class="font-mono">326da762016a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

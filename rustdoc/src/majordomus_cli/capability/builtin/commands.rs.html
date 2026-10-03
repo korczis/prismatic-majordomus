@@ -150,7 +150,7 @@
 <a href=#150 id=150 data-nosnippet>150</a>    // the conventions are the fallback only for an index built without an application.
 <a href=#151 id=151 data-nosnippet>151</a>    </span><span class="kw">let </span>root = std::path::Path::new(<span class="kw-2">&amp;</span>ctx.index.repository.root);
 <a href=#152 id=152 data-nosnippet>152</a>    <span class="kw">let </span>share = <span class="kw">crate</span>::share::Share::locate(ctx.index.share.as_deref(), root).ok();
-<a href=#153 id=153 data-nosnippet>153</a>    load::fast_at(root, share.as_ref().map(|s| s.dir()))
+<a href=#153 id=153 data-nosnippet>153</a>    load::fast_with(root, share.as_ref().map(|s| s.dir()), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>ctx.registry))
 <a href=#154 id=154 data-nosnippet>154</a>}
 <a href=#155 id=155 data-nosnippet>155</a>
 <a href=#156 id=156 data-nosnippet>156</a><span class="kw">fn </span>commands_list(ctx: <span class="kw-2">&amp;</span>Context, filter: CommandFilter) -&gt; <span class="prelude-ty">Result</span>&lt;CommandIndex, CapabilityError&gt; {
