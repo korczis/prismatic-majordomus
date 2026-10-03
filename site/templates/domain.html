@@ -1,0 +1,119 @@
+{% extends "page.html" %}
+{% block body %}
+{#- One product domain. The prose is the domain's own file, read from the `source` the
+    dataset names; everything else is derived from the stable features that name the domain
+    (ADR 0104). The domain file lists no feature, and neither does this template: the members,
+    the interfaces they reach, the guarantees and use cases behind them and the failure modes
+    they answer are the executable's answer to `majordomus product domains`. -#}
+{%- set model = load_data(path="data/registry/product.json") -%}
+{%- set d = [x for x in model.domains if x.id == page.extra.id][0] -%}
+{%- set shown = [x for x in model.domains if x.status == "stable" and x.features | length > 0] -%}
+{%- set base = config.base_url | trim_end(pat="/") -%}
+
+<div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0">
+    <p class="mb-6 rounded-base border border-brand-subtle bg-brand-softer p-4 text-base font-medium text-fg-brand-strong">{{ d.headline }}</p>
+
+    <section aria-labelledby="answers" class="mb-8">
+      <h2 id="answers" class="text-xl font-semibold tracking-tight text-heading">The failure it answers</h2>
+      <p class="mt-2 text-lg leading-relaxed text-heading">{{ d.problem }}</p>
+    </section>
+
+    <article class="format break-words max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto">{{ page.content | safe }}</article>
+
+    {#- --------------------------------------------------------------- the members -#}
+    <section aria-labelledby="features" class="mt-10">
+      <h2 id="features" class="text-xl font-semibold tracking-tight text-heading">The features filed under it</h2>
+      <p class="mt-2 text-body">Each feature names this domain in its own file; the domain lists none of them. A feature added with this domain is on this page at the next build, and one removed is gone.</p>
+      <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+        {%- for m in d.features %}
+        {%- set f = m %}
+        <li class="flex min-w-0 flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4">
+          <a href="{{ base }}{{ m.route }}" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">{{ m.label }}</a>
+          <p class="text-sm leading-relaxed text-body">{{ m.headline }}</p>
+          <div class="mt-auto">{% set surfaces = model.surfaces %}{% include "partials/feature-surfaces.html" %}</div>
+          {%- if m.claims > 0 %}<p class="font-mono text-xs text-body-subtle">{{ m.tested }} of {{ m.claims }} guarantees name their test{% if m.use_cases > 0 %} &middot; {{ m.use_cases }} use case{% if m.use_cases != 1 %}s{% endif %}{% endif %}</p>{% endif %}
+        </li>
+        {%- endfor %}
+      </ul>
+    </section>
+
+    {#- ------------------------------------------------------- the failure modes -#}
+    {%- if d.moments | length %}
+    <section aria-labelledby="moments" class="mt-10">
+      <h2 id="moments" class="text-xl font-semibold tracking-tight text-heading">The failure modes its features answer</h2>
+      <p class="mt-2 text-body">Operational moments from the Why catalogue that name a rule, a command, a capability or a claim of a feature in this domain. Nothing here was assigned.</p>
+      <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+        {%- for mo in d.moments %}{% if loop.index <= 6 %}
+        <li><a href="{{ base }}{{ mo.route }}" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary-soft p-4 text-sm text-heading hover:bg-neutral-secondary-medium"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span>{{ mo.hook }}</span></a></li>
+        {%- endif %}{% endfor %}
+      </ul>
+      {%- if d.moments | length > 6 %}
+      <details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+        <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-heading">Every failure mode it answers ({{ d.moments | length }})</summary>
+        <ul class="grid gap-2 border-t border-default p-4 sm:grid-cols-2">
+          {%- for mo in d.moments %}{% if loop.index > 6 %}
+          <li><a href="{{ base }}{{ mo.route }}" class="text-sm text-fg-brand hover:underline">{{ mo.title }}</a></li>
+          {%- endif %}{% endfor %}
+        </ul>
+      </details>
+      {%- endif %}
+    </section>
+    {%- endif %}
+
+    {#- ------------------------------------------------------------- the evidence -#}
+    {%- if d.claim_refs | length %}
+    <section aria-labelledby="guaranteed" class="mt-10">
+      <h2 id="guaranteed" class="text-xl font-semibold tracking-tight text-heading">What is guaranteed</h2>
+      <p class="mt-2 text-body">Every guarantee a feature of this domain names, once, with the status the claim declares and the test that settles it. Whether a recorded run supports a claim is its own page's verdict.</p>
+      <details class="mt-4 rounded-base border border-default bg-neutral-primary-soft">
+        <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-heading">{{ d.counts.claims }} guarantees, {{ d.counts.tested }} naming their test</summary>
+        <ul class="divide-y divide-default border-t border-default">
+          {%- for c in d.claim_refs %}
+          <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+            {{ <badge status={c.status} /> }}
+            <a href="{{ get_url(path='/guarantees/' ~ c.id ~ '/', trailing_slash=true) }}" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">{{ c.claim }}</a>
+            {%- if c.test %}<span class="ml-auto min-w-0 break-all font-mono text-xs text-body-subtle" title="the test that settles this claim">{{ c.test }}</span>{% endif %}
+          </li>
+          {%- endfor %}
+        </ul>
+      </details>
+    </section>
+    {%- endif %}
+
+    {%- if d.use_case_refs | length %}
+    <section aria-labelledby="use-cases" class="mt-10">
+      <h2 id="use-cases" class="text-xl font-semibold tracking-tight text-heading">Executable use cases</h2>
+      <p class="mt-2 text-body">Scenarios the tool runs against itself every time this site is built.</p>
+      <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+        {%- for u in d.use_case_refs %}
+        <li><a href="{{ get_url(path='/use-cases/' ~ u.id ~ '/', trailing_slash=true) }}" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ u.category }}</span><span class="mt-1 text-sm font-medium text-heading">{{ u.title }}</span></a></li>
+        {%- endfor %}
+      </ul>
+    </section>
+    {%- endif %}
+  </div>
+
+  {#- ------------------------------------------------------------------- the aside -#}
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
+    <h2 class="text-sm font-semibold uppercase tracking-wide text-body-subtle">Counted at build time</h2>
+    <dl class="mt-3 grid grid-cols-2 gap-3 text-sm">
+      <div><dt class="text-xs text-body">features</dt><dd class="font-mono text-xl font-bold text-heading">{{ d.counts.features }}</dd></div>
+      <div><dt class="text-xs text-body">capabilities</dt><dd class="font-mono text-xl font-bold text-heading">{{ d.counts.capabilities }}</dd></div>
+      <div><dt class="text-xs text-body">rules</dt><dd class="font-mono text-xl font-bold text-heading">{{ d.counts.rules }}</dd></div>
+      <div><dt class="text-xs text-body">rules enforced</dt><dd class="font-mono text-xl font-bold text-heading">{{ d.counts.enforced_rules }}</dd></div>
+    </dl>
+    <h2 class="mt-6 text-sm font-semibold uppercase tracking-wide text-body-subtle">Exposed through</h2>
+    <div class="mt-3">{% set f = d %}{% set surfaces = model.surfaces %}{% include "partials/feature-surfaces.html" %}</div>
+    <h2 class="mt-6 text-sm font-semibold uppercase tracking-wide text-body-subtle">The other domains</h2>
+    <ul class="mt-3 space-y-1 text-sm">
+      {%- for x in shown %}{% if x.id != d.id %}
+      <li><a href="{{ base }}{{ x.route }}" class="text-fg-brand hover:underline">{{ x.title }}</a></li>
+      {%- endif %}{% endfor %}
+    </ul>
+    <h2 class="mt-6 text-sm font-semibold uppercase tracking-wide text-body-subtle">Where this comes from</h2>
+    <p class="mt-3 break-all font-mono text-xs text-body-subtle">{{ d.source }}</p>
+    <p class="mt-1 font-mono text-xs text-body-subtle">majordomus product domains</p>
+  </aside>
+</div>
+{% endblock body %}

@@ -8,6 +8,7 @@ headline: Majordomus runtimes of one repository â€” on one machine or several â€
 summary: Each runtime is a key-authenticated participant; discovery (multicast, broadcast, rendezvous, seeds) only finds candidates, and a signed handshake admits a link only for the same repository, a compatible protocol and a trusted key. Linked runtimes replicate one signed event journal every heartbeat and fold it into the same state everywhere, so an exclusive claim on one machine refuses an overlapping claim on another, a handover published on one is consumed on another, and a runtime that crashes expires everywhere on its own. The CLI, HTTP, OpenAPI, MCP and the Cockpit render the same state, and every guarantee is held by tests over real processes and a container lab on a real network.
 status: stable
 weight: 45
+domain: coordination
 featured: true
 areas: [coordination]
 modules: [mesh]

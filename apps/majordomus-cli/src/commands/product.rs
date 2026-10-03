@@ -31,6 +31,15 @@ pub fn run(args: ProductArgs) -> Result<u8> {
             let v = call(&app, &["product", "show"], json!({ "id": id }))?;
             emit(format, &v, feature_text)
         }
+        ProductCommand::Domains => {
+            let input = if args.all {
+                json!({ "status": "any" })
+            } else {
+                json!({})
+            };
+            let v = call(&app, &["product", "domains"], input)?;
+            emit(format, &v, domains_text)
+        }
         ProductCommand::Matrix => {
             let v = call(&app, &["product", "matrix"], json!({}))?;
             emit(format, &v, matrix_text)
@@ -62,6 +71,7 @@ fn query_of(f: &ProductArgs) -> Value {
         }
     };
     put("area", &f.area);
+    put("domain", &f.domain);
     put("module", &f.module);
     put("command", &f.names_command);
     put("surface", &f.surface);
@@ -190,6 +200,48 @@ fn list_text(v: &Value) -> String {
     out.join("\n")
 }
 
+fn domains_text(v: &Value) -> String {
+    let domains = v["domains"].as_array().cloned().unwrap_or_default();
+    let mut out = Vec::new();
+    for d in &domains {
+        let c = &d["counts"];
+        out.push(format!(
+            "{}  {}{}",
+            s(d, "id"),
+            s(d, "title"),
+            if s(d, "status") == "stable" {
+                String::new()
+            } else {
+                format!("  [{}]", s(d, "status"))
+            }
+        ));
+        out.push(format!("  {}", s(d, "headline")));
+        out.push(format!("  answers: {}", s(d, "problem")));
+        out.push(format!(
+            "  surfaces {}   features {}  claims {} ({} name a test)  use cases {}  rules {} ({} enforced)  moments {}   route {}",
+            marks(&d["surfaces"]),
+            c["features"],
+            c["claims"],
+            c["tested"],
+            c["use_cases"],
+            c["rules"],
+            c["enforced_rules"],
+            c["moments"],
+            s(d, "route")
+        ));
+        for f in d["features"].as_array().cloned().unwrap_or_default() {
+            out.push(format!("    {:<18}{}", s(&f, "id"), s(&f, "headline")));
+        }
+        out.push(String::new());
+    }
+    out.push(format!(
+        "{} domain(s)  [{}]",
+        domains.len(),
+        &v["fingerprint"].as_str().unwrap_or("")[..12.min(s(v, "fingerprint").len())],
+    ));
+    out.join("\n")
+}
+
 fn feature_text(v: &Value) -> String {
     let mut out = vec![
         format!("{}  {}", s(v, "id"), s(v, "title")),
@@ -205,6 +257,13 @@ fn feature_text(v: &Value) -> String {
             s(v, "route")
         ),
         format!("  source {}", s(v, "source")),
+        format!(
+            "  domain {}",
+            v["domain_ref"]["route"]
+                .as_str()
+                .map(|r| format!("{} ({r})", s(v, "domain")))
+                .unwrap_or_else(|| "none".into())
+        ),
         format!("  surfaces {}   (derived)", marks(&v["surfaces"])),
     ];
     let row = |label: &str, values: Vec<String>| -> Option<String> {

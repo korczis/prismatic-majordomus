@@ -53,7 +53,7 @@ document. A feature therefore cannot claim a surface the registry does not have.
 `apps/majordomus-cli/src/product.rs` resolves every reference against the index, the
 capability registry, the command registry, the why catalogue and the web topology, and is
 the only place any of this is decided.
-`apps/majordomus-cli/src/capability/builtin/product.rs` declares five capabilities over it
+`apps/majordomus-cli/src/capability/builtin/product.rs` declares six capabilities over it
 with `capability!`, so the command line, the HTTP routes, the OpenAPI operations, the MCP
 tools and resources and the generated reference are projections of one declaration
 ([ADR 2](../.ai/repo/adrs/0002-canonical-capability-registry.md), `docs/CAPABILITIES.md`).
@@ -62,15 +62,37 @@ tools and resources and the generated reference are projections of one declarati
 |---|---|---|---|
 | every feature | `majordomus product list` | `GET /api/v1/product/features` | `majordomus_features`, `majordomus://product` |
 | one feature | `majordomus product show <id>` | `GET /api/v1/product/feature` | `majordomus_feature`, `majordomus://feature/<id>` |
+| the domains | `majordomus product domains` | `GET /api/v1/product/domains` | `majordomus_product_domains`, `majordomus://product/domains` |
 | the matrix | `majordomus product matrix` | `GET /api/v1/product/matrix` | `majordomus_product_matrix` |
 | the providers | `majordomus product providers` | `GET /api/v1/product/providers` | `majordomus_providers` |
 | the refusals | `majordomus product validate` | `GET /api/v1/product/validate` | `majordomus_product_validate` |
 
+## Domains: the product's shape above the feature
+
+A **domain** is one of the few things the product controls — context, coordination,
+governance, evidence, completion and surfaces, as this repository declares them — stated once
+in `.ai/repo/features/domains/<id>.md` (kind `domain`, schema `domain/v1`) with its title, a
+one-sentence `headline`, a one-sentence `problem` and a `weight` that orders every listing
+of domains ([ADR 104](../.ai/repo/adrs/0104-the-product-is-filed-under-a-few-domains-and-a-feature-names-its-one.md)).
+
+A feature names exactly one domain in its own `domain` field, and a domain lists nothing:
+its members are the stable features that name it, and their union of surfaces, the distinct
+claims, use cases, rules and capabilities behind them and the moments they answer are
+derived, never written. `product validate` refuses a domain that does not exist (with the
+nearest candidate), a stable feature that names none while any is declared, and a stable
+feature under a domain that is not stable; a domain no stable feature names is a warning
+and is shown nowhere.
+
+The areas of the why catalogue are not domains and are not replaced by them. An area is
+where operations hurt, a feature may serve several, and moments, the diagnosis and the
+Cockpit's sidebar are filed by area. A domain is where the product answers, and a feature
+has exactly one.
+
 ## The public projection boundary
 
 `majordomus generate site` writes `site/data/registry/product.json` and
-`product-graph.json`. The dataset is not the model serialised: `PUBLIC_FEATURE_FIELDS` in
-`apps/majordomus-cli/src/site.rs` is an allow-list, and each field is copied by name. A
+`product-graph.json`. The dataset is not the model serialised: `PUBLIC_FEATURE_FIELDS` and
+`PUBLIC_DOMAIN_FIELDS` in `apps/majordomus-cli/src/site.rs` are allow-lists, and each field is copied by name. A
 field added to the model does not reach a published page until somebody adds it to that
 list, which is the point — accidental exclusion is not a boundary, and a field nobody
 allowed is not published.

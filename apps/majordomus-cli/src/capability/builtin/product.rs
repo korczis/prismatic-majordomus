@@ -18,8 +18,8 @@ use crate::capability::model::{CachePolicy, Exposure, McpExposure, McpResource, 
 use crate::capability::module::ModuleDescriptor;
 use crate::model::Severity;
 use crate::product::{
-    ProductCoverage, ProductFinding, ProductModel, ProductProvider, ResolvedRefs, Surfaces, STABLE,
-    SURFACES,
+    ProductCoverage, ProductFinding, ProductModel, ProductProvider, ResolvedDomain, ResolvedRefs,
+    Surfaces, STABLE, SURFACES,
 };
 use crate::{capability, module};
 
@@ -31,6 +31,8 @@ pub const PRODUCT_URI: &str = "majordomus://product";
 pub const MATRIX_URI: &str = "majordomus://product/matrix";
 /// The URI under which the providers are read.
 pub const PROVIDERS_URI: &str = "majordomus://product/providers";
+/// The URI under which the domains are read.
+pub const DOMAINS_URI: &str = "majordomus://product/domains";
 
 /// The dataset's own format version, so a consumer can refuse a shape it does not read.
 pub const SCHEMA: &str = "majordomus/product/v1";
@@ -56,6 +58,8 @@ pub struct FeatureSummary {
     pub weight: u32,
     /// Whether the homepage shows it.
     pub featured: bool,
+    /// The product domain it belongs to, when it names one.
+    pub domain: Option<String>,
     /// The operational areas it serves.
     pub areas: Vec<String>,
     /// The audiences it is written for.
@@ -84,6 +88,7 @@ impl FeatureSummary {
             status: f.status.clone(),
             weight: f.weight,
             featured: f.featured,
+            domain: f.domain.clone(),
             areas: f.areas.clone(),
             audiences: f.audiences.clone(),
             tags: f.tags.clone(),
@@ -190,6 +195,43 @@ pub struct Matrix {
     pub kinds: Vec<ProductCoverage>,
 }
 
+/// Every domain of the product, each with what its features add up to.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct DomainList {
+    /// [`SCHEMA`].
+    pub schema: String,
+    /// The hash of the model's sources and derived facts.
+    pub fingerprint: String,
+    /// How many domains are listed.
+    pub count: usize,
+    /// The domains, in presentation order: the stable ones, or every one with status=any.
+    pub domains: Vec<ResolvedDomain>,
+}
+
+/// Which domains to list.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct DomainQuery {
+    #[serde(default)]
+    /// Only domains of this status. Absent means the stable ones; pass `any` for every
+    /// domain the model holds.
+    pub status: Option<String>,
+}
+
+impl BenchmarkCases for DomainQuery {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![
+            NamedCase::new("stable", DomainQuery::default()),
+            NamedCase::new(
+                "any",
+                DomainQuery {
+                    status: Some("any".into()),
+                },
+            ),
+        ]
+    }
+}
+
 /// Every provider.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ProviderList {
@@ -233,6 +275,9 @@ pub struct ProductQuery {
     /// Only features serving this operational area.
     pub area: Option<String>,
     #[serde(default)]
+    /// Only features filed under this product domain.
+    pub domain: Option<String>,
+    #[serde(default)]
     /// Only features made of this capability module.
     pub module: Option<String>,
     #[serde(default)]
@@ -267,6 +312,20 @@ impl BenchmarkCases for ProductQuery {
                 "by-area",
                 ProductQuery {
                     area: Some(a.identity.clone()),
+                    ..ProductQuery::default()
+                },
+            ));
+        }
+        if let Some(d) = ctx
+            .index
+            .objects
+            .iter()
+            .find(|o| o.kind == crate::product::DOMAIN)
+        {
+            cases.push(NamedCase::new(
+                "by-domain",
+                ProductQuery {
+                    domain: Some(d.identity.clone()),
                     ..ProductQuery::default()
                 },
             ));
@@ -391,6 +450,12 @@ fn product_features(ctx: &Context, input: ProductQuery) -> Result<FeatureList, C
         })
         .filter(|r| {
             input
+                .domain
+                .as_ref()
+                .is_none_or(|v| r.feature.domain.as_ref() == Some(v))
+        })
+        .filter(|r| {
+            input
                 .module
                 .as_ref()
                 .is_none_or(|v| r.feature.modules.contains(v))
@@ -461,6 +526,23 @@ fn product_providers(ctx: &Context, _: Empty) -> Result<ProviderList, Capability
     })
 }
 
+fn product_domains(ctx: &Context, input: DomainQuery) -> Result<DomainList, CapabilityError> {
+    let m = &ctx.product;
+    let status = input.status.as_deref().unwrap_or(STABLE);
+    let domains: Vec<ResolvedDomain> = m
+        .domains()
+        .iter()
+        .filter(|d| status == "any" || d.domain.status == status)
+        .cloned()
+        .collect();
+    Ok(DomainList {
+        schema: SCHEMA.into(),
+        fingerprint: m.fingerprint().into(),
+        count: domains.len(),
+        domains,
+    })
+}
+
 fn product_validate(ctx: &Context, _: Empty) -> Result<ProductValidationReport, CapabilityError> {
     let m = &ctx.product;
     let errors = m.errors();
@@ -488,7 +570,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "product.features",
                 title: "The features",
-                description: "Every product feature this repository declares, narrowed by any of the facets the model derives — featured, area, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too.",
+                description: "Every product feature this repository declares, narrowed by any of the facets the model derives — featured, area, domain, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too.",
                 input: ProductQuery,
                 output: FeatureList,
                 stability: Stability::BehaviorallyVerified,
@@ -559,6 +641,25 @@ pub fn module() -> ModuleDescriptor {
                 handler: product_providers,
             },
             capability! {
+                id: "product.domains",
+                title: "The domains",
+                description: "The few things the product controls, each declared once under the layer's features section with its promise and the failure it answers, and each holding the stable features that name it: their interfaces, the distinct claims, use cases, rules and capabilities behind them, and the operational moments they answer, all derived. A domain lists no features; a feature names its domain. The default is the stable set; pass status=any for every domain.",
+                input: DomainQuery,
+                output: DomainList,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: Some(McpExposure {
+                        tool: Some("majordomus_product_domains".into()),
+                        resource: Some(McpResource { uri: DOMAINS_URI.into(), name: "product-domains".into() }),
+                    }),
+                    http: get("/api/v1/product/domains"),
+                    cli: Some(crate::capability::CliExposure { path: vec!["product".into(), "domains".into()] }),
+                },
+                tags: ["product", "domains", "introspection"],
+                cache: CachePolicy::Process { max_entries: 4, ttl_seconds: None },
+                handler: product_domains,
+            },
+            capability! {
                 id: "product.validate",
                 title: "Validate the model",
                 description: "Every finding over the product model: a reference that resolves to nothing, with the nearest candidate; a duplicate identity; a file name that disagrees with its id; a draft that is featured; a stable feature under its floors; and every module, command or kind that no stable feature names. Errors make the model invalid; warnings do not.",
@@ -608,6 +709,11 @@ mod tests {
                 "product.providers",
                 "majordomus_providers",
                 "/api/v1/product/providers",
+            ),
+            (
+                "product.domains",
+                "majordomus_product_domains",
+                "/api/v1/product/domains",
             ),
             (
                 "product.validate",

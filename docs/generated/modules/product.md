@@ -5,7 +5,31 @@
 
 What this repository's product does for a person, as the features under the layer's features section declare it: each feature made of modules, commands, kinds, rules, documents, decisions, claims, use cases, Cockpit areas and web surfaces it names, with the interfaces it is exposed through, every count, the moments it answers and what is guaranteed derived from those references. The matrix of features against interfaces, the providers the tool has an adapter for, and the model's own validation. The homepage is a reader of this module and holds no inventory of its own.
 
-Stability: behaviorally_verified. Capabilities: 5.
+Stability: behaviorally_verified. Capabilities: 6.
+
+## `product.domains` — The domains
+
+The few things the product controls, each declared once under the layer's features section with its promise and the failure it answers, and each holding the stable features that name it: their interfaces, the distinct claims, use cases, rules and capabilities behind them, and the operational moments they answer, all derived. A domain lists no features; a feature names its domain. The default is the stable set; pass status=any for every domain.
+
+| | |
+|---|---|
+| kind | query |
+| stability | behaviorally_verified |
+| MCP tool | `majordomus_product_domains` |
+| MCP resource | `majordomus://product/domains` |
+| HTTP | `GET /api/v1/product/domains` |
+| CLI | `majordomus product domains` |
+| cache | process, 4 entries |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::product |
+| tags | product, domains, introspection |
+
+| input | type | required | description |
+|---|---|---|---|
+| `status` | string or null | no | Only domains of this status. Absent means the stable ones; pass `any` for every
+domain the model holds. |
+
+Output: `DomainList`.
 
 ## `product.feature` — One feature
 
@@ -31,7 +55,7 @@ Output: `ResolvedRefs`.
 
 ## `product.features` — The features
 
-Every product feature this repository declares, narrowed by any of the facets the model derives — featured, area, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too.
+Every product feature this repository declares, narrowed by any of the facets the model derives — featured, area, domain, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too.
 
 | | |
 |---|---|
@@ -52,6 +76,7 @@ Every product feature this repository declares, narrowed by any of the facets th
 | `status` | string or null | no | Only features of this status. Absent means the stable ones; pass `any` for
 everything the model holds. |
 | `area` | string or null | no | Only features serving this operational area. |
+| `domain` | string or null | no | Only features filed under this product domain. |
 | `module` | string or null | no | Only features made of this capability module. |
 | `command` | string or null | no | Only features made of this shell command. |
 | `surface` | string or null | no | Only features exposed through this surface: `cli`, `api`, `mcp`, `cockpit`, `docs`. |
