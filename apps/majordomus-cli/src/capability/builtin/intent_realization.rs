@@ -62,12 +62,18 @@ impl BenchmarkCases for IntentRealizationInput {
             "every-intent",
             IntentRealizationInput::default(),
         )];
-        if let Some(id) = first_intent(ctx) {
-            cases.push(NamedCase::new(
-                "first-intent",
-                IntentRealizationInput { intent: Some(id) },
-            ));
-        }
+        // the narrowed read is measured in every repository, as IntentExplainInput's is: on an
+        // intent the repository holds, or else on one it does not, so the `intent` parameter
+        // always carries an example (case 92) and the not-found answer is measured too
+        cases.push(match first_intent(ctx) {
+            Some(id) => NamedCase::new("first-intent", IntentRealizationInput { intent: Some(id) }),
+            None => NamedCase::new(
+                "absent-intent",
+                IntentRealizationInput {
+                    intent: Some("absent".into()),
+                },
+            ),
+        });
         cases
     }
 }
