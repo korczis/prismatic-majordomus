@@ -916,6 +916,105 @@ fn a_path_nothing_drives_does_not_drag_down_a_rule_that_also_names_a_case() {
     assert!(!mixed.satisfied);
 }
 
+/// A synthetic repository whose CI model runs the crate's tests through `rust-check`, with
+/// one crate module that keeps its `#[cfg(test)] mod tests` in a file of its own and one
+/// that declares a `tests` module the test build does not own.
+fn crate_with_unit_test_modules() -> crate::synthetic::SyntheticRepository {
+    let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+    std::fs::create_dir_all(repo.root().join(".ai/repo/ci")).unwrap();
+    std::fs::write(
+        repo.root().join(GATES_PATH),
+        "gates:\n  - id: rust-check\n    runs: scripts/rust-check --ci\n  - id: shell-suite\n    \
+         runs: bash test/run.sh\n",
+    )
+    .unwrap();
+    let src = repo.root().join("apps/majordomus-cli/src");
+    std::fs::create_dir_all(src.join("alpha")).unwrap();
+    std::fs::write(
+        src.join("alpha/mod.rs"),
+        "pub fn one() -> u8 {\n    1\n}\n\n#[cfg(test)]\nmod tests;\n",
+    )
+    .unwrap();
+    std::fs::write(
+        src.join("alpha/tests.rs"),
+        "use super::*;\n\n#[test]\nfn one_is_one() {\n    assert_eq!(one(), 1);\n}\n",
+    )
+    .unwrap();
+    // a module that happens to be called `tests` and is part of the product, not the test build
+    std::fs::create_dir_all(src.join("gamma")).unwrap();
+    std::fs::write(src.join("gamma/mod.rs"), "pub mod tests;\n").unwrap();
+    std::fs::write(src.join("gamma/tests.rs"), "pub fn render() {}\n").unwrap();
+    repo
+}
+
+/// Name one path as a blocking rule's only test, and report.
+fn rule_naming(repo: &crate::synthetic::SyntheticRepository, path: &str) -> RuleProof {
+    let rel = ".ai/repo/rules/project/rule-4.v1.md";
+    let text = std::fs::read_to_string(repo.root().join(rel)).unwrap();
+    std::fs::write(
+        repo.root().join(rel),
+        text.replace(
+            "class: advisory",
+            &format!("class: blocking\n\nx-majordomus:\n  tests: [{path}]"),
+        ),
+    )
+    .unwrap();
+    let ledger = Ledger::load(repo.root()).unwrap();
+    let r = report(&repo.index().unwrap(), &ledger);
+    r.rules
+        .into_iter()
+        .find(|p| p.rule.id == "project.rule-4")
+        .unwrap()
+}
+
+/// A unit-test module kept in its own file is run by the gate that runs the crate's tests:
+/// `cargo test` compiles every `#[cfg(test)] mod tests` into the library's test target, so
+/// `src/<module>/tests.rs` is driven exactly as `tests/<binary>.rs` is. Reading it as a path
+/// nothing runs left `project.integration-follows-the-current-master` with half its proof
+/// in prose.
+#[test]
+fn a_unit_test_module_in_its_own_file_is_run_by_the_crate_gate() {
+    let repo = crate_with_unit_test_modules();
+    let p = rule_naming(&repo, "apps/majordomus-cli/src/alpha/tests.rs");
+    assert!(p.tests[0].present);
+    assert_eq!(p.tests[0].kind, ArtifactKind::Gate);
+    assert_eq!(p.tests[0].gates, ["rust-check"]);
+    assert_eq!(p.state, RuleState::Gated);
+    assert!(p.satisfied, "the gate that runs the crate's tests runs this module");
+}
+
+/// The binding is to what the test build compiles, not to a file name or a directory: the
+/// module's own source is not a test, and a module called `tests` that is not declared under
+/// `#[cfg(test)]` is product code that `cargo test` runs nothing in by that name.
+#[test]
+fn a_crate_source_that_is_not_a_unit_test_module_is_run_by_nothing() {
+    let repo = crate_with_unit_test_modules();
+    let p = rule_naming(&repo, "apps/majordomus-cli/src/alpha/mod.rs");
+    assert_eq!(p.tests[0].kind, ArtifactKind::Unknown);
+    assert!(p.tests[0].gates.is_empty());
+    assert_eq!(p.state, RuleState::Unrunnable);
+    assert!(!p.satisfied);
+
+    let repo = crate_with_unit_test_modules();
+    let p = rule_naming(&repo, "apps/majordomus-cli/src/gamma/tests.rs");
+    assert_eq!(p.tests[0].kind, ArtifactKind::Unknown);
+    assert!(p.tests[0].gates.is_empty());
+    assert_eq!(p.state, RuleState::Unrunnable);
+}
+
+/// A unit-test module that is not in the tree is driven by nothing and still a lie: the
+/// path's shape earns it no gate.
+#[test]
+fn a_missing_unit_test_module_is_unknown_and_dangling() {
+    let repo = crate_with_unit_test_modules();
+    let p = rule_naming(&repo, "apps/majordomus-cli/src/beta/tests.rs");
+    assert!(!p.tests[0].present);
+    assert_eq!(p.tests[0].kind, ArtifactKind::Unknown);
+    assert!(p.tests[0].gates.is_empty());
+    assert_eq!(p.state, RuleState::Dangling);
+    assert!(!p.satisfied);
+}
+
 // ---------------------------------------------------------------- judged by freshness
 
 /// A synthetic repository under git, with two cases and one blocking rule naming both.
