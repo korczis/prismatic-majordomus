@@ -312,6 +312,24 @@ mod tests {
     use crate::error::Error;
     use crate::synthetic::SyntheticRepository;
 
+    /// Whether the listening socket at `address` stops accepting within `deadline`. Dropping
+    /// a `tiny_http::Server` closes its listener on the library's own accept thread, which
+    /// nothing joins, so the socket outlives `stop` by a scheduling delay; under a loaded
+    /// test run an immediate connect can still land in the backlog. The wait is bounded and
+    /// a listener that never closes still fails.
+    fn listener_closes(address: std::net::SocketAddr, deadline: Duration) -> bool {
+        let until = std::time::Instant::now() + deadline;
+        loop {
+            if std::net::TcpStream::connect_timeout(&address, Duration::from_millis(200)).is_err() {
+                return true;
+            }
+            if std::time::Instant::now() >= until {
+                return false;
+            }
+            std::thread::sleep(Duration::from_millis(20));
+        }
+    }
+
     #[test]
     fn publication_observes_a_serving_socket_and_failure_closes_it() {
         let fixture = SyntheticRepository::small().unwrap();
@@ -349,7 +367,7 @@ mod tests {
                 result.unwrap().stop();
             }
             assert!(
-                std::net::TcpStream::connect_timeout(&address, Duration::from_secs(1)).is_err(),
+                listener_closes(address, Duration::from_secs(5)),
                 "request workers retained the socket after shutdown"
             );
         }
