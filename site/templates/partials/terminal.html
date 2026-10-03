@@ -30,9 +30,8 @@
   {%- for p in tx -%}
   <figure x-show="t === {{ loop.index0 }}" id="{{ tx_id }}-panel-{{ loop.index0 }}" role="tabpanel" aria-labelledby="{{ tx_id }}-tab-{{ loop.index0 }}"
     class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs">
-    {#- The body is the run's stdout. It scrolls in both directions inside its own box, which
-        `scripts/ui check` requires to be reachable from the keyboard, rather than pushing the
-        page sideways on a phone; a long one shows its head and folds the rest. -#}
+    {#- The body is the run's stdout. It wraps inside the panel rather than pushing the page
+        sideways on a phone; a long one shows its head and folds the rest. -#}
     {%- set run_command = p.command -%}{%- set run_exit = p.exit -%}{%- set run_output = p.output -%}
     {%- set run_stdin = "" -%}{%- set run_checks = [] -%}{%- set run_verdict = "" -%}
     {% include "partials/terminal-run.html" %}

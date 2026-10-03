@@ -14,9 +14,10 @@
     What it guarantees, so a page does not have to: the prompt is drawn and never copied (the
     copy button copies the command alone); the command and the output are set apart by a rule
     and a ground, not by colour; a status reads as a word and a glyph (`exit 10`, `✕ scope`)
-    and never as a colour alone; the output scrolls inside its own keyboard-reachable box on
-    a phone rather than widening the page; and a long output shows its head and folds the
-    rest into a native disclosure that works without a script. There is no window chrome:
+    and never as a colour alone; the output wraps inside the block rather than widening the
+    page on a phone, so a line is read whole and no tab panel holds a sideways scroller of its
+    own; and a long output shows its head and folds the rest into a native disclosure that
+    works without a script. There is no window chrome:
     this is a record of a run, not a picture of a terminal.
 
     Nothing here rewrites what the run printed. The lines are the run's own, redacted once by
@@ -51,20 +52,20 @@
 {%- if rn_output %}
 <details class="border-t border-default bg-neutral-primary">
   <summary class="cursor-pointer px-4 py-2 text-xs font-medium text-fg-brand hover:underline focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">The whole recorded output, {{ rn_output | trim_end | split(pat="\n") | length }} lines</summary>
-  <div class="max-h-96 overflow-x-auto overflow-y-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body">{% for line in rn_output | trim_end | split(pat="\n") %}{% if line is starting_with(pat="FAIL") %}<span class="font-semibold text-heading">{{ line }}</span>{% else %}{{ line }}{% endif %}
-{% endfor %}</pre></div>
+  <pre class="m-0 whitespace-pre-wrap break-words border-t border-default p-4 font-mono text-xs leading-relaxed text-body">{% for line in rn_output | trim_end | split(pat="\n") %}{% if line is starting_with(pat="FAIL") %}<span class="font-semibold text-heading">{{ line }}</span>{% else %}{{ line }}{% endif %}
+{% endfor %}</pre>
 </details>
 {%- endif %}
 {%- elif rn_output %}
 {#- the output itself: its head, and the rest folded behind a disclosure when it is long -#}
 {%- set rn_lines = rn_output | trim_end | split(pat="\n") -%}
-<div class="max-h-96 overflow-x-auto overflow-y-auto bg-neutral-primary" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body">{% for line in rn_lines %}{% if loop.index <= rn_fold %}{% if line is starting_with(pat="FAIL") %}<span class="font-semibold text-heading">{{ line }}</span>{% else %}{{ line }}{% endif %}
-{% endif %}{% endfor %}</pre></div>
+<pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body">{% for line in rn_lines %}{% if loop.index <= rn_fold %}{% if line is starting_with(pat="FAIL") %}<span class="font-semibold text-heading">{{ line }}</span>{% else %}{{ line }}{% endif %}
+{% endif %}{% endfor %}</pre>
 {%- if rn_lines | length > rn_fold %}
 <details class="border-t border-default bg-neutral-primary">
   <summary class="cursor-pointer px-4 py-2 text-xs font-medium text-fg-brand hover:underline focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">The remaining {{ rn_lines | length - rn_fold }} lines of the output</summary>
-  <div class="max-h-96 overflow-x-auto overflow-y-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body">{% for line in rn_lines %}{% if loop.index > rn_fold %}{% if line is starting_with(pat="FAIL") %}<span class="font-semibold text-heading">{{ line }}</span>{% else %}{{ line }}{% endif %}
-{% endif %}{% endfor %}</pre></div>
+  <pre class="m-0 whitespace-pre-wrap break-words border-t border-default p-4 font-mono text-xs leading-relaxed text-body">{% for line in rn_lines %}{% if loop.index > rn_fold %}{% if line is starting_with(pat="FAIL") %}<span class="font-semibold text-heading">{{ line }}</span>{% else %}{{ line }}{% endif %}
+{% endif %}{% endfor %}</pre>
 </details>
 {%- endif %}
 {%- endif %}
