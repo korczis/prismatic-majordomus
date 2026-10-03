@@ -1666,14 +1666,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/capability/builtin/peers.rs",
-        "kind": "file",
-        "label": "peers.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/capability/builtin/peers.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/capability/builtin/product.rs",
         "kind": "file",
         "label": "product.rs",
@@ -38092,6 +38084,13 @@
         "source": "test/cases/80_bench_persistence.sh"
       },
       {
+        "id": "majordomus://test/test/cases/810_a_feature_is_explored_under_its_domain.sh",
+        "kind": "test",
+        "label": "test/cases/810_a_feature_is_explored_under_its_domain.sh",
+        "route": "/cockpit/objects/test/test-cases-810-a-feature-is-explored-under-its-domain-sh",
+        "source": "test/cases/810_a_feature_is_explored_under_its_domain.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/81_bench_baseline.sh",
         "kind": "test",
         "label": "test/cases/81_bench_baseline.sh",
@@ -44774,11 +44773,6 @@
       },
       {
         "source": "majordomus://adr/adr-0044",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/peers.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0044",
         "target": "file:apps/majordomus-cli/src/peers.rs",
         "kind": "put_in_force"
       },
@@ -44786,21 +44780,6 @@
         "source": "majordomus://adr/adr-0044",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0044",
-        "target": "majordomus://claim/mcp-peers",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0044",
-        "target": "majordomus://claim/mcp-shared-server",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0044",
-        "target": "majordomus://test/test/cases/250_the_board_is_repository_wide.sh",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0046",
@@ -59983,6 +59962,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/810_a_feature_is_explored_under_its_domain.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/81_bench_baseline.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -63215,7 +63199,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4500,
+      "edges": 4497,
       "acyclic": true,
       "truncated": true
     }
