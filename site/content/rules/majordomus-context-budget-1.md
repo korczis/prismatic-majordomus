@@ -1,7 +1,7 @@
 +++
 title = "Context budget"
 description = "Context budget"
-weight = 10
+weight = 11
 [extra]
 kind = "rule"
 slug = "majordomus-context-budget-1"

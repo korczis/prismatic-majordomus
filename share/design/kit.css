@@ -557,7 +557,9 @@
     @apply min-w-0 truncate;
     color: var(--mj-fg);
   }
+  /* a link in a box of values is a target a finger can hit (24 px), not one line of text */
   .mj-kv-value a {
+    @apply inline-block py-1;
     color: var(--mj-accent);
   }
   .mj-term-foot {

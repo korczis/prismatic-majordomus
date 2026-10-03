@@ -61,7 +61,7 @@ steps:
       exit: 0
       stdout_contains: ['^1  \[unresolved\]', 'tabs']
   - id: refused
-    run: ['finish', '--outcome', 'completed', '--verify-command', 'true']
+    run: ['finish', '--outcome', 'completed', '--verify-command', 'test -d .ai']
     note: 'completion of the follow-up is refused by the same entry'
     expect:
       exit: 10

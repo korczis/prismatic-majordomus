@@ -14,6 +14,8 @@
 {% block ogtitle %}{{ page.title }} — {{ project.name }}{% endblock ogtitle %}
 {% block description %}{{ page.description }}{% endblock description %}
 {% block ogdescription %}{{ page.description }}{% endblock ogdescription %}
+{#- the kit's sheet is the whole sheet of this page, so app.css is not loaded beside it -#}
+{% block stylesheet %}{% endblock stylesheet %}
 {% block kit %}{% include "partials/kit-assets.html" %}{% endblock kit %}
 {% block content %}
 {%- set design = load_data(path="data/registry/design.json") -%}

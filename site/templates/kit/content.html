@@ -45,7 +45,7 @@
 {#- The container every block sits in. The head leads with a step number (`step`), else a
     glyph (`icon`); `variant` is toned (the ground fades from the tone), quiet or flush; `cls`
     adds the classes of the layout the panel sits in, such as `mj-stage`. -#}
-{% component panel(title="", sub="", icon="", tone="", step=0, variant="", cls="", level="3", id="") %}
+{% component panel(title="", sub="", icon="", tone="", step=0, variant="", cls="", level="2", id="") %}
 <section class="mj-panel{% if variant %} mj-panel--{{ variant }}{% endif %}{% if tone %} mj-tone--{{ tone }}{% endif %}{% if cls %} {{ cls }}{% endif %}"{% if id %} id="{{ id }}"{% endif %}>
   {%- if title %}
   <div class="mj-panel-head">

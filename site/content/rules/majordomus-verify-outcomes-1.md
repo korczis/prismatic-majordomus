@@ -1,7 +1,7 @@
 +++
 title = "Verify outcomes, not activity"
 description = "Verify outcomes, not activity"
-weight = 56
+weight = 59
 [extra]
 kind = "rule"
 slug = "majordomus-verify-outcomes-1"

@@ -146,7 +146,18 @@ jq -e '([.surfaces[] | select((.id | length) == 0 or (.category | length) == 0 o
 jq -e '[.surfaces[].id] as $ids | ((.served + .published) | unique) - $ids | length == 0' "$S/web.json" >/dev/null \
   || bad "a surface is listed as served or published without being one of the surfaces:" "$S/web.json"
 
-echo "    ten MCP tools answered about this repository, and every answer matched the tree"
+# ---------------------------------------------------------------- 11. skills.explain
+# One skill of this checkout, named by the directory its SKILL.md is in (the directory also
+# holds a README.md, which is not a skill): the answer is that skill, at that path.
+id="$(cd "$ROOT/.ai/repo/skills" && for f in */SKILL.md; do [ -f "$f" ] && printf '%s\n' "${f%/SKILL.md}"; done \
+  | LC_ALL=C sort | head -1)"
+[ -n "$id" ] || { echo "    this checkout holds no skill to explain"; exit 1; }
+answer majordomus_skill_explain "{\"id\":\"$id\"}" "$S/skill.json"
+jq -e --arg id "$id" '.id == $id and .path == (".ai/repo/skills/" + $id + "/SKILL.md")' \
+  "$S/skill.json" >/dev/null \
+  || bad "majordomus_skill_explain does not describe skill $id:" "$S/skill.json"
+
+echo "    eleven MCP tools answered about this repository, and every answer matched the tree"
 
 # ================================================================ the ratchet, by mutation
 # A synthetic tree the gate can be pointed at: a registry projecting three tools, one client
@@ -266,7 +277,7 @@ rc=0; bash "$GATE" > "$S/real.log" 2>&1 || rc=$?
 for tool in majordomus_artifacts majordomus_deployment majordomus_devcontext_policy \
             majordomus_execution_cancel majordomus_install_status majordomus_mesh_identity \
             majordomus_plan_issues majordomus_product_validate majordomus_rules \
-            majordomus_web_surfaces; do
+            majordomus_skill_explain majordomus_web_surfaces; do
   if grep -qE "^[[:space:]]*${tool}[[:space:]]*$" "$ROOT/.ai/repo/mcp-tool-run-baseline.txt"; then
     echo "    $tool is invoked by this case and must not be in the baseline"; exit 1
   fi

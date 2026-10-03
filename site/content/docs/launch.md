@@ -1,7 +1,7 @@
 +++
 title = "Launch kit"
 description = "what to paste when somebody asks what Majordomus is: the link to send, the install command, one-sentence and longer descriptions, three proof points with the page behind each, and what not to claim"
-weight = 23
+weight = 24
 [extra]
 source = "docs/LAUNCH.md"
 +++

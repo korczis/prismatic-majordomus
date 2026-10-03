@@ -1,7 +1,7 @@
 +++
 title = "A session does not finish behind its own published site"
 description = "A session does not finish behind its own published site"
-weight = 40
+weight = 43
 [extra]
 kind = "rule"
 slug = "majordomus-publication-currency-1"

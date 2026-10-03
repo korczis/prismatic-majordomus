@@ -109,6 +109,16 @@
 </div>
 {% endcomponent section_head %}
 
+{#- The homepage's chapter head: the same three facts as section_head — a number, a kicker and a
+    title, with an optional lead — set at landing-page scale. Words come from the caller's data. -#}
+{% component landing_head(number, kicker, title, lead="") %}
+<div class="mb-10 max-w-3xl">
+  <p class="mb-4 inline-flex items-center gap-2 rounded-full border border-brand-subtle bg-brand-softer px-3 py-1 font-mono text-xs uppercase tracking-widest text-fg-brand"><span class="font-semibold">{{ number }}</span><span aria-hidden="true" class="h-3 w-px bg-brand-subtle"></span>{{ kicker }}</p>
+  <h2 class="text-3xl font-extrabold leading-[1.08] tracking-tight text-balance text-heading sm:text-4xl lg:text-5xl">{{ title }}</h2>
+  {%- if lead %}<p class="mt-5 text-lg leading-relaxed text-body">{{ lead }}</p>{% endif -%}
+</div>
+{% endcomponent landing_head %}
+
 {#- A data-derived Mermaid diagram from diagrams.json, with provenance. Source visible without JS. -#}
 {% component diagram(key) %}
 {%- set d = load_data(path="data/generated/diagrams.json") -%}

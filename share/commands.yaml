@@ -440,25 +440,25 @@ commands:
     writes: [.ai/local/state/sessions-open/, .ai/local/state/session-current.yaml, .ai/repo/sessions/, .ai/local/session-contexts/, .ai/local/state/ledger.jsonl]
     exit_codes: [0, 2, 10, 12, 13, 15]
     demo: session-episode
-    note: "One open session per provider session, not per worktree: a second window of the same provider gets an episode of its own under state/sessions-open/, and session-current.yaml points at the episode of this checkout. The open record is never tracked. A closed record is an envelope of references selected by the session stamp on each ledger line, never by a time range. start freezes the resolved context into the local working-context store and close appends the outcome to it; --if-open and --if-none are what let a provider hook run both on every event."
+    note: "One open session per provider session, not per worktree: a second window of the same provider gets an episode of its own under state/sessions-open/, and session-current.yaml points at the episode of this checkout. The open record is never tracked. A closed record is an envelope of references selected by the session stamp on each ledger line, never by a time range. start freezes the resolved context into the local working-context store as an opening snapshot, and `session context` composes the live working context on every read instead of returning that file: the episode's identity, git now against git at the open, and the checkpoints, decisions and questions the episode recorded, taken from the ledger lines carrying its own session id. `--path` prints the snapshot instead. A closed record's body is composed the same way and is never empty; where the episode recorded nothing authored, the record says so and names the command that would have recorded it. --if-open and --if-none are what let a provider hook run the open and the close on every event."
 
   - id: knowledge
     title: knowledge
-    summary: The compiled index over what this repository states.
+    summary: The compiled index over what this repository states, and the candidate records it derives from what an episode did.
     category: memory
     stage: inspect
     visibility: public
-    class: read-only
+    class: state-mutating
     requires_repository: true
     requires_installed: true
     requires_task: none
     json: true
-    syntax: majordomus knowledge <sources|nodes|edges> [--scope shared|operational|all] [--kind <kind>] [--type <type>] [--json]
-    reads: [.ai/repo/knowledge/sources.yaml, share/knowledge-sources.yaml, .ai/local/state/]
-    writes: []
-    exit_codes: [0, 2, 10, 13]
+    syntax: majordomus knowledge <sources|nodes|edges|derive|candidates|promote|reject|check> [--scope shared|operational|all] [--kind <kind>] [--type <type>] [--episode <id>] [--dry-run] [--class <class>] [--reason <why>] [--by <id>] [--json]
+    reads: [.ai/repo/knowledge/sources.yaml, share/knowledge-sources.yaml, .ai/local/state/, .ai/repo/knowledge/candidates/, .ai/repo/knowledge/curated/, .ai/local/state/ledger.jsonl, .ai/repo/policy.yaml, share/allow/knowledge.txt]
+    writes: [.ai/repo/knowledge/candidates/, .ai/repo/knowledge/curated/, .ai/local/state/ledger.jsonl]
+    exit_codes: [0, 2, 10, 12, 13]
     demo: knowledge-index
-    note: Discovery reads the version-control index with the declared pathspecs and never walks the tree. Nodes keep their identity across a rebuild, kinds are never guessed, and an edge exists only where a file states it.
+    note: "Discovery reads the version-control index with the declared pathspecs and never walks the tree. Nodes keep their identity across a rebuild, kinds are never guessed, and an edge exists only where a file states it. sources, nodes, edges, candidates and check write nothing. derive turns the ledger lines one episode stamped into candidate records under the tracked knowledge section, deterministically and without a model; a second run over the same evidence writes nothing and says so. promote and reject are a person's acts on a candidate and each leaves a ledger line; nothing here stages a file (ADR 0091)."
 
   - id: adr
     title: adr

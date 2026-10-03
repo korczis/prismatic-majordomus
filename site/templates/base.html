@@ -32,7 +32,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="{{ get_url(path="images/social-card.png") }}">
 <link rel="icon" href="{{ get_url(path="images/logo-mark.svg") }}" type="image/svg+xml">
-<link rel="stylesheet" href="{{ get_url(path="app.css", cachebust=true) }}">
+{% block stylesheet %}<link rel="stylesheet" href="{{ get_url(path="app.css", cachebust=true) }}">{% endblock stylesheet %}
 <link rel="stylesheet" href="{{ get_url(path="giallo-light.css") }}">
 <link rel="stylesheet" href="{{ get_url(path="giallo-dark.css") }}">
 {#- A page that is composed of the kit's components (templates/kit/) opts into their sheet and

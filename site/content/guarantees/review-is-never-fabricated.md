@@ -1,7 +1,7 @@
 +++
 title = "A session cannot claim review it did not get: a consultation must name an advisor its recorded plan selected, a conclusion's review is computed, and reasoning check and doctor refuse a forged record, provider coupling, a model credential in CI and a refused claim in a document"
 description = "\"Reviewed by\" is a fact about records, never a sentence someone wrote. The design's other"
-weight = 221
+weight = 232
 [extra]
 claim_id = "review-is-never-fabricated"
 status = "guaranteed"

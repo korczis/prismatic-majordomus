@@ -87,7 +87,7 @@ expect_exit 0 "$MJ" session status
 expect_grep 'Session: +s-'
 [ "$(contexts)" = "$((was_contexts + 1))" ] || { echo "    the start event did not freeze a working context"; ls -1 .ai/local/session-contexts; exit 1; }
 # the document of this episode, found the way a person finds it rather than by globbing
-ctx="$("$MJ" session context)"
+ctx="$("$MJ" session context --path)"
 expect_file "$ctx"
 grep -qF 'opened_by: hook' "$ctx"
 grep -qF 'provider: claude-code' "$ctx"

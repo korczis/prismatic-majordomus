@@ -47,6 +47,12 @@ honest statements that the work did not complete, and each needs a note saying w
 next (`# Next Action`) or why (`# Reason`). `no_match` means the thing sought does not
 exist; `failed` means the work could not be done. They are different facts.
 
+The work between `start` and `finish` follows the repository's skills, each read with
+`majordomus skills explain <id>` or as the resource named here: a change to the tree follows
+`majordomus://skill/implement`; removing a file, branch, worktree, record or process that
+this task did not create follows `majordomus://skill/assess-before-deleting`; the final
+report and every handover body follow `majordomus://skill/report-verification-state`.
+
 Never author identity fields. `repository_id`, `branch`, `head`, `working_tree` and
 `changed_files` on any record are computed from Git; a body that carries them is refused.
 

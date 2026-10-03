@@ -154,23 +154,23 @@ metrics:
     unit: ratio
     formula: "median over seeds of 1 - selected_tokens / candidate_tokens, where candidates are the distinct files the compiler judged relevant to the work (selected, or left out only for budget) and selected are those it put in the budget, counted with the named tokenizer; files it judged irrelevant are reported, never divided by"
     not: "not total token savings: it says what the compiler selected from what it found relevant, not what a session consumed, and a session remains free to read anything"
-    value: 0.971752241989
+    value: 0.972628356675
     status: measured
     n: 239
     distribution:
       n: 239
-      mean: 0.973592433019
-      median: 0.971752241989
-      p25: 0.971183665948
-      p75: 0.978296598129
-      p95: 0.979714612354
-      min: 0.964816905095
-      max: 0.980078557136
-      sd: 0.00420249789
+      mean: 0.974955789113
+      median: 0.972628356675
+      p25: 0.972378347726
+      p75: 0.979649901303
+      p95: 0.98103688127
+      min: 0.967140676171
+      max: 0.981512781397
+      sd: 0.004224136523
     interval:
       level_bp: 9500
-      low: 0.971702258324
-      high: 0.97176794522
+      low: 0.97254601118
+      high: 0.972999258539
       method: "percentile bootstrap of the median, each value resampled independently with replacement"
       resamples: 10000
       seed: 20260924
@@ -425,7 +425,7 @@ metrics:
     unit: ratio
     formula: "counted selected tokens / the compiler's own estimate of them - 1, over all seeds"
     not: "not a saving: it says how far the budget's unit is from counted tokens"
-    value: -0.019318488309
+    value: -0.026072972802
     status: measured
     n: 239
     suite: context
@@ -676,7 +676,7 @@ suites:
     version: 1
     title: "Context selection, counted"
     freshness: current
-    runs: 2
+    runs: 4
     pairs:
       declared: 0
       attempted: 0
@@ -687,7 +687,9 @@ suites:
       other: 0
     revisions:
       - 1cc12af61de40456670620d92ba6ed6fb63aada4
+      - 78f09f8af8e3372fd7a972c69307117a0e20af2b
       - 8183164ade2d0c9cc2199c1379432b0aac84f0bb
+      - a588b8eb5facf487dfae08d6204e583eb1e1f25d
     harnesses: []
     models_reported: []
   - id: pilot
@@ -823,20 +825,20 @@ pairs:
       - the control run is not recorded
 segments: []
 context:
-  revision: 8183164ade2d0c9cc2199c1379432b0aac84f0bb
-  measured_at: "2026-10-02T09:55:23Z"
+  revision: 78f09f8af8e3372fd7a972c69307117a0e20af2b
+  measured_at: "2026-10-02T12:48:07Z"
   tokenizer:
     encoding: o200k_base
     implementation: tiktoken-rs 0.12.0
   seeds: 239
-  candidate_tokens: 218842565
-  considered_tokens: 218842565
-  selected_tokens: 5624943
-  estimated_selected_tokens: 5735749
+  candidate_tokens: 231460529
+  considered_tokens: 231460529
+  selected_tokens: 5623255
+  estimated_selected_tokens: 5773795
   excluded_tokens:
-    budget: 213217622
+    budget: 225837274
     unresolved: 0
-  seeds_over_budget_counted: 86
+  seeds_over_budget_counted: 61
   budget_tokens: 24000
 history:
   - suite: context
@@ -848,10 +850,24 @@ history:
     n: 216
   - suite: context
     methodology: 1
+    revision: a588b8eb5facf487dfae08d6204e583eb1e1f25d
+    at: "2026-10-02T02:22:32Z"
+    metric: context_reduction_ratio
+    value: 0.970730382355
+    n: 238
+  - suite: context
+    methodology: 1
     revision: 8183164ade2d0c9cc2199c1379432b0aac84f0bb
     at: "2026-10-02T09:55:23Z"
     metric: context_reduction_ratio
     value: 0.971752241989
+    n: 239
+  - suite: context
+    methodology: 1
+    revision: 78f09f8af8e3372fd7a972c69307117a0e20af2b
+    at: "2026-10-02T12:48:07Z"
+    metric: context_reduction_ratio
+    value: 0.972628356675
     n: 239
 variants:
   - id: baseline

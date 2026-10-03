@@ -1,7 +1,7 @@
 +++
 title = "Retention caps"
 description = "Retention caps"
-weight = 43
+weight = 46
 [extra]
 kind = "rule"
 slug = "majordomus-retention-caps-1"

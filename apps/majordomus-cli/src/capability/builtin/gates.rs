@@ -395,6 +395,29 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
         )),
     }
 
+    // The topology half of the done invariant — "is a branch, worktree or pull request left
+    // behind?" — is `convergence.report`'s verdict, asked through the same executor for the
+    // same reason: one measurement of where this repository's work is held, not two.
+    let convergence = match ctx.execute("convergence.report", serde_json::json!({})) {
+        Ok(value) => match serde_json::from_value::<crate::convergence::ConvergenceReport>(value) {
+            Ok(report) => Some(report),
+            Err(e) => {
+                findings.push(format!(
+                    "convergence.report answered something this report cannot read, so whether \
+                     work is left behind is unknown rather than passing: {e}"
+                ));
+                None
+            }
+        },
+        Err(e) => {
+            findings.push(format!(
+                "convergence.report could not be executed, so whether work is left behind is \
+                 unknown rather than passing: {e}"
+            ));
+            None
+        }
+    };
+
     Ok(gates::complete(
         &m,
         &changed,
@@ -404,6 +427,7 @@ fn gates_completion(ctx: &Context, input: CompletionInput) -> Result<Completion,
         &hashes,
         &standing,
         closure_reachable,
+        convergence.as_ref(),
         input.on_demand.unwrap_or(false),
         &crate::peers::rfc3339(std::time::SystemTime::now()),
         findings,
@@ -511,5 +535,93 @@ mod tests {
             .find(|e| e.capability.id.as_str() == "gates.completion")
             .expect("declared");
         assert!(matches!(c.capability.cache, CachePolicy::Disabled));
+    }
+
+    #[derive(Debug, serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
+    struct NotAVerdict {
+        converged: String,
+    }
+
+    fn not_a_verdict(_: &Context, _: super::super::Empty) -> Result<NotAVerdict, CapabilityError> {
+        Ok(NotAVerdict {
+            converged: "perhaps".into(),
+        })
+    }
+
+    /// The completion report over `modules`, asked of a synthetic repository with no git.
+    fn completion_with(
+        modules: Vec<crate::capability::module::ModuleDescriptor>,
+    ) -> crate::gates::Completion {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let index = repo.index().unwrap();
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_modules(modules)
+            .with_index(&index)
+            .build()
+            .expect("the registry builds");
+        let ctx = Context::new(std::sync::Arc::new(index), std::sync::Arc::new(registry));
+        let value = ctx
+            .execute("gates.completion", serde_json::json!({ "changed": [] }))
+            .expect("the completion report answers");
+        serde_json::from_value(value).expect("a completion report")
+    }
+
+    /// Whether work is left behind is `convergence.report`'s answer. When that answer cannot
+    /// be had — the capability refused, or it answered in a shape this report cannot read —
+    /// the question is unknown and a finding says which, never a pass.
+    #[test]
+    fn a_convergence_answer_that_cannot_be_had_or_read_is_unknown_and_says_why() {
+        let stale = |c: &crate::gates::Completion| {
+            c.questions
+                .iter()
+                .find(|q| q.id == "no-stale-topology")
+                .expect("the invariant asks it")
+                .status
+        };
+
+        // no git here, so the real capability refuses
+        let refused = completion_with(super::super::modules());
+        assert!(
+            refused
+                .findings
+                .iter()
+                .any(|f| f.starts_with("convergence.report could not be executed")),
+            "{:?}",
+            refused.findings
+        );
+        assert_eq!(stale(&refused), crate::gates::GateStatus::Unknown);
+
+        let impostor = crate::module! {
+            id: "convergence",
+            title: "Convergence",
+            description: "Answers in a shape the completion report cannot read.",
+            stability: Stability::Experimental,
+            capabilities: [
+                crate::capability! {
+                    id: "convergence.report", title: "Not a verdict",
+                    description: "Something else.",
+                    input: super::super::Empty, output: NotAVerdict,
+                    stability: Stability::Experimental,
+                    exposure: crate::capability::model::Exposure::default(), tags: [],
+                    handler: not_a_verdict,
+                },
+            ],
+        };
+        let mut modules: Vec<_> = super::super::modules()
+            .into_iter()
+            .filter(|m| m.id.as_str() != "convergence")
+            .collect();
+        modules.push(impostor);
+        let unreadable = completion_with(modules);
+        assert!(
+            unreadable
+                .findings
+                .iter()
+                .any(|f| f
+                    .starts_with("convergence.report answered something this report cannot read")),
+            "{:?}",
+            unreadable.findings
+        );
+        assert_eq!(stale(&unreadable), crate::gates::GateStatus::Unknown);
     }
 }

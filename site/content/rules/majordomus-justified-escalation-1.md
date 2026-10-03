@@ -1,7 +1,7 @@
 +++
 title = "Escalate capability and effort only when justified"
 description = "Escalate capability and effort only when justified"
-weight = 24
+weight = 25
 [extra]
 kind = "rule"
 slug = "majordomus-justified-escalation-1"

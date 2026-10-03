@@ -1,7 +1,7 @@
 +++
 title = "Ledger integrity"
 description = "Ledger integrity"
-weight = 26
+weight = 29
 [extra]
 kind = "rule"
 slug = "majordomus-ledger-integrity-1"

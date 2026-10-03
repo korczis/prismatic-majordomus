@@ -279,6 +279,8 @@
       "supersedes": [],
       "tracks": [
         "lib/knowledge.sh",
+        "lib/capture.sh",
+        "lib/session.sh",
         "share/knowledge-sources.yaml"
       ]
     },
@@ -656,6 +658,28 @@
         "apps/majordomus-cli/src/bench",
         "scripts/rust-check"
       ]
+    },
+    {
+      "id": "ai.repo.knowledge.candidates",
+      "path": ".ai/repo/knowledge/candidates/README.md",
+      "dir": ".ai/repo/knowledge/candidates",
+      "depth": 3,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Candidate records",
+      "description": "What the tool derived from the ledger and git at an episode boundary and nobody has reviewed yet, discovered as a knowledge source class.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": []
     },
     {
       "id": "ai.repo.knowledge.curated",
@@ -1355,10 +1379,45 @@
         "supersedes": [],
         "tracks": [
           "lib/knowledge.sh",
+          "lib/capture.sh",
+          "lib/session.sh",
           "share/knowledge-sources.yaml"
         ],
         "paths": [],
-        "sha256": "940b66ef23466289a0fcf7eca36a47b89d3ccc973dee3ec99cda70951e243862"
+        "sha256": "08fd514e11443d6355b911b819602e888f09b68bee80acd73b2b394507087655"
+      }
+    },
+    {
+      "dir": ".ai/repo/knowledge/candidates",
+      "document": "ai.repo.knowledge.candidates",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 3,
+      "name": "candidates",
+      "contract": {
+        "index": 28,
+        "id": "ai.repo.knowledge.candidates",
+        "path": ".ai/repo/knowledge/candidates/README.md",
+        "dir": ".ai/repo/knowledge/candidates",
+        "depth": 3,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Candidate records",
+        "description": "What the tool derived from the ledger and git at an episode boundary and nobody has reviewed yet, discovered as a knowledge source class.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [],
+        "paths": [],
+        "sha256": "932391638f4f18ae79df00206d886d475fe57c46ff87452f920dbfb17d5bda3e"
       }
     },
     {
@@ -1369,7 +1428,7 @@
       "depth": 3,
       "name": "curated",
       "contract": {
-        "index": 28,
+        "index": 29,
         "id": "ai.repo.knowledge.curated",
         "path": ".ai/repo/knowledge/curated/README.md",
         "dir": ".ai/repo/knowledge/curated",
@@ -1512,7 +1571,7 @@
       "depth": 3,
       "name": "intents",
       "contract": {
-        "index": 29,
+        "index": 30,
         "id": "ai.repo.project.intents",
         "path": ".ai/repo/project/intents/README.md",
         "dir": ".ai/repo/project/intents",
@@ -1548,7 +1607,7 @@
       "depth": 3,
       "name": "issues",
       "contract": {
-        "index": 30,
+        "index": 31,
         "id": "ai.repo.project.issues",
         "path": ".ai/repo/project/issues/README.md",
         "dir": ".ai/repo/project/issues",
@@ -1583,7 +1642,7 @@
       "depth": 3,
       "name": "milestones",
       "contract": {
-        "index": 31,
+        "index": 32,
         "id": "ai.repo.project.milestones",
         "path": ".ai/repo/project/milestones/README.md",
         "dir": ".ai/repo/project/milestones",
@@ -1761,7 +1820,7 @@
       "depth": 3,
       "name": "project",
       "contract": {
-        "index": 32,
+        "index": 33,
         "id": "ai.repo.rules.project",
         "path": ".ai/repo/rules/project/README.md",
         "dir": ".ai/repo/rules/project",
@@ -1819,7 +1878,7 @@
           "share/schemas/majordomus/session-record/session-record.v1.schema.json"
         ],
         "paths": [],
-        "sha256": "fd70f67b382e1c4daa8ebf13e187d6f15a0a0b6ae05ee4ca85fb832e09da6464"
+        "sha256": "d0eb2ad6fcda6ea98daebc6d0f5856ca1be247c1b42076521fcc2a1d5745785f"
       }
     },
     {
@@ -1852,8 +1911,26 @@
         "supersedes": [],
         "tracks": [],
         "paths": [],
-        "sha256": "5a2ccbcb6a73852cd6a4dcd354084d17560145c9af3941c5c2ceae440744ecad"
+        "sha256": "d0cc1b31113263bf85f235c00aa769797396f94fea743e63d090fcb850a13a4b"
       }
+    },
+    {
+      "dir": ".ai/repo/skills/assess-before-deleting",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/skills/README.md",
+      "depth": 3,
+      "name": "assess-before-deleting",
+      "contract": null
+    },
+    {
+      "dir": ".ai/repo/skills/assess-before-deleting/examples",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/skills/README.md",
+      "depth": 4,
+      "name": "examples",
+      "contract": null
     },
     {
       "dir": ".ai/repo/skills/deploy-site",
@@ -1883,6 +1960,24 @@
       "contract": null
     },
     {
+      "dir": ".ai/repo/skills/pack-for-review",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/skills/README.md",
+      "depth": 3,
+      "name": "pack-for-review",
+      "contract": null
+    },
+    {
+      "dir": ".ai/repo/skills/pack-for-review/examples",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/skills/README.md",
+      "depth": 4,
+      "name": "examples",
+      "contract": null
+    },
+    {
       "dir": ".ai/repo/skills/repo-review",
       "document": null,
       "requires_contract": false,
@@ -1893,6 +1988,24 @@
     },
     {
       "dir": ".ai/repo/skills/repo-review/examples",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/skills/README.md",
+      "depth": 4,
+      "name": "examples",
+      "contract": null
+    },
+    {
+      "dir": ".ai/repo/skills/report-verification-state",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/skills/README.md",
+      "depth": 3,
+      "name": "report-verification-state",
+      "contract": null
+    },
+    {
+      "dir": ".ai/repo/skills/report-verification-state/examples",
       "document": null,
       "requires_contract": false,
       "governed_by": ".ai/repo/skills/README.md",
@@ -2073,8 +2186,8 @@
     }
   ],
   "counts": {
-    "directories": 51,
-    "documented": 32,
-    "exempt": 19
+    "directories": 58,
+    "documented": 33,
+    "exempt": 25
   }
 }

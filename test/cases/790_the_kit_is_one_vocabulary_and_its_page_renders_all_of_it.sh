@@ -57,6 +57,13 @@ kit_audit() {
   grep -qE 'js/kit\.js|kit\.css' "$r/site/templates/base.html" && { printf 'the base layout loads the kit on every page\n'; found=1; }
   grep -qF 'kit.css' "$r/site/tailwind.css" && { printf 'site/tailwind.css compiles the kit into every page'"'"'s sheet\n'; found=1; }
   grep -qF 'partials/kit-assets.html' "$page" || { printf '/kit/ does not load the kit'"'"'s sheet and behaviour\n'; found=1; }
+  # 7. a kit page loads one complete sheet: the kit's entry carries every import and plugin of
+  #    the site's, so nothing app.css styles is missing on a page that loads kit.css instead
+  local d
+  for d in $(grep -E '^@(import|plugin) ' "$r/site/tailwind.css" | LC_ALL=C sort -u | tr ' ' '~'); do
+    grep -qxF -- "$(printf '%s' "$d" | tr '~' ' ')" "$r/site/kit.tailwind.css" || { printf 'the kit'"'"'s entry lacks %s, which the site'"'"'s entry has\n' "$(printf '%s' "$d" | tr '~' ' ')"; found=1; }
+  done
+  grep -qE '^@source not ' "$r/site/kit.tailwind.css" && { printf 'the kit'"'"'s entry leaves sources out; its sheet is the whole sheet of a kit page\n'; found=1; }
   [ "$found" = 0 ] || return 10
   printf 'kit: every component rendered, every class emitted and defined, every icon held\n'
 }
@@ -71,7 +78,7 @@ cp "$ROOT"/site/templates/kit/*.html site/templates/kit/
 cp "$ROOT"/site/templates/kit-page.html "$ROOT"/site/templates/base.html site/templates/
 cp "$ROOT"/site/templates/partials/kit-assets.html site/templates/partials/
 cp "$ROOT"/site/data/kit/icons.toml site/data/kit/
-cp "$ROOT"/site/tailwind.css site/
+cp "$ROOT"/site/tailwind.css "$ROOT"/site/kit.tailwind.css site/
 cp "$ROOT"/share/design/kit.css "$ROOT"/share/design/primitives.css "$ROOT"/share/design/status.css share/design/
 expect_exit 0 kit_audit "$T"
 
@@ -104,6 +111,12 @@ sed -i.bak 's/ hidden>{{ <icon name="copy"/>{{ <icon name="copy"/' site/template
 expect_exit 10 kit_audit "$T"
 expect_grep 'copy button is not rendered hidden'
 cp "$ROOT"/site/templates/kit/base.html site/templates/kit/
+
+# 7. the kit's entry missing a projection the site's sheet imports
+sed -i.bak '/share\/design\/status.css/d' site/kit.tailwind.css && rm -f site/kit.tailwind.css.bak
+expect_exit 10 kit_audit "$T"
+expect_grep "the kit's entry lacks @import"
+cp "$ROOT"/site/kit.tailwind.css site/
 
 # 6. the kit loaded by every page
 printf '<script defer src="js/kit.js"></script>\n' >> site/templates/base.html

@@ -1,7 +1,7 @@
 +++
 title = "The homepage tells the story its declaration names, in that order, and the site is indexed by one declared policy"
 description = "The homepage tells the story its declaration names, in that order, and the site is indexed by one declared policy"
-weight = 95
+weight = 100
 [extra]
 kind = "rule"
 slug = "project-homepage-tells-a-declared-story-1"
