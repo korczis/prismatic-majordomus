@@ -1589,14 +1589,6 @@
         "status": "query"
       },
       {
-        "id": "file:.ai/repo/ci/gates.yaml",
-        "kind": "file",
-        "label": "gates.yaml",
-        "summary": "named by the layer; not an object of this index",
-        "source": ".ai/repo/ci/gates.yaml",
-        "external": true
-      },
-      {
         "id": "file:.ai/repo/ci/pages.yaml",
         "kind": "file",
         "label": "pages.yaml",
@@ -1618,38 +1610,6 @@
         "label": "order-baseline.txt",
         "summary": "named by the layer; not an object of this index",
         "source": ".ai/repo/order-baseline.txt",
-        "external": true
-      },
-      {
-        "id": "file:.github/workflows/pages.yml",
-        "kind": "file",
-        "label": "pages.yml",
-        "summary": "named by the layer; not an object of this index",
-        "source": ".github/workflows/pages.yml",
-        "external": true
-      },
-      {
-        "id": "file:.github/workflows/validate.yml",
-        "kind": "file",
-        "label": "validate.yml",
-        "summary": "named by the layer; not an object of this index",
-        "source": ".github/workflows/validate.yml",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/capability/builtin/design.rs",
-        "kind": "file",
-        "label": "design.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/capability/builtin/design.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/capability/builtin/executions.rs",
-        "kind": "file",
-        "label": "executions.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/capability/builtin/executions.rs",
         "external": true
       },
       {
@@ -1730,14 +1690,6 @@
         "label": "semantics.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/command_graph/semantics.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/design/mod.rs",
-        "kind": "file",
-        "label": "mod.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/design/mod.rs",
         "external": true
       },
       {
@@ -2002,14 +1954,6 @@
         "label": "cockpit.css",
         "summary": "named by the layer; not an object of this index",
         "source": "share/cockpit/src/cockpit.css",
-        "external": true
-      },
-      {
-        "id": "file:share/design/primitives.css",
-        "kind": "file",
-        "label": "primitives.css",
-        "summary": "named by the layer; not an object of this index",
-        "source": "share/design/primitives.css",
         "external": true
       },
       {
@@ -3808,6 +3752,38 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0077",
+        "kind": "adr",
+        "label": "adr-0077",
+        "summary": "Published content may be written in the reader's language; the repository's own artifacts may not",
+        "route": "/cockpit/objects/adr/adr-0077",
+        "source": ".ai/repo/adrs/0077-published-content-may-be-written-in-the-readers-language.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-17",
+          "related": [
+            "rule:project.english-only",
+            "claim:authored-files-are-english",
+            "claim:published-translation-is-declared",
+            "file:.ai/repo/rules/project/english-only.v2.md",
+            "file:scripts/ci/english-only-check",
+            "file:scripts/ci/english-only-allow.txt",
+            "file:docs/claims/authored-files-are-english.md",
+            "file:docs/claims/published-translation-is-declared.md",
+            "file:site/templates/base.html",
+            "file:site/content-src/proof-carrying-documentation.md",
+            "file:site/content-src/dokumentace-kterou-lze-odmitnout.md",
+            "test:test/cases/403_published_translation.sh"
+          ],
+          "tags": [
+            "language",
+            "governance",
+            "site",
+            "publication"
+          ]
+        }
+      },
+      {
         "id": "majordomus://adr/adr-0080",
         "kind": "adr",
         "label": "adr-0080",
@@ -4968,12 +4944,12 @@
         "id": "majordomus://claim/authored-files-are-english",
         "kind": "claim",
         "label": "authored-files-are-english",
-        "summary": "Every authored file in this repository is spelled in English, and a proper noun or a test fixture that is not carries its reason beside the check",
+        "summary": "Every authored file in this repository is spelled in English, and a proper noun, a test fixture or a published translation that is not carries its reason beside the check",
         "route": "/cockpit/objects/claim/authored-files-are-english",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
         "facts": {
-          "claim": "Every authored file in this repository is spelled in English, and a proper noun or a test fixture that is not carries its reason beside the check",
+          "claim": "Every authored file in this repository is spelled in English, and a proper noun, a test fixture or a published translation that is not carries its reason beside the check",
           "implementation": "scripts/ci/english-only-check",
           "responsibility": "none",
           "source": "docs/DOCTRINE.md",
@@ -7279,6 +7255,22 @@
           "responsibility": "projection",
           "source": "docs/CAPABILITIES.md",
           "test": "test/cases/93_rust_provider_projections.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/published-translation-is-declared",
+        "kind": "claim",
+        "label": "published-translation-is-declared",
+        "summary": "A page of the published site written in a reader's language is declared with that language and a reason, and is refused unless the page declares the same language itself",
+        "route": "/cockpit/objects/claim/published-translation-is-declared",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A page of the published site written in a reader's language is declared with that language and a reason, and is refused unless the page declares the same language itself",
+          "implementation": "scripts/ci/english-only-check",
+          "responsibility": "none",
+          "source": ".ai/repo/rules/project/english-only.v2.md",
+          "test": "test/cases/403_published_translation.sh"
         }
       },
       {
@@ -12247,6 +12239,14 @@
         "summary": "The provider bootstraps are a target of `majordomus generate`, rendered by one renderer, and `generate --check` refuses a stale one in CI",
         "route": "/cockpit/objects/document/docs-claims-provider-projections-one-renderer-md",
         "source": "docs/claims/provider-projections-one-renderer.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/published-translation-is-declared.md",
+        "kind": "document",
+        "label": "docs/claims/published-translation-is-declared.md",
+        "summary": "A published page in another language is declared, and declares itself",
+        "route": "/cockpit/objects/document/docs-claims-published-translation-is-declared-md",
+        "source": "docs/claims/published-translation-is-declared.md"
       },
       {
         "id": "majordomus://document/docs/claims/reasoning-survives-the-session.md",
@@ -32574,17 +32574,16 @@
         }
       },
       {
-        "id": "majordomus://rule/project.english-only@1",
+        "id": "majordomus://rule/project.english-only@2",
         "kind": "rule",
-        "label": "project.english-only@1",
+        "label": "project.english-only@2",
         "summary": "English only",
-        "route": "/cockpit/objects/rule/project-english-only-1",
-        "source": ".ai/repo/rules/project/english-only.v1.md",
+        "route": "/cockpit/objects/rule/project-english-only-2",
+        "source": ".ai/repo/rules/project/english-only.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
           "depends_on": [],
-          "statement": "Code, comments, commits, documents and governance records are written in English, with no exceptions.",
           "tags": [
             "language"
           ]
@@ -37250,6 +37249,13 @@
         "source": "test/cases/34_command_fixtures.sh"
       },
       {
+        "id": "majordomus://test/test/cases/350_the_queue_measures_itself.sh",
+        "kind": "test",
+        "label": "test/cases/350_the_queue_measures_itself.sh",
+        "route": "/cockpit/objects/test/test-cases-350-the-queue-measures-itself-sh",
+        "source": "test/cases/350_the_queue_measures_itself.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/352_the_version_the_site_shows_is_one_you_can_get.sh",
         "kind": "test",
         "label": "test/cases/352_the_version_the_site_shows_is_one_you_can_get.sh",
@@ -37262,6 +37268,13 @@
         "label": "test/cases/353_the_version_bump_has_an_actor.sh",
         "route": "/cockpit/objects/test/test-cases-353-the-version-bump-has-an-actor-sh",
         "source": "test/cases/353_the_version_bump_has_an_actor.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/354_a_lease_contest_is_judged_by_a_declaration.sh",
+        "kind": "test",
+        "label": "test/cases/354_a_lease_contest_is_judged_by_a_declaration.sh",
+        "route": "/cockpit/objects/test/test-cases-354-a-lease-contest-is-judged-by-a-declaration-sh",
+        "source": "test/cases/354_a_lease_contest_is_judged_by_a_declaration.sh"
       },
       {
         "id": "majordomus://test/test/cases/357_ci_records_evidence.sh",
@@ -37437,6 +37450,13 @@
         "label": "test/cases/402_argv_limit.sh",
         "route": "/cockpit/objects/test/test-cases-402-argv-limit-sh",
         "source": "test/cases/402_argv_limit.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/403_published_translation.sh",
+        "kind": "test",
+        "label": "test/cases/403_published_translation.sh",
+        "route": "/cockpit/objects/test/test-cases-403-published-translation-sh",
+        "source": "test/cases/403_published_translation.sh"
       },
       {
         "id": "majordomus://test/test/cases/404_refused_files_are_named.sh",
@@ -37920,6 +37940,13 @@
         "label": "test/cases/58_home_path_gate.sh",
         "route": "/cockpit/objects/test/test-cases-58-home-path-gate-sh",
         "source": "test/cases/58_home_path_gate.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/593_generation_states_its_subject.sh",
+        "kind": "test",
+        "label": "test/cases/593_generation_states_its_subject.sh",
+        "route": "/cockpit/objects/test/test-cases-593-generation-states-its-subject-sh",
+        "source": "test/cases/593_generation_states_its_subject.sh"
       },
       {
         "id": "majordomus://test/test/cases/599_a_silent_check_is_not_a_pass.sh",
@@ -44603,11 +44630,6 @@
       },
       {
         "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/executions.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
         "target": "file:apps/majordomus-cli/src/execution/engine.rs",
         "kind": "put_in_force"
       },
@@ -44658,11 +44680,6 @@
       },
       {
         "source": "majordomus://adr/adr-0033",
-        "target": "majordomus://document/docs/EXECUTIONS.md",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
         "target": "majordomus://rule/project.execution-events-are-typed@1",
         "kind": "put_in_force"
       },
@@ -44693,31 +44710,6 @@
       },
       {
         "source": "majordomus://adr/adr-0036",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/design.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0036",
-        "target": "file:apps/majordomus-cli/src/design/mod.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0036",
-        "target": "file:apps/majordomus-cli/src/design/render.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0036",
-        "target": "file:scripts/ci/design-check",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0036",
-        "target": "file:share/design/primitives.css",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0036",
         "target": "file:share/design/tokens.yaml",
         "kind": "put_in_force"
       },
@@ -44725,11 +44717,6 @@
         "source": "majordomus://adr/adr-0036",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0036",
-        "target": "majordomus://document/docs/DESIGN_SYSTEM.md",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0036",
@@ -44749,31 +44736,6 @@
       {
         "source": "majordomus://adr/adr-0036",
         "target": "majordomus://rule/project.ui-conformance@1",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0036",
-        "target": "majordomus://test/test/cases/107_design_tokens.sh",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0036",
-        "target": "majordomus://test/test/cases/109_design_system.sh",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0037",
-        "target": "file:.ai/repo/ci/gates.yaml",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0037",
-        "target": "file:.github/workflows/pages.yml",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0037",
-        "target": "file:.github/workflows/validate.yml",
         "kind": "put_in_force"
       },
       {
@@ -45063,7 +45025,7 @@
       },
       {
         "source": "majordomus://adr/adr-0048",
-        "target": "majordomus://rule/project.english-only@1",
+        "target": "majordomus://rule/project.english-only@2",
         "kind": "put_in_force"
       },
       {
@@ -45504,6 +45466,26 @@
       {
         "source": "majordomus://adr/adr-0076",
         "target": "majordomus://rule/project.skills-are-proven-capabilities@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0077",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0077",
+        "target": "majordomus://claim/authored-files-are-english",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0077",
+        "target": "majordomus://claim/published-translation-is-declared",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0077",
+        "target": "majordomus://rule/project.english-only@2",
         "kind": "put_in_force"
       },
       {
@@ -46575,11 +46557,6 @@
         "source": "majordomus://claim/checkpoint-record",
         "target": "majordomus://test/test/cases/20_checkpoint.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/ci-planned-gates",
-        "target": "file:.ai/repo/ci/gates.yaml",
-        "kind": "defined_in"
       },
       {
         "source": "majordomus://claim/ci-planned-gates",
@@ -48772,6 +48749,21 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/published-translation-is-declared",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/published-translation-is-declared",
+        "target": "majordomus://rule/project.english-only@2",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/published-translation-is-declared",
+        "target": "majordomus://test/test/cases/403_published_translation.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/reasoning-survives-the-session",
         "target": "kind:claim",
         "kind": "is_a"
@@ -49375,11 +49367,6 @@
         "source": "majordomus://claim/site-deploy-one-path",
         "target": "majordomus://test/test/cases/96_site_deploy.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/site-deploys-from-verified-run",
-        "target": "file:.github/workflows/pages.yml",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/site-deploys-from-verified-run",
@@ -51458,6 +51445,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/provider-projections-one-renderer.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/published-translation-is-declared.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -57592,7 +57584,7 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.english-only@1",
+        "source": "majordomus://rule/project.english-only@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
@@ -59422,12 +59414,22 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/350_the_queue_measures_itself.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/352_the_version_the_site_shows_is_one_you_can_get.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
       {
         "source": "majordomus://test/test/cases/353_the_version_bump_has_an_actor.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/354_a_lease_contest_is_judged_by_a_declaration.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -59553,6 +59555,11 @@
       },
       {
         "source": "majordomus://test/test/cases/402_argv_limit.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/403_published_translation.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -59898,6 +59905,11 @@
       },
       {
         "source": "majordomus://test/test/cases/58_home_path_gate.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/593_generation_states_its_subject.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -63429,7 +63441,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4496,
+      "edges": 4493,
       "acyclic": true,
       "truncated": true
     }

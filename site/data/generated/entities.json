@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 78,
+      "count": 79,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 78
+      "count": 79
     },
     {
       "kind": "application",
@@ -69,7 +69,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 220
+      "count": 221
     },
     {
       "kind": "command",
@@ -117,7 +117,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 308
+      "count": 309
     },
     {
       "kind": "feature",
@@ -269,7 +269,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 338
+      "count": 342
     },
     {
       "kind": "use-case",
@@ -1810,13 +1810,6 @@
       "references": [
         {
           "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/capability/builtin/executions.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
           "label": "apps/majordomus-cli/src/execution/engine.rs",
           "kind": "file",
           "route": null,
@@ -1876,13 +1869,6 @@
           "label": "adr-0013",
           "kind": "adr",
           "route": "/adrs/adr-0013/",
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "docs/EXECUTIONS.md",
-          "kind": "document",
-          "route": null,
           "external": false
         },
         {
@@ -1976,52 +1962,10 @@
       "references": [
         {
           "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/capability/builtin/design.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/design/mod.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/design/render.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "scripts/ci/design-check",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "share/design/primitives.css",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
           "label": "share/design/tokens.yaml",
           "kind": "file",
           "route": null,
           "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "docs/DESIGN_SYSTEM.md",
-          "kind": "document",
-          "route": null,
-          "external": false
         },
         {
           "edge": "put_in_force",
@@ -2050,20 +1994,6 @@
           "kind": "rule",
           "route": "/rules/project-ui-conformance-1/",
           "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "test/cases/107_design_tokens.sh",
-          "kind": "test",
-          "route": null,
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "test/cases/109_design_system.sh",
-          "kind": "test",
-          "route": null,
-          "external": false
         }
       ],
       "referenced_by": []
@@ -2081,27 +2011,6 @@
       ],
       "source": ".ai/repo/adrs/0037-a-gate-whose-runner-is-scarce-is-planned-on-demand-so-that-the-verdict-arrives.md",
       "references": [
-        {
-          "edge": "put_in_force",
-          "label": ".ai/repo/ci/gates.yaml",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": ".github/workflows/pages.yml",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": ".github/workflows/validate.yml",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
         {
           "edge": "put_in_force",
           "label": "adr-0006",
@@ -2617,9 +2526,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.english-only@1",
+          "label": "project.english-only@2",
           "kind": "rule",
-          "route": "/rules/project-english-only-1/",
+          "route": "/rules/project-english-only-2/",
           "external": false
         },
         {
@@ -3534,6 +3443,46 @@
           "label": "project.skills-are-proven-capabilities@1",
           "kind": "rule",
           "route": "/rules/project-skills-are-proven-capabilities-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0077",
+      "identity": "adr-0077",
+      "slug": "adr-0077",
+      "cockpit": "/cockpit/objects/adr/adr-0077",
+      "title": "Published content may be written in the reader's language; the repository's own artifacts may not",
+      "status": "proposed",
+      "tags": [
+        "language",
+        "governance",
+        "site",
+        "publication"
+      ],
+      "source": ".ai/repo/adrs/0077-published-content-may-be-written-in-the-readers-language.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "authored-files-are-english",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "published-translation-is-declared",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.english-only@2",
+          "kind": "rule",
+          "route": "/rules/project-english-only-2/",
           "external": false
         }
       ],
@@ -8470,16 +8419,16 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.english-only@1",
-      "identity": "project.english-only@1",
-      "slug": "project-english-only-1",
-      "cockpit": "/cockpit/objects/rule/project-english-only-1",
+      "id": "majordomus://rule/project.english-only@2",
+      "identity": "project.english-only@2",
+      "slug": "project-english-only-2",
+      "cockpit": "/cockpit/objects/rule/project-english-only-2",
       "title": "English only",
       "status": "active",
       "tags": [
         "language"
       ],
-      "source": ".ai/repo/rules/project/english-only.v1.md",
+      "source": ".ai/repo/rules/project/english-only.v2.md",
       "references": [],
       "referenced_by": [
         {
@@ -8487,6 +8436,20 @@
           "label": "adr-0048",
           "kind": "adr",
           "route": "/adrs/adr-0048/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0077",
+          "kind": "adr",
+          "route": "/adrs/adr-0077/",
+          "external": false
+        },
+        {
+          "edge": "defined_in",
+          "label": "published-translation-is-declared",
+          "kind": "claim",
+          "route": "/guarantees/",
           "external": false
         }
       ]

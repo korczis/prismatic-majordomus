@@ -117,33 +117,40 @@ permissions:
   # another run's artifact is this permission. Nothing here writes to Actions.
   actions: read
 
-# The site is a projection of the newest commit, so an older deployment of an older commit is
-# worth nothing the moment a newer push exists. A superseded run is cancelled rather than
-# finished; the branch push is idempotent and last-writer-wins, so cancelling one loses nothing
-# but the seconds it would have spent.
+# The site is a projection of the newest commit, and the group serialises the runs that
+# publish it: one run in flight, at most one waiting. Nothing cancels the run in flight —
+# neither a push, nor a dispatch, nor the schedule. GitHub keeps only the newest *pending*
+# run of a group and cancels the older pending ones, so a burst of merges still costs one
+# extra deploy at most: the one already running, of an intermediate commit, which the
+# waiting run of the newest commit overwrites as soon as it finishes. gh-pages is pushed in
+# commit order, so an older tree can never land after a newer one.
 #
-# Cancelling cannot strand the site, and that is a property of the group rather than a hope: a
-# run is only ever cancelled here by a *newer run of this same workflow starting*, so every
-# cancellation is by construction succeeded by a run of a newer commit, and the chain ends in a
-# run that publishes or in one that goes red. Twenty pull requests landed on 2026-09-10 and the
-# runs bear it out — seventeen cancelled runs over two days, fourteen of which had already
-# pushed gh-pages before they died (the job's own five-minute bound killed them mid-probe, which
-# is the defect the `deploy` job's timeouts below were rewritten for), and the three that died
-# before publishing were each followed by a run of a newer commit. What the cancellation does
-# cost is real and is named here: a run cancelled before it published had a publishable commit,
-# and if its successor then fails to build, the site keeps the older publication. That is a
-# stale site, and what reports it is the `pages-live` gate of .ai/repo/ci/gates.yaml, which
-# refuses once a publication has been owed longer than the deploy window.
+# A push used to supersede the run in flight, on the reasoning that it always carries a
+# newer tree. That is sound about the trees and wrong about the outcome: it starves the
+# publication whenever merges arrive faster than a run completes, because the superseding
+# run is itself superseded by the one after it, and nothing is ever published. Measured on
+# 2026-09-12: three consecutive runs cancelled (19b275520, 55dbf7b07 and the run before
+# them), the published site 34 commits behind master for three hours, and `pages-check`
+# reporting "inside the deploy window" throughout because each cancellation reset the clock.
+# A run is longer now than it was then — the rustdoc job, the build, and a probe that waits
+# up to ten minutes on GitHub's own build — so on a trunk that moves every few minutes a
+# cancelling group would publish nothing at all.
 #
-# `cancel-in-progress` is a push's privilege, not a dispatch's. A dispatch of this workflow is
-# the recovery path — it is run *because* the automatic one did not publish — and a recovery
-# that kills a deploy which is mid-`git push` to gh-pages, to publish the same tree a moment
-# later, is a race with nothing to win. With the expression false for a dispatch, a manual run
-# waits for the run in flight instead of cancelling it; a push still supersedes everything,
-# because a push always carries a newer tree than whatever is running.
+# A dispatch was already exempt for its own reason, which still holds: it is the recovery
+# path, run *because* the automatic one did not publish, and a recovery that kills a deploy
+# mid-`git push` to gh-pages, to publish the same tree a moment later, is a race with
+# nothing to win.
+#
+# What this moves elsewhere is named here so that it is not mistaken for a regression of
+# this setting: every run now finishes, so gh-pages is pushed more often, and a push to it
+# supersedes GitHub's own Pages build in flight, which GitHub reports as `errored` with
+# "Page build failed.". That is stage four of publication and is read, not hidden: the
+# `GitHub's own build of what we pushed` step below and the `owed` job's rebuild remedy.
+# A stale site from any cause is still refused by the `pages-live` gate of
+# .ai/repo/ci/gates.yaml once a publication has been owed longer than the deploy window.
 concurrency:
   group: pages-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'push' }}
+  cancel-in-progress: false
 
 jobs:
   # A scheduled run asks before it works: is a publication owed at all, and if so, which of its

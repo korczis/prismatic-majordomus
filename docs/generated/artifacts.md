@@ -157,10 +157,10 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 
 | path | document | format | bytes | sha256 |
 |---|---|---|---|---|
-| `.bb/AGENTS.md` | `providers/bb` | markdown | 1476 | `eef2417250e81202` |
+| `.bb/AGENTS.md` | `providers/bb` | markdown | 1476 | `a9d70bda82375a6b` |
 | `.dockerignore` | `deployment` | text | 573 | `b5411ad35adb24ea` |
-| `AGENTS.md` | `providers/agents` | markdown | 7543 | `d8029d17571b91b5` |
-| `CLAUDE.md` | `providers/claude-code` | markdown | 6832 | `d7be20157f19e4fa` |
+| `AGENTS.md` | `providers/agents` | markdown | 7543 | `2f93cfe9134a6daf` |
+| `CLAUDE.md` | `providers/claude-code` | markdown | 6832 | `47d42488faeca909` |
 | `apps/majordomus-cli/src/cockpit/logo-mark.svg` | `design-mark` | text | 904 | `861ed5a4aa3e3f4d` |
 | `apps/majordomus-cli/src/design/tokens.yaml` | `design-declaration` | yaml | 21258 | `00b8199388d600db` |
 | `apps/majordomus-cli/src/web/tokens.css` | `design-tokens` | text | 9320 | `bcd7932862d8364d` |
@@ -186,7 +186,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/economics.json` | `economics` | json | 27308 | `15358480c9062e3d` |
 | `docs/generated/economics.md` | `economics` | markdown | 14794 | `6828cf31f4f22b31` |
 | `docs/generated/economics.yaml` | `economics` | yaml | 22792 | `450b0b58bcc1d90a` |
-| `docs/generated/graph.json` | `graph` | json | 2390806 | `9d68fa2fd3db8fbf` |
+| `docs/generated/graph.json` | `graph` | json | 2392416 | `dd3dc1dd68950dce` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7618 | `53b604e27fc130c6` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1742 | `98ad38d220b99d7a` |
 | `docs/generated/modules/capabilities.md` | `modules/capabilities` | markdown | 3130 | `487726a98d97632c` |
@@ -264,7 +264,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/allow/manifest.txt` | `allow/manifest` | text | 649 | `9db1921e8af127ee` |
 | `share/allow/mesh-declaration.txt` | `allow/mesh-declaration` | text | 687 | `7e7d88703c991c8d` |
 | `share/allow/milestone.txt` | `allow/milestone` | text | 760 | `1e3a2f9a455816c1` |
-| `share/allow/policy.txt` | `allow/policy` | text | 1974 | `5454741a9fa4e3c6` |
+| `share/allow/policy.txt` | `allow/policy` | text | 2095 | `37a69b0a9a1b44a5` |
 | `share/allow/profile.txt` | `allow/profile` | text | 690 | `9fb86acad5a8a8e1` |
 | `share/allow/project.txt` | `allow/project` | text | 245 | `8281ddcc681a5bf1` |
 | `share/allow/prompt.txt` | `allow/prompt` | text | 227 | `f08ca081c75322b0` |
@@ -302,10 +302,10 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/version.txt` | `version` | text | 231 | `b809f40aa3dda7dd` |
 | `site/data/registry/design.json` | `site-design` | json | 11587 | `86dece83133ddd5d` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `387872eadf4f1d6d` |
-| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 662644 | `2fd551940d9de26c` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 91561 | `dae71a6dc30b81e2` |
-| `site/data/registry/product.json` | `site-product` | json | 471563 | `1d4702f41a31a926` |
-| `site/data/registry/registry.json` | `site-registry` | json | 5404125 | `438145388326f8be` |
+| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 663899 | `b20f3263f385fe4d` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 91561 | `dc148dc7a7e025e1` |
+| `site/data/registry/product.json` | `site-product` | json | 471757 | `8d7a8ab4c09c813e` |
+| `site/data/registry/registry.json` | `site-registry` | json | 5407586 | `66c90dbdd19bade3` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `05965e98b5dc0c58` |
 | `site/data/registry/why.json` | `site-why` | json | 349952 | `1064db74576aeadd` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `861ed5a4aa3e3f4d` |

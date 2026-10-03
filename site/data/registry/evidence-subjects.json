@@ -1674,6 +1674,11 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:published-translation-is-declared",
+      "path": "/evidence/claims/published-translation-is-declared/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:reasoning-survives-the-session",
       "path": "/evidence/claims/reasoning-survives-the-session/"
     },
@@ -8876,6 +8881,29 @@
       "mechanisms": [],
       "findings": []
     },
+    "claim:published-translation-is-declared": {
+      "kind": "claim",
+      "id": "published-translation-is-declared",
+      "status": "guaranteed",
+      "page": "/evidence/claims/published-translation-is-declared/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:403_published_translation",
+          "path": "test/cases/403_published_translation.sh",
+          "category": "e2e",
+          "inputs": [
+            ".ai/repo/rules/project/english-only.v2.md",
+            "scripts/ci/english-only-check",
+            "test/cases/403_published_translation.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "claim:reasoning-survives-the-session": {
       "kind": "claim",
       "id": "reasoning-survives-the-session",
@@ -14395,6 +14423,12 @@
           "via": "negative",
           "test": "suite:138_governance_gates",
           "path": "test/cases/138_governance_gates.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:403_published_translation",
+          "path": "test/cases/403_published_translation.sh",
           "category": "e2e"
         },
         {
@@ -23678,6 +23712,7 @@
     "crate:hot_path",
     "crate:index_behavior",
     "crate:lease_busy",
+    "crate:lease_declared",
     "crate:mcp_stdio",
     "crate:mesh_compaction",
     "crate:metadata_contract",
@@ -23735,8 +23770,10 @@
     "suite:343_the_cockpit_shows_who_else_is_here",
     "suite:349_a_step_reports_its_own_time",
     "suite:34_command_fixtures",
+    "suite:350_the_queue_measures_itself",
     "suite:352_the_version_the_site_shows_is_one_you_can_get",
     "suite:353_the_version_bump_has_an_actor",
+    "suite:354_a_lease_contest_is_judged_by_a_declaration",
     "suite:35_future_command",
     "suite:360_the_crate_boundary_is_measured",
     "suite:362_a_release_follows_the_ci_verdict",
@@ -23774,6 +23811,7 @@
     "suite:546_a_statistic_names_the_capability_it_asked",
     "suite:552_coverage_is_recorded_for_the_preflight",
     "suite:575_nothing_runs_perl",
+    "suite:593_generation_states_its_subject",
     "suite:599_a_silent_check_is_not_a_pass",
     "suite:59_reference_integrity",
     "suite:611_the_reclaim_refuses_what_it_cannot_prove",
