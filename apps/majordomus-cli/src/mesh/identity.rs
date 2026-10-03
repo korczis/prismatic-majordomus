@@ -288,6 +288,45 @@ fn unhex(text: &str) -> Option<Vec<u8>> {
         .collect()
 }
 
+/// Give the identity at `path` a display label, keeping its key: the node id, and every
+/// signature it ever made, are unchanged. The label is presentation — what a person reads
+/// as `macbook-pro` in a list of devices — and is refused unless it is a short name of
+/// letters, digits, `.`, `_` and `-`, because it is printed wherever this node is named.
+///
+/// ```
+/// use majordomus_cli::mesh::identity::{relabel, NodeIdentity};
+/// let dir = tempfile::tempdir().unwrap();
+/// let path = dir.path().join("node.json");
+/// let before = NodeIdentity::load_or_create(&path).unwrap();
+/// let after = relabel(&path, "mac-mini").unwrap();
+/// assert_eq!(after.public.display_name, "mac-mini");
+/// assert_eq!(after.public.node_id, before.public.node_id, "the key is the identity");
+/// assert!(relabel(&path, "two words").is_err());
+/// ```
+pub fn relabel(path: &Path, label: &str) -> Result<NodeIdentity, MeshError> {
+    let valid = !label.is_empty()
+        && label.len() <= 64
+        && label
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '_' | '-'));
+    if !valid {
+        return Err(MeshError::Identity(format!(
+            "`{label}` is not a device label: 1 to 64 letters, digits, `.`, `_` or `-`"
+        )));
+    }
+    NodeIdentity::load_or_create(path)?;
+    let text = std::fs::read_to_string(path)
+        .map_err(|e| MeshError::Identity(format!("{}: {e}", path.display())))?;
+    let mut file: IdentityFile = serde_json::from_str(&text).map_err(|e| {
+        MeshError::Identity(format!("{}: not an identity file: {e}", path.display()))
+    })?;
+    file.display_name = Some(label.to_string());
+    let text =
+        serde_json::to_string_pretty(&file).map_err(|e| MeshError::Identity(e.to_string()))?;
+    write_private(path, &text)?;
+    NodeIdentity::load(path)
+}
+
 /// Write `text` to `path` with owner-only permissions, atomically enough for one user's
 /// state directory: a temp file beside the target, then a rename.
 fn write_private(path: &Path, text: &str) -> Result<(), MeshError> {

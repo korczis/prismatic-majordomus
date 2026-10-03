@@ -34,6 +34,7 @@ pub(crate) mod capabilities;
 pub(crate) mod command_graph;
 pub(crate) mod commit;
 pub(crate) mod completion;
+pub(crate) mod continuity;
 pub(crate) mod convergence;
 pub(crate) mod dashboard;
 pub(crate) mod delivery;
@@ -109,6 +110,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Dashboard(args) => dashboard::run(args),
         Command::Skills(args) => skills::run(args),
         Command::Knowledge(args) => knowledge::run(args),
+        Command::Continuity(args) => continuity::run(args),
     }
 }
 
@@ -183,6 +185,13 @@ mod tests {
             (
                 &["majordomus", "knowledge", "record", "e1-0123456789ab"],
                 |c| matches!(c, Command::Knowledge(_)),
+            ),
+            (&["majordomus", "continuity", "status"], |c| {
+                matches!(c, Command::Continuity(_))
+            }),
+            (
+                &["majordomus", "continuity", "resume", "--record", "a1b2"],
+                |c| matches!(c, Command::Continuity(_)),
             ),
         ];
         for (argv, is_expected) in cases {

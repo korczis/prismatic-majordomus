@@ -6,22 +6,22 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.12.0
 coverage:
   - scope: direct
-    required: 169
-    covered: 151
+    required: 176
+    covered: 154
     missing: 0
-    waived: 18
+    waived: 22
     inapplicable: 0
   - scope: http
-    required: 167
-    covered: 151
+    required: 174
+    covered: 154
     missing: 0
-    waived: 16
+    waived: 20
     inapplicable: 0
   - scope: mcp
-    required: 163
-    covered: 147
+    required: 170
+    covered: 150
     missing: 0
-    waived: 16
+    waived: 20
     inapplicable: 0
   - scope: system
     required: 13
@@ -30,10 +30,10 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 512
-    covered: 462
+    required: 533
+    covered: 471
     missing: 0
-    waived: 50
+    waived: 62
     inapplicable: 0
 capabilities:
   - id: artifacts.list
@@ -142,6 +142,49 @@ capabilities:
       - conventional
       - not-conventional
       - merge
+  - id: continuity.device
+    module: continuity
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
+  - id: continuity.plan
+    module: continuity
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+      - by-prefix
+  - id: continuity.publish
+    module: continuity
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
+  - id: continuity.records
+    module: continuity
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: continuity.resume
+    module: continuity
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
   - id: continuity.state
     module: continuity
     kind: query
@@ -151,6 +194,23 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: continuity.status
+    module: continuity
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: continuity.sync
+    module: continuity
+    kind: command
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
   - id: convergence.report
     module: convergence
     kind: query

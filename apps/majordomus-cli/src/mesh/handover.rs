@@ -299,9 +299,64 @@ fn repository_id(root: &Path) -> Result<String, String> {
 /// assert!(std::fs::read_to_string(&written).unwrap().contains("worktree: mesh:"));
 /// ```
 pub fn materialize(root: &Path, view: &HandoverView) -> Result<PathBuf, String> {
+    write_record(
+        root,
+        &view.handover,
+        &Provenance {
+            transport: "mesh",
+            marker_key: "mesh_handover",
+            marker: view.id.clone(),
+            origin_key: "mesh_origin",
+            origin: view.runtime.clone(),
+            working_tree: None,
+            changed_files: Vec::new(),
+        },
+    )
+}
+
+/// Where a handover written into this checkout came from, and what its front matter says
+/// about the source state it was written against. The mesh and a continuity record are the
+/// two transports that bring one; both write through [`write_record`], so a handover that
+/// arrived from another machine has one shape whichever way it travelled.
+#[derive(Debug, Clone)]
+pub struct Provenance {
+    /// `mesh` or `continuity`: the file-name segment and the prefix of owner and worktree.
+    pub transport: &'static str,
+    /// The front-matter key whose value identifies the handover on its transport; a record
+    /// holding `<marker_key>: <marker>` already is this handover, which is what makes
+    /// writing it twice write one file.
+    pub marker_key: &'static str,
+    /// That value (32 hex).
+    pub marker: String,
+    /// The front-matter key naming where it came from.
+    pub origin_key: &'static str,
+    /// Where it came from: a runtime id or a device node id (hex).
+    pub origin: String,
+    /// `clean` or `dirty` at the origin when the transport carries it. `None` writes
+    /// `clean`, as the mesh, which does not carry it, always has.
+    pub working_tree: Option<&'static str>,
+    /// The repository-relative paths that differed from HEAD at the origin.
+    pub changed_files: Vec<String>,
+}
+
+/// Write a handover that arrived from elsewhere into `root`'s handovers directory, or
+/// return the record that already holds it. See [`materialize`] for why every value is
+/// written defensively.
+pub fn write_record(root: &Path, h: &HandoverBody, from: &Provenance) -> Result<PathBuf, String> {
     let dir = directory(root);
     std::fs::create_dir_all(&dir).map_err(|e| format!("{}: {e}", dir.display()))?;
-    let marker = format!("mesh_handover: {}", view.id);
+    let hexish = |v: &str| {
+        v.chars()
+            .filter(char::is_ascii_hexdigit)
+            .take(64)
+            .collect::<String>()
+    };
+    let marker_value = hexish(&from.marker);
+    let origin = hexish(&from.origin.replace('-', ""));
+    if marker_value.len() < 16 {
+        return Err("a handover from elsewhere is identified by at least 16 hex".into());
+    }
+    let marker = format!("{}: {marker_value}", from.marker_key);
     if let Ok(entries) = std::fs::read_dir(&dir) {
         for entry in entries.flatten() {
             let path = entry.path();
@@ -315,7 +370,15 @@ pub fn materialize(root: &Path, view: &HandoverView) -> Result<PathBuf, String> 
     // Everything below comes from another runtime. Validation refused multi-line values at
     // ingest; this writes defensively anyway, because a file name and a front matter built
     // from a peer's words are exactly where a path or a key would be smuggled.
-    let h = &view.handover;
+    let origin_label = if from.transport == "mesh" {
+        // the mesh's runtime id keeps its dash, as it always has
+        one_line(&from.origin)
+            .chars()
+            .filter(|c| c.is_ascii_hexdigit() || *c == '-')
+            .collect()
+    } else {
+        origin
+    };
     let branch = one_line(h.branch.as_deref().unwrap_or("DETACHED"));
     let head = one_line(h.head.as_deref().unwrap_or("NONE"));
     let created = one_line(
@@ -331,13 +394,21 @@ pub fn materialize(root: &Path, view: &HandoverView) -> Result<PathBuf, String> 
         one_line(h.task.as_deref().unwrap_or("none"))
     ));
     text.push_str("profile: none\n");
-    text.push_str(&format!("owner: \"mesh:{}\"\n", view.runtime));
+    let transport = from.transport;
+    text.push_str(&format!("owner: \"{transport}:{origin_label}\"\n"));
     text.push_str(&format!("repository_id: {}\n", repository_id(root)?));
-    text.push_str(&format!("worktree: mesh:{}\n", view.runtime));
+    text.push_str(&format!("worktree: {transport}:{origin_label}\n"));
     text.push_str(&format!(
-        "branch: {branch}\nhead: {head}\nworking_tree: clean\nchanged_files:\n"
+        "branch: {branch}\nhead: {head}\nworking_tree: {}\nchanged_files:\n",
+        from.working_tree.unwrap_or("clean")
     ));
-    text.push_str(&format!("{marker}\nmesh_origin: {}\n", view.runtime));
+    for path in &from.changed_files {
+        let path = one_line(path);
+        if !path.is_empty() && !path.starts_with('/') && !path.split('/').any(|c| c == "..") {
+            text.push_str(&format!("  - {path}\n"));
+        }
+    }
+    text.push_str(&format!("{marker}\n{}: {origin_label}\n", from.origin_key));
     if let Some(issue) = &h.issue {
         text.push_str(&format!("issue: \"{}\"\n", one_line(issue)));
     }
@@ -376,8 +447,8 @@ pub fn materialize(root: &Path, view: &HandoverView) -> Result<PathBuf, String> 
         head7 = "0000000".into();
     }
     let name = format!(
-        "{compact}--mesh--{branch_key}--{head7}--{}.md",
-        &view.id[..16]
+        "{compact}--{transport}--{branch_key}--{head7}--{}.md",
+        &marker_value[..16]
     );
     let path = dir.join(&name);
     if name.contains('/') || path.parent() != Some(dir.as_path()) {
@@ -386,7 +457,7 @@ pub fn materialize(root: &Path, view: &HandoverView) -> Result<PathBuf, String> 
             dir.display()
         ));
     }
-    let tmp = dir.join(format!(".tmp.mesh.{}", &view.id[..16]));
+    let tmp = dir.join(format!(".tmp.{transport}.{}", &marker_value[..16]));
     std::fs::write(&tmp, text).map_err(|e| format!("{}: {e}", tmp.display()))?;
     #[cfg(unix)]
     {

@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 169 | 151 | 0 | 18 |
-| http | 167 | 151 | 0 | 16 |
-| mcp | 163 | 147 | 0 | 16 |
+| direct | 176 | 154 | 0 | 22 |
+| http | 174 | 154 | 0 | 20 |
+| mcp | 170 | 150 | 0 | 20 |
 | system | 13 | 13 | 0 | 0 |
-| total | 512 | 462 | 0 | 50 |
+| total | 533 | 471 | 0 | 62 |
 
 ## Capabilities
 
@@ -30,7 +30,14 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `commit.plan` | commit | query | — | covered | covered | covered | `default` |
 | `commit.scopes` | commit | query | — | covered | covered | covered | `default` |
 | `commit.validate` | commit | query | — | covered | covered | covered | `conventional`, `not-conventional`, `merge` |
+| `continuity.device` | continuity | command | — | waived | waived | waived | — |
+| `continuity.plan` | continuity | query | — | covered | covered | covered | `default`, `by-prefix` |
+| `continuity.publish` | continuity | command | — | waived | waived | waived | — |
+| `continuity.records` | continuity | query | — | covered | covered | covered | `default` |
+| `continuity.resume` | continuity | command | — | waived | waived | waived | — |
 | `continuity.state` | continuity | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `continuity.status` | continuity | query | — | covered | covered | covered | `default` |
+| `continuity.sync` | continuity | command | — | waived | waived | waived | — |
 | `convergence.report` | convergence | query | — | covered | covered | covered | `default` |
 | `dashboard.overview` | dashboard | query | — | covered | covered | covered | `default` |
 | `delivery.feature` | delivery | query | — | waived | waived | waived | — |

@@ -503,6 +503,73 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
         },
     );
 
+    // --- handovers published from other machines
+    //
+    // `continuity.status` decides it: every record of the local continuity store admitted
+    // or refused, and the lineage read from what was admitted. A refused record (forged,
+    // foreign, leaking) or a broken line fails; a diverged line, a dangling parent or a
+    // record too new to read warns. A repository that never published is not a fault.
+    let continuity = crate::continuity::Machine::open_read(
+        root,
+        super::mesh::declaration(ctx).and_then(Result::ok),
+    )
+    .and_then(|m| crate::continuity::status(&m));
+    let (status, detail, findings) = match continuity {
+        Ok(st) => {
+            let worst = st
+                .diagnostics
+                .iter()
+                .map(|d| match d.severity {
+                    Severity::Error => HealthStatus::Fail,
+                    Severity::Warning => HealthStatus::Warn,
+                    _ => HealthStatus::Ok,
+                })
+                .fold(HealthStatus::Ok, HealthStatus::worse);
+            (
+                worst,
+                format!(
+                    "{} record(s) admitted, {} refused, {} resumable from another device",
+                    st.store.records,
+                    st.store.refused,
+                    st.resumable.len()
+                ),
+                st.diagnostics
+                    .iter()
+                    .filter(|d| d.severity != Severity::Info)
+                    .map(|d| {
+                        format!(
+                            "{} {}{}",
+                            d.code,
+                            d.path
+                                .as_deref()
+                                .map(|p| format!("{p}: "))
+                                .unwrap_or_default(),
+                            d.message
+                        )
+                    })
+                    .collect(),
+            )
+        }
+        Err(e) => (
+            HealthStatus::Unknown,
+            format!("the continuity store could not be read: {e}"),
+            Vec::new(),
+        ),
+    };
+    record(
+        &mut checks,
+        &ctx.progress,
+        HealthCheck {
+            id: "continuity".into(),
+            title: "Handovers published across machines".into(),
+            status,
+            detail,
+            decided_by: "the admission and lineage checks of `continuity.status`".into(),
+            evidence: vec!["majordomus-cli continuity status".into()],
+            findings,
+        },
+    );
+
     // --- the shared server of this checkout
     //
     // Not a second opinion and not a second reading: `server::standing_at` is what answers

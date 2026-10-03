@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.12.0"
   },
-  "fingerprint": "9a37187939be1bae4d434c636dbbef08287398ab72a522f32f50a66ce4ad8529",
+  "fingerprint": "05b85d62835cc23f3f0b9f88412923c3ed5d6555d048367733e4f63dab3f010d",
   "route": "/features/",
   "counts": {
     "features": 26,
@@ -3137,6 +3137,51 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
           "capabilities": [
             {
+              "id": "continuity.device",
+              "title": "This device's identity, and its label",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_continuity_device",
+              "route": "POST /api/v1/continuity/device",
+              "cli": "majordomus continuity device"
+            },
+            {
+              "id": "continuity.plan",
+              "title": "Whether and how a published handover can be resumed here",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_continuity_plan",
+              "route": "GET /api/v1/continuity/plan",
+              "cli": "majordomus continuity plan"
+            },
+            {
+              "id": "continuity.publish",
+              "title": "Publish this checkout's newest handover for another machine",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_continuity_publish",
+              "route": "POST /api/v1/continuity/publish",
+              "cli": "majordomus continuity publish"
+            },
+            {
+              "id": "continuity.records",
+              "title": "Every published handover the local store admits",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_continuity_records",
+              "route": "GET /api/v1/continuity/records",
+              "cli": "majordomus continuity records"
+            },
+            {
+              "id": "continuity.resume",
+              "title": "Resume a handover another machine published",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_continuity_resume",
+              "route": "POST /api/v1/continuity/resume",
+              "cli": "majordomus continuity resume"
+            },
+            {
               "id": "continuity.state",
               "title": "What the lifecycle is holding",
               "kind": "query",
@@ -3144,6 +3189,24 @@
               "tool": "majordomus_continuity",
               "resource": "majordomus://continuity",
               "route": "GET /api/v1/continuity"
+            },
+            {
+              "id": "continuity.status",
+              "title": "Where this device stands in the work published from every device",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_continuity_status",
+              "route": "GET /api/v1/continuity/status",
+              "cli": "majordomus continuity status"
+            },
+            {
+              "id": "continuity.sync",
+              "title": "Exchange published handovers with a git remote",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_continuity_sync",
+              "route": "POST /api/v1/continuity/sync",
+              "cli": "majordomus continuity sync"
             }
           ]
         },
@@ -3642,11 +3705,11 @@
         "worktrees"
       ],
       "counts": {
-        "capabilities": 9,
-        "mcp_tools": 9,
+        "capabilities": 16,
+        "mcp_tools": 16,
         "mcp_resources": 31,
-        "http_routes": 9,
-        "cli_paths": 0,
+        "http_routes": 16,
+        "cli_paths": 7,
         "commands": 7,
         "objects": 26,
         "rules": 8,
@@ -3860,7 +3923,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 78
+          "objects": 79
         },
         {
           "name": "knowledge",
@@ -4141,11 +4204,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 390,
+        "mcp_resources": 391,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 387,
+        "objects": 388,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -4355,7 +4418,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 159
+          "objects": 160
         }
       ],
       "rule_refs": [
@@ -4731,11 +4794,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 161,
+        "mcp_resources": 162,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 159,
+        "objects": 160,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -10799,7 +10862,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (78)",
+        "title": "adr (79)",
         "features": [
           "knowledge"
         ]
@@ -10947,7 +11010,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (159)",
+        "title": "rule (160)",
         "features": [
           "doctrine"
         ]
@@ -11866,19 +11929,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1855,
-    "builtin": 169,
-    "declarative": 1686,
+    "capabilities": 1871,
+    "builtin": 176,
+    "declarative": 1695,
     "modules": 51,
-    "mcp_tools": 163,
-    "mcp_resources": 1738,
-    "http_routes": 167,
-    "cli_commands": 175,
+    "mcp_tools": 170,
+    "mcp_resources": 1747,
+    "http_routes": 174,
+    "cli_commands": 182,
     "shell_commands": 30,
     "kinds": 32,
-    "objects": 1686,
+    "objects": 1695,
     "by_kind": {
-      "adr": 78,
+      "adr": 79,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -11902,12 +11965,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 8,
-      "rule": 159,
+      "rule": 160,
       "scope": 1,
       "session": 22,
       "skill": 6,
       "taxonomy": 10,
-      "test": 338,
+      "test": 345,
       "use-case": 48,
       "workspace": 1
     },

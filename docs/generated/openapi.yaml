@@ -963,6 +963,453 @@ paths:
         resource:
           uri: majordomus://continuity
           name: continuity
+  "/api/v1/continuity/device":
+    post:
+      operationId: continuity.device
+      summary: "This device's identity, and its label"
+      description: "The device a published handover names: the mesh node key (created when this device has none, in the user's state directory and never in a repository), its node id, its public key — what a trust list admits — and the label a person reads. With a label, renames the device; the key and every signature it made are unchanged."
+      tags:
+        - continuity
+      requestBody:
+        required: true
+        description: "The input of `continuity.device`."
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/DeviceInput"
+            examples:
+              default:
+                value: {}
+      responses:
+        "200":
+          description: "This device's identity, and its label: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/DeviceView"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "422":
+          description: "`refused`: The command was understood and turned down for the reason the message gives."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: continuity.device
+      x-majordomus-kind: command
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::continuity
+      x-majordomus-benchmark:
+        policy: waived
+        reason: destructive
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: process_state
+      x-majordomus-mcp:
+        tool: majordomus_continuity_device
+      x-majordomus-cli: continuity device
+  "/api/v1/continuity/plan":
+    get:
+      operationId: continuity.plan
+      summary: Whether and how a published handover can be resumed here
+      description: "Writes nothing. Chooses the record (named, or the one other device's handover this checkout has not resumed, on this branch first) and decides: is its signer trusted, does it diverge from the record this checkout stands on, does the local source hold the commit and branch it was written against, was it written in a dirty tree whose uncommitted files never reached a commit, may the other device still be working. The verdict is ready, ready_with_warnings, requires_source_update, conflict, choose_record, nothing_to_resume or refused, with blockers, warnings, the commands that resolve them (recommended, never run), what a resume restores and what this checkout recomputes for itself."
+      tags:
+        - continuity
+      parameters:
+        - name: record
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "A record id, or a unique prefix of one."
+          examples:
+            by-prefix:
+              value: "0000"
+      responses:
+        "200":
+          description: "Whether and how a published handover can be resumed here: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ResumePlan"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: continuity.plan
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::continuity
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_continuity_plan
+      x-majordomus-cli: continuity plan
+  "/api/v1/continuity/publish":
+    post:
+      operationId: continuity.publish
+      summary: "Publish this checkout's newest handover for another machine"
+      description: "Projects the newest handover record into a portable record — the handover body, the repository and device identity, the episode, the source state (branch, commit, and for a dirty tree the changed paths and a fingerprint, never their content), the task and its decisions, and the record it continues — refuses it when any value carries a credential, a secret environment value or a path of this machine's disk, signs it with the device's mesh key and adds it to refs/majordomus/continuity. Touches no branch, index or working tree, and no network: a sync publishes it."
+      tags:
+        - continuity
+      requestBody:
+        required: true
+        description: "The input of `continuity.publish`."
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/PublishInput"
+            examples:
+              default:
+                value: {}
+      responses:
+        "200":
+          description: "Publish this checkout's newest handover for another machine: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Published"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "422":
+          description: "`refused`: The command was understood and turned down for the reason the message gives."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: continuity.publish
+      x-majordomus-kind: command
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::continuity
+      x-majordomus-benchmark:
+        policy: waived
+        reason: destructive
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: repository_mutation
+      x-majordomus-mcp:
+        tool: majordomus_continuity_publish
+      x-majordomus-cli: continuity publish
+  "/api/v1/continuity/records":
+    get:
+      operationId: continuity.records
+      summary: Every published handover the local store admits
+      description: "Every record of refs/majordomus/continuity that passed admission — schema, id, signature, repository identity, portability — by line, with each line's heads, and a diagnostic for every file refused and every lineage defect."
+      tags:
+        - continuity
+      parameters: []
+      responses:
+        "200":
+          description: "Every published handover the local store admits: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Records"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: continuity.records
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::continuity
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_continuity_records
+      x-majordomus-cli: continuity records
+  "/api/v1/continuity/resume":
+    post:
+      operationId: continuity.resume
+      summary: Resume a handover another machine published
+      description: "Plans exactly as continuity.plan does and acts only on a ready or ready_with_warnings plan: writes the handover into this checkout's handovers (where handover --resolve and the session briefing find it), appends the task's decisions to the decision log once each, and records the record as the one this checkout continues, so that its next publication extends the same line. Runs nothing the record says; the start command for the task is returned as a recommendation."
+      tags:
+        - continuity
+      requestBody:
+        required: true
+        description: "The input of `continuity.resume`."
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/RecordInput"
+            examples:
+              by-prefix:
+                value:
+                  record: "0000"
+              default:
+                value: {}
+      responses:
+        "200":
+          description: "Resume a handover another machine published: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Resumed"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "422":
+          description: "`refused`: The command was understood and turned down for the reason the message gives."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: continuity.resume
+      x-majordomus-kind: command
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::continuity
+      x-majordomus-benchmark:
+        policy: waived
+        reason: destructive
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: repository_mutation
+      x-majordomus-mcp:
+        tool: majordomus_continuity_resume
+      x-majordomus-cli: continuity resume
+  "/api/v1/continuity/status":
+    get:
+      operationId: continuity.status
+      summary: Where this device stands in the work published from every device
+      description: "This device and repository identity, the record this checkout continues on its branch, how the local continuity store stands towards the remote's (from the refs alone, no network), every line of work with its heads, the handovers other devices published that this checkout could resume, and every refused record or broken lineage as a diagnostic. A diverged line — the same work continued twice — is reported; separate lines of work on separate devices are not a conflict."
+      tags:
+        - continuity
+      parameters: []
+      responses:
+        "200":
+          description: "Where this device stands in the work published from every device: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Status"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: continuity.status
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::continuity
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_continuity_status
+      x-majordomus-cli: continuity status
+  "/api/v1/continuity/sync":
+    post:
+      operationId: continuity.sync
+      summary: Exchange published handovers with a git remote
+      description: "Fetches the remote's refs/majordomus/continuity, merges it into the local store as the union of both (records are content-addressed, so a name holding different bytes is reported and the local copy kept), and pushes the result, never forced. Reports each line as equal, remote_newer, local_newer, diverged, local_only or remote_only. An unreachable remote changes nothing and leaves what is pending pending."
+      tags:
+        - continuity
+      requestBody:
+        required: true
+        description: "The input of `continuity.sync`."
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/SyncInput"
+            examples:
+              default:
+                value: {}
+      responses:
+        "200":
+          description: "Exchange published handovers with a git remote: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/Synced"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "422":
+          description: "`refused`: The command was understood and turned down for the reason the message gives."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: continuity.sync
+      x-majordomus-kind: command
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::continuity
+      x-majordomus-benchmark:
+        policy: waived
+        reason: external_dependency
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: repository_mutation
+      x-majordomus-mcp:
+        tool: majordomus_continuity_sync
+      x-majordomus-cli: continuity sync
   "/api/v1/convergence":
     get:
       operationId: convergence.report
@@ -14371,6 +14818,45 @@ components:
         - obligations
         - questions
       description: "```\nuse majordomus_cli::gates::Completion;\n\n// the document every surface reads, as `gates.completion` answers with it. The property\n// that matters is the one asserted here: a gate that never reported leaves the task\n// finishable and *unverified*, which is a different thing from a task that passed.\nlet c: Completion = serde_json::from_value(serde_json::json!({\n    \"present\": true,\n    \"model\": \".ai/repo/ci/gates.yaml\",\n    \"plan\": { \"mode\": \"affected\", \"reason\": \"1 path in 1 class\", \"changed\": [\"docs/CLI.md\"],\n              \"classes\": [], \"unclassified\": [], \"selected\": {}, \"excluded\": {} },\n    \"finishable\": true,\n    \"unverified\": [\"reference-check\"],\n    \"tallies\": { \"queued\": 1 },\n    \"gates\": [],\n    \"obligations\": [],\n    \"questions\": []\n}))\n.unwrap();\nassert!(c.finishable, \"absence of a verdict does not refuse\");\nassert_eq!(c.unverified, [\"reference-check\"], \"and it is never silently accepted\");\nassert!(c.blocking.is_empty());\n```\nWhether the active task may be called finished, and everything the answer rests on.\n\n`finishable` is the field a caller acts on and the one thing no surface may recompute:\nthe shell tool's `check` and `finish` read it, the HTTP API serves it, the Cockpit\nrenders it, and all of them are reading this one execution."
+    Component:
+      oneOf:
+        - type: string
+          const: handover
+          description: "The handover, into this checkout's handovers."
+        - type: string
+          const: intent
+          description: "The task's title and scope, offered as the `start` to run."
+        - type: string
+          const: issue
+          description: The issue and milestone.
+        - type: string
+          const: decisions
+          description: "The decisions the task recorded, into this checkout's decision log."
+        - type: string
+          const: next_action
+          description: "The handover's next action."
+        - type: string
+          const: lineage
+          description: "The record this checkout continues: the parent of its next publication."
+        - type: string
+          const: provenance
+          description: "Who published it, where, when, from which source state."
+        - type: string
+          const: worktree
+          description: "This checkout's path, recomputed rather than copied."
+        - type: string
+          const: repository_id
+          description: "The repository id the shell compares, recomputed."
+        - type: string
+          const: episode
+          description: "The episode, opened here by the provider's hooks."
+        - type: string
+          const: working_context
+          description: "The working context, compiled here from the restored records and this git."
+        - type: string
+          const: source_state
+          description: "The source state, from this checkout's git."
+      description: "What a resume writes, recomputes or leaves."
     ConclusionView:
       type: object
       properties:
@@ -16289,6 +16775,42 @@ components:
           const: deployed
           description: "Tested, and contained in what the public site serves."
       description: "How far development has carried a feature that does not exist yet. A ladder: a rung is\nreached only when every rung below it passes, so a feature whose tests are unknown is\n`on_master` even when the site already serves it."
+    Device:
+      type: object
+      properties:
+        node:
+          type: string
+          description: "The node id: the first 32 hex of the SHA-256 of the device's Ed25519 public key."
+        label:
+          type: string
+          description: "The display label of the device's identity file (`macbook-pro`), or the first eight\nhex of its node id when it has none."
+      required:
+        - node
+        - label
+      description: "The device a record was written on: the mesh node key's id and the label its identity\nfile carries. The label is presentation; the node id is identity."
+    DeviceInput:
+      type: object
+      additionalProperties: false
+      properties:
+        label:
+          type:
+            - string
+            - "null"
+          description: "A label to give this device (`macbook-pro`, `mac-mini`): letters, digits, `.`, `_`,\n`-`. The key, and so the identity, is unchanged."
+      description: "The input of `continuity.device`.\n\n```\nuse majordomus_cli::capability::builtin::continuity_transfer::DeviceInput;\nlet i: DeviceInput = serde_json::from_str(r#\"{\"label\":\"mac-mini\"}\"#).unwrap();\nassert_eq!(i.label.as_deref(), Some(\"mac-mini\"));\n```"
+    DeviceView:
+      type: object
+      properties:
+        device:
+          "$ref": "#/components/schemas/Device"
+          description: The node id and label.
+        public_key:
+          type: string
+          description: "The Ed25519 public key (hex): what a trust list names."
+      required:
+        - device
+        - public_key
+      description: "The answer of `continuity device`."
     Diagnosis:
       type: object
       properties:
@@ -23255,6 +23777,80 @@ components:
         - max_running
         - max_subscriber_queue
       description: "What this process's execution store keeps."
+    LineState:
+      oneOf:
+        - type: string
+          const: linear
+          description: "One head: the line continues from it."
+        - type: string
+          const: diverged
+          description: "More than one head: the same work was continued in more than one place."
+      description: Whether a line has one current record or several.
+    LineSync:
+      oneOf:
+        - type: string
+          const: equal
+          description: Both hold the same heads.
+        - type: string
+          const: remote_newer
+          description: "The remote holds records that continue the local heads: fetching brings them."
+        - type: string
+          const: local_newer
+          description: "The local store holds records that continue the remote's: publishing sends them."
+        - type: string
+          const: diverged
+          description: "Each holds a continuation the other lacks: after merging, the line has two heads."
+        - type: string
+          const: local_only
+          description: Only the local store holds the line.
+        - type: string
+          const: remote_only
+          description: Only the remote holds the line.
+      description: "How the local store and a remote's stand towards each other, for one line."
+    LineSyncView:
+      type: object
+      properties:
+        line:
+          type: string
+          description: The line.
+        relation:
+          "$ref": "#/components/schemas/LineSync"
+          description: "How the local store and the remote's stood before the merge."
+        heads:
+          type: array
+          items:
+            type: string
+          description: "The line's heads after the merge."
+      required:
+        - line
+        - relation
+        - heads
+      description: "One line's comparison in a sync."
+    LineView:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The line id.
+        state:
+          "$ref": "#/components/schemas/LineState"
+          description: Linear or diverged.
+        records:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many records it holds.
+        heads:
+          type: array
+          items:
+            "$ref": "#/components/schemas/RecordView"
+          description: Its heads.
+      required:
+        - id
+        - state
+        - records
+        - heads
+      description: "A line of work as `status` shows it."
     LinkRefusal:
       type: object
       properties:
@@ -26091,6 +26687,19 @@ components:
         - total
         - statuses
       description: "Issues matching a filter, with the vocabulary that names their statuses."
+    PlanItem:
+      type: object
+      properties:
+        code:
+          type: string
+          description: "A stable code: `source_incomplete`, `line_diverged`, `origin_untrusted`, …"
+        message:
+          type: string
+          description: What it means here.
+      required:
+        - code
+        - message
+      description: One thing a plan says about itself.
     PlanMilestone:
       type: object
       properties:
@@ -26294,6 +26903,30 @@ components:
       required:
         - milestones
       description: "The milestones in derived order, with the one being executed and the one after it."
+    PlanStatus:
+      oneOf:
+        - type: string
+          const: ready
+          description: Resume restores everything; nothing needs attention.
+        - type: string
+          const: ready_with_warnings
+          description: Resume restores everything; the warnings say what is not what it was at the origin.
+        - type: string
+          const: requires_source_update
+          description: "The local source does not hold what the record was written against: update git\nfirst, as the actions say."
+        - type: string
+          const: conflict
+          description: "The same work was continued twice, or the source histories diverged: a person\nchooses."
+        - type: string
+          const: choose_record
+          description: "More than one record could be meant: name one with `--record`."
+        - type: string
+          const: nothing_to_resume
+          description: Nothing to resume.
+        - type: string
+          const: refused
+          description: The record is not one this checkout may resume from (an untrusted signer).
+      description: The verdict of a resume plan.
     PlanStatusReport:
       type: object
       properties:
@@ -26534,6 +27167,27 @@ components:
       minimum: 0
       maximum: 65535
       description: "A TCP port a deployed process may bind. Privileged ports are not among them: the\nprocess runs as a non-root user and could not bind one."
+    Position:
+      type: object
+      properties:
+        line:
+          type: string
+          description: The line.
+        record:
+          type: string
+          description: "The record: the parent of this checkout's next publication on the branch."
+        via:
+          "$ref": "#/components/schemas/Via"
+          description: Published here or resumed here.
+        at:
+          type: string
+          description: "When, by this machine's clock."
+      required:
+        - line
+        - record
+        - via
+        - at
+      description: The record this checkout continues on one branch.
     Positive:
       type: integer
       format: uint32
@@ -27377,6 +28031,53 @@ components:
         - identity
         - verification
       description: "The publication as observed: where the site is, what it serves, and whether that was\nverified."
+    PublishInput:
+      type: object
+      additionalProperties: false
+      properties:
+        handover:
+          type:
+            - string
+            - "null"
+          description: "The file name of a handover record under `.ai/local/state/handovers/`; the newest\nwhen absent."
+        issue:
+          type:
+            - string
+            - "null"
+          description: "The issue the work belongs to (`#184`, `I0042`)."
+        milestone:
+          type:
+            - string
+            - "null"
+          description: The milestone it belongs to.
+      description: "The input of `continuity.publish`.\n\n```\nuse majordomus_cli::capability::builtin::continuity_transfer::PublishInput;\nlet i: PublishInput = serde_json::from_str(r##\"{\"issue\":\"#184\"}\"##).unwrap();\nassert_eq!(i.issue.as_deref(), Some(\"#184\"));\nassert!(i.handover.is_none(), \"the newest handover by default\");\n```"
+    Published:
+      type: object
+      properties:
+        record:
+          "$ref": "#/components/schemas/RecordView"
+          description: The record.
+        written:
+          type: boolean
+          description: "False when the same handover at the same source state was already the record this\ncheckout stands on: nothing new was written."
+        tip:
+          type: string
+          description: "The local ref's commit."
+        handover:
+          type: string
+          description: "The handover record it was read from, relative to the checkout."
+        next:
+          type: array
+          items:
+            type: string
+          description: "What is next: the record reaches another machine only through a sync."
+      required:
+        - record
+        - written
+        - tip
+        - handover
+        - next
+      description: "The answer of `continuity publish`."
     PullRequestAssessment:
       type: object
       properties:
@@ -28916,6 +29617,94 @@ components:
         - freshness
         - freshness_reason
       description: "One durable record of the local half, as much of it as a reader needs to decide whether\nto open the file."
+    RecordInput:
+      type: object
+      additionalProperties: false
+      properties:
+        record:
+          type:
+            - string
+            - "null"
+          description: "A record id, or a unique prefix of one."
+      description: "The input of `continuity.plan` and `continuity.resume`: which record, by id or a prefix\nof one. Absent, the one handover another device published that this checkout has not\nresumed — on this branch when there is one there.\n\n```\nuse majordomus_cli::capability::builtin::continuity_transfer::RecordInput;\nlet i: RecordInput = serde_json::from_str(r#\"{\"record\":\"a1b2c3\"}\"#).unwrap();\nassert_eq!(i.record.as_deref(), Some(\"a1b2c3\"));\nassert!(serde_json::from_str::<RecordInput>(r#\"{\"force\":true}\"#).is_err());\n```"
+    RecordView:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The record id.
+        line:
+          type: string
+          description: Its line.
+        parent:
+          type:
+            - string
+            - "null"
+          description: The record it continues.
+        device:
+          "$ref": "#/components/schemas/Device"
+          description: The device that published it.
+        this_device:
+          type: boolean
+          description: Whether that device is this one.
+        trust:
+          "$ref": "#/components/schemas/Trust"
+          description: Whether its signer is trusted here.
+        session:
+          type:
+            - string
+            - "null"
+          description: The episode it was published from.
+        branch:
+          type:
+            - string
+            - "null"
+          description: The branch it was written on.
+        head:
+          type:
+            - string
+            - "null"
+          description: The commit it was written at.
+        working_tree:
+          "$ref": "#/components/schemas/WorkingTree"
+          description: Clean or dirty at the origin.
+        changed_total:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many paths differed from HEAD at the origin.
+        published_at:
+          type: string
+          description: "When it was published, by the publisher's clock."
+        age_minutes:
+          type:
+            - integer
+            - "null"
+          format: int64
+          description: "Minutes since then, by this machine's clock; absent when either clock's reading is\nunusable."
+        task:
+          type:
+            - string
+            - "null"
+          description: "The task's title: the intent."
+        issue:
+          type:
+            - string
+            - "null"
+          description: The issue.
+        objective:
+          type: string
+          description: "The handover's `# Objective`, first line."
+      required:
+        - id
+        - line
+        - device
+        - this_device
+        - trust
+        - working_tree
+        - changed_total
+        - published_at
+      description: One record as every surface shows it.
     RecordedSpelling:
       type: object
       properties:
@@ -28932,6 +29721,29 @@ components:
         - spelling
         - writer
       description: "One store's spelling of one subject.\nWhich half of the layer wrote it, what wrote it, and the value it would have here.\n\n```\nuse majordomus_cli::session::{RecordedSpelling, Spelling};\n\nlet local = RecordedSpelling {\n    spelling: Spelling::Local,\n    writer: \"mj_git_repo_id (lib/common.sh)\".into(),\n    value: \"/src/repo/.git\".into(),\n};\n// knowing which half a string came from is what stops a path being compared with a URL\nassert_eq!(local.spelling.as_str(), \"local\");\nassert!(local.value.starts_with('/'));\n```"
+    Records:
+      type: object
+      properties:
+        records:
+          type: array
+          items:
+            "$ref": "#/components/schemas/RecordView"
+          description: "Every admitted record, by line and then by id."
+        lines:
+          type: array
+          items:
+            "$ref": "#/components/schemas/LineView"
+          description: Every line.
+        diagnostics:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Diagnostic"
+          description: Refused files and lineage findings.
+      required:
+        - records
+        - lines
+        - diagnostics
+      description: "The answer of `continuity records`."
     RecoverOrphansInput:
       type: object
       additionalProperties: false
@@ -29200,6 +30012,24 @@ components:
       required:
         - envelope
       description: "The input of `mesh.register`: one signed envelope, exactly as the wire carries it."
+    Relation:
+      oneOf:
+        - type: string
+          const: equal
+          description: The same record.
+        - type: string
+          const: newer
+          description: "The second descends from the first: the second is newer."
+        - type: string
+          const: older
+          description: "The first descends from the second: the second is older."
+        - type: string
+          const: diverged
+          description: "Same line, neither descends from the other: the work was continued twice."
+        - type: string
+          const: independent
+          description: "Different lines: separate work."
+      description: What one record is to another.
     RelationDirection:
       oneOf:
         - type: string
@@ -30684,6 +31514,118 @@ components:
         - cpus
         - memory_mb
       description: What one machine is granted.
+    ResumePlan:
+      type: object
+      properties:
+        status:
+          "$ref": "#/components/schemas/PlanStatus"
+          description: The verdict.
+        record:
+          anyOf:
+            - "$ref": "#/components/schemas/RecordView"
+            - type: "null"
+          description: The record it is about.
+        candidates:
+          type: array
+          items:
+            "$ref": "#/components/schemas/RecordView"
+          description: "When the record is not decided: the records that could be meant."
+        source:
+          anyOf:
+            - "$ref": "#/components/schemas/SourceCheck"
+            - type: "null"
+          description: The source check.
+        lineage:
+          anyOf:
+            - "$ref": "#/components/schemas/Relation"
+            - type: "null"
+          description: "What the record is to the record this checkout stands on, when it stands on one."
+        task:
+          anyOf:
+            - "$ref": "#/components/schemas/TaskRef"
+            - type: "null"
+          description: "The task, as published: the intent."
+        milestone:
+          type:
+            - string
+            - "null"
+          description: The milestone.
+        decisions:
+          type: array
+          items:
+            type: string
+          description: The headings of the decisions a resume carries.
+        objective:
+          type: string
+          description: "The handover's `# Objective`."
+        current_state:
+          type: string
+          description: "The handover's `# Current State`."
+        next_action:
+          type: string
+          description: "The handover's `# Next Action`."
+        blockers:
+          type: array
+          items:
+            "$ref": "#/components/schemas/PlanItem"
+          description: What stops a resume.
+        warnings:
+          type: array
+          items:
+            "$ref": "#/components/schemas/PlanItem"
+          description: What a resume proceeds past and a person should know.
+        actions:
+          type: array
+          items:
+            type: string
+          description: "The commands that resolve the blockers or follow the resume. Recommended, never run:\nnothing a record says is executed."
+        restores:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Component"
+          description: What a resume writes into this checkout.
+        recomputes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Component"
+          description: What this checkout computes for itself instead of copying.
+      required:
+        - status
+        - blockers
+        - warnings
+        - actions
+        - restores
+        - recomputes
+      description: "The answer of `continuity plan`, and the plan `continuity resume` acts on."
+    Resumed:
+      type: object
+      properties:
+        resumed:
+          type: boolean
+          description: Whether anything was restored. False when the plan did not admit a resume.
+        plan:
+          "$ref": "#/components/schemas/ResumePlan"
+          description: "The plan it acted on, or declined on."
+        handover:
+          type:
+            - string
+            - "null"
+          description: "The handover record written into this checkout, relative to it."
+        decisions_carried:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many decisions were appended to this checkout's log."
+        position:
+          anyOf:
+            - "$ref": "#/components/schemas/Position"
+            - type: "null"
+          description: The record this checkout now stands on.
+      required:
+        - resumed
+        - plan
+        - decisions_carried
+      description: "The answer of `continuity resume`."
     ReviewAnswer:
       type: object
       properties:
@@ -33039,6 +33981,83 @@ components:
         - path
         - rules
       description: One stylesheet the pair set was derived from.
+    SourceCheck:
+      type: object
+      properties:
+        expected_branch:
+          type:
+            - string
+            - "null"
+          description: The branch the record was written on.
+        expected_head:
+          type:
+            - string
+            - "null"
+          description: The commit it was written at.
+        local_branch:
+          type:
+            - string
+            - "null"
+          description: "This checkout's branch."
+        local_head:
+          type:
+            - string
+            - "null"
+          description: "This checkout's commit."
+        relation:
+          "$ref": "#/components/schemas/SourceRelation"
+          description: How they stand.
+        origin_dirty:
+          type: boolean
+          description: "Whether the origin's tree was dirty."
+        origin_changed:
+          type: array
+          items:
+            type: string
+          description: "The paths that were uncommitted at the origin, as listed."
+        origin_changed_total:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many were uncommitted.
+        local_dirty:
+          type: boolean
+          description: "Whether this checkout's tree is dirty."
+        same_uncommitted_work:
+          type:
+            - boolean
+            - "null"
+          description: "Whether this checkout holds the very uncommitted work the origin held (their\nfingerprints agree); absent when either side is clean."
+      required:
+        - relation
+        - origin_dirty
+        - origin_changed_total
+        - local_dirty
+      description: The source half of a plan.
+    SourceRelation:
+      oneOf:
+        - type: string
+          const: exact
+          description: "Same branch, same commit."
+        - type: string
+          const: local_ahead
+          description: Same branch; the local branch has commits the record did not see.
+        - type: string
+          const: local_behind
+          description: "Same branch; the record's commit is ahead of the local one."
+        - type: string
+          const: diverged
+          description: Same branch; neither commit contains the other.
+        - type: string
+          const: head_missing
+          description: "The record's commit is not in this clone."
+        - type: string
+          const: branch_differs
+          description: This checkout is on another branch.
+        - type: string
+          const: unknown
+          description: "The record carries no commit, or git could not answer."
+      description: "How the local source stands towards the record's."
     Spelling:
       oneOf:
         - type: string
@@ -33146,6 +34165,69 @@ components:
         - terminal
         - may_move_to
       description: "One state of the machine: its word, whether an episode ever leaves it, and where it may\ngo from there.\n\n```\nuse majordomus_cli::session::{EpisodeState, Machine, StateView};\n\nlet m = Machine::describe();\nlet closed: &StateView =\n    m.states.iter().find(|s| s.state == EpisodeState::Closed).expect(\"a state\");\nassert!(closed.terminal && closed.may_move_to.is_empty());\n```"
+    Status:
+      type: object
+      properties:
+        repository:
+          type: string
+          description: "This repository's identity (32 hex), the same on every clone."
+        device:
+          "$ref": "#/components/schemas/Device"
+          description: This device.
+        branch:
+          type: string
+          description: "The branch this checkout is on, or `DETACHED`."
+        head:
+          type:
+            - string
+            - "null"
+          description: The commit it is on.
+        working_tree:
+          "$ref": "#/components/schemas/WorkingTree"
+          description: Clean or dirty.
+        position:
+          anyOf:
+            - "$ref": "#/components/schemas/Position"
+            - type: "null"
+          description: The record this checkout continues on its branch.
+        store:
+          "$ref": "#/components/schemas/StoreView"
+          description: The stores.
+        last_sync:
+          anyOf:
+            - "$ref": "#/components/schemas/SyncNote"
+            - type: "null"
+          description: "The last sync, as this checkout recorded it."
+        lines:
+          type: array
+          items:
+            "$ref": "#/components/schemas/LineView"
+          description: "Every line, by id."
+        resumable:
+          type: array
+          items:
+            "$ref": "#/components/schemas/RecordView"
+          description: "What other devices published that this checkout could resume, newest first."
+        diagnostics:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Diagnostic"
+          description: "Refused files, broken lineage, diverged lines."
+        next:
+          type: array
+          items:
+            type: string
+          description: "The command to run next, when there is an obvious one."
+      required:
+        - repository
+        - device
+        - branch
+        - working_tree
+        - store
+        - lines
+        - resumable
+        - diagnostics
+      description: "The answer of `continuity status`."
     StatusReport:
       type: object
       properties:
@@ -33239,6 +34321,46 @@ components:
         - state
         - started_at
       description: "One named phase of an execution, as the handler reported it."
+    StoreView:
+      type: object
+      properties:
+        reference:
+          type: string
+          description: The local ref.
+        tip:
+          type:
+            - string
+            - "null"
+          description: Its commit.
+        remote:
+          type:
+            - string
+            - "null"
+          description: "The remote `sync` uses."
+        remote_tip:
+          type:
+            - string
+            - "null"
+          description: The commit last fetched from or pushed to it.
+        sync:
+          "$ref": "#/components/schemas/SyncState"
+          description: How they stand.
+        records:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Records admitted.
+        refused:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Files refused.
+      required:
+        - reference
+        - sync
+        - records
+        - refused
+      description: "The two stores, as refs."
     StoredConclusion:
       type: object
       description: "A conclusion as stored: the input and what only the writer computes.\n\nThe input is flattened, so a stored conclusion reads as the input plus two fields:\nthe advisors whose completed consultations it cites, each once and in canonical\norder, and their count. Both are computed at admission and checked again by\n`reasoning.check`, so a hand-edited count is reported.\n\n```\nuse majordomus_cli::reasoning::record::{ConclusionInput, StoredConclusion};\n\nlet stored = StoredConclusion {\n    input: ConclusionInput {\n        assessment: \"assessment-1\".into(),\n        decision: \"keep the lock\".into(),\n        rationale: \"measured\".into(),\n        ..Default::default()\n    },\n    reviewed_by: vec![\"alpha\".into()],\n    independent_review_count: 1,\n};\nlet json = serde_json::to_value(&stored).unwrap();\nassert_eq!(json[\"decision\"], \"keep the lock\");\nassert_eq!(json[\"independent_review_count\"], 1);\n```"
@@ -33797,6 +34919,131 @@ components:
         - cockpit
         - docs
       description: "The interfaces a feature is exposed through, decided from what its references project\nand from nothing a file says. Each is a fact with a reason a reader can check: `cli` is\ntrue when a module of the feature has a capability with a command-line path or the\nfeature names a shell command; `api` when a module has an HTTP route; `mcp` when a module\nhas an MCP tool or resource, or the feature names a kind, since every object of the layer\nis an MCP resource; `cockpit` when the feature names a Cockpit area or a module, since\nevery capability has a Cockpit page; `docs` when it names a document."
+    SyncAction:
+      oneOf:
+        - type: string
+          const: none
+          description: "Nothing to move: both held the same records."
+        - type: string
+          const: fetched
+          description: Records were fetched.
+        - type: string
+          const: published
+          description: Records were published.
+        - type: string
+          const: exchanged
+          description: Both.
+        - type: string
+          const: unreachable
+          description: "The remote could not be reached; nothing local changed, and what is pending stays\npending."
+        - type: string
+          const: no_remote
+          description: No remote is configured.
+      description: What a sync did.
+    SyncInput:
+      type: object
+      additionalProperties: false
+      properties:
+        remote:
+          type:
+            - string
+            - "null"
+          description: "The git remote; the current branch's, else `origin`, when absent."
+      description: "The input of `continuity.sync`.\n\n```\nuse majordomus_cli::capability::builtin::continuity_transfer::SyncInput;\nlet i: SyncInput = serde_json::from_str(r#\"{\"remote\":\"origin\"}\"#).unwrap();\nassert_eq!(i.remote.as_deref(), Some(\"origin\"));\n```"
+    SyncNote:
+      type: object
+      properties:
+        remote:
+          type: string
+          description: The remote.
+        at:
+          type: string
+          description: "When, by this machine's clock."
+        outcome:
+          type: string
+          description: "`ok`, or `unreachable` when the remote could not be asked."
+        detail:
+          type:
+            - string
+            - "null"
+          description: "What git said when it was not `ok`."
+      required:
+        - remote
+        - at
+        - outcome
+      description: "What the last sync did, so that a later status can report it without the network."
+    SyncState:
+      oneOf:
+        - type: string
+          const: no_remote
+          description: "No remote is configured: the store is local, and that is a valid answer."
+        - type: string
+          const: never_synced
+          description: Never synced with the remote.
+        - type: string
+          const: in_sync
+          description: Both hold the same records.
+        - type: string
+          const: pending
+          description: "This store holds records the remote has not received: a sync publishes them."
+        - type: string
+          const: behind
+          description: The last fetch brought records not merged yet.
+        - type: string
+          const: diverged
+          description: Both of the above.
+        - type: string
+          const: empty
+          description: The store is empty and nothing was ever fetched.
+      description: "How the local store stands towards the remote's, from the refs alone — no network."
+    Synced:
+      type: object
+      properties:
+        remote:
+          type:
+            - string
+            - "null"
+          description: "The remote, when there is one."
+        action:
+          "$ref": "#/components/schemas/SyncAction"
+          description: What happened.
+        fetched:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Records the local store gained.
+        published:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Records the remote gained.
+        lines:
+          type: array
+          items:
+            "$ref": "#/components/schemas/LineSyncView"
+          description: "Every line either side holds, compared."
+        store:
+          "$ref": "#/components/schemas/StoreView"
+          description: The store after the sync.
+        resumable:
+          type: array
+          items:
+            "$ref": "#/components/schemas/RecordView"
+          description: What other devices published that this checkout could resume.
+        diagnostics:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Diagnostic"
+          description: "Refused files, collisions, diverged lines, an unreachable remote."
+      required:
+        - action
+        - fetched
+        - published
+        - lines
+        - store
+        - resumable
+        - diagnostics
+      description: "The answer of `continuity sync`."
     Tallies:
       type: object
       properties:
@@ -33966,6 +35213,34 @@ components:
           const: undeclared
           description: "The canonical model does not declare this id. Not a status: the absence of a record."
       description: "Where a development task stands, as work.\n\n```\nuse majordomus_cli::devtask::TaskReadiness;\n\n// every state names the canonical status it refines, and refines only one\nassert_eq!(TaskReadiness::Ready.canonical(), \"READY\");\nassert_eq!(TaskReadiness::Waiting.canonical(), \"BLOCKED\");\nassert_eq!(TaskReadiness::Blocked.canonical(), \"BLOCKED\");\nassert_eq!(TaskReadiness::Review.canonical(), \"VERIFY\");\nassert_eq!(TaskReadiness::CompletionBlocked.canonical(), \"VERIFY\");\n\n// and one state is the absence of a record rather than a status of one\nassert!(TaskReadiness::Undeclared.canonical().is_empty());\n```"
+    TaskRef:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The task id, `t-<stamp>-<hex>`."
+        title:
+          type: string
+          description: "What the task is, in its author's words: the intent."
+        profile:
+          type:
+            - string
+            - "null"
+          description: The profile it ran under.
+        scope:
+          type: array
+          items:
+            type: string
+          description: The repository paths it may touch.
+        outcome:
+          type:
+            - string
+            - "null"
+          description: The outcome the task record held when the handover was published.
+      required:
+        - id
+        - title
+      description: "The task the handover was written under, as the task record named it."
     TestEvidence:
       type: object
       properties:
@@ -34647,6 +35922,21 @@ components:
       required:
         - source
       description: "The trunk, as the topology reports it."
+    Trust:
+      oneOf:
+        - type: string
+          const: this_device
+          description: This device signed it.
+        - type: string
+          const: trusted
+          description: "The mesh declaration's trust list admits the key."
+        - type: string
+          const: untrusted
+          description: "The mesh declaration exists and does not admit the key: never resumed from."
+        - type: string
+          const: undeclared
+          description: "The repository declares no mesh, so no list exists to check the key against. The\nsignature still binds the record to its key; the plan warns."
+      description: Whether the device that signed a record is one this repository trusts.
     TrustState:
       oneOf:
         - type: object
@@ -34874,6 +36164,15 @@ components:
         - index_is_current
         - findings
       description: "The answer of `objects.verify`."
+    Via:
+      oneOf:
+        - type: string
+          const: published
+          description: This checkout published it.
+        - type: string
+          const: resumed
+          description: This checkout resumed from it.
+      description: How this checkout came to stand on a record.
     Violation:
       type: object
       properties:
@@ -35112,6 +36411,15 @@ components:
         - variadic
         - required
       description: One parameter of a workflow.
+    WorkingTree:
+      oneOf:
+        - type: string
+          const: clean
+          description: Nothing outside HEAD.
+        - type: string
+          const: dirty
+          description: "Modified, staged or untracked files that HEAD does not hold."
+      description: Whether the working tree had changes git does not hold in a commit.
     WorkingTreeState:
       type: object
       properties:

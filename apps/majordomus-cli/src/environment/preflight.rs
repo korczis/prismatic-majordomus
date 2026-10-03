@@ -513,6 +513,33 @@ pub struct HandoverObservation {
     pub divergence: String,
 }
 
+/// What the continuity commands last left in this checkout's `continuity.json`: the
+/// handovers other devices published that could be resumed here, as the last sync computed
+/// them, and how that sync went. Read from that one file — never from the store, never from
+/// a remote — so that entering a directory costs no git call and no network.
+///
+/// ```
+/// use majordomus_cli::continuity::local::Offer;
+/// use majordomus_cli::environment::preflight::{derive, ContinuityObservation, Observations, Verdict};
+/// let mut o = Observations::empty("demo", 0);
+/// o.continuity = Some(ContinuityObservation {
+///     offers: vec![Offer { record: "a".repeat(32), device: "macbook-pro".into(),
+///         branch: Some("feature/x".into()), published_at: "2026-10-03T12:00:00Z".into(),
+///         task: None, issue: Some("#184".into()) }],
+///     last_sync: None,
+/// });
+/// let c = derive(&o).check("session.continuity").unwrap().clone();
+/// assert_eq!(c.verdict, Verdict::Active);
+/// assert!(c.summary.contains("macbook-pro"));
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ContinuityObservation {
+    /// Resumable handovers from other devices.
+    pub offers: Vec<crate::continuity::local::Offer>,
+    /// The last sync.
+    pub last_sync: Option<crate::continuity::local::SyncNote>,
+}
+
 /// Whether the policy parsed, was refused, or was never read by this call.
 ///
 /// ```
@@ -914,6 +941,9 @@ pub struct Observations {
     pub task: Option<TaskObservation>,
     /// The handover a resuming worker would get.
     pub handover: Option<HandoverObservation>,
+    /// What other devices published that could be resumed here; `None` when the
+    /// continuity commands never ran in this checkout.
+    pub continuity: Option<ContinuityObservation>,
     /// The policy.
     pub policy: PolicyObservation,
     /// The rule tally.
@@ -954,6 +984,7 @@ impl Observations {
             episode: None,
             task: None,
             handover: None,
+            continuity: None,
             policy: PolicyObservation::NotRead,
             rules: RulesObservation::Absent,
             adrs: None,
@@ -1001,6 +1032,7 @@ pub fn derive(o: &Observations) -> Preflight {
                 task_check(o),
                 context_check(o, head.as_deref(), clean),
                 handover_check(o),
+                continuity_check(o),
             ],
         },
         Section {
@@ -1304,6 +1336,83 @@ fn handover_check(o: &Observations) -> Check {
         )],
     )
     .next("majordomus handover --resolve")
+}
+
+fn continuity_check(o: &Observations) -> Check {
+    const FILE: &str = ".ai/local/state/continuity.json";
+    let Some(c) = &o.continuity else {
+        return Check::new(
+            "session.continuity",
+            "continuity",
+            Verdict::NotApplicable,
+            "no handover was published or synced from this checkout",
+            vec![],
+        );
+    };
+    if let Some(first) = c.offers.first() {
+        let more = if c.offers.len() > 1 {
+            format!(" (+{} more)", c.offers.len() - 1)
+        } else {
+            String::new()
+        };
+        let about: Vec<&str> = [first.branch.as_deref(), first.issue.as_deref()]
+            .into_iter()
+            .flatten()
+            .collect();
+        return Check::new(
+            "session.continuity",
+            "continuity",
+            Verdict::Active,
+            format!(
+                "resumable handover from {} ({}){more}",
+                first.device,
+                about.join(", ")
+            ),
+            vec![Evidence::new(
+                FILE,
+                format!(
+                    "record {} published {}",
+                    &first.record[..12.min(first.record.len())],
+                    first.published_at
+                ),
+            )],
+        )
+        .next("majordomus-cli continuity plan");
+    }
+    match &c.last_sync {
+        Some(sync) if sync.outcome != "ok" => Check::new(
+            "session.continuity",
+            "continuity",
+            Verdict::Degraded,
+            format!(
+                "the last sync with {} was {}; published handovers may be waiting there",
+                sync.remote, sync.outcome
+            ),
+            vec![Evidence::new(
+                FILE,
+                format!("last_sync {} at {}", sync.outcome, sync.at),
+            )],
+        )
+        .next("majordomus-cli continuity sync"),
+        Some(sync) => Check::new(
+            "session.continuity",
+            "continuity",
+            Verdict::Fresh,
+            format!(
+                "nothing waiting from another device as of the last sync ({})",
+                sync.at
+            ),
+            vec![Evidence::new(FILE, format!("last_sync ok at {}", sync.at))],
+        ),
+        None => Check::new(
+            "session.continuity",
+            "continuity",
+            Verdict::Unknown,
+            "this checkout publishes handovers and has never synced",
+            vec![],
+        )
+        .next("majordomus-cli continuity sync"),
+    }
 }
 
 fn policy_check(o: &Observations) -> Check {
@@ -2286,6 +2395,15 @@ pub fn observe(
         episode,
         task,
         handover,
+        continuity: crate::continuity::local::load(root)
+            .ok()
+            .filter(|s| {
+                crate::continuity::local::local_path(root).is_file() || !s.offers.is_empty()
+            })
+            .map(|s| ContinuityObservation {
+                offers: s.offers,
+                last_sync: s.last_sync,
+            }),
         policy: policy_observation,
         rules,
         adrs: environment.layer.kind("adr"),
@@ -2748,6 +2866,17 @@ pub fn compact(p: &Preflight, unicode: bool) -> String {
                 p.attention.len() - 1
             );
         }
+    }
+    if let Some(c) = p
+        .check("session.continuity")
+        .filter(|c| c.verdict == Verdict::Active)
+    {
+        let _ = write!(
+            out,
+            "\n  {} {}: majordomus-cli continuity plan",
+            if unicode { "↻" } else { "*" },
+            c.summary
+        );
     }
     out.push('\n');
     out

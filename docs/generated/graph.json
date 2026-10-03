@@ -167,6 +167,51 @@
         "status": "query"
       },
       {
+        "id": "capability:continuity.device",
+        "kind": "capability",
+        "label": "continuity.device",
+        "summary": "This device's identity, and its label",
+        "route": "/cockpit/capabilities/continuity.device",
+        "source": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:continuity.plan",
+        "kind": "capability",
+        "label": "continuity.plan",
+        "summary": "Whether and how a published handover can be resumed here",
+        "route": "/cockpit/capabilities/continuity.plan",
+        "source": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:continuity.publish",
+        "kind": "capability",
+        "label": "continuity.publish",
+        "summary": "Publish this checkout's newest handover for another machine",
+        "route": "/cockpit/capabilities/continuity.publish",
+        "source": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:continuity.records",
+        "kind": "capability",
+        "label": "continuity.records",
+        "summary": "Every published handover the local store admits",
+        "route": "/cockpit/capabilities/continuity.records",
+        "source": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:continuity.resume",
+        "kind": "capability",
+        "label": "continuity.resume",
+        "summary": "Resume a handover another machine published",
+        "route": "/cockpit/capabilities/continuity.resume",
+        "source": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+        "status": "command"
+      },
+      {
         "id": "capability:continuity.state",
         "kind": "capability",
         "label": "continuity.state",
@@ -174,6 +219,24 @@
         "route": "/cockpit/capabilities/continuity.state",
         "source": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
         "status": "query"
+      },
+      {
+        "id": "capability:continuity.status",
+        "kind": "capability",
+        "label": "continuity.status",
+        "summary": "Where this device stands in the work published from every device",
+        "route": "/cockpit/capabilities/continuity.status",
+        "source": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:continuity.sync",
+        "kind": "capability",
+        "label": "continuity.sync",
+        "summary": "Exchange published handovers with a git remote",
+        "route": "/cockpit/capabilities/continuity.sync",
+        "source": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+        "status": "command"
       },
       {
         "id": "capability:convergence.report",
@@ -1589,14 +1652,6 @@
         "status": "query"
       },
       {
-        "id": "file:.ai/repo/ci/gates.yaml",
-        "kind": "file",
-        "label": "gates.yaml",
-        "summary": "named by the layer; not an object of this index",
-        "source": ".ai/repo/ci/gates.yaml",
-        "external": true
-      },
-      {
         "id": "file:.ai/repo/ci/pages.yaml",
         "kind": "file",
         "label": "pages.yaml",
@@ -1618,38 +1673,6 @@
         "label": "order-baseline.txt",
         "summary": "named by the layer; not an object of this index",
         "source": ".ai/repo/order-baseline.txt",
-        "external": true
-      },
-      {
-        "id": "file:.github/workflows/pages.yml",
-        "kind": "file",
-        "label": "pages.yml",
-        "summary": "named by the layer; not an object of this index",
-        "source": ".github/workflows/pages.yml",
-        "external": true
-      },
-      {
-        "id": "file:.github/workflows/validate.yml",
-        "kind": "file",
-        "label": "validate.yml",
-        "summary": "named by the layer; not an object of this index",
-        "source": ".github/workflows/validate.yml",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/capability/builtin/design.rs",
-        "kind": "file",
-        "label": "design.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/capability/builtin/design.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/capability/builtin/executions.rs",
-        "kind": "file",
-        "label": "executions.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/capability/builtin/executions.rs",
         "external": true
       },
       {
@@ -1733,43 +1756,11 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/design/mod.rs",
-        "kind": "file",
-        "label": "mod.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/design/mod.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/design/render.rs",
         "kind": "file",
         "label": "render.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/design/render.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/execution/engine.rs",
-        "kind": "file",
-        "label": "engine.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/execution/engine.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/execution/event.rs",
-        "kind": "file",
-        "label": "event.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/execution/event.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/execution/mod.rs",
-        "kind": "file",
-        "label": "mod.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/execution/mod.rs",
         "external": true
       },
       {
@@ -1781,35 +1772,11 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/http/events.rs",
-        "kind": "file",
-        "label": "events.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/http/events.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/http/router.rs",
         "kind": "file",
         "label": "router.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/http/router.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/http/swagger.rs",
-        "kind": "file",
-        "label": "swagger.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/http/swagger.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/http/ws.rs",
-        "kind": "file",
-        "label": "ws.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/http/ws.rs",
         "external": true
       },
       {
@@ -1861,14 +1828,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/web/html.rs",
-        "kind": "file",
-        "label": "html.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/web/html.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/web/report/ui.rs",
         "kind": "file",
         "label": "ui.rs",
@@ -1914,22 +1873,6 @@
         "label": "path.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/worktree/path.rs",
-        "external": true
-      },
-      {
-        "id": "file:scripts/ci-plan",
-        "kind": "file",
-        "label": "ci-plan",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/ci-plan",
-        "external": true
-      },
-      {
-        "id": "file:scripts/ci/design-check",
-        "kind": "file",
-        "label": "design-check",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/ci/design-check",
         "external": true
       },
       {
@@ -2010,14 +1953,6 @@
         "label": "cockpit.css",
         "summary": "named by the layer; not an object of this index",
         "source": "share/cockpit/src/cockpit.css",
-        "external": true
-      },
-      {
-        "id": "file:share/design/primitives.css",
-        "kind": "file",
-        "label": "primitives.css",
-        "summary": "named by the layer; not an object of this index",
-        "source": "share/design/primitives.css",
         "external": true
       },
       {
@@ -4218,6 +4153,36 @@
             "providers",
             "mcp",
             "governance"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0105",
+        "kind": "adr",
+        "label": "adr-0105",
+        "summary": "A handover moves between machines as a signed record in a ref of its own, and is resumed only on a plan",
+        "route": "/cockpit/objects/adr/adr-0105",
+        "source": ".ai/repo/adrs/0105-a-handover-moves-between-machines-as-a-signed-record-in-a-ref-of-its-own.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-03",
+          "related": [
+            "file:.ai/repo/adrs/0014-a-closed-session-is-a-shared-object-of-the-layer-not-a-local.md",
+            "file:.ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md",
+            "rule:project.session-continuity-is-portable",
+            "file:apps/majordomus-cli/src/continuity/mod.rs",
+            "file:apps/majordomus-cli/src/continuity/record.rs",
+            "file:apps/majordomus-cli/src/continuity/store.rs",
+            "file:apps/majordomus-cli/src/continuity/lineage.rs",
+            "file:docs/CONTINUITY.md",
+            "file:test/cases/821_a_session_moves_between_machines.sh"
+          ],
+          "tags": [
+            "architecture",
+            "continuity",
+            "handover",
+            "devices",
+            "security"
           ]
         }
       },
@@ -33643,6 +33608,27 @@
         }
       },
       {
+        "id": "majordomus://rule/project.session-continuity-is-portable@1",
+        "kind": "rule",
+        "label": "project.session-continuity-is-portable@1",
+        "summary": "Session continuity is portable, and what is portable is checked",
+        "route": "/cockpit/objects/rule/project-session-continuity-is-portable-1",
+        "source": ".ai/repo/rules/project/session-continuity-is-portable.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.diagnostics-decide-the-exit@1"
+          ],
+          "tags": [
+            "continuity",
+            "handover",
+            "devices",
+            "security"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.shared-server-resilience@1",
         "kind": "rule",
         "label": "project.shared-server-resilience@1",
@@ -38313,6 +38299,55 @@
         "source": "test/cases/81_bench_baseline.sh"
       },
       {
+        "id": "majordomus://test/test/cases/821_a_session_moves_between_machines.sh",
+        "kind": "test",
+        "label": "test/cases/821_a_session_moves_between_machines.sh",
+        "route": "/cockpit/objects/test/test-cases-821-a-session-moves-between-machines-sh",
+        "source": "test/cases/821_a_session_moves_between_machines.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/822_a_dirty_handover_restores_context_not_source.sh",
+        "kind": "test",
+        "label": "test/cases/822_a_dirty_handover_restores_context_not_source.sh",
+        "route": "/cockpit/objects/test/test-cases-822-a-dirty-handover-restores-context-not-source-sh",
+        "source": "test/cases/822_a_dirty_handover_restores_context_not_source.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/823_the_same_work_continued_twice_is_a_conflict.sh",
+        "kind": "test",
+        "label": "test/cases/823_the_same_work_continued_twice_is_a_conflict.sh",
+        "route": "/cockpit/objects/test/test-cases-823-the-same-work-continued-twice-is-a-conflict-sh",
+        "source": "test/cases/823_the_same_work_continued_twice_is_a_conflict.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/824_separate_work_on_two_machines_is_not_a_conflict.sh",
+        "kind": "test",
+        "label": "test/cases/824_separate_work_on_two_machines_is_not_a_conflict.sh",
+        "route": "/cockpit/objects/test/test-cases-824-separate-work-on-two-machines-is-not-a-conflict-sh",
+        "source": "test/cases/824_separate_work_on_two_machines_is_not_a_conflict.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/825_a_handover_published_offline_waits_for_its_remote.sh",
+        "kind": "test",
+        "label": "test/cases/825_a_handover_published_offline_waits_for_its_remote.sh",
+        "route": "/cockpit/objects/test/test-cases-825-a-handover-published-offline-waits-for-its-remote-sh",
+        "source": "test/cases/825_a_handover_published_offline_waits_for_its_remote.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/826_a_handover_carrying_a_secret_is_not_published.sh",
+        "kind": "test",
+        "label": "test/cases/826_a_handover_carrying_a_secret_is_not_published.sh",
+        "route": "/cockpit/objects/test/test-cases-826-a-handover-carrying-a-secret-is-not-published-sh",
+        "source": "test/cases/826_a_handover_carrying_a_secret_is_not_published.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/827_a_record_is_admitted_before_it_is_read.sh",
+        "kind": "test",
+        "label": "test/cases/827_a_record_is_admitted_before_it_is_read.sh",
+        "route": "/cockpit/objects/test/test-cases-827-a-record-is-admitted-before-it-is-read-sh",
+        "source": "test/cases/827_a_record_is_admitted_before_it_is_read.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/82_bench_check.sh",
         "kind": "test",
         "label": "test/cases/82_bench_check.sh",
@@ -41132,6 +41167,106 @@
         "kind": "projects"
       },
       {
+        "source": "capability:continuity.device",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.device",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.device",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.device",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.plan",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.plan",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.plan",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.plan",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.publish",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.publish",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.publish",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.publish",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.records",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.records",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.records",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.records",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.resume",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.resume",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.resume",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.resume",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:continuity.state",
         "target": "projection:cockpit",
         "kind": "projects"
@@ -41143,6 +41278,46 @@
       },
       {
         "source": "capability:continuity.state",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.status",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.status",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.status",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.status",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.sync",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.sync",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.sync",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:continuity.sync",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -44533,21 +44708,6 @@
       },
       {
         "source": "majordomus://adr/adr-0031",
-        "target": "file:apps/majordomus-cli/src/http/swagger.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0031",
-        "target": "file:apps/majordomus-cli/src/web/html.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0031",
-        "target": "file:scripts/ci/design-check",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0031",
         "target": "file:share/design/tokens.yaml",
         "kind": "put_in_force"
       },
@@ -44577,44 +44737,9 @@
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0031",
-        "target": "majordomus://test/test/cases/107_design_tokens.sh",
-        "kind": "put_in_force"
-      },
-      {
         "source": "majordomus://adr/adr-0032",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/executions.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/execution/engine.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/execution/event.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/execution/mod.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/http/events.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/http/ws.rs",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0033",
@@ -44639,11 +44764,6 @@
       {
         "source": "majordomus://adr/adr-0033",
         "target": "majordomus://adr/adr-0013",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "majordomus://document/docs/EXECUTIONS.md",
         "kind": "put_in_force"
       },
       {
@@ -44678,31 +44798,6 @@
       },
       {
         "source": "majordomus://adr/adr-0036",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/design.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0036",
-        "target": "file:apps/majordomus-cli/src/design/mod.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0036",
-        "target": "file:apps/majordomus-cli/src/design/render.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0036",
-        "target": "file:scripts/ci/design-check",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0036",
-        "target": "file:share/design/primitives.css",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0036",
         "target": "file:share/design/tokens.yaml",
         "kind": "put_in_force"
       },
@@ -44710,11 +44805,6 @@
         "source": "majordomus://adr/adr-0036",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0036",
-        "target": "majordomus://document/docs/DESIGN_SYSTEM.md",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0036",
@@ -44737,36 +44827,6 @@
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0036",
-        "target": "majordomus://test/test/cases/107_design_tokens.sh",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0036",
-        "target": "majordomus://test/test/cases/109_design_system.sh",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0037",
-        "target": "file:.ai/repo/ci/gates.yaml",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0037",
-        "target": "file:.github/workflows/pages.yml",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0037",
-        "target": "file:.github/workflows/validate.yml",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0037",
-        "target": "file:scripts/ci-plan",
-        "kind": "put_in_force"
-      },
-      {
         "source": "majordomus://adr/adr-0037",
         "target": "kind:adr",
         "kind": "is_a"
@@ -44774,21 +44834,6 @@
       {
         "source": "majordomus://adr/adr-0037",
         "target": "majordomus://adr/adr-0006",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0037",
-        "target": "majordomus://document/docs/CI.md",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0037",
-        "target": "majordomus://test/test/cases/26_ci_wiring.sh",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0037",
-        "target": "majordomus://test/test/cases/94_ci_plan.sh",
         "kind": "put_in_force"
       },
       {
@@ -45977,6 +46022,26 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0105",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0105",
+        "target": "majordomus://adr/adr-0014",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0105",
+        "target": "majordomus://adr/adr-0067",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0105",
+        "target": "majordomus://rule/project.session-continuity-is-portable@1",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -46580,16 +46645,6 @@
         "source": "majordomus://claim/checkpoint-record",
         "target": "majordomus://test/test/cases/20_checkpoint.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/ci-planned-gates",
-        "target": "file:.ai/repo/ci/gates.yaml",
-        "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/ci-planned-gates",
-        "target": "file:scripts/ci-plan",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/ci-planned-gates",
@@ -49388,11 +49443,6 @@
       },
       {
         "source": "majordomus://claim/site-deploys-from-verified-run",
-        "target": "file:.github/workflows/pages.yml",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/site-deploys-from-verified-run",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -50000,11 +50050,6 @@
         "source": "majordomus://context/ai.repo.benchmarks.rust",
         "target": "kind:context",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://context/ai.repo.ci",
-        "target": "file:scripts/ci-plan",
-        "kind": "tracks"
       },
       {
         "source": "majordomus://context/ai.repo.ci",
@@ -58212,6 +58257,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://rule/project.session-continuity-is-portable@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.session-continuity-is-portable@1",
+        "target": "majordomus://rule/project.diagnostics-decide-the-exit@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.shared-server-resilience@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -60198,6 +60253,41 @@
       },
       {
         "source": "majordomus://test/test/cases/81_bench_baseline.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/821_a_session_moves_between_machines.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/822_a_dirty_handover_restores_context_not_source.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/823_the_same_work_continued_twice_is_a_conflict.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/824_separate_work_on_two_machines_is_not_a_conflict.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/825_a_handover_published_offline_waits_for_its_remote.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/826_a_handover_carrying_a_secret_is_not_published.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/827_a_record_is_admitted_before_it_is_read.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -62648,7 +62738,42 @@
       },
       {
         "source": "module:continuity",
+        "target": "capability:continuity.device",
+        "kind": "composes"
+      },
+      {
+        "source": "module:continuity",
+        "target": "capability:continuity.plan",
+        "kind": "composes"
+      },
+      {
+        "source": "module:continuity",
+        "target": "capability:continuity.publish",
+        "kind": "composes"
+      },
+      {
+        "source": "module:continuity",
+        "target": "capability:continuity.records",
+        "kind": "composes"
+      },
+      {
+        "source": "module:continuity",
+        "target": "capability:continuity.resume",
+        "kind": "composes"
+      },
+      {
+        "source": "module:continuity",
         "target": "capability:continuity.state",
+        "kind": "composes"
+      },
+      {
+        "source": "module:continuity",
+        "target": "capability:continuity.status",
+        "kind": "composes"
+      },
+      {
+        "source": "module:continuity",
+        "target": "capability:continuity.sync",
         "kind": "composes"
       },
       {
@@ -63439,7 +63564,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4501,
+      "edges": 4519,
       "acyclic": true,
       "truncated": true
     }

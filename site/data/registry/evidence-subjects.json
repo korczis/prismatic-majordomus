@@ -99,8 +99,43 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:continuity.device",
+      "path": "/evidence/capabilities/continuity-device/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:continuity.plan",
+      "path": "/evidence/capabilities/continuity-plan/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:continuity.publish",
+      "path": "/evidence/capabilities/continuity-publish/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:continuity.records",
+      "path": "/evidence/capabilities/continuity-records/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:continuity.resume",
+      "path": "/evidence/capabilities/continuity-resume/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:continuity.state",
       "path": "/evidence/capabilities/continuity-state/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:continuity.status",
+      "path": "/evidence/capabilities/continuity-status/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:continuity.sync",
+      "path": "/evidence/capabilities/continuity-sync/"
     },
     {
       "kind": "capability",
@@ -2134,6 +2169,41 @@
     },
     {
       "kind": "command",
+      "subject": "command:continuity device",
+      "path": "/evidence/commands/continuity-device/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:continuity plan",
+      "path": "/evidence/commands/continuity-plan/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:continuity publish",
+      "path": "/evidence/commands/continuity-publish/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:continuity records",
+      "path": "/evidence/commands/continuity-records/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:continuity resume",
+      "path": "/evidence/commands/continuity-resume/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:continuity status",
+      "path": "/evidence/commands/continuity-status/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:continuity sync",
+      "path": "/evidence/commands/continuity-sync/"
+    },
+    {
+      "kind": "command",
       "subject": "command:convergence",
       "path": "/evidence/commands/convergence/"
     },
@@ -3508,12 +3578,96 @@
       "mechanisms": [],
       "findings": []
     },
+    "capability:continuity.device": {
+      "kind": "capability",
+      "id": "continuity.device",
+      "page": "/evidence/capabilities/continuity-device/",
+      "programs": [],
+      "members": [
+        "command:continuity device"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:continuity.plan": {
+      "kind": "capability",
+      "id": "continuity.plan",
+      "page": "/evidence/capabilities/continuity-plan/",
+      "programs": [],
+      "members": [
+        "command:continuity plan"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:continuity.publish": {
+      "kind": "capability",
+      "id": "continuity.publish",
+      "page": "/evidence/capabilities/continuity-publish/",
+      "programs": [],
+      "members": [
+        "command:continuity publish"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:continuity.records": {
+      "kind": "capability",
+      "id": "continuity.records",
+      "page": "/evidence/capabilities/continuity-records/",
+      "programs": [],
+      "members": [
+        "command:continuity records"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:continuity.resume": {
+      "kind": "capability",
+      "id": "continuity.resume",
+      "page": "/evidence/capabilities/continuity-resume/",
+      "programs": [],
+      "members": [
+        "command:continuity resume"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "capability:continuity.state": {
       "kind": "capability",
       "id": "continuity.state",
       "page": "/evidence/capabilities/continuity-state/",
       "programs": [],
       "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:continuity.status": {
+      "kind": "capability",
+      "id": "continuity.status",
+      "page": "/evidence/capabilities/continuity-status/",
+      "programs": [],
+      "members": [
+        "command:continuity status"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:continuity.sync": {
+      "kind": "capability",
+      "id": "continuity.sync",
+      "page": "/evidence/capabilities/continuity-sync/",
+      "programs": [],
+      "members": [
+        "command:continuity sync"
+      ],
       "routes": [],
       "mechanisms": [],
       "findings": []
@@ -11258,6 +11412,139 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:continuity device": {
+      "kind": "command",
+      "id": "continuity device",
+      "page": "/evidence/commands/continuity-device/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:continuity plan": {
+      "kind": "command",
+      "id": "continuity plan",
+      "page": "/evidence/commands/continuity-plan/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:continuity publish": {
+      "kind": "command",
+      "id": "continuity publish",
+      "page": "/evidence/commands/continuity-publish/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:continuity records": {
+      "kind": "command",
+      "id": "continuity records",
+      "page": "/evidence/commands/continuity-records/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:continuity resume": {
+      "kind": "command",
+      "id": "continuity resume",
+      "page": "/evidence/commands/continuity-resume/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:continuity status": {
+      "kind": "command",
+      "id": "continuity status",
+      "page": "/evidence/commands/continuity-status/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:continuity sync": {
+      "kind": "command",
+      "id": "continuity sync",
+      "page": "/evidence/commands/continuity-sync/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:convergence": {
       "kind": "command",
       "id": "convergence",
@@ -11333,6 +11620,12 @@
           "via": "behaviour",
           "test": "suite:33_event_registry",
           "path": "test/cases/33_event_registry.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:821_a_session_moves_between_machines",
+          "path": "test/cases/821_a_session_moves_between_machines.sh",
           "category": "e2e"
         },
         {
@@ -12750,6 +13043,48 @@
           "via": "behaviour",
           "test": "suite:368_mesh_handover_resolves",
           "path": "test/cases/368_mesh_handover_resolves.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:821_a_session_moves_between_machines",
+          "path": "test/cases/821_a_session_moves_between_machines.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:822_a_dirty_handover_restores_context_not_source",
+          "path": "test/cases/822_a_dirty_handover_restores_context_not_source.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:823_the_same_work_continued_twice_is_a_conflict",
+          "path": "test/cases/823_the_same_work_continued_twice_is_a_conflict.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:824_separate_work_on_two_machines_is_not_a_conflict",
+          "path": "test/cases/824_separate_work_on_two_machines_is_not_a_conflict.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:825_a_handover_published_offline_waits_for_its_remote",
+          "path": "test/cases/825_a_handover_published_offline_waits_for_its_remote.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:826_a_handover_carrying_a_secret_is_not_published",
+          "path": "test/cases/826_a_handover_carrying_a_secret_is_not_published.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:827_a_record_is_admitted_before_it_is_read",
+          "path": "test/cases/827_a_record_is_admitted_before_it_is_read.sh",
           "category": "e2e"
         },
         {
@@ -15005,6 +15340,18 @@
           "category": "e2e"
         },
         {
+          "via": "behaviour",
+          "test": "suite:821_a_session_moves_between_machines",
+          "path": "test/cases/821_a_session_moves_between_machines.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:824_separate_work_on_two_machines_is_not_a_conflict",
+          "path": "test/cases/824_separate_work_on_two_machines_is_not_a_conflict.sh",
+          "category": "e2e"
+        },
+        {
           "via": "negative",
           "test": "suite:04_start_check",
           "path": "test/cases/04_start_check.sh",
@@ -16778,6 +17125,90 @@
       "programs": [],
       "members": [
         "capability:continuity.state"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_continuity_device": {
+      "kind": "mcp",
+      "id": "majordomus_continuity_device",
+      "alias_of": "capability:continuity.device",
+      "programs": [],
+      "members": [
+        "capability:continuity.device"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_continuity_plan": {
+      "kind": "mcp",
+      "id": "majordomus_continuity_plan",
+      "alias_of": "capability:continuity.plan",
+      "programs": [],
+      "members": [
+        "capability:continuity.plan"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_continuity_publish": {
+      "kind": "mcp",
+      "id": "majordomus_continuity_publish",
+      "alias_of": "capability:continuity.publish",
+      "programs": [],
+      "members": [
+        "capability:continuity.publish"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_continuity_records": {
+      "kind": "mcp",
+      "id": "majordomus_continuity_records",
+      "alias_of": "capability:continuity.records",
+      "programs": [],
+      "members": [
+        "capability:continuity.records"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_continuity_resume": {
+      "kind": "mcp",
+      "id": "majordomus_continuity_resume",
+      "alias_of": "capability:continuity.resume",
+      "programs": [],
+      "members": [
+        "capability:continuity.resume"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_continuity_status": {
+      "kind": "mcp",
+      "id": "majordomus_continuity_status",
+      "alias_of": "capability:continuity.status",
+      "programs": [],
+      "members": [
+        "capability:continuity.status"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_continuity_sync": {
+      "kind": "mcp",
+      "id": "majordomus_continuity_sync",
+      "alias_of": "capability:continuity.sync",
+      "programs": [],
+      "members": [
+        "capability:continuity.sync"
       ],
       "routes": [],
       "mechanisms": [],
@@ -21765,6 +22196,87 @@
           "inputs": [
             "test/cases/93_scope_policy.sh",
             ".ai/repo/rules/project/scope-is-declared.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "rule:project.session-continuity-is-portable": {
+      "kind": "rule",
+      "id": "project.session-continuity-is-portable",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:821_a_session_moves_between_machines",
+          "path": "test/cases/821_a_session_moves_between_machines.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/821_a_session_moves_between_machines.sh",
+            ".ai/repo/rules/project/session-continuity-is-portable.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:822_a_dirty_handover_restores_context_not_source",
+          "path": "test/cases/822_a_dirty_handover_restores_context_not_source.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/822_a_dirty_handover_restores_context_not_source.sh",
+            ".ai/repo/rules/project/session-continuity-is-portable.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:823_the_same_work_continued_twice_is_a_conflict",
+          "path": "test/cases/823_the_same_work_continued_twice_is_a_conflict.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/823_the_same_work_continued_twice_is_a_conflict.sh",
+            ".ai/repo/rules/project/session-continuity-is-portable.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:824_separate_work_on_two_machines_is_not_a_conflict",
+          "path": "test/cases/824_separate_work_on_two_machines_is_not_a_conflict.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/824_separate_work_on_two_machines_is_not_a_conflict.sh",
+            ".ai/repo/rules/project/session-continuity-is-portable.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:825_a_handover_published_offline_waits_for_its_remote",
+          "path": "test/cases/825_a_handover_published_offline_waits_for_its_remote.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/825_a_handover_published_offline_waits_for_its_remote.sh",
+            ".ai/repo/rules/project/session-continuity-is-portable.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:826_a_handover_carrying_a_secret_is_not_published",
+          "path": "test/cases/826_a_handover_carrying_a_secret_is_not_published.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/826_a_handover_carrying_a_secret_is_not_published.sh",
+            ".ai/repo/rules/project/session-continuity-is-portable.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:827_a_record_is_admitted_before_it_is_read",
+          "path": "test/cases/827_a_record_is_admitted_before_it_is_read.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/827_a_record_is_admitted_before_it_is_read.sh",
+            ".ai/repo/rules/project/session-continuity-is-portable.v1.md"
           ]
         }
       ],

@@ -213,13 +213,21 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus knowledge candidates`](#majordomus-knowledge-candidates) | `/docs/cli/knowledge/candidates/` | The candidate records awaiting review, with the branch of the episode each came from and how long each has waited |
 | [`majordomus knowledge record`](#majordomus-knowledge-record) | `/docs/cli/knowledge/record/` | One knowledge record by id: its front matter, and every reference it names resolved against the index, the ledger and git |
 | [`majordomus knowledge status`](#majordomus-knowledge-status) | `/docs/cli/knowledge/status/` | Whether the deriver is still writing: the last derivation, the newest closed episode, and the stopped-writer judgement against session.freshness |
+| [`majordomus continuity`](#majordomus-continuity) | `/docs/cli/continuity/` | Continue work on another machine: publish this checkout's newest handover as a signed record in refs/majordomus/continuity, exchange records with a git remote, and plan and resume a handover another device published — with its source compatibility, lineage and trust decided before anything is written |
+| [`majordomus continuity status`](#majordomus-continuity-status) | `/docs/cli/continuity/status/` | This device, the record this checkout continues, the store against its remote (no network), every line of work, and what other devices published that could be resumed here |
+| [`majordomus continuity records`](#majordomus-continuity-records) | `/docs/cli/continuity/records/` | Every published handover the local store admits, by line, and every file it refused |
+| [`majordomus continuity device`](#majordomus-continuity-device) | `/docs/cli/continuity/device/` | This device's identity — the mesh node key, created when absent — and its label; with --label, rename it |
+| [`majordomus continuity plan`](#majordomus-continuity-plan) | `/docs/cli/continuity/plan/` | Decide, writing nothing, whether and how a published handover can be resumed here: trust, lineage, source compatibility, uncommitted work at the origin |
+| [`majordomus continuity publish`](#majordomus-continuity-publish) | `/docs/cli/continuity/publish/` | Publish this checkout's newest handover as a signed record for another machine; refused when it carries a secret or a machine path |
+| [`majordomus continuity sync`](#majordomus-continuity-sync) | `/docs/cli/continuity/sync/` | Exchange published handovers with a git remote: fetch, merge as a union, push; an unreachable remote leaves what is pending pending |
+| [`majordomus continuity resume`](#majordomus-continuity-resume) | `/docs/cli/continuity/resume/` | Resume a published handover when its plan is ready: write it into this checkout's handovers, carry its decisions, and continue its line |
 
 <a id="majordomus"></a>
 ## `majordomus`
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus mesh`](#majordomus-mesh), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus mesh`](#majordomus-mesh), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge), [`majordomus continuity`](#majordomus-continuity).
 
 ```text
 majordomus <COMMAND>
@@ -5972,4 +5980,219 @@ Examples:
   ```
 
   Verified: exits 0; prints one JSON document carrying /present, /judged, /stopped_writer, /freshness.
+
+<a id="majordomus-continuity"></a>
+## `majordomus continuity`
+
+Continue work on another machine: publish this checkout's newest handover as a signed record in refs/majordomus/continuity, exchange records with a git remote, and plan and resume a handover another device published — with its source compatibility, lineage and trust decided before anything is written
+
+Subcommands: [`majordomus continuity status`](#majordomus-continuity-status), [`majordomus continuity records`](#majordomus-continuity-records), [`majordomus continuity device`](#majordomus-continuity-device), [`majordomus continuity plan`](#majordomus-continuity-plan), [`majordomus continuity publish`](#majordomus-continuity-publish), [`majordomus continuity sync`](#majordomus-continuity-sync), [`majordomus continuity resume`](#majordomus-continuity-resume).
+
+```text
+majordomus continuity [OPTIONS] <COMMAND>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+<a id="majordomus-continuity-status"></a>
+## `majordomus continuity status`
+
+This device, the record this checkout continues, the store against its remote (no network), every line of work, and what other devices published that could be resumed here
+
+```text
+majordomus continuity status [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Where this device stands in the work published from every device** — The same value `GET /api/v1/continuity/status` and the MCP tool `majordomus_continuity_status` return: this repository's identity (a digest of its root commits, the same in every clone), this device, the record this checkout continues on its branch, how the local store stands towards the remote's — read from refs, with no network — and what other devices published that could be resumed here. A repository that has published nothing answers with an empty store, which is an answer and not an error.
+
+  ```console
+  $ majordomus continuity status --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /repository, /device/node, /store/sync, /resumable.
+
+<a id="majordomus-continuity-records"></a>
+## `majordomus continuity records`
+
+Every published handover the local store admits, by line, and every file it refused
+
+```text
+majordomus continuity records [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Every published handover, by line** — Every record of refs/majordomus/continuity that passed admission, every line of work with its heads, and a diagnostic for each refused file. Empty in a repository that has published nothing.
+
+  ```console
+  $ majordomus continuity records --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /records, /lines, /diagnostics.
+
+<a id="majordomus-continuity-device"></a>
+## `majordomus continuity device`
+
+This device's identity — the mesh node key, created when absent — and its label; with --label, rename it
+
+```text
+majordomus continuity device [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--label` | `<LABEL>` | — | A label for this device (macbook-pro, mac-mini) |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **This device, as a published handover names it** — The node id and public key of this device's mesh key — created on first use in the user's state directory, never in a repository — and its label. `--label mac-mini` renames it without changing the key.
+
+  ```console
+  $ majordomus continuity device --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /device/node, /device/label, /public_key.
+
+<a id="majordomus-continuity-plan"></a>
+## `majordomus continuity plan`
+
+Decide, writing nothing, whether and how a published handover can be resumed here: trust, lineage, source compatibility, uncommitted work at the origin
+
+```text
+majordomus continuity plan [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--record` | `<RECORD>` | — | A record id or a unique prefix; the one resumable handover when absent |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **A plan with nothing to resume** — With no handover published from another device, the plan says so — `nothing_to_resume` — and exits 0: absence is an answer. With one, the same command decides trust, lineage and source compatibility and lists the commands that resolve each blocker without running any of them.
+
+  ```console
+  $ majordomus continuity plan --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /status, /blockers, /warnings, /actions.
+
+<a id="majordomus-continuity-publish"></a>
+## `majordomus continuity publish`
+
+Publish this checkout's newest handover as a signed record for another machine; refused when it carries a secret or a machine path
+
+```text
+majordomus continuity publish [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--handover` | `<HANDOVER>` | — | A handover record's file name under .ai/local/state/handovers/; the newest when absent |
+| `--issue` | `<ISSUE>` | — | The issue the work belongs to |
+| `--milestone` | `<MILESTONE>` | — | The milestone it belongs to |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Nothing to publish without a handover** — A publication reads the newest handover record; a checkout that has written none is told to write one with `majordomus handover` and exits 10, before any device key is created.
+
+  ```console
+  $ majordomus continuity publish
+  ```
+
+  Verified: exits 10.
+
+<a id="majordomus-continuity-sync"></a>
+## `majordomus continuity sync`
+
+Exchange published handovers with a git remote: fetch, merge as a union, push; an unreachable remote leaves what is pending pending
+
+```text
+majordomus continuity sync [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--remote` | `<REMOTE>` | — | The git remote; the current branch's, else origin, when absent |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **A repository with no remote keeps its records** — Sync moves records only through a git remote. A repository with none answers `no_remote` and exits 0: the records stay in this clone, and that is a valid state rather than a failure.
+
+  ```console
+  $ majordomus continuity sync --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /action, /store/sync.
+
+<a id="majordomus-continuity-resume"></a>
+## `majordomus continuity resume`
+
+Resume a published handover when its plan is ready: write it into this checkout's handovers, carry its decisions, and continue its line
+
+```text
+majordomus continuity resume [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--record` | `<RECORD>` | — | A record id or a unique prefix; the one resumable handover when absent |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **A resume with nothing to resume writes nothing** — Resume acts only on a ready plan. With no published handover it writes nothing and exits 10, printing the plan that declined.
+
+  ```console
+  $ majordomus continuity resume
+  ```
+
+  Verified: exits 10.
 

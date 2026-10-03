@@ -188,6 +188,91 @@
       "tool": "majordomus_commit_validate"
     },
     {
+      "api_anchor": "/docs/api/continuity/#op-continuity-device",
+      "claims": [],
+      "cli": "majordomus continuity device",
+      "id": "continuity.device",
+      "kind": "command",
+      "module": "continuity",
+      "module_route": "/registry/modules/continuity/",
+      "resource": null,
+      "route": "/registry/capabilities/continuity-device/",
+      "slug": "continuity-device",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "tests": [],
+      "title": "This device's identity, and its label",
+      "tool": "majordomus_continuity_device"
+    },
+    {
+      "api_anchor": "/docs/api/continuity/#op-continuity-plan",
+      "claims": [],
+      "cli": "majordomus continuity plan",
+      "id": "continuity.plan",
+      "kind": "query",
+      "module": "continuity",
+      "module_route": "/registry/modules/continuity/",
+      "resource": null,
+      "route": "/registry/capabilities/continuity-plan/",
+      "slug": "continuity-plan",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "tests": [],
+      "title": "Whether and how a published handover can be resumed here",
+      "tool": "majordomus_continuity_plan"
+    },
+    {
+      "api_anchor": "/docs/api/continuity/#op-continuity-publish",
+      "claims": [],
+      "cli": "majordomus continuity publish",
+      "id": "continuity.publish",
+      "kind": "command",
+      "module": "continuity",
+      "module_route": "/registry/modules/continuity/",
+      "resource": null,
+      "route": "/registry/capabilities/continuity-publish/",
+      "slug": "continuity-publish",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "tests": [],
+      "title": "Publish this checkout's newest handover for another machine",
+      "tool": "majordomus_continuity_publish"
+    },
+    {
+      "api_anchor": "/docs/api/continuity/#op-continuity-records",
+      "claims": [],
+      "cli": "majordomus continuity records",
+      "id": "continuity.records",
+      "kind": "query",
+      "module": "continuity",
+      "module_route": "/registry/modules/continuity/",
+      "resource": null,
+      "route": "/registry/capabilities/continuity-records/",
+      "slug": "continuity-records",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "tests": [],
+      "title": "Every published handover the local store admits",
+      "tool": "majordomus_continuity_records"
+    },
+    {
+      "api_anchor": "/docs/api/continuity/#op-continuity-resume",
+      "claims": [],
+      "cli": "majordomus continuity resume",
+      "id": "continuity.resume",
+      "kind": "command",
+      "module": "continuity",
+      "module_route": "/registry/modules/continuity/",
+      "resource": null,
+      "route": "/registry/capabilities/continuity-resume/",
+      "slug": "continuity-resume",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "tests": [],
+      "title": "Resume a handover another machine published",
+      "tool": "majordomus_continuity_resume"
+    },
+    {
       "api_anchor": "/docs/api/continuity/#op-continuity-state",
       "claims": [],
       "cli": null,
@@ -203,6 +288,40 @@
       "tests": [],
       "title": "What the lifecycle is holding",
       "tool": "majordomus_continuity"
+    },
+    {
+      "api_anchor": "/docs/api/continuity/#op-continuity-status",
+      "claims": [],
+      "cli": "majordomus continuity status",
+      "id": "continuity.status",
+      "kind": "query",
+      "module": "continuity",
+      "module_route": "/registry/modules/continuity/",
+      "resource": null,
+      "route": "/registry/capabilities/continuity-status/",
+      "slug": "continuity-status",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "tests": [],
+      "title": "Where this device stands in the work published from every device",
+      "tool": "majordomus_continuity_status"
+    },
+    {
+      "api_anchor": "/docs/api/continuity/#op-continuity-sync",
+      "claims": [],
+      "cli": "majordomus continuity sync",
+      "id": "continuity.sync",
+      "kind": "command",
+      "module": "continuity",
+      "module_route": "/registry/modules/continuity/",
+      "resource": null,
+      "route": "/registry/capabilities/continuity-sync/",
+      "slug": "continuity-sync",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "tests": [],
+      "title": "Exchange published handovers with a git remote",
+      "tool": "majordomus_continuity_sync"
     },
     {
       "api_anchor": "/docs/api/convergence/#op-convergence-report",
@@ -3551,7 +3670,7 @@
     ]
   },
   "counts": {
-    "capabilities": 169,
+    "capabilities": 176,
     "claims": 76,
     "modules": 51
   },
@@ -3659,9 +3778,44 @@
     {
       "capabilities": [
         {
+          "id": "continuity.device",
+          "route": "/registry/capabilities/continuity-device/",
+          "slug": "continuity-device"
+        },
+        {
+          "id": "continuity.plan",
+          "route": "/registry/capabilities/continuity-plan/",
+          "slug": "continuity-plan"
+        },
+        {
+          "id": "continuity.publish",
+          "route": "/registry/capabilities/continuity-publish/",
+          "slug": "continuity-publish"
+        },
+        {
+          "id": "continuity.records",
+          "route": "/registry/capabilities/continuity-records/",
+          "slug": "continuity-records"
+        },
+        {
+          "id": "continuity.resume",
+          "route": "/registry/capabilities/continuity-resume/",
+          "slug": "continuity-resume"
+        },
+        {
           "id": "continuity.state",
           "route": "/registry/capabilities/continuity-state/",
           "slug": "continuity-state"
+        },
+        {
+          "id": "continuity.status",
+          "route": "/registry/capabilities/continuity-status/",
+          "slug": "continuity-status"
+        },
+        {
+          "id": "continuity.sync",
+          "route": "/registry/capabilities/continuity-sync/",
+          "slug": "continuity-sync"
         }
       ],
       "claims": [],

@@ -13,7 +13,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `capabilities` | Capabilities | behaviorally_verified | 3 | [`modules/capabilities.md`](modules/capabilities.md) |
 | `commands` | Command graph | implemented | 3 | [`modules/commands.md`](modules/commands.md) |
 | `commit` | Commit | behaviorally_verified | 4 | [`modules/commit.md`](modules/commit.md) |
-| `continuity` | Continuity | behaviorally_verified | 1 | [`modules/continuity.md`](modules/continuity.md) |
+| `continuity` | Continuity | behaviorally_verified | 8 | [`modules/continuity.md`](modules/continuity.md) |
 | `convergence` | Convergence | behaviorally_verified | 1 | [`modules/convergence.md`](modules/convergence.md) |
 | `dashboard` | Dashboards | behaviorally_verified | 1 | [`modules/dashboard.md`](modules/dashboard.md) |
 | `delivery` | Delivery | experimental | 2 | [`modules/delivery.md`](modules/delivery.md) |
@@ -76,7 +76,14 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `commit.plan` | `commit` | query | behaviorally_verified | `majordomus_commit_plan` | `majordomus://commit/plan` | `GET /api/v1/commit/plan` | `majordomus commit plan` | — | required |
 | `commit.scopes` | `commit` | query | behaviorally_verified | `majordomus_commit_scopes` | `majordomus://commit/scopes` | `GET /api/v1/commit/scopes` | `majordomus commit scopes` | — | required |
 | `commit.validate` | `commit` | query | behaviorally_verified | `majordomus_commit_validate` | — | `GET /api/v1/commit/validate` | `majordomus commit validate` | — | required |
+| `continuity.device` | `continuity` | command | experimental | `majordomus_continuity_device` | — | `POST /api/v1/continuity/device` | `majordomus continuity device` | — | waived (destructive) |
+| `continuity.plan` | `continuity` | query | experimental | `majordomus_continuity_plan` | — | `GET /api/v1/continuity/plan` | `majordomus continuity plan` | — | required |
+| `continuity.publish` | `continuity` | command | experimental | `majordomus_continuity_publish` | — | `POST /api/v1/continuity/publish` | `majordomus continuity publish` | — | waived (destructive) |
+| `continuity.records` | `continuity` | query | experimental | `majordomus_continuity_records` | — | `GET /api/v1/continuity/records` | `majordomus continuity records` | — | required |
+| `continuity.resume` | `continuity` | command | experimental | `majordomus_continuity_resume` | — | `POST /api/v1/continuity/resume` | `majordomus continuity resume` | — | waived (destructive) |
 | `continuity.state` | `continuity` | query | behaviorally_verified | `majordomus_continuity` | `majordomus://continuity` | `GET /api/v1/continuity` | — | process, 2 entries, 2s | required |
+| `continuity.status` | `continuity` | query | experimental | `majordomus_continuity_status` | — | `GET /api/v1/continuity/status` | `majordomus continuity status` | — | required |
+| `continuity.sync` | `continuity` | command | experimental | `majordomus_continuity_sync` | — | `POST /api/v1/continuity/sync` | `majordomus continuity sync` | — | waived (external_dependency) |
 | `convergence.report` | `convergence` | query | behaviorally_verified | `majordomus_convergence` | `majordomus://convergence` | `GET /api/v1/convergence` | `majordomus convergence` | — | required |
 | `dashboard.overview` | `dashboard` | query | behaviorally_verified | `majordomus_dashboard_overview` | — | `GET /api/v1/dashboard/overview` | `majordomus dashboard overview` | — | required |
 | `delivery.feature` | `delivery` | query | experimental | `majordomus_delivery_feature` | — | `GET /api/v1/delivery/feature` | `majordomus delivery show` | — | waived (external_dependency) |

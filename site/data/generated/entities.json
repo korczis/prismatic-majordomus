@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 78,
+      "count": 79,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 159,
+      "count": 160,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 78
+      "count": 79
     },
     {
       "kind": "application",
@@ -229,7 +229,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 159
+      "count": 160
     },
     {
       "kind": "scope",
@@ -269,7 +269,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 338
+      "count": 345
     },
     {
       "kind": "use-case",
@@ -808,6 +808,13 @@
           "label": "adr-0052",
           "kind": "adr",
           "route": "/adrs/adr-0052/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0105",
+          "kind": "adr",
+          "route": "/adrs/adr-0105/",
           "external": false
         }
       ]
@@ -1695,27 +1702,6 @@
         },
         {
           "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/http/swagger.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/web/html.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "scripts/ci/design-check",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
           "label": "share/design/tokens.yaml",
           "kind": "file",
           "route": null,
@@ -1747,13 +1733,6 @@
           "label": "project.ui-conformance@1",
           "kind": "rule",
           "route": "/rules/project-ui-conformance-1/",
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "test/cases/107_design_tokens.sh",
-          "kind": "test",
-          "route": null,
           "external": false
         }
       ],
@@ -1810,48 +1789,6 @@
       "references": [
         {
           "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/capability/builtin/executions.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/execution/engine.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/execution/event.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/execution/mod.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/http/events.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/http/ws.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
           "label": "adr-0002",
           "kind": "adr",
           "route": "/adrs/adr-0002/",
@@ -1876,13 +1813,6 @@
           "label": "adr-0013",
           "kind": "adr",
           "route": "/adrs/adr-0013/",
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "docs/EXECUTIONS.md",
-          "kind": "document",
-          "route": null,
           "external": false
         },
         {
@@ -1976,52 +1906,10 @@
       "references": [
         {
           "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/capability/builtin/design.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/design/mod.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/design/render.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "scripts/ci/design-check",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "share/design/primitives.css",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
           "label": "share/design/tokens.yaml",
           "kind": "file",
           "route": null,
           "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "docs/DESIGN_SYSTEM.md",
-          "kind": "document",
-          "route": null,
-          "external": false
         },
         {
           "edge": "put_in_force",
@@ -2050,20 +1938,6 @@
           "kind": "rule",
           "route": "/rules/project-ui-conformance-1/",
           "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "test/cases/107_design_tokens.sh",
-          "kind": "test",
-          "route": null,
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "test/cases/109_design_system.sh",
-          "kind": "test",
-          "route": null,
-          "external": false
         }
       ],
       "referenced_by": []
@@ -2083,58 +1957,9 @@
       "references": [
         {
           "edge": "put_in_force",
-          "label": ".ai/repo/ci/gates.yaml",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": ".github/workflows/pages.yml",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": ".github/workflows/validate.yml",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "scripts/ci-plan",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
           "label": "adr-0006",
           "kind": "adr",
           "route": "/adrs/adr-0006/",
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "docs/CI.md",
-          "kind": "document",
-          "route": null,
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "test/cases/26_ci_wiring.sh",
-          "kind": "test",
-          "route": null,
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "test/cases/94_ci_plan.sh",
-          "kind": "test",
-          "route": null,
           "external": false
         }
       ],
@@ -3338,6 +3163,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0098/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0105",
+          "kind": "adr",
+          "route": "/adrs/adr-0105/",
+          "external": false
         }
       ]
     },
@@ -4369,6 +4201,47 @@
           "label": "project.a-provider-capability-cites-its-evidence@1",
           "kind": "rule",
           "route": "/rules/project-a-provider-capability-cites-its-evidence-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0105",
+      "identity": "adr-0105",
+      "slug": "adr-0105",
+      "cockpit": "/cockpit/objects/adr/adr-0105",
+      "title": "A handover moves between machines as a signed record in a ref of its own, and is resumed only on a plan",
+      "status": "proposed",
+      "tags": [
+        "architecture",
+        "continuity",
+        "handover",
+        "devices",
+        "security"
+      ],
+      "source": ".ai/repo/adrs/0105-a-handover-moves-between-machines-as-a-signed-record-in-a-ref-of-its-own.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0014",
+          "kind": "adr",
+          "route": "/adrs/adr-0014/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0067",
+          "kind": "adr",
+          "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.session-continuity-is-portable@1",
+          "kind": "rule",
+          "route": "/rules/project-session-continuity-is-portable-1/",
           "external": false
         }
       ],
@@ -8378,6 +8251,13 @@
           "kind": "rule",
           "route": "/rules/project-execution-state-is-authoritative-1/",
           "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.session-continuity-is-portable@1",
+          "kind": "rule",
+          "route": "/rules/project-session-continuity-is-portable-1/",
+          "external": false
         }
       ]
     },
@@ -11223,6 +11103,40 @@
       "source": ".ai/repo/rules/project/scope-is-declared.v1.md",
       "references": [],
       "referenced_by": []
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.session-continuity-is-portable@1",
+      "identity": "project.session-continuity-is-portable@1",
+      "slug": "project-session-continuity-is-portable-1",
+      "cockpit": "/cockpit/objects/rule/project-session-continuity-is-portable-1",
+      "title": "Session continuity is portable, and what is portable is checked",
+      "status": "active",
+      "tags": [
+        "continuity",
+        "handover",
+        "devices",
+        "security"
+      ],
+      "source": ".ai/repo/rules/project/session-continuity-is-portable.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.diagnostics-decide-the-exit@1",
+          "kind": "rule",
+          "route": "/rules/project-diagnostics-decide-the-exit-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0105",
+          "kind": "adr",
+          "route": "/adrs/adr-0105/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",

@@ -19895,3 +19895,721 @@ cli:
               setup: []
               expectation: "exits 0; prints one JSON document carrying /present, /judged, /stopped_writer, /freshness"
           subcommands: []
+    - path:
+        - majordomus
+        - continuity
+      route: /docs/cli/continuity/
+      executable: false
+      usage: "majordomus continuity [OPTIONS] <COMMAND>"
+      about: "Continue work on another machine: publish this checkout's newest handover as a signed record in refs/majordomus/continuity, exchange records with a git remote, and plan and resume a handover another device published — with its source compatibility, lineage and trust decided before anything is written"
+      args:
+        - name: repo
+          long: repo
+          positional: false
+          help: "Start the search for the repository root here (default: the current directory)"
+          value_name: PATH
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: discovery
+          long: discovery
+          positional: false
+          help: How declarative files are enumerated
+          value_name: DISCOVERY
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: vcs
+              help: "Tracked files, through the version-control index (the layer's contract)"
+            - name: filesystem
+              help: A walk of the work tree with the same glob semantics; untracked files included
+          defaults:
+            - vcs
+        - name: strict
+          long: strict
+          positional: false
+          help: Refuse to proceed when any file of the layer carries an error diagnostic
+          value_name: STRICT
+          takes_value: false
+          required: false
+          global: true
+          possible_values: []
+          defaults:
+            - "false"
+        - name: share
+          long: share
+          positional: false
+          help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+          value_name: DIR
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: format
+          long: format
+          positional: false
+          help: Output shape
+          value_name: FORMAT
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: text
+              help: Lines for a person
+            - name: json
+              help: "One JSON document, deterministic"
+          defaults:
+            - text
+      examples: []
+      subcommands:
+        - path:
+            - majordomus
+            - continuity
+            - status
+          route: /docs/cli/continuity/status/
+          executable: true
+          usage: "majordomus continuity status [OPTIONS]"
+          about: "This device, the record this checkout continues, the store against its remote (no network), every line of work, and what other devices published that could be resumed here"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: continuity-status-json
+              title: Where this device stands in the work published from every device
+              description: "The same value `GET /api/v1/continuity/status` and the MCP tool `majordomus_continuity_status` return: this repository's identity (a digest of its root commits, the same in every clone), this device, the record this checkout continues on its branch, how the local store stands towards the remote's — read from refs, with no network — and what other devices published that could be resumed here. A repository that has published nothing answers with an empty store, which is an answer and not an error."
+              argv:
+                - continuity
+                - status
+                - "--format"
+                - json
+              command: majordomus continuity status --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /repository, /device/node, /store/sync, /resumable"
+          subcommands: []
+        - path:
+            - majordomus
+            - continuity
+            - records
+          route: /docs/cli/continuity/records/
+          executable: true
+          usage: "majordomus continuity records [OPTIONS]"
+          about: "Every published handover the local store admits, by line, and every file it refused"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: continuity-records-json
+              title: "Every published handover, by line"
+              description: "Every record of refs/majordomus/continuity that passed admission, every line of work with its heads, and a diagnostic for each refused file. Empty in a repository that has published nothing."
+              argv:
+                - continuity
+                - records
+                - "--format"
+                - json
+              command: majordomus continuity records --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /records, /lines, /diagnostics"
+          subcommands: []
+        - path:
+            - majordomus
+            - continuity
+            - device
+          route: /docs/cli/continuity/device/
+          executable: true
+          usage: "majordomus continuity device [OPTIONS]"
+          about: "This device's identity — the mesh node key, created when absent — and its label; with --label, rename it"
+          args:
+            - name: label
+              long: label
+              positional: false
+              help: "A label for this device (macbook-pro, mac-mini)"
+              value_name: LABEL
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: continuity-device-json
+              title: "This device, as a published handover names it"
+              description: "The node id and public key of this device's mesh key — created on first use in the user's state directory, never in a repository — and its label. `--label mac-mini` renames it without changing the key."
+              argv:
+                - continuity
+                - device
+                - "--format"
+                - json
+              command: majordomus continuity device --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /device/node, /device/label, /public_key"
+          subcommands: []
+        - path:
+            - majordomus
+            - continuity
+            - plan
+          route: /docs/cli/continuity/plan/
+          executable: true
+          usage: "majordomus continuity plan [OPTIONS]"
+          about: "Decide, writing nothing, whether and how a published handover can be resumed here: trust, lineage, source compatibility, uncommitted work at the origin"
+          args:
+            - name: record
+              long: record
+              positional: false
+              help: A record id or a unique prefix; the one resumable handover when absent
+              value_name: RECORD
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: continuity-plan-nothing
+              title: A plan with nothing to resume
+              description: "With no handover published from another device, the plan says so — `nothing_to_resume` — and exits 0: absence is an answer. With one, the same command decides trust, lineage and source compatibility and lists the commands that resolve each blocker without running any of them."
+              argv:
+                - continuity
+                - plan
+                - "--format"
+                - json
+              command: majordomus continuity plan --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /status, /blockers, /warnings, /actions"
+          subcommands: []
+        - path:
+            - majordomus
+            - continuity
+            - publish
+          route: /docs/cli/continuity/publish/
+          executable: true
+          usage: "majordomus continuity publish [OPTIONS]"
+          about: "Publish this checkout's newest handover as a signed record for another machine; refused when it carries a secret or a machine path"
+          args:
+            - name: handover
+              long: handover
+              positional: false
+              help: "A handover record's file name under .ai/local/state/handovers/; the newest when absent"
+              value_name: HANDOVER
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: issue
+              long: issue
+              positional: false
+              help: The issue the work belongs to
+              value_name: ISSUE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: milestone
+              long: milestone
+              positional: false
+              help: The milestone it belongs to
+              value_name: MILESTONE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: continuity-publish-nothing
+              title: Nothing to publish without a handover
+              description: "A publication reads the newest handover record; a checkout that has written none is told to write one with `majordomus handover` and exits 10, before any device key is created."
+              argv:
+                - continuity
+                - publish
+              command: majordomus continuity publish
+              setup: []
+              expectation: exits 10
+          subcommands: []
+        - path:
+            - majordomus
+            - continuity
+            - sync
+          route: /docs/cli/continuity/sync/
+          executable: true
+          usage: "majordomus continuity sync [OPTIONS]"
+          about: "Exchange published handovers with a git remote: fetch, merge as a union, push; an unreachable remote leaves what is pending pending"
+          args:
+            - name: remote
+              long: remote
+              positional: false
+              help: "The git remote; the current branch's, else origin, when absent"
+              value_name: REMOTE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: continuity-sync-no-remote
+              title: A repository with no remote keeps its records
+              description: "Sync moves records only through a git remote. A repository with none answers `no_remote` and exits 0: the records stay in this clone, and that is a valid state rather than a failure."
+              argv:
+                - continuity
+                - sync
+                - "--format"
+                - json
+              command: majordomus continuity sync --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /action, /store/sync"
+          subcommands: []
+        - path:
+            - majordomus
+            - continuity
+            - resume
+          route: /docs/cli/continuity/resume/
+          executable: true
+          usage: "majordomus continuity resume [OPTIONS]"
+          about: "Resume a published handover when its plan is ready: write it into this checkout's handovers, carry its decisions, and continue its line"
+          args:
+            - name: record
+              long: record
+              positional: false
+              help: A record id or a unique prefix; the one resumable handover when absent
+              value_name: RECORD
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: continuity-resume-nothing
+              title: A resume with nothing to resume writes nothing
+              description: "Resume acts only on a ready plan. With no published handover it writes nothing and exits 10, printing the plan that declined."
+              argv:
+                - continuity
+                - resume
+              command: majordomus continuity resume
+              setup: []
+              expectation: exits 10
+          subcommands: []
