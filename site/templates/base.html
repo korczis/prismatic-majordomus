@@ -66,11 +66,9 @@
 {% block content %}{% endblock content %}
 </main>
 {% include "partials/footer.html" %}
-<script src="{{ get_url(path="js/flowbite.min.js") }}"></script>
+<script defer src="{{ get_url(path="js/nav.js") }}"></script>
 <script src="{{ get_url(path="js/theme.js") }}"></script>
 <script defer src="{{ get_url(path="js/alpine.min.js") }}"></script>
-{#- Flowbite v4's bundle exposes window.initFlowbite and does not call it (verified in node_modules/flowbite/dist/flowbite.js); one explicit call, once. -#}
-<script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
 {% block scripts %}{% endblock scripts %}
 </body>
 </html>

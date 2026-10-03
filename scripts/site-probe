@@ -381,14 +381,14 @@ const dark0=d.documentElement.classList.contains('dark');d.getElementById('theme
 setTimeout(()=>{const dark1=d.documentElement.classList.contains('dark');document.title='menu='+(!menu.classList.contains('hidden')&&menu.getBoundingClientRect().height>0)+' expanded='+mb.getAttribute('aria-expanded')+' theme='+(dark0!==dark1)+' stored='+w.localStorage.getItem('color-theme')},800)},2500)});</script>
 HTML
 t="$(title_of "http://127.0.0.1:$PORT/b.html")"
-printf '%s' "$t" | grep -q 'menu=true expanded=true' && ok menu "mobile menu opens via Flowbite collapse" || bad menu "mobile menu did not open ($t)"
+printf '%s' "$t" | grep -q 'menu=true expanded=true' && ok menu "mobile menu opens via the navbar's collapse (site/nav.js)" || bad menu "mobile menu did not open ($t)"
 printf '%s' "$t" | grep -q 'theme=true' && ok theme "theme toggle flips html.dark and persists" || bad theme "theme toggle did not flip ($t)"
 cat > "$WORK/srv/d.html" <<HTML
 <!doctype html><title>probe</title><iframe id=f src="$PREFIX/" style="width:1200px;height:800px;border:0"></iframe>
 <script>document.getElementById('f').addEventListener('load',()=>{setTimeout(()=>{const d=document.getElementById('f').contentDocument;const b=d.querySelector('[data-dropdown-toggle]');const m=d.getElementById(b.getAttribute('data-dropdown-toggle'));b.click();setTimeout(()=>{document.title='dropdown='+(!m.classList.contains('hidden')&&m.getBoundingClientRect().height>0)+' links='+m.querySelectorAll('a').length},700)},2500)});</script>
 HTML
 t="$(title_of "http://127.0.0.1:$PORT/d.html")"
-printf '%s' "$t" | grep -q 'dropdown=true' && ok dropdown "navigation dropdown opens via Flowbite" || bad dropdown "dropdown did not open ($t)"
+printf '%s' "$t" | grep -q 'dropdown=true' && ok dropdown "navigation dropdown opens (site/nav.js)" || bad dropdown "dropdown did not open ($t)"
 
 # A sample that passes is not a verdict about the site. Saying which question was answered
 # costs one line and stops "ok" from being read as a claim about every route: a --quick run

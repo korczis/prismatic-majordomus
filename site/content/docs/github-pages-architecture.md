@@ -385,10 +385,11 @@ semantic tokens (`bg-neutral-primary-soft`, `text-heading`, `border-default`, `r
 are used throughout. The theme names Inter first; it is not loaded, so the stack falls to the
 system font on purpose.
 
-Flowbite JS is vendored from the pinned package. Its bundle exposes `window.initFlowbite` and
-does not call it (verified in `node_modules/flowbite/dist/flowbite.js`), so `base.html` calls
-it once on `DOMContentLoaded`. The navbar uses `data-collapse-toggle`; nothing else needs
-Flowbite JS yet.
+Flowbite's JavaScript is not loaded. The only two things the site used it for, the navbar's
+mobile collapse (`data-collapse-toggle`) and its dropdowns (`data-dropdown-toggle`), are
+`site/nav.js`, about 2 KB, which `base.html` loads deferred and site-check requires exactly
+once per page. Removing the 134 KB bundle took the homepage from 338555 to 207140 bytes of
+scripts and stylesheets. Flowbite's styles stay; they are CSS, compiled into `app.css`.
 
 The homepage is a projection of `site/data/registry/product.json`, which the executable
 writes from the features of the layer, the capability registry and the web topology. Every
