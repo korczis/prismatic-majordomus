@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "b818942a57acdb8b4cd481a2a903815845a25ade",
+  "commit": "e45ce7c3e32a32c5d3037312c61e7beca5bf23da",
   "source_version": "0.12.0",
-  "registry_fingerprint": "2b025c18624648405bb59f230a0d182fa0da318d42918c392eb473f54b85e1d9"
+  "registry_fingerprint": "cc23db75991c8974df8e78c15105fb2dae8bc2c7758879c9113f7977cbe5d407"
  },
  "counts": {
-  "pages": 1816,
-  "capabilities": 1856,
+  "pages": 1820,
+  "capabilities": 1863,
   "cli_commands": 88,
   "http_routes": 167,
   "mcp_tools": 163,
-  "mcp_resources": 1739,
+  "mcp_resources": 1746,
   "modules": 83
  },
  "kinds": [
@@ -22,7 +22,7 @@
    "route": "/adrs/",
    "title": "Decisions",
    "reason": null,
-   "count": 78
+   "count": 79
   },
   {
    "kind": "application",
@@ -54,7 +54,7 @@
    "route": "/guarantees/",
    "title": null,
    "reason": null,
-   "count": 220
+   "count": 221
   },
   {
    "kind": "command",
@@ -102,7 +102,7 @@
    "route": null,
    "title": null,
    "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-   "count": 308
+   "count": 309
   },
   {
    "kind": "feature",
@@ -254,7 +254,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 338
+   "count": 342
   },
   {
    "kind": "use-case",
@@ -811,6 +811,14 @@
    "kind": "adr",
    "id": "majordomus://adr/adr-0076",
    "source": ".ai/repo/adrs/0076-a-skill-is-a-capability-only-when-something-proves-it.md"
+  },
+  {
+   "route": "/adrs/adr-0077/",
+   "title": "Published content may be written in the reader's language; the repository's own artifacts may not",
+   "description": "Published content may be written in the reader's language; the repository's own artifacts may not",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0077",
+   "source": ".ai/repo/adrs/0077-published-content-may-be-written-in-the-readers-language.md"
   },
   {
    "route": "/adrs/adr-0080/",
@@ -2954,6 +2962,11 @@
    "description": "Completion requires a verification command that actually ran and exited 0 over a tree that did not change under it; its exit code, duration and tree are recorded."
   },
   {
+   "route": "/dokumentace-kterou-lze-odmitnout/",
+   "title": "Dokumentace, kterou lze odmítnout",
+   "description": "Tvrzení, které nemůže spadnout, je jen dobře naformátovaná próza. Jak jsem donutil repozitář odmítat vlastní dokumentaci, co to dneska dokazuje a kde to přestává platit."
+  },
+  {
    "route": "/economics/",
    "title": "Token economics",
    "description": "What a coding session consumes with Majordomus and without it, from matched runs judged by the same hidden tests. Every number is generated from recorded evidence and labelled by how it was obtained."
@@ -3180,7 +3193,7 @@
   },
   {
    "route": "/guarantees/authored-files-are-english/",
-   "title": "Every authored file in this repository is spelled in English, and a proper noun or a test fixture that is not carries its reason beside the check",
+   "title": "Every authored file in this repository is spelled in English, and a proper noun, a test fixture or a published translation that is not carries its reason beside the check",
    "description": "project.english-only says every artifact of this repository is written in English:"
   },
   {
@@ -3914,6 +3927,11 @@
    "description": "AGENTS.md, CLAUDE.md, GEMINI.md and every other target the policy's projections[] declares are caches of two inputs: .ai/repo/policy.yaml with its profiles, and the provider template (.ai/repo/providers/<provider>.tmpl, else the distribution's share/providers/<provider>.tmpl). The Rust executable's majordomus generate providers writes them; majordomus generate --check, which CI runs on every push, derives them again, compares byte for byte, writes nothing, and exits 10 naming every file that differs or is missing. A rule typed into AGENTS.md by hand therefore does not merge."
   },
   {
+   "route": "/guarantees/published-translation-is-declared/",
+   "title": "A page of the published site written in a reader's language is declared with that language and a reason, and is refused unless the page declares the same language itself",
+   "description": "project.english-only binds this repository to one working language, and version 2 names one"
+  },
+  {
    "route": "/guarantees/reasoning-survives-the-session/",
    "title": "A decision and its provenance survive the session: the next session finds them in its context and handover, reuses a standing conclusion instead of consulting again, and reopens it only on new evidence",
    "description": "Consultation reduces repeated reasoning instead of multiplying it. A later session reads"
@@ -4111,7 +4129,7 @@
   {
    "route": "/guarantees/site-deploys-from-verified-run/",
    "title": "Publication is gated on everything that can make the published site wrong and waits for nothing else; the checks that decide whether a change may merge run beside it on the same commit, not in front of it",
-   "description": "A push to master that can change the site starts one job, and that job publishes as soon as the bytes are proved: the committed derived data is current for the tree, the site builds from it, and every static check over the output passes. It does not wait for the behavioural suite, the crate's gates, coverage, the macOS suite, the benchmark check or the browser probe. Those run on the same commit, in parallel, in the validation workflow, and they gate merging through the ci status — they guard the repository, not the published bytes. Nothing that can make the published bytes wrong was moved off the publication path; what was removed from it is what could only ever have delayed it. A newer push supersedes an older deployment: an older run is cancelled rather than finished, because the site is a projection of the newest commit and the branch push is last-writer-wins. Publication is measured from outside rather than assumed from a green job: the site serves the commit it was built from, the workflow waits for the public URL to name this one, and it reads GitHub's own build of the branch it pushed — a build that errored is a failure of the run that published, because publishing is two steps and only the first is this repository's."
+   "description": "A push to master that can change the site starts one job, and that job publishes as soon as the bytes are proved: the committed derived data is current for the tree, the site builds from it, and every static check over the output passes. It does not wait for the behavioural suite, the crate's gates, coverage, the macOS suite, the benchmark check or the browser probe. Those run on the same commit, in parallel, in the validation workflow, and they gate merging through the ci status — they guard the repository, not the published bytes. Nothing that can make the published bytes wrong was moved off the publication path; what was removed from it is what could only ever have delayed it. Deployments are serialised and the one in flight is never cancelled: GitHub keeps only the newest pending run, so a newer push supersedes every older *pending* deployment, while cancelling the running one would starve publication whenever merges arrive faster than a run completes. Publication is measured from outside rather than assumed from a green job: the site serves the commit it was built from, the workflow waits for the public URL to name this one, and it reads GitHub's own build of the branch it pushed — a build that errored is a failure of the run that published, because publishing is two steps and only the first is this repository's."
   },
   {
    "route": "/guarantees/site-registry-dataset/",
@@ -5677,6 +5695,11 @@
    "route": "/profiles/routine/",
    "title": "routine profile",
    "description": "small, well-understood changes; rename, bump, wording, one-line fixes"
+  },
+  {
+   "route": "/proof-carrying-documentation/",
+   "title": "Proof-carrying documentation",
+   "description": "A claim that no test can fail is prose with good formatting. What it took to make a repository refuse its own documentation, what that currently proves, and the exact place where it stops."
   },
   {
    "route": "/registry/",
@@ -7530,12 +7553,12 @@
    "source": ".ai/repo/rules/project/empty-is-not-failure.v1.md"
   },
   {
-   "route": "/rules/project-english-only-1/",
+   "route": "/rules/project-english-only-2/",
    "title": "English only",
    "description": "English only",
    "kind": "rule",
-   "id": "majordomus://rule/project.english-only@1",
-   "source": ".ai/repo/rules/project/english-only.v1.md"
+   "id": "majordomus://rule/project.english-only@2",
+   "source": ".ai/repo/rules/project/english-only.v2.md"
   },
   {
    "route": "/rules/project-entities-are-routable-1/",
@@ -8108,7 +8131,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 0.12.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.12.0, built from commit b818942a57acdb8b4cd481a2a903815845a25ade: the public items of the library and of the executable, and the source they were built from."
+   "description": "The rustdoc reference of majordomus-cli 0.12.0, built from commit e45ce7c3e32a32c5d3037312c61e7beca5bf23da: the public items of the library and of the executable, and the source they were built from."
   },
   {
    "route": "/rustdoc/majordomus/",

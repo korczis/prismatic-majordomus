@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="cs" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dokumentace, kterou lze odmítnout — Prismatic Majordomus</title>
+<meta name="description" content="Tvrzení, které nemůže spadnout, je jen dobře naformátovaná próza. Jak jsem donutil repozitář odmítat vlastní dokumentaci, co to dneska dokazuje a kde to přestává platit.">
+<link rel="canonical" href="https://majordomus.dev/dokumentace-kterou-lze-odmitnout/">
+<link rel="alternate" hreflang="cs" href="https://majordomus.dev/dokumentace-kterou-lze-odmitnout/">
+<link rel="alternate" hreflang="en" href="https://majordomus.dev/proof-carrying-documentation/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="Dokumentace, kterou lze odmítnout — Prismatic Majordomus">
+<meta property="og:description" content="Tvrzení, které nemůže spadnout, je jen dobře naformátovaná próza. Jak jsem donutil repozitář odmítat vlastní dokumentaci, co to dneska dokazuje a kde to přestává platit.">
+<meta property="og:url" content="https://majordomus.dev/dokumentace-kterou-lze-odmitnout/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=3b604e0b5a4ffd9983db">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.12.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.12.0</span>
+      
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Get started</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        <li><a href="https://majordomus.dev/challenge/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Challenge</a></li>
+        
+        
+        
+        
+        
+        <li><a href="https://majordomus.dev/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Product<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 md:absolute md:left-0 md:top-full md:mt-2 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/features/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Product</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/features/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">How it works<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 md:absolute md:left-0 md:top-full md:mt-2 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/method/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li><li><a href="https://majordomus.dev/kit/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Component kit</a></li><li><a href="https://majordomus.dev/docs/surfaces/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the surfaces are derived</a></li><li><a href="https://majordomus.dev/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the product page is derived</a></li><li><a href="https://majordomus.dev/proof-carrying-documentation/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Article: proof-carrying documentation</a></li><li><a href="https://majordomus.dev/dokumentace-kterou-lze-odmitnout/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading text-fg-brand">The same argument, written in Czech</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">How it works</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/method/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li><li><a href="https://majordomus.dev/kit/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Component kit</a></li><li><a href="https://majordomus.dev/docs/surfaces/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the surfaces are derived</a></li><li><a href="https://majordomus.dev/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the product page is derived</a></li><li><a href="https://majordomus.dev/proof-carrying-documentation/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Article: proof-carrying documentation</a></li><li><a href="https://majordomus.dev/dokumentace-kterou-lze-odmitnout/" class="block rounded px-3 py-2 text-fg-brand" aria-current="page">The same argument, written in Czech</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Docs<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 md:absolute md:left-0 md:top-full md:mt-2 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://majordomus.dev/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://majordomus.dev/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://majordomus.dev/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Docs</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://majordomus.dev/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://majordomus.dev/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-6" data-dropdown-toggle="nav-menu-6" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Evidence<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-6" class="z-10 hidden w-56 md:absolute md:left-0 md:top-full md:mt-2 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-6">
+              <li><a href="https://majordomus.dev/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Evidence</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Get started</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">Dokumentace, kterou lze odmítnout</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Dokumentace, kterou lze odmítnout</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">Tvrzení, které nemůže spadnout, je jen dobře naformátovaná próza. Jak jsem donutil repozitář odmítat vlastní dokumentaci, co to dneska dokazuje a kde to přestává platit.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  
+  <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-3xl dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0"><p>Nejdražší věc na práci s coding agenty není model. Je to to, co se stane každé ráno, než vůbec něco napíšeš.</p>
+<p>Otevřu novou session. Agent neví nic. Neví, proč je ta abstrakce rozdělená zrovna takhle, protože důvod je v diskuzi u pull requestu před třemi měsíci. Neví, že tenhle adresář se negeneruje ručně, protože to je v hlavě jednoho člověka. Neví, co se minule nepovedlo. Přečte si soubory, udělá si vlastní představu — obvykle rozumnou a obvykle jinou, než jaká je pravda — a začne pracovat.</p>
+<p>Za dvacet minut jsem to zjistil a opravil. Zítra znovu. A to je ta levnější varianta. Ta dražší je, když to nezjistím.</p>
+<h2 id="co-se-mi-delo-porad-dokola"><a class="zola-anchor" href="#co-se-mi-delo-porad-dokola" aria-label="Anchor link for: co-se-mi-delo-porad-dokola">Co se mi dělo pořád dokola</a></h2>
+<p>Časem jsem si ty poruchy přestal brát osobně a začal je psát. Vypadaly takhle:</p>
+<p><strong>Dokumentace lže a nic se nerozbije.</strong> V README stojí, že CLI a HTTP API nabízejí totéž. Nabízely, půl roku zpátky. Pak někdo přidal endpoint a neměl důvod sahat na CLI. Věta v README zůstala pravdivě vypadat. Žádný build kvůli ní nespadl, protože prosa nemá návratový kód.</p>
+<p><strong>Pravidla existují jako text, ne jako rozhodnutí.</strong> Soubor s instrukcemi pro agenta roste, protože do něj každý přidá to, co se minule pokazilo. Vznikne seznam jizev. Nikdo ho celý nečte a nikdo neumí říct, kolik z těch řádků ještě platí.</p>
+<p><strong>Kontext se ztrácí mezi sessions.</strong> Rozhodnutí, proč se něco udělalo takhle, je rozprostřené přes git history, tři markdowny, issue tracker a konverzaci, která už neexistuje.</p>
+<p><strong>Víc agentů pracuje na nekonzistentním stavu.</strong> Dva si sáhnou na stejný subsystém, protože ani jeden se nepodíval, co dělá ten druhý — a neměl kam se podívat.</p>
+<p>Společný jmenovatel: <strong>tvrzení o projektu nikde nemá formu, kterou by šlo odmítnout.</strong></p>
+<h2 id="proc-dat-agentovi-vic-kontextu-ten-problem-neresi"><a class="zola-anchor" href="#proc-dat-agentovi-vic-kontextu-ten-problem-neresi" aria-label="Anchor link for: proc-dat-agentovi-vic-kontextu-ten-problem-neresi">Proč "dát agentovi víc kontextu" ten problém neřeší</a></h2>
+<p>První reakce je zřejmá: napiš agentovi konvence do souboru, který si vždycky načte. Funguje to asi týden.</p>
+<p>Neselže to kvůli kapacitě okna. Selže to strukturálně. Konvence zapsaná v souboru, který nic nevynucuje, má dva stavy — dodržená a porušená — a ten soubor sám neumí říct, ve kterém z nich zrovna jsi. Takže se přidává další řádek. A reálné chování repozitáře se mezitím od toho textu vzdaluje, protože zjistit rozdíl by znamenalo přečíst celý soubor a proauditovat proti němu celý repozitář. Což je přesně ta práce, na kterou nikdy není čas.</p>
+<p>Pravidlo, o kterém nemůže rozhodnout žádný příkaz, je pravidlo, ve které doufáš.</p>
+<p>Otázka tedy není „jak dostat do agenta víc kontextu". Otázka je: <strong>která z těch vět jde udělat rozhodnutelnou — a co udělám s těmi, které nejdou.</strong></p>
+<h2 id="co-je-majordomus"><a class="zola-anchor" href="#co-je-majordomus" aria-label="Anchor link for: co-je-majordomus">Co je Majordomus</a></h2>
+<p>Majordomus je řídicí vrstva nad repozitářem, na kterém pracují lidé a coding agenti dohromady. Prakticky jsou to dva programy.</p>
+<p>Shellový nástroj <code>majordomus</code> drží lifecycle práce: na začátku session dá briefing o tom, co repozitář ví, zapisuje rozhodnutí a handovery, kontroluje změny proti deklarovanému scope úkolu a odmítne <code>finish</code>, jehož závazky nejsou splněné.</p>
+<p>Rust binárka indexuje vrstvu <code>.ai/</code> — pravidla, rozhodnutí, milestones, issues, use cases, tvrzení, záznamy sessions — do typovaného grafu objektů a ten graf pak nabízí přes příkazovou řádku, HTTP API, OpenAPI dokument, MCP server a webový Cockpit.</p>
+<p>To, co Majordomus spravuje, <strong>nejsou zdrojáky</strong>. Na ty existují kompilátory a testy. Je to vrstva nad nimi: co projekt slibuje, jaká pravidla svazují změnu, která rozhodnutí jsou uzavřená, čeho se session nesmí dotknout a co z toho je čím doložené.</p>
+<p>Ta vrstva existuje v každém projektu. Obvykle je rozsypaná přes CONTRIBUTING, pár stránek v Notionu, diagram, který přestal platit při předminulém refaktoru, a paměť toho, kdo je v týmu nejdéle.</p>
+<h2 id="jak-to-funguje-pod-kapotou"><a class="zola-anchor" href="#jak-to-funguje-pod-kapotou" aria-label="Anchor link for: jak-to-funguje-pod-kapotou">Jak to funguje pod kapotou</a></h2>
+<p>Architektura z té otázky přímo plyne: jedna kanonická deklarace, z ní odvozené povrchy, a gate všude tam, kde by odvození mohlo tiše zestárnout.</p>
+<pre class="mermaid" tabindex="0">
+flowchart TD
+  A[kanonický stav&lt;br/&gt;.ai/ pravidla, rozhodnutí, issues, tvrzení] --&gt; B[typovaná discovery&lt;br/&gt;jeden index, jeden graf objektů]
+  B --&gt; C[registry capabilit&lt;br/&gt;deklarovaná v Rustu]
+  C --&gt; D[HTTP API + OpenAPI]
+  C --&gt; E[MCP tools a resources]
+  C --&gt; F[Cockpit]
+  C --&gt; G[generovaná dokumentace]
+  C --&gt; H[příkazová řádka]
+  B --&gt; I[validátory a gates]
+  I --&gt; J[odmítnutí + příkaz, kterým ho zopakuješ]
+</pre>
+<p>Registry je ta část, která se zaplatí sama. Každá operace je deklarovaná jednou, v Rustu, včetně identity, efektu a toho, kde má být vidět. Dneska v ní je 1482 capabilit: 110 z nich je vystavených jako MCP tools, 1410 jako MCP resources, 112 jako HTTP operace. Všechny povrchy se renderují ze stejných řádků, takže operace nemůže existovat v API a chybět v OpenAPI dokumentu. Gate to přegeneruje a spadne, pokud se výsledek liší od toho, co je zacommitované.</p>
+<p>A teď to, co bych v marketingovém textu vynechal: <strong>CLI odvozené není.</strong> V grafu příkazů je 195 příkazů a 64 z nich nemá pod sebou žádnou capability — nástroj to o sobě sám hlásí řádkem <code>commands no capability claims: 64</code>. CLI je druhá deklarace, která se proti té první kontroluje, ne z ní odvozuje. Než se ta mezera zavře, platí „jedna deklarace, všechny povrchy" pro API, MCP a dokumentaci a je to předsevzetí pro CLI.</p>
+<h2 id="tvrzeni-jako-objekt-ne-jako-veta"><a class="zola-anchor" href="#tvrzeni-jako-objekt-ne-jako-veta" aria-label="Anchor link for: tvrzeni-jako-objekt-ne-jako-veta">Tvrzení jako objekt, ne jako věta</a></h2>
+<p>Tohle je mechanismus, kvůli kterému ten článek píšu.</p>
+<p>Každá věta o schopnostech na veřejném webu projektu pochází z jednoho souboru, <code>docs/CLAIMS.yaml</code>. Tvrzení je v něm typovaný objekt: id, jedna věta, kanonický soubor definující chování, soubor, který to implementuje, test, který to dokazuje, a status. Statusy jsou v tom souboru deklarované jako data — guaranteed, advisory, planned, rejected — takže generátor si nemůže vymyslet pátý.</p>
+<p><em>Guaranteed</em> znamená: implementováno, a dokazuje to behaviorální test.</p>
+<p>Co z toho dělá víc než tabulku, je požadavek, aby ten vztah platil <strong>oběma směry</strong>, a rozhoduje o tom gate. <code>scripts/ci/claim-proof-check</code> vezme každé guaranteed tvrzení, otevře test, na který ukazuje, a vyžaduje, aby ten test tvrzení jmenoval zpátky ve své hlavičce. Tvrzení ukazující na test, který o něm nikdy neslyšel, je nález. Pak ještě vyžaduje, aby ten test byl <strong>spustitelný</strong> — shellový case v <code>test/cases/</code> nebo crate test v <code>apps/majordomus-cli/tests/</code>. Protože tvrzení, jehož důkazem je markdown, není dokázané. Je popsané.</p>
+<p>Aktuálně ten check hlásí:</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellsession"><span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> scripts/ci/claim-proof-check --strict</span></span>
+<span class="giallo-l"><span>guaranteed claims:   0 of 161 name a test that does not name the claim back</span></span>
+<span class="giallo-l"><span>runnable tests:      every guaranteed claim names a shell case or a crate test</span></span>
+<span class="giallo-l"><span>claim-proof-check: every guaranteed claim names a test that names it back</span></span></code></pre>
+<p>161 guaranteed tvrzení, všechna uzavřená, a baseline výjimek vedle toho checku obsahuje třináct řádků komentářů a nula tvrzení. Na seznamu výjimek nestojí nic.</p>
+<p>Stejný tvar platí o patro výš, pro pravidla. Pravidlo je tu verzovaný markdown se strojově čitelným blokem, který deklaruje, <strong>jak</strong> je vynucené. 137 pravidel se rozpadá do deterministického pořadí, 116 má validátor a všech 109 blokujících pravidel ho má. Čtyři pravidla deklarují, že je vynucuje člověk při review — a to je typovaný stav s povinným odůvodněním, ne absence. Ten rozdíl je podstatný: „tohle kontrolujeme okem, protože automat by musel hádat" je obhajitelný inženýrský postoj. „Tohle nikdy nikdo nerozhodl" ve stejném kabátě není.</p>
+<h2 id="co-zatim-tvrdit-nemuzu"><a class="zola-anchor" href="#co-zatim-tvrdit-nemuzu" aria-label="Anchor link for: co-zatim-tvrdit-nemuzu">Co zatím tvrdit nemůžu</a></h2>
+<p>Všechno výše dokazuje, že důkaz <strong>existuje</strong>. Nic z toho nedokazuje, že ten důkaz <strong>proběhl</strong>.</p>
+<p>Repozitář má evidence ledger — <code>.ai/repo/evidence/ledger.json</code> — postavený na to, aby spojoval tvrzení se zaznamenanými běhy, a tvrzení pak neslo stav jako proven, stale nebo failing místo pouhého „má test". Ten subsystém je implementovaný. V ledgeru je šest běhů. Všech šest má <code>"origin": "local"</code>. Nejnovější je šest dní starý.</p>
+<p>Když se nástroje zeptám na stav důkazu u všech 176 tvrzení, odpoví: 153 nespuštěno, 14 zastaralých, 9 bez testu. Nula dokázaných. Report pravidel říká totéž svým slovníkem: <code>recorded: 0, passing: 0</code>.</p>
+<p>Příčina je nudná a konkrétní: žádný CI workflow nevolá <code>majordomus evidence record</code>. Suite běží při každém pushi — 224 shellových cases a 1545 Rust testovacích funkcí — a zapíše výsledek do logu, který GitHub při dalším re-runu smaže. Strojově čitelný report testů se nikde nepublikuje; <code>https://majordomus.dev/reports/tests.json</code> vrací 404.</p>
+<p>Přesné shrnutí současného stavu tedy zní: <strong>tenhle repozitář umí dokázat, že každé guaranteed tvrzení má test, který ho jmenuje zpátky, a zatím neumí dokázat, že ten test nedávno prošel.</strong> První půlka je vynucený invariant bez výjimek. Druhá je nezapojený drát.</p>
+<p>Mohl jsem s článkem počkat, až ledger naplním, a napsat čistší příběh. Myslím, že ta mezera je poučnější artefakt než hotová verze. Je to přesně ten typ polorozestavěného mechanismu, ze kterého se — když se o něm mlčí — stane za rok další věta, která nemůže spadnout.</p>
+<h2 id="konkretni-pruchod-pravidlo-ktere-odmitlo-me"><a class="zola-anchor" href="#konkretni-pruchod-pravidlo-ktere-odmitlo-me" aria-label="Anchor link for: konkretni-pruchod-pravidlo-ktere-odmitlo-me">Konkrétní průchod: pravidlo, které odmítlo mě</a></h2>
+<p>Nejlepší důkaz, že ta governance vrstva je spustitelná a ne dekorativní, je ten, že mě při psaní tohohle článku odmítla.</p>
+<p>Tenhle text má anglický protějšek. Nepřekládal jsem ho — napsal jsem dva články ze stejné důkazní základny pro dvě různá publika. Abych publikoval ten český, musel jsem do repozitáře vložit soubor s českou prózou.</p>
+<p>Repozitář má pravidlo <code>project.english-only</code> a jeho znění bylo: <em>„Code, comments, commits, documents and governance records are written in English, with no exceptions."</em> Je to blokující pravidlo a na rozdíl od většiny takových vět ve většině repozitářů je napojené na něco konkrétního. <code>scripts/ci/english-only-check</code> projde každý verzovaný autorský soubor a hledá písmena, která se vyskytují v češtině, slovenštině nebo polštině a v angličtině nikdy, plus celá nelatinková písma — porovnává je jako sekvence UTF-8 bajtů, takže výsledek nezávisí na locale stroje. Obsahový strom webu je v záběru. V tomhle stromu neexistuje baseline dluhu, takže jediný zásah shodí gate.</p>
+<p>Check má allow list se dvěma druhy záznamů: <code>name</code> pro vlastní jména a <code>fixture</code> pro soubory, které cizí řetězec používají jako testovací data. Oba se deklarují s odůvodněním. A oba mají v hlavičce checku napsáno: <em>neither exempts a sentence.</em> Ani jeden neomlouvá větu.</p>
+<p>Takže ten český článek nešlo přidat. Ne „nebylo by to hezké" — <strong>nešlo</strong>: gate by zčervenal a dopsat <code>fixture</code> řádek, aby ztichl, by bylo zneužití výjimky, jejíž vlastní dokumentace přesně tohle zakazuje.</p>
+<p>Udělal jsem místo toho to, co repozitář na změnu vynucovaných pravidel předepisuje. Zapsal jsem rozhodnutí (ADR) s rozlišením, které původní pravidlo nemuselo dělat, protože když vznikalo, byl každý artefakt v repozitáři pracovní artefakt. Publikovaný článek adresovaný čtenáři v jeho jazyce je jiná kategorie než komentář, commit message nebo governance záznam. Pravidlo jsem zvedl na verzi 2 s tím rozlišením ve znění, přidal třetí druh výjimky, <code>translation</code>, který vyžaduje cestu v publikovaném obsahu, deklarovaný jazyk a odůvodnění — a který si deklaraci ověřuje proti jazyku, ke kterému se hlásí sama stránka, aby ta výjimka nebyla jednostranná. Pak jsem napsal behaviorální case, který dokazuje, že upravený gate pořád odmítne českou větu v běžném zdrojovém souboru a pustí ji jen tam, kde to nový druh dovoluje.</p>
+<p>Zajímavý je ten tvar, ne to konkrétní pravidlo. Změna toho, co repozitář vynucuje, stála záznam rozhodnutí, zvýšení verze, změnu checku a test. Nic z toho nebyl rituál: bez kteréhokoli z těch kroků by změna neprošla, protože gate, který čte pravidla, by našel, že deklarované vynucení neodpovídá implementaci.</p>
+<p>Tohle myslím spustitelnou governance. Ne že někde stojí, že na pravidlech záleží — ale že se kolem nich nedostane ani autor.</p>
+<h2 id="co-z-toho-vychazi"><a class="zola-anchor" href="#co-z-toho-vychazi" aria-label="Anchor link for: co-z-toho-vychazi">Co z toho vychází</a></h2>
+<p><strong>Gate mění povahu dokumentu.</strong> Než vznikl <code>claim-proof-check</code>, byl soubor s tvrzeními marketingový inventář, který měl náhodou sloupec „test". Potom znamenalo přidat větu na web napsat test — a cestou nejmenšího odporu se stalo snížit status tvrzení, ne ho nafouknout. Soubor se nezměnil. Změnil se důsledek toho, že do něj člověk píše.</p>
+<p><strong>Většina governance dluhu je jednostranná.</strong> Opakovaná vada, kterou nacházím ve vlastní práci, je check ověřující vztah jen z jednoho konce: tvrzení jmenuje test, ale nic nevyžaduje, aby test jmenoval tvrzení. Jednostranné checky vypadají jako vynucení a nejsou jím, protože ta polovina, kterou nečtou, je přesně ta, která hnije.</p>
+<p><strong>Rozdíl mezi „deklarováno" a „zaznamenáno" je místo, kde bydlí poctivost.</strong> Postavit systém, který ví, co slibuje, je snadné. Postavit systém, který ví, kdy to naposledy ověřil, je výrazně těžší. Mám to první a zatím ne to druhé, a pojmenovat tu hranici přesně — ve výstupu nástroje, na veřejném webu i v tomhle textu — má větší cenu, než kdybych ji potichu zavřel.</p>
+<h2 id="dukazy"><a class="zola-anchor" href="#dukazy" aria-label="Anchor link for: dukazy">Důkazy</a></h2>
+<p>Všechna čísla výše jsem změřil v září 2026 na commitu <code>d8c97273f0</code>, kterým tahle stránka přibyla, a u každého je příkaz, který ho vypsal. Repozitář je veřejný.</p>
+<ul>
+<li>Počty capabilit a projekcí, nepokryté příkazy: <code>majordomus capabilities projections --format json</code></li>
+<li>Počty tvrzení a stavy důkazů: <code>majordomus evidence show --format json</code></li>
+<li>Uzavřenost tvrzení: <code>scripts/ci/claim-proof-check --strict</code>, baseline <code>.ai/repo/claim-proof-baseline.txt</code></li>
+<li>Pravidla a způsoby vynucení: <code>majordomus rules report --format json</code>, <code>scripts/ci/rule-proof-check</code></li>
+<li>Testy: 224 souborů v <code>test/cases/</code>, 1545 funkcí <code>#[test]</code>, z toho 374 v <code>apps/majordomus-cli/tests/</code></li>
+<li>Gates: 54 deklarovaných v <code>.ai/repo/ci/gates.yaml</code>, 17 běží vždy</li>
+<li>Nasazení: <code>build.json</code> na publikovaném webu jmenuje verzi zdroje, commit a generátor</li>
+<li>Pravidlo, které tenhle článek musel změnit: <code>.ai/repo/rules/project/english-only.v2.md</code></li>
+</ul>
+<p>Tvrzení samotná jsou publikovaná po jednom, každé se svým testem. Pokud je některá věta na tom webu špatně, existuje konkrétní soubor, který se dá otevřít, a konkrétní příkaz, který měl spadnout.</p>
+</article>
+  
+</div>
+
+</main>
+
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/challenge/" class="hover:text-heading hover:underline">Challenge</a></h2>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/why/" class="hover:text-heading hover:underline">Why</a></h2>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Product</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="hover:text-heading hover:underline">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="hover:text-heading hover:underline">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="hover:text-heading hover:underline">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="hover:text-heading hover:underline">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="hover:text-heading hover:underline">What it supervises</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">How it works</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="hover:text-heading hover:underline">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="hover:text-heading hover:underline">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="hover:text-heading hover:underline">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="hover:text-heading hover:underline">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="hover:text-heading hover:underline">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="hover:text-heading hover:underline">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="hover:text-heading hover:underline">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/kit/" class="hover:text-heading hover:underline">Component kit</a></li><li><a href="https://majordomus.dev/docs/surfaces/" class="hover:text-heading hover:underline">How the surfaces are derived</a></li><li><a href="https://majordomus.dev/architecture/" class="hover:text-heading hover:underline">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="hover:text-heading hover:underline">How the product page is derived</a></li><li><a href="https://majordomus.dev/proof-carrying-documentation/" class="hover:text-heading hover:underline">Article: proof-carrying documentation</a></li><li><a href="https://majordomus.dev/dokumentace-kterou-lze-odmitnout/" class="hover:text-heading hover:underline">The same argument, written in Czech</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">Docs</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="hover:text-heading hover:underline">Install</a></li><li><a href="https://majordomus.dev/commands/" class="hover:text-heading hover:underline">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="hover:text-heading hover:underline">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="hover:text-heading hover:underline">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="hover:text-heading hover:underline">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="hover:text-heading hover:underline">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="hover:text-heading hover:underline">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="hover:text-heading hover:underline">Registry</a></li><li><a href="https://majordomus.dev/map/" class="hover:text-heading hover:underline">Program map</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Evidence</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="hover:text-heading hover:underline">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="hover:text-heading hover:underline">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="hover:text-heading hover:underline">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="hover:text-heading hover:underline">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="hover:text-heading hover:underline">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="hover:text-heading hover:underline">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="hover:text-heading hover:underline">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="hover:text-heading hover:underline">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="hover:text-heading hover:underline">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="hover:text-heading hover:underline">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="hover:text-heading hover:underline">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/e45ce7c3e32a32c5d3037312c61e7beca5bf23da" class="font-mono underline">e45ce7c</a> · inputs <span class="font-mono">82bce9ff3fd0</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    </div>
+  </div>
+</footer>
+
+<script defer src="https://majordomus.dev/js/nav.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script>
+<script src="https://majordomus.dev/js/mermaid.min.js"></script>
+<script src="https://majordomus.dev/js/diagrams.js"></script>
+
+</body>
+</html>
