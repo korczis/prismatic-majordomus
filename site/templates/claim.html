@@ -5,26 +5,64 @@
 {%- set caps = load_data(path="data/generated/capabilities.json") -%}
 {%- set ev_model = load_data(path="data/registry/product.json") -%}{%- set ev = ev_model.evidence -%}
 {%- set readme = load_data(path="data/generated/readme.json") -%}
+{%- set catalogue_uc = load_data(path="data/generated/catalogue.json") -%}
 {%- set c = [x for x in caps.claims if x.id == page.extra.claim_id][0] -%}
 {%- set why_base = config.base_url | trim_end(pat="/") -%}
 {%- set covers = [r for r in readme.does if c.id in r.claim_ids] -%}
 {%- set explained = [x for x in catalogue.moments if x.status == "stable" and c.id in x.claims] -%}
 {%- set related = [x for x in caps.claims if x.id != c.id and x.implementation and x.implementation == c.implementation] -%}
+{%- set features = [f for f in ev_model.features if f.status != "draft" and c.id in f.claims] -%}
+{%- set scenarios = [u for u in catalogue_uc.use_cases if u.status == "active" and c.id in u.claims] -%}
 <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
-    <p class="flex flex-wrap items-center gap-3">{{ <badge status={c.status} /> }}<span class="text-sm text-body">{{ caps.statuses[c.status] }}</span></p>
-    <p class="mt-3 flex flex-wrap items-center gap-3"><span class="text-xs font-semibold uppercase tracking-wide text-body-subtle">recorded evidence</span>{{ <evidence claim={c.id} ev={ev} /> }}<span class="text-sm text-body">{% if not ev.available %}No evidence is recorded, so whether a run supports this claim is unknown.{% elif c.id in ev.claims and ev.claims[c.id].supported %}Supported by a recorded run whose inputs this claim names have not changed since.{% elif c.status == "guaranteed" %}Declared guaranteed, and not supported by a recorded run: the test is named, and no passing run of the current inputs is recorded.{% else %}Not judged: only a guaranteed claim is held to a recorded run.{% endif %} <a href="{{ get_url(path="/evidence/", trailing_slash=true) }}" class="text-fg-brand underline">how evidence is recorded</a></span></p>
+    <p class="flex flex-wrap items-center gap-3"><span class="text-xs font-semibold uppercase tracking-wide text-body-subtle">declared status</span>{%- set status = c.status -%}{%- set status_kind = "claim" -%}{% include "partials/status-badge.html" %}<span class="text-sm text-body">{{ caps.statuses[c.status] }}</span></p>
+    <p class="mt-3 flex flex-wrap items-center gap-3"><span class="text-xs font-semibold uppercase tracking-wide text-body-subtle">recorded evidence</span>{%- set status_kind = "proof" -%}{%- set status_claim = c.id -%}{% include "partials/status-badge.html" %}<span class="text-sm text-body">{% if not ev.available %}No evidence is recorded, so whether a run supports this claim is unknown.{% elif c.id in ev.claims and ev.claims[c.id].supported %}Supported by a recorded run whose inputs this claim names have not changed since.{% elif c.status == "guaranteed" %}Declared guaranteed, and not supported by a recorded run: the test is named, and no passing run of the current inputs is recorded.{% else %}Not judged: only a guaranteed claim is held to a recorded run.{% endif %} <a href="{{ get_url(path="/evidence/", trailing_slash=true) }}" class="text-fg-brand underline">how evidence is recorded</a></span></p>
     {% if c.note %}<p class="mt-6 max-w-3xl break-words text-base leading-relaxed text-heading">{{ c.note }}</p>{% endif %}
     <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-8 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0">{{ page.content | safe }}</article>
     <p class="mt-2 text-xs text-body-subtle">Detail rendered from <a href="{{ <source_blob path={page.extra.source} /> }}" class="font-mono underline">{{ page.extra.source }}</a>.</p>
 
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Provenance</h2>
-    <dl class="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-[auto_1fr]">
-      <dt class="text-body-subtle">defined in</dt><dd class="min-w-0 break-all">{% if c.source_route %}<a href="{{ get_url(path=c.source_route, trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">read it on this site</a> · {% endif %}<a href="{{ <source_blob path={c.source} /> }}" class="font-mono text-fg-brand hover:underline">{{ c.source }}</a></dd>
-      <dt class="text-body-subtle">implemented in</dt><dd class="min-w-0 break-all">{% if c.implementation %}<a href="{{ <source_blob path={c.implementation} /> }}" class="font-mono text-fg-brand hover:underline">{{ c.implementation }}</a>{% if c.command %} · <a href="{{ get_url(path="/commands/" ~ c.command ~ "/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">majordomus {{ c.command }}</a>{% endif %}{% else %}<span class="font-mono text-body-subtle">nothing yet</span>{% endif %}</dd>
-      <dt class="text-body-subtle">test it names</dt><dd class="min-w-0 break-all">{% if c.test %}<a href="{{ <source_blob path={c.test} /> }}" class="font-mono text-fg-brand hover:underline">{{ c.test }}</a>{% else %}<span class="font-mono text-body-subtle">no test — which is why this is not marked guaranteed</span>{% endif %}</dd>
-      <dt class="text-body-subtle">claim id</dt><dd class="font-mono text-heading">{{ c.id }}</dd>
-    </dl>
+    {#- The chain from what the site says to what proves it, one link per step, each link one
+        the data carries: the public statement and where it is made, the canonical claim, the
+        implementation, the test and the scenarios that execute it, and the verdict of the
+        recorded runs. A missing link says so; nothing is drawn as present that is not. No step
+        names a CI gate: no dataset joins a claim to the gate that runs its test. -#}
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading" id="chain">From the statement to the proof</h2>
+    <ol class="mt-4 grid list-none gap-3 p-0 text-sm" data-claim-chain="{{ c.id }}">
+      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">1 &middot; the public statement</p>
+        <p class="mt-1 mb-0 text-heading">{{ c.claim }}</p>
+        {%- if features | length > 0 or covers | length > 0 %}
+        <p class="mt-1 mb-0 text-body">Made on
+          {%- for f in features %} <a href="{{ why_base }}{{ f.route }}" class="font-medium text-fg-brand hover:underline">{{ f.short_title or f.title }}</a>{% if not loop.last or covers | length > 0 %},{% endif %}{% endfor %}
+          {%- for r in covers %} <a href="{{ get_url(path="/supervises/" ~ r.slug ~ "/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">{{ r.title }}</a>{% if not loop.last %},{% endif %}{% endfor %}.</p>
+        {%- else %}
+        <p class="mt-1 mb-0 text-body-subtle">No feature or README responsibility names it; this page is where it is stated.</p>
+        {%- endif %}
+      </li>
+      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">2 &middot; the canonical claim</p>
+        <p class="mt-1 mb-0 flex flex-wrap items-center gap-2"><code class="font-mono text-heading">{{ c.id }}</code>{%- set status = c.status -%}{%- set status_kind = "claim" -%}{% include "partials/status-badge.html" %}<span class="text-body">in <a href="{{ <source_blob path="docs/CLAIMS.yaml" /> }}" class="font-mono text-fg-brand hover:underline">docs/CLAIMS.yaml</a></span></p>
+        <p class="mt-1 mb-0 min-w-0 break-all text-body">Defined in {% if c.source_route %}<a href="{{ get_url(path=c.source_route, trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">read it on this site</a> · {% endif %}<a href="{{ <source_blob path={c.source} /> }}" class="font-mono text-fg-brand hover:underline">{{ c.source }}</a></p>
+      </li>
+      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">3 &middot; the implementation</p>
+        <p class="mt-1 mb-0 min-w-0 break-all">{% if c.implementation %}<a href="{{ <source_blob path={c.implementation} /> }}" class="font-mono text-fg-brand hover:underline">{{ c.implementation }}</a>{% if c.command %} · <a href="{{ get_url(path="/commands/" ~ c.command ~ "/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">majordomus {{ c.command }}</a>{% endif %}{% else %}<span class="text-body-subtle">Nothing implements it yet.</span>{% endif %}</p>
+      </li>
+      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">4 &middot; the test and the scenarios</p>
+        {%- if c.test or scenarios | length > 0 %}
+        {%- if c.test %}<p class="mt-1 mb-0 min-w-0 break-all">Test: <a href="{{ <source_blob path={c.test} /> }}" class="font-mono text-fg-brand hover:underline">{{ c.test }}</a></p>{% endif %}
+        {%- if scenarios | length > 0 %}<p class="mt-1 mb-0 text-body">Executed in
+          {%- for u in scenarios %} <a href="{{ get_url(path='/use-cases/' ~ u.id ~ '/', trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">{{ u.title }}</a>{% if not loop.last %},{% endif %}{% endfor %}.</p>{% endif %}
+        {%- else %}
+        <p class="mt-1 mb-0 text-body-subtle">No executable evidence linked: the claim names no test, and no use case executes it.</p>
+        {%- endif %}
+      </li>
+      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">5 &middot; the recorded runs</p>
+        <p class="mt-1 mb-0 flex flex-wrap items-center gap-2">{%- set status_kind = "proof" -%}{%- set status_claim = c.id -%}{% include "partials/status-badge.html" %}<a href="{{ get_url(path="/evidence/", trailing_slash=true) }}" class="text-fg-brand underline">how evidence is recorded</a></p>
+      </li>
+    </ol>
 
     {% if c.test %}
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Verify it yourself</h2>
@@ -44,7 +82,7 @@ bash test/run.sh {{ c.test_case }}
 
     {% if related | length > 0 %}
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Related claims <span class="font-mono text-sm font-normal text-body-subtle">same implementation</span></h2>
-    <ul class="mt-4 grid gap-3 sm:grid-cols-2">{% for x in related %}<li><a href="{{ get_url(path="/guarantees/" ~ x.id ~ "/", trailing_slash=true) }}" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span>{{ <badge status={x.status} /> }}</span><span class="text-sm text-heading">{{ x.claim }}</span></a></li>{% endfor %}</ul>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2">{% for x in related %}<li><a href="{{ get_url(path="/guarantees/" ~ x.id ~ "/", trailing_slash=true) }}" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span>{%- set status = x.status -%}{%- set status_kind = "claim" -%}{% include "partials/status-badge.html" %}</span><span class="text-sm text-heading">{{ x.claim }}</span></a></li>{% endfor %}</ul>
     {% endif %}
     {#- Which milestone would move this claim out of planned. The edge is declared once, in
         milestone.claims, and read here by inversion — a claim naming its own milestone would
