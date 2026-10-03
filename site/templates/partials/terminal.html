@@ -9,7 +9,9 @@
     Nothing in this file names a command, a count or an order. Given `tx` (a list of panels,
     each carrying `command`, `exit`, `output`, `use_case_title`, `route` and `assertions`),
     `tx_id` (a unique element id root) and `tx_label` (the tab list's accessible name), it
-    renders what it was handed.
+    renders what it was handed. Each panel is one run drawn by partials/terminal-run.html, the
+    one terminal primitive the site has: prompt never copied, command apart from output, a
+    status as a word and a glyph, long output folded behind a disclosure, no window chrome.
 
     Without JavaScript every panel renders, in order: `x-show` alone hides nothing statically,
     and the panel carries neither `x-cloak` nor `hidden`, which is the one combination
@@ -28,19 +30,12 @@
   {%- for p in tx -%}
   <figure x-show="t === {{ loop.index0 }}" id="{{ tx_id }}-panel-{{ loop.index0 }}" role="tabpanel" aria-labelledby="{{ tx_id }}-tab-{{ loop.index0 }}"
     class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs">
-    <figcaption class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-default px-4 py-2">
-      <span class="min-w-0 break-all font-mono text-xs text-heading">$ {{ p.command }}</span>
-      <span class="shrink-0 font-mono text-xs">
-        <span class="text-body-subtle">exit</span>
-        <span class="ms-1 rounded px-1.5 py-0.5 font-semibold {% if p.exit == 0 %}bg-success-soft text-fg-success-strong{% else %}bg-danger-soft text-fg-danger-strong{% endif %}">{{ p.exit }}</span>
-      </span>
-    </figcaption>
     {#- The body is the run's stdout. It scrolls in both directions inside its own box, which
         `scripts/ui check` requires to be reachable from the keyboard, rather than pushing the
-        page sideways on a phone or burying the sections under it on a desktop. The box is one
-        size for every panel: a terminal has a size, and a tab strip whose panels each set
-        their own height moves the page under the hand that clicked it. -#}
-    <div class="h-80 overflow-x-auto overflow-y-auto sm:h-96" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body">{{ p.output }}</pre></div>
+        page sideways on a phone; a long one shows its head and folds the rest. -#}
+    {%- set run_command = p.command -%}{%- set run_exit = p.exit -%}{%- set run_output = p.output -%}
+    {%- set run_stdin = "" -%}{%- set run_checks = [] -%}{%- set run_verdict = "" -%}
+    {% include "partials/terminal-run.html" %}
     {#- Where the transcript came from. A replayed scenario links its use case (`route`); a
         recorded CI run links what produced it (`links`: each a label and an address the data
         carries, never one composed here). -#}

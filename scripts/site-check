@@ -174,8 +174,11 @@ else bad product "site/data/registry/product.json missing (regenerate: majordomu
 TD="$SITE/data/generated/terminal.json"
 if [ -f "$TD" ]; then
   term_bad=0
-  # Zola writes an apostrophe as &#39;, and a recorded command now quotes its arguments with one
-  HOME_HTML="$(sed 's/&quot;/"/g; s/&#x27;/'"'"'/g; s/&#39;/'"'"'/g; s/&lt;/</g; s/&gt;/>/g; s/&amp;/\&/g' "$PUB/index.html")"
+  # Zola writes an apostrophe as &#39;, and a recorded command now quotes its arguments with one.
+  # The text is read with its tags removed: the terminal draws the prompt outside the command
+  # it copies (partials/terminal-run.html), so "$ <command>" is what a reader sees, not a
+  # byte sequence of the markup.
+  HOME_HTML="$(sed 's/<[^>]*>//g; s/&quot;/"/g; s/&#x27;/'"'"'/g; s/&#39;/'"'"'/g; s/&lt;/</g; s/&gt;/>/g; s/&amp;/\&/g' "$PUB/index.html")"
   n=0
   while IFS="$MJ_TAB" read -r cmd first; do
     n=$((n + 1))
