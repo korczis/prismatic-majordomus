@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="944a896b2646">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Integrations — Prismatic Majordomus</title>
+<meta name="description" content="One repository, every interface: what the layer reads, the snapshot it builds, and the command line, HTTP API, Swagger UI, Cockpit, MCP, this site and CI that read it.">
+<link rel="canonical" href="https://majordomus.dev/kit/integrations/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="Integrations — Prismatic Majordomus">
+<meta property="og:description" content="One repository, every interface: what the layer reads, the snapshot it builds, and the command line, HTTP API, Swagger UI, Cockpit, MCP, this site and CI that read it.">
+<meta property="og:url" content="https://majordomus.dev/kit/integrations/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><link rel="stylesheet" href="https://majordomus.dev/kit.css?h=a742cc00915cfdf18f7e">
+<script defer src="https://majordomus.dev/js/kit.js"></script>
+<script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.12.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.11.0</span>
+      
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Get started</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        <li><a href="https://majordomus.dev/challenge/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Challenge</a></li>
+        
+        
+        
+        
+        
+        <li><a href="https://majordomus.dev/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Product<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/features/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Product</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/features/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">How it works<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/method/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li><li><a href="https://majordomus.dev/kit/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Component kit</a></li><li><a href="https://majordomus.dev/docs/surfaces/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the surfaces are derived</a></li><li><a href="https://majordomus.dev/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the product page is derived</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">How it works</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/method/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li><li><a href="https://majordomus.dev/kit/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Component kit</a></li><li><a href="https://majordomus.dev/docs/surfaces/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the surfaces are derived</a></li><li><a href="https://majordomus.dev/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the product page is derived</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Docs<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://majordomus.dev/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://majordomus.dev/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://majordomus.dev/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Docs</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://majordomus.dev/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://majordomus.dev/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-6" data-dropdown-toggle="nav-menu-6" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Evidence<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-6" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-6">
+              <li><a href="https://majordomus.dev/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Evidence</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Get started</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="mx-auto max-w-screen-xl px-4 py-8 sm:px-6 lg:px-8">
+  <div class="mb-8 flex flex-wrap items-center justify-between gap-3">
+    
+<nav aria-label="Breadcrumb">
+  <ol class="mj-trail"><li><a href="https://majordomus.dev/">Home</a></li><li><a href="https://majordomus.dev/kit/">Component kit</a></li><li><span aria-current="page">Integrations</span></li>
+  </ol>
+</nav>
+    <span class="mj-tag">screen · composed of the kit</span>
+  </div>
+  
+<header class="mj-hero">
+  <div class="min-w-0">
+    <p class="mj-kicker">Integrations</p>
+    <h1 class="mj-hero-title"><span class="mj-hero-line">One repository.</span><span class="mj-hero-line">Every <span class="mj-hero-accent">interface.</span></span></h1><p class="mj-hero-lead">The same repository state reaches the command line, the HTTP API under /api/v1/, Swagger UI, the Cockpit, MCP and this site. Each capability is declared once: its HTTP route, OpenAPI operation and MCP tool are built from that declaration, and the command line is checked against it.</p>
+  </div><div class="min-w-0">
+  
+<figure class="mj-quote">
+  <blockquote class="mj-quote-text m-0">&ldquo;A command is declared once, and every surface that shows it is a projection&rdquo;</blockquote><figcaption class="mj-quote-by"><a href="https://majordomus.dev/rules/project-commands-are-projections-1/" class="hover:underline">project.commands-are-projections</a></figcaption>
+</figure>
+</div>
+</header><section class="mt-12" aria-label="From the repository to every interface">
+  
+<section class="mj-panel">
+  <div class="mj-panel-head">
+<span class="mj-glyph" aria-hidden="true"><svg class="mj-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg></span>
+    <div class="mj-panel-heading">
+      <h2 class="mj-panel-title">prismatic-majordomus</h2><p class="mj-panel-sub">What the snapshot is read from, and who reads it</p>
+    </div>
+  </div>
+  
+    <div class="mt-6">
+    <div class="mj-fan mj-fan--both">
+  <ul class="mj-fan-side m-0 list-none p-0"><li class="mj-fan-cell"><div class="mj-route">
+<span class="mj-glyph mj-glyph--sm mj-tone--blue" aria-hidden="true"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><line x1="6" x2="6" y1="3" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg></span>
+  <span class="min-w-0"><span class="mj-route-name">.git/</span><span class="mj-route-path" title="branch, head, working tree">branch, head, working tree</span></span></div></li><li class="mj-fan-cell"><div class="mj-route">
+<span class="mj-glyph mj-glyph--sm mj-tone--blue" aria-hidden="true"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span>
+  <span class="min-w-0"><span class="mj-route-name">.ai/</span><span class="mj-route-path" title="157 rules, 76 decisions, 6 skills">157 rules, 76 decisions, 6 skills</span></span></div></li><li class="mj-fan-cell"><div class="mj-route">
+<span class="mj-glyph mj-glyph--sm mj-tone--blue" aria-hidden="true"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span>
+  <span class="min-w-0"><span class="mj-route-name">apps/</span><span class="mj-route-path" title="the Rust executable">the Rust executable</span></span></div></li><li class="mj-fan-cell"><div class="mj-route">
+<span class="mj-glyph mj-glyph--sm mj-tone--blue" aria-hidden="true"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span>
+  <span class="min-w-0"><span class="mj-route-name">docs/</span><span class="mj-route-path" title="manuals and generated documents">manuals and generated documents</span></span></div></li><li class="mj-fan-cell"><div class="mj-route">
+<span class="mj-glyph mj-glyph--sm mj-tone--blue" aria-hidden="true"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span>
+  <span class="min-w-0"><span class="mj-route-name">share/</span><span class="mj-route-path" title="schemas, design, kinds">schemas, design, kinds</span></span></div></li><li class="mj-fan-cell"><div class="mj-route">
+<span class="mj-glyph mj-glyph--sm mj-tone--blue" aria-hidden="true"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span>
+  <span class="min-w-0"><span class="mj-route-name">test/</span><span class="mj-route-path" title="333 test objects">333 test objects</span></span></div></li>
+  </ul>
+  
+<div class="relative hidden min-w-0 lg:block" aria-hidden="true">
+  <svg class="mj-fan-wire" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,8.33 C50,8.33 50,50 100,50"/><path d="M0,25.0 C50,25.0 50,50 100,50"/><path d="M0,41.67 C50,41.67 50,50 100,50"/><path d="M0,58.33 C50,58.33 50,50 100,50"/><path d="M0,75.0 C50,75.0 50,50 100,50"/><path d="M0,91.67 C50,91.67 50,50 100,50"/></svg><span class="mj-fan-label absolute left-1/2 top-1/2 w-16 -translate-x-1/2 -translate-y-1/2">read</span>
+</div>
+  <div class="mj-fan-step" aria-hidden="true"><svg class="mj-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg></div>
+  <div class="mj-fan-hub">
+      
+<div class="mj-stack mj-stack--mono">
+  <div class="mj-stack-cap">
+    
+<span class="mj-glyph mj-glyph--lg" aria-hidden="true"><svg class="mj-icon mj-icon--lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg></span>
+    <h3 class="mj-stack-title">RepositoryEnvironment</h3><p class="mj-stack-text">one snapshot of this checkout, each value with where it came from</p>
+  </div>
+  <ol class="mj-stack-layers"><li class="mj-layer mj-tone--blue"><span class="mj-layer-title">project</span><span class="mj-layer-text">identity and release</span></li><li class="mj-layer mj-tone--violet"><span class="mj-layer-title">version control</span><span class="mj-layer-text">branch, head, working tree</span></li><li class="mj-layer mj-tone--green"><span class="mj-layer-title">toolchains</span><span class="mj-layer-text">what the checkout declares</span></li><li class="mj-layer mj-tone--orange"><span class="mj-layer-title">the layer</span><span class="mj-layer-text">objects counted per kind</span></li><li class="mj-layer mj-tone--rose"><span class="mj-layer-title">services</span><span class="mj-layer-text">the address a server published</span></li>
+  </ol>
+</div>
+    </div>
+  <div class="mj-fan-step" aria-hidden="true"><svg class="mj-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg></div>
+  
+<div class="relative hidden min-w-0 lg:block" aria-hidden="true">
+  <svg class="mj-fan-wire" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,50 C50,50 50,7.14 100,7.14"/><path d="M0,50 C50,50 50,21.43 100,21.43"/><path d="M0,50 C50,50 50,35.71 100,35.71"/><path d="M0,50 C50,50 50,50.0 100,50.0"/><path d="M0,50 C50,50 50,64.29 100,64.29"/><path d="M0,50 C50,50 50,78.57 100,78.57"/><path d="M0,50 C50,50 50,92.86 100,92.86"/></svg><span class="mj-fan-label absolute left-1/2 top-1/2 w-16 -translate-x-1/2 -translate-y-1/2">projected</span>
+</div>
+  <ul class="mj-fan-side m-0 list-none p-0"><li class="mj-fan-cell"><a href="https://majordomus.dev/docs/cli/" class="mj-route no-underline hover:shadow-xs">
+<span class="mj-glyph mj-glyph--sm mj-tone--blue" aria-hidden="true"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m7 11 2-2-2-2"/><path d="M11 13h4"/><rect width="18" height="18" x="3" y="3" rx="2"/></svg></span>
+  <span class="min-w-0"><span class="mj-route-name">CLI</span><span class="mj-route-path" title="majordomus">majordomus</span></span></a></li><li class="mj-fan-cell"><a href="https://majordomus.dev/docs/api/" class="mj-route no-underline hover:shadow-xs">
+<span class="mj-glyph mj-glyph--sm mj-tone--violet" aria-hidden="true"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg></span>
+  <span class="min-w-0"><span class="mj-route-name">HTTP API</span><span class="mj-route-path" title="/api/v1/">/api/v1/</span></span></a></li><li class="mj-fan-cell"><a href="https://majordomus.dev/docs/api/" class="mj-route no-underline hover:shadow-xs">
+<span class="mj-glyph mj-glyph--sm mj-tone--violet" aria-hidden="true"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+  <span class="min-w-0"><span class="mj-route-name">Swagger / OpenAPI</span><span class="mj-route-path" title="/swagger">/swagger</span></span></a></li><li class="mj-fan-cell"><a href="https://majordomus.dev/docs/cockpit/" class="mj-route no-underline hover:shadow-xs">
+<span class="mj-glyph mj-glyph--sm mj-tone--green" aria-hidden="true"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg></span>
+  <span class="min-w-0"><span class="mj-route-name">Cockpit</span><span class="mj-route-path" title="/cockpit">/cockpit</span></span></a></li><li class="mj-fan-cell"><a href="https://majordomus.dev/docs/mcp/" class="mj-route no-underline hover:shadow-xs">
+<span class="mj-glyph mj-glyph--sm mj-tone--green" aria-hidden="true"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="18" r="2.5"/><circle cx="19" cy="18" r="2.5"/><path d="M10.8 7.2 6.2 15.8"/><path d="m13.2 7.2 4.6 8.6"/><path d="M7.5 18h9"/></svg></span>
+  <span class="min-w-0"><span class="mj-route-name">MCP</span><span class="mj-route-path" title="majordomus mcp">majordomus mcp</span></span></a></li><li class="mj-fan-cell"><a href="https://majordomus.dev/docs/" class="mj-route no-underline hover:shadow-xs">
+<span class="mj-glyph mj-glyph--sm mj-tone--orange" aria-hidden="true"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></span>
+  <span class="min-w-0"><span class="mj-route-name">Documentation</span><span class="mj-route-path" title="GitHub Pages">GitHub Pages</span></span></a></li><li class="mj-fan-cell"><a href="https://majordomus.dev/docs/ci/" class="mj-route no-underline hover:shadow-xs">
+<span class="mj-glyph mj-glyph--sm mj-tone--rose" aria-hidden="true"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M12 2v2"/><path d="M12 22v-2"/><path d="m17 20.66-1-1.73"/><path d="M11 10.27 7 3.34"/><path d="m20.66 17-1.73-1"/><path d="m3.34 7 1.73 1"/><path d="M14 12h8"/><path d="M2 12h2"/><path d="m20.66 7-1.73 1"/><path d="m3.34 17 1.73-1"/><path d="m17 3.34-1 1.73"/><path d="m11 13.73-4 6.93"/></svg></span>
+  <span class="min-w-0"><span class="mj-route-name">CI</span><span class="mj-route-path" title="GitHub Actions">GitHub Actions</span></span></a></li>
+  </ul>
+</div>
+    </div>
+  
+</section>
+</section><section class="mt-6">
+  
+<section class="mj-panel mj-tone--violet" id="int-each">
+  <div class="mj-panel-head">
+<span class="mj-glyph" aria-hidden="true"><svg class="mj-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg></span>
+    <div class="mj-panel-heading">
+      <h2 class="mj-panel-title">Seven interfaces, one real thing each</h2><p class="mj-panel-sub">The environment snapshot where an interface serves it, and what each of the others is for</p>
+    </div>
+  </div>
+  
+    
+<div class="min-w-0" data-tabs="int-tabs" data-selected="0">
+  <div class="mj-tabs mj-tabs--line" role="tablist" aria-label="Interfaces of the repository" hidden>
+    <button type="button" role="tab" class="mj-tab" data-kit-tab id="int-tabs-tab-0" aria-controls="int-tabs-panel-0" aria-selected="true" tabindex="0"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m7 11 2-2-2-2"/><path d="M11 13h4"/><rect width="18" height="18" x="3" y="3" rx="2"/></svg><span>CLI</span></button>
+    <button type="button" role="tab" class="mj-tab" data-kit-tab id="int-tabs-tab-1" aria-controls="int-tabs-panel-1" aria-selected="false" tabindex="-1"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>API</span></button>
+    <button type="button" role="tab" class="mj-tab" data-kit-tab id="int-tabs-tab-2" aria-controls="int-tabs-panel-2" aria-selected="false" tabindex="-1"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg><span>Swagger</span></button>
+    <button type="button" role="tab" class="mj-tab" data-kit-tab id="int-tabs-tab-3" aria-controls="int-tabs-panel-3" aria-selected="false" tabindex="-1"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg><span>Cockpit</span></button>
+    <button type="button" role="tab" class="mj-tab" data-kit-tab id="int-tabs-tab-4" aria-controls="int-tabs-panel-4" aria-selected="false" tabindex="-1"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="18" r="2.5"/><circle cx="19" cy="18" r="2.5"/><path d="M10.8 7.2 6.2 15.8"/><path d="m13.2 7.2 4.6 8.6"/><path d="M7.5 18h9"/></svg><span>MCP</span></button>
+    <button type="button" role="tab" class="mj-tab" data-kit-tab id="int-tabs-tab-5" aria-controls="int-tabs-panel-5" aria-selected="false" tabindex="-1"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg><span>Docs</span></button>
+    <button type="button" role="tab" class="mj-tab" data-kit-tab id="int-tabs-tab-6" aria-controls="int-tabs-panel-6" aria-selected="false" tabindex="-1"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M12 2v2"/><path d="M12 22v-2"/><path d="m17 20.66-1-1.73"/><path d="M11 10.27 7 3.34"/><path d="m20.66 17-1.73-1"/><path d="m3.34 7 1.73 1"/><path d="M14 12h8"/><path d="M2 12h2"/><path d="m20.66 7-1.73 1"/><path d="m3.34 17 1.73-1"/><path d="m17 3.34-1 1.73"/><path d="m11 13.73-4 6.93"/></svg><span>CI</span></button>
+  </div>
+  
+      
+<div class="mj-tab-panel" role="tabpanel" id="int-tabs-panel-0" aria-labelledby="int-tabs-tab-0" tabindex="0">
+  <p class="mj-tab-heading">CLI</p>
+  
+        
+<figure class="mj-term dark m-0" aria-label="Terminal session">
+  <div class="mj-term-bar" aria-hidden="true"><svg class="mj-term-dot mj-term-dot--1" viewBox="0 0 12 12"><circle cx="6" cy="6" r="6" fill="currentColor"/></svg><svg class="mj-term-dot mj-term-dot--2" viewBox="0 0 12 12"><circle cx="6" cy="6" r="6" fill="currentColor"/></svg><svg class="mj-term-dot mj-term-dot--3" viewBox="0 0 12 12"><circle cx="6" cy="6" r="6" fill="currentColor"/></svg><span class="mj-term-title">recorded: majordomus context</span>
+  </div>
+  <div class="mj-term-body" tabindex="0">
+<div class="mj-term-line"><span class="mj-term-prompt">$</span> <span class="mj-term-cmd">majordomus</span> <span class="mj-term-arg">context</span></div><div class="overflow-x-auto" tabindex="0"><pre class="mj-term-out" tabindex="0"># Majordomus context — &lt;time&gt;
+# a projection of durable state, not a source of truth: validate every line against git
+
+## GIT
+repository   &lt;repo&gt;
+branch       main
+head         &lt;sha&gt;
+working_tree dirty
+task_record  exact (recorded head &lt;head&gt;)
+
+## TASK
+id           t-&lt;id&gt;
+task         narrow the parser
+profile      implementation</pre></div></div>
+</figure>
+        <p class="mj-point-text mt-3">A transcript the generator recorded. For the snapshot itself: <code>majordomus env</code> — What this checkout is: the project, version control, the toolchains it declares, what the layer holds, the workflows, the provider projections and the local services.</p>
+      
+</div>
+      
+<div class="mj-tab-panel" role="tabpanel" id="int-tabs-panel-1" aria-labelledby="int-tabs-tab-1" tabindex="0">
+  <p class="mj-tab-heading">API</p>
+  
+        
+<div class="mj-request">
+  <span class="mj-method mj-tone--blue">GET</span>
+  <code class="mj-request-path" title="/api/v1/environment">/api/v1/environment</code>
+</div>
+        <p class="mj-point-text mt-3">One snapshot of this checkout: project identity, repository identity, version control, declared toolchains, what the layer holds counted per kind, the workflows the runner describes, the provider projections against the policy that renders them, and the local services with the address a running server published. Every value carries where it came from.</p>
+        <div class="mt-3">
+<div class="mj-cmd mj-cmd--wrap"><span class="mj-cmd-prompt" aria-hidden="true">$</span>
+  <code class="mj-cmd-text" id="int-curl" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/environment?probe_services=false&quot;</code>
+  
+<button type="button" class="mj-copy" data-copy="int-curl" aria-label="Copy the command" hidden><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg></button>
+</div></div>
+      
+</div>
+      
+<div class="mj-tab-panel" role="tabpanel" id="int-tabs-panel-2" aria-labelledby="int-tabs-tab-2" tabindex="0">
+  <p class="mj-tab-heading">Swagger</p>
+  
+        <p class="mj-point-text mb-3">Serve the same capabilities over HTTP on the loopback interface, with the home page, /openapi.json, /swagger and the documentation under /docs/. The operations of the environment tag, as the OpenAPI 3.1.0 document describes them:</p>
+        
+<details class="mj-endpoint" open>
+  <summary><span class="mj-method mj-tone--blue">GET</span><code class="mj-endpoint-path">/api/v1/environment</code><span class="mj-endpoint-summary">The repository environment</span><span class="mj-chevron"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></span></summary><div class="mj-endpoint-body"><p class="m-0">One snapshot of this checkout: project identity, repository identity, version control, declared toolchains, what the layer holds counted per kind, the workflows the runner describes, the provider projections against the …</p></div>
+</details>
+        
+<details class="mj-endpoint">
+  <summary><span class="mj-method mj-tone--blue">GET</span><code class="mj-endpoint-path">/api/v1/environment/explain</code><span class="mj-endpoint-summary">Where an environment value came from</span><span class="mj-chevron"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></span></summary><div class="mj-endpoint-body"><p class="m-0">The provenance of the snapshot: for each field, what decided it — a compile-time constant, a file, a command, or the cache — which resolver read it, and how far it can be trusted. Narrow it to one field, or to a prefix, …</p></div>
+</details>
+        
+<details class="mj-endpoint">
+  <summary><span class="mj-method mj-tone--blue">GET</span><code class="mj-endpoint-path">/api/v1/environment/preflight</code><span class="mj-endpoint-summary">Whether Majordomus is in force here, and what proves it</span><span class="mj-chevron"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m6 9 6 6 6-6"/></svg></span></summary><div class="mj-endpoint-body"><p class="m-0">One verdict per claim about this checkout — git; the episode, its briefing, the task and the handover; the policy, the rule corpus and the ADRs; the shared server and the MCP, API and Cockpit surfaces it serves; the peer…</p></div>
+</details>
+      
+</div>
+      
+<div class="mj-tab-panel" role="tabpanel" id="int-tabs-panel-3" aria-labelledby="int-tabs-tab-3" tabindex="0">
+  <p class="mj-tab-heading">Cockpit</p>
+  
+        
+<div class="mj-request">
+  <span class="mj-method mj-tone--blue">GET</span>
+  <code class="mj-request-path" title="/api/v1/dashboard/overview">/api/v1/dashboard/overview</code>
+</div>
+        <p class="mj-point-text mt-3">The Cockpit at <code>/cockpit</code> asks the same server for its pages. Its overview: the overview: four questions.</p>
+        <div class="mt-3">
+<div class="mj-cmd"><span class="mj-cmd-prompt" aria-hidden="true">$</span>
+  <code class="mj-cmd-text" id="int-dash" tabindex="0">majordomus dashboard overview</code>
+  
+<button type="button" class="mj-copy" data-copy="int-dash" aria-label="Copy the command" hidden><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg></button>
+</div></div>
+      
+</div>
+      
+<div class="mj-tab-panel" role="tabpanel" id="int-tabs-panel-4" aria-labelledby="int-tabs-tab-4" tabindex="0">
+  <p class="mj-tab-heading">MCP</p>
+  
+        <p class="mj-point-text mb-3">Serve the repository&#39;s AI layer to an MCP client over stdio: 160 tools and 52 resources. The snapshot is one tool and one resource.</p>
+        
+<ul class="m-0 grid list-none grid-cols-[minmax(0,1fr)] gap-2 p-0">
+  <li class="">
+    <div class="mj-route">
+<span class="mj-glyph mj-glyph--sm mj-tone--green" aria-hidden="true"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></span>
+  <span class="min-w-0"><span class="mj-route-name">majordomus_environment</span><span class="mj-route-path" title="tool · The repository environment">tool · The repository environment</span></span></div>
+  </li>
+  <li class="">
+    <div class="mj-route">
+<span class="mj-glyph mj-glyph--sm mj-tone--green" aria-hidden="true"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg></span>
+  <span class="min-w-0"><span class="mj-route-name">majordomus://environment</span><span class="mj-route-path" title="resource · environment">resource · environment</span></span></div>
+  </li>
+</ul>
+        <div class="mt-3">
+<div class="mj-cmd"><span class="mj-cmd-prompt" aria-hidden="true">$</span>
+  <code class="mj-cmd-text" id="int-mcp" tabindex="0">majordomus mcp</code>
+  
+<button type="button" class="mj-copy" data-copy="int-mcp" aria-label="Copy the command" hidden><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg></button>
+</div></div>
+      
+</div>
+      
+<div class="mj-tab-panel" role="tabpanel" id="int-tabs-panel-5" aria-labelledby="int-tabs-tab-5" tabindex="0">
+  <p class="mj-tab-heading">Docs</p>
+  
+        <p class="mj-point-text mb-3">This site is built from the repository and published on GitHub Pages. The pages of it that describe the snapshot:</p>
+        
+<ul class="mj-links"><li><a href="https://majordomus.dev/docs/environment/"><span>The repository environment</span><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"/></svg></a></li><li><a href="https://majordomus.dev/docs/cli/env/"><span>majordomus env</span><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"/></svg></a></li><li><a href="https://majordomus.dev/docs/api/environment/"><span>HTTP API: environment</span><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"/></svg></a></li><li><a href="https://majordomus.dev/registry/mcp/"><span>MCP surface</span><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"/></svg></a></li>
+</ul>
+      
+</div>
+      
+<div class="mj-tab-panel" role="tabpanel" id="int-tabs-panel-6" aria-labelledby="int-tabs-tab-6" tabindex="0">
+  <p class="mj-tab-heading">CI</p>
+  
+        
+<div class="mj-request">
+  <span class="mj-method mj-tone--blue">GET</span>
+  <code class="mj-request-path" title="/api/v1/gates">/api/v1/gates</code>
+</div>
+        <p class="mj-point-text mt-3">The CI model: Every validation gate this repository declares — the job that runs it, the command it runs, what it proves, whether every plan selects it and whether its runner can be had on demand at all — with the path classes that decide which change se…</p>
+        <div class="mt-3">
+<ul class="mj-links"><li><a href="https://majordomus.dev/docs/ci/"><span>Continuous integration</span><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"/></svg></a></li>
+</ul></div>
+      
+</div>
+    
+</div>
+  
+</section>
+</section><section class="mt-12">
+  
+<div class="mj-section-head"><p class="mj-kicker">Surfaces</p><h2 class="mj-section-title">Where each one lives</h2>
+</div>
+  <div class="mt-6">
+    
+<div class="mj-tiles">
+<a href="https://majordomus.dev/docs/integration/" class="mj-tile">
+<span class="mj-glyph mj-tone--blue" aria-hidden="true"><svg class="mj-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg></span>
+  <span class="mj-tile-body"><span class="mj-tile-title">Git and GitHub</span><span class="mj-tile-text">pull requests classified against master</span></span>
+  <span class="mj-tile-go"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"/></svg></span>
+</a>
+<a href="https://majordomus.dev/docs/cli/" class="mj-tile">
+<span class="mj-glyph mj-tone--green" aria-hidden="true"><svg class="mj-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m7 11 2-2-2-2"/><path d="M11 13h4"/><rect width="18" height="18" x="3" y="3" rx="2"/></svg></span>
+  <span class="mj-tile-body"><span class="mj-tile-title">CLI</span><span class="mj-tile-text">196 commands, each with a reference page</span></span>
+  <span class="mj-tile-go"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"/></svg></span>
+</a>
+<a href="https://majordomus.dev/docs/api/" class="mj-tile">
+<span class="mj-glyph mj-tone--violet" aria-hidden="true"><svg class="mj-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></span>
+  <span class="mj-tile-body"><span class="mj-tile-title">HTTP API</span><span class="mj-tile-text">164 operations under /api/v1/</span></span>
+  <span class="mj-tile-go"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"/></svg></span>
+</a>
+<a href="https://majordomus.dev/docs/surfaces/" class="mj-tile">
+<span class="mj-glyph mj-tone--violet" aria-hidden="true"><svg class="mj-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+  <span class="mj-tile-body"><span class="mj-tile-title">Swagger / OpenAPI</span><span class="mj-tile-text">OpenAPI 3.1.0, 776 schemas</span></span>
+  <span class="mj-tile-go"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"/></svg></span>
+</a>
+<a href="https://majordomus.dev/docs/cockpit/" class="mj-tile">
+<span class="mj-glyph mj-tone--orange" aria-hidden="true"><svg class="mj-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg></span>
+  <span class="mj-tile-body"><span class="mj-tile-title">Cockpit</span><span class="mj-tile-text">the overview the server renders at /cockpit</span></span>
+  <span class="mj-tile-go"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"/></svg></span>
+</a>
+<a href="https://majordomus.dev/registry/mcp/" class="mj-tile">
+<span class="mj-glyph mj-tone--blue" aria-hidden="true"><svg class="mj-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="18" r="2.5"/><circle cx="19" cy="18" r="2.5"/><path d="M10.8 7.2 6.2 15.8"/><path d="m13.2 7.2 4.6 8.6"/><path d="M7.5 18h9"/></svg></span>
+  <span class="mj-tile-body"><span class="mj-tile-title">MCP</span><span class="mj-tile-text">160 tools and 52 resources</span></span>
+  <span class="mj-tile-go"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"/></svg></span>
+</a>
+<a href="https://majordomus.dev/docs/" class="mj-tile">
+<span class="mj-glyph mj-tone--violet" aria-hidden="true"><svg class="mj-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></span>
+  <span class="mj-tile-body"><span class="mj-tile-title">Documentation</span><span class="mj-tile-text">built from the repository, on GitHub Pages</span></span>
+  <span class="mj-tile-go"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"/></svg></span>
+</a>
+<a href="https://majordomus.dev/docs/ci/" class="mj-tile">
+<span class="mj-glyph mj-tone--blue" aria-hidden="true"><svg class="mj-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16Z"/><path d="M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M12 2v2"/><path d="M12 22v-2"/><path d="m17 20.66-1-1.73"/><path d="M11 10.27 7 3.34"/><path d="m20.66 17-1.73-1"/><path d="m3.34 7 1.73 1"/><path d="M14 12h8"/><path d="M2 12h2"/><path d="m20.66 7-1.73 1"/><path d="m3.34 17 1.73-1"/><path d="m17 3.34-1 1.73"/><path d="m11 13.73-4 6.93"/></svg></span>
+  <span class="mj-tile-body"><span class="mj-tile-title">CI</span><span class="mj-tile-text">the gates a change can reach, run in parallel</span></span>
+  <span class="mj-tile-go"><svg class="mj-icon mj-icon--sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6"/></svg></span>
+</a>
+</div>
+  </div>
+</section>
+
+<div class="mt-12">
+  
+<ul class="mj-strip mj-strip--5 m-0 list-none px-0">
+  <li class="mj-strip-item">
+    <span class="mj-ink mj-tone--blue"><svg class="mj-icon mj-icon--xl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg></span>
+    <span class="min-w-0"><span class="mj-point-title">One source</span><span class="mj-point-text">the layer under .ai/</span></span>
+  </li>
+  <li class="mj-strip-item">
+    <span class="mj-ink mj-tone--green"><svg class="mj-icon mj-icon--xl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg></span>
+    <span class="min-w-0"><span class="mj-point-title">Deterministic</span><span class="mj-point-text">generate --check is the byte-for-byte verdict</span></span>
+  </li>
+  <li class="mj-strip-item">
+    <span class="mj-ink mj-tone--orange"><svg class="mj-icon mj-icon--xl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg></span>
+    <span class="min-w-0"><span class="mj-point-title">Discovered</span><span class="mj-point-text">tracked files, through the git index</span></span>
+  </li>
+  <li class="mj-strip-item">
+    <span class="mj-ink mj-tone--violet"><svg class="mj-icon mj-icon--xl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+    <span class="min-w-0"><span class="mj-point-title">For agents too</span><span class="mj-point-text">160 MCP tools, 52 resources</span></span>
+  </li>
+  <li class="mj-strip-item">
+    <span class="mj-ink mj-tone--blue"><svg class="mj-icon mj-icon--xl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M19.439 7.85c-.049.322.059.648.289.878l1.568 1.568c.47.47.706 1.087.706 1.704s-.235 1.233-.706 1.704l-1.611 1.611a.98.98 0 0 1-.837.276c-.47-.07-.802-.48-.968-.925a2.501 2.501 0 1 0-3.214 3.214c.446.166.855.497.925.968a.979.979 0 0 1-.276.837l-1.61 1.61a2.404 2.404 0 0 1-1.705.707 2.402 2.402 0 0 1-1.704-.706l-1.568-1.568a1.026 1.026 0 0 0-.877-.29c-.493.074-.84.504-1.02.968a2.5 2.5 0 1 1-3.237-3.237c.464-.18.894-.527.967-1.02a1.026 1.026 0 0 0-.289-.877l-1.568-1.568A2.402 2.402 0 0 1 1.998 12c0-.617.236-1.234.706-1.704L4.23 8.77c.24-.24.581-.353.917-.303.515.077.877.528 1.073 1.01a2.5 2.5 0 1 0 3.259-3.259c-.482-.196-.933-.558-1.01-1.073-.05-.336.062-.676.303-.917l1.525-1.525A2.402 2.402 0 0 1 12 1.998c.617 0 1.234.236 1.704.706l1.568 1.568c.23.23.556.338.877.29.493-.074.84-.504 1.02-.968a2.5 2.5 0 1 1 3.237 3.237c-.464.18-.894.527-.967 1.02Z"/></svg></span>
+    <span class="min-w-0"><span class="mj-point-title">Extensible</span><span class="mj-point-text">a capability is declared once and projected</span></span>
+  </li>
+</ul>
+</div>
+
+</div>
+
+</main>
+
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/challenge/" class="hover:text-heading hover:underline">Challenge</a></h2>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/why/" class="hover:text-heading hover:underline">Why</a></h2>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Product</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="hover:text-heading hover:underline">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="hover:text-heading hover:underline">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="hover:text-heading hover:underline">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="hover:text-heading hover:underline">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="hover:text-heading hover:underline">What it supervises</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">How it works</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="hover:text-heading hover:underline">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="hover:text-heading hover:underline">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="hover:text-heading hover:underline">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="hover:text-heading hover:underline">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="hover:text-heading hover:underline">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="hover:text-heading hover:underline">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="hover:text-heading hover:underline">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/kit/" class="hover:text-heading hover:underline">Component kit</a></li><li><a href="https://majordomus.dev/docs/surfaces/" class="hover:text-heading hover:underline">How the surfaces are derived</a></li><li><a href="https://majordomus.dev/architecture/" class="hover:text-heading hover:underline">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="hover:text-heading hover:underline">How the product page is derived</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">Docs</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="hover:text-heading hover:underline">Install</a></li><li><a href="https://majordomus.dev/commands/" class="hover:text-heading hover:underline">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="hover:text-heading hover:underline">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="hover:text-heading hover:underline">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="hover:text-heading hover:underline">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="hover:text-heading hover:underline">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="hover:text-heading hover:underline">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="hover:text-heading hover:underline">Registry</a></li><li><a href="https://majordomus.dev/map/" class="hover:text-heading hover:underline">Program map</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Evidence</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="hover:text-heading hover:underline">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="hover:text-heading hover:underline">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="hover:text-heading hover:underline">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="hover:text-heading hover:underline">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="hover:text-heading hover:underline">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="hover:text-heading hover:underline">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="hover:text-heading hover:underline">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="hover:text-heading hover:underline">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="hover:text-heading hover:underline">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="hover:text-heading hover:underline">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="hover:text-heading hover:underline">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1814ce764360e6764482e7d2523bf3eb8187ec1b" class="font-mono underline">1814ce7</a> · inputs <span class="font-mono">dae52c6a1304</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="https://majordomus.dev/js/flowbite.min.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+
+</body>
+</html>
