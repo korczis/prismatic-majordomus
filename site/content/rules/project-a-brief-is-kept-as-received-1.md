@@ -1,7 +1,7 @@
 +++
 title = "A campaign brief this repository keeps is the one it was handed"
 description = "A campaign brief this repository keeps is the one it was handed"
-weight = 57
+weight = 60
 [extra]
 kind = "rule"
 slug = "project-a-brief-is-kept-as-received-1"

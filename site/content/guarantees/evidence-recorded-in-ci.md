@@ -1,7 +1,7 @@
 +++
 title = "CI records every test it ran with the commit and the run it happened in, and the site publishes the tracked ledger's verdict at that commit as current only when CI's run of the published commit measured clean trees and nothing was absent, refused or failed; otherwise as stale with its distance or its failures, as unknown with its reasons, or as unavailable with the reason"
 description = "Every push to master runs the behavioural suite, the crate's tests and the coverage"
-weight = 183
+weight = 185
 [extra]
 claim_id = "evidence-recorded-in-ci"
 status = "guaranteed"

@@ -1,7 +1,7 @@
 +++
 title = "The roadmap"
 description = "the graph between milestones: identity against version, the gate that makes a dependency real before the next step starts, derived ordering, claim linkage, and how a milestone is added"
-weight = 21
+weight = 22
 [extra]
 source = "docs/ROADMAP.md"
 +++

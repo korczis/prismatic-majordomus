@@ -32,7 +32,7 @@ for p in $PROFILES; do
   if [ "$(field "$p" regression_test_required)" = true ]; then
     printf 'x\n' > lib/touched.txt
     printf '# Objective\no\n\n# Current State\ns\n\n# Next Action\nn\n' | "$MJ" handover >/dev/null
-    expect_exit 10 "$MJ" finish --outcome completed --verify-command "true"
+    expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai"
     expect_grep "profile $p requires a regression test"
     printf 'x\n' > test/regression.txt
   fi
@@ -41,13 +41,13 @@ for p in $PROFILES; do
   if [ "$(field "$p" decision_record_required)" = true ]; then
     printf 'x\n' > lib/touched.txt
     printf '# Objective\no\n\n# Current State\ns\n\n# Next Action\nn\n' | "$MJ" handover >/dev/null
-    expect_exit 10 "$MJ" finish --outcome completed --verify-command "true"
+    expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai"
     expect_grep "profile $p requires an entry 'Task: $id'"
     printf '\n## a decision\nTask: %s\n' "$id" >> .ai/local/state/decisions.md
   fi
 
   printf '# Objective\no\n\n# Current State\ns\n\n# Next Action\nn\n' | "$MJ" handover >/dev/null
-  expect_exit 0 "$MJ" finish --outcome completed --verify-command "true"
+  expect_exit 0 "$MJ" finish --outcome completed --verify-command "test -d .ai"
   expect_grep "finish: $id completed"
   rm -f lib/touched.txt test/regression.txt
 done

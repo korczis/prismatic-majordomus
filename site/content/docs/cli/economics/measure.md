@@ -1,7 +1,7 @@
 +++
 title = "majordomus economics measure"
 description = "Run a deterministic suite (no model is called) and record its measurement"
-weight = 181
+weight = 182
 [extra]
 route = "/docs/cli/economics/measure/"
 command = "majordomus economics measure"

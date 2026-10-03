@@ -695,6 +695,22 @@ fn every_route_answers_its_benchmark_cases_and_the_document_shows_them() {
     use majordomus_cli::http::Request;
 
     let f = Fixture::new();
+    // The shared fixture holds no skill, and `skills.explain` of a skill that does not exist
+    // is a 404 like any other unknown id; its case provider then names an absent one. One
+    // draft skill gives the route an object to explain, as the fixture's own deployment and
+    // knowledge records do for theirs, without owing the evidence an active skill would.
+    let sources = std::fs::read_to_string(f.path(".ai/repo/knowledge/sources.yaml")).unwrap();
+    f.write(
+        ".ai/repo/knowledge/sources.yaml",
+        &format!(
+            "{sources}\n  - id: skill\n    kind: skill\n    discovery: vcs\n    pathspec: ':(glob).ai/repo/skills/*/SKILL.md'\n    required: false\n"
+        ),
+    );
+    f.write(
+        ".ai/repo/skills/fixture-skill/SKILL.md",
+        "---\nschema: skill/v1\nid: fixture-skill\nversion: 1\ntitle: The fixture's skill\ndescription: A skill the route replay can explain.\nstatus: draft\n---\n# Purpose\n\nGive the route an object.\n\n# Procedure\n\n1. Read it.\n\n# Output\n\nThe answer.\n",
+    );
+    f.commit("a skill for skills.explain to explain");
     let app = common::load_app(&f);
     let ctx = app.context.clone();
     let s = Served::start(&f.root(), &[]);

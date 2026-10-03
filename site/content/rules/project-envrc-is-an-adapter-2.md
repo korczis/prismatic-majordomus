@@ -1,7 +1,7 @@
 +++
 title = "The shell entry point is an adapter, and it makes one call"
 description = "The shell entry point is an adapter, and it makes one call"
-weight = 88
+weight = 92
 [extra]
 kind = "rule"
 slug = "project-envrc-is-an-adapter-2"

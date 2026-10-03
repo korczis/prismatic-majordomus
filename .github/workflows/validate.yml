@@ -136,9 +136,11 @@ jobs:
   # The cheap, deterministic gates every plan runs: the shell syntax and shellcheck, then
   # doctor, watch, the context documents, the continuity subsystem, the project model, the
   # offline GitHub projection and the derived site data, through scripts/ci/core-check.
+  # A full plan (any change to gates.yaml escalates to one) runs about 1380 s of gates here,
+  # core-check 698-714 s and shell-lint about 300 s, so 25 minutes cancelled it at 25:00.
   structure:
     needs: plan
-    timeout-minutes: 25
+    timeout-minutes: 40
     runs-on: ubuntu-latest
     steps:
       # the whole history and its tags: `version-matches-surface` asks what the public

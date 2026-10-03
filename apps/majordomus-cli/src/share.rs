@@ -211,6 +211,10 @@ impl Share {
                     scratch_roots: decl.map(|d| d.scratch_roots.clone()).unwrap_or_default(),
                     lifecycle: decl.map(|d| d.lifecycle.clone()).unwrap_or_default(),
                     prompt_capture: decl.map(|d| d.prompt_capture).unwrap_or(false),
+                    offers: decl
+                        .and_then(|d| d.offers.as_ref())
+                        .map(offers_of)
+                        .unwrap_or_default(),
                     template: templates.contains(&id),
                     declared: decl.is_some(),
                     id,
@@ -250,6 +254,185 @@ struct ProviderEntry {
     lifecycle: Vec<String>,
     #[serde(default)]
     prompt_capture: bool,
+    #[serde(default)]
+    offers: Option<ProviderOffersEntry>,
+}
+
+/// The `offers:` block of one provider entry, as written.
+///
+/// The two capability keys deserialise straight into their enums, so a word outside the
+/// vocabulary fails the read of the whole file with the path named rather than degrading
+/// to `none`. A typo that quietly means "this provider can do nothing" is the exact
+/// failure this file was written to end.
+#[derive(Debug, Default, Clone, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+struct ProviderOffersEntry {
+    #[serde(default)]
+    episode: Option<EpisodeSource>,
+    #[serde(default)]
+    episode_evidence: Option<String>,
+    #[serde(default)]
+    prompts: Option<PromptSource>,
+    #[serde(default)]
+    prompts_evidence: Option<String>,
+}
+
+fn offers_of(e: &ProviderOffersEntry) -> ProviderOffers {
+    ProviderOffers {
+        episode: e.episode.unwrap_or_default(),
+        episode_evidence: e.episode_evidence.clone().unwrap_or_default(),
+        prompts: e.prompts.unwrap_or_default(),
+        prompts_evidence: e.prompts_evidence.clone().unwrap_or_default(),
+    }
+}
+
+/// How an episode boundary can be drawn for one provider.
+///
+/// Three words, because three things are true of different providers and collapsing them
+/// into "supported / not supported" is what let this tool report one provider and stay
+/// silent about five others. A provider that fires its own events is not the same as one
+/// that fires none but speaks MCP, and neither is the same as one that can do nothing.
+///
+/// The words are the declaration's own, and a word outside them is refused rather than read
+/// as `none`:
+///
+/// ```
+/// use majordomus_cli::share::EpisodeSource;
+/// let read: EpisodeSource = serde_json::from_str("\"connection\"").unwrap();
+/// assert_eq!(read, EpisodeSource::Connection);
+/// assert_eq!(EpisodeSource::default(), EpisodeSource::None, "undeclared reads as none");
+/// assert!(serde_json::from_str::<EpisodeSource>("\"hook\"").is_err(), "hooks, plural");
+/// ```
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    PartialEq,
+    Eq,
+    serde::Serialize,
+    serde::Deserialize,
+    schemars::JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum EpisodeSource {
+    /// The provider fires its own session events and a hook this tool installs draws the
+    /// boundary from them. The strongest form: it sees a window somebody closed.
+    Hooks,
+    /// The provider fires no session event, but its client attaches to this repository's
+    /// shared MCP server, and the connection is the boundary (ADR 0103).
+    Connection,
+    /// Neither. Nothing can say when this provider's episode began or ended, and the tool
+    /// reports that rather than implying a capability nobody has.
+    #[default]
+    None,
+}
+
+impl EpisodeSource {
+    /// The word as the declaration writes it, which is also how it serialises; `capture
+    /// status` prints it beside the evidence that backs it.
+    ///
+    /// ```
+    /// use majordomus_cli::share::EpisodeSource;
+    /// for s in [EpisodeSource::Hooks, EpisodeSource::Connection, EpisodeSource::None] {
+    ///     assert_eq!(serde_json::to_string(&s).unwrap(), format!("\"{}\"", s.as_str()));
+    /// }
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            EpisodeSource::Hooks => "hooks",
+            EpisodeSource::Connection => "connection",
+            EpisodeSource::None => "none",
+        }
+    }
+}
+
+/// Whether the person's raw prompt can be captured below the model for one provider.
+///
+/// There is no `connection` here and there must not be: an MCP server is handed tool calls,
+/// never the prompt that produced them. Prompt capture is provider-specific and the
+/// declaration says so rather than pretending the connection can stand in for it.
+///
+/// ```
+/// use majordomus_cli::share::PromptSource;
+/// assert_eq!(serde_json::from_str::<PromptSource>("\"hook\"").unwrap(), PromptSource::Hook);
+/// assert!(serde_json::from_str::<PromptSource>("\"connection\"").is_err(),
+///         "no connection can observe a prompt");
+/// assert_eq!(PromptSource::default(), PromptSource::None);
+/// ```
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    PartialEq,
+    Eq,
+    serde::Serialize,
+    serde::Deserialize,
+    schemars::JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum PromptSource {
+    /// The provider hands the raw prompt to a command before the model runs.
+    Hook,
+    /// It does not. Nothing this tool can do makes the prompt observable.
+    #[default]
+    None,
+}
+
+impl PromptSource {
+    /// The word as the declaration writes it, which is also how it serialises.
+    ///
+    /// ```
+    /// use majordomus_cli::share::PromptSource;
+    /// assert_eq!(PromptSource::Hook.as_str(), "hook");
+    /// assert_eq!(serde_json::to_string(&PromptSource::None).unwrap(), "\"none\"");
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            PromptSource::Hook => "hook",
+            PromptSource::None => "none",
+        }
+    }
+}
+
+/// What one provider can do about the session lifecycle, and where that was verified.
+///
+/// **Every cell carries its evidence.** A capability asserted with no citation is the defect
+/// this type exists to make impossible: before it, a provider absent from a shell table was
+/// silently unsupported and a provider present in one was silently capable, and no surface
+/// could tell a reader which vendor page either answer came from — `capture status`
+/// enumerated the one provider that had an adapter and said nothing whatever about the
+/// other five this distribution declares. The rule
+/// `project.a-provider-capability-cites-its-evidence` refuses a declaration without one.
+///
+/// A provider that declares nothing is `none` on both axes with empty evidence — the state
+/// that rule refuses, so the gap is a finding rather than a silent "unsupported":
+///
+/// ```
+/// use majordomus_cli::share::{EpisodeSource, PromptSource, ProviderOffers};
+/// let undeclared = ProviderOffers::default();
+/// assert_eq!((undeclared.episode, undeclared.prompts), (EpisodeSource::None, PromptSource::None));
+/// assert!(undeclared.episode_evidence.is_empty() && undeclared.prompts_evidence.is_empty());
+/// let generic: ProviderOffers = serde_json::from_value(serde_json::json!({
+///     "episode": "connection", "episode_evidence": "ADR 0103",
+///     "prompts": "none", "prompts_evidence": "MCP carries no prompt",
+/// })).unwrap();
+/// assert_eq!(generic.episode, EpisodeSource::Connection);
+/// ```
+#[derive(
+    Debug, Clone, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize, schemars::JsonSchema,
+)]
+pub struct ProviderOffers {
+    /// How the episode boundary is drawn for this provider.
+    pub episode: EpisodeSource,
+    /// Where `episode` was verified: a vendor documentation URL, or the statement that no
+    /// such documentation exists and what was searched for it.
+    pub episode_evidence: String,
+    /// Whether the raw prompt can be captured below the model.
+    pub prompts: PromptSource,
+    /// Where `prompts` was verified, on the same terms as `episode_evidence`.
+    pub prompts_evidence: String,
 }
 
 /// What the distribution declares about its providers, joined with the templates it ships.
@@ -287,6 +470,13 @@ pub struct ProviderDeclaration {
     /// Whether the tool's adapter for it can archive the worker's prompts.
     #[serde(default)]
     pub prompt_capture: bool,
+    /// What the provider itself can do about the session lifecycle, and where each answer
+    /// was verified: the vendor's capability, where `lifecycle` is this tool's adapter. A
+    /// provider with no `offers:` block declares nothing, which reads as `none` with no
+    /// evidence — the state the capability rule refuses, so that the gap is a finding
+    /// rather than a silent "unsupported".
+    #[serde(default)]
+    pub offers: ProviderOffers,
     /// The distribution ships a template for it.
     pub template: bool,
     /// The distribution declares it.
@@ -494,4 +684,33 @@ pub fn schema_identity(relative: &str) -> Option<String> {
         return None;
     }
     Some(format!("{vendor}.{name}/{version}"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The word each offer is printed as is the word it is declared and serialised as, so a
+    /// reader of the table and a reader of the JSON read one vocabulary.
+    #[test]
+    fn every_offer_prints_as_the_word_it_is_declared_as() {
+        for (source, word) in [
+            (EpisodeSource::Hooks, "hooks"),
+            (EpisodeSource::Connection, "connection"),
+            (EpisodeSource::None, "none"),
+        ] {
+            assert_eq!(source.as_str(), word);
+            assert_eq!(
+                serde_json::to_string(&source).unwrap(),
+                format!("\"{word}\"")
+            );
+        }
+        for (source, word) in [(PromptSource::Hook, "hook"), (PromptSource::None, "none")] {
+            assert_eq!(source.as_str(), word);
+            assert_eq!(
+                serde_json::to_string(&source).unwrap(),
+                format!("\"{word}\"")
+            );
+        }
+    }
 }

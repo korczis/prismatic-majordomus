@@ -63,7 +63,7 @@ echo 'b() { :; }' >> lib/a.sh
 # check reports, it does not accept work: the unknown is named and nothing is refused
 expect_exit 0 "$MJ" check
 expect_grep 'gate .*could not answer gates.completion \(exit [0-9]+\).*unknown, never a pass.*not refused'
-expect_exit 10 "$MJ" finish --outcome completed --verify-command true --note "$S/note.md"
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai" --note "$S/note.md"
 expect_grep 'FAIL gate .*could not answer gates.completion \(exit 3\)'
 expect_grep 'completed needs a verdict that was read'
 expect_grep 'majordomus.completion-gates'
@@ -71,14 +71,14 @@ expect_grep 'majordomus.completion-gates'
 
 # ------------------------------------------------------------------ the reader is absent
 export MAJORDOMUS_BIN="$S/no-such-reader"
-expect_exit 10 "$MJ" finish --outcome completed --verify-command true --note "$S/note.md"
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai" --note "$S/note.md"
 expect_grep 'FAIL gate .*the gate reader is not built'
 [ "$(state)" = active ] || { echo "    a refused finish wrote the outcome anyway: $(state)"; exit 1; }
 
 # ------------------------------------------------------------------ the model is unreadable
 # declared and not version 1: gates exist that nothing can plan
 sed -i.bak 's/^version: 1$/version: 99/' .ai/repo/ci/gates.yaml && rm -f .ai/repo/ci/gates.yaml.bak
-expect_exit 10 "$MJ" finish --outcome completed --verify-command true --note "$S/note.md"
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai" --note "$S/note.md"
 expect_grep 'FAIL gate .*CI model at .ai/repo/ci/gates.yaml is not readable'
 cp "$S/gates.yaml" .ai/repo/ci/gates.yaml
 
@@ -100,7 +100,7 @@ grep -q '^    - publication_current$' .ai/repo/policy.yaml || { echo "    the fi
 git add -A >/dev/null && git commit -qm 'publishes'
 expect_exit 0 "$MJ" start "offline publication" --scope lib/
 echo 'c() { :; }' >> lib/a.sh
-expect_exit 10 "$MJ" finish --outcome completed --verify-command true --note "$S/note.md"
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai" --note "$S/note.md"
 expect_grep 'FAIL gate +publication .*could not be reached \(exit 12\)'
 expect_exit 0 "$MJ" finish --outcome blocked --note "$S/note.md"
 expect_grep 'skipped for outcome blocked'
@@ -109,7 +109,7 @@ expect_grep 'skipped for outcome blocked'
 git rm -q .ai/repo/ci/gates.yaml && git commit -qm 'no model'
 expect_exit 0 "$MJ" start "ungated repository" --scope lib/
 echo 'd() { :; }' >> lib/a.sh
-expect_exit 0 "$MJ" finish --outcome completed --verify-command true --note "$S/note.md"
+expect_exit 0 "$MJ" finish --outcome completed --verify-command "test -d .ai" --note "$S/note.md"
 expect_grep 'declares no CI model'
 expect_no_grep 'FAIL gate'
 
@@ -123,6 +123,6 @@ git add -A >/dev/null && git commit -qm 'model again'
 expect_exit 0 "$MJ" start "judged work" --scope lib/
 echo 'e() { :; }' >> lib/a.sh
 expect_exit 0 "$MJ" evidence --gate lint --exit 0 --command true
-expect_exit 0 "$MJ" finish --outcome completed --verify-command true --note "$S/note.md"
+expect_exit 0 "$MJ" finish --outcome completed --verify-command "test -d .ai" --note "$S/note.md"
 expect_grep 'OK   gate +.*every gate the change selects has reported over this tree'
 exit 0

@@ -150,7 +150,7 @@ fn graph_of(ctx: &Context) -> CommandGraph {
     // the conventions are the fallback only for an index built without an application.
     let root = std::path::Path::new(&ctx.index.repository.root);
     let share = crate::share::Share::locate(ctx.index.share.as_deref(), root).ok();
-    load::fast_at(root, share.as_ref().map(|s| s.dir()))
+    load::fast_with(root, share.as_ref().map(|s| s.dir()), Some(&ctx.registry))
 }
 
 fn commands_list(ctx: &Context, filter: CommandFilter) -> Result<CommandIndex, CapabilityError> {

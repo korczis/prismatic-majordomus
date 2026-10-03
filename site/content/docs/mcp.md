@@ -1,7 +1,7 @@
 +++
 title = "MCP surface"
 description = "the read-only MCP surface of the Rust executable: what it serves, what decides that, how it fails, what it refuses to serve"
-weight = 54
+weight = 55
 [extra]
 source = "docs/MCP.md"
 +++
@@ -385,6 +385,73 @@ leaves nothing behind, the newest 32 departed peers are kept so that a server wh
 all day is not a museum, and an attached peer is never evicted to make room for one that
 left. `peers.list`'s `count` is the peers actually attached; the `peers` array is longer
 when the board is holding what somebody said before they went.
+
+## Episodes
+
+A peer is a connection. An **episode** is a sitting of work, and for a client with no
+provider hooks of its own the connection is the only thing that can draw its boundary
+([ADR 0103](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0103-every-client-gets-an-episode-and-every-provider-capability-cites-its-evidence.md)).
+Until it, drawing the boundary below the model was wired for Claude Code alone, and the
+repository's claim to do so was a claim about one vendor.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| tool | capability | arguments | answers |
+|---|---|---|---|
+| `majordomus_session_attach` | `episodes.attach` | `external_id` | the episode this connection now holds, whether it was resumed, and the reattach grace |
+| `majordomus_session_detach` | `episodes.detach` | `external_id?` | the episode as it was closed, and what the repository's end event reported |
+| `majordomus_episodes` | `episodes.list` | none | every episode this server holds, open and detached, and the caller's own |
+
+</div>
+
+
+<pre class="mermaid">
+stateDiagram-v2
+  [*] --&gt; Attached: initialize, a peer attaches and no episode opens
+  Attached --&gt; Open: episodes.attach opens the episode, or resumes this client's own
+  Open --&gt; Open: every message is the episode's heartbeat
+  Open --&gt; Detached: the connection goes, detached and not closed
+  Detached --&gt; Open: episodes.attach again resumes the same episode under a new peer id
+  Open --&gt; Closed: episodes.detach closes it deliberately into a session record
+  Detached --&gt; Closed: no reconnect in 15 minutes, the reaper closes it as interrupted
+  Open --&gt; Closed: the server stops, closed as shutdown
+  Detached --&gt; Closed: the server stops, closed as shutdown
+  Closed --&gt; [*]
+</pre>
+
+
+**`initialize` opens nothing.** A client that opens the server to read one rule is not a
+worker and leaves no record; attach is a call, made by the client that knows it wants an
+episode. That is also what keeps the guarantee `test/cases/90_mcp_shared_server.sh` holds —
+serving changes the repository not at all.
+
+**The identity is the client's, never the peer id.** `external_id` is what the client
+durably calls the sitting it is in — its conversation or thread id — and its whole job is to
+survive a reconnect. A peer id is handed out per connection and is a different string every
+time the client comes back; treating one as durable is what made a session invisible to
+eight others for three hours on 2026-09-09.
+
+**A dropped connection detaches; it does not close.** Two clocks govern a client's
+disappearance and they answer two questions. `SESSION_IDLE_TIMEOUT` (90s) decides when a
+socket is forgotten. `episodes::REATTACH_GRACE` (15 minutes) decides when the *work* is
+over. A reader of the logs will see a connection reaped long before the episode it carried,
+and that is intended.
+
+**Nothing here writes a session record.** The board runs `majordomus capture session
+--provider generic --event start|end` — the same command a provider hook's shim runs, with
+the same payload shape, through the same reader — and reports what it said, verbatim, in the
+episode's `repository` field. A second writer of the record the hooks already write would be
+the repeated semantic definition [`CAPABILITIES.md`](@/docs/capabilities.md) forbids. The
+repository's own store is also what recovers an episode across a *server* restart: a killed
+server writes no end event, the episode stays open in `.ai/local/state/sessions-open/`, and
+the next `attach` under the same identity is `session start --if-open keep`, which keeps it.
+
+**Raw prompt capture is not here and is declared not to be.** An MCP server is handed
+`initialize`, tool calls and notifications; the person's prompt is never among them, in any
+version of the protocol. `share/providers.yaml` says `prompts: none` for the generic
+provider, with that reasoning in its evidence field, and there is no `connection` value under
+`prompts` for anybody to reach for. What each provider *can* do, and where it was verified,
+is `majordomus product providers` and `majordomus capture status`.
 
 ## What decides what is served
 

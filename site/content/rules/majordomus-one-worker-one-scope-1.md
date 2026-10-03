@@ -1,7 +1,7 @@
 +++
 title = "One worker, one clear scope"
 description = "One worker, one clear scope"
-weight = 31
+weight = 34
 [extra]
 kind = "rule"
 slug = "majordomus-one-worker-one-scope-1"

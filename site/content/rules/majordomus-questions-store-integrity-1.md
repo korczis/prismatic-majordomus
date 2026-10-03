@@ -1,7 +1,7 @@
 +++
 title = "Questions store integrity"
 description = "Questions store integrity"
-weight = 41
+weight = 44
 [extra]
 kind = "rule"
 slug = "majordomus-questions-store-integrity-1"

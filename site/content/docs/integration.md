@@ -1,7 +1,7 @@
 +++
 title = "Pull-request integration"
 description = "pull-request integration: every open pull request classified against the current master with its evidence, the thirteen dispositions, the deterministic rank, one merge at a time with a re-plan after each, refreshing a branch, the cleanup threshold, the lease and the audit trail (ADR 0101)"
-weight = 52
+weight = 53
 [extra]
 source = "docs/INTEGRATION.md"
 +++

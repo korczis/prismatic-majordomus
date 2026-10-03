@@ -107,4 +107,10 @@ case "$norm" in *"7s"*|*"12s"*) echo "    a recorded duration is not masked:"; p
 # and so is the tree a verification proved: it is the hash of the fixture as this recorder
 # wrote it, so CI and a workstation record different ones for the same scenario
 case "$norm" in *a9eff10ec68c*) echo "    a recorded tree is not masked:"; printf '%s\n' "$norm"; exit 1 ;; esac
+# and the fixture commit `session context` prints (#220) is masked, alone and with the head
+# the session opened at: a fixture's hash differs on every run, so the catalogue did too
+norm="$(MJ_BIN_DIR="$ROOT/bin" MJ_LIB_DIR="$ROOT/lib" bash -c '. "$1/lib/usecase.sh" && printf "%s\n" "- head: 02060ee" "- head: 30ae9d5 (opened at 868871e)" | mj_uc_normalise "$2"' _ "$ROOT" "$T")"
+want="$(printf '%s\n' '- head: <head>' '- head: <head> (opened at <head>)')"
+[ "$norm" = "$want" ] || {
+  echo "    the session context head is not masked:"; printf '%s\n' "$norm"; exit 1; }
 exit 0

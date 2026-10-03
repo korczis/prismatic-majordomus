@@ -1,7 +1,7 @@
 +++
 title = "Pull requests are integrated one at a time, each decided against the current master, never around the branch protection"
 description = "Pull requests are integrated one at a time, each decided against the current master, never around the branch protection"
-weight = 100
+weight = 105
 [extra]
 kind = "rule"
 slug = "project-integration-follows-the-current-master-1"

@@ -1,7 +1,7 @@
 +++
 title = "An empty result and a failed command must not look alike"
 description = "An empty result and a failed command must not look alike"
-weight = 83
+weight = 87
 [extra]
 kind = "rule"
 slug = "project-empty-is-not-failure-1"

@@ -6,20 +6,20 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.12.0
 coverage:
   - scope: direct
-    required: 159
-    covered: 141
+    required: 169
+    covered: 151
     missing: 0
     waived: 18
     inapplicable: 0
   - scope: http
-    required: 157
-    covered: 141
+    required: 167
+    covered: 151
     missing: 0
     waived: 16
     inapplicable: 0
   - scope: mcp
-    required: 153
-    covered: 137
+    required: 163
+    covered: 147
     missing: 0
     waived: 16
     inapplicable: 0
@@ -30,8 +30,8 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 482
-    covered: 432
+    required: 512
+    covered: 462
     missing: 0
     waived: 50
     inapplicable: 0
@@ -146,6 +146,15 @@ capabilities:
     module: continuity
     kind: query
     cache: "process, 2 entries, 2s"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: convergence.report
+    module: convergence
+    kind: query
+    cache: "—"
     direct: covered
     mcp: covered
     http: covered
@@ -432,6 +441,33 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: episodes.attach
+    module: episodes
+    kind: command
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: episodes.detach
+    module: episodes
+    kind: command
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: episodes.list
+    module: episodes
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
   - id: evidence.claim
     module: evidence
     kind: query
@@ -687,6 +723,33 @@ capabilities:
     module: intents
     kind: query
     cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: knowledge_base.candidates
+    module: knowledge_base
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: knowledge_base.record
+    module: knowledge_base
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - first-record
+  - id: knowledge_base.status
+    module: knowledge_base
+    kind: query
+    cache: "process, 2 entries, 2s"
     direct: covered
     mcp: covered
     http: covered
@@ -1372,6 +1435,33 @@ capabilities:
       - default
   - id: shell.check
     module: shell
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: skills.explain
+    module: skills
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - first-skill
+  - id: skills.status
+    module: skills
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: skills.verify
+    module: skills
     kind: query
     cache: "—"
     direct: covered

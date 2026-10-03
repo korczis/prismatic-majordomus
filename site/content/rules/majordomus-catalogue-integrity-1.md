@@ -1,7 +1,7 @@
 +++
 title = "Catalogue integrity"
 description = "Catalogue integrity"
-weight = 5
+weight = 6
 [extra]
 kind = "rule"
 slug = "majordomus-catalogue-integrity-1"

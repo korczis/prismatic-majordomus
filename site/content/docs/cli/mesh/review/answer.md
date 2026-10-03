@@ -1,7 +1,7 @@
 +++
 title = "majordomus mesh review answer"
 description = "Answer a review request"
-weight = 142
+weight = 143
 [extra]
 route = "/docs/cli/mesh/review/answer/"
 command = "majordomus mesh review answer"
