@@ -1350,6 +1350,131 @@ fn relation_cache_equals_recomputation() {
     }
 }
 
+/// Record an observation of `prs` in `dir`, with `master` as this clone's fetched base, the
+/// way `prs refresh` leaves a checkout for `queue_of`.
+fn observed(dir: &std::path::Path, master: &str, prs: Vec<PullRequestObservation>) {
+    git(dir, &["update-ref", "refs/remotes/origin/master", master]);
+    let obs = ForgeObservation {
+        schema: OBSERVATION_SCHEMA,
+        repository: "owner/repo".into(),
+        base: "master".into(),
+        base_sha: master.into(),
+        observed_at: "t0".into(),
+        required_checks: Some(vec!["ci".into()]),
+        reviews_required: Some(false),
+        merge_methods: vec!["merge".into()],
+        pull_requests: prs,
+    };
+    crate::integration::store_observation(dir, &obs).unwrap();
+}
+
+fn observed_pr(number: u64, head_sha: &str) -> PullRequestObservation {
+    let mut p = observe_pr(&sim(number));
+    p.head_sha = head_sha.into();
+    p
+}
+
+/// The keys of the relation cache `queue_of` left in `dir`.
+fn cached_keys(dir: &std::path::Path) -> Vec<String> {
+    let path = crate::integration::state_path(dir, crate::integration::RELATIONS_FILE);
+    let text = std::fs::read_to_string(path).unwrap_or_else(|_| "{}".into());
+    let cache: serde_json::Value = serde_json::from_str(&text).unwrap();
+    cache["entries"]
+        .as_object()
+        .map(|m| m.keys().cloned().collect())
+        .unwrap_or_default()
+}
+
+fn commit_ids(key: &str) -> bool {
+    let id = |s: &str| s.len() == 40 && s.bytes().all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'));
+    key.split_once("..").is_some_and(|(m, h)| id(m) && id(h))
+}
+
+/// A relation is decided on exactly the head the forge reported. A head that moved during the
+/// refresh is not in the clone: its relation is unknown, never the one of whatever a fetched
+/// ref holds now, and a name that is not a commit id is never decided or kept.
+#[test]
+fn the_relation_is_decided_on_the_observed_head_alone() {
+    let RelationFixture { dir, master, heads } = relation_fixture();
+    let moved = "1111111111111111111111111111111111111111";
+    // what the fetch brought in for #1 is another head than the one observed
+    git(
+        &dir,
+        &["update-ref", "refs/majordomus/prs/1", &heads["authored"]],
+    );
+    observed(
+        &dir,
+        &master,
+        vec![
+            observed_pr(1, moved),
+            observed_pr(2, "HEAD"),
+            observed_pr(3, &heads["authored"]),
+        ],
+    );
+    let q = crate::integration::queue_of(&dir).unwrap();
+    let relation = |n: u64| q.get(n).unwrap().relation.clone();
+    assert!(
+        matches!(relation(1), RelationToMaster::Unknown { ref reason } if reason.contains(moved)),
+        "{:?}",
+        relation(1)
+    );
+    assert_eq!(disposition(&q, 1), PullRequestDisposition::Unknown);
+    assert!(
+        matches!(relation(2), RelationToMaster::Unknown { .. }),
+        "{:?}",
+        relation(2)
+    );
+    assert!(
+        matches!(relation(3), RelationToMaster::Behind { .. }),
+        "{:?}",
+        relation(3)
+    );
+    let keys = cached_keys(&dir);
+    assert_eq!(
+        keys,
+        vec![format!("{master}..{}", heads["authored"])],
+        "only the observed, fetched commit id is kept"
+    );
+    assert!(keys.iter().all(|k| commit_ids(k) && !k.contains("refs/")));
+}
+
+/// A repository whose master's `.gitattributes` cannot be read, and a head that changes only
+/// the derived file it names: git merges and diffs it, and cannot say which path is derived.
+fn unreadable_attributes() -> (std::path::PathBuf, String, String) {
+    let dir = scratch();
+    git(&dir, &["init", "-q", "-b", "master"]);
+    std::fs::write(dir.join(".gitattributes"), "gen.json merge=derived\n").unwrap();
+    std::fs::write(dir.join("a.txt"), "one\n").unwrap();
+    std::fs::write(dir.join("gen.json"), "{}\n").unwrap();
+    git(&dir, &["add", "-A"]);
+    git(&dir, &["commit", "-q", "-m", "base"]);
+    let base = git(&dir, &["rev-parse", "HEAD"]);
+    let head = commit_on(&dir, "derived", &base, &[("gen.json", "{\"x\":1}\n")]);
+    let master = commit_on(&dir, "master", &base, &[("a.txt", "two\n")]);
+    // corrupt the attributes blob: every command but check-attr leaves it unread
+    let blob = git(&dir, &["rev-parse", &format!("{master}:.gitattributes")]);
+    let loose = dir.join(".git/objects").join(&blob[..2]).join(&blob[2..]);
+    std::fs::remove_file(&loose).unwrap();
+    std::fs::write(&loose, b"not an object").unwrap();
+    (dir, master, head)
+}
+
+#[test]
+fn an_attribute_read_that_fails_is_unknown_and_never_cached() {
+    use crate::integration::relation_to_master;
+    let (dir, master, head) = unreadable_attributes();
+    let r = relation_to_master(&dir, &master, &head);
+    // without the attribute, gen.json would be called authored and the head behind
+    assert!(
+        matches!(r, RelationToMaster::Unknown { ref reason } if reason.contains("check-attr")),
+        "{r:?}"
+    );
+    observed(&dir, &master, vec![observed_pr(1, &head)]);
+    let q = crate::integration::queue_of(&dir).unwrap();
+    assert_eq!(disposition(&q, 1), PullRequestDisposition::Unknown);
+    assert!(cached_keys(&dir).is_empty(), "{:?}", cached_keys(&dir));
+}
+
 #[test]
 fn a_dependency_is_a_declaration_not_a_mention() {
     use crate::integration::declared_dependencies;
