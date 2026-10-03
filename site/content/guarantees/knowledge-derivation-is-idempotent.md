@@ -1,7 +1,7 @@
 +++
 title = "A second derivation over the same evidence writes nothing, says so, and leaves the working tree unchanged; the record id is derived from the episode and a digest of the evidence so the same fact always lands in the same file"
 description = "Running the deriver twice over the same ledger and the same git produces the same bytes the second time, reports every record as unchanged, and leaves nothing for git status to show. The end event, the compaction event and majordomus knowledge derive by hand all go through the same writer, so a compaction followed by a close, or a person re-running the command after a hook, never produces a second copy of a record."
-weight = 213
+weight = 214
 [extra]
 claim_id = "knowledge-derivation-is-idempotent"
 status = "guaranteed"
