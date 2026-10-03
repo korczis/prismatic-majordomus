@@ -103,6 +103,24 @@ kinds:
       field: version
       supported: [1]
 
+  # What a worker observed of the repository against an intent's criteria, at one commit, and
+  # the work it suggests (ADR 0073). One per intent, named by it.
+  gap:
+    format: yaml
+    schema: majordomus.gap/v1
+    identity: [intent]
+    title: intent
+    description: observed_at
+
+  # The adversarial pass over an intent's plan: findings, each resolved open, planned into an
+  # issue that serves the intent, or rejected with a reason (ADR 0073). One per intent.
+  critique:
+    format: yaml
+    schema: majordomus.critique/v1
+    identity: [intent]
+    title: intent
+    description: reviewed_at
+
   milestone:
     format: yaml
     schema: majordomus.milestone/v1

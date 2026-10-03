@@ -1,7 +1,7 @@
 +++
 title = "Tests run in disposable repositories"
 description = "Tests run in disposable repositories"
-weight = 141
+weight = 143
 [extra]
 kind = "rule"
 slug = "project-tests-run-in-disposable-repos-1"

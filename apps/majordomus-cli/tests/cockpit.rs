@@ -24,6 +24,9 @@ use common::{Fixture, Served};
 /// `/cockpit/object` were served and swept by nothing.
 const QUERY_PAGES: &[&str] = &[
     "/cockpit/directories?path=.ai/repo/rules",
+    // an intent in detail: the fixture declares `fixture-intent`, so this is the page
+    // the list links each intent to
+    "/cockpit/intents/fixture-intent",
     "/cockpit/capabilities/repository.info",
     "/cockpit/capabilities?module=repository",
     "/cockpit/capabilities?kind=query",

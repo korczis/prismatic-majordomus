@@ -20,10 +20,16 @@ satisfaction:
     criterion: The intent-check gate runs intent validate on a change to the project model or the intent engine
     evidence: command
     ref: majordomus intent validate
+  - id: lineage-survives-providers
+    criterion: The work realising an intent is joined across episodes, providers and handovers with each link's provenance, and an intent whose work is all closed while its evidence says no is refused naming the criterion
+    evidence: test
+    ref: test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh
 governance:
   - rule:project.work-serves-a-declared-intent
+  - rule:project.an-intent-outlives-its-sessions
   - rule:project.derived-once
   - adr:adr-0070
+  - adr:adr-0075
 non_goals:
   - Choosing what to build; a person declares an intent
   - Replacing issues or milestones
