@@ -757,6 +757,52 @@ fn a_fork_whose_branch_is_named_like_the_base_stacks_nothing() {
     assert_eq!(q.next_merge, Some(1));
 }
 
+/// A fork's branch never answers for a branch of this repository, even when the two share
+/// a name: #3 is stacked on this repository's `feature/1`, which is #1's, not the fork's.
+#[test]
+fn a_fork_sharing_a_branch_name_is_not_what_another_is_stacked_on() {
+    let mut stacked = sim(3);
+    stacked.base = "feature/1";
+    let mut fork = sim(9);
+    fork.cross_repository = true;
+    fork.head_ref = "feature/1".into();
+    let w = World {
+        open: vec![sim(1), stacked, fork],
+        ..Default::default()
+    };
+    let q = w.queue();
+    assert_eq!(q.get(3).unwrap().reasons, vec!["stacked_on:#1".to_string()]);
+    let deps: Vec<u64> = q
+        .get(3)
+        .unwrap()
+        .dependencies
+        .iter()
+        .map(|d| d.number)
+        .collect();
+    assert_eq!(deps, vec![1]);
+}
+
+/// Only a pull request that targets another branch can be stacked: a back-merge from
+/// `master` into a release branch does not make every pull request into master wait on it.
+#[test]
+fn a_back_merge_from_the_base_stacks_nothing_onto_it() {
+    let mut back_merge = sim(5);
+    back_merge.head_ref = "master".into();
+    back_merge.base = "release/1";
+    let w = World {
+        open: vec![sim(1), back_merge],
+        ..Default::default()
+    };
+    let q = w.queue();
+    assert_eq!(
+        disposition(&q, 1),
+        PullRequestDisposition::Ready,
+        "{:?}",
+        q.get(1).unwrap().reasons
+    );
+    assert!(q.get(1).unwrap().dependencies.is_empty());
+}
+
 #[test]
 fn a_dry_run_changes_nothing_and_records_nothing() {
     let root = scratch();
@@ -935,6 +981,36 @@ fn a_check_the_executor_did_not_start_does_not_hold_the_refresh_pipeline() {
             "unreported {unreported}, pending {pending}: {out:?}"
         );
     }
+}
+
+/// A required check that never reports does not hold the pipeline even on the head the
+/// executor pushed itself: only a check still running there is the executor's to wait for.
+#[test]
+fn an_unreported_check_on_the_executors_own_head_does_not_hold_the_refresh_pipeline() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1), sim(2)],
+        master: 1,
+        ..Default::default()
+    };
+    let out = drain::step(&root, &mut w, false, true).unwrap();
+    assert!(
+        matches!(out, DrainStepOutcome::Refreshed { pr: 1, .. }),
+        "{out:?}"
+    );
+    // the head the executor pushed never gets its required check reported
+    w.open[0].ci_unreported = true;
+    let q = w.queue();
+    assert_eq!(disposition(&q, 1), PullRequestDisposition::WaitingForChecks);
+    assert_eq!(
+        q.get(1).unwrap().required_checks,
+        RequiredCheckState::Missing
+    );
+    let out = drain::step(&root, &mut w, false, true).unwrap();
+    assert!(
+        matches!(out, DrainStepOutcome::Refreshed { pr: 2, .. }),
+        "{out:?}"
+    );
 }
 
 #[test]
