@@ -178,7 +178,7 @@
       <div class="mt-3">{% set surfaces = model.surfaces %}{% include "partials/feature-surfaces.html" %}</div>
       {%- if f.module_refs | length %}
       <p class="mt-4 text-sm text-body">Each capability behind it, on every interface it is projected onto. A link goes to this site's reference for that interface; an HTTP route and an MCP tool are answered by a running <code class="font-mono text-xs">majordomus serve</code>, not by this site.</p>
-      <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <div class="relative mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
         <table class="w-full min-w-[36rem] text-left text-sm">
           <caption class="sr-only">The capabilities behind this feature, by interface</caption>
           <thead class="border-b border-default bg-neutral-secondary-soft font-mono text-xs uppercase tracking-wide text-body-subtle">
