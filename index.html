@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=55454cf03079e0c42f3c">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=240d6e9b82d2f6a77de9">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -152,17 +152,21 @@
 </nav>
 
 <main id="main">
-<section id="hero" class="scroll-mt-20 border-b border-default bg-neutral-primary">
-  <div class="mx-auto grid max-w-screen-xl gap-10 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-14 lg:px-8 lg:py-20">
+<section id="hero" class="dark relative isolate scroll-mt-20 overflow-hidden border-b border-default bg-neutral-primary"><div aria-hidden="true" class="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(to_right,var(--mj-line)_1px,transparent_1px),linear-gradient(to_bottom,var(--mj-line)_1px,transparent_1px)] bg-[size:56px_56px] opacity-50 [mask-image:radial-gradient(ellipse_70%_60%_at_50%_0%,black,transparent)]"></div>
+  <div aria-hidden="true" class="pointer-events-none absolute -top-48 left-1/2 -z-10 h-[40rem] w-[72rem] max-w-[200vw] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,var(--mj-accent-fill),transparent)] opacity-40"></div>
+  <div class="mx-auto grid max-w-screen-xl gap-12 px-4 pb-12 pt-12 sm:px-6 sm:pt-16 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-14 lg:px-8 lg:pb-16 lg:pt-24">
     <div class="flex min-w-0 flex-col">
-      <p class="text-sm font-semibold uppercase tracking-[0.2em] text-fg-brand">A supervisory control layer for AI-assisted work</p>
-      <h1 class="mt-4 text-4xl font-extrabold leading-[1.05] tracking-tight text-heading sm:text-5xl lg:text-6xl">AI coding agents do the work.<span class="mt-2 block text-fg-brand"> Your repository decides whether it is done.</span></h1>
-      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-body">Majordomus keeps the rules, the task and the paths it may touch, the handover and the definition of done in the repository instead of a chat window. It tells you when two agents claim the same files, and it refuses to call work finished until the repository&#39;s own checks pass. Local, portable shell, beside whichever coding agent you use; it never calls a model.</p>
-      <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-        <a href="https://majordomus.dev/challenge/" data-cta="challenge" class="inline-flex items-center justify-center rounded-base bg-brand px-5 py-3 text-sm font-medium text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium">Watch it refuse an agent <svg class="ms-2 h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/></svg></a>
-        <a href="#install" data-cta="install" class="inline-flex items-center justify-center rounded-base border border-default bg-neutral-primary-soft px-5 py-3 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">Install</a>
+      <p class="inline-flex max-w-full items-center gap-2 self-start rounded-full border border-default bg-neutral-primary-soft px-3 py-1 text-xs font-medium text-body">
+        <span aria-hidden="true" class="h-2 w-2 rounded-full bg-success"></span><a href="https://github.com/korczis/prismatic-majordomus/releases/tag/v0.11.0" class="font-mono font-semibold text-heading hover:underline">0.11.0</a><span aria-hidden="true" class="text-body-subtle">&middot;</span>
+        <span class="truncate">A supervisory control layer for AI-assisted work</span>
+      </p>
+      <h1 class="mt-7 text-5xl font-extrabold leading-[1.02] tracking-tighter text-balance text-heading sm:text-6xl xl:text-[4.25rem]">AI coding agents do the work.<span class="mt-3 block bg-[linear-gradient(90deg,var(--mj-accent),var(--mj-series-5),var(--mj-series-4))] bg-clip-text pb-2 text-transparent"> Your repository decides whether it is done.</span></h1>
+      <p class="mt-7 max-w-2xl text-lg leading-relaxed text-body">Majordomus keeps the rules, the task and the paths it may touch, the handover and the definition of done in the repository instead of a chat window. It tells you when two agents claim the same files, and it refuses to call work finished until the repository&#39;s own checks pass. Local, portable shell, beside whichever coding agent you use; it never calls a model.</p>
+      <div class="mt-9 flex flex-col gap-3 sm:flex-row">
+        <a href="https://majordomus.dev/challenge/" data-cta="challenge" class="group inline-flex items-center justify-center rounded-base bg-brand px-6 py-3.5 text-base font-semibold text-white shadow-lg hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium">Watch it refuse an agent <svg class="ms-2 h-4 w-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 5l7 7-7 7"/></svg></a>
+        <a href="#install" data-cta="install" class="inline-flex items-center justify-center rounded-base border border-default bg-neutral-primary-soft px-6 py-3.5 text-base font-semibold text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">Install</a>
       </div>
-      
+      <div class="mt-6 max-w-xl">
 <figure class="not-format overflow-hidden rounded-base border border-default bg-neutral-primary-soft" x-data="{ copied: false }">
   <figcaption class="flex items-center justify-between border-b border-default px-4 py-2">
     <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">install</span>
@@ -172,8 +176,15 @@
     </button>
   </figcaption><div class="overflow-hidden"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading whitespace-pre-wrap break-all" x-ref="src" tabindex="0"><code class="language-bash">curl -fsSL https://majordomus.dev/install.sh | sh</code></pre></div>
 </figure>
-
-    </div><div class="min-w-0"><div class="min-w-0" x-data="{ s: 0 }" data-challenge-replay="catch-an-agent-that-says-it-is-done">
+</div>
+    </div><div class="relative min-w-0">
+      <div aria-hidden="true" class="pointer-events-none absolute -inset-6 -z-10 rounded-[2rem] bg-[radial-gradient(closest-side,var(--mj-accent-soft),transparent)] opacity-90"></div>
+      <div class="overflow-hidden rounded-xl border border-default bg-neutral-primary-soft shadow-2xl ring-1 ring-brand-subtle">
+        <div class="flex items-center gap-2 border-b border-default px-4 py-2.5" aria-hidden="true">
+          <span class="h-3 w-3 rounded-full bg-danger"></span><span class="h-3 w-3 rounded-full bg-warning"></span><span class="h-3 w-3 rounded-full bg-success"></span>
+          <span class="ms-3 truncate font-mono text-xs text-body-subtle">majordomus &mdash; recorded run</span>
+        </div>
+        <div class="p-4 sm:p-5"><div class="min-w-0" x-data="{ s: 0 }" data-challenge-replay="catch-an-agent-that-says-it-is-done">
   <div class="flex flex-wrap items-center justify-between gap-2">
     <div role="tablist" aria-label="Steps of the recorded run" class="flex min-w-0 flex-wrap gap-1.5"><button type="button" role="tab" id="hero-replay-tab-0" aria-controls="hero-replay-panel-0"
         x-on:click="s = 0" :aria-selected="s === 0 ? 'true' : 'false'"
@@ -436,19 +447,29 @@ finish: t-&lt;id&gt; completed
     </p>
   </figure></div>
 
-      <p class="mt-3 text-sm text-body-subtle">A recorded run of the real tool, not a mockup: an agent strays outside its scope, says it is done, and is refused until the repository&#39;s own test passes. Step through it, or read the whole challenge.</p>
-      <p class="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
+        </div>
+      </div>
+      <p class="mt-4 text-sm leading-relaxed text-body-subtle">A recorded run of the real tool, not a mockup: an agent strays outside its scope, says it is done, and is refused until the repository&#39;s own test passes. Step through it, or read the whole challenge.</p>
+      <p class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
         <a href="https://majordomus.dev/challenge/" class="text-fg-brand hover:underline">The whole challenge, and how to run it yourself &rarr;</a>
         <a href="https://majordomus.dev/features/matrix/" class="text-fg-brand hover:underline">Every feature against every interface &rarr;</a>
       </p>
     </div>
+  </div><div class="border-t border-default bg-neutral-primary-soft">
+    <dl class="mx-auto grid max-w-screen-xl grid-cols-2 gap-px px-4 sm:px-6 md:grid-cols-5 lg:px-8" data-hero-figures>
+      <div class="min-w-0 px-2 py-5 sm:px-4"><dt class="text-xs leading-snug text-body">rules that stop the command</dt><dd class="mt-1 font-mono text-3xl font-bold tracking-tight text-heading">66</dd></div>
+      <div class="min-w-0 px-2 py-5 sm:px-4"><dt class="text-xs leading-snug text-body">interfaces from one registry</dt><dd class="mt-1 font-mono text-3xl font-bold tracking-tight text-heading">5</dd></div>
+      <div class="min-w-0 px-2 py-5 sm:px-4"><dt class="text-xs leading-snug text-body">worker tools it generates for</dt><dd class="mt-1 font-mono text-3xl font-bold tracking-tight text-heading">6</dd></div>
+      <div class="min-w-0 px-2 py-5 sm:px-4"><dt class="text-xs leading-snug text-body">recorded refusals on this page</dt><dd class="mt-1 font-mono text-3xl font-bold tracking-tight text-heading">12</dd></div>
+      <div class="min-w-0 px-2 py-5 sm:px-4 col-span-2 md:col-span-1"><dt class="text-xs leading-snug text-body">scenarios run to build it</dt><dd class="mt-1 font-mono text-3xl font-bold tracking-tight text-heading">45</dd></div>
+    </dl>
   </div>
 </section><section id="recognise" class="scroll-mt-20 border-b border-default bg-neutral-primary-soft">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+  <div class="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
     
-<div class="mb-8 max-w-3xl">
-  <p class="mb-2 font-mono text-xs uppercase tracking-widest text-fg-brand">01 / the problem</p>
-  <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">Where AI-assisted work actually breaks down</h2><p class="mt-3 text-base leading-relaxed text-body sm:text-lg">Giving a model a larger context window does not solve this. A larger pile of unstructured information is still a pile.</p></div>
+<div class="mb-10 max-w-3xl">
+  <p class="mb-4 inline-flex items-center gap-2 rounded-full border border-brand-subtle bg-brand-softer px-3 py-1 font-mono text-xs uppercase tracking-widest text-fg-brand"><span class="font-semibold">01</span><span aria-hidden="true" class="h-3 w-px bg-brand-subtle"></span>the problem</p>
+  <h2 class="text-3xl font-extrabold leading-[1.08] tracking-tight text-balance text-heading sm:text-4xl lg:text-5xl">Where AI-assisted work actually breaks down</h2><p class="mt-5 text-lg leading-relaxed text-body">Giving a model a larger context window does not solve this. A larger pile of unstructured information is still a pile.</p></div>
 
     <ol class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><li><a href="https://majordomus.dev/why/re-explaining-context/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-base text-heading hover:bg-neutral-secondary-medium hover:underline"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="min-w-0">re-explained the same context to a brand-new session</span></a></li><li><a href="https://majordomus.dev/why/two-agents-one-bug/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-base text-heading hover:bg-neutral-secondary-medium hover:underline"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="min-w-0">found two agents fixing the same bug in two branches</span></a></li><li><a href="https://majordomus.dev/why/strongest-model-renames-a-variable/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-base text-heading hover:bg-neutral-secondary-medium hover:underline"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="min-w-0">watched the strongest model, at maximum effort, rename a variable</span></a></li><li><a href="https://majordomus.dev/why/done-because-the-model-said-so/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-base text-heading hover:bg-neutral-secondary-medium hover:underline"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="min-w-0">accepted &quot;done&quot; because the model said so, and paid for it the next morning</span></a></li><li><a href="https://majordomus.dev/why/two-rulebooks-one-repository/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-base text-heading hover:bg-neutral-secondary-medium hover:underline"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="min-w-0">opened CLAUDE.md and AGENTS.md and found two different rulebooks for one repository</span></a></li><li><a href="https://majordomus.dev/why/re-arguing-a-settled-decision/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-base text-heading hover:bg-neutral-secondary-medium hover:underline"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="min-w-0">watched a session undo last week&#39;s decision, for the reason it was made</span></a></li><li><a href="https://majordomus.dev/why/task-in-progress-for-three-weeks/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-base text-heading hover:bg-neutral-secondary-medium hover:underline"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="min-w-0">found a task &quot;in progress&quot; that nobody had touched for three weeks</span></a></li><li><a href="https://majordomus.dev/why/what-the-workers-did-last-night/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-base text-heading hover:bg-neutral-secondary-medium hover:underline"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="min-w-0">asked what the workers did last night and had only transcripts to grep</span></a></li><li><a href="https://majordomus.dev/why/rule-in-a-readme-nobody-loaded/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-base text-heading hover:bg-neutral-secondary-medium hover:underline"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="min-w-0">found the rule for that directory in a README no session ever loaded</span></a></li><li><a href="https://majordomus.dev/why/three-roadmaps-none-of-them-true/" class="flex h-full gap-3 rounded-base border border-brand-subtle bg-neutral-primary px-4 py-3 text-base text-heading hover:bg-neutral-secondary-medium hover:underline"><span aria-hidden="true" class="font-mono text-fg-brand">→</span><span class="min-w-0">read three roadmaps for one project and believed none of them</span></a></li></ol>
 <p class="mt-4 text-sm"><a href="https://majordomus.dev/why/" class="font-medium text-fg-brand hover:underline">All 38, by who you are and by what part of operations they fall under &rarr;</a></p>
@@ -457,11 +478,11 @@ finish: t-&lt;id&gt; completed
     <p class="mt-3 text-sm"><a href="https://majordomus.dev/method/argument/" class="font-medium text-fg-brand underline">The full argument: why a larger context window does not fix this &rarr;</a></p>
   </div>
 </section><section id="how" class="scroll-mt-20 border-b border-default bg-neutral-primary">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+  <div class="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
     
-<div class="mb-8 max-w-3xl">
-  <p class="mb-2 font-mono text-xs uppercase tracking-widest text-fg-brand">02 / how it works</p>
-  <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">Declare what must hold. Derive everything that repeats it. Refuse what does not.</h2><p class="mt-3 text-base leading-relaxed text-body sm:text-lg">Nothing here asks a model to behave. The repository states its rules, its lifecycle and what done means as typed files; one executable derives every instruction file, interface and page from them; and the commands that close a task check the result against the contract before anything is recorded.</p></div>
+<div class="mb-10 max-w-3xl">
+  <p class="mb-4 inline-flex items-center gap-2 rounded-full border border-brand-subtle bg-brand-softer px-3 py-1 font-mono text-xs uppercase tracking-widest text-fg-brand"><span class="font-semibold">02</span><span aria-hidden="true" class="h-3 w-px bg-brand-subtle"></span>how it works</p>
+  <h2 class="text-3xl font-extrabold leading-[1.08] tracking-tight text-balance text-heading sm:text-4xl lg:text-5xl">Declare what must hold. Derive everything that repeats it. Refuse what does not.</h2><p class="mt-5 text-lg leading-relaxed text-body">Nothing here asks a model to behave. The repository states its rules, its lifecycle and what done means as typed files; one executable derives every instruction file, interface and page from them; and the commands that close a task check the result against the contract before anything is recorded.</p></div>
 
     <ol class="grid gap-4 lg:grid-cols-3">
       <li class="flex min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5">
@@ -488,7 +509,7 @@ finish: t-&lt;id&gt; completed
           <div class="min-w-0"><dt class="text-xs text-body">scenarios executed to build this page</dt><dd class="font-mono text-xl font-bold text-heading">45</dd></div>
         </dl>
       </li>
-    </ol><div class="mt-10 min-w-0"><div class="min-w-0" x-data="{ t: 3 }">
+    </ol><div class="dark mt-12 min-w-0 overflow-hidden rounded-xl border border-default bg-neutral-primary p-4 shadow-2xl ring-1 ring-brand-subtle sm:p-5"><div class="min-w-0" x-data="{ t: 3 }">
   <div role="tablist" aria-label="Recorded runs, not a mockup. The tabs are the lifecycle the tool declares, in its order; each panel is the stdout of a scenario this site executed while it was being generated, with the machine and the clock redacted and nothing else touched." class="flex flex-wrap gap-1.5"><button type="button" role="tab" id="how-term-tab-0" aria-controls="how-term-panel-0"
       x-on:click="t = 0" :aria-selected="t === 0 ? 'true' : 'false'"
       class="rounded-base border px-2.5 py-1 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
@@ -772,47 +793,47 @@ finish: t-&lt;id&gt; completed</pre></div><div class="flex flex-wrap items-cente
       <p class="mt-3 text-sm text-body-subtle">Recorded runs, not a mockup. The tabs are the lifecycle the tool declares, in its order; each panel is the stdout of a scenario this site executed while it was being generated, with the machine and the clock redacted and nothing else touched.</p>
     </div>
   </div>
-</section><section id="refuses" class="scroll-mt-20 border-b border-default bg-neutral-primary-soft">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+</section><section id="refuses" class="dark relative isolate scroll-mt-20 overflow-hidden border-b border-default bg-neutral-primary">
+  <div aria-hidden="true" class="pointer-events-none absolute -right-40 top-0 -z-10 h-[32rem] w-[48rem] rounded-full bg-[radial-gradient(closest-side,var(--mj-bad),transparent)] opacity-25"></div>
+  <div class="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
     
-<div class="mb-8 max-w-3xl">
-  <p class="mb-2 font-mono text-xs uppercase tracking-widest text-fg-brand">03 / what it refuses</p>
-  <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">The half a model cannot give you</h2><p class="mt-3 text-base leading-relaxed text-body sm:text-lg">Every transcript below is a run that happened, of a command of the declared lifecycle, that ended by declining to accept the work. None of it is written here: a command that stops refusing stops appearing, and the page cannot be built with nothing on this list.</p></div>
-
-    <ol class="mt-8 grid gap-4 lg:grid-cols-2">
-      <li class="min-w-0">
-        <figure class="h-full overflow-hidden rounded-base border border-default bg-neutral-primary shadow-xs">
+<div class="mb-10 max-w-3xl">
+  <p class="mb-4 inline-flex items-center gap-2 rounded-full border border-brand-subtle bg-brand-softer px-3 py-1 font-mono text-xs uppercase tracking-widest text-fg-brand"><span class="font-semibold">03</span><span aria-hidden="true" class="h-3 w-px bg-brand-subtle"></span>what it refuses</p>
+  <h2 class="text-3xl font-extrabold leading-[1.08] tracking-tight text-balance text-heading sm:text-4xl lg:text-5xl">The half a model cannot give you</h2><p class="mt-5 text-lg leading-relaxed text-body">Every transcript below is a run that happened, of a command of the declared lifecycle, that ended by declining to accept the work. None of it is written here: a command that stops refusing stops appearing, and the page cannot be built with nothing on this list.</p></div>
+<ol class="-mx-4 mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-4 px-4 pb-4 sm:-mx-6 sm:scroll-px-6 sm:px-6 lg:-mx-8 lg:scroll-px-8 lg:px-8" tabindex="0" aria-label="Recorded refusals">
+      <li class="w-[min(34rem,86vw)] shrink-0 snap-start">
+        <figure class="h-full overflow-hidden rounded-xl border border-default bg-neutral-primary-soft shadow-2xl ring-1 ring-danger-subtle">
           <figcaption class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-default px-4 py-2">
             <span class="min-w-0 break-all font-mono text-xs text-heading">$ majordomus context resolve .ai/repo/zones</span>
             <span class="shrink-0 font-mono text-xs"><span class="text-body-subtle">exit</span> <span class="ms-1 rounded bg-danger-soft px-1.5 py-0.5 font-semibold text-fg-danger-strong">10</span></span>
           </figcaption>
-          <div class="h-64 overflow-x-auto overflow-y-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">FAIL context     .ai/repo/zones/deep — missing-contract: carries no context document; a directory inside the tree says what it is for, or its governing contract exempts it (children.require_contract: false)  [reproduce: printf &#39;%s\n&#39; &#39;---&#39; &#39;schema: context/v1&#39; &gt; .ai/repo/zones/deep/README.md]
+          <div class="h-56 overflow-x-auto overflow-y-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">FAIL context     .ai/repo/zones/deep — missing-contract: carries no context document; a directory inside the tree says what it is for, or its governing contract exempts it (children.require_contract: false)  [reproduce: printf &#39;%s\n&#39; &#39;---&#39; &#39;schema: context/v1&#39; &gt; .ai/repo/zones/deep/README.md]
 majordomus: context: the tree does not validate (1 problem(s) above); nothing is resolved partially</pre></div>
           <figcaption class="border-t border-default px-4 py-2 text-xs">
             <a href="https://majordomus.dev/use-cases/document-every-directory-of-the-layer/" class="text-fg-brand hover:underline">Refuse a directory of the layer that documents nothing &rarr;</a>
           </figcaption>
         </figure>
       </li>
-      <li class="min-w-0">
-        <figure class="h-full overflow-hidden rounded-base border border-default bg-neutral-primary shadow-xs">
+      <li class="w-[min(34rem,86vw)] shrink-0 snap-start">
+        <figure class="h-full overflow-hidden rounded-xl border border-default bg-neutral-primary-soft shadow-2xl ring-1 ring-danger-subtle">
           <figcaption class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-default px-4 py-2">
             <span class="min-w-0 break-all font-mono text-xs text-heading">$ majordomus context validate</span>
             <span class="shrink-0 font-mono text-xs"><span class="text-body-subtle">exit</span> <span class="ms-1 rounded bg-danger-soft px-1.5 py-0.5 font-semibold text-fg-danger-strong">10</span></span>
           </figcaption>
-          <div class="h-64 overflow-x-auto overflow-y-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">FAIL context     .ai/repo/zones/deep — missing-contract: carries no context document; a directory inside the tree says what it is for, or its governing contract exempts it (children.require_contract: false)  [reproduce: printf &#39;%s\n&#39; &#39;---&#39; &#39;schema: context/v1&#39; &gt; .ai/repo/zones/deep/README.md]
+          <div class="h-56 overflow-x-auto overflow-y-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">FAIL context     .ai/repo/zones/deep — missing-contract: carries no context document; a directory inside the tree says what it is for, or its governing contract exempts it (children.require_contract: false)  [reproduce: printf &#39;%s\n&#39; &#39;---&#39; &#39;schema: context/v1&#39; &gt; .ai/repo/zones/deep/README.md]
 context validate: 1 problem(s) in 19 document(s)</pre></div>
           <figcaption class="border-t border-default px-4 py-2 text-xs">
             <a href="https://majordomus.dev/use-cases/document-every-directory-of-the-layer/" class="text-fg-brand hover:underline">Refuse a directory of the layer that documents nothing &rarr;</a>
           </figcaption>
         </figure>
       </li>
-      <li class="min-w-0">
-        <figure class="h-full overflow-hidden rounded-base border border-default bg-neutral-primary shadow-xs">
+      <li class="w-[min(34rem,86vw)] shrink-0 snap-start">
+        <figure class="h-full overflow-hidden rounded-xl border border-default bg-neutral-primary-soft shadow-2xl ring-1 ring-danger-subtle">
           <figcaption class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-default px-4 py-2">
             <span class="min-w-0 break-all font-mono text-xs text-heading">$ majordomus context --budget-lines 30</span>
             <span class="shrink-0 font-mono text-xs"><span class="text-body-subtle">exit</span> <span class="ms-1 rounded bg-danger-soft px-1.5 py-0.5 font-semibold text-fg-danger-strong">10</span></span>
           </figcaption>
-          <div class="h-64 overflow-x-auto overflow-y-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0"># Majordomus context — &lt;time&gt;
+          <div class="h-56 overflow-x-auto overflow-y-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0"># Majordomus context — &lt;time&gt;
 # a projection of durable state, not a source of truth: validate every line against git
 
 ## GIT
@@ -862,13 +883,13 @@ majordomus: context: 44 lines over the budget of 30 with nothing left to drop</p
           </figcaption>
         </figure>
       </li>
-      <li class="min-w-0">
-        <figure class="h-full overflow-hidden rounded-base border border-default bg-neutral-primary shadow-xs">
+      <li class="w-[min(34rem,86vw)] shrink-0 snap-start">
+        <figure class="h-full overflow-hidden rounded-xl border border-default bg-neutral-primary-soft shadow-2xl ring-1 ring-danger-subtle">
           <figcaption class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-default px-4 py-2">
             <span class="min-w-0 break-all font-mono text-xs text-heading">$ majordomus check</span>
             <span class="shrink-0 font-mono text-xs"><span class="text-body-subtle">exit</span> <span class="ms-1 rounded bg-danger-soft px-1.5 py-0.5 font-semibold text-fg-danger-strong">10</span></span>
           </figcaption>
-          <div class="h-64 overflow-x-auto overflow-y-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">·    checkpoint  t-&lt;id&gt; — &lt;timed against the checkpoint interval&gt;
+          <div class="h-56 overflow-x-auto overflow-y-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">·    checkpoint  t-&lt;id&gt; — &lt;timed against the checkpoint interval&gt;
 OK   records     ledger.jsonl — every line is a well-formed event
 FAIL blockers    t-&lt;id&gt; — 1 unresolved question(s) on this branch; first: t-&lt;id&gt; — does the parser need to accept tabs?  [reproduce: majordomus question list]
 OK   records     decisions.md — every entry is attributable
@@ -884,13 +905,13 @@ check: 10 finding(s), 1 failing</pre></div>
           </figcaption>
         </figure>
       </li>
-      <li class="min-w-0">
-        <figure class="h-full overflow-hidden rounded-base border border-default bg-neutral-primary shadow-xs">
+      <li class="w-[min(34rem,86vw)] shrink-0 snap-start">
+        <figure class="h-full overflow-hidden rounded-xl border border-default bg-neutral-primary-soft shadow-2xl ring-1 ring-danger-subtle">
           <figcaption class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-default px-4 py-2">
             <span class="min-w-0 break-all font-mono text-xs text-heading">$ majordomus check</span>
             <span class="shrink-0 font-mono text-xs"><span class="text-body-subtle">exit</span> <span class="ms-1 rounded bg-danger-soft px-1.5 py-0.5 font-semibold text-fg-danger-strong">10</span></span>
           </figcaption>
-          <div class="h-64 overflow-x-auto overflow-y-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">·    checkpoint  t-&lt;id&gt; — &lt;timed against the checkpoint interval&gt;
+          <div class="h-56 overflow-x-auto overflow-y-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">·    checkpoint  t-&lt;id&gt; — &lt;timed against the checkpoint interval&gt;
 OK   records     ledger.jsonl — every line is a well-formed event
 OK   blockers    t-&lt;id&gt; — none open
 OK   records     decisions.md — every entry is attributable
@@ -906,25 +927,25 @@ check: 10 finding(s), 1 failing</pre></div>
           </figcaption>
         </figure>
       </li>
-      <li class="min-w-0">
-        <figure class="h-full overflow-hidden rounded-base border border-default bg-neutral-primary shadow-xs">
+      <li class="w-[min(34rem,86vw)] shrink-0 snap-start">
+        <figure class="h-full overflow-hidden rounded-xl border border-default bg-neutral-primary-soft shadow-2xl ring-1 ring-danger-subtle">
           <figcaption class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-default px-4 py-2">
             <span class="min-w-0 break-all font-mono text-xs text-heading">$ majordomus check</span>
             <span class="shrink-0 font-mono text-xs"><span class="text-body-subtle">exit</span> <span class="ms-1 rounded bg-danger-soft px-1.5 py-0.5 font-semibold text-fg-danger-strong">12</span></span>
           </figcaption>
-          <div class="h-64 overflow-x-auto overflow-y-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">majordomus: no active task (.ai/local/state/current.yaml); run: majordomus start</pre></div>
+          <div class="h-56 overflow-x-auto overflow-y-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">majordomus: no active task (.ai/local/state/current.yaml); run: majordomus start</pre></div>
           <figcaption class="border-t border-default px-4 py-2 text-xs">
             <a href="https://majordomus.dev/use-cases/resume-in-the-right-worktree/" class="text-fg-brand hover:underline">Resume in the right worktree, never against somebody else’s task &rarr;</a>
           </figcaption>
         </figure>
       </li>
-      <li class="min-w-0">
-        <figure class="h-full overflow-hidden rounded-base border border-default bg-neutral-primary shadow-xs">
+      <li class="w-[min(34rem,86vw)] shrink-0 snap-start">
+        <figure class="h-full overflow-hidden rounded-xl border border-default bg-neutral-primary-soft shadow-2xl ring-1 ring-danger-subtle">
           <figcaption class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-default px-4 py-2">
             <span class="min-w-0 break-all font-mono text-xs text-heading">$ majordomus finish --outcome completed --verify-command true</span>
             <span class="shrink-0 font-mono text-xs"><span class="text-body-subtle">exit</span> <span class="ms-1 rounded bg-danger-soft px-1.5 py-0.5 font-semibold text-fg-danger-strong">10</span></span>
           </figcaption>
-          <div class="h-64 overflow-x-auto overflow-y-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">FAIL blockers    t-&lt;id&gt; — 1 unresolved question(s) on this branch; first: t-&lt;id&gt; — should tabs be an error or a warning?  [reproduce: majordomus question list]
+          <div class="h-56 overflow-x-auto overflow-y-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">FAIL blockers    t-&lt;id&gt; — 1 unresolved question(s) on this branch; first: t-&lt;id&gt; — should tabs be an error or a warning?  [reproduce: majordomus question list]
 OK   note        t-&lt;id&gt; — &lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md
 INFO regression  t-&lt;id&gt; — profile implementation adds no requirement beyond the shared contract
 OK   scope       t-&lt;id&gt; — 1 touched file(s), all within scope
@@ -944,13 +965,13 @@ blocking doctrines:
           </figcaption>
         </figure>
       </li>
-      <li class="min-w-0">
-        <figure class="h-full overflow-hidden rounded-base border border-default bg-neutral-primary shadow-xs">
+      <li class="w-[min(34rem,86vw)] shrink-0 snap-start">
+        <figure class="h-full overflow-hidden rounded-xl border border-default bg-neutral-primary-soft shadow-2xl ring-1 ring-danger-subtle">
           <figcaption class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-default px-4 py-2">
             <span class="min-w-0 break-all font-mono text-xs text-heading">$ majordomus finish --outcome completed --verify-command true</span>
             <span class="shrink-0 font-mono text-xs"><span class="text-body-subtle">exit</span> <span class="ms-1 rounded bg-danger-soft px-1.5 py-0.5 font-semibold text-fg-danger-strong">10</span></span>
           </figcaption>
-          <div class="h-64 overflow-x-auto overflow-y-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">FAIL blockers    t-&lt;id&gt; — 1 unresolved question(s) on this branch; first: t-&lt;id&gt; — does the parser need to accept tabs?  [reproduce: majordomus question list]
+          <div class="h-56 overflow-x-auto overflow-y-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">FAIL blockers    t-&lt;id&gt; — 1 unresolved question(s) on this branch; first: t-&lt;id&gt; — does the parser need to accept tabs?  [reproduce: majordomus question list]
 FAIL note        t-&lt;id&gt; — no --note file and no handover for this task  [reproduce: majordomus handover &lt; note.md]
 INFO regression  t-&lt;id&gt; — profile implementation adds no requirement beyond the shared contract
 OK   scope       t-&lt;id&gt; — 1 touched file(s), all within scope
@@ -971,13 +992,13 @@ blocking doctrines:
           </figcaption>
         </figure>
       </li>
-      <li class="min-w-0">
-        <figure class="h-full overflow-hidden rounded-base border border-default bg-neutral-primary shadow-xs">
+      <li class="w-[min(34rem,86vw)] shrink-0 snap-start">
+        <figure class="h-full overflow-hidden rounded-xl border border-default bg-neutral-primary-soft shadow-2xl ring-1 ring-danger-subtle">
           <figcaption class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-default px-4 py-2">
             <span class="min-w-0 break-all font-mono text-xs text-heading">$ majordomus finish --outcome completed --verify-command &#39;sh test/parse.sh&#39;</span>
             <span class="shrink-0 font-mono text-xs"><span class="text-body-subtle">exit</span> <span class="ms-1 rounded bg-danger-soft px-1.5 py-0.5 font-semibold text-fg-danger-strong">10</span></span>
           </figcaption>
-          <div class="h-64 overflow-x-auto overflow-y-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">OK   blockers    t-&lt;id&gt; — none open
+          <div class="h-56 overflow-x-auto overflow-y-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">OK   blockers    t-&lt;id&gt; — none open
 OK   note        t-&lt;id&gt; — &lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md
 INFO regression  t-&lt;id&gt; — profile implementation adds no requirement beyond the shared contract
 OK   scope       t-&lt;id&gt; — 1 touched file(s), all within scope
@@ -997,13 +1018,13 @@ blocking doctrines:
           </figcaption>
         </figure>
       </li>
-      <li class="min-w-0">
-        <figure class="h-full overflow-hidden rounded-base border border-default bg-neutral-primary shadow-xs">
+      <li class="w-[min(34rem,86vw)] shrink-0 snap-start">
+        <figure class="h-full overflow-hidden rounded-xl border border-default bg-neutral-primary-soft shadow-2xl ring-1 ring-danger-subtle">
           <figcaption class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-default px-4 py-2">
             <span class="min-w-0 break-all font-mono text-xs text-heading">$ majordomus finish --outcome completed --verify-command &#39;sh test/parse.sh&#39;</span>
             <span class="shrink-0 font-mono text-xs"><span class="text-body-subtle">exit</span> <span class="ms-1 rounded bg-danger-soft px-1.5 py-0.5 font-semibold text-fg-danger-strong">10</span></span>
           </figcaption>
-          <div class="h-64 overflow-x-auto overflow-y-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">OK   blockers    t-&lt;id&gt; — none open
+          <div class="h-56 overflow-x-auto overflow-y-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">OK   blockers    t-&lt;id&gt; — none open
 FAIL note        t-&lt;id&gt; — no --note file and no handover for this task  [reproduce: majordomus handover &lt; note.md]
 INFO regression  t-&lt;id&gt; — profile implementation adds no requirement beyond the shared contract
 FAIL scope       docs/d — outside claimed scope (lib)  [reproduce: git status --porcelain; git log --first-parent --no-merges --name-only --format= &lt;sha&gt;..HEAD]
@@ -1025,13 +1046,13 @@ blocking doctrines:
           </figcaption>
         </figure>
       </li>
-      <li class="min-w-0">
-        <figure class="h-full overflow-hidden rounded-base border border-default bg-neutral-primary shadow-xs">
+      <li class="w-[min(34rem,86vw)] shrink-0 snap-start">
+        <figure class="h-full overflow-hidden rounded-xl border border-default bg-neutral-primary-soft shadow-2xl ring-1 ring-danger-subtle">
           <figcaption class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-default px-4 py-2">
             <span class="min-w-0 break-all font-mono text-xs text-heading">$ majordomus finish --outcome completed --note done</span>
             <span class="shrink-0 font-mono text-xs"><span class="text-body-subtle">exit</span> <span class="ms-1 rounded bg-danger-soft px-1.5 py-0.5 font-semibold text-fg-danger-strong">10</span></span>
           </figcaption>
-          <div class="h-64 overflow-x-auto overflow-y-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">OK   blockers    t-&lt;id&gt; — none open
+          <div class="h-56 overflow-x-auto overflow-y-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">OK   blockers    t-&lt;id&gt; — none open
 FAIL note        t-&lt;id&gt; — no --note file and no handover for this task  [reproduce: majordomus handover &lt; note.md]
 INFO regression  t-&lt;id&gt; — profile implementation adds no requirement beyond the shared contract
 OK   scope       t-&lt;id&gt; — 1 touched file(s), all within scope
@@ -1053,13 +1074,13 @@ blocking doctrines:
           </figcaption>
         </figure>
       </li>
-      <li class="min-w-0">
-        <figure class="h-full overflow-hidden rounded-base border border-default bg-neutral-primary shadow-xs">
+      <li class="w-[min(34rem,86vw)] shrink-0 snap-start">
+        <figure class="h-full overflow-hidden rounded-xl border border-default bg-neutral-primary-soft shadow-2xl ring-1 ring-danger-subtle">
           <figcaption class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-default px-4 py-2">
             <span class="min-w-0 break-all font-mono text-xs text-heading">$ majordomus finish --outcome completed --note done</span>
             <span class="shrink-0 font-mono text-xs"><span class="text-body-subtle">exit</span> <span class="ms-1 rounded bg-danger-soft px-1.5 py-0.5 font-semibold text-fg-danger-strong">10</span></span>
           </figcaption>
-          <div class="h-64 overflow-x-auto overflow-y-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">OK   blockers    t-&lt;id&gt; — none open
+          <div class="h-56 overflow-x-auto overflow-y-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">OK   blockers    t-&lt;id&gt; — none open
 FAIL note        t-&lt;id&gt; — no --note file and no handover for this task  [reproduce: majordomus handover &lt; note.md]
 INFO regression  t-&lt;id&gt; — profile implementation adds no requirement beyond the shared contract
 OK   scope       t-&lt;id&gt; — 1 touched file(s), all within scope
@@ -1087,14 +1108,13 @@ blocking doctrines:
     <p class="mt-3 text-sm"><a href="https://majordomus.dev/contract/" class="font-medium text-fg-brand underline">The contract every one of these is evaluated against &rarr;</a></p>
   </div>
 </section><section id="chapters" class="scroll-mt-20 border-b border-default bg-neutral-primary">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+  <div class="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
     
-<div class="mb-8 max-w-3xl">
-  <p class="mb-2 font-mono text-xs uppercase tracking-widest text-fg-brand">04 / what it does</p>
-  <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">What it does, by what you need</h2><p class="mt-3 text-base leading-relaxed text-body sm:text-lg">Every feature is one file under the layer, listed here under each area of work it serves. The areas, the membership and the routes are derived from what those files name; the words are the only thing a person wrote.</p></div>
-
-    <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5">
+<div class="mb-10 max-w-3xl">
+  <p class="mb-4 inline-flex items-center gap-2 rounded-full border border-brand-subtle bg-brand-softer px-3 py-1 font-mono text-xs uppercase tracking-widest text-fg-brand"><span class="font-semibold">04</span><span aria-hidden="true" class="h-3 w-px bg-brand-subtle"></span>what it does</p>
+  <h2 class="text-3xl font-extrabold leading-[1.08] tracking-tight text-balance text-heading sm:text-4xl lg:text-5xl">What it does, by what you need</h2><p class="mt-5 text-lg leading-relaxed text-body">Every feature is one file under the layer, listed here under each area of work it serves. The areas, the membership and the routes are derived from what those files name; the words are the only thing a person wrote.</p></div>
+<div class="gap-5 sm:columns-2 lg:columns-3">
+      <div class="mb-5 min-w-0 break-inside-avoid rounded-xl border border-default bg-neutral-primary-soft p-5">
         <h3 class="text-base font-semibold tracking-tight text-heading">Context and continuity</h3>
         <ul class="mt-3 space-y-2">
           <li class="min-w-0"><a href="https://majordomus.dev/features/continuity/" class="block min-w-0 rounded-base px-2 py-1.5 hover:bg-neutral-secondary-medium"><span class="block text-sm font-medium text-fg-brand">Continuity</span><span class="block text-xs leading-relaxed text-body">Sessions, prompts and handovers that outlive the conversation</span></a></li>
@@ -1103,7 +1123,7 @@ blocking doctrines:
           <li class="min-w-0"><a href="https://majordomus.dev/features/context/" class="block min-w-0 rounded-base px-2 py-1.5 hover:bg-neutral-secondary-medium"><span class="block text-sm font-medium text-fg-brand">Context</span><span class="block text-xs leading-relaxed text-body">Every directory of the layer carries its contract, and a worker reads what applies</span></a></li>
         </ul>
       </div>
-      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="mb-5 min-w-0 break-inside-avoid rounded-xl border border-default bg-neutral-primary-soft p-5">
         <h3 class="text-base font-semibold tracking-tight text-heading">Coordination and ownership</h3>
         <ul class="mt-3 space-y-2">
           <li class="min-w-0"><a href="https://majordomus.dev/features/interfaces/" class="block min-w-0 rounded-base px-2 py-1.5 hover:bg-neutral-secondary-medium"><span class="block text-sm font-medium text-fg-brand">Interfaces</span><span class="block text-xs leading-relaxed text-body">One registry over the command line, HTTP, OpenAPI, Swagger UI and MCP</span></a></li>
@@ -1115,7 +1135,7 @@ blocking doctrines:
           <li class="min-w-0"><a href="https://majordomus.dev/features/continuity/" class="block min-w-0 rounded-base px-2 py-1.5 hover:bg-neutral-secondary-medium"><span class="block text-sm font-medium text-fg-brand">Continuity</span><span class="block text-xs leading-relaxed text-body">Sessions, prompts and handovers that outlive the conversation</span></a></li>
         </ul>
       </div>
-      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="mb-5 min-w-0 break-inside-avoid rounded-xl border border-default bg-neutral-primary-soft p-5">
         <h3 class="text-base font-semibold tracking-tight text-heading">Rules and governance</h3>
         <ul class="mt-3 space-y-2">
           <li class="min-w-0"><a href="https://majordomus.dev/features/declare-once/" class="block min-w-0 rounded-base px-2 py-1.5 hover:bg-neutral-secondary-medium"><span class="block text-sm font-medium text-fg-brand">Declare once</span><span class="block text-xs leading-relaxed text-body">Declare once, derive every interface</span></a></li>
@@ -1125,13 +1145,13 @@ blocking doctrines:
           <li class="min-w-0"><a href="https://majordomus.dev/features/commit/" class="block min-w-0 rounded-base px-2 py-1.5 hover:bg-neutral-secondary-medium"><span class="block text-sm font-medium text-fg-brand">Commits</span><span class="block text-xs leading-relaxed text-body">A commit message is a value this repository judges, not a convention it hopes for</span></a></li>
         </ul>
       </div>
-      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="mb-5 min-w-0 break-inside-avoid rounded-xl border border-default bg-neutral-primary-soft p-5">
         <h3 class="text-base font-semibold tracking-tight text-heading">Decisions</h3>
         <ul class="mt-3 space-y-2">
           <li class="min-w-0"><a href="https://majordomus.dev/features/knowledge/" class="block min-w-0 rounded-base px-2 py-1.5 hover:bg-neutral-secondary-medium"><span class="block text-sm font-medium text-fg-brand">Knowledge</span><span class="block text-xs leading-relaxed text-body">Decisions and knowledge that compound instead of evaporating</span></a></li>
         </ul>
       </div>
-      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="mb-5 min-w-0 break-inside-avoid rounded-xl border border-default bg-neutral-primary-soft p-5">
         <h3 class="text-base font-semibold tracking-tight text-heading">Work and its state</h3>
         <ul class="mt-3 space-y-2">
           <li class="min-w-0"><a href="https://majordomus.dev/features/worktrees/" class="block min-w-0 rounded-base px-2 py-1.5 hover:bg-neutral-secondary-medium"><span class="block text-sm font-medium text-fg-brand">Worktrees</span><span class="block text-xs leading-relaxed text-body">One branch, one worktree, at a path derived from git</span></a></li>
@@ -1139,7 +1159,7 @@ blocking doctrines:
           <li class="min-w-0"><a href="https://majordomus.dev/features/commit/" class="block min-w-0 rounded-base px-2 py-1.5 hover:bg-neutral-secondary-medium"><span class="block text-sm font-medium text-fg-brand">Commits</span><span class="block text-xs leading-relaxed text-body">A commit message is a value this repository judges, not a convention it hopes for</span></a></li>
         </ul>
       </div>
-      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="mb-5 min-w-0 break-inside-avoid rounded-xl border border-default bg-neutral-primary-soft p-5">
         <h3 class="text-base font-semibold tracking-tight text-heading">Verification and evidence</h3>
         <ul class="mt-3 space-y-2">
           <li class="min-w-0"><a href="https://majordomus.dev/features/doctrine/" class="block min-w-0 rounded-base px-2 py-1.5 hover:bg-neutral-secondary-medium"><span class="block text-sm font-medium text-fg-brand">Doctrine</span><span class="block text-xs leading-relaxed text-body">Rules a machine decides, wired, tested and CI-blocking</span></a></li>
@@ -1152,7 +1172,7 @@ blocking doctrines:
           <li class="min-w-0"><a href="https://majordomus.dev/features/ci/" class="block min-w-0 rounded-base px-2 py-1.5 hover:bg-neutral-secondary-medium"><span class="block text-sm font-medium text-fg-brand">CI</span><span class="block text-xs leading-relaxed text-body">CI planned from one model, the site deployed from its verified run</span></a></li>
         </ul>
       </div>
-      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="mb-5 min-w-0 break-inside-avoid rounded-xl border border-default bg-neutral-primary-soft p-5">
         <h3 class="text-base font-semibold tracking-tight text-heading">Observability</h3>
         <ul class="mt-3 space-y-2">
           <li class="min-w-0"><a href="https://majordomus.dev/features/interfaces/" class="block min-w-0 rounded-base px-2 py-1.5 hover:bg-neutral-secondary-medium"><span class="block text-sm font-medium text-fg-brand">Interfaces</span><span class="block text-xs leading-relaxed text-body">One registry over the command line, HTTP, OpenAPI, Swagger UI and MCP</span></a></li>
@@ -1161,7 +1181,7 @@ blocking doctrines:
           <li class="min-w-0"><a href="https://majordomus.dev/features/provenance/" class="block min-w-0 rounded-base px-2 py-1.5 hover:bg-neutral-secondary-medium"><span class="block text-sm font-medium text-fg-brand">Provenance</span><span class="block text-xs leading-relaxed text-body">Every record names the commit, the branch and the episode that made it</span></a></li>
         </ul>
       </div>
-      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="mb-5 min-w-0 break-inside-avoid rounded-xl border border-default bg-neutral-primary-soft p-5">
         <h3 class="text-base font-semibold tracking-tight text-heading">Model, effort and cost</h3>
         <ul class="mt-3 space-y-2">
           <li class="min-w-0"><a href="https://majordomus.dev/features/economics/" class="block min-w-0 rounded-base px-2 py-1.5 hover:bg-neutral-secondary-medium"><span class="block text-sm font-medium text-fg-brand">Economics</span><span class="block text-xs leading-relaxed text-body">Token economics, measured from matched runs and never typed</span></a></li>
@@ -1169,7 +1189,7 @@ blocking doctrines:
           <li class="min-w-0"><a href="https://majordomus.dev/features/benchmarks/" class="block min-w-0 rounded-base px-2 py-1.5 hover:bg-neutral-secondary-medium"><span class="block text-sm font-medium text-fg-brand">Benchmarks</span><span class="block text-xs leading-relaxed text-body">Every claim about speed is a recorded measurement</span></a></li>
         </ul>
       </div>
-      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5">
+      <div class="mb-5 min-w-0 break-inside-avoid rounded-xl border border-default bg-neutral-primary-soft p-5">
         <h3 class="text-base font-semibold tracking-tight text-heading">Documentation and drift</h3>
         <ul class="mt-3 space-y-2">
           <li class="min-w-0"><a href="https://majordomus.dev/features/declare-once/" class="block min-w-0 rounded-base px-2 py-1.5 hover:bg-neutral-secondary-medium"><span class="block text-sm font-medium text-fg-brand">Declare once</span><span class="block text-xs leading-relaxed text-body">Declare once, derive every interface</span></a></li>
@@ -1230,11 +1250,11 @@ blocking doctrines:
     </details>
   </div>
 </section><section id="proof" class="scroll-mt-20 border-b border-default bg-neutral-primary-soft">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+  <div class="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
     
-<div class="mb-8 max-w-3xl">
-  <p class="mb-2 font-mono text-xs uppercase tracking-widest text-fg-brand">05 / evidence, not testimonials</p>
-  <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">Every figure below is computed from the repository</h2><p class="mt-3 text-base leading-relaxed text-body sm:text-lg">There are no customer logos here. What there is: claims that each name the test that settles them, sorted by what they declare, with the ones a recorded run supports counted apart from the ones only declared, and the size of the model every interface is derived from. Planned and rejected claims are counted in the open.</p></div>
+<div class="mb-10 max-w-3xl">
+  <p class="mb-4 inline-flex items-center gap-2 rounded-full border border-brand-subtle bg-brand-softer px-3 py-1 font-mono text-xs uppercase tracking-widest text-fg-brand"><span class="font-semibold">05</span><span aria-hidden="true" class="h-3 w-px bg-brand-subtle"></span>evidence, not testimonials</p>
+  <h2 class="text-3xl font-extrabold leading-[1.08] tracking-tight text-balance text-heading sm:text-4xl lg:text-5xl">Every figure below is computed from the repository</h2><p class="mt-5 text-lg leading-relaxed text-body">There are no customer logos here. What there is: claims that each name the test that settles them, sorted by what they declare, with the ones a recorded run supports counted apart from the ones only declared, and the size of the model every interface is derived from. Planned and rejected claims are counted in the open.</p></div>
 
     <dl class="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       <div class="rounded-base border border-default bg-neutral-primary p-4"><dt class="text-xs text-body">capabilities in the registry</dt><dd class="mt-1 font-mono text-2xl font-bold text-heading">1759</dd></div>
@@ -1253,7 +1273,7 @@ blocking doctrines:
     </dl><dl class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-trust>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="release"><dt class="text-xs text-body">latest release the installer resolves</dt><dd class="mt-1 font-mono text-2xl font-bold text-heading"><a href="https://github.com/korczis/prismatic-majordomus/releases/tag/v0.11.0" class="hover:underline">0.11.0</a></dd><dd class="mt-1 text-xs text-body">published 2026-10-02</dd></div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="verify"><dt class="text-xs text-body">confirm what you installed</dt><dd class="mt-2 break-all font-mono text-sm text-heading">majordomus --version</dd></div>
-      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="commit"><dt class="text-xs text-body">commit this page was built from</dt><dd class="mt-1 font-mono text-2xl font-bold text-heading"><a href="https://github.com/korczis/prismatic-majordomus/commit/376ae594afb1b045148b68264a501f30e387a654" class="hover:underline">376ae59</a></dd><dd class="mt-1 text-xs text-body"><a href="https://majordomus.dev/build.json" class="text-fg-brand underline">served as build.json</a></dd></div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="commit"><dt class="text-xs text-body">commit this page was built from</dt><dd class="mt-1 font-mono text-2xl font-bold text-heading"><a href="https://github.com/korczis/prismatic-majordomus/commit/2edd4a582ac4bc780185df45615e26e62c20350e" class="hover:underline">2edd4a5</a></dd><dd class="mt-1 text-xs text-body"><a href="https://majordomus.dev/build.json" class="text-fg-brand underline">served as build.json</a></dd></div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="use-cases"><dt class="text-xs text-body">executable use cases, across areas of work</dt><dd class="mt-1 font-mono text-2xl font-bold text-heading"><a href="https://majordomus.dev/use-cases/" class="hover:underline">47</a></dd><dd class="mt-1 text-xs text-body">10 areas</dd></div>
     </dl><div class="mt-8 min-w-0 rounded-base border border-default bg-neutral-primary p-5" data-surfaces
          x-data="{ list: null, cap: null, async load() { if (!this.list) { const r = await fetch('https://majordomus.dev/graphs/surfaces.json'); this.list = await r.json(); } }, async choose(id) { await this.load(); this.cap = this.list.find((c) => c.id === id) || null; } }">
@@ -1278,11 +1298,11 @@ blocking doctrines:
     </p>
   </div>
 </section><section id="built" class="scroll-mt-20 border-b border-default bg-neutral-primary">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+  <div class="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
     
-<div class="mb-8 max-w-3xl">
-  <p class="mb-2 font-mono text-xs uppercase tracking-widest text-fg-brand">06 / direction</p>
-  <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">What is shipped, and what this is becoming</h2><p class="mt-3 text-base leading-relaxed text-body sm:text-lg">The argument above is a doctrine and a design. Parts of it run today; more of it does not. The feature matrix is the shipped half, feature by feature and interface by interface. The unshipped half is named here rather than left for a reader to assume.</p></div>
+<div class="mb-10 max-w-3xl">
+  <p class="mb-4 inline-flex items-center gap-2 rounded-full border border-brand-subtle bg-brand-softer px-3 py-1 font-mono text-xs uppercase tracking-widest text-fg-brand"><span class="font-semibold">06</span><span aria-hidden="true" class="h-3 w-px bg-brand-subtle"></span>direction</p>
+  <h2 class="text-3xl font-extrabold leading-[1.08] tracking-tight text-balance text-heading sm:text-4xl lg:text-5xl">What is shipped, and what this is becoming</h2><p class="mt-5 text-lg leading-relaxed text-body">The argument above is a doctrine and a design. Parts of it run today; more of it does not. The feature matrix is the shipped half, feature by feature and interface by interface. The unshipped half is named here rather than left for a reader to assume.</p></div>
 
     <ol class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       <li class="flex min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4">
@@ -1333,12 +1353,13 @@ blocking doctrines:
     </div>
     <p class="mt-6 text-sm"><a href="https://majordomus.dev/method/argument/" class="font-medium text-fg-brand underline">The model stage by stage, and the doctrine behind it &rarr;</a></p>
   </div>
-</section><section id="install" class="scroll-mt-20 bg-neutral-primary-soft">
-  <div class="mx-auto max-w-screen-xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+</section><section id="install" class="dark relative isolate scroll-mt-20 overflow-hidden bg-neutral-primary">
+  <div aria-hidden="true" class="pointer-events-none absolute -bottom-56 left-1/2 -z-10 h-[36rem] w-[64rem] max-w-[200vw] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,var(--mj-accent-fill),transparent)] opacity-35"></div>
+  <div class="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
     
-<div class="mb-8 max-w-3xl">
-  <p class="mb-2 font-mono text-xs uppercase tracking-widest text-fg-brand">07 / get started</p>
-  <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">Try it on a repository you already have</h2><p class="mt-3 text-base leading-relaxed text-body sm:text-lg">What init creates is the layer this site is generated from: one directory, tracked, readable without the tool. Everything above this section was derived from this repository&#39;s own.</p></div>
+<div class="mb-10 max-w-3xl">
+  <p class="mb-4 inline-flex items-center gap-2 rounded-full border border-brand-subtle bg-brand-softer px-3 py-1 font-mono text-xs uppercase tracking-widest text-fg-brand"><span class="font-semibold">07</span><span aria-hidden="true" class="h-3 w-px bg-brand-subtle"></span>get started</p>
+  <h2 class="text-3xl font-extrabold leading-[1.08] tracking-tight text-balance text-heading sm:text-4xl lg:text-5xl">Try it on a repository you already have</h2><p class="mt-5 text-lg leading-relaxed text-body">What init creates is the layer this site is generated from: one directory, tracked, readable without the tool. Everything above this section was derived from this repository&#39;s own.</p></div>
 
     
 <div class="not-format rounded-base border border-brand-subtle bg-neutral-primary shadow-xs">
@@ -1449,7 +1470,7 @@ blocking doctrines:
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/376ae594afb1b045148b68264a501f30e387a654" class="font-mono underline">376ae59</a> · inputs <span class="font-mono">1f52dc854a50</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2edd4a582ac4bc780185df45615e26e62c20350e" class="font-mono underline">2edd4a5</a> · inputs <span class="font-mono">1f52dc854a50</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>
