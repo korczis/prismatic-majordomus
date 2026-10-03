@@ -1621,14 +1621,6 @@
         "external": true
       },
       {
-        "id": "file:.github/workflows/pages.yml",
-        "kind": "file",
-        "label": "pages.yml",
-        "summary": "named by the layer; not an object of this index",
-        "source": ".github/workflows/pages.yml",
-        "external": true
-      },
-      {
         "id": "file:.github/workflows/validate.yml",
         "kind": "file",
         "label": "validate.yml",
@@ -38328,6 +38320,13 @@
         "source": "test/cases/81_bench_baseline.sh"
       },
       {
+        "id": "majordomus://test/test/cases/828_a_server_holding_its_lease_is_not_reaped.sh",
+        "kind": "test",
+        "label": "test/cases/828_a_server_holding_its_lease_is_not_reaped.sh",
+        "route": "/cockpit/objects/test/test-cases-828-a-server-holding-its-lease-is-not-reaped-sh",
+        "source": "test/cases/828_a_server_holding_its_lease_is_not_reaped.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/82_bench_check.sh",
         "kind": "test",
         "label": "test/cases/82_bench_check.sh",
@@ -44768,11 +44767,6 @@
       },
       {
         "source": "majordomus://adr/adr-0037",
-        "target": "file:.github/workflows/pages.yml",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0037",
         "target": "file:.github/workflows/validate.yml",
         "kind": "put_in_force"
       },
@@ -49375,11 +49369,6 @@
         "source": "majordomus://claim/site-deploy-one-path",
         "target": "majordomus://test/test/cases/96_site_deploy.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/site-deploys-from-verified-run",
-        "target": "file:.github/workflows/pages.yml",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/site-deploys-from-verified-run",
@@ -60192,6 +60181,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/828_a_server_holding_its_lease_is_not_reaped.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/82_bench_check.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -63429,7 +63423,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4496,
+      "edges": 4495,
       "acyclic": true,
       "truncated": true
     }
