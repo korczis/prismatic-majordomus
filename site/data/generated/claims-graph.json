@@ -1563,6 +1563,24 @@
       "note": "A rule could name a behavioural case in English prose, and nothing noticed when that case was renamed or deleted; the rule went on reading as enforced. The gate holds both halves of the relation. A named path that is not in the tree is `dangling` and is never ratcheted, because a proof that does not exist is worse than no proof. A rule of either class naming neither a validator nor a test nor a reason is `unproven`, which is the half no other check in this repository knows to look for; advisory is not an exemption, and the one exemption is a vendored rule tagged `principle`, which the package pins by hash and which the gate counts on every run. `majordomus rules` reports the same `unproven` state for every class but calls it a finding only for a blocking rule; the gate is what refuses it for an advisory one."
     },
     {
+      "id": "claim:evidence-subjects-are-derived",
+      "kind": "claim",
+      "label": "Every claim, rule, feature, command, capability, MCP tool and use case the repository declares is an evidence subject whose members and tests are derived from declarations that already exist, and a committed subject index that differs from that derivation is refused",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-subjects-are-derived/",
+      "external": false,
+      "note": "`majordomus generate site` writes site/data/registry/evidence-subjects.json from the claims matrix, the rules, the features, the use cases, the command registry, the documented command-line examples, the builtin capabilities and the first coverage and negative headers of every case; a capability is made of the claims implemented in the file its module is composed in, and a command word that both the shell tool and the executable answer to names both programs. Nothing lists a subject, a member or a route by hand, so adding a declaration adds its subject and removing it removes it. `generate --check` refuses a hand edit. The file carries structure only — no ledger row and no commit — so recording a run never makes it stale."
+    },
+    {
+      "id": "claim:evidence-subject-commands-agree-with-the-command-pages",
+      "kind": "claim",
+      "label": "The behavioural and negative tests the subject index names for a command are exactly the ones its command page lists, both read from the first coverage and negative header of each case",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-subject-commands-agree-with-the-command-pages/",
+      "external": false,
+      "note": "The case headers had several readers before the index: the site generator''s command pages, the command-coverage doctrine, the command-furnished gate and the use-case impact trace, and the last two match a command anywhere in any covers line between word boundaries rather than as a word of the first. The index reads the first line word for word, as the page does. The case holds the two equal, holds every case to one header of each kind, and holds each covers line to naming the same public commands under both readings, so the readers cannot yet disagree; the gate slice moves them onto the index. Two more shell derivations reach tests through declarations rather than headers: the capability pages give every capability the claims implemented in its module''s file, and the doctrine pages name the first test of each rule. The same case holds each of them equal to the index."
+    },
+    {
       "id": "claim:rule-exemption-carries-its-reason",
       "kind": "claim",
       "label": "A rule that no program can express says so in its own front matter, with the reason, and is counted apart from every rule that has a gate",
@@ -2127,6 +2145,13 @@
       "id": "impl:apps/majordomus-cli/src/evidence/mod.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/evidence/mod.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/evidence/subject.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/evidence/subject.rs",
       "route": null,
       "external": false
     },
@@ -3664,6 +3689,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
     },
     {
+      "id": "test:test/cases/507_evidence_subjects_are_derived.sh",
+      "kind": "test",
+      "label": "test/cases/507_evidence_subjects_are_derived.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/507_evidence_subjects_are_derived.sh"
+    },
+    {
       "id": "test:test/cases/50_blocker_across_handover.sh",
       "kind": "test",
       "label": "test/cases/50_blocker_across_handover.sh",
@@ -4876,6 +4908,16 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:evidence-subjects-are-derived",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:evidence-subject-commands-agree-with-the-command-pages",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:rule-exemption-carries-its-reason",
       "target": "source:docs/DOCTRINE.md",
       "kind": "specified_by"
@@ -5916,6 +5958,16 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:evidence-subjects-are-derived",
+      "target": "impl:apps/majordomus-cli/src/evidence/subject.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:evidence-subject-commands-agree-with-the-command-pages",
+      "target": "impl:apps/majordomus-cli/src/evidence/subject.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:rule-exemption-carries-its-reason",
       "target": "impl:scripts/ci/rule-proof-check",
       "kind": "implemented_by"
@@ -6953,6 +7005,16 @@
     {
       "source": "claim:rule-proof-is-named-and-resolves",
       "target": "test:test/cases/125_rule_proof.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-subjects-are-derived",
+      "target": "test:test/cases/507_evidence_subjects_are_derived.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-subject-commands-agree-with-the-command-pages",
+      "target": "test:test/cases/507_evidence_subjects_are_derived.sh",
       "kind": "proved_by"
     },
     {

@@ -18,23 +18,37 @@ export default {
       const shown = items.filter((i) => getComputedStyle(i).display !== 'none');
       return { total: items.length, shown: shown.length };
     }, { n, itemSel: 'li[x-show], [data-why-id]' });
+    // Alpine applies an x-show change on a later animation frame (3.17 defers both show and hide to
+    // requestAnimationFrame while the page is visible), so what is shown right after a keystroke or a click is the
+    // old state for as long as the renderer withholds its frames. The component has settled when Alpine has
+    // initialised it and every x-show in it agrees with its expression. The wait polls on an interval, not on frames,
+    // and is bounded: a filter that never applies is still judged, by the reads that follow it, only later.
+    const settled = (n) => page.waitForFunction((n) => {
+      const scope = document.querySelector(`[data-mj-control="${n}"]`)?.closest('[x-data]');
+      if (!scope || !window.Alpine || !scope._x_dataStack) return false;
+      return [...scope.querySelectorAll('[x-show]')].every((el) => {
+        let want;
+        try { want = !!window.Alpine.evaluate(el, el.getAttribute('x-show')); } catch (e) { return true; }
+        return want === (el.style.display !== 'none');
+      });
+    }, n, { timeout: 10000, polling: 100 }).catch(() => {});
     let exercised = 0, renderedClears = 0;
     for (const c of controls) {
       await page.reload({ waitUntil: 'load' });
-      await page.waitForTimeout(80);
       const loc = page.locator(`[data-mj-control="${c.n}"]`);
       // a reload drops the marks; put them back the same way the runner did
       if (await loc.count() === 0) {
         const { isControl, markControls } = await import('../interactions.mjs');
         await page.evaluate(markControls, isControl.toString());
       }
+      await settled(c.n);
       const base = await count(c.n);
       if (base.total === 0) { fail(`${c.tag} ${JSON.stringify(c.attrs['x-on:click'] || c.attrs['x-model'])} filters no list item`); exercised++; continue; }
       if (base.shown !== base.total) fail(`${base.total - base.shown} of ${base.total} items are hidden before any filter is touched`);
       if (c.tag === 'input') {
-        await loc.scrollIntoViewIfNeeded(); await loc.fill('zz-no-such-thing-zz'); await page.waitForTimeout(80);
+        await loc.scrollIntoViewIfNeeded(); await loc.fill('zz-no-such-thing-zz'); await settled(c.n);
         if ((await count(c.n)).shown !== 0) fail('a query nothing matches leaves items visible');
-        await loc.fill(''); await page.waitForTimeout(80);
+        await loc.fill(''); await settled(c.n);
         if ((await count(c.n)).shown !== base.total) fail('clearing the query does not restore every item');
       } else if (c.attrs['x-on:click'] === 'reset()') {
         // make reset have something to undo: a query nothing matches, typed into the component's own search
@@ -44,23 +58,23 @@ export default {
           const i = scope.querySelector('input[x-model="q"]'); return i ? i.getAttribute('data-mj-control') : null;
         }, c.n);
         if (!input) { fail('a reset button belongs to a component with no search to reset'); exercised++; continue; }
-        await page.locator(`[data-mj-control="${input}"]`).fill('zz-no-such-thing-zz'); await page.waitForTimeout(80);
+        await page.locator(`[data-mj-control="${input}"]`).fill('zz-no-such-thing-zz'); await settled(c.n);
         // the conditional "clear the filters" button exists only now; it resets too
         const clear = page.locator('button', { hasText: 'Clear the filters' });
         if (conditional && renderedClears < conditional && await clear.count()) {
-          await clear.first().click(); await page.waitForTimeout(80);
+          await clear.first().click(); await settled(c.n);
           if ((await count(c.n)).shown !== base.total) fail('the "Clear the filters" button does not restore every item');
           renderedClears++;
-          await page.locator(`[data-mj-control="${input}"]`).fill('zz-no-such-thing-zz'); await page.waitForTimeout(80);
+          await page.locator(`[data-mj-control="${input}"]`).fill('zz-no-such-thing-zz'); await settled(c.n);
         }
         await loc.scrollIntoViewIfNeeded();
         if (!(await loc.isVisible())) fail('the reset button is not shown while a filter is active');
-        else { await loc.click(); await page.waitForTimeout(80); }
+        else { await loc.click(); await settled(c.n); }
         const after = await count(c.n);
         if (after.shown !== base.total) fail(`reset leaves ${after.shown} of ${base.total} items shown`);
         if (await page.locator(`[data-mj-control="${input}"]`).inputValue() !== '') fail('reset does not empty the search');
       } else {
-        await loc.scrollIntoViewIfNeeded(); await loc.click(); await page.waitForTimeout(80);
+        await loc.scrollIntoViewIfNeeded(); await loc.click(); await settled(c.n);
         const pressed = await loc.getAttribute('aria-pressed');
         if (pressed !== null && pressed !== 'true') fail(`pressing the choice "${(await loc.innerText()).trim()}" does not mark it pressed`);
         const after = await count(c.n);

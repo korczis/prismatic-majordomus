@@ -212,6 +212,7 @@ fn a_document_with_a_json_encoding_has_a_yaml_one_and_they_are_the_same_document
                     | "site-why-graph"
                     | "site-product"
                     | "site-product-graph"
+                    | "site-evidence-subjects"
                     | "site-distribution"
                     | "distribution-matrix"
                     | "graph"

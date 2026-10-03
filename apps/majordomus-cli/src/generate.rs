@@ -768,6 +768,14 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
                 "the capability registry and the index of this repository's layer",
                 crate::site::render(&dataset),
             ));
+            // The evidence subjects as the site reads them: every declaration a verdict can
+            // be asked about, what it is made of and the tests it reaches. Structure only —
+            // no ledger row, no commit — and read from kinds the site pass does not write,
+            // so both `generate` passes of the derivation agree byte for byte.
+            out.push(crate::evidence::subject::artifact(
+                &app.context,
+                crate::VERSION,
+            )?);
             // The Why catalogue as the site reads it, and the graph of it. Both are
             // derived from the catalogue alone — never from the index's fingerprint —
             // so the two `generate` passes of the derivation graph agree byte for byte

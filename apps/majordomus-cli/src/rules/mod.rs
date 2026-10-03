@@ -578,6 +578,37 @@ impl RuleState {
             RuleState::Proven | RuleState::InputsUnchanged | RuleState::Stale
         )
     }
+
+    /// The one declared mapping of a rule's state onto the evidence vocabulary, and whether
+    /// that state can carry proof when a subject aggregates it.
+    ///
+    /// A gate refuses violations, but no recorded run proves the behaviour, so `gated` reads
+    /// `not_run`. A reviewed exemption and a rule that names nothing read `no_test`; only a
+    /// blocking rule that names nothing drags a subject, because only for it is that a
+    /// defect. A dangling path reads `unrunnable` and still drags.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::ProofState;
+    /// use majordomus_cli::rules::{Class, RuleState};
+    ///
+    /// assert_eq!(RuleState::Gated.as_proof(Class::Blocking), (ProofState::NotRun, true));
+    /// assert_eq!(RuleState::Reviewed.as_proof(Class::Blocking), (ProofState::NoTest, false));
+    /// assert_eq!(RuleState::Unproven.as_proof(Class::Blocking), (ProofState::NoTest, true));
+    /// assert_eq!(RuleState::Unproven.as_proof(Class::Advisory), (ProofState::NoTest, false));
+    /// assert_eq!(RuleState::Dangling.as_proof(Class::Advisory), (ProofState::Unrunnable, true));
+    /// ```
+    pub fn as_proof(self, class: Class) -> (ProofState, bool) {
+        match self {
+            RuleState::Proven => (ProofState::Proven, true),
+            RuleState::InputsUnchanged => (ProofState::InputsUnchanged, true),
+            RuleState::Stale => (ProofState::Stale, true),
+            RuleState::Failing => (ProofState::Failing, true),
+            RuleState::NotRun | RuleState::Gated => (ProofState::NotRun, true),
+            RuleState::Unrunnable | RuleState::Dangling => (ProofState::Unrunnable, true),
+            RuleState::Reviewed => (ProofState::NoTest, false),
+            RuleState::Unproven => (ProofState::NoTest, class == Class::Blocking),
+        }
+    }
 }
 
 /// One rule, joined to everything the repository can show about it.
