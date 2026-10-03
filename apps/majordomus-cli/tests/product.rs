@@ -670,3 +670,119 @@ fn one_domain_added_is_answered_everywhere_and_removed_is_answered_nowhere() {
     let dataset = majordomus_cli::site::product_artifacts(&app.context).unwrap();
     assert!(!dataset[0].content.contains("/domains/probe/"));
 }
+
+#[test]
+fn the_command_line_renders_the_domains_and_files_a_feature_under_its_own() {
+    let f = Fixture::new();
+    f.write(".ai/repo/features/domains/alpha.md", &domain("alpha", 10));
+    f.write(
+        ".ai/repo/features/domains/draft-one.md",
+        &domain("draft-one", 20).replace("status: stable", "status: draft"),
+    );
+    f.write(".ai/repo/features/fixture-feature.md", &feature_in("alpha"));
+    f.commit("one stable domain with a member, one draft");
+
+    let (code, out, err) = common::run_in(&f.root(), &["product", "domains"], "");
+    assert_eq!(code, 0, "{err}");
+    assert!(out.contains("alpha  Domain alpha"), "{out}");
+    assert!(out.contains("answers: The failure alpha answers."), "{out}");
+    assert!(
+        out.contains("fixture-feature"),
+        "the member is listed under it: {out}"
+    );
+    assert!(out.contains("route /domains/alpha/"), "{out}");
+    assert!(
+        out.contains("1 domain(s)"),
+        "the draft is not listed by default: {out}"
+    );
+
+    let (code, out, _) = common::run_in(&f.root(), &["product", "domains", "--all"], "");
+    assert_eq!(code, 0);
+    assert!(
+        out.contains("draft-one  Domain draft-one  [draft]"),
+        "{out}"
+    );
+    assert!(out.contains("2 domain(s)"), "{out}");
+
+    let (code, out, _) = common::run_in(&f.root(), &["product", "domains", "--format", "json"], "");
+    assert_eq!(code, 0);
+    let v: Value = serde_json::from_str(&out).expect("json");
+    assert_eq!(v["count"], 1);
+    assert_eq!(v["domains"][0]["features"][0]["id"], "fixture-feature");
+
+    let (code, out, _) = common::run_in(&f.root(), &["product", "list", "--domain", "alpha"], "");
+    assert_eq!(code, 0);
+    assert!(out.contains("fixture-feature"), "{out}");
+    let (code, out, _) = common::run_in(&f.root(), &["product", "list", "--domain", "nowhere"], "");
+    assert_eq!(code, 0);
+    assert!(
+        !out.contains("fixture-feature"),
+        "a domain nothing names filters everything out: {out}"
+    );
+
+    let (code, out, _) = common::run_in(&f.root(), &["product", "show", "fixture-feature"], "");
+    assert_eq!(code, 0);
+    assert!(out.contains("domain alpha (/domains/alpha/)"), "{out}");
+}
+
+#[test]
+fn a_feature_that_names_no_domain_says_so_on_the_command_line() {
+    let f = Fixture::new();
+    let (code, out, _) = common::run_in(&f.root(), &["product", "show", "fixture-feature"], "");
+    assert_eq!(code, 0);
+    assert!(out.contains("domain none"), "{out}");
+}
+
+#[test]
+fn the_benchmark_measures_the_domain_facet_when_a_domain_exists() {
+    let f = Fixture::new();
+    f.write(".ai/repo/features/domains/alpha.md", &domain("alpha", 10));
+    f.write(".ai/repo/features/fixture-feature.md", &feature_in("alpha"));
+    f.commit("a domain");
+    let app = common::load_app(&f);
+    let ctx = &app.context;
+    let cases = ctx.registry.cases("product.features").expect("cases")(
+        &majordomus_cli::capability::CaseContext { index: &ctx.index },
+    );
+    let by_domain = cases
+        .iter()
+        .find(|c| c.name == "by-domain")
+        .expect("a by-domain case");
+    assert_eq!(by_domain.input["domain"], "alpha");
+    let domains = ctx.registry.cases("product.domains").expect("cases")(
+        &majordomus_cli::capability::CaseContext { index: &ctx.index },
+    );
+    assert!(domains.iter().any(|c| c.input["status"] == "any"));
+}
+
+#[test]
+fn a_draft_domain_holds_no_stable_feature_and_a_file_must_carry_its_id() {
+    let f = Fixture::new();
+    f.write(
+        ".ai/repo/features/domains/held.md",
+        &domain("held", 10).replace("status: stable", "status: draft"),
+    );
+    f.write(
+        ".ai/repo/features/domains/misnamed.md",
+        &domain("other", 20),
+    );
+    f.write(".ai/repo/features/fixture-feature.md", &feature_in("held"));
+    f.commit("a stable feature under a draft domain, and a misnamed file");
+    let (_app, m) = model(&f);
+    assert!(
+        m.findings()
+            .iter()
+            .any(|x| x.code == "draft_domain" && x.severity == Severity::Error),
+        "{:?}",
+        m.findings()
+    );
+    assert!(
+        m.findings()
+            .iter()
+            .any(|x| x.code == "filename_mismatch" && x.path.ends_with("domains/misnamed.md")),
+        "{:?}",
+        m.findings()
+    );
+    assert!(m.public_domains().iter().all(|d| d.domain.id != "held"));
+    assert!(m.domain("held").is_some(), "a draft is held, not dropped");
+}

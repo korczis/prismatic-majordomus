@@ -1362,51 +1362,46 @@ impl ProductModel {
     /// reason. A domain no stable feature names is a warning: it renders empty, and so it
     /// is not rendered.
     fn resolve_domains(&mut self, index: &Index, why: &Catalogue) {
-        let mut domains: Vec<Domain> = Vec::new();
-        let mut seen: BTreeMap<String, String> = BTreeMap::new();
-        for o in index.objects.iter().filter(|o| o.kind == DOMAIN) {
-            let path = o.provenance.path.clone();
-            if let Some(first) = seen.insert(o.identity.clone(), path.clone()) {
-                self.findings.push(ProductFinding {
-                    severity: Severity::Error,
-                    code: "duplicate_identity".into(),
-                    path: path.clone(),
-                    id: Some(o.identity.clone()),
-                    field: Some("id".into()),
-                    message: format!(
-                        "a second domain claims the identity '{}' (first: {first})",
-                        o.identity
-                    ),
-                    did_you_mean: None,
-                });
-                continue;
-            }
-            let stem = path
-                .rsplit('/')
-                .next()
-                .and_then(|f| f.strip_suffix(".md"))
-                .unwrap_or_default();
-            if stem != o.identity {
-                self.findings.push(ProductFinding {
-                    severity: Severity::Error,
-                    code: "filename_mismatch".into(),
-                    path: path.clone(),
-                    id: Some(o.identity.clone()),
-                    field: Some("id".into()),
-                    message: format!(
-                        "the file is named '{stem}.md' and the domain's id is '{}'; the id is the file name and the route",
-                        o.identity
-                    ),
-                    did_you_mean: Some(format!("{}.md", o.identity)),
-                });
-            }
-            if let Ok(mut d) = serde_json::from_value::<Domain>(o.metadata.clone()) {
-                d.route = format!("{DOMAIN_ROUTE}{}/", d.id);
-                d.source = path;
-                d.body = o.body.clone();
-                domains.push(d);
-            }
-        }
+        // A second file claiming an identity is the index's to refuse: it drops both and
+        // reports them, and adopt_diagnostics carries that report into the findings.
+        let mut mismatched = Vec::new();
+        let mut domains: Vec<Domain> = index
+            .objects
+            .iter()
+            .filter(|o| o.kind == DOMAIN)
+            .filter_map(|o| {
+                let path = o.provenance.path.clone();
+                let stem = path
+                    .rsplit('/')
+                    .next()
+                    .and_then(|f| f.strip_suffix(".md"))
+                    .unwrap_or_default();
+                if stem != o.identity {
+                    mismatched.push(ProductFinding {
+                        severity: Severity::Error,
+                        code: "filename_mismatch".into(),
+                        path: path.clone(),
+                        id: Some(o.identity.clone()),
+                        field: Some("id".into()),
+                        message: format!(
+                            "the file is named '{stem}.md' and the domain's id is '{}'; the id is the file name and the route",
+                            o.identity
+                        ),
+                        did_you_mean: Some(format!("{}.md", o.identity)),
+                    });
+                }
+                // the schema validated the record before the index held it
+                serde_json::from_value::<Domain>(o.metadata.clone())
+                    .ok()
+                    .map(|mut d| {
+                        d.route = format!("{DOMAIN_ROUTE}{}/", d.id);
+                        d.source = path;
+                        d.body = o.body.clone();
+                        d
+                    })
+            })
+            .collect();
+        self.findings.extend(mismatched);
         crate::order::canonical(&mut domains);
 
         // every feature's reference, resolved or reported
@@ -2141,6 +2136,62 @@ fn providers(index: &Index) -> Vec<ProductProvider> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// One stable member, built from the resolved view's own JSON: the members of a domain are
+    /// whatever the features say, and the derivation counts what they share once.
+    fn member(id: &str, use_cases: &[&str], claims: &[&str]) -> ResolvedRefs {
+        let counts: FeatureCounts = serde_json::from_value(serde_json::json!({
+            "capabilities": 0, "mcp_tools": 0, "mcp_resources": 0, "http_routes": 0,
+            "cli_paths": 0, "commands": 0, "objects": 0, "rules": 0, "enforced_rules": 0,
+            "docs": 0, "adrs": 0, "claims": 0, "use_cases": 0, "moments": 0
+        }))
+        .unwrap();
+        serde_json::from_value(serde_json::json!({
+            "id": id, "title": id, "headline": "h", "summary": "s", "status": "stable",
+            "domain": "alpha",
+            "surfaces": { "cli": id == "a", "api": false, "mcp": id == "b", "cockpit": false, "docs": true },
+            "module_refs": [], "command_refs": [], "kind_refs": [],
+            "rule_refs": [{ "id": "project.r", "identity": "project.r@1", "title": "r",
+                            "class": "blocking", "enforced": true, "path": "r.md" }],
+            "doc_refs": [], "adr_refs": [],
+            "claim_refs": claims.iter().map(|c| serde_json::json!({
+                "id": c, "claim": c, "status": "guaranteed", "test": "test/cases/x.sh" })).collect::<Vec<_>>(),
+            "use_case_refs": use_cases.iter().map(|u| serde_json::json!({
+                "id": u, "title": u, "category": "completion" })).collect::<Vec<_>>(),
+            "cockpit_refs": [], "web_refs": [], "moments": [], "backlinks": [],
+            "counts": counts, "evidence": { "claims": {}, "modules": {} }
+        }))
+        .unwrap()
+    }
+
+    #[test]
+    fn a_domain_counts_what_its_members_share_once_and_unions_their_surfaces() {
+        let d: Domain = serde_json::from_value(serde_json::json!({
+            "id": "alpha", "title": "Alpha", "headline": "h", "problem": "p", "status": "stable"
+        }))
+        .unwrap();
+        let (a, b) = (
+            member("a", &["u1", "u2"], &["c1"]),
+            member("b", &["u2"], &["c1", "c2"]),
+        );
+        let r = resolve_domain(d, &[&a, &b], &Catalogue::default());
+        assert_eq!(r.counts.features, 2);
+        assert_eq!(r.counts.use_cases, 2, "u2 is shared and counted once");
+        assert_eq!(r.counts.claims, 2, "c1 is shared and counted once");
+        assert_eq!(r.counts.tested, 2);
+        assert_eq!(r.counts.rules, 1);
+        assert_eq!(r.counts.enforced_rules, 1);
+        assert!(
+            r.surfaces.cli && r.surfaces.mcp && r.surfaces.docs,
+            "the union of the members'"
+        );
+        assert!(!r.surfaces.api);
+        assert_eq!(r.evidence.claims["guaranteed"], 2);
+        let ids: Vec<&str> = r.use_case_refs.iter().map(|u| u.id.as_str()).collect();
+        assert_eq!(ids, ["u1", "u2"]);
+        assert_eq!(r.features[0].tested, 1);
+        assert_eq!(r.features[1].use_cases, 1);
+    }
 
     /// Areas as weights: the ranking the resolution reads, and the whole of what it reads.
     /// The catalogue's own numbers, five of the nine.

@@ -1100,6 +1100,27 @@ pub fn claim_evidence(report: &serde_json::Value) -> serde_json::Value {
     })
 }
 
+/// The fields of `v` an allow-list names, and nothing else: what reaches the published site is
+/// what was named, not what was not excluded.
+///
+/// ```
+/// use majordomus_cli::site::allowed;
+/// let v = serde_json::json!({"id": "context", "body": "prose", "route": "/domains/context/"});
+/// let public = allowed(&v, &["id", "route"]);
+/// assert_eq!(public, serde_json::json!({"id": "context", "route": "/domains/context/"}));
+/// assert_eq!(allowed(&serde_json::json!("not an object"), &["id"]), serde_json::json!({}));
+/// ```
+pub fn allowed(v: &serde_json::Value, fields: &[&str]) -> serde_json::Value {
+    serde_json::Value::Object(
+        v.as_object()
+            .into_iter()
+            .flatten()
+            .filter(|(k, _)| fields.contains(&k.as_str()))
+            .map(|(k, v)| (k.clone(), v.clone()))
+            .collect(),
+    )
+}
+
 /// The product model as the site's templates read it: `site/data/registry/product.json`.
 ///
 /// A projection of [`crate::product::ProductModel`] through the `product.*` capabilities, so the
@@ -1149,24 +1170,17 @@ pub fn product_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>
         }
         features.push(serde_json::Value::Object(public));
     }
-    let listed = run(
-        &["product", "domains"],
-        serde_json::json!({ "status": "any" }),
-    )?;
-    let domains: Vec<serde_json::Value> = listed["domains"]
-        .as_array()
-        .into_iter()
-        .flatten()
+    // The domains of every status, read from the model `product.domains` answers from — the
+    // same value, not a second derivation — and copied through their own allow-list.
+    let domains: Vec<serde_json::Value> = ctx
+        .product
+        .domains()
+        .iter()
         .map(|d| {
-            let mut public = serde_json::Map::new();
-            if let Some(o) = d.as_object() {
-                for (k, v) in o {
-                    if PUBLIC_DOMAIN_FIELDS.contains(&k.as_str()) {
-                        public.insert(k.clone(), v.clone());
-                    }
-                }
-            }
-            serde_json::Value::Object(public)
+            allowed(
+                &serde_json::to_value(d).expect("a resolved domain serialises"),
+                PUBLIC_DOMAIN_FIELDS,
+            )
         })
         .collect();
     let matrix = run(&["product", "matrix"], serde_json::json!({}))?;
