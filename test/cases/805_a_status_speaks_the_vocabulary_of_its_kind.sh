@@ -16,7 +16,8 @@
 # names no claim), and an unknown kind each fail by name; a stated count that disagrees fails
 # in digits, in words and as once or twice, in the text and in a meta description, and one
 # that agrees passes. Then the sources: the partial emits what the checker reads, site-check
-# runs both modes, and the challenge's own words carry no count at all.
+# runs both modes, and the challenge's own words carry no count at all. Last, a recorded run's
+# exit status reads as a number: "0" as a string is drawn ok, as 0 is, rendered by zola.
 . "$ROOT/test/lib.sh"
 AWK="$ROOT/scripts/lib/status-vocabulary.awk"
 [ -f "$AWK" ] || { echo "    scripts/lib/status-vocabulary.awk is missing"; exit 1; }
@@ -82,3 +83,31 @@ refusals 999999
 cp "$ROOT/site/content-src/challenge.md" page.html
 refusals 999999
 expect_grep '^COUNT	0$' out.txt
+
+# --- a recorded run's exit status is read as a number: partials/terminal-run.html draws the
+# run's status badge from run_exit, and a dataset that carries the status as the string "0"
+# (a hand-written fixture, a field produced by another tool) must still read as a success,
+# not as a failure because "0" is not the number 0. Rendered by zola itself, the engine the
+# site is built with, against a fixture site holding only the two partials.
+if command -v zola >/dev/null; then
+  Z="$PWD/zsite"; mkdir -p "$Z/templates/partials" "$Z/data/registry"
+  cp "$ROOT/site/templates/partials/terminal-run.html" "$ROOT/site/templates/partials/status-badge.html" "$Z/templates/partials/"
+  printf 'base_url = "https://example.invalid"\n' > "$Z/config.toml"
+  printf '{"states": {"ok": "ok", "fail": "bad"}}\n' > "$Z/data/registry/design.json"
+  printf '{"evidence": {"available": false, "claims": {}}}\n' > "$Z/data/registry/product.json"
+  {
+    for v in 0 '"0"' 10 '"10"'; do
+      printf '<section id="run-%s">{%%- set run_command = "majordomus check" -%%}{%%- set run_exit = %s -%%}{%%- set run_output = "" -%%}{%% include "partials/terminal-run.html" %%}</section>\n' "$(printf %s "$v" | tr -d '"')$(case $v in \"*) echo s;; esac)" "$v"
+    done
+  } > "$Z/templates/index.html"
+  ( cd "$Z" && run_quiet "$PWD/../zola.err" zola build --force -o "$Z/public" >/dev/null ) \
+    || { echo "    zola could not render the terminal-run fixture:"; cat zola.err; exit 1; }
+  H="$Z/public/index.html"
+  status_of() { awk -v id="run-$1" 'index($0, "id=\"" id "\"") { on = 1 } on && match($0, /data-status="[a-z]+"/) { print substr($0, RSTART + 13, RLENGTH - 14); exit }' "$H"; }
+  for pair in 0:ok 0s:ok 10:fail 10s:fail; do
+    got="$(status_of "${pair%%:*}")"
+    [ "$got" = "${pair#*:}" ] || { echo "    run_exit ${pair%%:*} (s = a string) renders the status '$got', not '${pair#*:}'"; exit 1; }
+  done
+else
+  echo "    (zola absent: the rendered exit status is not checked)"
+fi

@@ -17,8 +17,14 @@
     and never as a colour alone; the output wraps inside the block rather than widening the
     page on a phone, so a line is read whole and no tab panel holds a sideways scroller of its
     own; and a long output shows its head and folds the rest into a native disclosure that
-    works without a script. There is no window chrome:
-    this is a record of a run, not a picture of a terminal.
+    works without a script. It is deliberately distinct from the kit's `window` and `terminal`
+    components, which do draw chrome: this is a record of a run, not a picture of a terminal.
+
+    The exit status is compared as a number (`| int`), so a run recorded as the string "0"
+    reads as the success it is. The copy button is the site's Alpine copy button, the one
+    scripts/lib/interaction-specs/copy-button.mjs claims and drives: the kit's `data-copy`
+    script (site/kit.js) is loaded only by kit pages, not by these. When the clipboard refuses,
+    the button says so and a live region announces it, as it announces a copy that worked.
 
     Nothing here rewrites what the run printed. The lines are the run's own, redacted once by
     lib/usecase.sh when they were recorded. -#}
@@ -28,14 +34,15 @@
 {%- set rn_stdin = run_stdin | default(value="") -%}
 {%- set rn_exit = run_exit -%}
 {%- set rn_output = run_output | default(value="") -%}
-<div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-default bg-neutral-primary-soft px-4 py-2.5" x-data="{ copied: false }">
+<div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-default bg-neutral-primary-soft px-4 py-2.5" x-data="{ said: '' }">
   <p class="m-0 min-w-0 flex-1 break-all font-mono text-xs leading-relaxed text-heading"><span class="select-none text-body-subtle" aria-hidden="true">$</span> <code x-ref="src">{{ run_command }}</code>{% if rn_stdin %}<span class="text-body-subtle"> &lt; {{ rn_stdin }}</span>{% endif %}</p>
   <span class="flex shrink-0 items-center gap-2">
-    {%- set status = "ok" if rn_exit == 0 else "fail" -%}
+    {%- set status = "ok" if rn_exit | int == 0 else "fail" -%}
     {%- set status_kind = "" -%}{%- set status_label = "exit " ~ rn_exit -%}
     {% include "partials/status-badge.html" %}
     {%- set status_label = "" -%}
-    <button type="button" x-cloak x-on:click="navigator.clipboard.writeText($refs.src.innerText).then(() => { copied = true; setTimeout(() => copied = false, 1600) })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="copied ? 'Copied' : 'Copy the command'"><span x-text="copied ? 'Copied' : 'Copy'">Copy</span></button>
+    <button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy the command'"><span x-text="said || 'Copy'">Copy</span></button>
+    <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
   </span>
 </div>
 {%- if rn_checks | length > 0 %}

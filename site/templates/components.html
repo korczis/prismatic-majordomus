@@ -23,15 +23,17 @@
 {% include "partials/status-badge.html" %}
 {%- endcomponent evidence %}
 
-{#- A snippet with an Alpine copy button. Progressive: without JS the code is there and the button hidden (x-cloak). -#}
+{#- A snippet with an Alpine copy button. Progressive: without JS the code is there and the button hidden (x-cloak).
+    A refused clipboard is said on the button and announced, as a copy that worked is. -#}
 {% component code(label, lang="bash", wrap=false) %}
-<figure class="not-format overflow-hidden rounded-base border border-default bg-neutral-primary-soft" x-data="{ copied: false }">
+<figure class="not-format overflow-hidden rounded-base border border-default bg-neutral-primary-soft" x-data="{ said: '' }">
   <figcaption class="flex items-center justify-between border-b border-default px-4 py-2">
     <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ label }}</span>
-    <button type="button" x-cloak x-on:click="navigator.clipboard.writeText($refs.src.innerText).then(() => { copied = true; setTimeout(() => copied = false, 1600) })" class="inline-flex items-center gap-1.5 rounded-base px-2 py-1 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="copied ? 'Copied' : 'Copy to clipboard'">
+    <button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1.5 rounded-base px-2 py-1 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy to clipboard'">
       <svg class="h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V5a2 2 0 012-2h9a2 2 0 012 2v9a2 2 0 01-2 2h-2M5 9h9a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9a2 2 0 012-2z"/></svg>
-      <span x-text="copied ? 'Copied' : 'Copy'">Copy</span>
+      <span x-text="said || 'Copy'">Copy</span>
     </button>
+    <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
   </figcaption>
   {#- `wrap` folds a long single command instead of scrolling it sideways: a one-line install
       command on a phone is read whole, never dragged. Multi-line listings keep the scroll,
@@ -51,13 +53,14 @@
     <p class="font-mono text-xs uppercase tracking-widest text-fg-brand">install · one command</p>
     <h2 class="mt-2 text-3xl font-extrabold tracking-tight text-heading sm:text-4xl">Install {{ binary }} in one command</h2>
     <p class="mt-3 max-w-2xl text-base leading-relaxed text-body sm:text-lg">No git, no Rust, no Node, no root. One archive for your machine, its digest verified before anything is unpacked{% if install_dir %}, into <code class="font-mono text-heading">{{ install_dir }}</code>{% endif %}.</p>
-    <div class="mt-5 rounded-base border border-brand bg-neutral-primary-soft" x-data="{ copied: false }">
+    <div class="mt-5 rounded-base border border-brand bg-neutral-primary-soft" x-data="{ said: '' }">
       <div class="flex items-center justify-between gap-3 border-b border-brand-subtle px-4 py-2">
         <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">1 · paste into a terminal</span>
-        <button type="button" x-cloak x-on:click="navigator.clipboard.writeText($refs.src.innerText).then(() => { copied = true; setTimeout(() => copied = false, 1600) })" class="inline-flex items-center gap-1.5 rounded-base bg-brand px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium" :aria-label="copied ? 'Copied' : 'Copy the install command'">
+        <button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1.5 rounded-base bg-brand px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium" :aria-label="said || 'Copy the install command'">
           <svg class="h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V5a2 2 0 012-2h9a2 2 0 012 2v9a2 2 0 01-2 2h-2M5 9h9a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9a2 2 0 012-2z"/></svg>
-          <span x-text="copied ? 'Copied' : 'Copy'">Copy</span>
+          <span x-text="said || 'Copy'">Copy</span>
         </button>
+        <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
       </div>
       <pre class="m-0 whitespace-pre-wrap break-all px-4 py-4 font-mono text-base font-semibold leading-relaxed text-heading sm:px-5 sm:text-lg" x-ref="src"><code class="language-bash">{{ command }}</code></pre>
     </div>
