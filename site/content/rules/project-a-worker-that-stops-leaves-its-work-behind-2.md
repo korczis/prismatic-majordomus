@@ -1,7 +1,7 @@
 +++
 title = "A worker that stops leaves its work where somebody else can find it"
 description = "A worker that stops leaves its work where somebody else can find it"
-weight = 66
+weight = 67
 [extra]
 kind = "rule"
 slug = "project-a-worker-that-stops-leaves-its-work-behind-2"

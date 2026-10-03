@@ -1,7 +1,7 @@
 +++
 title = "A repository in which episodes close and no knowledge derivation follows within the stale threshold is reported as a stopped writer by doctor and watch, and the finding clears when a derivation is written"
 description = "doctor and watch compare two facts nothing else owns together: that episodes are closing, and that derivations are following them. When the newest session.closed line names an episode no knowledge.derived line names, and that close is older than session.freshness.stale_minutes, the finding is FAIL knowledge naming the episode, with the read-only reproduce and the remedy after fix:. When session.knowledge_on_end is on and the lifecycle source never calls the deriver, the finding names the source file. A derivation for that episode clears the finding."
-weight = 216
+weight = 218
 [extra]
 claim_id = "knowledge-writer-observed"
 status = "guaranteed"

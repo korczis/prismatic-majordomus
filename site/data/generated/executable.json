@@ -1180,6 +1180,57 @@
       "tool": "majordomus_pull_requests"
     },
     {
+      "api_anchor": "/docs/api/intent-realization/#op-intent_realization-explain",
+      "claims": [],
+      "cli": "majordomus intent explain",
+      "id": "intent_realization.explain",
+      "kind": "query",
+      "module": "intent_realization",
+      "module_route": "/registry/modules/intent-realization/",
+      "resource": null,
+      "route": "/registry/capabilities/intent-realization-explain/",
+      "slug": "intent-realization-explain",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
+      "tests": [],
+      "title": "Why an intent stands where it stands",
+      "tool": "majordomus_intent_explain"
+    },
+    {
+      "api_anchor": "/docs/api/intent-realization/#op-intent_realization-work",
+      "claims": [],
+      "cli": "majordomus intent realization",
+      "id": "intent_realization.work",
+      "kind": "query",
+      "module": "intent_realization",
+      "module_route": "/registry/modules/intent-realization/",
+      "resource": null,
+      "route": "/registry/capabilities/intent-realization-work/",
+      "slug": "intent-realization-work",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
+      "tests": [],
+      "title": "Which work realises which intent, and what each still lacks",
+      "tool": "majordomus_intent_realization"
+    },
+    {
+      "api_anchor": "/docs/api/intents/#op-intents-coverage",
+      "claims": [],
+      "cli": "majordomus intent coverage",
+      "id": "intents.coverage",
+      "kind": "query",
+      "module": "intents",
+      "module_route": "/registry/modules/intents/",
+      "resource": null,
+      "route": "/registry/capabilities/intents-coverage/",
+      "slug": "intents-coverage",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "tests": [],
+      "title": "Which work carries which criterion, and why each issue exists",
+      "tool": "majordomus_intent_coverage"
+    },
+    {
       "api_anchor": "/docs/api/intents/#op-intents-list",
       "claims": [],
       "cli": "majordomus intent list",
@@ -3242,6 +3293,20 @@
         "test": "test/cases/124_evidence.sh"
       },
       {
+        "id": "evidence-subjects-are-derived",
+        "implementation": "apps/majordomus-cli/src/evidence/subject.rs",
+        "route": "/guarantees/evidence-subjects-are-derived/",
+        "status": "guaranteed",
+        "test": "test/cases/507_evidence_subjects_are_derived.sh"
+      },
+      {
+        "id": "evidence-subject-commands-agree-with-the-command-pages",
+        "implementation": "apps/majordomus-cli/src/evidence/subject.rs",
+        "route": "/guarantees/evidence-subject-commands-agree-with-the-command-pages/",
+        "status": "guaranteed",
+        "test": "test/cases/507_evidence_subjects_are_derived.sh"
+      },
+      {
         "id": "rule-state-is-derived-from-what-ran",
         "implementation": "apps/majordomus-cli/src/rules/mod.rs",
         "route": "/guarantees/rule-state-is-derived-from-what-ran/",
@@ -3486,9 +3551,9 @@
     ]
   },
   "counts": {
-    "capabilities": 166,
-    "claims": 74,
-    "modules": 50
+    "capabilities": 169,
+    "claims": 76,
+    "modules": 51
   },
   "generator": "majordomus-cli 0.12.0",
   "modules": [
@@ -4101,6 +4166,32 @@
     },
     {
       "capabilities": [
+        {
+          "id": "intent_realization.explain",
+          "route": "/registry/capabilities/intent-realization-explain/",
+          "slug": "intent-realization-explain"
+        },
+        {
+          "id": "intent_realization.work",
+          "route": "/registry/capabilities/intent-realization-work/",
+          "slug": "intent-realization-work"
+        }
+      ],
+      "claims": [],
+      "id": "intent_realization",
+      "route": "/registry/modules/intent-realization/",
+      "slug": "intent-realization",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
+      "title": "Intent realization"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "intents.coverage",
+          "route": "/registry/capabilities/intents-coverage/",
+          "slug": "intents-coverage"
+        },
         {
           "id": "intents.list",
           "route": "/registry/capabilities/intents-list/",

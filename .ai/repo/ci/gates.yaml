@@ -60,6 +60,12 @@ gates:
     runs: scripts/ci/argv-limit-check
     summary: a whole file's JSON may not travel to jq on the command line — Linux refuses a single argument over 131072 bytes and macOS never will, so the shape is checked rather than the size
 
+  - id: doc-command-check
+    job: structure
+    always: true
+    runs: scripts/ci/doc-command-check
+    summary: a command the documents tell a reader to run is executed by a use-case scenario or a command-line example, or marked with the reason it cannot run here; a ratchet over the prose that still promises without proof
+
   - id: liveness-check
     job: structure
     always: true
@@ -328,6 +334,16 @@ gates:
     job: rust
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- intent validate
     summary: every intent names a milestone and a criterion, and every milestone, evidence reference and governance entry it names resolves; a milestone no intent serves is reported
+
+  # Closed work that the evidence contradicts. The plan can say every milestone of an intent is
+  # DONE while a criterion's recorded run is failing, or stale against a case that has changed:
+  # that is an intent reading finished that reality says is not, and the realization refuses it
+  # with exit 10 naming the criterion (ADR 0075, project.an-intent-outlives-its-sessions). It
+  # reads only tracked records and the ledger it is given, so CI answers what a worker does.
+  - id: intent-realization
+    job: rust
+    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- intent realization
+    summary: no intent whose milestones are all DONE has a criterion whose recorded evidence is failing or stale; the work realising each intent, its providers and handovers, and each link's provenance are reported
 
   - id: cockpit-assets
     job: site
@@ -763,8 +779,8 @@ classes:
   # and `rust` already select the suites; this class adds the one gate that reads intents as
   # links between records rather than as files.
   - id: intent
-    paths: [.ai/repo/project/**, share/schemas/majordomus/intent/**, apps/majordomus-cli/src/intent.rs, apps/majordomus-cli/src/capability/builtin/intents.rs, apps/majordomus-cli/src/plan.rs, test/cases/367_an_intent_is_satisfied_only_by_evidence.sh]
-    gates: [intent-check, rust-integration, shell-suite]
+    paths: [.ai/repo/project/**, share/schemas/majordomus/intent/**, share/schemas/majordomus/gap/**, share/schemas/majordomus/critique/**, apps/majordomus-cli/src/intent.rs, apps/majordomus-cli/src/intent_plan.rs, apps/majordomus-cli/src/intent_review.rs, apps/majordomus-cli/src/capability/builtin/intents.rs, apps/majordomus-cli/src/intent_realization.rs, apps/majordomus-cli/src/capability/builtin/intent_realization.rs, apps/majordomus-cli/src/plan.rs, .ai/repo/evidence/**, test/cases/367_an_intent_is_satisfied_only_by_evidence.sh, test/cases/386_a_plan_is_held_to_its_intent.sh, test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh]
+    gates: [intent-check, intent-realization, rust-integration, shell-suite]
 
   # the decisions and the allocator that hands out their identities. `layer` already selects
   # the suite for anything under .ai/; this class is narrower and adds the one gate that reads
@@ -796,8 +812,8 @@ classes:
 
   # documents and the files the site generator reads at the root; documents are index objects
   - id: docs
-    paths: [docs/**, README.md, CONTRIBUTING.md, SECURITY.md, LICENSE, examples/**]
-    gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit, providers-data, diagram-check]
+    paths: [docs/**, README.md, CONTRIBUTING.md, SECURITY.md, LICENSE, examples/**, scripts/ci/doc-command-check, .ai/repo/doc-command-baseline.txt, test/cases/638_a_documented_command_is_run.sh]
+    gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit, providers-data, diagram-check, doc-command-check]
 
   # the site: templates, assets, styles, scripts, its build dependencies and its scripts
   - id: site
