@@ -1621,22 +1621,6 @@
         "external": true
       },
       {
-        "id": "file:.github/workflows/pages.yml",
-        "kind": "file",
-        "label": "pages.yml",
-        "summary": "named by the layer; not an object of this index",
-        "source": ".github/workflows/pages.yml",
-        "external": true
-      },
-      {
-        "id": "file:.github/workflows/validate.yml",
-        "kind": "file",
-        "label": "validate.yml",
-        "summary": "named by the layer; not an object of this index",
-        "source": ".github/workflows/validate.yml",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/capability/builtin/design.rs",
         "kind": "file",
         "label": "design.rs",
@@ -26453,6 +26437,45 @@
         }
       },
       {
+        "id": "majordomus://issue/I1967",
+        "kind": "issue",
+        "label": "I1967",
+        "summary": "A reporter that sets a flag is a reporter",
+        "route": "/cockpit/objects/issue/i1967",
+        "source": ".ai/repo/project/issues/I1967.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A function that sets a flag rather than incrementing a counter is discovered as a reporter",
+            "A call to such a reporter inside a pipeline-fed loop is refused, with the file and line",
+            "The known-answer fixture holds a flag-setting reporter, and the guard refuses itself when it does not find it"
+          ],
+          "created_at": "2026-10-04",
+          "depends_on": [],
+          "evidence_required": [
+            "a_flag_setting_reporter_is_discovered"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Rewriting gates that are already correct: the guard names what is lost, not what offends taste",
+            "A check assembled from another program's output that dies silently, which I1513 named as its third face and test/cases/341 covers on its own"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "risk": "Low. The guard can only refuse shapes that already lose a verdict; a false alarm on a flag nobody reads is answered by naming the reporter it found.",
+          "scope": [
+            "scripts/lib/counting-functions.awk",
+            "scripts/ci/shell-lint",
+            "test/cases"
+          ],
+          "slug": "a-flag-setting-reporter-is-a-reporter",
+          "updated_at": "2026-10-04",
+          "validation": [
+            "bash scripts/ci/shell-lint"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -38328,6 +38351,13 @@
         "source": "test/cases/81_bench_baseline.sh"
       },
       {
+        "id": "majordomus://test/test/cases/829_ci_fails_on_a_skip.sh",
+        "kind": "test",
+        "label": "test/cases/829_ci_fails_on_a_skip.sh",
+        "route": "/cockpit/objects/test/test-cases-829-ci-fails-on-a-skip-sh",
+        "source": "test/cases/829_ci_fails_on_a_skip.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/82_bench_check.sh",
         "kind": "test",
         "label": "test/cases/82_bench_check.sh",
@@ -44768,16 +44798,6 @@
       },
       {
         "source": "majordomus://adr/adr-0037",
-        "target": "file:.github/workflows/pages.yml",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0037",
-        "target": "file:.github/workflows/validate.yml",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0037",
         "target": "kind:adr",
         "kind": "is_a"
       },
@@ -49375,11 +49395,6 @@
         "source": "majordomus://claim/site-deploy-one-path",
         "target": "majordomus://test/test/cases/96_site_deploy.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/site-deploys-from-verified-run",
-        "target": "file:.github/workflows/pages.yml",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/site-deploys-from-verified-run",
@@ -56192,6 +56207,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I1967",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1967",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -60188,6 +60213,11 @@
       },
       {
         "source": "majordomus://test/test/cases/81_bench_baseline.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/829_ci_fails_on_a_skip.sh",
         "target": "kind:test",
         "kind": "is_a"
       },

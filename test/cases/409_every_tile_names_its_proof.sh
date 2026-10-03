@@ -1,4 +1,5 @@
 # majordomus-covers: none
+# majordomus-skip-runs-in: site
 # A tile that shows a fact names the test that proves it, and the reader is one click away.
 #
 # The declaration is site/data/proofs.toml and the renderer is site/templates/partials/proof.html,
