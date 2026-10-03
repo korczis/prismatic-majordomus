@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "1814ce764360e6764482e7d2523bf3eb8187ec1b",
+  "commit": "c457d857e72773bed3fd82622f4355bd7102394f",
   "source_version": "0.12.0",
-  "registry_fingerprint": "6a5feab8cc3ce87bf1f0d3c9c990c818b2ff73596acf5e8cb788f2850db22251"
+  "registry_fingerprint": "7c3f1c124379ae3ce8657678cb50be0d60feb1ceb0f08b5a0f11a02d6a790b84"
  },
  "counts": {
-  "pages": 1791,
-  "capabilities": 1828,
+  "pages": 1794,
+  "capabilities": 1835,
   "cli_commands": 85,
   "http_routes": 164,
   "mcp_tools": 160,
-  "mcp_resources": 1714,
+  "mcp_resources": 1721,
   "modules": 80
  },
  "kinds": [
@@ -54,7 +54,7 @@
    "route": "/guarantees/",
    "title": null,
    "reason": null,
-   "count": 218
+   "count": 220
   },
   {
    "kind": "command",
@@ -94,7 +94,7 @@
    "route": null,
    "title": null,
    "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-   "count": 306
+   "count": 308
   },
   {
    "kind": "feature",
@@ -238,7 +238,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 333
+   "count": 336
   },
   {
    "kind": "use-case",
@@ -3420,6 +3420,16 @@
    "route": "/guarantees/evidence-recorded-in-ci/",
    "title": "CI records every test it ran with the commit and the run it happened in, and the site publishes the tracked ledger's verdict at that commit as current only when CI's run of the published commit measured clean trees and nothing was absent, refused or failed; otherwise as stale with its distance or its failures, as unknown with its reasons, or as unavailable with the reason",
    "description": "Every push to master runs the behavioural suite, the crate's tests and the coverage"
+  },
+  {
+   "route": "/guarantees/evidence-subject-commands-agree-with-the-command-pages/",
+   "title": "The behavioural and negative tests the subject index names for a command are exactly the ones its command page lists, both read from the first coverage and negative header of each case",
+   "description": "A case says which public commands it exercises and which it refutes, in its own header:"
+  },
+  {
+   "route": "/guarantees/evidence-subjects-are-derived/",
+   "title": "Every claim, rule, feature, command, capability, MCP tool and use case the repository declares is an evidence subject whose members and tests are derived from declarations that already exist, and a committed subject index that differs from that derivation is refused",
+   "description": "A verdict is always a verdict about something. A reader asks \"is the feature evidence"
   },
   {
    "route": "/guarantees/evidence-unsupported-guarantee-is-reported/",
@@ -7980,7 +7990,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 0.12.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.12.0, built from commit 1814ce764360e6764482e7d2523bf3eb8187ec1b: the public items of the library and of the executable, and the source they were built from."
+   "description": "The rustdoc reference of majordomus-cli 0.12.0, built from commit c457d857e72773bed3fd82622f4355bd7102394f: the public items of the library and of the executable, and the source they were built from."
   },
   {
    "route": "/rustdoc/majordomus/",
@@ -8546,6 +8556,11 @@
    "route": "/rustdoc/majordomus_cli/evidence/record/",
    "title": "majordomus_cli::evidence::record - Rust",
    "description": "The recorder: turning a run that happened into evidence that lasts."
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/evidence/subject/",
+   "title": "majordomus_cli::evidence::subject - Rust",
+   "description": "Evidence subjects: every declaration a verdict can be asked about, what it is made of, and the tests it reaches."
   },
   {
    "route": "/rustdoc/majordomus_cli/execution/",
