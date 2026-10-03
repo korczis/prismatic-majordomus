@@ -1,7 +1,7 @@
 +++
 title = "A claim reads proven only when its passing run was recorded on a commit the presented revision contains, nothing but the evidence ledger changed between the two, and neither the recorded tree nor the presented tree was dirty; a run on a commit the presented revision does not contain reads stale; a named revision is judged by the ledger committed in it, and a clean failing run of the same test that the checkout holds uncommitted, recorded between the two, caps it at stale"
 description = "Every verdict is a verdict at something. majordomus evidence show judges the working"
-weight = 196
+weight = 198
 [extra]
 claim_id = "evidence-judged-at-the-presented-revision"
 status = "guaranteed"

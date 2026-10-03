@@ -1,7 +1,7 @@
 +++
 title = "A provider's end event and its compaction event derive the knowledge the episode produced into candidate records under the tracked tree, from the ledger and git and never from a conversation, whether or not a task is active, and record that they did so in the ledger"
 description = "When an episode ends, and when the conversation inside one is compacted, Majordomus reads the ledger lines the episode stamped — the decisions it recorded, the questions it resolved, the tasks it finished — and writes each one as a candidate knowledge record under .ai/repo/knowledge/candidates/. The record is one assertion with a class, a status of candidate, an epistemic stance and provenance naming the episode and the task or decision it came from. Nothing reads the conversation, a prompt or a handover, and no model is called. The ledger records that the derivation ran, with the episode, the counts and the paths, even when nothing was written."
-weight = 213
+weight = 215
 [extra]
 claim_id = "knowledge-derived-at-the-boundary"
 status = "guaranteed"
