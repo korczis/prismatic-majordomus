@@ -133,7 +133,7 @@ pub struct IntentArgs {
     pub repo: RepoArgs,
 
     #[command(subcommand)]
-    /// `list`, `show`, `validate` or `preflight`.
+    /// `list`, `show`, `validate`, `coverage` or `preflight`.
     pub command: IntentCommand,
 
     #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
@@ -163,6 +163,8 @@ pub enum IntentCommand {
     },
     /// Every finding over the intents; exit 10 when any is a failure
     Validate,
+    /// Which work carries which criterion, and the reason every issue exists
+    Coverage,
     /// Which intent the work on an issue, or on some paths, serves; exit 10 when it serves none
     Preflight {
         /// The issue the work executes
@@ -171,6 +173,19 @@ pub enum IntentCommand {
         /// A path the work will touch; repeat for each
         #[arg(long = "path")]
         paths: Vec<String>,
+    },
+    /// Which work realises which intent — tasks, episodes, providers, handovers, peer claims —
+    /// each link with its provenance, and each intent's unmet criteria and drift; exit 10 when
+    /// an intent whose milestones are all DONE is contradicted by its evidence
+    Realization {
+        /// Only this intent and the work linked to it
+        #[arg(long)]
+        intent: Option<String>,
+    },
+    /// Why an intent stands where it stands: its stage, each criterion, the work realising it
+    Explain {
+        /// The intent's id
+        id: String,
     },
 }
 
@@ -5128,6 +5143,27 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "intent coverage",
+        examples: &[
+            ExampleDoc {
+                id: "intent-coverage",
+                title: "Which work carries which criterion, and why every issue exists",
+                description: "Every criterion of every live intent with the issues that serve it and how strongly — covered, weakly covered, observed by the recorded gap, or uncovered — and every issue with the reason it exists: the criteria it serves, or maintenance under a milestone no intent names.",
+                argv: &["intent", "coverage"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["CRITERION", "criterion(s)"]),
+            },
+            ExampleDoc {
+                id: "intent-coverage-json",
+                title: "The same, as the shape the API and MCP answer with",
+                description: "What `GET /api/v1/intents/coverage` returns and the `majordomus_intent_coverage` tool answers: each criterion with its strength and the issues serving it, and each issue with its origin.",
+                argv: &["intent", "coverage", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/criteria/0/strength", "/criteria/0/issues", "/issues/0/origin"]),
+            },
+        ],
+    },
+    CommandExamples {
         command: "intent preflight",
         examples: &[ExampleDoc {
             id: "intent-preflight",
@@ -5136,6 +5172,38 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["intent", "preflight", "--issue", "I0001"],
             setup: &[],
             expect: Expect::StdoutContains(&["serves", "fixture-intent"]),
+        }],
+    },
+    CommandExamples {
+        command: "intent realization",
+        examples: &[
+            ExampleDoc {
+                id: "intent-realization",
+                title: "Which work realises which intent, and what each still lacks",
+                description: "Every intent with its unmet criteria and the work realising it, then every task, session record and peer claim with its strongest link — declared, observed, derived or inferred — or the first missing link. Exit 10 when an intent whose milestones are all DONE is contradicted by its evidence.",
+                argv: &["intent", "realization"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["fixture-intent", "unit(s) of work"]),
+            },
+            ExampleDoc {
+                id: "intent-realization-json",
+                title: "The same, as the shape the API and MCP answer with",
+                description: "What `GET /api/v1/intents/realization` returns and the `majordomus_intent_realization` tool answers: each intent's unmet criteria, work and providers, and each unit of work with its links.",
+                argv: &["intent", "realization", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/intents/0/stage", "/intents/0/unmet", "/work", "/orphans"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "intent explain",
+        examples: &[ExampleDoc {
+            id: "intent-explain",
+            title: "Why an intent stands where it stands",
+            description: "A sentence for the stage naming each milestone's derived status, one per criterion naming its evidence state and coverage, and one for the work realising it — all derived, none stored.",
+            argv: &["intent", "explain", "fixture-intent"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["fixture-intent", "the-case-passes"]),
         }],
     },
     CommandExamples {

@@ -62,6 +62,11 @@ body {{ margin: 0; background: var(--mj-bg); color: var(--mj-fg); font-family: v
 .swagger-ui .topbar {{ display: none; }}
 .swagger-ui .info .title small.version-stamp {{ background: var(--mj-accent-fill); }}
 .swagger-ui a {{ color: var(--mj-accent); }}
+/* A tag's header is its name, its description and the expand button on one row. A module
+   name such as intent_realization is one word the browser will not break, so at 320 px it
+   pushed the button past the viewport. The row may now shrink, and the name may break. */
+.swagger-ui .opblock-tag {{ min-width: 0; }}
+.swagger-ui .opblock-tag > a, .swagger-ui .opblock-tag small {{ min-width: 0; overflow-wrap: anywhere; }}
 /* The frame owes the page a landmark and a heading; the widget renders its own title as an
    h2 beneath this one, so the order holds. Without them the page has neither, which is what
    the audit found the first time it was allowed to look at this surface. */

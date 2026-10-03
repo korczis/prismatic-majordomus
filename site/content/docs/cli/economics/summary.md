@@ -1,7 +1,7 @@
 +++
 title = "majordomus economics summary"
 description = "Every metric with its class, sample size and interval, the pairs, the segments, the state of the evidence, and the one statement the publication rule allows"
-weight = 176
+weight = 179
 [extra]
 route = "/docs/cli/economics/summary/"
 command = "majordomus economics summary"

@@ -184,7 +184,10 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus intent list`](#majordomus-intent-list) | `/docs/cli/intent/list/` | Every intent, with the stage derived from its milestones and its evidence |
 | [`majordomus intent show`](#majordomus-intent-show) | `/docs/cli/intent/show/` | One intent in full: each milestone's derived status and each criterion's evidence state |
 | [`majordomus intent validate`](#majordomus-intent-validate) | `/docs/cli/intent/validate/` | Every finding over the intents; exit 10 when any is a failure |
+| [`majordomus intent coverage`](#majordomus-intent-coverage) | `/docs/cli/intent/coverage/` | Which work carries which criterion, and the reason every issue exists |
 | [`majordomus intent preflight`](#majordomus-intent-preflight) | `/docs/cli/intent/preflight/` | Which intent the work on an issue, or on some paths, serves; exit 10 when it serves none |
+| [`majordomus intent realization`](#majordomus-intent-realization) | `/docs/cli/intent/realization/` | Which work realises which intent — tasks, episodes, providers, handovers, peer claims — each link with its provenance, and each intent's unmet criteria and drift; exit 10 when an intent whose milestones are all DONE is contradicted by its evidence |
+| [`majordomus intent explain`](#majordomus-intent-explain) | `/docs/cli/intent/explain/` | Why an intent stands where it stands: its stage, each criterion, the work realising it |
 | [`majordomus delivery`](#majordomus-delivery) | `/docs/cli/delivery/` | Whether each product feature exists: on master, deployed, publicly verified, tested, its evidence published and linked — every dimension computed, unknown never a pass |
 | [`majordomus delivery report`](#majordomus-delivery-report) | `/docs/cli/delivery/report/` | Every feature against every dimension, with the development stage of what does not exist |
 | [`majordomus delivery show`](#majordomus-delivery-show) | `/docs/cli/delivery/show/` | One feature: every dimension with its reason and remediation |
@@ -5092,7 +5095,7 @@ Examples:
 
 What must become true above the milestones: every intent with its stage derived from the plan and its satisfaction from the recorded evidence, one intent, the model's own validation, and which intent a piece of work serves
 
-Subcommands: [`majordomus intent list`](#majordomus-intent-list), [`majordomus intent show`](#majordomus-intent-show), [`majordomus intent validate`](#majordomus-intent-validate), [`majordomus intent preflight`](#majordomus-intent-preflight).
+Subcommands: [`majordomus intent list`](#majordomus-intent-list), [`majordomus intent show`](#majordomus-intent-show), [`majordomus intent validate`](#majordomus-intent-validate), [`majordomus intent coverage`](#majordomus-intent-coverage), [`majordomus intent preflight`](#majordomus-intent-preflight), [`majordomus intent realization`](#majordomus-intent-realization), [`majordomus intent explain`](#majordomus-intent-explain).
 
 ```text
 majordomus intent [OPTIONS] <COMMAND>
@@ -5196,6 +5199,41 @@ Examples:
 
   Verified: exits 0; prints intent(s), valid.
 
+<a id="majordomus-intent-coverage"></a>
+## `majordomus intent coverage`
+
+Which work carries which criterion, and the reason every issue exists
+
+```text
+majordomus intent coverage [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Which work carries which criterion, and why every issue exists** — Every criterion of every live intent with the issues that serve it and how strongly — covered, weakly covered, observed by the recorded gap, or uncovered — and every issue with the reason it exists: the criteria it serves, or maintenance under a milestone no intent names.
+
+  ```console
+  $ majordomus intent coverage
+  ```
+
+  Verified: exits 0; prints CRITERION, criterion(s).
+
+- **The same, as the shape the API and MCP answer with** — What `GET /api/v1/intents/coverage` returns and the `majordomus_intent_coverage` tool answers: each criterion with its strength and the issues serving it, and each issue with its origin.
+
+  ```console
+  $ majordomus intent coverage --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /criteria/0/strength, /criteria/0/issues, /issues/0/origin.
+
 <a id="majordomus-intent-preflight"></a>
 ## `majordomus intent preflight`
 
@@ -5224,6 +5262,70 @@ Examples:
   ```
 
   Verified: exits 0; prints serves, fixture-intent.
+
+<a id="majordomus-intent-realization"></a>
+## `majordomus intent realization`
+
+Which work realises which intent — tasks, episodes, providers, handovers, peer claims — each link with its provenance, and each intent's unmet criteria and drift; exit 10 when an intent whose milestones are all DONE is contradicted by its evidence
+
+```text
+majordomus intent realization [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--intent` | `<INTENT>` | — | Only this intent and the work linked to it |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Which work realises which intent, and what each still lacks** — Every intent with its unmet criteria and the work realising it, then every task, session record and peer claim with its strongest link — declared, observed, derived or inferred — or the first missing link. Exit 10 when an intent whose milestones are all DONE is contradicted by its evidence.
+
+  ```console
+  $ majordomus intent realization
+  ```
+
+  Verified: exits 0; prints fixture-intent, unit(s) of work.
+
+- **The same, as the shape the API and MCP answer with** — What `GET /api/v1/intents/realization` returns and the `majordomus_intent_realization` tool answers: each intent's unmet criteria, work and providers, and each unit of work with its links.
+
+  ```console
+  $ majordomus intent realization --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /intents/0/stage, /intents/0/unmet, /work, /orphans.
+
+<a id="majordomus-intent-explain"></a>
+## `majordomus intent explain`
+
+Why an intent stands where it stands: its stage, each criterion, the work realising it
+
+```text
+majordomus intent explain [OPTIONS] <ID>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<ID>` | `<ID>` | required | The intent's id |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Why an intent stands where it stands** — A sentence for the stage naming each milestone's derived status, one per criterion naming its evidence state and coverage, and one for the work realising it — all derived, none stored.
+
+  ```console
+  $ majordomus intent explain fixture-intent
+  ```
+
+  Verified: exits 0; prints fixture-intent, the-case-passes.
 
 <a id="majordomus-delivery"></a>
 ## `majordomus delivery`
