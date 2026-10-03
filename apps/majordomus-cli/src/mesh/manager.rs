@@ -139,6 +139,10 @@ pub struct MeshRuntime {
     cooperation: Mutex<Option<Arc<Cooperation>>>,
     /// Why cooperation is not running, when the mesh is but cooperation is not.
     cooperation_reason: Mutex<Option<String>>,
+    /// Whether a shared server decided anything about this runtime: activated it, or
+    /// declined with a reason. A runtime nobody decided on is the command line's, and its
+    /// inactivity is an absence the doctor may not report as a verdict (ADR 0059).
+    decided: AtomicBool,
 }
 
 impl Default for MeshRuntime {
@@ -159,7 +163,32 @@ impl MeshRuntime {
             ),
             cooperation: Mutex::new(None),
             cooperation_reason: Mutex::new(None),
+            decided: AtomicBool::new(false),
         }
+    }
+
+    /// Whether a shared server activated or declined this runtime. `false` in every process
+    /// that is not a server — the command line, a test — where nothing activates the mesh
+    /// and [`MeshRuntime::status`] reports an absence, not a decision.
+    ///
+    /// The distinction is what lets `mesh doctor` judge the server: an enabled declaration
+    /// and an inactive mesh is a failure when a server decided it and nothing at all when
+    /// nobody did.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::manager::MeshRuntime;
+    ///
+    /// let mesh = MeshRuntime::new();
+    /// assert!(!mesh.decided(), "nothing has decided the command line's runtime");
+    /// assert!(!mesh.status().active);
+    ///
+    /// // a server that could not activate the mesh says why, and that is a decision
+    /// mesh.decline("the node identity did not load");
+    /// assert!(mesh.decided());
+    /// assert!(mesh.status().reason.unwrap().contains("did not load"));
+    /// ```
+    pub fn decided(&self) -> bool {
+        self.decided.load(Ordering::SeqCst)
     }
 
     /// Attach the cooperation runtime a server built for this mesh. The runtime is
@@ -311,6 +340,7 @@ impl MeshRuntime {
         if state.is_none() {
             *self.reason.lock().expect("mesh reason") = format!("not active: {reason}");
         }
+        self.decided.store(true, Ordering::SeqCst);
     }
 
     /// Activate the mesh from a declaration. Idempotent: a second activation of an
@@ -372,6 +402,7 @@ impl MeshRuntime {
         repos: Vec<String>,
         version: &str,
     ) -> Result<(), MeshError> {
+        self.decided.store(true, Ordering::SeqCst);
         let mut state = self.state.lock().expect("mesh state");
         if state.is_some() {
             return Ok(());
@@ -883,6 +914,32 @@ mod tests {
         let status = runtime.status();
         assert!(!status.active);
         assert!(status.reason.unwrap().contains("disabled"));
+        assert!(
+            runtime.decided(),
+            "a server that read a disabled declaration decided: off"
+        );
+    }
+
+    #[test]
+    fn a_runtime_is_decided_by_an_activation_and_by_nothing_else_that_reads_it() {
+        let dir = tempfile::tempdir().unwrap();
+        let runtime = MeshRuntime::new();
+        let _ = runtime.status();
+        let _ = runtime.nodes();
+        let _ = runtime.cooperation_status();
+        assert!(!runtime.decided(), "reading a runtime decides nothing");
+        runtime
+            .activate(
+                &quiet_config(),
+                identity_in(&dir, "a.json"),
+                vec![],
+                vec![],
+                "0.5.0",
+            )
+            .unwrap();
+        assert!(runtime.decided());
+        runtime.stop();
+        assert!(runtime.decided(), "a stopped mesh was still decided on");
     }
 
     #[test]

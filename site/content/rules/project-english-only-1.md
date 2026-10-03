@@ -1,7 +1,7 @@
 +++
 title = "English only"
 description = "English only"
-weight = 79
+weight = 86
 [extra]
 kind = "rule"
 slug = "project-english-only-1"

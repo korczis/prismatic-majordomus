@@ -3,7 +3,7 @@
   "source": "docs/CLAIMS.yaml",
   "generator": "scripts/generate-site-data",
   "statuses": {
-    "guaranteed": "Deterministic and blocking. Implemented, and a behavioural test proves it.",
+    "guaranteed": "Declared deterministic and blocking, implemented, and naming the behavioural test that is to prove it. Whether a recorded run supports it is the evidence verdict, shown beside it.",
     "advisory": "Projected into the worker's instructions. Whether a worker honours it is not observable from outside. Documentation, not enforcement.",
     "planned": "Specified and not implemented. Named so the omission is visible.",
     "rejected": "Considered and deliberately refused, with the reason recorded."
@@ -1110,7 +1110,7 @@
       "status": "guaranteed",
       "route": "/guarantees/suite-parallel/",
       "external": false,
-      "note": "MJ_TEST_JOBS bounds the pool (xargs -P, never a bare ampersand); each case has its own log; the verdicts are rendered in name order with a failing case's whole log before its line; a filter that matches nothing and an empty case directory are usage errors in both modes; MJ_TEST_REPORT writes one row per case for the summary. test/cases/26_ci_wiring.sh proves the failure semantics through both modes on a private harness."
+      "note": "MJ_TEST_JOBS bounds the pool (xargs -P, never a bare ampersand); each case has its own log; the verdicts are rendered in name order with a failing case's whole log before its line; a filter that matches nothing and an empty case directory are usage errors in both modes; MJ_TEST_REPORT writes one row per case for the summary; test/lib.sh refuses a case that does not stand in the fixture test/run.sh made for it, so a case started by hand cannot write its fixture into a checkout. test/cases/26_ci_wiring.sh proves the failure semantics through both modes on a private harness."
     },
     {
       "id": "claim:rust-binary-artifact",
@@ -1329,6 +1329,24 @@
       "note": "continuity.state answers the worker's question about one episode, which is right for a briefing and blind to the other windows open on the same worktree, because state/session-current.yaml is a symlink the most recent start event re-aims. The five lifecycle capabilities read the store, the ledger and the index instead, decide every standing from what the repository can observe, and carry a remedy with every finding. They never write, they judge no thresholds — age is session.freshness and continuity.state's to report — and they declare no command line, because they read .ai/local/ and are served rather than shipped. The Cockpit's Continuity page is their projection and holds no session model of its own."
     },
     {
+      "id": "claim:connection-episode",
+      "kind": "claim",
+      "label": "A client with no provider hooks gets an execution episode from the MCP connection, resumes its own after a crash, and never has its prompt claimed to be captured",
+      "status": "guaranteed",
+      "route": "/guarantees/connection-episode/",
+      "external": false,
+      "note": "The episode opens on episodes.attach and never on initialize, so a client that only reads the layer leaves no record; it is keyed by the external identity the client supplies and never by a peer id, which is handed out per connection; every message the client sends is its heartbeat; losing the connection detaches rather than closes, and a reconnect under the same identity resumes the same episode. Nothing here writes a session record - the board runs `capture session --provider generic`, the same command a provider hook's shim runs, and reports what it said. Prompt capture is declared impossible for the connection and is not attempted: an MCP server is handed tool calls, never the prompt that produced them. ADR 0103."
+    },
+    {
+      "id": "claim:provider-capability-evidence",
+      "kind": "claim",
+      "label": "What each provider can do about the session lifecycle and prompt capture is one declaration with a citation per cell, every surface projects it, and no provider the declaration names goes unreported",
+      "status": "guaranteed",
+      "route": "/guarantees/provider-capability-evidence/",
+      "external": false,
+      "note": "share/providers.yaml carries an offers block per provider - episode (hooks, connection, none), prompts (hook, none), and the citation each was verified from; a word outside either vocabulary fails the read of the file rather than degrading to none. share::ProviderDeclaration and product::ProductProvider carry it and every surface is a projection. `capture status` joins it with the tree and reports two facts per aspect, the vendor's capability and this checkout's state, over the union of the declared providers and the adapter tables; `unsupported` is reserved for a provider that cannot do the thing and `unadapted` names a gap in this distribution. scripts/provider-evidence-check is the gate and the case holds it to its own negative. ADR 0103, rule project.a-provider-capability-cites-its-evidence."
+    },
+    {
       "id": "claim:adr-catalogue",
       "kind": "claim",
       "label": "An architecture decision is one file under the layer's adrs section, validated against the decision contract, with an identity nothing else claims, reciprocal supersession, and every reference it makes resolving",
@@ -1428,6 +1446,15 @@
       "note": "Two witnesses that do not share a writer name the commit, the producer's built_from and the value rustdoc renders on the crate's own COMMIT constant page. scripts/pages verify-rustdoc is a hard step of the pages workflow once the site serves the deployed commit, so a deployment whose public reference is absent, broken or stale fails its run, and scripts/ci/pages-check asks again as the pages-live gate."
     },
     {
+      "id": "claim:rustdoc-referenced",
+      "kind": "claim",
+      "label": "Every builtin module's page on the site links the page the crate's reference documents that module on, from the one module-to-page mapping the rustdoc check holds the published tree to, and only in a build that composed the reference",
+      "status": "guaranteed",
+      "route": "/guarantees/rustdoc-referenced/",
+      "external": false,
+      "note": "The mapping is quality::rustdoc::module_routes, the crate's exported modules each with the page derived from the crate's own inventory, which majordomus quality rustdoc requires of the tree as a missing-page finding. majordomus generate carries it into the site's registry dataset as rustdoc on each module, and a module rustdoc gives no page (pub(crate) or private) carries none. The template joins it with the surfaces the build composed, from data/build.json, which scripts/site-build writes from docs/generated/web.json; it derives no route, and a build without the reference links nothing. scripts/ci/link-check resolves every such link against the composed site."
+    },
+    {
       "id": "claim:worktree-topology-derived",
       "kind": "claim",
       "label": "A branch's worktree path is derived from git identity and the branch name alone — the primary checkout's sibling named with -wt, then the branch with its hierarchy kept — and is the same answer from every directory of every worktree, with nothing registered or configured",
@@ -1520,20 +1547,38 @@
     {
       "id": "claim:evidence-recorded-in-ci",
       "kind": "claim",
-      "label": "CI records every test it ran with the commit and the run it happened in, and the site publishes that evidence as current, stale with its distance, or unavailable with the reason",
+      "label": "CI records every test it ran with the commit and the run it happened in, and the site publishes the tracked ledger's verdict at that commit as current only when CI's run of the published commit measured clean trees and nothing was absent, refused or failed; otherwise as stale with its distance or its failures, as unknown with its reasons, or as unavailable with the reason",
       "status": "guaranteed",
       "route": "/guarantees/evidence-recorded-in-ci/",
       "external": false,
-      "note": "The evidence job of validate.yml records the suite's and the crate's results through `majordomus evidence record --origin ci`, which stamps each execution with the run from its environment, and keeps them with the report and the coverage summary as the artifact `evidence`. `scripts/pages evidence` publishes the artifact of the commit being published or its nearest ancestor into site/data/evidence.json, never committed, and never shows an ancestor's evidence as current. ADR 68."
+      "note": "The evidence job of validate.yml derives the report first, through `majordomus evidence show` on its own checkout, measured clean or dirty, with the downloaded reports and its output under the runner's temporary directory, so that report is the tracked ledger's verdict at the run's commit. Only then does it record the suite's and the crate's results through `majordomus evidence record --origin ci`, which stamps each execution with the run from its environment; those rows are a run record, counted in the manifest and deciding no verdict, and a trunk run's rows reach the tracked ledger only through ADR 0080's recording pull request. The suite and the rust job each measure the tree they ran in, excluding only the outputs their run names at the paths where that run writes them (rust-check writes in the crate's directory), and the manifest's working tree is derived from those measurements; a report measured at another commit is refused, and a report that yielded no execution is absent. For a pull request the recorded commit is the merge commit that ran, with the head beside it. `scripts/pages evidence` publishes the artifact of the commit being published or its nearest ancestor into site/data/evidence.json, never committed, and withholds current, with every reason, whenever the run cannot confirm the report, a report the collector failed to derive or did not carry included. ADR 68, as ADR 0087 amends it."
     },
     {
       "id": "claim:rule-proof-is-named-and-resolves",
       "kind": "claim",
-      "label": "Every blocking rule names what proves it, and every path it names is in the tree",
+      "label": "Every rule names what proves it, and every path it names is in the tree",
       "status": "guaranteed",
       "route": "/guarantees/rule-proof-is-named-and-resolves/",
       "external": false,
-      "note": "A rule could name a behavioural case in English prose, and nothing noticed when that case was renamed or deleted; the rule went on reading as enforced. The gate holds both halves of the relation. A named path that is not in the tree is `dangling` and is never ratcheted, because a proof that does not exist is worse than no proof. A blocking rule naming neither a validator nor a test nor a reason is `unproven`, which is the half no other check in this repository knows to look for."
+      "note": "A rule could name a behavioural case in English prose, and nothing noticed when that case was renamed or deleted; the rule went on reading as enforced. The gate holds both halves of the relation. A named path that is not in the tree is `dangling` and is never ratcheted, because a proof that does not exist is worse than no proof. A rule of either class naming neither a validator nor a test nor a reason is `unproven`, which is the half no other check in this repository knows to look for; advisory is not an exemption, and the one exemption is a vendored rule tagged `principle`, which the package pins by hash and which the gate counts on every run. `majordomus rules` reports the same `unproven` state for every class but calls it a finding only for a blocking rule; the gate is what refuses it for an advisory one."
+    },
+    {
+      "id": "claim:evidence-subjects-are-derived",
+      "kind": "claim",
+      "label": "Every claim, rule, feature, command, capability, MCP tool and use case the repository declares is an evidence subject whose members and tests are derived from declarations that already exist, and a committed subject index that differs from that derivation is refused",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-subjects-are-derived/",
+      "external": false,
+      "note": "`majordomus generate site` writes site/data/registry/evidence-subjects.json from the claims matrix, the rules, the features, the use cases, the command registry, the documented command-line examples, the builtin capabilities and the first coverage and negative headers of every case; a capability is made of the claims implemented in the file its module is composed in, and a command word that both the shell tool and the executable answer to names both programs. Nothing lists a subject, a member or a route by hand, so adding a declaration adds its subject and removing it removes it. `generate --check` refuses a hand edit. The file carries structure only — no ledger row and no commit — so recording a run never makes it stale."
+    },
+    {
+      "id": "claim:evidence-subject-commands-agree-with-the-command-pages",
+      "kind": "claim",
+      "label": "The behavioural and negative tests the subject index names for a command are exactly the ones its command page lists, both read from the first coverage and negative header of each case",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-subject-commands-agree-with-the-command-pages/",
+      "external": false,
+      "note": "The case headers had several readers before the index: the site generator''s command pages, the command-coverage doctrine, the command-furnished gate and the use-case impact trace, and the last two match a command anywhere in any covers line between word boundaries rather than as a word of the first. The index reads the first line word for word, as the page does. The case holds the two equal, holds every case to one header of each kind, and holds each covers line to naming the same public commands under both readings, so the readers cannot yet disagree; the gate slice moves them onto the index. Two more shell derivations reach tests through declarations rather than headers: the capability pages give every capability the claims implemented in its module''s file, and the doctrine pages name the first test of each rule. The same case holds each of them equal to the index."
     },
     {
       "id": "claim:rule-exemption-carries-its-reason",
@@ -1608,6 +1653,33 @@
       "note": "`majordomus evidence show --check` exits 10 on any guaranteed claim the evidence does not support, and `scripts/evidence-check` ratchets that against .ai/repo/evidence-baseline.txt, which records the state per claim rather than a list of names. Two things fail: a guarantee the baseline recorded as supported that no longer is, and a supported guarantee that left the matrix. A claim the baseline never knew, with no recorded run, is new debt — named and counted, never a regression — because a ratchet that fired on growth taxed writing claims down. The gate is advisory while the baseline carries unsupported lines and `--strict` is the end state; only `guaranteed` is judged, because advisory, planned and rejected already say that a current proof is not what they claim."
     },
     {
+      "id": "claim:evidence-judged-at-the-presented-revision",
+      "kind": "claim",
+      "label": "A claim reads proven only when its passing run was recorded on a commit the presented revision contains, nothing but the evidence ledger changed between the two, and neither the recorded tree nor the presented tree was dirty; a run on a commit the presented revision does not contain reads stale; a named revision is judged by the ledger committed in it, and a clean failing run of the same test that the checkout holds uncommitted, recorded between the two, caps it at stale",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-judged-at-the-presented-revision/",
+      "external": false,
+      "note": "`evidence::freshness` is the one truth table every surface reads, and only its proven row may render as verified. `evidence show --presented HEAD` judges the checked-out commit as committed, from the ledger that commit holds, against its tree measured without the working copy of the ledger; `--presented-tree` only weakens that measurement. A run the working ledger holds and the committed one does not is listed in `presented.uncommitted` and read only through the monotone rule, which withholds proven and never decides a verdict."
+    },
+    {
+      "id": "claim:evidence-a-skip-is-not-run",
+      "kind": "claim",
+      "label": "A test that declined to run reads not_run with a detail saying it declined, never proven and never failing, and a test that errored or timed out reads failing",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-a-skip-is-not-run/",
+      "external": false,
+      "note": "A recorded skip used to read failing, because every result that was not a pass did. It is the absence of a proof, not counter-evidence: the claim reads not_run with the detail that the test declined to run, and a guarantee resting on it is still a finding, one that says its test declined rather than that it was never recorded."
+    },
+    {
+      "id": "claim:evidence-a-failure-outranks-an-absence",
+      "kind": "claim",
+      "label": "A rule with a failing test reads failing whatever its other tests say, so a blocking rule whose tests are one failing and one not run is still a finding",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-a-failure-outranks-an-absence/",
+      "external": false,
+      "note": "`freshness::aggregate` is the one aggregation: failing if any part is failing, otherwise the weakest of the parts that can carry proof, otherwise the weakest of all. The declared order ranks failing above not_run, so a plain weakest-of over a failing test and a skipped one read not_run, which is not a finding, and hid the failure."
+    },
+    {
       "id": "claim:mesh-off-by-default",
       "kind": "claim",
       "label": "No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error",
@@ -1671,6 +1743,15 @@
       "note": "Three server processes in a line agree on the digest, hold the same event count, and carry no further events once converged; origin signatures survive the relay. Delivery is at-least-once with idempotent application, not exactly-once."
     },
     {
+      "id": "claim:mesh-compaction-keeps-what-is-live",
+      "kind": "claim",
+      "label": "Compacting the cooperation journal changes nothing live — a handover nobody has taken keeps its stream for a bounded retention, who took a handover and who answered a review stay with them, and a compacted runtime that beats again is fetched again whole",
+      "status": "guaranteed",
+      "route": "/guarantees/mesh-compaction-keeps-what-is-live/",
+      "external": false,
+      "note": "Case 493 runs tests/mesh_compaction.rs, two runtimes linked through the real signed protocol over an in-process transport, because no black-box knob reaches compaction in bounded time (a server compacts every sixty heartbeats and keeps a dead stream fifteen minutes; only the heartbeat and the expiry are declarable). The journal's unit tests reproduce each defect PR 588 recorded, and its property test holds that compaction changes no live claim, open session, handover taker or review answer over random histories. Not covered — two runtimes may print different digests while each compacts on its own schedule; what is live agrees, and docs/MESH.md says so."
+    },
+    {
       "id": "claim:mesh-network-acceptance",
       "kind": "claim",
       "label": "Separate Linux nodes on a real network discover each other by multicast, link, share claims and handovers, and recover from a partition and a crash, in a lab CI runs",
@@ -1687,6 +1768,15 @@
       "route": "/guarantees/mesh-observation-not-authority/",
       "external": false,
       "note": "The trust unit tests prove deny_unknown observes without trusting, allowlist and TOFU semantics, and that a key change under a known node id is rejected; the integration test proves a forged envelope is a counted refusal. Discovery still grants nothing: being heard or trusted admits no link on its own — a link needs the handshake of mesh-cooperation-links — and nothing a linked peer sends executes anything; the cooperation commands write this runtime's journal and, for a consumed handover, one record in this checkout's handovers directory (ADR 0067)."
+    },
+    {
+      "id": "claim:mesh-declared-is-held",
+      "kind": "claim",
+      "label": "An enabled mesh declaration whose shared server did not activate the mesh is a failed `runtime` check of `mesh doctor` (exit 10) carrying the server's reason, and a `Mesh: DECLARED ENABLED BUT NOT ACTIVE` line in the session-start briefing — never a quiet off; and this repository's committed declaration is tracked, enabled, allowlists the fleet and names a hub",
+      "status": "guaranteed",
+      "route": "/guarantees/mesh-declared-is-held/",
+      "external": false,
+      "note": "The runtime keeps one bit saying whether a shared server decided anything (activated, or declined with a reason); the doctor's `runtime` check reads the server's decision when the bit is set and reports an absence when it is not, and `majordomus mesh doctor` asks the running server for its report so that the verdict is the server's. The hook library renders the briefing line from that report and sends no request of its own. apps/majordomus-cli/tests/mesh.rs proves the three verdicts over a real server; the case proves the briefing answers and the exit code through the provider's start event, and reads this repository's committed declaration (ADR 0059). It does not make the mesh reach anybody, and hubs are started by hand."
     },
     {
       "id": "claim:models-one-declaration",
@@ -1714,6 +1804,87 @@
       "route": "/guarantees/models-no-secret-fields/",
       "external": false,
       "note": "credential_env names an environment variable and only std::env::var_os(..).is_some() is ever consulted; the test walks the catalogue's JSON schema and refuses any property name that smells like a credential."
+    },
+    {
+      "id": "claim:knowledge-derived-at-the-boundary",
+      "kind": "claim",
+      "label": "A provider's end event and its compaction event derive the knowledge the episode produced into candidate records under the tracked tree, from the ledger and git and never from a conversation, whether or not a task is active, and record that they did so in the ledger",
+      "status": "guaranteed",
+      "route": "/guarantees/knowledge-derived-at-the-boundary/",
+      "external": false,
+      "note": "The close path in lib/session.sh runs the deriver after the session record is published and before session.closed is appended, so every close is followed by its knowledge.derived line; the compaction adapter calls it directly, independent of the checkpoint switch. A decision becomes a convention, a resolved question a fact, a blocked task a lesson, a verified completion a fact; a handover's Next Action is continuation state and is never derived from. Nothing reads a conversation, a prompt or a model."
+    },
+    {
+      "id": "claim:knowledge-derivation-is-idempotent",
+      "kind": "claim",
+      "label": "A second derivation over the same evidence writes nothing, says so, and leaves the working tree unchanged; the record id is derived from the episode and a digest of the evidence so the same fact always lands in the same file",
+      "status": "guaranteed",
+      "route": "/guarantees/knowledge-derivation-is-idempotent/",
+      "external": false,
+      "note": "The record is composed into a temporary file in the same directory and compared byte for byte with the file the id names; identical is reported unchanged and the temporary file removed, different is renamed over it. The date is the evidence line's day, never the clock, and no random value enters the bytes, so the same ledger and the same git yield the same file on every machine."
+    },
+    {
+      "id": "claim:knowledge-failure-is-recorded",
+      "kind": "claim",
+      "label": "A policy switch that is off derives nothing and says so; a derivation that fails inside a provider hook is recorded as provider.event.failed and the hook still exits 0",
+      "status": "guaranteed",
+      "route": "/guarantees/knowledge-failure-is-recorded/",
+      "external": false,
+      "note": "session.knowledge_on_end and session.knowledge_on_compact are the two switches, read from the policy and independent of checkpoint_on_compact. A hook must return success to its provider and returning success is not the same as claiming the work happened, so the adapter reports the failure through mj_capture_session_failed with the deriver's last line as the reason and closes the episode regardless."
+    },
+    {
+      "id": "claim:knowledge-integrity",
+      "kind": "claim",
+      "label": "Every knowledge record is schema-valid with no unknown key, uniquely identified, evidenced when verified, resolves every reference it names, and carries no conversation; check, doctor and `majordomus knowledge check` refuse a record that is not",
+      "status": "guaranteed",
+      "route": "/guarantees/knowledge-integrity/",
+      "external": false,
+      "note": "mj_validate_knowledge_integrity reads candidates/ and curated/ once, refuses a candidate that claims verified, a dangling derived_from or relations target, a duplicate id across both directories, a key the generated allow-list does not carry, a superseded record with neither superseded_by nor a rejection, and a title, description or body line matching the transcript check that never-store-transcripts is kept by. References to the ledger and git (session, task, decision, commit) are resolved here, in one pass, and are external to the graph compiler, which never reports them as dangling."
+    },
+    {
+      "id": "claim:knowledge-writer-observed",
+      "kind": "claim",
+      "label": "A repository in which episodes close and no knowledge derivation follows within the stale threshold is reported as a stopped writer by doctor and watch, and the finding clears when a derivation is written",
+      "status": "guaranteed",
+      "route": "/guarantees/knowledge-writer-observed/",
+      "external": false,
+      "note": "mj_validate_knowledge_lifecycle compares two facts the way ADR 0052's validator does, episodes closing and derivations following, judged against session.freshness.stale_minutes; it also reads the lifecycle source for the call to the deriver while session.knowledge_on_end is on. A checkout whose ledger holds no knowledge.derived line is skipped rather than failed, so the day the deriver arrives no checkout turns red; the first derivation ends the skip. The Rust reader's knowledge_base.status makes the freshness half of the same judgement from the same numbers."
+    },
+    {
+      "id": "claim:knowledge-promotion-is-an-act",
+      "kind": "claim",
+      "label": "verified is written only by promote with evidence on stdin or by a person editing the file, never by the deriver; promotion moves the record to curated/ and rejection supersedes it with a reason, each leaving a ledger line",
+      "status": "guaranteed",
+      "route": "/guarantees/knowledge-promotion-is-an-act/",
+      "external": false,
+      "note": "An empty stdin is refused because an act without evidence is an assertion, and stdin carrying a transcript marker is refused for the reason a record may not carry one. Promotion keeps derived_from, adds the promoting episode, appends the evidence under an Evidence section and writes knowledge.promoted; rejection rewrites the candidate in place as superseded with a Rejected section and writes knowledge.rejected. The deriver skips a promoted or superseded id, so neither act is undone by the next episode boundary."
+    },
+    {
+      "id": "claim:briefing-names-candidates",
+      "kind": "claim",
+      "label": "The start briefing names the candidates awaiting review on this branch, count and ids, bounded and within the briefing budget, and prints their absence rather than omitting it",
+      "status": "guaranteed",
+      "route": "/guarantees/briefing-names-candidates/",
+      "external": false,
+      "note": "The section sits after the open questions and before the handover in the derived briefing, bounded the way the open-questions block is. A candidate's branch is the branch of the episode its derived_from names, read from the tracked session record or, while that record is not yet written, from the ledger; a candidate whose episode this checkout cannot resolve is named on its own line as unattributed rather than hidden."
+    },
+    {
+      "id": "claim:candidates-reviewed-not-accumulated",
+      "kind": "claim",
+      "label": "More candidates than the policy cap, or a candidate older than the policy age, is an advisory doctor finding that names them; both numbers are declared once in the policy",
+      "status": "guaranteed",
+      "route": "/guarantees/candidates-reviewed-not-accumulated/",
+      "external": false,
+      "note": "knowledge.candidates_max_files and knowledge.candidate_max_age_minutes are read with mj_pol_req and a missing key is reported at the rule's class. Review age is the age of the queue entry — the oldest knowledge.derived line naming the file, then the commit that added it, then the record's date — never the evidence day alone. A candidate version control does not track is named too, with the git add remedy after fix:, because a record git does not hold is discovered by nothing. The rule is dispatched from doctor only, so a full review queue never turns watch red."
+    },
+    {
+      "id": "claim:knowledge-served-on-every-surface",
+      "kind": "claim",
+      "label": "The candidates awaiting review, one record by id with its references resolved, and the derivation status of the checkout are one declaration each and answer with the same content over the command line, HTTP and MCP",
+      "status": "guaranteed",
+      "route": "/guarantees/knowledge-served-on-every-surface/",
+      "external": false,
+      "note": "knowledge_base.candidates, knowledge_base.record and knowledge_base.status are capability! blocks in one module; majordomus generate projects them to the HTTP routes, the OpenAPI document, the MCP tools and resources, the executable's knowledge subcommands, the cockpit's module catalogue and the benchmark inventory. The reader takes candidates from the index, the ledger from the session module and the thresholds from the continuity module's reading of the policy; it writes nothing and reports absence as absence."
     },
     {
       "id": "claim:new-code-is-covered",
@@ -1761,6 +1932,69 @@
       "note": "A case that cannot meet a precondition said so with `exit 0`, which is the status the runner wrote `ok` for, so `majordomus evidence record` entered a run that measured nothing into the ledger as a pass. test/lib.sh's `skip` exits 4 and writes the file the runner names in MJ_SKIP_MARK, the runner writes SKIP into the TSV in both the serial and the parallel phase, and Outcome::Skip does not prove. A skip is still not a failure: the run's exit status is unchanged and a run whose cases all declined is a run rather than \"no cases found\". A failure is not a skip either: a case runs under `set -e`, `jq -e` fails with 4 when it produced no result, and a 4 without the mark is recorded as FAIL. The old shape is refused where it would be written: the case that proves this claim reads every file in test/cases/ and fails when one says `exit 0` before its last statement outside a heredoc body or a comment, so a case can leave with status 0 only by reaching its end."
     },
     {
+      "id": "claim:reasoning-works-with-no-advisor",
+      "kind": "claim",
+      "label": "Majordomus reasons, decides, implements and validates with no advisor at all: absent advisors are reported as ordinary state, material uncertainty gets a structured local review, and the conclusion claims no independent review",
+      "status": "guaranteed",
+      "route": "/guarantees/reasoning-works-with-no-advisor/",
+      "external": false,
+      "note": "the case builds its environment from nothing (env -i, a PATH holding git and node only, no credential), so it holds on a machine where every advisor is installed."
+    },
+    {
+      "id": "claim:advisor-transports-share-one-contract",
+      "kind": "claim",
+      "label": "Every advisor transport is held to one contract — typed failures, deadlines, cancellation, normalised answers, reported usage, redacted secrets — proven against fakes with no network, model or credential",
+      "status": "guaranteed",
+      "route": "/guarantees/advisor-transports-share-one-contract/",
+      "external": false,
+      "note": "node --test scripts/lib/advisors/contract.test.mjs; the case refuses a run of fewer tests than the suite holds."
+    },
+    {
+      "id": "claim:advice-is-weighed-not-counted",
+      "kind": "claim",
+      "label": "Advisors that disagree never decide by count: a conclusion is refused while a disagreement on its assessment is unsettled, a resolution needs evidence, and every answer received must be weighed",
+      "status": "guaranteed",
+      "route": "/guarantees/advice-is-weighed-not-counted/",
+      "external": false,
+      "note": "the case lets the minority position win once an experiment settles the disagreement."
+    },
+    {
+      "id": "claim:advisor-failure-is-recorded-and-recovers",
+      "kind": "claim",
+      "label": "An advisor that times out, is rate limited, refuses its credential or answers malformed is recorded as exactly that, never blocks the work, opens a circuit that closes again after its cooldown, and never fails the session",
+      "status": "guaranteed",
+      "route": "/guarantees/advisor-failure-is-recorded-and-recovers/",
+      "external": false,
+      "note": "the circuit is derived from the recorded outcomes and the clock; the case shortens the cooldown with MAJORDOMUS_REASONING_COOLDOWN_SECONDS."
+    },
+    {
+      "id": "claim:reasoning-survives-the-session",
+      "kind": "claim",
+      "label": "A decision and its provenance survive the session: the next session finds them in its context and handover, reuses a standing conclusion instead of consulting again, and reopens it only on new evidence",
+      "status": "guaranteed",
+      "route": "/guarantees/reasoning-survives-the-session/",
+      "external": false,
+      "note": "the scripted advisor of session B would hang if it were asked, so reuse is proven by the absence of a consultation."
+    },
+    {
+      "id": "claim:advisors-are-declared-once",
+      "kind": "claim",
+      "label": "Advisors are declared once, in share/advisors.yaml, by reference to the provider table and the model catalogue; a new advisor reaches the command line, the policy, HTTP, OpenAPI, MCP and the Cockpit with no consumer edited",
+      "status": "guaranteed",
+      "route": "/guarantees/advisors-are-declared-once/",
+      "external": false,
+      "note": "the case appends a representative advisor to a fixture catalogue and reads it back from every surface, then removes its executable and sees it unavailable everywhere."
+    },
+    {
+      "id": "claim:review-is-never-fabricated",
+      "kind": "claim",
+      "label": "A session cannot claim review it did not get: a consultation must name an advisor its recorded plan selected, a conclusion's review is computed, and reasoning check and doctor refuse a forged record, provider coupling, a model credential in CI and a refused claim in a document",
+      "status": "guaranteed",
+      "route": "/guarantees/review-is-never-fabricated/",
+      "external": false,
+      "note": "a negative case: each defect is planted and must be named by reasoning check (exit 10) and by doctor."
+    },
+    {
       "id": "impl:.github/workflows/pages.yml",
       "kind": "implementation",
       "label": ".github/workflows/pages.yml",
@@ -1785,6 +2019,13 @@
       "id": "impl:apps/majordomus-cli/src/capability/builtin/evidence.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
       "route": null,
       "external": false
     },
@@ -1880,6 +2121,20 @@
       "external": false
     },
     {
+      "id": "impl:apps/majordomus-cli/src/episodes.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/episodes.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/evidence/freshness.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/evidence/freshness.rs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:apps/majordomus-cli/src/evidence/ledger.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/evidence/ledger.rs",
@@ -1890,6 +2145,13 @@
       "id": "impl:apps/majordomus-cli/src/evidence/mod.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/evidence/mod.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/evidence/subject.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/evidence/subject.rs",
       "route": null,
       "external": false
     },
@@ -1932,6 +2194,13 @@
       "id": "impl:apps/majordomus-cli/src/mesh/cooperation.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/mesh/cooperation.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/mesh/doctor.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/mesh/doctor.rs",
       "route": null,
       "external": false
     },
@@ -2016,6 +2285,41 @@
       "id": "impl:apps/majordomus-cli/src/quality/rustdoc.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/quality/rustdoc.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/reasoning/availability.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/reasoning/availability.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/reasoning/check.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/reasoning/check.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/reasoning/policy.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/reasoning/policy.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/reasoning/state.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/reasoning/state.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/reasoning/store.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/reasoning/store.rs",
       "route": null,
       "external": false
     },
@@ -2167,6 +2471,13 @@
       "external": false
     },
     {
+      "id": "impl:lib/derive.sh",
+      "kind": "implementation",
+      "label": "lib/derive.sh",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:lib/doctor.sh",
       "kind": "implementation",
       "label": "lib/doctor.sh",
@@ -2212,6 +2523,13 @@
       "id": "impl:lib/init.sh",
       "kind": "implementation",
       "label": "lib/init.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/knowledge.sh",
+      "kind": "implementation",
+      "label": "lib/knowledge.sh",
       "route": null,
       "external": false
     },
@@ -2405,6 +2723,13 @@
       "external": false
     },
     {
+      "id": "impl:scripts/lib/advisors/contract.mjs",
+      "kind": "implementation",
+      "label": "scripts/lib/advisors/contract.mjs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:scripts/lib/executable-site.jq",
       "kind": "implementation",
       "label": "scripts/lib/executable-site.jq",
@@ -2461,6 +2786,13 @@
       "external": false
     },
     {
+      "id": "impl:share/advisors.yaml",
+      "kind": "implementation",
+      "label": "share/advisors.yaml",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:share/commands.yaml",
       "kind": "implementation",
       "label": "share/commands.yaml",
@@ -2471,6 +2803,13 @@
       "id": "impl:share/install/install.sh.in",
       "kind": "implementation",
       "label": "share/install/install.sh.in",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:share/providers.yaml",
+      "kind": "implementation",
+      "label": "share/providers.yaml",
       "route": null,
       "external": false
     },
@@ -2685,6 +3024,13 @@
       "external": false
     },
     {
+      "id": "source:docs/KNOWLEDGE.md",
+      "kind": "source",
+      "label": "docs/KNOWLEDGE.md",
+      "route": "/docs/knowledge/",
+      "external": false
+    },
+    {
       "id": "source:docs/MCP.md",
       "kind": "source",
       "label": "docs/MCP.md",
@@ -2717,6 +3063,13 @@
       "kind": "source",
       "label": "docs/PRODUCT.md",
       "route": "/docs/product/",
+      "external": false
+    },
+    {
+      "id": "source:docs/REASONING.md",
+      "kind": "source",
+      "label": "docs/REASONING.md",
+      "route": "/docs/reasoning/",
       "external": false
     },
     {
@@ -2844,6 +3197,13 @@
       "label": "apps/majordomus-cli/tests/http_serve.rs",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/http_serve.rs"
+    },
+    {
+      "id": "test:apps/majordomus-cli/tests/knowledge_base.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/knowledge_base.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/knowledge_base.rs"
     },
     {
       "id": "test:apps/majordomus-cli/tests/lease_lost.rs",
@@ -3061,6 +3421,13 @@
       "label": "test/cases/18_doctrine_wiring.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/18_doctrine_wiring.sh"
+    },
+    {
+      "id": "test:test/cases/200_generic_mcp_episode.sh",
+      "kind": "test",
+      "label": "test/cases/200_generic_mcp_episode.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/200_generic_mcp_episode.sh"
     },
     {
       "id": "test:test/cases/20_checkpoint.sh",
@@ -3287,11 +3654,46 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/490_rustdoc_new_module.sh"
     },
     {
+      "id": "test:test/cases/492_rustdoc_module_links.sh",
+      "kind": "test",
+      "label": "test/cases/492_rustdoc_module_links.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/492_rustdoc_module_links.sh"
+    },
+    {
+      "id": "test:test/cases/493_mesh_compaction_keeps_what_is_live.sh",
+      "kind": "test",
+      "label": "test/cases/493_mesh_compaction_keeps_what_is_live.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/493_mesh_compaction_keeps_what_is_live.sh"
+    },
+    {
+      "id": "test:test/cases/494_the_mesh_is_declared_and_held.sh",
+      "kind": "test",
+      "label": "test/cases/494_the_mesh_is_declared_and_held.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/494_the_mesh_is_declared_and_held.sh"
+    },
+    {
       "id": "test:test/cases/49_roadmap_doctrine.sh",
       "kind": "test",
       "label": "test/cases/49_roadmap_doctrine.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/49_roadmap_doctrine.sh"
+    },
+    {
+      "id": "test:test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
+      "kind": "test",
+      "label": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
+    },
+    {
+      "id": "test:test/cases/507_evidence_subjects_are_derived.sh",
+      "kind": "test",
+      "label": "test/cases/507_evidence_subjects_are_derived.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/507_evidence_subjects_are_derived.sh"
     },
     {
       "id": "test:test/cases/50_blocker_across_handover.sh",
@@ -3313,6 +3715,27 @@
       "label": "test/cases/54_session_lifecycle_hooks.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/54_session_lifecycle_hooks.sh"
+    },
+    {
+      "id": "test:test/cases/563_knowledge_is_derived_at_the_boundary.sh",
+      "kind": "test",
+      "label": "test/cases/563_knowledge_is_derived_at_the_boundary.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/563_knowledge_is_derived_at_the_boundary.sh"
+    },
+    {
+      "id": "test:test/cases/564_knowledge_derivation_is_idempotent.sh",
+      "kind": "test",
+      "label": "test/cases/564_knowledge_derivation_is_idempotent.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/564_knowledge_derivation_is_idempotent.sh"
+    },
+    {
+      "id": "test:test/cases/565_knowledge_switch_and_failure_leave_evidence.sh",
+      "kind": "test",
+      "label": "test/cases/565_knowledge_switch_and_failure_leave_evidence.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/565_knowledge_switch_and_failure_leave_evidence.sh"
     },
     {
       "id": "test:test/cases/56_derived_current_gate.sh",
@@ -3357,6 +3780,27 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/69_context_documents.sh"
     },
     {
+      "id": "test:test/cases/707_knowledge_check_refuses_malformed_records.sh",
+      "kind": "test",
+      "label": "test/cases/707_knowledge_check_refuses_malformed_records.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/707_knowledge_check_refuses_malformed_records.sh"
+    },
+    {
+      "id": "test:test/cases/708_health_sees_a_stopped_knowledge_writer.sh",
+      "kind": "test",
+      "label": "test/cases/708_health_sees_a_stopped_knowledge_writer.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/708_health_sees_a_stopped_knowledge_writer.sh"
+    },
+    {
+      "id": "test:test/cases/709_knowledge_promotion_is_an_act.sh",
+      "kind": "test",
+      "label": "test/cases/709_knowledge_promotion_is_an_act.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/709_knowledge_promotion_is_an_act.sh"
+    },
+    {
       "id": "test:test/cases/70_context_impact.sh",
       "kind": "test",
       "label": "test/cases/70_context_impact.sh",
@@ -3364,11 +3808,74 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/70_context_impact.sh"
     },
     {
+      "id": "test:test/cases/710_briefing_names_the_candidates.sh",
+      "kind": "test",
+      "label": "test/cases/710_briefing_names_the_candidates.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/710_briefing_names_the_candidates.sh"
+    },
+    {
+      "id": "test:test/cases/711_candidates_are_reviewed_not_accumulated.sh",
+      "kind": "test",
+      "label": "test/cases/711_candidates_are_reviewed_not_accumulated.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/711_candidates_are_reviewed_not_accumulated.sh"
+    },
+    {
       "id": "test:test/cases/72_rust_mcp.sh",
       "kind": "test",
       "label": "test/cases/72_rust_mcp.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/72_rust_mcp.sh"
+    },
+    {
+      "id": "test:test/cases/730_reasoning_works_with_no_advisor.sh",
+      "kind": "test",
+      "label": "test/cases/730_reasoning_works_with_no_advisor.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/730_reasoning_works_with_no_advisor.sh"
+    },
+    {
+      "id": "test:test/cases/731_advisor_transport_contract.sh",
+      "kind": "test",
+      "label": "test/cases/731_advisor_transport_contract.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/731_advisor_transport_contract.sh"
+    },
+    {
+      "id": "test:test/cases/732_disagreement_is_settled_by_evidence.sh",
+      "kind": "test",
+      "label": "test/cases/732_disagreement_is_settled_by_evidence.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/732_disagreement_is_settled_by_evidence.sh"
+    },
+    {
+      "id": "test:test/cases/733_advisor_failure_and_recovery.sh",
+      "kind": "test",
+      "label": "test/cases/733_advisor_failure_and_recovery.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/733_advisor_failure_and_recovery.sh"
+    },
+    {
+      "id": "test:test/cases/734_reasoning_survives_the_session.sh",
+      "kind": "test",
+      "label": "test/cases/734_reasoning_survives_the_session.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/734_reasoning_survives_the_session.sh"
+    },
+    {
+      "id": "test:test/cases/735_a_new_advisor_needs_no_consumer_edit.sh",
+      "kind": "test",
+      "label": "test/cases/735_a_new_advisor_needs_no_consumer_edit.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/735_a_new_advisor_needs_no_consumer_edit.sh"
+    },
+    {
+      "id": "test:test/cases/736_reasoning_check_refuses_drift.sh",
+      "kind": "test",
+      "label": "test/cases/736_reasoning_check_refuses_drift.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/736_reasoning_check_refuses_drift.sh"
     },
     {
       "id": "test:test/cases/76_capabilities_projections.sh",
@@ -4271,6 +4778,16 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:connection-episode",
+      "target": "source:docs/MCP.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:provider-capability-evidence",
+      "target": "source:docs/CONCEPTS.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:adr-catalogue",
       "target": "source:docs/SCHEMAS.md",
       "kind": "specified_by"
@@ -4322,6 +4839,11 @@
     },
     {
       "source": "claim:rustdoc-verified-live",
+      "target": "source:docs/RUSTDOC.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:rustdoc-referenced",
       "target": "source:docs/RUSTDOC.md",
       "kind": "specified_by"
     },
@@ -4386,6 +4908,16 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:evidence-subjects-are-derived",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:evidence-subject-commands-agree-with-the-command-pages",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:rule-exemption-carries-its-reason",
       "target": "source:docs/DOCTRINE.md",
       "kind": "specified_by"
@@ -4426,6 +4958,21 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:evidence-judged-at-the-presented-revision",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:evidence-a-skip-is-not-run",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:evidence-a-failure-outranks-an-absence",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:mesh-off-by-default",
       "target": "source:docs/MESH.md",
       "kind": "specified_by"
@@ -4461,6 +5008,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:mesh-compaction-keeps-what-is-live",
+      "target": "source:docs/MESH.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:mesh-network-acceptance",
       "target": "source:docs/MESH.md",
       "kind": "specified_by"
@@ -4468,6 +5020,11 @@
     {
       "source": "claim:mesh-observation-not-authority",
       "target": "source:.ai/repo/rules/project/mesh-is-observation-not-authority.v1.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:mesh-declared-is-held",
+      "target": "source:docs/MESH.md",
       "kind": "specified_by"
     },
     {
@@ -4483,6 +5040,51 @@
     {
       "source": "claim:models-no-secret-fields",
       "target": "source:docs/MODELS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:knowledge-derived-at-the-boundary",
+      "target": "source:docs/KNOWLEDGE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:knowledge-derivation-is-idempotent",
+      "target": "source:docs/KNOWLEDGE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:knowledge-failure-is-recorded",
+      "target": "source:docs/KNOWLEDGE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:knowledge-integrity",
+      "target": "source:docs/KNOWLEDGE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:knowledge-writer-observed",
+      "target": "source:docs/KNOWLEDGE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:knowledge-promotion-is-an-act",
+      "target": "source:docs/KNOWLEDGE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:briefing-names-candidates",
+      "target": "source:docs/KNOWLEDGE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:candidates-reviewed-not-accumulated",
+      "target": "source:docs/KNOWLEDGE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:knowledge-served-on-every-surface",
+      "target": "source:docs/KNOWLEDGE.md",
       "kind": "specified_by"
     },
     {
@@ -4508,6 +5110,41 @@
     {
       "source": "claim:a-skipped-case-is-not-a-proof",
       "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:reasoning-works-with-no-advisor",
+      "target": "source:docs/REASONING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:advisor-transports-share-one-contract",
+      "target": "source:docs/REASONING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:advice-is-weighed-not-counted",
+      "target": "source:docs/REASONING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:advisor-failure-is-recorded-and-recovers",
+      "target": "source:docs/REASONING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:reasoning-survives-the-session",
+      "target": "source:docs/REASONING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:advisors-are-declared-once",
+      "target": "source:docs/REASONING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:review-is-never-fabricated",
+      "target": "source:docs/REASONING.md",
       "kind": "specified_by"
     },
     {
@@ -5191,6 +5828,16 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:connection-episode",
+      "target": "impl:apps/majordomus-cli/src/episodes.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:provider-capability-evidence",
+      "target": "impl:share/providers.yaml",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:adr-catalogue",
       "target": "impl:lib/adr.sh",
       "kind": "implemented_by"
@@ -5243,6 +5890,11 @@
     {
       "source": "claim:rustdoc-verified-live",
       "target": "impl:scripts/pages",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:rustdoc-referenced",
+      "target": "impl:apps/majordomus-cli/src/site.rs",
       "kind": "implemented_by"
     },
     {
@@ -5306,6 +5958,16 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:evidence-subjects-are-derived",
+      "target": "impl:apps/majordomus-cli/src/evidence/subject.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:evidence-subject-commands-agree-with-the-command-pages",
+      "target": "impl:apps/majordomus-cli/src/evidence/subject.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:rule-exemption-carries-its-reason",
       "target": "impl:scripts/ci/rule-proof-check",
       "kind": "implemented_by"
@@ -5346,6 +6008,21 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:evidence-judged-at-the-presented-revision",
+      "target": "impl:apps/majordomus-cli/src/evidence/freshness.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:evidence-a-skip-is-not-run",
+      "target": "impl:apps/majordomus-cli/src/evidence/freshness.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:evidence-a-failure-outranks-an-absence",
+      "target": "impl:apps/majordomus-cli/src/evidence/freshness.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:mesh-off-by-default",
       "target": "impl:apps/majordomus-cli/src/shared.rs",
       "kind": "implemented_by"
@@ -5381,6 +6058,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:mesh-compaction-keeps-what-is-live",
+      "target": "impl:apps/majordomus-cli/src/mesh/journal.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:mesh-network-acceptance",
       "target": "impl:test/mesh-lab/run",
       "kind": "implemented_by"
@@ -5388,6 +6070,11 @@
     {
       "source": "claim:mesh-observation-not-authority",
       "target": "impl:apps/majordomus-cli/src/mesh/trust.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:mesh-declared-is-held",
+      "target": "impl:apps/majordomus-cli/src/mesh/doctor.rs",
       "kind": "implemented_by"
     },
     {
@@ -5403,6 +6090,51 @@
     {
       "source": "claim:models-no-secret-fields",
       "target": "impl:apps/majordomus-cli/src/models/mod.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:knowledge-derived-at-the-boundary",
+      "target": "impl:lib/knowledge.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:knowledge-derivation-is-idempotent",
+      "target": "impl:lib/knowledge.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:knowledge-failure-is-recorded",
+      "target": "impl:lib/capture.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:knowledge-integrity",
+      "target": "impl:lib/knowledge.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:knowledge-writer-observed",
+      "target": "impl:lib/knowledge.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:knowledge-promotion-is-an-act",
+      "target": "impl:lib/knowledge.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:briefing-names-candidates",
+      "target": "impl:lib/derive.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:candidates-reviewed-not-accumulated",
+      "target": "impl:lib/knowledge.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:knowledge-served-on-every-surface",
+      "target": "impl:apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
       "kind": "implemented_by"
     },
     {
@@ -5428,6 +6160,41 @@
     {
       "source": "claim:a-skipped-case-is-not-a-proof",
       "target": "impl:test/run.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:reasoning-works-with-no-advisor",
+      "target": "impl:apps/majordomus-cli/src/reasoning/policy.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:advisor-transports-share-one-contract",
+      "target": "impl:scripts/lib/advisors/contract.mjs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:advice-is-weighed-not-counted",
+      "target": "impl:apps/majordomus-cli/src/reasoning/store.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:advisor-failure-is-recorded-and-recovers",
+      "target": "impl:apps/majordomus-cli/src/reasoning/availability.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:reasoning-survives-the-session",
+      "target": "impl:apps/majordomus-cli/src/reasoning/state.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:advisors-are-declared-once",
+      "target": "impl:share/advisors.yaml",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:review-is-never-fabricated",
+      "target": "impl:apps/majordomus-cli/src/reasoning/check.rs",
       "kind": "implemented_by"
     },
     {
@@ -6111,6 +6878,16 @@
       "kind": "proved_by"
     },
     {
+      "source": "claim:connection-episode",
+      "target": "test:test/cases/200_generic_mcp_episode.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:provider-capability-evidence",
+      "target": "test:test/cases/200_generic_mcp_episode.sh",
+      "kind": "proved_by"
+    },
+    {
       "source": "claim:adr-catalogue",
       "target": "test:test/cases/99_adr.sh",
       "kind": "proved_by"
@@ -6163,6 +6940,11 @@
     {
       "source": "claim:rustdoc-verified-live",
       "target": "test:test/cases/487_rustdoc_staleness.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:rustdoc-referenced",
+      "target": "test:test/cases/492_rustdoc_module_links.sh",
       "kind": "proved_by"
     },
     {
@@ -6226,6 +7008,16 @@
       "kind": "proved_by"
     },
     {
+      "source": "claim:evidence-subjects-are-derived",
+      "target": "test:test/cases/507_evidence_subjects_are_derived.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-subject-commands-agree-with-the-command-pages",
+      "target": "test:test/cases/507_evidence_subjects_are_derived.sh",
+      "kind": "proved_by"
+    },
+    {
       "source": "claim:rule-exemption-carries-its-reason",
       "target": "test:test/cases/125_rule_proof.sh",
       "kind": "proved_by"
@@ -6266,6 +7058,21 @@
       "kind": "proved_by"
     },
     {
+      "source": "claim:evidence-judged-at-the-presented-revision",
+      "target": "test:test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-a-skip-is-not-run",
+      "target": "test:test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-a-failure-outranks-an-absence",
+      "target": "test:test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
+      "kind": "proved_by"
+    },
+    {
       "source": "claim:mesh-off-by-default",
       "target": "test:apps/majordomus-cli/tests/mesh.rs",
       "kind": "proved_by"
@@ -6301,6 +7108,11 @@
       "kind": "proved_by"
     },
     {
+      "source": "claim:mesh-compaction-keeps-what-is-live",
+      "target": "test:test/cases/493_mesh_compaction_keeps_what_is_live.sh",
+      "kind": "proved_by"
+    },
+    {
       "source": "claim:mesh-network-acceptance",
       "target": "test:test/cases/414_mesh_lab_evidence.sh",
       "kind": "proved_by"
@@ -6308,6 +7120,11 @@
     {
       "source": "claim:mesh-observation-not-authority",
       "target": "test:apps/majordomus-cli/tests/mesh.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mesh-declared-is-held",
+      "target": "test:test/cases/494_the_mesh_is_declared_and_held.sh",
       "kind": "proved_by"
     },
     {
@@ -6323,6 +7140,51 @@
     {
       "source": "claim:models-no-secret-fields",
       "target": "test:test/cases/131_models.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:knowledge-derived-at-the-boundary",
+      "target": "test:test/cases/563_knowledge_is_derived_at_the_boundary.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:knowledge-derivation-is-idempotent",
+      "target": "test:test/cases/564_knowledge_derivation_is_idempotent.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:knowledge-failure-is-recorded",
+      "target": "test:test/cases/565_knowledge_switch_and_failure_leave_evidence.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:knowledge-integrity",
+      "target": "test:test/cases/707_knowledge_check_refuses_malformed_records.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:knowledge-writer-observed",
+      "target": "test:test/cases/708_health_sees_a_stopped_knowledge_writer.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:knowledge-promotion-is-an-act",
+      "target": "test:test/cases/709_knowledge_promotion_is_an_act.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:briefing-names-candidates",
+      "target": "test:test/cases/710_briefing_names_the_candidates.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:candidates-reviewed-not-accumulated",
+      "target": "test:test/cases/711_candidates_are_reviewed_not_accumulated.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:knowledge-served-on-every-surface",
+      "target": "test:apps/majordomus-cli/tests/knowledge_base.rs",
       "kind": "proved_by"
     },
     {
@@ -6348,6 +7210,41 @@
     {
       "source": "claim:a-skipped-case-is-not-a-proof",
       "target": "test:test/cases/413_a_skipped_case_is_not_a_proof.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:reasoning-works-with-no-advisor",
+      "target": "test:test/cases/730_reasoning_works_with_no_advisor.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:advisor-transports-share-one-contract",
+      "target": "test:test/cases/731_advisor_transport_contract.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:advice-is-weighed-not-counted",
+      "target": "test:test/cases/732_disagreement_is_settled_by_evidence.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:advisor-failure-is-recorded-and-recovers",
+      "target": "test:test/cases/733_advisor_failure_and_recovery.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:reasoning-survives-the-session",
+      "target": "test:test/cases/734_reasoning_survives_the_session.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:advisors-are-declared-once",
+      "target": "test:test/cases/735_a_new_advisor_needs_no_consumer_edit.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:review-is-never-fabricated",
+      "target": "test:test/cases/736_reasoning_check_refuses_drift.sh",
       "kind": "proved_by"
     }
   ]

@@ -1,7 +1,7 @@
 +++
 title = "The crate's reference"
 description = "the crate's rustdoc reference at `/rustdoc`: produced by the invocation its gate proves, declared as a web surface from the crate, served by `majordomus serve`, checked item by item against the crate's own inventory, composed into the site from the topology, deployed with it and verified at the public URL; local use, the gates and cases, and what to run when a page, a link, an asset or the source revision is wrong"
-weight = 59
+weight = 64
 [extra]
 source = "docs/RUSTDOC.md"
 +++
@@ -15,7 +15,7 @@ is produced, served, checked, published and verified — and what to do when one
 stages fails.
 
 The decision is
-[ADR 86](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0086-the-crates-rustdoc-is-a-published-surface-produced-by-its-gate-and-verified-live.md);
+[ADR 86](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0086-the-crates-rustdoc-is-a-published-surface-produced-by-its-gate-and-verified-live.md);
 the rule is `project.the-crate-reference-is-published`. Behaviour as implemented and tested;
 where this document and the scripts disagree, the document is wrong and changes in the same
 commit.
@@ -167,6 +167,20 @@ are pruned from it, because their markup is the toolchain's; `quality rustdoc` j
 link from a site page into `/rustdoc/` is decided by `scripts/ci/link-check` against the
 composed tree, as an internal file like any other.
 
+**References from the site.** Each builtin module's page under `/registry/modules/` links the
+page the reference documents that module on, as "crate reference" in its provenance. The mapping
+from a module to its page is the check's own: `quality::rustdoc::module_routes` keeps the modules
+the crate exports and derives each one's page from the crate's inventory — the routes the report
+lists under `modules`, each of which the check requires of the tree — and `majordomus generate`
+carries that answer into the site's registry dataset as `rustdoc` on each module (the surface,
+the module's crate path, the page within the surface). A module rustdoc gives no page, one
+declared `pub(crate)` or private, carries none, so no link is made that could answer `404`. The
+template derives no route: it joins that field with the surfaces the build composed, which
+`scripts/site-build` records with their mounts in `data/build.json`, and links through `get_url`
+at the mount the build composed the reference at. A build whose topology lacks the reference, or
+a plain `zola serve` with no `build.json`, links nothing. The Cockpit's module pages are a
+separate renderer and are not covered here.
+
 ## Local usage
 
 ```bash
@@ -198,13 +212,13 @@ stale after any commit, and the check says so.
 | `site-build` gate: `scripts/site-build` | the `site` job, and the publication | a published surface whose artifact is absent; a mount the site itself fills |
 | `site-build` gate: `scripts/site-check`, section 13m | the `site` job, and the publication | a composed surface missing from the build, carrying no `surface.json`, declaring another id or mount than the topology, or built from another commit than the build; `/build.json` disagreeing with it |
 | `scripts/ci/link-check` | run by `site-check` | a link from a site page into `/rustdoc/` that the composed tree does not hold |
-| cases 486–490 | the shell suite | each stage broken on purpose, and its refusal observed |
-| `quality::rustdoc` and `web::discover` tests, `tests/http_serve.rs` | `cargo test` | one fixture per way of failing; the declaration present before the producer runs; the tree served whole over a real socket |
+| cases 486–490 and 492 | the shell suite | each stage broken on purpose, and its refusal observed |
+| `quality::rustdoc`, `web::discover` and `site` tests, `tests/http_serve.rs` | `cargo test` | one fixture per way of failing; the declaration present before the producer runs; a module the crate does not export linked nowhere; the tree served whole over a real socket |
 
 </div>
 
 
-The five cases, one stage each:
+The six cases, one stage each:
 
 <div class="overflow-x-auto" tabindex="0">
 
@@ -215,14 +229,16 @@ The five cases, one stage each:
 | `488` | discoverable and reachable | the surface before the producer runs; `/rustdoc/` over a served socket |
 | `489` | deployment | the composed site deployed to a bare remote, and what the published branch carries |
 | `490` | completeness | a module added to a fixture crate, which becomes a required page with nothing listed |
+| `492` | referenced | every builtin module's site page against the check's module routes, with the reference composed and without it |
 
 </div>
 
 
 ```bash
 bash test/run.sh 486_rustdoc_composition 487_rustdoc_staleness 488_rustdoc_discoverable \
-  489_rustdoc_deploy 490_rustdoc_new_module
+  489_rustdoc_deploy 490_rustdoc_new_module 492_rustdoc_module_links
 cargo test --manifest-path apps/majordomus-cli/Cargo.toml quality::rustdoc
+cargo test --manifest-path apps/majordomus-cli/Cargo.toml site::tests
 cargo test --manifest-path apps/majordomus-cli/Cargo.toml web::discover
 cargo test --manifest-path apps/majordomus-cli/Cargo.toml --test http_serve
 ```

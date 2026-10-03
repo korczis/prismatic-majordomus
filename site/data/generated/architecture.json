@@ -44,8 +44,8 @@
       "kind": "module",
       "label": "knowledge",
       "command": "knowledge",
-      "summary": "the compiled index over what this repository states",
-      "read_only": true,
+      "summary": "the compiled index over what this repository states, and the records it derives",
+      "read_only": null,
       "route": "/commands/knowledge/",
       "external": false
     },
@@ -580,6 +580,16 @@
       "external": false
     },
     {
+      "id": ".ai/repo/knowledge/candidates/README.md",
+      "kind": "artifact",
+      "label": "repo/knowledge/candidates/README.md",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": ".ai/repo/workflows",
       "kind": "artifact",
       "label": "repo/workflows",
@@ -830,6 +840,16 @@
       "external": false
     },
     {
+      "id": "lib/sha256.sh",
+      "kind": "module",
+      "label": "sha256",
+      "command": null,
+      "summary": null,
+      "read_only": null,
+      "route": null,
+      "external": false
+    },
+    {
       "id": "lib/update.sh",
       "kind": "module",
       "label": "update",
@@ -979,6 +999,16 @@
     {
       "source": "lib/init.sh",
       "target": ".ai/repo/scope.yaml",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/knowledge.sh",
+      "target": ".ai/local/state/current.yaml",
+      "kind": "reads"
+    },
+    {
+      "source": "lib/knowledge.sh",
+      "target": ".ai/local/state/sessions-open",
       "kind": "reads"
     },
     {
@@ -1218,6 +1248,11 @@
     },
     {
       "source": "lib/capture.sh",
+      "target": "lib/knowledge.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/capture.sh",
       "target": "lib/rust_bin.sh",
       "kind": "sources"
     },
@@ -1254,6 +1289,11 @@
     {
       "source": "lib/check.sh",
       "target": "lib/gates.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/check.sh",
+      "target": "lib/knowledge.sh",
       "kind": "sources"
     },
     {
@@ -1313,6 +1353,11 @@
     },
     {
       "source": "lib/context.sh",
+      "target": "lib/knowledge.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/context.sh",
       "target": "lib/prompt.sh",
       "kind": "sources"
     },
@@ -1333,7 +1378,17 @@
     },
     {
       "source": "lib/derive.sh",
+      "target": "lib/knowledge.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/derive.sh",
       "target": "lib/question.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/derive.sh",
+      "target": "lib/rust_bin.sh",
       "kind": "sources"
     },
     {
@@ -1398,6 +1453,11 @@
     },
     {
       "source": "lib/doctor.sh",
+      "target": "lib/rust_bin.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/doctor.sh",
       "target": "lib/session.sh",
       "kind": "sources"
     },
@@ -1447,6 +1507,16 @@
       "kind": "sources"
     },
     {
+      "source": "lib/knowledge.sh",
+      "target": "lib/rust_bin.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/knowledge.sh",
+      "target": "lib/session.sh",
+      "kind": "sources"
+    },
+    {
       "source": "lib/migrate.sh",
       "target": "lib/init.sh",
       "kind": "sources"
@@ -1488,6 +1558,16 @@
     },
     {
       "source": "lib/session.sh",
+      "target": "lib/derive.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/session.sh",
+      "target": "lib/knowledge.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/session.sh",
       "target": "lib/project.sh",
       "kind": "sources"
     },
@@ -1504,6 +1584,11 @@
     {
       "source": "lib/skills.sh",
       "target": "lib/knowledge.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/skills.sh",
+      "target": "lib/rust_bin.sh",
       "kind": "sources"
     },
     {
@@ -1733,6 +1818,11 @@
     },
     {
       "source": "lib/init.sh",
+      "target": ".ai/repo/knowledge/candidates/README.md",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/init.sh",
       "target": ".ai/repo/knowledge/curated/README.md",
       "kind": "uses"
     },
@@ -1793,7 +1883,17 @@
     },
     {
       "source": "lib/knowledge.sh",
+      "target": ".ai/local/state/completed",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/knowledge.sh",
       "target": ".ai/repo/knowledge/sources.yaml",
+      "kind": "uses"
+    },
+    {
+      "source": "lib/knowledge.sh",
+      "target": ".ai/repo/policy.yaml",
       "kind": "uses"
     },
     {

@@ -1,4 +1,36 @@
 # Sourced by every test case. Provides expect_exit / expect_grep / expect_no_grep.
+
+# A case runs only in the fixture the runner made for it. Every case writes into the
+# directory it starts in (`printf ... > docs/CLAIMS.yaml`, `git add -A`, `git commit`),
+# because test/run.sh starts it in $T, a disposable repository of its own. Started by hand
+# from a checkout, it writes into that checkout. On 2026-09-28 the fixture of case 506,
+# run with a checkout as its working directory, emptied that checkout's claims matrix,
+# replaced its toolchain pin, added two stub files and staged all four; only the checkout's
+# own pre-commit hook stopped the `git commit -qm fixture` behind them.
+#
+# So before a case's first line runs: $T and $ROOT are set, the case stands in $T, and $T
+# is a fixture rather than a checkout of this repository, so it is neither $ROOT nor inside
+# it, and it has no test/run.sh. Setting T to the checkout is the first thing a caller tries
+# when this refuses, and it is refused too. The other callers that load this library
+# themselves (scripts/shell-coverage, case 35, the harness of case 413, and the use-case
+# runner in lib/usecase.sh, whose scenario setups use its helpers) set T and stand in it,
+# as test/run.sh does. Case 94 proves the refusal. The cost is two subshells.
+mj_case_in_its_fixture() {
+  local here fixture root
+  [ -n "${T:-}" ] && [ -n "${ROOT:-}" ] || return 1
+  here="$(pwd -P)" || return 1
+  fixture="$(cd "$T" 2>/dev/null && pwd -P)" || return 1
+  root="$(cd "$ROOT" 2>/dev/null && pwd -P)" || return 1
+  [ "$here" = "$fixture" ] || return 1
+  case "$fixture/" in "$root/"*) return 1 ;; esac
+  [ ! -e "$fixture/test/run.sh" ]
+}
+mj_case_in_its_fixture || {
+  printf '    run this case through test/run.sh: a case writes its fixture into the directory it starts in, and %s is not a fixture test/run.sh made (T=%s)\n' \
+    "$(pwd)" "${T:-unset}" >&2
+  exit 1
+}
+
 LAST_OUT=""
 
 # The exit status a case uses to say it declined to run. It is not 0 and it is not 1: the
@@ -77,12 +109,15 @@ run_quiet() {
 # octal permission bits of a file, GNU stat first (BSD stat has no -c and fails), then BSD
 file_mode() { stat -c %a "$1" 2>/dev/null || stat -f %Lp "$1"; }
 
+# SHA-256 for the cases, from the tool's own lib/sha256.sh: mj_sha256sum (files, or stdin),
+# mj_sha256_xargs (paths on stdin) and mj_sha256_hex. sha256sum, else openssl; never shasum,
+# which on macOS is a Perl script (case 575).
+# shellcheck source=../lib/sha256.sh
+. "$ROOT/lib/sha256.sh"
+
 # The SHA-256 of a file, for a case that must prove a file did not change rather than that a
-# command said it did not. sha256sum on Linux, shasum on macOS.
-sha256_of_file() {
-  if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | cut -d' ' -f1
-  else shasum -a 256 "$1" | cut -d' ' -f1; fi
-}
+# command said it did not.
+sha256_of_file() { mj_sha256_hex "$1"; }
 
 # The Rust executable a case drives. MAJORDOMUS_BIN names a prebuilt one (CI hands the
 # artifact of its rust job to a later job this way, a person points at a release build);
@@ -448,7 +483,7 @@ rustdoc_fixture_crate() {
   version="$(sed -n 's/^version = "\(.*\)"/\1/p' "$ROOT/$c/Cargo.toml" | head -n 1)"
   mkdir -p "$c/src" scripts lib
   cp "$ROOT/scripts/rust-check" scripts/rust-check
-  cp "$ROOT/lib/rust_bin.sh" lib/rust_bin.sh
+  cp "$ROOT/lib/rust_bin.sh" "$ROOT/lib/sha256.sh" lib/
   cp "$ROOT/rust-toolchain.toml" rust-toolchain.toml
   printf 'target/\n' > .gitignore
   cat > "$c/Cargo.toml" <<TOML
@@ -504,4 +539,55 @@ rustdoc_fixture_produce() {
     printf '    scripts/rust-check --doc failed on the fixture crate:\n' >&2
     sed 's/^/    | /' "$log" >&2; rm -f "$log"; return 1; }
   rm -f "$log"
+}
+
+# ---------------------------------------------------------------- reasoning (ADR 0098)
+# A fixture repository for the reasoning cases, and a way to run the executable and the
+# transport in an environment that holds exactly what the case gives it: `env -i`, a PATH
+# with git, node and a directory of stubs the case fills ($RZ_BIN), and no credential. On a
+# machine where every advisor is installed the zero-advisor case must still be zero, so
+# nothing of the caller's PATH or environment leaks in.
+#   reasoning_fixture            R (the repository, committed), RZ_BIN (empty stub dir)
+#   rz <args>                    the executable in $R, with $RZ_ENV (space-separated
+#                                NAME=value words) added to the environment
+#   rz_consult <args>            scripts/advisor-consult in $R, the same environment, with
+#                                the fixture adapters of test/fixtures/advisors
+#   rz_stub <name>               an executable named <name> on the isolated PATH
+#   rz_record <json>             record one reasoning step; prints its id
+reasoning_fixture() {
+  R="$T/repo"
+  fixture_repo "$R" >/dev/null
+  git -C "$R" init -q .
+  git -C "$R" config user.email t@example.com
+  git -C "$R" config user.name t
+  git -C "$R" add -A >/dev/null
+  git -C "$R" commit -qm fixture >/dev/null
+  RZ_BIN="$T/rz-bin"; mkdir -p "$RZ_BIN"
+  ln -sf "$(command -v git)" "$RZ_BIN/git"
+  # A skipped case reports ok, so on a CI runner a missing node is a failure, not a skip.
+  local node; node="$(node -p 'process.execPath' 2>/dev/null)" || {
+    [ -z "${CI:-}" ] || { echo "    node is required on CI: the reasoning transport cannot run"; exit 1; }
+    skip "no node"; }
+  ln -sf "$node" "$RZ_BIN/node"
+  RZ_ENV=""
+}
+rz_env() {
+  # shellcheck disable=SC2086 # RZ_ENV is a list of NAME=value words by contract
+  env -i HOME="$T" TMPDIR="${TMPDIR:-/tmp}" PATH="$RZ_BIN:/usr/bin:/bin" LANG=C.UTF-8 \
+    MAJORDOMUS_SHARE="$R/share" MAJORDOMUS_CLI="$RB" $RZ_ENV "$@"
+}
+rz() { ( cd "$R" && rz_env "$RB" "$@" ); }
+rz_consult() { ( cd "$R" && rz_env node "$R/scripts/advisor-consult" --adapters "$ROOT/test/fixtures/advisors" "$@" ); }
+rz_stub() { printf '#!/bin/sh\nexit 0\n' > "$RZ_BIN/$1"; chmod +x "$RZ_BIN/$1"; }
+rz_record() {
+  local out err="$T/rz_record.err"
+  out="$(printf '%s' "$1" | rz reasoning record --format json 2> "$err")" \
+    || { printf '    the record was refused: %s\n    input: %s\n' "$(cat "$err")" "$1" >&2; return 1; }
+  printf '%s' "$out" | jq -r '.record.id'
+}
+#   rz_json <args>               the executable's JSON answer alone (stdout); its stderr is
+#                                shown, and the case fails, when it exits non-zero
+rz_json() {
+  local err="$T/rz_json.err"
+  rz "$@" --format json 2> "$err" || { printf '    rz %s failed:\n' "$*" >&2; cat "$err" >&2; return 1; }
 }

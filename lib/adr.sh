@@ -546,41 +546,89 @@ mj_adr_high_water() {
 #
 # Breaking is itself exclusive, under `<lock>.break`: without it, two waiters that both read a
 # dead owner could each remove a lock, and the second removal would take the lock a third
-# proposer had taken in between. Under it, the owner file is read and the lock removed with no
-# other breaker running, and a dead owner cannot release, so nothing else can change the lock
-# between the reading and the removal. The known hole is a container that shares this host's
-# name and not its process table; there a live holder reads as dead.
+# proposer had taken in between.
+#
+# Releasing is exclusive under the same `<lock>.break`, and this is what makes a broken lock
+# the one that was dead. A holder's process ends moments after it releases, so a waiter that
+# read the owner file while the holder still held it, and asked `ps -p` after the holder had
+# released and exited, found a dead pid in a file that no longer described the lock: by then a
+# third proposer had taken the lock and written its own owner, and the waiter removed that
+# live lock. Two proposers were then inside at once, each read the directory before the other
+# had written, and both wrote the same identity (issue #715: two 0005s and two 0006s among
+# eight proposers on a saturated CI runner, where a `ps` spawn is slow enough to open the
+# window). With release under `<lock>.break`, the lock cannot change hands while a breaker
+# holds it: the holder cannot release, and nobody else can take a lock that exists. So the
+# owner file a breaker reads under it is the owner of the lock it removes.
+#
+# A waiter asks first without `<lock>.break` and takes it only when the owner looks dead, then
+# asks again under it, so a live lock costs its waiters one `ps` per poll and never holds up
+# its own release. A release removes only a lock whose owner file still names it, so that a
+# proposer can never remove a lock another one holds. The known hole is a container that
+# shares this host's name and not its process table; there a live holder reads as dead.
 MJ_ADR_LOCK_WAIT="${MJ_ADR_LOCK_WAIT:-100}"   # tenths of a second before a live lock is refused
 mj_adr_host() { uname -n 2>/dev/null || printf unknown; }
 mj_adr_lock_take() {
-  local lock="$1" waited=0 owner
+  local lock="$1" waited=0 owner also=""
   while ! mkdir "$lock" 2>/dev/null; do
     mj_adr_lock_break_dead "$lock" && continue
     waited=$((waited + 1))
     if [ "$waited" -gt "$MJ_ADR_LOCK_WAIT" ]; then
       owner="$(cat "$lock/owner" 2>/dev/null)" || owner=""
-      mj_die "$MJ_EX_INTERNAL" "adr propose: the identity lock $(mj_rel "$lock") has been held for too long ($([ -n "$owner" ] && printf 'by %s' "$owner" || printf 'by an owner it does not name')); remove it if no other worker is proposing"
+      # a `<lock>.break` that outlived its breaker stops every break and every release, and
+      # only a person can tell it from a slow one, so the refusal names it as well
+      [ -d "$lock.break" ] \
+        && also=" and $(mj_rel "$lock.break"), which stops a dead holder's lock being broken,"
+      mj_die "$MJ_EX_INTERNAL" "adr propose: the identity lock $(mj_rel "$lock") has been held for too long ($([ -n "$owner" ] && printf 'by %s' "$owner" || printf 'by an owner it does not name')); remove it$also if no other worker is proposing"
     fi
     sleep 0.1 2>/dev/null || sleep 1
   done
-  printf '%s %s\n' "$(mj_adr_host)" "$$" > "$lock/owner"
+  # written beside and moved into place, so a reader sees no owner or the whole owner
+  printf '%s %s\n' "$(mj_adr_host)" "$$" > "$lock/.owner.$$"
+  mv "$lock/.owner.$$" "$lock/owner"
+}
+# 0 when the lock at $1 is held by this process, by its owner file
+mj_adr_lock_mine() {
+  local host pid
+  read -r host pid 2>/dev/null < "$1/owner" && [ "$host" = "$(mj_adr_host)" ] && [ "$pid" = "$$" ]
 }
 mj_adr_lock_release() {
-  rm -f "$1/owner" 2>/dev/null
-  rmdir "$1" 2>/dev/null || true
+  local lock="$1" waited=0
+  until mkdir "$lock.break" 2>/dev/null; do
+    waited=$((waited + 1))
+    if [ "$waited" -gt "$MJ_ADR_LOCK_WAIT" ]; then
+      # Releasing without `<lock>.break` is the race above, so the lock stays. Its owner is
+      # this process, which is about to end, so the next waiter breaks it once the
+      # `<lock>.break` that held this release up is gone.
+      mj_err "warning: adr propose: could not release the identity lock $(mj_rel "$lock") (held up by $(mj_rel "$lock.break")); the next proposer breaks it once this process has ended"
+      return 0
+    fi
+    sleep 0.05 2>/dev/null || sleep 1
+  done
+  if mj_adr_lock_mine "$lock"; then
+    rm -f "$lock/owner" 2>/dev/null
+    rmdir "$lock" 2>/dev/null || true
+  fi
+  rmdir "$lock.break" 2>/dev/null || true
 }
-# 0 when a dead owner's lock was removed, 1 when the lock stands
-mj_adr_lock_break_dead() {
-  local lock="$1" host pid broke=1
-  [ -f "$lock/owner" ] || return 1
-  mkdir "$lock.break" 2>/dev/null || return 1
-  # stderr is redirected before the input: the holder may release between the test above and
-  # this read, and a redirection that fails is reported before any later redirection applies
-  if read -r host pid 2>/dev/null < "$lock/owner" \
+# 0 when the owner file names this host and a pid `ps -p` finds no process for, 1 otherwise
+mj_adr_lock_owner_dead() {
+  local host pid
+  # stderr is redirected before the input: the holder may release at any moment, and a
+  # redirection that fails is reported before any later redirection applies
+  read -r host pid 2>/dev/null < "$1/owner" \
     && [ "$host" = "$(mj_adr_host)" ] \
     && case "$pid" in ''|*[!0-9]*) false ;; *) true ;; esac \
     && ps -p "$$" >/dev/null 2>&1 \
-    && ! ps -p "$pid" >/dev/null 2>&1; then
+    && ! ps -p "$pid" >/dev/null 2>&1
+}
+# 0 when a dead owner's lock was removed, 1 when the lock stands
+mj_adr_lock_break_dead() {
+  local lock="$1" broke=1
+  # unexclusive and therefore only advisory: it decides whether to look again under the break
+  mj_adr_lock_owner_dead "$lock" || return 1
+  mkdir "$lock.break" 2>/dev/null || return 1
+  # authoritative: under `<lock>.break` the lock can be neither released nor taken
+  if mj_adr_lock_owner_dead "$lock"; then
     rm -f "$lock/owner" && rmdir "$lock" 2>/dev/null && broke=0
   fi
   rmdir "$lock.break" 2>/dev/null || true
@@ -903,6 +951,14 @@ mj_adr_propose() {
     printf '## Alternatives rejected\n\nWhat else was considered, and why it was not taken.\n\n'
     printf '## Consequences\n\nWhat this costs, what it forecloses, and what now has to be true.\n'
   } > "$tmp"
+  # Re-validated at the last moment it can be, still under the lock: the lock is this
+  # process's, and nothing in the directory has taken the identity since it was read. Either
+  # failing means two proposers were inside at once, which is the defect of issue #715, and a
+  # refusal is the only answer that does not write a second record at one identity.
+  if ! mj_adr_lock_mine "$lock" || ls "$MJ_ADRS_DIR/$num"-*.md >/dev/null 2>&1; then
+    rm -f "$tmp"
+    mj_die "$MJ_EX_INTERNAL" "adr propose: adr-$num was taken while this proposer held the identity lock $(mj_rel "$lock"), which the lock exists to prevent; nothing was written"
+  fi
   mv "$tmp" "$dest"
   mj_adr_lock_release "$lock"
   trap - EXIT

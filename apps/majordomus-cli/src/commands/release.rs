@@ -124,34 +124,10 @@ fn render_version(args: &ReleaseArgs) -> Result<u8> {
             }
         }
         OutputFormat::Text => {
-            writeln!(out, "declared     {}", report.declared).map_err(Error::Transport)?;
-            writeln!(out, "tool         {}", report.tool).map_err(Error::Transport)?;
-            writeln!(
-                out,
-                "agree        {}",
-                if report.agree { "yes" } else { "NO" }
-            )
-            .map_err(Error::Transport)?;
-            writeln!(
-                out,
-                "last release {}",
-                report.last_release.as_deref().unwrap_or("—")
-            )
-            .map_err(Error::Transport)?;
-            writeln!(out, "commits      {} since it", report.changes.len())
+            // Rendered whole and handed to stdout at once, so a reader that has gone away
+            // is one transport failure, reported — the exit says so, not a success.
+            out.write_all(version_text(&report, &findings).as_bytes())
                 .map_err(Error::Transport)?;
-            writeln!(out, "bump         {}", report.bump).map_err(Error::Transport)?;
-            writeln!(
-                out,
-                "next         {}",
-                report.next.as_deref().unwrap_or("—")
-            )
-            .map_err(Error::Transport)?;
-            for d in &findings {
-                writeln!(out).map_err(Error::Transport)?;
-                writeln!(out, "{} {}: {}", severity_word(d.severity), d.id, d.message)
-                    .map_err(Error::Transport)?;
-            }
         }
     }
     Ok(if report.agree && findings.is_empty() {
@@ -161,11 +137,94 @@ fn render_version(args: &ReleaseArgs) -> Result<u8> {
     })
 }
 
+/// What `release bump` says when it is asked to derive a version and the contract could not
+/// be measured: that there is nothing to derive one from, why — a line per reason, as
+/// `release version` gives them — and how to name the version deliberately instead.
+fn unmeasured_refusal(why: &str) -> String {
+    let mut lines = vec![
+        "release: the public contract cannot be measured here, so there is no bump to derive"
+            .to_string(),
+    ];
+    lines.extend(why.lines().map(|line| format!("         {line}")));
+    lines.push(
+        "         name the version deliberately: `majordomus release bump --level minor` or \
+         `--exact <version>`"
+            .to_string(),
+    );
+    lines.join("\n") + "\n"
+}
+
+/// The text rendering of `release version`: the version where it is stated, the release
+/// it is measured from, the `next` that was decided and who decided it — with the reason,
+/// line by line, when nobody could — and what the commits imply, labelled as the evidence
+/// it is. The findings follow, each after a blank line.
+fn version_text(
+    report: &release::model::VersionReport,
+    findings: &[release::compat::Diagnostic],
+) -> String {
+    use release::model::DecidedBy;
+    let mut lines = vec![
+        format!("declared     {}", report.declared),
+        format!("tool         {}", report.tool),
+        format!("agree        {}", if report.agree { "yes" } else { "NO" }),
+        format!(
+            "last release {}",
+            report.last_release.as_deref().unwrap_or("—")
+        ),
+        format!("commits      {} since it", report.changes.len()),
+        format!(
+            "next         {} ({})",
+            report.next.as_deref().unwrap_or("—"),
+            report.decided_by.phrase()
+        ),
+    ];
+    if let Some(why) = report.contract_unreadable.as_deref() {
+        // One line per error, as `release bump` prints them when it refuses.
+        lines.extend(
+            why.lines()
+                .map(|line| format!("             because {line}")),
+        );
+        lines.push(
+            "             name it deliberately: `majordomus release bump --level <level>` \
+             or `--exact <version>`"
+                .to_string(),
+        );
+    }
+    lines.push(format!("bump         {}", report.bump));
+    lines.push(format!(
+        "             commits imply {}{} ({})",
+        report.bump,
+        report
+            .commits_imply
+            .as_deref()
+            .map(|v| format!(" -> {v}"))
+            .unwrap_or_default(),
+        match report.decided_by {
+            DecidedBy::Contract => "evidence; the contract decides",
+            DecidedBy::ContractAndCommits => {
+                "evidence; the contract requires no release, so a patch carries them"
+            }
+            DecidedBy::Undecided => "evidence only; it does not answer in the contract's place",
+        }
+    ));
+    for d in findings {
+        lines.push(String::new());
+        lines.push(format!(
+            "{} {}: {}",
+            severity_word(d.severity),
+            d.id,
+            d.message
+        ));
+    }
+    lines.join("\n") + "\n"
+}
+
 /// How a diagnostic's severity is printed, the same word in every rendering.
 fn severity_word(severity: Severity) -> &'static str {
     match severity {
         Severity::Error => "ERROR  ",
         Severity::Warning => "WARNING",
+        Severity::Note => "NOTE   ",
     }
 }
 
@@ -397,7 +456,15 @@ fn render_plan(out: &mut impl Write, plan: &VersionPlan, explain: bool) -> Resul
 /// registry, has no baseline — so there is no floor, and the honest thing is to say so
 /// rather than to invent one. A version named explicitly is still written: refusing would
 /// make the command unusable in exactly the repositories that most need to cut a first
-/// release. A *derived* bump is refused, because there is nothing to derive it from.
+/// release. A *derived* bump is refused, because there is nothing to derive it from — and
+/// so is one whose baseline or declared version is not three numbers: the analysis could
+/// only guess, and ADR 0051 refuses an unmeasurable baseline rather than guessing it.
+///
+/// # One selection
+///
+/// With no target named, the version written is [`version::default_target`] of
+/// [`version::select`] — the selection `release version` reports — so the report's `next`
+/// and what this writes are one answer, made once.
 fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: bool) -> Result<u8> {
     // Arguments are validated before anything is read, so a typo is an exit 2 whatever the
     // state of the repository around it.
@@ -418,16 +485,18 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
 
     let app = App::load(&args.repo)?;
     let root = std::path::Path::new(&app.index().repository.root).to_path_buf();
-    // A plan that cannot be made is not an error here — it is the absence of a floor, which
-    // the branches below handle explicitly and report.
-    let plan = plan_of(&app, None).ok();
+    // The one release selection, the same `release version` reports: the analysis and the
+    // version decided from it. A plan that cannot be made is not an error here — it is the
+    // absence of a floor, which the branches below handle explicitly and report.
+    let selection = version::select(&root, &app.context.registry, &app.index().objects);
+    let plan = selection.plan.as_ref().ok();
 
     let stdout = std::io::stdout();
     let mut out = stdout.lock();
 
     // A plan that could not be trusted cannot authorise a write. The diagnostics say which
     // fact was unreadable, and they are printed rather than summarised away.
-    if let Some(p) = &plan {
+    if let Some(p) = plan {
         if p.has_errors() {
             writeln!(
                 out,
@@ -457,44 +526,38 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
 
     // The floor: the baseline raised by what the contract requires. `None` when no baseline
     // could be read — which is a different thing from a floor of zero, and is said so.
-    let floor = plan.as_ref().and_then(|p| {
+    let floor = plan.and_then(|p| {
         version::Version::parse(&p.baseline.version).map(|base| base.raised_to(p.required))
     });
 
     let (to, source) = match (wanted_exact, wanted_level) {
         (Some(v), _) => (v, "explicit --exact"),
         (None, Some(impact)) => (current.raised_to(impact), "explicit --level"),
-        // The measured minimum, which is the whole point: with no argument at all, the
-        // contract decides. With no measurable contract there is nothing to decide from.
-        (None, None) => match floor {
-            Some(f) => (
-                if current >= f { current } else { f },
-                "the public contract",
+        // The selected version, which is the whole point: with no argument at all, the
+        // contract decides — through the one selection `release version` reports, so the
+        // writer raises to exactly the `next` the report states. With no measurable contract
+        // no one decided, and there is nothing to raise to.
+        (None, None) => match version::default_target(&selection.report, current) {
+            Ok(to) => (
+                to,
+                match selection.report.decided_by {
+                    release::model::DecidedBy::ContractAndCommits => {
+                        "the public contract and the commits"
+                    }
+                    _ => "the public contract",
+                },
             ),
-            None => {
-                writeln!(
-                    out,
-                    "release: the public contract cannot be measured here, so there is no bump to derive"
-                )
-                .map_err(Error::Transport)?;
-                writeln!(
-                    out,
-                    "         {}",
-                    plan_refusal(&app).unwrap_or_else(|| "no baseline could be read".into())
-                )
-                .map_err(Error::Transport)?;
-                writeln!(
-                    out,
-                    "         name the version deliberately: `majordomus release bump --level minor` or `--exact <version>`"
-                )
-                .map_err(Error::Transport)?;
+            Err(why) => {
+                out.write_all(unmeasured_refusal(&why).as_bytes())
+                    .map_err(Error::Transport)?;
                 return Ok(EXIT_UNREADABLE);
             }
         },
     };
+    let explicit = wanted_exact.is_some() || wanted_level.is_some();
 
     // An override may go above the floor and never below it.
-    if let (Some(f), Some(p)) = (floor, plan.as_ref()) {
+    if let (Some(f), Some(p)) = (floor, plan) {
         if to < f {
             writeln!(
                 out,
@@ -531,7 +594,7 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
     let to = to.to_string();
     let declared = current.to_string();
     if to == declared {
-        match plan.as_ref() {
+        match plan {
             Some(p) => writeln!(
                 out,
                 "release: the version is already {to}, which covers the {} the contract requires since {}; nothing written",
@@ -544,7 +607,7 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
         return Ok(0);
     }
 
-    match plan.as_ref() {
+    match plan {
         Some(p) => writeln!(
             out,
             "release: {declared} -> {to} ({} required since {}, from {source})",
@@ -557,7 +620,7 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
         ),
     }
     .map_err(Error::Transport)?;
-    if source != "the public contract" {
+    if explicit {
         if let Some(f) = floor {
             // Provenance: a version larger than the measurement is allowed and never silent.
             writeln!(
@@ -567,8 +630,7 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
             .map_err(Error::Transport)?;
         }
     }
-    if plan.as_ref().is_some_and(|p| p.understated) {
-        let p = plan.as_ref().expect("checked just above");
+    if let Some(p) = plan.filter(|p| p.understated) {
         writeln!(
             out,
             "         note: the commit subjects classify this window as {} and the contract moved by {}",
@@ -623,11 +685,125 @@ fn derived_after(to: &str) -> String {
     )
 }
 
-/// Why the plan could not be made, for the message that says a floor is unmeasurable.
-fn plan_refusal(app: &App) -> Option<String> {
-    match plan_of(app, None) {
-        Ok(_) => None,
-        Err(Error::Refused { reason, .. }) => Some(reason),
-        Err(e) => Some(e.to_string()),
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::release::compat::Diagnostic;
+    use crate::release::model::{DecidedBy, VersionReport};
+
+    fn report(decided_by: DecidedBy) -> VersionReport {
+        VersionReport {
+            declared: "0.4.0".into(),
+            tool: "0.4.0".into(),
+            agree: true,
+            last_release: Some("0.4.0".into()),
+            bump: "patch".into(),
+            commits_imply: Some("0.4.1".into()),
+            next: Some("0.5.0".into()),
+            decided_by,
+            contract_unreadable: None,
+            changes: Vec::new(),
+        }
+    }
+
+    /// The report a person reads: the stated version, the release it is measured from, the
+    /// `next` with who decided it, and the commits as evidence — in that order, one write.
+    /// Each severity prints as its own word, padded to one width so the messages after it
+    /// line up; a note is not printed as a warning nor a warning as an error.
+    #[test]
+    fn every_severity_prints_as_its_own_word_at_one_width() {
+        assert_eq!(severity_word(Severity::Error), "ERROR  ");
+        assert_eq!(severity_word(Severity::Warning), "WARNING");
+        assert_eq!(severity_word(Severity::Note), "NOTE   ");
+    }
+
+    #[test]
+    fn the_version_report_names_who_decided_next_and_labels_the_commits_as_evidence() {
+        assert_eq!(
+            version_text(&report(DecidedBy::Contract), &[]),
+            "declared     0.4.0\n\
+             tool         0.4.0\n\
+             agree        yes\n\
+             last release 0.4.0\n\
+             commits      0 since it\n\
+             next         0.5.0 (decided by the contract)\n\
+             bump         patch\n\
+             \x20            commits imply patch -> 0.4.1 (evidence; the contract decides)\n"
+        );
+
+        let mut both = report(DecidedBy::ContractAndCommits);
+        both.next = Some("0.4.1".into());
+        let text = version_text(&both, &[]);
+        assert!(
+            text.contains("next         0.4.1 (decided by the contract and the commits)\n"),
+            "{text}"
+        );
+        assert!(
+            text.contains("(evidence; the contract requires no release, so a patch carries them)"),
+            "{text}"
+        );
+        assert!(!text.contains("because"), "{text}");
+    }
+
+    /// Nobody decided: `next` is a dash, every reason is its own line, the way out is named,
+    /// and the commits are evidence only — never an answer in the contract's place. A
+    /// disagreement and the findings are not hidden behind a decision either.
+    #[test]
+    fn an_undecided_report_says_why_line_by_line_and_the_findings_follow() {
+        let mut undecided = report(DecidedBy::Undecided);
+        undecided.next = None;
+        undecided.commits_imply = None;
+        undecided.agree = false;
+        undecided.last_release = None;
+        undecided.contract_unreadable =
+            Some("the tag v0.4.0 moved\nthe record names another commit".into());
+        let findings = [Diagnostic {
+            id: "projection-stale".into(),
+            severity: Severity::Error,
+            message: "bin/majordomus states 0.3.0".into(),
+        }];
+        let text = version_text(&undecided, &findings);
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(lines[2], "agree        NO");
+        assert_eq!(lines[3], "last release —");
+        assert_eq!(
+            lines[5],
+            "next         — (undecided: the contract could not be measured)"
+        );
+        assert_eq!(lines[6], "             because the tag v0.4.0 moved");
+        assert_eq!(
+            lines[7],
+            "             because the record names another commit"
+        );
+        assert!(lines[8].contains("name it deliberately"), "{text}");
+        assert_eq!(
+            lines[10],
+            "             commits imply patch (evidence only; it does not answer in the \
+             contract's place)"
+        );
+        // each finding after a blank line, with the same severity word every rendering uses
+        assert_eq!(lines[11], "");
+        assert_eq!(
+            lines[12],
+            format!(
+                "{} projection-stale: bin/majordomus states 0.3.0",
+                severity_word(Severity::Error)
+            )
+        );
+        assert_eq!(lines.len(), 13, "{text}");
+        assert!(text.ends_with('\n'));
+    }
+
+    /// The writer's refusal to guess names every reason it was given, a line each, between
+    /// what it refuses and how to name a version instead.
+    #[test]
+    fn the_refusal_to_derive_names_every_reason_and_the_way_out() {
+        assert_eq!(
+            unmeasured_refusal("nothing is published\nno tag names a release"),
+            "release: the public contract cannot be measured here, so there is no bump to \
+             derive\n         nothing is published\n         no tag names a release\n         \
+             name the version deliberately: `majordomus release bump --level minor` or \
+             `--exact <version>`\n"
+        );
     }
 }

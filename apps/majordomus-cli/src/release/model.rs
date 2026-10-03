@@ -384,7 +384,84 @@ pub struct Changelog {
     pub produced_by: Option<ProducedBy>,
 }
 
-/// What the version is, and what the commits since the last release imply it should become.
+/// Who answered a version report's `next`: the public contract, the contract with the
+/// commits — or no one, because the contract could not be measured.
+///
+/// ADR 0051 makes the contract the authority and demotes conventional commits to evidence,
+/// so [`DecidedBy::Contract`] is the normal answer. An unmeasurable contract is refused, not
+/// guessed: [`DecidedBy::Undecided`] leaves `next` absent and carries the reason, and the
+/// commit inference stays what it always is, evidence — never the answer in its place.
+///
+/// ```
+/// use majordomus_cli::release::model::DecidedBy;
+/// assert_eq!(serde_json::to_value(DecidedBy::Contract).unwrap(), "contract");
+/// assert_eq!(DecidedBy::Undecided.as_str(), "undecided");
+/// assert_eq!(DecidedBy::default(), DecidedBy::Undecided);
+/// ```
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+#[schemars(rename = "ReleaseVersionDecidedBy")]
+pub enum DecidedBy {
+    /// `release analyze` measured the public contract against the last release, and `next`
+    /// is the version it requires: the declared version when that already satisfies the
+    /// contract, otherwise the smallest one it allows.
+    Contract,
+    /// The contract was measured and requires no release over the last one — only behaviour
+    /// behind the public boundary changed — while the commits carry changes: `next` is the
+    /// smallest release above the last, a patch, however much the commit subjects claim.
+    ContractAndCommits,
+    /// The contract could not be measured — no published baseline carries a registry, or a
+    /// version is not three numbers — so nothing decides `next`: it is absent, the reason is
+    /// in `contract_unreadable`, and `release bump` without an explicit target refuses.
+    #[default]
+    Undecided,
+}
+
+impl DecidedBy {
+    /// The word the JSON value carries for who answered.
+    ///
+    /// ```
+    /// use majordomus_cli::release::model::DecidedBy;
+    /// for by in [DecidedBy::Contract, DecidedBy::ContractAndCommits, DecidedBy::Undecided] {
+    ///     assert_eq!(serde_json::to_value(by).unwrap(), by.as_str());
+    /// }
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            DecidedBy::Contract => "contract",
+            DecidedBy::ContractAndCommits => "contract_and_commits",
+            DecidedBy::Undecided => "undecided",
+        }
+    }
+
+    /// Who answered, as the text renderings print it in parentheses after `next`.
+    ///
+    /// ```
+    /// use majordomus_cli::release::model::DecidedBy;
+    /// assert_eq!(DecidedBy::Contract.phrase(), "decided by the contract");
+    /// let both = DecidedBy::ContractAndCommits.phrase();
+    /// assert_eq!(both, "decided by the contract and the commits");
+    /// let none = DecidedBy::Undecided.phrase();
+    /// assert_eq!(none, "undecided: the contract could not be measured");
+    /// ```
+    pub fn phrase(self) -> &'static str {
+        match self {
+            DecidedBy::Contract => "decided by the contract",
+            DecidedBy::ContractAndCommits => "decided by the contract and the commits",
+            DecidedBy::Undecided => "undecided: the contract could not be measured",
+        }
+    }
+}
+
+/// What the version is, what the public contract requires it to become, and what the
+/// commits since the last release say about themselves.
+///
+/// `next` is the contract's answer (ADR 0051): the analysis' `required_version`, or the
+/// smallest release above the last when that requirement is the last release itself. The
+/// commit inference is evidence — `bump` and `commits_imply` — and never the answer: when the
+/// contract cannot be measured `next` is absent, `decided_by` is `undecided` and
+/// `contract_unreadable` says why. The selection is [`crate::release::version::select`], the
+/// one function `release bump` also takes its default target from.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "ReleaseVersionReport")]
 pub struct VersionReport {
@@ -397,13 +474,31 @@ pub struct VersionReport {
     /// asked by the executable, so every surface can show the answer.
     pub agree: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    /// The last release the layer records.
+    /// The last release: the highest version the layer records (the newest version tag when
+    /// it records none) — the baseline `release analyze` measures the contract from, so the
+    /// contract and the commit evidence describe one window.
     pub last_release: Option<String>,
-    /// What the commits since it imply: `major`, `minor`, `patch`, or `none`.
+    /// What the commit subjects since it imply: `major`, `minor`, `patch`, or `none`.
+    /// Evidence only — the contract decides `next`; `release analyze` reports where the two
+    /// disagree.
     pub bump: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The version that bump would produce from the last release (from the declared version
+    /// when nothing was released yet). Evidence only, even when the contract cannot answer.
+    pub commits_imply: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    /// The version that bump would produce.
+    /// The next version. When the contract could be measured, the version it requires: the
+    /// declared version when that already satisfies it, otherwise the smallest one it allows
+    /// — and, when that is the last release itself, the smallest release above it. Absent
+    /// when nothing would be released, and when the contract could not be measured
+    /// (`decided_by: undecided`): an unmeasurable baseline is refused, not guessed.
     pub next: Option<String>,
+    #[serde(default)]
+    /// Who answered `next`.
+    pub decided_by: DecidedBy,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Why the contract could not answer, when `decided_by` is `undecided`.
+    pub contract_unreadable: Option<String>,
     /// How many commits since the last release, and of what kind — the evidence for the
     /// bump, so that a surprising answer can be checked rather than believed.
     pub changes: Vec<Change>,
@@ -430,5 +525,38 @@ mod tests {
         assert_eq!(ChangeKind::TABLE.len(), ChangeKind::WORDS.len());
         assert_eq!(ChangeKind::Other.word(), None);
         assert_eq!(ChangeKind::parse("wip"), ChangeKind::Other);
+    }
+
+    /// Who decided `next` is one word on the wire and one phrase in the text renderings, and
+    /// the word is the serialization itself: a variant renamed in one place and not the
+    /// other would make the JSON and the terminal name different deciders.
+    #[test]
+    fn who_decided_reads_the_same_on_the_wire_and_in_the_text() {
+        let all = [
+            DecidedBy::Contract,
+            DecidedBy::ContractAndCommits,
+            DecidedBy::Undecided,
+        ];
+        for by in all {
+            assert_eq!(serde_json::to_value(by).unwrap(), by.as_str());
+            let back: DecidedBy = serde_json::from_value(by.as_str().into()).unwrap();
+            assert_eq!(back, by);
+        }
+        assert_eq!(
+            all.map(DecidedBy::as_str),
+            ["contract", "contract_and_commits", "undecided"]
+        );
+        assert_eq!(DecidedBy::Contract.phrase(), "decided by the contract");
+        assert_eq!(
+            DecidedBy::ContractAndCommits.phrase(),
+            "decided by the contract and the commits"
+        );
+        // the undecided phrase says why nothing was decided, never a version's provenance
+        assert_eq!(
+            DecidedBy::Undecided.phrase(),
+            "undecided: the contract could not be measured"
+        );
+        // the absent field is the undecided one: an answer that names no decider decided nothing
+        assert_eq!(DecidedBy::default(), DecidedBy::Undecided);
     }
 }

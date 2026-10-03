@@ -1,7 +1,7 @@
 +++
 title = "Handover integrity"
 description = "Handover integrity"
-weight = 21
+weight = 22
 [extra]
 kind = "rule"
 slug = "majordomus-handover-integrity-1"

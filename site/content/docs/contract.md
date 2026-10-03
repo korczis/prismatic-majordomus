@@ -10,11 +10,11 @@ source = "AGENTS.md"
 
 This file is a bootstrap, not the rulebook. Read `README.md` for what this
 repository is. The provider-neutral AI context and governance layer lives under
-[`.ai/`](https://github.com/korczis/prismatic-majordomus/tree/master/.ai), and everything normative is there.
+[`.ai/`](https://github.com/korczis/prismatic-majordomus/tree/@source-ref@/.ai), and everything normative is there.
 
 Before substantive planning, implementation, review or repository mutation:
 
-1. read [`.ai/README.md`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/README.md) and follow its discovery protocol,
+1. read [`.ai/README.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/README.md) and follow its discovery protocol,
 2. load the effective rules under `.ai/repo/rules/` and resolve their dependencies,
 3. load only the skills, workflows and knowledge the task is about,
 4. never load `.ai/local/` implicitly; it is this checkout's own state and not context.
@@ -46,6 +46,13 @@ semantic definition across projections is a design defect (`docs/CAPABILITIES.md
 
 New repository automation is a typed or scripted capability (ADR 0069), not shell;
 `majordomus shell check` refuses a shell unit `.ai/repo/automation/` does not exempt.
+
+Material engineering uncertainty is reasoned about through `majordomus reasoning` (ADR
+0098, `docs/REASONING.md`): record the assessment with its evidence, let
+`scripts/advisor-consult` ask whichever optional advisors the plan selects, settle a
+disagreement with an experiment rather than a count, record the conclusion, and continue.
+No advisor is needed; an absent one is reported state, never a reason to stop or to ask a
+person what to do.
 
 A capability you add or change has use cases: run `majordomus usecase impact` and the
 scenarios it names, and close a coverage gap (`majordomus usecase coverage`) with a use

@@ -1,7 +1,7 @@
 +++
 title = "Performance truth"
 description = "where a command's time goes (`MJ_TIMING=1`), what was slow and the shape of every fix, `majordomus bench` and its cold and warm distributions, local runs against the tracked baseline, the regression check and the budgets, and how to work on performance"
-weight = 20
+weight = 21
 [extra]
 source = "docs/PERFORMANCE.md"
 +++
@@ -13,7 +13,7 @@ report on every command, one benchmark harness derived from the command registry
 evidence that is never a baseline, a tracked baseline that is never edited by hand, and a
 check that refuses a regression by policy. The rules behind it are
 `project.derived-once`, `project.benchmarkable-commands` and
-`project.performance-evidence` under [`.ai/repo/rules/project/`](https://github.com/korczis/prismatic-majordomus/tree/master/.ai/repo/rules/project).
+`project.performance-evidence` under [`.ai/repo/rules/project/`](https://github.com/korczis/prismatic-majordomus/tree/@source-ref@/.ai/repo/rules/project).
 
 ## Where the time goes: `MJ_TIMING`
 
@@ -36,8 +36,8 @@ per validator, the knowledge compiler one per stage, the site generator one per 
 A counter is one unit of work worth counting: a YAML flatten, a batch flatten, a batch
 hash, a git call. The counters are the structural evidence: a loop that regressed to one
 process per item shows up as a count that grows with the input, long before a clock notices
-it on a small repository. The clock is `EPOCHREALTIME` where bash has it, perl where it
-does not, whole seconds otherwise, and the report says which.
+it on a small repository. The clock is `EPOCHREALTIME` where bash has it and whole seconds
+otherwise, and the report says which.
 
 ## What was slow, and the shape of the fix
 
@@ -63,7 +63,7 @@ document carries no numbers on purpose: they go stale, and the files above do no
 
 ## Benchmarking: `majordomus bench`
 
-`bench` times every public command of [`share/commands.yaml`](https://github.com/korczis/prismatic-majordomus/blob/master/share/commands.yaml) in a
+`bench` times every public command of [`share/commands.yaml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/share/commands.yaml) in a
 disposable repository. Nothing keeps a list: a command added to the registry is a target
 from that moment, and the harness never times itself. When the tool's own suite is present,
 a target's scenario is the first scenario of its fixture under `test/fixtures/commands/`,

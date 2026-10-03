@@ -40,7 +40,9 @@ export default {
       for (const [i, id] of group.entries()) {
         await page.locator(`[data-mj-control="${id}"]`).click();
         let state = await read(group, i);
-        for (let t = 0; !state.ok && t < 30; t++) { await page.waitForTimeout(50); state = await read(group, i); }
+        // the panel shows on Alpine's next animation frame, which a loaded runner can hold back for seconds: wait up
+        // to 10 s, which a tab strip that works never spends
+        for (let t = 0; !state.ok && t < 200; t++) { await page.waitForTimeout(50); state = await read(group, i); }
         if (state.missing) fail(`a tab strip has ${state.missing} tab(s) without a panel to show`);
         else if (!state.ok) fail(`pressing tab ${i + 1} of ${group.length} leaves ${state.selectedCount} tab(s) selected and ${state.shownCount} panel(s) shown, its own ${state.shownMine ? 'among them' : 'hidden'}`);
         n++;

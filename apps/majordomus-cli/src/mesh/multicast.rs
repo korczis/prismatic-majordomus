@@ -249,6 +249,46 @@ mod tests {
     use super::*;
     use crate::mesh::provider::MeshProvider;
 
+    /// The first observation carrying exactly `bytes`, passing over every other datagram the
+    /// listener hands up before `within` runs out; `None` when it never arrives.
+    fn heard_among(
+        rx: &std::sync::mpsc::Receiver<Observation>,
+        bytes: &[u8],
+        within: Duration,
+    ) -> Option<Observation> {
+        let deadline = std::time::Instant::now() + within;
+        loop {
+            let left = deadline.checked_duration_since(std::time::Instant::now())?;
+            let heard = rx.recv_timeout(left).ok()?;
+            if heard.bytes == bytes {
+                return Some(heard);
+            }
+        }
+    }
+
+    #[test]
+    fn the_datagram_a_test_sent_is_found_behind_the_providers_own_beacon() {
+        let (tx, rx) = std::sync::mpsc::channel();
+        let seen = |bytes: &[u8]| Observation {
+            source: MeshSource::UdpMulticast,
+            path: "127.0.0.1:1".into(),
+            bytes: bytes.to_vec(),
+        };
+        tx.send(seen(b"{\"v\":1,\"pk\":\"1fb5\"}")).unwrap();
+        tx.send(seen(b"a datagram for the listener")).unwrap();
+        let heard = heard_among(
+            &rx,
+            b"a datagram for the listener",
+            Duration::from_millis(200),
+        );
+        assert_eq!(
+            heard.map(|o| o.bytes),
+            Some(b"a datagram for the listener".to_vec())
+        );
+        // and a datagram that never comes is an absence, not a hang
+        assert!(heard_among(&rx, b"never sent", Duration::from_millis(50)).is_none());
+    }
+
     #[test]
     fn a_group_that_is_not_multicast_is_refused_with_the_reason() {
         let mut provider = MulticastProvider::new(MulticastConfig {
@@ -315,11 +355,18 @@ mod tests {
         // Best-effort: aim a datagram at the port and see whether the listener hands it
         // up. On a host that delivers it, assert it is well-formed; on one that does not,
         // observe the silence and move on — the socket bound, which is what was under test.
+        //
+        // The listener hears more than this datagram: the announcer sends the provider's own
+        // beacon the moment it starts, and a host that routes multicast loops it back to this
+        // socket, so the first datagram up was often that beacon, and the test failed on it
+        // (master's rust job in run 36557029377, `left` the beacon's JSON). Datagrams that are
+        // not this one are passed over.
         let sender = UdpSocket::bind((Ipv4Addr::LOCALHOST, 0)).unwrap();
         let _ = sender.send_to(b"a datagram for the listener", (Ipv4Addr::LOCALHOST, port));
-        if let Ok(heard) = rx.recv_timeout(Duration::from_secs(2)) {
+        if let Some(heard) =
+            heard_among(&rx, b"a datagram for the listener", Duration::from_secs(2))
+        {
             assert_eq!(heard.source, MeshSource::UdpMulticast);
-            assert_eq!(heard.bytes, b"a datagram for the listener");
         }
 
         // Best-effort: the announcer transmits on a host with a multicast route. Where

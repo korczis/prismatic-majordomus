@@ -1,11 +1,388 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.10.0 -->
+     Generator: majordomus-cli 0.12.0 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **0.10.0**
+Current version: **0.12.0**
+
+## v0.11.0 — 2026-10-02
+
+### Added
+
+- **integration**: the queue is seen, waits counted, outages retried, the drain continuous (`1042e2d12`)
+- **ci**: the version workflow has a model (`ebf39cf7c`)
+- **reasoning**: advisors are optional, discovered by capability, and review is recorded (`fa0df532e`)
+- **worktree**: a new worktree shares the primary checkout's .envrc.local (`e5134c4e3`)
+- **integration**: pull requests are integrated one at a time against the current master (`160b9d758`)
+- **preflight**: generated docs are judged by the generation check that ran (`5f99283a1`)
+- **health**: the runtime names the commit it was built from (`9fd573ef9`)
+- **ci**: every mcp tool the registry projects is invoked by something, or the gate says so (`7e8614b67`)
+- **pages**: a failed publication is retried on a clock, and a rebuild is asked only when it helps (`f44cab3f0`)
+- **worktree**: the reclaim is a command, not a list somebody has to act on (`1b6a7f5c3`)
+- **plan**: a plan stamp carries the seal of its event (`91080bd64`)
+- **mesh**: the doctor judges the server, and every session start says it (ADR 0059) (`bfd7db5da`)
+- **rules**: majordomus depends on nothing of prismatic, and a gate says so (`cd8e49984`)
+- **cases**: a case number is surveyed before it is taken (`399a99bf5`)
+- **ci**: the ui-integrity gate refuses UI state that is not derived (`ecd294124`)
+- **site**: a module page links its crate reference (`4f377dffa`)
+- **preflight**: coverage is judged by the measurement that was recorded (`589843483`)
+- **dashboard**: the overview answers four questions from the capabilities that hold them (`6c81ac0e6`)
+- **freshness**: every repository answer says when it was observed (`9580ccab6`)
+- **evidence**: evidence is judged at the presented revision, and a failure outranks an absence (`87d9909e7`)
+- **site**: the homepage shows one declaration reaching every surface (`01795a693`)
+- **environment**: a declared toolchain the machine does not satisfy is a mismatch (`68c9cf633`)
+- **ci**: the version bump has an actor, and it proposes rather than releases (`f20f6089e`)
+- **cockpit**: the Cockpit shows who else is here, and says when it could not ask (`0a1e650d5`)
+- **ci**: the knowledge graph's refusal of a doubly claimed identity is a gate (`6ae2f425e`)
+
+### Fixed
+
+- **usecase**: a recorded duration is masked wherever it stands (`77fcf861b`)
+- **test**: case 97 builds the site outside the checkout (`cc90060bd`)
+- **usecase**: a recorded scenario decides the schema check, so no line is masked (`3b02d3c20`)
+- **ci**: the cockpit probe is bounded by what it now measurably costs (`27fc07f0d`)
+- **release**: bump and version share one decision, and an unmeasured contract refuses (`9ace743ad`)
+- **test**: case 304's fixture is judged without the generator it does not come from (`b8551b309`)
+- **cockpit**: the peers page passes o_path by value, as clippy requires (`5c1af0ece`)
+- **usecase**: a scenario's record does not say whether its recorder had an executable (`5a65de680`)
+- **release**: release version answers with the contract, and commits are evidence (`d30c166d0`)
+- **test**: two RepositoryInfo test fixtures name the observations (`9b46f2fd5`)
+- **test**: cases 304 and 305 skip through the helper, not exit 0 (`001cca17a`)
+- **test**: case 343 bounds its curl calls, and pages.rs is formatted (`04b09df1f`)
+- **test**: case 624 skips through the skip helper (`dd656e045`)
+- **test**: cases 581 and 582 skip through the skip helper (`4c1286b9b`)
+- **cockpit**: the integration page's lane counts say why zero is the fact (`2ee6c1e01`)
+- **usecase**: what doctor reports about reasoning is the recording machine's, so evidence masks it (`7386e6e45`)
+- **derive**: every stage uses the executable the derivation resolved (`95c34a7c5`)
+- **usecase**: a scenario runs in the ci reasoning mode, so its evidence is the same everywhere (`c4af0fbf8`)
+- **ci**: the suite's tree is measured in every shard and joined once (`c2e03d6ce`)
+- **test**: case 56 judges the faster of two timings (`39b422726`)
+- **test**: the heaviest cases open one per shard (`bea1a47e5`)
+- **test**: case 578 skips its positive half instead of passing it (`5da587f4a`)
+- **ci**: the suite's verifier does not stand in for the suite (`2b60dad3a`)
+- **test**: a case never inherits the runner's shard selection (`c296d16dc`)
+- **worktree**: cleanup counts a branch the remote trunk contains as merged (`94a906e79`)
+- **serve**: stop reports stopped only when the server process has exited (`57d7857c6`)
+- **integration**: the subsystem is the executable's, and its contract is tested where it is served (`0d1929685`)
+- **health**: the build's commit decision is tested, and case 635 can fail again (`e4324a36d`)
+- **worktree**: the reclaim reads each branch's upstream again, not the listing's (`1e1768acf`)
+- **site-check**: a failed run that spoke is not described as having printed nothing (`efe6f9178`)
+- **test**: case 276's server sweep asserts its exit code and its output (`a9db2405a`)
+- **site-check**: a checker that says nothing has not passed, and the relay is written once (`f34235568`)
+- **github**: the adapter composes a projected body in one place (`a19588c50`)
+- **test**: a case does not kill the machine's servers (`9fd908b99`)
+- **test**: the stale-executable case reads a version that exists (`81c2d1bc9`)
+- **rules**: the two liveness rules their scans can decide are blocking (`221fee8cc`)
+- **finish**: the verified tree is seeded from head, so a flagged file cannot hide an edit (`21895d29c`)
+- **cockpit**: the four questions ask for their route instead of reading the registry (`8f2a2a68a`)
+- **finish**: a verification records the tree it proved, and refuses a moving one (`6a4a26608`)
+- **gates**: a gate verdict that cannot be read refuses the outcome completed (`7a8814dcf`)
+- **automation**: the independence gate's exemption states why and when it ends (`122fdc11d`)
+- **test**: case 492 reads its diff without a pager, so the liveness gate passes (`2b3a40852`)
+- **ci**: the collision guard has a caller, and cannot answer about nothing (`ff28c9710`)
+- **mesh**: compaction keeps what is live, and a returning stream is heard again (`93472d7bf`)
+- **freshness**: the gates read an observed answer as the branch meant it (`e7097f063`)
+- **cockpit**: the compiled stylesheet follows the neutral guaranteed status (`60a52bd7e`)
+- **scope**: case 241 takes the name #659 gives it (`4adb2df67`)
+- **site**: the local preview serves the pinned build instead of re-rendering with zola serve (`e27be3254`)
+- **coverage**: a binary killed mid-run is shown by its unfinished block, not the output's tail (`57b3cd5b5`)
+- **coverage**: the coverage job names the test that failed, and two lib flakes are closed (`3f82fb2b8`)
+- **scope**: case 241 is no longer mistaken for a generated file (`170f7af35`)
+- **site**: committed page content links its source at the built commit (`f628ce053`)
+- **test**: a case runs only in the fixture the runner made for it (`10460db3c`)
+- **cockpit**: command words, a narrow distribution row, typed chip order (`3f9335b6c`)
+- **site**: the status pages carry the evidence verdict beside the declared status (`8e50b09d3`)
+- **cockpit**: the Cockpit says only what it knows (`1991e5c03`)
+- **site**: a declared guarantee is not shown as proven (`5f72c6bfb`)
+- **coverage**: each measurement writes its export to a name of its own (`fc821df1f`)
+- **evidence**: a ledger row's commit is never an option, and the cap reads the same test (`388ff69c1`)
+- **evidence**: the crate's tree excludes its outputs where rust-check writes them (`d356a7f27`)
+- **finish**: the verify command runs without the outcome finish is claiming (`45c39c3bb`)
+- **cli**: every value of --presented-tree says what it means (`8ab972f67`)
+- **evidence**: CI publishes the tracked ledger's verdict and measures its runs where they ran (`c6a0072ad`)
+- **ci**: a missing coverage export is a measurement that could not be trusted (`c57cca945`)
+- **knowledge**: the knowledge reader honours the schema the index enforces (`7ecae80f7`)
+- **test**: just test runs the plan CI runs, not three suites beside it (`8ff4efc1b`)
+- **ci**: the differential coverage gate has a runner, and the case can tell (`12cd83e69`)
+- **liveness**: the wait scan reads what the rule names, and a run: line is a command (`2a6f39dfe`)
+
+### Performance
+
+- **ci**: the rust job's tests run in three lanes (`3b7978474`)
+- **ci**: the suite runs as four duration-balanced shards with one verdict over all of them (`19a3c0665`)
+- **worktree**: the topology measures every work tree at once (`f36c1912e`)
+
+### Documentation
+
+- **build_identity**: executable doctests for the module and identify (`af6ecb206`)
+- **worktree**: state::branch carries a doctest of its exact-name filter (`5d6856afd`)
+- **worktree**: dirty_states carries an example that measures and keeps input order (`f063b78ef`)
+- **environment**: Pin carries an executable example of floor versus release line (`d2a9daa02`)
+- **reasoning**: link to the derive function, not the derive attribute (`e824bf06d`)
+- **reasoning**: every public item carries an example and every module a behavioural test (`239644a3f`)
+- **worktree**: merged_into_trunk carries an executable example (`739a8c934`)
+- **security**: the deletion promise names compose, vendor update and migrate with their limits (`e26abf16c`)
+- **security**: the promise about deletion says what holds, and a case binds it (`8df1ad0e0`)
+- **BREAKING** **models**: a model's status is optional, and absent means the catalogue declares none (`d7e4731af`)
+- **test**: case 275 names the renumbered unknown-gate case 578 (`cbfb5c573`)
+- **preflight**: the coverage record types carry examples, as the quality gate asks (`cfee37456`)
+- **architecture**: name the ADR directory and its file pattern apart, not as a path (`2c376d657`)
+- **architecture**: how Majordomus derives its surfaces (`0a0b79b92`)
+- the tree's version and the one a reader can obtain (`f5f11620b`)
+- who runs the writer, and why nothing did (`8dabaf74a`)
+- **adrs**: propose four decisions a shared-checkout session proved (`cfc6ecdca`)
+- **environment**: news_digest carries the example its rationale describes (`2b4c09fc6`)
+
+### Tests
+
+- **coverage**: the lines batch H2 changes are exercised (`35c50d293`)
+- **site**: case 406's fixture carries what master's homepage-check reads (`ba48ca00b`)
+- **integration**: the prs renderings and the forge's JSON readers are proven (`3193d04eb`)
+- **reasoning**: the reasoning MCP tools are invoked as a client invokes them (`1e8f57bee`)
+- **integration**: case 720 calls the three MCP tools as a client does (`cbb2aa95c`)
+- **pages**: a rebuild refusal names this commit's own build in flight (`606190dd3`)
+- **ci**: the alphabet gate is asked its question under every locale (`3fdd878a2`)
+- **finish**: a verify command that creates an untracked file is refused too (`2e063b7af`)
+- **site**: case 535 refuses a local preview that re-renders with zola serve (`cffa760ae`)
+- **evidence**: the monotone rule's containments are proven both ways (`4f937e7cb`)
+- **evidence**: every changed line of the presented revision is covered (`0ed6f0f8a`)
+- **capture**: a receipt names the provider's event in a field, not in its id (`120bb0235`)
+- **knowledge**: case 74's fixture is a valid instance, and the tree derives after it (`f9e0e77f6`)
+- **knowledge**: case 330 asserts what a de-declared contract now is — a refused file (`63f497288`)
+- **ci**: the gate's clean pass names the node it read (`b3f659294`)
+- **ci**: six gates that had never been seen to fail are proven by their violations (`dd909daea`)
+
+### Housekeeping
+
+- **generated**: re-derive the changelog once the merge reaches HEAD's history (`398700e58`)
+- **derive**: re-derive the changelog and site data over the merge commit (`68708852e`)
+- **derive**: the derived files follow batch G2's members (`cfb040d11`)
+- **derive**: the derived files follow master and #706 (`5edc95278`)
+- **derive**: the derived files follow the merge of master (`9f681784c`)
+- **derive**: the derived data follows the widened deletion promise (`c18de2f01`)
+- **derive**: the derived data follows the deletion promise (`b22c6c7e5`)
+- **ui-integrity**: the four paid baseline lines are dropped, so the ratchet holds them (`465e4db96`)
+- **derive**: the derived projections follow the merge of its base (`7c998e3de`)
+- **derive**: the derived projections follow the merge of its base (`72641060c`)
+- **derive**: the projections follow batch E (`76c56605a`)
+- **derive**: the derived projections follow the merge of master (`224d92904`)
+- **derive**: the derived projections follow the merge of master (`a491382a5`)
+- **derive**: the projections follow batch D (`4f4b03c75`)
+- **release**: record v0.10.0 and the metadata it publishes (`b34fd71f3`)
+- **derive**: the projections follow the merge with master (`058cb0fbf`)
+- **derive**: the projections follow the merge with master (`606b736e9`)
+- **derive**: the projections follow the merge with master (`8197b45a9`)
+- **derive**: the projections follow the merge with master (`c5f5e49d9`)
+- **derive**: the projections follow the merge with master (`726f6436f`)
+- **derive**: the projections follow the merge with master (`d21f05b11`)
+- **derive**: the projections follow the merge with master (`16da6739e`)
+- **derive**: the projections follow the merge with master (`25c30de9a`)
+- **derive**: the projections follow the merge with master (`a4356d5a8`)
+- **derive**: the projections follow the merge with master (`c695f924a`)
+- **derive**: the projections follow the merge with master (`e263a1c89`)
+- **derive**: the projections follow the merge with master (`c4d01e562`)
+- **derive**: the projections follow the merge with master (`9c2858d25`)
+- merge master and re-derive (`afd78acd2`)
+- **derive**: the projections follow the merge with master (`0c69ef149`)
+- **derive**: the projections follow the merge with master (`464d8f65a`)
+- **derive**: the derived data follows the merge with master (`e7b7130f7`)
+- **derive**: the stacked tree's derived data (`f60dd9080`)
+
+### Formatting
+
+- **test**: the coverage assertion is formatted as rustfmt writes it (`8ffc3e9dd`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.11.0-aarch64-apple-darwin.tar.gz (`a61783ccdd9d`)
+- `macos-x86_64` — majordomus-v0.11.0-x86_64-apple-darwin.tar.gz (`0d59cda3ec03`)
+- `linux-x86_64-gnu` — majordomus-v0.11.0-x86_64-unknown-linux-gnu.tar.gz (`8b407725a8d9`)
+- `linux-x86_64-musl` — majordomus-v0.11.0-x86_64-unknown-linux-musl.tar.gz (`21e8b3c4130b`)
+- `linux-aarch64-gnu` — majordomus-v0.11.0-aarch64-unknown-linux-gnu.tar.gz (`4ecbdbb44209`)
+- `linux-aarch64-musl` — majordomus-v0.11.0-aarch64-unknown-linux-musl.tar.gz (`8d3c335bfa84`)
+
+
+## v0.10.0 — 2026-09-29
+
+### Decisions
+
+- **ADR-0087** Evidence is indexed by subject and judged at the presented revision _(proposed)_
+- **ADR-0086** The crate's rustdoc is a published web surface at /rustdoc, produced by the invocation its gate proves and verified at the public URL _(proposed)_
+- **ADR-0085** The version is authored once, in the crate manifest, and shipped to the shell tool as a generated projection _(proposed)_
+- **ADR-0082** Token economics are measured from matched runs and published only past a declared rule _(proposed)_
+- **ADR-0080** A CI run reaches the tracked ledger through a recording branch, never through the run that produced it _(proposed)_
+- **ADR-0071** A feature exists only when its delivery is computed and every dimension passes _(proposed)_
+- **ADR-0068** CI evidence is kept where the run happened, and published with the commit it proves _(proposed)_
+- **ADR-0067** Mesh cooperation is authenticated links between runtimes and one replicated journal folded the same way everywhere _(proposed)_
+- **ADR-0066** Entry reports a verdict per claim and the evidence behind it, from one preflight value _(proposed)_
+
+### Added
+
+- **test**: a case that declines to run is recorded as a skip, never as a pass (`d348a6c76`)
+- **evidence**: text a run printed is redacted by one rule set (`5f1226aca`)
+- **product**: every active use case has a feature, and case 503 holds it (`bd74cd30d`)
+- **design**: the verdict words are status words (`ba0770c9c`)
+- **economics**: record the context suite's first measurement (`54ee7cd24`)
+- **site**: the schema reference links every schema file to its source (`300e93ce0`)
+- **mesh**: this repository runs its own mesh (`372eccf36`)
+- **entity**: every entity names its public documentation page (`ed1398a9c`)
+- **economics**: measure token economics from matched runs, never typed (`f48b9b078`)
+- **web**: the crate's rustdoc is a published surface, produced by its gate and verified live (`5baad7874`)
+- **evidence**: CI records its runs, and the site publishes them with the commit they prove (`5a43a3a05`)
+- **rules**: the report says what was proven, not merely that it found no fault (`9119e306a`)
+- **delivery**: whether a feature exists is computed, and unknown is not delivered (`9ba6a17f5`)
+- **served**: a deployment is evidence, judged by the commit it serves (`1f7e98bbb`)
+- **mesh**: runtimes cooperate over authenticated links and one replicated journal (`964d26e3d`)
+- **shell**: new shell is refused unless the inventory exempts it (`4a05b6292`)
+- **environment**: entry reports a verdict per claim and the evidence behind it (`271989160`)
+- **mesh**: a signed cooperation journal and a deterministic state fold (`7bea9265b`)
+
+### Fixed
+
+- **test**: a server's URL is read from its own listening line, once (`a5ea413ff`)
+- **site**: long directory paths wrap on the context page (`7f824c3ec`)
+- **economics**: one context measurement counts each file once (`b5fc0d5bf`)
+- **economics**: the explain example expects the answer, not a refusal (`51a84dd4f`)
+- **site**: the economics page links through Zola and names the built commit (`6973ef9fe`)
+- **economics**: the benchmark fixture is English and its references resolve (`ad09800e5`)
+- **ci**: crate-boundary argues for tiktoken-rs (`da63efb49`)
+- **economics**: explain answers a repository without a methodology (`782a7e97f`)
+- **rust**: a checkout with no site config still hands off its rustdoc reference (`02bcb9aac`)
+- **test**: case 89 empties the server log before it waits on it (`cf5fb2fe6`)
+- **test**: the batch's cases decline through skip, the one shape case 413 accepts (`9b52c572b`)
+- **shell**: the inventory declares the four CI scripts the batch brings (`5118a3140`)
+- **shell**: declare the entity gate master added since the branch (`b594d9f8f`)
+- **test**: case 532 declines through skip, the one shape case 413 accepts (`e0d35c170`)
+- **pages**: the deploy job's bound exceeds its steps' again, evidence step included (`6974910c8`)
+- **evidence**: public text refuses a secret once redacted or cut off (`21d22d944`)
+- **evidence**: public text refuses a credential its shape only announces (`9e654b61b`)
+- **claims**: deployment-contract-refuses-by-name promises only what case 84 asserts (`6e4b40867`)
+- **test**: no case in test/cases/ can decline with exit 0 any more (`c2fb7a66e`)
+- **ci**: the job summary counts a SKIP as skipped, not as failed (`1ba9834cd`)
+- **test**: a status 4 the case never declared is a failure, not a skip (`08209a66d`)
+- **ci**: a case is bounded at 3600 s, above the budget that warns of it (`b1386ae7b`)
+- **ci**: suite-budget fails a pipeline on any stage and sorts in byte order (`d68bd8dc5`)
+- **ci**: the suite's bound is measured, declared once, and refuses growth (`39b2916f9`)
+- **mesh**: a runtime dials its present siblings before the ones that stopped (`2b4aa04cb`)
+- **site**: the responsibility pages' file links and site-check follow the built commit (`07035a459`)
+- **mesh**: a node's streams are compacted before its quota refuses a sibling (`84ad1dd4e`)
+- **pages**: the comment no longer reads to case 97 as a timing phase (`937343683`)
+- **site**: a page's source links name the commit it was built from (`2548eff4c`)
+- **execution**: a cancel is recorded before its token is visible (`45439dbf0`)
+- **pages**: verify-docs says an index it never fetched was not measured (`a50e2385b`)
+- **ci**: the evidence collector and rust-check fail when any part of a pipeline does (`c22cb2c11`)
+- **evidence**: a proof older than what it is about does not support a guarantee (`e24f21dd7`)
+- **mcp**: the instructions say what writes, counted off the registry, not a promise of read-only (`92f641910`)
+- **evidence**: a run recorded while the tree was dirty is not proof of the commit it sat on (`b77bfbcdb`)
+- **release**: the carrier scan orders canonically, and case 484 pages nothing (`8a0a68ddc`)
+- **release**: a version declared in TOML, JavaScript or Python is refused too (`7c5f58da0`)
+- **mesh**: a push is counted as it leaves, not when its answer returns (`8173f333d`)
+- **site**: git's listing of tracked paths reaches jq by file, not by argv (`6122a6bc9`)
+- **mesh**: the lab evidence sorts in one collation and the diagram ids stop colliding with headings (`1f3f1cece`)
+- **shell**: declare the shell gates master added since the branch (`be2eeec35`)
+- **release**: a release record is derived before it is proposed (`018293b15`)
+- **served**: list the deployments in canonical order (`447b76a8b`)
+- **test**: case 384 observes a non-zero verdict instead of dying on it (`16a319417`)
+- **serve**: stop waits for the lease it read, not for the path to be free (`c0e885275`)
+- **serve**: the shutdown's own bound is stated, and begin_stop carries its example (`b3214a797`)
+- **serve**: the lease is released before the mesh drains, not after it (`016b04b4f`)
+- **site**: the tracked listing reaches jq through a file, and a slow run is not a failed one (`249e597a1`)
+- **mesh**: a command with nobody to ask says so, and the lab waits for the runtime it asks (`fb0285477`)
+- **mesh**: the gates the first commit failed, each at its cause (`f086432f7`)
+- **environment**: a verdict names the tree it was measured on, and the lease is read once (`9fc7284d8`)
+
+### Performance
+
+- **release**: a release's history is listed once, not asked once per decision (`08cbd76d5`)
+
+### Changed
+
+- **order**: the economics sort sites adopt the canonical order (`358a0ab69`)
+- **evidence**: the redactor orders its kinds canonically and writes English (`799834606`)
+- **evidence**: the redaction table spells a one-byte class inline (`418ebac6b`)
+- **release**: the shell tool reads its version from share/version.txt (`7655e9a7f`)
+- **release**: the version is authored once, in the crate manifest (`f3553508d`)
+
+### Documentation
+
+- **environment**: the RulesTally example builds its report with a verdict (`e1d61945f`)
+- **adr**: the recording stops where the ledger covers, and trunk proof needs a quiet trunk (`3145123fd`)
+- **adr**: the recording stops at a ledger-only commit, and publication states match first (`a1ccbebed`)
+- **ci**: the per-case budget is the pass limit, and its worst cost is censored (`d0b912444`)
+- **adr**: evidence is indexed by subject and judged at the presented revision (`bea35d448`)
+- **mesh**: the guide and how-it-works describe cooperation as it ships (`1c35c5d3c`)
+- **execution**: say which guard makes a cancel land before its token is seen (`d8f91e79f`)
+- **rules**: the verdict's two accessors say what they are for, not what the signature says (`a258c6894`)
+- **adr**: ADR 0085, the version is authored once and shipped as a projection (`30a0cb128`)
+- **served**: every exported item carries an example that runs (`c71152a3b`)
+
+### Tests
+
+- **evidence**: the ledger-row test names no CI run, a field #577 added (`85d21b7d6`)
+- **evidence**: the byte class test spells its samples as byte strings (`d478261fb`)
+- **evidence**: the rules side of the tree cap is judged over a test that exists (`8c8efd8bd`)
+- **ci**: the artifact case asserts the pairing, not the order of the uploads (`1d4ff7935`)
+- **release**: a refused derive-check must fail the publication job (`b5ff5ecce`)
+- **release**: the version is authored once, and the cases read it through its one reader (`7f6e3842f`)
+- **mesh**: the lab's record is judged from outside the lab, and two claim joins are corrected (`a4ead40eb`)
+- **mesh**: the rendering layer is measured, and the version says what the contract did (`e83842630`)
+
+### Housekeeping
+
+- **ci**: the rust job is bounded by what the batch measurably costs (`bf5dbd274`)
+- **ci**: the suite budget is re-derived from the batch's measured cost (`fabdc4442`)
+- **derive**: the projections follow the economics fixes (`55c556e73`)
+- **derive**: the projections follow the merge with master (`b9fdfef74`)
+- **derive**: the projections follow the merge with master 35f6457 (`937da6db6`)
+- **derive**: the projections follow the merge with master (`a366f3185`)
+- **derive**: the projections follow the merge with master 35f6457 (`3f5a84527`)
+- **derive**: the projections follow the merge with master (`67b589d7d`)
+- **derive**: the projections follow the rebase onto master (`e60a0101d`)
+- **derive**: the projections follow the rebase onto master (`e7d6d60b0`)
+- **release**: the surface measured a minor, so the version is 0.10.0 (`51a685abd`)
+- **derive**: the projections reach their fixed point after the merge (`08d9820d0`)
+- **derive**: the projections follow the merge with master (`131c04ee6`)
+- **derive**: the projections follow the merge with master (`07b48a0db`)
+- **derive**: the projections follow the merge with master (`3959fe407`)
+- **derive**: the projections follow the rebase onto master (`bf0dd8305`)
+- **derive**: the projections follow the rebase onto master (`c99c34e4d`)
+- **derive**: the projections follow the v0.9.0 release record (`0dba33e5b`)
+- **evidence**: the baseline records the debt a stricter gate can see (`a009197d1`)
+- **release**: record v0.9.0 and the metadata it publishes (`f0f19dea1`)
+- **derive**: the projections follow the merge with master, at 0.9.0 (`415cd1d4d`)
+- **derive**: the projections follow the merge with master 823ca04 (`1d00b7b80`)
+- **derive**: the projections follow the canonical carrier scan (`91f7cc0c7`)
+- **derive**: the projections follow the wider version-carrier detector (`ece5faead`)
+- **derive**: the projections follow the version authored once (`f2d128fea`)
+- **release**: 0.9.0, because served.show joined the contract (`8b7da5672`)
+- **release**: 0.9.0, because the environment gained the preflight capability (`814d72a76`)
+- **derive**: the projections follow the merge with master (`380c721b4`)
+- **release**: 0.9.0, because delivery.feature and delivery.report joined the contract (`c00501b4a`)
+- **derive**: the projections follow the merge with master (`b2ef9560e`)
+- **merge**: feature/a-deployment-is-evidence meets master (`e3cf03be8`)
+- **derive**: the projections follow the merge with master (`83a8af1c1`)
+- **derive**: the projections follow the merge with master (`89eea3687`)
+- **derive**: the projections follow the merge with master (`8d7125e75`)
+- **derive**: the projections follow the merge with master (`58a0428b0`)
+- **derive**: the projections follow the merge with master (`13cad65c7`)
+- **derive**: the projections follow the merge with master (`8587973f9`)
+
+### Formatting
+
+- **mesh**: the rendering tests are formatted as rustfmt writes them (`dab6e1b56`)
+- **delivery**: cargo fmt — the module lists stay sorted and the git args wrap (`9e830d8fa`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.10.0-aarch64-apple-darwin.tar.gz (`eec02d0717ff`)
+- `macos-x86_64` — majordomus-v0.10.0-x86_64-apple-darwin.tar.gz (`e7657b7bcfa1`)
+- `linux-x86_64-gnu` — majordomus-v0.10.0-x86_64-unknown-linux-gnu.tar.gz (`35e6e8fd6eb4`)
+- `linux-x86_64-musl` — majordomus-v0.10.0-x86_64-unknown-linux-musl.tar.gz (`06351fb7ac00`)
+- `linux-aarch64-gnu` — majordomus-v0.10.0-aarch64-unknown-linux-gnu.tar.gz (`5b7cb6a18f86`)
+- `linux-aarch64-musl` — majordomus-v0.10.0-aarch64-unknown-linux-musl.tar.gz (`17e56539424b`)
+
 
 ## v0.9.0 — 2026-09-25
 

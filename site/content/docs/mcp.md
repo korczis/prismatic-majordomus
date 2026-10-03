@@ -1,19 +1,19 @@
 +++
 title = "MCP surface"
 description = "the read-only MCP surface of the Rust executable: what it serves, what decides that, how it fails, what it refuses to serve"
-weight = 51
+weight = 55
 [extra]
 source = "docs/MCP.md"
 +++
 
 {% raw %}
 
-What the Rust executable under [`apps/majordomus-cli/`](https://github.com/korczis/prismatic-majordomus/tree/master/apps/majordomus-cli) serves
+What the Rust executable under [`apps/majordomus-cli/`](https://github.com/korczis/prismatic-majordomus/tree/@source-ref@/apps/majordomus-cli) serves
 to an MCP client, where it comes from, and what it refuses. Behaviour as implemented and
 tested; where implementation and this document disagree, the document is wrong and
 changes in the same commit as the fix. The developer-facing detail (architecture, every
 option, the kind schema) is in the application's own
-[`README.md`](https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/README.md).
+[`README.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/apps/majordomus-cli/README.md).
 
 ## What it is
 
@@ -45,7 +45,7 @@ removed when the server stops. It is one projection of the executable's capabili
 registry ([`CAPABILITIES.md`](@/docs/capabilities.md)): the same capabilities are the HTTP routes
 and the `capabilities` commands, and every tool and resource here is derived from a
 registry entry, none declared in the MCP code. The decision is
-[`.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md).
+[`.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md).
 
 ## One server per checkout
 
@@ -75,6 +75,9 @@ A server serves a checkout. A linked worktree is a checkout of its own — it ha
 manifest, so it has a root, a lease and a server of its own — and until ADR 0035 nothing
 said that two such servers belonged to one repository. Now the index route (`GET /`) names
 the git repository the checkout belongs to beside the checkout's own identity:
+`commit` is the commit the executable answering was built from, in full or `unknown`, and
+`dirty` whether its tree carried uncommitted changes (`null` when the build did not know) —
+the same two fields `GET /api/v1/live` and `GET /api/v1/ready` answer;
 `repository_id` is the checkout's (a digest of its root, what the lease probe compares),
 `git_repository_id` is the repository's (a digest of the git directory every worktree
 shares; absent where git cannot be asked), `linked_worktree` says whether this is the
@@ -252,9 +255,9 @@ others attach:
 
 | client | file | what it names |
 |---|---|---|
-| Claude Code | [`.mcp.json`](https://github.com/korczis/prismatic-majordomus/blob/master/.mcp.json) | a stdio server, `bin/majordomus-mcp`; Claude Code asks once whether to trust a project server |
-| Gemini CLI | [`.gemini/settings.json`](https://github.com/korczis/prismatic-majordomus/blob/master/.gemini/settings.json) | the same launcher under `mcpServers.majordomus` |
-| Codex | [`.codex/config.toml`](https://github.com/korczis/prismatic-majordomus/blob/master/.codex/config.toml) | `[mcp_servers.majordomus]`, loaded when the project is trusted |
+| Claude Code | [`.mcp.json`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.mcp.json) | a stdio server, `bin/majordomus-mcp`; Claude Code asks once whether to trust a project server |
+| Gemini CLI | [`.gemini/settings.json`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.gemini/settings.json) | the same launcher under `mcpServers.majordomus` |
+| Codex | [`.codex/config.toml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.codex/config.toml) | `[mcp_servers.majordomus]`, loaded when the project is trusted |
 | bb | nothing of its own | an orchestrator: the agent it starts (Claude Code, Codex, an ACP agent) reads its own file above, so a bb thread attaches through the agent, not through bb (ADR 0024). Claude Code under bb runs with `settingSources: project`, which loads `.mcp.json`; a server loaded from a settings file gets two seconds before the first turn, so a cold checkout that has to build the executable shows it `pending` at init and connected afterwards |
 
 </div>
@@ -262,7 +265,7 @@ others attach:
 
 The rows are the providers whose declaration names a client configuration; the whole set,
 with what each reads and where it keeps its scratch checkouts, is
-[`docs/generated/providers.md`](https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/providers.md), generated from the same declaration.
+[`docs/generated/providers.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/docs/generated/providers.md), generated from the same declaration.
 <div class="overflow-x-auto" tabindex="0">
 
 | anything speaking Streamable HTTP | the running server's `/mcp` | `initialize` answers with an `Mcp-Session-Id`; every later request carries it; `DELETE /mcp` ends the session; an idle session expires and the client re-initialises on the 404, as the transport prescribes |
@@ -382,6 +385,73 @@ leaves nothing behind, the newest 32 departed peers are kept so that a server wh
 all day is not a museum, and an attached peer is never evicted to make room for one that
 left. `peers.list`'s `count` is the peers actually attached; the `peers` array is longer
 when the board is holding what somebody said before they went.
+
+## Episodes
+
+A peer is a connection. An **episode** is a sitting of work, and for a client with no
+provider hooks of its own the connection is the only thing that can draw its boundary
+([ADR 0103](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0103-every-client-gets-an-episode-and-every-provider-capability-cites-its-evidence.md)).
+Until it, drawing the boundary below the model was wired for Claude Code alone, and the
+repository's claim to do so was a claim about one vendor.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| tool | capability | arguments | answers |
+|---|---|---|---|
+| `majordomus_session_attach` | `episodes.attach` | `external_id` | the episode this connection now holds, whether it was resumed, and the reattach grace |
+| `majordomus_session_detach` | `episodes.detach` | `external_id?` | the episode as it was closed, and what the repository's end event reported |
+| `majordomus_episodes` | `episodes.list` | none | every episode this server holds, open and detached, and the caller's own |
+
+</div>
+
+
+<pre class="mermaid">
+stateDiagram-v2
+  [*] --&gt; Attached: initialize, a peer attaches and no episode opens
+  Attached --&gt; Open: episodes.attach opens the episode, or resumes this client's own
+  Open --&gt; Open: every message is the episode's heartbeat
+  Open --&gt; Detached: the connection goes, detached and not closed
+  Detached --&gt; Open: episodes.attach again resumes the same episode under a new peer id
+  Open --&gt; Closed: episodes.detach closes it deliberately into a session record
+  Detached --&gt; Closed: no reconnect in 15 minutes, the reaper closes it as interrupted
+  Open --&gt; Closed: the server stops, closed as shutdown
+  Detached --&gt; Closed: the server stops, closed as shutdown
+  Closed --&gt; [*]
+</pre>
+
+
+**`initialize` opens nothing.** A client that opens the server to read one rule is not a
+worker and leaves no record; attach is a call, made by the client that knows it wants an
+episode. That is also what keeps the guarantee `test/cases/90_mcp_shared_server.sh` holds —
+serving changes the repository not at all.
+
+**The identity is the client's, never the peer id.** `external_id` is what the client
+durably calls the sitting it is in — its conversation or thread id — and its whole job is to
+survive a reconnect. A peer id is handed out per connection and is a different string every
+time the client comes back; treating one as durable is what made a session invisible to
+eight others for three hours on 2026-09-09.
+
+**A dropped connection detaches; it does not close.** Two clocks govern a client's
+disappearance and they answer two questions. `SESSION_IDLE_TIMEOUT` (90s) decides when a
+socket is forgotten. `episodes::REATTACH_GRACE` (15 minutes) decides when the *work* is
+over. A reader of the logs will see a connection reaped long before the episode it carried,
+and that is intended.
+
+**Nothing here writes a session record.** The board runs `majordomus capture session
+--provider generic --event start|end` — the same command a provider hook's shim runs, with
+the same payload shape, through the same reader — and reports what it said, verbatim, in the
+episode's `repository` field. A second writer of the record the hooks already write would be
+the repeated semantic definition [`CAPABILITIES.md`](@/docs/capabilities.md) forbids. The
+repository's own store is also what recovers an episode across a *server* restart: a killed
+server writes no end event, the episode stays open in `.ai/local/state/sessions-open/`, and
+the next `attach` under the same identity is `session start --if-open keep`, which keeps it.
+
+**Raw prompt capture is not here and is declared not to be.** An MCP server is handed
+`initialize`, tool calls and notifications; the person's prompt is never among them, in any
+version of the protocol. `share/providers.yaml` says `prompts: none` for the generic
+provider, with that reasoning in its evidence field, and there is no `connection` value under
+`prompts` for anybody to reach for. What each provider *can* do, and where it was verified,
+is `majordomus product providers` and `majordomus capture status`.
 
 ## What decides what is served
 
@@ -555,7 +625,7 @@ rules contract requires. Nothing is repaired, defaulted or rewritten.
 - **The hierarchy of bootstrap files.** Root `README.md`, `AGENTS.md` and the other
   provider files are served as documents with their directory recorded; nothing merges
   or ranks them, because the repository defines no merge semantics. Recorded in
-  [`.ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md).
+  [`.ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md).
 - **Any mutation of the repository**, subscriptions, list-change notifications, and a
   server-initiated stream on `/mcp` (this server sends nothing unasked). The HTTP
   projection of the same registry is served by the shared server and by `majordomus

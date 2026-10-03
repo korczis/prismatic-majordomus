@@ -1,7 +1,7 @@
 +++
 title = "Profile requirements"
 description = "Profile requirements"
-weight = 34
+weight = 37
 [extra]
 kind = "rule"
 slug = "majordomus-profile-requirements-1"

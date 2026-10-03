@@ -1,7 +1,7 @@
 +++
 title = "Executable use cases"
 description = "executable use cases: one file each under `.ai/repo/use-cases/`, the scenario that proves it against the tool, evidence, observed maturity, coverage gated by policy, impact analysis, scaffolding, and what the site derives from it"
-weight = 40
+weight = 43
 [extra]
 source = "docs/USE_CASES.md"
 +++
@@ -10,7 +10,7 @@ source = "docs/USE_CASES.md"
 
 A use case is a task somebody performs with Majordomus, written once as data and proved
 against the real tool. It is not a tutorial, not a feature list and not a page: it is one
-file under [`.ai/repo/use-cases/`](https://github.com/korczis/prismatic-majordomus/tree/master/.ai/repo/use-cases) whose front matter names the
+file under [`.ai/repo/use-cases/`](https://github.com/korczis/prismatic-majordomus/tree/@source-ref@/.ai/repo/use-cases) whose front matter names the
 commands, rules, claims, responsibilities and applications it touches and carries a
 scenario, and whose body says what the situation is and what you are left holding. Every
 projection of it is derived: the page, the category it sits in, the links to and from it,
@@ -115,6 +115,25 @@ carries the exit code and, optionally, `stdout_contains`, `stdout_not_contains`,
 `files_exist` and `files_contain` (extended regular expressions over the combined
 output or a file). `then` says in words what the assertions proved.
 
+A fixture scenario may also show the change the tool is judging. A **worker step** is one
+shell line, run with `sh -c` in the disposable repository, between two invocations:
+
+```yaml
+  - id: the-worker-strays
+    worker: 'echo "parser notes" >> docs/d'
+    expect:
+      exit: 0
+```
+
+Its evidence carries `actor: worker` (every other step's is `actor: tool`) and the line
+itself as the command, so a page can show who did what. It exists so that one scenario can
+tell a whole story — a worker strays, the tool refuses, the worker takes it back, the tool
+accepts — instead of each state being a separate setup script. `usecase validate` refuses
+a worker step in a live scenario, which may never change the repository it asks about, and
+beside `run` or `obligation`, since a step is exactly one of the three. The challenge on the
+website is such a scenario: `site/data/challenge.toml` names it and
+`site/data/generated/challenge.json` is its recorded run.
+
 ## Where a scenario runs
 
 `mode` says which repository the scenario is about. It is `fixture` unless written down,
@@ -161,10 +180,10 @@ majordomus usecase run know-whether-this-work-is-finished   # by name, whatever 
 
 Live evidence lands under `.ai/local/evidence/live/` and is never committed: it describes
 one tree, on one machine, at one minute, and a derived file whose content depends on who
-derived it is what [ADR 5](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0005-one-projection-plan-canonical-owners-and-the-site-as-registry-view.md)
+derived it is what [ADR 5](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0005-one-projection-plan-canonical-owners-and-the-site-as-registry-view.md)
 forbids. For the same reason `usecase coverage` counts a live scenario as naming a command
 and never as covering it: a guarantee CI cannot re-run is not a guarantee. The decision is
-[ADR 38](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0038-a-scenario-declares-where-it-runs-and-an-obligation-is-a-ste.md).
+[ADR 38](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0038-a-scenario-declares-where-it-runs-and-an-obligation-is-a-ste.md).
 
 ## Running and evidence
 

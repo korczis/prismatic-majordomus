@@ -13,15 +13,20 @@
 #   not selected   the policy does not name the requirement          accepted, skipped
 #   exit 0         the publication is current                        accepted
 #   exit 10        the publication is behind                         REFUSED, task still active
-#   exit 12        the gate could not reach its subject              accepted, named unverified
+#   exit 12        the gate could not reach its subject              REFUSED, named unverified
 #   outcome != completed, with the gate failing                      accepted
 #   no at-finish gate declared at all                                accepted, says so
 #
-# The two that matter are the last-but-two and the exit 12. A requirement that refuses when
-# it merely could not measure anything is one that gets waived within a week; a requirement
-# that passes when it could not measure anything is decoration. It must do neither, and say
-# which of the two happened.
+# The two that matter are exit 10 and exit 12. A requirement that passes when it could not
+# measure anything is decoration, so an unreachable subject refuses `completed` as well — but
+# it says which of the two happened, and an honest outcome (blocked, partial) is still never
+# refused over it. test/cases/578_an_unknown_gate_refuses_completed.sh proves the same for
+# the completion-gates reader.
 . "$ROOT/test/lib.sh"
+# The completion-gates validator runs beside this one at finish and refuses `completed` when
+# it cannot read a verdict, so the fixture is handed a reader that can.
+BIN="$(rust_bin)" || rust_bin_exit $?
+export MAJORDOMUS_BIN="$BIN" MAJORDOMUS_SHARE="$ROOT/share"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj275.XXXXXX")"; trap 'rm -rf "$S"' EXIT
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
 printf '# Objective\n\nx\n\n# Current State\n\nx\n\n# Next Action\n\nx\n' > "$S/note.md"
@@ -68,7 +73,7 @@ git add -A >/dev/null && git commit -qm base
 # would make `finish_requires` decoration.
 verdict behind
 expect_exit 0 "$MJ" start "unselected" --scope lib/
-expect_exit 0 "$MJ" finish --outcome completed --verify-command true --note "$S/note.md"
+expect_exit 0 "$MJ" finish --outcome completed --verify-command "test -d .ai" --note "$S/note.md"
 expect_grep 'not in verification.finish_requires'
 
 sed -i.bak 's/^    - note_present$/    - note_present\n    - publication_current/' .ai/repo/policy.yaml
@@ -79,7 +84,7 @@ git add -A >/dev/null && git commit -qm select
 
 # --------------------------------------------------- behind: refused, and the task survives
 expect_exit 0 "$MJ" start "publishing work" --scope lib/
-expect_exit 10 "$MJ" finish --outcome completed --verify-command true --note "$S/note.md"
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai" --note "$S/note.md"
 expect_grep 'FAIL gate +publication'
 expect_grep 'the published site is not a projection of the trunk'
 expect_grep '14 commit\(s\) ahead of the publication'
@@ -99,21 +104,25 @@ expect_grep 'skipped for outcome blocked'
 verdict ok
 expect_exit 0 "$MJ" start "more work" --scope lib/
 echo 'b() { :; }' >> lib/a.sh
-expect_exit 0 "$MJ" finish --outcome completed --verify-command true --note "$S/note.md"
+expect_exit 0 "$MJ" finish --outcome completed --verify-command "test -d .ai" --note "$S/note.md"
 expect_grep 'OK   gate +publication'
 expect_grep 'is on master'
 
 # --------------------------------------------------- unreachable: named, never a pass
-# No network, no published branch, no hosting API. This is the state the design turns on:
-# it is reported by name with its reason and it refuses nothing, because a session that
-# could not measure the site is not evidence that the site is stale.
+# No network, no published branch, no hosting API. A session that could not measure the site
+# is not evidence that it is stale, and it is not evidence that it is current either, which
+# is what `completed` claims: refused, named by its exit so it is never read as exit 10, and
+# the honest outcome stays open.
 verdict unknown
 expect_exit 0 "$MJ" start "offline work" --scope lib/
 echo 'c() { :; }' >> lib/a.sh
-expect_exit 0 "$MJ" finish --outcome completed --verify-command true --note "$S/note.md"
-expect_grep 'could not be reached \(exit 12\)'
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai" --note "$S/note.md"
+expect_grep 'FAIL gate +publication .*could not be reached \(exit 12\)'
 expect_grep 'unverified and never a pass'
 expect_no_grep 'OK   gate +publication'
+expect_no_grep 'not a projection of the trunk'
+expect_exit 0 "$MJ" finish --outcome blocked --note "$S/note.md"
+expect_grep 'skipped for outcome blocked'
 
 # --------------------------------------------------- a repository that publishes nothing
 # The mechanism names no gate of its own. Remove the marker and the requirement has nothing
@@ -124,7 +133,7 @@ rm -f .ai/repo/ci/gates.yaml.bak
 git add -A >/dev/null && git commit -qm 'publishes nothing'
 expect_exit 0 "$MJ" start "no publication" --scope lib/
 echo 'd() { :; }' >> lib/a.sh
-expect_exit 0 "$MJ" finish --outcome completed --verify-command true --note "$S/note.md"
+expect_exit 0 "$MJ" finish --outcome completed --verify-command "test -d .ai" --note "$S/note.md"
 expect_grep 'no gate in this repository.s CI model is marked at-finish'
 
 # --------------------------------------------------- a marker with no command is a defect
@@ -136,7 +145,7 @@ rm -f .ai/repo/ci/gates.yaml.bak .ai/repo/ci/gates.yaml.bak2
 git add -A >/dev/null && git commit -qm 'marked, unrunnable'
 expect_exit 0 "$MJ" start "broken model" --scope lib/
 echo 'e() { :; }' >> lib/a.sh
-expect_exit 10 "$MJ" finish --outcome completed --verify-command true --note "$S/note.md"
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai" --note "$S/note.md"
 expect_grep 'declares no command to run it'
 
 # --------------------------------------------------------------- this repository is wired

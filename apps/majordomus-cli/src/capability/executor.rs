@@ -39,6 +39,7 @@
 //! ```
 
 use std::collections::{HashMap, VecDeque};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
@@ -53,6 +54,10 @@ use super::model::CachePolicy;
 #[derive(Debug, Default)]
 pub struct CapabilityExecutor {
     cache: Mutex<Cache>,
+    /// The handlers this executor ran: cache misses and uncached calls. A measurement of
+    /// this executor reads it; the process-wide counters also count every other executor
+    /// in the process, which a test running beside another reads as its own.
+    invocations: AtomicU64,
 }
 
 #[derive(Debug, Default)]
@@ -143,6 +148,7 @@ impl CapabilityExecutor {
             }
         }
         Counters::bump(&COUNTERS.handler_invocations);
+        self.invocations.fetch_add(1, Ordering::Relaxed);
         let value = {
             let _guard = perf::phase(Phase::HandlerExecution);
             ctx.registry.dispatch(ctx, id, input)?
@@ -174,6 +180,18 @@ impl CapabilityExecutor {
     /// How many entries the cache holds, all capabilities together.
     pub fn cached_entries(&self) -> usize {
         lock(&self.cache).entries.len()
+    }
+
+    /// How many handlers this executor has run — its cache misses and uncached calls, never
+    /// another executor's. Dropping the cache does not reset it.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::executor::CapabilityExecutor;
+    /// let e = CapabilityExecutor::default();
+    /// assert_eq!(e.handler_invocations(), 0);
+    /// ```
+    pub fn handler_invocations(&self) -> u64 {
+        self.invocations.load(Ordering::Relaxed)
     }
 
     /// Drop every cached entry.

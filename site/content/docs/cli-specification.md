@@ -471,8 +471,10 @@ weakest evidence about the present.
 | `CONTEXT DOCUMENTS` | `.ai/**/README.md` (the context contract) | a task is active; the effective chain is listed for each of its scope paths |
 | `OPEN QUESTIONS` | `state/open-questions.md` | any unresolved entry names this task |
 | `DECISIONS` | `state/decisions.md` | `context.decisions: true` (this task) or `context.architecture_notes: true` (the repository) |
+| `REASONING` | `state/reasoning/<task>/`, rendered by `majordomus-cli reasoning status --report` | the task has reasoning records and `context.decisions: true` |
 | `LATEST CHECKPOINT` | `state/checkpoints/` | a checkpoint resolves for this task |
 | `LATEST COMPATIBLE HANDOVER` | `state/handovers/` | a handover resolves for this worktree and branch |
+| knowledge candidates | `.ai/repo/knowledge/candidates/` | in the derived briefing, after the open questions and before the handover: the candidates awaiting review whose episode was on this branch, count and ids, bounded; unattributed ones on their own line; absence printed rather than omitted |
 | `FILES TOUCHED IN SCOPE` | git | `context.relevant_files: true` |
 | `RECENT HISTORY` | `state/ledger.jsonl` | `context.recent_history_depth` is above zero |
 | `PROMPT` | `prompts/<name>.md` | `--prompt <name>` was given |
@@ -801,12 +803,16 @@ doctrine `majordomus.completion-gates`, and report each in one vocabulary:
 | `blocked` | something it cannot run without has not passed |
 | `queued` | the plan selects it and no run has ever reported |
 | `exempt` | nothing this change did can make it true or false |
-| `unknown` | it cannot be judged here at all — no model, no reader |
+| `unknown` | it cannot be judged here at all — a model that does not parse, a reader that is not built, errors or answers nothing, no `jq` |
 
 </div>
 
 
-Only `fail`, `stale` and `blocked` refuse the outcome `completed`. `queued` is reported by
+`fail`, `stale`, `blocked` and `unknown` refuse the outcome `completed`: `completed` is a
+claim that the verdict is known, and a verdict that could not be read cannot back it. Every
+other outcome is still accepted over any of them, named "not refused", and `check` reports
+without refusing. A repository that declares no CI model at all has no gate to be unknown
+about and refuses nothing. `queued` is reported by
 name, never accepted as a pass and never refused: a verdict that never arrived and a verdict
 that said pass are different facts, and on 2026-09-10 this repository's trunk carried three
 branch-breaking defects overnight because they looked identical
@@ -1266,13 +1272,17 @@ saying when the body went, how long it was, and its digest. A record is still ne
 `doctor` reports an archive over either bound, and nothing prunes as a side effect of the
 hook that was supposed to be keeping them.
 
-**`capture status` reports five distinct states, and never a generic pass:**
+**`capture status` reports every provider the distribution declares, for both aspects, with
+two facts per row and never one word standing in for both.** The **capability** is the
+vendor's, read from `share/providers.yaml` where every cell carries the citation it was
+verified from; the **state** is this checkout's, computed from the tree.
 
 <div class="overflow-x-auto" tabindex="0">
 
 | state | what is true |
 |---|---|
-| `unsupported` | the provider has no documented event that hands a command the prompt before the model runs |
+| `unsupported` | the provider has no such event at all, and the declaration says where that was verified. Nothing this tool can do changes it. |
+| `unadapted` | the provider documents the event and this distribution ships no adapter for it. A gap in the tool, named as one. |
 | `unconfigured` | an adapter exists, but this repository does not wire it |
 | `named` | the configuration declares the hook, but not the shim this tool wrote |
 | `wired` | the shim is in place and executable, but a payload through it produced no record |
@@ -1284,12 +1294,23 @@ hook that was supposed to be keeping them.
 A repository holds itself to this by declaring an `enforcement` entry with
 `wired_by: provider-hook:<provider>`; `doctor` then fails unless the state is `verified`,
 and because `doctor` runs on `pre-commit`, a hook that stops capturing stops the commit.
-Only Claude Code has an adapter today; every other provider the distribution declares
-(`docs/generated/providers.md`) is reported `unsupported` rather than assumed, and no other
-surface — the web, the desktop app, another machine — is observable from here at all. An
-orchestrator such as bb has no adapter by design: it hands no prompt to a command before the
-model, and the agent it runs keeps its own hooks, so a Claude Code thread under bb is
-captured as `claude-code` (ADR 0024).
+
+**Until ADR 0103 this paragraph said something untrue, and it is worth saying what.** It
+read: "Only Claude Code has an adapter today; every other provider the distribution declares
+is reported `unsupported` rather than assumed." Neither half held. The others were not
+reported `unsupported` — they were not reported at all, because the loop was over the
+providers with a line in an internal shell table and that table had one line; the state was
+unreachable for any provider a person could name. And `unsupported` had stopped being the
+right word for two of them: by 2026-09-11 Codex CLI and Gemini CLI had both shipped
+`SessionStart`, `SessionEnd`, a pre-compaction event and a prompt hook firing before the
+model. They are `unadapted` — this distribution ships no adapter — and the citations for all
+of it are in the declaration.
+
+Claude Code still has the only hook adapter. An orchestrator such as bb has none by design:
+it hands no prompt to a command before the model, and the agent it runs keeps its own hooks,
+so a Claude Code thread under bb is captured as `claude-code` (ADR 0024). `agents` is a class
+of tools rather than a product and fires nothing at all. No other surface — the web, the
+desktop app, another machine — is observable from here.
 
 ### `capture session` — the episode boundary
 
@@ -1309,6 +1330,17 @@ as `closed`, and anything else — a crash, a name the table has not seen — cl
 `interrupted`, because calling a cut-short episode complete is the worse of the two
 mistakes.
 
+**The close derives what the episode learned, between the checkpoint and the handover.**
+`session close` runs `majordomus knowledge derive` after the session record is published and
+before `session.closed` is appended, whenever `session.knowledge_on_end` is not `false`, so
+every close — the adapter's, a person's, any future caller's — is followed by its
+`knowledge.derived` line; the compaction adapter calls the deriver itself under
+`session.knowledge_on_compact`, independently of `checkpoint_on_compact`. Neither asks whether
+a task is active. A derivation that fails is reported as `provider.event.failed` with the
+deriver's last line as the reason, the episode is closed regardless, and the hook exits 0; a
+switch that is off is said on stderr and derives nothing. [`KNOWLEDGE.md`](@/docs/knowledge.md) has
+what is derived from what.
+
 **Neither hook writes to standard output.** Claude Code adds a `SessionStart` hook's output
 to the model's context, and nothing under the local half of the layer may be loaded into a
 context implicitly. Diagnostics go to stderr, and `capture session` never exits 2, for the
@@ -1318,10 +1350,13 @@ reason `capture prompt` never does.
 `.ai/local/session-contexts/<stamp>--<session-id>.md`: front matter carrying
 `schema: session-context/v1`, the episode's identity, the provider and the provider's own
 session id — the same string the prompt records carry — then the context builder's output
-verbatim, then a `## Notes` section for the worker. `session close` appends a `## Close`
-section naming the outcome and the record it wrote. The document is appended to and never
-rewritten, so what a worker typed into it survives the close; `majordomus session context`
-prints its path.
+verbatim. `session close` appends a `## Close` section naming the outcome and the record it
+wrote. That file is the opening snapshot, evidence of what the worker was told, and
+`majordomus session context --path` prints its path. `majordomus session context` itself
+composes the live working context on every read: the episode's identity, git now against
+git at the open, and the checkpoints, decisions and questions the episode recorded, read
+from the ledger lines stamped with its own session id. Nothing caches it, so it cannot be
+stale; `--json` carries it beside the snapshot's freshness label.
 
 That store is local and stays local. It names this machine, and it is a snapshot of a
 projection — re-resolving it later gives a different document — so it is never published,
@@ -1341,8 +1376,12 @@ INFO  capture  .claude/hooks/majordomus-session-start  written and made executab
 INFO  capture  .claude/hooks/majordomus-session-end  written and made executable
 INFO  capture  .claude/settings.json  written with the UserPromptSubmit, SessionStart, SessionEnd hook(s)
 $ majordomus capture status
-claude-code            verified     .claude/hooks/majordomus-capture is wired, and a synthetic payload through it produced one record and its renderings
-claude-code:session    verified     .claude/hooks/majordomus-session-start and .claude/hooks/majordomus-session-end are wired, and a synthetic payload through the end shim reached the command
+agents                 unsupported  none        not a product but a class of tools defined by the file they read …
+bb:session             unsupported  none        no conversation-lifecycle hook is published. Searched 2026-09-11: …
+claude-code            verified     hook        .claude/hooks/majordomus-capture is wired, and a synthetic payload through it produced one record and its rendering
+claude-code:session    verified     hooks       .claude/hooks/majordomus-session-start, …-end, …-compact are wired, and a synthetic payload through the end shim reached the command
+codex:session          unadapted    hooks       the provider documents session events and this distribution ships no adapter for them — https://learn.chatgpt.com/docs/hooks …
+generic:session        verified     connection  bin/majordomus-mcp is in place and a synthetic attach reached the episode boundary …
 $ majordomus capture render
 0 rendering(s) written into .ai/local/prompts
 ```
@@ -1370,8 +1409,9 @@ search: 2 match(es)
 
 ## `majordomus knowledge`
 
-A compiler over what this repository already states. Read-only in every subcommand
-documented here.
+A compiler over what this repository already states, and the writer of what an episode
+learned. `sources`, `nodes`, `edges`, `candidates` and `check` are read-only; `derive`,
+`promote` and `reject` write knowledge records and ledger lines, and nothing else.
 
 It is not a wiki, not a database, not a memory service, and not a second place to write
 things down. Every source it reads is a file somebody already maintains, everything it
@@ -1393,6 +1433,62 @@ changes the other.
   claim one identity.
 - `edges [--scope ...] [--type <t>]` derives one edge per stated relationship, with the file
   and the field or line it was observed in.
+- `derive [--episode <id>] [--dry-run] [--json]` derives the knowledge the episode produced
+  into candidate records under `.ai/repo/knowledge/candidates/`, from the ledger and git and
+  never from a conversation: a recorded decision becomes a `convention`, a resolved question a
+  `fact`, a blocked or failed task a `lesson`, a completion with a verification command a
+  `fact`. The open episode, or the one named. Deterministic: same ledger, same git, same
+  bytes, and a second run reports every record `unchanged`. `--dry-run` says what it would
+  write and touches neither the tree nor the ledger.
+- `candidates [--json]` lists every record awaiting review — id, class, date, the branch of
+  the episode it came from, title — reading the directory rather than the index, so a
+  candidate the hook just wrote and nobody has added is listed.
+- `promote <id> [--class <c>] < evidence.md` moves a candidate to `curated/` as `verified`,
+  with the evidence on standard input appended under `# Evidence` and the class the person
+  chose. The deriver never writes `verified`; this is the act that does.
+- `reject <id> --reason "<why>" [--by <id>]` marks a candidate `superseded` in place with the
+  reason under `# Rejected`, naming the record that replaces it when `--by` gives one.
+- `check [--json]` validates every record under `candidates/` and `curated/`: the schema, no
+  unknown key, unique ids equal to the file name, provenance beside `verified`, every
+  reference resolving, a reason beside `superseded`, no candidate claiming `verified`, no
+  conversation. The same check `check` and `doctor` dispatch.
+
+The read side of the same store is served by the executable — `bin/majordomus-cli knowledge
+candidates`, `knowledge record <id>` and `knowledge status`, each a capability declared once
+and answering identically over HTTP, MCP and the command line (`CAPABILITIES.md`); `status`
+reports the last derivation, the newest close and whether the writer has stopped.
+[`KNOWLEDGE.md`](@/docs/knowledge.md) has the derivation table, the two moments and the rules.
+
+**Writes:** `derive` writes `.ai/repo/knowledge/candidates/<id>.md`, one per record, through a
+temporary file in the same directory renamed over the id-named file, never staged, and prints
+`written`, `unchanged` or `skipped` per record with the summary last; it appends
+`knowledge.derived` to the ledger — episode, counts, paths — even when it wrote nothing.
+`promote` writes `.ai/repo/knowledge/curated/<id>.md` the same way, removes the candidate,
+appends `knowledge.promoted` and prints the curated path last. `reject` rewrites the
+candidate in place and appends `knowledge.rejected`. The record id is the episode id and a
+digest of the evidence, so the same fact always lands in the same file.
+
+**Never** stages, commits, or modifies any other file. Never reads a conversation, a prompt or
+a handover; never calls a model or a network. Never writes `verified`.
+
+**Refuses** (`10`) `promote` with empty stdin, with stdin carrying a transcript marker, on a
+record whose status is not `candidate`, or with a class outside the enumeration; `reject` on a
+record whose status is not `candidate`, or when `--by` names no record; `derive` when the
+policy does not parse; `check` on any failing record. (`12`) `promote` or `reject` when no
+candidate carries the id. (`2`) `reject` without a non-empty `--reason`. (`13`) a write that
+did not complete. `derive` with no episode to derive from says so and exits `0`.
+
+```
+$ majordomus decision add "Tabs are refused in the parser" --why "two encodings of one thing"
+$ majordomus knowledge derive
+written .ai/repo/knowledge/candidates/s-20260912101500-7f1a-3b9c2e4d1a05.md
+knowledge derive: 1 written, 0 unchanged, 0 skipped for episode s-20260912101500-7f1a
+$ majordomus knowledge derive
+unchanged .ai/repo/knowledge/candidates/s-20260912101500-7f1a-3b9c2e4d1a05.md
+knowledge derive: 0 written, 1 unchanged, 0 skipped for episode s-20260912101500-7f1a
+$ printf 'Verified by reading lib/yaml.sh.\n' | majordomus knowledge promote s-20260912101500-7f1a-3b9c2e4d1a05 --class constraint
+.ai/repo/knowledge/curated/s-20260912101500-7f1a-3b9c2e4d1a05.md
+```
 
 **No edge without provenance.** Every edge names where the relationship was stated, and an
 edge missing any of from, to, type or provenance is refused rather than emitted with a
@@ -1512,6 +1608,16 @@ A class marked `required` that discovers nothing is reported as a `WARN`. The co
 curated list is that a path can be forgotten, and a forgotten path is indistinguishable
 from a repository that does not have that file unless something says so.
 
+Whether a file conforms to the schema of its kind is the executable's index's verdict, not the
+reader's: `knowledge nodes` asks the index which files it refused, drops them and reports each
+refusal as a `FAIL` (`test/cases/405_the_knowledge_reader_honours_the_schema.sh`). With no
+executable built, or no `jq`, it reports a `WARN` that the schema went unchecked; it never
+reads as a pass. `MAJORDOMUS_KNOWLEDGE_SCHEMA=unasked` says not to ask, and the reader then
+reports an `INFO` that the check was not asked for. That is what a recorded use-case scenario
+sets: whether the index *could* be asked is a fact about the recording machine, and evidence
+that must read the same on every machine cannot carry it (#713,
+`test/cases/777_a_recorded_scenario_does_not_depend_on_the_recorder.sh`).
+
 ```
 $ majordomus knowledge sources --scope shared
 policy      shared      policy     4f2a9c1d8b30  .ai/repo/policy.yaml
@@ -1614,7 +1720,11 @@ result, and a copy of `--note` under `state/completed/<id>.md` when given.
 
 **Arguments:** `--outcome completed|partial|blocked|no_match|failed` required.
 `--verify-command "<cmd>"` runs the project's own verification in the repository root
-and records its exit code, duration, and command. `--note <file>` supplies the
+and records its exit code, duration, command, and the git tree id of the working tree it
+ran over. The tree is read before and after the run: if it changed while the command was
+running — a second worker in the same checkout, a person saving a file, a command that
+rewrites tracked files — the run describes neither state and the line fails; run it again
+once the tree is settled. `--note <file>` supplies the
 completion note; otherwise the newest handover naming this task is used. `--check`
 evaluates scope and state without writing and exits `0` when no task is active or the
 task is already finished, so a pre-push hook never blocks a repository with nothing to

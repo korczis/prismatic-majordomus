@@ -1,7 +1,7 @@
 +++
 title = "Distribution"
 description = "how the tool is packaged, published and installed: the one canonical model, what derives from it, the trust path, adding a platform, releasing, and recovering from a bad release"
-weight = 25
+weight = 27
 [extra]
 source = "docs/DISTRIBUTION.md"
 +++
@@ -20,9 +20,9 @@ it, what the trust path is, how a release happens, and how to add a platform.
 > artifacts, installer resolution, documentation, release automation and the exposed
 > UI/API metadata derive from that model or are mechanically validated against it.
 
-The model is [`share/distribution.yaml`](https://github.com/korczis/prismatic-majordomus/blob/master/share/distribution.yaml), contract
+The model is [`share/distribution.yaml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/share/distribution.yaml), contract
 `majordomus-distribution/v1`, schema
-[`share/schemas/majordomus/distribution/distribution.v1.schema.json`](https://github.com/korczis/prismatic-majordomus/blob/master/share/schemas/majordomus/distribution/distribution.v1.schema.json). It
+[`share/schemas/majordomus/distribution/distribution.v1.schema.json`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/share/schemas/majordomus/distribution/distribution.v1.schema.json). It
 declares the binary, the repository releases are published from, the installer's canonical
 URL and defaults, how an archive is named, and every target the project has an opinion
 about — supported, experimental, or unavailable with the reason.
@@ -173,26 +173,36 @@ scripts/derive                       # builds, then projects share/version.txt a
 scripts/release-version --check --tag v0.3.0
 
 # 2. commit, open the pull request, and merge it once `ci` is green
+```
 
-# 3. tag the merge on the default branch, and push the tag
+<!-- majordomus:unrun it asks GitHub for the commit's newest `ci` check-run, which needs the network and a token; case 362 runs it against a stubbed answer -->
+```bash
+# 3. the commit to be tagged passed ci — the same question the pipeline asks first
+scripts/ci/release-verdict --commit HEAD
+```
+
+```bash
+# 4. tag the merge on the default branch, and push the tag
 git tag v0.3.0 && git push origin v0.3.0
 
-# 4. the pipeline publishes, then proposes the record as release/record-v0.3.0:
+# 5. the pipeline publishes, then proposes the record as release/record-v0.3.0:
 #    merge that pull request — until it lands, releases/latest.json still names the
 #    previous release and the installer installs it
-# 5. Pages deploys the record; confirm with scripts/pages verify --commit <merge sha> and
+# 6. Pages deploys the record; confirm with scripts/pages verify --commit <merge sha> and
 #    curl -fsSL https://majordomus.dev/releases/latest.json, and re-run the smoke job if it
 #    ran before the record was published
 ```
 
-The pipeline is [`.github/workflows/release.yml`](https://github.com/korczis/prismatic-majordomus/blob/master/.github/workflows/release.yml), an
-adapter over [`.ai/repo/ci/release.yaml`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/ci/release.yaml) and the generated
+The pipeline is [`.github/workflows/release.yml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.github/workflows/release.yml), an
+adapter over [`.ai/repo/ci/release.yaml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/ci/release.yaml) and the generated
 matrix:
 
 ```text
 plan     the tag equals the version the crate manifest declares and the shell tool prints
-         it; the model and every recorded release hold their invariants; the matrix is
-         emitted
+         it; the tagged commit's `ci` check concluded success (scripts/ci/release-verdict:
+         failure refuses with 10, a run still in progress after the wait or a verdict that
+         cannot be read with 12); the model and every recorded release hold their
+         invariants; the matrix is emitted
 build    one archive per supported target, on the runner the model names, verified where
          it was built (fail-fast: a release missing a platform is not a release)
 publish  digests, the GitHub release, the record written from what was uploaded and staged,
@@ -202,7 +212,15 @@ smoke    the published installer, from its published URL, installing the release
          just published, on every runner whose target it was built for
 ```
 
-Only `publish` has `contents: write`. Nothing else in the run can write anything.
+Only `publish` has `contents: write`. Nothing else in the run can write anything; `plan`
+reads check-runs (`checks: read`) and nothing more.
+
+A release follows the verdict. v0.3.1, v0.5.0, v0.6.0 and v0.7.0 were published from commits
+whose `ci` check-run concluded failure, because the pipeline asked only whether the tag agreed
+with the version. The newest `ci` check-run of the tagged commit is now the first thing `plan`
+reads after the version, and nothing is built from a commit it did not see pass.
+`test/cases/362_a_release_follows_the_ci_verdict.sh` holds the script to success, failure,
+a run in progress, a missing check and an unreadable answer, and the workflow to asking it.
 
 A runner label the model names must be a standard, currently offered GitHub-hosted label.
 This is not a style rule. A retired label does not fail: the job is accepted and queues for
@@ -224,7 +242,7 @@ Until one of those happens the advertised install command is broken for everyone
 
 A release changes things the world can see, and it can fail after some of them have changed.
 Rerunning the workflow for the same tag is the supported recovery, and it is safe at every
-stage. What "safe" means is declared in [`.ai/repo/ci/release.yaml`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/ci/release.yaml)
+stage. What "safe" means is declared in [`.ai/repo/ci/release.yaml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/ci/release.yaml)
 under `rerun:` and implemented in the publish job:
 
 * **the assets on an existing release are the release.** If the tag already has a GitHub
@@ -332,7 +350,7 @@ when it is merely a few minutes old. Run by hand the wait is zero, because a per
 whether the command works wants the answer now. A site that cannot serve the metadata inside
 the window is broken either way, and the finding stands.
 
-It is the gate `installer-live` in [`.ai/repo/ci/gates.yaml`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/ci/gates.yaml),
+It is the gate `installer-live` in [`.ai/repo/ci/gates.yaml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/ci/gates.yaml),
 job `install`, on Linux and macOS. No path class selects it, deliberately: no change to a
 tree can make it true or false — only a deployment can. It is also one of the model's
 on-demand gates, because half of its matrix is a macOS runner and this repository waits

@@ -8,6 +8,9 @@ MJ_EX_OK=0; MJ_EX_USAGE=2; MJ_EX_CONTRACT=10; MJ_EX_DRIFT=11
 MJ_EX_MISSING=12; MJ_EX_INTERNAL=13; MJ_EX_REFUSED=15
 export MJ_EX_OK MJ_EX_USAGE MJ_EX_CONTRACT MJ_EX_DRIFT MJ_EX_MISSING MJ_EX_INTERNAL MJ_EX_REFUSED
 
+# shellcheck source=sha256.sh
+. "$(dirname "${BASH_SOURCE[0]}")/sha256.sh"
+
 MJ_REPO=""; MJ_JSON=0; MJ_ARGS=()
 MJ_FINDINGS=0; MJ_FAILS=0
 
@@ -45,7 +48,34 @@ mj_drift() { mj_finding DRIFT "$@"; }
 # computed from, so a value produced here is comparable with every source.json ever written.
 mj_inputs_hash() {
   printf '%s\0' "$@" | mj_sha256_many | awk -F'\t' '{ printf "%s %s\n", $2, $1 }' \
-    | { mj_sha256 /dev/stdin 2>/dev/null || shasum -a 256 | cut -d' ' -f1; }
+    | mj_sha256_hex
+}
+
+# The git tree object id of the working tree exactly as it stands: HEAD's tree with every
+# modification, addition and deletion applied. Computed in a temporary index, so the real
+# index keeps its staged content and its stat cache; ignored paths stay out, which is what
+# .ai/local/ is. The temporary index is seeded from HEAD, never copied from the real one: a
+# copy carries its assume-unchanged and skip-worktree flags and its stat cache, and `add -A`
+# trusts those, so an edit to a flagged file would be neither recorded nor noticed moving.
+# Seeding from HEAD rehashes every file (about a second on this repository) and sees them all.
+# Empty when git cannot answer, so a caller degrades to knowing nothing rather than to
+# believing something.
+#
+# Not mj_inputs_hash: that fingerprints a list of paths the caller already knows, and the
+# question here is what the whole tree was, including a file no list would have named
+# because it did not exist yet. A tree id is also git's own answer to that question,
+# comparable with every other tree id without this tool being present to explain it.
+mj_worktree_tree_id() {
+  local idx out
+  idx="$(mktemp "${TMPDIR:-/tmp}/mj-index.XXXXXX")" || return 0
+  rm -f "$idx"
+  out="$( cd "$MJ_ROOT" || exit 1
+    export GIT_INDEX_FILE="$idx"
+    if git rev-parse --verify -q HEAD >/dev/null 2>&1; then git read-tree HEAD 2>/dev/null || exit 1; fi
+    git add -A 2>/dev/null || exit 1
+    git write-tree 2>/dev/null )"
+  rm -f "$idx"
+  printf '%s' "$out"
 }
 
 mj_json_esc() { printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' | tr -d '\n'; }
@@ -331,16 +361,15 @@ mj_now() {
 # Phase timing and work counters, on only when MJ_TIMING is set: every phase a command
 # declares is written as one line to a file created here, in the shell that reports at
 # exit, never inside a command substitution. The clock is EPOCHREALTIME where bash has
-# it, otherwise perl, otherwise whole seconds, and the report says which. Off, the cost
-# of a phase or a count is one test.
+# it (bash 5), otherwise whole seconds, and the report says which. Off, the cost of a phase
+# or a count is one test. There is no third clock: the one that used to stand between them
+# was perl, and nothing in this repository runs Perl.
 MJ_TIMING_FILE=""; MJ_TIMING_T0=""
 if [ -n "${EPOCHREALTIME:-}" ]; then MJ_TIMING_CLOCK=epochrealtime
-elif command -v perl >/dev/null 2>&1; then MJ_TIMING_CLOCK=perl
 else MJ_TIMING_CLOCK=seconds; fi
 mj_ms() {
   case "$MJ_TIMING_CLOCK" in
     epochrealtime) local t="${EPOCHREALTIME/./}"; printf '%s' "${t%???}" ;;
-    perl) perl -MTime::HiRes=time -e 'printf("%d", time() * 1000)' ;;
     *) printf '%s000' "$(date +%s)" ;;
   esac
 }
@@ -382,9 +411,8 @@ mj_now_compact() {
 }
 mj_rand16() { od -An -N8 -tx1 /dev/urandom | tr -d ' \n'; }
 mj_sha256() {
-  if command -v sha256sum >/dev/null 2>&1; then sha256sum "$1" | cut -d' ' -f1
-  elif command -v shasum >/dev/null 2>&1; then shasum -a 256 "$1" | cut -d' ' -f1
-  else mj_die "$MJ_EX_MISSING" "need sha256sum or shasum"; fi
+  mj_sha256_tool 2>/dev/null || mj_die "$MJ_EX_MISSING" "$MJ_SHA256_MISSING"
+  mj_sha256_hex "$1"
 }
 # NR counts a final line that carries no newline; wc -l does not, and a projection
 # written without a trailing newline would be measured one line under its budget.
@@ -541,9 +569,8 @@ mj_yaml_flatten_many() {
 # it, and the knowledge compiler hashes every source it discovers.
 mj_sha256_many() {
   mj_count sha256_many
-  if command -v sha256sum >/dev/null 2>&1; then xargs -0 sha256sum
-  elif command -v shasum >/dev/null 2>&1; then xargs -0 shasum -a 256
-  else mj_die "$MJ_EX_MISSING" "need sha256sum or shasum"; fi | awk '{ h = $1; sub(/^[^ ]+  /, ""); printf "%s\t%s\n", h, $0 }'
+  mj_sha256_tool 2>/dev/null || mj_die "$MJ_EX_MISSING" "$MJ_SHA256_MISSING"
+  mj_sha256_xargs -0 | awk '{ h = $1; sub(/^[^ ]+  /, ""); printf "%s\t%s\n", h, $0 }'
 }
 # value of a flattened key (first match); empty if absent
 # One process each. These run thousands of times per command — the rule loader alone asks
@@ -1047,8 +1074,7 @@ mj_repository_id() {
 }
 
 mj_worktree_id() {
-  if command -v sha256sum >/dev/null 2>&1; then printf '%s' "$MJ_ROOT" | sha256sum | cut -c1-16
-  elif command -v shasum >/dev/null 2>&1; then printf '%s' "$MJ_ROOT" | shasum -a 256 | cut -c1-16
+  if mj_sha256_tool 2>/dev/null; then printf '%s' "$MJ_ROOT" | mj_sha256_hex | cut -c1-16
   else printf '%s' "$MJ_ROOT" | cksum | tr -d ' ' | cut -c1-16; fi
 }
 

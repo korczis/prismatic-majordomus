@@ -313,6 +313,125 @@ pub fn is_ancestor(root: &Path, ancestor: &str, descendant: &str) -> Option<bool
     }
 }
 
+/// Whether one commit contains another: three answers, because "no" and "this clone cannot
+/// say" send a reader to different places.
+///
+/// Evidence recorded on a commit the presented revision does not contain is evidence about
+/// some other history, however empty a diff between the two happens to be. And a commit this
+/// clone does not have — a rewritten branch, a shallow fetch, a typo — is neither a yes nor a
+/// no, so it is not collapsed into either.
+///
+/// This is the one definition. PR #600 carries a private copy in `delivery::revision`, with
+/// the same variants and meaning; it imports this one and deletes its copy.
+///
+/// ```
+/// use majordomus_cli::git::Containment;
+///
+/// // only one of the three answers is a yes
+/// let answers = [
+///     Containment::Contains,
+///     Containment::DoesNotContain,
+///     Containment::CommitUnknown,
+/// ];
+/// assert_eq!(answers.iter().filter(|a| **a == Containment::Contains).count(), 1);
+/// assert_ne!(Containment::DoesNotContain, Containment::CommitUnknown);
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Containment {
+    /// The ancestor is reachable from the descendant.
+    Contains,
+    /// Both commits are known here, and the ancestor is not reachable from the descendant.
+    DoesNotContain,
+    /// This clone does not have one of the two commits, or git could not be asked, so the
+    /// question has no answer here.
+    CommitUnknown,
+}
+
+/// Does `rev` name a commit this clone has?
+///
+/// `git rev-parse --verify --quiet <rev>^{commit}`, through [`read_only`]: a branch, a tag, a
+/// full or abbreviated object name, `HEAD`. Forty hex digits that no object has do not
+/// resolve, which is the difference between a well-formed commit id and a commit.
+///
+/// ```
+/// use majordomus_cli::git::resolves;
+/// use std::process::Command;
+///
+/// let dir = tempfile::tempdir().unwrap();
+/// let git = |args: &[&str]| {
+///     Command::new("git").arg("-C").arg(dir.path()).args(args).output().unwrap()
+/// };
+/// git(&["init", "-q"]);
+/// // an unborn repository has no HEAD to name
+/// assert!(!resolves(dir.path(), "HEAD"));
+///
+/// git(&["config", "user.email", "t@example.com"]);
+/// git(&["config", "user.name", "t"]);
+/// git(&["commit", "-q", "--allow-empty", "-m", "one"]);
+/// assert!(resolves(dir.path(), "HEAD"));
+/// assert!(!resolves(dir.path(), &"0".repeat(40)), "well-formed is not the same as present");
+/// ```
+pub fn resolves(root: &Path, rev: &str) -> bool {
+    read_only(root)
+        .args([
+            "rev-parse",
+            "--verify",
+            "--quiet",
+            &format!("{rev}^{{commit}}"),
+        ])
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false)
+}
+
+/// Does `descendant` contain `ancestor`?
+///
+/// [`Containment::CommitUnknown`] unless both commits resolve here; otherwise
+/// [`is_ancestor`] decides. The resolution comes first because [`is_ancestor`] answers
+/// `Some(false)` for an object this clone does not have, which is the right answer for its
+/// own caller and the wrong one here: a record naming a commit nobody can find is not a
+/// record from a known other history.
+///
+/// ```
+/// use majordomus_cli::git::{contains, Containment};
+/// use std::process::Command;
+///
+/// let dir = tempfile::tempdir().unwrap();
+/// let git = |args: &[&str]| {
+///     let out = Command::new("git").arg("-C").arg(dir.path()).args(args).output().unwrap();
+///     String::from_utf8_lossy(&out.stdout).trim().to_string()
+/// };
+/// git(&["init", "-q"]);
+/// git(&["config", "user.email", "t@example.com"]);
+/// git(&["config", "user.name", "t"]);
+/// git(&["commit", "-q", "--allow-empty", "-m", "one"]);
+/// let old = git(&["rev-parse", "HEAD"]);
+/// git(&["commit", "-q", "--allow-empty", "-m", "two"]);
+/// let new = git(&["rev-parse", "HEAD"]);
+///
+/// assert_eq!(contains(dir.path(), &new, &old), Containment::Contains);
+/// assert_eq!(contains(dir.path(), &old, &new), Containment::DoesNotContain);
+/// // a commit contains itself
+/// assert_eq!(contains(dir.path(), &new, &new), Containment::Contains);
+/// assert_eq!(
+///     contains(dir.path(), &new, &"0".repeat(40)),
+///     Containment::CommitUnknown
+/// );
+/// ```
+pub fn contains(root: &Path, descendant: &str, ancestor: &str) -> Containment {
+    if !resolves(root, descendant) || !resolves(root, ancestor) {
+        return Containment::CommitUnknown;
+    }
+    // git not running at all is the one `None`, and it is not an answer either way
+    is_ancestor(root, ancestor, descendant).map_or(Containment::CommitUnknown, |yes| {
+        if yes {
+            Containment::Contains
+        } else {
+            Containment::DoesNotContain
+        }
+    })
+}
+
 fn run(root: &Path, args: &[&str]) -> Result<String> {
     let out = read_only(root)
         .args(args)

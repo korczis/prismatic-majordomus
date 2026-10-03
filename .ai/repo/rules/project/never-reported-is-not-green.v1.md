@@ -9,6 +9,9 @@ status: active
 class: advisory
 depends_on: [project.land-and-publish@1]
 tags: [process, integration, evidence]
+
+x-majordomus:
+  reviewed_because: decided by review and by the record, not by a gate — no check can tell that a person believed silence; the nearest mechanical support is that the planner refuses a model whose verdict cannot be reached
 ---
 
 # Rationale

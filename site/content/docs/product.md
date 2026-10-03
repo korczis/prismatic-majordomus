@@ -1,7 +1,7 @@
 +++
 title = "Product"
 description = "the product features as objects of the layer: what a feature file may hold, what every surface derives from it, the public projection boundary and its allow-list, what the homepage and the `/features/` pages render, and what is refused"
-weight = 41
+weight = 44
 [extra]
 source = "docs/PRODUCT.md"
 +++
@@ -15,9 +15,9 @@ layer holds, which operational moments a feature answers, what is guaranteed and
 only advisory. What a person writes is which parts of the product form one chapter, and in
 what order. Behaviour as implemented and tested; where this document and the executable
 disagree, the document is wrong and changes in the same commit. The decision is
-[ADR 23](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0023-product-features-are-objects-of-the-layer-and-the-landing-page-is-a-projection.md);
+[ADR 23](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0023-product-features-are-objects-of-the-layer-and-the-landing-page-is-a-projection.md);
 the rule is `project.product-surface-derived`; the directory's own contract is
-[`.ai/repo/features/README.md`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/features/README.md).
+[`.ai/repo/features/README.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/features/README.md).
 
 ## The kind
 
@@ -69,7 +69,7 @@ the only place any of this is decided.
 `apps/majordomus-cli/src/capability/builtin/product.rs` declares five capabilities over it
 with `capability!`, so the command line, the HTTP routes, the OpenAPI operations, the MCP
 tools and resources and the generated reference are projections of one declaration
-([ADR 2](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0002-canonical-capability-registry.md), `docs/CAPABILITIES.md`).
+([ADR 2](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0002-canonical-capability-registry.md), `docs/CAPABILITIES.md`).
 
 <div class="overflow-x-auto" tabindex="0">
 
@@ -114,7 +114,7 @@ templates read the dataset and name nothing:
 | `/` | `site/templates/index.html` | the chapters (features that declare themselves featured, in weight order), the interfaces, the matrix, the graph, the providers, the kinds and the doctrine |
 | `/features/` | `features-section.html` | every non-draft feature, the interfaces, the graph, the providers |
 | `/features/<id>/` | `feature.html` | the feature's own prose, then everything derived from its references |
-| `/features/matrix/` | `features-matrix.html` | features against interfaces, and modules, commands and kinds against the features that name them |
+| `/features/matrix/` | `features-matrix.html` | features against interfaces, and modules, commands and kinds against the features that name them, and how much of each feature is proven |
 
 </div>
 
@@ -228,6 +228,15 @@ detail pages: add its name to `[indexing] unlisted`.
 
 A capability module, a public command or an object kind that no stable feature names is
 **not** refused. It is reported as a gap by `majordomus product validate` and shown on the
+A surface column says where a feature is reachable. It does not say what of it holds, and a
+compliance table that answers only the first question invites the reader to assume the second.
+So each row also carries `proven` over `claims`: how many of the claims that feature names are
+guaranteed *and* name the case that settles them, out of how many it names at all. Both numbers
+are derived — the claims from the feature file, the case from each claim's `test:` in
+`docs/CLAIMS.yaml` — and a claim whose test is `-`, meaning planned or rejected, carries none
+rather than a dash a reader would mistake for evidence. The same field reaches each feature page,
+beside the claim it settles, so the evidence is one read away rather than three.
+
 matrix, because a thing the product does that the product page does not mention is exactly
 what this model exists to make visible. Closing it is one reference in one file.
 

@@ -368,6 +368,7 @@ mod tests {
                 kind_sources: vec![],
                 scope_origin: crate::scope::Origin::Distribution,
                 scope_path: String::new(),
+                observed: Default::default(),
             },
             objects: vec![],
             diagnostics: vec![],

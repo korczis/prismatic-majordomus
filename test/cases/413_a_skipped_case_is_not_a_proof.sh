@@ -120,8 +120,8 @@ export MAJORDOMUS_SHARE="$ROOT/share"
 # The runner under test, over three cases of its own, outside this checkout: driving the
 # real test/cases/ would mean running the whole suite to ask one question about one word.
 H="$W/harness"
-mkdir -p "$H/test/cases"
-cp "$ROOT/test/run.sh" "$ROOT/test/lib.sh" "$H/test/"
+mkdir -p "$H/test/cases" "$H/lib"
+cp "$ROOT/test/run.sh" "$ROOT/test/lib.sh" "$H/test/"; cp "$ROOT/lib/sha256.sh" "$H/lib/"
 cat > "$H/test/cases/01_passes.sh" <<'SH'
 . "$ROOT/test/lib.sh"
 expect_exit 0 true
@@ -211,9 +211,11 @@ cat > "$H/test/cases/04_fails_with_four.sh" <<'SH'
 : > out.json
 jq -e '.schema == 1' out.json >/dev/null
 SH
-# the fixture must really end with the skip status, or this section asserts nothing
+# the fixture must really end with the skip status, or this section asserts nothing; it is
+# started in a directory of its own named as its fixture, because test/lib.sh refuses a
+# case that does not stand in one
 mkdir -p "$W/four"; rc=0
-( cd "$W/four" && env -u MJ_SKIP_MARK ROOT="$H" bash -eu "$H/test/cases/04_fails_with_four.sh" ) \
+( cd "$W/four" && env -u MJ_SKIP_MARK T="$W/four" ROOT="$H" bash -eu "$H/test/cases/04_fails_with_four.sh" ) \
   >/dev/null 2>&1 || rc=$?
 [ "$rc" = 4 ] || { echo "    the fixture meant to fail with status 4 exited $rc"; exit 1; }
 for jobs in 1 2; do

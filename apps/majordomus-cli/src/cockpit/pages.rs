@@ -9,11 +9,13 @@
 
 use serde_json::{json, Value};
 
+use crate::capability::builtin::dashboard::DashboardOverview;
+use crate::capability::builtin::peers::PeerList;
 use crate::capability::builtin::{
-    ArtifactReport, CheckState, CommandIndex, Continuity, DesignReport, DirectoryReport,
-    DirectoryState, EventHistory, ExecutionList, ExecutionView, GraphList, Health, HealthStatus,
-    InstallabilityReport, NodeList, ObjectList, ObjectSummary, QualityAnswer, Record,
-    RepositoryReport, TokenList,
+    ArtifactReport, ArtifactState, ArtifactTallies, ArtifactVerdict, CheckState, CommandIndex,
+    CommandSummary, Continuity, DesignReport, DirectoryReport, DirectoryState, EventHistory,
+    ExecutionList, ExecutionView, GraphList, Health, HealthStatus, InstallabilityReport, NodeList,
+    ObjectList, ObjectSummary, QualityAnswer, Record, RepositoryReport, TokenList,
 };
 use crate::capability::{
     Capability, CapabilityKind, Context, Effect as CapabilityEffect, Provenance,
@@ -23,10 +25,11 @@ use crate::execution::{Execution, ExecutionState, StepState};
 use crate::generate;
 use crate::graph::{Graph, NodeState, ObservedGraph, RuntimeState};
 use crate::http::router::percent_encode;
+use crate::peers::OverlapPath;
 use crate::release::compat::{Impact, Severity, Status as ReleaseStatus, VersionPlan};
 use crate::worktree::{
     BranchState, MigrationPlan, RepositoryTopology, Standing, StepOutcome, TopologyDiagnostic,
-    WorktreeState,
+    UpstreamState, WorktreeState,
 };
 
 use crate::capability::builtin::lifecycle::{
@@ -62,7 +65,7 @@ pub struct Page {
 }
 
 impl Page {
-    fn new(area: Area, title: impl Into<String>, main: El) -> Self {
+    pub(crate) fn new(area: Area, title: impl Into<String>, main: El) -> Self {
         Page {
             area,
             title: title.into(),
@@ -73,7 +76,7 @@ impl Page {
             scripts: Vec::new(),
         }
     }
-    fn subtitle(mut self, subtitle: impl Into<String>) -> Self {
+    pub(crate) fn subtitle(mut self, subtitle: impl Into<String>) -> Self {
         self.subtitle = Some(subtitle.into());
         self
     }
@@ -105,13 +108,44 @@ fn word<T: serde::Serialize>(value: &T) -> String {
 }
 
 /// Ask the executor for a capability's output, typed.
-fn ask<T: serde::de::DeserializeOwned>(ctx: &Context, id: &str, input: Value) -> Result<T, String> {
+pub(crate) fn ask<T: serde::de::DeserializeOwned>(
+    ctx: &Context,
+    id: &str,
+    input: Value,
+) -> Result<T, String> {
     let value = ctx.execute(id, input).map_err(|e| e.to_string())?;
     serde_json::from_value(value).map_err(|e| format!("{id} answered something unexpected: {e}"))
 }
 
+/// Every count of a capability's tallies, as a stat strip: iterated over the answer's own
+/// fields, so a tally the capability adds is a statistic the page shows, and none — the bad
+/// ones least of all — is left out by a hand-picked subset.
+fn tally_statistics(tallies: &impl serde::Serialize, source: &str) -> El {
+    tally_statistics_with(tallies, source, &[])
+}
+
+/// [`tally_statistics`], with the fields whose count is not known in this answer: those
+/// render "unknown" rather than a zero that reads as a measurement.
+fn tally_statistics_with(tallies: &impl serde::Serialize, source: &str, unknown: &[&str]) -> El {
+    let mut strip = el("div").class("mj-stats");
+    if let Ok(Value::Object(fields)) = serde_json::to_value(tallies) {
+        for (field, value) in fields {
+            let shown = if unknown.contains(&field.as_str()) {
+                "unknown".to_string()
+            } else {
+                match value {
+                    Value::Number(n) => n.to_string(),
+                    _ => continue,
+                }
+            };
+            strip = strip.child(statistic(shown, field.replace('_', " "), source));
+        }
+    }
+    strip
+}
+
 /// A page that says what went wrong instead of showing a blank one.
-fn failed(area: Area, title: &str, reason: String) -> Page {
+pub(crate) fn failed(area: Area, title: &str, reason: String) -> Page {
     Page::new(
         area,
         title,
@@ -128,7 +162,10 @@ fn failed(area: Area, title: &str, reason: String) -> Page {
 
 /// The landing page: what this process is serving, and whether it is healthy.
 pub fn overview(ctx: &Context) -> Page {
-    let report: RepositoryReport = match ask(ctx, "repository.info", json!({})) {
+    // The capability every statistic below is read from, named once: what the page asks is
+    // what each statistic says it was asked of, so a label cannot name another capability.
+    const ASKED: &str = "repository.info";
+    let report: RepositoryReport = match ask(ctx, ASKED, json!({})) {
         Ok(r) => r,
         Err(e) => return failed(Area::Overview, "Overview", e),
     };
@@ -136,6 +173,7 @@ pub fn overview(ctx: &Context) -> Page {
         Ok(h) => h,
         Err(e) => return failed(Area::Overview, "Overview", e),
     };
+    let now = std::time::SystemTime::now();
 
     let git = match &report.repository.git {
         crate::git::GitState::Available(info) => {
@@ -150,38 +188,48 @@ pub fn overview(ctx: &Context) -> Page {
         crate::git::GitState::Unavailable { reason } => reason.clone(),
     };
 
+    let counted = &report.capabilities;
     let statistics = el("div")
         .class("mj-stats")
-        .child(statistic(
-            report.capabilities.total.to_string(),
+        .child(super::view::asked_statistic(
+            counted.total.to_string(),
             "capabilities",
-            "capabilities.list",
+            ASKED,
+            "capabilities.total",
         ))
-        .child(statistic(
+        .child(super::view::asked_statistic(
             report.objects.to_string(),
             "objects of the layer",
-            "repository.info",
+            ASKED,
+            "objects",
         ))
-        .child(statistic(
-            report.capabilities.http_routes.to_string(),
+        .child(super::view::asked_statistic(
+            counted.http_routes.to_string(),
             "HTTP routes",
-            "the registry's HTTP exposures",
+            ASKED,
+            "capabilities.http_routes",
         ))
-        .child(statistic(
-            report.capabilities.mcp_tools.to_string(),
+        .child(super::view::asked_statistic(
+            counted.mcp_tools.to_string(),
             "MCP tools",
-            "the registry's MCP exposures",
+            ASKED,
+            "capabilities.mcp_tools",
         ))
-        .child(statistic(
-            report.capabilities.modules.to_string(),
+        .child(super::view::asked_statistic(
+            counted.modules.to_string(),
             "modules",
-            "compose_modules! and the layer's kinds",
+            ASKED,
+            "capabilities.modules",
         ))
-        .child(statistic(
-            report.capabilities.cached.to_string(),
+        .child(super::view::asked_statistic(
+            counted.cached.to_string(),
             "cached capabilities",
-            "the descriptors' cache policies",
+            ASKED,
+            "capabilities.cached",
         ));
+    let statistics = el("div")
+        .child(statistics)
+        .child(super::view::as_of(&report.repository.observed.index, now));
 
     let identity = card(
         "This repository",
@@ -191,7 +239,15 @@ pub fn overview(ctx: &Context) -> Page {
                 "Layer schema",
                 Node::Element(mono(&report.repository.layer_schema)),
             ),
-            ("Version control", Node::Element(mono(git))),
+            (
+                "Version control",
+                Node::Element(
+                    el("span")
+                        .child(mono(git))
+                        .text(" ")
+                        .child(super::view::as_of(&report.repository.observed.git, now)),
+                ),
+            ),
             (
                 "Discovery",
                 Node::Element(mono(&report.repository.discovery)),
@@ -297,15 +353,97 @@ pub fn overview(ctx: &Context) -> Page {
         "Overview",
         el("div")
             .class("mj-grid")
+            .child(four_questions(ctx))
             .child(statistics)
             .child(identity)
             .child(health_card)
             .child(preflight_card(ctx))
-            .children(distribution_card(ctx).into_iter().collect::<Vec<_>>())
+            .child(distribution_card(ctx))
             .child(kinds)
             .child(diagnostics),
     )
     .subtitle(crate::about::SUMMARY)
+}
+
+/// The four questions, first on the overview: `dashboard.overview` laid out, card by card.
+///
+/// Nothing here reads a fact of its own. Each card shows the value the capability carried,
+/// the status word its source gave it, the capability and pointer it was read from, and a
+/// link to the page holding the evidence. The value is also written as data
+/// (`data-value`, the card's JSON), so a test compares this page with the route byte for
+/// byte rather than parsing a rendering. A capability that fails is a failure on the page,
+/// never an empty card.
+fn four_questions(ctx: &Context) -> El {
+    let o: DashboardOverview = match ask(ctx, "dashboard.overview", json!({})) {
+        Ok(o) => o,
+        Err(e) => return card("Four questions", alert("fail", e)),
+    };
+    let shown = |v: &Value| match v {
+        Value::String(s) => s.clone(),
+        Value::Null => "none".into(),
+        other => other.to_string(),
+    };
+    let questions: Vec<El> = o
+        .questions
+        .iter()
+        .map(|q| {
+            el("div")
+                .attr("data-question", q.id.as_str())
+                .child(
+                    el("h3")
+                        .class("mj-card-title")
+                        .text(&q.title)
+                        .text(" ")
+                        .child(badge(q.status.as_str(), q.status.as_str())),
+                )
+                .child(
+                    el("ul").class("mj-checklist").children(
+                        q.cards
+                            .iter()
+                            .map(|c| {
+                                el("li")
+                                    .class("mj-checklist-item")
+                                    .attr("data-card", c.id.as_str())
+                                    .attr("data-value", c.value.to_string())
+                                    .attr("data-status", c.status.as_str())
+                                    .child(badge(c.status.as_str(), c.status.as_str()))
+                                    .child(
+                                        el("a")
+                                            .class("mj-link mj-checklist-title")
+                                            .attr("href", c.route.as_str())
+                                            .text(&c.title),
+                                    )
+                                    .child(mono(shown(&c.value)))
+                                    .child(el("span").class("mj-checklist-detail").text(format!(
+                                        "{} — from {} {}",
+                                        c.detail, c.source.capability, c.source.pointer
+                                    )))
+                            })
+                            .collect::<Vec<_>>(),
+                    ),
+                )
+        })
+        .collect();
+    // the route the registry declares for the capability, not one written here: asked of
+    // `capabilities.describe`, so the page reads no registry of its own (ADR 0089)
+    let route = ask::<Value>(
+        ctx,
+        "capabilities.describe",
+        json!({ "id": "dashboard.overview" }),
+    )
+    .ok()
+    .and_then(|c| {
+        c.pointer("/exposure/http/path")
+            .and_then(Value::as_str)
+            .map(String::from)
+    })
+    .unwrap_or_default();
+    card_with(
+        "Four questions",
+        link(route, "as JSON"),
+        el("div").children(questions),
+    )
+    .attr("data-overview-status", o.status.as_str())
 }
 
 /// The preflight card: whether Majordomus is in force here, claim by claim.
@@ -349,12 +487,43 @@ fn preflight_card(ctx: &Context) -> El {
 ///
 /// It asks `distribution.status`, which is the same capability the command line, the HTTP
 /// route and the MCP tool answer from, so no number here is computed twice and none is
-/// written down. A repository that carries no distribution model gets no card rather than
-/// a card full of dashes.
-fn distribution_card(ctx: &Context) -> Option<El> {
-    let report: InstallabilityReport = ask(ctx, "distribution.status", json!({})).ok()?;
+/// written down. A capability that does not answer — no distribution model among them — is
+/// a card that says so, never a card that vanishes: an absent card and an unasked question
+/// look the same, and only one of them is true.
+///
+/// The verdict is worded as what it is. `distribution.status` reaches no network: it
+/// decides from the distribution model and the release records, so the card says
+/// "installable", decided from the release records, and not that the public install is healthy, which
+/// only the release pipeline's smoke phase has observed.
+fn distribution_card(ctx: &Context) -> El {
+    distribution_card_of(ask(ctx, "distribution.status", json!({})))
+}
+
+/// What `distribution.status` decides from, said beside its verdict.
+const RECORDS: &str = "the release records, with no network reached";
+
+fn distribution_card_of(answer: Result<InstallabilityReport, String>) -> El {
+    let report = match answer {
+        Ok(r) => r,
+        Err(e) => {
+            return card_with(
+                "Distribution",
+                badge("unknown", "unknown"),
+                el("div")
+                    .child(facts(vec![
+                        ("Installable", Node::Element(badge("unknown", "unknown"))),
+                        ("Decided from", Node::Element(el("span").text(RECORDS))),
+                    ]))
+                    .child(
+                        el("p")
+                            .class("mj-note")
+                            .text(format!("distribution.status did not answer: {e}")),
+                    ),
+            )
+        }
+    };
     let verdict = if report.installable {
-        badge("ok", "healthy")
+        badge("ok", "yes")
     } else {
         badge("fail", "blocked")
     };
@@ -376,7 +545,8 @@ fn distribution_card(ctx: &Context) -> Option<El> {
                 report.published_artifacts, report.required_targets
             ))),
         ),
-        ("Public install", Node::Element(verdict)),
+        ("Installable", Node::Element(verdict)),
+        ("Decided from", Node::Element(el("span").text(RECORDS))),
     ];
     // Why, and what to do about it — the same cause and next action every other projection
     // of this capability shows, rather than a second wording of them here.
@@ -390,7 +560,7 @@ fn distribution_card(ctx: &Context) -> Option<El> {
             }
         }
     }
-    Some(card_with(
+    card_with(
         "Distribution",
         link(
             "/cockpit/capabilities/distribution.status",
@@ -401,7 +571,7 @@ fn distribution_card(ctx: &Context) -> Option<El> {
                 .class("mj-note")
                 .child(mono(&report.install_command)),
         ),
-    ))
+    )
 }
 
 fn health_badge(status: HealthStatus) -> El {
@@ -414,6 +584,21 @@ fn health_badge(status: HealthStatus) -> El {
             HealthStatus::Unknown => "a dimension could not be decided",
         },
     ))
+}
+
+/// The badge for a model's declared standing. A catalogue entry that declares none is
+/// "undeclared", which wears the colour of not knowing, never the one of "available".
+fn model_status_badge(status: Option<crate::models::ModelStatus>) -> El {
+    use crate::models::ModelStatus;
+    match status {
+        None => badge("unknown", "undeclared"),
+        Some(s) => word_badge(match s {
+            ModelStatus::Available => "available",
+            ModelStatus::Preview => "preview",
+            ModelStatus::Deprecated => "deprecated",
+            ModelStatus::Retired => "retired",
+        }),
+    }
 }
 
 // --------------------------------------------------------------- capabilities
@@ -2876,15 +3061,9 @@ pub fn models(ctx: &Context) -> Page {
         .models
         .iter()
         .map(|m| {
-            let status = match m.status {
-                crate::models::ModelStatus::Available => "available",
-                crate::models::ModelStatus::Preview => "preview",
-                crate::models::ModelStatus::Deprecated => "deprecated",
-                crate::models::ModelStatus::Retired => "retired",
-            };
             card_with(
                 m.id.clone(),
-                word_badge(status),
+                model_status_badge(m.status),
                 el("div")
                     .child(facts(vec![
                         ("Vendor", Node::Element(el("span").text(&m.vendor))),
@@ -3496,19 +3675,23 @@ pub fn health(ctx: &Context) -> Page {
         Ok(h) => h,
         Err(e) => return failed(Area::Health, "Health", e),
     };
+    let now = std::time::SystemTime::now();
     let cards: Vec<El> = health
         .checks
         .iter()
         .map(|c| {
+            // a check that judged a picture says when the picture was taken; one that
+            // decided live, during this call, has nothing older than the page to show
+            let mut decided = vec![("Decided by", Node::Element(el("span").text(&c.decided_by)))];
+            if let Some(o) = health.observed.get(&c.id) {
+                decided.push(("Observed", Node::Element(super::view::as_of(o, now))));
+            }
             card_with(
                 c.title.clone(),
                 badge(c.status.as_str(), c.status.as_str()),
                 el("div")
                     .child(el("p").class("mj-prose").text(&c.detail))
-                    .child(facts(vec![(
-                        "Decided by",
-                        Node::Element(el("span").text(&c.decided_by)),
-                    )]))
+                    .child(facts(decided))
                     .when(!c.evidence.is_empty(), |d| {
                         d.child(
                             el("div")
@@ -3797,6 +3980,32 @@ pub fn release(ctx: &Context) -> Page {
 
 // --------------------------------------------------------------------- artifacts
 
+/// The badge for the verdict `artifacts.list` decided. An unverified set wears no colour of
+/// health: its unhashed files were not compared, and saying so is the whole point.
+fn artifact_verdict_badge(verdict: ArtifactVerdict, t: &ArtifactTallies) -> El {
+    match verdict {
+        ArtifactVerdict::Current => badge("ok", "current"),
+        ArtifactVerdict::Unverified => badge(
+            "unknown",
+            format!("unverified: {} file(s) carry no recorded hash", t.present),
+        ),
+        ArtifactVerdict::Stale => badge("warn", "stale"),
+        ArtifactVerdict::Missing => badge("fail", "missing"),
+        ArtifactVerdict::NotGenerated => badge("warn", "not generated"),
+    }
+}
+
+/// The badge status of one file's state: a file present without a recorded hash is not
+/// known to be current, so it is not coloured as if it were.
+fn artifact_state_status(state: ArtifactState) -> &'static str {
+    match state {
+        ArtifactState::Current => "ok",
+        ArtifactState::Stale => "warn",
+        ArtifactState::Missing => "fail",
+        ArtifactState::Present => "unknown",
+    }
+}
+
 /// What the generator writes: every document with the encodings it is committed in, and
 /// every file with its contract and its state against the working tree. Read through
 /// `artifacts.list`, which reads the generator's own manifest; this page keeps no list of
@@ -3806,16 +4015,9 @@ pub fn artifacts(ctx: &Context) -> Page {
         Ok(r) => r,
         Err(e) => return failed(Area::Artifacts, "Artifacts", e),
     };
-    let t = &report.tallies;
-    let overall = if !report.present {
-        ("warn", "not generated")
-    } else if t.missing > 0 {
-        ("fail", "missing")
-    } else if t.stale > 0 {
-        ("warn", "stale")
-    } else {
-        ("ok", "current")
-    };
+    // The verdict is the capability's: this page renders it and decides nothing from the
+    // tallies itself.
+    let overall = artifact_verdict_badge(report.verdict, &report.tallies);
 
     let documents = table(
         &["document", "encodings", "schema", "source"],
@@ -3856,7 +4058,7 @@ pub fn artifacts(ctx: &Context) -> Page {
                     cell(mono(a.document.clone())),
                     text_cell(a.format.suffix()),
                     text_cell(a.bytes.map(|b| b.to_string()).unwrap_or_else(|| "—".into())),
-                    cell(badge(a.state.as_str(), a.state.as_str())),
+                    cell(badge(artifact_state_status(a.state), a.state.as_str())),
                 ])
             })
             .collect(),
@@ -3869,25 +4071,9 @@ pub fn artifacts(ctx: &Context) -> Page {
             .class("mj-grid")
             .child(card_with(
                 "Where the generated tree stands",
-                badge(overall.0, overall.1),
+                overall,
                 el("div")
-                    .child(
-                        el("div")
-                            .class("mj-stats")
-                            .child(statistic(
-                                t.documents.to_string(),
-                                "documents",
-                                "the manifest",
-                            ))
-                            .child(statistic(
-                                t.artifacts.to_string(),
-                                "files",
-                                "the manifest",
-                            ))
-                            .child(statistic(t.current.to_string(), "current", "sha256"))
-                            .child(statistic(t.stale.to_string(), "stale", "sha256"))
-                            .child(statistic(t.missing.to_string(), "missing", "the tree")),
-                    )
+                    .child(tally_statistics(&report.tallies, "artifacts.list"))
                     .child(facts(vec![
                         ("Manifest", Node::Element(mono(report.manifest.clone()))),
                         ("Schema", Node::Element(mono(report.schema.clone()))),
@@ -4289,13 +4475,19 @@ fn upstream_cell(w: &WorktreeState) -> El {
     match &w.upstream {
         None => text_cell("-"),
         Some(u) if u.gone => cell(el("span").child(mono(&u.name)).text(" (gone)")),
-        Some(u) => text_cell(format!(
-            "{} +{} −{}",
-            u.name,
-            u.ahead.unwrap_or(0),
-            u.behind.unwrap_or(0)
-        )),
+        Some(u) => text_cell(upstream_text(u)),
     }
+}
+
+/// An upstream and how far this branch is from it. A count git did not answer is unknown,
+/// never zero: "+0 −0" says in sync, which nobody measured.
+fn upstream_text(u: &UpstreamState) -> String {
+    let count = |n: Option<usize>| n.map_or_else(|| "?".to_string(), |n| n.to_string());
+    let mut text = format!("{} +{} −{}", u.name, count(u.ahead), count(u.behind));
+    if u.ahead.is_none() || u.behind.is_none() {
+        text.push_str(" (unknown)");
+    }
+    text
 }
 
 fn diagnostics_table(diagnostics: &[TopologyDiagnostic]) -> El {
@@ -4367,49 +4559,16 @@ pub fn worktrees(ctx: &Context) -> Page {
         ]),
     );
 
-    let ta = &t.tallies;
-    let statistics = el("div")
-        .class("mj-stats")
-        .child(statistic(
-            ta.worktrees.to_string(),
-            "worktrees",
-            "worktree.topology",
-        ))
-        .child(statistic(
-            ta.canonical.to_string(),
-            "canonical",
-            "worktree.topology",
-        ))
-        .child(statistic(
-            ta.misplaced.to_string(),
-            "misplaced",
-            "worktree.topology",
-        ))
-        .child(statistic(
-            ta.ephemeral.to_string(),
-            "ephemeral",
-            "worktree.topology",
-        ))
-        .child(statistic(
-            ta.detached.to_string(),
-            "detached",
-            "worktree.topology",
-        ))
-        .child(statistic(
-            ta.dirty.to_string(),
-            "with uncommitted work",
-            "git status, one per worktree",
-        ))
-        .child(statistic(
-            ta.branches_without_worktree.to_string(),
-            "branches without a worktree",
-            "for-each-ref",
-        ))
-        .child(statistic(
-            ta.cleanup_eligible.to_string(),
-            "cleanup-eligible branches",
-            "merged into the trunk, clean or absent",
-        ));
+    // Every tally the capability answers, the bad ones included: a summary that showed the
+    // canonical count and not the missing one sat beside "valid" with 31 rows missing. The
+    // one count that is not always measured, uncommitted work, is "unknown" when no
+    // worktree in the answer was asked for it.
+    let dirty_unmeasured = t.worktrees.iter().all(|w| w.dirty.is_none());
+    let statistics = tally_statistics_with(
+        &t.tallies,
+        "worktree.topology",
+        if dirty_unmeasured { &["dirty"] } else { &[] },
+    );
 
     let worktree_rows: Vec<El> = t
         .worktrees
@@ -4519,7 +4678,10 @@ pub fn worktrees(ctx: &Context) -> Page {
             "Diagnostics",
             badge(
                 if t.valid { "ok" } else { "fail" },
-                format!("{} error(s), {} warning(s)", ta.errors, ta.warnings),
+                format!(
+                    "{} error(s), {} warning(s)",
+                    t.tallies.errors, t.tallies.warnings
+                ),
             ),
             diagnostics_table(&t.diagnostics),
         )
@@ -4616,6 +4778,594 @@ pub fn worktrees(ctx: &Context) -> Page {
     .subtitle("Where every branch's worktree belongs and where each one is: <repo>-wt/<branch>, derived from git and registered nowhere.")
     .trail(vec![("Cockpit", Some("/cockpit")), ("Worktrees", None)])
     .script("worktrees.js")
+}
+
+// ------------------------------------------------------------------ peers
+
+/// Who else is working in this repository, and where two of them are about to collide.
+///
+/// The board is the repository's, not this process's: `peers.list` gathers every checkout's
+/// board and returns them together (ADR 0044). That answer has been reachable over MCP and
+/// over HTTP since it was written, and by no person looking at the Cockpit — which is where
+/// somebody looks *before* starting, and is why "is anyone else on this" kept being answered
+/// by messaging other sessions, twice too late.
+///
+/// The distinction this page exists to keep is **absent against empty**. A board that could
+/// not be asked is not a board with nobody on it, so `complete: false` is rendered as loudly
+/// as the peers themselves, with the checkout that could not be reached and the reason it
+/// gave. Rendering silence for an unreachable server is the failure the capability was
+/// written to avoid, and a page is the easiest place to reintroduce it.
+pub fn peers(ctx: &Context) -> Page {
+    match ask(ctx, "peers.list", json!({})) {
+        Ok(b) => peers_of(&b),
+        Err(e) => failed(Area::Peers, "Peers", e),
+    }
+}
+
+/// The Peers page of one `peers.list` answer: the rendering, apart from the asking, so that
+/// a board that could not be read — which no single process can produce on demand — is
+/// rendered by the same code as one that could.
+fn peers_of(b: &PeerList) -> Page {
+    let attached = b.peers.iter().filter(|p| p.attached).count();
+    let unread = b.boards.iter().filter(|v| v.reason.is_some()).count();
+
+    let statistics = el("div")
+        .class("mj-stats")
+        .child(statistic(b.count.to_string(), "peers", "peers.list"))
+        .child(statistic(
+            attached.to_string(),
+            "attached now",
+            "peers.list",
+        ))
+        .child(statistic(
+            b.boards.len().to_string(),
+            "checkouts",
+            "peers.list",
+        ))
+        .child(statistic(unread.to_string(), "boards unread", "peers.list"))
+        .child(statistic(
+            b.overlaps.len().to_string(),
+            "overlapping claims",
+            "peers.list",
+        ));
+
+    let identity = card(
+        "This board",
+        facts(vec![
+            (
+                "Coverage",
+                Node::Element(if b.complete {
+                    badge("ok", "every checkout answered")
+                } else {
+                    badge("fail", format!("{unread} checkout(s) could not be asked"))
+                }),
+            ),
+            (
+                "You are",
+                Node::Element(match &b.caller {
+                    Some(id) => el("span")
+                        .child(mono(id.as_str()))
+                        .text(" — a position on this checkout's board, handed out again after a reconnect"),
+                    None => el("span").text("not on the board: this page was not opened through an MCP session"),
+                }),
+            ),
+        ]),
+    );
+
+    // The unread boards first when there are any: a reader who stops after the peer table
+    // must not stop having read "nobody else is here" when the truth is "I could not ask".
+    let unreachable = if unread == 0 {
+        None
+    } else {
+        Some(card(
+            "Boards that could not be asked",
+            el("div")
+                .child(el("p").class("mj-note").text(
+                    "These checkouts are part of this repository and their boards were not read. \
+                     Whoever is working in them is not listed below.",
+                ))
+                .child(table(
+                    &["Checkout", "Branch", "Standing", "Why not"],
+                    b.boards
+                        .iter()
+                        .filter(|v| v.reason.is_some())
+                        .map(|v| {
+                            row(vec![
+                                cell(mono(v.checkout.worktree.display().to_string())),
+                                cell(mono(
+                                    v.checkout
+                                        .branch
+                                        .clone()
+                                        .unwrap_or_else(|| "(detached)".into()),
+                                )),
+                                cell(badge("warn", v.standing.as_str())),
+                                cell(el("span").text(v.reason.clone().unwrap_or_default())),
+                            ])
+                        })
+                        .collect(),
+                )),
+        ))
+    };
+
+    let peers_card = card(
+        "Workers",
+        if b.peers.is_empty() {
+            el("p").class("mj-note").text(if b.complete {
+                "Every board of this repository answered, and none of them holds a worker."
+            } else {
+                "No worker on the boards that answered. The boards above were not read, so this is not the whole repository."
+            })
+        } else {
+            table(
+                &["Peer", "Checkout", "Client", "Standing", "Intent", "Scope"],
+                b.peers
+                    .iter()
+                    .map(|p| {
+                        let checkout = match &p.checkout {
+                            Some(c) => el("span")
+                                .child(mono(
+                                    c.branch.clone().unwrap_or_else(|| "(detached)".into()),
+                                ))
+                                .when(c.this_checkout, |e| e.text(" ").child(tag("here"))),
+                            None => el("span").text("(unknown)"),
+                        };
+                        let a = p.announcement.as_ref();
+                        row(vec![
+                            cell(mono(p.id.as_str())),
+                            cell(checkout),
+                            cell(el("span").text(p.client.name.clone())),
+                            cell(if p.attached {
+                                badge("ok", "attached")
+                            } else {
+                                badge("warn", "gone")
+                            }),
+                            cell(match a {
+                                Some(x) => el("span").text(x.intent.clone()),
+                                None => el("span").class("mj-note").text("announced nothing"),
+                            }),
+                            cell(match a {
+                                Some(x) if !x.scope.is_empty() => {
+                                    let mut e = el("span");
+                                    for path in &x.scope {
+                                        e = e.child(mono(path)).text(" ");
+                                    }
+                                    e
+                                }
+                                _ => el("span").class("mj-note").text("—"),
+                            }),
+                        ])
+                    })
+                    .collect(),
+            )
+        },
+    );
+
+    let overlaps = if b.overlaps.is_empty() {
+        None
+    } else {
+        Some(card(
+            "Two workers, one scope",
+            el("div")
+                .child(el("p").class("mj-note").text(
+                    "Each row is a pair whose claimed scope meets. A claim is not a lock: the task's own \
+                     scope and `check --overlap` are what refuse a commit. This is the warning that comes first.",
+                ))
+                .child(table(
+                    &["Peer", "Standing", "Intent", "Where it meets"],
+                    b.overlaps
+                        .iter()
+                        .map(|o| {
+                            let mut paths = el("span");
+                            for path in &o.paths {
+                                paths = paths.child(mono(o_path(path))).text(" ");
+                            }
+                            row(vec![
+                                cell(mono(o.peer.as_str())),
+                                cell(if o.attached {
+                                    badge("fail", "attached")
+                                } else {
+                                    badge("warn", "gone")
+                                }),
+                                cell(el("span").text(o.intent.clone())),
+                                cell(paths),
+                            ])
+                        })
+                        .collect(),
+                )),
+        ))
+    };
+
+    let boards = card(
+        "Checkouts",
+        table(
+            &["Checkout", "Branch", "Standing", "Server", "Attached"],
+            b.boards
+                .iter()
+                .map(|v| {
+                    row(vec![
+                        cell(mono(v.checkout.worktree.display().to_string())),
+                        cell(mono(
+                            v.checkout
+                                .branch
+                                .clone()
+                                .unwrap_or_else(|| "(detached)".into()),
+                        )),
+                        cell(badge(
+                            if v.reason.is_some() { "warn" } else { "ok" },
+                            v.standing.as_str(),
+                        )),
+                        cell(match &v.url {
+                            Some(u) => mono(u),
+                            None => el("span").class("mj-note").text("—"),
+                        }),
+                        cell(el("span").text(v.attached.to_string())),
+                    ])
+                })
+                .collect(),
+        ),
+    );
+
+    Page::new(
+        Area::Peers,
+        "Peers",
+        {
+            // The unread boards come before the workers, and the overlaps before both: a reader
+            // who stops early must not stop having read "nobody else is here".
+            let mut grid = el("div").class("mj-grid").child(statistics).child(identity);
+            if let Some(c) = unreachable {
+                grid = grid.child(c);
+            }
+            if let Some(c) = overlaps {
+                grid = grid.child(c);
+            }
+            grid.child(peers_card).child(boards)
+        },
+    )
+    .subtitle(
+        "Every worker of this repository, gathered from every checkout's board — and the checkouts whose board could not be read, because a board nobody could ask is not a board with nobody on it.",
+    )
+    .trail(vec![("Cockpit", Some("/cockpit")), ("Peers", None)])
+}
+
+/// One side of an overlap, as a path a reader can compare with their own.
+fn o_path(p: &OverlapPath) -> String {
+    if p.yours == p.theirs {
+        p.yours.clone()
+    } else {
+        format!("{} / {}", p.yours, p.theirs)
+    }
+}
+
+// ---------------------------------------------------------------- integration
+
+/// The badge status of a disposition: what the reader should feel about it.
+fn disposition_status(d: crate::integration::PullRequestDisposition) -> &'static str {
+    use crate::integration::IntegrationLane as L;
+    match d.lane() {
+        L::Ready => "ok",
+        L::Waiting => "info",
+        L::Repair => "fail",
+        L::Cleanup => "warn",
+        L::Held => "unknown",
+    }
+}
+
+/// The pull-request integration queue (ADR 0101): the lanes, the master every decision was
+/// taken against, the lease, the starving, and the executor's recent actions — all of it
+/// `integration.queue` and `integration.events`, the answers the command line and MCP give.
+/// Read from the last recorded observation, so a page load never reaches the forge.
+pub fn integration(ctx: &Context) -> Page {
+    use crate::capability::builtin::integration::{IntegrationEvents, IntegrationStatus};
+    use crate::integration::IntegrationLane;
+
+    let status: IntegrationStatus = match ask(ctx, "integration.queue", json!({})) {
+        Ok(s) => s,
+        Err(e) => return failed(Area::Integration, "Integration", e),
+    };
+    let trail = vec![("Cockpit", Some("/cockpit")), ("Integration", None)];
+    let commands = card(
+        "Commands",
+        el("div")
+            .child(el("p").class("mj-prose").text(
+                "The Cockpit reads; the command line acts, one merge at a time, each against a master observed a moment before, under the base branch's lease. Nothing here reaches the forge.",
+            ))
+            .child(pre(
+                "majordomus prs refresh                  # observe the forge now; the one network read\nmajordomus prs status                   # this queue, in rank order\nmajordomus prs explain <n>              # why one pull request is where it is\nmajordomus prs drain --dry-run          # what the executor would do; changes nothing\nmajordomus prs drain --max 1            # merge the next provably safe one, verify, re-plan\nmajordomus prs drain --continuous       # drain, wait, drain again, until Ctrl-C\nmajordomus prs cleanup                  # list what is provably on master; --apply closes",
+            )),
+    );
+    let Some(q) = status.queue else {
+        return Page::new(
+            Area::Integration,
+            "Integration",
+            el("div")
+                .class("mj-grid")
+                .child(card(
+                    "No queue",
+                    el("div")
+                        .child(alert(
+                            "info",
+                            status
+                                .reason
+                                .unwrap_or_else(|| "nothing is observed".into()),
+                        ))
+                        .child(nothing(
+                            "The queue is built from a recorded forge observation, and this checkout has none. `majordomus prs refresh` records one.",
+                        )),
+                ))
+                .child(commands),
+        )
+        .subtitle("Every open pull request classified against the current master, and the executor that merges the next provably safe one.")
+        .trail(trail);
+    };
+
+    // Reached only with a recorded observation (the early return above handles none).
+    // ui-integrity: tallies count every observed assessment, so an absent lane holds none
+    let lane = |name: &str| q.tallies.by_lane.get(name).copied().unwrap_or(0);
+    let statistics = tally_statistics(
+        &serde_json::json!({
+            "open": q.tallies.open,
+            "ready": lane("ready"),
+            "waiting": lane("waiting"),
+            "repair": lane("repair"),
+            "cleanup": lane("cleanup"),
+            "held": lane("held"),
+            "starving": q.starving.len(),
+        }),
+        "integration.queue",
+    );
+
+    let lease = match &status.lease {
+        None => badge("ok", "free"),
+        Some(l) if l.stale => badge(
+            "warn",
+            format!(
+                "stale — renewed {} s ago; the next executor takes it over",
+                l.renewed_seconds_ago
+            ),
+        ),
+        Some(l) => match &l.holder {
+            Some(h) => badge(
+                "info",
+                format!(
+                    "held by pid {} on {}, renewed {} s ago",
+                    h.pid, h.host, l.renewed_seconds_ago
+                ),
+            ),
+            None => badge("info", "held (holder unreadable)"),
+        },
+    };
+    let last_merge = match &status.last_merge {
+        Some(e) => Node::Element(
+            el("span")
+                .child(mono(format!("#{}", e.pr.unwrap_or_default())))
+                .text(format!(
+                    " at {} — master {}",
+                    e.at,
+                    e.master_after.clone().unwrap_or_else(|| "?".into())
+                )),
+        ),
+        None => Node::Element(el("span").text("none recorded in this checkout")),
+    };
+    let identity = card_with(
+        "This queue",
+        link(
+            "/cockpit/capabilities/integration.queue",
+            "integration.queue",
+        ),
+        facts(vec![
+            ("Repository", Node::Element(mono(&q.repository))),
+            (
+                "Base",
+                Node::Element(
+                    el("span")
+                        .child(mono(&q.base))
+                        .text(" at ")
+                        .child(mono(&q.master_sha)),
+                ),
+            ),
+            (
+                "Observed",
+                Node::Element(el("span").text(format!(
+                    "{} — the forge then said {} is {}",
+                    q.observed_at, q.base, q.observed_base_sha
+                ))),
+            ),
+            (
+                "Next merge",
+                Node::Element(match q.next_merge {
+                    Some(n) => badge("ok", format!("#{n}")),
+                    None => badge("info", "nothing is ready"),
+                }),
+            ),
+            ("Lease", Node::Element(lease)),
+            ("Last merge", last_merge),
+            (
+                "Policy",
+                Node::Element(el("span").text(format!(
+                    "required checks: {}; review required: {}; merge method: {}",
+                    q.policy
+                        .required_checks
+                        .as_ref()
+                        .map(|c| if c.is_empty() { "none".to_string() } else { c.join(", ") })
+                        .unwrap_or_else(|| "unread — nothing can be ready".into()),
+                    q.policy
+                        .reviews_required
+                        .map(|r| r.to_string())
+                        .unwrap_or_else(|| "unread".into()),
+                    q.policy.merge_method
+                ))),
+            ),
+        ]),
+    );
+
+    let diagnostics = if q.diagnostics.is_empty() {
+        card(
+            "Diagnostics",
+            nothing("The observation is current for this clone's master."),
+        )
+    } else {
+        card_with(
+            "Diagnostics",
+            badge("warn", format!("{}", q.diagnostics.len())),
+            el("div").children(
+                q.diagnostics
+                    .iter()
+                    .map(|d| alert("warn", d.clone()))
+                    .collect::<Vec<_>>(),
+            ),
+        )
+    };
+
+    // one card per lane, in the lanes' own order; an empty lane says so rather than vanishing
+    let lanes = [
+        (
+            IntegrationLane::Ready,
+            "Ready",
+            "Nothing is ready: the executor has nothing to merge.",
+        ),
+        (
+            IntegrationLane::Waiting,
+            "Waiting",
+            "Nothing is waiting on a refresh, a check, a review or a dependency.",
+        ),
+        (
+            IntegrationLane::Repair,
+            "Needs repair",
+            "No pull request needs a person to change its branch.",
+        ),
+        (
+            IntegrationLane::Cleanup,
+            "Cleanup",
+            "No open pull request's work is on master already.",
+        ),
+        (
+            IntegrationLane::Held,
+            "Held",
+            "Nothing is held: no draft, blocking label, other base or unknown.",
+        ),
+    ];
+    let mut lane_cards = Vec::new();
+    for (lane, title, empty_note) in lanes {
+        let rows: Vec<El> = q
+            .assessments
+            .iter()
+            .enumerate()
+            .filter(|(_, a)| a.lane == lane)
+            .map(|(i, a)| {
+                let waited = a.wait.as_ref().map(|w| {
+                    let mut s = format!("since {}", w.actionable_since);
+                    if w.passed_over > 0 {
+                        s.push_str(&format!(", passed over {}×", w.passed_over));
+                    }
+                    s
+                });
+                row(vec![
+                    text_cell((i + 1).to_string()),
+                    cell(
+                        el("span")
+                            .child(link(
+                                format!(
+                                    "/cockpit/capabilities/integration.explain?number={}",
+                                    a.number
+                                ),
+                                format!("#{}", a.number),
+                            ))
+                            .when(q.starving.contains(&a.number), |e| {
+                                e.text(" ").child(tag("starving"))
+                            }),
+                    ),
+                    cell(badge(
+                        disposition_status(a.disposition),
+                        a.disposition.as_str(),
+                    )),
+                    text_cell(word(&a.risk)),
+                    text_cell(a.reasons.join(", ")),
+                    text_cell(a.next_action.clone().unwrap_or_default()),
+                    text_cell(waited.unwrap_or_default()),
+                    text_cell(a.title.clone()),
+                ])
+            })
+            .collect();
+        let n = rows.len();
+        lane_cards.push(if rows.is_empty() {
+            card(title, nothing(empty_note))
+        } else {
+            card_with(
+                title,
+                badge(
+                    if lane == IntegrationLane::Repair {
+                        "fail"
+                    } else {
+                        "info"
+                    },
+                    n.to_string(),
+                ),
+                table(
+                    &[
+                        "Rank",
+                        "PR",
+                        "Disposition",
+                        "Risk",
+                        "Reasons",
+                        "Next",
+                        "Waiting",
+                        "Title",
+                    ],
+                    rows,
+                ),
+            )
+        });
+    }
+
+    let events: Vec<crate::integration::drain::IntegrationEvent> =
+        ask::<IntegrationEvents>(ctx, "integration.events", json!({}))
+            .map(|e| e.events)
+            .unwrap_or_default();
+    let recent: Vec<El> = events
+        .iter()
+        .rev()
+        .take(20)
+        .map(|e| {
+            row(vec![
+                text_cell(e.at.clone()),
+                cell(mono(&e.action)),
+                text_cell(e.pr.map(|n| format!("#{n}")).unwrap_or_else(|| "-".into())),
+                text_cell(e.detail.clone()),
+                text_cell(e.actor.clone()),
+            ])
+        })
+        .collect();
+    let history = if recent.is_empty() {
+        card(
+            "Recent actions",
+            nothing("The executor has recorded nothing in this checkout."),
+        )
+    } else {
+        card_with(
+            "Recent actions",
+            link(
+                "/cockpit/capabilities/integration.events",
+                "integration.events",
+            ),
+            table(&["When", "Action", "PR", "Detail", "Actor"], recent),
+        )
+    };
+
+    let mut grid = el("div")
+        .class("mj-grid")
+        .child(statistics)
+        .child(identity)
+        .child(diagnostics);
+    for c in lane_cards {
+        grid = grid.child(c);
+    }
+    Page::new(
+        Area::Integration,
+        "Integration",
+        grid.child(history).child(commands),
+    )
+    .subtitle("Every open pull request classified against the current master, and the executor that merges the next provably safe one — one at a time, re-planning after every merge.")
+    .trail(trail)
 }
 
 // ------------------------------------------------------------------ not found
@@ -4875,47 +5625,37 @@ pub fn commands(ctx: &Context, query: &[(String, String)]) -> Page {
         }
     };
 
-    let programs = chips(
-        [
-            ("every program", None),
-            ("executable", Some("executable")),
-            ("shell tool", Some("tool")),
-            ("workflow", Some("workflow")),
-        ]
-        .into_iter()
-        .map(|(label, value)| {
-            (
-                label.to_string(),
-                here("origin", value),
-                index
-                    .commands
-                    .iter()
-                    .filter(|c| value.is_none_or(|v| c.origin == v))
-                    .count(),
-                origin.as_deref() == value,
-            )
-        })
-        .collect(),
-    );
-
-    let effects = chips(
-        [
-            ("any effect", None),
-            ("read-only", Some("read_only")),
-            ("up to local", Some("local_mutation")),
-            ("up to repository", Some("repository_mutation")),
-        ]
-        .into_iter()
-        .map(|(label, value)| {
-            (
-                label.to_string(),
-                here("effect", value),
-                0,
-                effect.as_deref() == value,
-            )
-        })
-        .collect(),
-    );
+    // The chips are facets: each one counts what choosing it would list, so each is
+    // counted over the answer with every other filter applied and its own left out. Both
+    // are `commands.list` answers — the set of chips is the set of values present in
+    // them, and no chip's count is anything but a count of that answer.
+    let facet = |drop: &str| -> Result<CommandIndex, String> {
+        let mut input = json!({});
+        for (k, v) in [
+            ("origin", origin.as_deref()),
+            ("effect", effect.as_deref()),
+            ("search", search.as_deref()),
+        ] {
+            if let (true, Some(v)) = (k != drop, v) {
+                input[k] = json!(v);
+            }
+        }
+        ask(ctx, "commands.list", input)
+    };
+    let by_origin = match facet("origin") {
+        Ok(v) => v,
+        Err(e) => return failed(Area::Commands, "Commands", e),
+    };
+    let by_effect = match facet("effect") {
+        Ok(v) => v,
+        Err(e) => return failed(Area::Commands, "Commands", e),
+    };
+    let programs = chips(program_chips(&by_origin.commands, origin.as_deref(), |v| {
+        here("origin", v)
+    }));
+    let effects = chips(effect_chips(&by_effect.commands, effect.as_deref(), |v| {
+        here("effect", v)
+    }));
 
     let rows = index
         .commands
@@ -5113,6 +5853,87 @@ pub fn command(ctx: &Context, id: &str) -> Page {
         ("Commands", Some("/cockpit/commands")),
         (node.id.as_str(), None),
     ])
+}
+
+/// One chip per program present in `commands`, in the program's own order, each counting
+/// the commands that program runs; the first chip is every program. The set of programs is
+/// the answer's, never a list here: a program the graph gains is a chip the page gains.
+fn program_chips(
+    commands: &[CommandSummary],
+    current: Option<&str>,
+    here: impl Fn(Option<&str>) -> String,
+) -> Vec<(String, String, usize, bool)> {
+    // In the program's own declared order, which is the enum's: a set keyed by the typed
+    // value, not a display ordering.
+    let present: std::collections::BTreeSet<(Option<crate::command_graph::Origin>, String)> =
+        commands
+            .iter()
+            .map(|c| {
+                let typed = serde_json::from_value(json!(c.origin)).ok();
+                (typed, c.origin.clone())
+            })
+            .collect();
+    let mut chips = vec![(
+        "every program".to_string(),
+        here(None),
+        commands.len(),
+        current.is_none(),
+    )];
+    for (_, word) in present {
+        chips.push((
+            word.clone(),
+            here(Some(&word)),
+            commands.iter().filter(|c| c.origin == word).count(),
+            current == Some(word.as_str()),
+        ));
+    }
+    chips
+}
+
+/// One chip per effect present in `commands`, in the order of increasing consequence, each
+/// counting what its filter lists: the effect filter of `commands.list` is a ceiling, so a
+/// chip counts every command at or below its effect. The set of effects is the answer's —
+/// `network_mutation` is a chip the day a command has it, and not before.
+fn effect_chips(
+    commands: &[CommandSummary],
+    current: Option<&str>,
+    here: impl Fn(Option<&str>) -> String,
+) -> Vec<(String, String, usize, bool)> {
+    use crate::command_graph::Effect;
+    let typed = |word: &str| serde_json::from_value::<Effect>(json!(word)).ok();
+    // In the order of increasing consequence, which is the enum's: a set keyed by the typed
+    // value, not a display ordering.
+    let present: std::collections::BTreeSet<(Option<Effect>, String)> = commands
+        .iter()
+        .map(|c| (typed(&c.effect), c.effect.clone()))
+        .collect();
+    let mut chips = vec![(
+        "any effect".to_string(),
+        here(None),
+        commands.len(),
+        current.is_none(),
+    )];
+    for (rank, word) in present {
+        let count = commands
+            .iter()
+            .filter(|c| match (typed(&c.effect), rank) {
+                (Some(e), Some(ceiling)) => e <= ceiling,
+                _ => c.effect == word,
+            })
+            .count();
+        let label = if rank.is_some_and(|e| e.is_read_only()) {
+            word.replace('_', " ")
+        } else {
+            format!("up to {}", word.replace('_', " "))
+        };
+        chips.push((
+            label,
+            here(Some(&word)),
+            count,
+            current == Some(word.as_str()),
+        ));
+    }
+    chips
 }
 
 /// The badge status for an effect: what a reader should feel about running it.
@@ -6169,6 +6990,191 @@ pub fn entity(ctx: &Context, kind: &str, slug: &str) -> Page {
 mod tests {
     use super::*;
 
+    fn command(origin: &str, effect: &str) -> CommandSummary {
+        serde_json::from_value(json!({
+            "id": format!("{origin}.x.{effect}"),
+            "invocation": "x",
+            "summary": "x",
+            "origin": origin,
+            "effect": effect,
+            "projections": { "docs": "" },
+        }))
+        .expect("a command summary")
+    }
+
+    /// The effect chips count what their filter lists — a ceiling, so each counts every
+    /// command at or below it — and exist for the effects present, `network_mutation`
+    /// included; before, every chip's count was a literal 0 and the list was written here.
+    #[test]
+    fn effect_chips_count_the_answer_and_come_from_the_effects_present() {
+        let commands = vec![
+            command("executable", "read_only"),
+            command("executable", "read_only"),
+            command("tool", "repository_mutation"),
+            command("workflow", "network_mutation"),
+        ];
+        let chips = effect_chips(&commands, None, |v| format!("{v:?}"));
+        let got: Vec<(&str, usize)> = chips.iter().map(|c| (c.0.as_str(), c.2)).collect();
+        assert_eq!(
+            got,
+            [
+                ("any effect", 4),
+                ("read only", 2),
+                ("up to repository mutation", 3),
+                ("up to network mutation", 4),
+            ]
+        );
+        assert!(chips[0].3, "no filter is the first chip, current");
+        let chips = effect_chips(&commands, Some("read_only"), |v| format!("{v:?}"));
+        assert!(chips[1].3 && !chips[0].3);
+    }
+
+    /// The program chips are the programs present, each counting its own commands.
+    #[test]
+    fn program_chips_come_from_the_programs_present() {
+        let commands = vec![
+            command("workflow", "read_only"),
+            command("executable", "read_only"),
+            command("executable", "local_mutation"),
+        ];
+        let chips = program_chips(&commands, None, |v| format!("{v:?}"));
+        let got: Vec<(&str, usize)> = chips.iter().map(|c| (c.0.as_str(), c.2)).collect();
+        assert_eq!(
+            got,
+            [("every program", 3), ("executable", 2), ("workflow", 1)]
+        );
+    }
+
+    /// Every numeric field of a tally is a statistic, and a field whose count is not known
+    /// renders "unknown" rather than a zero.
+    #[test]
+    fn a_tally_strip_renders_every_field() {
+        let t = crate::worktree::TopologyTallies {
+            missing: 31,
+            locked: 2,
+            errors: 1,
+            warnings: 4,
+            ..Default::default()
+        };
+        let html = tally_statistics_with(&t, "worktree.topology", &["dirty"]).render();
+        let fields = serde_json::to_value(&t).unwrap();
+        let fields = fields.as_object().unwrap();
+        assert_eq!(
+            html.matches("mj-stat-label").count(),
+            fields.len(),
+            "{html}"
+        );
+        for label in [
+            "missing",
+            "locked",
+            "errors",
+            "warnings",
+            "branches without worktree",
+        ] {
+            assert!(html.contains(&format!(">{label}<")), "{label}: {html}");
+        }
+        assert!(
+            html.contains(">31<") && html.contains(">unknown<"),
+            "{html}"
+        );
+
+        let a = ArtifactTallies {
+            documents: 1,
+            artifacts: 149,
+            current: 146,
+            stale: 0,
+            missing: 0,
+            present: 3,
+        };
+        let html = tally_statistics(&a, "artifacts.list").render();
+        assert!(html.contains(">present<") && html.contains(">3<"), "{html}");
+    }
+
+    /// An unverified tree is not rendered current, and not in a colour of health.
+    #[test]
+    fn an_unverified_artifact_tree_is_not_rendered_current() {
+        let t = ArtifactTallies {
+            documents: 1,
+            artifacts: 4,
+            current: 1,
+            stale: 0,
+            missing: 0,
+            present: 3,
+        };
+        let html = artifact_verdict_badge(ArtifactVerdict::Unverified, &t).render();
+        assert!(html.contains("mj-badge--unknown"), "{html}");
+        assert!(html.contains("unverified: 3 file(s)"), "{html}");
+        assert_eq!(artifact_state_status(ArtifactState::Present), "unknown");
+    }
+
+    /// An ahead or behind count git did not answer is unknown, never "+0 −0".
+    #[test]
+    fn an_unknown_upstream_distance_is_not_rendered_as_in_sync() {
+        let u = UpstreamState {
+            name: "origin/x".into(),
+            ahead: None,
+            behind: None,
+            gone: false,
+        };
+        let text = upstream_text(&u);
+        assert!(!text.contains("+0") && !text.contains("−0"), "{text}");
+        assert!(text.contains("unknown"), "{text}");
+        let u = UpstreamState {
+            ahead: Some(2),
+            behind: Some(0),
+            ..u
+        };
+        assert_eq!(upstream_text(&u), "origin/x +2 −0");
+    }
+
+    /// A distribution capability that does not answer is a card that says so, and the
+    /// verdict is worded as the records it is decided from.
+    #[test]
+    fn a_failed_distribution_status_is_an_unknown_card_and_not_no_card() {
+        let html = distribution_card_of(Err("no distribution model".into())).render();
+        assert!(html.contains("Distribution"), "{html}");
+        assert!(html.contains("mj-badge--unknown"), "{html}");
+        assert!(html.contains("no distribution model"), "{html}");
+        assert!(!html.contains("healthy"), "{html}");
+        assert!(html.contains(RECORDS), "{html}");
+    }
+
+    /// An installable answer is worded as what decided it — the release records — and not
+    /// as a public install observed to be healthy, which this capability never observes.
+    #[test]
+    fn an_installable_answer_says_per_release_records_and_not_healthy() {
+        let report: InstallabilityReport = serde_json::from_value(json!({
+            "installable": true,
+            "summary": "installable",
+            "local_version": "1.0.0",
+            "stable_tag": "v1.0.0",
+            "required_targets": 1,
+            "published_artifacts": 1,
+            "install_command": "curl | sh",
+            "installer_url": "https://example.test/install.sh",
+            "latest_url": "https://example.test/latest",
+            "checks": [],
+        }))
+        .expect("an installability report");
+        let html = distribution_card_of(Ok(report)).render();
+        assert!(html.contains(RECORDS), "{html}");
+        assert!(
+            !html.contains("healthy") && !html.contains("Public install"),
+            "{html}"
+        );
+    }
+
+    /// A model the catalogue declares no status for is "undeclared", never "available".
+    #[test]
+    fn an_undeclared_model_status_is_not_available() {
+        let html = model_status_badge(None).render();
+        assert!(
+            html.contains("undeclared") && !html.contains("available"),
+            "{html}"
+        );
+        assert!(html.contains("mj-badge--unknown"), "{html}");
+    }
+
     #[test]
     fn a_nullable_integer_is_edited_as_a_number() {
         let schema = json!({ "anyOf": [{ "type": "integer" }, { "type": "null" }] });
@@ -6206,5 +7212,350 @@ mod tests {
         assert!(rendered.contains("required"), "{rendered}");
         assert!(rendered.contains("max=\"50\""), "{rendered}");
         assert!(rendered.contains("data-mj-type=\"integer\""), "{rendered}");
+    }
+
+    /// A git repository with an origin/master and one commit, for the integration page.
+    fn integration_repository() -> (crate::synthetic::SyntheticRepository, String) {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let root = repo.root().to_path_buf();
+        let git = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(&root)
+                .args(args)
+                .env("GIT_AUTHOR_NAME", "t")
+                .env("GIT_AUTHOR_EMAIL", "t@example.com")
+                .env("GIT_COMMITTER_NAME", "t")
+                .env("GIT_COMMITTER_EMAIL", "t@example.com")
+                .output()
+                .expect("git");
+            assert!(out.status.success(), "git {args:?}: {:?}", out);
+            String::from_utf8_lossy(&out.stdout).trim().to_string()
+        };
+        git(&["init", "-q", "-b", "master"]);
+        git(&["commit", "-q", "--allow-empty", "-m", "base"]);
+        let sha = git(&["rev-parse", "HEAD"]);
+        git(&["update-ref", "refs/remotes/origin/master", &sha]);
+        (repo, sha)
+    }
+
+    fn observed_pr(
+        number: u64,
+        head_sha: &str,
+        state: crate::integration::CheckRunState,
+    ) -> crate::integration::PullRequestObservation {
+        crate::integration::PullRequestObservation {
+            number,
+            title: format!("change {number}"),
+            author: "someone".into(),
+            head_ref: format!("feature/{number}"),
+            head_sha: head_sha.into(),
+            base_ref: "master".into(),
+            draft: false,
+            labels: vec![],
+            created_at: format!("2026-09-0{number}T00:00:00Z"),
+            updated_at: format!("2026-09-0{number}T00:00:00Z"),
+            body: String::new(),
+            checks: vec![crate::integration::CheckObservation {
+                name: "ci".into(),
+                state,
+            }],
+            review_decision: String::new(),
+            auto_merge: false,
+            cross_repository: false,
+        }
+    }
+
+    /// With nothing observed the page says so and names the command that observes; with an
+    /// observation it renders the lanes, the base, the lease and the recent actions, every
+    /// figure from the same queue the command line and MCP answer.
+    #[test]
+    fn the_integration_page_renders_the_observed_queue_and_says_when_there_is_none() {
+        use crate::integration::{
+            drain, store_observation, CheckRunState, ForgeObservation, OBSERVATION_SCHEMA,
+        };
+        let (repo, sha) = integration_repository();
+        let root = repo.root().to_path_buf();
+
+        let ctx = repo.context().expect("a context");
+        let empty = integration(&ctx).main.render();
+        assert!(empty.contains("prs refresh"), "{empty}");
+
+        store_observation(
+            &root,
+            &ForgeObservation {
+                schema: OBSERVATION_SCHEMA,
+                repository: "owner/repo".into(),
+                base: "master".into(),
+                base_sha: sha.clone(),
+                observed_at: "2026-10-01T00:00:00Z".into(),
+                required_checks: Some(vec!["ci".into()]),
+                reviews_required: Some(false),
+                merge_methods: vec!["merge".into()],
+                pull_requests: vec![
+                    observed_pr(1, &sha, CheckRunState::Passed),
+                    observed_pr(2, &sha, CheckRunState::Failed),
+                    observed_pr(3, &sha, CheckRunState::Pending),
+                ],
+            },
+        )
+        .expect("an observation");
+        drain::record(
+            &root,
+            drain::IntegrationEvent {
+                at: "2026-10-01T00:01:00Z".into(),
+                actor: "test".into(),
+                action: "merge_succeeded".into(),
+                pr: Some(9),
+                master_before: Some(sha.clone()),
+                head_sha: Some(sha.clone()),
+                master_after: Some(sha.clone()),
+                reasons: vec![],
+                detail: "merged #9".into(),
+                passed_over: vec![],
+            },
+        );
+        let lease = drain::IntegrationLease::acquire(&root, "master").expect("the lease");
+
+        let ctx = repo.context().expect("a context");
+        let page = integration(&ctx);
+        let html = page.main.render();
+        assert_eq!(page.status, 200);
+        for n in ["#1", "#2", "#3"] {
+            assert!(html.contains(n), "{n} is not on the page: {html}");
+        }
+        assert!(html.contains(&sha[..10]), "the base master is not named");
+        assert!(
+            html.contains("merged #9") || html.contains("#9"),
+            "the last merge is missing"
+        );
+        assert!(
+            !html.contains("prs refresh records one"),
+            "an observed queue says nothing is observed"
+        );
+        drop(lease);
+    }
+
+    /// One `peers.list` answer, from the JSON the capability serves: the page renders what
+    /// arrives over the wire, so the fixture is written in that shape and not in Rust's.
+    fn peer_list(value: Value) -> PeerList {
+        serde_json::from_value(value).expect("a peers.list answer")
+    }
+
+    /// A peer as a board serializes it, attached or not.
+    fn board_peer(id: &str, attached: bool) -> Value {
+        json!({
+            "id": id,
+            "client": { "name": format!("client-{id}"), "version": "1" },
+            "transport": "http",
+            "connected_at": "2026-10-01T00:00:00Z",
+            "last_seen_seconds_ago": 3,
+            "attached": attached,
+        })
+    }
+
+    /// Absent is not empty: a board that could not be read is named, with its reason, before
+    /// the workers — and a list with nobody on it says that it is not the whole repository,
+    /// rather than "nobody is here".
+    #[test]
+    fn the_peers_page_names_a_board_it_could_not_read_and_never_renders_it_as_nobody() {
+        let page = peers_of(&peer_list(json!({
+            "count": 0,
+            "peers": [],
+            "complete": false,
+            "boards": [
+                {
+                    "id": "repo-a", "worktree": "/work/repo", "branch": "master",
+                    "this_checkout": true, "standing": "ready",
+                    "url": "http://127.0.0.1:4100", "attached": 0,
+                },
+                {
+                    "id": "repo-b", "worktree": "/work/repo-wt/feature/x",
+                    "this_checkout": false, "standing": "stale", "attached": 0,
+                    "reason": "http://127.0.0.1:4200 did not answer (connection refused)",
+                },
+            ],
+        })));
+        assert_eq!(page.status, 200);
+        let html = page.main.render();
+        assert!(html.contains("1 checkout(s) could not be asked"), "{html}");
+        assert!(html.contains("Boards that could not be asked"), "{html}");
+        assert!(html.contains("/work/repo-wt/feature/x"), "{html}");
+        assert!(
+            html.contains("did not answer (connection refused)"),
+            "{html}"
+        );
+        // a checkout with no branch is said to be detached, not left blank
+        assert!(html.contains("(detached)"), "{html}");
+        // nobody on the boards that answered is not the same as nobody in the repository
+        assert!(html.contains("not the whole repository"), "{html}");
+        assert!(!html.contains("none of them holds a worker"), "{html}");
+        // the reachable checkout carries its server's address, the unread one a dash
+        assert!(html.contains("http://127.0.0.1:4100"), "{html}");
+        assert!(html.contains("not on the board"), "{html}");
+        // the unread boards come before the workers: a reader who stops early has read them
+        let unread = html.find("Boards that could not be asked").unwrap();
+        let workers = html.find("Workers").unwrap();
+        assert!(
+            unread < workers,
+            "the unread boards follow the workers: {html}"
+        );
+        assert!(
+            !html.contains("Two workers, one scope"),
+            "an overlap was invented"
+        );
+    }
+
+    /// A whole board: every worker with where it is, whether it is still here, what it
+    /// announced and where it claimed — and every pair whose claims meet, before the workers.
+    #[test]
+    fn a_whole_board_shows_every_worker_and_where_two_of_them_meet() {
+        let mut here = board_peer("p1", true);
+        here["checkout"] = json!({
+            "id": "repo-a", "worktree": "/work/repo", "branch": "feature/peers",
+            "this_checkout": true,
+        });
+        here["announcement"] = json!({
+            "intent": "renders the board", "scope": ["src/cockpit", "docs"],
+            "at": "2026-10-01T00:00:00Z",
+        });
+        let mut silent = board_peer("p2", false);
+        silent["checkout"] = Value::Null;
+        let mut unscoped = board_peer("p3", true);
+        unscoped["announcement"] = json!({
+            "intent": "reads only", "scope": [], "at": "2026-10-01T00:00:00Z",
+        });
+        let page = peers_of(&peer_list(json!({
+            "count": 2,
+            "caller": "p1",
+            "peers": [here, silent, unscoped],
+            "overlaps": [
+                {
+                    "peer": "p4", "attached": true, "intent": "edits the cockpit",
+                    "paths": [
+                        { "yours": "src/cockpit", "theirs": "src/cockpit/pages.rs" },
+                        { "yours": "docs", "theirs": "docs" },
+                    ],
+                },
+                {
+                    "peer": "p5", "attached": false, "intent": "left",
+                    "paths": [{ "yours": "docs", "theirs": "docs/x.md" }],
+                },
+            ],
+            "complete": true,
+            "boards": [{
+                "id": "repo-a", "worktree": "/work/repo", "branch": "feature/peers",
+                "this_checkout": true, "standing": "ready", "attached": 2,
+            }],
+        })));
+        let html = page.main.render();
+        assert!(html.contains("every checkout answered"), "{html}");
+        assert!(!html.contains("Boards that could not be asked"), "{html}");
+        // the caller is told what its id is: a position, not an identity
+        assert!(
+            html.contains("handed out again after a reconnect"),
+            "{html}"
+        );
+        // the workers, each as the board knows it
+        assert!(html.contains("feature/peers"), "{html}");
+        assert!(
+            html.contains(">here<"),
+            "this checkout is not marked: {html}"
+        );
+        assert!(
+            html.contains("(unknown)"),
+            "a peer with no checkout: {html}"
+        );
+        assert!(html.contains("announced nothing"), "{html}");
+        assert!(html.contains("renders the board"), "{html}");
+        assert!(
+            html.contains(">gone<"),
+            "a detached peer is not marked gone: {html}"
+        );
+        assert!(html.contains("reads only"), "{html}");
+        // the overlaps: a path both claimed once, two that meet as the pair they are
+        assert!(html.contains("Two workers, one scope"), "{html}");
+        assert!(
+            html.contains("src/cockpit / src/cockpit/pages.rs"),
+            "{html}"
+        );
+        assert!(
+            html.contains("<code class=\"mj-mono\">docs</code>"),
+            "a path both claimed is not named once, as itself: {html}"
+        );
+        assert!(
+            !html.contains("docs / docs<"),
+            "a shared path is named twice: {html}"
+        );
+        assert!(html.contains("docs / docs/x.md"), "{html}");
+        let overlap = html.find("Two workers, one scope").unwrap();
+        let workers = html.find("Workers").unwrap();
+        assert!(overlap < workers, "the overlaps follow the workers: {html}");
+    }
+
+    /// A board that answered and holds nobody says so in words, and only then.
+    #[test]
+    fn an_empty_whole_board_says_nobody_is_here() {
+        let html = peers_of(&peer_list(json!({
+            "count": 0, "peers": [], "complete": true, "boards": [],
+        })))
+        .main
+        .render();
+        assert!(html.contains("none of them holds a worker"), "{html}");
+        assert!(!html.contains("not the whole repository"), "{html}");
+        assert!(!html.contains("Two workers, one scope"), "{html}");
+    }
+
+    /// The page asks the capability every other surface asks: the workers this process's
+    /// own board holds are on it, with their claims and the pair they make — and when the
+    /// capability cannot answer, the page is a failure that says so, never an empty board.
+    #[test]
+    fn the_peers_page_renders_the_board_the_capability_answers_and_fails_when_it_cannot() {
+        use crate::peers::Transport;
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let ctx = repo.context().expect("a context");
+        let mine = ctx.peers.attach(Transport::Http);
+        let theirs = ctx.peers.attach(Transport::Http);
+        ctx.peers
+            .announce(&mine, "draws the peers page", vec!["src/cockpit".into()]);
+        ctx.peers.announce(
+            &theirs,
+            "edits one page",
+            vec!["src/cockpit/pages.rs".into()],
+        );
+
+        let page = peers(&ctx.for_caller(mine.clone()));
+        assert_eq!(page.status, 200);
+        let html = page.main.render();
+        assert!(html.contains("draws the peers page"), "{html}");
+        assert!(html.contains("edits one page"), "{html}");
+        assert!(html.contains("every checkout answered"), "{html}");
+        assert!(html.contains("Two workers, one scope"), "{html}");
+        // the pair the board found, as one path against the other, whichever side is whose
+        assert!(
+            html.contains("src/cockpit/pages.rs / src/cockpit<")
+                || html.contains("src/cockpit / src/cockpit/pages.rs<"),
+            "{html}"
+        );
+        assert!(html.contains(mine.as_str()), "{html}");
+
+        // a registry with no peers.list: the capability cannot be asked at all
+        let index = repo.index().expect("an index");
+        let bare = Context::new(
+            std::sync::Arc::new(index),
+            std::sync::Arc::new(
+                crate::capability::registry::CapabilityRegistry::builder()
+                    .build()
+                    .expect("an empty registry"),
+            ),
+        );
+        let page = peers(&bare);
+        assert_eq!(page.status, 500);
+        let html = page.main.render();
+        assert!(html.contains("did not answer"), "{html}");
+        assert!(
+            !html.contains("Workers"),
+            "a failure rendered a board: {html}"
+        );
     }
 }

@@ -47,25 +47,44 @@ pages still render, say so, and remain fully usable.
 
 | Route | What it shows | Derived from |
 |---|---|---|
-| `/cockpit` | repository identity, git state, index state, the registry counted, every diagnostic, the health summary | `repository.info`, `health.report` |
+| `/cockpit` | the four questions first (is it healthy, what changed, what is broken, what needs action), then repository identity, git state, index state, the registry counted, every diagnostic, the health summary | `dashboard.overview`, `repository.info`, `health.report` |
 | `/cockpit/capabilities` | every capability, filtered by module, kind, source or text | the registry |
 | `/cockpit/capabilities/<id>` | one descriptor in full: schemas, projections, cache and benchmark policy, provenance, examples, and a form that runs it | the descriptor and its `BenchmarkCases` |
+| `/cockpit/commands` | every command this repository offers, from whichever program offers it, and where each one is projected | `commands.list` |
 | `/cockpit/executions` | what this process has run and is running, with the counts beside it; follows the live channel and updates itself | `executions.list` |
 | `/cockpit/executions/<id>` | one execution: its state, steps, progress, diagnostics, live output, output or error, and the input as it was stored; a stable URL a reload restores from | `executions.get`, `executions.events` |
 | `/cockpit/objects` | the declarative objects of the layer, by kind | `objects.list` |
 | `/cockpit/objects/<kind>` | one kind's index, at the kind's own address | `entity.kinds`, `objects.list` |
 | `/cockpit/objects/<kind>/<slug>` | one entity: what it is and where the public site publishes it, what can be said about the artefacts it names, the references it declares and the references that resolve to it, the surfaces that answer for it, its front matter, and the file as it is | `entity.show` |
 | `/cockpit/object?uri=` | the address an object had before it had one of its own; still resolves, so no published link breaks | `objects.get` |
+| `/cockpit/directories` | the layer's directory contracts: the hierarchy, what each directory owes, and for one directory its local contract beside the chain that actually applies | `directories.list` |
 | `/cockpit/graphs` | every graph this executable derives | `graph.list` |
 | `/cockpit/graphs/<id>` | one graph: the drawing, the vocabularies, and every node and edge as tables | `graph.get` |
 | `/cockpit/graphs/topology` | the registry graph in three dimensions — optional | `graph.get` (`registry`) |
 | `/cockpit/continuity` | what this checkout's lifecycle is holding, and what the subsystem around it is doing: the open episode the briefing is about, the active task, the records that resolve here with their labels, the blockers — then every open episode of the store, this process against the repository, recovery, the providers, and the tracked records | `continuity.state`, `lifecycle.episodes`, `lifecycle.runtime`, `lifecycle.recovery`, `lifecycle.providers`, `lifecycle.closed` |
 | `/cockpit/health` | one check per dimension, each with the engine that decided it and the command that reproduces it | `health.report` |
+| `/cockpit/quality` | the crate's own public surface as the rules hold it, every number and finding from one execution | `quality.report` |
+| `/cockpit/artifacts` | what the generator writes: every document with the encodings it is committed in, every file with its contract and its state against the working tree | `artifacts.list` |
+| `/cockpit/release` | what the public contract did since the last release, and the smallest version it allows | `release.analysis` |
+| `/cockpit/design` | the design system as this executable carries it: every role with its light and dark value, the statuses, the type scale, the layout values and the theme contract | `design.system`, `design.tokens` |
+| `/cockpit/mesh` | the discovered nodes of this process's runtime, the providers that heard them, and why the mesh is or is not running | `mesh.status`, `mesh.nodes` |
+| `/cockpit/models` | the vendors and models `share/models.yaml` declares, with each vendor's credential presence (never a value), and their routing | `models.list` |
 | `/cockpit/api` | every HTTP route the registry projects, and the projection's own | the registry |
 | `/cockpit/search` | capabilities and objects matching one query | the registry, `objects.search` |
 | `/cockpit/worktrees` | the branch-to-worktree topology: container, trunk, every worktree with its standing, uncommitted work and diagnostics, every branch without a worktree, the migration plan with the command that applies it; reloads itself when the topology changes | `worktree.topology`, `worktree.migration_plan` |
+| `/cockpit/peers` | every worker of this repository, from every checkout's board, the pairs whose claimed scope meets, and the checkouts whose board could not be read | `peers.list` |
+| `/cockpit/integration` | the pull-request integration queue and its executor; with nothing observed, says so and still renders | `integration.queue` |
+| `/cockpit/reasoning` | the optional advisors, and the open task's uncertainties and conclusions; with no advisor, only the local review path | `reasoning.advisors`, `reasoning.status` |
+| `/cockpit/economics` | token economics, measured | `economics.summary` |
 | `/cockpit/activity` | this process's counters and phases, and a running plot of them | `perf.counters` |
 | `/cockpit/assets/<file>` | the stylesheet, the scripts, the vendored libraries | `share/cockpit/` |
+
+This table is checked against the dispatcher, not kept beside it. Every plain route
+`cockpit::STATIC_ROUTES` names has a row here, and no row names a plain route the dispatcher
+does not answer; `cockpit::tests::the_documented_route_table_is_the_dispatchers` fails the
+build otherwise. Editing a row's description is free. Adding or removing a route starts in
+`STATIC_ROUTES` beside the dispatcher's `match`, and the navigation area it belongs to in
+`nav::areas()` is checked by `every_area_has_a_route_and_every_route_its_area`.
 
 Every route is a deep link: the filters are query parameters, a refresh loses nothing, and
 a page can be sent to somebody.
@@ -172,6 +191,19 @@ included, and `test/cases/389_cockpit_projection.sh` drives it against fixture t
 object count and the kind catalogue come from `repository.info`, a listing from
 `objects.list`, one object from `objects.get`.
 
+**Unknown is never drawn as healthy.** ADR 0089 (`project.ui-derived-state`) widens the same
+checker. Its `--ui-integrity` gate (`ui-integrity`) refuses four things:
+
+- a direct `ctx.registry`, `ctx.product` or `ctx.why` read outside the navigation's
+  commented allow-list;
+- a health check given `HealthStatus::Ok` as a literal;
+- a `#[default]` on a healthy enum variant;
+- an absent count rendered as zero in `pages.rs`.
+
+A site that is right as written says why in a `// ui-integrity: <reason>` comment. The
+findings master already holds are a ratchet in `.ai/repo/ui-integrity-baseline.txt`, and
+`test/cases/547_the_ui_says_only_what_is_derived.sh` plants each violation in a fixture tree.
+
 **Nothing in it is a list.** The sidebar's catalogues are the registry's modules, the kinds
 `repository.info` reports and the graph derivation table. The capability explorer is the
 registry filtered. The palette reads `/api/v1/capabilities`, `/api/v1/graphs` and `/api/v1/objects`,
@@ -193,6 +225,27 @@ The behavioural claim is one test:
 rule into a disposable repository and asserts it reaches the capability listing, a page of
 its own, the object explorer, the search and the listing the palette reads — with no line
 of the Cockpit written for it.
+
+## The four questions: a dashboard that is a projection
+
+The overview opens with the Overview of the Dashboard Suite (ADR 0088): four questions — *is it
+healthy*, *what changed*, *what is broken*, *what needs action* — answered by
+`dashboard.overview`, which is an ordinary capability (`GET /api/v1/dashboard/overview`, MCP
+`majordomus_dashboard_overview`, `majordomus dashboard overview`). It has no data of its own.
+Each card is one fact read out of another capability's answer — `health.report`,
+`release.version`, `plan.status`, `worktree.status`, `plan.next`, `continuity.state`, and
+`peers.list` for this checkout's board — and it carries that capability, the input it was asked
+with, the RFC 6901 pointer its value was read from and the measure (`exact`, or `count` for the
+length of a list the source omits when empty), beside the source's own verdict, the page to
+drill into and the command that acts on it. A source that cannot answer makes its cards
+`unknown`, never `ok`.
+
+The page writes each card's value as `data-value` — the JSON the route answered — so the page
+and the route are compared byte for byte. `tests/dashboard.rs` is the gate: it asks every
+card's source the card's own question over the source's own route, reads the pointer, and fails
+when the card's value differs; it names no card, so the next one is held to it unedited.
+`test/cases/534_the_overview_answers_four_questions.sh` holds the same contract through the
+built executable.
 
 ## Graphs
 

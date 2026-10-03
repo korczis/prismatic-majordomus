@@ -42,6 +42,77 @@ being maintained separately from the repository that backs it.
 | behaviour | theme toggle, Mermaid init | `site/theme.js`, `site/diagrams.js` | yes |
 | output | the static site | `site/public/**` | never |
 
+## What the publishing clone must be able to answer
+
+The site links to the repository on its forge, and `scripts/ci/link-check` decides those
+links **against git rather than over the network**: `commit/<sha>` and `compare/a...b` are
+resolved in the history, `releases/tag/<t>` and `tree/<tag>` in the tags. A clone that was
+not given those cannot decide such a link. It must then refuse rather than guess — and
+`scripts/site-check` counts a refusal as a failure, so the publication stops.
+
+That is not a hypothetical cost. Between **2026-09-14 18:34 and 2026-09-15 00:0x** the
+deploy checked out at depth 1, which truncates the history *and* fetches no tags. Six links
+to `v0.3.1`, `v0.5.0` and `v0.6.0` — tags that exist and carry published releases — were
+reported as non-existent, 2302 commit links were undecidable, `publish` was skipped on every
+run, and the live site stayed at `8cf457000` for seven hours while master moved three merges
+ahead. Every gate was green throughout, because nothing asked whether the site was current.
+
+So the requirement is **declared, not written into the workflow**:
+
+```yaml
+# .ai/repo/ci/pages.yaml
+deploy:
+  checkout:
+    history: full      # renders as fetch-depth: 0
+    tags: required     # actions/checkout fetches none at a shallow depth
+```
+
+| what | where |
+|------|-------|
+| the requirement | `deploy.checkout` in `.ai/repo/ci/pages.yaml` |
+| the depth it implies | `scripts/pages checkout` — prints `0` |
+| the clone a run was given | `scripts/pages checkout --verify` — exit 10 when it cannot decide a ref |
+| the workflow held to the model | `test/cases/97_pages_fast_path.sh` |
+
+The workflow is an adapter over that, the same way its `paths:` block is an adapter over
+`scripts/pages paths`. **Changing what the publisher needs from its clone is an edit to the
+model and nowhere else**: the depth, the verification and the test all read it. A test that
+asserted `fetch-depth: 0` literally would hold one patch in place; the case compares the two
+and fails when they disagree, whichever of them moved.
+
+`--verify` runs in the deploy job immediately after checkout, so a runner that does not
+honour the declaration fails there, naming the depth — rather than three steps later inside
+link-check, where a checkout problem presents as a link defect.
+
+## When a publication fails: the scheduled retry
+
+A push-triggered run that fails leaves the site where it was, and nothing asks again. On
+2026-09-14 the site stood seven hours while every run failed. So `.github/workflows/pages.yml`
+also runs on a clock, `trigger.schedule` in `.ai/repo/ci/pages.yaml`, every thirty minutes —
+the window `scripts/ci/pages-check` judges by (`OWED_AFTER`, 1800 s); a schedule slower than the
+window cannot notice what the window calls owed. `test/cases/97_pages_fast_path.sh` holds the
+workflow's cron to the model's.
+
+A scheduled run asks before it works, in a small job of its own (`owed`):
+
+| state | remedy | run ends |
+|-------|--------|----------|
+| the site is current | none; nothing else runs | green |
+| gh-pages does not carry the trunk's site | the `rustdoc` and `deploy` jobs run as on a push | red |
+| gh-pages is right, GitHub's own build errored | `scripts/pages rebuild` | red |
+
+Red is deliberate: the run repaired a fault the push-triggered run should not have left, and
+healing without reporting would hide a fault that recurs every thirty minutes. The
+`intervention` job says what was owed and what was done.
+
+A rebuild is a different action from a redeploy. Deploying an identical tree changes nothing
+when GitHub's builder is what failed, and a request for a build **preempts a build in flight**:
+asking while GitHub is building kills that build. `scripts/pages rebuild` therefore asks only
+when the build of the commit errored *and* nothing is building, reads that state through
+`scripts/pages built --porcelain` (the one reader of it), exits 12 without asking when the state
+cannot be read or a build is in flight, and reads the state again after asking.
+`test/cases/625_a_rebuild_is_asked_only_when_it_helps.sh` holds each of those.
+
 ## Projection pipeline
 
 Two generators, one graph. The Rust executable projects its own registry; the site
@@ -563,8 +634,8 @@ npm ci                      # Tailwind, Flowbite, Alpine, Mermaid — pinned
 brew install zola           # or the release binary; CI pins 0.23.4
 just derive                 # every committed derived artifact, in order (scripts/derive)
 just derive-check           # is every committed derived artifact current? writes nothing
-just test                   # the shell suite, the Rust gates, derive-check
-scripts/site-serve          # generate, build, serve at http://127.0.0.1:1111/prismatic-majordomus/
+just test                   # the gates CI would run for this working tree (scripts/ci/run-plan)
+scripts/site-serve          # generate, build, serve the built pages at http://127.0.0.1:1111/
 scripts/rust-check --doc    # the crate's reference, target/web/rustdoc — site-build composes it and refuses without it
 scripts/site-build          # production build into site/public/
 scripts/site-check          # the static checks CI runs

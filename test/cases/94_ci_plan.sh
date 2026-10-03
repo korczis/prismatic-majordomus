@@ -197,8 +197,10 @@ expect_grep 'selected no gate'
 # --- the parallel runner keeps the serial runner's semantics: a failing case turns the run
 #     red with its log rendered, the exclusive cases run after the pool, one at a time, the
 #     report carries every case, and a case that writes into the checkout is caught
-H="$T/harness"; mkdir -p "$H/test/cases" "$H/bin"
+H="$T/harness"; mkdir -p "$H/test/cases" "$H/bin" "$H/lib"
 cp "$ROOT/test/run.sh" "$H/test/run.sh"; cp "$ROOT/test/lib.sh" "$H/test/lib.sh"
+# test/lib.sh sources the tool's own lib/sha256.sh
+cp "$ROOT/lib/sha256.sh" "$H/lib/sha256.sh"
 git -C "$H" init -q . 2>/dev/null; git -C "$H" add -A >/dev/null; git -C "$H" -c user.email=t@e.com -c user.name=t commit -qm harness
 for i in 1 2 3 4 5; do printf 'sleep 1; echo "case %s ran"\n' "$i" > "$H/test/cases/p$i.sh"; done
 printf 'echo "this one explains itself"; exit 1\n' > "$H/test/cases/p_fails.sh"
@@ -222,6 +224,32 @@ printf 'echo dirty > "$ROOT/test/cases/dirt.txt"\n' > "$H/test/cases/p_writes.sh
 out="$(MJ_TEST_JOBS=2 bash "$H/test/run.sh" 2>&1)" && { echo "    a case that wrote into the checkout did not turn the run red"; exit 1; }
 printf '%s\n' "$out" | grep -q 'the checkout changed during the parallel phase: test/cases/dirt.txt' || { printf '%s\n' "$out"; echo "    the dirtied path is not named"; exit 1; }
 rm -f "$H/test/cases/dirt.txt" "$H/test/cases/p_writes.sh"
+# a case runs only in the fixture the runner made for it: started by hand, it writes its
+# fixture into whatever directory it is in, a checkout included, so test/lib.sh refuses
+# before the case's first line runs. This case writes and stages a file where it stands.
+printf '. "$ROOT/test/lib.sh"\nprintf stub > stub.txt\ngit add -A\n' > "$H/test/cases/p_by_hand.sh"
+mkdir -p "$T/away" "$T/other/test"; : > "$T/other/test/run.sh"
+harness_state() { git -C "$H" status --porcelain --untracked-files=all; git -C "$H" diff --cached --name-only; }
+before="$(harness_state)"
+by_hand() {   # by_hand <label> <dir> [VAR=value...]: the case run by hand in <dir> is refused
+  local label="$1" dir="$2" rc=0; shift 2
+  out="$(cd "$dir" && env -u T "$@" ROOT="$H" bash -eu "$H/test/cases/p_by_hand.sh" 2>&1)" || rc=$?
+  [ "$rc" = 1 ] || { printf '%s\n' "$out"; echo "    a case run by hand $label exited $rc, not 1"; exit 1; }
+  printf '%s\n' "$out" | grep -q 'run this case through test/run.sh' \
+    || { printf '%s\n' "$out"; echo "    a case run by hand $label does not say to run it through test/run.sh"; exit 1; }
+  [ ! -e "$dir/stub.txt" ] || { echo "    a case run by hand $label wrote its fixture into $dir"; exit 1; }
+}
+by_hand "from the checkout, with no fixture" "$H"
+by_hand "from the checkout, naming a fixture it does not stand in" "$H" T="$T/away"
+by_hand "with the checkout named as its fixture" "$H" T="$H"
+by_hand "in a directory inside the checkout, named as its fixture" "$H/test/cases" T="$H/test/cases"
+by_hand "in another checkout of the repository, named as its fixture" "$T/other" T="$T/other"
+[ "$(harness_state)" = "$before" ] || { harness_state; echo "    a refused case changed the checkout it was started from"; exit 1; }
+# and the same case through the runner passes, writing into its own fixture only
+out="$(bash "$H/test/run.sh" p_by_hand 2>&1)" || { printf '%s\n' "$out"; echo "    the case failed through the runner"; exit 1; }
+printf '%s\n' "$out" | grep -q '^ok   p_by_hand$' || { printf '%s\n' "$out"; echo "    the runner did not report the case ok"; exit 1; }
+[ "$(harness_state)" = "$before" ] || { harness_state; echo "    the case wrote into the checkout through the runner"; exit 1; }
+rm -f "$H/test/cases/p_by_hand.sh"
 # the filter and the empty directory are usage errors in parallel mode too
 MJ_TEST_JOBS=2 bash "$H/test/run.sh" no_such_case >/dev/null 2>&1 && { echo "    a filter matching nothing passed"; exit 1; }
 rm -f "$H"/test/cases/*.sh

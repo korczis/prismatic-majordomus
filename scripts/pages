@@ -31,10 +31,16 @@
 #                                         or its nearest ancestor (the `evidence` artifact, or DIR),
 #                                         current, stale with the distance, or unavailable with
 #                                         the reason; 0 in all three, 12 when it cannot write
-#   scripts/pages verify --url URL --commit SHA [--timeout N] [--quiet]
+#   scripts/pages checkout [--verify]     the fetch-depth deploy.checkout implies; --verify
+#                                         measures this clone instead and exits 10 when it
+#                                         cannot decide a ref (shallow, or no tags)
+#   scripts/pages verify --url URL --commit SHA [--timeout N] [--quiet] [--smoke]
 #                                         poll the public site until it serves that commit;
 #                                         --timeout 0 is a single probe. 0 it serves it,
-#                                         10 it serves something else, 12 it never answered
+#                                         10 it serves something else, 12 it never answered.
+#                                         --smoke then fetches every deploy.smoke route of the
+#                                         model and exits 10 naming each one whose marker is
+#                                         missing or which does not answer
 #   scripts/pages verify-docs --url URL --commit SHA [--quiet]
 #                                         the documentation that commit publishes, as served:
 #                                         /docs/index.json names the commit, and every route it
@@ -124,10 +130,12 @@ cmd_current() {
 #
 # A repository without the built executable — an adopter's, or a clone before the first build
 # — skips it and says so. Skipping loudly is the point: silence here is what this gate is for.
+DERIVED_SKIPPED=""
 cmd_derived() {
   local cli="$ROOT/bin/majordomus-cli" out rc=0
   if [ ! -x "$cli" ]; then
     printf 'pages: no %s; the registry half of the derived data was not checked\n' "bin/majordomus-cli" >&2
+    DERIVED_SKIPPED=1
     return 0
   fi
   out="$(MAJORDOMUS_NO_BUILD=1 "$cli" generate --check 2>&1)" || rc=$?
@@ -135,11 +143,47 @@ cmd_derived() {
     0) [ -n "${MJ_PAGES_QUIET:-}" ] || printf 'pages: the registry projections are in sync with this tree\n'
        return 0 ;;
     12) printf 'pages: the executable is not built, so the registry half of the derived data was not checked\n' >&2
+        DERIVED_SKIPPED=1
         return 0 ;;
   esac
   printf '%s\n' "$out" | grep -v '^20[0-9][0-9]-' >&2
   printf '       the registry records every source file it indexed; a source change moves it, and\n       only `majordomus generate` writes it. Run scripts/derive and commit the result.\n' >&2
   return 10
+}
+
+# THE RECORD. `pages current` is the generation check the pre-commit hook runs on every commit,
+# and its verdict is recorded at .ai/local/state/generation/check.json, which the preflight's
+# `verification.docs` check reads (apps/majordomus-cli/src/environment/preflight.rs,
+# GENERATION_RECORD). The record names the *tree* it checked rather than a commit: the hook
+# runs before the commit exists, and the index it checks is exactly the tree that commit will
+# have, so the preflight compares it with HEAD^{tree}. A working tree that differs from the
+# index is not the tree the index names, so it is recorded with no tree, which that check
+# calls stale. Recording never changes the gate's verdict: a failure to record is silent.
+record_generation() {   # <exit status of the check>
+  local rc="$1" outcome tree="" head at record="$ROOT/.ai/local/state/generation/check.json"
+  if [ "$rc" != 0 ]; then outcome=fail
+  elif [ -n "$DERIVED_SKIPPED" ]; then outcome=partial
+  else outcome=pass; fi
+  head="$(git -C "$ROOT" rev-parse --verify --quiet HEAD 2>/dev/null)" || head=""
+  # --no-optional-locks: a read must not refresh the index under another session's feet.
+  if git -C "$ROOT" --no-optional-locks diff --quiet 2>/dev/null; then
+    tree="$(git -C "$ROOT" write-tree 2>/dev/null)" || tree=""
+  fi
+  at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  {
+    mkdir -p "$(dirname "$record")" &&
+    printf '{"schema":1,"check":"scripts/pages current","commit":"%s","tree":"%s","at":"%s","outcome":"%s"}\n' \
+      "$head" "$tree" "$at" "$outcome" > "$record.tmp.$$" &&
+    mv "$record.tmp.$$" "$record"
+  } 2>/dev/null || rm -f "$record.tmp.$$"
+  return 0
+}
+
+cmd_current_recorded() {
+  local rc=0
+  cmd_current "$@" && cmd_derived "$@" || rc=$?
+  record_generation "$rc"
+  return "$rc"
 }
 
 # ---------------------------------------------------------------- build
@@ -188,6 +232,48 @@ cmd_check() {
 # escalation is about how much validation a change to the pipeline deserves, not about what the
 # published bytes are derived from: changing scripts/ci-plan or the justfile makes every gate
 # run and cannot move a pixel. Publication follows the inputs, and the inputs are named.
+cmd_checkout() {
+  # The publishing clone's requirement, from deploy.checkout and nowhere else. Without
+  # --verify it renders the requirement as the `fetch-depth` actions/checkout must be given,
+  # which is what test/cases/97_pages_fast_path.sh holds the workflow to. With --verify it
+  # measures the clone this process is running in and refuses one that cannot decide a ref —
+  # the declaration proved on every run, rather than trusted because it is written down.
+  local history tags
+  history="$(m deploy.checkout.history)"
+  tags="$(m deploy.checkout.tags)"
+  case "$history" in
+    full) ;;
+    "") echo "pages: ${MODEL#"$ROOT"/} declares no deploy.checkout.history" >&2; return 10 ;;
+    *)  echo "pages: deploy.checkout.history: '$history' is not a depth this can render;" \
+             "link-check resolves commit links, for which a truncated history is never" \
+             "partially sufficient. The only meaningful value is 'full'." >&2; return 10 ;;
+  esac
+  case "$tags" in
+    required|optional) ;;
+    *) echo "pages: deploy.checkout.tags: '$tags' is neither required nor optional" >&2; return 10 ;;
+  esac
+
+  if [ "${1:-}" != --verify ]; then
+    printf '%s\n' 0            # fetch-depth for a full history
+    return 0
+  fi
+
+  local shallow count bad=0
+  shallow="$(git -C "$ROOT" rev-parse --is-shallow-repository 2>/dev/null || echo unknown)"
+  count="$(git -C "$ROOT" tag 2>/dev/null | wc -l | tr -d " ")"
+  [ "$shallow" = false ] || { echo "pages: the checkout is shallow (is-shallow-repository=$shallow), and deploy.checkout.history is '$history'" >&2; bad=1; }
+  if [ "$tags" = required ] && [ "${count:-0}" -eq 0 ]; then
+    echo "pages: the checkout carries no tags, and deploy.checkout.tags is 'required'" >&2; bad=1
+  fi
+  if [ "$bad" = 1 ]; then
+    echo "pages: this clone cannot decide a ref, so scripts/site-check must refuse the links" \
+         "that resolve against git, and the publication stops. Check out with fetch-depth:" \
+         "$(cmd_checkout)." >&2
+    return 10
+  fi
+  echo "pages: checkout ok — full history, $count tag(s); every link that resolves against git is decidable"
+}
+
 cmd_paths() {
   [ -f "$GATES" ] || { echo "pages: no gate model at ${GATES#"$ROOT"/}" >&2; return 12; }
   GFLAT="$(mktemp "${TMPDIR:-/tmp}/mj-pages-gates.XXXXXX")"
@@ -386,12 +472,14 @@ cmd_report() {
 # --max-time, so an unreachable host costs a known number of seconds instead of curl's
 # default of waiting for a connection that will never open.
 cmd_verify() {
-  local url="" commit="" timeout=180 quiet=0 t0 waited served body reached=0
+  local url="" commit="" timeout=180 quiet=0 smoke=0 t0 waited served body reached=0
+  local built_status="" branch_tip=""
   while [ $# -gt 0 ]; do case "$1" in
     --url) url="$2"; shift 2 ;;
     --commit) commit="$2"; shift 2 ;;
     --timeout) timeout="$2"; shift 2 ;;
     --quiet) quiet=1; shift ;;
+    --smoke) smoke=1; shift ;;
     *) echo "pages verify: unknown option $1" >&2; exit 2 ;;
   esac; done
   [ -n "$url" ] || url="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$ROOT/site/config.toml")"
@@ -407,6 +495,7 @@ cmd_verify() {
     echo "pages verify: --commit $commit is too short to name a commit; use seven characters or more" >&2
     exit 2; }
   command -v curl >/dev/null || { echo "pages verify: curl is required" >&2; return 12; }
+  branch_tip="$(git -C "$ROOT" rev-parse --short origin/gh-pages 2>/dev/null || echo gh-pages)"
   t0="$(now)"
   while :; do
     body="$(curl -fsSL --max-time "${MJ_PAGES_PROBE_SECONDS:-10}" -H 'Cache-Control: no-cache' "${url%/}/$IDENTITY?t=$(now)" 2>/dev/null || true)"
@@ -426,6 +515,24 @@ cmd_verify() {
       waited=$(( $(now) - t0 ))
       [ "$quiet" = 1 ] || printf 'pages verify: %s serves %s after %s s\n' "${url%/}/$IDENTITY" "${commit:0:12}" "$waited"
       printf '%s\n' "$waited" > "${MJ_PAGES_WAITED:-/dev/null}"
+      [ "$smoke" = 1 ] || return 0
+      # The identity says which commit is served; it does not say that the pages a visitor is
+      # sent to answer and carry what they are for. The same public bytes are asked that too,
+      # route by route, and every miss is named rather than only the first.
+      local i=0 route marker page missing=0 asked=0
+      while route="$(m "deploy.smoke.$i.route")"; [ -n "$route" ]; do
+        marker="$(m "deploy.smoke.$i.marker")"; asked=$((asked + 1))
+        page="$(curl -fsSL --max-time "${MJ_PAGES_PROBE_SECONDS:-10}" -H 'Cache-Control: no-cache' "${url%/}$route?t=$(now)" 2>/dev/null || true)"
+        if [ -z "$page" ]; then
+          printf 'pages verify: smoke %s did not answer\n' "${url%/}$route" >&2; missing=$((missing + 1))
+        elif ! printf '%s' "$page" | grep -qF -- "$marker"; then
+          printf 'pages verify: smoke %s does not carry %s\n' "${url%/}$route" "$marker" >&2; missing=$((missing + 1))
+        fi
+        i=$((i + 1))
+      done
+      [ "$asked" -gt 0 ] || { echo "pages verify: --smoke, and ${MODEL#"$ROOT"/} declares no deploy.smoke route; nothing was asked" >&2; return 10; }
+      [ "$missing" = 0 ] || return 10
+      [ "$quiet" = 1 ] || printf 'pages verify: smoke %s route check(s) answered with their markers\n' "$asked"
       return 0
     fi
     [ $(( $(now) - t0 )) -lt "$timeout" ] || {
@@ -433,6 +540,26 @@ cmd_verify() {
         printf 'pages verify: %s could not be reached within %s s; publication was not measured\n' "${url%/}/$IDENTITY" "$timeout" >&2
         return 12
       fi
+      # A timeout is not yet a verdict about the deploy. Publishing is two steps owned by two
+      # parties, and this probe watches only the second one's output: the site still serving an
+      # older commit means "GitHub has not finished" and "the publication failed" equally well,
+      # and until 2026-09-15 this said the second in both cases. A reader then had to leave the
+      # tool and ask the API to tell a slow success from a failure — which is what happened at
+      # 01:05 that morning, with the build in progress and this reporting exit 10.
+      #
+      # So the state that is unknown is read rather than assumed, from the one place that knows:
+      # `pages built`, which reads GitHub's own build of the branch this deploy pushed.
+      built_status="$(cmd_built --porcelain 2>/dev/null | head -1 | cut -f1)"
+      case "$built_status" in
+        building|queued)
+          printf 'pages verify: after %s s %s still serves %s, and GitHub is %s its build of %s: the publication is in flight, not failed. This is not a verdict — ask again, or raise --timeout\n' \
+            "$timeout" "${url%/}/$IDENTITY" "${served:-no commit}" "$built_status" "$branch_tip" >&2
+          return 12 ;;
+        errored)
+          printf 'pages verify: after %s s %s still serves %s, and GitHub\x27s own build of %s errored: the branch was pushed and the bytes were never served\n' \
+            "$timeout" "${url%/}/$IDENTITY" "${served:-no commit}" "$branch_tip" >&2
+          return 10 ;;
+      esac
       printf 'pages verify: after %s s %s still serves %s, not %s\n' "$timeout" "${url%/}/$IDENTITY" "${served:-no commit}" "${commit:0:12}" >&2
       return 10; }
     sleep 2
@@ -576,7 +703,7 @@ cmd_built() {
     errored)
       [ "$porcelain" = 1 ] || {
         printf "pages built: GitHub's own build of %s ERRORED: %s\n" "${commit:0:12}" "$berror" >&2
-        printf "             the branch is right and the site is not. Re-run the build by dispatching the\n             pages workflow, or push %s again.\n" "$branch" >&2; }
+        printf "             the branch is right and the site is not: this is GitHub's builder, not\n             this repository. Ask for the build again with: scripts/pages rebuild\n"; }
       return 10 ;;
     *)
       [ "$porcelain" = 1 ] || printf "pages built: GitHub's build of %s is %s; not a verdict\n" "${commit:0:12}" "$status" >&2
@@ -588,13 +715,17 @@ cmd_built() {
 # The dataset the site's evidence section renders: the newest evidence CI gathered
 # (scripts/ci/evidence-collect, the `evidence` artifact of validate.yml) for this commit or for
 # its nearest ancestor that has any. It is an input of one deployment, like data/build.json, and
-# it is never a gate on publishing. What it may never do is claim a currency it cannot back, so
-# it says one of three things: evidence of this very commit is `current`; evidence of an
-# ancestor is published with `current: false`, naming how many commits and changed files lie
-# between; and no evidence at all is published as unavailable, with the reason. ADR 68.
+# it is never a gate on publishing. What it may never do is claim a currency it cannot back. The
+# report it carries is the tracked ledger's verdict at the run's commit; the run only confirms
+# it or not. So it is `current` only when the run is of this very commit, measured clean trees,
+# derived the report on a clean checkout, and nothing was absent, refused or failed; `stale`
+# for an ancestor's run, naming how many commits and changed files lie between, or for a run
+# that recorded a failure; `unknown`, with every reason, when the run cannot confirm the
+# report; and no evidence at all is published as unavailable, with the reason. ADR 68, as
+# ADR 0087 amends it; the reasons withhold `current` and never change the report.
 cmd_evidence() {
   local commit="" from="" out="$ROOT/site/data/evidence.json" slug="" tmp="" aid="" sha="" best=""
-  local m ecommit behind changed repo_url cov_json cov_txt report_txt
+  local m ecommit behind changed repo_url cov_json cov_txt report_txt state reasons
   while [ $# -gt 0 ]; do case "$1" in
     --commit) commit="$2"; shift 2 ;;
     --from) from="$2"; shift 2 ;;
@@ -647,13 +778,41 @@ cmd_evidence() {
   jq -n --arg published "$commit" --argjson behind "$behind" --argjson changed "$changed" --arg repo "$repo_url" \
     --slurpfile m "$m" --slurpfile cov "$cov_json" --rawfile report "$report_txt" --rawfile coverage "$cov_txt" '
     $m[0] as $man
+    # What the run cannot confirm about the report it carries. Each reason only withholds
+    # `current`; none of them changes the report. A manifest written before the run measured
+    # its trees has no such key, and reads as not measured. A report the collector failed to
+    # derive, or one that did not reach the artifact, is nothing to confirm.
+    | ([($man.totals.outcomes // {}) | (.fail // 0), (.timeout // 0), (.error // 0)] | add) as $failed
+    | ([($man.panels // [])[] | select(.label == "evidence")] | .[0]) as $ep
+    | [
+        (if $ep == null then "The run names no report."
+         elif $ep.exit != 0 then "The report could not be derived: \($ep.command) exited \($ep.exit // "without a status")."
+         elif ($report | test("\\S") | not) then "The run carries no report text, so there is nothing to confirm."
+         else empty end),
+        (if $man.working_tree == "clean" then empty
+         elif $man.working_tree == "dirty" then "A job that ran tests ran them in a dirty tree."
+         else "Not every job that ran tests measured the tree it ran them in." end),
+        (if $man.report_tree == "clean" then empty
+         elif $man.report_tree == "dirty" then "The report was derived in a dirty checkout."
+         else "The checkout the report was derived in was not measured." end),
+        (($man.refused // []) | if length > 0
+          then "The run refused the report of " + (map(.runner) | join(", ")) + ", measured at another commit."
+          else empty end),
+        (($man.absent // []) | if length > 0 then "The run has no report from " + join(", ") + "." else empty end),
+        (if $failed > 0 then "The run recorded \($failed) failed, timed-out or errored execution(s)." else empty end)
+      ] as $unconfirmed
+    | (if $man.commit == $published and ($unconfirmed | length) == 0 then "current"
+       elif $man.commit != $published or $failed > 0 then "stale"
+       else "unknown" end) as $state
     | {
         schema: 1,
         available: true,
         published_commit: $published,
         commit: $man.commit,
         commit_url: (if $repo != "" then $repo + "/commit/" + $man.commit else null end),
-        current: ($man.commit == $published),
+        state: $state,
+        current: ($state == "current"),
+        unconfirmed: $unconfirmed,
         behind: $behind,
         changed: $changed,
         produced_at: $man.produced_at,
@@ -671,10 +830,16 @@ cmd_evidence() {
              ]}
         ]
       }' > "$out" || { echo "pages evidence: could not write $out" >&2; exit 12; }
-  if [ "$behind" = 0 ]; then
-    echo "pages evidence: current: recorded against ${commit:0:12}"
+  state="$(jq -r .state "$out")"
+  reasons="$(jq -r '.unconfirmed | join(" ")' "$out")"
+  if [ "$state" = current ]; then
+    echo "pages evidence: current: the run of ${commit:0:12} confirms the report it carries"
+  elif [ "$behind" != 0 ]; then
+    echo "pages evidence: stale: recorded against ${ecommit:0:12}, $behind commit(s) and $changed changed file(s) behind ${commit:0:12}${reasons:+. $reasons}"
+  elif [ "$state" = stale ]; then
+    echo "pages evidence: stale: the run of ${commit:0:12} recorded failures, so it does not confirm the report it carries. $reasons"
   else
-    echo "pages evidence: stale: recorded against ${ecommit:0:12}, $behind commit(s) and $changed changed file(s) behind ${commit:0:12}"
+    echo "pages evidence: unknown: the run of ${commit:0:12} cannot confirm the report it carries. $reasons"
   fi
 }
 
@@ -862,18 +1027,92 @@ vr_resolve() {
   printf '%s%s\n' "$dir" "$ref"
 }
 
+# ---------------------------------------------------------------- rebuild
+# Ask GitHub to build the branch again — and only when that is the thing that helps.
+#
+# An owed publication has two causes and two different remedies, and tonight both happened.
+# If gh-pages does not carry the trunk's site, deploying is the fix. If gh-pages is right and
+# GitHub's own builder errored, deploying again changes nothing: the tree it would push is the
+# one already there. On 2026-09-14 three consecutive builds of a correct tree errored with
+# "Page build failed." and no message; a direct request built the identical commit and it went
+# through. So a rebuild is a different action from a redeploy, not a dressed-up retry of one.
+#
+# TWO HAZARDS, BOTH MEASURED RATHER THAN IMAGINED.
+#
+#   A request PREEMPTS a build in flight. Asking while GitHub is building kills that build, so
+#   one slow build becomes two failed ones. The predicate is therefore "the build of this
+#   commit errored AND nothing is building", never "the build errored".
+#
+#   The state is not stable under one reading: `building` at 01:03 had become `errored` by the
+#   next look, and the repository-level status disagreed with the per-build list at the same
+#   moment. So this reads through `pages built --porcelain` — the one place this repository
+#   reads that state — twice: once about the commit in question, once about the newest build,
+#   which is how "nothing is building" is asked. It does not add a third reader.
+#
+# Exit: 0 a build was requested, or none was needed; 12 the state could not be read, or a build
+# is in flight and asking would preempt it. Never 0 for a request that was not made.
+cmd_rebuild() {
+  local branch="gh-pages" commit="" slug row status newest nstatus
+  while [ $# -gt 0 ]; do case "$1" in
+    --branch) branch="$2"; shift 2 ;;
+    --commit) commit="$2"; shift 2 ;;
+    *) echo "pages rebuild: unknown option $1" >&2; exit 2 ;;
+  esac; done
+
+  row="$(cmd_built --branch "$branch" ${commit:+--commit "$commit"} --porcelain 2>/dev/null)" || true
+  status="$(printf '%s' "$row" | cut -f1)"
+  [ -n "$status" ] && [ "$status" != unreadable ] || {
+    echo "pages rebuild: the build state could not be read; not asking blindly (no gh, no token, or no pages:read)" >&2
+    return 12; }
+  [ -z "$commit" ] && commit="$(printf '%s' "$row" | cut -f2)"
+
+  case "$status" in
+    built)
+      printf 'pages rebuild: the build of %s succeeded; nothing to ask for\n' "${commit:0:12}"
+      return 0 ;;
+    building|queued)
+      printf 'pages rebuild: a build of %s is %s; a request would preempt it\n' "${commit:0:12}" "$status" >&2
+      return 12 ;;
+  esac
+
+  # errored, and nothing of this commit is in flight — but a build of something else may be
+  newest="$(cmd_built --branch "$branch" --porcelain 2>/dev/null)" || true
+  nstatus="$(printf '%s' "$newest" | cut -f1)"
+  case "$nstatus" in
+    building|queued)
+      printf 'pages rebuild: GitHub is %s another commit; a request would preempt it\n' "$nstatus" >&2
+      return 12 ;;
+  esac
+
+  slug="${GITHUB_REPOSITORY:-}"
+  [ -n "$slug" ] || slug="$(git -C "$ROOT" remote get-url origin 2>/dev/null | sed -n 's|.*[:/]\([^/][^/]*/[^/][^/]*\)$|\1|p' | sed 's|\.git$||')"
+  [ -n "$slug" ] || { echo "pages rebuild: no repository slug (no GITHUB_REPOSITORY, no origin)" >&2; return 12; }
+
+  printf 'pages rebuild: the build of %s errored; asking GitHub to build it again\n' "${commit:0:12}"
+  gh api -X POST "repos/$slug/pages/builds" >/dev/null 2>&1 || {
+    echo "pages rebuild: the request was refused (no token, or no pages:write)" >&2; return 12; }
+
+  # the request was accepted; what came of it is read, not assumed — a queued build errors too
+  row="$(cmd_built --branch "$branch" --porcelain 2>/dev/null)" || true
+  status="$(printf '%s' "$row" | cut -f1)"
+  printf 'pages rebuild: requested; GitHub now reports %s\n' "${status:-nothing}"
+  return 0
+}
+
 case "${1:-}" in
   evidence)    shift; cmd_evidence "$@" ;;
   build)       shift; cmd_build "$@" ;;
   check)       shift; cmd_check "$@" ;;
   fingerprint) shift; cmd_fingerprint "$@" ;;
-  current)     shift; cmd_current "$@" && cmd_derived "$@" ;;
+  current)     shift; cmd_current_recorded "$@" ;;
   derived)     shift; cmd_derived "$@" ;;
   paths)       shift; cmd_paths "$@" ;;
+  checkout)    shift; cmd_checkout "$@" ;;
   budget)      shift; cmd_budget "$@" ;;
   benchmark)   shift; cmd_benchmark "$@" ;;
   report)      shift; cmd_report "$@" ;;
   built)       shift; cmd_built "$@" ;;
+  rebuild)     shift; cmd_rebuild "$@" ;;
   verify)      shift; cmd_verify "$@" ;;
   verify-docs) shift; cmd_verify_docs "$@" ;;
   verify-rustdoc) shift; cmd_verify_rustdoc "$@" ;;

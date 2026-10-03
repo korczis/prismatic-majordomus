@@ -2,7 +2,7 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL);
      regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.10.0 -->
+     Generator: majordomus-cli 0.12.0 -->
 
 ## Quick install
 
@@ -89,10 +89,10 @@ MAJORDOMUS_INSTALL_DIR="$HOME/bin" curl -fsSL https://majordomus.dev/install.sh 
 ## Pinning a version
 
 ```bash
-curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v0.9.0
+curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v0.11.0
 ```
 
-A pinned installation resolves `https://majordomus.dev/releases/v0.9.0.json`, which names the exact artifact and its
+A pinned installation resolves `https://majordomus.dev/releases/v0.11.0.json`, which names the exact artifact and its
 sha256 digest, and therefore installs the same bytes every time. An unpinned
 installation resolves `https://majordomus.dev/releases/latest.json`, which is the latest stable release and moves
 forward as releases are published. Use the pinned form in CI.
@@ -100,7 +100,7 @@ forward as releases are published. Use the pinned form in CI.
 ## Using it in CI
 
 ```bash
-curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v0.9.0
+curl -fsSL https://majordomus.dev/install.sh | sh -s -- --version v0.11.0
 export PATH="$HOME/.local/bin:$PATH"
 majordomus --version
 ```
@@ -134,7 +134,9 @@ the tool's, and no command of this project deletes them.
 
 | Release | Published | Channel | Artifacts | Metadata |
 |---|---|---|---|---|
-| `v0.9.0` (latest) | 2026-09-25 | stable | 6 | [`v0.9.0.json`](https://majordomus.dev/releases/v0.9.0.json) |
+| `v0.11.0` (latest) | 2026-10-02 | stable | 6 | [`v0.11.0.json`](https://majordomus.dev/releases/v0.11.0.json) |
+| `v0.10.0` | 2026-09-29 | stable | 6 | [`v0.10.0.json`](https://majordomus.dev/releases/v0.10.0.json) |
+| `v0.9.0` | 2026-09-25 | stable | 6 | [`v0.9.0.json`](https://majordomus.dev/releases/v0.9.0.json) |
 | `v0.8.0` | 2026-09-20 | stable | 6 | [`v0.8.0.json`](https://majordomus.dev/releases/v0.8.0.json) |
 | `v0.7.0` | 2026-09-15 | stable | 6 | [`v0.7.0.json`](https://majordomus.dev/releases/v0.7.0.json) |
 | `v0.6.0` | 2026-09-12 | stable | 6 | [`v0.6.0.json`](https://majordomus.dev/releases/v0.6.0.json) |
@@ -184,7 +186,7 @@ sh install-majordomus.sh
 ```
 
 The installer is one file with no dependencies beyond `curl` or `wget`, `tar`, and one of
-`sha256sum`, `shasum` or `openssl`. Its top half is generated from the distribution model and
+`sha256sum` or `openssl`. Its top half is generated from the distribution model and
 its bottom half is behaviour; both are reviewed in this repository and linted by
 `shellcheck` in CI.
 

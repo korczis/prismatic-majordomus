@@ -1,7 +1,7 @@
 +++
 title = "Repository entry: what is automatic, what is decorative, and where it breaks"
 description = "forensic finding, 2026-09-10: what converges on its own when a person or an agent enters this repository — executable, shared server, episode, peer, continuation — and what does not; the root causes ranked, the matrix, the dependency graph, and the plan by stage"
-weight = 32
+weight = 34
 [extra]
 source = "docs/ENTRY_AUDIT.md"
 +++
@@ -99,7 +99,7 @@ run first died on a silent peer.
    Reproduce: with no lease, `bin/majordomus-env export --shell direnv | grep -c URL`.
    The providers named above are examples of the ones that carry a lifecycle adapter and the
    ones that do not; which is which is not a list this document keeps — it is
-   [`docs/generated/providers.md`](https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/providers.md), written from
+   [`docs/generated/providers.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/docs/generated/providers.md), written from
    `share/providers.yaml` by `majordomus generate providers` (ADR 0024).
 
 3. **The episode is one per checkout, keyed on nothing the provider sent.** `session start

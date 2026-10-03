@@ -36,18 +36,44 @@ expect_grep 'FAIL verification .* false — exit 1'
 [ "$(refusals)" = 2 ] || { echo "    finish --check wrote a refusal; a check is a question, not a claim"; exit 1; }
 # handover supplies the note; regression test path is required by debugging profile
 printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover >/dev/null
-expect_exit 10 "$MJ" finish --outcome completed --verify-command "true"
+# The verify command is the project's own verification, run as a worker would run it. The
+# outcome being claimed is finish's own state: a `check` the verify command runs must not
+# see it, or that check judges its obligations and gates as a completed finish and refuses.
+venv="$(mktemp "${TMPDIR:-/tmp}/mj-venv.XXXXXX")"
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "env > '$venv'"
 expect_grep 'OK +note'
 expect_grep 'FAIL regression .* no test path'
+grep -q '^PATH=' "$venv" || { echo "    the verify command did not run"; exit 1; }
+grep -q '^MJ_FINISH_OUTCOME=' "$venv" \
+  && { echo "    the verify command inherited $(grep '^MJ_FINISH_OUTCOME=' "$venv")"; exit 1; }
+rm -f "$venv"
 echo t2 >> test/a_test
-expect_exit 0 "$MJ" finish --outcome completed --verify-command "true"
+# three claims of done refused so far: no verify command, a failing one, a regression path missing
+[ "$(refusals)" = 3 ] || { echo "    three refused finishes left $(refusals) task.refused line(s)"; exit 1; }
+# A verification command that cannot verify anything is refused before it runs, whatever it
+# exits: `true` was accepted here until 2026-09-15, and the ledger recorded it as the proof
+# that the work was verified. Every no-op shape the rule names is refused, and names the rule.
+vacuous_shapes=0
+for vacuous in "true" ":" "exit 0" "   " "true && echo ok" "echo verified"; do
+  vacuous_shapes=$((vacuous_shapes + 1))
+  expect_exit 10 "$MJ" finish --outcome completed --verify-command "$vacuous"
+  expect_grep 'FAIL verification .* cannot verify anything'
+  expect_grep 'majordomus\.verification-integrity'
+  expect_grep '^outcome: active$' .ai/local/state/current.yaml
+  # a refused no-op is a refused claim of done, recorded like every other
+  [ "$(refusals)" = $((3 + vacuous_shapes)) ] \
+    || { echo "    '$vacuous' left $(refusals) task.refused line(s), not $((3 + vacuous_shapes))"; exit 1; }
+done
+# ... and a real command that happens to include a no-op part is still a real command
+expect_exit 0 "$MJ" finish --outcome completed --verify-command "true && test -f test/a_test"
 expect_grep 'OK +regression'
 expect_grep 'finish: t-.* completed'
 expect_grep '^outcome: completed$' .ai/local/state/current.yaml
-expect_grep '"event":"task.finished".*"outcome":"completed".*"majordomus.verification-integrity":"pass".*"verify":\{"command":"true","exit":0' .ai/local/state/ledger.jsonl
+expect_grep '"event":"task.finished".*"outcome":"completed".*"majordomus.verification-integrity":"pass".*"verify":\{"command":"true && test -f test/a_test","exit":0' .ai/local/state/ledger.jsonl
 # the point of the record: a task accepted after refusals is no longer indistinguishable from
 # one accepted first try — its false dones are still there, in order, before the one that held
-[ "$(refusals)" = 3 ] || { echo "    the accepted task's history lost its refusals: $(refusals) left"; exit 1; }
+[ "$(refusals)" = $((3 + vacuous_shapes)) ] \
+  || { echo "    the accepted task's history lost its refusals: $(refusals) left, not $((3 + vacuous_shapes))"; exit 1; }
 last_two="$(grep -E '"event":"task\.(refused|finished)"' "$LEDGER" | tail -n 2 | sed 's/.*"event":"\([^"]*\)".*/\1/' | tr '\n' ' ')"
 [ "$last_two" = "task.refused task.finished " ] || { echo "    ledger order is '$last_two', not refused then finished"; exit 1; }
 # and history shows a refusal as what it is
@@ -85,5 +111,5 @@ expect_exit 10 "$MJ" finish --check
 expect_grep 'FAIL scope +test/other'
 # a scope failure blocks a completed finish even with everything else present
 printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover >/dev/null
-expect_exit 10 "$MJ" finish --outcome completed --verify-command true
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai"
 expect_grep 'FAIL scope'

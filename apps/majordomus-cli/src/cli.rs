@@ -64,6 +64,11 @@ pub enum Command {
     /// The branch-to-worktree topology: where every linked worktree belongs (`<repo>-wt/<branch>`), where each one is, and the lifecycle — create, migrate, repair, guard
     #[command(alias = "wt")]
     Worktree(WorktreeArgs),
+    /// Pull-request integration: every open pull request classified against the current master with its evidence, the ranked plan, and the executor that merges the next provably safe one — one at a time, re-planning after each (ADR 0101)
+    #[command(alias = "pr")]
+    Prs(PrsArgs),
+    /// Is any of this repository's work held where it can be lost? Every holding — a work tree with uncommitted files, a branch with commits, a stash — with the disposition read from git, and one verdict over them
+    Convergence(ConvergenceArgs),
     /// The commit as a value: what the working tree would commit and how it divides, the scope vocabulary this repository's history yields, and the verdict on one message against the commit policy
     Commit(CommitArgs),
     /// The product: what this repository's tool does for a person, as the features under the layer declare it, with every surface, count and moment derived; the matrix of features against interfaces; the providers; and the model's own validation
@@ -82,12 +87,16 @@ pub enum Command {
     Mesh(MeshArgs),
     /// The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate
     Models(ModelsArgs),
+    /// Provider-independent reasoning: the optional advisors and what they can do now, what an uncertainty calls for, the session's reasoning records, their state and provenance, and the checks that keep reasoning independent of any advisor
+    Reasoning(ReasoningArgs),
     /// What actually ran and what it proves: every claim of the matrix against the runs recorded for it, one claim's proof, one test's claims, and the recording of a run that happened
     Evidence(EvidenceArgs),
     /// Whether a deployment serves the commit it was meant to: observe the build identity it serves, judged by commit containment, and read each deployment's recorded standing against a commit
     Served(ServedArgs),
     /// Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about
     Rules(RulesArgs),
+    /// What must become true above the milestones: every intent with its stage derived from the plan and its satisfaction from the recorded evidence, one intent, the model's own validation, and which intent a piece of work serves
+    Intent(IntentArgs),
     /// Whether each product feature exists: on master, deployed, publicly verified, tested, its evidence published and linked — every dimension computed, unknown never a pass
     Delivery(DeliveryArgs),
     /// Token economics, measured: matched runs with and without Majordomus, every metric with its measurement class and sample size, the statement the evidence allows, and the check that refuses an unsupported savings claim
@@ -96,6 +105,117 @@ pub enum Command {
     Entity(EntityArgs),
     /// The repository's shell automation against the tracked migration inventory: every shell unit declared with an exemption, and every exemption naming a unit the tree still has
     Shell(ShellArgs),
+    /// The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it
+    Dashboard(DashboardArgs),
+    /// Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans
+    Skills(SkillsArgs),
+    /// What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion, one record by id with every reference it names resolved, and the derivation status of this checkout judged against the policy's freshness thresholds
+    Knowledge(KnowledgeArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus intent`. The output shape is global, so it reads where a person writes it.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, IntentArgs, IntentCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "intent", "preflight", "--issue", "I0001"]).unwrap();
+/// let Command::Intent(args) = cli.command else { panic!("intent") };
+/// let args: IntentArgs = args;
+/// assert!(matches!(args.command, IntentCommand::Preflight { issue: Some(_), .. }));
+/// // the group runs nothing of its own: every runnable path here is a capability's
+/// assert!(Cli::try_parse_from(["majordomus", "intent"]).is_err());
+/// ```
+pub struct IntentArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `list`, `show`, `validate` or `preflight`.
+    pub command: IntentCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus intent`: the command line of `intents.list`,
+/// `intents.record`, `intents.validate` and `intents.preflight`.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, IntentCommand};
+/// use clap::Parser;
+/// let cli = Cli::parse_from(["majordomus", "intent", "show", "intent-lifecycle"]);
+/// let Command::Intent(args) = cli.command else { panic!("intent") };
+/// let IntentCommand::Show { id } = args.command else { panic!("show") };
+/// assert_eq!(id, "intent-lifecycle");
+/// ```
+pub enum IntentCommand {
+    /// Every intent, with the stage derived from its milestones and its evidence
+    List,
+    /// One intent in full: each milestone's derived status and each criterion's evidence state
+    Show {
+        /// The intent's id, which is also its file name
+        id: String,
+    },
+    /// Every finding over the intents; exit 10 when any is a failure
+    Validate,
+    /// Which intent the work on an issue, or on some paths, serves; exit 10 when it serves none
+    Preflight {
+        /// The issue the work executes
+        #[arg(long)]
+        issue: Option<String>,
+        /// A path the work will touch; repeat for each
+        #[arg(long = "path")]
+        paths: Vec<String>,
+    },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus dashboard`. Every subcommand is one page of the Dashboard Suite, run through
+/// the capability that answers it.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, DashboardArgs, DashboardCommand, OutputFormat};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "dashboard", "overview", "--format", "json"]).unwrap();
+/// let Command::Dashboard(args) = cli.command else { panic!("not the dashboard command") };
+/// let args: DashboardArgs = args;
+/// assert!(matches!(args.command, DashboardCommand::Overview));
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// ```
+pub struct DashboardArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `overview`. Required: the group runs nothing of its own.
+    pub command: DashboardCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus dashboard`: one per page of the suite.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, DashboardCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "dashboard", "overview"]).unwrap();
+/// let Command::Dashboard(args) = cli.command else { panic!("not the dashboard command") };
+/// assert!(matches!(args.command, DashboardCommand::Overview));
+/// ```
+pub enum DashboardCommand {
+    /// Is it healthy, what changed, what is broken, what needs action: every card with its value, the source's verdict, and the capability and pointer it was read from; exit 10 when the overview is fail or unknown
+    Overview,
 }
 
 #[derive(Debug, Args)]
@@ -147,6 +267,62 @@ pub enum ShellCommand {
 }
 
 #[derive(Debug, Args)]
+/// `majordomus skills`. The output shape is global, so it reads where a person writes it.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, OutputFormat, SkillsArgs, SkillsCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "skills", "explain", "implement"]).unwrap();
+/// let Command::Skills(args) = cli.command else { panic!("skills") };
+/// let args: SkillsArgs = args;
+/// assert!(matches!(args.command, SkillsCommand::Explain { .. }));
+/// assert_eq!(args.format, OutputFormat::Text, "text unless a person asks for json");
+/// // `--format` is global, so it is read after the subcommand as well as before it
+/// let cli = Cli::try_parse_from(["majordomus", "skills", "status", "--format", "json"]).unwrap();
+/// let Command::Skills(SkillsArgs { format, .. }) = cli.command else { panic!("skills") };
+/// assert_eq!(format, OutputFormat::Json);
+/// // the group runs nothing of its own: every runnable path here is a capability's
+/// assert!(Cli::try_parse_from(["majordomus", "skills"]).is_err());
+/// ```
+pub struct SkillsArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `status`, `explain` or `verify`.
+    pub command: SkillsCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus skills`: the command line of `skills.status`,
+/// `skills.explain` and `skills.verify`.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, SkillsCommand};
+/// let cli = Cli::parse_from(["majordomus", "skills", "verify"]);
+/// let Command::Skills(args) = cli.command else { panic!("skills") };
+/// assert!(matches!(args.command, SkillsCommand::Verify));
+/// ```
+pub enum SkillsCommand {
+    /// Every skill with its derived standing: tested, documented, enforced, used
+    Status,
+    /// One skill in full: each naming test and its evidence, its page, its gates, every invocation
+    Explain {
+        /// The skill's id, which is also its directory name
+        id: String,
+    },
+    /// Every finding over the skills; exit 10 when any is a failure
+    Verify,
+}
+
+#[derive(Debug, Args)]
 /// `majordomus models`.
 pub struct ModelsArgs {
     #[command(subcommand)]
@@ -161,6 +337,93 @@ pub enum ModelsCommand {
     List(ModelsListArgs),
     /// Which model a stated need selects, the fallback chain behind it, and why every excluded model fell out
     Route(ModelsRouteArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus reasoning`: the command-line projection of the `reasoning` capabilities.
+/// The repository arguments and the output shape are shared by every subcommand, and the
+/// shape is global, so `--format` reads the same before or after the subcommand.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, OutputFormat, ReasoningArgs, ReasoningCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "reasoning", "plan", "--materiality", "high", "--format", "json"]).unwrap();
+/// let Command::Reasoning(args) = cli.command else { panic!("not the reasoning command") };
+/// let args: ReasoningArgs = args;
+/// assert!(matches!(args.command, ReasoningCommand::Plan { .. }));
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// ```
+pub struct ReasoningArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `advisors`, `plan`, `record`, `status`, `explain`, `check`.
+    pub command: ReasoningCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// `text` for a person, `json` for a machine; both render the same answer.
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The `reasoning` subcommands, one per capability: `advisors`, `plan` and `status` read,
+/// `explain` traces one record, `check` gates, and `record` is the one that writes.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, ReasoningCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "reasoning", "plan"]).unwrap();
+/// let Command::Reasoning(args) = cli.command else { panic!("not the reasoning command") };
+/// let ReasoningCommand::Plan { materiality, confidence, capabilities } = args.command else {
+///     panic!("not plan")
+/// };
+/// assert_eq!((materiality.as_str(), confidence.as_str()), ("material", "medium"));
+/// assert!(capabilities.is_none());
+/// let cli = Cli::try_parse_from(["majordomus", "reasoning", "status", "--task", "all", "--report"]).unwrap();
+/// let Command::Reasoning(args) = cli.command else { panic!("not the reasoning command") };
+/// assert!(matches!(args.command, ReasoningCommand::Status { report: true, .. }));
+/// ```
+pub enum ReasoningCommand {
+    /// Every advisor with its status and why, the mode in force, and who can provide each advisory capability now; no advisor at all is an ordinary answer
+    Advisors,
+    /// Whether a stated uncertainty warrants independent review, how much, and from which available advisors — with every advisor left out and why; records nothing
+    Plan {
+        /// trivial, low, material, high or critical
+        #[arg(long, default_value = "material")]
+        materiality: String,
+        /// low, medium or high
+        #[arg(long, default_value = "medium")]
+        confidence: String,
+        /// Advisory capabilities review needs, comma-separated
+        #[arg(long)]
+        capabilities: Option<String>,
+    },
+    /// Record one reasoning step of the open task from JSON (`{"kind":"assessment",...}`) read from --file or standard input; a record that breaks a rule is refused and nothing is written
+    Record {
+        /// The JSON record; standard input when absent
+        #[arg(long)]
+        file: Option<std::path::PathBuf>,
+    },
+    /// The reasoning state of the open task — assessments, consultations, disagreements, conclusions, the timeline — and the report a handover carries
+    Status {
+        /// A task id, or `all`
+        #[arg(long)]
+        task: Option<String>,
+        /// Print only the Markdown report (empty when there is nothing to report)
+        #[arg(long)]
+        report: bool,
+    },
+    /// One record with the whole chain of its assessment: why a decision was made
+    Explain {
+        /// The record id
+        id: String,
+    },
+    /// Check that reasoning stays provider-independent and that every record is consistent; exit 10 on a finding
+    Check,
 }
 
 #[derive(Debug, Args)]
@@ -1100,6 +1363,42 @@ pub struct QualityRustdocArgs {
 }
 
 #[derive(Debug, Args)]
+/// `majordomus convergence`: whether any of this repository's work is held where only one
+/// disk can see it. It exits 10 when it is, so a hook or a script refuses on the verdict
+/// rather than on a parsed report.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, ConvergenceArgs, OutputFormat};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "convergence", "--format", "json", "--all"])
+///     .unwrap();
+/// let args: ConvergenceArgs = match cli.command {
+///     Command::Convergence(args) => args,
+///     other => panic!("expected `convergence`, parsed {other:?}"),
+/// };
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// assert!(args.all);
+///
+/// // a person asks the question with nothing after it, and reads only what is at risk
+/// let bare = Cli::try_parse_from(["majordomus", "convergence"]).unwrap();
+/// assert!(matches!(bare.command, Command::Convergence(ConvergenceArgs { all: false, .. })));
+/// ```
+pub struct ConvergenceArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// How to render the verdict
+    pub format: OutputFormat,
+
+    #[arg(long)]
+    /// List every holding, not only the ones whose work exists on one disk
+    pub all: bool,
+}
+
+#[derive(Debug, Args)]
 /// `majordomus quality report`.
 pub struct QualityReportArgs {
     #[command(flatten)]
@@ -1677,6 +1976,23 @@ pub enum EvidenceCommand {
         /// Exit 10 when a claim declares a guarantee the evidence does not support
         #[arg(long)]
         check: bool,
+        /// Judge at the checked-out commit as committed (HEAD, or any name of it), from the ledger that commit holds, instead of at the working tree
+        #[arg(long, value_name = "REV")]
+        presented: Option<String>,
+        /// What you know about the presented commit's tree (clean, dirty, unknown); it can only weaken the measured state
+        #[arg(
+            long,
+            value_name = "TREE",
+            value_parser = clap::builder::PossibleValuesParser::new([
+                clap::builder::PossibleValue::new("clean")
+                    .help("Nothing you know of: the measured state stands"),
+                clap::builder::PossibleValue::new("dirty")
+                    .help("The build did not come from the commit as committed; nothing reads as proven"),
+                clap::builder::PossibleValue::new("unknown")
+                    .help("You cannot say whether it did; nothing reads as proven"),
+            ])
+        )]
+        presented_tree: Option<String>,
     },
     /// One claim: its proof state, the execution behind it, and how to reproduce it
     Claim {
@@ -1983,6 +2299,61 @@ pub enum RulesCommand {
         /// `suite:<case>`, `crate:<binary>`, or the path a rule names it with
         id: String,
     },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus knowledge`. What the knowledge deriver left for review and whether it is
+/// still writing. The deriver itself is the shell tool's (`lib/knowledge.sh`); this reads
+/// what it wrote — the candidate records under the tracked knowledge section, one record by
+/// id with its references resolved, and the derivation status of this checkout — through the
+/// `knowledge_base` capabilities, so the command line answers what HTTP and MCP answer.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, KnowledgeArgs};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "knowledge", "status", "--format", "json"]).unwrap();
+/// let Command::Knowledge(args) = cli.command else { panic!("not the knowledge command") };
+/// let _: KnowledgeArgs = args;
+/// ```
+pub struct KnowledgeArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `candidates`, `record` or `status`. Required: the group runs nothing of its own, so
+    /// that every runnable path here is one a capability declares rather than one
+    /// classified command-line-only in `cli::local`.
+    pub command: KnowledgeCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus knowledge`.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, KnowledgeCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "knowledge", "record", "e1-0123456789ab"]).unwrap();
+/// let Command::Knowledge(args) = cli.command else { panic!("not the knowledge command") };
+/// assert!(matches!(args.command, KnowledgeCommand::Record { id } if id == "e1-0123456789ab"));
+/// assert!(Cli::try_parse_from(["majordomus", "knowledge"]).is_err(), "a subcommand is required");
+/// ```
+pub enum KnowledgeCommand {
+    /// The candidate records awaiting review, with the branch of the episode each came from and how long each has waited
+    Candidates,
+    /// One knowledge record by id: its front matter, and every reference it names resolved against the index, the ledger and git
+    Record {
+        /// The record id, which is also its file name
+        id: String,
+    },
+    /// Whether the deriver is still writing: the last derivation, the newest closed episode, and the stopped-writer judgement against session.freshness
+    Status,
 }
 
 #[derive(Debug, Args)]
@@ -2408,6 +2779,103 @@ pub struct RepoArgs {
 }
 
 #[derive(Debug, Args)]
+/// `majordomus prs` (alias `pr`). Every subcommand but `refresh`, `drain` and `cleanup`
+/// reads the last recorded forge observation and never reaches the network.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, OutputFormat, PrsArgs, PrsCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "pr", "explain", "12", "--format", "json"]).unwrap();
+/// let Command::Prs(args) = cli.command else { panic!("not the prs command") };
+/// let args: PrsArgs = args;
+/// assert!(matches!(args.command, Some(PrsCommand::Explain { number: 12 })));
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// ```
+pub struct PrsArgs {
+    #[command(flatten)]
+    /// Where the repository is found.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// The subcommand; none is `status`.
+    pub command: Option<PrsCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus prs`. `status`, `plan`, `explain` and `events` render the
+/// recorded observation offline; `refresh`, `drain` and `cleanup` reach the forge, and a
+/// drain is bounded by `--max` merges and, without `--dry-run`, holds the base branch's
+/// integration lease while it acts.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, PrsCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "prs", "drain", "--max", "3", "--refresh"]).unwrap();
+/// let Command::Prs(args) = cli.command else { panic!("not the prs command") };
+/// assert!(matches!(
+///     args.command,
+///     Some(PrsCommand::Drain { max: 3, dry_run: false, refresh: true, continuous: false, .. })
+/// ));
+/// // continuous: drain, wait, drain again — never together with a dry run
+/// let cli = Cli::try_parse_from(["majordomus", "prs", "drain", "--continuous", "--interval", "60"]).unwrap();
+/// let Command::Prs(args) = cli.command else { panic!() };
+/// assert!(matches!(args.command, Some(PrsCommand::Drain { continuous: true, interval: 60, .. })));
+/// assert!(Cli::try_parse_from(["majordomus", "prs", "drain", "--continuous", "--dry-run"]).is_err());
+/// assert!(Cli::try_parse_from(["majordomus", "prs", "drain", "--continuous", "--interval", "5"]).is_err());
+/// // with no subcommand it is `status`
+/// let cli = Cli::try_parse_from(["majordomus", "prs"]).unwrap();
+/// let Command::Prs(args) = cli.command else { panic!() };
+/// assert!(args.command.is_none());
+/// ```
+pub enum PrsCommand {
+    /// Every open pull request with its disposition, risk and reason, in rank order, from the last recorded observation; exit 10 when the observation is stale or absent
+    Status,
+    /// What the executor would do next: the next merge, the pull requests that need master brought in, and the lanes; nothing is changed
+    Plan,
+    /// Why one pull request is where it is: the revisions it was decided against, every piece of evidence, its rank and the factors behind it
+    Explain {
+        /// The pull request number.
+        number: u64,
+    },
+    /// Observe the forge now (the GitHub CLI and one `git fetch`) and record the observation; the only read that reaches the network
+    Refresh,
+    /// Merge the next ready pull request, verify it landed, observe again, and repeat — at most `--max` merges; `--dry-run` decides without acting
+    Drain {
+        /// At most this many merges.
+        #[arg(long, default_value_t = 1)]
+        max: usize,
+        /// Observe and decide, change nothing.
+        #[arg(long)]
+        dry_run: bool,
+        /// When nothing is ready, bring master into the first pull request that needs it (a merge commit with the derived driver and a fresh derive, pushed as a fast-forward), so that its checks run against the current master
+        #[arg(long)]
+        refresh: bool,
+        /// Drain, wait `--interval` seconds, and drain again until stopped, holding the lease throughout; each cycle is bounded by `--max` and observes before every step. Ctrl-C or SIGTERM lets the step in progress finish, then releases the lease; a second signal ends it at once. Never with `--dry-run`
+        #[arg(long, conflicts_with = "dry_run")]
+        continuous: bool,
+        /// With `--continuous`: seconds between cycles, 30 to 900
+        #[arg(long, default_value_t = 300, value_parser = clap::value_parser!(u64).range(crate::integration::drain::INTERVAL_SECONDS))]
+        interval: u64,
+    },
+    /// Close the pull requests whose work is provably on master already; without `--apply` it only lists them
+    Cleanup {
+        /// Close them.
+        #[arg(long)]
+        apply: bool,
+    },
+    /// The audit trail: every selection, merge, refusal, stale decision and closure this checkout's executor recorded
+    Events,
+    /// One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease, and the last merge. Offline, decides no relation, and prints nothing where the forge was never observed
+    Brief,
+}
+
+#[derive(Debug, Args)]
 /// `majordomus worktree` (alias `wt`). The output shape is global, so it reads the way a
 /// person writes it — `worktree list --format json` — and is declared once.
 pub struct WorktreeArgs {
@@ -2515,8 +2983,14 @@ pub enum WorktreeCommand {
         #[arg(long)]
         force: bool,
     },
-    /// The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing
-    Cleanup,
+    /// The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing without --remove
+    Cleanup {
+        /// Remove the worktrees listed, each re-measured immediately before it goes: a branch
+        /// ahead of its remote, uncommitted work, or a process working inside is refused and
+        /// named. Branches are never deleted; the listing still says how.
+        #[arg(long)]
+        remove: bool,
+    },
     /// Every local branch, one per line, for a shell completion that wants the live set
     Branches {
         /// Only branches with no worktree
@@ -3435,11 +3909,11 @@ pub const EXAMPLES: &[CommandExamples] = &[
         command: "release version",
         examples: &[ExampleDoc {
             id: "release-version",
-            title: "The version, and the one the commits imply",
-            description: "The version is authored in one place, the crate manifest, and the shell tool reads its projection, share/version.txt, because an installed tree has no Cargo.toml. This says what the manifest declares, whether the projection states it, and — exit 10 — any version written down by hand where the tool's own files live. What the next version must be is a different question, measured from the public contract by `release analyze`.",
+            title: "The version, and the one the contract requires next",
+            description: "The version is authored in one place, the crate manifest, and the shell tool reads its projection, share/version.txt, because an installed tree has no Cargo.toml. This says what the manifest declares, whether the projection states it, and — exit 10 — any version written down by hand where the tool's own files live. `next` is the public contract's answer, the version `release analyze` requires (the declared version when it already satisfies the contract, otherwise the smallest one it allows); `decided_by` names who answered, and the bump the commit subjects imply is carried as evidence. This fixture has published no release with a registry, so the contract cannot be measured: `next` is absent and `decided_by` is `undecided`, with the reason in `contract_unreadable` — an unmeasurable baseline is refused, not guessed.",
             argv: &["release", "version", "--format", "json"],
             setup: &[],
-            expect: Expect::Json(&["/declared", "/agree", "/bump"]),
+            expect: Expect::Json(&["/declared", "/agree", "/bump", "/decided_by"]),
         }],
     },
     CommandExamples {
@@ -3576,14 +4050,24 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "evidence show",
-        examples: &[ExampleDoc {
-            id: "evidence-show-json",
-            title: "The whole join, as one document",
-            description: "The same answer `GET /api/v1/evidence` and the MCP tool `majordomus_evidence` return: every claim with its proof state, the sentence that explains how that state was derived, the execution behind it, the files that have changed since, and the command that produces the proof again. The tallies count the whole matrix even when the claims are filtered, so a narrowed answer never misreports how much of it was examined.",
-            argv: &["evidence", "show", "--format", "json"],
-            setup: &[],
-            expect: Expect::Json(&["/claims", "/totals", "/ledger/path", "/findings"]),
-        }],
+        examples: &[
+            ExampleDoc {
+                id: "evidence-show-json",
+                title: "The whole join, as one document",
+                description: "The same answer `GET /api/v1/evidence` and the MCP tool `majordomus_evidence` return: every claim with its proof state, the sentence that explains how that state was derived, the execution behind it, the files that have changed since, and the command that produces the proof again. The tallies count the whole matrix even when the claims are filtered, so a narrowed answer never misreports how much of it was examined.",
+                argv: &["evidence", "show", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/claims", "/totals", "/ledger/path", "/findings"]),
+            },
+            ExampleDoc {
+                id: "evidence-show-presented",
+                title: "The checked-out commit, judged as committed",
+                description: "The reading a site built from this commit needs: every claim judged from the ledger the commit holds rather than the working tree's, against the commit's own tree, measured without the ledger's working copy. The first line names what was judged. A run the working ledger holds that the commit's does not can only withhold `proven`, and is named when there is one; a revision other than the checked-out commit is refused.",
+                argv: &["evidence", "show", "--presented", "HEAD"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["judged at", "as committed"]),
+            },
+        ],
     },
     CommandExamples {
         command: "evidence claim",
@@ -3679,6 +4163,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "dashboard overview",
+        examples: &[ExampleDoc {
+            id: "dashboard-overview-json",
+            title: "The four questions, every card with the answer it was read from",
+            description: "The same answer `GET /api/v1/dashboard/overview`, the MCP tool `majordomus_dashboard_overview` and the first section of the Cockpit's overview return: is it healthy, what changed, what is broken, what needs action, each answered by cards read out of `health.report`, `release.version`, `plan.status`, `worktree.status`, `plan.next`, `continuity.state` and `peers.list`. Every card carries its source capability, the input it was asked with and the JSON pointer its value was read from, so `majordomus run <capability>` read at that pointer gives the same value. The exit code is the overview's own word: 0 for ok and warn, 10 for fail and unknown. This fixture commits no registry manifest, so `health.report` cannot decide one of its checks, the health card is `unknown` rather than ok, and the answer is 10.",
+            argv: &["dashboard", "overview", "--format", "json"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
         command: "shell check",
         examples: &[ExampleDoc {
             id: "shell-check-json",
@@ -3709,6 +4204,39 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["rules", "proves", "test/cases/125_rule_proof.sh", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/proves", "/sole_proof_of", "/path"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge candidates",
+        examples: &[ExampleDoc {
+            id: "knowledge-candidates-json",
+            title: "The review queue, as one document",
+            description: "The same answer `GET /api/v1/knowledge/candidates`, the MCP tool `majordomus_knowledge_candidates` and the resource `majordomus://knowledge-candidates` serve: every record with status candidate under the candidates class, the branch of the episode each came from, how long each has waited, and the policy's cap beside the count. A repository whose deriver has not run yet answers with an empty queue, which is an answer and not an error.",
+            argv: &["knowledge", "candidates", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/total", "/on_this_branch", "/branch", "/over_cap"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge record",
+        examples: &[ExampleDoc {
+            id: "knowledge-record-absent",
+            title: "A record the repository does not hold",
+            description: "An id nothing carries is a not-found rather than an empty answer, with the exit code that says which: a typo that read as `this record names no evidence` would be indistinguishable from the dangling reference the integrity validator exists to report.",
+            argv: &["knowledge", "record", "no-such-record"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge status",
+        examples: &[ExampleDoc {
+            id: "knowledge-status-json",
+            title: "Whether the deriver is still writing",
+            description: "The freshness half of the stopped-writer judgement: the newest derivation, the newest closed episode, how many closed episodes no derivation names, and — once a derivation has run in this checkout — whether the newest close went underived past the stale threshold. A fresh repository, in which no episode has closed, reports that it was not judged and why, and never a stopped writer.",
+            argv: &["knowledge", "status", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/present", "/judged", "/stopped_writer", "/freshness"]),
         }],
     },
     CommandExamples {
@@ -3797,6 +4325,116 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["executions", "protocol", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/protocol_version", "/websocket", "/event_types/0", "/stream_types/0", "/limits/max_events"]),
+        }],
+    },
+    CommandExamples {
+        command: "prs",
+        examples: &[ExampleDoc {
+            id: "prs-default-unobserved",
+            title: "The queue, before the forge was ever observed",
+            description: "`prs` with nothing after it is `prs status`. It reads the last recorded forge observation and never reaches the network, so in a checkout where `prs refresh` has never run it has nothing to rank: it says so, names the command that observes, and exits 10.",
+            argv: &["prs"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "prs status",
+        examples: &[ExampleDoc {
+            id: "prs-status-json-unobserved",
+            title: "The ranked queue as one document",
+            description: "Every open pull request's assessment in rank order — disposition, lane, reasons, the master and head it was decided against, evidence, risk, overlaps — with the next merge and the tallies. The same value `GET /api/v1/pull-requests` and the MCP tool `majordomus_pull_requests` answer. With no observation recorded it exits 10.",
+            argv: &["prs", "status", "--format", "json"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "prs plan",
+        examples: &[ExampleDoc {
+            id: "prs-plan-unobserved",
+            title: "What the executor would do next",
+            description: "The next merge, the pull requests that need master brought in, and the repair, cleanup and held lanes. The plan is void after any merge: the executor observes again before its next step. With no observation recorded it exits 10.",
+            argv: &["prs", "plan"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "prs explain",
+        examples: &[ExampleDoc {
+            id: "prs-explain-unobserved",
+            title: "Why one pull request is where it is",
+            description: "The revisions it was decided against, every piece of evidence, its rank and the factors behind it. The same answer `GET /api/v1/pull-requests/explain?number=` gives. With no observation recorded it exits 10.",
+            argv: &["prs", "explain", "1"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "prs events",
+        examples: &[ExampleDoc {
+            id: "prs-events-empty",
+            title: "The audit trail of this checkout's executor",
+            description: "Every selection, stale decision, merge with the master before and after, refusal, refresh and closure, oldest first. A checkout whose executor never ran has none, and says so.",
+            argv: &["prs", "events"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["no integration action"]),
+        }],
+    },
+    CommandExamples {
+        command: "prs refresh",
+        examples: &[ExampleDoc {
+            id: "prs-refresh-no-forge",
+            title: "Observing the forge, where there is none",
+            description: "`refresh` is one of the three `prs` commands that reach the network: it asks the GitHub CLI about the repository, its branch protection and its open pull requests, and fetches their heads. A repository with no GitHub remote cannot be observed, and the answer is exit 12 — unusable, never an empty queue.",
+            argv: &["prs", "refresh"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "prs drain",
+        examples: &[ExampleDoc {
+            id: "prs-drain-dry-run-no-forge",
+            title: "A dry run starts from a fresh observation",
+            description: "Even a dry run observes the forge first — a decision is never taken from the recorded observation — so where the forge cannot be reached it stops with exit 12 before deciding anything, and nothing is merged, refreshed or recorded.",
+            argv: &["prs", "drain", "--dry-run"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "prs brief",
+        examples: &[ExampleDoc {
+            id: "prs-brief-unobserved",
+            title: "The briefing line, where nothing was observed",
+            description: "What `majordomus context` prints under INTEGRATION: the last queue this checkout built, the lease and the last merge, in one line, read from files and never from the network. A checkout whose forge was never observed has nothing to say, prints nothing, and exits 0 — a briefing does not grow a section about an empty queue.",
+            argv: &["prs", "brief"],
+            setup: &[],
+            expect: Expect::ExitCode(0),
+        }],
+    },
+    CommandExamples {
+        command: "prs cleanup",
+        examples: &[ExampleDoc {
+            id: "prs-cleanup-no-forge",
+            title: "Cleanup lists before it closes, and observes before it lists",
+            description: "Without `--apply` cleanup only lists the pull requests whose work is provably on master; either way it observes the forge first, so where there is none it exits 12.",
+            argv: &["prs", "cleanup"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "convergence",
+        examples: &[ExampleDoc {
+            id: "convergence-report-json",
+            title: "Is any work held where it can be lost?",
+            description: "Every holding of this repository — a work tree with uncommitted files, a branch with commits, a stash — with the disposition read from git for each: integrated when the trunk reaches it, published when a remote-tracking ref does, local_only when nothing but this disk has it, uncommitted when it was never committed at all. The last two are at risk, and the verdict over them is what the completion invariant's `no-stale-topology` question reads. Measured offline: a remote-tracking ref is what this checkout last fetched, which is exactly the question — whether the work left this disk.",
+            argv: &["convergence", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/schema", "/converged", "/at_risk", "/tallies"]),
         }],
     },
     CommandExamples {
@@ -4294,6 +4932,49 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "skills status",
+        examples: &[
+            ExampleDoc {
+                id: "skills-status",
+                title: "Every skill, with its derived standing",
+                description: "Tested, documented, enforced and used are derived on every read from the tests that name the skill, the evidence ledger, the site projection, the CI model and the invocation surfaces; no file stores them. A repository with no skill answers with none.",
+                argv: &["skills", "status"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["skill(s)"]),
+            },
+            ExampleDoc {
+                id: "skills-status-json",
+                title: "The same, as the shape the API and MCP answer with",
+                description: "What `GET /api/v1/skills` returns and the `majordomus_skills` tool answers: the count, the tally by standing, and every skill with its four derived facts.",
+                argv: &["skills", "status", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/count", "/standings", "/skills"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "skills explain",
+        examples: &[ExampleDoc {
+            id: "skills-explain-absent",
+            title: "A skill the repository does not hold is a refusal, not an empty answer",
+            description: "`skills explain <id>` answers one skill in full: each naming test with the state of its latest run and how to reproduce it, its page, its gates and every invocation by path and line. An id that names no skill exits 12 and names what was looked for.",
+            argv: &["skills", "explain", "no-such-skill"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "skills verify",
+        examples: &[ExampleDoc {
+            id: "skills-verify",
+            title: "Check every skill is a proven capability",
+            description: "An active skill no test names or nothing invokes, a failing run, a contract violation, or a test or invocation naming a skill that does not exist: each a failure, and exit 10. Evidence that is not current, a missing page or a missing gate: a warning.",
+            argv: &["skills", "verify"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["skill(s)", "valid"]),
+        }],
+    },
+    CommandExamples {
         command: "why list",
         examples: &[
             ExampleDoc {
@@ -4385,6 +5066,60 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["why", "validate"],
             setup: &[],
             expect: Expect::StdoutContains(&["moment(s)", "valid"]),
+        }],
+    },
+    CommandExamples {
+        command: "intent list",
+        examples: &[
+            ExampleDoc {
+                id: "intent-list",
+                title: "Every intent, with its derived stage",
+                description: "The stage is derived on every read from the status the plan gives each milestone the intent names and from the evidence recorded for each criterion; no file stores it.",
+                argv: &["intent", "list"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["STAGE", "intent(s)"]),
+            },
+            ExampleDoc {
+                id: "intent-list-json",
+                title: "The same, as the shape the API and MCP answer with",
+                description: "What `GET /api/v1/intents` returns and the `majordomus_intents` tool answers: the count, the tally by stage, and every intent with its milestones and criteria.",
+                argv: &["intent", "list", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/count", "/stages", "/intents/0/stage", "/intents/0/satisfaction"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "intent show",
+        examples: &[ExampleDoc {
+            id: "intent-show",
+            title: "One intent, with each milestone and criterion derived",
+            description: "The statement and invariants as authored, each milestone with its derived status, and each criterion with the state of its evidence and the command that reproduces it.",
+            argv: &["intent", "show", "fixture-intent"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["fixture-intent", "stage"]),
+        }],
+    },
+    CommandExamples {
+        command: "intent validate",
+        examples: &[ExampleDoc {
+            id: "intent-validate",
+            title: "Check the intents before anything relies on them",
+            description: "An intent naming no milestone, a milestone or evidence reference that resolves to nothing, governance that names nothing: each a failure, and exit 10. A milestone no intent serves is a warning.",
+            argv: &["intent", "validate"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["intent(s)", "valid"]),
+        }],
+    },
+    CommandExamples {
+        command: "intent preflight",
+        examples: &[ExampleDoc {
+            id: "intent-preflight",
+            title: "Which intent the work on an issue serves",
+            description: "Issue to milestone to intent, each link named, with the governance the intent loads. A missing link is a refusal naming it, and exit 10.",
+            argv: &["intent", "preflight", "--issue", "I0001"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["serves", "fixture-intent"]),
         }],
     },
     CommandExamples {
@@ -4933,8 +5668,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
         command: "mesh doctor",
         examples: &[ExampleDoc {
             id: "mesh-doctor",
-            title: "Every mesh prerequisite, proved on this machine alone",
-            description: "Deterministic checks in a fixed order — the declaration parses, the identity loads, a UDP socket binds, the multicast group joins, broadcast enables, and the protocol signs, encodes, parses and verifies in memory. The report is the value and the command exits 0; a failed check is a row that says why, so `--format json` scripts against it.",
+            title: "Every mesh prerequisite, and the server's verdict on the declaration",
+            description: "Deterministic checks in a fixed order — the declaration parses, the identity loads, a UDP socket binds, the multicast group joins, broadcast enables, and the protocol signs, encodes, parses and verifies in memory — then `runtime`: asked of this checkout's running server when one serves it, whether an enabled declaration actually activated the mesh. With no server, as here, the report is this process's and `runtime` says nothing was decided. Every check holds here, so the command exits 0; a failed check is a row that says why, and exits 10.",
             argv: &["mesh", "doctor"],
             setup: &[],
             expect: Expect::StdoutContains(&["protocol"]),
@@ -5103,6 +5838,72 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["models", "route", "--require", "text"],
             setup: &[],
             expect: Expect::StdoutContains(&["selected"]),
+        }],
+    },
+    CommandExamples {
+        command: "reasoning advisors",
+        examples: &[ExampleDoc {
+            id: "reasoning-advisors",
+            title: "The advisors, and what they can do now",
+            description: "Every declared advisor with its status and why — available, unavailable, not_configured, disabled, temporarily_failed, rate_limited — from presence alone (an executable on PATH, a credential variable set, never a value), the mode in force and the recorded outcomes of earlier consultations; then who can provide each advisory capability now. Reasoning is operational whether or not any advisor is.",
+            argv: &["reasoning", "advisors"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["reasoning   operational"]),
+        }],
+    },
+    CommandExamples {
+        command: "reasoning plan",
+        examples: &[ExampleDoc {
+            id: "reasoning-plan",
+            title: "What a material uncertainty calls for",
+            description: "Whether independent review is worth having, how many advisors the mode allows, which available advisors a capability-driven selection asks, and why every other advisor is left out. With no suitable advisor the plan is the structured local review. Nothing is recorded.",
+            argv: &["reasoning", "plan", "--materiality", "material"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["outcome", "budget"]),
+        }],
+    },
+    CommandExamples {
+        command: "reasoning record",
+        examples: &[ExampleDoc {
+            id: "reasoning-record-refused",
+            title: "Input that is not a record is refused",
+            description: "The writer reads one JSON record (`{\"kind\":\"assessment\",...}`) from --file or standard input. Anything else — here a YAML file — is refused with exit 13 and nothing is written; so is a record that breaks a rule, such as a plan for an assessment nobody recorded.",
+            argv: &["reasoning", "record", "--file", "share/advisors.yaml"],
+            setup: &[],
+            expect: Expect::ExitCode(13),
+        }],
+    },
+    CommandExamples {
+        command: "reasoning status",
+        examples: &[ExampleDoc {
+            id: "reasoning-status",
+            title: "The reasoning state of the open task",
+            description: "Assessments and where each stands, consultations and how each ended, disagreements and what settled them, conclusions with their computed review and validation, and the timeline — derived from the records alone.",
+            argv: &["reasoning", "status", "--task", "all"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["records"]),
+        }],
+    },
+    CommandExamples {
+        command: "reasoning explain",
+        examples: &[ExampleDoc {
+            id: "reasoning-explain-absent",
+            title: "Why a decision was made",
+            description: "One record with the whole chain of its assessment. An id nothing recorded is refused as not found.",
+            argv: &["reasoning", "explain", "conclusion-absent"],
+            setup: &[],
+            expect: Expect::ExitCode(13),
+        }],
+    },
+    CommandExamples {
+        command: "reasoning check",
+        examples: &[ExampleDoc {
+            id: "reasoning-check",
+            title: "Check that reasoning stays provider-independent",
+            description: "The advisor catalogue's references, the transport adapters, the provider-independent sources, CI, the documents and every stored record; exit 10 on a finding.",
+            argv: &["reasoning", "check"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["checks"]),
         }],
     },
 ];

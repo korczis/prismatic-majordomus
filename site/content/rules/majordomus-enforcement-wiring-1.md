@@ -1,7 +1,7 @@
 +++
 title = "Enforcement wiring"
 description = "Enforcement wiring"
-weight = 19
+weight = 20
 [extra]
 kind = "rule"
 slug = "majordomus-enforcement-wiring-1"

@@ -211,6 +211,7 @@ fn write_status(out: &mut impl Write, e: &RepositoryEnvironment) -> Result<()> {
             format!(
                 "{}{} ({})",
                 match (&t.installed, t.availability) {
+                    (Some(v), ToolchainAvailability::Mismatch) => format!("{v}, mismatch"),
                     (Some(v), _) => v.clone(),
                     (None, ToolchainAvailability::Missing) => "not installed".into(),
                     (None, _) => "unknown".into(),
@@ -264,6 +265,22 @@ fn write_status(out: &mut impl Write, e: &RepositoryEnvironment) -> Result<()> {
                 )?;
             }
         }
+    }
+
+    if let Some(r) = &e.reasoning {
+        line(
+            "reasoning",
+            format!(
+                "operational, mode {}; advisors available: {}; {} optional unavailable",
+                r.mode,
+                if r.available.is_empty() {
+                    "none (local review)".to_string()
+                } else {
+                    r.available.join(", ")
+                },
+                r.unavailable
+            ),
+        )?;
     }
 
     for p in &e.providers {

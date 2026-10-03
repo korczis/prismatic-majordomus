@@ -21,9 +21,30 @@
 #             rule reads as proven. This is the one-way relation the repository keeps
 #             rediscovering — a reference verified in one direction with the converse
 #             unowned.
-#   unproven  a blocking rule names neither a validator nor a test. Ratcheted: the rules
-#             that are review-enforced today are recorded in the baseline, so existing debt
-#             blocks nobody and a new blocking rule cannot arrive without proof.
+#   unproven  a rule names neither a validator, nor a test, nor a reason why nothing
+#             executable can express it. Ratcheted: the rules carrying that debt today are
+#             recorded in the baseline, so existing debt blocks nobody and a new rule
+#             cannot arrive without proof.
+#
+# THE CLASS IS NOT AN EXEMPTION. Until this line was written the `unproven` finding was
+# asked only of `class: blocking`, and an advisory rule could stay documented-only forever
+# with nothing to say so. That is backwards: the class says what a violation costs, not
+# whether anyone can tell there was one. Measured at the time: 137 rules, 21 of them
+# documented-only, and every one of the 21 was advisory — the whole population the gate
+# was blind to was the population the loophole covered. Eleven of them said, in their own
+# "Failure behaviour" prose, that a reader decides them; they now say it in front matter,
+# where this gate can read it.
+#
+# ONE EXEMPTION, AND IT IS NARROW: a rule that is vendored (under the rules section's
+# `vendor/` tree) AND tagged `principle`. Both halves are load-bearing. Vendored means
+# this repository did not author it and cannot amend it — the package manifest pins every
+# rule file by content hash, so adding a `reviewed_because` here would fork the
+# distribution rather than declare anything. `principle` is the package's own statement
+# that the rule is a culture sentence with no mechanical expression. A project rule cannot
+# reach this exemption by tagging itself, because it is not vendored; a vendored rule that
+# is not a principle cannot reach it either, and those are the vendored integrity rules,
+# which are dispatched. The honest alternative — a blanket pass for anything under
+# `vendor/` — would have exempted the whole vendored package to spare its ten principles.
 #
 # On the overlap, because a reader will find it: scripts/ci/reference-check already refuses
 # a path named in any authored document that is not in the tree, and a rule's front matter
@@ -34,7 +55,7 @@
 # the diagnosis differs: reference-check says a document names a missing path, which is true
 # of a typo in prose; this says a rule's proof is gone, which is the thing to act on. The
 # `unproven` finding is the half nothing else can express — no other check knows that a
-# blocking rule is supposed to name anything at all.
+# rule is supposed to name anything at all.
 #
 # The denominator is read from the tree, so a rule added tomorrow is measured tomorrow and
 # this script never carries a list of what exists.
@@ -72,8 +93,14 @@ files="$(find "$RULES" -name '*.md' ! -name 'README.md' | LC_ALL=C sort)"
 [ -n "$files" ] || { echo "rule-proof-check: the rules section holds no rule"; exit 12; }
 
 # One pass per file: the identity, the class, and the enforcement block flattened to
-#   <id>\t<class>\t<has-validator>\t<declares-review>\t<test-path>
+#   <id>\t<class>\t<has-validator>\t<declares-review>\t<vendored-principle>\t<test-path>
 # with one row per named test and a single row carrying "-" when the block names none.
+#
+# `vendored-principle` is the one exemption, and it is computed from two facts that must
+# both hold: the file sits under the rules section's `vendor/` tree, and its `tags` carry
+# `principle`. The header says why each half is required. It is read here rather than
+# guessed at the call site so that a rule the exemption covers is visible in the same row
+# as the class it would otherwise be judged by.
 #
 # `declares-review` is the third mode, and it is not an absence dressed up. A rule may say,
 # in its own front matter, that nothing executable can express it, by carrying a
@@ -89,20 +116,22 @@ files="$(find "$RULES" -name '*.md' ! -name 'README.md' | LC_ALL=C sort)"
 # parser that silently drops the other.
 read_rules() {
   awk '
-    FNR == 1 { id = ""; cls = ""; val = 0; rb = 0; nt = 0; inblk = 0; inlist = 0; fm = 0 }
+    FNR == 1 { id = ""; cls = ""; tg = ""; val = 0; rb = 0; nt = 0; inblk = 0; inlist = 0; fm = 0 }
     FNR == 1 && $0 == "---" { fm = 1; next }
     fm == 1 && $0 == "---" {
       fm = 2
       if (id != "") {
         rev = rb
-        if (nt == 0) printf "%s\t%s\t%d\t%d\t-\n", id, cls, val, rev
-        else for (i = 1; i <= nt; i++) printf "%s\t%s\t%d\t%d\t%s\n", id, cls, val, rev, t[i]
+        vp = (FILENAME ~ /\/rules\/vendor\// && tg ~ /(^|[][, \t])principle([][, \t]|$)/) ? 1 : 0
+        if (nt == 0) printf "%s\t%s\t%d\t%d\t%d\t-\n", id, cls, val, rev, vp
+        else for (i = 1; i <= nt; i++) printf "%s\t%s\t%d\t%d\t%d\t%s\n", id, cls, val, rev, vp, t[i]
       }
       next
     }
     fm != 1 { next }
     /^id:/    { if (id  == "") { id  = $0; sub(/^id:[ \t]*/,  "", id)  } }
     /^class:/ { if (cls == "") { cls = $0; sub(/^class:[ \t]*/, "", cls) } }
+    /^tags:/  { if (tg  == "") { tg  = $0; sub(/^tags:[ \t]*/, "", tg)  } }
     /^x-majordomus:/ { inblk = 1; next }
     inblk && /^[^ \t]/ { inblk = 0; inlist = 0 }
     inblk && /^[ \t]+validator:[ \t]*[^ \t]/ { val = 1; inlist = 0; next }
@@ -139,7 +168,7 @@ rows="$(read_rules)"
 [ -n "$rows" ] || { echo "rule-proof-check: no rule front matter parsed; the reader is broken" >&2; exit 12; }
 
 # dangling: the block names a path the tree does not hold
-while IFS="	" read -r id cls val rev path; do
+while IFS="	" read -r id cls val rev vp path; do
   [ -n "$id" ] || continue
   [ "$path" = "-" ] && continue
   [ -e "$path" ] || add "$id" dangling "names $path, which is not in the tree"
@@ -149,7 +178,7 @@ EOF
 
 # reviewed: the rule says a reader enforces it, and says why. Reported on every run and
 # never a failure; counted apart so the number is visible.
-while IFS="	" read -r id cls val rev path; do
+while IFS="	" read -r id cls val rev vp path; do
   [ -n "$id" ] || continue
   [ "$rev" = 1 ] || continue
   [ "$path" = "-" ] || continue
@@ -159,14 +188,17 @@ done <<EOF
 $rows
 EOF
 
-# unproven: a blocking rule names neither a validator nor a test
-while IFS="	" read -r id cls val rev path; do
+# unproven: a rule names neither a validator, nor a test, nor a reason. Asked of every
+# rule, blocking or advisory: the class says what a violation costs, not whether anyone
+# can tell there was one. The single exemption is the vendored culture principle, and the
+# header says why both halves of it are required.
+while IFS="	" read -r id cls val rev vp path; do
   [ -n "$id" ] || continue
-  [ "$cls" = blocking ] || continue
+  [ "$vp" = 1 ] && continue
   [ "$path" = "-" ] || continue
   [ "$val" = 1 ] && continue
   [ "$rev" = 1 ] && continue
-  add "$id" unproven "is blocking and names neither a validator nor a test that proves it"
+  add "$id" unproven "is $cls and names neither a validator, nor a test that proves it, nor a reviewed_because"
 done <<EOF
 $rows
 EOF
@@ -175,19 +207,23 @@ dangling="$(printf '%s' "$findings" | grep -v '^$' | awk -F'	' '$2 == "dangling"
 unproven="$(printf '%s' "$findings" | grep -v '^$' | awk -F'	' '$2 == "unproven" { print $1 }' | LC_ALL=C sort -u || true)"
 reviewed="$(printf '%s' "$findings" | grep -v '^$' | awk -F'	' '$2 == "reviewed" { print $1 }' | LC_ALL=C sort -u || true)"
 
-# The denominators. `measured` is every rule the section holds; `blocking` is the population
-# the `unproven` finding is actually about, and it is stated separately because a verdict
-# about blocking rules that prints only the total reads as a verdict about all of them.
+# The denominators. `measured` is every rule the section holds and, since the class stopped
+# being an exemption, it is also the population the `unproven` finding is about, less the
+# exempt. `blocking` is stated separately because it is what the finding used to be about
+# and because a reader needs to see how much of the set a violation actually stops.
 # This is the number enforcement-check (removed) used to print as "0 of 102" before its
 # rule half was removed as a duplicate of this one; it is stated here so nothing that half
 # reported was lost with it.
 measured_n="$(nlines "$(printf '%s\n' "$rows" | awk -F'	' '{ print $1 }' | LC_ALL=C sort -u)")"
 blocking_n="$(nlines "$(printf '%s\n' "$rows" | awk -F'	' '$2 == "blocking" { print $1 }' | LC_ALL=C sort -u)")"
+# The exemption, counted so that it is visible on every run. An exemption nobody sees is
+# the loophole this gate closed, one level up.
+exempt_n="$(nlines "$(printf '%s\n' "$rows" | awk -F'	' '$5 == 1 { print $1 }' | LC_ALL=C sort -u)")"
 
 if [ "$MODE" = write ]; then
-  { echo "# Blocking rules that name no executable proof: enforced by review today."
+  { echo "# Rules, of any class, that name no executable proof and give no reason: debt."
     echo "# Written by scripts/ci/rule-proof-check --write-baseline. The list may shrink;"
-    echo "# a blocking rule not on it that names no proof fails the gate. Do not add by hand."
+    echo "# a rule not on it that names no proof fails the gate. Do not add by hand."
     printf '%s\n' "$unproven" | grep -v '^$' || true
   } > "$BASELINE"
   echo "rule-proof-check: baseline written with $(nlines "$unproven") rule(s)"
@@ -208,6 +244,7 @@ fi
 # reader who meets a list of ids must not have to guess what they are ids of.
 printf 'blocking rules:      %s of %s rule(s) in %s; %s declare a reader enforces them, with a reason\n' \
   "$blocking_n" "$measured_n" "$RULES" "$(nlines "$reviewed")"
+printf 'proof is required of: every rule of either class; %s vendored culture principle(s) are exempt, and nothing else is\n' "$exempt_n"
 printf 'guaranteed claims:   not measured here — scripts/ci/claim-proof-check is the one reader of that population\n'
 
 known=""
@@ -239,8 +276,8 @@ if [ -n "$dangling" ]; then
 fi
 
 if [ "$MODE" = strict ]; then
-  [ -z "$unproven" ] && { echo "rule-proof-check: every one of $blocking_n blocking rule(s) names what proves it, and every proof is in the tree"; exit 0; }
-  echo "rule-proof-check: $(nlines "$unproven") blocking rule(s) name no proof (--strict)" >&2
+  [ -z "$unproven" ] && { echo "rule-proof-check: every one of $measured_n rule(s) names what proves it or why nothing can, and every proof is in the tree"; exit 0; }
+  echo "rule-proof-check: $(nlines "$unproven") rule(s) name no proof (--strict)" >&2
   exit 10
 fi
 
@@ -253,8 +290,10 @@ if [ -n "$new" ]; then
   echo >&2
   echo "rule-proof-check: new debt, not in $BASELINE:" >&2
   printf '  %s\n' $new >&2
-  echo "  A blocking rule nobody can prove is a rule nobody enforces. Name the behavioural" >&2
-  echo "  case in its x-majordomus block: tests: [test/cases/NN_name.sh]." >&2
+  echo "  A rule nobody can prove is a rule nobody enforces, and advisory is not an exemption:" >&2
+  echo "  the class says what a violation costs, not whether anyone can tell there was one." >&2
+  echo "  Name the behavioural case in its x-majordomus block: tests: [test/cases/NN_name.sh]," >&2
+  echo "  or, if nothing executable can express it, say so there: reviewed_because: <reason>." >&2
   exit 10
 fi
 echo "rule-proof-check: no new debt ($(nlines "$known") rule(s) known, $(nlines "$reviewed") declared review-enforced, $blocking_n blocking of $measured_n rule(s) measured)"

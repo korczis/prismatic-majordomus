@@ -95,6 +95,16 @@ grep -q 'exit 12' "$ROOT/scripts/rust-coverage" \
   || { echo "    rust-coverage no longer declares exit 12"; exit 1; }
 grep -q 'cov_status=\$?' "$ROOT/scripts/rust-coverage" \
   || { echo "    the cargo llvm-cov call is unguarded again: a failing suite exits 101"; exit 1; }
+# The floor reads --from the export the coverage job's one instrumented run wrote, and it runs
+# even when that run wrote none (.github/workflows/validate.yml) — so a missing, empty or torn
+# export is the same 12 as an instrumentation that wrote nothing, never python's traceback
+# and exit 1.
+expect_exit 12 "$W/scripts/rust-coverage" --from "$T/no-such-export.json"
+expect_grep "the measurement could not be trusted"
+: > "$T/empty-export.json"
+expect_exit 12 "$W/scripts/rust-coverage" --from "$T/empty-export.json"
+printf '{"data": [' > "$T/torn-export.json"
+expect_exit 12 "$W/scripts/rust-coverage" --from "$T/torn-export.json"
 
 # ------------------------------- 7. the changed-line read refuses rather than reading nothing
 #
@@ -104,3 +114,36 @@ grep -q 'cov_status=\$?' "$ROOT/scripts/rust-coverage" \
 # the defect project.a-verdict-states-its-subject refuses.
 grep -q 'set -o pipefail' "$ROOT/scripts/rust-coverage" \
   || { echo "    rust-coverage pipes under set -e without pipefail: an unread diff passes"; exit 1; }
+
+# ------------------------------- 8. each measurement writes its export to a name of its own
+#
+# The export cargo llvm-cov writes is a mktemp file. BSD mktemp (macOS) replaces only the
+# X's that end a template: `mj-cov.XXXXXX.json` stayed that literal name, every run shared
+# one file, and a second run beside the first found it already there. Every template in the
+# script must end in its X's; and, driven through a cargo stand-in that records where it was
+# told to write, two measurements must write to two different files, neither literally named.
+bad="$(grep -o 'mktemp "[^"]*"' "$ROOT/scripts/rust-coverage" | grep -v 'XXX"$' || true)"
+[ -z "$bad" ] || { echo "    a mktemp template does not end in its X's: $bad"; exit 1; }
+STUB="$T/stub"; LOG="$T/cargo-llvm-cov.log"; mkdir -p "$STUB" "$T/tmp"
+cat > "$STUB/cargo" <<'SH'
+#!/usr/bin/env bash
+# the stand-in answers `llvm-cov --version`, and a measurement by writing the fixture export
+# to the --output-path it was given, which it records
+[ "$1" = llvm-cov ] || exit 0
+[ "$2" = --version ] && { echo "cargo-llvm-cov stand-in"; exit 0; }
+out=""; while [ $# -gt 0 ]; do [ "$1" = --output-path ] && out="$2"; shift; done
+printf '%s\n' "$out" >> "$STUB_LOG"
+cp "$STUB_EXPORT" "$out"
+SH
+chmod +x "$STUB/cargo"
+for run in 1 2; do
+  rc=0
+  # the stand-in shadows cargo only; TMPDIR keeps the exports inside this case
+  ( cd "$W" && env PATH="$STUB:$PATH" TMPDIR="$T/tmp" STUB_LOG="$LOG" STUB_EXPORT="$FX" \
+      scripts/rust-coverage --report ) > "$T/cov-$run.out" 2>&1 || rc=$?
+  [ "$rc" = 0 ] || { tail -5 "$T/cov-$run.out"; echo "    measurement $run exited $rc"; exit 1; }
+done
+[ "$(wc -l < "$LOG" | tr -d ' ')" = 2 ] || { cat "$LOG"; echo "    cargo llvm-cov was not asked twice"; exit 1; }
+grep -q 'XXX' "$LOG" && { cat "$LOG"; echo "    the export was written to a literal template name"; exit 1; }
+[ "$(sort -u "$LOG" | wc -l | tr -d ' ')" = 2 ] \
+  || { cat "$LOG"; echo "    two measurements wrote to one export file"; exit 1; }
