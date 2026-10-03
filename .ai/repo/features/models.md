@@ -8,6 +8,7 @@ headline: One declared catalogue of vendors and models — capabilities, context
 summary: share/models.yaml declares vendors and models in one place, in routing's preference order, with provenance stated and pricing deliberately absent; models.list and models.route project the catalogue and its explainable routing to the CLI, HTTP, OpenAPI, MCP and the Cockpit, credential presence is reported without any value being read, and nothing anywhere calls a model — the crate's no-network boundary stands.
 status: stable
 weight: 46
+domain: coordination
 featured: true
 areas: [coordination]
 modules: [models]

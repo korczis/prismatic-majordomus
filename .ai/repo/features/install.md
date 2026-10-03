@@ -8,6 +8,7 @@ headline: The installer downloads one archive for your machine, verifies its dig
 summary: One distribution model owns every platform, artifact name and URL; the installer, the release build matrix, the installation guide, the website's install block and the public release metadata are generated from it, and a release publishes an artifact for every supported target or it is not published.
 status: stable
 weight: 120
+domain: surfaces
 featured: false
 areas: [verification, documentation]
 modules: [distribution, release]
