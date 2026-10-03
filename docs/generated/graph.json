@@ -1613,14 +1613,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/capability/builtin/executions.rs",
-        "kind": "file",
-        "label": "executions.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/capability/builtin/executions.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/capability/builtin/graph.rs",
         "kind": "file",
         "label": "graph.rs",
@@ -30697,6 +30689,29 @@
         }
       },
       {
+        "id": "majordomus://release-record/v0.12.0",
+        "kind": "release-record",
+        "label": "v0.12.0",
+        "summary": "v0.12.0",
+        "route": "/cockpit/objects/release-record/v0-12-0",
+        "source": ".ai/repo/releases/v0.12.0.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "a137c3fe144bd9eec284ed7aa4ddab88ce2de5cc",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.12.0",
+          "published_at": "2026-10-03T18:51:26Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.12.0"
+        }
+      },
+      {
         "id": "majordomus://release-record/v0.3.1",
         "kind": "release-record",
         "label": "v0.3.1",
@@ -44615,11 +44630,6 @@
       },
       {
         "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/executions.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
         "target": "file:apps/majordomus-cli/src/execution/engine.rs",
         "kind": "put_in_force"
       },
@@ -44666,11 +44676,6 @@
       {
         "source": "majordomus://adr/adr-0033",
         "target": "majordomus://adr/adr-0013",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "majordomus://document/docs/EXECUTIONS.md",
         "kind": "put_in_force"
       },
       {
@@ -56604,6 +56609,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://release-record/v0.12.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://release-record/v0.3.1",
         "target": "kind:release-record",
         "kind": "is_a"
@@ -63431,7 +63441,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4494,
+      "edges": 4493,
       "acyclic": true,
       "truncated": true
     }
