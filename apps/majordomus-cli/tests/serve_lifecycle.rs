@@ -471,13 +471,10 @@ fn a_live_owner_that_never_answers_is_still_taken_over() {
     drop(wedged);
 }
 
-#[test]
-fn a_server_of_this_executable_replaced_on_disk_is_replaced() {
-    // The lease names a server that answers for this checkout, started from this very
-    // executable — but the file at that path is not the one it loaded (another mtime and
-    // size). It is serving code that is no longer on disk: `ensure` starts a server, whose
-    // election takes the superseded lease over, and the new one is what stands there.
-    let f = Fixture::new();
+/// A server that answers for `f`'s checkout, and a lease naming it as started from this very
+/// executable at another mtime and size: one serving code that is no longer on disk.
+/// Answers the url it serves on.
+fn a_server_of_a_replaced_executable(f: &Fixture) -> String {
     let old = TcpListener::bind("127.0.0.1:0").unwrap();
     let old_url = format!("http://{}", old.local_addr().unwrap());
     let body = serde_json::json!({
@@ -500,7 +497,7 @@ fn a_server_of_this_executable_replaced_on_disk_is_replaced() {
         }
     });
     let exe = std::fs::canonicalize(BIN).unwrap();
-    let lease = lease_path(&f);
+    let lease = lease_path(f);
     std::fs::create_dir_all(lease.parent().unwrap()).unwrap();
     std::fs::write(
         &lease,
@@ -517,6 +514,17 @@ fn a_server_of_this_executable_replaced_on_disk_is_replaced() {
         .to_string(),
     )
     .unwrap();
+    old_url
+}
+
+#[test]
+fn a_server_of_this_executable_replaced_on_disk_is_replaced() {
+    // The lease names a server that answers for this checkout, started from this very
+    // executable — but the file at that path is not the one it loaded (another mtime and
+    // size). It is serving code that is no longer on disk: `ensure` starts a server, whose
+    // election takes the superseded lease over, and the new one is what stands there.
+    let f = Fixture::new();
+    let old_url = a_server_of_a_replaced_executable(&f);
     let (code, a, err) = ensure(&f.root(), &["--idle", "120"]);
     assert_eq!(code, 0, "{a}\n{err}");
     assert_eq!(a["standing"], "ready", "{a}");
@@ -527,6 +535,37 @@ fn a_server_of_this_executable_replaced_on_disk_is_replaced() {
     assert_ne!(a["url"].as_str().unwrap(), old_url, "{a}");
     let (code, out, err) = mj(&f.root(), &["serve", "stop"]);
     assert_eq!(code, 0, "serve stop: {out}{err}");
+}
+
+#[test]
+fn a_replacement_that_cannot_be_started_is_an_error_not_a_ready_server() {
+    // The same superseded server, but the replacement cannot be started: its log, beside the
+    // lease, is a directory, so the started process would have nowhere to write. `ensure`
+    // says so and fails rather than reporting the superseded server as one it converged on,
+    // and the lease it could not act on is left as it was.
+    let f = Fixture::new();
+    let old_url = a_server_of_a_replaced_executable(&f);
+    let log = lease_path(&f).with_file_name("server.log");
+    std::fs::create_dir_all(&log).unwrap();
+    let (code, out, err) = mj(
+        &f.root(),
+        &["serve", "ensure", "--format", "json", "--wait", "5"],
+    );
+    assert_ne!(
+        code, 0,
+        "a server that could not be started was reported: {out}{err}"
+    );
+    assert!(
+        err.contains("server.log"),
+        "the refusal names what could not be opened: {err}"
+    );
+    let lease: Value =
+        serde_json::from_str(&std::fs::read_to_string(lease_path(&f)).unwrap()).unwrap();
+    assert_eq!(
+        lease["url"],
+        old_url.as_str(),
+        "the lease was left as it was: {lease}"
+    );
 }
 
 #[test]
