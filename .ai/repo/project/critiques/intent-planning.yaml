@@ -1,0 +1,55 @@
+intent: intent-planning
+reviewed_at: 1d11762cb
+reviewed_by: "claude-code (session 9dde131e, board p22) — SELF-REVIEW: the session that authored I1901 and I1902 also wrote this critique. Bootstrap provenance, stated rather than hidden: a critique carries more weight when another session or the owner writes it."
+findings:
+  - id: parity-fork
+    class: regression_risk
+    subject: I1901
+    finding: A malformed_serves or duplicate_serves finding added to plan.rs would appear in the Rust engine only, and case 99 compares findings between engines code for code.
+    blocking: true
+    resolution:
+      state: planned
+      issue: I1901
+      because: Token checks moved into intent_plan; plan.rs carries serves as data and adds no finding.
+  - id: seed-intent-uncovered
+    class: missed_requirement
+    subject: intent-lifecycle#stage-is-derived
+    finding: The gate that refuses uncovered criteria would turn intent-lifecycle invalid the moment it lands, because no issue serves its criteria.
+    blocking: true
+    resolution:
+      state: planned
+      issue: I1901
+      because: I1900 is authored in the same change and serves all three criteria of intent-lifecycle, agreed with the owner of that intent.
+  - id: observed-is-not-met
+    class: unproven_assumption
+    subject: intent-planning#criteria-are-covered
+    finding: A criterion a gap observed satisfied could be read as met, letting an observation stand in for evidence.
+    blocking: true
+    resolution:
+      state: planned
+      issue: I1902
+      because: Coverage strength `observed` only removes the demand for work; satisfaction stays with the evidence ledger (ADR 0070), and a satisfied condition counts only with declared observations.
+  - id: no-surface-yet
+    class: surface_missing
+    subject: intent-planning#criteria-are-covered
+    finding: Coverage findings reach no surface until the intent engine calls them; a module no capability calls proves nothing.
+    blocking: true
+    resolution:
+      state: planned
+      issue: I1901
+      because: intent validate reports coverage and review findings, and case 386 runs them through the built executable.
+  - id: gap-staleness
+    class: unproven_assumption
+    subject: intent-planning#gap-is-recorded
+    finding: A gap observed at an old commit is not re-judged when the paths it observed change.
+    blocking: false
+    resolution:
+      state: rejected
+      because: observed_at is recorded so a later slice can compare it with changed paths; judging staleness needs the path set each criterion depends on, which no record carries yet, and ADR 0073 says so.
+  - id: public-proof
+    class: delivery_verification
+    subject: intent-planning#critique-precedes-execution
+    finding: The planning half is invisible to a reader of majordomus.dev until the generated documentation carrying intent validate is deployed and verified.
+    blocking: false
+    resolution:
+      state: open

@@ -1,0 +1,35 @@
+id: I1900
+milestone: intent-lifecycle
+title: An intent is a typed record whose stage and satisfaction are derived
+slug: an-intent-is-a-typed-record
+priority: p1
+profile: implementation
+parallel_safe: true
+serves:
+  - intent-lifecycle#stage-is-derived
+  - intent-lifecycle#surfaces-agree
+  - intent-lifecycle#model-is-gated
+objective: "Deliver slice 1 of the intent-lifecycle milestone: the intent kind and schema, the read-only capabilities intent.list, intent.record, intent.validate and intent.preflight on every surface, and the intent-check gate."
+why: "Nothing above a milestone recorded what must become true, so no command could say which outcome a change serves or whether finished milestones achieved it (ADR 0070)."
+current_state: "No intent kind, capability or gate exists on master."
+desired_state: "An intent's stage follows the plan and its satisfaction follows recorded evidence, answered identically on the command line, HTTP and MCP, and an invalid intent model fails a gate."
+scope:
+  - apps/majordomus-cli/src/intent.rs
+  - apps/majordomus-cli/src/capability/builtin/intent.rs
+  - share/schemas/majordomus/intent
+  - .ai/repo/project/intents
+  - .ai/repo/ci/gates.yaml
+depends_on: []
+acceptance_criteria:
+  - The stage of an intent follows the derived milestone status and satisfaction follows only recorded evidence
+  - The command line, HTTP and MCP answer the same derived intents
+  - intent validate exits 10 naming the finding on an invalid model, and the intent-check gate runs it
+validation:
+  - majordomus intent validate
+  - cargo test --test intent
+  - bash test/run.sh 367_an_intent_is_satisfied_only_by_evidence
+evidence_required:
+  - intent_stage_is_derived
+  - intent_surfaces_agree
+created_at: 2026-09-15
+updated_at: 2026-09-15

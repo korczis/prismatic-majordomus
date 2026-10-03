@@ -1,0 +1,38 @@
+id: intent-planning
+title: The plan of an intent is held to it before execution
+slug: intent-planning
+order: 97
+priority: p1
+problem: "An intent (ADR 0070) names its milestones and the evidence that settles each criterion, but nothing relates a criterion to the work meant to make it true. An intent can name a milestone whose issues address two of its four criteria and nothing says the other two have no work until verification finds them unmet. Planning starts from a prompt: what a worker observed was missing, and what a review of the plan overlooked, live in a terminal scroll and are gone when the session ends."
+outcome: "An issue names the intent criteria it serves; coverage of every criterion is derived from the plan and refused when a criterion has no work or work has no purpose. The gap a worker observed and the critique of the plan are typed records validated against the intent and the plan, and work does not start on an intent whose plan was never critiqued or has an open blocking finding."
+current_state: "Issues carry objective, why and acceptance criteria but no link to an intent criterion. No gap or critique record kind exists. plan validate checks dependencies, waves, cycles and scope overlap within the plan only."
+desired_state: "intent validate reports the coverage of every criterion, the purpose of every issue, and the findings of the gap and critique records, and exits non-zero when the plan does not carry the intent."
+scope:
+  - apps/majordomus-cli/src/intent_plan.rs
+  - apps/majordomus-cli/src/intent_review.rs
+  - apps/majordomus-cli/src/plan.rs
+  - apps/majordomus-cli/tests
+  - share/schemas/majordomus
+  - share/kinds.yaml
+  - .ai/repo/project
+  - .ai/repo/adrs
+  - test/cases
+non_scope:
+  - Deriving issues from a gap automatically
+  - Judging whether a criterion is met
+acceptance_criteria:
+  - "Every criterion of every live intent has derived coverage, and an uncovered one fails intent validate"
+  - "Every issue has a derived origin, and one under an intent's milestone that serves nothing fails intent validate"
+  - "Gap and critique records are typed kinds validated against the intent and the plan"
+  - "Execution on an intent whose plan has no critique, or an open blocking finding, fails intent validate"
+validation:
+  - majordomus intent validate
+  - cargo test --test intent_plan
+  - bash test/run.sh 386_a_plan_is_held_to_its_intent
+evidence_required: []
+depends_on:
+  - intent-lifecycle
+risks:
+  - "Refusing an uncovered criterion makes an intent declared ahead of its issues invalid; the intent and the issues that serve it must land together."
+created_at: 2026-09-15
+updated_at: 2026-09-15

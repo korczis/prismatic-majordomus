@@ -875,6 +875,7 @@ mod tests {
             blocked_by: Vec::new(),
             dependents: Vec::new(),
             scope: Vec::new(),
+            serves: Vec::new(),
             objective: String::new(),
             evidence_have: 0,
             evidence_need: 0,
