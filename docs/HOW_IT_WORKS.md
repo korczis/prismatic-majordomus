@@ -7,7 +7,8 @@ written, through the index and the typed registry that hold it, through the chec
 whether it is true, to every interface that shows it — and it names each place where the
 repository does not yet live up to that shape.
 
-Every statement here was checked against the code on the default branch. Where the code and a
+Every statement here was checked against the code at the commit that last changed this file,
+and audited claim by claim by a second session. Where the code and a
 design record disagree, the code wins and the disagreement is listed under
 [Architecture debt](#architecture-debt). Numbers are not written into this document: each one
 is stated as the command that measures it, because a count copied into prose is stale the day
@@ -60,8 +61,9 @@ Read it from the top. Humans and workers author a small set of canonical files. 
 them through declarations rather than hand-kept lists, the index gives each one a typed identity,
 and the capability registry holds every operation the executable can perform. Every surface asks
 the same executor. Derived state — whether a rule is proven, what an issue's status is, what a
-checkout's environment is — is computed on request from canonical and observed inputs, never
-stored as a second copy. The generated files at the bottom are committed and checked, so a
+checkout's environment is — is computed from canonical and observed inputs; where a copy is kept
+(the committed projections, the environment cache), it is checked against or rebuilt from those
+inputs and never treated as a source. The generated files at the bottom are committed and checked, so a
 disagreement between the model and its projections fails a build instead of reaching a reader.
 
 ## Two programs share one name
@@ -74,8 +76,9 @@ answer to `majordomus`:
 | the shell tool | `bin/majordomus` with `lib/*.sh` | POSIX shell and awk | the task lifecycle (`start`, `check`, `finish`), `handover`, `context`, session capture, `doctor`, doctrine dispatch, the plan engine |
 | the Rust executable | `bin/majordomus-cli` | Rust, `apps/majordomus-cli/` | the capability registry, `serve`, `mcp`, HTTP, OpenAPI, Swagger UI, the Cockpit, `generate`, peers, mesh, environment, worktrees, rule proof, evidence, release |
 
-The shell tool forwards a command it does not know by reading `docs/generated/cli.yaml`, the
-generated description of the Rust command tree, and naming the executable that owns it. The
+The shell tool refuses a command it does not know, and when `docs/generated/cli.yaml` — the
+generated description of the Rust command tree — lists it, names the launcher to run instead; it
+does not forward it. The
 two are converging on the Rust side (ADR 0047 and ADR 0052 describe the session cutover; both
 are still proposed), and some domains already have a Rust reader held to byte equality with the
 shell writer — the plan is the clearest case. The architecture described here is fully true of
@@ -84,7 +87,7 @@ matters.
 
 ## Six kinds of state
 
-Every value Majordomus shows belongs to exactly one of these kinds. The kind decides who may
+Each value Majordomus shows can be placed in one of these kinds. The kind decides who may
 write it and whether it can ever overwrite something else.
 
 | Kind | Examples in this repository | Who creates it | Who modifies it | Authority | May overwrite canonical state | Invalidated by |
@@ -102,7 +105,8 @@ Two distinctions carry most of the weight.
 authoritative and Majordomus finds it: a rule file matched by a pathspec, a module named in the
 composition, a worktree listed by git. Inference means Majordomus proposes a likely
 interpretation. The only inference in the context compiler is keyword relevance, and it is
-capped so that it can never outrank a declared relation (see
+capped below a direct declaration — a test, `an_inference_is_never_as_confident_as_a_declaration`,
+holds that — though not below every relation reached through weak or multi-hop edges (see
 [Context for a session](#context-for-a-session)).
 
 **Observed is not canonical.** A peer being online is not a declaration anybody made; it is the
@@ -139,12 +143,12 @@ To see what it holds in this checkout:
 
 ```console
 $ bin/majordomus-cli serve ensure
-$ curl -s 'http://127.0.0.1:8742/api/v1/objects?kind=rule' | jq .
-$ curl -s http://127.0.0.1:8742/api/v1/repository | jq .
+$ curl -s 'http://127.0.0.1:8741/api/v1/objects?kind=rule' | jq .
+$ curl -s http://127.0.0.1:8741/api/v1/repository | jq .
 ```
 
-The shared server of a checkout logs its own URL; `serve status` prints it when the default port
-is taken.
+The shared server of a checkout listens on the default port unless it is taken, and
+`bin/majordomus-cli serve status` prints the URL it actually holds.
 
 ## Identity
 
@@ -158,7 +162,7 @@ joins two things by their titles.
 | an indexed object as a capability | `<kind>.<identity>` | `rule.majordomus.scope-integrity@1` |
 | a rule | `id` plus `version`, never the file name | `project.derived-once` at version 1 |
 | a claim | its `id` in `docs/CLAIMS.yaml` | `scope-enforcement` |
-| a test in the evidence ledger | its runner and path | `shell:test/cases/04_start_check.sh` |
+| a test in the evidence ledger | its runner and name, with the source path beside it | `suite:04_start_check` (source `test/cases/04_start_check.sh`) |
 | a peer on a board | a position, `p1`, `p2`, reassigned on reconnect; the checkout it carries is the durable half | `p7` in worktree `prismatic-majordomus-wt/feature/x` |
 | a mesh node | a digest of its Ed25519 public key | kept in `~/.local/state/majordomus/node.json` |
 | a worktree | derived from the branch name: `<repository>-wt/<branch>` | `prismatic-majordomus-wt/docs/how-majordomus-is-derived` |
@@ -176,8 +180,9 @@ There are two schema pipelines, one per kind of thing, and neither is written tw
 value (`apps/majordomus-cli/src/capability/schema.rs`), and that single value is rendered four
 ways: inline for MCP (`for_mcp`), as OpenAPI components (`for_openapi`), as the Cockpit runner
 form, and into `docs/generated/registry.json`. HTTP query parameters are coerced through the
-same schema. There is no hand-written JSON Schema for any capability, no TypeScript interface,
-and no separate Swagger definition.
+same schema. No capability schema is a hand-kept document — there is no TypeScript interface and no separate
+Swagger definition — though one Rust type, `design::Ordered<T>` (an ordered map), implements
+`JsonSchema` by hand rather than by derive.
 
 ```mermaid
 flowchart LR
@@ -191,14 +196,16 @@ flowchart LR
 
 **Repository documents.** Each kind declared in `share/kinds.yaml` names a schema identity of
 the form `<vendor>.<name>/v<n>`. The schemas live under `share/schemas/majordomus/<kind>/`.
-Markdown kinds — rules, ADRs, skills — are authored as protobuf messages and their JSON Schema is
-generated by `majordomus generate`; YAML kinds are authored directly as JSON Schema. The rule
+Most Markdown kinds — rules, ADRs, skills, prompts, context documents and others
+(`ls share/schemas/majordomus/*/*.proto`) — are authored as protobuf messages and their JSON
+Schema is derived from them; the remaining kinds are authored directly as JSON Schema. The rule
 header, for example, is the closed message in
 `share/schemas/majordomus/rule/rule.v1.proto`, which is why an unknown front-matter key in a
 rule is refused rather than silently kept.
 
-**Generated artifacts** have schemas too, under `share/schemas/generated/`, and `generate`
-validates each document it writes against its schema before writing it.
+**Generated artifacts** have schemas too, under `share/schemas/generated/`. Before writing,
+`generate` checks every artifact for its provenance banner, and every structured document that
+declares a contract against its schema.
 
 ## The capability: the one declaration
 
@@ -234,12 +241,13 @@ What the declaration states, and what the macro fills in by itself:
 | `kind` (`Query` by default, or `Command`, `Resource`) | `provenance`, from `module_path!()` |
 | `input` and `output` types | `availability`, `visibility`, `execution`, classified from kind and exposure |
 | `stability` | the benchmark cases, taken from the input type's `BenchmarkCases` implementation |
-| `exposure` for MCP, HTTP and the command line | whether it writes the repository: opt-in with `.writes_repository()`, pinned by a unit test to `plan.transition` and `recover.orphans` |
+| `exposure` for MCP, HTTP and the command line | whether it writes the repository: opt-in with `.writes_repository()`, pinned by the unit test `the_capabilities_that_write_the_repository_are_these` in `capability/builtin/mod.rs` to the set it lists |
 | `tags`, `cache`, `benchmark`, `handler` | |
 
-Two properties are enforced by the compiler rather than by review: an input type without
-benchmark cases does not compile, so every operation is a benchmark target by construction; and
-a handler whose signature does not match the declared types does not compile.
+Two properties are enforced by the compiler rather than by review: an input type that does not
+implement `BenchmarkCases` does not compile — whether the operation is then timed is its declared
+`BenchmarkPolicy` (required, or waived with a typed reason), which the coverage report shows; and a
+handler whose signature does not match the declared types does not compile.
 
 ### The registry
 
@@ -282,8 +290,9 @@ the input schema or takes a POST's JSON body, and calls `Context::execute`. Ever
 is forced under `/api/v1/` by `HttpExposure::PREFIX`. Errors map to 400, 404, 422 and 500 in one
 place.
 
-The few non-capability mounts — `/`, `/openapi.json`, `/swagger`, `/cockpit`, `/mcp`, `/docs/`
-— are declared once in the web surface discovery (`apps/majordomus-cli/src/web/`), which
+The non-capability mounts — the served home, `/openapi.json`, `/swagger`, `/cockpit`, `/mcp`,
+the events stream, `/docs/`, `/rustdoc` — are declared once in the web surface discovery
+(`apps/majordomus-cli/src/web/`; `docs/generated/web.json` lists them), which
 `docs/WEB.md` describes. A new operation needs no HTTP code at all: `rules.show` has no handler
 in the router, only the generic dispatch.
 
@@ -355,7 +364,7 @@ What keeps that second declaration from drifting is that it is checked in both d
    fails a command with no reason.
 3. **Same executor.** A command that renders a capability calls `ctx.execute(id, input)`; its own
    code is presentation only (`report_text`, `show_text` in
-   `apps/majordomus-cli/src/commands/rules.rs`), and `--json` prints the capability's value
+   `apps/majordomus-cli/src/commands/rules.rs`), and `--format json` prints the capability's value
    unchanged.
 
 In practice a command path is written three times: in the clap structs, in the capability's
@@ -366,8 +375,23 @@ logic, write the repository, alias another command or manage a process. Measure 
 rather than trusting a number here:
 
 ```console
-$ jq '[.commands[] | select(.executable)] | length' docs/generated/cli.json
+$ jq '[.. | objects | select(.executable? == true)] | length' docs/generated/cli.json
 $ jq '[.capabilities[] | select(.exposure.cli)] | length' docs/generated/registry.json
+```
+
+Beside the hand-rendered commands there is a generic one, and it is derived. `majordomus-cli run
+<capability-id> [--input JSON]` (`apps/majordomus-cli/src/commands/executions.rs`) executes any
+registered capability through the same executor and prints its value — the command-line
+counterpart of the Cockpit runner. So every capability is reachable from the command line;
+a dedicated command with its own words and a human renderer exists only where a clap command was
+written for it. Indexed objects are read the same way, through `entity kinds` and `entity show`
+(capabilities `entity.kinds` and `entity.show`, also over HTTP and MCP), or through
+`run objects.list`.
+
+```console
+$ bin/majordomus-cli run plan.status --format json
+$ bin/majordomus-cli run peers.list --format json
+$ bin/majordomus-cli entity show <uri>
 ```
 
 Help text is clap's. Shell completion is not clap's: `majordomus completion` answers from the
@@ -393,8 +417,8 @@ flowchart TD
 ### The Cockpit
 
 The Cockpit is not another application, database or domain model. ADR 0012 calls it a
-projection of the registry for a person, and the code holds to that at the data level: every page
-asks `Context::execute` (`ask()` in `apps/majordomus-cli/src/cockpit/pages.rs`), and it performs
+projection of the registry for a person, and the code holds to that at the data level: the data every page
+shows comes through `Context::execute` (`ask()` in `apps/majordomus-cli/src/cockpit/pages.rs`), and it performs
 no discovery of its own. The mesh page renders `mesh.status` and `mesh.nodes` and holds no node
 list (`project.mesh-is-observation-not-authority`); the peers view renders `peers.list`.
 
@@ -407,7 +431,7 @@ What is derived and what is written:
 
 | Part | How it exists |
 |---|---|
-| the capability explorer and runner at `/cockpit/capabilities/<id>` | generic: one page for every capability, with a form generated from the input schema and examples from the benchmark cases; `rules.show` has no page code |
+| the capability explorer and runner at `/cockpit/capabilities/<id>` | generic: one page for every capability; a runner form, generated from the input schema with examples from the benchmark cases, for every capability exposed over HTTP whose stability allows execution; `rules.show` has no page code |
 | the object browser at `/cockpit/objects?kind=<kind>` and `/cockpit/object?uri=<uri>` | generic: every indexed kind, including rules, ADRs and claims |
 | navigation catalogues | derived from the registry modules, the index kinds and the graph derivations, grouped by the product model's areas and ordered canonically |
 | the top-level areas and their routes | hand-written: a match in `apps/majordomus-cli/src/cockpit/mod.rs` and an area list in `nav.rs` |
@@ -424,18 +448,19 @@ named generator and checked for drift:
 
 | Output | Source | Generator | Drift check |
 |---|---|---|---|
-| `docs/generated/` — registry, OpenAPI, command reference, capabilities reference, benchmarks, changelog, design, artifact manifest, graph | the registry and the Rust declarations | `majordomus generate` | `majordomus generate --check`, byte for byte |
+| `docs/generated/` — registry, OpenAPI, command reference, capabilities reference, benchmarks, changelog, design, artifact manifest, graph | the registry, the index, the design tokens, the release records and git history | `majordomus generate` | `majordomus generate --check`, byte for byte |
 | `site/data/generated/` and `site/content/` projections — docs pages, guarantees, doctrines, commands, registry pages, plan status | `docs/*.md`, `docs/CLAIMS.yaml`, rules, `share/commands.yaml`, `.ai/repo/project/`, the generated registry | `scripts/generate-site-data` | `scripts/generate-site-data --check` |
 | `site/public/` | everything above | Zola via `scripts/site-build` | `scripts/site-check`, then publication verification |
 
 `scripts/derive` runs the whole graph in order (generate, site data, generate again because
 documents are indexed objects, then `.gitattributes`), and `scripts/derive-check` names every
-stale file. The artifact manifest `docs/generated/artifacts.md` lists every generated document
-with its schema and source, and is itself generated.
+stale file. The artifact manifest `docs/generated/artifacts.md` lists every file `majordomus
+generate` writes, with its schema where it has one and its source, and is itself generated; the
+site generator's outputs are not in it.
 
 This document is an example. It is authored once, here. `scripts/generate-site-data` discovers
-it through its row in `docs/README.md` — every file in `docs/` must have a row, or generation
-fails — writes `site/content/docs/how-it-works.md` with generated front matter (title from the
+it through its row in `docs/README.md` — every top-level Markdown or YAML file in `docs/` must have a row in one of
+the index's tables, or generation fails — writes `site/content/docs/how-it-works.md` with generated front matter (title from the
 first heading, description from the index row, order from the row's position), rewrites its
 relative links to site routes, and turns its `mermaid` blocks into rendered diagrams. The docs
 page is committed and held to the source by the same `--check`.
@@ -448,7 +473,7 @@ page is committed and held to the source by the same `--check`.
 | OpenAPI | integrators, generators | the contract | the registry and canonical schemas | nothing | OpenAPI 3.1 JSON |
 | Swagger UI | a person exploring the API | interactive contract | `/openapi.json` | nothing | HTML |
 | MCP | AI workers | tools and resources | the registry and the object index | the reconnect replay of announcements | JSON-RPC |
-| Command line | people and scripts | interactive operation | checked against the registry; renders capability values | the clap tree, text renderers, `cli::LOCAL` | terminal text or `--json` |
+| Command line | people and scripts | interactive operation | checked against the registry; renders capability values | the clap tree, text renderers, `cli::LOCAL` | terminal text or `--format json` |
 | Cockpit | people | visibility and running operations | capability answers; catalogues from registry and index | area list, routes, specialised views | HTML |
 | Generated docs and site | readers | reference and explanation | the registry, the index, `docs/` | explanatory prose | Markdown, JSON, HTML |
 
@@ -469,7 +494,7 @@ flowchart TD
   d4_LED[".ai/repo/evidence/ledger.json"] --> d4_ENG
   d4_ENG --> d4_RD["RuleDetail value"]
   d4_RD --> d4_T1["text renderer: rules show"]
-  d4_RD --> d4_T2["JSON: rules show --json and GET /api/v1/rules/rule"]
+  d4_RD --> d4_T2["JSON: rules show --format json and GET /api/v1/rules/rule"]
   d4_RD --> d4_T3["MCP tool majordomus_rule"]
   d4_RD --> d4_T4["Cockpit runner"]
 ```
@@ -488,7 +513,7 @@ Which routes and menus are derived, and which are declared on purpose:
 | OpenAPI | one path per HTTP exposure | tags from the capability namespace | the projection test compares every exposure with its operation |
 | MCP | one tool or resource per exposure, plus one resource per indexed object | `tools/list`, `resources/list` | the projection test; registry uniqueness |
 | Cockpit | generic pages for every capability and every object; the area routes are a hand-written list and match | area list hand-written; the catalogues inside each area derived from the registry, the index and the product model | tests in `cockpit/mod.rs` hold the area list, the static routes and the dispatcher equal |
-| website | one page per derived object a projection publishes — features, domains, claims, doctrines, commands, capabilities, use cases | `site/data/nav.toml`, declared once on purpose: a navbar is editorial, a sitemap is not | `scripts/ci/nav-check` and `site-check`: every href resolves, no href twice, every published section reachable |
+| website | one page per derived object a projection publishes — features, claims (as guarantees), doctrines, rules, ADRs, commands, capabilities, use cases | `site/data/nav.toml`, declared once on purpose: a navbar is editorial, a sitemap is not | `scripts/ci/nav-check` and `site-check`: every href resolves, no href twice, every published section reachable |
 | served home | the runtime's mounts, from the web topology | from the resolved topology | `web::discover` and the reserved-path list |
 
 Order is a contract, not an accident. Generated lists sort by `crate::order`'s key — group,
@@ -528,7 +553,7 @@ the declaration is written per capability.
 | declaration | `apps/majordomus-cli/src/capability/builtin/rules.rs` | authored |
 | input type and its benchmark cases | `RuleInput` in the same file | authored |
 | domain logic | `apps/majordomus-cli/src/rules/` | authored |
-| composition | the `rules` module in `builtin::modules()` | authored, one existing line |
+| composition | the `rules` module in `builtin::modules()` | authored, two existing lines: `pub mod` and the `compose_modules!` entry |
 | registry validation | `CapabilityRegistry::build` | automatic |
 | HTTP route | `GET /api/v1/rules/rule?rule=<id>` via the generic router | automatic |
 | OpenAPI operation `rules.show` | `/openapi.json`, `docs/generated/openapi.json` | generated |
@@ -550,15 +575,21 @@ The honest developer workflow on the default branch today:
    `apps/majordomus-cli/src/capability/builtin/`, with input and output types deriving
    `JsonSchema` and an input implementing `BenchmarkCases`. If the module is new, add it to the
    `pub mod` list and to `builtin::modules()` — the one manual composition step.
-3. **HTTP, OpenAPI, Swagger UI, MCP and the Cockpit runner appear** with no further code.
+3. **HTTP, OpenAPI, Swagger UI, MCP and the Cockpit runner appear** with no further code, for each
+   exposure the declaration names; the runner needs an HTTP exposure, and `run <id>` reaches it
+   from the command line either way.
 4. **If the capability is exposed on the command line**, add the clap variant, dispatch it with
-   `ctx.execute`, write the text renderer, and add a runnable example. Closure and parity refuse
-   the build until the declaration and the tree agree.
-5. **Run `majordomus generate`** (or `just derive`), which rewrites the registry, OpenAPI, the
-   references, the benchmark inventory and the site data; commit them with the change. The
-   pre-commit hook refuses a commit whose derived files are stale.
-6. **Tests.** The generic projection tests cover the new capability automatically; add a
-   behavioural case for what it does.
+   `ctx.execute`, write the text renderer, and add a runnable example. Closure and parity fail
+   `capabilities validate`, the projection test and `projection-check` until the declaration and
+   the tree agree; the build itself succeeds.
+5. **Run `just derive`** (`scripts/derive`: generate, site data, generate again, then
+   `.gitattributes`), which rewrites the registry, OpenAPI, the references, the benchmark
+   inventory and the site data; `majordomus generate` alone does not rewrite the site data. Commit
+   them with the change. The pre-commit hook refuses a commit whose site data is stale and, when
+   the executable is built, one whose registry projections are stale.
+6. **Tests.** The generic projection tests cover the new capability automatically. A module's own
+   pin test lists its capabilities and their exposures, so adding one to an existing module means
+   extending that table; then add a behavioural case for what it does.
 7. **Claim and evidence.** If the capability is a public guarantee, add a claim to
    `docs/CLAIMS.yaml` with its test, and a detail page under `docs/claims/`; record the test's run
    with `majordomus-cli evidence record`.
@@ -578,17 +609,17 @@ The taxonomy as the schemas and loaders implement it:
 |---|---|---|---|
 | **rule** | a versioned invariant with a statement, a class (blocking or advisory), dependencies, and optionally a declaration of how it is enforced | `.ai/repo/rules/project/` and the vendored standard under `.ai/repo/rules/vendor/majordomus/rules/` | `majordomus.rule/v1` |
 | **doctrine** | not a separate kind: a rule whose enforcement block names a validator that a command runs | derived from rules by `lib/doctrine.sh` | the rule schema |
-| **policy** | configurable repository behaviour: profiles in force, required handover sections, freshness thresholds, enforcement wiring | `.ai/repo/policy.yaml` | `policy.v1` |
-| **ADR** | an architectural decision with its context, alternatives and consequences; `proposed` until a person accepts it | `.ai/repo/adrs/` | `adr.v1` |
-| **claim** | a public statement of what the tool guarantees, with its source, implementation, test and status | `docs/CLAIMS.yaml`, detail in `docs/claims/` | `claim.v1` |
-| **profile** | a named set of policy toggles for a kind of work | `.ai/repo/profiles/` | `profile.v1` |
-| **skill** | a packaged procedure for a worker | `.ai/repo/skills/` | `skill.v1` |
+| **policy** | configurable repository behaviour: profiles in force, required handover sections, freshness thresholds, enforcement wiring | `.ai/repo/policy.yaml` | `majordomus.policy/v1` |
+| **ADR** | an architectural decision with its context, alternatives and consequences; `proposed` until a person accepts it | `.ai/repo/adrs/` | `majordomus.adr/v1` |
+| **claim** | a public statement of what the tool guarantees, with its source, implementation, test and status | `docs/CLAIMS.yaml`, detail in `docs/claims/` | `majordomus.claim/v1` |
+| **profile** | a named set of policy toggles for a kind of work | `.ai/repo/profiles/` | `majordomus.profile/v1` |
+| **skill** | a packaged procedure for a worker | `.ai/repo/skills/` | `majordomus.skill/v1` |
 
 The doctrine is the part most often misunderstood. A doctrine is not a principle document that
 rules point at; it is a rule the tool itself enforces through a named validator. The registry of
 doctrines is derived, never written: it is every rule of the effective set whose enforcement
 block names a validator (`docs/DOCTRINE.md`). The principles a doctrine serves are themselves
-rules — the `majordomus.principle-*` rules — connected by ordinary `depends_on`. There is no
+rules — the vendored rules tagged `principle` (files `principle-NN-*.v1.md`, for example `majordomus.one-worker-one-scope`) — connected by ordinary `depends_on`. There is no
 typed doctrine-to-rule field; see [Architecture debt](#architecture-debt).
 
 Doctrines come from a package. The standard rules live in `share/standard/majordomus/`, with a
@@ -597,7 +628,8 @@ manifest carrying each file's sha256, and are vendored byte for byte into the re
 
 ### A rule's shape
 
-This is the real header of `.ai/repo/rules/project/rule-is-a-doctrine.v1.md`:
+An excerpt of the real header of `.ai/repo/rules/project/rule-is-a-doctrine.v1.md` (its
+`description` omitted, its statement shortened):
 
 ```yaml
 id: project.rule-is-a-doctrine
@@ -613,8 +645,8 @@ x-majordomus:
   tests: [test/cases/18_doctrine_wiring.sh, test/cases/125_rule_proof.sh]
 ```
 
-The body must carry four headings: Rationale, Required behaviour, Failure behaviour,
-Verification. The `x-majordomus` block has no `mode` field. The enforcement mode is derived from
+The body must carry the headings `rule.v1.proto` requires: Rationale, Required behaviour, Failure
+behaviour, Verification. The `x-majordomus` block has no `mode` field. The enforcement mode is derived from
 what the block names (ADR 0048):
 
 | The block names | Mode | Meaning |
@@ -622,9 +654,10 @@ what the block names (ADR 0048):
 | a `validator` | **dispatched** | a command runs `mj_validate_<name>` itself: `check`, `finish`, `doctor`, `watch` — whichever its `enforced_by` lists |
 | `tests` and no validator | **gated** | a CI gate runs the tests that prove it |
 | only `reviewed_because` | **reviewed** | a person enforces it, and the rule says why no machine can |
-| nothing | **declarative** | a stated principle with no enforcement claim |
+| nothing | **declarative** | a stated principle; allowed only for the vendored rules tagged `principle` — any other rule naming nothing fails `rule-proof-check` |
 
-A half-declared block is refused by the loader.
+The shell rule loader (`lib/rules.sh`) refuses a half-declared block; the Rust proof engine reads
+one as declarative and reports it.
 
 ### The lifecycle of a rule
 
@@ -657,38 +690,45 @@ of these rungs, and each rung is a separate fact:
 | recorded | the evidence ledger holds that run, with its commit, working-tree state and digest |
 | current | the recorded run's inputs are unchanged in the tree being asked about |
 
-The Rust rules engine (`apps/majordomus-cli/src/rules/mod.rs`) reduces this to one of ten
-states, strongest first: `proven`, `inputs_unchanged`, `stale`, `gated`, `failing`, `not_run`,
-`reviewed`, `unrunnable`, `dangling`, `unproven`. A failing test makes the rule `failing`;
-otherwise a rule's state is the weakest state among the tests that can carry proof. Only the
+The Rust rules engine (`apps/majordomus-cli/src/rules/mod.rs`) reduces this to one state of
+`RuleState`, strongest first: `proven`, `inputs_unchanged`, `stale`, `gated`, `failing`,
+`not_run`, `reviewed`, `unrunnable`, `dangling`, `unproven`. A dangling path makes the rule
+`dangling` — it dominates everything; otherwise a failing test makes it `failing`; otherwise its
+state is the weakest among the tests that can carry proof. Only the
 first three count as passing. A finding is raised for a dangling proof, or for a
 blocking rule that is unproven, failing or unrunnable; `not_run`, `gated` and `reviewed` are
 deliberately not findings, because they describe the absence of a record rather than a defect.
 
-`scripts/ci/rule-proof-check` is the gate: a dangling proof fails; a blocking rule naming no
-proof fails, held by a ratchet whose baseline, `.ai/repo/rule-proof-baseline.txt`, is empty.
+`scripts/ci/rule-proof-check` is the gate: a dangling proof fails, and a rule of any class that
+names no validator, no test and no `reviewed_because` fails — the class is not an exemption. The
+one exemption is a vendored rule tagged `principle`. It is held by a ratchet whose baseline,
+`.ai/repo/rule-proof-baseline.txt`, is empty.
 
 To see where the repository stands — not to take this document's word for it:
 
 ```console
 $ bin/majordomus-cli rules report
 $ bin/majordomus-cli rules show majordomus.scope-integrity
-$ curl -s http://127.0.0.1:8742/api/v1/rules | jq .summary
+$ curl -s http://127.0.0.1:8741/api/v1/rules | jq .summary
 ```
 
-At the time of writing that report says every blocking rule names a proof that resolves and is
-bound to a gate, and that few runs are recorded in the ledger, so most rules stand at `not_run`
-rather than `proven`. That is the correct reading of the evidence: gates run in CI on every
-change, but CI does not yet write its runs into the ledger. "Satisfied" in the report means the
-proof is named and resolves, not that a recorded run passed. A green badge anywhere in
-Majordomus has to be a projection of a recorded execution, and where no execution is recorded
-the surfaces say `not run`.
+At the time of writing that report says every blocking rule either names a proof that resolves
+and is bound to a gate, or declares `reviewed_because` and is enforced by a person
+(`rules report --class blocking` lists which), and that few runs are recorded in the ledger, so
+most rules stand at `not_run` rather than `proven`. That is the correct reading of the evidence:
+gates run in CI on every change, and CI records its runs into a per-run artifact
+(`scripts/ci/evidence-collect`), but nothing yet carries them into the tracked ledger (ADR 0080,
+proposed). "Satisfied" in the report means no finding — nothing dangles, and no blocking rule is
+unproven, failing or unrunnable; it includes reviewed rules and advisory rules that name no
+proof. It does not mean a recorded run passed. A green badge anywhere in Majordomus has to be a
+projection of a recorded execution; where none is recorded the surfaces say `not run`, `gated`
+or `reviewed` — never `proven`.
 
 ### The governance map
 
 ```mermaid
 flowchart LR
-  g_P["principle: an advisory rule, majordomus.principle-*"] -->|depends_on| g_R["rule: id@version, class, statement"]
+  g_P["principle: a vendored advisory rule tagged principle"] -->|depends_on| g_R["rule: id@version, class, statement"]
   g_R -->|x-majordomus names a validator| g_V["validator: mj_validate_* in lib/"]
   g_R -->|x-majordomus names tests| g_T["tests: test/cases, crate tests, gate scripts"]
   g_R -->|names only reviewed_because| g_H["a person's review"]
@@ -740,8 +780,9 @@ commit is `proven` at that commit, `inputs_unchanged` at a later commit that did
 inputs, and `stale` at one that did. `proven` and `inputs_unchanged` are never collapsed into one
 state, because the second is an inference about relevance and the first is not.
 
-The four evidence capabilities are `evidence.report`, `evidence.claim`, `evidence.test` and
-`evidence.record` — the last is the only writer and is command-line only.
+The evidence capabilities
+(`jq -r '.capabilities[] | select(.id | startswith("evidence.")) | .id' docs/generated/registry.json`)
+are the report, one claim, one test, and `evidence.record` — the only writer, command-line only.
 
 ## One doctrine traced: scope integrity
 
@@ -753,7 +794,7 @@ The four evidence capabilities are `evidence.report`, `evidence.claim`, `evidenc
 | principle | `depends_on: majordomus.one-worker-one-scope@1` |
 | enforcement block | `validator: scope`, `enforced_by: [check, finish, watch]`, `exit_code: 10`, `claims: [scope-enforcement, scoped-task]`, `tests: [test/cases/04_start_check.sh]` |
 | validator | `mj_validate_scope` in `lib/check.sh`: fails files changed since the task's start that fall outside the task's scope |
-| dispatch | `mj_doctrine_dispatch check` and `finish`; `finish --check` runs from the pre-push hook |
+| dispatch | `mj_doctrine_dispatch` in `check`, `finish` and `watch`; `finish --check` runs from the pre-push hook |
 | wiring verified | `mj_validate_doctrine_wiring` in `lib/doctor.sh`, mutation-tested by `test/cases/18_doctrine_wiring.sh` |
 | test | `test/cases/04_start_check.sh`, run by the `shell-suite` and `macos` gates |
 | claim | `scope-enforcement` in `docs/CLAIMS.yaml`, detail at `docs/claims/scope-enforcement.md` |
@@ -772,8 +813,8 @@ The four evidence capabilities are `evidence.report`, `evidence.claim`, `evidenc
 | authored | `.ai/repo/rules/project/derived-files-regenerated.v1.md` |
 | proof | `tests:` naming `test/cases/56_derived_current_gate.sh`, `test/cases/51_derived_artifacts_committed.sh`, `test/cases/95_executable_reference.sh` and `scripts/derive-check` |
 | enforcement point | the pre-commit hook runs `scripts/pages current`; `.ai/repo/policy.yaml` declares that wiring as `derived-current`, and `doctor` fails if the hook stops running it |
-| gates | `shell-suite` and `macos` run the three cases; `scripts/derive-check` is classed as unrunnable by the proof engine and ignored because the others resolve |
-| surfaces | `rules show project.derived-files-regenerated`, the object page in the Cockpit, and the rules section of `/features/declare-once/` on the website |
+| gates | `shell-suite` runs the named cases, and `macos` on demand; `scripts/derive-check` is classed as unrunnable by the proof engine and ignored because the others resolve |
+| surfaces | `rules show project.derived-files-regenerated`, the object page in the Cockpit, its own page `/rules/project-derived-files-regenerated-1/`, and the rules section of `/features/declare-once/` |
 | evidence | read with `rules show`; the proof is named and gated |
 
 ## Walkthrough: adding a new rule
@@ -782,7 +823,8 @@ Suppose a maintainer adds: *every public capability has at least one executable 
 What happens at each step on the default branch today:
 
 1. **Authored.** A file named `every-capability-is-verified.v1.md` under `.ai/repo/rules/project/`, with the
-   rule header and the four body headings. Manual, and the only authored step.
+   rule header and the required body headings. Manual: the file, its relations and its
+   enforcement block are the authored parts.
 2. **Schema.** The rule loader validates the header against `rule.v1`; an unknown key or a
    half-declared enforcement block is refused. Automatic.
 3. **Discovery.** The `rule` source class in `.ai/repo/knowledge/sources.yaml` already matches
@@ -801,8 +843,9 @@ What happens at each step on the default branch today:
 8. **HTTP.** `GET /api/v1/rules/rule?rule=project.every-capability-is-verified`. Automatic.
 9. **MCP.** Resource at its URI and the `majordomus_rule` tool. Automatic.
 10. **Cockpit.** Its object page and the rules report in the runner. Automatic.
-11. **Website.** A project rule gets no page of its own; it appears where a product feature names
-    it in its `rule_refs`. A doctrine would get a `/doctrines/` page. Partly automatic.
+11. **Website.** The rule gets its generated page at
+    `/rules/project-every-capability-is-verified-1/`; a doctrine also gets a `/doctrines/` page, and
+    a feature that names it lists it. Automatic.
 12. **Execution.** CI runs the gates on the next change that touches their path class. Automatic.
 13. **Evidence.** A run reaches the ledger only through `evidence record`. Manual today.
 14. **Current state on every surface.** Derived on request from the ledger and the tree.
@@ -820,15 +863,16 @@ Work survives the session doing it through durable records, not transcripts
 | active task | `.ai/local/state/current.yaml` | local | task, scope, profile authored; a `computed from git` block derived |
 | open episode | `.ai/local/state/sessions-open/` | local, until close | derived from provider hook events |
 | closed session | `.ai/repo/sessions/` when the manifest names that section | committed | derived from the ledger at close |
-| checkpoint | `.ai/local/checkpoints/` | local | derived with `checkpoint --derive`, or authored |
+| checkpoint | `.ai/local/state/checkpoints/` | local | derived with `checkpoint --derive`, or authored |
 | handover | `.ai/local/state/handovers/` | local | body authored; front matter derived |
-| ledger | `.ai/local/ledger.jsonl` | local, append-only | derived: one receipt per event |
+| ledger | `.ai/local/state/ledger.jsonl` | local, appended to and rotated under the policy's `ledger.retention_max_lines` | derived: one receipt per event |
 
 Provider hooks (for Claude Code, under `.claude/hooks/`) call `majordomus capture session` on
 start, compact and end. Start opens or keeps the episode, makes sure the checkout's server is
 running and prints a briefing; end derives a checkpoint and a handover and closes the provider's
 own session. `.ai/local/` is git-ignored: continuity is local to a machine, and only closed
-session records are shared.
+session records are committed. On a repository with mesh cooperation enabled, handovers also
+replicate to linked runtimes through the journal (`apps/majordomus-cli/src/mesh/handover.rs`).
 
 The task lifecycle is `start` with a required scope, `check` which dispatches the doctrines
 bound to it, and `finish` with an outcome and, when the profile requires, a verify command whose
@@ -837,7 +881,8 @@ what is unmet.
 
 ### Context for a session
 
-There are two context compilers, and both are deterministic.
+Context is compiled in several places, and each is deterministic. Besides the three below,
+`lib/session_context.sh` composes the open episode's working context on every read.
 
 **`majordomus context`** (`lib/context.sh`) assembles ordered sections — git, peers, task,
 profile, context documents, open questions, knowledge candidates, decisions, reasoning,
@@ -859,8 +904,10 @@ document adds to its ancestors; the nearest does not replace them.
 typed edges with fixed forward and reverse weights, sorts by authority tier — task, governance,
 source, decision, knowledge, history — then relevance, then URI, and spends a token budget first
 fit, naming every item it skipped and its cost. Its one inference is intent: words of the task
-matched against an object's title, description, identity and tags, scaled so that the resulting
-relevance is always below that of a declared relation. The shell `context` command does not use
+matched against an object's title, description, identity and tags, capped below a direct seed
+and below most single declared edges (`devcontext/select.rs`); it can still outrank a declared
+relation reached through a weak or multi-hop edge, and the authority tier is sorted before
+relevance. The shell `context` command does not use
 it yet.
 
 Context is generated because it must be rebuildable. A context that exists only inside an earlier
@@ -923,8 +970,9 @@ Each checkout's shared server keeps a peer board in memory (`apps/majordomus-cli
 An MCP client that attaches becomes a peer with a position id, its client name, transport,
 connection time and last activity. With `majordomus_announce` it states an intent and a scope,
 optionally under a claim name, and announcing again under the same name replaces that claim.
-The board is not persisted: a departed peer that had announced is retained briefly as not
-attached, and one that never announced disappears.
+The board is not persisted: a departed peer that had announced is retained as not attached, up
+to `RETAINED` departed slots (`apps/majordomus-cli/src/peers.rs`), and one that never announced
+disappears.
 
 `majordomus_peers` gathers the board repository-wide (ADR 0044): it reads this checkout's board
 from memory and asks every sibling worktree's server over HTTP, one hop, stamping each peer with
@@ -946,10 +994,11 @@ None of them refuses anything. Announce-time overlap compares only the announcin
 board; the repository-wide comparison is made when the board is gathered, by `peers.list` and the
 `context` briefing. What refuses on one machine is the scope doctrine: files a task changed
 outside its own scope fail `check` and a completed `finish`, and `finish --check` runs from the
-pre-push hook. `scripts/collision-check` scans pushed branches for paths a new piece of work would
-create. Across machines, a claim taken with `mesh.claim` is exclusive by default and is refused
-with `claim_conflict` when it meets a live exclusive claim of another session — the one place a
-claim is more than awareness (see [The mesh: who exists](#the-mesh-who-exists)).
+pre-push hook. `scripts/collision-check` compares unmerged local and remote branches for paths both
+add with different content, and the `collision-check` gate refuses such a collision on a pull
+request (exit 11) unless it is labelled accepted. Across machines, a claim taken with `mesh.claim` is exclusive by default and is refused
+with `claim_conflict` when it meets a live exclusive claim of another session — among claims, the one that is
+more than awareness (see [The mesh: who exists](#the-mesh-who-exists)).
 
 ```mermaid
 flowchart LR
@@ -969,8 +1018,8 @@ The mesh answers a different question: which Majordomus nodes exist and can be r
 an instance is one run of a process. Discovery providers send one signed, bounded envelope over
 UDP multicast, UDP broadcast or an HTTP rendezvous endpoint, and a declaration may name static
 cooperation seeds. The registry holds nodes by identity
-with a presence TTL and a retention window; trust is deny-unknown and changes only labels —
-nothing can be executed remotely.
+with a presence TTL and a retention window; trust is deny-unknown; it labels nodes and decides
+which may link and replicate the journal, and it grants no execution rights.
 
 | Field | Kind of state |
 |---|---|
@@ -980,8 +1029,8 @@ nothing can be executed remotely.
 
 A repository with no mesh declaration, or one declared `enabled: false`, opens no discovery
 socket, and the skeleton a new repository starts from ships none. This repository's own
-declaration, `.ai/repo/mesh/majordomus.yaml`, is enabled: multicast on the local segment, two
-rendezvous hubs on the owner's private network and tailnet, and three trusted keys
+declaration, `.ai/repo/mesh/majordomus.yaml`, is enabled: multicast on the local segment,
+rendezvous hubs on the owner's private network and tailnet, and the trusted keys it lists
 (`docs/MESH.md`, "This repository's mesh"). There is no Tailscale or mDNS
 provider; ADR 0050 lists them as future providers, and a rendezvous endpoint reachable over a
 tailnet is the supported way to span machines. Data flow is the same as every other surface:
@@ -1091,17 +1140,21 @@ layout, budgets, retention, the rule DAG, ADRs, skills and prompts. The Rust `he
 adds a comparison of the committed registry with an in-process render.
 
 Doctor detects; it does not repair. Regeneration is `majordomus generate` and `just derive`;
-repair of a hand-edited projection is `majordomus update`. A generator is not self-healing
-merely because it exists, and none of these runs by itself.
+repair of a hand-edited provider projection is `majordomus update --diff <target>` and then
+`--force` — plain `update` refuses to overwrite a hand edit. A generator is not self-healing
+merely because it exists: regeneration runs unattended only in the version and release
+workflows, which open pull requests, and nothing repairs in place.
 
 ## Circular dogfooding
 
 Majordomus is supervised by Majordomus. The rules that forbid hand-kept registries are rules in
 this repository's own `.ai/`; the proof engine that says whether they are enforced reads this
 repository's gates; the generators that write the reference are checked by the gates those rules
-name; the evidence ledger records runs of the tests that prove the generators deterministic; and
-the Cockpit renders that proof from the same registry it proves. When a generator breaks, a rule
-about generators turns red on the surface the generator produces. The loop is only as strong as
+name; the evidence ledger can record runs of the tests that prove the generators deterministic
+(today it holds none of them: `jq -r '.executions[].test' .ai/repo/evidence/ledger.json`); and
+the Cockpit renders that proof from the same registry it proves. When a generator breaks, the
+gate a rule about generators names fails in CI, and the rule itself reads `failing` only once
+that run is recorded. The loop is only as strong as
 its weakest recorded link — today, recording executions — which is why that link is named below.
 
 ## What is not generated
@@ -1122,31 +1175,31 @@ quietly call it canonical truth.
 If a person records *OAuth must use PKCE*, the machine may derive the rules it touches, the
 context that should carry it, the links from documentation and whether the implementation is
 tested. It may not rewrite the decision because a heuristic found it unlikely. The inference in
-the context compiler is capped below every declared relation for exactly that reason.
+the context compiler is capped below a direct declaration for exactly that reason.
 
 ## Generation matrix
 
 | Entity | Authored | Discovered | Derived | CLI | HTTP | MCP | Cockpit | Website |
 |---|---|---|---|---|---|---|---|---|
-| capability | `capability!` | module composition | availability, visibility, execution, benchmarks | only where a clap command renders it | yes, when exposed | tool or resource, when exposed | explorer and runner | `/registry/` pages |
+| capability | `capability!` | module composition | availability, visibility, execution, benchmarks | every one through `run <id>`; a dedicated command where a clap command renders it | yes, when exposed | tool or resource, when exposed | explorer and runner | `/registry/` pages |
 | command | clap tree, `share/commands.yaml` | `just` recipes | command graph, completion | yes | through its capability | through its capability | `/cockpit/commands` | `/docs/cli/`, `/commands/` |
-| document object | any indexed file | `sources.yaml` | URI, kind | `objects` | `/api/v1/objects` | resource | object page | only kinds with a projection |
-| rule | rule file | index | mode, gates, proof state | `rules report`, `rules show` | `/api/v1/rules` | `majordomus_rules`, `majordomus_rule` | object page, runner | doctrines only; project rules via features |
+| document object | any indexed file | `sources.yaml` | URI, kind | `entity kinds`, `entity show`; shell `search`; `run objects.list` | `/api/v1/objects`, `/api/v1/entity*` | resource | object page | only kinds with a projection |
+| rule | rule file | index | mode, gates, proof state | `rules report`, `rules show` | `/api/v1/rules` | `majordomus_rules`, `majordomus_rule` | object page, runner | `/rules/<id>-<version>/` for every rule in force; `/doctrines/` for doctrines |
 | doctrine | a rule with a validator | doctrine loader | doctrine registry | shell `doctrine` | via rules | via rules | via rules | `/doctrines/` |
 | claim | `docs/CLAIMS.yaml`, `docs/claims/` | index | evidence state | `evidence claim` | evidence endpoints | evidence tools | object page, runner | `/guarantees/` |
-| ADR | ADR file | index | none | objects | objects | resource | object page | no section |
-| issue, milestone | YAML | index | status, waves, next | shell `plan` (the Rust plan capabilities have no command) | `/api/v1/plan/*`, `POST /api/v1/plan/transition` | `majordomus_plan*` | runner only, no plan page | `/plan/`, roadmap, dependency graph |
-| peer | announcement | MCP attach | overlaps | none in either program; a section of shell `context` | `/api/v1/peers`, `POST /api/v1/peers/announce` | `majordomus_peers`, `majordomus_announce` | `/cockpit/peers` | none |
-| mesh node, mesh claim | mesh declaration; `mesh.claim` | providers, links | presence, trust label, folded journal state | `majordomus-cli mesh` | `/api/v1/mesh/*` | `majordomus_mesh*` | `/cockpit/mesh` | none |
+| ADR | ADR file | index | none | `entity show` | objects | resource | object page | `/adrs/adr-NNNN/`, one generated page per decision |
+| issue, milestone | YAML | index | status, waves, next | shell `plan`; the Rust plan capabilities through `run plan.<op>` only | `/api/v1/plan/*`, `POST /api/v1/plan/transition` | `majordomus_plan*` | runner only, no plan page | `/plan/`, roadmap, dependency graph |
+| peer (observed: attachment and announcement) | announcement | MCP attach | overlaps | `run peers.list`; a section of shell `context`; announcing needs an MCP session | `/api/v1/peers`; `POST /api/v1/peers/announce` exists but refuses without an MCP session | `majordomus_peers`, `majordomus_announce` | `/cockpit/peers` | none |
+| mesh node (observed: presence), mesh claim | mesh declaration; `mesh.claim` | providers, links | presence, trust label, folded journal state | `majordomus-cli mesh` | `/api/v1/mesh/*` | `majordomus_mesh*` | `/cockpit/mesh` | none |
 | environment | policy, manifest | git, toolchains, services | snapshot with provenance | `env` | `/api/v1/environment` | `majordomus://environment` | not on the overview | none |
 | design token | `share/design/tokens.yaml` | none | stylesheets, logo, design data | none | design report | design tools | `/cockpit/design`, all styling | all styling |
-| version | the three version sites, written by `release bump` | the last release record | the minimum bump | `release analyze` | `/api/v1/release/analysis` | release tool | `/cockpit/release` | changelog, install |
+| version | the crate manifest's `[package] version`, written by `release bump` | the last release record | the minimum bump | `release analyze` | `/api/v1/release/analysis` | release tool | `/cockpit/release` | changelog, install |
 
 ## Architecture debt
 
 Where the repository is not yet the model this document describes, measured on the default
-branch. None of this is hidden by the surfaces; it is listed here so a reader does not have to
-find it.
+branch. The surfaces do not all disclose these gaps themselves; they are listed here so a reader
+does not have to find them.
 
 **Declared twice or registered by hand**
 
@@ -1164,8 +1217,9 @@ find it.
 - Two allow-lists, `share/allow/commands.txt` and `share/allow/events.txt`, are authored; no
   generator derives them yet.
 - The MCP bridge special-cases the announce tool for reconnect replay.
-- `docs/HARDCODING_LEDGER.yaml` lists every known place a fact is written twice, with the command
-  that reproduces each; several open entries remain. The surface table in `docs/WEB.md` is one of
+- `docs/HARDCODING_LEDGER.yaml` lists the places a fact is written twice that have been filed,
+  with the command that reproduces each; several open entries remain, and several duplications
+  named in this section are not in it yet. The surface table in `docs/WEB.md` is one of
   them in spirit: typed by hand and checked by no test.
 
 **Derived, but not faithfully**
@@ -1184,11 +1238,13 @@ find it.
 
 - No per-kind Cockpit pages for rules, doctrines, ADRs or claims — the generic object page serves
   them. No Cockpit plan page, and the overview shows the preflight but not the environment
-  snapshot. No website page for project rules outside features, and no ADR section.
-- The peer board has no command in either program; announcing needs an MCP session.
+  snapshot.
+- The peer board has no dedicated command — `run peers.list` reads it — and announcing needs an
+  MCP session.
 - The shell lifecycle commands (`start`, `check`, `finish`, `handover`, `context`) are not
   capabilities, so they have no HTTP or MCP projection; `continuity.state` is their read model.
-- Only one provider has session hooks adapted; the others are declared and unadapted.
+- Session hooks are adapted for Claude Code only; the other providers declare theirs and are
+  unadapted (`share/providers.yaml`, `lib/capture.sh`).
 - Swagger UI's assets come from a CDN.
 
 **Not evidenced**
@@ -1201,23 +1257,29 @@ find it.
 
 **Not enforced as documented**
 
-- `project.derived-files-regenerated` says `scripts/derive-check` runs in CI; its three halves run
-  separately, and the composed script does not. The pre-commit half compares the input hash and
+- `project.derived-files-regenerated` says `scripts/derive-check` runs in CI and in the Pages
+  workflow; it runs only in the version-bump and release workflows, while the pull-request gate
+  runs its halves separately. The pre-commit half compares the input hash and
   skips the registry comparison when no executable is built.
-- The public verification of a deploy is advisory inside the deploy job; the `pages-live` gate
-  at finish is what judges publication.
-- `project.no-counts-in-prose` is enforced by review for documents; it is mechanised only for the
-  site's marketing copy.
+- The serving probe of a deploy is advisory inside the deploy job; once it sees the commit, the
+  published docs and rustdoc are verified and fail the job, as does an errored GitHub Pages build,
+  and the `pages-live` gate at finish judges whether publication is current.
+- `project.no-counts-in-prose` is mechanised for the always-loaded provider context (doctor) and
+  the homepage's proof band (`homepage-check`); for documents it is enforced by review.
+- `evidence.record` writes the committed ledger but declares the `process_state` effect, so the
+  effect-derived list of repository writers (MCP instructions, `x-majordomus-effect`) omits it.
 
 **Not built, or partly built**
 
 - Tailscale and mDNS discovery providers; NAT traversal and wide-area links. Cross-machine
-  cooperation exists over rendezvous endpoints and trusted keys, is experimental, and has one
-  recorded manual two-machine run.
+  cooperation exists over rendezvous endpoints and trusted keys, is experimental, and its
+  multi-machine operation rests on a recorded manual run (`docs/MESH.md`).
 - The Rust side of the session lifecycle is a read model; the cutover is proposed.
-- The intent record is partly adopted.
+- The intent record is partly adopted (ADR 0070): `.ai/repo/project/intents/` holds the records
+  `intent validate` and `intent preflight` read, and no session or completion policy consumes them.
 - A version can be declared before it is released: the crate's version and the latest release
-  record are separate facts, and the site shows both rather than one.
+  record are separate facts; the navbar names the release and the changelog shows the unreleased
+  version above it.
 - Many ADRs that the code already follows remain `proposed`, because acceptance is a person's act.
 
 ## Claim audit
@@ -1236,7 +1298,7 @@ Each strong statement in this document, with how to check it.
 | issue status is derived with no stored status | an issue YAML has no status key; `lib/project.awk`; `bin/majordomus plan status` |
 | overlap is advisory | `lib/check.sh` returns 0 after `--overlap`; `peers.rs` documents informational overlaps |
 | the mesh is off by default and has no Tailscale provider | `ls share/skeleton/ai/repo` has no `mesh/`; `ls apps/majordomus-cli/src/mesh` |
-| this repository runs its own mesh, trusting three keys | `.ai/repo/mesh/majordomus.yaml`; `test/cases/491_the_mesh_is_on_here.sh` |
+| this repository runs its own mesh, trusting the keys its declaration lists | `.ai/repo/mesh/majordomus.yaml`; `test/cases/491_the_mesh_is_on_here.sh` |
 | the board is in memory only | module comment of `apps/majordomus-cli/src/peers.rs` |
 | publication is verified against the public endpoint | `scripts/pages verify`; `curl -s https://majordomus.dev/build.json` |
 | the version is authored in one place and projected for the shell tool | `apps/majordomus-cli/src/release/version.rs`; `share/version.txt`; `scripts/ci/release-check`; gate `version-authored-once` |
@@ -1248,15 +1310,15 @@ place that answers it.
 
 | Question | Answer |
 |---|---|
-| Where does a command come from? | A clap variant in `apps/majordomus-cli/src/cli.rs` (Rust) or a case in `bin/majordomus` with its row in `share/commands.yaml` (shell). [The command line](#the-command-line-a-checked-second-declaration) |
-| Is it registered by hand or derived? | By hand, as a checked second declaration: closure and parity refuse a tree that disagrees with the registry. Same section |
+| Where does a command come from? | A clap variant in `apps/majordomus-cli/src/cli.rs` (Rust) or a case in `bin/majordomus` with its row in `share/commands.yaml` (shell); and for every capability, the generic `majordomus-cli run <id>`. [The command line](#the-command-line-a-checked-second-declaration) |
+| Is it registered by hand or derived? | A dedicated command by hand, as a checked second declaration — closure and parity fail a tree that disagrees with the registry; `run <id>` is derived. Same section |
 | Where does an HTTP route come from? | The capability's `HttpExposure`; the router asks the registry on every request. [HTTP](#http) |
 | How is OpenAPI made? | Walked from the registry by `http/openapi.rs`, schemas from the Rust types. [OpenAPI](#openapi) |
 | How does Swagger UI relate to the API? | It renders `/openapi.json` and holds nothing of its own. [Swagger UI](#swagger-ui) |
 | How does an AI worker get the same capability? | As the MCP tool or resource its exposure names, through the same executor. [MCP](#mcp) |
 | How does a person see it in the Cockpit? | The generic capability page and runner, form from the input schema. [The Cockpit](#the-cockpit) |
 | How is Cockpit navigation made? | Areas and routes are written; the catalogues inside them are derived. [Routes, navigation and order](#routes-navigation-and-order) |
-| Where do rule and doctrine pages come from? | The index and the doctrine registry, through `scripts/generate-site-data`; the Cockpit's object page. [Documentation and the website](#documentation-and-the-website) |
+| Where do rule and doctrine pages come from? | The index and the doctrine registry, through `scripts/generate-site-data`: `/rules/`, `/doctrines/`, `/adrs/`; the Cockpit's object page. [Documentation and the website](#documentation-and-the-website) |
 | How does a doctrine relate to rules? | A doctrine is a rule whose block names a validator; principles are rules it depends on. [Governance](#governance-what-each-document-kind-is) |
 | How does a rule relate to its validator? | Its `x-majordomus` block names it, and the mode is derived from what is named. [Governance](#governance-what-each-document-kind-is), under "A rule's shape" |
 | How does a validator relate to evidence? | A run is recorded in the ledger with its commit and digest, and judged against the tree. [Evidence](#evidence) |
@@ -1269,7 +1331,7 @@ place that answers it.
 | How is a handover made? | An authored body with derived front matter, resolved by worktree and branch. [Handover](#handover) |
 | How are execution waves derived? | Kahn layering of the issue dependency graph. [Planning](#planning) |
 | How does peer and mesh discovery work? | The board through MCP attachment and lease files; nodes through signed datagrams and rendezvous. [The peer board, overlap and the mesh](#the-peer-board-overlap-and-the-mesh) |
-| How do mesh data reach the surfaces? | Through `mesh.*` and `peers.*` capabilities, like everything else. [The mesh: who exists](#the-mesh-who-exists) |
+| How do mesh data reach the surfaces? | Through `mesh.*` and `peers.*` capabilities over HTTP, MCP, the Cockpit and `run`, like everything else. [The mesh: who exists](#the-mesh-who-exists) |
 | How is a scope collision derived? | Scopes compared as equal or nested paths; reported, and refused only for an exclusive mesh claim. [Overlap](#overlap-derived-advisory) |
 | How does a new capability reach the surfaces? | [What happens when a capability is added](#what-happens-when-a-capability-is-added) |
 | Where are the exceptions? | [Architecture debt](#architecture-debt) |
