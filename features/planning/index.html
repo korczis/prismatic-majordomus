@@ -333,6 +333,75 @@ effort or schedules dates.</p>
           </li>
         </ul><p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/capability/builtin/devtask.rs</p>
       </section>
+      <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a href="https://majordomus.dev/registry/modules/intents/" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">Intent</a>
+          <code class="font-mono text-xs text-body-subtle">intents</code>
+          <span class="ms-auto font-mono text-xs text-body-subtle">behaviorally verified</span>
+        </p>
+        <p class="mt-2 text-sm text-body">What must become true above the milestones that realise it: each intent&#39;s statement, invariants and satisfaction criteria, its stage derived from the plan&#39;s milestone status, and each criterion&#39;s state derived from the evidence ledger. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere.</p>
+        <ul class="mt-3 divide-y divide-default border-t border-default">
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/intents-coverage/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Which work carries which criterion, and why each issue exists</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span class="text-heading">$ majordomus intent coverage</span><span>GET /api/v1/intents/coverage</span><span>majordomus_intent_coverage</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/intents-list/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Every intent, with its derived stage</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span class="text-heading">$ majordomus intent list</span><span>GET /api/v1/intents</span><span>majordomus_intents</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/intents-preflight/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Which intent a piece of work serves</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span class="text-heading">$ majordomus intent preflight</span><span>GET /api/v1/intents/preflight</span><span>majordomus_intent_preflight</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/intents-record/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">One intent, with everything derived about it</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span class="text-heading">$ majordomus intent show</span><span>GET /api/v1/intents/record</span><span>majordomus_intent_record</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/intents-validate/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">What the intent model refuses</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span class="text-heading">$ majordomus intent validate</span><span>GET /api/v1/intents/validate</span><span>majordomus_intent_validate</span></p>
+          </li>
+        </ul><p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/capability/builtin/intents.rs</p>
+      </section>
+      <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a href="https://majordomus.dev/registry/modules/intent-realization/" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">Intent realization</a>
+          <code class="font-mono text-xs text-body-subtle">intent_realization</code>
+          <span class="ms-auto font-mono text-xs text-body-subtle">behaviorally verified</span>
+        </p>
+        <p class="mt-2 text-sm text-body">Which work realises which intent: every task of this checkout&#39;s ledger with the episodes, providers and handovers that carried it, every closed session record and every claim on the peer board, joined through the plan to the intents they serve, each link marked declared, observed, derived or inferred; each intent&#39;s unmet criteria with the issues serving them; and the drift between closed work and current evidence. Derived on every read and stored nowhere, so an intent outlives every session and provider that worked on it.</p>
+        <ul class="mt-3 divide-y divide-default border-t border-default">
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/intent-realization-explain/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Why an intent stands where it stands</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span class="text-heading">$ majordomus intent explain</span><span>GET /api/v1/intents/explain</span><span>majordomus_intent_explain</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/intent-realization-work/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Which work realises which intent, and what each still lacks</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span class="text-heading">$ majordomus intent realization</span><span>GET /api/v1/intents/realization</span><span>majordomus_intent_realization</span></p>
+          </li>
+        </ul><p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/capability/builtin/intent_realization.rs</p>
+      </section>
     </div>
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The commands that run it</h2>
     <ul class="mt-4 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
@@ -347,8 +416,9 @@ effort or schedules dates.</p>
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The objects it is made of</h2>
     <p class="mt-2 text-body">Kinds of the layer. Each is a schema, a source class and a file on disk; the number beside it is what this repository holds today, counted at build time.</p>
     <ul class="mt-4 flex flex-wrap gap-2">
-      <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5"><code class="font-mono text-sm text-heading">milestone</code><span class="font-mono text-xs text-body-subtle">22</span></li>
-      <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5"><code class="font-mono text-sm text-heading">issue</code><span class="font-mono text-xs text-body-subtle">239</span></li>
+      <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5"><code class="font-mono text-sm text-heading">milestone</code><span class="font-mono text-xs text-body-subtle">23</span></li>
+      <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5"><code class="font-mono text-sm text-heading">issue</code><span class="font-mono text-xs text-body-subtle">244</span></li>
+      <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5"><code class="font-mono text-sm text-heading">intent</code><span class="font-mono text-xs text-body-subtle">2</span></li>
     </ul>
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What it answers</h2>
     <p class="mt-2 text-body">Operational moments from the Why catalogue that name one of this feature's mechanisms. Nothing here was assigned: a moment appears because it names a rule, a command, a capability or a claim this feature also names.</p>
@@ -431,15 +501,17 @@ effort or schedules dates.</p>
   </div><aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
     <h2 class="text-sm font-semibold uppercase tracking-wide text-body-subtle">Counted at build time</h2>
     <dl class="mt-3 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">capabilities</dt><dd class="font-mono text-sm text-heading">14</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">MCP tools</dt><dd class="font-mono text-sm text-heading">14</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">HTTP routes</dt><dd class="font-mono text-sm text-heading">14</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">command-line paths</dt><dd class="font-mono text-sm text-heading">2</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">objects of its kinds</dt><dd class="font-mono text-sm text-heading">261</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">capabilities</dt><dd class="font-mono text-sm text-heading">21</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">MCP tools</dt><dd class="font-mono text-sm text-heading">21</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">HTTP routes</dt><dd class="font-mono text-sm text-heading">21</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">command-line paths</dt><dd class="font-mono text-sm text-heading">9</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">objects of its kinds</dt><dd class="font-mono text-sm text-heading">269</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">rules</dt><dd class="font-mono text-sm text-heading">3</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">claims</dt><dd class="font-mono text-sm text-heading">8</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">moments answered</dt><dd class="font-mono text-sm text-heading">6</dd></div>
     </dl>
+    <h2 class="mt-6 text-sm font-semibold uppercase tracking-wide text-body-subtle">In the Cockpit</h2>
+    <ul class="mt-3 space-y-1"><li><code class="font-mono text-xs text-body">/cockpit/intents</code> <span class="text-sm text-heading">Intents</span></li></ul>
     <h2 class="mt-6 text-sm font-semibold uppercase tracking-wide text-body-subtle">Read further</h2>
     <ul class="mt-3 space-y-2 text-sm"><li><a href="https://majordomus.dev/docs/planning/" class="text-fg-brand hover:underline">Planning — milestones, issues, and the graph between them</a></li><li><a href="https://majordomus.dev/docs/roadmap/" class="text-fg-brand hover:underline">The roadmap — milestones as a graph</a></li></ul>
     <h2 class="mt-6 text-sm font-semibold uppercase tracking-wide text-body-subtle">Next to it</h2>
@@ -517,7 +589,7 @@ effort or schedules dates.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/c457d857e72773bed3fd82622f4355bd7102394f" class="font-mono underline">c457d85</a> · inputs <span class="font-mono">adb1dea7eb32</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/a137c3fe144bd9eec284ed7aa4ddab88ce2de5cc" class="font-mono underline">a137c3f</a> · inputs <span class="font-mono">d1550afd75ff</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

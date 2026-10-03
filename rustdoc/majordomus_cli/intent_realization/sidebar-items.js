@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["REPRODUCE"],"enum":["IntentLinkProvenance","IntentLinkVia","IntentWorkKind"],"fn":["drift","explain","gather","issue_tokens","link","realize","tasks_from_ledger"],"struct":["IntentEpisode","IntentExplanation","IntentLink","IntentRealization","IntentRealizationView","IntentRealizedWork","IntentUnmetCriterion","IntentWorkRef","IntentWorkUnit"]};

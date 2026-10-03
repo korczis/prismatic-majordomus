@@ -167,16 +167,16 @@
 </div></div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">196</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">199</p>
       <p class="mt-1 text-sm text-body-subtle">commands</p>
     </div><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">172</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">175</p>
       <p class="mt-1 text-sm text-body-subtle">of them you can run</p>
     </div><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">1324</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">1341</p>
       <p class="mt-1 text-sm text-body-subtle">documented arguments</p>
     </div><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">196</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">201</p>
       <p class="mt-1 text-sm text-body-subtle">executed examples</p>
     </div></div>
 
@@ -856,9 +856,21 @@ Most of the task lifecycle (init, start, check, finish, doctor, ...) is the shel
       <span class="break-words font-mono text-sm text-heading">majordomus intent validate</span>
       <span class="break-words text-sm text-body sm:flex-1">Every finding over the intents; exit 10 when any is a failure</span>
       <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/intent/coverage/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus intent coverage</span>
+      <span class="break-words text-sm text-body sm:flex-1">Which work carries which criterion, and the reason every issue exists</span>
+      <span class="font-mono text-xs text-body-subtle">2 examples</span>
     </a></li><li><a href="https://majordomus.dev/docs/cli/intent/preflight/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
       <span class="break-words font-mono text-sm text-heading">majordomus intent preflight</span>
       <span class="break-words text-sm text-body sm:flex-1">Which intent the work on an issue, or on some paths, serves; exit 10 when it serves none</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/intent/realization/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus intent realization</span>
+      <span class="break-words text-sm text-body sm:flex-1">Which work realises which intent — tasks, episodes, providers, handovers, peer claims — each link with its provenance, and each intent&#39;s unmet criteria and drift; exit 10 when an intent whose milestones are all DONE is contradicted by its evidence</span>
+      <span class="font-mono text-xs text-body-subtle">2 examples</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/intent/explain/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus intent explain</span>
+      <span class="break-words text-sm text-body sm:flex-1">Why an intent stands where it stands: its stage, each criterion, the work realising it</span>
       <span class="font-mono text-xs text-body-subtle">1 example</span>
     </a></li><li><a href="https://majordomus.dev/docs/cli/delivery/" class="flex flex-col gap-1 px-4 py-3  hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
       <span class="break-words font-mono text-sm text-heading">majordomus delivery</span>
@@ -967,7 +979,7 @@ Most of the task lifecycle (init, start, check, finish, doctor, ...) is the shel
     </a></li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What makes this true</h2>
-  <p class="mt-2 max-w-3xl break-words text-sm text-body">Every command above is declared once, in <a href="https://github.com/korczis/prismatic-majordomus/blob/c457d857e72773bed3fd82622f4355bd7102394f/apps/majordomus-cli/src/cli.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/src/cli.rs</a>, together with its examples. The executable walks that declaration into <a href="https://github.com/korczis/prismatic-majordomus/blob/c457d857e72773bed3fd82622f4355bd7102394f/docs/generated/cli.json" class="break-all font-mono text-fg-brand underline inline-block py-1">docs/generated/cli.json</a>, and these pages, <code class="font-mono">--help</code> and <a href="https://github.com/korczis/prismatic-majordomus/blob/c457d857e72773bed3fd82622f4355bd7102394f/docs/generated/cli.md" class="break-all font-mono text-fg-brand underline inline-block py-1">docs/generated/cli.md</a> render it. A command a person can run cannot exist without an example: the executable's own validator refuses it, and the examples shown here are the argument vectors the crate's example tests execute against the built binary.</p>
+  <p class="mt-2 max-w-3xl break-words text-sm text-body">Every command above is declared once, in <a href="https://github.com/korczis/prismatic-majordomus/blob/a137c3fe144bd9eec284ed7aa4ddab88ce2de5cc/apps/majordomus-cli/src/cli.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/src/cli.rs</a>, together with its examples. The executable walks that declaration into <a href="https://github.com/korczis/prismatic-majordomus/blob/a137c3fe144bd9eec284ed7aa4ddab88ce2de5cc/docs/generated/cli.json" class="break-all font-mono text-fg-brand underline inline-block py-1">docs/generated/cli.json</a>, and these pages, <code class="font-mono">--help</code> and <a href="https://github.com/korczis/prismatic-majordomus/blob/a137c3fe144bd9eec284ed7aa4ddab88ce2de5cc/docs/generated/cli.md" class="break-all font-mono text-fg-brand underline inline-block py-1">docs/generated/cli.md</a> render it. A command a person can run cannot exist without an example: the executable's own validator refuses it, and the examples shown here are the argument vectors the crate's example tests execute against the built binary.</p>
   <p class="mt-3 max-w-3xl text-sm text-body">The whole command line on one page: <a href="https://majordomus.dev/registry/cli/" class="text-fg-brand underline">the registry's command-line page</a>. The task lifecycle (<code class="font-mono">init</code>, <code class="font-mono">start</code>, <code class="font-mono">check</code>, <code class="font-mono">finish</code>, <code class="font-mono">doctor</code>, ...) belongs to the <em>shell</em> tool <code class="font-mono">bin/majordomus</code>, a different program: see <a href="https://majordomus.dev/commands/" class="text-fg-brand underline">Commands</a> and its <a href="https://majordomus.dev/docs/cli-specification/" class="text-fg-brand underline">specification</a>.</p>
 </div>
 
@@ -1036,7 +1048,7 @@ Most of the task lifecycle (init, start, check, finish, doctor, ...) is the shel
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/c457d857e72773bed3fd82622f4355bd7102394f" class="font-mono underline">c457d85</a> · inputs <span class="font-mono">adb1dea7eb32</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/a137c3fe144bd9eec284ed7aa4ddab88ce2de5cc" class="font-mono underline">a137c3f</a> · inputs <span class="font-mono">d1550afd75ff</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

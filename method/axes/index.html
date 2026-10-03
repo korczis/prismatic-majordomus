@@ -225,13 +225,13 @@ build.</p>
     I[&quot;Intent&lt;br/&gt;&lt;small&gt;one task, started once&lt;/small&gt;&quot;]
     A0[&quot;Profile&lt;br/&gt;&lt;small&gt;4 profiles&lt;/small&gt;&quot;]
     A1[&quot;Workflow&lt;br/&gt;&lt;small&gt;4 workflows&lt;/small&gt;&quot;]
-    C[&quot;Capability&lt;br/&gt;&lt;small&gt;166 · declared once&lt;/small&gt;&quot;]
+    C[&quot;Capability&lt;br/&gt;&lt;small&gt;169 · declared once&lt;/small&gt;&quot;]
     I --&gt; A0 --&gt; A1 --&gt; C
-    S0[&quot;Command line&lt;br/&gt;&lt;small&gt;85 of 166&lt;/small&gt;&quot;]
+    S0[&quot;Command line&lt;br/&gt;&lt;small&gt;88 of 169&lt;/small&gt;&quot;]
     C --&gt; S0
-    S1[&quot;HTTP + OpenAPI&lt;br/&gt;&lt;small&gt;164 of 166&lt;/small&gt;&quot;]
+    S1[&quot;HTTP + OpenAPI&lt;br/&gt;&lt;small&gt;167 of 169&lt;/small&gt;&quot;]
     C --&gt; S1
-    S2[&quot;MCP tools and resources&lt;br/&gt;&lt;small&gt;160 of 166&lt;/small&gt;&quot;]
+    S2[&quot;MCP tools and resources&lt;br/&gt;&lt;small&gt;163 of 169&lt;/small&gt;&quot;]
     C --&gt; S2
     M([&quot;Model&lt;br/&gt;&lt;small&gt;chosen per run · named in no file of the layer&lt;/small&gt;&quot;])
     A1 -. &quot;executed by&quot; .-&gt; M</pre></div>
@@ -256,24 +256,24 @@ build.</p>
 <section class="mt-16" aria-labelledby="surfaces">
   <div class="mb-8 max-w-3xl">
     <p class="mb-2 font-mono text-xs uppercase tracking-widest text-fg-brand">03 / the surface axis</p>
-    <h2 id="surfaces" class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">166 capabilities, 3 interfaces, one declaration</h2>
+    <h2 id="surfaces" class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">169 capabilities, 3 interfaces, one declaration</h2>
     <p class="mt-3 text-base leading-relaxed text-body sm:text-lg">A surface is not a page someone builds. It is the exposure a capability declares, and the command line, the HTTP API with its OpenAPI document, and the MCP tools and resources are all read out of that one declaration. Nothing is registered anywhere a second time; a projection that disagrees with the registry fails the build.</p>
   </div>
   <dl class="grid gap-4 sm:grid-cols-3">
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
       <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">Command line</dt>
-      <dd class="mt-1"><span class="font-mono text-3xl font-semibold text-heading">85</span> <span class="font-mono text-xs text-body-subtle">of 166</span></dd>
+      <dd class="mt-1"><span class="font-mono text-3xl font-semibold text-heading">88</span> <span class="font-mono text-xs text-body-subtle">of 169</span></dd>
     </div>
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
       <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">HTTP + OpenAPI</dt>
-      <dd class="mt-1"><span class="font-mono text-3xl font-semibold text-heading">164</span> <span class="font-mono text-xs text-body-subtle">of 166</span></dd>
+      <dd class="mt-1"><span class="font-mono text-3xl font-semibold text-heading">167</span> <span class="font-mono text-xs text-body-subtle">of 169</span></dd>
     </div>
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
       <dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">MCP tools and resources</dt>
-      <dd class="mt-1"><span class="font-mono text-3xl font-semibold text-heading">160</span> <span class="font-mono text-xs text-body-subtle">of 166</span></dd>
+      <dd class="mt-1"><span class="font-mono text-3xl font-semibold text-heading">163</span> <span class="font-mono text-xs text-body-subtle">of 169</span></dd>
     </div>
   </dl>
-  <p class="mt-6 max-w-3xl text-body">The gaps are deliberate and visible, which is the difference between a derived matrix and a hand-kept one. 83 reach <span class="font-mono text-heading">cli + http + mcp</span>; 77 reach <span class="font-mono text-heading">http + mcp</span>; 4 reach <span class="font-mono text-heading">http</span>; 2 reach <span class="font-mono text-heading">cli</span>. Nobody has to remember to add a row.</p>
+  <p class="mt-6 max-w-3xl text-body">The gaps are deliberate and visible, which is the difference between a derived matrix and a hand-kept one. 86 reach <span class="font-mono text-heading">cli + http + mcp</span>; 77 reach <span class="font-mono text-heading">http + mcp</span>; 4 reach <span class="font-mono text-heading">http</span>; 2 reach <span class="font-mono text-heading">cli</span>. Nobody has to remember to add a row.</p>
   <div class="mt-6 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[34rem] text-start text-sm" tabindex="0">
       <thead class="border-b border-default bg-neutral-primary-soft font-mono text-xs uppercase tracking-wide text-body-subtle">
@@ -323,6 +323,13 @@ build.</p>
           <td class="px-4 py-2.5 text-end font-mono text-heading">5</td>
         </tr>
         <tr>
+          <th scope="row" class="px-4 py-2.5 text-start font-mono text-sm font-normal text-heading">intents</th>
+          <td class="px-4 py-2.5 text-end font-mono text-body">5</td>
+          <td class="px-4 py-2.5 text-end font-mono text-heading">5</td>
+          <td class="px-4 py-2.5 text-end font-mono text-heading">5</td>
+          <td class="px-4 py-2.5 text-end font-mono text-heading">5</td>
+        </tr>
+        <tr>
           <th scope="row" class="px-4 py-2.5 text-start font-mono text-sm font-normal text-heading">lifecycle</th>
           <td class="px-4 py-2.5 text-end font-mono text-body">5</td>
           <td class="px-4 py-2.5 text-end font-mono text-body-subtle">0</td>
@@ -363,13 +370,6 @@ build.</p>
           <td class="px-4 py-2.5 text-end font-mono text-heading">4</td>
           <td class="px-4 py-2.5 text-end font-mono text-fg-warning">3</td>
           <td class="px-4 py-2.5 text-end font-mono text-fg-warning">3</td>
-        </tr>
-        <tr>
-          <th scope="row" class="px-4 py-2.5 text-start font-mono text-sm font-normal text-heading">intents</th>
-          <td class="px-4 py-2.5 text-end font-mono text-body">4</td>
-          <td class="px-4 py-2.5 text-end font-mono text-heading">4</td>
-          <td class="px-4 py-2.5 text-end font-mono text-heading">4</td>
-          <td class="px-4 py-2.5 text-end font-mono text-heading">4</td>
         </tr>
         <tr>
           <th scope="row" class="px-4 py-2.5 text-start font-mono text-sm font-normal text-heading">objects</th>
@@ -519,6 +519,13 @@ build.</p>
           <td class="px-4 py-2.5 text-end font-mono text-heading">2</td>
         </tr>
         <tr>
+          <th scope="row" class="px-4 py-2.5 text-start font-mono text-sm font-normal text-heading">intent_realization</th>
+          <td class="px-4 py-2.5 text-end font-mono text-body">2</td>
+          <td class="px-4 py-2.5 text-end font-mono text-heading">2</td>
+          <td class="px-4 py-2.5 text-end font-mono text-heading">2</td>
+          <td class="px-4 py-2.5 text-end font-mono text-heading">2</td>
+        </tr>
+        <tr>
           <th scope="row" class="px-4 py-2.5 text-start font-mono text-sm font-normal text-heading">models</th>
           <td class="px-4 py-2.5 text-end font-mono text-body">2</td>
           <td class="px-4 py-2.5 text-end font-mono text-heading">2</td>
@@ -633,7 +640,7 @@ build.</p>
       </tbody>
     </table>
   </div>
-  <p class="mt-4 text-sm text-body-subtle">50 modules. Every row is a count over the registry the executable generates, never a mark someone typed. <a class="text-fg-brand underline" href="https://majordomus.dev/registry/capabilities/">Every capability, one page each</a>.</p>
+  <p class="mt-4 text-sm text-body-subtle">51 modules. Every row is a count over the registry the executable generates, never a mark someone typed. <a class="text-fg-brand underline" href="https://majordomus.dev/registry/capabilities/">Every capability, one page each</a>.</p>
 </section>
 
 </div>
@@ -703,7 +710,7 @@ build.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/c457d857e72773bed3fd82622f4355bd7102394f" class="font-mono underline">c457d85</a> · inputs <span class="font-mono">adb1dea7eb32</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/a137c3fe144bd9eec284ed7aa4ddab88ce2de5cc" class="font-mono underline">a137c3f</a> · inputs <span class="font-mono">d1550afd75ff</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

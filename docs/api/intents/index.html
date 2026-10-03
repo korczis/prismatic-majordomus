@@ -172,11 +172,11 @@
   <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="API sections">
     <p class="mb-2"><a href="https://majordomus.dev/docs/api/" class="font-mono text-xs uppercase tracking-wide text-fg-brand hover:underline">HTTP API index</a></p>
     <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">on this page</p>
-    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="#op-intents-list" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">intents.list</a></li><li><a href="#op-intents-preflight" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">intents.preflight</a></li><li><a href="#op-intents-record" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">intents.record</a></li><li><a href="#op-intents-validate" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">intents.validate</a></li><li><a href="#schemas" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Schemas</a></li>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="#op-intents-list" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">intents.list</a></li><li><a href="#op-intents-coverage" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">intents.coverage</a></li><li><a href="#op-intents-preflight" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">intents.preflight</a></li><li><a href="#op-intents-record" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">intents.record</a></li><li><a href="#op-intents-validate" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">intents.validate</a></li><li><a href="#schemas" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Schemas</a></li>
     </ul>
   </nav>
   <div class="min-w-0">
-    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/c457d857e72773bed3fd82622f4355bd7102394f/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p><section id="tag-intents" class="scroll-mt-24">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/a137c3fe144bd9eec284ed7aa4ddab88ce2de5cc/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p><section id="tag-intents" class="scroll-mt-24">
       <h2 class="font-mono text-xl font-semibold tracking-tight text-heading">intents</h2>
       <p class="mt-2 max-w-3xl text-sm text-body">What must become true above the milestones that realise it: each intent&#39;s statement, invariants and satisfaction criteria, its stage derived from the plan&#39;s milestone status, and each criterion&#39;s state derived from the evidence ledger. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere.</p><article id="op-intents-list" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-center gap-2">
@@ -192,7 +192,7 @@
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">MCP tool majordomus_intents</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">MCP resource {&quot;name&quot;: &quot;intents&quot;, &quot;uri&quot;: &quot;majordomus://intents&quot;}</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">$ intent list</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
   <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
-  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/intents&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Verified by <a href="https://github.com/korczis/prismatic-majordomus/blob/c457d857e72773bed3fd82622f4355bd7102394f/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/intents&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Verified by <a href="https://github.com/korczis/prismatic-majordomus/blob/a137c3fe144bd9eec284ed7aa4ddab88ce2de5cc/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
 
   <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
   <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -202,6 +202,50 @@
           <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
           <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/intents/#schema-IntentList" class="text-fg-brand hover:underline">IntentList</a></td>
           <td class="px-3 py-2 text-body">Every intent, with its derived stage: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
+<article id="op-intents-coverage" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/intents/coverage</code>
+    <a href="#op-intents-coverage" class="font-mono text-xs text-body-subtle hover:underline">intents.coverage</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">Which work carries which criterion, and why each issue exists</h3>
+  <p class="mt-1 break-words text-sm text-body">The plan read against the intents (ADR 0073): every criterion of every live intent with the live issues that serve it, the milestones they belong to, and its strength — covered, weakly covered when no serving issue requires evidence, observed when the recorded gap saw it already true, or uncovered when nothing in the plan will make it true — and every issue with the reason it exists: the criteria it serves, maintenance under a milestone no intent names, or unexplained under one that realises an intent.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">behaviorally_verified</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">MCP tool majordomus_intent_coverage</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">$ intent coverage</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/intents/coverage&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Verified by <a href="https://github.com/korczis/prismatic-majordomus/blob/a137c3fe144bd9eec284ed7aa4ddab88ce2de5cc/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/intents/#schema-IntentCoverage" class="text-fg-brand hover:underline">IntentCoverage</a></td>
+          <td class="px-3 py-2 text-body">Which work carries which criterion, and why each issue exists: the result.</td>
         </tr><tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
           <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
@@ -254,7 +298,7 @@
     </table>
   </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
   <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
-  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/intents/preflight?issue=I0001&amp;paths=&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Verified by <a href="https://github.com/korczis/prismatic-majordomus/blob/c457d857e72773bed3fd82622f4355bd7102394f/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/intents/preflight?issue=I0001&amp;paths=&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Verified by <a href="https://github.com/korczis/prismatic-majordomus/blob/a137c3fe144bd9eec284ed7aa4ddab88ce2de5cc/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
 
   <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
   <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -310,7 +354,7 @@
     </table>
   </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
   <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
-  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/intents/record?id=intent-lifecycle&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Verified by <a href="https://github.com/korczis/prismatic-majordomus/blob/c457d857e72773bed3fd82622f4355bd7102394f/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/intents/record?id=intent-lifecycle&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Verified by <a href="https://github.com/korczis/prismatic-majordomus/blob/a137c3fe144bd9eec284ed7aa4ddab88ce2de5cc/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
 
   <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
   <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -318,7 +362,7 @@
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
-          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/intents/#schema-IntentView" class="text-fg-brand hover:underline">IntentView</a></td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-IntentView" class="text-fg-brand hover:underline">IntentView</a></td>
           <td class="px-3 py-2 text-body">One intent, with everything derived about it: the result.</td>
         </tr><tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
@@ -354,7 +398,7 @@
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">MCP tool majordomus_intent_validate</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">$ intent validate</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
   <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
-  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/intents/validate&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Verified by <a href="https://github.com/korczis/prismatic-majordomus/blob/c457d857e72773bed3fd82622f4355bd7102394f/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/intents/validate&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Verified by <a href="https://github.com/korczis/prismatic-majordomus/blob/a137c3fe144bd9eec284ed7aa4ddab88ce2de5cc/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
 
   <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
   <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -386,123 +430,47 @@
 </article>
 </section><section id="schemas" class="mt-12 scroll-mt-24">
       <h2 class="text-xl font-semibold tracking-tight text-heading">Schemas</h2>
-      <p class="mt-2 text-sm text-body">The components only this tag's operations use. Each row is the type's own field, its doc comment the description; a type another page owns links there.</p><article id="schema-IntentCriterion" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+      <p class="mt-2 text-sm text-body">The components only this tag's operations use. Each row is the type's own field, its doc comment the description; a type another page owns links there.</p><article id="schema-IntentCoverage" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-    <h3 class="font-mono text-base font-semibold text-heading">IntentCriterion</h3>
+    <h3 class="font-mono text-base font-semibold text-heading">IntentCoverage</h3>
     <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
-  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One criterion with the evidence behind it: what the record declared, what the ledger says
-about it, whether that meets it, and the command that would produce the evidence again.</p>
-<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::intent::{IntentCriterion, IntentEvidenceState};</span></span>
-<span class="giallo-l"><span>let c = IntentCriterion {</span></span>
-<span class="giallo-l"><span>    id: &quot;stage-is-derived&quot;.into(),</span></span>
-<span class="giallo-l"><span>    criterion: &quot;the stage follows the plan&quot;.into(),</span></span>
-<span class="giallo-l"><span>    evidence: &quot;test&quot;.into(),</span></span>
-<span class="giallo-l"><span>    reference: &quot;apps/majordomus-cli/tests/intent.rs&quot;.into(),</span></span>
-<span class="giallo-l"><span>    state: IntentEvidenceState::NotRun,</span></span>
-<span class="giallo-l"><span>    met: false,</span></span>
-<span class="giallo-l"><span>    reproduce: None,</span></span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The whole derived coverage: every criterion of every live intent, every issue with the
+reason it exists, and every finding the two produced. Nothing here is stored; it is derived
+on each read from the intents and the plan.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::intent_plan::{IntentCoverage, IssueOrigin, IssuePurpose};</span></span>
+<span class="giallo-l"><span>let coverage = IntentCoverage {</span></span>
+<span class="giallo-l"><span>    criteria: vec![],</span></span>
+<span class="giallo-l"><span>    issues: vec![IssuePurpose {</span></span>
+<span class="giallo-l"><span>        issue: &quot;I0007&quot;.into(),</span></span>
+<span class="giallo-l"><span>        milestone: &quot;ops&quot;.into(),</span></span>
+<span class="giallo-l"><span>        origin: IssueOrigin::Maintenance,</span></span>
+<span class="giallo-l"><span>        serves: vec![],</span></span>
+<span class="giallo-l"><span>        intents: vec![],</span></span>
+<span class="giallo-l"><span>    }],</span></span>
+<span class="giallo-l"><span>    findings: vec![],</span></span>
 <span class="giallo-l"><span>};</span></span>
-<span class="giallo-l"><span>// nothing recorded is not a pass</span></span>
-<span class="giallo-l"><span>assert!(!c.met);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+<span class="giallo-l"><span>assert_eq!(coverage.failures(), 0);</span></span>
+<span class="giallo-l"><span>assert_eq!(coverage.purpose(&quot;I0007&quot;).unwrap().origin, IssueOrigin::Maintenance);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
-          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono font-semibold text-heading">criteria</td>
+          <td class="px-3 py-2 font-mono text-body">array of CriterionCoverage <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/shared/#schema-CriterionCoverage" class="text-fg-brand underline">CriterionCoverage</a></td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">Unique within the intent.</td>
+          <td class="px-3 py-2 text-body">Every criterion of every live intent, in intent then declaration order.</td>
         </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">criterion</td>
-          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono font-semibold text-heading">issues</td>
+          <td class="px-3 py-2 font-mono text-body">array of IssuePurpose <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/intents/#schema-IssuePurpose" class="text-fg-brand underline">IssuePurpose</a></td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">What is observably true when it is met.</td>
+          <td class="px-3 py-2 text-body">Every issue of the plan, in id order, with the reason it exists.</td>
         </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">evidence</td>
-          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono font-semibold text-heading">findings</td>
+          <td class="px-3 py-2 font-mono text-body">array of IntentFinding <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/shared/#schema-IntentFinding" class="text-fg-brand underline">IntentFinding</a></td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body"><code>test</code>, <code>claim</code>, <code>command</code> or <code>deployment</code>.</td>
-        </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">ref</td>
-          <td class="px-3 py-2 font-mono text-body">string</td>
-          <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">What the evidence names, as authored.</td>
-        </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
-          <td class="px-3 py-2 font-mono text-body">IntentEvidenceState <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/intents/#schema-IntentEvidenceState" class="text-fg-brand underline">IntentEvidenceState</a></td>
-          <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">Derived: what the evidence says.</td>
-        </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">met</td>
-          <td class="px-3 py-2 font-mono text-body">boolean</td>
-          <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">Derived: the state is <code>current</code>.</td>
-        </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">reproduce</td>
-          <td class="px-3 py-2 font-mono text-body">string | null</td>
-          <td class="px-3 py-2 font-mono text-body">no</td>
-          <td class="px-3 py-2 text-body">The command that produces the evidence again, when one is known.</td>
+          <td class="px-3 py-2 text-body">Every finding, in derivation order.</td>
         </tr></tbody>
     </table>
-  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/intents/#schema-IntentView" class="font-mono text-fg-brand underline">IntentView</a></p></article>
-<article id="schema-IntentEvidenceState" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-    <h3 class="font-mono text-base font-semibold text-heading">IntentEvidenceState</h3>
-    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;current&quot; | &quot;stale&quot; | &quot;failing&quot; | &quot;not_run&quot; | &quot;not_derivable&quot; | &quot;unresolved&quot;</span>
-  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What the evidence behind one criterion says, as a word. Only <code>Current</code> meets a criterion:
-a stale, failing, unrecorded or underivable reference never does, and neither does one that
-resolves to nothing.</p>
-<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::intent::IntentEvidenceState;</span></span>
-<span class="giallo-l"><span>assert_eq!(serde_json::to_string(&amp;IntentEvidenceState::NotRun).unwrap(), &quot;\&quot;not_run\&quot;&quot;);</span></span>
-<span class="giallo-l"><span>assert_ne!(IntentEvidenceState::Stale, IntentEvidenceState::Current);</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">current</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A passing run of the test that is in the tree now, or a claim proven or with its
-inputs unchanged since its passing run. The only state that meets a criterion.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">stale</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A passing run of a test whose source has changed since, or a claim whose inputs
-have.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">failing</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The latest recorded run did not pass.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">not_run</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The reference resolves and nothing has been recorded for it.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">not_derivable</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The reference resolves, and this kind of evidence (<code>command</code>, <code>deployment</code>) is not
-derivable from the ledger, so it never meets a criterion by itself.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unresolved</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The reference is empty or names nothing this repository holds.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/intents/#schema-IntentCriterion" class="font-mono text-fg-brand underline">IntentCriterion</a></p></article>
-<article id="schema-IntentFinding" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-    <h3 class="font-mono text-base font-semibold text-heading">IntentFinding</h3>
-    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
-  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One validation finding: its level, a stable code a reader greps for, the intent or milestone
-it is about, one line of what is wrong, and the command that shows it again.</p>
-<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::intent::{IntentFinding, FAIL};</span></span>
-<span class="giallo-l"><span>let f = IntentFinding {</span></span>
-<span class="giallo-l"><span>    level: FAIL.into(),</span></span>
-<span class="giallo-l"><span>    code: &quot;unknown_milestone&quot;.into(),</span></span>
-<span class="giallo-l"><span>    subject: &quot;intent-lifecycle&quot;.into(),</span></span>
-<span class="giallo-l"><span>    message: &quot;`no-such` is not a milestone&quot;.into(),</span></span>
-<span class="giallo-l"><span>    reproduce: &quot;majordomus intent validate&quot;.into(),</span></span>
-<span class="giallo-l"><span>};</span></span>
-<span class="giallo-l"><span>assert_eq!(f.level, &quot;FAIL&quot;);</span></span>
-<span class="giallo-l"><span>assert_eq!(f.reproduce, &quot;majordomus intent validate&quot;);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
-    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
-      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
-      <tbody><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">level</td>
-          <td class="px-3 py-2 font-mono text-body">string</td>
-          <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body"><code>FAIL</code> or <code>WARN</code>. A failure means the intent model is invalid.</td>
-        </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">code</td>
-          <td class="px-3 py-2 font-mono text-body">string</td>
-          <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">The stable code a reader greps for.</td>
-        </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">subject</td>
-          <td class="px-3 py-2 font-mono text-body">string</td>
-          <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">The intent or milestone the finding is about.</td>
-        </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">message</td>
-          <td class="px-3 py-2 font-mono text-body">string</td>
-          <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">What is wrong, in one line.</td>
-        </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">reproduce</td>
-          <td class="px-3 py-2 font-mono text-body">string</td>
-          <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">The command that shows it again.</td>
-        </tr></tbody>
-    </table>
-  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/intents/#schema-IntentValidation" class="font-mono text-fg-brand underline">IntentValidation</a></p></article>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/intents/#op-intents-coverage" class="font-mono text-fg-brand hover:underline">intents.coverage</a></p></article>
 <article id="schema-IntentList" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">IntentList</h3>
@@ -532,43 +500,12 @@ with, out of one derivation.</p>
           <td class="px-3 py-2 text-body">How many in each stage, keyed by the stage word.</td>
         </tr><tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold text-heading">intents</td>
-          <td class="px-3 py-2 font-mono text-body">array of IntentView <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/intents/#schema-IntentView" class="text-fg-brand underline">IntentView</a></td>
+          <td class="px-3 py-2 font-mono text-body">array of IntentView <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/shared/#schema-IntentView" class="text-fg-brand underline">IntentView</a></td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
           <td class="px-3 py-2 text-body">Every intent, in identity order.</td>
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/intents/#op-intents-list" class="font-mono text-fg-brand hover:underline">intents.list</a></p></article>
-<article id="schema-IntentMilestone" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-    <h3 class="font-mono text-base font-semibold text-heading">IntentMilestone</h3>
-    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
-  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One milestone an intent names, as the plan derives it. A milestone that does not resolve is
-carried with <code>resolved: false</code> rather than dropped, because a name that points at nothing is
-a finding and not an absence.</p>
-<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::intent::IntentMilestone;</span></span>
-<span class="giallo-l"><span>let named = IntentMilestone { id: &quot;no-such&quot;.into(), resolved: false, status: None };</span></span>
-<span class="giallo-l"><span>assert!(!named.resolved);</span></span>
-<span class="giallo-l"><span>assert!(named.status.is_none());</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
-    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
-      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
-      <tbody><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
-          <td class="px-3 py-2 font-mono text-body">string</td>
-          <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">The id the intent names.</td>
-        </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">resolved</td>
-          <td class="px-3 py-2 font-mono text-body">boolean</td>
-          <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">Whether the plan holds a milestone with that id.</td>
-        </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">status</td>
-          <td class="px-3 py-2 font-mono text-body">string | null</td>
-          <td class="px-3 py-2 font-mono text-body">no</td>
-          <td class="px-3 py-2 text-body">The status the plan derives for it; absent when it does not resolve.</td>
-        </tr></tbody>
-    </table>
-  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/intents/#schema-IntentView" class="font-mono text-fg-brand underline">IntentView</a></p></article>
 <article id="schema-IntentPreflight" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">IntentPreflight</h3>
@@ -646,7 +583,7 @@ each step named rather than asserted.</p>
           <td class="px-3 py-2 text-body">Its title.</td>
         </tr><tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold text-heading">stage</td>
-          <td class="px-3 py-2 font-mono text-body">IntentStage <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/intents/#schema-IntentStage" class="text-fg-brand underline">IntentStage</a></td>
+          <td class="px-3 py-2 font-mono text-body">IntentStage <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/shared/#schema-IntentStage" class="text-fg-brand underline">IntentStage</a></td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
           <td class="px-3 py-2 text-body">Its derived stage.</td>
         </tr><tr class="border-t border-default align-top">
@@ -662,15 +599,6 @@ each step named rather than asserted.</p>
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/intents/#schema-IntentPreflight" class="font-mono text-fg-brand underline">IntentPreflight</a></p></article>
-<article id="schema-IntentStage" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
-  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-    <h3 class="font-mono text-base font-semibold text-heading">IntentStage</h3>
-    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;declared&quot; | &quot;planned&quot; | &quot;executing&quot; | &quot;verifying&quot; | &quot;satisfied&quot; | &quot;cancelled&quot; | &quot;superseded&quot;</span>
-  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Where an intent stands, derived on every read and stored nowhere.</p>
-<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::intent::IntentStage;</span></span>
-<span class="giallo-l"><span>// one word every surface prints, and an order that follows the work</span></span>
-<span class="giallo-l"><span>assert_eq!(IntentStage::Executing.as_str(), &quot;executing&quot;);</span></span>
-<span class="giallo-l"><span>assert!(IntentStage::Declared &lt; IntentStage::Satisfied);</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">declared</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A named milestone does not resolve, or none is named.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">planned</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Every milestone resolves and none has started.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">executing</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A milestone is under way.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">verifying</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Every milestone that counts is DONE; satisfaction is not yet evidenced.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">satisfied</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Verifying, and every criterion has current evidence.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">cancelled</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The record says it was abandoned.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">superseded</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The record names the intent that replaced it.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/intents/#schema-IntentPreflightMatch" class="font-mono text-fg-brand underline">IntentPreflightMatch</a> <a href="https://majordomus.dev/docs/api/intents/#schema-IntentView" class="font-mono text-fg-brand underline">IntentView</a></p></article>
 <article id="schema-IntentValidation" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">IntentValidation</h3>
@@ -711,101 +639,68 @@ every finding with its level. Warnings are reported and do not make it invalid.<
           <td class="px-3 py-2 text-body">How many findings are warnings.</td>
         </tr><tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold text-heading">findings</td>
-          <td class="px-3 py-2 font-mono text-body">array of IntentFinding <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/intents/#schema-IntentFinding" class="text-fg-brand underline">IntentFinding</a></td>
+          <td class="px-3 py-2 font-mono text-body">array of IntentFinding <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/shared/#schema-IntentFinding" class="text-fg-brand underline">IntentFinding</a></td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
           <td class="px-3 py-2 text-body">Every finding.</td>
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/intents/#op-intents-validate" class="font-mono text-fg-brand hover:underline">intents.validate</a></p></article>
-<article id="schema-IntentView" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+<article id="schema-IssueOrigin" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-    <h3 class="font-mono text-base font-semibold text-heading">IntentView</h3>
+    <h3 class="font-mono text-base font-semibold text-heading">IssueOrigin</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;intent&quot; | &quot;maintenance&quot; | &quot;unexplained&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Why an issue exists: because it serves a criterion, because it is maintenance under a
+milestone no intent names, or because nobody said — which is a failure under an intent.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::intent_plan::IssueOrigin;</span></span>
+<span class="giallo-l"><span>assert_eq!(serde_json::to_string(&amp;IssueOrigin::Maintenance).unwrap(), &quot;\&quot;maintenance\&quot;&quot;);</span></span>
+<span class="giallo-l"><span>// work under no intent is legitimate and says so; it is never given an invented intent</span></span>
+<span class="giallo-l"><span>assert_ne!(IssueOrigin::Maintenance, IssueOrigin::Unexplained);</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">intent</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">It serves at least one criterion of a declared intent.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">maintenance</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Its milestone is named by no intent: maintenance or operational work, stated as such.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unexplained</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Its milestone realises an intent, but it names nothing it serves.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/intents/#schema-IssuePurpose" class="font-mono text-fg-brand underline">IssuePurpose</a></p></article>
+<article id="schema-IssuePurpose" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">IssuePurpose</h3>
     <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
-  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One intent, as its record declares it and as the plan and the ledger derive it: the
-statement and invariants as authored, each milestone with its derived status, each criterion
-with the state of its evidence, and the stage that follows from both.</p>
-<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::intent::{IntentStage, IntentView};</span></span>
-<span class="giallo-l"><span>let view = IntentView {</span></span>
-<span class="giallo-l"><span>    id: &quot;intent-lifecycle&quot;.into(),</span></span>
-<span class="giallo-l"><span>    title: &quot;Work is traceable to the intent it serves&quot;.into(),</span></span>
-<span class="giallo-l"><span>    statement: &quot;A reader can ask what work is for.&quot;.into(),</span></span>
-<span class="giallo-l"><span>    invariants: vec![&quot;no intent status is stored&quot;.into()],</span></span>
-<span class="giallo-l"><span>    stage: IntentStage::Declared,</span></span>
-<span class="giallo-l"><span>    milestones: vec![],</span></span>
-<span class="giallo-l"><span>    satisfaction: vec![],</span></span>
-<span class="giallo-l"><span>    met: 0,</span></span>
-<span class="giallo-l"><span>    governance: vec![&quot;adr:adr-0070&quot;.into()],</span></span>
-<span class="giallo-l"><span>    non_goals: vec![],</span></span>
-<span class="giallo-l"><span>    superseded_by: None,</span></span>
-<span class="giallo-l"><span>    source: &quot;.ai/repo/project/intents/intent-lifecycle.yaml&quot;.into(),</span></span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The answer to "why does this issue exist?": the criteria it declares it serves, the intents
+whose milestones contain it, and which of the three origins that adds up to.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::intent_plan::{IssueOrigin, IssuePurpose};</span></span>
+<span class="giallo-l"><span>let purpose = IssuePurpose {</span></span>
+<span class="giallo-l"><span>    issue: &quot;I1901&quot;.into(),</span></span>
+<span class="giallo-l"><span>    milestone: &quot;intent-planning&quot;.into(),</span></span>
+<span class="giallo-l"><span>    origin: IssueOrigin::Intent,</span></span>
+<span class="giallo-l"><span>    serves: vec![&quot;intent-planning#criteria-are-covered&quot;.into()],</span></span>
+<span class="giallo-l"><span>    intents: vec![&quot;intent-planning&quot;.into()],</span></span>
 <span class="giallo-l"><span>};</span></span>
-<span class="giallo-l"><span>// a record naming no milestone that resolves has not been planned</span></span>
-<span class="giallo-l"><span>assert_eq!(view.stage, IntentStage::Declared);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+<span class="giallo-l"><span>assert_eq!(purpose.origin, IssueOrigin::Intent);</span></span>
+<span class="giallo-l"><span>assert_eq!(purpose.serves.len(), 1);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">id</td>
+          <td class="px-3 py-2 font-mono font-semibold text-heading">issue</td>
           <td class="px-3 py-2 font-mono text-body">string</td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">The identity, which is also the file name.</td>
+          <td class="px-3 py-2 text-body">The issue id.</td>
         </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">title</td>
+          <td class="px-3 py-2 font-mono font-semibold text-heading">milestone</td>
           <td class="px-3 py-2 font-mono text-body">string</td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">One line.</td>
+          <td class="px-3 py-2 text-body">Its milestone.</td>
         </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">statement</td>
-          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono font-semibold text-heading">origin</td>
+          <td class="px-3 py-2 font-mono text-body">IssueOrigin <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/intents/#schema-IssueOrigin" class="text-fg-brand underline">IssueOrigin</a></td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">What must become true.</td>
+          <td class="px-3 py-2 text-body">Which kind of reason it has.</td>
         </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">invariants</td>
+          <td class="px-3 py-2 font-mono font-semibold text-heading">serves</td>
           <td class="px-3 py-2 font-mono text-body">array of string</td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">What must stay true.</td>
+          <td class="px-3 py-2 text-body">The <code>&lt;intent&gt;#&lt;criterion&gt;</code> references it declares, as declared.</td>
         </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">stage</td>
-          <td class="px-3 py-2 font-mono text-body">IntentStage <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/intents/#schema-IntentStage" class="text-fg-brand underline">IntentStage</a></td>
-          <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">Derived: the stage.</td>
-        </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">milestones</td>
-          <td class="px-3 py-2 font-mono text-body">array of IntentMilestone <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/intents/#schema-IntentMilestone" class="text-fg-brand underline">IntentMilestone</a></td>
-          <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">The milestones, each with its derived status.</td>
-        </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">satisfaction</td>
-          <td class="px-3 py-2 font-mono text-body">array of IntentCriterion <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/intents/#schema-IntentCriterion" class="text-fg-brand underline">IntentCriterion</a></td>
-          <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">The criteria, each with its evidence state.</td>
-        </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">met</td>
-          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
-          <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">Derived: how many criteria are met.</td>
-        </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">governance</td>
+          <td class="px-3 py-2 font-mono font-semibold text-heading">intents</td>
           <td class="px-3 py-2 font-mono text-body">array of string</td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">The governance a worker on this intent loads.</td>
-        </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">non_goals</td>
-          <td class="px-3 py-2 font-mono text-body">array of string</td>
-          <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">What is deliberately not required.</td>
-        </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">superseded_by</td>
-          <td class="px-3 py-2 font-mono text-body">string | null</td>
-          <td class="px-3 py-2 font-mono text-body">no</td>
-          <td class="px-3 py-2 text-body">The replacement, when the record names one.</td>
-        </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">source</td>
-          <td class="px-3 py-2 font-mono text-body">string</td>
-          <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">Repository-relative path of the record.</td>
+          <td class="px-3 py-2 text-body">The intents whose milestones include this issue's milestone, sorted.</td>
         </tr></tbody>
     </table>
-  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/intents/#op-intents-record" class="font-mono text-fg-brand hover:underline">intents.record</a> <a href="https://majordomus.dev/docs/api/intents/#schema-IntentList" class="font-mono text-fg-brand underline">IntentList</a></p></article>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/intents/#schema-IntentCoverage" class="font-mono text-fg-brand underline">IntentCoverage</a></p></article>
 </section>
   </div>
 </div>
@@ -877,7 +772,7 @@ with the state of its evidence, and the stage that follows from both.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/c457d857e72773bed3fd82622f4355bd7102394f" class="font-mono underline">c457d85</a> · inputs <span class="font-mono">adb1dea7eb32</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/a137c3fe144bd9eec284ed7aa4ddab88ce2de5cc" class="font-mono underline">a137c3f</a> · inputs <span class="font-mono">d1550afd75ff</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

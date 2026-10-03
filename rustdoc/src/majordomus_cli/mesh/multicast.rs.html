@@ -323,72 +323,77 @@
 <a href=#323 id=323 data-nosnippet>323</a>        // the manager's own tests (a_synthetic_provider_reaches_the_registry...) and by
 <a href=#324 id=324 data-nosnippet>324</a>        // the two-runtime rendezvous test in tests/mesh.rs; here they are a best-effort
 <a href=#325 id=325 data-nosnippet>325</a>        // observation, reported, never a failure.
-<a href=#326 id=326 data-nosnippet>326</a>        </span><span class="kw">let </span>port = {
-<a href=#327 id=327 data-nosnippet>327</a>            <span class="kw">let </span>probe = UdpSocket::bind((Ipv4Addr::LOCALHOST, <span class="number">0</span>)).unwrap();
-<a href=#328 id=328 data-nosnippet>328</a>            probe.local_addr().unwrap().port()
-<a href=#329 id=329 data-nosnippet>329</a>        };
-<a href=#330 id=330 data-nosnippet>330</a>        <span class="kw">let </span><span class="kw-2">mut </span>provider = MulticastProvider::new(MulticastConfig {
-<a href=#331 id=331 data-nosnippet>331</a>            port,
-<a href=#332 id=332 data-nosnippet>332</a>            interval_seconds: <span class="number">1</span>,
-<a href=#333 id=333 data-nosnippet>333</a>            ..MulticastConfig::default()
-<a href=#334 id=334 data-nosnippet>334</a>        });
-<a href=#335 id=335 data-nosnippet>335</a>        <span class="kw">let </span>(tx, rx) = std::sync::mpsc::channel();
-<a href=#336 id=336 data-nosnippet>336</a>        <span class="kw">let </span>stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(<span class="bool-val">false</span>));
-<a href=#337 id=337 data-nosnippet>337</a>        <span class="kw">let </span>ctx = <span class="kw">crate</span>::mesh::provider::ProviderContext {
-<a href=#338 id=338 data-nosnippet>338</a>            tx,
-<a href=#339 id=339 data-nosnippet>339</a>            stop: std::sync::Arc::clone(<span class="kw-2">&amp;</span>stop),
-<a href=#340 id=340 data-nosnippet>340</a>            beacon: std::sync::Arc::new(<span class="kw">crate</span>::mesh::provider::Beacon::new(
-<a href=#341 id=341 data-nosnippet>341</a>                std::sync::Arc::new(<span class="kw">crate</span>::mesh::identity::NodeIdentity::ephemeral().unwrap()),
-<a href=#342 id=342 data-nosnippet>342</a>                <span class="macro">vec!</span>[],
-<a href=#343 id=343 data-nosnippet>343</a>                <span class="macro">vec!</span>[],
-<a href=#344 id=344 data-nosnippet>344</a>                <span class="macro">vec!</span>[],
-<a href=#345 id=345 data-nosnippet>345</a>                <span class="string">"test"</span>,
-<a href=#346 id=346 data-nosnippet>346</a>            )),
-<a href=#347 id=347 data-nosnippet>347</a>        };
-<a href=#348 id=348 data-nosnippet>348</a>
-<a href=#349 id=349 data-nosnippet>349</a>        <span class="comment">// The one hard assertion: the provider comes up. A host that cannot bind the port
-<a href=#350 id=350 data-nosnippet>350</a>        // or join the group is a real failure of the provider's own contract.
-<a href=#351 id=351 data-nosnippet>351</a>        </span>provider.start(<span class="kw-2">&amp;</span>ctx).unwrap();
-<a href=#352 id=352 data-nosnippet>352</a>        <span class="macro">assert_eq!</span>(provider.status().state, MeshProviderState::Running);
-<a href=#353 id=353 data-nosnippet>353</a>        <span class="macro">assert_eq!</span>(provider.id(), <span class="string">"udp_multicast"</span>);
-<a href=#354 id=354 data-nosnippet>354</a>
-<a href=#355 id=355 data-nosnippet>355</a>        <span class="comment">// Best-effort: aim a datagram at the port and see whether the listener hands it
-<a href=#356 id=356 data-nosnippet>356</a>        // up. On a host that delivers it, assert it is well-formed; on one that does not,
-<a href=#357 id=357 data-nosnippet>357</a>        // observe the silence and move on — the socket bound, which is what was under test.
-<a href=#358 id=358 data-nosnippet>358</a>        //
-<a href=#359 id=359 data-nosnippet>359</a>        // The listener hears more than this datagram: the announcer sends the provider's own
-<a href=#360 id=360 data-nosnippet>360</a>        // beacon the moment it starts, and a host that routes multicast loops it back to this
-<a href=#361 id=361 data-nosnippet>361</a>        // socket, so the first datagram up was often that beacon, and the test failed on it
-<a href=#362 id=362 data-nosnippet>362</a>        // (master's rust job in run 36557029377, `left` the beacon's JSON). Datagrams that are
-<a href=#363 id=363 data-nosnippet>363</a>        // not this one are passed over.
-<a href=#364 id=364 data-nosnippet>364</a>        </span><span class="kw">let </span>sender = UdpSocket::bind((Ipv4Addr::LOCALHOST, <span class="number">0</span>)).unwrap();
-<a href=#365 id=365 data-nosnippet>365</a>        <span class="kw">let _ </span>= sender.send_to(<span class="string">b"a datagram for the listener"</span>, (Ipv4Addr::LOCALHOST, port));
-<a href=#366 id=366 data-nosnippet>366</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(heard) =
-<a href=#367 id=367 data-nosnippet>367</a>            heard_among(<span class="kw-2">&amp;</span>rx, <span class="string">b"a datagram for the listener"</span>, Duration::from_secs(<span class="number">2</span>))
-<a href=#368 id=368 data-nosnippet>368</a>        {
-<a href=#369 id=369 data-nosnippet>369</a>            <span class="macro">assert_eq!</span>(heard.source, MeshSource::UdpMulticast);
-<a href=#370 id=370 data-nosnippet>370</a>        }
-<a href=#371 id=371 data-nosnippet>371</a>
-<a href=#372 id=372 data-nosnippet>372</a>        <span class="comment">// Best-effort: the announcer transmits on a host with a multicast route. Where
-<a href=#373 id=373 data-nosnippet>373</a>        // there is none, send_to fails and the count stays zero; that is the network's
-<a href=#374 id=374 data-nosnippet>374</a>        // answer, not the provider's.
-<a href=#375 id=375 data-nosnippet>375</a>        </span><span class="kw">let </span>deadline = std::time::Instant::now() + Duration::from_secs(<span class="number">2</span>);
-<a href=#376 id=376 data-nosnippet>376</a>        <span class="kw">while </span>provider.status().sent == <span class="number">0 </span>&amp;&amp; std::time::Instant::now() &lt; deadline {
-<a href=#377 id=377 data-nosnippet>377</a>            std::thread::sleep(Duration::from_millis(<span class="number">50</span>));
-<a href=#378 id=378 data-nosnippet>378</a>        }
-<a href=#379 id=379 data-nosnippet>379</a>        <span class="comment">// Either it transmitted, or it did not for want of a route — both are consistent
-<a href=#380 id=380 data-nosnippet>380</a>        // with a Running provider. The status is readable either way, which is the invariant.
-<a href=#381 id=381 data-nosnippet>381</a>        </span><span class="kw">let _ </span>= provider.status().sent;
-<a href=#382 id=382 data-nosnippet>382</a>        stop.store(<span class="bool-val">true</span>, std::sync::atomic::Ordering::SeqCst);
-<a href=#383 id=383 data-nosnippet>383</a>    }
-<a href=#384 id=384 data-nosnippet>384</a>
-<a href=#385 id=385 data-nosnippet>385</a>    <span class="attr">#[test]
-<a href=#386 id=386 data-nosnippet>386</a>    </span><span class="kw">fn </span>a_garbled_group_is_refused_before_any_socket_opens() {
-<a href=#387 id=387 data-nosnippet>387</a>        <span class="kw">let </span>provider = MulticastProvider::new(MulticastConfig {
-<a href=#388 id=388 data-nosnippet>388</a>            group: <span class="string">"not-an-ip"</span>.into(),
-<a href=#389 id=389 data-nosnippet>389</a>            ..MulticastConfig::default()
-<a href=#390 id=390 data-nosnippet>390</a>        });
-<a href=#391 id=391 data-nosnippet>391</a>        <span class="macro">assert!</span>(provider.open().is_err());
-<a href=#392 id=392 data-nosnippet>392</a>    }
-<a href=#393 id=393 data-nosnippet>393</a>}
+<a href=#326 id=326 data-nosnippet>326</a>        //
+<a href=#327 id=327 data-nosnippet>327</a>        // The probe binds the wildcard the provider binds (bind_shared), so the port it
+<a href=#328 id=328 data-nosnippet>328</a>        // offers is free on every local address. A loopback probe may offer a port another
+<a href=#329 id=329 data-nosnippet>329</a>        // socket holds on a host address: macOS lets the provider's SO_REUSEADDR wildcard
+<a href=#330 id=330 data-nosnippet>330</a>        // bind share it, Linux refuses unless that other socket set SO_REUSEADDR too.
+<a href=#331 id=331 data-nosnippet>331</a>        </span><span class="kw">let </span>port = {
+<a href=#332 id=332 data-nosnippet>332</a>            <span class="kw">let </span>probe = UdpSocket::bind((Ipv4Addr::UNSPECIFIED, <span class="number">0</span>)).unwrap();
+<a href=#333 id=333 data-nosnippet>333</a>            probe.local_addr().unwrap().port()
+<a href=#334 id=334 data-nosnippet>334</a>        };
+<a href=#335 id=335 data-nosnippet>335</a>        <span class="kw">let </span><span class="kw-2">mut </span>provider = MulticastProvider::new(MulticastConfig {
+<a href=#336 id=336 data-nosnippet>336</a>            port,
+<a href=#337 id=337 data-nosnippet>337</a>            interval_seconds: <span class="number">1</span>,
+<a href=#338 id=338 data-nosnippet>338</a>            ..MulticastConfig::default()
+<a href=#339 id=339 data-nosnippet>339</a>        });
+<a href=#340 id=340 data-nosnippet>340</a>        <span class="kw">let </span>(tx, rx) = std::sync::mpsc::channel();
+<a href=#341 id=341 data-nosnippet>341</a>        <span class="kw">let </span>stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(<span class="bool-val">false</span>));
+<a href=#342 id=342 data-nosnippet>342</a>        <span class="kw">let </span>ctx = <span class="kw">crate</span>::mesh::provider::ProviderContext {
+<a href=#343 id=343 data-nosnippet>343</a>            tx,
+<a href=#344 id=344 data-nosnippet>344</a>            stop: std::sync::Arc::clone(<span class="kw-2">&amp;</span>stop),
+<a href=#345 id=345 data-nosnippet>345</a>            beacon: std::sync::Arc::new(<span class="kw">crate</span>::mesh::provider::Beacon::new(
+<a href=#346 id=346 data-nosnippet>346</a>                std::sync::Arc::new(<span class="kw">crate</span>::mesh::identity::NodeIdentity::ephemeral().unwrap()),
+<a href=#347 id=347 data-nosnippet>347</a>                <span class="macro">vec!</span>[],
+<a href=#348 id=348 data-nosnippet>348</a>                <span class="macro">vec!</span>[],
+<a href=#349 id=349 data-nosnippet>349</a>                <span class="macro">vec!</span>[],
+<a href=#350 id=350 data-nosnippet>350</a>                <span class="string">"test"</span>,
+<a href=#351 id=351 data-nosnippet>351</a>            )),
+<a href=#352 id=352 data-nosnippet>352</a>        };
+<a href=#353 id=353 data-nosnippet>353</a>
+<a href=#354 id=354 data-nosnippet>354</a>        <span class="comment">// The one hard assertion: the provider comes up. A host that cannot bind the port
+<a href=#355 id=355 data-nosnippet>355</a>        // or join the group is a real failure of the provider's own contract.
+<a href=#356 id=356 data-nosnippet>356</a>        </span>provider.start(<span class="kw-2">&amp;</span>ctx).unwrap();
+<a href=#357 id=357 data-nosnippet>357</a>        <span class="macro">assert_eq!</span>(provider.status().state, MeshProviderState::Running);
+<a href=#358 id=358 data-nosnippet>358</a>        <span class="macro">assert_eq!</span>(provider.id(), <span class="string">"udp_multicast"</span>);
+<a href=#359 id=359 data-nosnippet>359</a>
+<a href=#360 id=360 data-nosnippet>360</a>        <span class="comment">// Best-effort: aim a datagram at the port and see whether the listener hands it
+<a href=#361 id=361 data-nosnippet>361</a>        // up. On a host that delivers it, assert it is well-formed; on one that does not,
+<a href=#362 id=362 data-nosnippet>362</a>        // observe the silence and move on — the socket bound, which is what was under test.
+<a href=#363 id=363 data-nosnippet>363</a>        //
+<a href=#364 id=364 data-nosnippet>364</a>        // The listener hears more than this datagram: the announcer sends the provider's own
+<a href=#365 id=365 data-nosnippet>365</a>        // beacon the moment it starts, and a host that routes multicast loops it back to this
+<a href=#366 id=366 data-nosnippet>366</a>        // socket, so the first datagram up was often that beacon, and the test failed on it
+<a href=#367 id=367 data-nosnippet>367</a>        // (master's rust job in run 36557029377, `left` the beacon's JSON). Datagrams that are
+<a href=#368 id=368 data-nosnippet>368</a>        // not this one are passed over.
+<a href=#369 id=369 data-nosnippet>369</a>        </span><span class="kw">let </span>sender = UdpSocket::bind((Ipv4Addr::LOCALHOST, <span class="number">0</span>)).unwrap();
+<a href=#370 id=370 data-nosnippet>370</a>        <span class="kw">let _ </span>= sender.send_to(<span class="string">b"a datagram for the listener"</span>, (Ipv4Addr::LOCALHOST, port));
+<a href=#371 id=371 data-nosnippet>371</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(heard) =
+<a href=#372 id=372 data-nosnippet>372</a>            heard_among(<span class="kw-2">&amp;</span>rx, <span class="string">b"a datagram for the listener"</span>, Duration::from_secs(<span class="number">2</span>))
+<a href=#373 id=373 data-nosnippet>373</a>        {
+<a href=#374 id=374 data-nosnippet>374</a>            <span class="macro">assert_eq!</span>(heard.source, MeshSource::UdpMulticast);
+<a href=#375 id=375 data-nosnippet>375</a>        }
+<a href=#376 id=376 data-nosnippet>376</a>
+<a href=#377 id=377 data-nosnippet>377</a>        <span class="comment">// Best-effort: the announcer transmits on a host with a multicast route. Where
+<a href=#378 id=378 data-nosnippet>378</a>        // there is none, send_to fails and the count stays zero; that is the network's
+<a href=#379 id=379 data-nosnippet>379</a>        // answer, not the provider's.
+<a href=#380 id=380 data-nosnippet>380</a>        </span><span class="kw">let </span>deadline = std::time::Instant::now() + Duration::from_secs(<span class="number">2</span>);
+<a href=#381 id=381 data-nosnippet>381</a>        <span class="kw">while </span>provider.status().sent == <span class="number">0 </span>&amp;&amp; std::time::Instant::now() &lt; deadline {
+<a href=#382 id=382 data-nosnippet>382</a>            std::thread::sleep(Duration::from_millis(<span class="number">50</span>));
+<a href=#383 id=383 data-nosnippet>383</a>        }
+<a href=#384 id=384 data-nosnippet>384</a>        <span class="comment">// Either it transmitted, or it did not for want of a route — both are consistent
+<a href=#385 id=385 data-nosnippet>385</a>        // with a Running provider. The status is readable either way, which is the invariant.
+<a href=#386 id=386 data-nosnippet>386</a>        </span><span class="kw">let _ </span>= provider.status().sent;
+<a href=#387 id=387 data-nosnippet>387</a>        stop.store(<span class="bool-val">true</span>, std::sync::atomic::Ordering::SeqCst);
+<a href=#388 id=388 data-nosnippet>388</a>    }
+<a href=#389 id=389 data-nosnippet>389</a>
+<a href=#390 id=390 data-nosnippet>390</a>    <span class="attr">#[test]
+<a href=#391 id=391 data-nosnippet>391</a>    </span><span class="kw">fn </span>a_garbled_group_is_refused_before_any_socket_opens() {
+<a href=#392 id=392 data-nosnippet>392</a>        <span class="kw">let </span>provider = MulticastProvider::new(MulticastConfig {
+<a href=#393 id=393 data-nosnippet>393</a>            group: <span class="string">"not-an-ip"</span>.into(),
+<a href=#394 id=394 data-nosnippet>394</a>            ..MulticastConfig::default()
+<a href=#395 id=395 data-nosnippet>395</a>        });
+<a href=#396 id=396 data-nosnippet>396</a>        <span class="macro">assert!</span>(provider.open().is_err());
+<a href=#397 id=397 data-nosnippet>397</a>    }
+<a href=#398 id=398 data-nosnippet>398</a>}
 </code></pre></div></section></main></body></html>

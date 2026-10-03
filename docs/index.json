@@ -2,18 +2,18 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "c457d857e72773bed3fd82622f4355bd7102394f",
+  "commit": "a137c3fe144bd9eec284ed7aa4ddab88ce2de5cc",
   "source_version": "0.12.0",
-  "registry_fingerprint": "7c3f1c124379ae3ce8657678cb50be0d60feb1ceb0f08b5a0f11a02d6a790b84"
+  "registry_fingerprint": "55ac1857f74a8fa75dc3c82a8299764835d6496886bb87d9525eddf48db439ca"
  },
  "counts": {
-  "pages": 1794,
-  "capabilities": 1835,
-  "cli_commands": 85,
-  "http_routes": 164,
-  "mcp_tools": 160,
-  "mcp_resources": 1721,
-  "modules": 80
+  "pages": 1816,
+  "capabilities": 1855,
+  "cli_commands": 88,
+  "http_routes": 167,
+  "mcp_tools": 163,
+  "mcp_resources": 1738,
+  "modules": 83
  },
  "kinds": [
   {
@@ -22,7 +22,7 @@
    "route": "/adrs/",
    "title": "Decisions",
    "reason": null,
-   "count": 76
+   "count": 78
   },
   {
    "kind": "application",
@@ -70,7 +70,15 @@
    "route": "/context/",
    "title": null,
    "reason": null,
-   "count": 33
+   "count": 35
+  },
+  {
+   "kind": "critique",
+   "projection": "none",
+   "route": null,
+   "title": null,
+   "reason": "A critique is the adversarial pass over one intent's plan, written for the worker who must resolve its findings before work starts (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
+   "count": 1
   },
   {
    "kind": "deployment",
@@ -105,6 +113,14 @@
    "count": 27
   },
   {
+   "kind": "gap",
+   "projection": "none",
+   "route": null,
+   "title": null,
+   "reason": "A gap is what one worker observed of the repository against an intent's criteria at one commit (ADR 0073). It is a dated input to planning, superseded by the next observation, and the work it suggested is published on /plan/.",
+   "count": 1
+  },
+  {
    "kind": "implementation",
    "projection": "none",
    "route": null,
@@ -118,7 +134,7 @@
    "route": null,
    "title": null,
    "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` answers for the intent itself.",
-   "count": 1
+   "count": 2
   },
   {
    "kind": "issue",
@@ -126,7 +142,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 239
+   "count": 244
   },
   {
    "kind": "knowledge",
@@ -150,7 +166,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 22
+   "count": 23
   },
   {
    "kind": "moment",
@@ -198,7 +214,7 @@
    "route": "/rules/",
    "title": "Rules",
    "reason": null,
-   "count": 157
+   "count": 159
   },
   {
    "kind": "scope",
@@ -238,7 +254,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 336
+   "count": 338
   },
   {
    "kind": "use-case",
@@ -773,6 +789,22 @@
    "source": ".ai/repo/adrs/0071-a-feature-exists-only-when-delivery-is-computed-and-every-dimension-passes.md"
   },
   {
+   "route": "/adrs/adr-0073/",
+   "title": "An issue names the intent criterion it serves, and the coverage of every criterion is derived from the plan",
+   "description": "An issue names the intent criterion it serves, and the coverage of every criterion is derived from the plan",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0073",
+   "source": ".ai/repo/adrs/0073-an-issue-names-the-intent-criterion-it-serves-and-coverage-is-derived.md"
+  },
+  {
+   "route": "/adrs/adr-0075/",
+   "title": "Which work realises an intent is a join over the records the lifecycle already keeps, and closed work does not outrank evidence",
+   "description": "Which work realises an intent is a join over the records the lifecycle already keeps, and closed work does not outrank evidence",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0075",
+   "source": ".ai/repo/adrs/0075-intent-realization-is-a-join-and-closed-work-does-not-outrank-evidence.md"
+  },
+  {
    "route": "/adrs/adr-0076/",
    "title": "A skill is a capability only when something proves it — tested, documented, enforced and used are derived, never authored",
    "description": "A skill is a capability only when something proves it — tested, documented, enforced and used are derived, never authored",
@@ -1225,6 +1257,11 @@
    "route": "/docs/api/integration/",
    "title": "HTTP API: integration",
    "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network."
+  },
+  {
+   "route": "/docs/api/intent-realization/",
+   "title": "HTTP API: intent_realization",
+   "description": "Which work realises which intent: every task of this checkout's ledger with the episodes, providers and handovers that carried it, every closed session record and every claim on the peer board, joined through the plan to the intents they serve, each link marked declared, observed, derived or inferred; each intent's unmet criteria with the issues serving them; and the drift between closed work and current evidence. Derived on every read and stored nowhere, so an intent outlives every session and provider that worked on it."
   },
   {
    "route": "/docs/api/intents/",
@@ -1792,6 +1829,16 @@
    "description": "What must become true above the milestones: every intent with its stage derived from the plan and its satisfaction from the recorded evidence, one intent, the model's own validation, and which intent a piece of work serves"
   },
   {
+   "route": "/docs/cli/intent/coverage/",
+   "title": "majordomus intent coverage",
+   "description": "Which work carries which criterion, and the reason every issue exists"
+  },
+  {
+   "route": "/docs/cli/intent/explain/",
+   "title": "majordomus intent explain",
+   "description": "Why an intent stands where it stands: its stage, each criterion, the work realising it"
+  },
+  {
    "route": "/docs/cli/intent/list/",
    "title": "majordomus intent list",
    "description": "Every intent, with the stage derived from its milestones and its evidence"
@@ -1800,6 +1847,11 @@
    "route": "/docs/cli/intent/preflight/",
    "title": "majordomus intent preflight",
    "description": "Which intent the work on an issue, or on some paths, serves; exit 10 when it serves none"
+  },
+  {
+   "route": "/docs/cli/intent/realization/",
+   "title": "majordomus intent realization",
+   "description": "Which work realises which intent — tasks, episodes, providers, handovers, peer claims — each link with its provenance, and each intent's unmet criteria and drift; exit 10 when an intent whose milestones are all DONE is contradicted by its evidence"
   },
   {
    "route": "/docs/cli/intent/show/",
@@ -5392,6 +5444,26 @@
    "description": "Record one scenario in which a worker strays outside its scope, claims it is done, hands over, and is refused until the repository's own test passes; render that run on the homepage and on /challenge/; make README.md's first transcript a step of it; and verify the public site serves it after publication."
   },
   {
+   "route": "/plan/i1900/",
+   "title": "I1900 — An intent is a typed record whose stage and satisfaction are derived",
+   "description": "Deliver slice 1 of the intent-lifecycle milestone: the intent kind and schema, the read-only capabilities intent.list, intent.record, intent.validate and intent.preflight on every surface, and the intent-check gate."
+  },
+  {
+   "route": "/plan/i1901/",
+   "title": "I1901 — An issue names the intent criterion it serves, and coverage is derived",
+   "description": "Add `serves` to the issue record and derive, in intent_plan::coverage, the coverage of every intent criterion and the origin of every issue, reported by intent validate."
+  },
+  {
+   "route": "/plan/i1902/",
+   "title": "I1902 — The gap and the critique of an intent are typed records the plan is held to",
+   "description": "Add the gap and critique kinds, their schemas, and intent_review::review, so intent validate refuses an incomplete gap and execution on an uncritiqued plan."
+  },
+  {
+   "route": "/plan/i1903/",
+   "title": "I1903 — The work realising an intent is joined across episodes, providers and handovers",
+   "description": "Join every ledger task, closed session record and peer claim to the intents it realises with each link's provenance, record each episode's provider on the ledger, explain an intent's standing, and refuse closed work the evidence contradicts."
+  },
+  {
    "route": "/plan/i1945/",
    "title": "I1945 — The test-evidence decision and its plan are recorded",
    "description": "Record the test-evidence design as ADR 0087 with status proposed, create the milestone test-evidence, and give every slice of the design one issue, so that `majordomus plan` tracks the work and each slice is held to one written definition."
@@ -5497,9 +5569,19 @@
    "description": "Move the entry preflight's verification.tests check onto the freshness function and its verification.enforcement check onto the rules corpus verdict, ending the one known exception ADR 0087 names in decisions 3 and 4. It depends on PR #578 as well as on I1948, because the preflight exists only on #578."
   },
   {
+   "route": "/plan/i1966/",
+   "title": "I1966 — The composed graph is whole or its generation refuses",
+   "description": "Stop docs/generated/graph.json from silently dropping nodes and edges at the MAX_NODES cap. Either the cap is raised or removed under a measured size budget, or generation refuses a truncated graph and names the count and the cap. The committed graph must never be a prefix of the repository that still passes as whole."
+  },
+  {
    "route": "/plan/intent-lifecycle/",
    "title": "intent-lifecycle — Work is traceable to the intent it serves, and an intent is satisfied only by evidence",
    "description": "An intent is a typed record above the milestones that realise it: a statement, its invariants, and satisfaction criteria each naming the evidence that settles it. Its stage is derived from the plan's milestone status and its satisfaction from the evidence ledger, never stored. A gate refuses an intent that names no milestone or evidence that resolves to nothing, a session's preflight names the intent its work serves or refuses, the Cockpit shows intents with measured and enforced coverage of its scripts, and a milestone closes on GitHub only when the intents it serves are satisfied."
+  },
+  {
+   "route": "/plan/intent-planning/",
+   "title": "intent-planning — The plan of an intent is held to it before execution",
+   "description": "An issue names the intent criteria it serves; coverage of every criterion is derived from the plan and refused when a criterion has no work or work has no purpose. The gap a worker observed and the critique of the plan are typed records validated against the intent and the plan, and work does not start on an intent whose plan was never critiqued or has an open blocking finding."
   },
   {
    "route": "/plan/m000/",
@@ -5950,6 +6032,21 @@
    "route": "/registry/capabilities/integration-queue/",
    "title": "integration.queue",
    "description": "The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection's required checks and reviews, the blocking labels, the merge method), every open pull request's assessment in rank order — an actionable one with how long it has waited for the executor and how often another was chosen instead — the next merge, the pull requests that need master brought in, the starving ones, the tallies by disposition and lane, and the diagnostics, a stale observation first; beside it, who holds the base branch's integration lease and the last merge the executor recorded. `observed: false` with the reason when this checkout has recorded no observation."
+  },
+  {
+   "route": "/registry/capabilities/intent-realization-explain/",
+   "title": "intent_realization.explain",
+   "description": "One intent explained from the derivations alone: a sentence for its stage naming each milestone's derived status, a sentence per criterion naming its evidence state, the plan's coverage of it and the command that reproduces it, a sentence for the work and providers realising it, and each drift finding; beside them the derived intent, the coverage of its criteria, its realization and the work linked to it."
+  },
+  {
+   "route": "/registry/capabilities/intent-realization-work/",
+   "title": "intent_realization.work",
+   "description": "Every unit of work this checkout can see — ledger tasks with their episodes, providers and handovers, closed session records, peer claims — with every intent it realises through issue, milestone and criterion, each link's provenance (declared: the work cites the issue; observed: its episode moved the issue; derived: its branch names the issue; inferred: only an open issue's scope overlaps) or the first missing link; every intent with its unmet criteria and the issues serving each, the work and providers realising it, and its drift: closed_work_contradicted when every milestone is DONE and a criterion's evidence is stale or failing, closed_work_unproven when it never existed, criterion_closed_unmet when every serving issue is DONE and the criterion is not met. Live work serving no intent is a warning."
+  },
+  {
+   "route": "/registry/capabilities/intents-coverage/",
+   "title": "intents.coverage",
+   "description": "The plan read against the intents (ADR 0073): every criterion of every live intent with the live issues that serve it, the milestones they belong to, and its strength — covered, weakly covered when no serving issue requires evidence, observed when the recorded gap saw it already true, or uncovered when nothing in the plan will make it true — and every issue with the reason it exists: the criteria it serves, maintenance under a milestone no intent names, or unexplained under one that realises an intent."
   },
   {
    "route": "/registry/capabilities/intents-list/",
@@ -6585,6 +6682,11 @@
    "route": "/registry/modules/integration/",
    "title": "Pull-request integration",
    "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network."
+  },
+  {
+   "route": "/registry/modules/intent-realization/",
+   "title": "Intent realization",
+   "description": "Which work realises which intent: every task of this checkout's ledger with the episodes, providers and handovers that carried it, every closed session record and every claim on the peer board, joined through the plan to the intents they serve, each link marked declared, observed, derived or inferred; each intent's unmet criteria with the issues serving them; and the drift between closed work and current evidence. Derived on every read and stored nowhere, so an intent outlives every session and provider that worked on it."
   },
   {
    "route": "/registry/modules/intents/",
@@ -7228,6 +7330,14 @@
    "source": ".ai/repo/rules/project/a-number-names-one-case.v1.md"
   },
   {
+   "route": "/rules/project-a-plan-carries-the-intent-it-serves-1/",
+   "title": "A plan carries the intent it serves, and is reviewed before it is executed",
+   "description": "A plan carries the intent it serves, and is reviewed before it is executed",
+   "kind": "rule",
+   "id": "majordomus://rule/project.a-plan-carries-the-intent-it-serves@1",
+   "source": ".ai/repo/rules/project/a-plan-carries-the-intent-it-serves.v1.md"
+  },
+  {
    "route": "/rules/project-a-provider-capability-cites-its-evidence-1/",
    "title": "A provider capability is declared once, with the citation it was verified from",
    "description": "A provider capability is declared once, with the citation it was verified from",
@@ -7274,6 +7384,14 @@
    "kind": "rule",
    "id": "majordomus://rule/project.advisors-are-optional@1",
    "source": ".ai/repo/rules/project/advisors-are-optional.v1.md"
+  },
+  {
+   "route": "/rules/project-an-intent-outlives-its-sessions-1/",
+   "title": "An intent outlives the sessions and providers that realise it, and closed work does not outrank evidence",
+   "description": "An intent outlives the sessions and providers that realise it, and closed work does not outrank evidence",
+   "kind": "rule",
+   "id": "majordomus://rule/project.an-intent-outlives-its-sessions@1",
+   "source": ".ai/repo/rules/project/an-intent-outlives-its-sessions.v1.md"
   },
   {
    "route": "/rules/project-benchmarkable-commands-1/",
@@ -7990,7 +8108,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 0.12.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.12.0, built from commit c457d857e72773bed3fd82622f4355bd7102394f: the public items of the library and of the executable, and the source they were built from."
+   "description": "The rustdoc reference of majordomus-cli 0.12.0, built from commit a137c3fe144bd9eec284ed7aa4ddab88ce2de5cc: the public items of the library and of the executable, and the source they were built from."
   },
   {
    "route": "/rustdoc/majordomus/",
@@ -8106,6 +8224,11 @@
    "route": "/rustdoc/majordomus_cli/capability/builtin/health/",
    "title": "majordomus_cli::capability::builtin::health - Rust",
    "description": "The `health` module: whether what this process serves is healthy, answered by the engines that already decide it rather than by checks written a second time here."
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/capability/builtin/intent_realization/",
+   "title": "majordomus_cli::capability::builtin::intent_realization - Rust",
+   "description": "The `intent_realization` module: which work realises which intent, and why an intent stands where it stands."
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/intents/",
@@ -8671,6 +8794,21 @@
    "route": "/rustdoc/majordomus_cli/intent/",
    "title": "majordomus_cli::intent - Rust",
    "description": "Intents: what must become true above the milestones that realise it, and whether the recorded evidence says it has."
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/intent_plan/",
+   "title": "majordomus_cli::intent_plan - Rust",
+   "description": "Intent coverage: which work makes which intent criterion true, derived from the plan."
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/intent_realization/",
+   "title": "majordomus_cli::intent_realization - Rust",
+   "description": "Intent realization: which work realises which intent, through which sessions and providers, how each link is known, and what the intent still lacks."
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/intent_review/",
+   "title": "majordomus_cli::intent_review - Rust",
+   "description": "The two planning records an intent is held to before execution: the gap and the critique."
   },
   {
    "route": "/rustdoc/majordomus_cli/lease/",

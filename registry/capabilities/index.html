@@ -933,8 +933,42 @@
       <span class="rounded border border-default px-1 text-body">cli</span>
       
     </span>
+  </a></li></ul><h2 class="mt-8 text-xl font-semibold tracking-tight text-heading"><a href="https://majordomus.dev/registry/modules/intent-realization/" class="font-mono hover:underline">intent_realization</a> <span class="text-base font-normal text-body">Intent realization</span></h2>
+<ul class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><li><a href="https://majordomus.dev/registry/capabilities/intent-realization-explain/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <code class="break-all font-mono font-semibold text-heading">intent_realization.explain</code>
+    <span class="mt-1 break-words text-sm text-body">One intent explained from the derivations alone: a sentence for its stage naming each milestone&#39;s derived status, a sentence per criterion naming its evidence state, the plan&#39;s coverage of it and the command that reproduces it, a sentence for the work and providers realising it, and each drift finding; beside them the derived intent, the coverage of its criteria, its realization and the work linked to it.</span>
+    <span class="mt-3 flex flex-wrap gap-1 font-mono text-xs">
+      <span class="rounded border border-default bg-neutral-secondary-medium px-1 text-heading">query</span>
+      <span class="rounded border border-default px-1 text-body">behaviorally_verified</span>
+      <span class="rounded border border-default px-1 text-body">mcp</span>
+      <span class="rounded border border-default px-1 text-body">http</span>
+      <span class="rounded border border-default px-1 text-body">cli</span>
+      
+    </span>
+  </a></li><li><a href="https://majordomus.dev/registry/capabilities/intent-realization-work/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <code class="break-all font-mono font-semibold text-heading">intent_realization.work</code>
+    <span class="mt-1 break-words text-sm text-body">Every unit of work this checkout can see — ledger tasks with their episodes, providers and handovers, closed session records, peer claims — with every intent it realises through issue, milestone and criterion, each link&#39;s provenance (declared: the work cites the issue; observed: its episode moved the issue; derived: its branch names the issue; inferred: only an open issue&#39;s scope overlaps) or the first missing link; every intent with its unmet criteria and the issues serving each, the work and providers realising it, and its drift: closed_work_contradicted when every milestone is DONE and a criterion&#39;s evidence is stale or failing, closed_work_unproven when it never existed, criterion_closed_unmet when every serving issue is DONE and the criterion is not met. Live work serving no intent is a warning.</span>
+    <span class="mt-3 flex flex-wrap gap-1 font-mono text-xs">
+      <span class="rounded border border-default bg-neutral-secondary-medium px-1 text-heading">query</span>
+      <span class="rounded border border-default px-1 text-body">behaviorally_verified</span>
+      <span class="rounded border border-default px-1 text-body">mcp</span>
+      <span class="rounded border border-default px-1 text-body">http</span>
+      <span class="rounded border border-default px-1 text-body">cli</span>
+      
+    </span>
   </a></li></ul><h2 class="mt-8 text-xl font-semibold tracking-tight text-heading"><a href="https://majordomus.dev/registry/modules/intents/" class="font-mono hover:underline">intents</a> <span class="text-base font-normal text-body">Intent</span></h2>
-<ul class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><li><a href="https://majordomus.dev/registry/capabilities/intents-list/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+<ul class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><li><a href="https://majordomus.dev/registry/capabilities/intents-coverage/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <code class="break-all font-mono font-semibold text-heading">intents.coverage</code>
+    <span class="mt-1 break-words text-sm text-body">The plan read against the intents (ADR 0073): every criterion of every live intent with the live issues that serve it, the milestones they belong to, and its strength — covered, weakly covered when no serving issue requires evidence, observed when the recorded gap saw it already true, or uncovered when nothing in the plan will make it true — and every issue with the reason it exists: the criteria it serves, maintenance under a milestone no intent names, or unexplained under one that realises an intent.</span>
+    <span class="mt-3 flex flex-wrap gap-1 font-mono text-xs">
+      <span class="rounded border border-default bg-neutral-secondary-medium px-1 text-heading">query</span>
+      <span class="rounded border border-default px-1 text-body">behaviorally_verified</span>
+      <span class="rounded border border-default px-1 text-body">mcp</span>
+      <span class="rounded border border-default px-1 text-body">http</span>
+      <span class="rounded border border-default px-1 text-body">cli</span>
+      
+    </span>
+  </a></li><li><a href="https://majordomus.dev/registry/capabilities/intents-list/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
     <code class="break-all font-mono font-semibold text-heading">intents.list</code>
     <span class="mt-1 break-words text-sm text-body">Every intent the project model declares, each with the status the plan derives for its milestones, the state of the evidence behind each satisfaction criterion, and the stage those two derive: declared, planned, executing, verifying or satisfied — or cancelled or superseded, when the record says so.</span>
     <span class="mt-3 flex flex-wrap gap-1 font-mono text-xs">
@@ -2115,7 +2149,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/c457d857e72773bed3fd82622f4355bd7102394f" class="font-mono underline">c457d85</a> · inputs <span class="font-mono">adb1dea7eb32</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/a137c3fe144bd9eec284ed7aa4ddab88ce2de5cc" class="font-mono underline">a137c3f</a> · inputs <span class="font-mono">d1550afd75ff</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

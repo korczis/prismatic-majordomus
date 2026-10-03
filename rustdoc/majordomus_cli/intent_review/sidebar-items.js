@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CRITIQUE","GAP"],"enum":["ConditionState","CritiqueClass","ResolutionState"],"fn":["observed_satisfied","review"],"struct":["CritiqueFinding","CritiqueRecord","GapCondition","GapObservation","GapRecord","GapWork"]};

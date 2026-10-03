@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["module"],"struct":["IntentExplainInput","IntentRealizationInput"]};

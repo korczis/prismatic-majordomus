@@ -393,6 +393,10 @@
     I1516[&quot;I1516&lt;br/&gt;The adapter composes a projected body in one place&quot;]:::active
     I1520[&quot;I1520&lt;br/&gt;A step that runs out of time says so itself&quot;]:::active
     I1600[&quot;I1600&lt;br/&gt;The challenge is one recorded run, and every public surface replays it&quot;]:::ready
+    I1900[&quot;I1900&lt;br/&gt;An intent is a typed record whose stage and satisfaction are derived&quot;]:::ready
+    I1901[&quot;I1901&lt;br/&gt;An issue names the intent criterion it serves, and coverage is derived&quot;]:::blocked
+    I1902[&quot;I1902&lt;br/&gt;The gap and the critique of an intent are typed records the plan is held to&quot;]:::blocked
+    I1903[&quot;I1903&lt;br/&gt;The work realising an intent is joined across episodes, providers and handovers&quot;]:::blocked
     I1945[&quot;I1945&lt;br/&gt;The test-evidence decision and its plan are recorded&quot;]:::active
     I1946[&quot;I1946&lt;br/&gt;The verdict words are status words of the design system&quot;]:::ready
     I1947[&quot;I1947&lt;br/&gt;Every feature reaches a test, and every use case has a feature&quot;]:::ready
@@ -414,6 +418,7 @@
     I1963[&quot;I1963&lt;br/&gt;Evidence is tested end to end&quot;]:::blocked
     I1964[&quot;I1964&lt;br/&gt;The evidence reference is documented and held to the tree&quot;]:::blocked
     I1965[&quot;I1965&lt;br/&gt;The entry preflight reads the one verdict&quot;]:::blocked
+    I1966[&quot;I1966&lt;br/&gt;The composed graph is whole or its generation refuses&quot;]:::ready
     I0001 --&gt; I0002
     I0002 --&gt; I0003
     I0003 --&gt; I0004
@@ -696,6 +701,9 @@
     I1505 --&gt; I1506
     I1505 --&gt; I1507
     I1506 --&gt; I1507
+    I1900 --&gt; I1901
+    I1900 --&gt; I1903
+    I1901 --&gt; I1902
     I1946 --&gt; I1958
     I1946 --&gt; I1960
     I1947 --&gt; I1952
@@ -2432,6 +2440,24 @@
           <td class="px-4 py-2"><span class="mj-badge mj-badge--blocked">BLOCKED</span>
  <span class="text-heading">Issues, milestones, sessions and peers reach the Cockpit as projections</span></td>
         </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1900/" class="text-fg-brand underline">I1900</a> <span class="mj-badge mj-badge--ready">READY</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1901/" class="text-fg-brand underline">I1901</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--blocked">BLOCKED</span>
+ <span class="text-heading">An issue names the intent criterion it serves, and coverage is derived</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1900/" class="text-fg-brand underline">I1900</a> <span class="mj-badge mj-badge--ready">READY</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1903/" class="text-fg-brand underline">I1903</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--blocked">BLOCKED</span>
+ <span class="text-heading">The work realising an intent is joined across episodes, providers and handovers</span></td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1901/" class="text-fg-brand underline">I1901</a> <span class="mj-badge mj-badge--blocked">BLOCKED</span>
+</td>
+          <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1902/" class="text-fg-brand underline">I1902</a></td>
+          <td class="px-4 py-2"><span class="mj-badge mj-badge--blocked">BLOCKED</span>
+ <span class="text-heading">The gap and the critique of an intent are typed records the plan is held to</span></td>
+        </tr><tr class="border-t border-default align-top">
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1946/" class="text-fg-brand underline">I1946</a> <span class="mj-badge mj-badge--ready">READY</span>
 </td>
           <td class="px-4 py-2 font-mono text-xs"><a href="https://majordomus.dev/plan/i1958/" class="text-fg-brand underline">I1958</a></td>
@@ -2654,12 +2680,14 @@
 </a><a href="https://majordomus.dev/plan/i1516/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1516</span><span class="mj-badge mj-badge--active">ACTIVE</span>
 </a><a href="https://majordomus.dev/plan/i1520/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1520</span><span class="mj-badge mj-badge--active">ACTIVE</span>
 </a><a href="https://majordomus.dev/plan/i1600/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1600</span><span class="mj-badge mj-badge--ready">READY</span>
+</a><a href="https://majordomus.dev/plan/i1900/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1900</span><span class="mj-badge mj-badge--ready">READY</span>
 </a><a href="https://majordomus.dev/plan/i1945/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1945</span><span class="mj-badge mj-badge--active">ACTIVE</span>
 </a><a href="https://majordomus.dev/plan/i1946/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1946</span><span class="mj-badge mj-badge--ready">READY</span>
 </a><a href="https://majordomus.dev/plan/i1947/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1947</span><span class="mj-badge mj-badge--ready">READY</span>
 </a><a href="https://majordomus.dev/plan/i1948/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1948</span><span class="mj-badge mj-badge--ready">READY</span>
 </a><a href="https://majordomus.dev/plan/i1949/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1949</span><span class="mj-badge mj-badge--ready">READY</span>
 </a><a href="https://majordomus.dev/plan/i1950/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1950</span><span class="mj-badge mj-badge--ready">READY</span>
+</a><a href="https://majordomus.dev/plan/i1966/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1966</span><span class="mj-badge mj-badge--ready">READY</span>
 </a></p>
     </div>
     <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
@@ -2693,6 +2721,8 @@
 </a><a href="https://majordomus.dev/plan/i1402/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1402</span><span class="mj-badge mj-badge--done">DONE</span>
 </a><a href="https://majordomus.dev/plan/i1405/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1405</span><span class="mj-badge mj-badge--done">DONE</span>
 </a><a href="https://majordomus.dev/plan/i1505/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1505</span><span class="mj-badge mj-badge--blocked">BLOCKED</span>
+</a><a href="https://majordomus.dev/plan/i1901/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1901</span><span class="mj-badge mj-badge--blocked">BLOCKED</span>
+</a><a href="https://majordomus.dev/plan/i1903/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1903</span><span class="mj-badge mj-badge--blocked">BLOCKED</span>
 </a><a href="https://majordomus.dev/plan/i1951/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1951</span><span class="mj-badge mj-badge--blocked">BLOCKED</span>
 </a><a href="https://majordomus.dev/plan/i1952/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1952</span><span class="mj-badge mj-badge--blocked">BLOCKED</span>
 </a><a href="https://majordomus.dev/plan/i1965/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1965</span><span class="mj-badge mj-badge--blocked">BLOCKED</span>
@@ -2733,6 +2763,7 @@
 </a><a href="https://majordomus.dev/plan/i1304/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1304</span><span class="mj-badge mj-badge--blocked">BLOCKED</span>
 </a><a href="https://majordomus.dev/plan/i1404/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1404</span><span class="mj-badge mj-badge--done">DONE</span>
 </a><a href="https://majordomus.dev/plan/i1506/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1506</span><span class="mj-badge mj-badge--blocked">BLOCKED</span>
+</a><a href="https://majordomus.dev/plan/i1902/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1902</span><span class="mj-badge mj-badge--blocked">BLOCKED</span>
 </a><a href="https://majordomus.dev/plan/i1953/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1953</span><span class="mj-badge mj-badge--blocked">BLOCKED</span>
 </a><a href="https://majordomus.dev/plan/i1954/" class="inline-flex items-center gap-1.5 rounded-base border border-default px-2 py-1 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I1954</span><span class="mj-badge mj-badge--blocked">BLOCKED</span>
 </a></p>
@@ -2970,7 +3001,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/c457d857e72773bed3fd82622f4355bd7102394f" class="font-mono underline">c457d85</a> · inputs <span class="font-mono">adb1dea7eb32</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.12.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/a137c3fe144bd9eec284ed7aa4ddab88ce2de5cc" class="font-mono underline">a137c3f</a> · inputs <span class="font-mono">d1550afd75ff</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

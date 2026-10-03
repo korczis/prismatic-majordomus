@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CoverageStrength","IssueOrigin"],"fn":["coverage","serves_token"],"struct":["CoveringIssue","CriterionCoverage","IntentCoverage","IntentOutline","IssuePurpose"]};

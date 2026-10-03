@@ -240,61 +240,106 @@
 <a href=#240 id=240 data-nosnippet>240</a>        <span class="macro">assert!</span>(disabled.destinations().unwrap().is_empty());
 <a href=#241 id=241 data-nosnippet>241</a>    }
 <a href=#242 id=242 data-nosnippet>242</a>
-<a href=#243 id=243 data-nosnippet>243</a>    <span class="attr">#[test]
-<a href=#244 id=244 data-nosnippet>244</a>    </span><span class="kw">fn </span>the_sole_udp_provider_listens_and_counts_what_it_hears() {
-<a href=#245 id=245 data-nosnippet>245</a>        <span class="kw">let </span>port = {
-<a href=#246 id=246 data-nosnippet>246</a>            <span class="kw">let </span>probe = UdpSocket::bind((Ipv4Addr::LOCALHOST, <span class="number">0</span>)).unwrap();
-<a href=#247 id=247 data-nosnippet>247</a>            probe.local_addr().unwrap().port()
-<a href=#248 id=248 data-nosnippet>248</a>        };
-<a href=#249 id=249 data-nosnippet>249</a>        <span class="kw">let </span><span class="kw-2">mut </span>provider = BroadcastProvider::new(
-<a href=#250 id=250 data-nosnippet>250</a>            BroadcastConfig {
-<a href=#251 id=251 data-nosnippet>251</a>                mode: BroadcastMode::Auto,
-<a href=#252 id=252 data-nosnippet>252</a>                port,
-<a href=#253 id=253 data-nosnippet>253</a>                interval_seconds: <span class="number">1</span>,
-<a href=#254 id=254 data-nosnippet>254</a>                ..BroadcastConfig::default()
-<a href=#255 id=255 data-nosnippet>255</a>            },
-<a href=#256 id=256 data-nosnippet>256</a>            <span class="bool-val">true</span>,
-<a href=#257 id=257 data-nosnippet>257</a>        );
-<a href=#258 id=258 data-nosnippet>258</a>        <span class="kw">let </span>(tx, rx) = std::sync::mpsc::channel();
-<a href=#259 id=259 data-nosnippet>259</a>        <span class="kw">let </span>stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(<span class="bool-val">false</span>));
-<a href=#260 id=260 data-nosnippet>260</a>        <span class="kw">let </span>ctx = <span class="kw">crate</span>::mesh::provider::ProviderContext {
-<a href=#261 id=261 data-nosnippet>261</a>            tx,
-<a href=#262 id=262 data-nosnippet>262</a>            stop: std::sync::Arc::clone(<span class="kw-2">&amp;</span>stop),
-<a href=#263 id=263 data-nosnippet>263</a>            beacon: std::sync::Arc::new(<span class="kw">crate</span>::mesh::provider::Beacon::new(
-<a href=#264 id=264 data-nosnippet>264</a>                std::sync::Arc::new(<span class="kw">crate</span>::mesh::identity::NodeIdentity::ephemeral().unwrap()),
-<a href=#265 id=265 data-nosnippet>265</a>                <span class="macro">vec!</span>[],
-<a href=#266 id=266 data-nosnippet>266</a>                <span class="macro">vec!</span>[],
-<a href=#267 id=267 data-nosnippet>267</a>                <span class="macro">vec!</span>[],
-<a href=#268 id=268 data-nosnippet>268</a>                <span class="string">"test"</span>,
-<a href=#269 id=269 data-nosnippet>269</a>            )),
-<a href=#270 id=270 data-nosnippet>270</a>        };
-<a href=#271 id=271 data-nosnippet>271</a>        <span class="comment">// Hard: the sole UDP provider binds its listening socket and reaches Running.
-<a href=#272 id=272 data-nosnippet>272</a>        </span>provider.start(<span class="kw-2">&amp;</span>ctx).unwrap();
-<a href=#273 id=273 data-nosnippet>273</a>        <span class="macro">assert_eq!</span>(provider.status().state, MeshProviderState::Running);
-<a href=#274 id=274 data-nosnippet>274</a>        <span class="comment">// Best-effort: a host that delivers the loopback datagram hands it up as a
-<a href=#275 id=275 data-nosnippet>275</a>        // broadcast observation; one that does not route it leaves the channel silent.
-<a href=#276 id=276 data-nosnippet>276</a>        // The bound socket was the invariant under test; delivery is the network's to
-<a href=#277 id=277 data-nosnippet>277</a>        // grant, and the round-trip is proven host-independently in tests/mesh.rs.
-<a href=#278 id=278 data-nosnippet>278</a>        </span><span class="kw">let </span>sender = UdpSocket::bind((Ipv4Addr::LOCALHOST, <span class="number">0</span>)).unwrap();
-<a href=#279 id=279 data-nosnippet>279</a>        <span class="kw">let _ </span>= sender.send_to(<span class="string">b"aimed at the port"</span>, (Ipv4Addr::LOCALHOST, port));
-<a href=#280 id=280 data-nosnippet>280</a>        <span class="kw">if let </span><span class="prelude-val">Ok</span>(heard) = rx.recv_timeout(Duration::from_secs(<span class="number">2</span>)) {
-<a href=#281 id=281 data-nosnippet>281</a>            <span class="macro">assert_eq!</span>(heard.source, MeshSource::UdpBroadcast);
-<a href=#282 id=282 data-nosnippet>282</a>        }
-<a href=#283 id=283 data-nosnippet>283</a>        stop.store(<span class="bool-val">true</span>, std::sync::atomic::Ordering::SeqCst);
-<a href=#284 id=284 data-nosnippet>284</a>    }
-<a href=#285 id=285 data-nosnippet>285</a>
-<a href=#286 id=286 data-nosnippet>286</a>    <span class="attr">#[test]
-<a href=#287 id=287 data-nosnippet>287</a>    </span><span class="kw">fn </span>a_malformed_network_is_an_error_naming_it() {
-<a href=#288 id=288 data-nosnippet>288</a>        <span class="kw">let </span>provider = BroadcastProvider::new(
-<a href=#289 id=289 data-nosnippet>289</a>            BroadcastConfig {
-<a href=#290 id=290 data-nosnippet>290</a>                mode: BroadcastMode::Explicit,
-<a href=#291 id=291 data-nosnippet>291</a>                networks: <span class="macro">vec!</span>[<span class="string">"not-an-address"</span>.into()],
-<a href=#292 id=292 data-nosnippet>292</a>                ..BroadcastConfig::default()
-<a href=#293 id=293 data-nosnippet>293</a>            },
-<a href=#294 id=294 data-nosnippet>294</a>            <span class="bool-val">false</span>,
-<a href=#295 id=295 data-nosnippet>295</a>        );
-<a href=#296 id=296 data-nosnippet>296</a>        <span class="kw">let </span>error = provider.destinations().unwrap_err().to_string();
-<a href=#297 id=297 data-nosnippet>297</a>        <span class="macro">assert!</span>(error.contains(<span class="string">"not-an-address"</span>), <span class="string">"{error}"</span>);
-<a href=#298 id=298 data-nosnippet>298</a>    }
-<a href=#299 id=299 data-nosnippet>299</a>}
+<a href=#243 id=243 data-nosnippet>243</a>    <span class="doccomment">/// How many fresh ports a listening start may try before the test gives up.
+<a href=#244 id=244 data-nosnippet>244</a>    </span><span class="kw">const </span>BIND_ATTEMPTS: usize = <span class="number">8</span>;
+<a href=#245 id=245 data-nosnippet>245</a>
+<a href=#246 id=246 data-nosnippet>246</a>    <span class="doccomment">/// The text the host gives a bind that finds its address taken, read from a real
+<a href=#247 id=247 data-nosnippet>247</a>    /// collision rather than written down: it differs between operating systems.
+<a href=#248 id=248 data-nosnippet>248</a>    </span><span class="kw">fn </span>address_in_use() -&gt; String {
+<a href=#249 id=249 data-nosnippet>249</a>        <span class="kw">let </span>held = UdpSocket::bind((Ipv4Addr::UNSPECIFIED, <span class="number">0</span>)).unwrap();
+<a href=#250 id=250 data-nosnippet>250</a>        <span class="kw">let </span>refused = UdpSocket::bind(held.local_addr().unwrap()).unwrap_err();
+<a href=#251 id=251 data-nosnippet>251</a>        <span class="macro">assert_eq!</span>(refused.kind(), std::io::ErrorKind::AddrInUse, <span class="string">"{refused}"</span>);
+<a href=#252 id=252 data-nosnippet>252</a>        refused.to_string()
+<a href=#253 id=253 data-nosnippet>253</a>    }
+<a href=#254 id=254 data-nosnippet>254</a>
+<a href=#255 id=255 data-nosnippet>255</a>    <span class="doccomment">/// Start a listening provider on a port nobody holds, and hand back the provider with
+<a href=#256 id=256 data-nosnippet>256</a>    /// the port it holds.
+<a href=#257 id=257 data-nosnippet>257</a>    ///
+<a href=#258 id=258 data-nosnippet>258</a>    /// A free port can only be found by binding port 0 and letting it go, and between the
+<a href=#259 id=259 data-nosnippet>259</a>    /// release and the provider's own bind any process on the host may take it: under load
+<a href=#260 id=260 data-nosnippet>260</a>    /// one did, and the test failed with "cannot bind udp port 55932: Address already in
+<a href=#261 id=261 data-nosnippet>261</a>    /// use". The provider binding the port it was configured with is what is under test,
+<a href=#262 id=262 data-nosnippet>262</a>    /// so the port stays a configured one; a start that lost that race, and only that
+<a href=#263 id=263 data-nosnippet>263</a>    /// race, is retried with a fresh port a bounded number of times. Any other failure of
+<a href=#264 id=264 data-nosnippet>264</a>    /// the start fails the test at once.
+<a href=#265 id=265 data-nosnippet>265</a>    </span><span class="kw">fn </span>start_listening_on_a_free_port(
+<a href=#266 id=266 data-nosnippet>266</a>        ctx: <span class="kw-2">&amp;</span><span class="kw">crate</span>::mesh::provider::ProviderContext,
+<a href=#267 id=267 data-nosnippet>267</a>    ) -&gt; (BroadcastProvider, u16) {
+<a href=#268 id=268 data-nosnippet>268</a>        <span class="kw">let </span>in_use = address_in_use();
+<a href=#269 id=269 data-nosnippet>269</a>        <span class="kw">let </span><span class="kw-2">mut </span>lost = Vec::new();
+<a href=#270 id=270 data-nosnippet>270</a>        <span class="kw">for _ in </span><span class="number">0</span>..BIND_ATTEMPTS {
+<a href=#271 id=271 data-nosnippet>271</a>            <span class="kw">let </span>port = {
+<a href=#272 id=272 data-nosnippet>272</a>                <span class="kw">let </span>probe = UdpSocket::bind((Ipv4Addr::UNSPECIFIED, <span class="number">0</span>)).unwrap();
+<a href=#273 id=273 data-nosnippet>273</a>                probe.local_addr().unwrap().port()
+<a href=#274 id=274 data-nosnippet>274</a>            };
+<a href=#275 id=275 data-nosnippet>275</a>            <span class="kw">let </span><span class="kw-2">mut </span>provider = BroadcastProvider::new(
+<a href=#276 id=276 data-nosnippet>276</a>                BroadcastConfig {
+<a href=#277 id=277 data-nosnippet>277</a>                    mode: BroadcastMode::Auto,
+<a href=#278 id=278 data-nosnippet>278</a>                    port,
+<a href=#279 id=279 data-nosnippet>279</a>                    interval_seconds: <span class="number">1</span>,
+<a href=#280 id=280 data-nosnippet>280</a>                    ..BroadcastConfig::default()
+<a href=#281 id=281 data-nosnippet>281</a>                },
+<a href=#282 id=282 data-nosnippet>282</a>                <span class="bool-val">true</span>,
+<a href=#283 id=283 data-nosnippet>283</a>            );
+<a href=#284 id=284 data-nosnippet>284</a>            <span class="kw">match </span>provider.start(ctx) {
+<a href=#285 id=285 data-nosnippet>285</a>                <span class="prelude-val">Ok</span>(()) =&gt; {
+<a href=#286 id=286 data-nosnippet>286</a>                    <span class="comment">// Hard: the sole UDP provider binds its listening socket and reaches
+<a href=#287 id=287 data-nosnippet>287</a>                    // Running.
+<a href=#288 id=288 data-nosnippet>288</a>                    </span><span class="macro">assert_eq!</span>(provider.status().state, MeshProviderState::Running);
+<a href=#289 id=289 data-nosnippet>289</a>                    <span class="kw">return </span>(provider, port);
+<a href=#290 id=290 data-nosnippet>290</a>                }
+<a href=#291 id=291 data-nosnippet>291</a>                <span class="prelude-val">Err</span>(e)
+<a href=#292 id=292 data-nosnippet>292</a>                    <span class="kw">if </span>e.to_string()
+<a href=#293 id=293 data-nosnippet>293</a>                        .ends_with(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"cannot bind udp port {port}: {in_use}"</span>)) =&gt;
+<a href=#294 id=294 data-nosnippet>294</a>                {
+<a href=#295 id=295 data-nosnippet>295</a>                    lost.push(port);
+<a href=#296 id=296 data-nosnippet>296</a>                }
+<a href=#297 id=297 data-nosnippet>297</a>                <span class="prelude-val">Err</span>(e) =&gt; <span class="macro">panic!</span>(<span class="string">"the listening provider did not start: {e}"</span>),
+<a href=#298 id=298 data-nosnippet>298</a>            }
+<a href=#299 id=299 data-nosnippet>299</a>        }
+<a href=#300 id=300 data-nosnippet>300</a>        <span class="macro">panic!</span>(<span class="string">"every port probed was taken before the provider could bind it: {lost:?}"</span>);
+<a href=#301 id=301 data-nosnippet>301</a>    }
+<a href=#302 id=302 data-nosnippet>302</a>
+<a href=#303 id=303 data-nosnippet>303</a>    <span class="attr">#[test]
+<a href=#304 id=304 data-nosnippet>304</a>    </span><span class="kw">fn </span>the_sole_udp_provider_listens_and_counts_what_it_hears() {
+<a href=#305 id=305 data-nosnippet>305</a>        <span class="kw">let </span>(tx, rx) = std::sync::mpsc::channel();
+<a href=#306 id=306 data-nosnippet>306</a>        <span class="kw">let </span>stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(<span class="bool-val">false</span>));
+<a href=#307 id=307 data-nosnippet>307</a>        <span class="kw">let </span>ctx = <span class="kw">crate</span>::mesh::provider::ProviderContext {
+<a href=#308 id=308 data-nosnippet>308</a>            tx,
+<a href=#309 id=309 data-nosnippet>309</a>            stop: std::sync::Arc::clone(<span class="kw-2">&amp;</span>stop),
+<a href=#310 id=310 data-nosnippet>310</a>            beacon: std::sync::Arc::new(<span class="kw">crate</span>::mesh::provider::Beacon::new(
+<a href=#311 id=311 data-nosnippet>311</a>                std::sync::Arc::new(<span class="kw">crate</span>::mesh::identity::NodeIdentity::ephemeral().unwrap()),
+<a href=#312 id=312 data-nosnippet>312</a>                <span class="macro">vec!</span>[],
+<a href=#313 id=313 data-nosnippet>313</a>                <span class="macro">vec!</span>[],
+<a href=#314 id=314 data-nosnippet>314</a>                <span class="macro">vec!</span>[],
+<a href=#315 id=315 data-nosnippet>315</a>                <span class="string">"test"</span>,
+<a href=#316 id=316 data-nosnippet>316</a>            )),
+<a href=#317 id=317 data-nosnippet>317</a>        };
+<a href=#318 id=318 data-nosnippet>318</a>        <span class="kw">let </span>(_provider, port) = start_listening_on_a_free_port(<span class="kw-2">&amp;</span>ctx);
+<a href=#319 id=319 data-nosnippet>319</a>        <span class="comment">// Best-effort: a host that delivers the loopback datagram hands it up as a
+<a href=#320 id=320 data-nosnippet>320</a>        // broadcast observation; one that does not route it leaves the channel silent.
+<a href=#321 id=321 data-nosnippet>321</a>        // The bound socket was the invariant under test; delivery is the network's to
+<a href=#322 id=322 data-nosnippet>322</a>        // grant, and the round-trip is proven host-independently in tests/mesh.rs.
+<a href=#323 id=323 data-nosnippet>323</a>        </span><span class="kw">let </span>sender = UdpSocket::bind((Ipv4Addr::LOCALHOST, <span class="number">0</span>)).unwrap();
+<a href=#324 id=324 data-nosnippet>324</a>        <span class="kw">let _ </span>= sender.send_to(<span class="string">b"aimed at the port"</span>, (Ipv4Addr::LOCALHOST, port));
+<a href=#325 id=325 data-nosnippet>325</a>        <span class="kw">if let </span><span class="prelude-val">Ok</span>(heard) = rx.recv_timeout(Duration::from_secs(<span class="number">2</span>)) {
+<a href=#326 id=326 data-nosnippet>326</a>            <span class="macro">assert_eq!</span>(heard.source, MeshSource::UdpBroadcast);
+<a href=#327 id=327 data-nosnippet>327</a>        }
+<a href=#328 id=328 data-nosnippet>328</a>        stop.store(<span class="bool-val">true</span>, std::sync::atomic::Ordering::SeqCst);
+<a href=#329 id=329 data-nosnippet>329</a>    }
+<a href=#330 id=330 data-nosnippet>330</a>
+<a href=#331 id=331 data-nosnippet>331</a>    <span class="attr">#[test]
+<a href=#332 id=332 data-nosnippet>332</a>    </span><span class="kw">fn </span>a_malformed_network_is_an_error_naming_it() {
+<a href=#333 id=333 data-nosnippet>333</a>        <span class="kw">let </span>provider = BroadcastProvider::new(
+<a href=#334 id=334 data-nosnippet>334</a>            BroadcastConfig {
+<a href=#335 id=335 data-nosnippet>335</a>                mode: BroadcastMode::Explicit,
+<a href=#336 id=336 data-nosnippet>336</a>                networks: <span class="macro">vec!</span>[<span class="string">"not-an-address"</span>.into()],
+<a href=#337 id=337 data-nosnippet>337</a>                ..BroadcastConfig::default()
+<a href=#338 id=338 data-nosnippet>338</a>            },
+<a href=#339 id=339 data-nosnippet>339</a>            <span class="bool-val">false</span>,
+<a href=#340 id=340 data-nosnippet>340</a>        );
+<a href=#341 id=341 data-nosnippet>341</a>        <span class="kw">let </span>error = provider.destinations().unwrap_err().to_string();
+<a href=#342 id=342 data-nosnippet>342</a>        <span class="macro">assert!</span>(error.contains(<span class="string">"not-an-address"</span>), <span class="string">"{error}"</span>);
+<a href=#343 id=343 data-nosnippet>343</a>    }
+<a href=#344 id=344 data-nosnippet>344</a>}
 </code></pre></div></section></main></body></html>

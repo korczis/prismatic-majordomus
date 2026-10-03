@@ -80,7 +80,7 @@
 <a href=#80 id=80 data-nosnippet>80</a>        <span class="self">self</span>.subtitle = <span class="prelude-val">Some</span>(subtitle.into());
 <a href=#81 id=81 data-nosnippet>81</a>        <span class="self">self
 <a href=#82 id=82 data-nosnippet>82</a>    </span>}
-<a href=#83 id=83 data-nosnippet>83</a>    <span class="kw">fn </span>trail(<span class="kw-2">mut </span><span class="self">self</span>, trail: Vec&lt;(<span class="kw-2">&amp;</span>str, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;)&gt;) -&gt; <span class="self">Self </span>{
+<a href=#83 id=83 data-nosnippet>83</a>    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>trail(<span class="kw-2">mut </span><span class="self">self</span>, trail: Vec&lt;(<span class="kw-2">&amp;</span>str, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;)&gt;) -&gt; <span class="self">Self </span>{
 <a href=#84 id=84 data-nosnippet>84</a>        <span class="self">self</span>.breadcrumbs = trail
 <a href=#85 id=85 data-nosnippet>85</a>            .into_iter()
 <a href=#86 id=86 data-nosnippet>86</a>            .map(|(l, h)| (l.to_string(), h.map(str::to_string)))
@@ -91,7 +91,7 @@
 <a href=#91 id=91 data-nosnippet>91</a>        <span class="self">self</span>.scripts.push(name);
 <a href=#92 id=92 data-nosnippet>92</a>        <span class="self">self
 <a href=#93 id=93 data-nosnippet>93</a>    </span>}
-<a href=#94 id=94 data-nosnippet>94</a>    <span class="kw">fn </span>status(<span class="kw-2">mut </span><span class="self">self</span>, status: u16) -&gt; <span class="self">Self </span>{
+<a href=#94 id=94 data-nosnippet>94</a>    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>status(<span class="kw-2">mut </span><span class="self">self</span>, status: u16) -&gt; <span class="self">Self </span>{
 <a href=#95 id=95 data-nosnippet>95</a>        <span class="self">self</span>.status = status;
 <a href=#96 id=96 data-nosnippet>96</a>        <span class="self">self
 <a href=#97 id=97 data-nosnippet>97</a>    </span>}
