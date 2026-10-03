@@ -33,4 +33,4 @@
 {%- set sb_role = sb_design.states[sb_word] if sb_word in sb_design.states else "neutral" -%}
 {%- set sb_glyphs = {"ok": "✓", "warn": "!", "bad": "✕", "info": "•", "neutral": "○"} -%}
 {%- set sb_axes = {"claim": "declared status", "proof": "recorded evidence", "feature": "feature status"} -%}
-<span class="mj-badge mj-badge--{{ sb_word }}" data-status="{{ sb_word }}"{% if sb_kind %} data-status-kind="{{ sb_kind }}"{% endif %}{% if sb_kind == "proof" %} data-claim="{{ sb_claim }}"{% endif %}><span aria-hidden="true">{{ sb_glyphs[sb_role] }}</span>{% if sb_kind in sb_axes %}<span class="sr-only">{{ sb_axes[sb_kind] }}: </span>{% endif %}{{ sb_text }}</span>
+<span class="mj-badge mj-badge--{{ sb_word }} relative" data-status="{{ sb_word }}"{% if sb_kind %} data-status-kind="{{ sb_kind }}"{% endif %}{% if sb_kind == "proof" %} data-claim="{{ sb_claim }}"{% endif %}><span aria-hidden="true">{{ sb_glyphs[sb_role] }}</span>{% if sb_kind in sb_axes %}<span class="sr-only">{{ sb_axes[sb_kind] }}: </span>{% endif %}{{ sb_text }}</span>
