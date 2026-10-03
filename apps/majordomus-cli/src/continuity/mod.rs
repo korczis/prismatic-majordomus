@@ -315,7 +315,10 @@ fn branch_key(branch: Option<&str>) -> String {
 /// The heads other devices published that this checkout has neither resumed nor continued:
 /// what it could resume. Newest first by the publisher's clock — for presentation only.
 pub fn offers(machine: &Machine<'_>, graph: &Graph, state: &LocalState) -> Vec<SignedRecord> {
-    let mut out: Vec<SignedRecord> = graph
+    // keyed newest first by the publisher's clock, then by id: a total order with no sort
+    // site of its own (the clock orders the list a person reads, never the lineage)
+    let mut ordered: BTreeMap<(std::cmp::Reverse<String>, String), SignedRecord> = BTreeMap::new();
+    for r in graph
         .heads()
         .into_iter()
         .filter_map(|h| graph.records.get(&h).cloned())
@@ -326,14 +329,16 @@ pub fn offers(machine: &Machine<'_>, graph: &Graph, state: &LocalState) -> Vec<S
                 .values()
                 .any(|p| graph.descends(&p.record, &r.id))
         })
-        .collect();
-    out.sort_by(|a, b| {
-        b.record
-            .published_at
-            .cmp(&a.record.published_at)
-            .then_with(|| a.id.cmp(&b.id))
-    });
-    out
+    {
+        ordered.insert(
+            (
+                std::cmp::Reverse(r.record.published_at.clone()),
+                r.id.clone(),
+            ),
+            r,
+        );
+    }
+    ordered.into_values().collect()
 }
 
 fn offer_of(r: &SignedRecord) -> Offer {

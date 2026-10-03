@@ -231,7 +231,7 @@ pub fn source_state(root: &Path) -> SourceState {
         }
         changed.push(path);
     }
-    changed.sort();
+    crate::order::canonical_strings(&mut changed);
     changed.dedup();
     let total = changed.len();
     let working_tree = if total == 0 {
@@ -244,7 +244,7 @@ pub fn source_state(root: &Path) -> SourceState {
         if head.is_some() {
             hasher.update(git_out(root, &["diff", "--binary", "HEAD"]).unwrap_or_default());
         }
-        untracked.sort();
+        crate::order::canonical_strings(&mut untracked);
         for path in &untracked {
             hasher.update(b"\0untracked\0");
             hasher.update(path.as_bytes());
