@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.12.0",
+  "generator": "majordomus-cli 0.13.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -1724,14 +1724,6 @@
         "label": "router.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/http/router.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/http/swagger.rs",
-        "kind": "file",
-        "label": "swagger.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/http/swagger.rs",
         "external": true
       },
       {
@@ -30830,6 +30822,29 @@
         }
       },
       {
+        "id": "majordomus://release-record/v0.12.0",
+        "kind": "release-record",
+        "label": "v0.12.0",
+        "summary": "v0.12.0",
+        "route": "/cockpit/objects/release-record/v0-12-0",
+        "source": ".ai/repo/releases/v0.12.0.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "a137c3fe144bd9eec284ed7aa4ddab88ce2de5cc",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.12.0",
+          "published_at": "2026-10-03T18:51:26Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.12.0"
+        }
+      },
+      {
         "id": "majordomus://release-record/v0.3.1",
         "kind": "release-record",
         "label": "v0.3.1",
@@ -44693,11 +44708,6 @@
       },
       {
         "source": "majordomus://adr/adr-0031",
-        "target": "file:apps/majordomus-cli/src/http/swagger.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0031",
         "target": "file:apps/majordomus-cli/src/web/html.rs",
         "kind": "put_in_force"
       },
@@ -44734,11 +44744,6 @@
       {
         "source": "majordomus://adr/adr-0031",
         "target": "majordomus://rule/project.ui-conformance@1",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0031",
-        "target": "majordomus://test/test/cases/107_design_tokens.sh",
         "kind": "put_in_force"
       },
       {
@@ -56762,6 +56767,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://release-record/v0.12.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://release-record/v0.3.1",
         "target": "kind:release-record",
         "kind": "is_a"
@@ -63579,7 +63589,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4501,
+      "edges": 4500,
       "acyclic": true,
       "truncated": true
     }
