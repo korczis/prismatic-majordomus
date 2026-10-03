@@ -14,7 +14,6 @@
 {%- set series = [s.decisions | length for s in cl.sections] | reverse -%}
 {%- set wanted = [{"t": "repository", "p": "/api/v1/repository"}, {"t": "rules", "p": "/api/v1/rules"}, {"t": "environment", "p": "/api/v1/environment"}, {"t": "objects", "p": "/api/v1/search"}, {"t": "plan", "p": "/api/v1/plan/transition"}] -%}
 {%- set resources = [r for r in registry.mcp.resources if r.name in ["repository", "rules", "environment", "plan", "changelog"]] -%}
-{%- set gs = get_page(path="getting-started.md") -%}
 {#- the response's shape, from the schema the operation names -#}
 {%- set shape -%}{
 {% for p in report.properties %}  "{{ p.name }}": {{ p.type }}{% if not loop.last %},{% endif %}
@@ -101,11 +100,10 @@
     <div class="mt-4 grid gap-4 sm:grid-cols-[minmax(0,12rem)_minmax(0,1fr)] xl:grid-cols-1">
       <div class="min-w-0 space-y-3">
         {{ <search placeholder="Search documentation" action={base ~ "docs/"} /> }}
-        {{ <sidenav items={[{"title": gs.title, "href": base ~ "getting-started/", "icon": "home", "current": true}, {"title": "Command reference", "href": base ~ "docs/cli/", "icon": "terminal"}, {"title": "HTTP API", "href": base ~ "docs/api/", "icon": "code"}, {"title": "MCP surface", "href": base ~ "docs/mcp/", "icon": "nodes"}, {"title": "The Cockpit", "href": base ~ "docs/cockpit/", "icon": "monitor"}, {"title": "Rules", "href": base ~ "rules/", "icon": "shield"}]} /> }}
+        {{ <sidenav items={[{"title": "Getting started", "href": base ~ "getting-started/", "icon": "home", "current": true}, {"title": "Command reference", "href": base ~ "docs/cli/", "icon": "terminal"}, {"title": "HTTP API", "href": base ~ "docs/api/", "icon": "code"}, {"title": "MCP surface", "href": base ~ "docs/mcp/", "icon": "nodes"}, {"title": "The Cockpit", "href": base ~ "docs/cockpit/", "icon": "monitor"}, {"title": "Rules", "href": base ~ "rules/", "icon": "shield"}]} /> }}
       </div>
       <div class="min-w-0">
-        <p class="mj-panel-title">{{ gs.title }}</p>
-        <p class="mj-point-text">{{ gs.description }}</p>
+        <p class="mj-panel-title"><a href="{{ base }}getting-started/" class="hover:underline">Getting started</a></p>
         <div class="mt-3">{{ <cmd_list id="feat-gs" commands={["majordomus init", "majordomus update", "majordomus doctor"]} /> }}</div>
       </div>
     </div>
