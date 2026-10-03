@@ -180,6 +180,7 @@ struct PlanIssueRaw {
     objective: String,
     depends_on: Vec<String>,
     scope: Vec<String>,
+    serves: Vec<String>,
     acceptance_criteria: usize,
     validation: usize,
     evidence_required: Vec<String>,
@@ -225,6 +226,7 @@ impl PlanIssueRaw {
             objective: field(meta, "objective"),
             depends_on: list(meta, "depends_on"),
             scope: list(meta, "scope"),
+            serves: list(meta, "serves"),
             acceptance_criteria: list(meta, "acceptance_criteria").len(),
             validation: list(meta, "validation").len(),
             evidence_required: list(meta, "evidence_required"),
@@ -367,6 +369,10 @@ pub struct PlanIssue {
     pub dependents: Vec<String>,
     /// The paths it touches; two issues of one wave that share a path are serialised.
     pub scope: Vec<String>,
+    /// The intent criteria it exists to make true, each `<intent>#<criterion>`, as declared.
+    /// Empty for maintenance work under a milestone no intent names; whether a named
+    /// criterion exists is the intent coverage's question, not the plan's.
+    pub serves: Vec<String>,
     /// One line: what the issue is for.
     pub objective: String,
     /// Evidence entries attached.
@@ -379,6 +385,14 @@ pub struct PlanIssue {
     pub verified_at: String,
     /// When completion was recorded.
     pub completed_at: String,
+}
+
+/// An issue is shown, everywhere, in the natural order of its identity: `issue-2` before
+/// `issue-10`, which is the order its file names read in.
+impl crate::order::Ordered for PlanIssue {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.id, &self.id)
+    }
 }
 
 /// One milestone, as its record declares it and as the two graphs derive it.
@@ -1200,6 +1214,7 @@ fn derive(mut header: PlanProject, mraw: Vec<PlanMilestoneRaw>, iraw: Vec<PlanIs
             blocked_by: blocked_by[n].clone(),
             dependents: dependents[n].clone(),
             scope: r.scope.clone(),
+            serves: r.serves.clone(),
             objective: r.objective.clone(),
             evidence_have: u32::try_from(r.evidence_have.len()).unwrap_or(u32::MAX),
             evidence_need: u32::try_from(r.evidence_required.len()).unwrap_or(u32::MAX),

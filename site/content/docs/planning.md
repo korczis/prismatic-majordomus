@@ -140,6 +140,131 @@ the issue's own file, beside the contract it satisfies, with the commit it was r
 What this does not do: rerun the command. The tool records what a worker says a command
 produced. The commit hash stored beside it is what makes a false record checkable later.
 
+## What the work is for: intents, coverage, and the two planning records
+
+Above the milestones sits the **intent** (ADR 0070): what must become true, the invariants
+that must stay true, and the satisfaction criteria that settle it, each naming the evidence
+that decides it. An intent names the milestones that realise it. It stores no status: its
+stage follows the plan and its satisfaction follows the evidence ledger.
+
+That relates an intent to milestones and to evidence. What relates a *criterion* to the work
+meant to make it true is `serves` on the issue (ADR 0073):
+
+```yaml
+serves:
+  - intent-planning#criteria-are-covered
+```
+
+The link is authored on the issue, which is written after the intent, so replanning never
+edits an intent. The plan carries `serves` as data and derives no finding from it; the intent
+engine does the judging, and `majordomus intent coverage` prints it:
+
+```text
+CRITERION                             STRENGTH   ISSUES
+intent-planning#criteria-are-covered  covered    I1901
+```
+
+A criterion is `covered` when a live issue that requires evidence serves it, `weak` when every
+serving issue requires none, `observed` when the recorded gap saw it already true, and
+`uncovered` when nothing in the plan will make it true. Every issue also answers why it
+exists: `intent` when it serves a criterion, `maintenance` when its milestone is named by no
+intent — legitimate operational work, stated as such and never given an invented intent — or
+`unexplained` when its milestone realises an intent and it serves nothing.
+
+`majordomus intent validate` refuses (exit 10):
+
+<div class="overflow-x-auto" tabindex="0">
+
+| finding | what it means |
+|---|---|
+| `criterion_uncovered` | the intent has work, and this criterion has none of it |
+| `issue_without_purpose` | the issue sits under an intent's milestone and serves nothing |
+| `serves_outside_milestone` | the issue serves a criterion of an intent that does not name its milestone |
+| `serves_unknown_intent`, `serves_unknown_criterion`, `malformed_serves` | the link points at nothing |
+
+</div>
+
+
+and warns on `intent_not_planned` (no live issue under any milestone it names — where every
+intent starts), `criterion_weakly_covered`, `duplicate_work` and `milestone_contributes_nothing`.
+
+### The gap and the critique
+
+Planning starts from two records rather than from a prompt, so that what a worker observed and
+what a review found survive the session that produced them.
+
+A **gap**, one per intent under `.ai/repo/project/gaps/`, states the observations made at an
+`observed_at` commit, each with its source, and answers *every* criterion of the intent with
+`satisfied`, `missing`, `conflicting` or `unknown`, citing the observations behind it. A gap
+that leaves a criterion out is refused; `unknown` must be written rather than omitted, and is
+never read as satisfied. A criterion observed `satisfied` with its observations asks for no
+planned work — it reads `observed` — while remaining *met* only by evidence.
+
+A **critique**, one per intent under `.ai/repo/project/critiques/`, is the adversarial pass
+over the plan: findings classed by the question asked — `missed_requirement`,
+`unproven_assumption`, `insufficient_work`, `unnecessary_work`, `regression_risk`,
+`surface_missing`, `delivery_verification` — each `blocking` or not, and each resolved `open`,
+`planned` into an issue that serves the intent, or `rejected` with a reason. A dismissal
+nobody can read is not a resolution.
+
+Work does not start before the plan has been reviewed: an issue serving an intent that is
+`ACTIVE`, `VERIFY` or `DONE` while the intent has no critique is `executing_without_critique`,
+and while a blocking finding is open, `executing_with_open_blocker`. Both are failures.
+
+**Majordomus judges these records; it does not write them.** A person or a worker — Claude,
+Codex, Gemini — does the observing and the criticising, and the repository refuses the result
+when it does not hold together. Nothing here derives a plan from an intent automatically.
+
+### Realization: who is making it true, and whether reality agrees
+
+An intent belongs to the project, not to the session working on it. Which work realises it is
+therefore never written into a task, a session or a handover; it is joined on every read from
+the records the lifecycle already keeps (ADR 0075): the ledger's tasks, each with every episode
+that worked on it, the provider of each episode and the handovers between them; the closed
+session records; and the claims on the peer board.
+
+```bash
+majordomus intent realization                 # every intent, its unmet criteria, the work realising it
+majordomus intent realization --intent <id>   # one intent and the work linked to it
+majordomus intent explain <id>                # why it stands where it stands, sentence by sentence
+```
+
+Every link from work to an issue says how it is known, and a join keeps the strongest per issue:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| provenance | how the link was read |
+|------------|-----------------------|
+| `declared` | the claim or the task's own words cite the issue |
+| `observed` | a plan transition in the work's episode, or a closed session record's `issues` |
+| `derived`  | the branch name carries the issue id |
+| `inferred` | only when nothing stronger exists: an open issue's scope overlaps the work's |
+
+</div>
+
+
+So a task a Claude Code episode starts and hands over, and a Codex episode resumes, is one unit
+of work with two episodes and both providers, and the intent it serves lists both. The episode's
+`session.started` ledger line names its provider, so the lineage survives the episode's end.
+
+Closed work does not outrank evidence. When every milestone of an intent is DONE and a
+criterion's recorded run is failing, or stale against a case that has changed since, the
+realization reports `closed_work_contradicted` naming the criterion, and exits 10; the
+`intent-realization` gate runs it. An intent that was satisfied and regresses lands exactly
+there: its stage falls back to `verifying`, and nothing about the intent was written for it to.
+`closed_work_unproven` (every milestone DONE, a criterion never evidenced) and
+`criterion_closed_unmet` (every issue serving a criterion DONE, the criterion unmet) are
+warnings, as is live work that serves no intent (`work_serves_no_intent`).
+
+In the Cockpit, `/cockpit/intents` lists every intent with its stage and the work realising it,
+and `/cockpit/intents/<id>` shows one: each criterion with its evidence state, linked to the test
+object it names and to the issues serving it, and each unit of work with the provenance of its
+link. Both pages render the capabilities above and decide nothing themselves.
+
+`test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh` is the loop end
+to end: declared, realised across two providers and a handover, closed while one case fails,
+fixed, satisfied, broken again and repaired — with the intent file byte-identical throughout.
+
 ## Traceability: what realised an issue, and what an issue realised
 
 The model reaches as far as a branch on its own: a branch path component equal to an issue id
