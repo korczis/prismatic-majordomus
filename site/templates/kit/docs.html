@@ -1,0 +1,57 @@
+{#- The kit's documentation components: the trail, the search field, the table of contents
+    and the step flow of a getting-started page. See templates/kit/base.html. -#}
+
+{#- Where this page is: each item `title` and `href`; the last is the page and links nowhere. -#}
+{% component trail(items, label="Breadcrumb") %}
+<nav aria-label="{{ label }}">
+  <ol class="mj-trail">
+    {%- for c in items %}<li>{% if loop.last %}<span aria-current="page">{{ c.title }}</span>{% else %}<a href="{{ c.href }}">{{ c.title }}</a>{% endif %}</li>{% endfor %}
+  </ol>
+</nav>
+{%- endcomponent trail %}
+
+{#- A search field that submits its query to `action` as `?q=`: the documentation hub
+    (/docs/) reads it and lists what matches. A field with nowhere to submit would be a
+    control that does nothing, so there is no such variant. -#}
+{% component search(placeholder, action, label="Search the documentation") %}
+<form role="search" action="{{ action }}" class="min-w-0">
+  <label class="mj-search">
+    {{ <icon name="search" size="sm" /> }}
+    <span class="sr-only">{{ label }}</span>
+    <input type="search" name="q" placeholder="{{ placeholder }}" autocomplete="off" data-kit-search>
+  </label>
+</form>
+{%- endcomponent search %}
+
+{#- On this page. An item is `title`, `href` (`#anchor`) and optional `children`. With no
+    script it is a list of links; site/kit.js marks the section being read. -#}
+{% component toc(items, title="On this page") %}
+<nav class="min-w-0" aria-label="{{ title }}" data-toc>
+  <p class="mb-2 flex items-center gap-2 text-sm font-semibold text-heading">{{ <icon name="list" size="sm" /> }}{{ title }}</p>
+  <ul class="mj-toc">
+    {%- for t in items %}
+    <li><a href="{{ t.href }}">{{ t.title }}</a>
+      {%- if t.children %}<ul class="mj-toc mj-toc-sub">{% for c in t.children %}<li><a href="{{ c.href }}">{{ c.title }}</a></li>{% endfor %}</ul>{% endif %}
+    </li>
+    {%- endfor %}
+  </ul>
+</nav>
+{%- endcomponent toc %}
+
+{#- A flow of numbered steps, each a card with what to do and the commands that do it. A
+    step is `title`, `text`, `icon`, `tone` and `commands` (a list of strings). `id` roots
+    the ids the copy buttons need; `columns` sets how many sit side by side at wide widths
+    (default: all of them), for a flow in a narrow column. -#}
+{% component flow(steps, id, level="3", columns=0) %}
+{#- an arrow joins two steps only when every step sits in one row -#}
+<ol class="mj-stages mj-stages--{{ columns or steps | length }}{% if columns == 0 or columns >= steps | length %} mj-stages--linked{% endif %} m-0 list-none p-0">
+  {%- for s in steps %}
+  <li class="mj-panel mj-stage{% if s.tone %} mj-tone--{{ s.tone }}{% endif %}">
+    <div class="flex items-center gap-3">{{ <step n={loop.index} /> }}{% if s.icon %}<span class="mj-ink">{{ <icon name={s.icon} size="xl" /> }}</span>{% endif %}</div>
+    <h{{ level }} class="mj-panel-title mt-4">{{ s.title }}</h{{ level }}>
+    {%- if s.text %}<p class="mj-panel-sub">{{ s.text }}</p>{% endif %}
+    {%- if s.commands %}<div class="mj-panel-foot">{{ <cmd_list commands={s.commands} id={id ~ "-" ~ loop.index0} /> }}</div>{% endif %}
+  </li>
+  {%- endfor %}
+</ol>
+{%- endcomponent flow %}

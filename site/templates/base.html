@@ -32,9 +32,13 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="{{ get_url(path="images/social-card.png") }}">
 <link rel="icon" href="{{ get_url(path="images/logo-mark.svg") }}" type="image/svg+xml">
-<link rel="stylesheet" href="{{ get_url(path="app.css", cachebust=true) }}">
+{% block stylesheet %}<link rel="stylesheet" href="{{ get_url(path="app.css", cachebust=true) }}">{% endblock stylesheet %}
 <link rel="stylesheet" href="{{ get_url(path="giallo-light.css") }}">
 <link rel="stylesheet" href="{{ get_url(path="giallo-dark.css") }}">
+{#- A page that is composed of the kit's components (templates/kit/) opts into their sheet and
+    behaviour with `{% block kit %}{% include "partials/kit-assets.html" %}{% endblock kit %}`.
+    Every other page pays nothing for them: the homepage has a byte budget (site-check). -#}
+{% block kit %}{% endblock kit %}
 {#- Theme before paint: the one statement the design declaration generates for every surface (the Cockpit ships the same bytes). -#}
 <script>{{ design.theme.bootstrap | safe }}</script>
 </head>

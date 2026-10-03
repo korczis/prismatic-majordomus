@@ -1,0 +1,121 @@
+{#- The kit's dashboard components: a window, its navigation, stat tiles, a chart and its
+    legend, an activity feed, quick actions and a health list. They compose a picture of a
+    control plane on a page that is not one — the Cockpit itself is rendered by the
+    executable — and every value they show is handed to them. See templates/kit/base.html. -#}
+
+{#- A window: the bar with its three marks and a title, then the body. `nav` (items for
+    `sidenav`) gives it a sidebar, `brand` heads the sidebar, and `foot` closes it. `dark`
+    makes it a dark window on any page. -#}
+{% component window(title="", nav=[], brand="", foot="", dark=true, label="Application window") %}
+<figure class="mj-window m-0{% if dark %} dark{% endif %}" aria-label="{{ label }}">
+  <div class="mj-window-bar" aria-hidden="true">
+    {%- for n in [1, 2, 3] %}<svg class="mj-term-dot mj-term-dot--{{ n }}" viewBox="0 0 12 12"><circle cx="6" cy="6" r="6" fill="currentColor"/></svg>{% endfor -%}
+    {%- if title %}<span class="mj-term-title">{{ title }}</span>{% endif %}
+  </div>
+  <div class="{% if nav | length > 0 %}mj-window-body{% endif %}">
+    {%- if nav | length > 0 %}
+    <nav class="mj-window-side" aria-label="{{ brand or title }}">
+      {%- if brand %}<p class="flex items-center gap-2 px-2 text-sm font-semibold text-heading">{{ brand }}</p>{% endif %}
+      {{ <sidenav items={nav} variant="solid" /> }}
+      {%- if foot %}<p class="mt-auto px-2 font-mono text-xs text-body-subtle">{{ foot }}</p>{% endif %}
+    </nav>
+    {%- endif %}
+    <div class="mj-window-main">{{ body }}</div>
+  </div>
+</figure>
+{%- endcomponent window %}
+
+{#- A navigation list. An item is `title`, `href`, `icon`, `current` (true marks it), and
+    `children` — which makes it a group that opens; a group holding the current entry is
+    open. `variant` solid marks the current entry with the accent's fill. -#}
+{% component sidenav(items, variant="") %}
+<ul class="mj-sidenav{% if variant %} mj-sidenav--{{ variant }}{% endif %}">
+  {%- for n in items %}
+  <li>
+    {%- if n.children %}
+    {%- set open = n.open or n.current or [c for c in n.children if c.current] | length > 0 -%}
+    <details class="mj-sidenav-group"{% if open %} open{% endif %}>
+      <summary><span class="flex items-center gap-2">{% if n.icon %}{{ <icon name={n.icon} size="sm" /> }}{% endif %}{{ n.title }}</span><span class="mj-chevron">{{ <icon name="chevron-down" size="sm" /> }}</span></summary>
+      <ul class="mj-sidenav">
+        {%- for c in n.children %}<li><a href="{{ c.href }}"{% if c.current %} aria-current="page"{% endif %}>{{ c.title }}</a></li>{% endfor %}
+      </ul>
+    </details>
+    {%- else %}
+    <a href="{{ n.href }}"{% if n.current %} aria-current="page"{% endif %}>{% if n.icon %}{{ <icon name={n.icon} size="sm" /> }}{% endif %}<span class="truncate">{{ n.title }}</span></a>
+    {%- endif %}
+  </li>
+  {%- endfor %}
+</ul>
+{%- endcomponent sidenav %}
+
+{#- Counts with what they count. An item is `title`, `value`, `icon`, `tone` and `source`,
+    the command or file the count was read from. -#}
+{% component kpis(items) %}
+<ul class="mj-kpis m-0 list-none p-0">
+  {%- for k in items %}
+  <li class="mj-kpi">
+    {%- if k.icon %}{{ <glyph icon={k.icon} tone={k.tone or ""} /> }}{% endif %}
+    <span class="min-w-0"><span class="mj-kpi-label">{{ k.title }}</span><span class="mj-kpi-value">{{ k.value }}</span>{% if k.source %}<span class="mj-kpi-source">{{ k.source }}</span>{% endif %}</span>
+  </li>
+  {%- endfor %}
+</ul>
+{%- endcomponent kpis %}
+
+{#- A series as a line over its area, scaled to its own range. `values` is a list of numbers,
+    oldest first; `label` is the accessible name and must say what the series is. -#}
+{% component chart(values, label, tone="blue", area=true) %}
+{%- set n = values | length -%}
+{%- set sorted = values | sort -%}
+{%- set lo = sorted | first -%}
+{%- set hi = sorted | last -%}
+{%- set span = hi - lo if hi > lo else 1 -%}
+{%- set step = 100 / (n - 1) if n > 1 else 100 -%}
+<svg class="mj-chart mj-tone--{{ tone }}" viewBox="0 0 100 40" preserveAspectRatio="none" role="img" aria-label="{{ label }}">
+  {%- set line -%}{% for v in values %}{{ (loop.index0 * step) | round(precision=2) }},{{ (38 - (v - lo) * 36 / span) | round(precision=2) }} {% endfor %}{%- endset -%}
+  {%- if area %}<polygon class="mj-chart-area" points="0,40 {{ line | trim }} 100,40"/>{% endif %}
+  <polyline class="mj-chart-line" points="{{ line | trim }}"/>
+</svg>
+{%- endcomponent chart %}
+
+{#- The names and values of the series a chart or a count shows. -#}
+{% component legend(items) %}
+<ul class="mj-legend">
+  {%- for l in items %}<li class="mj-legend-item mj-tone--{{ l.tone or "blue" }}"><span class="mj-legend-name">{{ l.title }}</span><span class="mj-legend-value">{{ l.value }}</span></li>{% endfor %}
+</ul>
+{%- endcomponent legend %}
+
+{#- What happened, newest first. An item is `icon`, `tone`, `title`, `when`, `ref` (a
+    commit, a pull request) and `href`. -#}
+{% component feed(items) %}
+<ul class="mj-feed">
+  {%- for f in items %}
+  <li class="mj-feed-item">
+    {{ <glyph icon={f.icon or "commit"} tone={f.tone or ""} size="sm" icon_size="sm" /> }}
+    {%- if f.href %}<a href="{{ f.href }}" class="mj-feed-text hover:underline">{{ f.title }}</a>{% else %}<span class="mj-feed-text">{{ f.title }}</span>{% endif %}
+    {%- if f.when %}<span class="mj-feed-when">{{ f.when }}</span>{% endif %}
+    {%- if f.ref %}<code class="mj-feed-ref">{{ f.ref }}</code>{% endif %}
+  </li>
+  {%- endfor %}
+</ul>
+{%- endcomponent feed %}
+
+{#- Actions, each a glyph and a word, each a link. -#}
+{% component actions(items) %}
+<ul class="mj-actions m-0 list-none p-0">
+  {%- for a in items %}<li><a class="mj-action" href="{{ a.href }}">{{ <glyph icon={a.icon} tone={a.tone or ""} size="sm" icon_size="sm" /> }}<span>{{ a.title }}</span></a></li>{% endfor %}
+</ul>
+{%- endcomponent actions %}
+
+{#- The health of named parts. An item is `title`, `icon`, `state` (a state word) and
+    `measure` (a latency, a count). -#}
+{% component health(items) %}
+<ul class="mj-health">
+  {%- for h in items %}
+  <li class="mj-health-item">
+    <span class="mj-health-name">{% if h.icon %}{{ <icon name={h.icon} size="sm" /> }}{% endif %}<span class="truncate">{{ h.title }}</span></span>
+    {{ <state word={h.state} /> }}
+    {%- if h.measure %}<span class="mj-health-measure">{{ h.measure }}</span>{% endif %}
+  </li>
+  {%- endfor %}
+</ul>
+{%- endcomponent health %}

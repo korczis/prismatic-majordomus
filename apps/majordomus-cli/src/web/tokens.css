@@ -14,10 +14,11 @@
   --text-dense: 13.5px;
   --text-dense--line-height: 1.6;
   --tracking-caps: 0.12em;
+  --tracking-kicker: 0.24em;
   --radius-sm: 0.25rem;
   --radius-md: 0.375rem;
   --radius-lg: 0.5rem;
-  --mj-design: "edc7bf48e646";
+  --mj-design: "944a896b2646";
   --mj-measure: 62rem;
   --mj-cockpit: 1600px;
   --mj-topbar: 2.75rem;
@@ -59,6 +60,30 @@
   --mj-neutral: var(--mj-fg);
   --mj-neutral-bg: var(--mj-sunken);
   --mj-neutral-line: var(--mj-line);
+  --mj-tone-blue: oklch(48.8% 0.243 264.376);
+  --mj-tone-blue-bg: oklch(98.5% 0.008 254.604);
+  --mj-tone-blue-line: oklch(88.2% 0.059 254.128);
+  --mj-tone-blue-fill: oklch(48.8% 0.243 264.376);
+  --mj-tone-violet: oklch(49.1% 0.27 292.581);
+  --mj-tone-violet-bg: oklch(98.5% 0.010 293.756);
+  --mj-tone-violet-line: oklch(89.4% 0.057 293.283);
+  --mj-tone-violet-fill: oklch(49.1% 0.27 292.581);
+  --mj-tone-green: oklch(50.8% 0.118 165.612);
+  --mj-tone-green-bg: oklch(98.5% 0.012 166.113);
+  --mj-tone-green-line: oklch(90.5% 0.093 164.15);
+  --mj-tone-green-fill: oklch(50.8% 0.118 165.612);
+  --mj-tone-orange: oklch(55.3% 0.195 38.402);
+  --mj-tone-orange-bg: oklch(98.5% 0.010 73.684);
+  --mj-tone-orange-line: oklch(90.1% 0.076 70.697);
+  --mj-tone-orange-fill: oklch(55.3% 0.195 38.402);
+  --mj-tone-rose: oklch(51.4% 0.222 16.935);
+  --mj-tone-rose-bg: oklch(98.5% 0.009 12.422);
+  --mj-tone-rose-line: oklch(89.2% 0.058 10.001);
+  --mj-tone-rose-fill: oklch(51.4% 0.222 16.935);
+  --mj-tone-cyan: oklch(52% 0.105 223.128);
+  --mj-tone-cyan-bg: oklch(98.5% 0.011 200.873);
+  --mj-tone-cyan-line: oklch(91.7% 0.08 205.041);
+  --mj-tone-cyan-fill: oklch(52% 0.105 223.128);
 }
 @media (prefers-color-scheme: dark) {
   :root:not(.light) {
@@ -99,6 +124,30 @@
     --mj-neutral: var(--mj-fg);
     --mj-neutral-bg: var(--mj-sunken);
     --mj-neutral-line: var(--mj-line);
+    --mj-tone-blue: oklch(70.7% 0.165 254.624);
+    --mj-tone-blue-bg: oklch(28.2% 0.091 267.935);
+    --mj-tone-blue-line: oklch(37.9% 0.146 265.522);
+    --mj-tone-blue-fill: oklch(48.8% 0.243 264.376);
+    --mj-tone-violet: oklch(70.2% 0.183 293.541);
+    --mj-tone-violet-bg: oklch(28.3% 0.141 291.089);
+    --mj-tone-violet-line: oklch(38% 0.189 293.745);
+    --mj-tone-violet-fill: oklch(49.1% 0.27 292.581);
+    --mj-tone-green: oklch(76.5% 0.177 163.223);
+    --mj-tone-green-bg: oklch(26.2% 0.051 172.552);
+    --mj-tone-green-line: oklch(37.8% 0.077 168.94);
+    --mj-tone-green-fill: oklch(50.8% 0.118 165.612);
+    --mj-tone-orange: oklch(75% 0.183 55.934);
+    --mj-tone-orange-bg: oklch(26.6% 0.079 36.259);
+    --mj-tone-orange-line: oklch(40.8% 0.123 38.172);
+    --mj-tone-orange-fill: oklch(55.3% 0.195 38.402);
+    --mj-tone-rose: oklch(71.2% 0.194 13.428);
+    --mj-tone-rose-bg: oklch(27.1% 0.105 12.094);
+    --mj-tone-rose-line: oklch(41% 0.159 10.272);
+    --mj-tone-rose-fill: oklch(51.4% 0.222 16.935);
+    --mj-tone-cyan: oklch(78.9% 0.154 211.53);
+    --mj-tone-cyan-bg: oklch(30.2% 0.056 229.695);
+    --mj-tone-cyan-line: oklch(39.8% 0.07 227.392);
+    --mj-tone-cyan-fill: oklch(52% 0.105 223.128);
   }
 }
 :root.dark {
@@ -139,4 +188,28 @@
   --mj-neutral: var(--mj-fg);
   --mj-neutral-bg: var(--mj-sunken);
   --mj-neutral-line: var(--mj-line);
+  --mj-tone-blue: oklch(70.7% 0.165 254.624);
+  --mj-tone-blue-bg: oklch(28.2% 0.091 267.935);
+  --mj-tone-blue-line: oklch(37.9% 0.146 265.522);
+  --mj-tone-blue-fill: oklch(48.8% 0.243 264.376);
+  --mj-tone-violet: oklch(70.2% 0.183 293.541);
+  --mj-tone-violet-bg: oklch(28.3% 0.141 291.089);
+  --mj-tone-violet-line: oklch(38% 0.189 293.745);
+  --mj-tone-violet-fill: oklch(49.1% 0.27 292.581);
+  --mj-tone-green: oklch(76.5% 0.177 163.223);
+  --mj-tone-green-bg: oklch(26.2% 0.051 172.552);
+  --mj-tone-green-line: oklch(37.8% 0.077 168.94);
+  --mj-tone-green-fill: oklch(50.8% 0.118 165.612);
+  --mj-tone-orange: oklch(75% 0.183 55.934);
+  --mj-tone-orange-bg: oklch(26.6% 0.079 36.259);
+  --mj-tone-orange-line: oklch(40.8% 0.123 38.172);
+  --mj-tone-orange-fill: oklch(55.3% 0.195 38.402);
+  --mj-tone-rose: oklch(71.2% 0.194 13.428);
+  --mj-tone-rose-bg: oklch(27.1% 0.105 12.094);
+  --mj-tone-rose-line: oklch(41% 0.159 10.272);
+  --mj-tone-rose-fill: oklch(51.4% 0.222 16.935);
+  --mj-tone-cyan: oklch(78.9% 0.154 211.53);
+  --mj-tone-cyan-bg: oklch(30.2% 0.056 229.695);
+  --mj-tone-cyan-line: oklch(39.8% 0.07 227.392);
+  --mj-tone-cyan-fill: oklch(52% 0.105 223.128);
 }
