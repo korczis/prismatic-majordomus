@@ -57,11 +57,10 @@ pub fn derived_paths(
         .stderr(std::process::Stdio::piped())
         .spawn()
         .and_then(|mut child| {
-            if let Some(mut stdin) = child.stdin.take() {
-                use std::io::Write;
-                // a write git refused shows in its exit status, which is read below
-                let _ = stdin.write_all(&input);
-            }
+            use std::io::Write;
+            // stdin is piped, so it is there; it is closed at the end of this statement, and
+            // a write git refused shows in its exit status, which is read below
+            let _ = child.stdin.take().map(|mut stdin| stdin.write_all(&input));
             child.wait_with_output()
         })
         .map_err(|e| format!("git check-attr could not run: {e}"))?;

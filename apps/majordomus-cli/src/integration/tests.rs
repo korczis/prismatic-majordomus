@@ -1377,7 +1377,8 @@ fn observed_pr(number: u64, head_sha: &str) -> PullRequestObservation {
 /// The keys of the relation cache `queue_of` left in `dir`.
 fn cached_keys(dir: &std::path::Path) -> Vec<String> {
     let path = crate::integration::state_path(dir, crate::integration::RELATIONS_FILE);
-    let text = std::fs::read_to_string(path).unwrap_or_else(|_| "{}".into());
+    // queue_of writes the cache on every build, an empty one included
+    let text = std::fs::read_to_string(path).unwrap();
     let cache: serde_json::Value = serde_json::from_str(&text).unwrap();
     cache["entries"]
         .as_object()
