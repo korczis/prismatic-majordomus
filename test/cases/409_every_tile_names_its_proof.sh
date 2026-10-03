@@ -58,12 +58,13 @@ uc_test="test/cases/94_use_cases.sh"
 
 # every command-line page that shows an example names the test that runs it
 pages=0; linked=0
-for f in $(find "$P/docs/cli" -name index.html 2>/dev/null); do
+# read from a process substitution, not a pipe, so the counts survive the loop
+while IFS= read -r f; do
   [ -f "$f" ] || continue
   grep -q 'id="example-' "$f" || continue
   pages=$((pages + 1))
   grep -q "$cli_test" "$f" && linked=$((linked + 1))
-done
+done < <(find "$P/docs/cli" -name index.html 2>/dev/null)
 [ "$pages" -gt 0 ] || { echo "    no command-line page shows an example; the corpus moved"; exit 1; }
 [ "$pages" = "$linked" ] || { echo "    $pages command page(s) show examples, $linked name $cli_test"; exit 1; }
 
