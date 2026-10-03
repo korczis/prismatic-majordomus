@@ -37,16 +37,17 @@ printf '{"session_id":"cc-1","source":"startup"}' | .claude/hooks/majordomus-ses
 majordomus session status                    # an open episode nobody typed a command for
 printf '{"session_id":"cc-1"}' | .claude/hooks/majordomus-session-compact
 majordomus checkpoint --show                 # what the compaction recorded
-majordomus session context                   # .ai/local/session-contexts/<stamp>--<id>.md
+majordomus session context                   # the working context, composed on this read
+majordomus session context --path            # .ai/local/session-contexts/<stamp>--<id>.md
 printf '{"session_id":"cc-1","reason":"prompt_input_exit"}' | .claude/hooks/majordomus-session-end
 majordomus session latest                    # the closed record, with its commits and references
 ```
 
 ## What it does not cover
 
-Only Claude Code has a lifecycle adapter. A provider without one is reported `unsupported`, and a session opened on the web, in another application or on another machine is not observable from a hook that was never run.
+Only Claude Code has a lifecycle **adapter**, and that is now the narrower of two facts. Codex CLI and Gemini CLI both document `SessionStart` and `SessionEnd`; this distribution ships no adapter for either, so they are reported `unadapted` rather than `unsupported`, which is a word reserved for a provider that cannot do the thing at all (ADR 0103, `share/providers.yaml` carries the citations). A client with no hooks whatever now gets its episode from the MCP connection instead — see [connection-episode](@/guarantees/connection-episode.md) — so a worker is no longer without a boundary for want of a vendor. A session opened on the web, in another application or on another machine remains unobservable from a hook that was never run and from a connection that was never made.
 
-The working context is a snapshot, not a live view: it is what the builder resolved at the open, and the repository moves underneath it. It is also local, and stays local — it names this machine and it cannot be reproduced by any surface, so it is never published, never indexed, and never loaded into a context on its own.
+The opening snapshot is a snapshot, not a live view: it is what the builder resolved at the open, and the repository moves underneath it. `session context` composes the live working context from the episode, git and the ledger on every read, and `--path` names the snapshot. It is also local, and stays local — it names this machine and it cannot be reproduced by any surface, so it is never published, never indexed, and never loaded into a context on its own.
 
 It is not a transcript and cannot become one. The derived half is the builder's output and the authored half is a summary of the work; a front-matter key naming a message list, a completion or a model's reply is a blocking failure, which is how `project.never-store-transcripts` is kept mechanically rather than by memory.
 

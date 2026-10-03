@@ -17,7 +17,6 @@ use crate::error::{Error, Result};
 use crate::http::server;
 use crate::http::Router;
 use crate::mcp::bridge;
-use crate::perf::COUNTERS;
 
 use super::projection::{BenchmarkTarget, TargetKind, Transport};
 use super::results::{BenchmarkResult, CacheMode};
@@ -224,9 +223,7 @@ impl Runner {
         for _ in 0..self.profile.warmup {
             call(&ctx)?;
         }
-        let before = COUNTERS
-            .handler_invocations
-            .load(std::sync::atomic::Ordering::Relaxed);
+        let before = ctx.executor.handler_invocations();
         let mut samples = Vec::with_capacity(self.profile.samples);
         for _ in 0..self.profile.samples {
             if mode == CacheMode::Cold {
@@ -241,9 +238,7 @@ impl Runner {
                 }
             }
         }
-        let after = COUNTERS
-            .handler_invocations
-            .load(std::sync::atomic::Ordering::Relaxed);
+        let after = ctx.executor.handler_invocations();
         Ok((Statistics::of(&samples), Some(after - before)))
     }
 

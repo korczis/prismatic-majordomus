@@ -4,6 +4,44 @@
   "contract": "share/schemas/majordomus/skill/skill.v1.schema.json",
   "skills": [
     {
+      "id": "assess-before-deleting",
+      "uri": "majordomus://skill/assess-before-deleting",
+      "title": "Assess before deleting",
+      "description": "Remove a file, branch, worktree, record or process only after each candidate has been classified by what depends on it and what would be lost, and the reversible step has been taken first.",
+      "status": "active",
+      "version": 1,
+      "tags": [
+        "cleanup",
+        "safety",
+        "evidence",
+        "worktrees"
+      ],
+      "related": [
+        "implement",
+        "report-verification-state"
+      ],
+      "inputs": [
+        "the candidates for removal, each named by its path, ref, record id or process id",
+        "a checkout with git history, the peer board and the repository's own diagnostics"
+      ],
+      "outputs": [
+        "a removal table naming each candidate, its class, the evidence behind the class, its risk and the action taken",
+        "a rescue ref or pushed branch for anything that held work not reachable elsewhere",
+        "the verification that ran after the removal, with its exit codes"
+      ],
+      "path": ".ai/repo/skills/assess-before-deleting/SKILL.md",
+      "sha256": "1323f89e67598092c61c479733e12fbfecb39217a568942b1d43144bc8afaa2d",
+      "examples": [
+        {
+          "path": ".ai/repo/skills/assess-before-deleting/examples/remove-stale-worktrees.md",
+          "title": "Remove worktrees that look finished",
+          "body": "\nThe disk is filling and several linked worktrees belong to branches that were merged. Each\none is a candidate, not a decision: a merged branch can still hold uncommitted work.\n\n```text\nApply the assess-before-deleting skill to every linked worktree whose branch is merged into\nmaster. Classify each with git status, the unpushed commits and the peer board; push or\nrescue anything that holds work, remove only the low-risk ones, then run majordomus doctor.\n```\n"
+        }
+      ],
+      "valid": true,
+      "route": "/skills/assess-before-deleting/"
+    },
+    {
       "id": "deploy-site",
       "uri": "majordomus://skill/deploy-site",
       "title": "Deploy the site by hand",
@@ -93,6 +131,42 @@
       "route": "/skills/implement/"
     },
     {
+      "id": "pack-for-review",
+      "uri": "majordomus://skill/pack-for-review",
+      "title": "Pack the repository for an outside reviewer",
+      "description": "Prepare a bounded, reproducible snapshot of the tracked tree for a reviewer who cannot read the repository directly, with the local half and anything secret left out and the questions the review must answer written down.",
+      "status": "active",
+      "version": 1,
+      "tags": [
+        "review",
+        "archive",
+        "privacy"
+      ],
+      "related": [
+        "repo-review",
+        "report-verification-state"
+      ],
+      "inputs": [
+        "the question the outside review must answer, and the paths it concerns",
+        "a committed tree at the revision to be reviewed"
+      ],
+      "outputs": [
+        "an archive of the tracked tree at a named commit, with its file list and size",
+        "a brief for the reviewer naming the commit, the scope, the questions and what was left out"
+      ],
+      "path": ".ai/repo/skills/pack-for-review/SKILL.md",
+      "sha256": "da842f9e17303b40624419d6bd817d58df18de6560fec24b468ac33083d4e038",
+      "examples": [
+        {
+          "path": ".ai/repo/skills/pack-for-review/examples/second-opinion-from-another-model.md",
+          "title": "A second opinion from a model without the checkout",
+          "body": "\nA design change should be reviewed by a model in another tool that cannot read the\nrepository.\n\n```text\nApply the pack-for-review skill: commit the change, take the context profile of majordomus\narchive at that commit, read the dry run for anything that must not leave, and write a brief\nnaming the commit, the question and what the pack leaves out.\n```\n"
+        }
+      ],
+      "valid": true,
+      "route": "/skills/pack-for-review/"
+    },
+    {
       "id": "repo-review",
       "uri": "majordomus://skill/repo-review",
       "title": "Repository review",
@@ -146,20 +220,67 @@
       ],
       "valid": true,
       "route": "/skills/repo-review/"
+    },
+    {
+      "id": "report-verification-state",
+      "uri": "majordomus://skill/report-verification-state",
+      "title": "Report by verification state",
+      "description": "Write the outcome of a piece of work as claims each marked VERIFIED, PARTIAL or BLOCKED by the evidence actually observed, so a reader can tell what was proved from what was only done or intended.",
+      "status": "active",
+      "version": 1,
+      "tags": [
+        "reporting",
+        "evidence",
+        "handover"
+      ],
+      "related": [
+        "implement",
+        "repo-review"
+      ],
+      "inputs": [
+        "the work as it stands in the tree, with its commits and anything pushed",
+        "the commands that ran during the work, with their exit codes and the relevant output"
+      ],
+      "outputs": [
+        "a report whose every claim carries one of VERIFIED, PARTIAL or BLOCKED and the evidence for it",
+        "the gaps, each with the command or decision that would close it"
+      ],
+      "path": ".ai/repo/skills/report-verification-state/SKILL.md",
+      "sha256": "0cb225ea4302ab1bbd4a1d1f456e5d74e16f07be43143cd6bd214857c2bd5d4c",
+      "examples": [
+        {
+          "path": ".ai/repo/skills/report-verification-state/examples/final-report-of-a-task.md",
+          "title": "Final report of a task",
+          "body": "\nA task is closing and its report will be read by someone deciding whether to merge.\n\n```text\nApply the report-verification-state skill to this task's outcome. One claim per line, each\nmarked VERIFIED, PARTIAL or BLOCKED with the command and exit code behind it; BLOCKED first,\nand one line per gap saying what would close it.\n```\n"
+        }
+      ],
+      "valid": true,
+      "route": "/skills/report-verification-state/"
     }
   ],
-  "count": 3,
+  "count": 6,
   "by_tag": {
+    "cleanup": [
+      "assess-before-deleting"
+    ],
+    "safety": [
+      "assess-before-deleting"
+    ],
+    "evidence": [
+      "assess-before-deleting",
+      "deploy-site",
+      "implement",
+      "repo-review",
+      "report-verification-state"
+    ],
+    "worktrees": [
+      "assess-before-deleting"
+    ],
     "site": [
       "deploy-site"
     ],
     "deploy": [
       "deploy-site"
-    ],
-    "evidence": [
-      "deploy-site",
-      "implement",
-      "repo-review"
     ],
     "implementation": [
       "implement"
@@ -173,7 +294,20 @@
       "repo-review"
     ],
     "review": [
+      "pack-for-review",
       "repo-review"
+    ],
+    "archive": [
+      "pack-for-review"
+    ],
+    "privacy": [
+      "pack-for-review"
+    ],
+    "reporting": [
+      "report-verification-state"
+    ],
+    "handover": [
+      "report-verification-state"
     ]
   }
 }

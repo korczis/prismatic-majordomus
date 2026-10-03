@@ -1,7 +1,7 @@
 +++
 title = "Prompt integrity"
 description = "Prompt integrity"
-weight = 39
+weight = 42
 [extra]
 kind = "rule"
 slug = "majordomus-prompt-integrity-1"

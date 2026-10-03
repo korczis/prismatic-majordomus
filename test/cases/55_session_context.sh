@@ -19,7 +19,9 @@ store=.ai/local/session-contexts
 expect_exit 0 "$MJ" session context
 expect_grep 'No open session'
 expect_exit 12 "$MJ" session context s-19700101000000-0000
-expect_grep 'No working context'
+expect_grep 'No episode s-19700101000000-0000'
+expect_exit 12 "$MJ" session context --path s-19700101000000-0000
+expect_grep 'No episode s-19700101000000-0000'
 expect_exit 2 "$MJ" session context one two
 expect_grep 'one session id at a time' 
 
@@ -27,7 +29,7 @@ expect_grep 'one session id at a time'
 "$MJ" start "a task" --scope lib/ >/dev/null
 expect_exit 0 "$MJ" session start
 expect_grep 'working context: .ai/local/session-contexts/'
-ctx="$("$MJ" session context)"
+ctx="$("$MJ" session context --path)"
 expect_file "$ctx"
 case "$(basename "$ctx")" in
   2[0-9][0-9][0-9][0-9][0-9][0-9][0-9]T[0-9][0-9][0-9][0-9][0-9][0-9]Z--s-*.md) ;;
@@ -47,15 +49,21 @@ expect_no_grep '^provider:' "$ctx"
 grep -qF '## Context at open' "$ctx"
 grep -qF '## TASK' "$ctx"
 grep -qF 'task_id: ' "$ctx"
-# ...and the notes section the worker writes into
-grep -qF '## Notes' "$ctx"
+# ...and no notes template: a heading nobody wrote under was replaced by the composed
+# context, which reads the episode's checkpoints, decisions and questions back
+# (project.the-session-context-is-derived)
+grep -qF '## Notes' "$ctx" && { echo "    the opening snapshot still carries a ## Notes template"; exit 1; }
 
-# the same path, by session id and by --json
+# the same path, by session id and by --json; the composed context names it too
 sid="$(sed -n 's/^session_id: //p' "$ctx")"
-expect_exit 0 "$MJ" session context "$sid"
+expect_exit 0 "$MJ" session context --path "$sid"
 expect_grep "$(basename "$ctx")"
-expect_exit 0 "$MJ" --json session context
+expect_exit 0 "$MJ" --json session context --path
 expect_grep '"context":".ai/local/session-contexts/'
+expect_exit 0 "$MJ" --json session context
+expect_grep '"snapshot":".ai/local/session-contexts/'
+expect_exit 0 "$MJ" session context "$sid"
+expect_grep "opening snapshot: .*$(basename "$ctx")"
 
 # ---------------------------------------------------------------- the close appends
 printf 'The extraction boundary landed; the discovery stage is next.\n' >> "$ctx"
@@ -111,7 +119,7 @@ rm -f "$store/.session-context.log"
 # An open episode with no working context is the producer having failed silently, which is
 # exactly what the empty store looked like before it had one.
 "$MJ" session start >/dev/null
-rm -f "$("$MJ" session context)"
+rm -f "$("$MJ" session context --path)"
 finding 'FAIL +session +.*has no working context'
 "$MJ" session close >/dev/null
 finding 'OK +session +.*working context'

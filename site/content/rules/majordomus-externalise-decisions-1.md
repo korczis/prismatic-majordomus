@@ -1,7 +1,7 @@
 +++
 title = "Externalise decisions and durable state"
 description = "Externalise decisions and durable state"
-weight = 20
+weight = 21
 [extra]
 kind = "rule"
 slug = "majordomus-externalise-decisions-1"

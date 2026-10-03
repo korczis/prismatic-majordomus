@@ -67,6 +67,8 @@ pub enum Command {
     /// Pull-request integration: every open pull request classified against the current master with its evidence, the ranked plan, and the executor that merges the next provably safe one — one at a time, re-planning after each (ADR 0101)
     #[command(alias = "pr")]
     Prs(PrsArgs),
+    /// Is any of this repository's work held where it can be lost? Every holding — a work tree with uncommitted files, a branch with commits, a stash — with the disposition read from git, and one verdict over them
+    Convergence(ConvergenceArgs),
     /// The commit as a value: what the working tree would commit and how it divides, the scope vocabulary this repository's history yields, and the verdict on one message against the commit policy
     Commit(CommitArgs),
     /// The product: what this repository's tool does for a person, as the features under the layer declare it, with every surface, count and moment derived; the matrix of features against interfaces; the providers; and the model's own validation
@@ -105,6 +107,10 @@ pub enum Command {
     Shell(ShellArgs),
     /// The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it
     Dashboard(DashboardArgs),
+    /// Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans
+    Skills(SkillsArgs),
+    /// What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion, one record by id with every reference it names resolved, and the derivation status of this checkout judged against the policy's freshness thresholds
+    Knowledge(KnowledgeArgs),
 }
 
 #[derive(Debug, Args)]
@@ -258,6 +264,62 @@ pub enum ShellCommand {
         #[arg(long)]
         canonical: bool,
     },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus skills`. The output shape is global, so it reads where a person writes it.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, OutputFormat, SkillsArgs, SkillsCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "skills", "explain", "implement"]).unwrap();
+/// let Command::Skills(args) = cli.command else { panic!("skills") };
+/// let args: SkillsArgs = args;
+/// assert!(matches!(args.command, SkillsCommand::Explain { .. }));
+/// assert_eq!(args.format, OutputFormat::Text, "text unless a person asks for json");
+/// // `--format` is global, so it is read after the subcommand as well as before it
+/// let cli = Cli::try_parse_from(["majordomus", "skills", "status", "--format", "json"]).unwrap();
+/// let Command::Skills(SkillsArgs { format, .. }) = cli.command else { panic!("skills") };
+/// assert_eq!(format, OutputFormat::Json);
+/// // the group runs nothing of its own: every runnable path here is a capability's
+/// assert!(Cli::try_parse_from(["majordomus", "skills"]).is_err());
+/// ```
+pub struct SkillsArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `status`, `explain` or `verify`.
+    pub command: SkillsCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus skills`: the command line of `skills.status`,
+/// `skills.explain` and `skills.verify`.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, SkillsCommand};
+/// let cli = Cli::parse_from(["majordomus", "skills", "verify"]);
+/// let Command::Skills(args) = cli.command else { panic!("skills") };
+/// assert!(matches!(args.command, SkillsCommand::Verify));
+/// ```
+pub enum SkillsCommand {
+    /// Every skill with its derived standing: tested, documented, enforced, used
+    Status,
+    /// One skill in full: each naming test and its evidence, its page, its gates, every invocation
+    Explain {
+        /// The skill's id, which is also its directory name
+        id: String,
+    },
+    /// Every finding over the skills; exit 10 when any is a failure
+    Verify,
 }
 
 #[derive(Debug, Args)]
@@ -1301,6 +1363,42 @@ pub struct QualityRustdocArgs {
 }
 
 #[derive(Debug, Args)]
+/// `majordomus convergence`: whether any of this repository's work is held where only one
+/// disk can see it. It exits 10 when it is, so a hook or a script refuses on the verdict
+/// rather than on a parsed report.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, ConvergenceArgs, OutputFormat};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "convergence", "--format", "json", "--all"])
+///     .unwrap();
+/// let args: ConvergenceArgs = match cli.command {
+///     Command::Convergence(args) => args,
+///     other => panic!("expected `convergence`, parsed {other:?}"),
+/// };
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// assert!(args.all);
+///
+/// // a person asks the question with nothing after it, and reads only what is at risk
+/// let bare = Cli::try_parse_from(["majordomus", "convergence"]).unwrap();
+/// assert!(matches!(bare.command, Command::Convergence(ConvergenceArgs { all: false, .. })));
+/// ```
+pub struct ConvergenceArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// How to render the verdict
+    pub format: OutputFormat,
+
+    #[arg(long)]
+    /// List every holding, not only the ones whose work exists on one disk
+    pub all: bool,
+}
+
+#[derive(Debug, Args)]
 /// `majordomus quality report`.
 pub struct QualityReportArgs {
     #[command(flatten)]
@@ -2201,6 +2299,61 @@ pub enum RulesCommand {
         /// `suite:<case>`, `crate:<binary>`, or the path a rule names it with
         id: String,
     },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus knowledge`. What the knowledge deriver left for review and whether it is
+/// still writing. The deriver itself is the shell tool's (`lib/knowledge.sh`); this reads
+/// what it wrote — the candidate records under the tracked knowledge section, one record by
+/// id with its references resolved, and the derivation status of this checkout — through the
+/// `knowledge_base` capabilities, so the command line answers what HTTP and MCP answer.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, KnowledgeArgs};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "knowledge", "status", "--format", "json"]).unwrap();
+/// let Command::Knowledge(args) = cli.command else { panic!("not the knowledge command") };
+/// let _: KnowledgeArgs = args;
+/// ```
+pub struct KnowledgeArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `candidates`, `record` or `status`. Required: the group runs nothing of its own, so
+    /// that every runnable path here is one a capability declares rather than one
+    /// classified command-line-only in `cli::local`.
+    pub command: KnowledgeCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus knowledge`.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, KnowledgeCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "knowledge", "record", "e1-0123456789ab"]).unwrap();
+/// let Command::Knowledge(args) = cli.command else { panic!("not the knowledge command") };
+/// assert!(matches!(args.command, KnowledgeCommand::Record { id } if id == "e1-0123456789ab"));
+/// assert!(Cli::try_parse_from(["majordomus", "knowledge"]).is_err(), "a subcommand is required");
+/// ```
+pub enum KnowledgeCommand {
+    /// The candidate records awaiting review, with the branch of the episode each came from and how long each has waited
+    Candidates,
+    /// One knowledge record by id: its front matter, and every reference it names resolved against the index, the ledger and git
+    Record {
+        /// The record id, which is also its file name
+        id: String,
+    },
+    /// Whether the deriver is still writing: the last derivation, the newest closed episode, and the stopped-writer judgement against session.freshness
+    Status,
 }
 
 #[derive(Debug, Args)]
@@ -4054,6 +4207,39 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "knowledge candidates",
+        examples: &[ExampleDoc {
+            id: "knowledge-candidates-json",
+            title: "The review queue, as one document",
+            description: "The same answer `GET /api/v1/knowledge/candidates`, the MCP tool `majordomus_knowledge_candidates` and the resource `majordomus://knowledge-candidates` serve: every record with status candidate under the candidates class, the branch of the episode each came from, how long each has waited, and the policy's cap beside the count. A repository whose deriver has not run yet answers with an empty queue, which is an answer and not an error.",
+            argv: &["knowledge", "candidates", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/total", "/on_this_branch", "/branch", "/over_cap"]),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge record",
+        examples: &[ExampleDoc {
+            id: "knowledge-record-absent",
+            title: "A record the repository does not hold",
+            description: "An id nothing carries is a not-found rather than an empty answer, with the exit code that says which: a typo that read as `this record names no evidence` would be indistinguishable from the dangling reference the integrity validator exists to report.",
+            argv: &["knowledge", "record", "no-such-record"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "knowledge status",
+        examples: &[ExampleDoc {
+            id: "knowledge-status-json",
+            title: "Whether the deriver is still writing",
+            description: "The freshness half of the stopped-writer judgement: the newest derivation, the newest closed episode, how many closed episodes no derivation names, and — once a derivation has run in this checkout — whether the newest close went underived past the stale threshold. A fresh repository, in which no episode has closed, reports that it was not judged and why, and never a stopped writer.",
+            argv: &["knowledge", "status", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/present", "/judged", "/stopped_writer", "/freshness"]),
+        }],
+    },
+    CommandExamples {
         command: "evidence record",
         examples: &[ExampleDoc {
             id: "evidence-record-missing",
@@ -4238,6 +4424,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["prs", "cleanup"],
             setup: &[],
             expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "convergence",
+        examples: &[ExampleDoc {
+            id: "convergence-report-json",
+            title: "Is any work held where it can be lost?",
+            description: "Every holding of this repository — a work tree with uncommitted files, a branch with commits, a stash — with the disposition read from git for each: integrated when the trunk reaches it, published when a remote-tracking ref does, local_only when nothing but this disk has it, uncommitted when it was never committed at all. The last two are at risk, and the verdict over them is what the completion invariant's `no-stale-topology` question reads. Measured offline: a remote-tracking ref is what this checkout last fetched, which is exactly the question — whether the work left this disk.",
+            argv: &["convergence", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/schema", "/converged", "/at_risk", "/tallies"]),
         }],
     },
     CommandExamples {
@@ -4732,6 +4929,49 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["why"],
             setup: &[],
             expect: Expect::StdoutContains(&["SLUG", "moment(s)"]),
+        }],
+    },
+    CommandExamples {
+        command: "skills status",
+        examples: &[
+            ExampleDoc {
+                id: "skills-status",
+                title: "Every skill, with its derived standing",
+                description: "Tested, documented, enforced and used are derived on every read from the tests that name the skill, the evidence ledger, the site projection, the CI model and the invocation surfaces; no file stores them. A repository with no skill answers with none.",
+                argv: &["skills", "status"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["skill(s)"]),
+            },
+            ExampleDoc {
+                id: "skills-status-json",
+                title: "The same, as the shape the API and MCP answer with",
+                description: "What `GET /api/v1/skills` returns and the `majordomus_skills` tool answers: the count, the tally by standing, and every skill with its four derived facts.",
+                argv: &["skills", "status", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/count", "/standings", "/skills"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "skills explain",
+        examples: &[ExampleDoc {
+            id: "skills-explain-absent",
+            title: "A skill the repository does not hold is a refusal, not an empty answer",
+            description: "`skills explain <id>` answers one skill in full: each naming test with the state of its latest run and how to reproduce it, its page, its gates and every invocation by path and line. An id that names no skill exits 12 and names what was looked for.",
+            argv: &["skills", "explain", "no-such-skill"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "skills verify",
+        examples: &[ExampleDoc {
+            id: "skills-verify",
+            title: "Check every skill is a proven capability",
+            description: "An active skill no test names or nothing invokes, a failing run, a contract violation, or a test or invocation naming a skill that does not exist: each a failure, and exit 10. Evidence that is not current, a missing page or a missing gate: a warning.",
+            argv: &["skills", "verify"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["skill(s)", "valid"]),
         }],
     },
     CommandExamples {

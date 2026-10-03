@@ -21,6 +21,10 @@
 . "$MJ_LIB_DIR/history.sh"
 # shellcheck source=prompt.sh
 . "$MJ_LIB_DIR/prompt.sh"
+# the knowledge candidates awaiting review, the section the start briefing carries too; the
+# bounding it uses comes from derive.sh, which handover.sh above has already loaded
+# shellcheck source=knowledge.sh
+. "$MJ_LIB_DIR/knowledge.sh"
 # the scoped context documents: discovery, resolution, validation, impact
 # shellcheck source=context_docs.sh
 . "$MJ_LIB_DIR/context_docs.sh"
@@ -48,8 +52,9 @@ mj_cmd_context() {
 usage: majordomus context [--for <provider>] [--prompt <name>] [--budget-lines <n>] [--json]
        majordomus context list | resolve <path> | explain <path> | validate | affected | check-sync
   prints what a worker needs to know now: git identity, the task and its profile, the
-  context documents that apply to its scope, open questions, recent decisions, the newest
-  checkpoint, the most relevant handover, recent history — as far as the policy's
+  context documents that apply to its scope, open questions, the knowledge candidates
+  awaiting review on this branch, recent decisions, the newest checkpoint, the most
+  relevant handover, recent history — as far as the policy's
   context.builder_budget_lines allows, in that order
   --for      wrap the same body for one provider named in the policy's projections
   --prompt   append a rendered prompt asset from .ai/repo/prompts/
@@ -230,6 +235,15 @@ mj_context_sections() {
     fi
   fi
 
+  # 4b. the knowledge awaiting review on this branch — the section the start briefing
+  # carries, from the one definition in knowledge.sh (ADR 0091). Task or no task: a
+  # candidate belongs to the branch its episode worked on, not to a task. Absence is
+  # printed, never omitted; the section itself is dropped for budget after the derived
+  # listings and before any authored record, and the drop is named.
+  { printf '## KNOWLEDGE (candidates awaiting review on this branch; majordomus knowledge candidates)\n'
+    mj_knowledge_briefing_section "$(mj_git_branch)"
+  } > "$MJ_CTX_TMP/45.knowledge"
+
   # 5. decisions
   local dfile="$MJ_STATE_DIR/decisions.md" dmax
   dmax="$(mj_pol_req context.recent_decisions)"
@@ -353,8 +367,8 @@ mj_ctx_verification() {
 # right now outranks your own records the way git does, and it is dropped late for the same
 # reason — a collision in flight is worth more than history. `75.integration` is one line a
 # command away (`majordomus prs brief`), so it goes before any record body does.
-MJ_CTX_DROP_ORDER="90.history 75.integration 80.files 35.documents 55.reasoning 50.decisions 60.checkpoint 70.handover 15.peers"
-MJ_CTX_ORDER="10.git 15.peers 20.task 30.profile 35.documents 40.questions 50.decisions 55.reasoning 60.checkpoint 70.handover 75.integration 80.files 90.history 95.prompt"
+MJ_CTX_DROP_ORDER="90.history 75.integration 80.files 35.documents 45.knowledge 55.reasoning 50.decisions 60.checkpoint 70.handover 15.peers"
+MJ_CTX_ORDER="10.git 15.peers 20.task 30.profile 35.documents 40.questions 45.knowledge 50.decisions 55.reasoning 60.checkpoint 70.handover 75.integration 80.files 90.history 95.prompt"
 
 # Render the whole document, including its own header and trailer, into $1. The budget
 # governs what a worker actually receives, so the count must be of this file and not of
@@ -589,7 +603,7 @@ mj_context_json() {
   else printf ',"task":null'; fi
   printf ',"sections":['
   first=1
-  for d in 30.profile 35.documents 40.questions 50.decisions 60.checkpoint 70.handover 80.files 90.history 95.prompt; do
+  for d in 30.profile 35.documents 40.questions 45.knowledge 50.decisions 60.checkpoint 70.handover 80.files 90.history 95.prompt; do
     [ -f "$MJ_CTX_TMP/$d" ] || continue
     [ "$first" = 1 ] || printf ','
     printf '{"id":"%s","lines":%s,"text":"%s"}' "${d#*.}" "$(mj_lines "$MJ_CTX_TMP/$d")" "$(mj_json_file "$MJ_CTX_TMP/$d")"

@@ -1,7 +1,7 @@
 +++
 title = "No endpoint of the Rust executable without a benchmark, and no number without evidence"
 description = "No endpoint of the Rust executable without a benchmark, and no number without evidence"
-weight = 127
+weight = 132
 [extra]
 kind = "rule"
 slug = "project-rust-benchmark-coverage-1"

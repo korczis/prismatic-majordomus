@@ -35,6 +35,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 1
+  - id: convergence
+    title: Convergence
+    description: "Whether every unit of work in this repository is somewhere another worker could find it. A holding is anything that can hold work — a work tree with uncommitted files, a branch with commits, a stash — and each carries a disposition read from git: integrated (the trunk reaches it), published (a remote-tracking ref reaches it), local_only (committed on this disk and nowhere else) or uncommitted. The last two are at risk: they are invisible to every other worker, and a worker that stops is not a rollback. Measured offline, from this checkout alone; whether a pull request exists for a branch is a question for the forge and is not asked here."
+    stability: behaviorally_verified
+    source: builtin
+    capabilities: 1
   - id: dashboard
     title: Dashboards
     description: "The Dashboard Suite as a projection of the canonical state: every card is one fact read out of an existing capability's answer, carrying the capability it asked, the input, the JSON pointer its value was read from, the Cockpit page that holds the evidence and the command that acts on it. No dashboard stores, counts or judges anything of its own (ADR 0088)."
@@ -101,6 +107,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 3
+  - id: episodes
+    title: Episodes
+    description: "The execution episodes this shared server holds: one per client that asked for one, opened when the client attaches, kept alive by its own traffic, detached rather than closed when the connection goes, and closed on a deliberate detach, on shutdown, or by the reaper when nothing came back. The episode boundary for a client with no provider hooks of its own (ADR 0103)."
+    stability: behaviorally_verified
+    source: builtin
+    capabilities: 3
   - id: evidence
     title: Evidence
     description: "What actually ran, against which commit, and whether it still proves anything. The claims matrix binds a claim to a test by path; the ledger under .ai/repo/evidence records the latest execution of every test with the commit, the tree state, the digest of the test's own source, the time, the origin and the command that runs it again. Joining the two answers, per claim, whether the repository can honestly call it proven — and distinguishes a run recorded against this very commit from one whose inputs merely have not changed since, because collapsing those two is how a green badge stops meaning anything."
@@ -143,6 +155,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 4
+  - id: knowledge_base
+    title: Knowledge base
+    description: "What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion with the branch of the episode each came from, one record by id with every reference it names resolved against the index, the ledger and git, and the derivation status of this checkout judged against the policy's freshness thresholds. Read from the index and the ledger; written by nothing here — the deriver is the shell tool's, and a person promotes."
+    stability: behaviorally_verified
+    source: builtin
+    capabilities: 3
   - id: lifecycle
     title: Session lifecycle
     description: "The episode lifecycle as an operator sees it: every open episode of this checkout's store rather than only the one the pointer follows, the episodes that can no longer close themselves, the commit this process is answering about against the commit the repository is on, what each provider's adapter declares it can do, and the tracked records a clone receives. Read from the local half of the layer and from the index; written by nothing here."
@@ -257,6 +275,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 1
+  - id: skills
+    title: Skills
+    description: "Every skill the layer defines as a proven capability: whether a test names it and the evidence ledger holds a current passing run of that test, whether the site projects its page, whether a doctrine and a CI gate hold it, and whether a workflow, prompt, profile, provider template, recipe or CI workflow invokes it. All four are derived on every read and none is authored; an active skill no test names or nothing invokes is an orphan."
+    stability: behaviorally_verified
+    source: builtin
+    capabilities: 3
   - id: trace
     title: Traceability
     description: "Which branches and commits realised an issue, and which issue and milestone a commit served — derived from git and from the canonical project model on every call, stored nowhere. A branch names an issue when one of its path components is an issue id; a commit belongs to the issue whose branches hold it; a commit no such branch holds is reported as unattributed rather than left out, because work with no execution contract is what a traceability report exists to make visible. Pull requests are a GitHub fact and this executable makes no network call: `scripts/traceability` reads them and joins them to this answer over the branch name."
@@ -4023,6 +4047,151 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/continuity.rs
+  - id: convergence.report
+    module: convergence
+    kind: query
+    title: Is any work held where it can be lost?
+    description: "Every holding of this repository with its disposition, the evidence read for it and the command that would move it out of danger, the tallies per disposition, how many holdings exist on one disk only, and the one verdict over them. Read from git on every call: a commit, a push or an editor's save changes the answer between two calls."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: ConvergenceReport
+      schema:
+        type: object
+        properties:
+          schema:
+            type: string
+            description: "`SCHEMA`."
+          repository:
+            type: string
+            description: The primary checkout this was measured from.
+          trunk:
+            type:
+              - string
+              - "null"
+            description: "The trunk the containment was decided against, when there is one."
+          holdings:
+            type: array
+            items:
+              "$ref": "#/$defs/Holding"
+            description: "Every holding, at-risk ones first, then by kind and identity."
+          tallies:
+            type: object
+            additionalProperties:
+              type: integer
+              format: uint
+              minimum: 0
+            description: "How many holdings carry each disposition, by its word."
+          at_risk:
+            type: integer
+            format: uint
+            minimum: 0
+            description: The holdings that exist on one disk only.
+          converged:
+            type: boolean
+            description: Nothing is held where it can be lost.
+        required:
+          - schema
+          - repository
+          - holdings
+          - tallies
+          - at_risk
+          - converged
+        description: "The repository's convergence: every holding, and the one verdict over them.\n\n```\nuse majordomus_cli::convergence::{ConvergenceReport, SCHEMA};\n\nlet empty = ConvergenceReport {\n    schema: SCHEMA.into(),\n    repository: \"/tmp/r\".into(),\n    trunk: Some(\"master\".into()),\n    holdings: vec![],\n    tallies: Default::default(),\n    at_risk: 0,\n    converged: true,\n};\n// the verdict is the one word a gate reads; the count is what a person reads next to it\nassert!(empty.converged && empty.at_risk == 0);\nassert_eq!(serde_json::to_value(&empty).unwrap()[\"schema\"], \"convergence/v1\");\n```"
+        title: ConvergenceReport
+        "$defs":
+          Holding:
+            type: object
+            properties:
+              kind:
+                "$ref": "#/$defs/HoldingKind"
+                description: What kind of thing holds it.
+              identity:
+                type: string
+                description: "How it is named: a branch name, an absolute worktree path, a stash ref."
+              disposition:
+                "$ref": "#/$defs/Disposition"
+                description: Where the work can be reached from.
+              evidence:
+                type: string
+                description: What was actually read — never a restatement of the disposition.
+              remedy:
+                type: string
+                description: The command that would move it out of danger. Empty when it is not at risk.
+              at_risk:
+                type: boolean
+                description: "This holding's work exists on one disk only."
+            required:
+              - kind
+              - identity
+              - disposition
+              - evidence
+              - at_risk
+            description: "One thing holding work, and what is known about where that work can be reached from.\n\n```\nuse majordomus_cli::convergence::{Disposition, Holding, HoldingKind};\n\nlet branch = Holding {\n    kind: HoldingKind::Branch,\n    identity: \"feature/x\".into(),\n    disposition: Disposition::LocalOnly,\n    evidence: \"abc123 is on no remote-tracking ref of this checkout\".into(),\n    remedy: \"git push -u origin feature/x\".into(),\n    at_risk: true,\n};\n// an at-risk holding always carries the command that would move it out of danger\nassert!(branch.at_risk && !branch.remedy.is_empty());\n// and a reachable one carries none, so the field is left out of the document\nlet safe = Holding { disposition: Disposition::Published, remedy: String::new(), at_risk: false, ..branch };\nassert!(!serde_json::to_string(&safe).unwrap().contains(\"remedy\"));\n```"
+          HoldingKind:
+            oneOf:
+              - type: string
+                const: worktree
+                description: "A registered work tree, holding files that are not committed."
+              - type: string
+                const: branch
+                description: "A local branch, holding commits."
+              - type: string
+                const: stash
+                description: "An entry of `git stash`."
+            description: "What kind of thing is holding the work.\n\n```\nuse majordomus_cli::convergence::HoldingKind;\n\n// the word a report and a persisted record use; renaming a variant must not rename it\nassert_eq!(HoldingKind::Worktree.as_str(), \"worktree\");\nassert_eq!(serde_json::to_string(&HoldingKind::Stash).unwrap(), \"\\\"stash\\\"\");\n```"
+          Disposition:
+            oneOf:
+              - type: string
+                const: integrated
+                description: "The trunk reaches it: it is in the repository's own history."
+              - type: string
+                const: published
+                description: "A remote reaches it: another checkout can fetch it, and it survives this disk."
+              - type: string
+                const: local_only
+                description: Committed here and nowhere else. One disk away from being lost.
+              - type: string
+                const: uncommitted
+                description: "Not committed at all: files in a work tree, or a stash entry."
+            description: "Where the work a holding carries can be reached from.\n\nThe order is the order of safety: everything above `Disposition::LocalOnly` is\nreachable by somebody who is not the worker that made it.\n\n```\nuse majordomus_cli::convergence::Disposition;\n\n// declared in the order of safety, so the derived order says which is worse\nassert!(Disposition::Integrated < Disposition::Published);\nassert!(Disposition::Published < Disposition::LocalOnly);\nassert_eq!(serde_json::to_string(&Disposition::LocalOnly).unwrap(), \"\\\"local_only\\\"\");\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::convergence
+    exposure:
+      mcp:
+        tool: majordomus_convergence
+        resource:
+          uri: majordomus://convergence
+          name: convergence
+      http:
+        method: GET
+        path: /api/v1/convergence
+      cli:
+        path:
+          - convergence
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - convergence
+      - git
+      - worktree
+      - integration
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/convergence.rs
   - id: dashboard.overview
     module: dashboard
     kind: query
@@ -13234,6 +13403,359 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/environment.rs
+  - id: episodes.attach
+    module: episodes
+    kind: command
+    title: Attach this connection to an episode
+    description: "Open an execution episode for the calling client, or resume the one it already had. 'external_id' is the client's own durable name for the sitting — its conversation or thread id — and must survive a reconnect: a client that comes back under the same identity is given its own episode again, under whatever peer id it now has, rather than a second one. This server's peer id will not do; it is handed out per connection. After this the client's own traffic keeps the episode alive, losing the connection detaches rather than closes it, and it is closed by majordomus_session_detach, by the server stopping, or by the reaper once the reattach grace has passed. The repository's episode is opened by the same command a provider hook runs, and what it reported is in the answer. Needs an MCP session: over plain HTTP there is no connection to bind to."
+    input:
+      name: AttachInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          external_id:
+            type: string
+            description: "The client's own durable name for this episode — its conversation id, thread id, or\nwhatever it calls the sitting it is in.\n\n**It must survive a reconnect**, because that is the whole of its job: a client that\ncomes back under the same identity is given its own episode again rather than a\nsecond one. Anything the client can reproduce will do; what will not do is this\nserver's peer id, which is handed out per connection and is a different string every\ntime the client reconnects."
+        required:
+          - external_id
+        description: "The input of `episodes.attach`: which piece of work this connection is carrying.\n\nThe identity is the only field, and an unknown one is refused rather than ignored, so a\nclient that sends a peer id under another name learns it at once:\n\n```\nuse majordomus_cli::capability::builtin::episodes::AttachInput;\nlet input: AttachInput = serde_json::from_str(r#\"{\"external_id\":\"conv-42\"}\"#).unwrap();\nassert_eq!(input.external_id, \"conv-42\");\nassert!(serde_json::from_str::<AttachInput>(r#\"{\"external_id\":\"x\",\"peer\":\"p1\"}\"#).is_err());\nassert!(serde_json::from_str::<AttachInput>(\"{}\").is_err(), \"the identity is required\");\n```"
+        title: AttachInput
+    output:
+      name: Attached
+      schema:
+        type: object
+        properties:
+          episode:
+            "$ref": "#/$defs/ConnectionEpisode"
+            description: The episode this connection now holds.
+          resumed:
+            type: boolean
+            description: "Whether an episode already under this identity was resumed rather than a new one\nopened. True after a reconnect, a client restart or a crash, and the field a caller\nchecks to know whether it is continuing something."
+          reattach_grace_seconds:
+            type: integer
+            format: uint64
+            minimum: 0
+            description: "How long this episode survives its connection before the reaper closes it, in\nseconds. Stated rather than left to be discovered: a client that knows the grace can\ndecide whether reconnecting is worth it."
+        required:
+          - episode
+          - resumed
+          - reattach_grace_seconds
+        description: "The answer of `episodes.attach`: the episode the connection now holds, whether it was\nresumed rather than opened, and how long it outlives a lost connection.\n\n```\nuse majordomus_cli::capability::builtin::episodes::Attached;\nlet schema = serde_json::to_value(schemars::schema_for!(Attached)).unwrap();\nfor field in [\"episode\", \"resumed\", \"reattach_grace_seconds\"] {\n    assert!(schema[\"required\"].as_array().unwrap().iter().any(|f| f == field), \"{field}\");\n}\n```"
+        title: Attached
+        "$defs":
+          ConnectionEpisode:
+            type: object
+            properties:
+              external_id:
+                type: string
+                description: "The client's own durable name for this piece of work, and the key everything here is\naddressed by. Never a peer id: see the module documentation."
+              provider:
+                type: string
+                description: "The provider id this episode is recorded under, as `share/providers.yaml` names one."
+              peer:
+                anyOf:
+                  - "$ref": "#/$defs/PeerId"
+                  - type: "null"
+                description: "The connection holding it, when one does. `None` while detached — which is a state\nan episode is *supposed* to reach and come back from, not a fault."
+              opened_at:
+                type: string
+                description: "When it was first opened, RFC 3339, UTC. Unchanged by a re-attach: the episode is\nthe work, and the work did not restart because a socket did."
+              last_activity_seconds_ago:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Seconds since the client last spoke on it, through any connection."
+              attachments:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: "How many times a connection has taken it over, the first attach included."
+              state:
+                "$ref": "#/$defs/ConnectionEpisodeState"
+                description: "Open, or detached and waiting for its client."
+              repository:
+                type: string
+                description: "What the repository's own episode command reported, verbatim — the record it opened,\nor the reason it could not. Never interpreted here, and never empty: a subsystem\nthat silently does nothing is the failure mode this field exists to make visible."
+            required:
+              - external_id
+              - provider
+              - opened_at
+              - last_activity_seconds_ago
+              - attachments
+              - state
+              - repository
+            description: "One episode: what the client calls itself, which connection holds it now, and what the\nrepository did about it.\n\n```\nuse majordomus_cli::episodes::{ConnectionEpisode, EpisodeBoard};\nuse majordomus_cli::peers::{PeerBoard, Transport};\nlet peer = PeerBoard::new().attach(Transport::Http);\nlet (episode, _) = EpisodeBoard::new().attach(&peer, \"conv-42\", \"generic\");\nlet episode: ConnectionEpisode = episode;\nassert_eq!((episode.external_id.as_str(), episode.provider.as_str()), (\"conv-42\", \"generic\"));\nassert_eq!(episode.peer.as_ref(), Some(&peer));\n// never empty: a board with no repository behind it says so\nassert!(episode.repository.contains(\"without a driver\"));\n```"
+          PeerId:
+            type: string
+            description: "A peer's identity for the life of the server: `p1`, `p2`, ... in attachment order.\n`p1` is the session that started the server."
+          ConnectionEpisodeState:
+            oneOf:
+              - type: string
+                const: open
+                description: A connection holds it and the client is speaking.
+              - type: string
+                const: detached
+                description: "The connection has gone; the episode is kept for `REATTACH_GRACE` so the client\ncan come back to it. This is the state a crash lands in, and the one a reconnect\nrecovers from."
+            description: "Where an episode stands: held by a live connection, or waiting for its client to come\nback. There is no closed state, because a closed episode leaves the board; what survives\nit is the repository's own record.\n\n```\nuse majordomus_cli::episodes::{ConnectionEpisodeState, EpisodeBoard};\nuse majordomus_cli::peers::{PeerBoard, Transport};\nlet peer = PeerBoard::new().attach(Transport::Stdio);\nlet board = EpisodeBoard::new();\nassert_eq!(board.attach(&peer, \"w\", \"generic\").0.state, ConnectionEpisodeState::Open);\nassert_eq!(board.detach(&peer)[0].state, ConnectionEpisodeState::Detached);\nassert_eq!(serde_json::to_string(&ConnectionEpisodeState::Detached).unwrap(), \"\\\"detached\\\"\");\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::episodes
+    exposure:
+      mcp:
+        tool: majordomus_session_attach
+      http:
+        method: POST
+        path: /api/v1/episodes/attach
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - episodes
+      - session
+      - coordination
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: process_state
+      cancellable: false
+      concurrency: serial
+    source_path: apps/majordomus-cli/src/capability/builtin/episodes.rs
+  - id: episodes.detach
+    module: episodes
+    kind: command
+    title: "Close this connection's episode"
+    description: "Close an execution episode deliberately: the work is done, not merely interrupted, and the repository's record says so. Without 'external_id' it is whichever episode the calling connection holds, which needs an MCP session: over plain HTTP there is no connection, so the call is refused and the episode must be named. A client that simply goes away does not need this — its episode detaches and the reaper closes it as interrupted — and the difference between those two records is the one thing about an ended episode that changes what somebody does next."
+    input:
+      name: DetachInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          external_id:
+            type:
+              - string
+              - "null"
+            description: "The episode to close. Omitted, it is whichever one this connection holds, which is\nwhat a client ending its own sitting means."
+        description: "The input of `episodes.detach`: the episode to close.\n\nEmpty is a valid input, meaning the episode the calling connection holds; over an\ninterface with no connection that input is refused, since there is nothing to take\n\"this one's episode\" from.\n\n```\nuse majordomus_cli::capability::builtin::episodes::DetachInput;\nlet mine: DetachInput = serde_json::from_str(\"{}\").unwrap();\nassert!(mine.external_id.is_none());\nlet named: DetachInput = serde_json::from_str(r#\"{\"external_id\":\"conv-42\"}\"#).unwrap();\nassert_eq!(named.external_id.as_deref(), Some(\"conv-42\"));\nassert_eq!(serde_json::to_string(&mine).unwrap(), \"{}\", \"an omitted id is not written as null\");\n```"
+        title: DetachInput
+    output:
+      name: Detached
+      schema:
+        type: object
+        properties:
+          episode:
+            "$ref": "#/$defs/ConnectionEpisode"
+            description: "The episode as it was closed, its `repository` field carrying what the repository's\nown end event reported."
+        required:
+          - episode
+        description: "The answer of `episodes.detach`: the episode as it was closed, no longer held by any\nconnection, with what the repository's end event reported.\n\n```\nuse majordomus_cli::capability::builtin::episodes::Detached;\nlet schema = serde_json::to_value(schemars::schema_for!(Detached)).unwrap();\nassert_eq!(schema[\"required\"], serde_json::json!([\"episode\"]));\n```"
+        title: Detached
+        "$defs":
+          ConnectionEpisode:
+            type: object
+            properties:
+              external_id:
+                type: string
+                description: "The client's own durable name for this piece of work, and the key everything here is\naddressed by. Never a peer id: see the module documentation."
+              provider:
+                type: string
+                description: "The provider id this episode is recorded under, as `share/providers.yaml` names one."
+              peer:
+                anyOf:
+                  - "$ref": "#/$defs/PeerId"
+                  - type: "null"
+                description: "The connection holding it, when one does. `None` while detached — which is a state\nan episode is *supposed* to reach and come back from, not a fault."
+              opened_at:
+                type: string
+                description: "When it was first opened, RFC 3339, UTC. Unchanged by a re-attach: the episode is\nthe work, and the work did not restart because a socket did."
+              last_activity_seconds_ago:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Seconds since the client last spoke on it, through any connection."
+              attachments:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: "How many times a connection has taken it over, the first attach included."
+              state:
+                "$ref": "#/$defs/ConnectionEpisodeState"
+                description: "Open, or detached and waiting for its client."
+              repository:
+                type: string
+                description: "What the repository's own episode command reported, verbatim — the record it opened,\nor the reason it could not. Never interpreted here, and never empty: a subsystem\nthat silently does nothing is the failure mode this field exists to make visible."
+            required:
+              - external_id
+              - provider
+              - opened_at
+              - last_activity_seconds_ago
+              - attachments
+              - state
+              - repository
+            description: "One episode: what the client calls itself, which connection holds it now, and what the\nrepository did about it.\n\n```\nuse majordomus_cli::episodes::{ConnectionEpisode, EpisodeBoard};\nuse majordomus_cli::peers::{PeerBoard, Transport};\nlet peer = PeerBoard::new().attach(Transport::Http);\nlet (episode, _) = EpisodeBoard::new().attach(&peer, \"conv-42\", \"generic\");\nlet episode: ConnectionEpisode = episode;\nassert_eq!((episode.external_id.as_str(), episode.provider.as_str()), (\"conv-42\", \"generic\"));\nassert_eq!(episode.peer.as_ref(), Some(&peer));\n// never empty: a board with no repository behind it says so\nassert!(episode.repository.contains(\"without a driver\"));\n```"
+          PeerId:
+            type: string
+            description: "A peer's identity for the life of the server: `p1`, `p2`, ... in attachment order.\n`p1` is the session that started the server."
+          ConnectionEpisodeState:
+            oneOf:
+              - type: string
+                const: open
+                description: A connection holds it and the client is speaking.
+              - type: string
+                const: detached
+                description: "The connection has gone; the episode is kept for `REATTACH_GRACE` so the client\ncan come back to it. This is the state a crash lands in, and the one a reconnect\nrecovers from."
+            description: "Where an episode stands: held by a live connection, or waiting for its client to come\nback. There is no closed state, because a closed episode leaves the board; what survives\nit is the repository's own record.\n\n```\nuse majordomus_cli::episodes::{ConnectionEpisodeState, EpisodeBoard};\nuse majordomus_cli::peers::{PeerBoard, Transport};\nlet peer = PeerBoard::new().attach(Transport::Stdio);\nlet board = EpisodeBoard::new();\nassert_eq!(board.attach(&peer, \"w\", \"generic\").0.state, ConnectionEpisodeState::Open);\nassert_eq!(board.detach(&peer)[0].state, ConnectionEpisodeState::Detached);\nassert_eq!(serde_json::to_string(&ConnectionEpisodeState::Detached).unwrap(), \"\\\"detached\\\"\");\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::episodes
+    exposure:
+      mcp:
+        tool: majordomus_session_detach
+      http:
+        method: POST
+        path: /api/v1/episodes/detach
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - episodes
+      - session
+      - coordination
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: process_state
+      cancellable: false
+      concurrency: serial
+    source_path: apps/majordomus-cli/src/capability/builtin/episodes.rs
+  - id: episodes.list
+    module: episodes
+    kind: query
+    title: List episodes
+    description: "Every execution episode this shared server holds, open and detached, with the connection holding each, when its client last spoke, how many connections have carried it, and what the repository's own episode command reported. In-memory: what survives the process is the repository's session record."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: EpisodeList
+      schema:
+        type: object
+        properties:
+          open:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many are open — held by a connection that is still there.
+          detached:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many are detached, waiting for a client to come back inside the grace. Not a\nfault count: this is where a crashed client's work waits to be resumed."
+          episodes:
+            type: array
+            items:
+              "$ref": "#/$defs/ConnectionEpisode"
+            description: "Every episode, open and detached, in external-identity order."
+          mine:
+            anyOf:
+              - "$ref": "#/$defs/ConnectionEpisode"
+              - type: "null"
+            description: "The episode the calling connection holds, when it holds one."
+        required:
+          - open
+          - detached
+          - episodes
+        description: "The answer of `episodes.list`: every episode this server holds, counted by state, and the\none the caller holds. In memory only — it is the association between live connections and\nthe repository's records, which stops being true when the process stops.\n\nThe two counts partition the list, and `mine` is left out of the JSON rather than written\nas `null` when the caller holds nothing, which is always so over plain HTTP:\n\n```\nuse majordomus_cli::capability::builtin::episodes::EpisodeList;\nlet none = EpisodeList { open: 0, detached: 0, episodes: vec![], mine: None };\nlet json = serde_json::to_value(&none).unwrap();\nassert_eq!(json, serde_json::json!({\"open\": 0, \"detached\": 0, \"episodes\": []}));\nlet back: EpisodeList = serde_json::from_value(json).unwrap();\nassert_eq!(back.open + back.detached, back.episodes.len());\n```"
+        title: EpisodeList
+        "$defs":
+          ConnectionEpisode:
+            type: object
+            properties:
+              external_id:
+                type: string
+                description: "The client's own durable name for this piece of work, and the key everything here is\naddressed by. Never a peer id: see the module documentation."
+              provider:
+                type: string
+                description: "The provider id this episode is recorded under, as `share/providers.yaml` names one."
+              peer:
+                anyOf:
+                  - "$ref": "#/$defs/PeerId"
+                  - type: "null"
+                description: "The connection holding it, when one does. `None` while detached — which is a state\nan episode is *supposed* to reach and come back from, not a fault."
+              opened_at:
+                type: string
+                description: "When it was first opened, RFC 3339, UTC. Unchanged by a re-attach: the episode is\nthe work, and the work did not restart because a socket did."
+              last_activity_seconds_ago:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Seconds since the client last spoke on it, through any connection."
+              attachments:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: "How many times a connection has taken it over, the first attach included."
+              state:
+                "$ref": "#/$defs/ConnectionEpisodeState"
+                description: "Open, or detached and waiting for its client."
+              repository:
+                type: string
+                description: "What the repository's own episode command reported, verbatim — the record it opened,\nor the reason it could not. Never interpreted here, and never empty: a subsystem\nthat silently does nothing is the failure mode this field exists to make visible."
+            required:
+              - external_id
+              - provider
+              - opened_at
+              - last_activity_seconds_ago
+              - attachments
+              - state
+              - repository
+            description: "One episode: what the client calls itself, which connection holds it now, and what the\nrepository did about it.\n\n```\nuse majordomus_cli::episodes::{ConnectionEpisode, EpisodeBoard};\nuse majordomus_cli::peers::{PeerBoard, Transport};\nlet peer = PeerBoard::new().attach(Transport::Http);\nlet (episode, _) = EpisodeBoard::new().attach(&peer, \"conv-42\", \"generic\");\nlet episode: ConnectionEpisode = episode;\nassert_eq!((episode.external_id.as_str(), episode.provider.as_str()), (\"conv-42\", \"generic\"));\nassert_eq!(episode.peer.as_ref(), Some(&peer));\n// never empty: a board with no repository behind it says so\nassert!(episode.repository.contains(\"without a driver\"));\n```"
+          PeerId:
+            type: string
+            description: "A peer's identity for the life of the server: `p1`, `p2`, ... in attachment order.\n`p1` is the session that started the server."
+          ConnectionEpisodeState:
+            oneOf:
+              - type: string
+                const: open
+                description: A connection holds it and the client is speaking.
+              - type: string
+                const: detached
+                description: "The connection has gone; the episode is kept for `REATTACH_GRACE` so the client\ncan come back to it. This is the state a crash lands in, and the one a reconnect\nrecovers from."
+            description: "Where an episode stands: held by a live connection, or waiting for its client to come\nback. There is no closed state, because a closed episode leaves the board; what survives\nit is the repository's own record.\n\n```\nuse majordomus_cli::episodes::{ConnectionEpisodeState, EpisodeBoard};\nuse majordomus_cli::peers::{PeerBoard, Transport};\nlet peer = PeerBoard::new().attach(Transport::Stdio);\nlet board = EpisodeBoard::new();\nassert_eq!(board.attach(&peer, \"w\", \"generic\").0.state, ConnectionEpisodeState::Open);\nassert_eq!(board.detach(&peer)[0].state, ConnectionEpisodeState::Detached);\nassert_eq!(serde_json::to_string(&ConnectionEpisodeState::Detached).unwrap(), \"\\\"detached\\\"\");\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::episodes
+    exposure:
+      mcp:
+        tool: majordomus_episodes
+      http:
+        method: GET
+        path: /api/v1/episodes
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - episodes
+      - session
+      - coordination
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/episodes.rs
   - id: evidence.claim
     module: evidence
     kind: query
@@ -19861,6 +20383,530 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/intents.rs
+  - id: knowledge_base.candidates
+    module: knowledge_base
+    kind: query
+    title: Candidates awaiting review
+    description: "Every knowledge record with status candidate under the candidates source class: its class, its assertion, the episode it came from and that episode's branch, and how long it has waited — measured from the derivation that wrote it, then the commit that added it, then its own date — judged against session.freshness; against the policy's cap. A candidate whose episode this checkout does not know is reported with no branch rather than hidden. Ordered by id."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: KnowledgeCandidates
+      schema:
+        type: object
+        properties:
+          total:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many records carry `status: candidate` under the candidates class."
+          on_this_branch:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many of them came from an episode on this checkout's branch."
+          unattributed:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many name an episode this checkout knows nothing about.
+          branch:
+            type: string
+            description: "The branch this answer is about, or `DETACHED`."
+          candidates:
+            type: array
+            items:
+              "$ref": "#/$defs/KnowledgeCandidate"
+            description: "Every candidate, in canonical order of id."
+          cap:
+            type:
+              - integer
+              - "null"
+            format: uint
+            minimum: 0
+            description: "`knowledge.candidates_max_files`, when the policy declares it."
+          over_cap:
+            type: boolean
+            description: "True when `total` exceeds `cap`. False when no cap is declared: nobody wrote one down."
+          findings:
+            type: array
+            items:
+              type: string
+            description: "What a reader should know before trusting the above: a malformed record that was\nskipped, a cap that was exceeded, a policy that declares none. Empty is the good case."
+        required:
+          - total
+          - on_this_branch
+          - unattributed
+          - branch
+          - over_cap
+        description: "The candidates awaiting review, against the policy's cap.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeCandidates;\nlet empty: KnowledgeCandidates = serde_json::from_str(\n    r#\"{\"total\":0,\"on_this_branch\":0,\"unattributed\":0,\"branch\":\"master\",\"candidates\":[],\"over_cap\":false}\"#,\n).unwrap();\nassert_eq!(empty.total, 0, \"an empty queue is an answer\");\nassert_eq!(empty.cap, None, \"and a policy without the key declares no cap\");\n```"
+        title: KnowledgeCandidates
+        "$defs":
+          KnowledgeCandidate:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The record id, which is also its file name."
+              uri:
+                type: string
+                description: "`majordomus://knowledge/<id>`."
+              path:
+                type: string
+                description: Repository-relative path.
+              class:
+                type: string
+                description: "`fact`, `convention`, `constraint`, `memory` or `lesson`."
+              status:
+                type: string
+                description: "Always `candidate` here; carried so that a reader sees the same record shape as `record`."
+              epistemics:
+                type: string
+                description: "`observed`, `inferred` or `decided`."
+              title:
+                type: string
+                description: "The assertion, in one line."
+              date:
+                type: string
+                description: "The day of the evidence, `YYYY-MM-DD`."
+              derived_from:
+                type: array
+                items:
+                  type: string
+                description: "The typed references the record names as its evidence, as declared."
+              episode:
+                type: string
+                description: "The episode the record came from: the `session:` reference, or empty when it names none."
+              branch:
+                type:
+                  - string
+                  - "null"
+                description: "The branch that episode ran on, joined to the tracked session record or, while that\nis not yet written, to the ledger's `session.started` line. `None` when this checkout\nknows nothing about the episode — named rather than hidden, so that a reader can tell\n\"not this branch\" from \"not known here\". Serialised as `null` in that case, never\nomitted."
+                default: null
+              freshness:
+                "$ref": "#/$defs/Freshness"
+                description: "How long it has waited, judged against `session.freshness`."
+              age_minutes:
+                type:
+                  - integer
+                  - "null"
+                format: int64
+                description: "The wait in whole minutes, when it could be measured."
+              freshness_reason:
+                type: string
+                description: "Why it was judged that way, in one phrase. Never empty."
+              age_source:
+                "$ref": "#/$defs/AgeSource"
+                description: Where the wait was read from.
+            required:
+              - id
+              - uri
+              - path
+              - class
+              - status
+              - epistemics
+              - title
+              - date
+              - freshness
+              - freshness_reason
+              - age_source
+            description: "One candidate record awaiting review: what a reader needs to decide whether to open it.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeCandidate;\nlet c: KnowledgeCandidate = serde_json::from_str(r#\"{\n  \"id\": \"e1-0123456789ab\", \"uri\": \"majordomus://knowledge/e1-0123456789ab\",\n  \"path\": \".ai/repo/knowledge/candidates/e1-0123456789ab.md\", \"class\": \"convention\",\n  \"status\": \"candidate\", \"epistemics\": \"decided\", \"title\": \"Tests run in disposable repositories\",\n  \"date\": \"2026-09-12\", \"derived_from\": [\"session:e1\"], \"episode\": \"e1\",\n  \"freshness\": \"unknown\", \"freshness_reason\": \"no timestamp\", \"age_source\": \"date\"\n}\"#).unwrap();\nassert_eq!(c.episode, \"e1\");\nassert_eq!(c.branch, None, \"an episode this checkout never saw has no branch, and says so\");\n```"
+          Freshness:
+            oneOf:
+              - type: string
+                const: fresh
+                description: "Inside `session.freshness.fresh_minutes`. Current; act on it."
+              - type: string
+                const: aging
+                description: "Between the two thresholds. Still current, but its age is worth stating."
+              - type: string
+                const: stale
+                description: "At or beyond `session.freshness.stale_minutes`. History, never current."
+              - type: string
+                const: unknown
+                description: "Nothing to judge it by: no timestamp, or no thresholds declared."
+              - type: string
+                const: invalid
+                description: "A timestamp that does not parse, or one in the future."
+            description: "How old a record is, judged against `session.freshness` in the policy.\n\nThis is the second of two independent judgements every record carries, and it exists\nbecause the first one cannot answer this question. `Divergence` says where a record's\ncommit sits relative to HEAD; `advanced` means that commit is an ancestor of this one,\nwhich sounds like agreement and is identically true on the day the record is written and\na month later. Between 2026-09-05 and 2026-09-11 this repository served a handover that\nwas `advanced` and six days dead, and every surface that read this model — MCP, the HTTP\nAPI, the Cockpit — presented its `Next Action` as the thing to do (ADR 0052).\n\nThe thresholds are policy and are read, never restated here: a constant in this file\nwould be a second source of truth for a number the policy owns, and a repository whose\npolicy predates the key is reported as `Freshness::Unknown` naming the missing key\nrather than judged against a default nobody declared.\n\nThe five words divide into two groups, and the division is the one a caller acts on:\n`fresh` and `aging` are current and may be presented as the instruction, `stale` and\n`invalid` must be shown as history, and `unknown` is neither — a record nobody can date\nis not thereby an old record, and treating it as one would quietly discard a briefing\nthat is perfectly good. `Freshness::history` is that division, and it is the only\nplace it is decided.\n\n```\nuse majordomus_cli::capability::builtin::continuity::Freshness;\n\n// the two renderings are one value: the serialised word is the word `as_str` gives,\n// so a reader who met `stale` from MCP and from the command line met one fact\nlet stale = serde_json::to_value(Freshness::Stale).unwrap();\nassert_eq!(stale, serde_json::json!(\"stale\"));\nassert_eq!(stale.as_str(), Some(Freshness::Stale.as_str()));\n\n// and the division a caller acts on: absence of a judgement is not a bad judgement\nassert!(Freshness::Stale.history() && Freshness::Invalid.history());\nassert!(!Freshness::Unknown.history(), \"undated is not old\");\nassert!(!Freshness::Fresh.history() && !Freshness::Aging.history());\n```"
+          AgeSource:
+            oneOf:
+              - type: string
+                const: derivation
+                description: "The oldest `knowledge.derived` line in this checkout's ledger whose paths name it."
+              - type: string
+                const: commit
+                description: The commit that added the file to this history.
+              - type: string
+                const: date
+                description: "The record's own `date`, at midnight UTC: the evidence day, not the queue day."
+            description: "Where the age of a candidate in the review queue was read from. A candidate's `date` is\nthe day of the evidence it came from, deliberately, so that the same evidence yields the\nsame bytes; the day it entered the queue is a different fact and is read from the ledger\nfirst, then from git, and only then from the record.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::AgeSource;\nlet from_ledger: AgeSource = serde_json::from_str(r#\"\"derivation\"\"#).unwrap();\nassert_eq!(from_ledger, AgeSource::Derivation);\nassert!(AgeSource::Derivation < AgeSource::Date, \"the ledger is asked before the record\");\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::knowledge_base
+    exposure:
+      mcp:
+        tool: majordomus_knowledge_candidates
+        resource:
+          uri: majordomus://knowledge-candidates
+          name: knowledge-candidates
+      http:
+        method: GET
+        path: /api/v1/knowledge/candidates
+      cli:
+        path:
+          - knowledge
+          - candidates
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - knowledge
+      - continuity
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/knowledge_base.rs
+  - id: knowledge_base.record
+    module: knowledge_base
+    kind: query
+    title: One knowledge record
+    description: "One knowledge record by id — candidate or curated — with every reference it names resolved: a session against the tracked session records and the ledger, a task or decision against the ledger and the task store, a commit against git, a file or test against the index and the tree, a rule, an ADR, an issue or another record against the index. Which references dangle is the question a reviewer asks before promoting, and the one the integrity validator asks of every record. A `task:none` or `decision:none` reference is refused by name."
+    input:
+      name: KnowledgeRecordInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          id:
+            type: string
+            description: "The record id, as the file name and `majordomus://knowledge/<id>` carry it."
+        required:
+          - id
+        description: "Which knowledge record: the input of `knowledge_base.record`. The id is the file name\nand the identity the index keys the record by, so one string names it on every surface.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeRecordInput;\nlet input: KnowledgeRecordInput = serde_json::from_str(r#\"{\"id\":\"e1-0123456789ab\"}\"#).unwrap();\nassert_eq!(input.id, \"e1-0123456789ab\");\n// a key the input does not declare is refused, never ignored\nassert!(serde_json::from_str::<KnowledgeRecordInput>(r#\"{\"id\":\"x\",\"uri\":\"y\"}\"#).is_err());\n```"
+        title: KnowledgeRecordInput
+    output:
+      name: KnowledgeRecord
+      schema:
+        type: object
+        properties:
+          id:
+            type: string
+            description: The record id.
+          uri:
+            type: string
+            description: "`majordomus://knowledge/<id>`."
+          path:
+            type: string
+            description: Repository-relative path.
+          source_class:
+            type: string
+            description: "The source class that discovered it: `candidates` or `curated`."
+          class:
+            type: string
+            description: "`fact`, `convention`, `constraint`, `memory` or `lesson`."
+          status:
+            type: string
+            description: "`candidate`, `verified` or `superseded`."
+          epistemics:
+            type: string
+            description: "`observed`, `inferred` or `decided`."
+          origin:
+            type: string
+            description: "`authored` or `extracted`; empty when the record carries no provenance."
+          date:
+            type: string
+            description: The day the record reached its status.
+          title:
+            type: string
+            description: The assertion.
+          derived_from:
+            type: array
+            items:
+              "$ref": "#/$defs/ResolvedReference"
+            description: "Every `provenance.derived_from` reference, resolved, in the record's order."
+          relations:
+            type: array
+            items:
+              "$ref": "#/$defs/ResolvedRelation"
+            description: "Every `relations` entry, resolved, in the record's order."
+          superseded_by:
+            type:
+              - string
+              - "null"
+            description: "The record that replaced this one, when the status is `superseded`."
+          resolved:
+            type: boolean
+            description: True when every reference above resolved. The one bit a reviewer reads first.
+            default: false
+          content:
+            type: string
+            description: "The whole file, front matter and body."
+        required:
+          - id
+          - uri
+          - path
+          - source_class
+          - class
+          - status
+          - epistemics
+          - date
+          - title
+          - content
+        description: "One knowledge record, with every reference it names resolved.\n\n`objects.get` already serves the same file as metadata and content. What this adds is\nthe resolution: which of the record's references answer, through which reader, and which\ndangle — the question a reviewer asks before promoting a candidate, and the question the\nintegrity validator asks of every record.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeRecord;\nlet r: KnowledgeRecord = serde_json::from_str(r#\"{\n  \"id\": \"e1-0123456789ab\", \"uri\": \"majordomus://knowledge/e1-0123456789ab\",\n  \"path\": \".ai/repo/knowledge/candidates/e1-0123456789ab.md\", \"source_class\": \"candidates\",\n  \"class\": \"convention\", \"status\": \"candidate\", \"epistemics\": \"decided\", \"origin\": \"extracted\",\n  \"date\": \"2026-09-12\", \"title\": \"An assertion\", \"resolved\": true, \"content\": \"---\\n---\\n\"\n}\"#).unwrap();\nassert!(r.derived_from.is_empty(), \"a record that names nothing has nothing to resolve\");\nassert_eq!(r.superseded_by, None, \"and is not superseded\");\n```"
+        title: KnowledgeRecord
+        "$defs":
+          ResolvedReference:
+            type: object
+            properties:
+              reference:
+                type: string
+                description: "The reference as written: `<prefix>:<value>`."
+              resolution:
+                "$ref": "#/$defs/ReferenceResolution"
+                description: How it resolved.
+              target:
+                type:
+                  - string
+                  - "null"
+                description: "What it resolved to: a URI for an object, a path for a file, the reader that vouched\nfor an external reference. Absent when nothing did."
+              reason:
+                type: string
+                description: "Why it did not resolve, when it did not."
+            required:
+              - reference
+              - resolution
+            description: "One `derived_from` reference of a record, with how it resolved and against what.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::{ReferenceResolution, ResolvedReference};\nlet r: ResolvedReference = serde_json::from_str(\n    r#\"{\"reference\":\"task:none\",\"resolution\":\"missing\",\"reason\":\"`none` is not a task\"}\"#,\n).unwrap();\nassert_eq!(r.resolution, ReferenceResolution::Missing);\nassert_eq!(r.target, None);\n```"
+          ReferenceResolution:
+            oneOf:
+              - type: string
+                const: object
+                description: "An object of the index: the `target` is its URI, or its path for a file."
+              - type: string
+                const: external
+                description: "Vouched for by the ledger, the task store or git: a session, a task, a decision, a commit."
+              - type: string
+                const: missing
+                description: "Nothing answers to it. A dangling reference is the integrity validator's finding."
+            description: "How a typed reference resolved.\n\nThree words and no fourth: a reference names an object of the index, or something only\nthe ledger and git can vouch for, or nothing. `external` is not a weaker `object` — a\ncommit or a task is exactly as real as a rule — it says which reader answered.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::ReferenceResolution;\nlet r: ReferenceResolution = serde_json::from_str(r#\"\"external\"\"#).unwrap();\nassert_eq!(r, ReferenceResolution::External);\nassert!(r.resolves(), \"vouched for by the ledger or git is resolved\");\nassert!(!ReferenceResolution::Missing.resolves());\n```"
+          ResolvedRelation:
+            type: object
+            properties:
+              relation_type:
+                type: string
+                description: "`relates_to`, `depends_on`, `documents`, `supports`, `contradicts`, `supersedes` or `derived_from`."
+              reference:
+                type: string
+                description: The target as written.
+              resolution:
+                "$ref": "#/$defs/ReferenceResolution"
+                description: How it resolved.
+              target:
+                type:
+                  - string
+                  - "null"
+                description: "What it resolved to, when something did."
+              reason:
+                type: string
+                description: "Why it did not resolve, when it did not."
+            required:
+              - relation_type
+              - reference
+              - resolution
+            description: "One `relations` entry, resolved the same way.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::{ReferenceResolution, ResolvedRelation};\nlet r: ResolvedRelation = serde_json::from_str(\n    r#\"{\"relation_type\":\"relates_to\",\"reference\":\"file:docs/CLI.md\",\"resolution\":\"object\",\"target\":\"docs/CLI.md\"}\"#,\n).unwrap();\nassert_eq!(r.relation_type, \"relates_to\");\nassert!(r.resolution.resolves());\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::knowledge_base
+    exposure:
+      mcp:
+        tool: majordomus_knowledge_record
+      http:
+        method: GET
+        path: /api/v1/knowledge/record
+      cli:
+        path:
+          - knowledge
+          - record
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - knowledge
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/knowledge_base.rs
+  - id: knowledge_base.status
+    module: knowledge_base
+    kind: query
+    title: Whether the deriver is still writing
+    description: "The freshness half of the stopped-writer judgement (ADR 0052, applied to the knowledge deriver by ADR 0091): the newest knowledge.derived line, the newest session.closed line, how many closed episodes no derivation names, the candidate counts, and — once a derivation has run in this checkout and the switch is on — whether the newest closed episode went underived past session.freshness.stale_minutes. Episode ids are compared, never line order. Whether the close path still calls the deriver is read from the source by the shell validator, not here."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: KnowledgeStatus
+      schema:
+        type: object
+        properties:
+          present:
+            type: boolean
+            description: "Whether anything is here to judge: a ledger line or a candidate. False in a fresh clone."
+          branch:
+            type: string
+            description: "The branch this checkout is on, or `DETACHED`."
+          last_derived:
+            anyOf:
+              - "$ref": "#/$defs/LedgerMark"
+              - type: "null"
+            description: "The newest `knowledge.derived` line, or `None` when the deriver has never run here."
+          last_closed:
+            anyOf:
+              - "$ref": "#/$defs/LedgerMark"
+              - type: "null"
+            description: "The newest `session.closed` line, or `None` when no episode has closed here."
+          closed_without_derivation:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many closed episodes in this ledger no `knowledge.derived` line names."
+          candidates:
+            type: integer
+            format: uint
+            minimum: 0
+            description: "How many records carry `status: candidate` under the candidates class."
+          on_this_branch:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many of those came from an episode on this branch.
+          freshness:
+            "$ref": "#/$defs/Freshness"
+            description: "How old the newest closed episode is, judged against `session.freshness`."
+          age_minutes:
+            type:
+              - integer
+              - "null"
+            format: int64
+            description: "That age in whole minutes, when it could be measured."
+          freshness_reason:
+            type: string
+            description: Why it was judged that way. Never empty.
+          judged:
+            type: boolean
+            description: "Whether the stopped-writer judgement was made at all. False, with the reason among\n`findings`, while no episode has closed here, while the switch is off, or while no\nderivation has yet run in this checkout."
+          stopped_writer:
+            type: boolean
+            description: "The finding: episodes close here and no derivation followed the newest one within\nthe stale threshold. True only when `judged`."
+          knowledge_on_end:
+            type: boolean
+            description: "`session.knowledge_on_end`, as the policy declares it; absent means on."
+          knowledge_on_compact:
+            type: boolean
+            description: "`session.knowledge_on_compact`, likewise."
+          findings:
+            type: array
+            items:
+              type: string
+            description: "What a reader should know: why the judgement was withheld, or what it found."
+        required:
+          - present
+          - branch
+          - closed_without_derivation
+          - candidates
+          - on_this_branch
+          - freshness
+          - freshness_reason
+          - judged
+          - stopped_writer
+          - knowledge_on_end
+          - knowledge_on_compact
+        description: "Whether the deriver is still writing, and what it last wrote.\n\nThe judgement is ADR 0052's, applied to this writer: while episodes keep closing, a\nderivation follows every close. It compares episode ids, never line order or timestamps\nbetween the two events, because the close derives before it appends `session.closed`.\nIt is the freshness half of the judgement only; whether the close path and the\ncompaction adapter still call the deriver is read from the source by the shell\nvalidator, which is where the source is.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeStatus;\nlet fresh: KnowledgeStatus = serde_json::from_str(r#\"{\n  \"present\": false, \"branch\": \"master\", \"closed_without_derivation\": 0, \"candidates\": 0,\n  \"on_this_branch\": 0, \"freshness\": \"unknown\", \"freshness_reason\": \"no episode has closed here\",\n  \"judged\": false, \"stopped_writer\": false, \"knowledge_on_end\": true, \"knowledge_on_compact\": true\n}\"#).unwrap();\nassert!(!fresh.present, \"a fresh clone has no ledger, and that is not a fault\");\nassert!(!fresh.stopped_writer);\n```"
+        title: KnowledgeStatus
+        "$defs":
+          LedgerMark:
+            type: object
+            properties:
+              ts:
+                type: string
+                description: "The line's timestamp, RFC 3339 in UTC."
+              episode:
+                type: string
+                description: The episode the line is about; empty when the line names none.
+            required:
+              - ts
+            description: "One ledger line that matters to the judgement: when, and which episode.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::LedgerMark;\nlet m: LedgerMark = serde_json::from_str(r#\"{\"ts\":\"2026-09-12T10:00:00Z\",\"episode\":\"e1\"}\"#).unwrap();\nassert_eq!(m.episode, \"e1\");\n```"
+          Freshness:
+            oneOf:
+              - type: string
+                const: fresh
+                description: "Inside `session.freshness.fresh_minutes`. Current; act on it."
+              - type: string
+                const: aging
+                description: "Between the two thresholds. Still current, but its age is worth stating."
+              - type: string
+                const: stale
+                description: "At or beyond `session.freshness.stale_minutes`. History, never current."
+              - type: string
+                const: unknown
+                description: "Nothing to judge it by: no timestamp, or no thresholds declared."
+              - type: string
+                const: invalid
+                description: "A timestamp that does not parse, or one in the future."
+            description: "How old a record is, judged against `session.freshness` in the policy.\n\nThis is the second of two independent judgements every record carries, and it exists\nbecause the first one cannot answer this question. `Divergence` says where a record's\ncommit sits relative to HEAD; `advanced` means that commit is an ancestor of this one,\nwhich sounds like agreement and is identically true on the day the record is written and\na month later. Between 2026-09-05 and 2026-09-11 this repository served a handover that\nwas `advanced` and six days dead, and every surface that read this model — MCP, the HTTP\nAPI, the Cockpit — presented its `Next Action` as the thing to do (ADR 0052).\n\nThe thresholds are policy and are read, never restated here: a constant in this file\nwould be a second source of truth for a number the policy owns, and a repository whose\npolicy predates the key is reported as `Freshness::Unknown` naming the missing key\nrather than judged against a default nobody declared.\n\nThe five words divide into two groups, and the division is the one a caller acts on:\n`fresh` and `aging` are current and may be presented as the instruction, `stale` and\n`invalid` must be shown as history, and `unknown` is neither — a record nobody can date\nis not thereby an old record, and treating it as one would quietly discard a briefing\nthat is perfectly good. `Freshness::history` is that division, and it is the only\nplace it is decided.\n\n```\nuse majordomus_cli::capability::builtin::continuity::Freshness;\n\n// the two renderings are one value: the serialised word is the word `as_str` gives,\n// so a reader who met `stale` from MCP and from the command line met one fact\nlet stale = serde_json::to_value(Freshness::Stale).unwrap();\nassert_eq!(stale, serde_json::json!(\"stale\"));\nassert_eq!(stale.as_str(), Some(Freshness::Stale.as_str()));\n\n// and the division a caller acts on: absence of a judgement is not a bad judgement\nassert!(Freshness::Stale.history() && Freshness::Invalid.history());\nassert!(!Freshness::Unknown.history(), \"undated is not old\");\nassert!(!Freshness::Fresh.history() && !Freshness::Aging.history());\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::knowledge_base
+    exposure:
+      mcp:
+        tool: majordomus_knowledge_status
+        resource:
+          uri: majordomus://knowledge-status
+          name: knowledge-status
+      http:
+        method: GET
+        path: /api/v1/knowledge/status
+      cli:
+        path:
+          - knowledge
+          - status
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - knowledge
+      - continuity
+      - session
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 2
+      ttl_seconds: 2
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/knowledge_base.rs
   - id: lifecycle.closed
     module: lifecycle
     kind: query
@@ -30164,6 +31210,14 @@ capabilities:
                   type: string
                 description: "The scratch roots this provider creates checkouts of its own under, as declared:\nthe worktree topology reports a checkout there as a session's scratch checkout and\nnever moves it (ADR 0024)."
                 default: []
+              offers:
+                "$ref": "#/$defs/ProviderOffers"
+                description: "What it can do about the session lifecycle, and where each answer was verified\n(`share/providers.yaml`, ADR 0103). The capability, never the wiring: `hooks` says\nthe vendor fires session events, not that this repository has installed anything to\nreceive them. The other half — what is wired here, and whether driving it produced\nanything — is `majordomus capture status`, which reads this same declaration and\njoins it with the tree. It is not restated here because only the shell tool holds\nthe adapter table and can run a shim, and a second account it could not compute\ncorrectly is worse than one reader more."
+                default:
+                  episode: none
+                  episode_evidence: ""
+                  prompts: none
+                  prompts_evidence: ""
             required:
               - id
               - title
@@ -30187,6 +31241,48 @@ capabilities:
               - mode
               - always_loaded
             description: One bootstrap a provider renders.
+          ProviderOffers:
+            type: object
+            properties:
+              episode:
+                "$ref": "#/$defs/EpisodeSource"
+                description: How the episode boundary is drawn for this provider.
+              episode_evidence:
+                type: string
+                description: "Where `episode` was verified: a vendor documentation URL, or the statement that no\nsuch documentation exists and what was searched for it."
+              prompts:
+                "$ref": "#/$defs/PromptSource"
+                description: Whether the raw prompt can be captured below the model.
+              prompts_evidence:
+                type: string
+                description: "Where `prompts` was verified, on the same terms as `episode_evidence`."
+            required:
+              - episode
+              - episode_evidence
+              - prompts
+              - prompts_evidence
+            description: "What one provider can do about the session lifecycle, and where that was verified.\n\n**Every cell carries its evidence.** A capability asserted with no citation is the defect\nthis type exists to make impossible: before it, a provider absent from a shell table was\nsilently unsupported and a provider present in one was silently capable, and no surface\ncould tell a reader which vendor page either answer came from — `capture status`\nenumerated the one provider that had an adapter and said nothing whatever about the\nother five this distribution declares. The rule\n`project.a-provider-capability-cites-its-evidence` refuses a declaration without one.\n\nA provider that declares nothing is `none` on both axes with empty evidence — the state\nthat rule refuses, so the gap is a finding rather than a silent \"unsupported\":\n\n```\nuse majordomus_cli::share::{EpisodeSource, PromptSource, ProviderOffers};\nlet undeclared = ProviderOffers::default();\nassert_eq!((undeclared.episode, undeclared.prompts), (EpisodeSource::None, PromptSource::None));\nassert!(undeclared.episode_evidence.is_empty() && undeclared.prompts_evidence.is_empty());\nlet generic: ProviderOffers = serde_json::from_value(serde_json::json!({\n    \"episode\": \"connection\", \"episode_evidence\": \"ADR 0103\",\n    \"prompts\": \"none\", \"prompts_evidence\": \"MCP carries no prompt\",\n})).unwrap();\nassert_eq!(generic.episode, EpisodeSource::Connection);\n```"
+          EpisodeSource:
+            oneOf:
+              - type: string
+                const: hooks
+                description: "The provider fires its own session events and a hook this tool installs draws the\nboundary from them. The strongest form: it sees a window somebody closed."
+              - type: string
+                const: connection
+                description: "The provider fires no session event, but its client attaches to this repository's\nshared MCP server, and the connection is the boundary (ADR 0103)."
+              - type: string
+                const: none
+                description: "Neither. Nothing can say when this provider's episode began or ended, and the tool\nreports that rather than implying a capability nobody has."
+            description: "How an episode boundary can be drawn for one provider.\n\nThree words, because three things are true of different providers and collapsing them\ninto \"supported / not supported\" is what let this tool report one provider and stay\nsilent about five others. A provider that fires its own events is not the same as one\nthat fires none but speaks MCP, and neither is the same as one that can do nothing.\n\nThe words are the declaration's own, and a word outside them is refused rather than read\nas `none`:\n\n```\nuse majordomus_cli::share::EpisodeSource;\nlet read: EpisodeSource = serde_json::from_str(\"\\\"connection\\\"\").unwrap();\nassert_eq!(read, EpisodeSource::Connection);\nassert_eq!(EpisodeSource::default(), EpisodeSource::None, \"undeclared reads as none\");\nassert!(serde_json::from_str::<EpisodeSource>(\"\\\"hook\\\"\").is_err(), \"hooks, plural\");\n```"
+          PromptSource:
+            oneOf:
+              - type: string
+                const: hook
+                description: The provider hands the raw prompt to a command before the model runs.
+              - type: string
+                const: none
+                description: It does not. Nothing this tool can do makes the prompt observable.
+            description: "Whether the person's raw prompt can be captured below the model for one provider.\n\nThere is no `connection` here and there must not be: an MCP server is handed tool calls,\nnever the prompt that produced them. Prompt capture is provider-specific and the\ndeclaration says so rather than pretending the connection can stand in for it.\n\n```\nuse majordomus_cli::share::PromptSource;\nassert_eq!(serde_json::from_str::<PromptSource>(\"\\\"hook\\\"\").unwrap(), PromptSource::Hook);\nassert!(serde_json::from_str::<PromptSource>(\"\\\"connection\\\"\").is_err(),\n        \"no connection can observe a prompt\");\nassert_eq!(PromptSource::default(), PromptSource::None);\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::product
@@ -35150,10 +36246,10 @@ capabilities:
             properties:
               id:
                 type: string
-                description: "`tag-without-record`, `record-without-tag`, `tag-commit-mismatch`."
+                description: "`tag-without-record`, `tag-predates-records`, `record-without-tag`,\n`tag-commit-mismatch`."
               severity:
                 "$ref": "#/$defs/ReleaseSeverity"
-                description: Whether it stops a release or only warns.
+                description: "Whether it stops a release, only warns, or only informs."
               message:
                 type: string
                 description: "What is wrong, in one sentence."
@@ -35170,7 +36266,10 @@ capabilities:
               - type: string
                 const: warning
                 description: "The plan stands, and something is still wrong."
-            description: "How much a diagnostic matters.\n\nAn error says the plan itself cannot be trusted and blocks the verdict; a warning says\nsomething about the release state is wrong and the verdict stands anyway.\n\n```\nuse majordomus_cli::release::compat::Severity;\nassert_ne!(Severity::Error, Severity::Warning);\n```"
+              - type: string
+                const: note
+                description: Nothing is wrong; the reader is told something about the release state anyway.
+            description: "How much a diagnostic matters.\n\nAn error says the plan itself cannot be trusted and blocks the verdict; a warning says\nsomething about the release state is wrong and the verdict stands anyway; a note says\nsomething true and not wrong, so that the warnings keep meaning what they say.\n\n```\nuse majordomus_cli::release::compat::Severity;\nassert_ne!(Severity::Error, Severity::Warning);\nassert_ne!(Severity::Warning, Severity::Note);\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::release
@@ -38966,6 +40065,849 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/shell.rs
+  - id: skills.explain
+    module: skills
+    kind: query
+    title: "One skill, with everything derived about it"
+    description: "One skill in full: its authored identity, status and provenance marker, each test that names it with the state of its latest recorded run and the command that reproduces it, its page, its doctrine and gates, every invocation by path and line, its standing and the findings about it. The file itself stays at `majordomus://skill/<id>`."
+    input:
+      name: SkillExplainInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          id:
+            type: string
+            description: "The skill's id, which is also its directory name."
+        required:
+          - id
+        description: "Which skill to explain, by its id. An id the repository does not hold is a refusal\nnaming what was looked for, never an empty answer.\n\n```\nuse majordomus_cli::capability::builtin::skills::SkillExplainInput;\nlet input = SkillExplainInput { id: \"implement\".into() };\nassert_eq!(input.id, \"implement\");\n```"
+        title: SkillExplainInput
+    output:
+      name: SkillStatus
+      schema:
+        type: object
+        properties:
+          id:
+            type: string
+            description: "The skill's id, which is its directory name."
+          uri:
+            type: string
+            description: "`majordomus://skill/<id>`."
+          title:
+            type: string
+            description: The title as authored.
+          description:
+            type: string
+            description: The description as authored.
+          status:
+            type: string
+            description: "The lifecycle status as authored: `draft`, `active` or `deprecated`; `unknown` for a\nfile the index refused."
+          version:
+            type: integer
+            format: uint64
+            minimum: 0
+            description: The version as authored.
+          path:
+            type: string
+            description: "The file, repository-relative."
+          provenance:
+            anyOf:
+              - "$ref": "#/$defs/SkillProvenance"
+              - type: "null"
+            description: "Where it came from, when it declares that."
+          valid:
+            type: boolean
+            description: "Whether the file satisfies the skill contract, as the index judged it."
+          tested:
+            "$ref": "#/$defs/SkillTested"
+            description: The tested fact.
+          documented:
+            "$ref": "#/$defs/SkillDocumented"
+            description: The documented fact.
+          enforced:
+            "$ref": "#/$defs/SkillEnforced"
+            description: The enforced fact.
+          used:
+            "$ref": "#/$defs/SkillUsed"
+            description: The used fact.
+          standing:
+            "$ref": "#/$defs/SkillStanding"
+            description: "Where it stands, derived from the four."
+          findings:
+            type: array
+            items:
+              "$ref": "#/$defs/SkillFinding"
+            description: The findings about this skill.
+        required:
+          - id
+          - uri
+          - title
+          - description
+          - status
+          - version
+          - path
+          - valid
+          - tested
+          - documented
+          - enforced
+          - used
+          - standing
+          - findings
+        description: "One skill with everything derived about it.\n\n```\nuse majordomus_cli::skill::SkillStatus;\n// every fact is always present in the answer, so a client never has to tell \"absent\"\n// from \"false\"; only the provenance is optional\nlet schema = serde_json::to_value(schemars::schema_for!(SkillStatus)).unwrap();\nlet required = schema[\"required\"].as_array().unwrap();\nfor field in [\"id\", \"valid\", \"tested\", \"documented\", \"enforced\", \"used\", \"standing\"] {\n    assert!(required.iter().any(|f| f == field), \"{field}\");\n}\nassert!(!required.iter().any(|f| f == \"provenance\"));\n```"
+        title: SkillStatus
+        "$defs":
+          SkillProvenance:
+            type: object
+            properties:
+              origin:
+                type: string
+                description: "`prior-art`: the concept was studied elsewhere before this skill was written."
+              ledger:
+                type: string
+                description: "`import-<date>#<n>`: the entry of the local import ledger that holds the mapping."
+              decision:
+                type: string
+                description: "`adapted`, `reimplemented` or `merged`."
+            required:
+              - origin
+              - ledger
+              - decision
+            description: "Where a skill came from, when it was not written here first: an opaque marker into a\nledger kept outside the repository. The committed half names no source; the ledger entry\nit points at does, locally.\n\n```\nuse majordomus_cli::skill::SkillProvenance;\nlet p = SkillProvenance {\n    origin: \"prior-art\".into(),\n    ledger: \"import-2026-09-09#1\".into(),\n    decision: \"adapted\".into(),\n};\nassert!(p.ledger.starts_with(\"import-\"));\n```"
+          SkillTested:
+            type: object
+            properties:
+              state:
+                "$ref": "#/$defs/SkillEvidence"
+                description: "The weakest state of the naming tests; `untested` when there are none."
+              tests:
+                type: array
+                items:
+                  "$ref": "#/$defs/SkillTest"
+                description: "Every test that names the skill, in path order."
+            required:
+              - state
+              - tests
+            description: "The tested fact: the tests that name the skill, and their weakest state.\n\n```\nuse majordomus_cli::skill::{SkillEvidence, SkillTested};\nlet t = SkillTested { state: SkillEvidence::Untested, tests: vec![] };\nassert!(!t.state.current());\n```"
+          SkillEvidence:
+            oneOf:
+              - type: string
+                const: proven
+                description: "Every naming test has a passing run, and nothing but the ledger changed since."
+              - type: string
+                const: inputs_unchanged
+                description: "Every naming test passed, and neither the test nor the skill changed since."
+              - type: string
+                const: stale
+                description: "A passing run exists, and the test or the skill changed since."
+              - type: string
+                const: failing
+                description: The latest recorded run of a naming test did not pass.
+              - type: string
+                const: not_run
+                description: A test names the skill and no run of it was ever recorded.
+              - type: string
+                const: unrunnable
+                description: A test names the skill from a path no runner drives.
+              - type: string
+                const: untested
+                description: No test names the skill.
+            description: "What the evidence ledger can say about a skill's tests, as a whole: the weakest state of\nthe tests that name it, or `untested` when none does.\n\n```\nuse majordomus_cli::skill::SkillEvidence;\nassert!(SkillEvidence::Proven.current());\nassert!(SkillEvidence::InputsUnchanged.current());\nassert!(!SkillEvidence::Stale.current());\nassert!(SkillEvidence::Proven < SkillEvidence::Untested);\n```"
+          SkillTest:
+            type: object
+            properties:
+              path:
+                type: string
+                description: "The test's path."
+              test:
+                type:
+                  - string
+                  - "null"
+                description: "Its identity in the ledger, when a runner owns the path."
+              state:
+                "$ref": "#/$defs/ProofState"
+                description: "What the ledger says about its latest run, for this skill."
+              reproduce:
+                type:
+                  - string
+                  - "null"
+                description: The command that runs it again.
+              recorded_at:
+                type:
+                  - string
+                  - "null"
+                description: When the run behind the state was recorded.
+            required:
+              - path
+              - state
+            description: "One test that names a skill, and what the ledger says about it.\n\n```\nuse majordomus_cli::evidence::ProofState;\nuse majordomus_cli::skill::SkillTest;\nlet t = SkillTest {\n    path: \"test/cases/95_skills.sh\".into(),\n    test: Some(\"suite:95_skills\".into()),\n    state: ProofState::NotRun,\n    reproduce: Some(\"bash test/run.sh 95_skills\".into()),\n    recorded_at: None,\n};\nassert_eq!(t.state, ProofState::NotRun);\n```"
+          ProofState:
+            oneOf:
+              - type: string
+                const: proven
+                description: "A passing run, and nothing has changed since it — the diff against the execution's\nown commit is empty but for the ledger. Proof of the tree in front of you."
+              - type: string
+                const: inputs_unchanged
+                description: "A passing run, and nothing this claim names has changed since. Not proof at HEAD:\nsomething the claim does not name may have broken it."
+              - type: string
+                const: stale
+                description: "A passing run, but something this claim names has changed since. The proof is older\nthan its subject."
+              - type: string
+                const: failing
+                description: "The latest run of this claim's test did not pass."
+              - type: string
+                const: not_run
+                description: "The claim names a test a runner owns, and no run of it has ever been recorded."
+              - type: string
+                const: unrunnable
+                description: "The claim names a path no runner in this repository drives. Nothing can record it,\nso nothing can prove it this way."
+              - type: string
+                const: no_test
+                description: "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
+            description: "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven < ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
+          SkillDocumented:
+            type: object
+            properties:
+              documented:
+                type: boolean
+                description: Whether the page is a tracked file.
+              page:
+                type: string
+                description: Where the page is projected.
+            required:
+              - documented
+              - page
+            description: "The documented fact: the page the site projects for the skill.\n\n```\nuse majordomus_cli::skill::SkillDocumented;\nlet d = SkillDocumented { documented: true, page: \"site/content/skills/implement.md\".into() };\nassert!(d.page.ends_with(\"implement.md\"));\n```"
+          SkillEnforced:
+            type: object
+            properties:
+              enforced:
+                type: boolean
+                description: "A doctrine validates skills, and a gate running the verification covers this file."
+              doctrine:
+                type:
+                  - string
+                  - "null"
+                description: "The rule whose validator is `skills`, when the index holds one."
+              gates:
+                type: array
+                items:
+                  type: string
+                description: "The CI gates a change to the skill selects whose command runs `skills verify`."
+            required:
+              - enforced
+              - gates
+            description: "The enforced fact: the doctrine that validates skills and the gates a change to this one\nselects.\n\n```\nuse majordomus_cli::skill::SkillEnforced;\nlet e = SkillEnforced { enforced: false, doctrine: None, gates: vec![] };\nassert!(!e.enforced);\n```"
+          SkillUsed:
+            type: object
+            properties:
+              used:
+                type: boolean
+                description: At least one invocation surface references the skill.
+              invocations:
+                type: array
+                items:
+                  "$ref": "#/$defs/SkillInvocation"
+                description: "Every reference, in path and line order."
+            required:
+              - used
+              - invocations
+            description: "The used fact: every invocation surface that references the skill.\n\n```\nuse majordomus_cli::skill::SkillUsed;\nlet u = SkillUsed { used: false, invocations: vec![] };\nassert!(!u.used);\n```"
+          SkillInvocation:
+            type: object
+            properties:
+              path:
+                type: string
+                description: "The invocation surface, repository-relative."
+              line:
+                type: integer
+                format: uint
+                minimum: 0
+                description: The 1-based line the reference is on.
+              reference:
+                type: string
+                description: The reference as written.
+            required:
+              - path
+              - line
+              - reference
+            description: "One place a skill is invoked from.\n\n```\nuse majordomus_cli::skill::SkillInvocation;\nlet i = SkillInvocation {\n    path: \".ai/repo/prompts/review.md\".into(),\n    line: 3,\n    reference: \"majordomus://skill/repo-review\".into(),\n};\nassert_eq!(i.line, 3);\n```"
+          SkillStanding:
+            oneOf:
+              - type: string
+                const: proven
+                description: "Active, and tested with current evidence, documented, enforced and used."
+              - type: string
+                const: partial
+                description: "Active, named by a test and invoked, with at least one debt a warning names."
+              - type: string
+                const: orphan
+                description: "Active, and no test names it or nothing invokes it."
+              - type: string
+                const: invalid
+                description: "Its file does not satisfy the skill contract; one the index refused outright is listed\nhere too, so a listing never silently shrinks."
+              - type: string
+                const: not_required
+                description: "Draft or deprecated: nothing is owed."
+            description: "Where a skill stands, derived from the four facts.\n\n```\nuse majordomus_cli::skill::SkillStanding;\nassert_eq!(SkillStanding::Orphan.label(), \"orphan\");\n```"
+          SkillFinding:
+            type: object
+            properties:
+              level:
+                "$ref": "#/$defs/SkillFindingLevel"
+                description: "`fail` or `warn`."
+              code:
+                type: string
+                description: "A stable code: `contract`, `untested`, `unused`, `unevidenced`, `failing`,\n`undocumented`, `unenforced`, `unknown_skill_in_test`, `unknown_skill_invoked`."
+              skill:
+                type:
+                  - string
+                  - "null"
+                description: "The skill concerned, when the finding is about one."
+              subject:
+                type: string
+                description: "The file the finding is about, repository-relative."
+              message:
+                type: string
+                description: "What is wrong, and what to do about it."
+              reproduce:
+                type: string
+                description: The command that reproduces or settles it.
+            required:
+              - level
+              - code
+              - subject
+              - message
+              - reproduce
+            description: "One thing the derivation found wrong, with the command that settles or reproduces it.\n\n```\nuse majordomus_cli::skill::{SkillFinding, SkillFindingLevel};\nlet f = SkillFinding {\n    level: SkillFindingLevel::Fail,\n    code: \"untested\".into(),\n    skill: Some(\"implement\".into()),\n    subject: \".ai/repo/skills/implement/SKILL.md\".into(),\n    message: \"no test names this skill\".into(),\n    reproduce: \"majordomus skills explain implement\".into(),\n};\nassert!(f.reproduce.contains(\"explain\"));\n```"
+          SkillFindingLevel:
+            oneOf:
+              - type: string
+                const: fail
+                description: "Refuses: `skills verify` exits 10 and the doctrine fails."
+              - type: string
+                const: warn
+                description: "Reported, and does not refuse."
+            description: "How bad a finding is: a failure refuses, a warning is reported.\n\n```\nuse majordomus_cli::skill::SkillFindingLevel;\nassert_ne!(SkillFindingLevel::Fail, SkillFindingLevel::Warn);\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::skills
+    exposure:
+      mcp:
+        tool: majordomus_skill_explain
+      http:
+        method: GET
+        path: /api/v1/skills/explain
+      cli:
+        path:
+          - skills
+          - explain
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - skill
+      - evidence
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/skills.rs
+  - id: skills.status
+    module: skills
+    kind: query
+    title: "Every skill, with its derived standing"
+    description: "Every skill the index holds, each with the tests that name it and the evidence state of their latest runs, its page projection, the doctrine and gates that hold it, every invocation that references it, and the standing those derive: proven, partial, orphan, invalid, or not_required for a draft or deprecated skill."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: SkillStatusList
+      schema:
+        type: object
+        properties:
+          count:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many skills.
+          standings:
+            type: object
+            additionalProperties:
+              type: integer
+              format: uint
+              minimum: 0
+            description: "How many in each standing, keyed by the standing word."
+          skills:
+            type: array
+            items:
+              "$ref": "#/$defs/SkillStatus"
+            description: "Every skill, in index order."
+        required:
+          - count
+          - standings
+          - skills
+        description: "Every skill with its derived standing, and how many stand where: what\n`majordomus skills status`, `GET /api/v1/skills` and the `majordomus_skills` tool answer.\n\n```\nuse majordomus_cli::capability::builtin::skills::SkillStatusList;\nlet empty = SkillStatusList {\n    count: 0,\n    standings: std::collections::BTreeMap::new(),\n    skills: vec![],\n};\nassert_eq!(empty.count, 0);\n```"
+        title: SkillStatusList
+        "$defs":
+          SkillStatus:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The skill's id, which is its directory name."
+              uri:
+                type: string
+                description: "`majordomus://skill/<id>`."
+              title:
+                type: string
+                description: The title as authored.
+              description:
+                type: string
+                description: The description as authored.
+              status:
+                type: string
+                description: "The lifecycle status as authored: `draft`, `active` or `deprecated`; `unknown` for a\nfile the index refused."
+              version:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: The version as authored.
+              path:
+                type: string
+                description: "The file, repository-relative."
+              provenance:
+                anyOf:
+                  - "$ref": "#/$defs/SkillProvenance"
+                  - type: "null"
+                description: "Where it came from, when it declares that."
+              valid:
+                type: boolean
+                description: "Whether the file satisfies the skill contract, as the index judged it."
+              tested:
+                "$ref": "#/$defs/SkillTested"
+                description: The tested fact.
+              documented:
+                "$ref": "#/$defs/SkillDocumented"
+                description: The documented fact.
+              enforced:
+                "$ref": "#/$defs/SkillEnforced"
+                description: The enforced fact.
+              used:
+                "$ref": "#/$defs/SkillUsed"
+                description: The used fact.
+              standing:
+                "$ref": "#/$defs/SkillStanding"
+                description: "Where it stands, derived from the four."
+              findings:
+                type: array
+                items:
+                  "$ref": "#/$defs/SkillFinding"
+                description: The findings about this skill.
+            required:
+              - id
+              - uri
+              - title
+              - description
+              - status
+              - version
+              - path
+              - valid
+              - tested
+              - documented
+              - enforced
+              - used
+              - standing
+              - findings
+            description: "One skill with everything derived about it.\n\n```\nuse majordomus_cli::skill::SkillStatus;\n// every fact is always present in the answer, so a client never has to tell \"absent\"\n// from \"false\"; only the provenance is optional\nlet schema = serde_json::to_value(schemars::schema_for!(SkillStatus)).unwrap();\nlet required = schema[\"required\"].as_array().unwrap();\nfor field in [\"id\", \"valid\", \"tested\", \"documented\", \"enforced\", \"used\", \"standing\"] {\n    assert!(required.iter().any(|f| f == field), \"{field}\");\n}\nassert!(!required.iter().any(|f| f == \"provenance\"));\n```"
+          SkillProvenance:
+            type: object
+            properties:
+              origin:
+                type: string
+                description: "`prior-art`: the concept was studied elsewhere before this skill was written."
+              ledger:
+                type: string
+                description: "`import-<date>#<n>`: the entry of the local import ledger that holds the mapping."
+              decision:
+                type: string
+                description: "`adapted`, `reimplemented` or `merged`."
+            required:
+              - origin
+              - ledger
+              - decision
+            description: "Where a skill came from, when it was not written here first: an opaque marker into a\nledger kept outside the repository. The committed half names no source; the ledger entry\nit points at does, locally.\n\n```\nuse majordomus_cli::skill::SkillProvenance;\nlet p = SkillProvenance {\n    origin: \"prior-art\".into(),\n    ledger: \"import-2026-09-09#1\".into(),\n    decision: \"adapted\".into(),\n};\nassert!(p.ledger.starts_with(\"import-\"));\n```"
+          SkillTested:
+            type: object
+            properties:
+              state:
+                "$ref": "#/$defs/SkillEvidence"
+                description: "The weakest state of the naming tests; `untested` when there are none."
+              tests:
+                type: array
+                items:
+                  "$ref": "#/$defs/SkillTest"
+                description: "Every test that names the skill, in path order."
+            required:
+              - state
+              - tests
+            description: "The tested fact: the tests that name the skill, and their weakest state.\n\n```\nuse majordomus_cli::skill::{SkillEvidence, SkillTested};\nlet t = SkillTested { state: SkillEvidence::Untested, tests: vec![] };\nassert!(!t.state.current());\n```"
+          SkillEvidence:
+            oneOf:
+              - type: string
+                const: proven
+                description: "Every naming test has a passing run, and nothing but the ledger changed since."
+              - type: string
+                const: inputs_unchanged
+                description: "Every naming test passed, and neither the test nor the skill changed since."
+              - type: string
+                const: stale
+                description: "A passing run exists, and the test or the skill changed since."
+              - type: string
+                const: failing
+                description: The latest recorded run of a naming test did not pass.
+              - type: string
+                const: not_run
+                description: A test names the skill and no run of it was ever recorded.
+              - type: string
+                const: unrunnable
+                description: A test names the skill from a path no runner drives.
+              - type: string
+                const: untested
+                description: No test names the skill.
+            description: "What the evidence ledger can say about a skill's tests, as a whole: the weakest state of\nthe tests that name it, or `untested` when none does.\n\n```\nuse majordomus_cli::skill::SkillEvidence;\nassert!(SkillEvidence::Proven.current());\nassert!(SkillEvidence::InputsUnchanged.current());\nassert!(!SkillEvidence::Stale.current());\nassert!(SkillEvidence::Proven < SkillEvidence::Untested);\n```"
+          SkillTest:
+            type: object
+            properties:
+              path:
+                type: string
+                description: "The test's path."
+              test:
+                type:
+                  - string
+                  - "null"
+                description: "Its identity in the ledger, when a runner owns the path."
+              state:
+                "$ref": "#/$defs/ProofState"
+                description: "What the ledger says about its latest run, for this skill."
+              reproduce:
+                type:
+                  - string
+                  - "null"
+                description: The command that runs it again.
+              recorded_at:
+                type:
+                  - string
+                  - "null"
+                description: When the run behind the state was recorded.
+            required:
+              - path
+              - state
+            description: "One test that names a skill, and what the ledger says about it.\n\n```\nuse majordomus_cli::evidence::ProofState;\nuse majordomus_cli::skill::SkillTest;\nlet t = SkillTest {\n    path: \"test/cases/95_skills.sh\".into(),\n    test: Some(\"suite:95_skills\".into()),\n    state: ProofState::NotRun,\n    reproduce: Some(\"bash test/run.sh 95_skills\".into()),\n    recorded_at: None,\n};\nassert_eq!(t.state, ProofState::NotRun);\n```"
+          ProofState:
+            oneOf:
+              - type: string
+                const: proven
+                description: "A passing run, and nothing has changed since it — the diff against the execution's\nown commit is empty but for the ledger. Proof of the tree in front of you."
+              - type: string
+                const: inputs_unchanged
+                description: "A passing run, and nothing this claim names has changed since. Not proof at HEAD:\nsomething the claim does not name may have broken it."
+              - type: string
+                const: stale
+                description: "A passing run, but something this claim names has changed since. The proof is older\nthan its subject."
+              - type: string
+                const: failing
+                description: "The latest run of this claim's test did not pass."
+              - type: string
+                const: not_run
+                description: "The claim names a test a runner owns, and no run of it has ever been recorded."
+              - type: string
+                const: unrunnable
+                description: "The claim names a path no runner in this repository drives. Nothing can record it,\nso nothing can prove it this way."
+              - type: string
+                const: no_test
+                description: "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
+            description: "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven < ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
+          SkillDocumented:
+            type: object
+            properties:
+              documented:
+                type: boolean
+                description: Whether the page is a tracked file.
+              page:
+                type: string
+                description: Where the page is projected.
+            required:
+              - documented
+              - page
+            description: "The documented fact: the page the site projects for the skill.\n\n```\nuse majordomus_cli::skill::SkillDocumented;\nlet d = SkillDocumented { documented: true, page: \"site/content/skills/implement.md\".into() };\nassert!(d.page.ends_with(\"implement.md\"));\n```"
+          SkillEnforced:
+            type: object
+            properties:
+              enforced:
+                type: boolean
+                description: "A doctrine validates skills, and a gate running the verification covers this file."
+              doctrine:
+                type:
+                  - string
+                  - "null"
+                description: "The rule whose validator is `skills`, when the index holds one."
+              gates:
+                type: array
+                items:
+                  type: string
+                description: "The CI gates a change to the skill selects whose command runs `skills verify`."
+            required:
+              - enforced
+              - gates
+            description: "The enforced fact: the doctrine that validates skills and the gates a change to this one\nselects.\n\n```\nuse majordomus_cli::skill::SkillEnforced;\nlet e = SkillEnforced { enforced: false, doctrine: None, gates: vec![] };\nassert!(!e.enforced);\n```"
+          SkillUsed:
+            type: object
+            properties:
+              used:
+                type: boolean
+                description: At least one invocation surface references the skill.
+              invocations:
+                type: array
+                items:
+                  "$ref": "#/$defs/SkillInvocation"
+                description: "Every reference, in path and line order."
+            required:
+              - used
+              - invocations
+            description: "The used fact: every invocation surface that references the skill.\n\n```\nuse majordomus_cli::skill::SkillUsed;\nlet u = SkillUsed { used: false, invocations: vec![] };\nassert!(!u.used);\n```"
+          SkillInvocation:
+            type: object
+            properties:
+              path:
+                type: string
+                description: "The invocation surface, repository-relative."
+              line:
+                type: integer
+                format: uint
+                minimum: 0
+                description: The 1-based line the reference is on.
+              reference:
+                type: string
+                description: The reference as written.
+            required:
+              - path
+              - line
+              - reference
+            description: "One place a skill is invoked from.\n\n```\nuse majordomus_cli::skill::SkillInvocation;\nlet i = SkillInvocation {\n    path: \".ai/repo/prompts/review.md\".into(),\n    line: 3,\n    reference: \"majordomus://skill/repo-review\".into(),\n};\nassert_eq!(i.line, 3);\n```"
+          SkillStanding:
+            oneOf:
+              - type: string
+                const: proven
+                description: "Active, and tested with current evidence, documented, enforced and used."
+              - type: string
+                const: partial
+                description: "Active, named by a test and invoked, with at least one debt a warning names."
+              - type: string
+                const: orphan
+                description: "Active, and no test names it or nothing invokes it."
+              - type: string
+                const: invalid
+                description: "Its file does not satisfy the skill contract; one the index refused outright is listed\nhere too, so a listing never silently shrinks."
+              - type: string
+                const: not_required
+                description: "Draft or deprecated: nothing is owed."
+            description: "Where a skill stands, derived from the four facts.\n\n```\nuse majordomus_cli::skill::SkillStanding;\nassert_eq!(SkillStanding::Orphan.label(), \"orphan\");\n```"
+          SkillFinding:
+            type: object
+            properties:
+              level:
+                "$ref": "#/$defs/SkillFindingLevel"
+                description: "`fail` or `warn`."
+              code:
+                type: string
+                description: "A stable code: `contract`, `untested`, `unused`, `unevidenced`, `failing`,\n`undocumented`, `unenforced`, `unknown_skill_in_test`, `unknown_skill_invoked`."
+              skill:
+                type:
+                  - string
+                  - "null"
+                description: "The skill concerned, when the finding is about one."
+              subject:
+                type: string
+                description: "The file the finding is about, repository-relative."
+              message:
+                type: string
+                description: "What is wrong, and what to do about it."
+              reproduce:
+                type: string
+                description: The command that reproduces or settles it.
+            required:
+              - level
+              - code
+              - subject
+              - message
+              - reproduce
+            description: "One thing the derivation found wrong, with the command that settles or reproduces it.\n\n```\nuse majordomus_cli::skill::{SkillFinding, SkillFindingLevel};\nlet f = SkillFinding {\n    level: SkillFindingLevel::Fail,\n    code: \"untested\".into(),\n    skill: Some(\"implement\".into()),\n    subject: \".ai/repo/skills/implement/SKILL.md\".into(),\n    message: \"no test names this skill\".into(),\n    reproduce: \"majordomus skills explain implement\".into(),\n};\nassert!(f.reproduce.contains(\"explain\"));\n```"
+          SkillFindingLevel:
+            oneOf:
+              - type: string
+                const: fail
+                description: "Refuses: `skills verify` exits 10 and the doctrine fails."
+              - type: string
+                const: warn
+                description: "Reported, and does not refuse."
+            description: "How bad a finding is: a failure refuses, a warning is reported.\n\n```\nuse majordomus_cli::skill::SkillFindingLevel;\nassert_ne!(SkillFindingLevel::Fail, SkillFindingLevel::Warn);\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::skills
+    exposure:
+      mcp:
+        tool: majordomus_skills
+        resource:
+          uri: majordomus://skills
+          name: skills
+      http:
+        method: GET
+        path: /api/v1/skills
+      cli:
+        path:
+          - skills
+          - status
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - skill
+      - evidence
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/skills.rs
+  - id: skills.verify
+    module: skills
+    kind: query
+    title: What the skills owe and do not have
+    description: "Every finding over the skills: a file that breaks the skill contract, an active skill no test names or nothing invokes, a test whose latest run failed, a test or an invocation naming a skill that does not exist — each a failure — and evidence that is not current, a missing page or a missing gate, each a warning."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: SkillVerification
+      schema:
+        type: object
+        properties:
+          valid:
+            type: boolean
+            description: True when no finding is a failure.
+          skills:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many skills were examined.
+          failures:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many findings refuse.
+          warnings:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many findings are warnings.
+          findings:
+            type: array
+            items:
+              "$ref": "#/$defs/SkillFinding"
+            description: Every finding.
+        required:
+          - valid
+          - skills
+          - failures
+          - warnings
+          - findings
+        description: "The verdict over every skill: valid when no finding refuses.\n\n```\nuse majordomus_cli::capability::builtin::skills::SkillVerification;\nlet v = SkillVerification { valid: true, skills: 3, failures: 0, warnings: 2, findings: vec![] };\n// warnings are debts, reported; they do not make the verdict false\nassert!(v.valid);\n```"
+        title: SkillVerification
+        "$defs":
+          SkillFinding:
+            type: object
+            properties:
+              level:
+                "$ref": "#/$defs/SkillFindingLevel"
+                description: "`fail` or `warn`."
+              code:
+                type: string
+                description: "A stable code: `contract`, `untested`, `unused`, `unevidenced`, `failing`,\n`undocumented`, `unenforced`, `unknown_skill_in_test`, `unknown_skill_invoked`."
+              skill:
+                type:
+                  - string
+                  - "null"
+                description: "The skill concerned, when the finding is about one."
+              subject:
+                type: string
+                description: "The file the finding is about, repository-relative."
+              message:
+                type: string
+                description: "What is wrong, and what to do about it."
+              reproduce:
+                type: string
+                description: The command that reproduces or settles it.
+            required:
+              - level
+              - code
+              - subject
+              - message
+              - reproduce
+            description: "One thing the derivation found wrong, with the command that settles or reproduces it.\n\n```\nuse majordomus_cli::skill::{SkillFinding, SkillFindingLevel};\nlet f = SkillFinding {\n    level: SkillFindingLevel::Fail,\n    code: \"untested\".into(),\n    skill: Some(\"implement\".into()),\n    subject: \".ai/repo/skills/implement/SKILL.md\".into(),\n    message: \"no test names this skill\".into(),\n    reproduce: \"majordomus skills explain implement\".into(),\n};\nassert!(f.reproduce.contains(\"explain\"));\n```"
+          SkillFindingLevel:
+            oneOf:
+              - type: string
+                const: fail
+                description: "Refuses: `skills verify` exits 10 and the doctrine fails."
+              - type: string
+                const: warn
+                description: "Reported, and does not refuse."
+            description: "How bad a finding is: a failure refuses, a warning is reported.\n\n```\nuse majordomus_cli::skill::SkillFindingLevel;\nassert_ne!(SkillFindingLevel::Fail, SkillFindingLevel::Warn);\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::skills
+    exposure:
+      mcp:
+        tool: majordomus_skills_verify
+      http:
+        method: GET
+        path: /api/v1/skills/verify
+      cli:
+        path:
+          - skills
+          - verify
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - skill
+      - evidence
+      - validation
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/skills.rs
   - id: trace.commit
     module: trace
     kind: query

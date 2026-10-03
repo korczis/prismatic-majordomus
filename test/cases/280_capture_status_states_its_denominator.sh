@@ -48,8 +48,16 @@ d = json.load(open(sys.argv[1]))
 un = d.get("unadapted")
 assert isinstance(un, list), "the json surface carries no unadapted set"
 assert "agents" in un and "generic" in un, f"unadapted is missing declared providers: {un}"
-assert not any(p["provider"] in un for p in d["providers"]), \
-    "a provider cannot be both adapted and unadapted"
+# Every declared provider has its rows now (ADR 0103), so a provider in the unadapted set is
+# reported too: what it must never be reported as is wired. Its prompt row says the vendor
+# offers nothing (`unsupported`) or that this tool ships no adapter (`unadapted`), never a
+# state only an adapter can reach.
+wired = {"unconfigured", "named", "wired", "verified"}
+bad = [p for p in d["providers"]
+       if p["provider"] in un and p["aspect"] == "prompt" and p["state"] in wired]
+assert not bad, f"a provider with no capture adapter is reported as wired: {bad}"
+assert all(any(p["provider"] == u for p in d["providers"]) for u in un), \
+    "a provider named in the unadapted set has no row of its own"
 PY
 
 # ------------------------------------ the set is derived, not listed: add one and see it
