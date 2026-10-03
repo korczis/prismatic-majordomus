@@ -14,8 +14,10 @@ export default {
       const results = page.locator('[data-docs-search-results] a');
       await loc.scrollIntoViewIfNeeded();
       await loc.fill('decision');
+      // the first query fetches the index before it lists anything; the wait polls on an interval, not on animation
+      // frames (Playwright's default), because a starved renderer delays those frames by seconds
       await page.waitForFunction(() => document.querySelectorAll('[data-docs-search-results] a').length > 0,
-        null, { timeout: 5000 }).catch(() => {});
+        null, { timeout: 15000, polling: 100 }).catch(() => {});
       const n = await results.count();
       if (n === 0) fail('a query many pages match ("decision") lists no result');
       else {

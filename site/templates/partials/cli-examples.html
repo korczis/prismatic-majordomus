@@ -14,7 +14,8 @@
       <pre class="px-3 py-2 text-xs leading-relaxed text-body"><code>{% for st in e.setup %}$ {{ st.command }}
 {% endfor %}$ {{ e.command }}</code></pre>
     </div>
-    <p class="mt-1 text-xs text-body-subtle">Verified by the example tests: {{ e.expectation }}.</p>
+    <p class="mt-1 text-xs text-body-subtle">What it asserts: {{ e.expectation }}.</p>
+    {%- set tile = "cli-examples" -%}{% include "partials/proof.html" %}
   </li>
   {%- endfor -%}
 </ul>

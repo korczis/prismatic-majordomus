@@ -1,7 +1,7 @@
 +++
 title = "verified is written only by promote with evidence on stdin or by a person editing the file, never by the deriver; promotion moves the record to curated/ and rejection supersedes it with a reason, each leaving a ledger line"
 description = "The deriver writes candidates and nothing else. A record becomes verified through majordomus knowledge promote <id> with evidence on standard input, which moves it to curated/, or through a person editing the file. majordomus knowledge reject <id> --reason \"<why>\" sets it aside as superseded in place with the reason recorded. Each act leaves a ledger line, knowledge.promoted or knowledge.rejected, and the deriver skips a promoted or superseded id at the next boundary so that neither act is undone."
-weight = 217
+weight = 219
 [extra]
 claim_id = "knowledge-promotion-is-an-act"
 status = "guaranteed"

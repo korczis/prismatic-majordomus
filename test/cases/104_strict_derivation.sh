@@ -90,4 +90,20 @@ expect_grep 'declares no demo'
 expect_grep 'majordomus-covers: probe'
 expect_grep 'majordomus-negative: probe'
 expect_grep '5 requirement\(s\) unmet'
+
+# A prefixed name is not a command. `script:scripts/ci/probe` names a script; a reader that
+# matched between word boundaries read `probe` out of it, as it read `check` out of case
+# 335's `script:scripts/ci/link-check`, and called the command furnished by a case that
+# never runs it. The headers below name probe only inside prefixed words, so both
+# requirements stay unmet; a header naming it as a word meets them.
+printf '# majordomus-covers: script:scripts/ci/probe\n# majordomus-negative: gate:x-probe\n' \
+  > "$T/test/cases/990_prefixed.sh"
+expect_exit 10 "$ROOT/scripts/ci/command-furnished" --root "$T" probe
+expect_grep 'majordomus-covers: probe'
+expect_grep 'majordomus-negative: probe'
+printf '# majordomus-covers: none probe\n# majordomus-negative: probe\n' > "$T/test/cases/991_word.sh"
+expect_exit 10 "$ROOT/scripts/ci/command-furnished" --root "$T" probe
+expect_no_grep 'majordomus-covers: probe'
+expect_no_grep 'majordomus-negative: probe'
+expect_grep '3 requirement\(s\) unmet'
 rm -rf "$T"
