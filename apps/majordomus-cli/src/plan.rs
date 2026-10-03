@@ -387,6 +387,14 @@ pub struct PlanIssue {
     pub completed_at: String,
 }
 
+/// An issue is shown, everywhere, in the natural order of its identity: `issue-2` before
+/// `issue-10`, which is the order its file names read in.
+impl crate::order::Ordered for PlanIssue {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.id, &self.id)
+    }
+}
+
 /// One milestone, as its record declares it and as the two graphs derive it.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct PlanMilestone {

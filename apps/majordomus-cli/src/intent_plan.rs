@@ -57,6 +57,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::intent::{IntentFinding, FAIL, REPRODUCE, WARN};
+use crate::order::{canonical, OrderKey, Ordered};
 use crate::plan::{overlap, Plan, PlanIssue};
 
 /// What coverage needs of one intent: its identity, its criterion ids, its milestones, and
@@ -220,6 +221,13 @@ pub struct IssuePurpose {
     pub serves: Vec<String>,
     /// The intents whose milestones include this issue's milestone, sorted.
     pub intents: Vec<String>,
+}
+
+/// Issues are listed in the natural order of their identity, as everywhere else.
+impl Ordered for IssuePurpose {
+    fn order_key(&self) -> OrderKey<'_> {
+        OrderKey::plain(&self.issue, &self.issue)
+    }
 }
 
 /// The whole derived coverage: every criterion of every live intent, every issue with the
@@ -469,7 +477,7 @@ pub fn coverage(intents: &[IntentOutline], plan: &Plan) -> IntentCoverage {
             intents: under,
         });
     }
-    purposes.sort_by(|a, b| a.issue.cmp(&b.issue));
+    canonical(&mut purposes);
 
     // --- every criterion of every live intent
     let mut criteria = Vec::new();
@@ -495,7 +503,7 @@ pub fn coverage(intents: &[IntentOutline], plan: &Plan) -> IntentCoverage {
         for cid in &intent.criteria {
             let key = (intent.id.clone(), cid.clone());
             let mut issues: Vec<&PlanIssue> = serving.get(&key).cloned().unwrap_or_default();
-            issues.sort_by(|a, b| a.id.cmp(&b.id));
+            canonical(&mut issues);
             issues.dedup_by(|a, b| a.id == b.id);
             let subject = format!("{}#{cid}", intent.id);
             let strength = if issues.is_empty() && intent.observed_satisfied.contains(cid) {

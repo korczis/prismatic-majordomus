@@ -45,6 +45,7 @@ use crate::index::Index;
 use crate::intent::{IntentEvidenceState, IntentFinding, IntentStage, IntentView, Intents, WARN};
 use crate::intent_plan::{CoverageStrength, CriterionCoverage, IntentCoverage};
 use crate::ledger::Entry;
+use crate::order::{canonical, OrderKey, Ordered};
 use crate::peers::Peer;
 use crate::plan::{overlap, Plan};
 use crate::worktree::state::issue_of;
@@ -344,6 +345,20 @@ pub struct IntentLink {
     pub provenance: IntentLinkProvenance,
 }
 
+/// A unit of work's links read strongest first, then by intent, then by issue.
+impl Ordered for IntentLink {
+    fn order_key(&self) -> OrderKey<'_> {
+        OrderKey::plain(&self.intent, &self.issue).ranked(rank(self.provenance, None))
+    }
+}
+
+/// The explicit position a link's provenance, and then the record a piece of work came from,
+/// give it: provenance first, because the strongest link is the one a reader reads first.
+fn rank(provenance: IntentLinkProvenance, kind: Option<IntentWorkKind>) -> i64 {
+    let kind = kind.map_or(0, |k| k as i64 + 1);
+    provenance as i64 * 8 + kind
+}
+
 /// A unit of work with every intent it realises, or the reason it realises none.
 ///
 /// ```
@@ -473,9 +488,7 @@ pub fn link(unit: IntentWorkUnit, intents: &Intents, plan: &Plan) -> IntentReali
             });
         }
     }
-    links.sort_by(|a, b| {
-        (a.provenance, &a.intent, &a.issue).cmp(&(b.provenance, &b.intent, &b.issue))
-    });
+    canonical(&mut links);
 
     let unlinked = if !links.is_empty() {
         None
@@ -569,6 +582,14 @@ pub struct IntentWorkRef {
     pub providers: Vec<String>,
     /// How many handovers carried it.
     pub handovers: usize,
+}
+
+/// The work realising an intent reads strongest link first, then by the record it came from,
+/// then by its identity.
+impl Ordered for IntentWorkRef {
+    fn order_key(&self) -> OrderKey<'_> {
+        OrderKey::plain(&self.id, &self.id).ranked(rank(self.provenance, Some(self.kind)))
+    }
 }
 
 /// One intent, realised: how far reality is from it, the work realising it and by whom, and the
@@ -781,7 +802,7 @@ pub fn realize(intents: &Intents, plan: &Plan, units: Vec<IntentWorkUnit>) -> In
                 })
             })
             .collect();
-        refs.sort_by(|a, b| (a.provenance, a.kind, &a.id).cmp(&(b.provenance, b.kind, &b.id)));
+        canonical(&mut refs);
         let mut providers = Vec::new();
         for r in &refs {
             for p in &r.providers {
