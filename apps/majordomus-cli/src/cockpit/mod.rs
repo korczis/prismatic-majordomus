@@ -26,6 +26,7 @@ pub mod html;
 pub(crate) mod intents;
 pub(crate) mod nav;
 pub(crate) mod pages;
+pub(crate) mod plan;
 pub(crate) mod reasoning;
 pub(crate) mod view;
 
@@ -89,6 +90,7 @@ pub const STATIC_ROUTES: &[(&str, &str)] = &[
     ("/cockpit/graphs/topology", ""),
     ("/cockpit/continuity", "continuity"),
     ("/cockpit/intents", "intents"),
+    ("/cockpit/plan", "plan"),
     ("/cockpit/worktrees", "worktrees"),
     ("/cockpit/peers", "peers"),
     ("/cockpit/integration", "integration"),
@@ -222,6 +224,7 @@ impl Cockpit {
             "/cockpit/graphs/topology" => pages::topology(ctx),
             "/cockpit/continuity" => pages::continuity(ctx),
             "/cockpit/intents" => intents::list(ctx),
+            "/cockpit/plan" => plan::plan(ctx, query),
             "/cockpit/worktrees" => pages::worktrees(ctx),
             "/cockpit/peers" => pages::peers(ctx),
             "/cockpit/integration" => pages::integration(ctx),
@@ -245,6 +248,10 @@ impl Cockpit {
                     pages::capability(ctx, &percent_decode(id))
                 } else if let Some(id) = other.strip_prefix("/cockpit/commands/") {
                     pages::command(ctx, &percent_decode(id))
+                } else if let Some(id) = other.strip_prefix("/cockpit/plan/milestones/") {
+                    plan::milestone(ctx, &percent_decode(id))
+                } else if let Some(id) = other.strip_prefix("/cockpit/plan/issues/") {
+                    plan::issue(ctx, &percent_decode(id))
                 } else if let Some(id) = other.strip_prefix("/cockpit/intents/") {
                     intents::intent(ctx, &percent_decode(id))
                 } else if let Some(id) = other.strip_prefix("/cockpit/graphs/") {
