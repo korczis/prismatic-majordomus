@@ -60,7 +60,7 @@
         <li class="md:relative">
           {# desktop: dropdown trigger; mobile: the group label is a plain heading and its items are listed flat #}
           <button id="nav-{{ loop.index }}" data-dropdown-toggle="nav-menu-{{ loop.index }}" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 {% if active %}text-fg-brand{% else %}text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand{% endif %} focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">{{ g.label }}<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
-          <div id="nav-menu-{{ loop.index }}" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+          <div id="nav-menu-{{ loop.index }}" class="z-10 hidden w-56 md:absolute md:left-0 md:top-full md:mt-2 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
             <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-{{ loop.index }}">
               {% for i in items %}<li><a href="{{ get_url(path=i.href, trailing_slash=true) }}" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading{% if cp == i.href %} text-fg-brand{% endif %}">{{ i.label }}</a></li>{% endfor %}
             </ul>
