@@ -161,9 +161,13 @@ jq -c --slurpfile exe "$SITE/data/generated/executable.json" '
           mcp: (.exposure.mcp.tool // null) } ]' \
   "$SITE/data/registry/registry.json" > "$SITE/static/graphs/surfaces.json"
 cp "$SITE/api-anchors.js" "$SITE/static/js/api-anchors.js"
+# the kit's behaviour (copy, tabs, the table of contents), loaded by the base layout
+cp "$SITE/kit.js" "$SITE/static/js/kit.js"
 if [ "$NOCSS" = 0 ]; then
   echo "== css"
   ( cd "$ROOT" && node_modules/.bin/tailwindcss -i "$SITE/tailwind.css" -o "$SITE/static/app.css" --minify )
+  # the kit's sheet, loaded only by the pages composed of its components (partials/kit-assets.html)
+  ( cd "$ROOT" && node_modules/.bin/tailwindcss -i "$SITE/kit.tailwind.css" -o "$SITE/static/kit.css" --minify )
 else
   # The stylesheet is a build product and is ignored, so a clean checkout has none — and
   # base.html asks for it with cachebust=true, which makes zola read the file rather than
@@ -175,6 +179,9 @@ else
   echo "== css (skipped: an empty stylesheet, so the pages resolve it)"
   printf '/* --no-css: no Tailwind build. This file exists because every page links it. */\n' \
     > "$SITE/static/app.css"
+  # and the kit's sheet, for the same reason: every page composed of the kit links it
+  printf '/* --no-css: no Tailwind build. This file exists because every kit page links it. */\n' \
+    > "$SITE/static/kit.css"
 fi
 echo "== zola"
 # an absolute output path, because zola resolves --output-dir against the site directory

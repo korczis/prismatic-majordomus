@@ -1,0 +1,60 @@
+{% extends "screen.html" %}
+{#- The Cockpit screen: a picture of the Cockpit that `majordomus serve` renders at /cockpit,
+    drawn from the same generated data. The sidebar names the Cockpit's own areas
+    (apps/majordomus-cli/src/cockpit/nav.rs), each linked to the page of this site that
+    documents it; the counts are registry.index.by_kind, the series is the changelog's
+    decisions per release, the feed is the latest release's changes, and the health list
+    says what a static page can know: the index state and what is declared. -#}
+{% block screen %}
+{%- set latest = cl.sections | first -%}
+{%- set series = [s.decisions | length for s in cl.sections] | reverse -%}
+{%- set kind_icon = {"feat": "plus", "fix": "wrench", "perf": "bolt", "docs": "file-text", "test": "check-circle", "chore": "cog", "style": "pencil"} -%}
+{%- set kind_tone = {"feat": "green", "fix": "rose", "perf": "orange", "docs": "blue", "test": "violet", "chore": "cyan", "style": "cyan"} -%}
+{%- set changes = [{"icon": kind_icon[g.kind] or "commit", "tone": kind_tone[g.kind] or "", "title": g.changes[0].subject, "when": g.heading, "ref": g.changes[0].commit, "href": g.changes[0].url} for g in latest.groups[:4]] -%}
+
+{% <hero kicker="Cockpit" title="Your repository," accent="at a glance." lead="The Cockpit renders every capability, object, graph, worktree and health check of the repository as pages, asking the same executor the command line, the HTTP API and MCP ask. It is served by majordomus at /cockpit; what follows is a picture of it, built from the same data." actions={[{"label": "The Cockpit, documented", "href": base ~ "docs/cockpit/", "kind": "primary", "trail": "arrow-right"}, {"label": "HTTP API", "href": base ~ "docs/api/", "icon": "code"}]}> %}
+  {{ <quote text="It holds no model, no catalogue and no verdict of its own" by=".ai/repo/features/cockpit.md" href={base ~ "features/cockpit/"} /> }}
+{% </hero> %}
+
+<div class="mt-12">
+{% <fan left={[{"icon": "menu", "tone": "blue", "title": "One navigation", "text": "Its areas, then catalogues built from the registry's modules, the index's kinds and the graph derivations, in one sidebar."}, {"icon": "code", "tone": "rose", "title": "Live repository state", "text": "Every page asks a capability through the one executor MCP and the HTTP routes use."}, {"icon": "search", "tone": "violet", "title": "Drill down anywhere", "text": "A capability's page carries its schemas, projections, provenance and a runner built from its input schema."}]} right={[{"icon": "activity", "tone": "green", "title": "One health report", "text": "Health names the engine behind every check; a source that cannot answer is unknown, never ok."}, {"icon": "chart", "tone": "blue", "title": "Complete without script", "text": "Every page is whole HTML before any script runs; the palette, runner and graph drawing are enhancements."}, {"icon": "link", "tone": "violet", "title": "Nothing is a second list", "text": "A capability, kind or graph added to the backend has a page, a navigation entry and a search entry."}]} left_kind="card" right_kind="card" wiring="parallel" hub="wide"> %}
+  <div class="min-w-0">
+    {% <window title="Cockpit · /cockpit" brand={project.short_name} foot={"v" ~ project.release} label="A picture of the Cockpit" nav={[{"title": "Overview", "href": base ~ "features/cockpit/", "icon": "home", "current": true}, {"title": "Capabilities", "href": base ~ "registry/capabilities/", "icon": "puzzle"}, {"title": "Commands", "href": base ~ "commands/", "icon": "terminal"}, {"title": "Objects", "href": base ~ "registry/", "icon": "database"}, {"title": "Directories", "href": base ~ "docs/api/directories/", "icon": "folder"}, {"title": "Graphs", "href": base ~ "docs/api/graph/", "icon": "nodes"}, {"title": "Continuity", "href": base ~ "docs/continuity/", "icon": "refresh"}, {"title": "Worktrees", "href": base ~ "docs/worktrees/", "icon": "branch"}, {"title": "Peers", "href": base ~ "docs/api/peers/", "icon": "users"}, {"title": "Integration", "href": base ~ "docs/integration/", "icon": "merge"}, {"title": "Mesh", "href": base ~ "docs/mesh/", "icon": "globe"}, {"title": "Models", "href": base ~ "docs/models/", "icon": "box"}, {"title": "Reasoning", "href": base ~ "docs/reasoning/", "icon": "sparkles"}, {"title": "Economics", "href": base ~ "economics/", "icon": "chart"}, {"title": "Health", "href": base ~ "docs/api/health/", "icon": "activity"}, {"title": "Artifacts", "href": base ~ "registry/artifacts/", "icon": "file-check"}, {"title": "Release", "href": base ~ "docs/release/", "icon": "target"}, {"title": "Design", "href": base ~ "docs/design/", "icon": "layers"}, {"title": "API", "href": base ~ "docs/api/", "icon": "code"}]}> %}
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div class="min-w-0">
+          <p class="mj-panel-title">Overview</p>
+          <p class="mj-panel-sub">Is it healthy, what changed, what is broken, what needs action.</p>
+          <p class="mj-kpi-source">{{ project.repository_url | split(pat="/") | last }} · {{ project.tagline }}</p>
+        </div>
+        {{ <state word={registry.index.state | lower} label={"index " ~ (registry.index.state | lower)} /> }}
+      </div>
+      <div class="mt-4">{{ <kpis items={[{"title": "Rules", "value": kinds.rule, "icon": "shield", "tone": "blue"}, {"title": "Decisions", "value": kinds.adr, "icon": "book", "tone": "violet"}, {"title": "Features", "value": kinds.feature, "icon": "layers", "tone": "orange"}, {"title": "Tests", "value": kinds.test, "icon": "check-circle", "tone": "green"}]} /> }}</div>
+      <div class="mt-3">{{ <kpis items={[{"title": "Commands", "value": kinds.command, "icon": "terminal", "tone": "cyan"}, {"title": "Use cases", "value": kinds["use-case"], "icon": "target", "tone": "rose"}, {"title": "Claims", "value": kinds.claim, "icon": "shield-check", "tone": "green"}, {"title": "Sessions", "value": kinds.session, "icon": "users", "tone": "blue"}]} /> }}</div>
+      <div class="mt-4 grid gap-4">
+        {% <panel title="Decisions per release" sub="oldest first, from the changelog" variant="quiet"> %}
+          {{ <chart values={series} label={"Decisions recorded per release, oldest first: " ~ (series | join(sep=", "))} tone="violet" /> }}
+          <div class="mt-3">{{ <legend items={[{"title": "v" ~ cl.sections[0].version, "value": cl.sections[0].decisions | length, "tone": "violet"}, {"title": "v" ~ cl.sections[1].version, "value": cl.sections[1].decisions | length, "tone": "blue"}, {"title": "v" ~ cl.sections[2].version, "value": cl.sections[2].decisions | length, "tone": "green"}, {"title": "v" ~ cl.sections[3].version, "value": cl.sections[3].decisions | length, "tone": "orange"}]} /> }}</div>
+        {% </panel> %}
+        {% <panel title="Quick actions" variant="quiet"> %}
+          {{ <actions items={[{"title": "Commands", "icon": "terminal", "tone": "blue", "href": base ~ "commands/"}, {"title": "Rules", "icon": "shield", "tone": "green", "href": base ~ "rules/"}, {"title": "Decisions", "icon": "book", "tone": "violet", "href": base ~ "adrs/"}, {"title": "Changelog", "icon": "clock", "tone": "orange", "href": base ~ "changelog/"}, {"title": "HTTP API", "icon": "code", "tone": "violet", "href": base ~ "docs/api/"}, {"title": "MCP", "icon": "nodes", "tone": "green", "href": base ~ "registry/mcp/"}, {"title": "Command line", "icon": "prompt", "tone": "blue", "href": base ~ "docs/cli/"}, {"title": "Design", "icon": "layers", "tone": "orange", "href": base ~ "docs/design/"}]} /> }}
+        {% </panel> %}
+      </div>
+      <div class="mt-4 grid gap-4">
+        {% <panel title={"Changes in v" ~ latest.version} variant="quiet"> %}
+          {{ <feed items={changes} /> }}
+        {% </panel> %}
+        {% <panel title="Health" sub="what this page can know: the index, and what is declared" variant="quiet"> %}
+          {{ <health items={[{"title": "Object index", "icon": "database", "state": registry.index.state | lower, "measure": "registry.index"}, {"title": "Diagnostics", "icon": "alert", "state": "clean" if registry.index.diagnostics | length == 0 else "failing", "measure": registry.index.diagnostics | length}, {"title": "Command line", "icon": "terminal", "state": "declared", "measure": cli.counts.commands ~ " commands"}, {"title": "HTTP API", "icon": "globe", "state": "declared", "measure": oas.counts.operations ~ " operations"}, {"title": "Swagger UI", "icon": "file-text", "state": "declared", "measure": "/swagger"}, {"title": "MCP", "icon": "nodes", "state": "declared", "measure": "majordomus mcp"}, {"title": "Cockpit", "icon": "monitor", "state": "declared", "measure": "/cockpit"}]} /> }}
+        {% </panel> %}
+      </div>
+    {% </window> %}
+    <p class="mj-figure-source mt-3">A picture, not the Cockpit: the counts are the generated registry's, the series and the changes the changelog's. Run <code>majordomus serve</code> and open /cockpit for the live one.</p>
+  </div>
+{% </fan> %}
+</div>
+
+<div class="mt-14 grid gap-6 lg:grid-cols-[minmax(0,18rem)_minmax(0,1fr)] lg:items-center">
+  {{ <section kicker="Cockpit features" title="More than just a dashboard." /> }}
+  {{ <strip items={[{"icon": "eye", "tone": "blue", "title": "One executor", "text": "the same answer as the CLI, the API and MCP"}, {"icon": "grid", "tone": "violet", "title": "A runner per capability", "text": "a form from its input schema calls its real route"}, {"icon": "bolt", "tone": "orange", "title": "What writes is declared", "text": "a command that writes tracked files says so before it is sent"}, {"icon": "users", "tone": "rose", "title": "For people and agents", "text": "the server that answers agents renders the pages"}]} /> }}
+</div>
+{% endblock screen %}

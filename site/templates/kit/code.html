@@ -1,0 +1,125 @@
+{#- The kit's code components: the terminal and what goes in it, a command with its copy
+    button, the tab strip, and the rows of an HTTP API. See templates/kit/base.html for the
+    conventions. -#}
+
+{#- A terminal window. Always dark: it carries the theme class, so every role inside it
+    resolves to its dark value whatever the page wears. The body is the session: lines from
+    `term_line`, boxes from `term_box`, or preformatted output. -#}
+{% component terminal(title="", label="Terminal session") %}
+<figure class="mj-term dark m-0" aria-label="{{ label }}">
+  <div class="mj-term-bar" aria-hidden="true">
+    {%- for n in [1, 2, 3] %}<svg class="mj-term-dot mj-term-dot--{{ n }}" viewBox="0 0 12 12"><circle cx="6" cy="6" r="6" fill="currentColor"/></svg>{% endfor -%}
+    {%- if title %}<span class="mj-term-title">{{ title }}</span>{% endif %}
+  </div>
+  <div class="mj-term-body" tabindex="0">{{ body }}</div>
+</figure>
+{%- endcomponent terminal %}
+
+{#- One command typed at the prompt: the program, then its arguments in the accent. -#}
+{% component term_line(cmd, args="", prompt="$") %}
+<div class="mj-term-line"><span class="mj-term-prompt">{{ prompt }}</span> <span class="mj-term-cmd">{{ cmd }}</span>{% if args %} <span class="mj-term-arg">{{ args }}</span>{% endif %}</div>
+{%- endcomponent term_line %}
+
+{#- What a command printed, verbatim, in a box that scrolls sideways rather than wrapping: a
+    transcript's columns are its meaning. -#}
+{% component term_out(text) %}<div class="overflow-x-auto" tabindex="0"><pre class="mj-term-out">{{ text }}</pre></div>{% endcomponent term_out %}
+
+{#- A structured block of output: sections of keys and values in a box. A section is
+    `heading` and `aside` (the two ends of a title row) and `rows`, each `k` and `v` and an
+    optional `href`; `foot` is the line under the box. -#}
+{% component term_box(sections, foot="") %}
+<div class="mj-term-box">
+  {%- for s in sections %}
+  <div class="mj-term-section">
+    {%- if s.heading %}<div class="mj-term-heading"><span>{{ s.heading }}</span>{% if s.aside %}<span>{{ s.aside }}</span>{% endif %}</div>{% endif %}
+    {%- if s.note %}<div class="mj-kv-key">{{ s.note }}</div>{% endif %}
+    {%- if s.rows %}
+    <dl class="mj-kv m-0">
+      {%- for r in s.rows %}<dt class="mj-kv-key">{{ r.k }}</dt><dd class="mj-kv-value m-0">{% if r.href %}<a href="{{ r.href }}">{{ r.v }}</a>{% else %}{{ r.v }}{% endif %}</dd>{% endfor %}
+    </dl>
+    {%- endif %}
+  </div>
+  {%- endfor %}
+</div>
+{%- if foot %}<div class="mj-term-foot">{{ foot }}</div>{% endif %}
+{%- endcomponent term_box %}
+
+{#- A command on one line, with a copy button the script reveals. `id` must be unique on the
+    page; it is what the button copies. -#}
+{% component cmd(text, id, prompt=true, wrap=false) %}
+<div class="mj-cmd{% if wrap %} mj-cmd--wrap{% endif %}">
+  {%- if prompt %}<span class="mj-cmd-prompt" aria-hidden="true">$</span>{% endif %}
+  <code class="mj-cmd-text" id="{{ id }}" tabindex="0">{{ text }}</code>
+  {{ <copy target={id} label="Copy the command" /> }}
+</div>
+{%- endcomponent cmd %}
+
+{#- Commands, one per row. `id` roots the ids of the rows. -#}
+{% component cmd_list(commands, id) %}
+<ul class="mj-cmd-list">
+  {%- for c in commands %}<li>{{ <cmd text={c} id={id ~ "-" ~ loop.index0} /> }}</li>{% endfor %}
+</ul>
+{%- endcomponent cmd_list %}
+
+{#- A tab strip over panels. `labels` names the tabs and `icons`, optional and parallel to
+    it, leads each; `variant` is line, segmented or pills. The body is one `tab_panel` per
+    label, with the same `id` and its position.
+
+    With no script the strip is not shown — it could switch nothing — and every panel is
+    there in order, each under the heading its tab would have carried. site/kit.js shows the
+    strip, hides all panels but the selected one, and moves between tabs with the arrow
+    keys, Home and End, as the ARIA tabs pattern asks. -#}
+{% component tabs(id, labels, variant="line", icons=[], label="", selected=0) %}
+<div class="min-w-0" data-tabs="{{ id }}" data-selected="{{ selected }}">
+  <div class="mj-tabs mj-tabs--{{ variant }}" role="tablist" aria-label="{{ label or id }}" hidden>
+    {%- for l in labels %}
+    <button type="button" role="tab" class="mj-tab" data-kit-tab id="{{ id }}-tab-{{ loop.index0 }}" aria-controls="{{ id }}-panel-{{ loop.index0 }}" aria-selected="{% if loop.index0 == selected %}true{% else %}false{% endif %}" tabindex="{% if loop.index0 == selected %}0{% else %}-1{% endif %}">
+      {%- if icons | length > loop.index0 and icons[loop.index0] %}{{ <icon name={icons[loop.index0]} size="sm" /> }}{% endif %}<span>{{ l }}</span></button>
+    {%- endfor %}
+  </div>
+  {{ body }}
+</div>
+{%- endcomponent tabs %}
+
+{% component tab_panel(id, i, label) %}
+<div class="mj-tab-panel" role="tabpanel" id="{{ id }}-panel-{{ i }}" aria-labelledby="{{ id }}-tab-{{ i }}" tabindex="0">
+  <p class="mj-tab-heading">{{ label }}</p>
+  {{ body }}
+</div>
+{%- endcomponent tab_panel %}
+
+{#- An HTTP method as a word on its tone. The tone follows the method, never the page:
+    reading is blue, creating green, replacing orange, amending violet, deleting rose. -#}
+{% component method(name) %}
+{%- set m = name | upper -%}
+{%- set tones = {"GET": "blue", "HEAD": "blue", "POST": "green", "PUT": "orange", "PATCH": "violet", "DELETE": "rose"} -%}
+<span class="mj-method mj-tone--{{ tones[m] or "cyan" }}">{{ m }}</span>
+{%- endcomponent method %}
+
+{#- A request and, when one was recorded, the status it answered with. `status` is the
+    line ("200 OK"), `state` the word it is filed under. -#}
+{% component request(method, path, status="", state="ok") %}
+<div class="mj-request">
+  {{ <method name={method} /> }}
+  <code class="mj-request-path" title="{{ path }}">{{ path }}</code>
+  {%- if status %}<span class="mj-badge mj-badge--{{ state }}">{{ status }}</span>{% endif %}
+</div>
+{%- endcomponent request %}
+
+{#- An operation that opens to show its body: what it takes and what it returns. A native
+    disclosure, so it opens with no script. -#}
+{% component endpoint(method, path, summary="", open=false) %}
+<details class="mj-endpoint"{% if open %} open{% endif %}>
+  <summary>{{ <method name={method} /> }}<code class="mj-endpoint-path">{{ path }}</code>{% if summary %}<span class="mj-endpoint-summary">{{ summary }}</span>{% endif %}<span class="mj-chevron">{{ <icon name="chevron-down" size="sm" /> }}</span></summary>
+  {%- if body | trim %}<div class="mj-endpoint-body">{{ body }}</div>{% endif %}
+</details>
+{%- endcomponent endpoint %}
+
+{#- A listing on the page's own ground, for text that is read rather than run: a struct, a
+    JSON shape. It scrolls sideways rather than wrapping, like a transcript. -#}
+{% component listing(text, title="") %}
+<figure class="mj-code">
+  {%- if title %}<figcaption class="mj-code-title">{{ title }}</figcaption>{% endif %}
+  <div class="overflow-x-auto" tabindex="0"><pre>{{ text }}</pre></div>
+</figure>
+{%- endcomponent listing %}

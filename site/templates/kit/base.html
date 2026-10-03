@@ -1,0 +1,60 @@
+{#- The kit's atoms. Every component under templates/kit/ emits the `.mj-*` classes of
+    share/design/kit.css and nothing else that decides a look: a template says what a thing
+    is, the stylesheet says how it looks, and /kit/ renders all of them. docs/DESIGN_SYSTEM.md,
+    section "The kit", is the manual.
+
+    Conventions every kit component keeps:
+    - an item is a map, and the same key means the same thing everywhere: `title` and `text`
+      for what is read, `icon` for a key of data/kit/icons.toml, `tone` for a tone of
+      share/design/tokens.yaml, `href` for where it goes, `state` for a state word;
+    - a tone is optional; without one a component wears the accent;
+    - nothing is a number, a count or a name written here: the page that composes a
+      component hands it the data, and the data comes from the generator. -#}
+
+{#- An outline glyph by name. Decorative unless it is given a label, in which case it is the
+    one accessible name of whatever it sits in. -#}
+{% component icon(name, size="", label="") %}
+{%- set icons = load_data(path="data/kit/icons.toml") -%}
+<svg class="mj-icon{% if size %} mj-icon--{{ size }}{% endif %}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"{% if label %} role="img" aria-label="{{ label }}"{% else %} aria-hidden="true"{% endif %} focusable="false">{{ icons.icons[name] | safe }}</svg>
+{%- endcomponent icon %}
+
+{#- An icon on its tone's ground. -#}
+{% component glyph(icon, tone="", size="", round=false, icon_size="") %}
+<span class="mj-glyph{% if size %} mj-glyph--{{ size }}{% endif %}{% if round %} mj-glyph--round{% endif %}{% if tone %} mj-tone--{{ tone }}{% endif %}" aria-hidden="true">{{ <icon name={icon} size={icon_size} /> }}</span>
+{%- endcomponent glyph %}
+
+{#- A numbered step on its tone's fill. The number is text, so it is read. -#}
+{% component step(n, tone="", size="") %}
+<span class="mj-step{% if size %} mj-step--{{ size }}{% endif %}{% if tone %} mj-tone--{{ tone }}{% endif %}">{{ n }}</span>
+{%- endcomponent step %}
+
+{% component kicker(text) %}<p class="mj-kicker">{{ text }}</p>{% endcomponent kicker %}
+
+{#- A link that looks like a button. `kind` is primary (the page's one action), accent, or
+    nothing for the quiet one; `icon` leads, `trail` follows; `cta` names it for the page's
+    checks (`data-cta`). -#}
+{% component btn(label, href, kind="", icon="", trail="", size="", block=false, cta="") %}
+<a href="{{ href }}"{% if cta %} data-cta="{{ cta }}"{% endif %} class="mj-btn{% if kind %} mj-btn--{{ kind }}{% endif %}{% if size %} mj-btn--{{ size }}{% endif %}{% if block %} mj-btn--block{% endif %}">{% if icon %}{{ <icon name={icon} size="sm" /> }}{% endif %}<span>{{ label }}</span>{% if trail %}{{ <icon name={trail} size="sm" /> }}{% endif %}</a>
+{%- endcomponent btn %}
+
+{#- A word of a vocabulary on its tone. -#}
+{% component pill(label, tone="") %}<span class="mj-pill{% if tone %} mj-tone--{{ tone }}{% endif %}">{{ label }}</span>{% endcomponent pill %}
+
+{#- A cloud of words. Each word takes the tone of its position in `tones`, cycling, so a
+    cloud of nine kinds over six tones is still legible and never chooses a colour per word
+    in the page that renders it. -#}
+{% component pills(words, tones=[], center=false) %}
+<ul class="mj-pills{% if center %} mj-pills--center{% endif %} m-0 list-none p-0">
+  {%- for w in words %}<li>{{ <pill label={w} tone={tones[loop.index0 % (tones | length)] if tones | length > 0 else ""} /> }}</li>{% endfor -%}
+</ul>
+{%- endcomponent pills %}
+
+{#- A state word with its dot, coloured by the status the word is filed under in
+    share/design/tokens.yaml. scripts/site-check refuses a word filed nowhere. -#}
+{% component state(word, label="") %}<span class="mj-state mj-status--{{ word | lower }}">{{ label or word }}</span>{% endcomponent state %}
+
+{#- A copy button for the text of the element whose id it is given. Rendered hidden: with no
+    script it could do nothing, so it is not there; site/kit.js reveals and wires it. -#}
+{% component copy(target, label="Copy") %}
+<button type="button" class="mj-copy" data-copy="{{ target }}" aria-label="{{ label }}" hidden>{{ <icon name="copy" size="sm" /> }}</button>
+{%- endcomponent copy %}

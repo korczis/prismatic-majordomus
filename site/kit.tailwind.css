@@ -1,0 +1,27 @@
+/* The kit's entry point, compiled by scripts/site-build into static/kit.css: the one sheet a
+   page composed of the kit loads, *instead of* app.css (templates/partials/kit-assets.html,
+   and the page's empty `stylesheet` block). Every other page — the homepage has a byte
+   budget — loads app.css and pays nothing for the kit.
+
+   One complete sheet rather than app.css plus an addition, because two sheets that both emit
+   utilities fight in the cascade: a `.hidden` the second sheet re-emits lands after the first
+   sheet's `md:block` and hides the navbar's menu. So this file repeats site/tailwind.css's
+   imports and plugins exactly (test/cases/790 holds the two to the same list), scans the same
+   sources without leaving out the kit's, and adds the kit's own sheet. */
+@import "tailwindcss";
+@import "flowbite/src/themes/default";
+/* generated from share/design/tokens.yaml — never edited */
+@import "../share/design/theme.css";
+@import "../share/design/surface.css";
+@import "../share/design/status.css";
+/* hand-written and shared with the Cockpit: the accessible base and the primitives */
+@import "../share/design/base.css";
+@import "../share/design/primitives.css";
+/* the kit */
+@import "../share/design/kit.css";
+@plugin "flowbite/plugin";
+@plugin "flowbite-typography";
+@source "../node_modules/flowbite";
+@source "./templates";
+@source "./content";
+@custom-variant dark (&:where(.dark, .dark *));

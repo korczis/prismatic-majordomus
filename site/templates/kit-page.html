@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{#- /kit/: every component of site/templates/kit/, rendered from this repository's own data.
+
+    The page is the kit's specification by example and its test fixture: scripts/site-check
+    reads the classes it renders, and test/cases holds the case that asserts every component
+    appears here. Nothing below is a sample value. A count is read from the registry the
+    generator wrote, a command from the HTTP API's own description of itself, a transcript
+    from a run the generator recorded, a release from the changelog; where a component needs
+    a value no dataset carries, the example says what it would show and shows no number. -#}
+{% block title %}{{ section.title }} — {{ project.name }}{% endblock title %}
+{% block ogtitle %}{{ section.title }} — {{ project.name }}{% endblock ogtitle %}
+{% block description %}{{ section.description }}{% endblock description %}
+{% block ogdescription %}{{ section.description }}{% endblock ogdescription %}
+{#- the kit's sheet is the whole sheet of this page, so app.css is not loaded beside it -#}
+{% block stylesheet %}{% endblock stylesheet %}
+{% block kit %}{% include "partials/kit-assets.html" %}{% endblock kit %}
+{% block content %}
+{%- set design = load_data(path="data/registry/design.json") -%}
+{%- set registry = load_data(path="data/registry/registry.json") -%}
+{%- set term = load_data(path="data/generated/terminal.json") -%}
+{%- set oas = load_data(path="data/generated/openapi.json") -%}
+{%- set cl = load_data(path="data/generated/changelog.json") -%}
+{%- set kinds = registry.index.by_kind -%}
+{%- set tones = [t.name for t in design.tones] -%}
+{#- the first tag of the API with an operation that has a command and a tool; Tera 2 takes
+    one `for` per comprehension, so the tag is found first and its operations read after -#}
+{%- set tag = [t for t in oas.tags if [o for o in t.operations if o.cli and o.mcp_tool] | length > 0] | first -%}
+{%- set ops = [o for o in tag.operations if o.cli and o.mcp_tool] -%}
+{%- set op = ops | first -%}
+{%- set base = get_url(path="/", trailing_slash=true) -%}
+{#- the kit's source, at the commit this page was built from -#}
+{%- set kit_source -%}{{ <source_tree path="site/templates/kit" /> }}{%- endset -%}
+
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  {% <hero kicker="Component kit" title="One vocabulary." accent="Every screen." lead={section.description} actions={[{"label": "The design system", "href": base ~ "docs/design/", "kind": "primary", "trail": "arrow-right"}, {"label": "Source", "href": kit_source | trim, "icon": "github"}]}> %}
+    {{ <quote text="A page says what a thing is — a badge, a table, a code block, a card — and this file says how that thing looks." by="share/design/primitives.css" /> }}
+  {% </hero> %}
+
+  <div class="mt-14 grid gap-10 xl:grid-cols-[minmax(0,1fr)_14rem]">
+    <div class="min-w-0 space-y-16">
+
+      {#- ------------------------------------------------------------------ tones -#}
+      <section id="tones" aria-labelledby="tones-title">
+        {{ <section kicker="01 / tones" title="Tones" lead="Hues that carry identity and never meaning: the colour of a step, of one surface's card, of one kind in a cloud of kinds. A tone is a class; every component reads it through the same four properties." /> }}
+        <ul class="m-0 grid list-none gap-3 p-0 sm:grid-cols-2 lg:grid-cols-3">
+          {%- for t in design.tones %}
+          <li class="mj-panel mj-panel--toned mj-tone--{{ t.name }}">
+            <div class="flex items-center gap-3">{{ <step n={loop.index} /> }}{{ <glyph icon="layers" /> }}{{ <pill label={t.name} /> }}{{ <method name="get" /> }}</div>
+            <p class="mj-point-text mt-3">{{ t.about }}</p>
+            <code class="mj-figure-source">{{ t.class }}</code>
+          </li>
+          {%- endfor %}
+        </ul>
+      </section>
+
+      {#- ------------------------------------------------------------------ atoms -#}
+      <section id="atoms" aria-labelledby="atoms-title">
+        {{ <section kicker="02 / atoms" title="Atoms" lead="Buttons, glyphs, steps, words of a vocabulary and state words. A state word is coloured by the status it is filed under in share/design/tokens.yaml, and by nothing else." /> }}
+        <div class="mj-panel space-y-5">
+          <div class="flex flex-wrap items-center gap-3">
+            {{ <btn label="Get started" href={base ~ "getting-started/"} kind="primary" trail="arrow-right" /> }}
+            {{ <btn label="Documentation" href={base ~ "docs/"} icon="book" /> }}
+            {{ <btn label="Commands" href={base ~ "commands/"} kind="accent" size="sm" /> }}
+          </div>
+          <div class="flex flex-wrap items-center gap-3">
+            {%- for i in ["terminal", "globe", "file-text", "monitor", "nodes", "book", "cog", "database", "shield-check", "puzzle"] %}{{ <glyph icon={i} tone={tones[loop.index0 % (tones | length)]} /> }}{% endfor %}
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            {%- for w in ["healthy", "running", "stopped", "failed", "pending", "declared"] %}{{ <state word={w} /> }}{% endfor %}
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            {%- for w in ["passed", "failed", "running", "draft"] %}<span class="mj-badge mj-badge--{{ w }}">{{ w }}</span>{% endfor %}
+          </div>
+        </div>
+      </section>
+
+      {#- --------------------------------------------------------------- headings -#}
+      <section id="headings" aria-labelledby="headings-title">
+        {{ <section kicker="03 / page heading" title="Hero, quote and section head" lead="The top of this page is the hero; its aside takes a quote, a terminal or a row of claims. A section head is what opens each section below." /> }}
+        <div class="grid gap-4 lg:grid-cols-2">
+          {{ <quote text="a projection of durable state, not a source of truth: validate every line against git" by="majordomus context" /> }}
+          <div class="mj-panel">{{ <section kicker="kicker" title="A section title" lead="A lead that says in one sentence what the section holds." level="3" /> }}</div>
+        </div>
+      </section>
+
+      {#- ------------------------------------------------------------- containers -#}
+      <section id="containers" aria-labelledby="containers-title">
+        {{ <section kicker="04 / containers" title="Panels and stages" lead="The container every block sits in, plain, toned or quiet, and a row of stages joined by arrows that reads left to right on a wide screen and top to bottom on a narrow one." /> }}
+        {% <stages count={4}> %}
+          {%- for s in [{"t": "Declare", "x": "share/design/tokens.yaml decides every value"}, {"t": "Generate", "x": "majordomus generate design projects it"}, {"t": "Check", "x": "scripts/ci/design-check refuses drift"}, {"t": "Wear", "x": "every surface imports the projections"}] %}
+          {% <panel title={s.t} sub={s.x} step={loop.index} tone={tones[loop.index0]} variant="toned" cls="mj-stage"> %}<p class="mj-point-text">Stage {{ loop.index }} of 4.</p>{% </panel> %}
+          {%- endfor %}
+        {% </stages> %}
+      </section>
+
+      {#- ------------------------------------------------------------------ lists -#}
+      <section id="lists" aria-labelledby="lists-title">
+        {{ <section kicker="05 / lists" title="Trees, points, routes, tiles" lead="What a repository holds, what a page promises, which interface does what, and where to go next." /> }}
+        <div class="grid gap-4 lg:grid-cols-2">
+          {% <panel title="Repository" sub="What the layer reads" icon="github"> %}
+            {{ <tree root={(project.repository_url | split(pat="/") | last) ~ "/"} items={[{"name": ".ai/", "note": "the layer: policy, rules, prompts, workflows"}, {"name": "apps/", "note": "the Rust executable"}, {"name": "docs/", "note": "decisions, manuals and generated documents"}, {"name": "share/", "note": "the distribution: schemas, design, kinds"}, {"name": "site/", "note": "this website, derived from the rest"}, {"name": "test/", "note": "the cases", "children": [{"name": "cases/", "note": (kinds.test ~ " test objects")}]}, {"name": "justfile", "note": "the recipes a person runs", "icon": "file-text"}]} /> }}
+          {% </panel> %}
+          {% <panel title="Guarantees" sub="Points, ruled" icon="shield-check" tone="green"> %}
+            {{ <points items={[{"icon": "refresh", "tone": "blue", "title": "One declaration", "text": "every surface reads the same registry"}, {"icon": "list-checks", "tone": "violet", "title": "Deterministic", "text": "the same input projects the same bytes"}, {"icon": "shield-check", "tone": "green", "title": "Enforced", "text": "a rule that is declared has a gate"}, {"icon": "puzzle", "tone": "orange", "title": "Extensible", "text": "a capability is declared once and projected"}]} /> }}
+          {% </panel> %}
+        </div>
+        <div class="mt-4">
+          {% <panel title="Interfaces" sub="Routes, described" icon="nodes" tone="violet"> %}
+            {{ <routes described={true} items={[{"name": "Command line", "path": "majordomus " ~ op.cli, "icon": "terminal", "tone": "blue", "for": "Local work", "for_text": "every capability as a command"}, {"name": "HTTP API", "path": op.method ~ " " ~ op.path, "icon": "globe", "tone": "violet", "for": "Programmatic access", "for_text": "JSON, described by OpenAPI"}, {"name": "MCP", "path": op.mcp_tool, "icon": "nodes", "tone": "green", "for": "Tools for agents", "for_text": "the same capability as a tool"}, {"name": "Documentation", "path": base ~ "docs/", "icon": "book", "tone": "orange", "for": "This site", "for_text": "generated from the repository", "href": base ~ "docs/"}]} /> }}
+          {% </panel> %}
+        </div>
+        <div class="mt-4">
+          {{ <tiles items={[{"title": "Commands", "text": kinds.command ~ " command objects in the layer", "href": base ~ "commands/", "icon": "terminal", "tone": "blue"}, {"title": "HTTP API", "text": "every operation with its schema", "href": base ~ "docs/api/", "icon": "code", "tone": "violet"}, {"title": "MCP surface", "text": "tools, resources and prompts", "href": base ~ "registry/mcp/", "icon": "nodes", "tone": "green"}, {"title": "Design", "text": "the declaration behind this page", "href": base ~ "docs/design/", "icon": "layers", "tone": "orange"}]} /> }}
+        </div>
+        <div class="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
+          <div class="mj-panel">
+            <p class="mj-panel-title">Compact tiles</p>
+            <div class="mt-3">{{ <tiles compact={true} items={[{"title": "majordomus context", "text": "the briefing", "href": base ~ "commands/", "icon": "prompt"}, {"title": "majordomus check", "text": "before claiming progress", "href": base ~ "commands/", "icon": "check-circle", "tone": "green"}, {"title": "majordomus finish", "text": "close with evidence", "href": base ~ "commands/", "icon": "shield-check", "tone": "violet"}, {"title": "majordomus doctor", "text": "read-only health", "href": base ~ "commands/", "icon": "activity", "tone": "orange"}]} /> }}</div>
+          </div>
+          {% <panel title="Related" icon="link" tone="violet"> %}{{ <links items={[{"title": "Command reference", "href": base ~ "docs/cli/"}, {"title": "HTTP API", "href": base ~ "docs/api/"}, {"title": "Registry", "href": base ~ "registry/"}, {"title": "Design", "href": base ~ "docs/design/"}]} /> }}{% </panel> %}
+        </div>
+        <div class="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {%- for f in [{"k": "rule", "t": "rules"}, {"k": "adr", "t": "decisions"}, {"k": "test", "t": "test objects"}, {"k": "use-case", "t": "use cases"}] %}
+          {{ <figure value={kinds[f.k]} label={f.t ~ " in the layer"} source="registry.json · index.by_kind" icon={["shield", "book", "check-circle", "target"][loop.index0]} tone={tones[loop.index0]} /> }}
+          {%- endfor %}
+        </div>
+        <div class="mj-panel mt-4">
+          {{ <claims items={[{"icon": "refresh", "tone": "green", "title": "Regenerated", "text": "never edited by hand"}, {"icon": "shield-check", "tone": "violet", "title": "Checked", "text": "by gates in CI"}, {"icon": "database", "tone": "blue", "title": "One source", "text": "the layer under .ai/"}, {"icon": "users", "tone": "orange", "title": "For people and agents", "text": "the same contract"}]} /> }}
+        </div>
+        <div class="mj-panel mt-4">
+          <p class="mj-panel-title">A table of rows</p>
+          <div class="mt-3">{{ <table caption={"The first operations of the " ~ tag.name ~ " tag"} columns={[{"key": "path", "title": "path", "mono": true}, {"key": "method", "title": "method", "mono": true}, {"key": "summary", "title": "what it does"}]} rows={ops[:4]} /> }}</div>
+        </div>
+        <div class="mj-panel mt-4">
+          <p class="mj-panel-title">Every kind the layer holds</p>
+          <p class="mj-panel-sub">A cloud of words, each on the tone of its place in the list; from the registry's index.</p>
+          <div class="mt-4">{{ <pills words={kinds | keys} tones={tones} /> }}</div>
+        </div>
+        {{ <strip items={[{"icon": "database", "tone": "blue", "title": "One source", "text": "the layer under .ai/"}, {"icon": "refresh", "tone": "green", "title": "Derived", "text": "regenerated, never edited"}, {"icon": "shield-check", "tone": "violet", "title": "Checked", "text": "gates in CI"}, {"icon": "bolt", "tone": "orange", "title": "Discovered", "text": "nothing registered by hand"}, {"icon": "users", "tone": "rose", "title": "For people and agents", "text": "the same contract"}]} /> }}
+      </section>
+
+      {#- ------------------------------------------------------------------- code -#}
+      <section id="code" aria-labelledby="code-title">
+        {{ <section kicker="06 / code" title="Terminal, commands, tabs, operations" lead="A transcript the generator recorded, a structured block of output, commands with copy buttons, a tab strip in three looks, and operations read from the API's own description." /> }}
+        {%- set run = term.walkthrough | first -%}
+        <div class="grid gap-4 lg:grid-cols-2">
+          {% <terminal title={run.label}> %}{{ <term_line cmd="majordomus" args={run.command | replace(from="majordomus ", to="")} /> }}{{ <term_out text={run.output | trim} /> }}{% </terminal> %}
+          {% <terminal title="the layer, counted"> %}
+            {{ <term_box sections={[{"heading": project.name, "aside": "v" ~ project.release}, {"rows": [{"k": "rules", "v": kinds.rule}, {"k": "decisions", "v": kinds.adr}, {"k": "skills", "v": kinds.skill}, {"k": "commands", "v": kinds.command}]}, {"rows": [{"k": "docs", "v": base ~ "docs/", "href": base ~ "docs/"}, {"k": "api", "v": base ~ "docs/api/", "href": base ~ "docs/api/"}]}]} foot="from site/data/registry/registry.json" /> }}
+          {% </terminal> %}
+        </div>
+        <div class="mt-4 grid gap-4 lg:grid-cols-2">
+          {% <panel title="Commands" sub="Copy buttons appear when the script runs; a listing is read, not run" icon="terminal"> %}
+            <div class="mb-3">{{ <listing title="design.json · tones" text={design.tones | json_encode(pretty=true) | truncate(length=400)} /> }}</div>
+            {{ <cmd_list id="kit-cmds" commands={["majordomus context", "majordomus check", "majordomus " ~ op.cli]} /> }}
+          {% </panel> %}
+          {% <panel title={op.summary} sub="One capability, three surfaces" icon="code" tone="violet"> %}
+            {% <tabs id="kit-tabs-line" labels={["CLI", "HTTP", "MCP"]} icons={["terminal", "globe", "nodes"]} label="Surfaces of one capability"> %}
+              {% <tab_panel id="kit-tabs-line" i={0} label="CLI"> %}{{ <cmd id="kit-tab-cli" text={"majordomus " ~ op.cli} /> }}{% </tab_panel> %}
+              {% <tab_panel id="kit-tabs-line" i={1} label="HTTP"> %}{{ <request method={op.method} path={op.path} /> }}<div class="mt-2">{{ <cmd id="kit-tab-curl" text={op.curl} wrap={true} /> }}</div>{% </tab_panel> %}
+              {% <tab_panel id="kit-tabs-line" i={2} label="MCP"> %}{{ <cmd id="kit-tab-mcp" text={op.mcp_tool} prompt={false} /> }}{% </tab_panel> %}
+            {% </tabs> %}
+          {% </panel> %}
+        </div>
+        <div class="mt-4 grid gap-4 lg:grid-cols-2">
+          <div class="mj-panel space-y-4">
+            {%- for v in ["segmented", "pills"] %}
+            {% <tabs id={"kit-tabs-" ~ v} labels={["Overview", "Inspect", "Run"]} variant={v} label={v ~ " tabs"}> %}
+              {%- for l in ["Overview", "Inspect", "Run"] %}{% <tab_panel id={"kit-tabs-" ~ v} i={loop.index0} label={l}> %}<p class="mj-point-text">The {{ l | lower }} panel of a {{ v }} strip.</p>{% </tab_panel> %}{% endfor %}
+            {% </tabs> %}
+            {%- endfor %}
+          </div>
+          {% <panel title="Operations" sub={"The " ~ tag.name ~ " operations, from the API's own description"} icon="globe" tone="blue" variant=""> %}
+            {%- for o in ops[:5] %}
+            {% <endpoint method={o.method} path={o.path} summary={o.summary} open={loop.first}> %}<p class="m-0">{{ o.description | truncate(length=180) }}</p>{% </endpoint> %}
+            {%- endfor %}
+          {% </panel> %}
+        </div>
+      </section>
+
+      {#- -------------------------------------------------------------- dashboard -#}
+      <section id="dashboard" aria-labelledby="dashboard-title">
+        {{ <section kicker="07 / dashboard" title="A control plane, pictured" lead="A window with its navigation, counts, a series, what changed and the actions a person takes. The Cockpit is rendered by the executable; these are for a page that describes it." /> }}
+        {%- set series = [s.decisions | length for s in cl.sections] | reverse -%}
+        {%- set latest = cl.sections | first -%}
+        {% <window title="Cockpit" brand={project.short_name} foot={"v" ~ project.release} nav={[{"title": "Overview", "href": base ~ "kit/#dashboard", "icon": "home", "current": true}, {"title": "Rules", "href": base ~ "rules/", "icon": "shield"}, {"title": "Decisions", "href": base ~ "adrs/", "icon": "book"}, {"title": "Skills", "href": base ~ "skills/", "icon": "box"}, {"title": "Sessions", "href": base ~ "sessions/", "icon": "users"}, {"title": "Registry", "href": base ~ "registry/", "icon": "database"}]}> %}
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <p class="text-lg font-semibold text-heading">Repository overview</p>
+            {{ <state word="declared" label="from the generated registry" /> }}
+          </div>
+          <div class="mt-4">{{ <kpis items={[{"title": "Rules", "value": kinds.rule, "icon": "shield", "tone": "blue"}, {"title": "Decisions", "value": kinds.adr, "icon": "book", "tone": "violet"}, {"title": "Tests", "value": kinds.test, "icon": "check-circle", "tone": "green"}, {"title": "Features", "value": kinds.feature, "icon": "layers", "tone": "orange"}]} /> }}</div>
+          <div class="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_16rem]">
+            {% <panel title="Decisions per release" sub="oldest first, from the changelog" variant="quiet"> %}
+              {{ <chart values={series} label={"Decisions recorded per release, oldest first: " ~ (series | join(sep=", "))} tone="violet" /> }}
+            {% </panel> %}
+            {% <panel title="Quick actions" variant="quiet"> %}
+              {{ <actions items={[{"title": "Commands", "icon": "terminal", "tone": "blue", "href": base ~ "commands/"}, {"title": "HTTP API", "icon": "code", "tone": "violet", "href": base ~ "docs/api/"}, {"title": "MCP", "icon": "nodes", "tone": "green", "href": base ~ "registry/mcp/"}, {"title": "Design", "icon": "layers", "tone": "orange", "href": base ~ "docs/design/"}]} /> }}
+            {% </panel> %}
+          </div>
+          <div class="mt-4 grid gap-4 lg:grid-cols-2">
+            {% <panel title={"Changes in " ~ latest.version} variant="quiet"> %}
+              {{ <feed items={[{"icon": "commit", "tone": "green", "title": latest.groups[0].changes[0].subject, "ref": latest.groups[0].changes[0].commit, "href": latest.groups[0].changes[0].url}, {"icon": "commit", "tone": "blue", "title": latest.groups[0].changes[1].subject, "ref": latest.groups[0].changes[1].commit, "href": latest.groups[0].changes[1].url}, {"icon": "commit", "tone": "violet", "title": latest.groups[0].changes[2].subject, "ref": latest.groups[0].changes[2].commit, "href": latest.groups[0].changes[2].url}]} /> }}
+            {% </panel> %}
+            {% <panel title="The layer" variant="quiet"> %}
+              {{ <legend items={[{"title": "rules", "value": kinds.rule, "tone": "blue"}, {"title": "decisions", "value": kinds.adr, "tone": "violet"}, {"title": "tests", "value": kinds.test, "tone": "green"}, {"title": "use cases", "value": kinds["use-case"], "tone": "orange"}]} /> }}
+              <div class="mt-4">{{ <health items={[{"title": "Index", "icon": "database", "state": registry.index.state | lower}, {"title": "Diagnostics", "icon": "alert", "state": "clean" if registry.index.diagnostics | length == 0 else "failing", "measure": registry.index.diagnostics | length}]} /> }}</div>
+            {% </panel> %}
+          </div>
+        {% </window> %}
+      </section>
+
+      {#- ------------------------------------------------------------------- docs -#}
+      <section id="docs" aria-labelledby="docs-title">
+        {{ <section kicker="08 / documentation" title="Trail, search, contents, flow" lead="The parts of a documentation page: where it is, how to find another, what it holds, and the steps of a first run. The contents at the side of this page is the table-of-contents component, marking the section you are reading." /> }}
+        <div class="mj-panel space-y-4">
+          {{ <trail items={[{"title": "Home", "href": base}, {"title": "How it works", "href": base ~ "method/"}, {"title": section.title, "href": ""}]} /> }}
+          {{ <search placeholder="Search documentation" action={base ~ "docs/"} /> }}
+          {{ <sidenav items={[{"title": "Getting started", "href": base ~ "getting-started/", "icon": "home"}, {"title": "How it works", "icon": "layers", "children": [{"title": "Method", "href": base ~ "method/"}, {"title": "Design", "href": base ~ "docs/design/"}, {"title": "Component kit", "href": base ~ "kit/", "current": true}]}, {"title": "Command reference", "href": base ~ "docs/cli/", "icon": "terminal"}]} /> }}
+        </div>
+        <div class="mt-4">
+          {{ <flow id="kit-flow" steps={[{"title": "Install", "text": "one archive, its digest verified", "icon": "arrow-down", "tone": "blue", "commands": ["curl -fsSL https://majordomus.dev/install.sh | sh"]}, {"title": "Supervise", "text": "writes .ai/ and nothing else", "icon": "folder", "tone": "violet", "commands": ["majordomus init"]}, {"title": "Project", "text": "every bootstrap from the policy", "icon": "refresh", "tone": "green", "commands": ["majordomus update"]}, {"title": "Brief", "text": "what the repository already knows", "icon": "play", "tone": "orange", "commands": ["majordomus context"]}]} /> }}
+        </div>
+      </section>
+
+      {#- --------------------------------------------------------------- diagrams -#}
+      <section id="diagrams" aria-labelledby="diagrams-title">
+        {{ <section kicker="09 / diagrams" title="Stack, fan and cycle" lead="Drawn from the data they are handed, with no script: a fan's curves are computed from how many rows each side has, and on a phone the parts stack with an arrow between them." /> }}
+        <div class="mj-panel">
+          {% <fan left={[{"name": ".ai/", "path": "policy, rules, prompts", "icon": "folder", "tone": "blue"}, {"name": "docs/", "path": "decisions and manuals", "icon": "folder", "tone": "blue"}, {"name": "share/", "path": "schemas and the design", "icon": "folder", "tone": "blue"}, {"name": "test/cases/", "path": "the cases", "icon": "folder", "tone": "blue"}]} right={[{"name": "Command line", "path": "majordomus", "icon": "terminal", "tone": "blue"}, {"name": "HTTP API", "path": "/api/v1/", "icon": "globe", "tone": "violet"}, {"name": "Swagger UI", "path": "/swagger", "icon": "file-text", "tone": "violet"}, {"name": "Cockpit", "path": "/cockpit", "icon": "monitor", "tone": "green"}, {"name": "MCP", "path": "majordomus mcp", "icon": "nodes", "tone": "green"}, {"name": "This site", "path": "GitHub Pages", "icon": "book", "tone": "orange"}]} left_label="indexed" right_label="projected"> %}
+            {{ <stack title="share/design/tokens.yaml" text="one declaration, read as a typed model" icon="database" mono={true} layers={[{"title": "palette", "text": "the raw colours", "tone": "blue"}, {"title": "roles", "text": "the semantic surface", "tone": "violet"}, {"title": "status", "text": "five meanings and their words", "tone": "green"}, {"title": "tones", "text": "hues for identity", "tone": "orange"}, {"title": "type · layout · motion", "text": "the shared measures", "tone": "rose"}]} /> }}
+          {% </fan> %}
+        </div>
+        {%- set check = [w for w in term.walkthrough if w.label == "check"] | first -%}
+        <div class="mj-panel mt-4">
+          {% <fan left={[{"title": "Annotated", "text": "a card points at what it describes", "icon": "link", "tone": "blue"}, {"title": "Straight wires", "text": "one per card, at the card's height", "icon": "list", "tone": "violet"}]} right={[{"title": "Any centre", "text": "a terminal, a window, a stack", "icon": "monitor", "tone": "green"}, {"title": "Real output", "text": "this transcript was recorded by the generator", "icon": "check-circle", "tone": "orange"}]} left_kind="card" right_kind="card" wiring="parallel" dashed={true}> %}
+            {% <terminal title={check.label}> %}{{ <term_line cmd="majordomus" args={check.command | replace(from="majordomus ", to="")} /> }}{{ <term_out text={check.output | trim | truncate(length=320)} /> }}{% </terminal> %}
+          {% </fan> %}
+        </div>
+        <div class="mt-4 grid gap-4 lg:grid-cols-2">
+          <div class="mj-panel">
+            {% <cycle id="kit-cycle" stages={[{"title": "Edit tokens.yaml", "tone": "blue"}, {"title": "majordomus generate design", "tone": "green"}, {"title": "design-check in CI", "tone": "violet"}, {"title": "Every surface wears it", "tone": "orange"}]}> %}
+              {{ <glyph icon="layers" size="lg" icon_size="lg" round={true} /> }}<span class="text-sm font-semibold text-heading">The design</span>
+            {% </cycle> %}
+          </div>
+          {% <panel title="Points, on cards" sub="the list beside a dashboard" icon="check-circle" tone="green" variant="toned"> %}
+            {{ <points variant="cards" glyphs={true} items={[{"icon": "check-circle", "tone": "green", "title": "Inferred", "text": "nothing registered by hand"}, {"icon": "list", "tone": "blue", "title": "Ordered", "text": "declaration order on every surface"}, {"icon": "shield-check", "tone": "violet", "title": "Measured", "text": "every colour pair against WCAG 2.1 AA"}]} /> }}
+          {% </panel> %}
+        </div>
+      </section>
+
+      {#- ---------------------------------------------------------------- screens -#}
+      <section id="screens" aria-labelledby="screens-title">
+        {{ <section kicker="10 / screens" title="Screens composed of the kit" lead="Whole pages built from nothing but these components, each rendering one of the page designs from this repository's own data." /> }}
+        <ul class="mj-tiles m-0 list-none p-0">
+          {%- for p in section.pages %}
+          <li>{{ <tile title={p.title} text={p.description} href={p.permalink} icon={p.extra.icon or "monitor"} tone={tones[loop.index0 % (tones | length)]} /> }}</li>
+          {%- endfor %}
+        </ul>
+      </section>
+
+    </div>
+    <aside class="hidden xl:block">
+      <div class="sticky top-24">
+        {{ <toc items={[{"title": "Tones", "href": "#tones"}, {"title": "Atoms", "href": "#atoms"}, {"title": "Page heading", "href": "#headings"}, {"title": "Containers", "href": "#containers"}, {"title": "Lists", "href": "#lists"}, {"title": "Code", "href": "#code"}, {"title": "Dashboard", "href": "#dashboard"}, {"title": "Documentation", "href": "#docs"}, {"title": "Diagrams", "href": "#diagrams"}, {"title": "Screens", "href": "#screens"}]} /> }}
+      </div>
+    </aside>
+  </div>
+</div>
+{% endblock content %}
