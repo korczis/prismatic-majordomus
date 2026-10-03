@@ -9,7 +9,7 @@
 //! |---|---|---|
 //! | `share/design/theme.css` | the Tailwind `@theme`, and Flowbite's names as synonyms | both Tailwind builds |
 //! | `share/design/surface.css` | every role and status colour as `--mj-*`, light and dark | both Tailwind builds |
-//! | `share/design/status.css` | one selector group per state word | both Tailwind builds |
+//! | `share/design/status.css` | one selector group per state word and per tone | both Tailwind builds |
 //! | `apps/majordomus-cli/src/web/tokens.css` | the same tokens, no Tailwind | the executable's own pages |
 //! | `apps/majordomus-cli/src/design/tokens.yaml` | the declaration itself | the executable |
 //! | `site/data/registry/design.json` | the vocabulary, the theme contract, the widths | the site's templates and the probes |
@@ -17,7 +17,7 @@
 
 use serde_json::{json, Map, Value};
 
-use super::{DesignSystem, Resolved, TokenKind, PREFIX, SITE_SCHEMA, SOURCE};
+use super::{DesignSystem, Resolved, TokenKind, PREFIX, SITE_SCHEMA, SOURCE, TONE_PARTS};
 
 /// The Tailwind theme both builds import.
 pub const THEME_CSS: &str = "share/design/theme.css";
@@ -57,6 +57,7 @@ pub fn projections_of(kind: TokenKind) -> Vec<String> {
             &[THEME_CSS, SURFACE_CSS, STATUS_CSS, TOKENS_CSS, SITE_JSON]
         }
         TokenKind::State => &[STATUS_CSS, SITE_JSON],
+        TokenKind::Tone => &[SURFACE_CSS, STATUS_CSS, TOKENS_CSS, SITE_JSON],
         TokenKind::Layout | TokenKind::Motion => &[SURFACE_CSS, TOKENS_CSS],
         TokenKind::Theme => &[SURFACE_CSS, TOKENS_CSS, SITE_JSON],
         TokenKind::Palette => &[],
@@ -116,7 +117,8 @@ fn constant_declarations(design: &DesignSystem) -> Vec<(String, String)> {
     out
 }
 
-/// Every colour of one theme: the roles, then each status's text, ground and border.
+/// Every colour of one theme: the roles, then each status's text, ground and border, then
+/// each tone's ink, ground, border and fill.
 fn colour_declarations(design: &DesignSystem, dark: bool) -> Vec<(String, String)> {
     let css = |r: Option<Resolved>| r.map(|r| r.css).unwrap_or_default();
     let mut out = Vec::new();
@@ -136,6 +138,16 @@ fn colour_declarations(design: &DesignSystem, dark: bool) -> Vec<(String, String
             let reference = if dark { &pair.dark } else { &pair.light };
             out.push((
                 format!("{PREFIX}{name}{suffix}"),
+                css(design.resolve(reference, dark)),
+            ));
+        }
+    }
+    for (name, tone) in design.tones.iter() {
+        for (part, suffix) in TONE_PARTS {
+            let pair = tone.part(part);
+            let reference = if dark { &pair.dark } else { &pair.light };
+            out.push((
+                format!("{PREFIX}tone-{name}{suffix}"),
                 css(design.resolve(reference, dark)),
             ));
         }
@@ -237,12 +249,31 @@ pub fn status_css(design: &DesignSystem) -> String {
         );
         out.push_str("  }\n");
     }
+    // A tone is the same indirection over hues that carry no meaning: `.mj-tone--violet`
+    // sets the four properties a kit component reads, so a component names no hue.
+    for name in design.tones.keys() {
+        out.push_str(&format!("  .mj-tone--{name} {{\n"));
+        for (part, suffix) in TONE_PARTS {
+            decl(
+                &mut out,
+                "    ",
+                &format!("{PREFIX}tone-{part}"),
+                &format!("var({PREFIX}tone-{name}{suffix})"),
+            );
+        }
+        out.push_str("  }\n");
+    }
     out.push_str("  /* one swatch per colour token, for the design inspector */\n");
     let mut swatches: Vec<String> = design.roles.keys().map(str::to_string).collect();
     for name in design.status.roles.keys() {
         swatches.push(name.to_string());
         swatches.push(format!("{name}-bg"));
         swatches.push(format!("{name}-line"));
+    }
+    for name in design.tones.keys() {
+        for (_, suffix) in TONE_PARTS {
+            swatches.push(format!("tone-{name}{suffix}"));
+        }
     }
     for token in swatches {
         out.push_str(&format!(
@@ -337,6 +368,19 @@ pub fn site_document(design: &DesignSystem, version: &str) -> Value {
             })
         })
         .collect();
+    let tones: Vec<Value> = design
+        .tones
+        .iter()
+        .map(|(name, tone)| {
+            json!({
+                "name": name,
+                "about": tone.about,
+                "class": format!(".mj-tone--{name}"),
+                "light": design.resolve(&tone.fg.light, false).map(|r| r.literal),
+                "dark": design.resolve(&tone.fg.dark, true).map(|r| r.literal),
+            })
+        })
+        .collect();
     json!({
         "schema": SITE_SCHEMA,
         "generated": crate::generate::json_banner(SOURCE_LINE),
@@ -353,6 +397,7 @@ pub fn site_document(design: &DesignSystem, version: &str) -> Value {
         "font": design.font,
         "roles": roles,
         "statuses": statuses,
+        "tones": tones,
         "states": Value::Object(states),
         "viewports": design.viewports,
     })
@@ -459,6 +504,25 @@ pub fn reference_markdown(design: &DesignSystem) -> String {
                 .join(" ")
         ));
     }
+    if !design.tones.is_empty() {
+        out.push_str("\n## Tones\n\nHues that carry identity and never meaning: the colour of a step of a sequence, of one surface's card. A component reads `--mj-tone-fg`, `-bg`, `-line` and `-fill`; the class `.mj-tone--<tone>` on it or an ancestor says which tone they are.\n\n| tone | ink (light / dark) | ground | border | fill | for |\n|---|---|---|---|---|---|\n");
+        for token in design.tokens().iter().filter(|t| t.kind == TokenKind::Tone) {
+            // the parts are TONE_PARTS in order, fg first, by construction of `tokens()`
+            let fg = &token.parts[0];
+            let rest: Vec<String> = token.parts[1..]
+                .iter()
+                .map(|p| format!("`{}`", p.css))
+                .collect();
+            out.push_str(&format!(
+                "| `.mj-tone--{}` | {} / {} | {} | {} |\n",
+                token.name,
+                reference(&fg.light),
+                reference(&fg.dark),
+                rest.join(" | "),
+                token.about
+            ));
+        }
+    }
     out.push_str("\n## Layout, radius, motion\n\n| token | value | for |\n|---|---|---|\n");
     for token in design.tokens().iter().filter(|t| {
         matches!(
@@ -559,6 +623,43 @@ mod tests {
         assert!(css.contains(".mj-status--stale"));
         assert!(css.contains("--mj-status-fg: var(--mj-ok);"));
         assert!(css.contains(".mj-swatch--accent { background: var(--mj-accent); }"));
+    }
+
+    #[test]
+    fn every_tone_reaches_the_surface_and_the_status_sheet() {
+        let d = design();
+        assert!(!d.tones.is_empty(), "the shipped declaration carries tones");
+        let surface = surface_css(&d);
+        let status = status_css(&d);
+        let site = site_document(&d, "test");
+        for name in d.tones.keys() {
+            for (_, suffix) in TONE_PARTS {
+                assert!(
+                    surface.contains(&format!("--mj-tone-{name}{suffix}:")),
+                    "{name}{suffix}"
+                );
+            }
+            assert!(status.contains(&format!(".mj-tone--{name} {{")), "{name}");
+            assert!(status.contains(&format!("--mj-tone-fill: var(--mj-tone-{name}-fill);")));
+            assert!(site["tones"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|t| t["name"] == *name));
+        }
+    }
+
+    #[test]
+    fn a_declaration_without_tones_has_no_tones_section_and_one_with_them_lists_each() {
+        let mut d = design();
+        let with = reference_markdown(&d);
+        for name in d.tones.keys() {
+            assert!(with.contains(&format!("| `.mj-tone--{name}` |")), "{name}");
+        }
+        d.tones = Default::default();
+        let without = reference_markdown(&d);
+        assert!(!without.contains("## Tones"));
+        assert!(without.contains("## Layout, radius, motion"));
     }
 
     #[test]

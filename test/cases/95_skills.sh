@@ -216,6 +216,8 @@ mkdir -p "$F/site/data" "$F/test"; cp "$ROOT/site/data/marketing.toml" "$ROOT/si
 # that had built the site and failed on a clean checkout — the fixture inheriting ambient
 # state, not a fact about skills. The fixture provides its own.
 [ -f "$F/site/static/app.css" ] || printf '/* fixture: no Tailwind build here. */\n' > "$F/site/static/app.css"
+# and the kit's sheet, which every page composed of the kit links (partials/kit-assets.html)
+[ -f "$F/site/static/kit.css" ] || printf '/* fixture: no Tailwind build here. */\n' > "$F/site/static/kit.css"
 git -C "$F" init -q; git -C "$F" config user.email fixture@example.invalid; git -C "$F" config user.name fixture
 git -C "$F" add -A >/dev/null; git -C "$F" commit -qm fixture
 expect_exit 0 "$F/scripts/generate-site-data"
