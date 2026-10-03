@@ -60,7 +60,7 @@ use serde::{Deserialize, Serialize};
 #[cfg(test)]
 pub(crate) use classify::declared_dependencies;
 pub use classify::{classify, IntegrationPolicy, QueueContext, BLOCKING_LABELS};
-pub use forge::{ForgeObservation, OBSERVATION_SCHEMA, PR_REF_PREFIX};
+pub use forge::{ForgeObservation, OBSERVATION_SCHEMA};
 pub use model::*;
 #[cfg(test)]
 pub(crate) use relation::relation_to_master;
@@ -69,7 +69,8 @@ pub(crate) use relation::relation_to_master;
 pub const STATE_DIR: &str = ".ai/local/state/integration";
 /// The last forge observation.
 pub const OBSERVATION_FILE: &str = "observation.json";
-/// Relations already computed, keyed by `master..head`: immutable, so never invalidated.
+/// Relations already computed, keyed by `master..head` commit ids: immutable, so never
+/// invalidated. Nothing but a pair of full commit ids is ever a key.
 pub const RELATIONS_FILE: &str = "relations.json";
 /// The audit trail of every integration action.
 pub const EVENTS_FILE: &str = "events.jsonl";
@@ -127,6 +128,13 @@ fn relation_cached(
     master: &str,
     head: &str,
 ) -> RelationToMaster {
+    // a ref or an abbreviation may name another commit tomorrow: only a pair of commit ids
+    // is decided here, so that every key of the cache is a fact forever
+    if !is_object_id(master) || !is_object_id(head) {
+        return RelationToMaster::Unknown {
+            reason: format!("{master}..{head} is not a pair of full commit ids"),
+        };
+    }
     let key = format!("{master}..{head}");
     if let Some(r) = cache.entries.get(&key) {
         return r.clone();
@@ -137,6 +145,11 @@ fn relation_cached(
         cache.entries.insert(key, r.clone());
     }
     r
+}
+
+/// Whether `s` is a full commit id, SHA-1 or SHA-256, as git prints one.
+fn is_object_id(s: &str) -> bool {
+    matches!(s.len(), 40 | 64) && s.bytes().all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f'))
 }
 
 /// The master commit this clone has for `base`, as fetched.
@@ -377,15 +390,18 @@ pub fn queue_of(root: &Path) -> Result<IntegrationQueue, String> {
         .entries
         .retain(|k, _| k.starts_with(&format!("{master}..")));
     let mut queue = build_queue(&obs, &master, |p| {
-        let head = format!("{PR_REF_PREFIX}{}", p.number);
-        // the fetched ref must still be the observed head: a head that moved since is
-        // decided against the SHA the forge reported, which the fetch brought in
-        let sha = if relation::has_commit(root, &p.head_sha) {
-            p.head_sha.clone()
-        } else {
-            head
-        };
-        relation_cached(root, &mut cache, &master, &sha)
+        // decided on exactly the head the forge reported, which the assessment names as
+        // evaluated: a head that moved during the refresh is not in this clone, and what
+        // the fetched ref holds now is another head nobody observed
+        if !relation::has_commit(root, &p.head_sha) {
+            return RelationToMaster::Unknown {
+                reason: format!(
+                    "the observed head {} is not fetched; the pull request moved during the refresh — majordomus prs refresh",
+                    p.head_sha
+                ),
+            };
+        }
+        relation_cached(root, &mut cache, &master, &p.head_sha)
     });
     if let Ok(text) = serde_json::to_string(&cache) {
         let _ = write_atomic(&cache_path, &text);

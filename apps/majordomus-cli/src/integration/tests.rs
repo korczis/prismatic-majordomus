@@ -1476,6 +1476,22 @@ fn an_attribute_read_that_fails_is_unknown_and_never_cached() {
 }
 
 #[test]
+fn derived_paths_says_when_git_cannot_answer() {
+    use crate::integration::relation::derived_paths;
+    let none = derived_paths(std::path::Path::new("/nonexistent"), "m", &[]);
+    assert_eq!(none, Ok(Default::default()), "no path asks nothing");
+    let err = derived_paths(
+        std::path::Path::new("/nonexistent/majordomus"),
+        "m",
+        &["a".to_string()],
+    );
+    assert!(
+        matches!(&err, Err(e) if e.contains("could not run")),
+        "{err:?}"
+    );
+}
+
+#[test]
 fn a_dependency_is_a_declaration_not_a_mention() {
     use crate::integration::declared_dependencies;
     assert_eq!(
