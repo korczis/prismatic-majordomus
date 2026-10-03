@@ -66,7 +66,10 @@
 <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_16rem]">
   <div class="min-w-0">
     {#- ------------------------------------------------------------- what it is -#}
-    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto">{{ page.content | safe }}</article>
+    {#- Zola wraps each heading's text in its own anchor link (insert_anchor_links = "heading"),
+        which the prose styles as a body-coloured underlined link: the heading keeps its id and
+        its link for deep links, and reads as a heading -#}
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline">{{ page.content | safe }}</article>
 
     {#- -------------------------------------------------------------------- why -#}
     {%- if has_why %}
@@ -361,6 +364,9 @@
     <nav aria-label="On this page" class="hidden lg:block">
       <h2 class="text-sm font-semibold uppercase tracking-wide text-body-subtle">On this page</h2>
       <ul class="mt-3 space-y-1 border-s border-default text-sm">
+        {#- one outline in document order: the feature file's own headings first, as Zola
+            collected them, then the sections this template draws -#}
+        {%- for h in page.toc %}<li><a href="#{{ h.id }}" class="-ms-px block border-s border-transparent ps-3 text-body hover:border-brand hover:text-heading">{{ h.title }}</a></li>{% endfor %}
         {%- if has_why %}<li><a href="#why" class="-ms-px block border-s border-transparent ps-3 text-body hover:border-brand hover:text-heading">Why it exists</a></li>{% endif %}
         {%- if has_how %}<li><a href="#how" class="-ms-px block border-s border-transparent ps-3 text-body hover:border-brand hover:text-heading">How it works</a></li>{% endif %}
         <li><a href="#relationships" class="-ms-px block border-s border-transparent ps-3 text-body hover:border-brand hover:text-heading">Where it sits</a></li>
