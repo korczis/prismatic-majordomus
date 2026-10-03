@@ -67,11 +67,18 @@ fn is_key(s: &str) -> Option<(&str, &str)> {
     Some((k, rest.trim_start_matches([' ', '\t'])))
 }
 
+/// Strip a scalar's matching surrounding quotes. Inside single quotes YAML has exactly one
+/// escape, a doubled quote for one quote (`'the repository''s test'`), and every other
+/// parser reads it that way; keeping the pair published `repository''s` on the site.
 fn unquote(v: &str) -> Scalar {
     let v = v.trim();
-    if v.len() >= 2
-        && ((v.starts_with('"') && v.ends_with('"')) || (v.starts_with('\'') && v.ends_with('\'')))
-    {
+    if v.len() >= 2 && v.starts_with('\'') && v.ends_with('\'') {
+        return Scalar {
+            text: v[1..v.len() - 1].replace("''", "'"),
+            quoted: true,
+        };
+    }
+    if v.len() >= 2 && v.starts_with('"') && v.ends_with('"') {
         return Scalar {
             text: v[1..v.len() - 1].to_string(),
             quoted: true,
@@ -623,6 +630,18 @@ mod tests {
         for k in ["e", "f", "g", "h", "i", "j"] {
             assert!(m[k].is_string(), "{k} = {:?}", m[k]);
         }
+    }
+
+    #[test]
+    fn a_doubled_quote_inside_single_quotes_is_one_quote() {
+        let m =
+            parse_mapping("a: 'the repository''s test'\nb: \"it''s\"\nc: ''''\nd: ['x''y', z]\n")
+                .unwrap();
+        assert_eq!(m["a"], json!("the repository's test"));
+        // the escape is single-quoted YAML's alone; a double-quoted scalar keeps the pair
+        assert_eq!(m["b"], json!("it''s"));
+        assert_eq!(m["c"], json!("'"));
+        assert_eq!(m["d"], json!(["x'y", "z"]));
     }
 
     #[test]
