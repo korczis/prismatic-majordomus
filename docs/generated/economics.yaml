@@ -418,6 +418,7 @@ metrics:
     warnings:
       - "tokens counted with o200k_base (tiktoken-rs 0.12.0), which is not the tokenizer of every model"
       - "the candidates are what the compiler's own graph walk judged relevant; a worker without the compiler would not necessarily have read them, so this ratio describes the selection, not a session's saving"
+      - "stale: a measured mechanism changed since this record"
   - id: context_cost_model_error
     title: "Error of the compiler's bytes-over-four cost model"
     class: derived
@@ -669,13 +670,15 @@ metrics:
       - I1963
       - I1964
       - I1965
-    warnings: []
+    warnings:
+      - "stale: a measured mechanism changed since this record"
 suites:
   - id: context
     kind: context
     version: 1
     title: "Context selection, counted"
-    freshness: current
+    freshness: stale
+    freshness_detail: "1 record(s) were measured against inputs that have changed since: .ai/repo/benchmarks/economics/methodology.yaml, .ai/repo/benchmarks/economics/suites/context.yaml, apps/majordomus-cli/src/devcontext, .ai/repo/knowledge/sources.yaml"
     runs: 4
     pairs:
       declared: 0

@@ -8,6 +8,7 @@ headline: Who did what, under which task, at which commit, in which session is a
 summary: The ledger records every durable event with its task and its head; identity fields on any record are computed from git and refused when authored; a closed session is an immutable record of what one episode produced; the person's prompts are captured by the provider's hooks; and retention is capped by policy rather than by forgetting.
 status: stable
 weight: 110
+domain: evidence
 featured: true
 areas: [observability, cost]
 audiences: [enterprise, engineering-lead]

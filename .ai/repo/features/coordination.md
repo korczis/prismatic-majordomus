@@ -8,6 +8,7 @@ headline: Every worker declares the paths it may touch, every session can see wh
 summary: A task claims its scope before the first edit; check and finish refuse a file outside it and report another worktree's overlapping claim; every client of the shared server is a peer that can announce its intent and paths; and each branch has exactly one worktree, derived from git.
 status: stable
 weight: 30
+domain: coordination
 featured: true
 areas: [coordination]
 audiences: [ai-native-team, platform-team]

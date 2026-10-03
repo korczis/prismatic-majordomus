@@ -145,6 +145,12 @@ sources:
     pathspec: ':(glob).ai/repo/features/*.md'
     required: false
 
+  - id: domain
+    kind: domain
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/features/domains/*.md'
+    required: false
+
   - id: deployment
     kind: deployment
     discovery: vcs

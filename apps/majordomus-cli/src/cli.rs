@@ -1110,7 +1110,7 @@ pub struct ProductArgs {
     pub repo: RepoArgs,
 
     #[command(subcommand)]
-    /// `list`, `show`, `matrix`, `providers` or `validate`; none lists.
+    /// `list`, `show`, `domains`, `matrix`, `providers` or `validate`; none lists.
     pub command: Option<ProductCommand>,
 
     #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
@@ -1126,6 +1126,9 @@ pub struct ProductArgs {
     /// Only features serving this operational area of the why catalogue
     #[arg(long, global = true)]
     pub area: Option<String>,
+    /// Only features filed under this product domain
+    #[arg(long, global = true)]
+    pub domain: Option<String>,
     /// Only features made of this capability module
     #[arg(long, global = true)]
     pub module: Option<String>,
@@ -1150,6 +1153,8 @@ pub enum ProductCommand {
         /// The feature's id, which is also its slug and its route
         id: String,
     },
+    /// The domains of the product, each with the stable features that name it and what they add up to
+    Domains,
     /// Every feature against every interface, and every module, command and kind against the features that name it
     Matrix,
     /// Every provider the tool has an adapter for, with what this repository does with it
@@ -3848,6 +3853,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["product", "show", "fixture-feature"],
             setup: &[],
             expect: Expect::StdoutContains(&["fixture-feature", "surfaces", "derived"]),
+        }],
+    },
+    CommandExamples {
+        command: "product domains",
+        examples: &[ExampleDoc {
+            id: "product-domains",
+            title: "The few things the product controls, and the features under each",
+            description: "One block per domain in presentation order: its promise, the failure it answers, and the stable features that name it, with the interfaces, claims and use cases they add up to. A domain lists nothing itself; every member and count is derived from the features.",
+            argv: &["product", "domains"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["domain(s)"]),
         }],
     },
     CommandExamples {

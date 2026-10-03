@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 166 | 148 | 0 | 18 |
-| http | 164 | 148 | 0 | 16 |
-| mcp | 160 | 144 | 0 | 16 |
+| direct | 167 | 149 | 0 | 18 |
+| http | 165 | 149 | 0 | 16 |
+| mcp | 161 | 145 | 0 | 16 |
 | system | 13 | 13 | 0 | 0 |
-| total | 503 | 453 | 0 | 50 |
+| total | 506 | 456 | 0 | 50 |
 
 ## Capabilities
 
@@ -139,8 +139,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `plan.transition` | plan | command | — | covered | covered | covered | `refused-by-status` |
 | `plan.validate` | plan | query | — | covered | covered | covered | `default` |
 | `plan.waves` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |
+| `product.domains` | product | query | process, 4 entries | covered | covered | covered | `stable`, `any` |
 | `product.feature` | product | query | process, 64 entries | covered | covered | covered | `first-feature` |
-| `product.features` | product | query | process, 32 entries | covered | covered | covered | `all`, `featured`, `by-area` |
+| `product.features` | product | query | process, 32 entries | covered | covered | covered | `all`, `featured`, `by-area`, `by-domain` |
 | `product.matrix` | product | query | process, 2 entries | covered | covered | covered | `default` |
 | `product.providers` | product | query | process, 2 entries | covered | covered | covered | `default` |
 | `product.validate` | product | query | process, 2 entries | covered | covered | covered | `default` |

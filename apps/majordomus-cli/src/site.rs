@@ -961,6 +961,7 @@ pub const PUBLIC_FEATURE_FIELDS: &[&str] = &[
     "status",
     "weight",
     "featured",
+    "domain",
     "areas",
     "audiences",
     "modules",
@@ -990,6 +991,29 @@ pub const PUBLIC_FEATURE_FIELDS: &[&str] = &[
     "web_refs",
     "moments",
     "backlinks",
+    "counts",
+    "evidence",
+    "domain_ref",
+];
+
+/// The fields of one domain the public dataset carries: an allow-list, for the reason
+/// [`PUBLIC_FEATURE_FIELDS`] is one. The body stays in the file the record names in
+/// `source`, as a feature's does.
+pub const PUBLIC_DOMAIN_FIELDS: &[&str] = &[
+    "id",
+    "title",
+    "headline",
+    "problem",
+    "status",
+    "weight",
+    "tags",
+    "route",
+    "source",
+    "features",
+    "surfaces",
+    "moments",
+    "claim_refs",
+    "use_case_refs",
     "counts",
     "evidence",
 ];
@@ -1125,6 +1149,26 @@ pub fn product_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>
         }
         features.push(serde_json::Value::Object(public));
     }
+    let listed = run(
+        &["product", "domains"],
+        serde_json::json!({ "status": "any" }),
+    )?;
+    let domains: Vec<serde_json::Value> = listed["domains"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .map(|d| {
+            let mut public = serde_json::Map::new();
+            if let Some(o) = d.as_object() {
+                for (k, v) in o {
+                    if PUBLIC_DOMAIN_FIELDS.contains(&k.as_str()) {
+                        public.insert(k.clone(), v.clone());
+                    }
+                }
+            }
+            serde_json::Value::Object(public)
+        })
+        .collect();
     let matrix = run(&["product", "matrix"], serde_json::json!({}))?;
     let providers = run(&["product", "providers"], serde_json::json!({}))?;
     let validation = run(&["product", "validate"], serde_json::json!({}))?;
@@ -1163,6 +1207,7 @@ pub fn product_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>
         "by_kind": by_kind,
         "providers": list["counts"]["providers"],
         "features": list["counts"]["features"],
+        "domains": domains.iter().filter(|d| d["status"].as_str() == Some("stable")).count(),
         "web_surfaces": ctx.web.surfaces.len(),
     });
 
@@ -1199,8 +1244,10 @@ pub fn product_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>
         "generator": { "id": "majordomus-cli", "version": crate::VERSION },
         "fingerprint": list["fingerprint"],
         "route": crate::product::ROUTE,
+        "domain_route": crate::product::DOMAIN_ROUTE,
         "counts": list["counts"],
         "surfaces": list["surfaces"],
+        "domains": domains,
         "features": features,
         "matrix": { "rows": matrix["rows"], "modules": matrix["modules"], "commands": matrix["commands"], "kinds": matrix["kinds"] },
         "providers": providers["providers"],

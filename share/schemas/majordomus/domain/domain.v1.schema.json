@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/domain/domain.v1.schema.json",
+  "x-majordomus-schema": "majordomus.domain/v1",
+  "title": "Product domain",
+  "description": "The front matter of a product domain under .ai/repo/features/domains/: one of the few things the product controls, stated once with its promise and the failure it answers. A domain never lists its features: membership is each feature's `domain`, and the members, the interfaces they reach, the claims, use cases and rules behind them and the moments they answer are derived by the executable. The body carries what the domain covers and what it does not. Nothing derivable is written here: the route, the members, the surfaces and every count are computed and never authored.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "id",
+    "kind",
+    "title",
+    "headline",
+    "problem",
+    "status"
+  ],
+  "properties": {
+    "schema": {
+      "description": "The format version of this record. A version the tool does not know is refused, never guessed.",
+      "const": "domain/v1"
+    },
+    "id": {
+      "description": "The identity and the slug. It fixes the file name, the route /domains/<id>/ and the anchor the homepage map gives the domain, and it survives a retitle.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "kind": {
+      "const": "domain"
+    },
+    "title": {
+      "description": "The domain as one word or two: what the product controls, not a feature name.",
+      "type": "string",
+      "minLength": 1
+    },
+    "headline": {
+      "description": "One sentence a first-time reader reads: what the product does about this domain, in plain words, with no number in it. Also the page description.",
+      "type": "string",
+      "minLength": 1
+    },
+    "problem": {
+      "description": "One sentence: the operational failure this domain answers, as the reader would recognise it, with no number in it.",
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "description": "stable: shown wherever the product is presented. draft: written and not yet shown. deprecated: kept because its route exists, listed nowhere.",
+      "enum": [
+        "stable",
+        "draft",
+        "deprecated"
+      ]
+    },
+    "weight": {
+      "description": "Presentation order, lowest first: the order of the homepage map and of every listing of domains. Equal weights fall back to the id.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      }
+    }
+  }
+}

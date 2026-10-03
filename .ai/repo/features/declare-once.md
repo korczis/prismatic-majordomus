@@ -8,11 +8,12 @@ headline: A capability is written in one place, and the command line, the HTTP A
 summary: One typed declaration per capability, one file per object of the layer; every interface, generated document and page is derived from the registry those declarations build, and a stale projection fails the build.
 status: stable
 weight: 10
+domain: surfaces
 featured: true
 areas: [documentation, governance]
 modules: [capabilities, artifacts, product, quality]
 commands: [update, doctor]
-kinds: [feature, command, claim]
+kinds: [feature, domain, command, claim]
 rules: [project.interfaces-are-projections, project.rust-canonical-declaration, project.derived-files-regenerated, project.generated-artifacts-are-typed, project.derived-once]
 docs: [docs/CAPABILITIES.md, docs/DYNAMICITY.md, docs/GITHUB_PAGES_ARCHITECTURE.md]
 adrs: [adr-0002, adr-0004, adr-0005, adr-0023]

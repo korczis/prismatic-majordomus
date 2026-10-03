@@ -8,6 +8,7 @@ headline: What a coding session consumes with Majordomus and without it, from ma
 summary: A task corpus runs in a real harness twice — without Majordomus and with it — and the provider's usage, the gate verdicts and the context compiler's counted selection are recorded as raw facts; one calculator derives pairs, distributions, seeded bootstrap intervals and the one statement the methodology's publication rule allows, projected to the CLI, HTTP, OpenAPI, MCP, the Cockpit, a generated report and the site; economics check refuses any savings number typed by hand.
 status: stable
 weight: 47
+domain: evidence
 featured: false
 areas: [observability, cost]
 modules: [economics]
