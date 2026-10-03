@@ -644,6 +644,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:product.domains",
+      "path": "/evidence/capabilities/product-domains/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:product.feature",
       "path": "/evidence/capabilities/product-feature/"
     },
@@ -1576,6 +1581,11 @@
       "kind": "claim",
       "subject": "claim:policy-parse",
       "path": "/evidence/claims/policy-parse/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:product-domains-derived",
+      "path": "/evidence/claims/product-domains-derived/"
     },
     {
       "kind": "claim",
@@ -2536,6 +2546,11 @@
       "kind": "command",
       "subject": "command:plan",
       "path": "/evidence/commands/plan/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:product domains",
+      "path": "/evidence/commands/product-domains/"
     },
     {
       "kind": "command",
@@ -4677,6 +4692,18 @@
       "page": "/evidence/capabilities/plan-waves/",
       "programs": [],
       "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:product.domains": {
+      "kind": "capability",
+      "id": "product.domains",
+      "page": "/evidence/capabilities/product-domains/",
+      "programs": [],
+      "members": [
+        "command:product domains"
+      ],
       "routes": [],
       "mechanisms": [],
       "findings": []
@@ -8436,6 +8463,29 @@
             "docs/SCHEMAS.md",
             "lib/common.sh",
             "test/cases/00_yaml_flatten.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:product-domains-derived": {
+      "kind": "claim",
+      "id": "product-domains-derived",
+      "status": "guaranteed",
+      "page": "/evidence/claims/product-domains-derived/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:800_product_domains",
+          "path": "test/cases/800_product_domains.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/PRODUCT.md",
+            "apps/majordomus-cli/src/product.rs",
+            "test/cases/800_product_domains.sh"
           ]
         }
       ],
@@ -13587,6 +13637,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:product domains": {
+      "kind": "command",
+      "id": "product domains",
+      "page": "/evidence/commands/product-domains/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:product list": {
       "kind": "command",
       "id": "product list",
@@ -17783,6 +17852,18 @@
       "programs": [],
       "members": [
         "capability:environment.preflight"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_product_domains": {
+      "kind": "mcp",
+      "id": "majordomus_product_domains",
+      "alias_of": "capability:product.domains",
+      "programs": [],
+      "members": [
+        "capability:product.domains"
       ],
       "routes": [],
       "mechanisms": [],
@@ -23579,6 +23660,7 @@
     "suite:763_a_tag_older_than_the_record_practice_is_a_note",
     "suite:790_the_kit_is_one_vocabulary_and_its_page_renders_all_of_it",
     "suite:791_a_screen_is_composed_of_the_kit_and_of_real_data",
+    "suite:810_a_feature_is_explored_under_its_domain",
     "suite:85_deployment_bind",
     "suite:86_deployment_projections",
     "suite:93_schema_integrity",

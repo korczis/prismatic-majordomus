@@ -16021,6 +16021,18 @@
         {
           "defaults": [],
           "global": true,
+          "help": "Only features filed under this product domain",
+          "long": "domain",
+          "name": "domain",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DOMAIN"
+        },
+        {
+          "defaults": [],
+          "global": true,
           "help": "Only features made of this capability module",
           "long": "module",
           "name": "module",
@@ -16080,6 +16092,12 @@
           "command": "majordomus product show",
           "name": "show",
           "route": "/docs/cli/product/show/"
+        },
+        {
+          "about": "The domains of the product, each with the stable features that name it and what they add up to",
+          "command": "majordomus product domains",
+          "name": "domains",
+          "route": "/docs/cli/product/domains/"
         },
         {
           "about": "Every feature against every interface, and every module, command and kind against the features that name it",
@@ -16264,6 +16282,18 @@
           "required": false,
           "takes_value": true,
           "value_name": "AREA"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only features filed under this product domain",
+          "long": "domain",
+          "name": "domain",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DOMAIN"
         },
         {
           "defaults": [],
@@ -16511,6 +16541,18 @@
         {
           "defaults": [],
           "global": true,
+          "help": "Only features filed under this product domain",
+          "long": "domain",
+          "name": "domain",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DOMAIN"
+        },
+        {
+          "defaults": [],
+          "global": true,
           "help": "Only features made of this capability module",
           "long": "module",
           "name": "module",
@@ -16587,6 +16629,236 @@
       ],
       "route": "/docs/cli/product/show/",
       "usage": "majordomus product show [OPTIONS] <ID>"
+    },
+    {
+      "about": "The domains of the product, each with the stable features that name it and what they add up to",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus product",
+          "name": "product",
+          "route": "/docs/cli/product/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Only the features the homepage shows",
+          "long": "featured",
+          "name": "featured",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "FEATURED"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Include drafts and deprecated features, not only the stable ones",
+          "long": "all",
+          "name": "all",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "ALL"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only features serving this operational area of the why catalogue",
+          "long": "area",
+          "name": "area",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "AREA"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only features filed under this product domain",
+          "long": "domain",
+          "name": "domain",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DOMAIN"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only features made of this capability module",
+          "long": "module",
+          "name": "module",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MODULE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only features made of this shell command",
+          "long": "names-command",
+          "name": "names_command",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "NAMES_COMMAND"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only features exposed through this surface: cli, api, mcp, cockpit or docs",
+          "long": "surface",
+          "name": "surface",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SURFACE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Case-insensitive text over identities, titles, headlines, summaries, tags and bodies",
+          "long": "query",
+          "name": "query",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "short": "q",
+          "takes_value": true,
+          "value_name": "QUERY"
+        }
+      ],
+      "children": [],
+      "command": "majordomus product domains",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "product",
+            "domains"
+          ],
+          "command": "majordomus product domains",
+          "description": "One block per domain in presentation order: its promise, the failure it answers, and the stable features that name it, with the interfaces, claims and use cases they add up to. A domain lists nothing itself; every member and count is derived from the features.",
+          "expectation": "exits 0; prints domain(s)",
+          "id": "product-domains",
+          "setup": [],
+          "title": "The few things the product controls, and the features under each"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "domains",
+      "parent_route": "/docs/cli/product/",
+      "path": [
+        "majordomus",
+        "product",
+        "domains"
+      ],
+      "route": "/docs/cli/product/domains/",
+      "usage": "majordomus product domains [OPTIONS]"
     },
     {
       "about": "Every feature against every interface, and every module, command and kind against the features that name it",
@@ -16726,6 +16998,18 @@
           "required": false,
           "takes_value": true,
           "value_name": "AREA"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only features filed under this product domain",
+          "long": "domain",
+          "name": "domain",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DOMAIN"
         },
         {
           "defaults": [],
@@ -16948,6 +17232,18 @@
         {
           "defaults": [],
           "global": true,
+          "help": "Only features filed under this product domain",
+          "long": "domain",
+          "name": "domain",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DOMAIN"
+        },
+        {
+          "defaults": [],
+          "global": true,
           "help": "Only features made of this capability module",
           "long": "module",
           "name": "module",
@@ -17162,6 +17458,18 @@
           "required": false,
           "takes_value": true,
           "value_name": "AREA"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Only features filed under this product domain",
+          "long": "domain",
+          "name": "domain",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DOMAIN"
         },
         {
           "defaults": [],
@@ -30794,10 +31102,10 @@
     }
   ],
   "counts": {
-    "arguments": 1324,
-    "commands": 196,
-    "examples": 196,
-    "runnable": 172
+    "arguments": 1343,
+    "commands": 197,
+    "examples": 197,
+    "runnable": 173
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.12.0",

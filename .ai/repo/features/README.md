@@ -44,8 +44,27 @@ only advisory, and its route. The schema refuses a derived key such as `surfaces
 
 **Editorial decisions** are the fields nothing can infer, and they are the only ones a
 person writes for presentation: `headline` (the promise), `summary`, `status`, `weight`
-(the order), `featured` (whether the homepage shows it as a chapter), `areas` and
+(the order), `featured` (whether the homepage shows it as a chapter), `domain` (its one
+place in the product's top-level model), `areas` and
 `audiences` (the why catalogue's own taxonomies, reused rather than declared again).
+
+## Domains
+
+Every feature names exactly one **domain** in `domain:` — one of the few things the
+product controls, each a file under `domains/` here (kind `domain`, schema `domain/v1`):
+
+```text
+domains/<id>.md   one product domain   schema: domain/v1
+```
+
+A domain states its title, a one-sentence `headline` (what the product does about it), a
+one-sentence `problem` (the failure it answers) and a `weight` (the order of the homepage
+map and of every list of domains). It never lists its features: membership is the
+feature's `domain`, and everything a domain shows — members, interfaces, claims, use cases,
+rules, moments — is derived. `majordomus product domains` answers it; a stable feature that
+names no domain, or one that does not exist, fails `majordomus product validate`
+(ADR 0104). The domain is not an area: a feature still names the why catalogue's areas it
+serves, which can be several.
 
 ## Discovery
 

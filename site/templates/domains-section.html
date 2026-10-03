@@ -1,0 +1,35 @@
+{% extends "page.html" %}
+{% block title %}{{ section.title }} — {{ project.name }}{% endblock title %}
+{% block ogtitle %}{{ section.title }} — {{ project.name }}{% endblock ogtitle %}
+{% block description %}{{ section.description }}{% endblock description %}
+{% block ogdescription %}{{ section.description }}{% endblock ogdescription %}
+{% block content %}
+{%- set crumb_title = section.title -%}{%- set crumb_parent = false -%}
+{#- The product, by domain: the few things it controls, each opening onto the features filed
+    under it. The domains and their members are data/registry/product.json's; this template
+    names none of them (ADR 0104). -#}
+{%- set model = load_data(path="data/registry/product.json") -%}
+{%- set base = config.base_url | trim_end(pat="/") -%}
+
+<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  {% include "partials/breadcrumb.html" %}
+  <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1>
+  <p class="mt-3 max-w-3xl break-words text-lg text-body">{{ section.description }}</p>
+</div></div>
+
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  {%- set map_heading = "h2" -%}
+  {% include "partials/domain-map.html" %}
+
+  <section aria-labelledby="how-filed" class="mt-12 max-w-3xl">
+    <h2 id="how-filed" class="text-xl font-semibold tracking-tight text-heading">How a feature lands in a domain</h2>
+    <p class="mt-2 text-body">A domain is one file under <code class="font-mono text-sm">.ai/repo/features/domains/</code> with its promise and the failure it answers. A feature names exactly one domain in its own file. Everything above is derived from those two facts at build time: the members, the interfaces, the guarantees and the counts. A feature that names no domain, or one that does not exist, fails validation before a page is built.</p>
+    <p class="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
+      <a href="{{ get_url(path='/features/', trailing_slash=true) }}" class="text-fg-brand hover:underline">Every feature &rarr;</a>
+      <a href="{{ get_url(path='/features/matrix/', trailing_slash=true) }}" class="text-fg-brand hover:underline">Every feature against every interface &rarr;</a>
+      <a href="{{ get_url(path='/why/', trailing_slash=true) }}" class="text-fg-brand hover:underline">The failure modes, by area of work &rarr;</a>
+      <a href="{{ get_url(path='/docs/product/', trailing_slash=true) }}" class="text-fg-brand hover:underline">How this page is derived &rarr;</a>
+    </p>
+  </section>
+</div>
+{% endblock content %}

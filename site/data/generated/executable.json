@@ -2201,6 +2201,23 @@
       "tool": "majordomus_plan_waves"
     },
     {
+      "api_anchor": "/docs/api/product/#op-product-domains",
+      "claims": [],
+      "cli": "majordomus product domains",
+      "id": "product.domains",
+      "kind": "query",
+      "module": "product",
+      "module_route": "/registry/modules/product/",
+      "resource": "majordomus://product/domains",
+      "route": "/registry/capabilities/product-domains/",
+      "slug": "product-domains",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/product.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/product.rs",
+      "tests": [],
+      "title": "The domains",
+      "tool": "majordomus_product_domains"
+    },
+    {
       "api_anchor": "/docs/api/product/#op-product-feature",
       "claims": [],
       "cli": "majordomus product show",
@@ -3207,6 +3224,13 @@
         "test": "test/cases/97_product_features.sh"
       },
       {
+        "id": "product-domains-derived",
+        "implementation": "apps/majordomus-cli/src/product.rs",
+        "route": "/guarantees/product-domains-derived/",
+        "status": "guaranteed",
+        "test": "test/cases/800_product_domains.sh"
+      },
+      {
         "id": "product-surfaces-derived",
         "implementation": "apps/majordomus-cli/src/product.rs",
         "route": "/guarantees/product-surfaces-derived/",
@@ -3500,8 +3524,8 @@
     ]
   },
   "counts": {
-    "capabilities": 166,
-    "claims": 76,
+    "capabilities": 167,
+    "claims": 77,
     "modules": 50
   },
   "generator": "majordomus-cli 0.12.0",
@@ -4514,6 +4538,11 @@
     },
     {
       "capabilities": [
+        {
+          "id": "product.domains",
+          "route": "/registry/capabilities/product-domains/",
+          "slug": "product-domains"
+        },
         {
           "id": "product.feature",
           "route": "/registry/capabilities/product-feature/",
