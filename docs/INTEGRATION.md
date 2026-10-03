@@ -25,6 +25,13 @@ every pull request conflicting. The relation to master is decided by git: `git m
 --write-tree` with the drivers, and `git check-attr merge` for which paths are derived,
 according to master's own `.gitattributes`.
 
+The relation is decided on exactly the head the forge reported, the one the assessment names
+as evaluated. A head that moved during the refresh is not in the clone, and its relation is
+`unknown` until the next refresh. It is never decided on whatever a fetched ref holds now.
+When git cannot say which paths are derived, because `git check-attr` failed, the relation is
+`unknown` too, never "nothing is derived". A relation is cached only under a pair of full
+commit ids, and an `unknown` is never cached.
+
 ## Dispositions
 
 Every open pull request has exactly one. They are decided in the order below, so an earlier
@@ -33,14 +40,14 @@ answer wins. `ready` is reached only after every other question is answered in i
 | Disposition | Lane | When | Next |
 |---|---|---|---|
 | `other_base` | held | targets a branch other than the base, and no open pull request's head | — |
-| `waiting_for_dependency` | waiting | stacked on another open pull request, or declares `Depends on #N`/`Stacked on #N`/`Requires #N`/`After #N` on an open one | land that one first |
+| `waiting_for_dependency` | waiting | stacked on another open pull request of this repository, or declares a dependency on an open one (see below) | land that one first |
 | `draft` | held | a draft | mark it ready |
 | `blocked` | held | carries a blocking label (`do-not-merge`, `blocked`, `hold`, `on-hold`, `wip`, `manual-merge`) | remove it |
 | `superseded` | cleanup | its head is an ancestor of master, or merging it changes no file | `prs cleanup --apply` closes it |
 | `possibly_redundant` | cleanup | merging it changes only derived artifacts | a person decides |
 | `unknown` | held | its head is not fetched, git failed, or the branch protection could not be read | `prs refresh` |
 | `conflicting` | repair | the merge conflicts on an authored path | the author resolves it |
-| `waiting_for_review` | waiting | a required review is missing or changes were requested | a reviewer |
+| `waiting_for_review` | waiting | a required review is missing or changes were requested (see below) | a reviewer |
 | `needs_repair` | repair | a required check failed on its head, or it is behind master from a fork | the author |
 | `needs_refresh` | waiting | merges cleanly but does not contain master | `prs drain --refresh` |
 | `waiting_for_checks` | waiting | contains master; a required check is pending or missing on this head | wait |
@@ -49,6 +56,43 @@ answer wins. `ready` is reached only after every other question is answered in i
 A required check that is pending, missing, skipped or unreadable is not passed. The required
 checks are read from the base's branch protection, never listed here. A green check that is
 not required proves nothing.
+
+### Review states
+
+The forge's review decision comes first, and the branch protection's requirement second:
+
+| The forge says | The protection requires a review | Review | Disposition, if nothing earlier decided |
+|---|---|---|---|
+| `CHANGES_REQUESTED` | any | `changes_requested` | `waiting_for_review` |
+| `APPROVED` | any | `approved` | goes on to the checks |
+| `REVIEW_REQUIRED` | any | `pending` | `waiting_for_review` |
+| nothing | yes | `pending` | `waiting_for_review` |
+| nothing | no | `not_required` | goes on to the checks |
+| nothing | unread | `unknown` | `unknown` |
+
+`REVIEW_REQUIRED` is pending even when the branch protection requires no review. A ruleset or
+code owners can require one that the protection does not, and the forge's word is that a
+review is still owed.
+
+### Dependency markers
+
+A pull request depends on another when a line of its body opens with one of these markers,
+in any case, followed by one or more numbers:
+
+- `Depends on #N`
+- `Stacked on #N`
+- `Requires #N`
+- `Land after #N`
+
+Only a bullet (`-`, `*`, `+`, `1.`), quote marks (`>`) and emphasis (`*`, `_`) may come before
+the marker, so `- **Depends on:** #7` declares a dependency. More numbers follow with commas,
+`and` or `&`: `Stacked on #644 and #645`. The same words anywhere else in a line are prose:
+`a regression introduced after #540` and `thereafter #5` declare nothing, and neither does a
+bare `After #N`. A dependency is satisfied once that pull request is no longer open.
+
+A pull request that targets another branch is stacked on the open pull request whose head is
+that branch. Only branches of this repository count. A fork's branch says nothing about a
+branch here, whatever it is called, so a fork whose branch is named `master` stacks nothing.
 
 ## The rank
 
@@ -102,6 +146,11 @@ refreshed pull request waits for its checks, no other is refreshed, because merg
 would put the second behind again. Throughput is therefore one pull request per run of the
 required check, which is the true cost of this repository's mechanics.
 
+Only a run the executor started holds the pipeline: a required check that is *pending* on the
+head a `refreshed` event recorded as pushed (`head_after`). A required check that never
+reports on a head (`missing`) does not hold it, and neither does a check running on a head the
+author pushed. Otherwise one silent check would stop every refresh.
+
 ## Cleanup
 
 Closing a pull request requires more evidence than merging one. `prs cleanup` lists the
@@ -117,7 +166,8 @@ repository's own setting decides that.
   lease untouched for 30 minutes is reclaimed. Observers never take it.
 - Every act is appended to `.ai/local/state/integration/events.jsonl`: `selected`,
   `stale_decision`, `merge_attempted`, `merge_succeeded`, `merge_failed`,
-  `verification_failed`, `refresh_selected`, `refreshed`, `refresh_failed`,
+  `verification_failed`, `refresh_selected`, `refreshed` (with the head it pushed),
+  `refresh_failed`,
   `closed_superseded`, `idle`, and the two transitions of a wait, `became_actionable` and
   `left_actionable`.
 - A dry run observes and decides, and changes and records nothing.
