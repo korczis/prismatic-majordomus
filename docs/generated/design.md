@@ -3,7 +3,7 @@
      Generator: majordomus-cli 0.12.0 -->
 # The design system
 
-One declaration, `share/design/tokens.yaml`, projected into every surface. Fingerprint `edc7bf48e646a4fb3713d1dea257c8b56e6220a05148a3d1a70ea8feed8ae482` (`--mj-design: "edc7bf48e646"` on every page that carries it). Explain any token with `majordomus_design_explain`, `GET /api/v1/design/explain?token=<name>` or the Cockpit's Design page.
+One declaration, `share/design/tokens.yaml`, projected into every surface. Fingerprint `944a896b2646060d5dc100adcc36737fd5d8086e2f53d43d6858ac6fdad39540` (`--mj-design: "944a896b2646"` on every page that carries it). Explain any token with `majordomus_design_explain`, `GET /api/v1/design/explain?token=<name>` or the Cockpit's Design page.
 
 ## Type
 
@@ -19,6 +19,7 @@ One declaration, `share/design/tokens.yaml`, projected into every surface. Finge
 | `--text-small` | 12px / 1.5 | `text-small` | secondary text at density; notes, log lines, monospace inline |
 | `--text-dense` | 13.5px / 1.6 | `text-dense` | the body text of a control plane |
 | `--tracking-caps` | 0.12em | `tracking-caps` | the letter-spacing of an uppercase label |
+| `--tracking-kicker` | 0.24em | `tracking-kicker` | the letter-spacing of the uppercase line that names a page's section above its headline |
 
 ## Roles
 
@@ -60,6 +61,19 @@ Five meanings; every state word any surface renders is filed under one of them a
 | `--mj-bad` | `rose-900` / `rose-300` | `--mj-bad-bg` | `--mj-bad-line` | `bad` `fail` `failed` `error` `missing` `blocked` `rejected` `blocking` `refused` `disconnected` `offline` `lost` `stderr` `superseded` `unwired` `unsupported` `owed` `foreign` `misplaced` `failing` `unrunnable` |
 | `--mj-info` | `blue-900` / `blue-400` | `--mj-info-bg` | `--mj-info-line` | `info` `running` `queued` `active` `verified` `generated` `cached` `runtime` `resource` `pending` `loading` `streaming` `implemented` `featured` `exempt` `inherited` `unmerged` `detached` `inputs-unchanged` |
 | `--mj-neutral` | `fg` → `oklch(21% 0.034 264.665)` / `fg` → `#fff` | `--mj-neutral-bg` | `--mj-neutral-line` | `neutral` `unknown` `guaranteed` `external` `planned` `described` `draft` `ready` `inactive` `stopped` `idle` `query` `command` `builtin` `declarative` `vendored` `high` `medium` `low` `setup` `begin` `work` `inspect` `conclude` `not-run` `no-test` |
+
+## Tones
+
+Hues that carry identity and never meaning: the colour of a step of a sequence, of one surface's card. A component reads `--mj-tone-fg`, `-bg`, `-line` and `-fill`; the class `.mj-tone--<tone>` on it or an ancestor says which tone they are.
+
+| tone | ink (light / dark) | ground | border | fill | for |
+|---|---|---|---|---|---|
+| `.mj-tone--blue` | `blue-700` / `blue-400` | `--mj-tone-blue-bg` | `--mj-tone-blue-line` | `--mj-tone-blue-fill` | the first step of a sequence; the tone of the CLI, the files a repository holds |
+| `.mj-tone--violet` | `violet-700` / `violet-400` | `--mj-tone-violet-bg` | `--mj-tone-violet-line` | `--mj-tone-violet-fill` | the second step; the tone of the typed model and of the API |
+| `.mj-tone--green` | `emerald-700` / `emerald-400` | `--mj-tone-green-bg` | `--mj-tone-green-line` | `--mj-tone-green-fill` | the third step; the tone of the derived surfaces |
+| `.mj-tone--orange` | `orange-700` / `orange-400` | `--mj-tone-orange-bg` | `--mj-tone-orange-line` | `--mj-tone-orange-fill` | the fourth step; the tone of what is presented and fed back |
+| `.mj-tone--rose` | `rose-700` / `rose-400` | `--mj-tone-rose-bg` | `--mj-tone-rose-line` | `--mj-tone-rose-fill` | a fifth hue for a vocabulary longer than four, such as a cloud of kinds |
+| `.mj-tone--cyan` | `cyan-700` / `cyan-400` | `--mj-tone-cyan-bg` | `--mj-tone-cyan-line` | `--mj-tone-cyan-fill` | a sixth hue for a vocabulary longer than five |
 
 ## Layout, radius, motion
 
@@ -110,6 +124,7 @@ Internal. A role or a status names an entry; nothing else does.
 | `emerald-400` | `oklch(76.5% 0.177 163.223)` |
 | `emerald-300` | `oklch(84.5% 0.143 164.978)` |
 | `emerald-600` | `oklch(59.6% 0.145 163.225)` |
+| `emerald-700` | `oklch(50.8% 0.118 165.612)` |
 | `emerald-900` | `oklch(37.8% 0.077 168.94)` |
 | `emerald-950` | `oklch(26.2% 0.051 172.552)` |
 | `orange-50` | `oklch(98% 0.016 73.684)` |
@@ -117,6 +132,7 @@ Internal. A role or a status names an entry; nothing else does.
 | `orange-400` | `oklch(75% 0.183 55.934)` |
 | `orange-300` | `oklch(83.7% 0.128 66.29)` |
 | `orange-600` | `oklch(64.6% 0.222 41.116)` |
+| `orange-700` | `oklch(55.3% 0.195 38.402)` |
 | `orange-900` | `oklch(40.8% 0.123 38.172)` |
 | `orange-950` | `oklch(26.6% 0.079 36.259)` |
 | `rose-50` | `oklch(96.9% 0.015 12.422)` |
@@ -124,13 +140,30 @@ Internal. A role or a status names an entry; nothing else does.
 | `rose-400` | `oklch(71.2% 0.194 13.428)` |
 | `rose-300` | `oklch(81% 0.117 11.638)` |
 | `rose-600` | `oklch(58.6% 0.253 17.585)` |
+| `rose-700` | `oklch(51.4% 0.222 16.935)` |
 | `rose-900` | `oklch(41% 0.159 10.272)` |
 | `rose-950` | `oklch(27.1% 0.105 12.094)` |
+| `violet-50` | `oklch(96.9% 0.016 293.756)` |
+| `violet-200` | `oklch(89.4% 0.057 293.283)` |
 | `violet-400` | `oklch(70.2% 0.183 293.541)` |
 | `violet-600` | `oklch(54.1% 0.281 293.009)` |
+| `violet-700` | `oklch(49.1% 0.27 292.581)` |
+| `violet-900` | `oklch(38% 0.189 293.745)` |
+| `violet-950` | `oklch(28.3% 0.141 291.089)` |
+| `cyan-50` | `oklch(98.4% 0.019 200.873)` |
+| `cyan-200` | `oklch(91.7% 0.08 205.041)` |
 | `cyan-400` | `oklch(78.9% 0.154 211.53)` |
 | `cyan-600` | `oklch(60.9% 0.126 221.723)` |
+| `cyan-700` | `oklch(52% 0.105 223.128)` |
+| `cyan-900` | `oklch(39.8% 0.07 227.392)` |
+| `cyan-950` | `oklch(30.2% 0.056 229.695)` |
 | `lime-400` | `oklch(84.1% 0.238 128.85)` |
 | `lime-600` | `oklch(64.8% 0.2 131.684)` |
 | `fuchsia-400` | `oklch(74% 0.238 322.16)` |
 | `fuchsia-600` | `oklch(59.1% 0.293 322.896)` |
+| `blue-tint` | `oklch(98.5% 0.008 254.604)` |
+| `violet-tint` | `oklch(98.5% 0.010 293.756)` |
+| `emerald-tint` | `oklch(98.5% 0.012 166.113)` |
+| `orange-tint` | `oklch(98.5% 0.010 73.684)` |
+| `rose-tint` | `oklch(98.5% 0.009 12.422)` |
+| `cyan-tint` | `oklch(98.5% 0.011 200.873)` |

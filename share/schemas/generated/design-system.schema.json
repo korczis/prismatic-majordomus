@@ -30,7 +30,7 @@
         "required": ["name", "kind", "about", "css", "projections"],
         "properties": {
           "name": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-          "kind": { "enum": ["font", "palette", "role", "status", "state", "type", "tracking", "layout", "radius", "motion", "theme"] },
+          "kind": { "enum": ["font", "palette", "role", "status", "state", "tone", "type", "tracking", "layout", "radius", "motion", "theme"] },
           "about": { "type": "string" },
           "css": { "type": "array", "items": { "type": "string", "minLength": 1 } },
           "parts": {
@@ -39,7 +39,7 @@
               "type": "object",
               "required": ["part", "css", "light", "dark"],
               "properties": {
-                "part": { "enum": ["fg", "bg", "line"] },
+                "part": { "enum": ["fg", "bg", "line", "fill"] },
                 "css": { "type": "string", "pattern": "^--mj-" },
                 "light": { "$ref": "#/$defs/resolved" },
                 "dark": { "$ref": "#/$defs/resolved" }

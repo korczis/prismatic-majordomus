@@ -1,0 +1,1092 @@
+/* The kit: the page-building components a product page, a documentation page and a
+   dashboard preview are composed of — a hero, a panel, a step, a file tree, a terminal, a
+   tab strip, a fan-out diagram, a stat tile — written once as `.mj-*` classes and imported
+   by both Tailwind entry points after the primitives. docs/DESIGN_SYSTEM.md, section "The
+   kit", is the manual; site/templates/kit/ holds the components that emit these classes,
+   and /kit/ on the site renders every one of them.
+
+   The same contract as share/design/primitives.css. Every colour is a role (`--mj-*`), a
+   status through the generated status sheet (`--mj-status-*`) or a tone through the same
+   kind of indirection (`--mj-tone-fg`, `-bg`, `-line`, `-fill`, set by `.mj-tone--<tone>`
+   on the element or an ancestor). Nothing here names a hue, so a tone or a status added to
+   share/design/tokens.yaml is styled here the day it exists. Every pair of colours a rule
+   states is measured by the design's contrast check, which reads this file.
+
+   State is carried by attributes, never by a class a script adds. A selected tab is
+   `[aria-selected="true"]`, the current link `[aria-current]`, an open disclosure
+   `details[open]`: an attribute selector has the specificity to beat the static class,
+   where an Alpine `:class` binding loses to whichever utility Tailwind happened to emit
+   later in the sheet.
+
+   Without JavaScript every component is still the content it carries: a tab strip shows
+   every panel, a table of contents is a list of links, a copy button is absent. */
+
+@layer components {
+  /* -------------------------------------------------------------------- icons */
+
+  .mj-icon {
+    @apply h-5 w-5 shrink-0;
+  }
+  .mj-icon--sm {
+    @apply h-4 w-4;
+  }
+  .mj-icon--lg {
+    @apply h-6 w-6;
+  }
+  .mj-icon--xl {
+    @apply h-8 w-8;
+  }
+  /* An icon on its tone's ground: the square every list item and card leads with. */
+  .mj-glyph {
+    @apply inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg;
+    color: var(--mj-tone-fg, var(--mj-accent));
+    background: var(--mj-tone-bg, var(--mj-accent-soft));
+    border: 1px solid var(--mj-tone-line, var(--mj-accent-line));
+  }
+  .mj-glyph--sm {
+    @apply h-8 w-8 rounded-md;
+  }
+  .mj-glyph--lg {
+    @apply h-12 w-12 rounded-xl;
+  }
+  .mj-glyph--round {
+    @apply rounded-full;
+  }
+  /* An icon in its tone's ink, with no ground. */
+  .mj-ink {
+    color: var(--mj-tone-fg, var(--mj-accent));
+  }
+
+  /* ------------------------------------------------------------- page heading */
+
+  .mj-hero {
+    @apply grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] lg:gap-12;
+  }
+  .mj-kicker {
+    @apply text-sm font-medium uppercase tracking-kicker;
+    color: var(--mj-accent);
+  }
+  .mj-hero-title {
+    @apply mt-3 text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl lg:text-6xl lg:leading-none;
+    color: var(--mj-fg);
+    text-wrap: balance;
+  }
+  .mj-hero-title > .mj-hero-line {
+    @apply block;
+  }
+  .mj-hero-accent {
+    color: var(--mj-accent);
+  }
+  .mj-hero-lead {
+    @apply mt-5 max-w-3xl text-lg leading-relaxed sm:text-xl;
+    color: var(--mj-body);
+  }
+  .mj-hero-actions {
+    @apply mt-8 flex flex-wrap items-center gap-3;
+  }
+
+  /* A doctrine, quoted: the sentence a page stands on, with where it comes from. */
+  .mj-quote {
+    @apply m-0 rounded-xl px-6 py-5 sm:px-8 sm:py-6;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-quote-text {
+    @apply text-xl font-light leading-snug sm:text-2xl;
+    color: var(--mj-fg);
+    text-wrap: balance;
+  }
+  .mj-quote-by {
+    @apply mt-4 flex items-center gap-3 text-sm;
+    color: var(--mj-muted);
+  }
+  .mj-quote-by::before {
+    @apply h-px w-5 shrink-0;
+    content: "";
+    background: currentColor;
+  }
+
+  /* A section's heading inside a page: the kicker, the title and a lead. */
+  .mj-section-head {
+    @apply mb-6 max-w-3xl;
+  }
+  .mj-section-title {
+    @apply mt-2 text-2xl font-bold tracking-tight sm:text-3xl;
+    color: var(--mj-fg);
+  }
+  .mj-section-lead {
+    @apply mt-2 text-base leading-relaxed;
+    color: var(--mj-body);
+  }
+
+  /* ------------------------------------------------------------------- buttons */
+
+  .mj-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold no-underline;
+    color: var(--mj-fg);
+    background: var(--mj-raised);
+    border: 1px solid var(--mj-line);
+    transition: background-color var(--mj-motion-fast), border-color var(--mj-motion-fast);
+  }
+  .mj-btn:hover {
+    background: var(--mj-sunken);
+  }
+  /* The one action a page asks for: the page's own ink as a ground. */
+  .mj-btn--primary {
+    color: var(--mj-bg);
+    background: var(--mj-fg);
+    border-color: var(--mj-fg);
+  }
+  .mj-btn--primary:hover {
+    color: var(--mj-bg);
+    background: var(--mj-body);
+  }
+  .mj-btn--accent {
+    color: var(--mj-on-accent);
+    background: var(--mj-accent-fill);
+    border-color: var(--mj-accent-fill);
+  }
+  /* the fill stays: white on the accent's strong step reads at 2.6:1 in the dark theme */
+  .mj-btn--accent:hover {
+    border-color: var(--mj-accent-strong);
+  }
+  .mj-btn--sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+  .mj-btn--block {
+    @apply w-full;
+  }
+
+  /* -------------------------------------------------------------------- panels */
+
+  /* The container every block of a composed page sits in. */
+  .mj-panel {
+    @apply relative flex min-w-0 flex-col rounded-xl p-5 shadow-xs sm:p-6;
+    background: var(--mj-raised);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-panel--flush {
+    @apply p-0;
+  }
+  .mj-panel--quiet {
+    @apply shadow-none;
+    background: var(--mj-sunken);
+  }
+  /* A panel in its tone: the ground fades from the tone into the card. */
+  .mj-panel--toned {
+    background: linear-gradient(180deg, var(--mj-tone-bg, var(--mj-sunken)) 0%, var(--mj-raised) 70%);
+    border-color: var(--mj-tone-line, var(--mj-line));
+  }
+  /* a well inside a quiet panel would vanish into it: it takes the card's ground instead */
+  .mj-panel--quiet .mj-cmd,
+  .mj-panel--quiet .mj-code {
+    background: var(--mj-raised);
+  }
+  /* the same for the secondary text of a toned panel, whose ground starts at the tone's */
+  .mj-panel--toned .mj-panel-sub,
+  .mj-panel--toned .mj-point-text {
+    color: var(--mj-body);
+  }
+  .mj-panel-head {
+    @apply mb-4 flex min-w-0 items-start gap-3;
+  }
+  .mj-panel-heading {
+    @apply min-w-0 flex-1;
+  }
+  .mj-panel-title {
+    @apply text-lg font-semibold leading-snug;
+    color: var(--mj-fg);
+  }
+  .mj-panel-sub {
+    @apply mt-0.5 text-sm;
+    color: var(--mj-muted);
+    overflow-wrap: anywhere;
+  }
+  .mj-panel-foot {
+    @apply mt-auto pt-4;
+  }
+
+  /* A numbered step: the tone's fill with the accent's text on it. */
+  .mj-step {
+    @apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-base font-bold;
+    color: var(--mj-on-accent);
+    background: var(--mj-tone-fill, var(--mj-accent-fill));
+  }
+  .mj-step--sm {
+    @apply h-7 w-7 text-sm;
+  }
+
+  /* A row of stages that reads left to right on a wide screen and top to bottom on a
+     narrow one; the arrow between two stages is drawn by the later one. */
+  .mj-stages {
+    @apply grid gap-6;
+  }
+  .mj-stages--2 { @apply lg:grid-cols-2; }
+  .mj-stages--3 { @apply lg:grid-cols-3; }
+  .mj-stages--4 { @apply md:grid-cols-2 xl:grid-cols-4; }
+  .mj-stages--5 { @apply md:grid-cols-2 xl:grid-cols-5; }
+  .mj-stages--6 { @apply md:grid-cols-3 xl:grid-cols-6; }
+  .mj-stage {
+    @apply relative min-w-0;
+  }
+  .mj-stages--linked > .mj-stage + .mj-stage::before {
+    @apply absolute hidden text-lg xl:block;
+    content: "\2192";
+    color: var(--mj-muted);
+    left: -1.1rem;
+    top: 2.25rem;
+  }
+
+  /* ----------------------------------------------------------------- lists */
+
+  /* A tree of paths with its guide lines: what a repository holds, and what each part is. */
+  .mj-tree {
+    @apply m-0 list-none p-0;
+  }
+  .mj-tree-root {
+    @apply mb-2 flex items-center gap-2 font-mono text-sm font-medium;
+    color: var(--mj-fg);
+  }
+  .mj-tree-item {
+    @apply relative flex min-w-0 items-start gap-3 py-1.5 ps-7;
+  }
+  .mj-tree-item::before {
+    content: "";
+    position: absolute;
+    left: 0.45rem;
+    top: 0;
+    bottom: 0;
+    border-left: 1px solid var(--mj-line);
+  }
+  .mj-tree-item:last-child::before {
+    bottom: 50%;
+  }
+  .mj-tree-item::after {
+    content: "";
+    position: absolute;
+    left: 0.45rem;
+    top: 50%;
+    width: 0.9rem;
+    border-top: 1px solid var(--mj-line);
+  }
+  .mj-tree-icon {
+    @apply mt-0.5 shrink-0;
+    color: var(--mj-fg);
+  }
+  .mj-tree-text {
+    @apply min-w-0;
+  }
+  .mj-tree-name {
+    @apply block break-all font-mono text-sm;
+    color: var(--mj-fg);
+  }
+  .mj-tree-note {
+    @apply block text-xs;
+    color: var(--mj-muted);
+  }
+  .mj-tree-sub {
+    @apply ms-3;
+  }
+
+  /* A list of points, each an icon in its tone, a title and a line. */
+  .mj-points {
+    @apply m-0 list-none p-0;
+  }
+  .mj-point {
+    @apply flex min-w-0 items-start gap-3 py-3;
+  }
+  .mj-points--ruled > .mj-point + .mj-point {
+    border-top: 1px solid var(--mj-line);
+  }
+  .mj-points--cards {
+    @apply grid gap-2;
+  }
+  .mj-points--cards > .mj-point {
+    @apply rounded-lg px-3;
+    background: var(--mj-raised);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-point-title {
+    @apply block text-sm font-semibold;
+    color: var(--mj-fg);
+  }
+  .mj-point-text {
+    @apply block text-xs leading-relaxed;
+    color: var(--mj-muted);
+    overflow-wrap: anywhere;
+  }
+
+  /* An interface row: what it is, where it lives, and — beside it — what it is for. */
+  .mj-route {
+    @apply flex min-w-0 items-center gap-3 rounded-lg px-3 py-2.5;
+    background: var(--mj-raised);
+    border: 1px solid var(--mj-line);
+  }
+  /* a name can be one long identifier (an MCP tool): it breaks rather than widen the row */
+  .mj-route-name {
+    @apply block text-sm font-semibold;
+    color: var(--mj-fg);
+    overflow-wrap: anywhere;
+  }
+  .mj-route-path {
+    @apply block truncate font-mono text-xs;
+    color: var(--mj-muted);
+  }
+  .mj-route-for {
+    @apply flex min-w-0 flex-col justify-center rounded-lg px-3 py-2.5;
+    background: var(--mj-sunken);
+  }
+  .mj-route-for-title {
+    @apply block text-sm;
+    color: var(--mj-fg);
+  }
+  .mj-route-for-text {
+    @apply block text-xs;
+    color: var(--mj-muted);
+  }
+
+  /* A card that is one link: the whole tile navigates. */
+  .mj-tile {
+    @apply flex min-w-0 items-start gap-4 rounded-xl p-5 no-underline;
+    background: var(--mj-raised);
+    border: 1px solid var(--mj-line);
+    transition: border-color var(--mj-motion-fast), background-color var(--mj-motion-fast);
+  }
+  .mj-tile:hover {
+    background: var(--mj-sunken);
+    border-color: var(--mj-accent-line);
+  }
+  /* Tiles fit as many columns as the container holds, not as the viewport does: the same
+     list sits in a full-width band and beside a table of contents. */
+  .mj-tiles {
+    @apply grid gap-3;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  }
+  .mj-tiles--compact {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+  }
+  .mj-tile--compact {
+    @apply items-center gap-3 p-3;
+  }
+  .mj-tile-body {
+    @apply min-w-0 flex-1;
+  }
+  .mj-tile-title {
+    @apply block font-semibold;
+    color: var(--mj-fg);
+  }
+  .mj-tile--compact .mj-tile-title {
+    @apply font-mono text-sm font-medium;
+  }
+  .mj-tile-text {
+    @apply mt-1 block text-sm leading-relaxed;
+    color: var(--mj-muted);
+  }
+  .mj-tile--compact .mj-tile-text {
+    @apply mt-0 text-xs;
+  }
+  .mj-tile-go {
+    @apply mt-0.5 shrink-0 self-center;
+    color: var(--mj-muted);
+  }
+  .mj-tile:hover .mj-tile-go {
+    color: var(--mj-accent);
+  }
+
+  /* A list of links with a chevron each: related sections, a reference index. */
+  .mj-links {
+    @apply m-0 list-none p-0;
+  }
+  .mj-links a {
+    @apply flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm no-underline;
+    color: var(--mj-body);
+  }
+  .mj-links a:hover {
+    color: var(--mj-accent);
+    background: var(--mj-sunken);
+  }
+
+  /* The band of short claims under a page: an icon, a title, a line, divided. */
+  .mj-strip {
+    @apply grid gap-6 py-8 sm:grid-cols-2 lg:gap-0;
+    border-top: 1px solid var(--mj-line);
+  }
+  /* Divided only where the band is one row: at xl, where five claims fit. */
+  .mj-strip--3 { @apply xl:grid-cols-3; }
+  .mj-strip--4 { @apply xl:grid-cols-4; }
+  .mj-strip--5 { @apply xl:grid-cols-5; }
+  .mj-strip-item {
+    @apply flex min-w-0 items-start gap-3 xl:px-5;
+  }
+  .mj-strip-item + .mj-strip-item {
+    @apply xl:border-l;
+    border-color: var(--mj-line);
+  }
+  .mj-strip-item:first-child {
+    @apply xl:ps-0;
+  }
+
+  /* Claims stood on round glyphs: an icon over a title and a line, centred, in a row. */
+  .mj-claims {
+    @apply m-0 grid list-none grid-cols-2 gap-4 p-0 sm:grid-cols-4;
+  }
+  .mj-claim {
+    @apply flex min-w-0 flex-col items-center gap-2 text-center;
+  }
+
+  /* A listing on the page's own ground: a struct, a JSON shape, a list of steps. The
+     terminal is for a session; this is for text that is read, not run. */
+  .mj-code {
+    @apply m-0 min-w-0 overflow-hidden rounded-lg;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-code-title {
+    @apply px-3 py-1.5 font-mono text-xs;
+    color: var(--mj-muted);
+    border-bottom: 1px solid var(--mj-line);
+  }
+  .mj-code pre {
+    @apply m-0 bg-transparent p-3 font-mono text-xs leading-relaxed;
+    color: var(--mj-fg);
+  }
+
+  /* A measured figure with what it measures and, when it is a share, a meter. */
+  .mj-figure-value {
+    @apply block text-2xl font-bold tracking-tight;
+    color: var(--mj-fg);
+  }
+  .mj-figure-label {
+    @apply block text-sm;
+    color: var(--mj-muted);
+  }
+  .mj-figure-source {
+    @apply mt-1 block font-mono text-xs;
+    color: var(--mj-muted);
+  }
+  .mj-meter {
+    @apply mt-3 block h-1 w-full overflow-hidden rounded-full;
+    background: var(--mj-sunken);
+  }
+  /* The share is an SVG rect whose width is the share out of 100: an attribute, never a style. */
+  .mj-meter-fill {
+    fill: var(--mj-tone-fill);
+  }
+
+  /* A cloud of kinds: each a monospace word on its tone. */
+  .mj-pills {
+    @apply flex flex-wrap gap-2;
+  }
+  .mj-pills--center {
+    @apply justify-center;
+  }
+  .mj-pill {
+    @apply inline-flex items-center rounded-md px-2.5 py-1 font-mono text-xs;
+    color: var(--mj-tone-fg, var(--mj-body));
+    background: var(--mj-tone-bg, var(--mj-sunken));
+    border: 1px solid var(--mj-tone-line, var(--mj-line));
+  }
+
+  /* ---------------------------------------------------------------- terminal */
+
+  /* A terminal is dark on every page: the component carries the theme class, so the
+     roles inside it resolve to their dark values whatever the page is wearing. */
+  .mj-term {
+    @apply min-w-0 overflow-hidden rounded-xl shadow-lg;
+    color: var(--mj-body);
+    background: var(--mj-bg);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-term-bar {
+    @apply flex items-center gap-1.5 px-4 py-3;
+  }
+  .mj-term-title {
+    @apply ms-3 truncate font-mono text-xs;
+    color: var(--mj-muted);
+  }
+  .mj-term-dot {
+    @apply h-3 w-3;
+  }
+  .mj-term-dot--1 { color: var(--mj-bad); }
+  .mj-term-dot--2 { color: var(--mj-warn); }
+  .mj-term-dot--3 { color: var(--mj-ok); }
+  .mj-term-body {
+    @apply overflow-x-auto px-4 pb-4 font-mono text-xs leading-relaxed sm:text-sm;
+  }
+  .mj-term-body pre {
+    @apply m-0 bg-transparent p-0 font-mono;
+    color: var(--mj-body);
+  }
+  .mj-term-line {
+    @apply whitespace-pre;
+  }
+  .mj-term-prompt {
+    color: var(--mj-ok);
+  }
+  .mj-term-cmd {
+    color: var(--mj-fg);
+  }
+  .mj-term-arg {
+    color: var(--mj-accent);
+  }
+  .mj-term-out {
+    color: var(--mj-body);
+  }
+  /* A structured block of a command's output: sections of keys and values in a box. */
+  .mj-term-box {
+    @apply my-2 rounded-md;
+    border: 1px solid var(--mj-line);
+  }
+  .mj-term-section {
+    @apply px-3 py-2;
+  }
+  .mj-term-section + .mj-term-section {
+    border-top: 1px solid var(--mj-line);
+  }
+  .mj-term-heading {
+    @apply flex justify-between gap-4 font-semibold;
+    color: var(--mj-fg);
+  }
+  .mj-kv {
+    @apply grid grid-cols-[auto_minmax(0,1fr)] gap-x-6;
+  }
+  .mj-kv-key {
+    color: var(--mj-muted);
+  }
+  .mj-kv-value {
+    @apply min-w-0 truncate;
+    color: var(--mj-fg);
+  }
+  /* a link in a box of values is a target a finger can hit (24 px), not one line of text */
+  .mj-kv-value a {
+    @apply inline-block py-1;
+    color: var(--mj-accent);
+  }
+  .mj-term-foot {
+    @apply mt-2 rounded-md px-3 py-1.5;
+    color: var(--mj-fg);
+    border: 1px solid var(--mj-line);
+  }
+
+  /* A command on one line with a copy button: what a reader types next. */
+  /* clipped to itself: the command scrolls inside its own text, never past the row */
+  .mj-cmd {
+    @apply flex min-w-0 max-w-full items-center gap-2 overflow-hidden rounded-lg px-3 py-2 font-mono text-xs;
+    color: var(--mj-fg);
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-cmd-prompt {
+    @apply select-none;
+    color: var(--mj-muted);
+  }
+  .mj-cmd-text {
+    @apply min-w-0 flex-1 overflow-x-auto whitespace-pre;
+  }
+  .mj-cmd--wrap .mj-cmd-text {
+    @apply whitespace-pre-wrap break-all;
+  }
+  .mj-cmd-list {
+    @apply m-0 grid list-none grid-cols-[minmax(0,1fr)] gap-2 p-0;
+  }
+  .mj-copy {
+    @apply inline-flex h-6 w-6 shrink-0 items-center justify-center rounded;
+    color: var(--mj-muted);
+  }
+  .mj-copy:hover {
+    color: var(--mj-fg);
+  }
+  .mj-copy[data-copied="true"] {
+    color: var(--mj-ok);
+  }
+
+  /* --------------------------------------------------------------------- tabs */
+
+  .mj-tabs {
+    @apply flex min-w-0 flex-wrap items-center gap-1;
+  }
+  .mj-tab {
+    @apply inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium;
+    color: var(--mj-muted);
+  }
+  .mj-tab:hover {
+    color: var(--mj-fg);
+  }
+  /* underline: the strip a code sample or a section switches with */
+  /* one row, scrolled sideways in a narrow column rather than wrapped onto a second */
+  .mj-tabs--line {
+    @apply flex-nowrap gap-4 overflow-x-auto;
+    border-bottom: 1px solid var(--mj-line);
+  }
+  .mj-tabs--line > .mj-tab {
+    @apply rounded-none px-0.5 pb-2 pt-1;
+    box-shadow: inset 0 -2px 0 transparent;
+  }
+  .mj-tabs--line > .mj-tab[aria-selected="true"] {
+    color: var(--mj-accent);
+    box-shadow: inset 0 -2px 0 var(--mj-accent);
+  }
+  /* segmented: one control, the selected segment raised out of the well */
+  .mj-tabs--segmented {
+    @apply rounded-lg p-1;
+    background: var(--mj-sunken);
+  }
+  .mj-tabs--segmented > .mj-tab[aria-selected="true"] {
+    @apply shadow-xs;
+    color: var(--mj-fg);
+    background: var(--mj-raised);
+  }
+  /* pills: the selected one on the accent's soft ground */
+  .mj-tabs--pills > .mj-tab {
+    border: 1px solid transparent;
+  }
+  .mj-tabs--pills > .mj-tab[aria-selected="true"] {
+    color: var(--mj-accent-strong);
+    background: var(--mj-accent-soft);
+    border-color: var(--mj-accent-line);
+  }
+  .mj-tab-panel {
+    @apply mt-4 min-w-0;
+  }
+  /* Without a script the strip cannot switch, so it is not shown and every panel carries
+     the heading it would have had as a tab. */
+  .mj-tab-heading {
+    @apply mb-2 text-sm font-semibold;
+    color: var(--mj-fg);
+  }
+  [data-tabs-live] .mj-tab-heading {
+    @apply sr-only;
+  }
+
+  /* ------------------------------------------------------------------ the API */
+
+  .mj-method {
+    @apply inline-flex w-14 shrink-0 justify-center rounded px-1.5 py-0.5 font-mono text-xs font-bold uppercase;
+    color: var(--mj-tone-fg, var(--mj-body));
+    background: var(--mj-tone-bg, var(--mj-sunken));
+    border: 1px solid var(--mj-tone-line, var(--mj-line));
+  }
+  .mj-request {
+    @apply flex min-w-0 flex-wrap items-center gap-3 rounded-lg px-3 py-2;
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-request-path {
+    @apply min-w-0 flex-1 truncate font-mono text-sm;
+    color: var(--mj-fg);
+  }
+  /* An operation that opens to show what it takes and returns; a native disclosure. */
+  .mj-endpoint {
+    @apply rounded-lg;
+    background: var(--mj-raised);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-endpoint + .mj-endpoint {
+    @apply mt-2;
+  }
+  .mj-endpoint > summary {
+    @apply flex min-w-0 cursor-pointer list-none items-center gap-3 px-3 py-2;
+  }
+  .mj-endpoint > summary::-webkit-details-marker {
+    display: none;
+  }
+  /* The path is what the row is; the summary gives way to it. The summary's basis is
+     zero, so it only takes what the path leaves, and the path shrinks only when the row
+     cannot hold it at all. */
+  .mj-endpoint-path {
+    @apply min-w-0 truncate font-mono text-sm;
+    flex: 0 1 auto;
+    color: var(--mj-fg);
+  }
+  .mj-endpoint-summary {
+    @apply hidden min-w-0 truncate text-right text-xs md:block;
+    flex: 1 1 0%;
+    color: var(--mj-muted);
+  }
+  .mj-endpoint-body {
+    @apply px-3 pb-3 text-sm;
+    color: var(--mj-body);
+  }
+  .mj-chevron {
+    @apply shrink-0;
+    color: var(--mj-muted);
+    transition: transform var(--mj-motion-fast);
+  }
+  details[open] > summary .mj-chevron {
+    transform: rotate(180deg);
+  }
+
+  /* ---------------------------------------------------------------- dashboard */
+
+  /* A dashboard preview is a window: a bar with the three marks, then its content. */
+  .mj-window {
+    @apply min-w-0 overflow-hidden rounded-xl shadow-xl;
+    color: var(--mj-body);
+    background: var(--mj-bg);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-window-bar {
+    @apply flex items-center gap-1.5 px-4 py-2.5;
+    border-bottom: 1px solid var(--mj-line);
+  }
+  .mj-window-body {
+    @apply grid min-w-0 md:grid-cols-[13rem_minmax(0,1fr)];
+  }
+  .mj-window-side {
+    @apply hidden min-w-0 flex-col gap-3 p-3 md:flex;
+    border-right: 1px solid var(--mj-line);
+  }
+  .mj-window-main {
+    @apply min-w-0 p-4 sm:p-5;
+  }
+
+  /* A navigation list with the current entry marked. */
+  .mj-sidenav {
+    @apply m-0 grid list-none gap-0.5 p-0;
+  }
+  .mj-sidenav a {
+    @apply flex min-w-0 items-center gap-2 rounded-md px-2.5 py-1.5 text-sm no-underline;
+    color: var(--mj-body);
+  }
+  .mj-sidenav a:hover {
+    color: var(--mj-fg);
+    background: var(--mj-sunken);
+  }
+  .mj-sidenav a[aria-current] {
+    @apply font-medium;
+    color: var(--mj-accent-strong);
+    background: var(--mj-accent-soft);
+  }
+  .mj-sidenav--solid a[aria-current] {
+    color: var(--mj-on-accent);
+    background: var(--mj-accent-fill);
+  }
+  .mj-sidenav-group > summary {
+    @apply flex cursor-pointer list-none items-center justify-between gap-2 rounded-md px-2.5 py-1.5 text-sm;
+    color: var(--mj-body);
+  }
+  .mj-sidenav-group > summary::-webkit-details-marker {
+    display: none;
+  }
+  .mj-sidenav-group > .mj-sidenav {
+    @apply ms-4 mt-0.5 ps-2;
+    border-left: 1px solid var(--mj-line);
+  }
+
+  /* A search field: the icon, the input and the shortcut that opens it. */
+  .mj-search {
+    @apply flex min-w-0 items-center gap-2 rounded-lg px-3 py-2 text-sm;
+    color: var(--mj-muted);
+    background: var(--mj-sunken);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-search input {
+    @apply min-w-0 flex-1 border-0 bg-transparent p-0 text-sm focus:ring-0;
+    color: var(--mj-fg);
+  }
+  .mj-search kbd {
+    @apply rounded px-1 font-mono text-xs;
+    color: var(--mj-muted);
+    border: 1px solid var(--mj-line);
+  }
+
+  /* A count with what it counts, on its tone's glyph. */
+  /* As many columns as the container holds: a row of counts sits in a full-width band and
+     in a quarter-width panel of a pictured window alike. */
+  .mj-kpis {
+    @apply grid gap-3;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 9rem), 1fr));
+  }
+  .mj-kpi {
+    @apply flex min-w-0 items-center gap-3 rounded-lg p-3;
+    background: var(--mj-raised);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-kpi-label {
+    @apply block truncate text-xs;
+    color: var(--mj-muted);
+  }
+  .mj-kpi-value {
+    @apply block text-2xl font-semibold leading-tight;
+    color: var(--mj-fg);
+  }
+  .mj-kpi-source {
+    @apply block truncate font-mono text-xs;
+    color: var(--mj-muted);
+  }
+
+  /* A series drawn as a line with its area: the stroke and the fill are the tone's. */
+  .mj-chart {
+    @apply block h-24 w-full;
+  }
+  .mj-chart-line {
+    fill: none;
+    stroke: var(--mj-tone-fg, var(--mj-accent));
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+  }
+  .mj-chart-area {
+    fill: var(--mj-tone-bg, var(--mj-accent-soft));
+    stroke: none;
+  }
+  .mj-legend {
+    @apply m-0 grid list-none gap-1.5 p-0 text-xs;
+  }
+  .mj-legend-item {
+    @apply flex items-center justify-between gap-3;
+    color: var(--mj-body);
+  }
+  .mj-legend-item::before {
+    @apply h-2 w-2 shrink-0 rounded-full;
+    content: "";
+    background: var(--mj-tone-fill);
+  }
+  .mj-legend-name {
+    @apply min-w-0 flex-1;
+  }
+  .mj-legend-value {
+    @apply font-mono;
+    color: var(--mj-fg);
+  }
+
+  /* What happened, newest first: a glyph, a sentence, when, and the reference. */
+  .mj-feed {
+    @apply m-0 list-none p-0;
+  }
+  .mj-feed-item {
+    @apply flex min-w-0 items-center gap-3 py-2;
+  }
+  .mj-feed-item + .mj-feed-item {
+    border-top: 1px solid var(--mj-line);
+  }
+  .mj-feed-text {
+    @apply min-w-0 flex-1 truncate text-sm;
+    color: var(--mj-fg);
+  }
+  .mj-feed-when {
+    @apply hidden shrink-0 text-xs sm:block;
+    color: var(--mj-muted);
+  }
+  .mj-feed-ref {
+    @apply shrink-0 font-mono text-xs;
+    color: var(--mj-muted);
+  }
+
+  /* Actions a person can take from here, each a glyph and a word. */
+  .mj-actions {
+    @apply grid gap-2;
+    grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr));
+  }
+  .mj-action {
+    @apply flex min-w-0 flex-col items-center gap-2 rounded-lg p-3 text-center text-xs no-underline;
+    color: var(--mj-body);
+    background: var(--mj-raised);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-action:hover {
+    color: var(--mj-fg);
+    border-color: var(--mj-accent-line);
+  }
+
+  /* The health of named parts: the name, the state word and a measure. */
+  .mj-health {
+    @apply m-0 list-none p-0 text-sm;
+  }
+  .mj-health-item {
+    @apply flex min-w-0 items-center gap-3 py-1.5;
+  }
+  .mj-health-item + .mj-health-item {
+    border-top: 1px solid var(--mj-line);
+  }
+  .mj-health-name {
+    @apply flex min-w-0 flex-1 items-center gap-2 truncate;
+    color: var(--mj-fg);
+  }
+  .mj-health-measure {
+    @apply shrink-0 whitespace-nowrap text-right font-mono text-xs;
+    color: var(--mj-muted);
+  }
+  /* A state word with a dot before it, coloured by the status it is filed under. */
+  .mj-state {
+    @apply inline-flex shrink-0 items-center gap-1.5 text-xs;
+    color: var(--mj-status-fg, var(--mj-muted));
+  }
+  .mj-state::before {
+    @apply h-2 w-2 shrink-0 rounded-full;
+    content: "";
+    background: currentColor;
+  }
+
+  /* ---------------------------------------------------------- documentation */
+
+  .mj-trail {
+    @apply m-0 flex min-w-0 list-none flex-wrap items-center gap-x-2 gap-y-1 p-0 text-sm;
+    color: var(--mj-muted);
+  }
+  .mj-trail li + li::before {
+    @apply me-2;
+    content: "\203A";
+  }
+  .mj-trail a {
+    @apply no-underline;
+    color: var(--mj-body);
+  }
+  .mj-trail a:hover {
+    color: var(--mj-accent);
+  }
+  .mj-trail [aria-current] {
+    color: var(--mj-fg);
+  }
+
+  /* On this page: the headings of the page, the one being read marked by the script. */
+  .mj-toc {
+    @apply m-0 grid list-none gap-0.5 p-0 text-sm;
+  }
+  .mj-toc a {
+    @apply block rounded-md px-3 py-1 no-underline;
+    color: var(--mj-muted);
+    box-shadow: inset 2px 0 0 transparent;
+  }
+  .mj-toc a:hover {
+    color: var(--mj-fg);
+  }
+  .mj-toc a[aria-current="true"] {
+    color: var(--mj-accent-strong);
+    background: var(--mj-accent-soft);
+    box-shadow: inset 2px 0 0 var(--mj-accent);
+  }
+  .mj-toc-sub {
+    @apply ps-3;
+  }
+
+  /* --------------------------------------------------------------- diagrams */
+
+  /* A stack of layers under one heading: the model and the passes that build it. */
+  .mj-stack {
+    @apply relative mx-auto flex w-full max-w-sm flex-col items-stretch;
+  }
+  .mj-stack-cap {
+    @apply relative z-10 flex flex-col items-center rounded-2xl px-5 pb-5 pt-6 text-center shadow-sm;
+    background: var(--mj-raised);
+    border: 1px solid var(--mj-line);
+  }
+  .mj-stack-title {
+    @apply mt-3 text-lg font-semibold;
+    color: var(--mj-fg);
+  }
+  .mj-stack-text {
+    @apply mt-1 text-sm;
+    color: var(--mj-muted);
+  }
+  .mj-stack-layers {
+    @apply m-0 -mt-3 grid list-none gap-0 p-0 pt-3;
+  }
+  .mj-layer {
+    @apply relative -mt-1 rounded-2xl px-5 py-3 text-center;
+    background: var(--mj-tone-bg, var(--mj-sunken));
+    border: 1px solid var(--mj-tone-line, var(--mj-line));
+    box-shadow: 0 6px 12px -10px currentColor;
+  }
+  .mj-layer:first-child {
+    @apply mt-0;
+  }
+  .mj-layer-title {
+    @apply block text-sm font-semibold;
+    color: var(--mj-tone-fg, var(--mj-fg));
+  }
+  /* body, not muted: muted grey on a tone's pale ground measured 4.3:1 (axe, /kit/) */
+  .mj-layer-text {
+    @apply block text-xs;
+    color: var(--mj-body);
+  }
+  .mj-stack--mono .mj-layer-title {
+    @apply font-mono font-medium;
+  }
+
+  /* A fan: things on the left, a hub, things on the right, each joined to the hub by a
+     drawn curve. The curves are computed by the template from how many rows each side
+     has, so they need no script and no measurement; on a narrow screen the sides stack
+     and the curves give way to an arrow. */
+  .mj-fan {
+    @apply grid min-w-0 items-stretch gap-4;
+  }
+  .mj-fan--both {
+    @apply lg:grid-cols-[minmax(0,1fr)_4.5rem_minmax(0,20rem)_4.5rem_minmax(0,1fr)] lg:gap-0;
+  }
+  .mj-fan--in {
+    @apply lg:grid-cols-[minmax(0,1fr)_4.5rem_minmax(0,1fr)] lg:gap-0;
+  }
+  .mj-fan--out {
+    @apply lg:grid-cols-[minmax(0,1fr)_4.5rem_minmax(0,1.4fr)] lg:gap-0;
+  }
+  /* a hub that is the subject (a window, a terminal) takes the width; the sides annotate it */
+  .mj-fan--wide.mj-fan--both {
+    @apply lg:grid-cols-[minmax(0,13rem)_3.5rem_minmax(0,1fr)_3.5rem_minmax(0,13rem)] xl:grid-cols-[minmax(0,11rem)_3rem_minmax(0,1fr)_3rem_minmax(0,11rem)];
+  }
+  .mj-fan--wide.mj-fan--in {
+    @apply lg:grid-cols-[minmax(0,15rem)_3.5rem_minmax(0,1fr)];
+  }
+  .mj-fan--wide.mj-fan--out {
+    @apply lg:grid-cols-[minmax(0,1fr)_3.5rem_minmax(0,15rem)];
+  }
+  .mj-fan-side {
+    @apply grid min-w-0 auto-rows-fr gap-2;
+  }
+  .mj-fan-cell {
+    @apply flex min-w-0 flex-col justify-center;
+  }
+  .mj-fan-hub {
+    @apply flex min-w-0 flex-col justify-center;
+  }
+  .mj-fan-wire {
+    @apply hidden h-full w-full lg:block;
+    color: var(--mj-muted);
+  }
+  .mj-fan-wire path {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.25;
+    vector-effect: non-scaling-stroke;
+  }
+  .mj-fan-wire--dashed path {
+    stroke-dasharray: 4 4;
+  }
+  .mj-fan-step {
+    @apply flex justify-center text-lg lg:hidden;
+    color: var(--mj-muted);
+  }
+  /* The label that rides on a wire: what passes along it. */
+  .mj-fan-label {
+    @apply rounded px-1 py-0.5 text-center text-xs leading-tight;
+    color: var(--mj-accent);
+    background: var(--mj-raised);
+  }
+
+  /* A cycle of four: the stages on the compass points, the arcs between them drawn. */
+  .mj-cycle {
+    @apply relative mx-auto grid aspect-square w-full max-w-xs grid-cols-3 grid-rows-3 items-center justify-items-center text-center;
+  }
+  .mj-cycle-ring {
+    @apply absolute inset-[16%] h-[68%] w-[68%];
+  }
+  .mj-cycle-ring path {
+    fill: none;
+    stroke: var(--mj-tone-fg, var(--mj-accent));
+    stroke-width: 2;
+  }
+  .mj-cycle-ring marker path {
+    fill: var(--mj-tone-fg, var(--mj-accent));
+    stroke: none;
+  }
+  .mj-cycle-centre {
+    @apply col-start-2 row-start-2 flex flex-col items-center gap-1;
+  }
+  .mj-cycle-node {
+    @apply max-w-28 text-xs leading-snug;
+    color: var(--mj-body);
+  }
+  .mj-cycle-node--n { @apply col-start-2 row-start-1 self-start; }
+  .mj-cycle-node--e { @apply col-start-3 row-start-2 justify-self-end; }
+  .mj-cycle-node--s { @apply col-start-2 row-start-3 self-end; }
+  .mj-cycle-node--w { @apply col-start-1 row-start-2 justify-self-start; }
+}

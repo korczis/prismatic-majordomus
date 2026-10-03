@@ -1,0 +1,199 @@
+{#- The kit's page and content components: the hero, the doctrine quote, the section head,
+    panels and stages, and the lists a composed page is made of. See templates/kit/base.html
+    for the conventions. -#}
+
+{#- The top of a page: the kicker, a headline in two voices, the lead and the actions; what
+    stands beside it (a quote, a terminal, a row of claims) is the body. `title` is plain,
+    `accent` is the part in the accent; each may be a list of lines. `inline` puts a one-line
+    accent at the end of the last title line instead of on its own line. -#}
+{% component hero(kicker, title, accent="", lead="", actions=[], level="1", inline=false) %}
+<header class="mj-hero">
+  <div class="min-w-0">
+    {{ <kicker text={kicker} /> }}
+    <h{{ level }} class="mj-hero-title">
+      {%- set lines = [title] if title is string else title -%}
+      {%- for line in lines %}<span class="mj-hero-line">{{ line }}{% if inline and loop.last and accent %} <span class="mj-hero-accent">{{ accent }}</span>{% endif %}</span>{% endfor -%}
+      {%- if accent and not inline %}{% for line in ([accent] if accent is string else accent) %}<span class="mj-hero-line mj-hero-accent">{{ line }}</span>{% endfor %}{% endif -%}
+    </h{{ level }}>
+    {%- if lead %}<p class="mj-hero-lead">{{ lead }}</p>{% endif %}
+    {%- if actions | length > 0 %}
+    <div class="mj-hero-actions">
+      {%- for a in actions %}{{ <btn label={a.label} href={a.href} kind={a.kind or ""} icon={a.icon or ""} trail={a.trail or ""} cta={a.cta or ""} /> }}{% endfor %}
+    </div>
+    {%- endif %}
+  </div>
+  {%- if body | trim %}<div class="min-w-0">{{ body }}</div>{% endif %}
+</header>
+{%- endcomponent hero %}
+
+{#- A doctrine, quoted, with where it comes from. -#}
+{% component quote(text, by="", href="") %}
+<figure class="mj-quote">
+  <blockquote class="mj-quote-text m-0">&ldquo;{{ text }}&rdquo;</blockquote>
+  {%- if by %}<figcaption class="mj-quote-by">{% if href %}<a href="{{ href }}" class="hover:underline">{{ by }}</a>{% else %}{{ by }}{% endif %}</figcaption>{% endif %}
+</figure>
+{%- endcomponent quote %}
+
+{% component section(kicker="", title="", lead="", level="2") %}
+<div class="mj-section-head">
+  {%- if kicker %}{{ <kicker text={kicker} /> }}{% endif %}
+  {%- if title %}<h{{ level }} class="mj-section-title">{{ title }}</h{{ level }}>{% endif %}
+  {%- if lead %}<p class="mj-section-lead">{{ lead }}</p>{% endif %}
+</div>
+{%- endcomponent section %}
+
+{#- The container every block sits in. The head leads with a step number (`step`), else a
+    glyph (`icon`); `variant` is toned (the ground fades from the tone), quiet or flush; `cls`
+    adds the classes of the layout the panel sits in, such as `mj-stage`. -#}
+{% component panel(title="", sub="", icon="", tone="", step=0, variant="", cls="", level="2", id="") %}
+<section class="mj-panel{% if variant %} mj-panel--{{ variant }}{% endif %}{% if tone %} mj-tone--{{ tone }}{% endif %}{% if cls %} {{ cls }}{% endif %}"{% if id %} id="{{ id }}"{% endif %}>
+  {%- if title %}
+  <div class="mj-panel-head">
+    {%- if step %}{{ <step n={step} /> }}{% elif icon %}{{ <glyph icon={icon} /> }}{% endif %}
+    <div class="mj-panel-heading">
+      <h{{ level }} class="mj-panel-title">{{ title }}</h{{ level }}>
+      {%- if sub %}<p class="mj-panel-sub">{{ sub }}</p>{% endif %}
+    </div>
+  </div>
+  {%- endif %}
+  {{ body }}
+</section>
+{%- endcomponent panel %}
+
+{#- A row of stages. `count` sets the columns at wide widths; `linked` draws the arrow
+    between two stages. Each stage is a panel with cls="mj-stage". -#}
+{% component stages(count=4, linked=true) %}
+<div class="mj-stages mj-stages--{{ count }}{% if linked %} mj-stages--linked{% endif %}">{{ body }}</div>
+{%- endcomponent stages %}
+
+{#- A tree of paths with its guide lines. An item is `name` (a trailing slash makes it a
+    folder), `note`, an optional `icon`, and optional `children` of the same shape. -#}
+{% component tree(items, root="", root_icon="branch") %}
+<div class="min-w-0">
+  {%- if root %}<p class="mj-tree-root">{{ <icon name={root_icon} size="sm" /> }}<span>{{ root }}</span></p>{% endif %}
+  <ul class="mj-tree">
+    {%- for i in items %}
+    <li class="mj-tree-item">
+      <span class="mj-tree-icon">{{ <icon name={i.icon or ("folder" if i.name[-1:] == "/" else "file")} /> }}</span>
+      <span class="mj-tree-text"><span class="mj-tree-name">{{ i.name }}</span>{% if i.note %}<span class="mj-tree-note">{{ i.note }}</span>{% endif %}
+      {%- if i.children %}
+      <ul class="mj-tree mj-tree-sub">
+        {%- for c in i.children %}<li class="mj-tree-item"><span class="mj-tree-icon">{{ <icon name={c.icon or ("folder" if c.name[-1:] == "/" else "file")} size="sm" /> }}</span><span class="mj-tree-text"><span class="mj-tree-name">{{ c.name }}</span>{% if c.note %}<span class="mj-tree-note">{{ c.note }}</span>{% endif %}</span></li>{% endfor %}
+      </ul>
+      {%- endif %}</span>
+    </li>
+    {%- endfor %}
+  </ul>
+</div>
+{%- endcomponent tree %}
+
+{#- Points: an icon in its tone, a title and a line each. `variant` is ruled (divided),
+    cards (each on its own card) or nothing. `glyphs` puts each icon on its ground. -#}
+{% component points(items, variant="ruled", glyphs=false) %}
+<ul class="mj-points{% if variant %} mj-points--{{ variant }}{% endif %}">
+  {%- for p in items %}
+  <li class="mj-point">
+    {%- if p.icon %}{% if glyphs %}{{ <glyph icon={p.icon} tone={p.tone or ""} size="sm" icon_size="sm" /> }}{% else %}<span class="mj-ink{% if p.tone %} mj-tone--{{ p.tone }}{% endif %}">{{ <icon name={p.icon} size="lg" /> }}</span>{% endif %}{% endif %}
+    <span class="min-w-0">
+      {%- if p.href %}<a href="{{ p.href }}" class="mj-point-title hover:underline">{{ p.title }}</a>{% else %}<span class="mj-point-title">{{ p.title }}</span>{% endif %}
+      {%- if p.text %}<span class="mj-point-text">{{ p.text }}</span>{% endif %}
+    </span>
+  </li>
+  {%- endfor %}
+</ul>
+{%- endcomponent points %}
+
+{#- One interface as a row: glyph, name, where it lives. -#}
+{% component route(name, path="", icon="", tone="", href="") %}
+{%- if href %}<a href="{{ href }}" class="mj-route no-underline hover:shadow-xs">{% else %}<div class="mj-route">{% endif %}
+  {%- if icon %}{{ <glyph icon={icon} tone={tone} size="sm" icon_size="sm" /> }}{% endif %}
+  <span class="min-w-0"><span class="mj-route-name">{{ name }}</span>{% if path %}<span class="mj-route-path" title="{{ path }}">{{ path }}</span>{% endif %}</span>
+{%- if href %}</a>{% else %}</div>{% endif %}
+{%- endcomponent route %}
+
+{#- Interfaces as rows; `described` sets what each is for beside it, after an arrow in its
+    tone. An item is `name`, `path`, `icon`, `tone`, `href`, and `for` and `for_text`. -#}
+{% component routes(items, described=false) %}
+<ul class="m-0 grid list-none grid-cols-[minmax(0,1fr)] gap-2 p-0">
+  {%- for r in items %}
+  <li class="{% if described %}grid items-stretch gap-2 sm:grid-cols-[minmax(0,1fr)_1.5rem_minmax(0,1fr)]{% endif %}">
+    {{ <route name={r.name} path={r.path or ""} icon={r.icon or ""} tone={r.tone or ""} href={r.href or ""} /> }}
+    {%- if described %}
+    <span class="mj-ink hidden items-center justify-center sm:flex{% if r.tone %} mj-tone--{{ r.tone }}{% endif %}">{{ <icon name="arrow-right" size="sm" /> }}</span>
+    <span class="mj-route-for"><span class="mj-route-for-title">{{ r.for }}</span>{% if r.for_text %}<span class="mj-route-for-text">{{ r.for_text }}</span>{% endif %}</span>
+    {%- endif %}
+  </li>
+  {%- endfor %}
+</ul>
+{%- endcomponent routes %}
+
+{#- A card that is one link. `compact` is the dense row of a command index. -#}
+{% component tile(title, href, text="", icon="", tone="", compact=false) %}
+<a href="{{ href }}" class="mj-tile{% if compact %} mj-tile--compact{% endif %}">
+  {%- if icon %}{{ <glyph icon={icon} tone={tone} size={"sm" if compact else ""} icon_size={"sm" if compact else ""} /> }}{% endif %}
+  <span class="mj-tile-body"><span class="mj-tile-title">{{ title }}</span>{% if text %}<span class="mj-tile-text">{{ text }}</span>{% endif %}</span>
+  <span class="mj-tile-go">{{ <icon name="chevron-right" size="sm" /> }}</span>
+</a>
+{%- endcomponent tile %}
+
+{#- Tiles in a grid that fits as many columns as its container holds. -#}
+{% component tiles(items, compact=false) %}
+<div class="mj-tiles{% if compact %} mj-tiles--compact{% endif %}">
+  {%- for t in items %}{{ <tile title={t.title} href={t.href} text={t.text or ""} icon={t.icon or ""} tone={t.tone or ""} compact={compact} /> }}{% endfor %}
+</div>
+{%- endcomponent tiles %}
+
+{#- Links with a chevron each. -#}
+{% component links(items) %}
+<ul class="mj-links">
+  {%- for l in items %}<li><a href="{{ l.href }}"><span>{{ l.title }}</span>{{ <icon name="chevron-right" size="sm" /> }}</a></li>{% endfor %}
+</ul>
+{%- endcomponent links %}
+
+{#- The band of short claims under a page. -#}
+{% component strip(items) %}
+<ul class="mj-strip mj-strip--{{ items | length }} m-0 list-none px-0">
+  {%- for s in items %}
+  <li class="mj-strip-item">
+    <span class="mj-ink{% if s.tone %} mj-tone--{{ s.tone }}{% endif %}">{{ <icon name={s.icon} size="xl" /> }}</span>
+    <span class="min-w-0"><span class="mj-point-title">{{ s.title }}</span>{% if s.text %}<span class="mj-point-text">{{ s.text }}</span>{% endif %}</span>
+  </li>
+  {%- endfor %}
+</ul>
+{%- endcomponent strip %}
+
+{#- A measured figure: the value, what it measures and where the number came from. `share`
+    (0 to 100) adds a meter; a figure with no source is not rendered by a page that cares. -#}
+{% component figure(value, label, source="", share=-1, icon="", tone="blue") %}
+<div class="flex min-w-0 items-start gap-3">
+  {%- if icon %}{{ <glyph icon={icon} tone={tone} round={true} /> }}{% endif %}
+  <div class="min-w-0 flex-1">
+    <span class="mj-figure-value">{{ value }}</span>
+    <span class="mj-figure-label">{{ label }}</span>
+    {#- drawn, not styled: the site's policy refuses a style attribute, and a width is a length -#}
+    {%- if share >= 0 %}<svg class="mj-meter mj-tone--{{ tone }}" viewBox="0 0 100 4" preserveAspectRatio="none" role="img" aria-label="{{ share }} percent"><rect class="mj-meter-fill" width="{{ share }}" height="4" rx="2"/></svg>{% endif %}
+    {%- if source %}<span class="mj-figure-source">{{ source }}</span>{% endif %}
+  </div>
+</div>
+{%- endcomponent figure %}
+
+{#- Claims stood on round glyphs, in a row: an item is `icon`, `tone`, `title` and `text`. -#}
+{% component claims(items) %}
+<ul class="mj-claims">
+  {%- for c in items %}<li class="mj-claim">{{ <glyph icon={c.icon} tone={c.tone or ""} size="lg" icon_size="lg" round={true} /> }}<span class="mj-point-title">{{ c.title }}</span>{% if c.text %}<span class="mj-point-text">{{ c.text }}</span>{% endif %}</li>{% endfor %}
+</ul>
+{%- endcomponent claims %}
+
+{#- A table of rows: `columns` is a list of `key`, `title` and optional `mono`; a row is a map
+    by those keys, and a row that carries `href` links its first cell. -#}
+{% component table(columns, rows, caption="") %}
+<div class="mj-table-wrap overflow-x-auto" tabindex="0">
+  <table class="mj-table">
+    {%- if caption %}<caption class="mj-note text-left">{{ caption }}</caption>{% endif %}
+    <thead><tr>{% for c in columns %}<th scope="col">{{ c.title }}</th>{% endfor %}</tr></thead>
+    <tbody>
+      {%- for r in rows %}<tr>{% for c in columns %}<td{% if c.mono %} class="mj-mono"{% endif %}>{% if loop.first and r.href %}<a href="{{ r.href }}" class="mj-link">{{ r[c.key] }}</a>{% else %}{{ r[c.key] or "" }}{% endif %}</td>{% endfor %}</tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{%- endcomponent table %}
