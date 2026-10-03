@@ -470,6 +470,18 @@ pub struct ResolvedRefs {
 // ---------------------------------------------------------------- domains
 
 /// A domain as a feature points at it: enough for a breadcrumb.
+///
+/// ```
+/// use majordomus_cli::product::DomainRef;
+/// let crumb = DomainRef {
+///     id: "context".into(),
+///     title: "Context".into(),
+///     route: "/domains/context/".into(),
+/// };
+/// let v = serde_json::to_value(&crumb).unwrap();
+/// assert_eq!(v["route"], "/domains/context/");
+/// assert_eq!(serde_json::from_value::<DomainRef>(v).unwrap(), crumb);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct DomainRef {
     /// The domain id.
@@ -482,6 +494,22 @@ pub struct DomainRef {
 
 /// One product domain, as its file declares it plus where it came from and where it is
 /// published. A domain never lists its features; [`ResolvedDomain`] derives them.
+///
+/// The front matter is read as it stands; the route, the source and the body are filled in by
+/// the model, so a record read alone carries none of them.
+///
+/// ```
+/// use majordomus_cli::product::Domain;
+/// let d: Domain = serde_json::from_value(serde_json::json!({
+///     "id": "context", "title": "Context", "status": "stable", "weight": 10,
+///     "headline": "Every worker starts from what the repository knows.",
+///     "problem": "Agents forget.",
+/// }))
+/// .unwrap();
+/// assert_eq!(d.weight, 10);
+/// assert!(d.route.is_empty(), "the route is derived by the model, never read");
+/// assert!(d.tags.is_empty());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Domain {
     /// The identity, the slug and the file name.
@@ -520,6 +548,25 @@ impl crate::order::Ordered for Domain {
 }
 
 /// One stable feature of a domain, as a card shows it.
+///
+/// ```
+/// use majordomus_cli::product::{DomainMember, Surfaces};
+/// let m = DomainMember {
+///     id: "finish-contract".into(),
+///     label: "Finish contract".into(),
+///     title: "Done is a contract".into(),
+///     headline: "A worker does not define its own completion.".into(),
+///     route: "/features/finish-contract/".into(),
+///     featured: true,
+///     surfaces: Surfaces::default(),
+///     claims: 3,
+///     tested: 2,
+///     use_cases: 1,
+/// };
+/// let v = serde_json::to_value(&m).unwrap();
+/// assert_eq!(v["tested"], 2);
+/// assert_eq!(v["surfaces"]["cli"], false);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct DomainMember {
     /// The feature id.
@@ -545,6 +592,16 @@ pub struct DomainMember {
 }
 
 /// How much stands behind a domain: sums and distinct counts over its stable features.
+///
+/// ```
+/// use majordomus_cli::product::DomainCounts;
+/// let empty = DomainCounts::default();
+/// assert_eq!(empty.features, 0);
+/// let v = serde_json::to_value(&empty).unwrap();
+/// for key in ["features", "claims", "tested", "use_cases", "rules", "enforced_rules", "capabilities", "moments"] {
+///     assert_eq!(v[key], 0, "{key} is published, and zero for a domain nothing names");
+/// }
+/// ```
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct DomainCounts {
     /// Stable features filed under it.
@@ -569,6 +626,31 @@ pub struct DomainCounts {
 
 /// One domain, resolved: the record as its file declares it, and everything derived from
 /// the stable features that name it.
+///
+/// The declared record is flattened, so a reader sees one object: the domain's own fields
+/// beside its derived members and counts.
+///
+/// ```
+/// use majordomus_cli::product::{Domain, DomainCounts, FeatureEvidence, ResolvedDomain, Surfaces};
+/// let domain: Domain = serde_json::from_value(serde_json::json!({
+///     "id": "context", "title": "Context", "status": "stable",
+///     "headline": "h", "problem": "p",
+/// }))
+/// .unwrap();
+/// let resolved = ResolvedDomain {
+///     domain,
+///     features: vec![],
+///     surfaces: Surfaces::default(),
+///     moments: vec![],
+///     claim_refs: vec![],
+///     use_case_refs: vec![],
+///     counts: DomainCounts::default(),
+///     evidence: FeatureEvidence::default(),
+/// };
+/// let v = serde_json::to_value(&resolved).unwrap();
+/// assert_eq!(v["id"], "context", "the record is flattened into the resolved view");
+/// assert_eq!(v["counts"]["features"], 0);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ResolvedDomain {
     /// The record as its file declares it, plus its route and source.
@@ -1245,11 +1327,24 @@ impl ProductModel {
     pub fn domains(&self) -> &[ResolvedDomain] {
         &self.domains
     }
-    /// One domain by id.
+    /// One domain by its id, whatever its status, or `None` when the layer declares no domain
+    /// of that id.
+    ///
+    /// ```
+    /// use majordomus_cli::product::ProductModel;
+    /// let empty = ProductModel::default();
+    /// assert!(empty.domain("context").is_none());
+    /// ```
     pub fn domain(&self, id: &str) -> Option<&ResolvedDomain> {
         self.domain_by_id.get(id).map(|i| &self.domains[*i])
     }
-    /// The stable domains, in presentation order.
+    /// The stable domains, in presentation order: the set every public surface shows, before
+    /// it drops a domain no stable feature names.
+    ///
+    /// ```
+    /// use majordomus_cli::product::ProductModel;
+    /// assert!(ProductModel::default().public_domains().is_empty());
+    /// ```
     pub fn public_domains(&self) -> Vec<&ResolvedDomain> {
         self.domains
             .iter()

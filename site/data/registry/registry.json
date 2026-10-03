@@ -6,7 +6,7 @@
     "version": "0.12.0"
   },
   "registry": {
-    "fingerprint": "1a19ed402a4e824db5219448a278cca3be37df65d039c3be701fbcf6b4f11c71",
+    "fingerprint": "c4b768ae7471eeb219a80642c4f0e2881ab579f3b00ac2ed2693955590142476",
     "summary": {
       "total": 1847,
       "builtin": 167,
@@ -41493,7 +41493,7 @@
                   "counts",
                   "evidence"
                 ],
-                "description": "One domain, resolved: the record as its file declares it, and everything derived from\nthe stable features that name it."
+                "description": "One domain, resolved: the record as its file declares it, and everything derived from\nthe stable features that name it.\n\nThe declared record is flattened, so a reader sees one object: the domain's own fields\nbeside its derived members and counts.\n\n```\nuse majordomus_cli::product::{Domain, DomainCounts, FeatureEvidence, ResolvedDomain, Surfaces};\nlet domain: Domain = serde_json::from_value(serde_json::json!({\n    \"id\": \"context\", \"title\": \"Context\", \"status\": \"stable\",\n    \"headline\": \"h\", \"problem\": \"p\",\n}))\n.unwrap();\nlet resolved = ResolvedDomain {\n    domain,\n    features: vec![],\n    surfaces: Surfaces::default(),\n    moments: vec![],\n    claim_refs: vec![],\n    use_case_refs: vec![],\n    counts: DomainCounts::default(),\n    evidence: FeatureEvidence::default(),\n};\nlet v = serde_json::to_value(&resolved).unwrap();\nassert_eq!(v[\"id\"], \"context\", \"the record is flattened into the resolved view\");\nassert_eq!(v[\"counts\"][\"features\"], 0);\n```"
               },
               "DomainMember": {
                 "type": "object",
@@ -41557,7 +41557,7 @@
                   "tested",
                   "use_cases"
                 ],
-                "description": "One stable feature of a domain, as a card shows it."
+                "description": "One stable feature of a domain, as a card shows it.\n\n```\nuse majordomus_cli::product::{DomainMember, Surfaces};\nlet m = DomainMember {\n    id: \"finish-contract\".into(),\n    label: \"Finish contract\".into(),\n    title: \"Done is a contract\".into(),\n    headline: \"A worker does not define its own completion.\".into(),\n    route: \"/features/finish-contract/\".into(),\n    featured: true,\n    surfaces: Surfaces::default(),\n    claims: 3,\n    tested: 2,\n    use_cases: 1,\n};\nlet v = serde_json::to_value(&m).unwrap();\nassert_eq!(v[\"tested\"], 2);\nassert_eq!(v[\"surfaces\"][\"cli\"], false);\n```"
               },
               "Surfaces": {
                 "type": "object",
@@ -41737,7 +41737,7 @@
                   "capabilities",
                   "moments"
                 ],
-                "description": "How much stands behind a domain: sums and distinct counts over its stable features."
+                "description": "How much stands behind a domain: sums and distinct counts over its stable features.\n\n```\nuse majordomus_cli::product::DomainCounts;\nlet empty = DomainCounts::default();\nassert_eq!(empty.features, 0);\nlet v = serde_json::to_value(&empty).unwrap();\nfor key in [\"features\", \"claims\", \"tested\", \"use_cases\", \"rules\", \"enforced_rules\", \"capabilities\", \"moments\"] {\n    assert_eq!(v[key], 0, \"{key} is published, and zero for a domain nothing names\");\n}\n```"
               },
               "FeatureEvidence": {
                 "type": "object",
@@ -42706,7 +42706,7 @@
                   "title",
                   "route"
                 ],
-                "description": "A domain as a feature points at it: enough for a breadcrumb."
+                "description": "A domain as a feature points at it: enough for a breadcrumb.\n\n```\nuse majordomus_cli::product::DomainRef;\nlet crumb = DomainRef {\n    id: \"context\".into(),\n    title: \"Context\".into(),\n    route: \"/domains/context/\".into(),\n};\nlet v = serde_json::to_value(&crumb).unwrap();\nassert_eq!(v[\"route\"], \"/domains/context/\");\nassert_eq!(serde_json::from_value::<DomainRef>(v).unwrap(), crumb);\n```"
               }
             }
           }
@@ -64291,7 +64291,7 @@
     ]
   },
   "index": {
-    "fingerprint": "f2188b8d16481d87b80769654930cd72c34b31243732220ce00514d74536005f",
+    "fingerprint": "9d627058c818ced6d890f9830e0e317a9b4f2ab3e958b885168e1cbd9e376fc5",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {

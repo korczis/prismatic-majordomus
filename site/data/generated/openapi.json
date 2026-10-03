@@ -12939,7 +12939,7 @@
       "variants": []
     },
     {
-      "description": "How much stands behind a domain: sums and distinct counts over its stable features.",
+      "description": "How much stands behind a domain: sums and distinct counts over its stable features.\n\n```\nuse majordomus_cli::product::DomainCounts;\nlet empty = DomainCounts::default();\nassert_eq!(empty.features, 0);\nlet v = serde_json::to_value(&empty).unwrap();\nfor key in [\"features\", \"claims\", \"tested\", \"use_cases\", \"rules\", \"enforced_rules\", \"capabilities\", \"moments\"] {\n    assert_eq!(v[key], 0, \"{key} is published, and zero for a domain nothing names\");\n}\n```",
       "home": "product",
       "is_enum": false,
       "name": "DomainCounts",
@@ -13055,7 +13055,7 @@
       "variants": []
     },
     {
-      "description": "One stable feature of a domain, as a card shows it.",
+      "description": "One stable feature of a domain, as a card shows it.\n\n```\nuse majordomus_cli::product::{DomainMember, Surfaces};\nlet m = DomainMember {\n    id: \"finish-contract\".into(),\n    label: \"Finish contract\".into(),\n    title: \"Done is a contract\".into(),\n    headline: \"A worker does not define its own completion.\".into(),\n    route: \"/features/finish-contract/\".into(),\n    featured: true,\n    surfaces: Surfaces::default(),\n    claims: 3,\n    tested: 2,\n    use_cases: 1,\n};\nlet v = serde_json::to_value(&m).unwrap();\nassert_eq!(v[\"tested\"], 2);\nassert_eq!(v[\"surfaces\"][\"cli\"], false);\n```",
       "home": "product",
       "is_enum": false,
       "name": "DomainMember",
@@ -13142,7 +13142,7 @@
       "variants": []
     },
     {
-      "description": "A domain as a feature points at it: enough for a breadcrumb.",
+      "description": "A domain as a feature points at it: enough for a breadcrumb.\n\n```\nuse majordomus_cli::product::DomainRef;\nlet crumb = DomainRef {\n    id: \"context\".into(),\n    title: \"Context\".into(),\n    route: \"/domains/context/\".into(),\n};\nlet v = serde_json::to_value(&crumb).unwrap();\nassert_eq!(v[\"route\"], \"/domains/context/\");\nassert_eq!(serde_json::from_value::<DomainRef>(v).unwrap(), crumb);\n```",
       "home": "product",
       "is_enum": false,
       "name": "DomainRef",
@@ -36756,7 +36756,7 @@
       "variants": []
     },
     {
-      "description": "One domain, resolved: the record as its file declares it, and everything derived from\nthe stable features that name it.",
+      "description": "One domain, resolved: the record as its file declares it, and everything derived from\nthe stable features that name it.\n\nThe declared record is flattened, so a reader sees one object: the domain's own fields\nbeside its derived members and counts.\n\n```\nuse majordomus_cli::product::{Domain, DomainCounts, FeatureEvidence, ResolvedDomain, Surfaces};\nlet domain: Domain = serde_json::from_value(serde_json::json!({\n    \"id\": \"context\", \"title\": \"Context\", \"status\": \"stable\",\n    \"headline\": \"h\", \"problem\": \"p\",\n}))\n.unwrap();\nlet resolved = ResolvedDomain {\n    domain,\n    features: vec![],\n    surfaces: Surfaces::default(),\n    moments: vec![],\n    claim_refs: vec![],\n    use_case_refs: vec![],\n    counts: DomainCounts::default(),\n    evidence: FeatureEvidence::default(),\n};\nlet v = serde_json::to_value(&resolved).unwrap();\nassert_eq!(v[\"id\"], \"context\", \"the record is flattened into the resolved view\");\nassert_eq!(v[\"counts\"][\"features\"], 0);\n```",
       "home": "product",
       "is_enum": false,
       "name": "ResolvedDomain",
