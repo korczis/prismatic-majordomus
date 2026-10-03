@@ -174,8 +174,11 @@ else bad product "site/data/registry/product.json missing (regenerate: majordomu
 TD="$SITE/data/generated/terminal.json"
 if [ -f "$TD" ]; then
   term_bad=0
-  # Zola writes an apostrophe as &#39;, and a recorded command now quotes its arguments with one
-  HOME_HTML="$(sed 's/&quot;/"/g; s/&#x27;/'"'"'/g; s/&#39;/'"'"'/g; s/&lt;/</g; s/&gt;/>/g; s/&amp;/\&/g' "$PUB/index.html")"
+  # Zola writes an apostrophe as &#39;, and a recorded command now quotes its arguments with one.
+  # The text is read with its tags removed: the terminal draws the prompt outside the command
+  # it copies (partials/terminal-run.html), so "$ <command>" is what a reader sees, not a
+  # byte sequence of the markup.
+  HOME_HTML="$(sed 's/<[^>]*>//g; s/&quot;/"/g; s/&#x27;/'"'"'/g; s/&#39;/'"'"'/g; s/&lt;/</g; s/&gt;/>/g; s/&amp;/\&/g' "$PUB/index.html")"
   n=0
   while IFS="$MJ_TAB" read -r cmd first; do
     n=$((n + 1))
@@ -353,6 +356,34 @@ if [ -f "$design" ]; then
   grep -q -- "--mj-design:\"$fp\"" "$SITE/static/app.css" && ok design "app.css carries --mj-design $fp" || bad design "app.css does not carry --mj-design \"$fp\"; rebuild the CSS"
 else
   bad design "site/data/registry/design.json missing; run majordomus generate design"
+fi
+# 7c. one status vocabulary per axis. A badge drawn by partials/status-badge.html names its
+# kind: a claim's declared status is one docs/CLAIMS.yaml declares, a feature's one feature/v1
+# allows, and a proof badge says exactly the state `majordomus evidence show` derived for its
+# claim, or unknown where none was. The challenge states how often its run refused only as the
+# recorded run counts it. scripts/lib/status-vocabulary.awk judges both; each vocabulary is
+# read from its declaration here, and none is listed.
+SV_AWK="$ROOT/scripts/lib/status-vocabulary.awk"; SV_VOCAB="$(mktemp "${TMPDIR:-/tmp}/mj.sv.XXXXXX")"
+{ jq -r '.status_order[] | "claim\t\(.)"' "$SITE/data/generated/capabilities.json"
+  jq -r '.properties.status.enum[] | "feature\t\(.)"' "$ROOT/share/schemas/majordomus/feature/feature.v1.schema.json"
+  jq -r 'if .evidence.available then .evidence.claims | to_entries[] | "proof\t\(.key)\t\(.value.state)" else empty end' "$SITE/data/registry/product.json"
+} > "$SV_VOCAB" || bad vocabulary "a status vocabulary could not be read from its declaration"
+sv_out="$(awk -v mode=badges -v vocab="$SV_VOCAB" -f "$SV_AWK" $pages)"; rm -f "$SV_VOCAB"
+# findings print as this file's own lines and are counted here, not in a pipeline's subshell
+sv_report() { # <check> <awk output>: prints the findings, returns how many there were
+  printf '%s\n' "$2" | awk -F'\t' -v c="$1" -v pub="$PUB" '$1 == "FAIL" { f = $2; sub("^" pub, "", f); printf "FAIL %-12s %s: %s\n", c, f, $3; n++ } END { exit n > 255 ? 255 : n }'
+}
+sv_n="$(printf '%s\n' "$sv_out" | awk -F'\t' '$1 == "COUNT" { print $2 }')"
+sv_bad=0; sv_report vocabulary "$sv_out" || sv_bad=$?
+if [ "$sv_bad" -gt 0 ]; then fails=$((fails + sv_bad))
+elif [ "${sv_n:-0}" -gt 0 ]; then ok vocabulary "$sv_n status badge(s), each in the vocabulary of its kind: declared claim, feature, recorded evidence"
+else bad vocabulary "no page renders a status badge of a declared kind; a check over nothing has not passed"; fi
+if [ -f "$PUB/challenge/index.html" ] && [ -f "$SITE/data/generated/challenge.json" ]; then
+  sv_want="$(jq -r '.counts.refusals' "$SITE/data/generated/challenge.json")"
+  sv_out="$(awk -v mode=refusals -v want="$sv_want" -f "$SV_AWK" "$PUB/challenge/index.html")"
+  sv_bad=0; sv_report refusals "$sv_out" || sv_bad=$?
+  if [ "$sv_bad" -gt 0 ]; then fails=$((fails + sv_bad))
+  else ok refusals "/challenge/ states no refusal count but the recorded run's ($sv_want)"; fi
 fi
 # 8. no external runtime dependency: every script/stylesheet is served from this site's own origin
 BASE_URL="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$##')"

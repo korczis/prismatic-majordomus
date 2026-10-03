@@ -6,23 +6,23 @@
     "version": "0.12.0"
   },
   "registry": {
-    "fingerprint": "7c3f1c124379ae3ce8657678cb50be0d60feb1ceb0f08b5a0f11a02d6a790b84",
+    "fingerprint": "a11e29575296cd4c229c789754ca219280173f9cc4a456a9885aaf913e281916",
     "summary": {
-      "total": 1835,
+      "total": 1836,
       "builtin": 166,
-      "declarative": 1669,
+      "declarative": 1670,
       "by_kind": {
         "command": 22,
         "query": 144,
-        "resource": 1669
+        "resource": 1670
       },
       "by_stability": {
         "behaviorally_verified": 124,
         "experimental": 34,
-        "implemented": 1677
+        "implemented": 1678
       },
       "mcp_tools": 160,
-      "mcp_resources": 1721,
+      "mcp_resources": 1722,
       "http_routes": 164,
       "cli_commands": 85,
       "modules": 80,
@@ -63646,7 +63646,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 336,
+        "capabilities": 337,
         "capability_ids": []
       },
       {
@@ -63736,7 +63736,7 @@
     ]
   },
   "index": {
-    "fingerprint": "5b7691a17ec3d5f7b2211bbfd52afe192e6c372fc2a8744367f722b5fe349f59",
+    "fingerprint": "aba75f16686453dd2d4c6b3f2399f8a2f2f1ab41afb5f15d6f398a04d3b0f064",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -63786,7 +63786,7 @@
       "session": 22,
       "skill": 6,
       "taxonomy": 10,
-      "test": 336,
+      "test": 337,
       "use-case": 48,
       "workspace": 1
     },
@@ -65372,7 +65372,7 @@
         "kind": "claim",
         "identity": "a-finding-names-how-to-see-it-again",
         "title": "Every finding a command reports names the command that reproduces it",
-        "description": "`mj_finding` takes the reproduce command as its fifth argument and prints the finding without it when it is absent, so a caller that forgot one produced a finding that read exactly like a finding that could not have one. The gate counts the arguments of every call to the reporting helpers, treating a forwarding call as the caller''s business and reporting a call it cannot parse as unreadable rather than passing it silently. It landed with an empty baseline: the nine violations it found were fixed rather than recorded.",
+        "description": "`mj_finding` takes the reproduce command as its fifth argument and prints the finding without it when it is absent, so a caller that forgot one produced a finding that read exactly like a finding that could not have one. The gate counts the arguments of every call to the reporting helpers, treating a forwarding call as the caller's business and reporting a call it cannot parse as unreadable rather than passing it silently. It landed with an empty baseline: the nine violations it found were fixed rather than recorded.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
         "bytes": 167626
@@ -66007,7 +66007,7 @@
         "kind": "claim",
         "identity": "evidence-currency-is-not-collapsed",
         "title": "A run recorded against this commit and a run whose inputs merely have not changed since are reported as different states, never as one",
-        "description": "`proven` means the diff between the execution''s own commit and the working tree is empty, excluding the ledger''s own row — the tree in front of you is the tree the run measured. `inputs_unchanged` is a passing run where nothing the claim names differs from the working tree — the absence of a known invalidation, not proof at HEAD, because a change the claim does not name could have broken it. Collapsing the two is how a badge stops meaning anything, so the states are distinct in the model, in every projection and in the gate.",
+        "description": "`proven` means the diff between the execution's own commit and the working tree is empty, excluding the ledger's own row — the tree in front of you is the tree the run measured. `inputs_unchanged` is a passing run where nothing the claim names differs from the working tree — the absence of a known invalidation, not proof at HEAD, because a change the claim does not name could have broken it. Collapsing the two is how a badge stops meaning anything, so the states are distinct in the model, in every projection and in the gate.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
         "bytes": 167626
@@ -66077,7 +66077,7 @@
         "kind": "claim",
         "identity": "evidence-subject-commands-agree-with-the-command-pages",
         "title": "The behavioural and negative tests the subject index names for a command are exactly the ones its command page lists, both read from the first coverage and negative header of each case",
-        "description": "The case headers had several readers before the index: the site generator''s command pages, the command-coverage doctrine, the command-furnished gate and the use-case impact trace, and the last two match a command anywhere in any covers line between word boundaries rather than as a word of the first. The index reads the first line word for word, as the page does. The case holds the two equal, holds every case to one header of each kind, and holds each covers line to naming the same public commands under both readings, so the readers cannot yet disagree; the gate slice moves them onto the index. Two more shell derivations reach tests through declarations rather than headers: the capability pages give every capability the claims implemented in its module''s file, and the doctrine pages name the first test of each rule. The same case holds each of them equal to the index.",
+        "description": "The case headers had several readers before the index: the site generator's command pages, the command-coverage doctrine, the command-furnished gate and the use-case impact trace, and the last two match a command anywhere in any covers line between word boundaries rather than as a word of the first. The index reads the first line word for word, as the page does. The case holds the two equal, holds every case to one header of each kind, and holds each covers line to naming the same public commands under both readings, so the readers cannot yet disagree; the gate slice moves them onto the index. Two more shell derivations reach tests through declarations rather than headers: the capability pages give every capability the claims implemented in its module's file, and the doctrine pages name the first test of each rule. The same case holds each of them equal to the index.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
         "bytes": 167626
@@ -67085,7 +67085,7 @@
         "kind": "claim",
         "identity": "rule-state-is-derived-from-what-ran",
         "title": "A rule's proof state is derived from the tree and the ledger together, and a mechanism that refuses violations is never reported as a run that passed",
-        "description": "`majordomus doctrine` asks whether the repository satisfies a rule now; the proof graph asks whether the rule is in a state where it could be satisfied at all. Ten states, and the ones that must not collapse are `proven` (a passing run and nothing changed since), `gated` (an executable check a CI gate runs, with no verdict recorded here) and `reviewed` (a declared exemption). A rule''s state is the weakest of its parts, so one dangling case makes the rule dangling however many others pass.",
+        "description": "`majordomus doctrine` asks whether the repository satisfies a rule now; the proof graph asks whether the rule is in a state where it could be satisfied at all. Ten states, and the ones that must not collapse are `proven` (a passing run and nothing changed since), `gated` (an executable check a CI gate runs, with no verdict recorded here) and `reviewed` (a declared exemption). A rule's state is the weakest of its parts, so one dangling case makes the rule dangling however many others pass.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
         "bytes": 167626
@@ -68432,7 +68432,7 @@
         "title": "Prismatic Majordomus",
         "path": "README.md",
         "source_class": "readme",
-        "bytes": 36604
+        "bytes": 36845
       },
       {
         "uri": "majordomus://document/SECURITY.md",
@@ -71360,7 +71360,7 @@
         "path": ".ai/repo/features/provenance.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2493,
+        "bytes": 2514,
         "tags": [
           "audit",
           "ledger",
@@ -71544,7 +71544,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 78012
+        "bytes": 78161
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -78506,7 +78506,7 @@
         "identity": "test/cases/00_yaml_flatten.sh",
         "path": "test/cases/00_yaml_flatten.sh",
         "source_class": "case",
-        "bytes": 2162
+        "bytes": 2708
       },
       {
         "uri": "majordomus://test/test/cases/01_init.sh",
@@ -78698,7 +78698,7 @@
         "identity": "test/cases/10_site_data.sh",
         "path": "test/cases/10_site_data.sh",
         "source_class": "case",
-        "bytes": 6615
+        "bytes": 7119
       },
       {
         "uri": "majordomus://test/test/cases/110_lease_reader.sh",
@@ -80837,6 +80837,14 @@
         "bytes": 5746
       },
       {
+        "uri": "majordomus://test/test/cases/805_a_status_speaks_the_vocabulary_of_its_kind.sh",
+        "kind": "test",
+        "identity": "test/cases/805_a_status_speaks_the_vocabulary_of_its_kind.sh",
+        "path": "test/cases/805_a_status_speaks_the_vocabulary_of_its_kind.sh",
+        "source_class": "case",
+        "bytes": 5982
+      },
+      {
         "uri": "majordomus://test/test/cases/80_bench_persistence.sh",
         "kind": "test",
         "identity": "test/cases/80_bench_persistence.sh",
@@ -81259,7 +81267,7 @@
         "kind": "use-case",
         "identity": "catch-an-agent-that-says-it-is-done",
         "title": "Catch an agent that says it is done when it is not",
-        "description": "One task, start to finish: a worker strays outside its scope, claims it is finished, hands over, and is accepted only once the repository''s own verification passes.",
+        "description": "One task, start to finish: a worker strays outside its scope, claims it is finished, hands over, and is accepted only once the repository's own verification passes.",
         "path": ".ai/repo/use-cases/catch-an-agent-that-says-it-is-done.md",
         "section": "use-cases",
         "source_class": "use_case",
@@ -81358,7 +81366,7 @@
         "kind": "use-case",
         "identity": "follow-a-skill-the-repository-defines",
         "title": "Follow a procedure the repository defines, and add another one",
-        "description": "Read the repository''s skills, take one as it is written, and add a new one by writing its file — no registry, no code, and a check that says what it examined.",
+        "description": "Read the repository's skills, take one as it is written, and add a new one by writing its file — no registry, no code, and a check that says what it examined.",
         "path": ".ai/repo/use-cases/follow-a-skill-the-repository-defines.md",
         "section": "use-cases",
         "source_class": "use_case",
@@ -81468,7 +81476,7 @@
         "kind": "use-case",
         "identity": "let-the-provider-draw-the-episode-boundary",
         "title": "Have the session opened and closed without anybody remembering to",
-        "description": "Wire the provider''s own session events, and the episode opens when the sitting begins, hands the worker what the last one left, records what a compaction is about to discard, and closes with a continuation record beside its envelope.",
+        "description": "Wire the provider's own session events, and the episode opens when the sitting begins, hands the worker what the last one left, records what a compaction is about to discard, and closes with a continuation record beside its envelope.",
         "path": ".ai/repo/use-cases/let-the-provider-draw-the-episode-boundary.md",
         "section": "use-cases",
         "source_class": "use_case",
@@ -82012,7 +82020,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 336
+      "objects": 337
     },
     {
       "name": "use-case",

@@ -13,6 +13,13 @@ export default {
         return src ? src.innerText : null;
       });
       if (expected === null) { fail('a copy button has no x-ref="src" snippet in its component'); n++; continue; }
+      // a button in a tab panel that is not selected (a recorded run's command, one tab of
+      // several) is reached the way a reader reaches it: by selecting its tab first
+      const tab = await c.locator.evaluate((b) => {
+        const panel = b.closest('[role="tabpanel"]');
+        return panel && (panel.hidden || getComputedStyle(panel).display === 'none') ? panel.getAttribute('aria-labelledby') : null;
+      });
+      if (tab) await page.locator(`[id="${tab}"]`).click();
       await c.locator.scrollIntoViewIfNeeded();
       // "Copied" lasts 1600 ms before the button says Copy again, and a stalled driver can read past it: an observer
       // set before the click records the label when it changes, so the check judges what the button said, not what

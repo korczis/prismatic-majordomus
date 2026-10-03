@@ -10,7 +10,7 @@
 **[The challenge: watch it refuse an agent](https://majordomus.dev/challenge/)** ·
 [CLI reference](docs/CLI.md) ·
 [File schemas](docs/SCHEMAS.md) ·
-[What is guaranteed, advisory, planned, or refused](docs/SITE_CLAIMS.md) ·
+[What is guaranteed, advisory, planned, or rejected](docs/SITE_CLAIMS.md) ·
 [Why it exists](docs/EXTRACTION_REPORT.md)
 
 AI coding agents do the work. Majordomus decides whether it is done. It holds one
@@ -412,8 +412,10 @@ Unknown keys anywhere are errors, so a typo fails loudly.
 
 - Majordomus is invoked by a person, a git hook, or a worker following its
   instructions. It does not hook the worker's runtime.
-- It measures no tokens and no cost. [`docs/ECONOMICS.md`](docs/ECONOMICS.md) says what
-  it would take.
+- It does not meter the tokens or the cost of a working session. `majordomus economics`
+  counts what the context compiler selects with a pinned tokenizer and records what the
+  provider reports for matched benchmark runs; it states no total-token saving until those
+  runs meet the publication rule of [`docs/ECONOMICS.md`](docs/ECONOMICS.md).
 - Scope overlap is reported, never blocked, and only across worktrees of one repository
   on one machine.
 - The regression-test check in `finish` is a path heuristic (`test/`, `spec/`, `_test.`)

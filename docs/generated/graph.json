@@ -1912,14 +1912,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/release/surface.rs",
-        "kind": "file",
-        "label": "surface.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/release/surface.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/rules/mod.rs",
         "kind": "file",
         "label": "mod.rs",
@@ -37945,6 +37937,13 @@
         "source": "test/cases/79_bench_command.sh"
       },
       {
+        "id": "majordomus://test/test/cases/805_a_status_speaks_the_vocabulary_of_its_kind.sh",
+        "kind": "test",
+        "label": "test/cases/805_a_status_speaks_the_vocabulary_of_its_kind.sh",
+        "route": "/cockpit/objects/test/test-cases-805-a-status-speaks-the-vocabulary-of-its-kind-sh",
+        "source": "test/cases/805_a_status_speaks_the_vocabulary_of_its_kind.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/80_bench_persistence.sh",
         "kind": "test",
         "label": "test/cases/80_bench_persistence.sh",
@@ -38542,7 +38541,7 @@
             "scope",
             "state"
           ],
-          "summary": "One task, start to finish: a worker strays outside its scope, claims it is finished, hands over, and is accepted only once the repository''s own verification passes.",
+          "summary": "One task, start to finish: a worker strays outside its scope, claims it is finished, hands over, and is accepted only once the repository's own verification passes.",
           "target": "guaranteed",
           "weight": 1
         }
@@ -38930,7 +38929,7 @@
             "layer",
             "doctor"
           ],
-          "summary": "Read the repository''s skills, take one as it is written, and add a new one by writing its file — no registry, no code, and a check that says what it examined.",
+          "summary": "Read the repository's skills, take one as it is written, and add a new one by writing its file — no registry, no code, and a check that says what it examined.",
           "target": "guaranteed"
         }
       },
@@ -44890,11 +44889,6 @@
       {
         "source": "majordomus://adr/adr-0050",
         "target": "majordomus://rule/project.mesh-is-observation-not-authority@1",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0051",
-        "target": "file:apps/majordomus-cli/src/release/surface.rs",
         "kind": "put_in_force"
       },
       {
@@ -59834,6 +59828,11 @@
       },
       {
         "source": "majordomus://test/test/cases/79_bench_command.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/805_a_status_speaks_the_vocabulary_of_its_kind.sh",
         "target": "kind:test",
         "kind": "is_a"
       },

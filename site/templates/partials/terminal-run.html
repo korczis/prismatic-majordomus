@@ -1,0 +1,71 @@
+{#- One recorded run in the site's terminal: the primitive every transcript on the site is drawn
+    with, the concise story and the full evidence alike.
+
+    The caller sets, before the include:
+      run_command   the command line as recorded (required)
+      run_exit      its exit status (required)
+      run_stdin     optional: the file the run read on stdin
+      run_output    the run's stdout as recorded, or ""
+      run_checks    optional: the contract lines the run printed, each `name` and `pass`; when
+                    there are some, they are the story and the output sits behind a disclosure
+      run_verdict   optional: the line that closed the run (`finish: refused, 1 unmet`)
+      run_fold      optional: how many lines of output to show before folding the rest (12)
+
+    What it guarantees, so a page does not have to: the prompt is drawn and never copied (the
+    copy button copies the command alone); the command and the output are set apart by a rule
+    and a ground, not by colour; a status reads as a word and a glyph (`exit 10`, `✕ scope`)
+    and never as a colour alone; the output wraps inside the block rather than widening the
+    page on a phone, so a line is read whole and no tab panel holds a sideways scroller of its
+    own; and a long output shows its head and folds the rest into a native disclosure that
+    works without a script. There is no window chrome:
+    this is a record of a run, not a picture of a terminal.
+
+    Nothing here rewrites what the run printed. The lines are the run's own, redacted once by
+    lib/usecase.sh when they were recorded. -#}
+{%- set rn_fold = run_fold | default(value=12) -%}
+{%- set rn_checks = run_checks | default(value=[]) -%}
+{%- set rn_verdict = run_verdict | default(value="") -%}
+{%- set rn_stdin = run_stdin | default(value="") -%}
+{%- set rn_exit = run_exit -%}
+{%- set rn_output = run_output | default(value="") -%}
+<div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-default bg-neutral-primary-soft px-4 py-2.5" x-data="{ copied: false }">
+  <p class="m-0 min-w-0 flex-1 break-all font-mono text-xs leading-relaxed text-heading"><span class="select-none text-body-subtle" aria-hidden="true">$</span> <code x-ref="src">{{ run_command }}</code>{% if rn_stdin %}<span class="text-body-subtle"> &lt; {{ rn_stdin }}</span>{% endif %}</p>
+  <span class="flex shrink-0 items-center gap-2">
+    {%- set status = "ok" if rn_exit == 0 else "fail" -%}
+    {%- set status_kind = "" -%}{%- set status_label = "exit " ~ rn_exit -%}
+    {% include "partials/status-badge.html" %}
+    {%- set status_label = "" -%}
+    <button type="button" x-cloak x-on:click="navigator.clipboard.writeText($refs.src.innerText).then(() => { copied = true; setTimeout(() => copied = false, 1600) })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="copied ? 'Copied' : 'Copy the command'"><span x-text="copied ? 'Copied' : 'Copy'">Copy</span></button>
+  </span>
+</div>
+{%- if rn_checks | length > 0 %}
+{#- the story: each line of the contract the run checked, then its verdict -#}
+<div class="bg-neutral-primary px-4 py-3">
+  <ul class="m-0 flex list-none flex-wrap gap-1.5 p-0" aria-label="What the run checked">
+    {%- for c in rn_checks %}
+    <li>{% set status = "pass" if c.pass else "fail" %}{% set status_kind = "" %}{% set status_label = c.name %}{% include "partials/status-badge.html" %}<span class="sr-only"> {% if c.pass %}passed{% else %}failed{% endif %}</span></li>
+    {%- endfor %}
+  </ul>
+  {%- set status_label = "" -%}
+  {%- if rn_verdict %}<p class="mt-2 mb-0 font-mono text-xs font-semibold text-heading">&rarr; {{ rn_verdict }}</p>{% endif %}
+</div>
+{%- if rn_output %}
+<details class="border-t border-default bg-neutral-primary">
+  <summary class="cursor-pointer px-4 py-2 text-xs font-medium text-fg-brand hover:underline focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">The whole recorded output, {{ rn_output | trim_end | split(pat="\n") | length }} lines</summary>
+  <pre class="m-0 whitespace-pre-wrap break-words border-t border-default p-4 font-mono text-xs leading-relaxed text-body">{% for line in rn_output | trim_end | split(pat="\n") %}{% if line is starting_with(pat="FAIL") %}<span class="font-semibold text-heading">{{ line }}</span>{% else %}{{ line }}{% endif %}
+{% endfor %}</pre>
+</details>
+{%- endif %}
+{%- elif rn_output %}
+{#- the output itself: its head, and the rest folded behind a disclosure when it is long -#}
+{%- set rn_lines = rn_output | trim_end | split(pat="\n") -%}
+<pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body">{% for line in rn_lines %}{% if loop.index <= rn_fold %}{% if line is starting_with(pat="FAIL") %}<span class="font-semibold text-heading">{{ line }}</span>{% else %}{{ line }}{% endif %}
+{% endif %}{% endfor %}</pre>
+{%- if rn_lines | length > rn_fold %}
+<details class="border-t border-default bg-neutral-primary">
+  <summary class="cursor-pointer px-4 py-2 text-xs font-medium text-fg-brand hover:underline focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">The remaining {{ rn_lines | length - rn_fold }} lines of the output</summary>
+  <pre class="m-0 whitespace-pre-wrap break-words border-t border-default p-4 font-mono text-xs leading-relaxed text-body">{% for line in rn_lines %}{% if loop.index > rn_fold %}{% if line is starting_with(pat="FAIL") %}<span class="font-semibold text-heading">{{ line }}</span>{% else %}{{ line }}{% endif %}
+{% endif %}{% endfor %}</pre>
+</details>
+{%- endif %}
+{%- endif %}

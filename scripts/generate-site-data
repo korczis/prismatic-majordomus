@@ -347,6 +347,12 @@ jq -r '.claims[] | [.id, .status, .source, (.implementation // "-"), (.test // "
   done
   if [ "$status" = guaranteed ] && [ "$test" = "-" ]; then echo "generate-site-data: guaranteed claim $id has no test" >&2; exit 10; fi
 done
+# every claim carries a status the file declares: the statuses are one list of data, and a
+# word outside it would reach every page as a badge no vocabulary defines
+CLAIM_UNDECLARED="$(jq -r '.status_order as $s | [.claims[] | select(.status as $x | $s | index($x) | not)
+  | "\(.id) (\(.status))"] | join(", ")' "$OUT/capabilities.json")"
+[ -z "$CLAIM_UNDECLARED" ] || {
+  echo "generate-site-data: claim(s) carry a status docs/CLAIMS.yaml does not declare under statuses: $CLAIM_UNDECLARED" >&2; exit 10; }
 
 mj_phase_end "gen:capabilities.json_from_docs" "$GEN_T0"
 # ---------------------------------------------------------------- lifecycle.json
@@ -1252,11 +1258,20 @@ if [ -f "$CH_TOML" ]; then
                              | select(test("^(OK|FAIL) |^INFO +overlap|^(check|finish): |^started t-"))
                              | select(test("^(OK|FAIL) +use-case ") | not) ]
                            | if length > 0 then . else [ $s.output | split("\n")[] | select(length > 0) ] end),
-                output: $s.output } ],
+                output: $s.output } ]
+            # the story of each step, read off its own decision lines and nothing else: every
+            # contract line it printed, by name and pass or fail, and the verdict line that
+            # closed it. A step that printed neither (a handover, a worker change) has none.
+            | map(. + { checks: [ .decision[] | select(test("^(OK|FAIL) "))
+                                  | capture("^(?<v>OK|FAIL) +(?<name>[^ ]+)")
+                                  | { name, pass: (.v == "OK") } ],
+                        verdict: ([ .decision[] | select(test("^(check|finish): ")) ] | last) }),
           claims: [ $rows[] | claimref(.) ],
           exercised: [ ($u.claims // [])[] | claimref(.) ],
           counts: { steps: ($steps | length),
                     refusals: ([ $steps[] | select((.actor // "tool") == "tool" and .exit != 0) ] | length),
+                    finish_refusals: ([ $steps[] | select((.actor // "tool") == "tool" and .exit != 0
+                                                          and .argv[0] == "finish") ] | length),
                     worker: ([ $steps[] | select(.actor == "worker") ] | length) } }
       end' "$OUT/catalogue.json" > "$OUT/challenge.json"
   [ -s "$OUT/challenge.json" ] || {
