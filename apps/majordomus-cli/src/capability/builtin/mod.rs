@@ -35,6 +35,7 @@ pub(crate) mod capabilities;
 pub mod commands;
 pub mod commit;
 pub mod continuity;
+pub(crate) mod convergence;
 pub mod dashboard;
 pub(crate) mod delivery;
 pub(crate) mod deploy;
@@ -46,11 +47,15 @@ pub(crate) mod distribution;
 pub mod economics;
 pub mod entity;
 pub mod environment;
+pub mod episodes;
 pub mod evidence;
 pub(crate) mod executions;
 pub mod gates;
 pub(crate) mod graph;
 pub mod health;
+pub(crate) mod integration;
+pub mod intents;
+pub mod knowledge_base;
 pub mod lifecycle;
 pub(crate) mod mesh;
 pub(crate) mod models;
@@ -71,6 +76,7 @@ pub mod served;
 pub mod server;
 pub mod session_domain;
 pub(crate) mod shell;
+pub mod skills;
 pub mod trace;
 mod views;
 pub mod web;
@@ -109,6 +115,7 @@ pub use distribution::{
     ReleaseArtifactInput, ReleaseArtifactView, ReleaseView, ReleasesReport, TargetView,
 };
 pub use environment::{EnvironmentInput, EnvironmentProvenance, ExplainInput, ENVIRONMENT_URI};
+pub use episodes::{AttachInput, DetachInput, EpisodeList};
 pub use executions::{
     CancelReport, EventHistory, ExecutionLinks, ExecutionList, ExecutionView, ProtocolReport,
     EXECUTIONS_URI, EXECUTION_PROTOCOL_URI,
@@ -116,6 +123,11 @@ pub use executions::{
 pub use gates::{CompletionInput, GateModelEntry, GateModelReport, COMPLETION_URI, GATES_URI};
 pub use graph::{GraphInput, GraphList, GRAPHS_URI};
 pub use health::{Health, HealthCheck, HealthStatus, HEALTH_URI};
+pub use knowledge_base::{
+    AgeSource, KnowledgeCandidate, KnowledgeCandidates, KnowledgeRecord, KnowledgeRecordInput,
+    KnowledgeStatus, LedgerMark, ReferenceResolution, ResolvedReference, ResolvedRelation,
+    KNOWLEDGE_CANDIDATES_URI, KNOWLEDGE_STATUS_URI,
+};
 pub use lifecycle::{
     Balance, ClosedSession, ClosedSessions, Episode, EpisodeStanding, Episodes, Orphan, Pointer,
     PointerLayout, ProviderLifecycle, ProviderLifecycles, Recovery, RuntimeView, Stranded,
@@ -167,6 +179,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         health,
         dashboard,
         continuity,
+        knowledge_base,
         lifecycle,
         obligations,
         gates,
@@ -179,6 +192,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         mesh,
         models,
         reasoning,
+        episodes,
         peers,
         server,
         session_domain,
@@ -194,10 +208,14 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         quality,
         distribution,
         why,
+        intents,
+        skills,
         web,
         design,
         devtask,
         worktree,
+        integration,
+        convergence,
         trace,
         product
     ]

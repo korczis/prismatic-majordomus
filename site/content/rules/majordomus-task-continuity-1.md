@@ -1,7 +1,7 @@
 +++
 title = "Task continuity"
 description = "Task continuity"
-weight = 53
+weight = 56
 [extra]
 kind = "rule"
 slug = "majordomus-task-continuity-1"

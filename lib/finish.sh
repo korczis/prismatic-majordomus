@@ -12,7 +12,7 @@
 . "$MJ_LIB_DIR/handover.sh"
 
 MJ_FINISH_OUTCOME=""; MJ_FINISH_VERIFY=""; MJ_FINISH_NOTE=""
-MJ_FINISH_VEXIT=""; MJ_FINISH_VSECS=""
+MJ_FINISH_VEXIT=""; MJ_FINISH_VSECS=""; MJ_FINISH_VTREE=""
 export MJ_FINISH_OUTCOME
 
 mj_cmd_finish() {
@@ -27,7 +27,9 @@ mj_cmd_finish() {
 usage: majordomus finish --outcome <completed|partial|blocked|no_match|failed> [--verify-command "<cmd>"] [--note <file>]
        majordomus finish --check
   evaluates every line of the finish contract, prints pass/fail for each, refuses (10) if any fails
-  --verify-command  the project's own verification; its exit code, duration and command are recorded
+  --verify-command  the project's own verification; its command, exit code, duration and the
+                    tree it ran over are recorded, and a tree that changed under it is not a pass.
+                    A command that cannot verify anything (true, :, exit 0, only echo) is refused
   --note            a completion note (required sections as a handover); otherwise the newest handover for this task is used
   --check           evaluate the current task against scope and state without writing; exit 0 when no task is active
 H
@@ -64,7 +66,7 @@ H
     *) mj_die "$MJ_EX_USAGE" "finish: unknown outcome '$outcome'" ;; esac
 
   MJ_FINISH_OUTCOME="$outcome"; MJ_FINISH_VERIFY="$verify"; MJ_FINISH_NOTE="$note"
-  MJ_FINISH_VEXIT=""; MJ_FINISH_VSECS=""
+  MJ_FINISH_VEXIT=""; MJ_FINISH_VSECS=""; MJ_FINISH_VTREE=""
   mj_doctrine_dispatch finish
 
   # The policy may name a requirement the registry does not define. That is a
@@ -91,7 +93,10 @@ H
     mj_ledger_append task.refused "\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"unmet\":$unmet,\"refused\":[${refused_json%,}],\"contract\":$contract"
     if [ "$MJ_JSON" != 1 ]; then
       printf 'finish: refused, %s unmet\n' "$unmet"
-      [ -n "$refused" ] && printf 'blocking doctrines:%s\n' "$(printf '%s' "$refused" | tr ' ' '\n' | sed '/^$/d' | sed 's/^/\n- /' | tr -d '\n' | sed 's/^/\n/')"
+      # one doctrine per line: the list used to be joined with its own separators deleted.
+      # $refused is a space-separated list of doctrine ids, split here on purpose.
+      # shellcheck disable=SC2086
+      [ -n "$refused" ] && { printf 'blocking doctrines:\n'; printf '%s\n' $refused | sed 's/^/- /'; }
     fi
     exit "$MJ_EX_CONTRACT"
   fi
@@ -99,7 +104,7 @@ H
   local now; now="$(mj_now)"
   sed -e "s/^outcome: .*/outcome: $outcome/" -e "s/^checkpoint_at: .*/checkpoint_at: $now/" "$MJ_CUR" > "$MJ_CUR.mj-tmp" && mv "$MJ_CUR.mj-tmp" "$MJ_CUR"
   [ -n "$note" ] && { mkdir -p "$MJ_STATE_DIR/completed"; cp "$note" "$MJ_STATE_DIR/completed/$id.md"; }
-  local vj=null; [ -n "$MJ_FINISH_VEXIT" ] && vj="{\"command\":\"$(mj_json_esc "$verify")\",\"exit\":$MJ_FINISH_VEXIT,\"seconds\":$MJ_FINISH_VSECS}"
+  local vj=null; [ -n "$MJ_FINISH_VEXIT" ] && vj="{\"command\":\"$(mj_json_esc "$verify")\",\"exit\":$MJ_FINISH_VEXIT,\"seconds\":$MJ_FINISH_VSECS${MJ_FINISH_VTREE:+,\"tree\":\"$MJ_FINISH_VTREE\"}}"
   local cps=0; cps="$(find "$MJ_STATE_DIR/checkpoints" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
   mj_ledger_append task.finished "\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"contract\":$contract,\"verify\":$vj,\"checkpoints\":$cps"
   [ "$MJ_JSON" = 1 ] || printf 'finish: %s %s\n' "$id" "$outcome"
@@ -123,6 +128,28 @@ mj_finish_selected() {
 }
 
 # ---------------------------------------------------------------- finish-only validators
+# Is <cmd> a verification command that cannot verify anything? The rule is that a completed
+# outcome is verified, not described, and `--verify-command true` satisfied it: the suite
+# asserted so, and the ledger recorded `verify:{command:"true",exit:0}` as the proof. A command
+# whose every part is a no-op builtin (true, :, exit 0, return 0) or only prints (echo,
+# printf) exits 0 whatever the state of the work, so it is refused before it runs. This does
+# not judge whether a real command is the right one — only that it is a command at all.
+# Separators ; && || and newlines split the parts; a comment-only or empty part is a no-op.
+mj_verify_is_vacuous() {
+  local part
+  printf '%s\n' "$1" | awk '{ gsub(/&&|\|\||;/, "\n"); print }' | {
+    while IFS= read -r part || [ -n "$part" ]; do
+      part="$(printf '%s' "$part" | sed -e 's/^[[:space:](){}]*//' -e 's/[[:space:](){}]*$//')"
+      case "$part" in
+        ''|'#'*|true|:|/bin/true|/usr/bin/true|exit|'exit 0'|return|'return 0') ;;
+        echo|'echo '*|printf|'printf '*) ;;
+        *) exit 1 ;;
+      esac
+    done
+    exit 0
+  }
+}
+
 mj_validate_verification() {
   local id; id="$(mj_cur id)"
   mj_finish_selected || { mj_doctrine_skip verification "$id" "not in verification.finish_requires"; MJ_DOCTRINE_SKIPPED=1; return 0; }
@@ -134,14 +161,29 @@ mj_validate_verification() {
     mj_doctrine_skip verification "$id" "not required by profile $(mj_cur profile)"; MJ_DOCTRINE_SKIPPED=1; return 0; fi
   if [ -z "$MJ_FINISH_VERIFY" ]; then
     mj_doctrine_fail verification "$id" "profile $(mj_cur profile) requires --verify-command" "majordomus finish --outcome completed --verify-command \"<cmd>\""; return 0; fi
-  local t0 t1 vexit; t0="$(date +%s)"
+  if mj_verify_is_vacuous "$MJ_FINISH_VERIFY"; then
+    mj_doctrine_fail verification "$id" "\"$MJ_FINISH_VERIFY\" cannot verify anything: it is only a no-op or a print, so its exit 0 proves nothing (majordomus.verification-integrity)" "majordomus finish --outcome completed --verify-command \"<a test or check of this project, e.g. make test>\""; return 0; fi
+  # The tree is read on both sides of the run. An exit code alone says that some command
+  # once exited zero; it does not say over what, and a checkout with more than one worker
+  # in it — a second agent, a person saving a file, a watcher regenerating an artefact —
+  # moves under a long verification routinely. A run whose subject changed proved nothing
+  # about the tree it started on and nothing about the tree it left, so it is not a pass,
+  # and the tree that a run did prove is recorded with it.
+  local t0 t1 vexit before after; before="$(mj_worktree_tree_id)"; t0="$(date +%s)"
   # The verify command is the project's own verification, run as a worker would run it. The
   # outcome this finish claims is its own state: a `check` the command runs that saw it would
   # judge obligations and gates as a completed finish and refuse, so it is not exported there.
   if ( cd "$MJ_ROOT" && unset MJ_FINISH_OUTCOME && sh -c "$MJ_FINISH_VERIFY" ) > /dev/null 2>&1; then vexit=0; else vexit=$?; fi
-  t1="$(date +%s)"; MJ_FINISH_VEXIT="$vexit"; MJ_FINISH_VSECS=$((t1-t0))
-  if [ "$vexit" = 0 ]; then mj_doctrine_ok verification "$id" "$MJ_FINISH_VERIFY — exit 0, ${MJ_FINISH_VSECS}s"
-  else mj_doctrine_fail verification "$id" "$MJ_FINISH_VERIFY — exit $vexit, ${MJ_FINISH_VSECS}s" "$MJ_FINISH_VERIFY"; fi
+  t1="$(date +%s)"; after="$(mj_worktree_tree_id)"
+  MJ_FINISH_VEXIT="$vexit"; MJ_FINISH_VSECS=$((t1-t0)); MJ_FINISH_VTREE="$after"
+  if [ "$vexit" != 0 ]; then
+    mj_doctrine_fail verification "$id" "$MJ_FINISH_VERIFY — exit $vexit, ${MJ_FINISH_VSECS}s" "$MJ_FINISH_VERIFY"; return 0; fi
+  if [ -n "$before" ] && [ -n "$after" ] && [ "$before" != "$after" ]; then
+    MJ_FINISH_VTREE=""
+    mj_doctrine_fail verification "$id" \
+      "$MJ_FINISH_VERIFY — exit 0, ${MJ_FINISH_VSECS}s, but the tree changed while it ran (${before:0:12} → ${after:0:12}); the run describes neither state" \
+      "git status --porcelain; $MJ_FINISH_VERIFY"; return 0; fi
+  mj_doctrine_ok verification "$id" "$MJ_FINISH_VERIFY — exit 0, ${MJ_FINISH_VSECS}s${after:+, tree ${after:0:12}}"
   return 0
 }
 

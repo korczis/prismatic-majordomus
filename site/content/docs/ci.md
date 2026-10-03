@@ -1,7 +1,7 @@
 +++
 title = "Continuous integration"
 description = "how a change is validated: the validation workflow over repository-owned gates, the planner and its model of what can affect what, the gates and how to run each locally, the caches and artifacts, the executable as a build output, the parallel suite and probe, the platform policy, and where the measurements live"
-weight = 63
+weight = 67
 [extra]
 source = "docs/CI.md"
 +++
@@ -122,8 +122,9 @@ when a worker says the work is done, so that is who asks: `majordomus finish` ru
 published site is behind the trunk. The doctrine is `majordomus.publication-currency` and
 the repository turns it on with `publication_current` in `verification.finish_requires`; a
 gate that could not reach its subject — no network, no published branch — is reported
-unverified by name and refuses nothing, because a session that could not measure the site is
-not evidence that the site is stale.
+unverified by name, with its exit, and refuses `completed` as well: a session that could not
+measure the site is not evidence that it is stale, but it is no evidence that it is current
+either, which is what `completed` claims. `partial` and `blocked` are never refused over it.
 
 To force full validation of a pull request, add the label `ci:full`; the `labeled` event
 re-plans it. To see why a gate ran or did not, read the `plan` job's summary or the
@@ -339,8 +340,10 @@ it waits on a queue, a build and a CDN that this repository does not own, and a 
 somebody else's latency is a gate that gets waived — but *slow* and *failed* are different
 facts and the second one has an API. `scripts/pages built` reads it, in one place, for both
 callers: `pages.yml` fails the run on an errored build at the moment it happens, and
-`scripts/ci/pages-check` asks the same question afterwards through the same command. A build
-that has merely not finished stays a note; only `errored` is a failure.
+`scripts/ci/pages-check` asks the same question afterwards through the same command. Only
+`errored` is a failure (exit 10). A build that has not finished, one of another commit, or one
+that could not be read at all is a note and exit 12, not determined: never a failure, and never
+the pass it used to be, when the gate printed the whole guarantee over the half it had not seen.
 
 ## Where a gate cannot reach
 

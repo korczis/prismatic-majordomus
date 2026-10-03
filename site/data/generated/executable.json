@@ -205,6 +205,23 @@
       "tool": "majordomus_continuity"
     },
     {
+      "api_anchor": "/docs/api/convergence/#op-convergence-report",
+      "claims": [],
+      "cli": "majordomus convergence",
+      "id": "convergence.report",
+      "kind": "query",
+      "module": "convergence",
+      "module_route": "/registry/modules/convergence/",
+      "resource": "majordomus://convergence",
+      "route": "/registry/capabilities/convergence-report/",
+      "slug": "convergence-report",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/convergence.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/convergence.rs",
+      "tests": [],
+      "title": "Is any work held where it can be lost?",
+      "tool": "majordomus_convergence"
+    },
+    {
       "api_anchor": "/docs/api/dashboard/#op-dashboard-overview",
       "claims": [],
       "cli": "majordomus dashboard overview",
@@ -715,6 +732,57 @@
       "tool": "majordomus_environment"
     },
     {
+      "api_anchor": "/docs/api/episodes/#op-episodes-attach",
+      "claims": [],
+      "cli": null,
+      "id": "episodes.attach",
+      "kind": "command",
+      "module": "episodes",
+      "module_route": "/registry/modules/episodes/",
+      "resource": null,
+      "route": "/registry/capabilities/episodes-attach/",
+      "slug": "episodes-attach",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/episodes.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/episodes.rs",
+      "tests": [],
+      "title": "Attach this connection to an episode",
+      "tool": "majordomus_session_attach"
+    },
+    {
+      "api_anchor": "/docs/api/episodes/#op-episodes-detach",
+      "claims": [],
+      "cli": null,
+      "id": "episodes.detach",
+      "kind": "command",
+      "module": "episodes",
+      "module_route": "/registry/modules/episodes/",
+      "resource": null,
+      "route": "/registry/capabilities/episodes-detach/",
+      "slug": "episodes-detach",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/episodes.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/episodes.rs",
+      "tests": [],
+      "title": "Close this connection's episode",
+      "tool": "majordomus_session_detach"
+    },
+    {
+      "api_anchor": "/docs/api/episodes/#op-episodes-list",
+      "claims": [],
+      "cli": null,
+      "id": "episodes.list",
+      "kind": "query",
+      "module": "episodes",
+      "module_route": "/registry/modules/episodes/",
+      "resource": null,
+      "route": "/registry/capabilities/episodes-list/",
+      "slug": "episodes-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/episodes.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/episodes.rs",
+      "tests": [],
+      "title": "List episodes",
+      "tool": "majordomus_episodes"
+    },
+    {
       "api_anchor": "/docs/api/evidence/#op-evidence-claim",
       "claims": [
         {
@@ -1059,6 +1127,206 @@
       "tests": [],
       "title": "Health of this process",
       "tool": "majordomus_health"
+    },
+    {
+      "api_anchor": "/docs/api/integration/#op-integration-events",
+      "claims": [],
+      "cli": "majordomus prs events",
+      "id": "integration.events",
+      "kind": "query",
+      "module": "integration",
+      "module_route": "/registry/modules/integration/",
+      "resource": null,
+      "route": "/registry/capabilities/integration-events/",
+      "slug": "integration-events",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "tests": [],
+      "title": "The integration audit trail",
+      "tool": "majordomus_integration_events"
+    },
+    {
+      "api_anchor": "/docs/api/integration/#op-integration-explain",
+      "claims": [],
+      "cli": "majordomus prs explain",
+      "id": "integration.explain",
+      "kind": "query",
+      "module": "integration",
+      "module_route": "/registry/modules/integration/",
+      "resource": null,
+      "route": "/registry/capabilities/integration-explain/",
+      "slug": "integration-explain",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "tests": [],
+      "title": "Why one pull request is where it is",
+      "tool": "majordomus_pull_request_explain"
+    },
+    {
+      "api_anchor": "/docs/api/integration/#op-integration-queue",
+      "claims": [],
+      "cli": "majordomus prs status",
+      "id": "integration.queue",
+      "kind": "query",
+      "module": "integration",
+      "module_route": "/registry/modules/integration/",
+      "resource": null,
+      "route": "/registry/capabilities/integration-queue/",
+      "slug": "integration-queue",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "tests": [],
+      "title": "The integration queue",
+      "tool": "majordomus_pull_requests"
+    },
+    {
+      "api_anchor": "/docs/api/intents/#op-intents-list",
+      "claims": [],
+      "cli": "majordomus intent list",
+      "id": "intents.list",
+      "kind": "query",
+      "module": "intents",
+      "module_route": "/registry/modules/intents/",
+      "resource": "majordomus://intents",
+      "route": "/registry/capabilities/intents-list/",
+      "slug": "intents-list",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "tests": [],
+      "title": "Every intent, with its derived stage",
+      "tool": "majordomus_intents"
+    },
+    {
+      "api_anchor": "/docs/api/intents/#op-intents-preflight",
+      "claims": [],
+      "cli": "majordomus intent preflight",
+      "id": "intents.preflight",
+      "kind": "query",
+      "module": "intents",
+      "module_route": "/registry/modules/intents/",
+      "resource": null,
+      "route": "/registry/capabilities/intents-preflight/",
+      "slug": "intents-preflight",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "tests": [],
+      "title": "Which intent a piece of work serves",
+      "tool": "majordomus_intent_preflight"
+    },
+    {
+      "api_anchor": "/docs/api/intents/#op-intents-record",
+      "claims": [],
+      "cli": "majordomus intent show",
+      "id": "intents.record",
+      "kind": "query",
+      "module": "intents",
+      "module_route": "/registry/modules/intents/",
+      "resource": null,
+      "route": "/registry/capabilities/intents-record/",
+      "slug": "intents-record",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "tests": [],
+      "title": "One intent, with everything derived about it",
+      "tool": "majordomus_intent_record"
+    },
+    {
+      "api_anchor": "/docs/api/intents/#op-intents-validate",
+      "claims": [],
+      "cli": "majordomus intent validate",
+      "id": "intents.validate",
+      "kind": "query",
+      "module": "intents",
+      "module_route": "/registry/modules/intents/",
+      "resource": null,
+      "route": "/registry/capabilities/intents-validate/",
+      "slug": "intents-validate",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "tests": [],
+      "title": "What the intent model refuses",
+      "tool": "majordomus_intent_validate"
+    },
+    {
+      "api_anchor": "/docs/api/knowledge-base/#op-knowledge_base-candidates",
+      "claims": [
+        {
+          "id": "knowledge-served-on-every-surface",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+          "route": "/guarantees/knowledge-served-on-every-surface/",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/knowledge_base.rs"
+        }
+      ],
+      "cli": "majordomus knowledge candidates",
+      "id": "knowledge_base.candidates",
+      "kind": "query",
+      "module": "knowledge_base",
+      "module_route": "/registry/modules/knowledge-base/",
+      "resource": "majordomus://knowledge-candidates",
+      "route": "/registry/capabilities/knowledge-base-candidates/",
+      "slug": "knowledge-base-candidates",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+      "tests": [
+        "apps/majordomus-cli/tests/knowledge_base.rs"
+      ],
+      "title": "Candidates awaiting review",
+      "tool": "majordomus_knowledge_candidates"
+    },
+    {
+      "api_anchor": "/docs/api/knowledge-base/#op-knowledge_base-record",
+      "claims": [
+        {
+          "id": "knowledge-served-on-every-surface",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+          "route": "/guarantees/knowledge-served-on-every-surface/",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/knowledge_base.rs"
+        }
+      ],
+      "cli": "majordomus knowledge record",
+      "id": "knowledge_base.record",
+      "kind": "query",
+      "module": "knowledge_base",
+      "module_route": "/registry/modules/knowledge-base/",
+      "resource": null,
+      "route": "/registry/capabilities/knowledge-base-record/",
+      "slug": "knowledge-base-record",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+      "tests": [
+        "apps/majordomus-cli/tests/knowledge_base.rs"
+      ],
+      "title": "One knowledge record",
+      "tool": "majordomus_knowledge_record"
+    },
+    {
+      "api_anchor": "/docs/api/knowledge-base/#op-knowledge_base-status",
+      "claims": [
+        {
+          "id": "knowledge-served-on-every-surface",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+          "route": "/guarantees/knowledge-served-on-every-surface/",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/knowledge_base.rs"
+        }
+      ],
+      "cli": "majordomus knowledge status",
+      "id": "knowledge_base.status",
+      "kind": "query",
+      "module": "knowledge_base",
+      "module_route": "/registry/modules/knowledge-base/",
+      "resource": "majordomus://knowledge-status",
+      "route": "/registry/capabilities/knowledge-base-status/",
+      "slug": "knowledge-base-status",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+      "tests": [
+        "apps/majordomus-cli/tests/knowledge_base.rs"
+      ],
+      "title": "Whether the deriver is still writing",
+      "tool": "majordomus_knowledge_status"
     },
     {
       "api_anchor": "/docs/api/lifecycle/#op-lifecycle-closed",
@@ -2218,7 +2486,7 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/release.rs",
       "tests": [],
-      "title": "The version, and the one the commits imply",
+      "title": "The version, and the one the contract requires next",
       "tool": "majordomus_release_version"
     },
     {
@@ -2424,6 +2692,57 @@
       "tests": [],
       "title": "Refuse undeclared shell",
       "tool": "majordomus_shell_check"
+    },
+    {
+      "api_anchor": "/docs/api/skills/#op-skills-explain",
+      "claims": [],
+      "cli": "majordomus skills explain",
+      "id": "skills.explain",
+      "kind": "query",
+      "module": "skills",
+      "module_route": "/registry/modules/skills/",
+      "resource": null,
+      "route": "/registry/capabilities/skills-explain/",
+      "slug": "skills-explain",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/skills.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/skills.rs",
+      "tests": [],
+      "title": "One skill, with everything derived about it",
+      "tool": "majordomus_skill_explain"
+    },
+    {
+      "api_anchor": "/docs/api/skills/#op-skills-status",
+      "claims": [],
+      "cli": "majordomus skills status",
+      "id": "skills.status",
+      "kind": "query",
+      "module": "skills",
+      "module_route": "/registry/modules/skills/",
+      "resource": "majordomus://skills",
+      "route": "/registry/capabilities/skills-status/",
+      "slug": "skills-status",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/skills.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/skills.rs",
+      "tests": [],
+      "title": "Every skill, with its derived standing",
+      "tool": "majordomus_skills"
+    },
+    {
+      "api_anchor": "/docs/api/skills/#op-skills-verify",
+      "claims": [],
+      "cli": "majordomus skills verify",
+      "id": "skills.verify",
+      "kind": "query",
+      "module": "skills",
+      "module_route": "/registry/modules/skills/",
+      "resource": null,
+      "route": "/registry/capabilities/skills-verify/",
+      "slug": "skills-verify",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/skills.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/skills.rs",
+      "tests": [],
+      "title": "What the skills owe and do not have",
+      "tool": "majordomus_skills_verify"
     },
     {
       "api_anchor": "/docs/api/trace/#op-trace-commit",
@@ -2825,6 +3144,13 @@
         "test": "apps/majordomus-cli/tests/why.rs"
       },
       {
+        "id": "connection-episode",
+        "implementation": "apps/majordomus-cli/src/episodes.rs",
+        "route": "/guarantees/connection-episode/",
+        "status": "guaranteed",
+        "test": "test/cases/200_generic_mcp_episode.sh"
+      },
+      {
         "id": "web-surface-declared-once",
         "implementation": "apps/majordomus-cli/src/web/model.rs",
         "route": "/guarantees/web-surface-declared-once/",
@@ -2916,6 +3242,20 @@
         "test": "test/cases/124_evidence.sh"
       },
       {
+        "id": "evidence-subjects-are-derived",
+        "implementation": "apps/majordomus-cli/src/evidence/subject.rs",
+        "route": "/guarantees/evidence-subjects-are-derived/",
+        "status": "guaranteed",
+        "test": "test/cases/507_evidence_subjects_are_derived.sh"
+      },
+      {
+        "id": "evidence-subject-commands-agree-with-the-command-pages",
+        "implementation": "apps/majordomus-cli/src/evidence/subject.rs",
+        "route": "/guarantees/evidence-subject-commands-agree-with-the-command-pages/",
+        "status": "guaranteed",
+        "test": "test/cases/507_evidence_subjects_are_derived.sh"
+      },
+      {
         "id": "rule-state-is-derived-from-what-ran",
         "implementation": "apps/majordomus-cli/src/rules/mod.rs",
         "route": "/guarantees/rule-state-is-derived-from-what-ran/",
@@ -2935,6 +3275,27 @@
         "route": "/guarantees/evidence-partial-run-preserves-the-rest/",
         "status": "guaranteed",
         "test": "test/cases/124_evidence.sh"
+      },
+      {
+        "id": "evidence-judged-at-the-presented-revision",
+        "implementation": "apps/majordomus-cli/src/evidence/freshness.rs",
+        "route": "/guarantees/evidence-judged-at-the-presented-revision/",
+        "status": "guaranteed",
+        "test": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
+      },
+      {
+        "id": "evidence-a-skip-is-not-run",
+        "implementation": "apps/majordomus-cli/src/evidence/freshness.rs",
+        "route": "/guarantees/evidence-a-skip-is-not-run/",
+        "status": "guaranteed",
+        "test": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
+      },
+      {
+        "id": "evidence-a-failure-outranks-an-absence",
+        "implementation": "apps/majordomus-cli/src/evidence/freshness.rs",
+        "route": "/guarantees/evidence-a-failure-outranks-an-absence/",
+        "status": "guaranteed",
+        "test": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
       },
       {
         "id": "mesh-one-registry",
@@ -2991,6 +3352,13 @@
         "route": "/guarantees/mesh-observation-not-authority/",
         "status": "guaranteed",
         "test": "apps/majordomus-cli/tests/mesh.rs"
+      },
+      {
+        "id": "mesh-declared-is-held",
+        "implementation": "apps/majordomus-cli/src/mesh/doctor.rs",
+        "route": "/guarantees/mesh-declared-is-held/",
+        "status": "guaranteed",
+        "test": "test/cases/494_the_mesh_is_declared_and_held.sh"
       },
       {
         "id": "models-one-declaration",
@@ -3132,11 +3500,11 @@
     ]
   },
   "counts": {
-    "capabilities": 149,
-    "claims": 68,
-    "modules": 44
+    "capabilities": 166,
+    "claims": 76,
+    "modules": 50
   },
-  "generator": "majordomus-cli 0.11.0",
+  "generator": "majordomus-cli 0.12.0",
   "modules": [
     {
       "capabilities": [
@@ -3252,6 +3620,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
       "title": "Continuity"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "convergence.report",
+          "route": "/registry/capabilities/convergence-report/",
+          "slug": "convergence-report"
+        }
+      ],
+      "claims": [],
+      "id": "convergence",
+      "route": "/registry/modules/convergence/",
+      "slug": "convergence",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/convergence.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/convergence.rs",
+      "title": "Convergence"
     },
     {
       "capabilities": [
@@ -3527,6 +3911,32 @@
     {
       "capabilities": [
         {
+          "id": "episodes.attach",
+          "route": "/registry/capabilities/episodes-attach/",
+          "slug": "episodes-attach"
+        },
+        {
+          "id": "episodes.detach",
+          "route": "/registry/capabilities/episodes-detach/",
+          "slug": "episodes-detach"
+        },
+        {
+          "id": "episodes.list",
+          "route": "/registry/capabilities/episodes-list/",
+          "slug": "episodes-list"
+        }
+      ],
+      "claims": [],
+      "id": "episodes",
+      "route": "/registry/modules/episodes/",
+      "slug": "episodes",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/episodes.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/episodes.rs",
+      "title": "Episodes"
+    },
+    {
+      "capabilities": [
+        {
           "id": "evidence.claim",
           "route": "/registry/capabilities/evidence-claim/",
           "slug": "evidence-claim"
@@ -3676,6 +4086,97 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/health.rs",
       "title": "Health"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "integration.events",
+          "route": "/registry/capabilities/integration-events/",
+          "slug": "integration-events"
+        },
+        {
+          "id": "integration.explain",
+          "route": "/registry/capabilities/integration-explain/",
+          "slug": "integration-explain"
+        },
+        {
+          "id": "integration.queue",
+          "route": "/registry/capabilities/integration-queue/",
+          "slug": "integration-queue"
+        }
+      ],
+      "claims": [],
+      "id": "integration",
+      "route": "/registry/modules/integration/",
+      "slug": "integration",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "title": "Pull-request integration"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "intents.list",
+          "route": "/registry/capabilities/intents-list/",
+          "slug": "intents-list"
+        },
+        {
+          "id": "intents.preflight",
+          "route": "/registry/capabilities/intents-preflight/",
+          "slug": "intents-preflight"
+        },
+        {
+          "id": "intents.record",
+          "route": "/registry/capabilities/intents-record/",
+          "slug": "intents-record"
+        },
+        {
+          "id": "intents.validate",
+          "route": "/registry/capabilities/intents-validate/",
+          "slug": "intents-validate"
+        }
+      ],
+      "claims": [],
+      "id": "intents",
+      "route": "/registry/modules/intents/",
+      "slug": "intents",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "title": "Intent"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "knowledge_base.candidates",
+          "route": "/registry/capabilities/knowledge-base-candidates/",
+          "slug": "knowledge-base-candidates"
+        },
+        {
+          "id": "knowledge_base.record",
+          "route": "/registry/capabilities/knowledge-base-record/",
+          "slug": "knowledge-base-record"
+        },
+        {
+          "id": "knowledge_base.status",
+          "route": "/registry/capabilities/knowledge-base-status/",
+          "slug": "knowledge-base-status"
+        }
+      ],
+      "claims": [
+        {
+          "id": "knowledge-served-on-every-surface",
+          "implementation": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+          "route": "/guarantees/knowledge-served-on-every-surface/",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/knowledge_base.rs"
+        }
+      ],
+      "id": "knowledge_base",
+      "route": "/registry/modules/knowledge-base/",
+      "slug": "knowledge-base",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+      "title": "Knowledge base"
     },
     {
       "capabilities": [
@@ -4276,6 +4777,32 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/shell.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/shell.rs",
       "title": "Shell automation"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "skills.explain",
+          "route": "/registry/capabilities/skills-explain/",
+          "slug": "skills-explain"
+        },
+        {
+          "id": "skills.status",
+          "route": "/registry/capabilities/skills-status/",
+          "slug": "skills-status"
+        },
+        {
+          "id": "skills.verify",
+          "route": "/registry/capabilities/skills-verify/",
+          "slug": "skills-verify"
+        }
+      ],
+      "claims": [],
+      "id": "skills",
+      "route": "/registry/modules/skills/",
+      "slug": "skills",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/skills.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/skills.rs",
+      "title": "Skills"
     },
     {
       "capabilities": [

@@ -38,8 +38,8 @@
     }
   ],
   "diagrams": {
-    "axes": "flowchart TD\n    I[\"Intent<br/><small>one task, started once</small>\"]\n    A0[\"Profile<br/><small>4 profiles</small>\"]\n    A1[\"Workflow<br/><small>4 workflows</small>\"]\n    C[\"Capability<br/><small>149 · declared once</small>\"]\n    I --> A0 --> A1 --> C\n    S0[\"Command line<br/><small>71 of 149</small>\"]\n    C --> S0\n    S1[\"HTTP + OpenAPI<br/><small>147 of 149</small>\"]\n    C --> S1\n    S2[\"MCP tools and resources<br/><small>143 of 149</small>\"]\n    C --> S2\n    M([\"Model<br/><small>chosen per run · named in no file of the layer</small>\"])\n    A1 -. \"executed by\" .-> M",
-    "governance": "flowchart TD\n    L0[\"Doctrine<br/><small>10 principles · years</small>\"]\n    L1[\"Policy<br/><small>3 projections · months to years</small>\"]\n    L2[\"Rule<br/><small>45 rules · months</small>\"]\n    L3[\"Enforcement<br/><small>45 validators · the implementation that answers it</small>\"]\n    L4[\"Diagnostic<br/><small>4 reporting commands · one run</small>\"]\n    L0 --> L1 --> L2 --> L3 --> L4\n    L4 -. \"exit 10 · the commit does not land\" .-> L2"
+    "axes": "flowchart TD\n    I[\"Intent<br/><small>one task, started once</small>\"]\n    A0[\"Profile<br/><small>4 profiles</small>\"]\n    A1[\"Workflow<br/><small>4 workflows</small>\"]\n    C[\"Capability<br/><small>166 · declared once</small>\"]\n    I --> A0 --> A1 --> C\n    S0[\"Command line<br/><small>85 of 166</small>\"]\n    C --> S0\n    S1[\"HTTP + OpenAPI<br/><small>164 of 166</small>\"]\n    C --> S1\n    S2[\"MCP tools and resources<br/><small>160 of 166</small>\"]\n    C --> S2\n    M([\"Model<br/><small>chosen per run · named in no file of the layer</small>\"])\n    A1 -. \"executed by\" .-> M",
+    "governance": "flowchart TD\n    L0[\"Doctrine<br/><small>10 principles · years</small>\"]\n    L1[\"Policy<br/><small>3 projections · months to years</small>\"]\n    L2[\"Rule<br/><small>48 rules · months</small>\"]\n    L3[\"Enforcement<br/><small>48 validators · the implementation that answers it</small>\"]\n    L4[\"Diagnostic<br/><small>4 reporting commands · one run</small>\"]\n    L0 --> L1 --> L2 --> L3 --> L4\n    L4 -. \"exit 10 · the commit does not land\" .-> L2"
   },
   "example": {
     "claims": 5,
@@ -147,6 +147,13 @@
       },
       {
         "capabilities": 4,
+        "cli": 4,
+        "http": 4,
+        "mcp": 4,
+        "module": "intents"
+      },
+      {
+        "capabilities": 4,
         "cli": 0,
         "http": 4,
         "mcp": 4,
@@ -198,8 +205,29 @@
         "capabilities": 3,
         "cli": 0,
         "http": 3,
+        "mcp": 3,
+        "module": "episodes"
+      },
+      {
+        "capabilities": 3,
+        "cli": 0,
+        "http": 3,
         "mcp": 1,
         "module": "health"
+      },
+      {
+        "capabilities": 3,
+        "cli": 3,
+        "http": 3,
+        "mcp": 3,
+        "module": "integration"
+      },
+      {
+        "capabilities": 3,
+        "cli": 3,
+        "http": 3,
+        "mcp": 3,
+        "module": "knowledge_base"
       },
       {
         "capabilities": 3,
@@ -221,6 +249,13 @@
         "http": 3,
         "mcp": 3,
         "module": "rules"
+      },
+      {
+        "capabilities": 3,
+        "cli": 3,
+        "http": 3,
+        "mcp": 3,
+        "module": "skills"
       },
       {
         "capabilities": 3,
@@ -325,6 +360,13 @@
         "cli": 1,
         "http": 1,
         "mcp": 1,
+        "module": "convergence"
+      },
+      {
+        "capabilities": 1,
+        "cli": 1,
+        "http": 1,
+        "mcp": 1,
         "module": "dashboard"
       },
       {
@@ -370,15 +412,15 @@
         "module": "web"
       }
     ],
-    "capabilities": 149,
+    "capabilities": 166,
     "combinations": [
       {
-        "count": 74,
-        "surfaces": "http + mcp"
+        "count": 83,
+        "surfaces": "cli + http + mcp"
       },
       {
-        "count": 69,
-        "surfaces": "cli + http + mcp"
+        "count": 77,
+        "surfaces": "http + mcp"
       },
       {
         "count": 4,
@@ -389,28 +431,28 @@
         "surfaces": "cli"
       }
     ],
-    "modules": 44,
+    "modules": 50,
     "surfaces": [
       {
-        "count": 71,
+        "count": 85,
         "id": "cli",
         "label": "Command line"
       },
       {
-        "count": 147,
+        "count": 164,
         "id": "http",
         "label": "HTTP + OpenAPI"
       },
       {
-        "count": 143,
+        "count": 160,
         "id": "mcp",
         "label": "MCP tools and resources"
       }
     ]
   },
   "governance": {
-    "advisory": 5,
-    "blocking": 40,
+    "advisory": 6,
+    "blocking": 42,
     "commands": [
       "check",
       "doctor",
@@ -427,12 +469,27 @@
       "Execution depth is not output verbosity",
       "Parallel work requires isolation"
     ],
-    "rules": 45,
+    "rules": 48,
     "rules_without_principle": [
+      {
+        "route": "/doctrines/knowledge-integrity/",
+        "slug": "knowledge-integrity",
+        "title": "Knowledge integrity"
+      },
+      {
+        "route": "/doctrines/candidates-reviewed/",
+        "slug": "candidates-reviewed",
+        "title": "Candidates are reviewed"
+      },
       {
         "route": "/doctrines/lifecycle-observed/",
         "slug": "lifecycle-observed",
         "title": "Lifecycle observation"
+      },
+      {
+        "route": "/doctrines/knowledge-observed/",
+        "slug": "knowledge-observed",
+        "title": "Knowledge observation"
       },
       {
         "route": "/doctrines/deployment-contract/",
@@ -471,8 +528,8 @@
       }
     ],
     "rules_without_test": [],
-    "tests": 37,
-    "validators": 45
+    "tests": 40,
+    "validators": 48
   },
   "layers": [
     {
@@ -495,7 +552,7 @@
     },
     {
       "artifact": "a rule file with a class, a validator, the commands that run it and the test that proves it",
-      "count": 45,
+      "count": 48,
       "level": "Rule",
       "lifetime": "months",
       "question": "What exactly must, or must not, be?",
@@ -504,7 +561,7 @@
     },
     {
       "artifact": "a validator, dispatched from a command, wired to a git hook and to CI",
-      "count": 45,
+      "count": 48,
       "level": "Enforcement",
       "lifetime": "the implementation that answers it",
       "question": "How does a machine decide it?",

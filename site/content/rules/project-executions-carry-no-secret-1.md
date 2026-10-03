@@ -1,7 +1,7 @@
 +++
 title = "A sensitive value never enters an execution"
 description = "A sensitive value never enters an execution"
-weight = 89
+weight = 96
 [extra]
 kind = "rule"
 slug = "project-executions-carry-no-secret-1"

@@ -214,21 +214,23 @@ if [ "$REMOTE" -eq 1 ]; then
   elif ! gh auth status >/dev/null 2>&1; then
     fail "--remote was asked for but gh has no token: the backlog cannot be measured"
   else
-    base="$(git rev-parse origin/master 2>/dev/null || git rev-parse HEAD)"
-    landable=0; total=0
-    for pr in $(gh pr list --state open --limit 100 --json number -q '.[].number' 2>/dev/null); do
-      total=$((total+1))
-      br="$(gh pr view "$pr" --json headRefName -q .headRefName 2>/dev/null)" || continue
-      git fetch origin "$br" --quiet 2>/dev/null || continue
-      # The exit code, never a grep (see scripts/land).
-      if git merge-tree --write-tree "$base" FETCH_HEAD >/dev/null 2>&1; then
-        landable=$((landable+1))
-      fi
-    done
-    if [ "$landable" -gt "$MAX" ]; then
-      fail "$landable of $total open pull requests merge cleanly here and are still open (threshold $MAX): run scripts/land"
+    # The queue is the integration module's (ADR 0101), not a second reading here: it
+    # observes the forge once, decides every pull request's relation to master with git and
+    # the derived driver, and classifies it. What accumulates is work that could land now or
+    # after master is brought in — `ready` and `needs_refresh` — and is still open.
+    cli="$ROOT/bin/majordomus-cli"
+    if ! "$cli" prs refresh >/dev/null 2>&1; then
+      fail "--remote was asked for but the forge could not be observed (majordomus prs refresh): the backlog cannot be measured"
+    elif ! queue="$("$cli" prs status --format json 2>/dev/null)" && [ -z "$queue" ]; then
+      fail "majordomus prs status produced no queue: the backlog cannot be measured"
     else
-      ok "$landable of $total open pull requests are landable, within the threshold of $MAX"
+      landable="$(printf '%s' "$queue" | jq '[.assessments[] | select(.disposition == "ready" or .disposition == "needs_refresh")] | length')"
+      total="$(printf '%s' "$queue" | jq '.tallies.open')"
+      if [ "$landable" -gt "$MAX" ]; then
+        fail "$landable of $total open pull requests could land now or after master is brought in (threshold $MAX): run majordomus prs drain --refresh"
+      else
+        ok "$landable of $total open pull requests are landable, within the threshold of $MAX"
+      fi
     fi
   fi
 fi

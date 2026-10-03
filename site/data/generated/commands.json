@@ -280,6 +280,9 @@
           "284_a_record_reads_the_whole_declaration",
           "36_command_doctrines",
           "44_model_doctrine",
+          "707_knowledge_check_refuses_malformed_records",
+          "708_health_sees_a_stopped_knowledge_writer",
+          "711_candidates_are_reviewed_not_accumulated",
           "730_reasoning_works_with_no_advisor",
           "83_doctor_budget",
           "84_deployment_contract",
@@ -302,9 +305,13 @@
           "29_prompt_capture",
           "32_schema_integrity",
           "36_command_doctrines",
+          "391_skills_are_proven_capabilities",
           "54_session_lifecycle_hooks",
           "55_session_context",
           "56_derived_current_gate",
+          "707_knowledge_check_refuses_malformed_records",
+          "708_health_sees_a_stopped_knowledge_writer",
+          "711_candidates_are_reviewed_not_accumulated",
           "83_doctor_budget",
           "95_skills",
           "99_adr"
@@ -393,6 +400,8 @@
           "07_watch",
           "15_command_surface",
           "19_end_to_end",
+          "708_health_sees_a_stopped_knowledge_writer",
+          "711_candidates_are_reviewed_not_accumulated",
           "83_doctor_budget"
         ],
         "negative": [
@@ -401,6 +410,7 @@
           "21_decision_question",
           "22_history",
           "24_prompt_search",
+          "708_health_sees_a_stopped_knowledge_writer",
           "83_doctor_budget",
           "95_skills"
         ]
@@ -603,7 +613,8 @@
           "15_command_surface",
           "224_continuity_crosses_machines",
           "23_context",
-          "25_continuity_lifecycle"
+          "25_continuity_lifecycle",
+          "710_briefing_names_the_candidates"
         ],
         "negative": [
           "23_context",
@@ -660,7 +671,7 @@
           }
         ]
       },
-      "doc_md": "\nWhat does whoever works next need to know? Read-only. Assembles durable state into one\nbriefing and prints it. Nothing is persisted, no model is called, and the output is a\nprojection: every line is recomputed from the records and git each time it runs.\n\n**Section order is authority order.** Git first, because it is the only thing that cannot\nbe stale; then the task and the profile that constrains it; then blockers, which change\nwhat may be accepted; then authored records; then event history last, because it is the\nweakest evidence about the present.\n\n| Section | Source | Included when |\n|---|---|---|\n| `GIT` | git | always |\n| `TASK` | `state/current.yaml` | a task is active and the profile's `context.task` is not `false` |\n| `PROFILE` | `profiles/<name>.yaml` | the task names a profile that exists |\n| `CONTEXT DOCUMENTS` | `.ai/**/README.md` (the context contract) | a task is active; the effective chain is listed for each of its scope paths |\n| `OPEN QUESTIONS` | `state/open-questions.md` | any unresolved entry names this task |\n| `DECISIONS` | `state/decisions.md` | `context.decisions: true` (this task) or `context.architecture_notes: true` (the repository) |\n| `REASONING` | `state/reasoning/<task>/`, rendered by `majordomus-cli reasoning status --report` | the task has reasoning records and `context.decisions: true` |\n| `LATEST CHECKPOINT` | `state/checkpoints/` | a checkpoint resolves for this task |\n| `LATEST COMPATIBLE HANDOVER` | `state/handovers/` | a handover resolves for this worktree and branch |\n| `FILES TOUCHED IN SCOPE` | git | `context.relevant_files: true` |\n| `RECENT HISTORY` | `state/ledger.jsonl` | `context.recent_history_depth` is above zero |\n| `PROMPT` | `prompts/<name>.md` | `--prompt <name>` was given |\n\nThis is the only code that reads a profile's `context` block, which is what makes those\nfields state rather than documentation.\n\n**Budget.** `context.builder_budget_lines` in the policy, or `--budget-lines`. When the\nassembled text exceeds it, sections are dropped in a fixed order — history, files,\ndecisions, then the bodies of the checkpoint and the handover, which degrade to a pointer\nrather than disappearing. Git, task, profile and blockers are never dropped. Every drop is\nnamed under `EXCLUDED` with its reason, so an under-filled context is debugged from the\nexclusion list instead of guessed at. Exit `10` if what cannot be dropped is already over\nbudget.\n\n**`--for <provider>`** wraps the same body with a header naming the provider and its\nalways-loaded file. The body does not change: the canonical context is provider-neutral,\nand a provider that needed different facts would be a different policy, not a different\nrendering.\n\n**`--json`** emits one object: `git`, `task`, `sections[]` (each with `id`, `lines` and\n`text`), `excluded[]` (each with `item` and `reason`), and `budget`. The same selection as\nthe text form, because both are assembled once and rendered twice.\n\n```\n$ majordomus context\n# Majordomus context — 2026-09-03T19:41:02Z\n# a projection of durable state, not a source of truth: validate every line against git"
+      "doc_md": "\nWhat does whoever works next need to know? Read-only. Assembles durable state into one\nbriefing and prints it. Nothing is persisted, no model is called, and the output is a\nprojection: every line is recomputed from the records and git each time it runs.\n\n**Section order is authority order.** Git first, because it is the only thing that cannot\nbe stale; then the task and the profile that constrains it; then blockers, which change\nwhat may be accepted; then authored records; then event history last, because it is the\nweakest evidence about the present.\n\n| Section | Source | Included when |\n|---|---|---|\n| `GIT` | git | always |\n| `TASK` | `state/current.yaml` | a task is active and the profile's `context.task` is not `false` |\n| `PROFILE` | `profiles/<name>.yaml` | the task names a profile that exists |\n| `CONTEXT DOCUMENTS` | `.ai/**/README.md` (the context contract) | a task is active; the effective chain is listed for each of its scope paths |\n| `OPEN QUESTIONS` | `state/open-questions.md` | any unresolved entry names this task |\n| `DECISIONS` | `state/decisions.md` | `context.decisions: true` (this task) or `context.architecture_notes: true` (the repository) |\n| `REASONING` | `state/reasoning/<task>/`, rendered by `majordomus-cli reasoning status --report` | the task has reasoning records and `context.decisions: true` |\n| `LATEST CHECKPOINT` | `state/checkpoints/` | a checkpoint resolves for this task |\n| `LATEST COMPATIBLE HANDOVER` | `state/handovers/` | a handover resolves for this worktree and branch |\n| knowledge candidates | `.ai/repo/knowledge/candidates/` | in the derived briefing, after the open questions and before the handover: the candidates awaiting review whose episode was on this branch, count and ids, bounded; unattributed ones on their own line; absence printed rather than omitted |\n| `FILES TOUCHED IN SCOPE` | git | `context.relevant_files: true` |\n| `RECENT HISTORY` | `state/ledger.jsonl` | `context.recent_history_depth` is above zero |\n| `PROMPT` | `prompts/<name>.md` | `--prompt <name>` was given |\n\nThis is the only code that reads a profile's `context` block, which is what makes those\nfields state rather than documentation.\n\n**Budget.** `context.builder_budget_lines` in the policy, or `--budget-lines`. When the\nassembled text exceeds it, sections are dropped in a fixed order — history, files,\ndecisions, then the bodies of the checkpoint and the handover, which degrade to a pointer\nrather than disappearing. Git, task, profile and blockers are never dropped. Every drop is\nnamed under `EXCLUDED` with its reason, so an under-filled context is debugged from the\nexclusion list instead of guessed at. Exit `10` if what cannot be dropped is already over\nbudget.\n\n**`--for <provider>`** wraps the same body with a header naming the provider and its\nalways-loaded file. The body does not change: the canonical context is provider-neutral,\nand a provider that needed different facts would be a different policy, not a different\nrendering.\n\n**`--json`** emits one object: `git`, `task`, `sections[]` (each with `id`, `lines` and\n`text`), `excluded[]` (each with `item` and `reason`), and `budget`. The same selection as\nthe text form, because both are assembled once and rendered twice.\n\n```\n$ majordomus context\n# Majordomus context — 2026-09-03T19:41:02Z\n# a projection of durable state, not a source of truth: validate every line against git"
     },
     {
       "name": "checkpoint",
@@ -898,7 +909,9 @@
           "17_doctrine_enforcement",
           "19_end_to_end",
           "25_continuity_lifecycle",
-          "32_refusal_lifecycle"
+          "32_refusal_lifecycle",
+          "578_an_unknown_gate_refuses_completed",
+          "707_knowledge_check_refuses_malformed_records"
         ],
         "negative": [
           "04_start_check",
@@ -908,7 +921,8 @@
           "19_end_to_end",
           "21_decision_question",
           "25_continuity_lifecycle",
-          "32_refusal_lifecycle"
+          "32_refusal_lifecycle",
+          "707_knowledge_check_refuses_malformed_records"
         ]
       },
       "demo_data": {
@@ -1009,7 +1023,9 @@
           "25_continuity_lifecycle",
           "275_publication_is_current",
           "32_refusal_lifecycle",
-          "33_event_registry"
+          "33_event_registry",
+          "572_verification_records_the_tree_it_proved",
+          "578_an_unknown_gate_refuses_completed"
         ],
         "negative": [
           "06_finish",
@@ -1021,7 +1037,9 @@
           "21_decision_question",
           "25_continuity_lifecycle",
           "275_publication_is_current",
-          "32_refusal_lifecycle"
+          "32_refusal_lifecycle",
+          "572_verification_records_the_tree_it_proved",
+          "578_an_unknown_gate_refuses_completed"
         ]
       },
       "demo_data": {
@@ -1072,7 +1090,7 @@
               "--outcome",
               "completed",
               "--verify-command",
-              "true"
+              "test -d .ai"
             ],
             "expect": {
               "exit": 10,
@@ -1100,7 +1118,7 @@
               "--outcome",
               "completed",
               "--verify-command",
-              "true"
+              "test -d .ai"
             ],
             "expect": {
               "exit": 10,
@@ -1179,7 +1197,7 @@
               "--outcome",
               "completed",
               "--verify-command",
-              "true"
+              "test -d .ai"
             ],
             "expect": {
               "exit": 0,
@@ -1193,7 +1211,7 @@
           }
         ]
       },
-      "doc_md": "\nEvaluate the finish contract. Refuse if unmet.\n\n**Reads:** policy, profile, `current.yaml`, git, ledger.\n**Writes:** on success, `current.yaml` outcome set to the given value, one\n`task.finished` ledger line carrying the evaluated checklist and the verification\nresult, and a copy of `--note` under `state/completed/<id>.md` when given.\n\n**Arguments:** `--outcome completed|partial|blocked|no_match|failed` required.\n`--verify-command \"<cmd>\"` runs the project's own verification in the repository root\nand records its exit code, duration, and command. `--note <file>` supplies the\ncompletion note; otherwise the newest handover naming this task is used. `--check`\nevaluates scope and state without writing and exits `0` when no task is active or the\ntask is already finished, so a pre-push hook never blocks a repository with nothing to\nenforce.\n\nProfile requirements are also evaluated for `completed`: `regression_test_required`\npasses when a touched path looks like a test (`test/`, `spec/`, `_test.`, `.spec.`);\n`decision_record_required` passes when `decisions.md` contains `Task: <id>`. The\nregression check is deliberately crude and says so in its message.\n\n**Contract for `completed`:**\n\n```\nscope respected        touched files within claimed paths\nverification ran       --verify-command exited 0, recorded\nstate updated          current.yaml is at HEAD or advanced, not diverged\nno open blockers       open-questions.md has no unresolved entry for this task\nnote present           newest handover or completion note has required sections\n```\n\nEvery line of the contract is evaluated and printed, pass or fail, so that a refusal\nsays exactly what is missing. `partial` and `blocked` require a note with `# Next\nAction`; `no_match` and `failed` require `# Reason`; all four skip the verification\nline, and `blocked` skips the blockers line. Nothing is written when any line fails.\nFinishing an already finished task is refused (`15`).\n\n```\n$ majordomus finish --outcome completed --verify-command \"make test\"\nOK   scope         12 files, all within lib/auth\nOK   verification  make test — exit 0, 41s\nOK   state         exact (head 9b1e2d4)\nFAIL blockers      open-questions.md: \"token refresh window — needs product decision\" unresolved  [reproduce: grep -n 'unresolved' .ai/local/state/open-questions.md]\nOK   note          handover 20260903T201455Z--main--9b1e2d4--c0ffee.md\nfinish: refused, 1 unmet\nblocking doctrines:\n- majordomus.blocker-resolution\n$ echo $?\n10\n```\n\nThe contract is not a list inside `finish`. It is the set of doctrines whose\n`enforced_by` names `finish`, selected by this repository's\n`verification.finish_requires`. A requirement in the policy that no doctrine defines is\nreported and refuses, rather than being ignored. See\n[`DOCTRINE.md`](https://majordomus.dev/docs/doctrine/).\n\n---"
+      "doc_md": "\nEvaluate the finish contract. Refuse if unmet.\n\n**Reads:** policy, profile, `current.yaml`, git, ledger.\n**Writes:** on success, `current.yaml` outcome set to the given value, one\n`task.finished` ledger line carrying the evaluated checklist and the verification\nresult, and a copy of `--note` under `state/completed/<id>.md` when given.\n\n**Arguments:** `--outcome completed|partial|blocked|no_match|failed` required.\n`--verify-command \"<cmd>\"` runs the project's own verification in the repository root\nand records its exit code, duration, command, and the git tree id of the working tree it\nran over. The tree is read before and after the run: if it changed while the command was\nrunning — a second worker in the same checkout, a person saving a file, a command that\nrewrites tracked files — the run describes neither state and the line fails; run it again\nonce the tree is settled. `--note <file>` supplies the\ncompletion note; otherwise the newest handover naming this task is used. `--check`\nevaluates scope and state without writing and exits `0` when no task is active or the\ntask is already finished, so a pre-push hook never blocks a repository with nothing to\nenforce.\n\nProfile requirements are also evaluated for `completed`: `regression_test_required`\npasses when a touched path looks like a test (`test/`, `spec/`, `_test.`, `.spec.`);\n`decision_record_required` passes when `decisions.md` contains `Task: <id>`. The\nregression check is deliberately crude and says so in its message.\n\n**Contract for `completed`:**\n\n```\nscope respected        touched files within claimed paths\nverification ran       --verify-command exited 0, recorded\nstate updated          current.yaml is at HEAD or advanced, not diverged\nno open blockers       open-questions.md has no unresolved entry for this task\nnote present           newest handover or completion note has required sections\n```\n\nEvery line of the contract is evaluated and printed, pass or fail, so that a refusal\nsays exactly what is missing. `partial` and `blocked` require a note with `# Next\nAction`; `no_match` and `failed` require `# Reason`; all four skip the verification\nline, and `blocked` skips the blockers line. Nothing is written when any line fails.\nFinishing an already finished task is refused (`15`).\n\n```\n$ majordomus finish --outcome completed --verify-command \"make test\"\nOK   scope         12 files, all within lib/auth\nOK   verification  make test — exit 0, 41s\nOK   state         exact (head 9b1e2d4)\nFAIL blockers      open-questions.md: \"token refresh window — needs product decision\" unresolved  [reproduce: grep -n 'unresolved' .ai/local/state/open-questions.md]\nOK   note          handover 20260903T201455Z--main--9b1e2d4--c0ffee.md\nfinish: refused, 1 unmet\nblocking doctrines:\n- majordomus.blocker-resolution\n$ echo $?\n10\n```\n\nThe contract is not a list inside `finish`. It is the set of doctrines whose\n`enforced_by` names `finish`, selected by this repository's\n`verification.finish_requires`. A requirement in the policy that no doctrine defines is\nreported and refuses, rather than being ignored. See\n[`DOCTRINE.md`](https://majordomus.dev/docs/doctrine/).\n\n---"
     },
     {
       "name": "history",
@@ -1227,7 +1245,8 @@
           "25_continuity_lifecycle",
           "282_the_ledger_envelope_is_reserved",
           "32_refusal_lifecycle",
-          "33_event_registry"
+          "33_event_registry",
+          "408_a_receipt_is_provider_neutral"
         ],
         "negative": [
           "22_history",
@@ -1718,7 +1737,7 @@
           }
         ]
       },
-      "doc_md": "\nRecord evidence against the active task: one obligation it declared, discharged, or one\nvalidation gate of the CI model that has reported.\n\n```\nmajordomus evidence --covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) [--result <r>] [--json]\nmajordomus evidence --gate <id> --exit <status> [--command <cmd>] [--result <r>] [--json]\n```\n\nThe two forms record different kinds of fact and are never one invocation. An obligation is\na promise the task made; a gate is what the validation pipeline said about the tree. A line\nclaiming to be both would be readable as neither, so passing `--covers` and `--gate`\ntogether exits `2`.\n\nA task's `scope` says where a worker may write; its `requires` says what the worker owes\nbefore the outcome `completed` is available. The tokens are declared in\n`share/obligations.yaml` — implementation, tests, docs, generated, rules, commit, push,\ntarget, pages, deploy, verify — each naming the command that discharges it and, where the\nfact is local, the pathspecs its evidence is taken over.\n\nFour of them are never recorded here. `commit`, `push`, `target` and `pages` name facts the\ntool can establish — a clean tree, a remote-tracking ref that reaches the head, a trunk that\nreaches it, a published site that serves it — and `check` and `finish` settle those live at\nHEAD instead of asking a worker to transcribe them. Recording one has no effect: an\nestablished obligation discharges by being true and refuses by being false. Where the\ncheckout cannot settle it (no remote, no default branch recorded, a site that never\nanswered) the token falls back to the recorded line, and the finding says which it was.\n`deploy` and `verify` stay hand-recorded, and `share/obligations.yaml` says in one line why:\na deployment is a fact about a machine this repository never contacts.\n\n`--command` or `--artifact` is required: narrative is not evidence. A token the vocabulary\ndoes not declare exits `2`; a token the active task never promised exits `15`, because\nrecording evidence for something nobody asked for is how a checklist grows entries nobody\nwanted.\n\n**Writes:** a `task.evidence` line in the ledger, carrying the obligation, how it was taken,\nthe command or artifact, and the hash of the tracked files the obligation names. Nothing\nelse is written; the ledger is already append-only, ordered and integrity-checked, and its\nenvelope already carries the head, the branch and the session.\n\nThat hash is the point. Evidence discharges an obligation only while the recomputed hash of\nits inputs equals the recorded one, so a change to any file the obligation names takes the\nproof away rather than leaving it behind — the same currency question the site's own\n`source_hash` asks, asked of a test result. An obligation whose fact is remote (a push, an\nintegration, a publication, a deployment) has no inputs and is bound instead to the commit\nit was taken at, judged `exact | advanced | diverged | different_context` like every other\nrecord here.\n\n`check` and `finish` evaluate every obligation on every run through the doctrine\n`majordomus.obligation-closure`, so a stale evidence is visible before someone builds on\nit; only an outcome of `completed` is refused. A worker reporting `blocked` is being honest,\nand refusing that would teach them to claim `completed` instead.\n\n### Recording a gate\n\n`--gate` names a gate of `.ai/repo/ci/gates.yaml`, this repository's CI model, and `--exit`\nthe status it reported; `0` is a pass. A gate the model does not declare exits `2`, as does\nan `--exit` that is not a number.\n\n```\nmajordomus evidence --gate rust-check --exit 0 --command 'scripts/rust-check --ci'\n```\n\n**Writes:** a `task.gate` line in the ledger, carrying the gate, its exit status and the hash\nof the files that select it. Those files are derived from the model rather than declared:\nthe union of the paths of every class that names the gate, and everything for a gate every\nplan selects, because a gate every plan selects is a gate any change can invalidate. Change\none of them and the run stops discharging the gate — committed or not, since the change set\na task is judged over includes its working tree.\n\n`check` and `finish` evaluate every gate the task's own change set selects, through the\ndoctrine `majordomus.completion-gates`, and report each in one vocabulary:\n\n| status | meaning |\n|--------|---------|\n| `pass` | it ran over these inputs and exited `0` |\n| `fail` | it ran over these inputs and did not |\n| `stale` | it ran, and the files that select it have changed since |\n| `blocked` | something it cannot run without has not passed |\n| `queued` | the plan selects it and no run has ever reported |\n| `exempt` | nothing this change did can make it true or false |\n| `unknown` | it cannot be judged here at all — no model, no reader |\n\nOnly `fail`, `stale` and `blocked` refuse the outcome `completed`. `queued` is reported by\nname, never accepted as a pass and never refused: a verdict that never arrived and a verdict\nthat said pass are different facts, and on 2026-09-10 this repository's trunk carried three\nbranch-breaking defects overnight because they looked identical\n(`majordomus.never-reported-is-not-green`).\n\nThe whole judgement — every gate, the plan that selected it, which obligations the change\nimplies, and the nineteen questions of the done invariant with the source that answered each\n— is one document, `gates.completion`, read the same way by the command line, the HTTP API,\nMCP and the Cockpit:\n\n```\nmajordomus-cli run gates.completion --input '{}' --format json | jq '.output.questions'\n```"
+      "doc_md": "\nRecord evidence against the active task: one obligation it declared, discharged, or one\nvalidation gate of the CI model that has reported.\n\n```\nmajordomus evidence --covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) [--result <r>] [--json]\nmajordomus evidence --gate <id> --exit <status> [--command <cmd>] [--result <r>] [--json]\n```\n\nThe two forms record different kinds of fact and are never one invocation. An obligation is\na promise the task made; a gate is what the validation pipeline said about the tree. A line\nclaiming to be both would be readable as neither, so passing `--covers` and `--gate`\ntogether exits `2`.\n\nA task's `scope` says where a worker may write; its `requires` says what the worker owes\nbefore the outcome `completed` is available. The tokens are declared in\n`share/obligations.yaml` — implementation, tests, docs, generated, rules, commit, push,\ntarget, pages, deploy, verify — each naming the command that discharges it and, where the\nfact is local, the pathspecs its evidence is taken over.\n\nFour of them are never recorded here. `commit`, `push`, `target` and `pages` name facts the\ntool can establish — a clean tree, a remote-tracking ref that reaches the head, a trunk that\nreaches it, a published site that serves it — and `check` and `finish` settle those live at\nHEAD instead of asking a worker to transcribe them. Recording one has no effect: an\nestablished obligation discharges by being true and refuses by being false. Where the\ncheckout cannot settle it (no remote, no default branch recorded, a site that never\nanswered) the token falls back to the recorded line, and the finding says which it was.\n`deploy` and `verify` stay hand-recorded, and `share/obligations.yaml` says in one line why:\na deployment is a fact about a machine this repository never contacts.\n\n`--command` or `--artifact` is required: narrative is not evidence. A token the vocabulary\ndoes not declare exits `2`; a token the active task never promised exits `15`, because\nrecording evidence for something nobody asked for is how a checklist grows entries nobody\nwanted.\n\n**Writes:** a `task.evidence` line in the ledger, carrying the obligation, how it was taken,\nthe command or artifact, and the hash of the tracked files the obligation names. Nothing\nelse is written; the ledger is already append-only, ordered and integrity-checked, and its\nenvelope already carries the head, the branch and the session.\n\nThat hash is the point. Evidence discharges an obligation only while the recomputed hash of\nits inputs equals the recorded one, so a change to any file the obligation names takes the\nproof away rather than leaving it behind — the same currency question the site's own\n`source_hash` asks, asked of a test result. An obligation whose fact is remote (a push, an\nintegration, a publication, a deployment) has no inputs and is bound instead to the commit\nit was taken at, judged `exact | advanced | diverged | different_context` like every other\nrecord here.\n\n`check` and `finish` evaluate every obligation on every run through the doctrine\n`majordomus.obligation-closure`, so a stale evidence is visible before someone builds on\nit; only an outcome of `completed` is refused. A worker reporting `blocked` is being honest,\nand refusing that would teach them to claim `completed` instead.\n\n### Recording a gate\n\n`--gate` names a gate of `.ai/repo/ci/gates.yaml`, this repository's CI model, and `--exit`\nthe status it reported; `0` is a pass. A gate the model does not declare exits `2`, as does\nan `--exit` that is not a number.\n\n```\nmajordomus evidence --gate rust-check --exit 0 --command 'scripts/rust-check --ci'\n```\n\n**Writes:** a `task.gate` line in the ledger, carrying the gate, its exit status and the hash\nof the files that select it. Those files are derived from the model rather than declared:\nthe union of the paths of every class that names the gate, and everything for a gate every\nplan selects, because a gate every plan selects is a gate any change can invalidate. Change\none of them and the run stops discharging the gate — committed or not, since the change set\na task is judged over includes its working tree.\n\n`check` and `finish` evaluate every gate the task's own change set selects, through the\ndoctrine `majordomus.completion-gates`, and report each in one vocabulary:\n\n| status | meaning |\n|--------|---------|\n| `pass` | it ran over these inputs and exited `0` |\n| `fail` | it ran over these inputs and did not |\n| `stale` | it ran, and the files that select it have changed since |\n| `blocked` | something it cannot run without has not passed |\n| `queued` | the plan selects it and no run has ever reported |\n| `exempt` | nothing this change did can make it true or false |\n| `unknown` | it cannot be judged here at all — a model that does not parse, a reader that is not built, errors or answers nothing, no `jq` |\n\n`fail`, `stale`, `blocked` and `unknown` refuse the outcome `completed`: `completed` is a\nclaim that the verdict is known, and a verdict that could not be read cannot back it. Every\nother outcome is still accepted over any of them, named \"not refused\", and `check` reports\nwithout refusing. A repository that declares no CI model at all has no gate to be unknown\nabout and refuses nothing. `queued` is reported by\nname, never accepted as a pass and never refused: a verdict that never arrived and a verdict\nthat said pass are different facts, and on 2026-09-10 this repository's trunk carried three\nbranch-breaking defects overnight because they looked identical\n(`majordomus.never-reported-is-not-green`).\n\nThe whole judgement — every gate, the plan that selected it, which obligations the change\nimplies, and the nineteen questions of the done invariant with the source that answered each\n— is one document, `gates.completion`, read the same way by the command line, the HTTP API,\nMCP and the Cockpit:\n\n```\nmajordomus-cli run gates.completion --input '{}' --format json | jq '.output.questions'\n```"
     },
     {
       "name": "skills",
@@ -1749,9 +1768,11 @@
       ],
       "tests": {
         "behaviour": [
+          "391_skills_are_proven_capabilities",
           "95_skills"
         ],
         "negative": [
+          "391_skills_are_proven_capabilities",
           "95_skills"
         ]
       },
@@ -1872,20 +1893,30 @@
           "111_session_per_provider",
           "130_lifecycle_survives_a_stale_task",
           "140_prompt_continuity",
+          "200_generic_mcp_episode",
           "220_exactly_once_close",
           "221_the_lifecycle_under_concurrency",
           "222_an_episode_nobody_ended",
           "224_continuity_crosses_machines",
           "282_the_ledger_envelope_is_reserved",
           "29_prompt_capture",
-          "54_session_lifecycle_hooks"
+          "408_a_receipt_is_provider_neutral",
+          "494_the_mesh_is_declared_and_held",
+          "54_session_lifecycle_hooks",
+          "563_knowledge_is_derived_at_the_boundary",
+          "564_knowledge_derivation_is_idempotent",
+          "565_knowledge_switch_and_failure_leave_evidence",
+          "710_briefing_names_the_candidates"
         ],
         "negative": [
           "111_session_per_provider",
           "140_prompt_continuity",
+          "200_generic_mcp_episode",
           "282_the_ledger_envelope_is_reserved",
           "29_prompt_capture",
-          "54_session_lifecycle_hooks"
+          "408_a_receipt_is_provider_neutral",
+          "54_session_lifecycle_hooks",
+          "565_knowledge_switch_and_failure_leave_evidence"
         ]
       },
       "demo_data": {
@@ -2191,6 +2222,7 @@
         2,
         10,
         12,
+        13,
         15
       ],
       "tests": {
@@ -2201,6 +2233,9 @@
           "43_plan_command",
           "44_model_doctrine",
           "45_github_projection",
+          "581_no_plan_stamp_without_its_event",
+          "582_the_done_guard_holds_in_both_engines",
+          "602_a_spliced_body_is_recognised_as_its_own",
           "99_plan_capabilities",
           "99_work_graph_chain"
         ],
@@ -2208,7 +2243,9 @@
           "40_project_model",
           "41_project_status",
           "42_dag_waves",
-          "43_plan_command"
+          "43_plan_command",
+          "581_no_plan_stamp_without_its_event",
+          "582_the_done_guard_holds_in_both_engines"
         ]
       },
       "demo_data": {
@@ -2425,7 +2462,7 @@
       "json_output": true,
       "syntax": "majordomus session <start|status|close|list|show|latest|context> [options]",
       "demo": "session-episode",
-      "note": "One open session per provider session, not per worktree: a second window of the same provider gets an episode of its own under state/sessions-open/, and session-current.yaml points at the episode of this checkout. The open record is never tracked. A closed record is an envelope of references selected by the session stamp on each ledger line, never by a time range. start freezes the resolved context into the local working-context store and close appends the outcome to it; --if-open and --if-none are what let a provider hook run both on every event.",
+      "note": "One open session per provider session, not per worktree: a second window of the same provider gets an episode of its own under state/sessions-open/, and session-current.yaml points at the episode of this checkout. The open record is never tracked. A closed record is an envelope of references selected by the session stamp on each ledger line, never by a time range. start freezes the resolved context into the local working-context store as an opening snapshot, and `session context` composes the live working context on every read instead of returning that file: the episode's identity, git now against git at the open, and the checkpoints, decisions and questions the episode recorded, taken from the ledger lines carrying its own session id. `--path` prints the snapshot instead. A closed record's body is composed the same way and is never empty; where the episode recorded nothing authored, the record says so and names the command that would have recorded it. --if-open and --if-none are what let a provider hook run the open and the close on every event.",
       "reads": [
         ".ai/local/state/sessions-open/",
         ".ai/local/state/session-current.yaml",
@@ -2453,6 +2490,7 @@
           "111_session_per_provider",
           "127_briefing_freshness",
           "136_changed_files_classifier",
+          "210_session_context_is_derived",
           "220_exactly_once_close",
           "221_the_lifecycle_under_concurrency",
           "222_an_episode_nobody_ended",
@@ -2460,10 +2498,12 @@
           "224_continuity_crosses_machines",
           "281_published_order_is_tracked",
           "284_a_record_reads_the_whole_declaration",
+          "494_the_mesh_is_declared_and_held",
           "54_session_lifecycle_hooks",
           "55_session_context",
           "60_session_lifecycle",
-          "63_session_records"
+          "63_session_records",
+          "710_briefing_names_the_candidates"
         ],
         "negative": [
           "111_session_per_provider",
@@ -2475,6 +2515,7 @@
           "281_published_order_is_tracked",
           "54_session_lifecycle_hooks",
           "55_session_context",
+          "565_knowledge_switch_and_failure_leave_evidence",
           "60_session_lifecycle"
         ]
       },
@@ -2572,7 +2613,7 @@
           },
           {
             "id": "working-context",
-            "title": "Where the episode's working context is",
+            "title": "The episode's working context, composed now",
             "given": {
               "session open": true
             },
@@ -2584,10 +2625,33 @@
             "expect": {
               "exit": 0,
               "stdout_contains": [
+                "^# Working context of session s-",
+                "not stored and is not a snapshot"
+              ]
+            },
+            "explain": "`session context` composes the live working context on every read: the episode's own record, git now against git at the open, and the episode's ledger lines. Nothing in it is a stored document somebody had to write.",
+            "setup_sh": "# Installed, with one execution episode open in this worktree.\n. \"$FIXTURE_SETUP/installed.sh\"\n\"$MJ\" session start --worker some-provider/some-model >/dev/null",
+            "stdin_body": null
+          },
+          {
+            "id": "working-context-path",
+            "title": "Where the episode's opening snapshot is",
+            "given": {
+              "session open": true
+            },
+            "setup": "session-open",
+            "run": [
+              "session",
+              "context",
+              "--path"
+            ],
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
                 "^\\.ai/local/session-contexts/"
               ]
             },
-            "explain": "`start` freezes what the context builder resolved into the local working-context store, and this prints the path rather than the document: local evidence is never poured into a terminal where a context can pick it up.",
+            "explain": "`start` freezes what the context builder resolved into the local working-context store, and `--path` prints where that snapshot is rather than its contents.",
             "setup_sh": "# Installed, with one execution episode open in this worktree.\n. \"$FIXTURE_SETUP/installed.sh\"\n\"$MJ\" session start --worker some-provider/some-model >/dev/null",
             "stdin_body": null
           }
@@ -2597,36 +2661,60 @@
     },
     {
       "name": "knowledge",
-      "summary": "The compiled index over what this repository states.",
+      "summary": "The compiled index over what this repository states, and the candidate records it derives from what an episode did.",
       "category": "memory",
       "stage": "inspect",
-      "class": "read-only",
-      "read_only": true,
+      "class": "state-mutating",
+      "read_only": false,
       "requires_task": "none",
       "requires_repository": true,
       "requires_installed": true,
       "json_output": true,
-      "syntax": "majordomus knowledge <sources|nodes|edges> [--scope shared|operational|all] [--kind <kind>] [--type <type>] [--json]",
+      "syntax": "majordomus knowledge <sources|nodes|edges|derive|candidates|promote|reject|check> [--scope shared|operational|all] [--kind <kind>] [--type <type>] [--episode <id>] [--dry-run] [--class <class>] [--reason <why>] [--by <id>] [--json]",
       "demo": "knowledge-index",
-      "note": "Discovery reads the version-control index with the declared pathspecs and never walks the tree. Nodes keep their identity across a rebuild, kinds are never guessed, and an edge exists only where a file states it.",
+      "note": "Discovery reads the version-control index with the declared pathspecs and never walks the tree. Nodes keep their identity across a rebuild, kinds are never guessed, and an edge exists only where a file states it. sources, nodes, edges, candidates and check write nothing. derive turns the ledger lines one episode stamped into candidate records under the tracked knowledge section, deterministically and without a model; a second run over the same evidence writes nothing and says so. promote and reject are a person's acts on a candidate and each leaves a ledger line; nothing here stages a file (ADR 0091).",
       "reads": [
         ".ai/repo/knowledge/sources.yaml",
         "share/knowledge-sources.yaml",
-        ".ai/local/state/"
+        ".ai/local/state/",
+        ".ai/repo/knowledge/candidates/",
+        ".ai/repo/knowledge/curated/",
+        ".ai/local/state/ledger.jsonl",
+        ".ai/repo/policy.yaml",
+        "share/allow/knowledge.txt"
       ],
-      "writes": [],
+      "writes": [
+        ".ai/repo/knowledge/candidates/",
+        ".ai/repo/knowledge/curated/",
+        ".ai/local/state/ledger.jsonl"
+      ],
       "exit_codes": [
         0,
         2,
         10,
+        12,
         13
       ],
       "tests": {
         "behaviour": [
-          "64_knowledge_discovery"
+          "405_the_knowledge_reader_honours_the_schema",
+          "563_knowledge_is_derived_at_the_boundary",
+          "564_knowledge_derivation_is_idempotent",
+          "565_knowledge_switch_and_failure_leave_evidence",
+          "64_knowledge_discovery",
+          "707_knowledge_check_refuses_malformed_records",
+          "708_health_sees_a_stopped_knowledge_writer",
+          "709_knowledge_promotion_is_an_act",
+          "710_briefing_names_the_candidates",
+          "711_candidates_are_reviewed_not_accumulated",
+          "777_a_recorded_scenario_does_not_depend_on_the_recorder"
         ],
         "negative": [
-          "64_knowledge_discovery"
+          "405_the_knowledge_reader_honours_the_schema",
+          "563_knowledge_is_derived_at_the_boundary",
+          "64_knowledge_discovery",
+          "707_knowledge_check_refuses_malformed_records",
+          "709_knowledge_promotion_is_an_act"
         ]
       },
       "demo_data": {
@@ -2700,10 +2788,32 @@
             "explain": "Usage errors exit 2 and name the help text; nothing is guessed from a near miss.",
             "setup_sh": "# A repository with Majordomus installed and projections generated, and one commit of work.\n\"$MJ\" init >/dev/null\n\"$MJ\" update >/dev/null\nmkdir -p lib docs\necho a > lib/a\necho d > docs/d\ngit add . && git commit -qm base",
             "stdin_body": null
+          },
+          {
+            "id": "derive-dry-run",
+            "title": "What an episode would yield, without writing it",
+            "given": {
+              "session open": true
+            },
+            "setup": "session-open",
+            "run": [
+              "knowledge",
+              "derive",
+              "--dry-run"
+            ],
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^knowledge derive:"
+              ]
+            },
+            "explain": "The deriver reads the open episode's ledger lines and says what it would write; with --dry-run no record and no ledger line is written, so it can be run anywhere.",
+            "setup_sh": "# Installed, with one execution episode open in this worktree.\n. \"$FIXTURE_SETUP/installed.sh\"\n\"$MJ\" session start --worker some-provider/some-model >/dev/null",
+            "stdin_body": null
           }
         ]
       },
-      "doc_md": "\nA compiler over what this repository already states. Read-only in every subcommand\ndocumented here.\n\nIt is not a wiki, not a database, not a memory service, and not a second place to write\nthings down. Every source it reads is a file somebody already maintains, everything it\nproduces is derived and regenerable, and none of it outranks the file it came from. A\nresult is a pointer to canonical knowledge, never a rewritten answer.\n\n**`knowledge` is not `search`.** `search` is a literal scan over the durable operational\nrecords — handovers, checkpoints, decisions, questions, prompts, the ledger — with no\nindex, because that corpus is a handful of files. `knowledge` covers the repository's\ncanonical artifacts: the policy, the profiles, the prompts, the milestone and issue\ncontracts, the claims matrix and the documents. Two corpora, two contracts, and neither\nchanges the other.\n\n- `sources [--scope shared|operational|all]` lists the curated source classes and the\n  files each one discovers, with the class, the scope, the kind, a content hash and the\n  repository-relative path.\n- `nodes [--scope ...] [--kind <k>]` derives one node per canonical object: its identity,\n  its kind, the source it came from and that source's hash. Exits `10` when two objects\n  claim one identity.\n- `edges [--scope ...] [--type <t>]` derives one edge per stated relationship, with the file\n  and the field or line it was observed in.\n\n**No edge without provenance.** Every edge names where the relationship was stated, and an\nedge missing any of from, to, type or provenance is refused rather than emitted with a\nblank — a blank source reads as \"unknown\" and is indistinguishable from one nobody recorded.\nAn edge nobody can trace to a line is not a fact, it is a guess wearing a fact's clothes, and\nit is a guess the person best placed to notice it is wrong will never see.\n\n**Nothing is inferred from prose.** The repository already states its relationships\nexplicitly, in fields somebody maintains, and those are both free and correct. The edge\ntypes are a closed set; an undeclared one is an error rather than a new vocabulary word:\n\n| type | from → to | stated in |\n|---|---|---|\n| `part_of` | issue → milestone | the issue's `milestone` |\n| `depends_on` | issue → issue, milestone → milestone | the record's `depends_on` |\n| `declares` | milestone → claim | the milestone's `claims` |\n| `specified_by` | claim → document | `docs/CLAIMS.yaml`'s `source` |\n| `implemented_by` | claim → implementation | its `implementation` |\n| `tested_by` | claim → test, doctrine → test | its `test` |\n| `supports` | doctrine → claim | the doctrine's `claims` |\n| `references` | document → document | an inline Markdown link |\n\nLinks are the one edge source that is not curated, and they are read conservatively. Fenced\ncode is dropped first, because a path inside a code sample is an example of a path and not a\nreference to one. A target with a scheme, a protocol-relative target and an absolute path are\nall skipped; a fragment is trimmed, because `docs/CLI.md#session` refers to `docs/CLI.md`.\n\n**Severity distinguishes what Majordomus owns from what an author wrote.** A declared\nrelationship pointing at a file the repository does not contain is a `FAIL`: it is a broken\npromise. A link in a document pointing at nothing is a `WARN`: a document may deliberately\npoint outside the repository and the target alone cannot tell the two apart. A relationship\npointing at a real file that this compiler does not model as one node — a container of many\nobjects, or something outside the curated set — is silent, because a report that is large by\ndesign is a report people stop reading.\n\n`nodes` and `edges` are two views of one derivation, so a defect in either exits `10` on\nboth. There is no clean node listing over a graph that is broken.\n\n**A node's identity is never its content hash.** It is the object's own canonical id where\nit has one — `claim:policy-parse`, `issue:I0801`, `milestone:M003`, `profile:debugging` —\nand its repository path where it does not, as in `document:docs/CONTINUITY.md`. A hash says\nwhether something *changed*; it can never say what something *is*, because then every edit\nwould delete a node and create a stranger, and every reference to it would point at nothing\nwithout anything saying so. The hash rides along on the node and is what freshness is\nmeasured with.\n\nThe consequence is deliberate: editing a document keeps its node and moves its hash;\nrenaming one is a delete and an add, and disturbs no other node.\n\n**A kind comes from structure, never from prose.** It is decided by the source class the\nfile was discovered in and by fields the file itself declares. Nothing reads a body looking\nfor a word that suggests a type: a document that discusses roadmaps and milestones is a\ndocument that discusses them. Where no rule applies the kind is `unknown` and the node is\nstill emitted, with one finding naming the class — an explicit unknown is information, and a\nconfident wrong answer is not.\n\n**A title is taken or left empty, never invented.** From the record's own `title` or\n`description`, or from a document's first level-one heading. A document with no heading gets\nno title rather than its filename, because a filename standing in for a title reads like a\nfact and is a guess.\n\nTwo stores have no id field of their own. A decision is keyed by its title and a question by\nits text — in both cases exactly what the ledger records and what a session envelope\nreferences, so three places name the same thing the same way and nothing maps between them.\nAnswering a question rewrites the line it lives on, and the identity survives that: the\nappended answer is stripped, and only when what remains ends in the entry's opening date, so\na question whose own text contains a dash is left whole rather than cut at a guess.\n\n**Discovery is driven by the repository index, not by a filesystem walk.** A walk returns\nbuild output, vendored trees and editor droppings; it returns them in an order that\ndiffers between two machines; and it can return a file nobody meant to publish. Listing\ntracked files instead gives repository truth in a stable order, and an untracked file is\nnever a source. Operational records are discovered from the state directory Majordomus\nitself owns under `.ai/local/`, which is never tracked — and from nowhere else. No hidden\ndirectory is scanned because it happens to exist.\n\nThe source classes are declared twice, by two owners: the repository declares its shared\nsources in its AI layer, `.ai/repo/knowledge/sources.yaml`, and the tool ships the\noperational classes, the records it writes itself, in `share/knowledge-sources.yaml`. The\nscope of a class is decided by which file declared it; neither file names the other:\n\n| scope | meaning |\n|---|---|\n| `shared` | repository knowledge; may be projected to a public surface |\n| `operational` | this checkout's own working records; never part of a shared projection |\n\nThe scope is a property of the class, so the publication boundary is decided in one place\nrather than at each producer. Every tracked pathspec carries the `:(glob)` prefix, under\nwhich `*` does not cross a directory separator. That is not tidiness: without it,\n`docs/*.md` also matches `docs/claims/*.md`, two classes silently overlap, and one file\nbecomes two nodes. `test/cases/64_knowledge_discovery.sh` fails on that mutation.\n\nOne overlap is settled by the file rather than by the classes. A section's `README.md` matches\nboth `.ai/**/README.md`, the `context` class, and its section's own pathspec\n(`.ai/repo/features/*.md`, `.ai/repo/rules/**/*.md`, and so on). It declares `kind: context`, so\nit is a `context` node, once: a second class discovering it adds nothing. The index applies the\nsame precedence in `apps/majordomus-cli/src/discovery/mod.rs`, and\n`test/cases/330_a_contract_is_the_kind_it_declares.sh` proves it for `knowledge nodes`. Where no\nfile declares a kind, two classes over one path remain a refusal (case 73's `twin`).\n\n`init` declares the `context` class first, so a new repository's contracts are objects of its\nindex from the start. Without it `context resolve`, which reads the files, and every capability\nthat reads the index disagreed about what applies to a path;\n`test/cases/130_context_compiler.sh` fails without the class.\n\nA class marked `required` that discovers nothing is reported as a `WARN`. The cost of a\ncurated list is that a path can be forgotten, and a forgotten path is indistinguishable\nfrom a repository that does not have that file unless something says so.\n\n```\n$ majordomus knowledge sources --scope shared\npolicy      shared      policy     4f2a9c1d8b30  .ai/repo/policy.yaml\nprofile     shared      profile    a1b2c3d4e5f6  .ai/repo/profiles/debugging.yaml\n...\nissue       shared      issue      0e5a7b9c3f51  .ai/repo/project/issues/I0801.yaml\nclaims      shared      claim      7c9e1b3d5f70  docs/CLAIMS.yaml\ndocument    shared      document   9b1e2d4f8c3a  docs/CONTINUITY.md\nknowledge sources: 169 file(s) in scope shared\n```"
+      "doc_md": "\nA compiler over what this repository already states, and the writer of what an episode\nlearned. `sources`, `nodes`, `edges`, `candidates` and `check` are read-only; `derive`,\n`promote` and `reject` write knowledge records and ledger lines, and nothing else.\n\nIt is not a wiki, not a database, not a memory service, and not a second place to write\nthings down. Every source it reads is a file somebody already maintains, everything it\nproduces is derived and regenerable, and none of it outranks the file it came from. A\nresult is a pointer to canonical knowledge, never a rewritten answer.\n\n**`knowledge` is not `search`.** `search` is a literal scan over the durable operational\nrecords — handovers, checkpoints, decisions, questions, prompts, the ledger — with no\nindex, because that corpus is a handful of files. `knowledge` covers the repository's\ncanonical artifacts: the policy, the profiles, the prompts, the milestone and issue\ncontracts, the claims matrix and the documents. Two corpora, two contracts, and neither\nchanges the other.\n\n- `sources [--scope shared|operational|all]` lists the curated source classes and the\n  files each one discovers, with the class, the scope, the kind, a content hash and the\n  repository-relative path.\n- `nodes [--scope ...] [--kind <k>]` derives one node per canonical object: its identity,\n  its kind, the source it came from and that source's hash. Exits `10` when two objects\n  claim one identity.\n- `edges [--scope ...] [--type <t>]` derives one edge per stated relationship, with the file\n  and the field or line it was observed in.\n- `derive [--episode <id>] [--dry-run] [--json]` derives the knowledge the episode produced\n  into candidate records under `.ai/repo/knowledge/candidates/`, from the ledger and git and\n  never from a conversation: a recorded decision becomes a `convention`, a resolved question a\n  `fact`, a blocked or failed task a `lesson`, a completion with a verification command a\n  `fact`. The open episode, or the one named. Deterministic: same ledger, same git, same\n  bytes, and a second run reports every record `unchanged`. `--dry-run` says what it would\n  write and touches neither the tree nor the ledger.\n- `candidates [--json]` lists every record awaiting review — id, class, date, the branch of\n  the episode it came from, title — reading the directory rather than the index, so a\n  candidate the hook just wrote and nobody has added is listed.\n- `promote <id> [--class <c>] < evidence.md` moves a candidate to `curated/` as `verified`,\n  with the evidence on standard input appended under `# Evidence` and the class the person\n  chose. The deriver never writes `verified`; this is the act that does.\n- `reject <id> --reason \"<why>\" [--by <id>]` marks a candidate `superseded` in place with the\n  reason under `# Rejected`, naming the record that replaces it when `--by` gives one.\n- `check [--json]` validates every record under `candidates/` and `curated/`: the schema, no\n  unknown key, unique ids equal to the file name, provenance beside `verified`, every\n  reference resolving, a reason beside `superseded`, no candidate claiming `verified`, no\n  conversation. The same check `check` and `doctor` dispatch.\n\nThe read side of the same store is served by the executable — `bin/majordomus-cli knowledge\ncandidates`, `knowledge record <id>` and `knowledge status`, each a capability declared once\nand answering identically over HTTP, MCP and the command line (`CAPABILITIES.md`); `status`\nreports the last derivation, the newest close and whether the writer has stopped.\n[`KNOWLEDGE.md`](https://majordomus.dev/docs/knowledge/) has the derivation table, the two moments and the rules.\n\n**Writes:** `derive` writes `.ai/repo/knowledge/candidates/<id>.md`, one per record, through a\ntemporary file in the same directory renamed over the id-named file, never staged, and prints\n`written`, `unchanged` or `skipped` per record with the summary last; it appends\n`knowledge.derived` to the ledger — episode, counts, paths — even when it wrote nothing.\n`promote` writes `.ai/repo/knowledge/curated/<id>.md` the same way, removes the candidate,\nappends `knowledge.promoted` and prints the curated path last. `reject` rewrites the\ncandidate in place and appends `knowledge.rejected`. The record id is the episode id and a\ndigest of the evidence, so the same fact always lands in the same file.\n\n**Never** stages, commits, or modifies any other file. Never reads a conversation, a prompt or\na handover; never calls a model or a network. Never writes `verified`.\n\n**Refuses** (`10`) `promote` with empty stdin, with stdin carrying a transcript marker, on a\nrecord whose status is not `candidate`, or with a class outside the enumeration; `reject` on a\nrecord whose status is not `candidate`, or when `--by` names no record; `derive` when the\npolicy does not parse; `check` on any failing record. (`12`) `promote` or `reject` when no\ncandidate carries the id. (`2`) `reject` without a non-empty `--reason`. (`13`) a write that\ndid not complete. `derive` with no episode to derive from says so and exits `0`.\n\n```\n$ majordomus decision add \"Tabs are refused in the parser\" --why \"two encodings of one thing\"\n$ majordomus knowledge derive\nwritten .ai/repo/knowledge/candidates/s-20260912101500-7f1a-3b9c2e4d1a05.md\nknowledge derive: 1 written, 0 unchanged, 0 skipped for episode s-20260912101500-7f1a\n$ majordomus knowledge derive\nunchanged .ai/repo/knowledge/candidates/s-20260912101500-7f1a-3b9c2e4d1a05.md\nknowledge derive: 0 written, 1 unchanged, 0 skipped for episode s-20260912101500-7f1a\n$ printf 'Verified by reading lib/yaml.sh.\\n' | majordomus knowledge promote s-20260912101500-7f1a-3b9c2e4d1a05 --class constraint\n.ai/repo/knowledge/curated/s-20260912101500-7f1a-3b9c2e4d1a05.md\n```\n\n**No edge without provenance.** Every edge names where the relationship was stated, and an\nedge missing any of from, to, type or provenance is refused rather than emitted with a\nblank — a blank source reads as \"unknown\" and is indistinguishable from one nobody recorded.\nAn edge nobody can trace to a line is not a fact, it is a guess wearing a fact's clothes, and\nit is a guess the person best placed to notice it is wrong will never see.\n\n**Nothing is inferred from prose.** The repository already states its relationships\nexplicitly, in fields somebody maintains, and those are both free and correct. The edge\ntypes are a closed set; an undeclared one is an error rather than a new vocabulary word:\n\n| type | from → to | stated in |\n|---|---|---|\n| `part_of` | issue → milestone | the issue's `milestone` |\n| `depends_on` | issue → issue, milestone → milestone | the record's `depends_on` |\n| `declares` | milestone → claim | the milestone's `claims` |\n| `specified_by` | claim → document | `docs/CLAIMS.yaml`'s `source` |\n| `implemented_by` | claim → implementation | its `implementation` |\n| `tested_by` | claim → test, doctrine → test | its `test` |\n| `supports` | doctrine → claim | the doctrine's `claims` |\n| `references` | document → document | an inline Markdown link |\n\nLinks are the one edge source that is not curated, and they are read conservatively. Fenced\ncode is dropped first, because a path inside a code sample is an example of a path and not a\nreference to one. A target with a scheme, a protocol-relative target and an absolute path are\nall skipped; a fragment is trimmed, because `docs/CLI.md#session` refers to `docs/CLI.md`.\n\n**Severity distinguishes what Majordomus owns from what an author wrote.** A declared\nrelationship pointing at a file the repository does not contain is a `FAIL`: it is a broken\npromise. A link in a document pointing at nothing is a `WARN`: a document may deliberately\npoint outside the repository and the target alone cannot tell the two apart. A relationship\npointing at a real file that this compiler does not model as one node — a container of many\nobjects, or something outside the curated set — is silent, because a report that is large by\ndesign is a report people stop reading.\n\n`nodes` and `edges` are two views of one derivation, so a defect in either exits `10` on\nboth. There is no clean node listing over a graph that is broken.\n\n**A node's identity is never its content hash.** It is the object's own canonical id where\nit has one — `claim:policy-parse`, `issue:I0801`, `milestone:M003`, `profile:debugging` —\nand its repository path where it does not, as in `document:docs/CONTINUITY.md`. A hash says\nwhether something *changed*; it can never say what something *is*, because then every edit\nwould delete a node and create a stranger, and every reference to it would point at nothing\nwithout anything saying so. The hash rides along on the node and is what freshness is\nmeasured with.\n\nThe consequence is deliberate: editing a document keeps its node and moves its hash;\nrenaming one is a delete and an add, and disturbs no other node.\n\n**A kind comes from structure, never from prose.** It is decided by the source class the\nfile was discovered in and by fields the file itself declares. Nothing reads a body looking\nfor a word that suggests a type: a document that discusses roadmaps and milestones is a\ndocument that discusses them. Where no rule applies the kind is `unknown` and the node is\nstill emitted, with one finding naming the class — an explicit unknown is information, and a\nconfident wrong answer is not.\n\n**A title is taken or left empty, never invented.** From the record's own `title` or\n`description`, or from a document's first level-one heading. A document with no heading gets\nno title rather than its filename, because a filename standing in for a title reads like a\nfact and is a guess.\n\nTwo stores have no id field of their own. A decision is keyed by its title and a question by\nits text — in both cases exactly what the ledger records and what a session envelope\nreferences, so three places name the same thing the same way and nothing maps between them.\nAnswering a question rewrites the line it lives on, and the identity survives that: the\nappended answer is stripped, and only when what remains ends in the entry's opening date, so\na question whose own text contains a dash is left whole rather than cut at a guess.\n\n**Discovery is driven by the repository index, not by a filesystem walk.** A walk returns\nbuild output, vendored trees and editor droppings; it returns them in an order that\ndiffers between two machines; and it can return a file nobody meant to publish. Listing\ntracked files instead gives repository truth in a stable order, and an untracked file is\nnever a source. Operational records are discovered from the state directory Majordomus\nitself owns under `.ai/local/`, which is never tracked — and from nowhere else. No hidden\ndirectory is scanned because it happens to exist.\n\nThe source classes are declared twice, by two owners: the repository declares its shared\nsources in its AI layer, `.ai/repo/knowledge/sources.yaml`, and the tool ships the\noperational classes, the records it writes itself, in `share/knowledge-sources.yaml`. The\nscope of a class is decided by which file declared it; neither file names the other:\n\n| scope | meaning |\n|---|---|\n| `shared` | repository knowledge; may be projected to a public surface |\n| `operational` | this checkout's own working records; never part of a shared projection |\n\nThe scope is a property of the class, so the publication boundary is decided in one place\nrather than at each producer. Every tracked pathspec carries the `:(glob)` prefix, under\nwhich `*` does not cross a directory separator. That is not tidiness: without it,\n`docs/*.md` also matches `docs/claims/*.md`, two classes silently overlap, and one file\nbecomes two nodes. `test/cases/64_knowledge_discovery.sh` fails on that mutation.\n\nOne overlap is settled by the file rather than by the classes. A section's `README.md` matches\nboth `.ai/**/README.md`, the `context` class, and its section's own pathspec\n(`.ai/repo/features/*.md`, `.ai/repo/rules/**/*.md`, and so on). It declares `kind: context`, so\nit is a `context` node, once: a second class discovering it adds nothing. The index applies the\nsame precedence in `apps/majordomus-cli/src/discovery/mod.rs`, and\n`test/cases/330_a_contract_is_the_kind_it_declares.sh` proves it for `knowledge nodes`. Where no\nfile declares a kind, two classes over one path remain a refusal (case 73's `twin`).\n\n`init` declares the `context` class first, so a new repository's contracts are objects of its\nindex from the start. Without it `context resolve`, which reads the files, and every capability\nthat reads the index disagreed about what applies to a path;\n`test/cases/130_context_compiler.sh` fails without the class.\n\nA class marked `required` that discovers nothing is reported as a `WARN`. The cost of a\ncurated list is that a path can be forgotten, and a forgotten path is indistinguishable\nfrom a repository that does not have that file unless something says so.\n\nWhether a file conforms to the schema of its kind is the executable's index's verdict, not the\nreader's: `knowledge nodes` asks the index which files it refused, drops them and reports each\nrefusal as a `FAIL` (`test/cases/405_the_knowledge_reader_honours_the_schema.sh`). With no\nexecutable built, or no `jq`, it reports a `WARN` that the schema went unchecked; it never\nreads as a pass. `MAJORDOMUS_KNOWLEDGE_SCHEMA=unasked` says not to ask, and the reader then\nreports an `INFO` that the check was not asked for. That is what a recorded use-case scenario\nsets: whether the index *could* be asked is a fact about the recording machine, and evidence\nthat must read the same on every machine cannot carry it (#713,\n`test/cases/777_a_recorded_scenario_does_not_depend_on_the_recorder.sh`).\n\n```\n$ majordomus knowledge sources --scope shared\npolicy      shared      policy     4f2a9c1d8b30  .ai/repo/policy.yaml\nprofile     shared      profile    a1b2c3d4e5f6  .ai/repo/profiles/debugging.yaml\n...\nissue       shared      issue      0e5a7b9c3f51  .ai/repo/project/issues/I0801.yaml\nclaims      shared      claim      7c9e1b3d5f70  docs/CLAIMS.yaml\ndocument    shared      document   9b1e2d4f8c3a  docs/CONTINUITY.md\nknowledge sources: 169 file(s) in scope shared\n```"
     },
     {
       "name": "adr",
@@ -2903,10 +3013,13 @@
       "tests": {
         "behaviour": [
           "359_live_scenarios",
+          "632_a_scenario_shows_the_worker_it_judges",
+          "777_a_recorded_scenario_does_not_depend_on_the_recorder",
           "94_use_cases"
         ],
         "negative": [
           "359_live_scenarios",
+          "632_a_scenario_shows_the_worker_it_judges",
           "94_use_cases"
         ]
       },
@@ -3255,7 +3368,8 @@
       ],
       "tests": {
         "behaviour": [
-          "135_session_store_recovery"
+          "135_session_store_recovery",
+          "608_deletion_is_accounted_for"
         ],
         "negative": [
           "135_session_store_recovery"

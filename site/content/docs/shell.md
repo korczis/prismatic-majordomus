@@ -1,7 +1,7 @@
 +++
 title = "Shell automation"
 description = "shell automation under migration: the inventory of every unit and its disposition, the `shell check` that refuses a shell unit no exemption declares and an exemption whose unit is gone, the exemption format, and how a unit is migrated out of the list"
-weight = 64
+weight = 68
 [extra]
 source = "docs/SHELL.md"
 +++

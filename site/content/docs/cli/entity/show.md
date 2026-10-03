@@ -1,7 +1,7 @@
 +++
 title = "majordomus entity show"
 description = "One entity: its route, what it references, what references it, where it is served"
-weight = 169
+weight = 184
 [extra]
 route = "/docs/cli/entity/show/"
 command = "majordomus entity show"

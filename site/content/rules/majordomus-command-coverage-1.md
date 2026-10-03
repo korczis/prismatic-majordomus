@@ -1,7 +1,7 @@
 +++
 title = "Every public command is exercised and refuted"
 description = "Every public command is exercised and refuted"
-weight = 7
+weight = 8
 [extra]
 kind = "rule"
 slug = "majordomus-command-coverage-1"

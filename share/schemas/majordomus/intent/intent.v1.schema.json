@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/majordomus/intent/intent.v1.schema.json",
+  "x-majordomus-schema": "majordomus.intent/v1",
+  "title": "Intent",
+  "description": "An intent under .ai/repo/project/intents/: a statement about reality — what must become true, what must stay true, and the evidence that would settle it — above the milestones that realise it. No status is stored: the stage is derived from the milestones' derived status and satisfaction from the recorded evidence.",
+  "x-majordomus-allow": "intent",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "title",
+    "statement",
+    "invariants",
+    "satisfaction",
+    "milestones"
+  ],
+  "properties": {
+    "id": {
+      "description": "The identity, equal to the file name without `.yaml`: `[a-z][a-z0-9-]*`.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "title": {
+      "description": "One line naming what must become true.",
+      "type": "string",
+      "minLength": 1
+    },
+    "statement": {
+      "description": "What must become true, as a statement about the repository or its users that is either true or false.",
+      "type": "string",
+      "minLength": 1
+    },
+    "invariants": {
+      "description": "What must stay true while the intent is realised.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "satisfaction": {
+      "description": "The criteria that settle the statement, each with the evidence that decides it.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/criterion"
+      }
+    },
+    "milestones": {
+      "description": "The milestones that realise the intent, by the id of a record under .ai/repo/project/milestones/.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "governance": {
+      "description": "The governance a worker on this intent loads: `rule:<id>[@<version>]`, `adr:<identity>`, `claim:<id>` or `file:<path>`.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(rule|adr|claim|file):.+$"
+      }
+    },
+    "non_goals": {
+      "description": "What the intent deliberately does not require.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "cancelled": {
+      "description": "The intent was abandoned. A fact about what happened, not a status.",
+      "type": "boolean"
+    },
+    "superseded_by": {
+      "description": "The intent that replaced this one, by id.",
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "criterion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "criterion",
+        "evidence",
+        "ref"
+      ],
+      "properties": {
+        "id": {
+          "description": "Unique within the intent.",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$"
+        },
+        "criterion": {
+          "description": "What is observably true when the criterion is met.",
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence": {
+          "description": "What decides it. `test` and `claim` are derived from the evidence ledger; `command` and `deployment` resolve but are not derivable yet, so a criterion of either kind is never counted as met.",
+          "enum": [
+            "test",
+            "claim",
+            "command",
+            "deployment"
+          ]
+        },
+        "ref": {
+          "description": "For `test`, the path of a case or integration test or its `suite:`/`crate:` identity; for `claim`, a claim id of docs/CLAIMS.yaml; for `command`, the command; for `deployment`, a deployment id.",
+          "type": "string"
+        }
+      }
+    }
+  }
+}

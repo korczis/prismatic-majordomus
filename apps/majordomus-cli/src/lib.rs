@@ -15,12 +15,14 @@ pub mod about;
 pub mod app;
 pub(crate) mod automation;
 pub mod bench;
+pub mod build_identity;
 pub mod capability;
 pub mod cli;
 pub mod cockpit;
 pub mod command_graph;
 pub mod commands;
 pub mod commit;
+pub mod convergence;
 pub(crate) mod delivery;
 pub mod deploy;
 pub(crate) mod design;
@@ -32,6 +34,7 @@ pub(crate) mod distribution;
 pub mod economics;
 pub mod entity;
 pub mod environment;
+pub mod episodes;
 pub(crate) mod error;
 pub mod evidence;
 pub mod execution;
@@ -42,6 +45,8 @@ pub mod git;
 pub mod graph;
 pub mod http;
 pub mod index;
+pub(crate) mod integration;
+pub mod intent;
 pub mod lease;
 pub mod ledger;
 pub mod live;
@@ -71,6 +76,7 @@ pub mod session;
 pub mod share;
 pub(crate) mod shared;
 pub mod site;
+pub mod skill;
 pub mod synthetic;
 pub mod web;
 pub mod why;
@@ -95,6 +101,24 @@ pub const PROFILE: &str = env!("MAJORDOMUS_PROFILE");
 /// build time: nothing here shells out to git, and an installed binary needs no repository
 /// in order to say what it is.
 pub const COMMIT: &str = env!("MAJORDOMUS_COMMIT");
+
+/// Whether the tree [`COMMIT`] names carried uncommitted changes when this executable was
+/// built: `Some(true)` or `Some(false)` when the build knew, `None` when it did not — a
+/// commit handed in through `MAJORDOMUS_BUILD_COMMIT` without `MAJORDOMUS_BUILD_DIRTY`, or
+/// a build outside a work tree. It covers the crate's directory as the build script last saw
+/// it; [`build_identity::identify`] is the decision and holds its table.
+///
+/// Read with `option_env!`: a build-script output that predates the flag (a target directory
+/// shared across checkouts reuses one) must still compile, and what it did not record is
+/// unknown rather than a build failure.
+pub const DIRTY: Option<bool> = match option_env!("MAJORDOMUS_DIRTY") {
+    Some(v) => match v.as_bytes() {
+        b"true" => Some(true),
+        b"false" => Some(false),
+        _ => None,
+    },
+    None => None,
+};
 
 /// The generation this executable was built from: the digest `generation::crate_generation`
 /// takes over the crate sources, compiled in by `build.rs`, or `unknown` when the build

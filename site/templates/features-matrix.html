@@ -17,13 +17,14 @@
     to reach a 1px box nobody can see. A scroll container contains what it positions. -#}
 <div class="relative mt-8 min-w-0 overflow-x-auto rounded-base border border-default" tabindex="0">
   <table class="w-full min-w-[36rem] border-collapse text-sm">
-    <caption class="sr-only">Features against the interfaces they are exposed through</caption>
+    <caption class="sr-only">Features against the interfaces they are exposed through, and how much of each is proven</caption>
     <thead class="bg-neutral-primary-soft">
       <tr>
         <th scope="col" class="border-b border-default px-4 py-3 text-start font-semibold text-heading">Feature</th>
         {%- for s in model.surfaces %}
         <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="{{ base }}{{ s.route }}" class="hover:text-fg-brand hover:underline">{{ s.id }}</a></th>
         {%- endfor %}
+        <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle" title="claims this feature names that are guaranteed and name the test that settles them">proven</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-default">
@@ -36,6 +37,10 @@
           {%- else %}<span class="font-mono text-body-subtle" aria-hidden="true">·</span><span class="sr-only">not on {{ s.title }}</span>{% endif -%}
         </td>
         {%- endfor %}
+        <td class="px-3 py-2.5 text-center font-mono text-xs">
+          {%- if r.claims %}<span class="{% if r.proven == r.claims %}text-fg-success-strong{% else %}text-body-subtle{% endif %}" title="{{ r.proven }} of {{ r.claims }} claim(s) guaranteed with a test">{{ r.proven }}/{{ r.claims }}</span>
+          {%- else %}<span class="text-body-subtle" aria-hidden="true">·</span><span class="sr-only">names no claim</span>{% endif -%}
+        </td>
       </tr>
       {%- endfor %}
     </tbody>

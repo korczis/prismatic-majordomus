@@ -117,6 +117,15 @@ kinds:
     title: title
     description: objective
 
+  # What must become true above the milestones that realise it. No status is stored: the
+  # stage is derived from the plan and satisfaction from the evidence ledger.
+  intent:
+    format: yaml
+    schema: majordomus.intent/v1
+    identity: [id]
+    title: title
+    description: statement
+
   document:
     format: markdown
     front_matter: optional

@@ -1,0 +1,31 @@
+id: intent-lifecycle
+title: Every change can be traced to the intent it serves, and an intent reads satisfied only when evidence says so
+statement: "A worker or reviewer can ask, of any piece of work, which declared intent it serves and get an answer derived from the repository's own records, and can ask whether that intent is satisfied and get an answer derived from recorded evidence rather than from a merged pull request or a finished milestone."
+invariants:
+  - No intent status is stored and nothing transitions an intent; the plan remains the only lifecycle of work
+  - Every intent capability is read-only on every surface
+  - An intent whose milestones or evidence do not resolve is refused by a gate, never silently read as planned
+milestones:
+  - intent-lifecycle
+satisfaction:
+  - id: stage-is-derived
+    criterion: The stage of an intent follows the milestones' derived status and satisfaction follows only the recorded evidence
+    evidence: test
+    ref: apps/majordomus-cli/tests/intent.rs
+  - id: surfaces-agree
+    criterion: The command line, HTTP and MCP answer the same derived intents, and an invalid model exits non-zero naming the finding
+    evidence: test
+    ref: test/cases/367_an_intent_is_satisfied_only_by_evidence.sh
+  - id: model-is-gated
+    criterion: The intent-check gate runs intent validate on a change to the project model or the intent engine
+    evidence: command
+    ref: majordomus intent validate
+governance:
+  - rule:project.work-serves-a-declared-intent
+  - rule:project.derived-once
+  - adr:adr-0070
+non_goals:
+  - Choosing what to build; a person declares an intent
+  - Replacing issues or milestones
+created_at: 2026-09-15
+updated_at: 2026-09-15

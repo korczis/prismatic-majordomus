@@ -335,9 +335,8 @@ mj_rules_manifest_check() {
   done < <(tail -n +2 "$tmp/entries")
   : > "$tmp/hashes"; : > "$tmp/idents"
   if [ -s "$tmp/existing" ]; then
-    if command -v sha256sum >/dev/null 2>&1; then xargs sha256sum < "$tmp/existing" > "$tmp/hashes"
-    elif command -v shasum >/dev/null 2>&1; then xargs shasum -a 256 < "$tmp/existing" > "$tmp/hashes"
-    else rm -rf "$tmp"; mj_die "$MJ_EX_MISSING" "need sha256sum or shasum"; fi
+    mj_sha256_tool 2>/dev/null || { rm -rf "$tmp"; mj_die "$MJ_EX_MISSING" "$MJ_SHA256_MISSING"; }
+    mj_sha256_xargs < "$tmp/existing" > "$tmp/hashes"
     # and one pipeline over their front matter for the identity each declares: the same
     # cut and the same parser as everywhere else, one marker line per file
     if ! xargs awk 'FNR == 1 { print "mjfile: " (++k); fm = ($0 == "---"); next } fm && $0 == "---" { fm = 0; next } fm { print }' < "$tmp/existing" \

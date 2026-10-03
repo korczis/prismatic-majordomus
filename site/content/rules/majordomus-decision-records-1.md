@@ -1,7 +1,7 @@
 +++
 title = "Decision records"
 description = "Decision records"
-weight = 13
+weight = 14
 [extra]
 kind = "rule"
 slug = "majordomus-decision-records-1"

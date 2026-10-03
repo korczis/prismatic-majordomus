@@ -249,19 +249,26 @@ expect_grep 'in sync'
 #
 # Both sites are reported, the tree is clean so they agree, and the bump is arithmetic over
 # the commit types rather than a number anyone chose: a feature is in the range, so minor.
+# That bump is evidence (ADR 0051): this fixture commits no registry, so the contract cannot
+# be measured, and an unmeasurable baseline is refused rather than guessed — `next` is
+# absent and undecided, and the commit inference does not stand in for it.
 expect_exit 0 "$RB" release version
 expect_grep 'declared     1\.0\.0'
 expect_grep 'tool         1\.0\.0'
 expect_grep 'agree        yes'
 expect_grep 'last release 1\.0\.0'
 expect_grep 'bump         minor'
-expect_grep 'next         1\.1\.0'
+expect_grep '^next         [^0-9]+ \(undecided: the contract could not be measured\)$'
+expect_grep 'commits imply minor -> 1\.1\.0'
 
 "$RB" release version --format json > "$S/version.json" 2>/dev/null
-for field in '"declared": "1.0.0"' '"tool": "1.0.0"' '"agree": true' '"bump": "minor"' '"next": "1.1.0"'; do
+for field in '"declared": "1.0.0"' '"tool": "1.0.0"' '"agree": true' '"bump": "minor"' \
+             '"commits_imply": "1.1.0"' '"decided_by": "undecided"'; do
   grep -qF "$field" "$S/version.json" || {
     echo "    the version report does not carry $field:"; cat "$S/version.json"; exit 1; }
 done
+[ "$(jq -r '.next // "absent"' "$S/version.json")" = absent ] || {
+  echo "    an unmeasurable contract still selected a next version:"; cat "$S/version.json"; exit 1; }
 
 # a projection edited by hand is the failure the report exists to name, with the exit code the
 # release pipeline's own check gives: a version no derivation writes is an error...

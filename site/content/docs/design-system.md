@@ -1,7 +1,7 @@
 +++
 title = "The design system"
 description = "the design system: the one declaration every surface is rendered from, the pipeline from `share/design/tokens.yaml` to the site, the Cockpit and the executable's own pages, how to add a role, a status word or a type step without touching a consumer, how drift is caught, and how to read a page that looks wrong"
-weight = 56
+weight = 60
 [extra]
 source = "docs/DESIGN_SYSTEM.md"
 +++
@@ -45,6 +45,7 @@ decided it again, and no check could tell obedience from invention.
 | `roles` | the semantic surface: `bg`, `raised`, `sunken`, `line`, `fg`, `body`, `muted`, `faint`, `accent`, `accent-strong`, `accent-soft`, `accent-line`, `accent-fill`, `on-accent`, each a palette entry per theme |
 | `status.roles` | five meanings — `ok`, `warn`, `bad`, `info`, `neutral` — each with text, ground and border per theme |
 | `status.states` | the vocabulary: every state word any surface renders, filed under one meaning |
+| `tones` | hues for identity and never meaning — blue, violet, green, orange, rose, cyan — each with ink, ground, border and fill per theme |
 | `type` | the named scale (`meta`, `label`, `small`, `dense`) and letter-spacings |
 | `layout`, `radius`, `motion` | the shared measures, corner radii and durations |
 | `theme` | the class that means dark and the `localStorage` key of the reader's choice |
@@ -135,6 +136,11 @@ Every extension is one edit to `share/design/tokens.yaml`, then `majordomus gene
   the Cockpit's Design page and in the inventory, and answered by `explain`.
 - **A status semantic.** Add a meaning under `status.roles` with `fg`, `bg` and `line` per
   theme, and file its words under `status.states`. Every `mj-badge--<word>` is styled.
+- **A tone.** Add it under `tones` with `fg`, `bg`, `line` and `fill` per theme. A tone is a
+  hue for identity — a step of a sequence, one surface's card — and never a verdict, so it
+  is not a status. `.mj-tone--<name>` sets the four `--mj-tone-*` properties every kit
+  component reads, the contrast measurement pairs the tone with itself only, and
+  `site/data/registry/design.json` lists it for the templates.
 - **A state word.** Add it to the list under its meaning. That is the whole change:
   `test/cases/109_design_system.sh` does exactly this to prove nothing else moves.
 - **A type step.** Add it under `type.scale` with `size` and `leading`; `text-<name>` exists
@@ -150,6 +156,69 @@ Every extension is one edit to `share/design/tokens.yaml`, then `majordomus gene
 
 The process never includes editing the site's templates and the Cockpit's stylesheet for the
 same reason. If it does, the architecture has a hole; file it.
+
+## The kit
+
+The components the site's product and documentation pages are composed of: a hero and a
+doctrine quote, panels and stages, a file tree, points, interface rows, link tiles, a band of
+claims, a terminal with structured output, a command with its copy button, a tab strip in
+three looks, the rows of an HTTP API, a dashboard window with its counts, chart, feed,
+actions and health list, a trail, a search field, a table of contents, a step flow, and three
+diagrams — a stack of layers, a fan that joins rows to a hub, and a cycle of four.
+[/kit/](https://majordomus.dev/kit/) renders every one of them from this repository's data.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| file | what it holds |
+|---|---|
+| `share/design/kit.css` | how each component looks, as `.mj-*` classes over the roles, the status indirection and the tone indirection; measured by the contrast check like the primitives |
+| `site/templates/kit/*.html` | what each component is, as a Tera component: `base` (icon, glyph, step, button, pill, state, copy), `content` (hero, quote, section, panel, stages, tree, points, routes, tiles, links, strip, figure, claims, table), `code` (terminal, term_line, term_out, term_box, cmd, cmd_list, tabs, tab_panel, method, request, endpoint, listing), `dashboard` (window, sidenav, kpis, chart, legend, feed, actions, health), `docs` (trail, search, toc, flow), `diagrams` (stack, fan, cycle) |
+| `site/data/kit/icons.toml` | the outline glyphs a component names by key; an unknown key fails the build |
+| `site/kit.js` | the three behaviours markup cannot carry: copy, switch tabs, mark the section being read |
+| `site/kit.tailwind.css`, `site/templates/partials/kit-assets.html` | the kit's own sheet and script, which a page opts into |
+
+</div>
+
+
+Conventions a component keeps, so that a page composes them without reading their source:
+
+- **An item is a map, and a key means one thing everywhere.** `title` and `text` are read,
+  `icon` is a key of the icon set, `tone` a tone, `href` where it goes, `state` a state word.
+- **No value is written in a component.** A count, a command, a transcript or a release is
+  handed to it by the page, and the page reads it from a generated dataset. A mockup's
+  numbers are not data.
+- **State is an attribute.** A selected tab is `aria-selected`, the current link
+  `aria-current`, an open group `details[open]`. The sheet styles the attribute, so no bound
+  class can lose to a static utility (see *Alpine `:class` loses to static utilities*).
+- **Nothing needs the script to be read.** A copy button and a tab strip are rendered
+  `hidden` and revealed by `site/kit.js`; every tab panel is rendered, under the heading its
+  tab would carry; a disclosure is a native `<details>`; a fan's curves are computed by the
+  template from how many rows each side has.
+- **The kit is a page's choice.** A page composed of it includes
+  `{% block kit %}{% include "partials/kit-assets.html" %}{% endblock kit %}`; every other
+  page loads none of it, which keeps the homepage within its byte budget.
+
+**Screens.** A screen is a whole page composed of nothing but the kit, rendering one of the
+owner's page designs (architecture, integrations, documentation, CLI, Cockpit, features, how it
+works, landing) from this repository's data at `/kit/<screen>/`. A screen template
+(`site/templates/screens/<name>.html`) extends `site/templates/screen.html`, which loads the
+datasets a screen may read under one set of names — `design`, `registry`, `kinds`, `oas`, `cl`,
+`term`, `cli`, `commands`, `tones`, `base` — and its page is `site/content-src/kit/<name>.md`.
+The designs carried values nobody measured (a version never released, counts of objects that do
+not exist, latencies, an issue number, a port); a screen shows none of them, and
+`test/cases/791_a_screen_is_composed_of_the_kit_and_of_real_data.sh` refuses one that does, one
+that chooses a colour, a style or a class of its own, and one outside the frame.
+
+To add a component: write its classes in `share/design/kit.css`, its markup in the file of
+`site/templates/kit/` it belongs to, and an example on `site/templates/kit-page.html` from
+real data; a control it carries needs a spec under `scripts/lib/interaction-specs/`.
+`test/cases/790_the_kit_is_one_vocabulary_and_its_page_renders_all_of_it.sh` refuses a
+component the page does not render, a class no template emits or no sheet defines, an icon
+the set does not hold, and a kit loaded by every page; `scripts/interaction-probe` drives
+every copy button, tab and search field in a browser. Zola 0.23's Tera 2 types a
+component's argument by its default, takes a literal argument only in braces
+(`count={4}`), allows one `for` per comprehension and arrays two levels deep; the kit is
+written within those limits.
 
 ## Validation
 

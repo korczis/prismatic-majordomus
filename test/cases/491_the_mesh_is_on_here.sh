@@ -9,7 +9,7 @@
 #      segment only (TTL 1), no broadcast, rendezvous hubs only at private or tailnet
 #      addresses, no seed, cooperation at its defaults, trust `deny_unknown` with an
 #      allowlist of public keys and nothing wider;
-#   2. `mesh doctor` holds over this repository on a machine with no identity yet;
+#   2. the mesh self-check holds over this repository on a machine with no identity yet;
 #   3. two runtimes of one repository on one machine — two worktrees, one node key, which is
 #      this repository's everyday shape — run from that declaration, observe each other and
 #      link, although their key is not on the allowlist: a machine's own key is trusted as
@@ -49,8 +49,12 @@ expect_file "$DECL"
 skeleton_mesh="$(find "$ROOT/share/skeleton" -path '*/repo/mesh/*' -name '*.yaml' 2>/dev/null)"
 [ -z "$skeleton_mesh" ] || { echo "    the skeleton ships a mesh declaration, so every new repository would inherit this one's: $skeleton_mesh"; exit 1; }
 EMPTY="$T/no-identity"; mkdir -p "$EMPTY"
-( cd "$ROOT" && XDG_STATE_HOME="$EMPTY" "$RB" mesh doctor --repo "$ROOT" --format json ) \
-  > "$T/doctor.json" 2> "$T/doctor.err" || { cat "$T/doctor.err"; exit 1; }
+# The self-check runs in this process, under the state directory given here: `mesh doctor`
+# would ask a server serving $ROOT, whose identity is the machine's and not the fixture's
+# (its runtime verdict is case 494's subject). `run` executes the capability in-process.
+( cd "$ROOT" && XDG_STATE_HOME="$EMPTY" "$RB" run mesh.doctor --format json ) \
+  > "$T/doctor.run.json" 2> "$T/doctor.err" || { cat "$T/doctor.err"; exit 1; }
+jq '.output' "$T/doctor.run.json" > "$T/doctor.json"
 decl="$(jq -r '.checks[] | select(.check == "declaration") | .detail' "$T/doctor.json")"
 case "$decl" in
   "majordomus: enabled=true, multicast=true, broadcast=false, rendezvous endpoints="*", trust=deny_unknown ("*" allowed key(s)), cooperation=true (heartbeat 5s, expiry 30s, 0 seed(s))") ;;
@@ -203,8 +207,9 @@ jq -e --arg rt "${RT_C#*-}" '.nodes[] | select(.runtime == $rt) | .trust.state =
 # ---------------------------------------------------------------- 5. an unlisted machine is told
 # The fixture machine now has an identity, which is on no allowlist; the self-check over this
 # repository names the key and the remedy instead of passing silently.
-( cd "$ROOT" && XDG_STATE_HOME="$MACHINE" "$RB" mesh doctor --repo "$ROOT" --format json ) \
-  > "$T/doctor-unlisted.json" 2>/dev/null || { echo "    mesh doctor failed to answer"; exit 1; }
+( cd "$ROOT" && XDG_STATE_HOME="$MACHINE" "$RB" run mesh.doctor --format json ) \
+  > "$T/doctor-unlisted.run.json" 2>/dev/null || { echo "    mesh doctor failed to answer"; exit 1; }
+jq '.output' "$T/doctor-unlisted.run.json" > "$T/doctor-unlisted.json"
 jq -e '.ok == false and ([.checks[] | select(.check == "trust" and (.ok | not) and (.remediation | test("trust.allow")))] | length == 1)' \
   "$T/doctor-unlisted.json" >/dev/null \
   || { echo "    mesh doctor did not tell an unlisted machine so:"; cat "$T/doctor-unlisted.json"; exit 1; }

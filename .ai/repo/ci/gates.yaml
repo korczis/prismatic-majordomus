@@ -60,6 +60,12 @@ gates:
     runs: scripts/ci/argv-limit-check
     summary: a whole file's JSON may not travel to jq on the command line — Linux refuses a single argument over 131072 bytes and macOS never will, so the shape is checked rather than the size
 
+  - id: doc-command-check
+    job: structure
+    always: true
+    runs: scripts/ci/doc-command-check
+    summary: a command the documents tell a reader to run is executed by a use-case scenario or a command-line example, or marked with the reason it cannot run here; a ratchet over the prose that still promises without proof
+
   - id: liveness-check
     job: structure
     always: true
@@ -76,6 +82,17 @@ gates:
     always: true
     runs: scripts/development-semantics-check
     summary: a mutating development command is backed by a capability of the canonical runtime and a Cockpit tree reaches into no layer path; the debt ratchets down and may not grow
+
+  # A tool that says what somebody else's product can do is making a claim about a third
+  # party, and this repository was making two of them wrong at once until ADR 0103: it
+  # reported one of the six providers it declares, and the omission had gone stale because
+  # two of the five had shipped hook systems since. The gate reads share/providers.yaml and
+  # runs `capture status`; no build, so it belongs with the other structure checks.
+  - id: provider-evidence
+    job: structure
+    always: true
+    runs: scripts/provider-evidence-check
+    summary: every declared provider's session and prompt capability is declared with the citation it was verified from, and every one of them is reported
 
   - id: core-check
     job: structure
@@ -107,6 +124,43 @@ gates:
     job: structure
     runs: bin/majordomus adr check
     summary: every decision valid and its references resolving, and no identity this branch adds is already carried by a different decision on another ref
+
+  # The knowledge graph refuses an identity two sources claim: `knowledge nodes` exits 10 and
+  # names it, rather than keeping one claimant and hiding the ambiguity. Nothing ran it. For a
+  # day it exited 10 on this repository with eleven directory contracts claimed twice (a line
+  # that forced every context document to `document`, so the two classes discovering one README
+  # emitted one identity), and every surface that reads the graph was faithful to a graph that
+  # had refused to hold them. A reporter nobody asks is a declaration, not an enforcement. File
+  # reads and the version-control index only, no build; shared scope, because operational
+  # records are one checkout's own and CI holds none.
+  - id: knowledge-nodes
+    job: structure
+    always: true
+    runs: bin/majordomus knowledge nodes --scope shared
+    summary: every canonical object is one node with one identity; an identity two source classes claim is refused by name, and the refusal fails the plan
+
+  # The same question for every path, not only for decision identities: does another unmerged
+  # branch already add, independently and differently, a path this pull request adds? A
+  # collision is a defect of the pair of trees, so it can only be asked across refs, and a
+  # checkout that cannot see them gets 12 rather than a pass. It must run on every plan,
+  # because the answer turns on what other branches carry, not on which class of path this
+  # change touches. Git plumbing only; the job checks out at fetch-depth 0. A related branch
+  # (one this is built on) and a same-bytes copy (a rescue branch) are listed and pass; a
+  # person accepts a real collision with the label collision:accepted.
+  - id: collision-check
+    job: structure
+    always: true
+    runs: scripts/ci/collision-gate
+    summary: no path this pull request adds is added independently, with different content, by another unmerged branch; related work and same-bytes copies are listed, and a checkout that cannot see the other branches says so instead of passing
+
+  # The second identifier this repository allocates by hand: a behavioural case's number. Two
+  # files of one identity in one tree is the defect this refuses; the collisions of the day it
+  # was written sit on the baseline, because they are spread across other sessions' branches
+  # and renumbering them would break those. File reads only, no build, no git.
+  - id: case-numbers
+    job: structure
+    runs: scripts/case-numbers check
+    summary: no file under test/cases/ shares its identity with another, beyond the collisions recorded on the baseline
 
   - id: shell-suite
     job: suite
@@ -151,11 +205,30 @@ gates:
     runs: scripts/ci/english-only-check
     summary: every authored file is spelled in English; a letter that occurs in Czech, Slovak or Polish and never in English, or a whole other script, fails — proper nouns and files that use a foreign string as test data are declared with their reason beside the check
 
+  # File reads only, under a second, so it is unconditional rather than classed: the dependency
+  # it refuses can arrive through any manifest, script or configuration file, and a class list
+  # that forgot one would be the gap.
+  - id: prismatic-independence
+    job: structure
+    always: true
+    runs: scripts/ci/prismatic-independence-check
+    summary: no submodule, gitlink, dependency manifest, script, hook, workflow or configuration file names a Prismatic project; the project's own name and the bare brand word are not references, and documents are out of scope
+
   - id: finding-reproduce
     job: structure
     always: true
     runs: scripts/ci/finding-reproduce-check
     summary: every finding a command reports names the command that reproduces it; a reporting call with too few arguments, or one this gate cannot parse, is a finding of its own
+
+  # A skill is a capability only when something proves it: a test names it and the evidence
+  # ledger holds a run of that test, a surface invokes it, a doctrine and this gate hold it
+  # (project.skills-are-proven-capabilities, ADR 0076). The verdict is the executable's
+  # `skills verify`, the same derivation the command line, HTTP and MCP answer with; an
+  # orphan fails, evidence that is not current is reported and does not.
+  - id: skills-proof
+    job: structure
+    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- skills verify
+    summary: every active skill is named by a test and invoked by a workflow, prompt, profile, provider template, recipe or CI workflow; no test or invocation names a skill that does not exist
 
   - id: rule-proof
     job: structure
@@ -203,6 +276,19 @@ gates:
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- economics check
     summary: no quantity about tokens, context or cost is typed into hand-written prose, and every claim bound to an economics metric is guaranteed only while its evidence is current and meets the binding
 
+  # The third population. A public command must have an executable use case and doctor fails
+  # without one; a guaranteed claim is held by claim-proof above. The tools the registry
+  # projects over MCP were held by nothing: `use_cases.coverage.mcp_tools` is advisory, and
+  # for that class `covered` means NAMED, because no use-case scenario can reach an MCP tool.
+  # Greps over the generated registry and the files that send a tools/call, so it costs
+  # nothing and needs no build. The debt is ratcheted in .ai/repo/mcp-tool-run-baseline.txt;
+  # the gate fails on a tool that arrives unexercised, not on the known ones.
+  - id: mcp-tool-run
+    job: structure
+    always: true
+    runs: scripts/ci/mcp-tool-run-check
+    summary: every MCP tool the registry projects is sent a tools/call by a case or an integration test of this repository; the verdict states its denominator and the populations it is not about, and the uninvoked set may not grow
+
   - id: rust-quality
     job: structure
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- quality report --summary
@@ -240,6 +326,14 @@ gates:
     job: rust
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- web validate
     summary: the repository's web surfaces resolve into one topology with no collision, no nested claim and no directory outside the generated root
+
+  # An intent names the milestones that realise it and the evidence that settles it; a link
+  # that resolves to nothing would read as a planned intent forever. The executable decides
+  # it (ADR 0070, project.work-serves-a-declared-intent), so it runs where the toolchain is.
+  - id: intent-check
+    job: rust
+    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- intent validate
+    summary: every intent names a milestone and a criterion, and every milestone, evidence reference and governance entry it names resolves; a milestone no intent serves is reported
 
   - id: cockpit-assets
     job: site
@@ -498,6 +592,14 @@ gates:
     runs: MJ_TEST_JOBS=3 bash test/run.sh && cargo test --no-fail-fast --manifest-path apps/majordomus-cli/Cargo.toml
     summary: the behavioural suite under the stock macOS shell and userland, and the crate's suites on macOS
 
+  # The campaign briefs under campaigns/ are provenance: nothing reads them at run time, which is
+  # why nothing would notice one being edited, half-copied or quietly added to. File reads only —
+  # the manifest against the tree in both directions, and the index against the packs.
+  - id: campaigns-provenance
+    job: structure
+    runs: scripts/ci/campaigns-check
+    summary: every file under campaigns/ is the bytes the manifest recorded, every file present is declared, and every pack has a row in the index that names it
+
   # Box art in a published document: a picture nothing can render, link, theme, diff against
   # what it describes, or wrap on a phone. File reads only, so it belongs in the structure
   # job; the ratchet is meant to reach zero.
@@ -600,6 +702,20 @@ classes:
     paths: [.ai/repo/rules/**, .ai/repo/rule-proof-baseline.txt, share/standard/majordomus/rules/**, scripts/ci/rule-proof-check, scripts/ci/claim-proof-check, .ai/repo/claim-proof-baseline.txt, scripts/ci/english-only-check, scripts/ci/english-only-allow.txt, scripts/ci/finding-reproduce-check, test/cases/125_rule_proof.sh, test/cases/133_rule_graph.sh, test/cases/138_governance_gates.sh, test/cases/230_verdict_states_its_subject.sh, apps/majordomus-cli/src/rules/**, site/data/publication.toml, scripts/ci/entity-check, test/cases/277_entities_are_routable.sh]
     gates: [rule-proof, claim-proof, english-only, finding-reproduce, entity-check, shell-suite, rust-integration]
 
+  # the MCP surface as a population: the ratchet that holds every projected tool to being
+  # invoked by something, its baseline, and the case that both invokes a sample and proves
+  # the ratchet by mutation. The denominator is the generated registry, which `rust-generated`
+  # already selects; this class is what selects the gate itself when its own files move.
+  - id: mcp-surface
+    paths: [scripts/ci/mcp-tool-run-check, .ai/repo/mcp-tool-run-baseline.txt, test/cases/620_mcp_tools_are_invoked_and_answer.sh]
+    gates: [mcp-tool-run, shell-suite]
+
+  # the skills: every active skill is a proven capability (project.skills-are-proven-capabilities);
+  # a change to a skill, to a surface that invokes one, or to the derivation runs the proof.
+  - id: skills
+    paths: [.ai/repo/skills/**, .ai/repo/prompts/**, .ai/repo/workflows/**, .ai/repo/profiles/**, .ai/repo/providers/**, .just/**, justfile, apps/majordomus-cli/src/skill/**, apps/majordomus-cli/src/capability/builtin/skills.rs, apps/majordomus-cli/src/commands/skills.rs, apps/majordomus-cli/tests/skills.rs, lib/skills.sh, test/cases/95_skills.sh, test/cases/391_skills_are_proven_capabilities.sh, .ai/repo/rules/project/skills-are-proven-capabilities.v1.md]
+    gates: [skills-proof, shell-suite, rust-integration]
+
   # the commit policy: the subsystem that judges a message, the gate that reads the history
   # through it, the hook that refuses with it, and the baseline of the commits that predate
   # it. A change to the grammar, the policy or the vocabulary changes what every commit made
@@ -649,6 +765,13 @@ classes:
     paths: [.ai/**]
     gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit, providers-data, github-projection, entry-converges]
 
+  # the intents, the plan they are derived against, and the engine that derives them. `layer`
+  # and `rust` already select the suites; this class adds the one gate that reads intents as
+  # links between records rather than as files.
+  - id: intent
+    paths: [.ai/repo/project/**, share/schemas/majordomus/intent/**, apps/majordomus-cli/src/intent.rs, apps/majordomus-cli/src/capability/builtin/intents.rs, apps/majordomus-cli/src/plan.rs, test/cases/367_an_intent_is_satisfied_only_by_evidence.sh]
+    gates: [intent-check, rust-integration, shell-suite]
+
   # the decisions and the allocator that hands out their identities. `layer` already selects
   # the suite for anything under .ai/; this class is narrower and adds the one gate that reads
   # the decisions as a set spread across refs rather than as files of this tree. The planner
@@ -657,10 +780,30 @@ classes:
     paths: [.ai/repo/adrs/**, lib/adr.sh, test/cases/271_adr_allocation.sh, test/cases/99_adr.sh]
     gates: [adr-collision, core-check, shell-suite]
 
+  # the campaign briefs and what proves them: provenance, read by people rather than by the tool,
+  # so beyond the suite the only gate this class needs is the one that decides them
+  - id: campaigns
+    paths: [campaigns/**, scripts/ci/campaigns-check, test/cases/340_a_brief_is_kept_as_received.sh, .ai/repo/rules/project/a-brief-is-kept-as-received.v1.md]
+    gates: [campaigns-provenance, shell-suite]
+
+  # the detector the collision-check gate calls. The gate runs on every plan already; this
+  # class exists so that an edit to the detector selects its behavioural case instead of
+  # escalating the whole plan as an unmatched path.
+  - id: coordination
+    paths: [scripts/collision-check, test/cases/566_the_collision_guard_has_a_caller.sh]
+    gates: [collision-check, shell-lint, shell-suite]
+
+  # the case identities and the allocator that surveys them. `shell` already selects the suite
+  # for anything under test/; this class adds the one gate that reads the cases as a set of
+  # identities, and names the allocator, whose edits would otherwise escalate the whole plan.
+  - id: cases
+    paths: [test/cases/**, scripts/case-numbers, .ai/repo/ci/case-numbers-baseline.txt, .ai/repo/rules/project/a-number-names-one-case.v1.md]
+    gates: [case-numbers, shell-lint, shell-suite]
+
   # documents and the files the site generator reads at the root; documents are index objects
   - id: docs
-    paths: [docs/**, README.md, CONTRIBUTING.md, SECURITY.md, LICENSE, examples/**]
-    gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit, providers-data, diagram-check]
+    paths: [docs/**, README.md, CONTRIBUTING.md, SECURITY.md, LICENSE, examples/**, scripts/ci/doc-command-check, .ai/repo/doc-command-baseline.txt, test/cases/638_a_documented_command_is_run.sh]
+    gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit, providers-data, diagram-check, doc-command-check]
 
   # the site: templates, assets, styles, scripts, its build dependencies and its scripts
   - id: site
@@ -706,7 +849,7 @@ classes:
   # project.accumulation-is-measured). Narrow on purpose: the rule's own file is named here
   # rather than the whole rules tree, so a change to one rule does not escalate every plan.
   - id: backlog
-    paths: [scripts/reap-orphans, scripts/land, lib/rust_bin.sh, .ai/repo/rules/project/accumulation-is-measured.v2.md, test/cases/131_backlog_hygiene.sh, test/cases/276_disk_is_bounded.sh, test/cases/318_a_partial_sweep_says_so.sh]
+    paths: [scripts/reap-orphans, apps/majordomus-cli/src/integration, lib/rust_bin.sh, .ai/repo/rules/project/accumulation-is-measured.v2.md, test/cases/131_backlog_hygiene.sh, test/cases/276_disk_is_bounded.sh, test/cases/318_a_partial_sweep_says_so.sh]
     gates: [backlog-hygiene, shell-lint, shell-suite]
 
   # Shell automation against its migration inventory: a unit added, changed or deleted under

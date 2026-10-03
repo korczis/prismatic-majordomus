@@ -253,17 +253,23 @@ fn a_blocking_rule_is_held_to_its_proof_and_an_advisory_one_is_not() {
 /// The corpus verdict is three-valued, because "no findings" and "proven" are different
 /// sentences. A blocking rule that was never run is not a finding (docs/DOCTRINE.md), and it
 /// is not proof either: the verdict over it is `unproven`. Only a corpus every one of whose
-/// blocking rules carries a current passing run is `proven`, and any finding is `failing`.
+/// blocking rules is `proven` is `proven` — `inputs unchanged` included among the weaker
+/// states — and any finding is `failing`.
 #[test]
 fn the_verdict_is_proven_only_when_every_blocking_rule_passed() {
     use RuleState::*;
-    // proven: every blocking rule carries a current pass
+    // proven: every blocking rule is proven
     assert_eq!(
-        RulesVerdict::of([Proven, InputsUnchanged], false),
+        RulesVerdict::of([Proven, Proven], false),
         RulesVerdict::Proven
     );
+    // a pass whose inputs are merely unchanged is not proven
+    assert_eq!(
+        RulesVerdict::of([Proven, InputsUnchanged], false),
+        RulesVerdict::Unproven
+    );
     // unproven: each weaker state that is not a finding, alone among passing rules
-    for weaker in [NotRun, Gated, Reviewed, Stale] {
+    for weaker in [InputsUnchanged, NotRun, Gated, Reviewed, Stale] {
         assert_eq!(
             RulesVerdict::of([Proven, weaker], false),
             RulesVerdict::Unproven,
@@ -908,4 +914,197 @@ fn a_path_nothing_drives_does_not_drag_down_a_rule_that_also_names_a_case() {
         .unwrap();
     assert_eq!(mixed.state, RuleState::Dangling);
     assert!(!mixed.satisfied);
+}
+
+// ---------------------------------------------------------------- judged by freshness
+
+/// A synthetic repository under git, with two cases and one blocking rule naming both.
+struct Judged {
+    repo: crate::synthetic::SyntheticRepository,
+}
+
+impl Judged {
+    fn new() -> Judged {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        std::fs::create_dir_all(repo.root().join("test/cases")).unwrap();
+        std::fs::write(repo.root().join("test/cases/01_alpha.sh"), "# alpha\n").unwrap();
+        std::fs::write(repo.root().join("test/cases/02_beta.sh"), "# beta\n").unwrap();
+        let rel = ".ai/repo/rules/project/rule-2.v1.md";
+        let text = std::fs::read_to_string(repo.root().join(rel)).unwrap();
+        std::fs::write(
+            repo.root().join(rel),
+            text.replace(
+                "class: advisory",
+                "class: blocking\n\nx-majordomus:\n  tests: [test/cases/01_alpha.sh, \
+                 test/cases/02_beta.sh]",
+            ),
+        )
+        .unwrap();
+        let j = Judged { repo };
+        j.git(&["init", "-q"]);
+        j.git(&["config", "user.email", "t@example.com"]);
+        j.git(&["config", "user.name", "t"]);
+        j.git(&["add", "-A"]);
+        j.git(&["commit", "-q", "-m", "fixture"]);
+        j
+    }
+
+    fn root(&self) -> &Path {
+        self.repo.root()
+    }
+
+    fn git(&self, args: &[&str]) -> String {
+        let out = std::process::Command::new("git")
+            .arg("-C")
+            .arg(self.root())
+            .args(args)
+            .output()
+            .unwrap();
+        String::from_utf8_lossy(&out.stdout).trim().to_string()
+    }
+
+    /// Record one run of a case at HEAD, into the working ledger.
+    fn record(&self, case: &str, outcome: &str, tree: &str) {
+        let source = format!("test/cases/{case}.sh");
+        let digest = crate::evidence::digest_of(&std::fs::read(self.root().join(&source)).unwrap());
+        let e: Execution = serde_json::from_value(json!({
+            "test": format!("suite:{case}"),
+            "runner": "suite",
+            "source": source,
+            "outcome": outcome,
+            "seconds": 1,
+            "commit": self.git(&["rev-parse", "HEAD"]),
+            "working_tree": tree,
+            "digest": digest,
+            "at": "2026-09-26T00:00:00Z",
+            "origin": "local",
+            "command": format!("bash test/run.sh {case}")
+        }))
+        .unwrap();
+        let mut l = Ledger::load(self.root()).unwrap();
+        l.merge([e]);
+        l.save(self.root()).unwrap();
+    }
+
+    fn report(&self) -> RulesReport {
+        report(
+            &self.repo.index().unwrap(),
+            &Ledger::load(self.root()).unwrap(),
+        )
+    }
+}
+
+fn rule_two(r: &RulesReport) -> &RuleProof {
+    r.rules
+        .iter()
+        .find(|p| p.rule.id == "project.rule-2")
+        .unwrap()
+}
+
+/// A recorded skip is a test that declined to run: `not_run`, never `failing`, and so not a
+/// finding against the rule it proves.
+#[test]
+fn a_rule_tests_recorded_skip_reads_not_run() {
+    let j = Judged::new();
+    j.record("01_alpha", "skip", "clean");
+    j.record("02_beta", "pass", "clean");
+    let r = j.report();
+    let p = rule_two(&r);
+    assert_eq!(p.tests[0].state, ProofState::NotRun);
+    assert_eq!(p.tests[1].state, ProofState::Proven);
+    assert_eq!(p.state, RuleState::NotRun);
+    assert!(r.findings.is_empty(), "a skip is not a failure");
+}
+
+/// A pass recorded on a commit the checked-out branch does not contain is about some other
+/// history, however empty a diff between the two trees is.
+#[test]
+fn evidence_on_a_commit_head_does_not_contain_reads_stale() {
+    let j = Judged::new();
+    let trunk = j.git(&["symbolic-ref", "--short", "HEAD"]);
+    j.git(&["checkout", "-q", "-b", "side"]);
+    j.git(&["commit", "-q", "--allow-empty", "-m", "side"]);
+    j.record("01_alpha", "pass", "clean");
+    j.record("02_beta", "pass", "clean");
+    let ledger = j.root().join(crate::evidence::LEDGER_PATH);
+    let text = std::fs::read_to_string(&ledger).unwrap();
+    std::fs::remove_file(&ledger).unwrap();
+    j.git(&["checkout", "-q", &trunk]);
+    std::fs::write(&ledger, text).unwrap();
+    let r = j.report();
+    let p = rule_two(&r);
+    assert!(
+        p.tests.iter().all(|t| t.state == ProofState::Stale),
+        "{p:?}"
+    );
+    assert_eq!(p.state, RuleState::Stale);
+}
+
+/// A failure outranks an absence: one failing test and one that declined to run make a
+/// failing rule, and a finding, rather than a `not_run` rule nobody is told about.
+#[test]
+fn a_blocking_rule_with_a_failing_and_a_skipped_test_is_failing_and_a_finding() {
+    let j = Judged::new();
+    j.record("01_alpha", "fail", "clean");
+    j.record("02_beta", "skip", "clean");
+    let r = j.report();
+    let p = rule_two(&r);
+    assert_eq!(p.tests[0].state, ProofState::Failing);
+    assert_eq!(p.tests[1].state, ProofState::NotRun);
+    assert_eq!(p.state, RuleState::Failing);
+    assert!(!p.satisfied);
+    assert_eq!(
+        r.findings
+            .iter()
+            .map(|f| f.rule.as_str())
+            .collect::<Vec<_>>(),
+        ["project.rule-2"]
+    );
+    assert_eq!(r.verdict, RulesVerdict::Failing);
+
+    // and a failing test beside one never run at all is the same
+    let j = Judged::new();
+    j.record("01_alpha", "fail", "clean");
+    let r = j.report();
+    assert_eq!(rule_two(&r).tests[1].state, ProofState::NotRun);
+    assert_eq!(rule_two(&r).state, RuleState::Failing);
+}
+
+/// The aggregation itself, over rule states: a failure outranks an absence, a path nothing
+/// drives counts only when it is all there is.
+#[test]
+fn a_failing_part_outranks_a_part_never_run() {
+    use crate::evidence::freshness::aggregate;
+    use RuleState::*;
+    assert_eq!(
+        aggregate(&[(Failing, true), (NotRun, true)], Failing),
+        Some(Failing)
+    );
+    assert_eq!(
+        aggregate(&[(NotRun, true), (Unrunnable, false)], Failing),
+        Some(NotRun)
+    );
+    assert_eq!(aggregate(&[(Unrunnable, false)], Failing), Some(Unrunnable));
+}
+
+/// A run recorded on a dirty tree is capped at `inputs_unchanged`, and a corpus whose only
+/// blocking rule rests on it is not proven.
+#[test]
+fn a_blocking_rule_whose_pass_was_recorded_on_a_dirty_tree_leaves_the_corpus_unproven() {
+    let j = Judged::new();
+    j.record("01_alpha", "pass", "dirty");
+    j.record("02_beta", "pass", "clean");
+    let r = j.report();
+    let p = rule_two(&r);
+    assert_eq!(p.tests[0].state, ProofState::InputsUnchanged);
+    assert_eq!(p.tests[1].state, ProofState::Proven);
+    assert_eq!(p.state, RuleState::InputsUnchanged);
+    assert!(r.findings.is_empty());
+    assert_eq!(r.verdict, RulesVerdict::Unproven);
+
+    // the same corpus with both runs clean is proven
+    j.record("01_alpha", "pass", "clean");
+    let r = j.report();
+    assert_eq!(rule_two(&r).state, RuleState::Proven);
+    assert_eq!(r.verdict, RulesVerdict::Proven);
 }

@@ -1,7 +1,7 @@
 +++
 title = "Development semantics live in the canonical runtime; a surface only consumes them"
 description = "Development semantics live in the canonical runtime; a surface only consumes them"
-weight = 76
+weight = 82
 [extra]
 kind = "rule"
 slug = "project-development-semantics-are-canonical-1"

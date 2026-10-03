@@ -1,7 +1,7 @@
 +++
 title = "The command surface is declared and reconciled"
 description = "The command surface is declared and reconciled"
-weight = 8
+weight = 9
 [extra]
 kind = "rule"
 slug = "majordomus-command-surface-1"

@@ -24,6 +24,8 @@
 MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_BIN_DIR MJ_LIB_DIR
 # shellcheck source=../../lib/common.sh
 . "$ROOT/lib/common.sh"
+# shellcheck source=../../lib/commands.sh
+. "$ROOT/lib/commands.sh"
 
 REG="$ROOT/share/commands.yaml"
 FLAT="$T/commands.flat"
@@ -63,9 +65,26 @@ done
 covers() { grep -qE "^$1 $2 " "$CLAIMS"; }          # command, layer
 cases_for() { grep -E "^$1 $2 " "$CLAIMS" | awk '{print $3}' | LC_ALL=C sort -u | tr '\n' ' '; }
 
-# ---- a declared cover must name a command that exists. A header pointing at a command
-#      that was renamed or removed is a broken reference, not harmless documentation.
+# ---- a declared cover must name something that exists. A header pointing at a command that
+#      was renamed or removed is a broken reference, not harmless documentation.
+#
+#      Two vocabularies, resolved by the one function the doctor check uses
+#      (mj_covers_resolve in lib/commands.sh), so the two cannot disagree: a bare name is a
+#      public command, and `gate:`, `script:`, `workflow:` and `capability:` name the other kinds of
+#      thing a case can be about. Before those existed, a case covering a gate or a script had
+#      no word for its own subject and `none` was its only legal value — 74 of 215 cases on
+#      2026-09-15.
+#
+#      A prefixed name is checked for existence and is deliberately NOT counted as command
+#      coverage: the obligations below still read bare names only, so widening the vocabulary
+#      cannot discharge the narrower duty that every public command carries two cases.
 for c in $(awk '$1 != "-" {print $1}' "$CLAIMS" | LC_ALL=C sort -u); do
+  rc=0; why="$(mj_covers_resolve "$ROOT" "$c")" || rc=$?
+  case "$rc" in
+    0) continue ;;
+    1) echo "    $why"; exit 1 ;;
+    3) echo "    '$c' cannot be resolved: this tree carries no $why"; exit 1 ;;
+  esac
   printf '%s\n' $public | grep -qx "$c" || {
     echo "    a test case declares coverage of '$c', which is not a public command"
     echo "    reproduce: grep -rn 'majordomus-covers\\|majordomus-negative' test/cases/ | grep $c"

@@ -135,39 +135,106 @@ Ranked from strongest to weakest, so a summary that sorts by the state reads as 
 Each state carries its own one-sentence meaning in the model, so every surface says the
 same thing rather than inventing a gloss.
 
-| state | derived when |
+| state | in short |
 |---|---|
-| `proven` | the latest execution passed, and the diff between its commit and the working tree is empty — excluding the ledger's own row |
-| `inputs_unchanged` | the latest execution passed, and **nothing the claim itself names** differs between that commit and the working tree |
-| `stale` | the latest execution passed, but something the claim names has changed since — or git could not answer the comparison at all |
-| `failing` | the latest execution of this claim's test did not pass |
-| `not_run` | the claim names a test a runner owns, and no execution of it has ever been recorded |
+| `proven` | a passing run the presented revision contains, nothing but the ledger changed since, on a clean tree at both ends |
+| `inputs_unchanged` | a passing run, and **nothing the claim itself names** has changed since — or it has not, but one of the two trees was not its commit |
+| `stale` | a passing run that no longer proves the presented revision: something the claim names changed, the revision does not contain it, git could not compare, or a failure the checkout holds withholds it |
+| `failing` | the latest execution of this claim's test failed, timed out or could not be run |
+| `not_run` | the claim names a test a runner owns, and no execution that ran it has been recorded — never run, or it declined to run |
 | `unrunnable` | the claim names a path no runner in this repository drives, so no execution of it can ever be recorded |
 | `no_test` | the claim names no test at all — correct for a `planned` or a `rejected` claim, a defect for any other |
 
-"What the claim itself names" is exactly three paths: its `source`, its `implementation`
-and the test's own source. The comparison is `git diff --name-only <recorded commit> --`,
-which catches a path committed since, staged, or merely edited in the working tree. It is
-run once per distinct commit in the ledger and shared by every claim recorded against it,
-which in practice is one subprocess.
+Every state is decided by one function, `evidence::freshness`, from the recorded run and the
+revision it is judged at, and the first row that matches wins. E is the commit the run was
+recorded on; "the presented revision" is what is judged (below); "the inputs" are what the
+claim names — exactly three paths: its `source`, its `implementation` and the test's own
+source (a rule names its test's source and its own definition). "Changed" is every path
+that differs between E and the presented revision, and changed' is that set without the
+ledger's own row.
 
-When git cannot answer — no work tree, a commit the checkout does not have — the state is
-`stale`, not `inputs_unchanged`. Not knowing is not proof.
+| # | when | state | the report adds |
+|---|---|---|---|
+| 1 | the claim names no test | `no_test` | |
+| 2 | it names a path no runner drives | `unrunnable` | |
+| 3 | nothing is recorded for the test | `not_run` | |
+| 4 | the run was a skip | `not_run` | detail: the test declined to run |
+| 5 | the run failed, timed out or errored | `failing` | detail: which |
+| 6 | a pass, and git could not compare E with the presented revision | `stale` | detail naming E |
+| 7 | a pass on an E the presented revision does not contain | `stale` | detail naming E |
+| 8 | a pass whose test no longer hashes to its recorded digest, and no input changed | `stale` | `changed`: the test |
+| 9 | a pass, and an input changed | `stale` | `changed`: those inputs |
+| 10 | a pass, changed' empty, the run's recorded tree clean, the presented tree clean | **`proven`** | |
+| 11 | as 10, but the run's recorded tree was `dirty` or `unknown` | `inputs_unchanged` | detail: the run measured a tree that was not its commit |
+| 12 | as 10, but the presented tree was `dirty` or `unknown` | `inputs_unchanged` | detail: the presented revision was built from a tree that was not its commit |
+| 13 | a pass, changed' not empty, and none of it an input | `inputs_unchanged` | |
+| 14 | as 13, but the route names no inputs at all | `stale` | detail: a change since the run cannot be ruled out |
 
-A `stale` claim names the paths that changed, so a reader is told which of the three
-invalidated the run rather than being told to go and look.
+Only row 10 is `proven`, and only `proven` may be rendered as verified on any surface. A
+`stale` claim names the paths that changed, or says in its detail why it is stale, so a
+reader is told what invalidated the run rather than being told to go and look. Not knowing
+is not proof: an unanswerable comparison is row 6, never row 13.
+
+**The presented revision.** `evidence show` judges the working tree: HEAD plus every
+tracked, staged and untracked change, compared with `git diff --name-only E --` together
+with the untracked files git would show. `evidence show --presented HEAD` judges the
+checked-out commit as committed. The commit must be the one checked out — the claims, the
+tests' sources and their digests are read from the checkout, so a verdict at any other
+commit would mix two trees — and the ledger is the one committed in it, compared with `git
+diff --name-only E <commit> --`. The presented tree is measured ignoring the ledger's
+working copy, which is not what is judged, and `--presented-tree` can only weaken that
+measurement. The report says what it was judged at in `presented`. This is the reading a
+site built from a commit needs, and no surface asks for it yet: the evidence publication
+(issue I1955) and the site build that binds it to `build.json` (issue I1959) are the later
+slices that will pass `build.json.commit` as `--presented` and a build with
+`build.json.dirty` set as `--presented-tree dirty`. The two measurements differ:
+`build.json.dirty` ignores untracked files, and the presented tree counts them. The
+narrower one cannot make a verdict proven, because the presented tree is measured here
+whatever the caller declares, and a declared state can only weaken it.
+
+**The working ledger's uncommitted executions.** Under `--presented`, the executions the
+working copy of the ledger holds that the committed ledger does not are listed in
+`presented.uncommitted`, and read only through the monotone rule: a supplementary record
+may withhold `proven` and never grant it. When one of them failed, timed out or errored,
+on a clean tree, at a commit that contains E and that the presented commit contains, a
+`proven` or `inputs_unchanged` verdict is capped at `stale`, with a detail naming the run.
+The cap is `stale` and not `failing`: such a record never decides a verdict, and an
+uncommitted pass never strengthens one. A working ledger that cannot be read is refused,
+because a run it may hold cannot be ruled out.
+
+**A skip is not a failure.** A test that declined to run proved nothing and failed nothing:
+it is `not_run`, with a detail saying it declined, and a guarantee resting on it is named by
+a finding that says its test declined to run. A test that errored or timed out did not
+decline: it is `failing`.
+
+**Containment.** A pass recorded on a commit the presented revision does not contain is a
+fact about another history — a branch that was never merged, a rewritten one — however
+empty a diff between the two trees happens to be. It is `stale`, and its detail names the
+commit. A commit this clone does not have is neither contained nor not: git cannot answer,
+which is row 6, and nothing is diffed against it. A ledger row's commit is data, so a word
+git would read as an option (`--output=<file>`) is never handed to git: it names no
+commit, and it is row 6 too.
+
+**Aggregation.** Where several states make one — a rule over the tests it names — a
+failing part makes the whole failing, whatever the other parts say, because the ranking
+puts `failing` above `not_run` and the weakest of a failing test and a skipped one would
+otherwise read `not_run` and hide the failure. Otherwise the whole is the weakest of the
+parts that can carry proof, and a part nothing can ever record counts only when it is all
+there is.
 
 ### `proven` and `inputs_unchanged` are deliberately not the same state
 
 This is the point of the whole subsystem, and it is the thing to preserve in any change to
 it.
 
-**`proven`** means a passing run exists, *nothing has changed since it*, and *the run
-measured the commit it is joined to*: the diff between the execution's own commit and the
-working tree is empty, and the execution's `working_tree` is `clean`. It is proof of the
-tree in front of you — the tree the run measured is the tree you are looking at.
+**`proven`** means a passing run exists, *nothing has changed since it*, *the run
+measured the commit it is joined to*, and *what is presented is that commit's own
+history, as committed*: the presented revision contains the execution's own commit, the
+diff between the two is empty but for the ledger, the execution's `working_tree` is
+`clean`, and so is the presented tree. It is proof of the tree in front of you — the tree
+the run measured is the tree you are looking at.
 
-Both halves are needed, and each fails differently. A run recorded while something else was
+Each condition is needed, and each fails differently. A run recorded while something else was
 pending sat on its commit without measuring it (ADR 0041: "`proven` is a passing run
 recorded against this exact commit with a clean tree"), so it is capped at
 `inputs_unchanged` however empty the diff is when the report is taken — a later `git
@@ -381,6 +448,96 @@ Both read the same derivation, so the two directions cannot disagree. A claim th
 does not declare is a not-found rather than an empty answer: a typo that read as "this
 claim has no evidence" is the one answer these capabilities must never give.
 
+## Subjects: what a verdict is about
+
+A claim is one thing a reader asks about, and not the only one. A reader also asks whether
+a feature is proven, what tests a command, what proves a rule. Each of those is a *subject*:
+one declaration the repository already makes, named by a key `<kind>:<id>` — `claim:<id>`,
+`rule:<id>` (the rule's id without its version), `feature:<id>`, `command:<path>` (the words
+of a command joined by one space, `command:commit plan`), `capability:<id>`, `mcp:<tool>`
+and `use_case:<id>`. The subject index says, for every one of them, which subjects it is
+made of and which tests it reaches; nothing lists either by hand.
+
+| Kind | Its own routes | Its members |
+|---|---|---|
+| claim | the test the claim names, judged by the claim's source, implementation and test source | none |
+| rule | every path its enforcement block names that a runner drives; any other named path is listed as a mechanism | none |
+| command | the cases whose first covers line names it (behaviour) and whose first negative line names it (negative); for a documented example path, the binary that runs every example, where that binary exists | none |
+| capability | the cases whose first covers or negative line names `capability:<id>` | its command-line path, and every claim implemented in the file its module is composed in |
+| mcp | none | the capability that declares the tool, of which it is an alias |
+| use case | its scenario, which the ledger does not record | the commands it runs, the rules it exercises, the claims it evidences and the MCP tools it calls |
+| feature | none | the claims, rules, commands and use cases it names |
+
+A command word is a public command of the shell tool, a documented example path of the
+executable or a capability's command-line path, and the subject names the programs it
+belongs to. Those are the words of the command graph (`majordomus commands graph`): every
+command of the executable that can be run carries a documented example and a group that only
+holds commands carries none, so a group such as `evidence` is not a word of the executable,
+and a case holds the command subjects and their programs equal to the graph's. A word both
+programs answer to is one subject naming both, with the advisory finding
+`command_in_two_programs`: its header routes prove the shell tool and its example route
+proves the executable. The members form a graph with no cycles — a use case never
+includes the features that name it, and nothing includes a feature — and a reference that
+resolves to nothing is skipped here and reported by the product validation.
+
+A subject's verdict is the one aggregation the claims and the rules already use, over its
+parts: a failing part makes the subject failing; otherwise the verdict is the weakest of the
+parts that can carry proof; otherwise the weakest of all its parts; and a subject with no
+part reads `no_test`. The totals of its parts, by state, are always beside the verdict, so
+one `not_run` part is never hidden behind it. A subject is judged over its own routes and
+its members' own verdicts, never over its members' raw routes. It is judged at the presented
+revision, as `evidence show --presented` judges a claim: a claim route is the claim join's
+proof, a command's routes go through the same truth table and the same monotone rule over
+the working ledger's uncommitted run, and the rules report, which judges the working tree,
+is capped by the presented tree, so a rule-derived `proven` becomes `inputs unchanged` when
+the presented tree is not its commit, as every other route does. A surface that reads records
+beyond the tracked ledger may weaken a route before anything is aggregated, and never
+strengthen it: the route keeps the weaker of the two states.
+
+A rule subject reads its rule proof's state through one declared mapping:
+
+| Rule state | Evidence state | Can carry proof |
+|---|---|---|
+| `proven`, `inputs_unchanged`, `stale`, `failing`, `not_run`, `unrunnable` | the same word | yes |
+| `gated` | `not_run`: a gate refuses violations, and no recorded run proves the behaviour | yes |
+| `reviewed` | `no_test` | no |
+| `unproven` | `no_test` | only for a blocking rule, for which naming nothing is a defect |
+| `dangling` | `unrunnable`, and a subject made of it carries the finding `dangling_member` | yes |
+
+A scenario and a mechanism are listed so that a reader sees them, and neither ever decides
+a verdict: the ledger holds no scenario run, and a mechanism is a gate or a script that
+refuses violations rather than a run that passed. A feature whose members reach no test a
+runner drives carries the finding `feature_without_evidence`. The subject findings are
+advisory until the gate slice holds them.
+
+The committed index, `site/data/registry/evidence-subjects.json`, is written by
+`majordomus generate site` and carries structure only: no ledger row, no commit and no time,
+so recording a run never makes it stale, and `generate --check` refuses a copy that differs
+from the derivation. Shell and jq only join it. It replaces or holds equal the shell
+derivations of subject to test that came before it:
+
+- the command pages (`scripts/generate-site-data`) read the first covers and negative line
+  of every case, as the index does, and a case holds the two equal until the pages join the
+  index instead;
+- the command-coverage doctrine (`lib/commands.sh`) reads the same first line;
+- the `command-furnished` gate and the use-case impact trace match a command anywhere in
+  any covers line between word boundaries, so they would read a second header of a kind,
+  and a command inside a longer word (`capability:commit.plan` holds `plan`); a case holds
+  every case to one header of each kind, and its covers line to naming the same public
+  commands under both readings, so they cannot yet disagree; the gate slice moves them onto
+  the index;
+- the capability pages (`scripts/lib/executable-site.jq`) give every capability the claims
+  implemented in its module's file, and a case holds them equal to the index;
+- the doctrine pages name the first test of each rule, and a case holds every one of them to
+  a route or a mechanism of that rule.
+
+```sh
+jq '.subjects["feature:evidence"]' site/data/registry/evidence-subjects.json
+majordomus generate site --check
+```
+
+ADR 0087 (proposed) records the decision to index evidence by subject.
+
 ## The gate
 
 [`scripts/evidence-check`](../scripts/evidence-check) renders the executable's own answer
@@ -468,21 +625,24 @@ exactly as this repository's is.
 
 ## Recorded in CI
 
-The ledger above holds whatever was recorded into the tree. CI's runs are recorded as well, but
-they are kept where they happened rather than committed. A run cannot commit what it proved
-without adding a commit after the one it proved, on a trunk that moves faster than the suite
-finishes. The decision is
-[ADR 68](../.ai/repo/adrs/0068-ci-evidence-is-kept-where-the-run-happened-and-published-with-the-commit-it-proves.md).
+The ledger above holds whatever was recorded into the tree. CI's runs are recorded as well, and
+a validating run never commits its rows: they are kept where the run happened, as a run record.
+A trunk run's rows are committed later, by a separate pull request (ADR 0080), because a run
+cannot commit what it proved without adding a commit after the one it proved, on a trunk that
+moves faster than the suite finishes. That recording pull request is not wired yet. The
+decision is
+[ADR 68](../.ai/repo/adrs/0068-ci-evidence-is-kept-where-the-run-happened-and-published-with-the-commit-it-proves.md),
+as ADR 0087 amends it.
 
 ```mermaid
 flowchart LR
-  suite["suite job<br>suite.tsv"]
-  crate["rust job, three lanes<br>cargo-test-1..3.txt, joined"]
+  suite["suite job, four shards<br>suite.tsv · suite-tree.json, joined"]
+  crate["rust job, three lanes<br>cargo-test-1..3.txt · crate-tree.json, joined"]
   cov["coverage job<br>coverage.json"]
   collect["evidence job<br>scripts/ci/evidence-collect"]
-  artifact["artifact `evidence`<br>ledger · report · coverage · manifest"]
+  artifact["artifact `evidence`<br>report · ledger · coverage · manifest"]
   pages["pages.yml<br>scripts/pages evidence"]
-  site["/evidence/<br>current · stale · unavailable"]
+  site["/evidence/<br>current · stale · unknown · unavailable"]
   suite --> collect
   crate --> collect
   cov --> collect
@@ -490,19 +650,46 @@ flowchart LR
   collect -. "commit still the tip: dispatch" .-> pages
 ```
 
-**What the collector does.** `scripts/ci/evidence-collect` takes the raw reports the jobs left
-and records the suite's and the crate's results through `majordomus evidence record --origin ci`.
-It derives the report through `majordomus evidence show` and summarises the coverage export
-through `scripts/rust-coverage --summary-json`. It writes `manifest.json`, naming:
+**What the collector derives first.** Before it records anything, `scripts/ci/evidence-collect`
+measures the checkout it runs in and derives the report through `majordomus evidence show`, as
+`report.txt` and `report.json`. The reports it is handed and the directory it writes are under
+the runner's temporary directory, outside that checkout. The report is therefore the tracked
+ledger's verdict at the run's commit, the answer a clean checkout of that commit gives, and the
+manifest's `report_tree` says whether the checkout was clean when it was derived.
 
-- the commit;
-- the run;
+**What the run's rows are.** Only then does it record the suite's and the crate's results
+through `majordomus evidence record --origin ci`, and keep the ledger that now holds them as
+`ledger.json`. Those rows are a run record. They are counted in the manifest and decide no
+verdict, in the artifact or on the site. A trunk run's rows become verdicts only when ADR
+0080's recording pull request lands them in the tracked ledger. The collector also summarises
+the coverage export through `scripts/rust-coverage --summary-json`.
+
+**What the producers and the recorder measure.** Each job that ran tests measures its own
+checkout right after its run and hands the measurement over beside its report:
+`suite-tree.json` from the suite job, `crate-tree.json` from the rust job. Each excludes by name
+the outputs its own run names, at the paths where that run writes them, and nothing else: the
+suite its report, at the root; the rust job its timings and its artifact directory, which
+`scripts/rust-check` writes in the crate's directory, where it runs. The measurement lists what
+it excluded. The manifest's `working_tree` is derived from those measurements
+alone: clean when every recorded job measured a clean tree, dirty when any measured a dirty one,
+unknown otherwise. It is never read from the recorder's checkout, which is clean by
+construction. The recorded rows still carry the recorder's own stamp, which the manifest keeps
+apart as `rows_working_tree`. A report whose job measured a commit other than the one the
+collector runs on is refused: it is not recorded, and it is named.
+
+The collector writes `manifest.json`, naming:
+
+- the commit that ran (for a pull request, GitHub's merge commit), and `head_sha`, the head it
+  was built from, carried beside it and never in its place;
+- the event and the run;
 - the outcomes of that run's executions;
-- which reports were absent.
+- the producers' measurements, the `working_tree` derived from them, and the `report_tree`;
+- which reports were absent, a report that yielded no execution included, and which were
+  refused, with the reason.
 
 An absent report is named, never counted as a pass. The job keeps the directory as the artifact
-`evidence` for ninety days. It is not a gate: it reads jobs that have already decided, and a red
-suite is exactly the evidence worth keeping.
+`evidence`. It is not a gate: it reads jobs that have already decided, and a red suite is
+exactly the evidence worth keeping.
 
 **An execution names its run.** A `ci` recording made inside a GitHub Actions environment stamps
 every execution with `run`: the provider, the run's identifier, its attempt, the workflow, the
@@ -524,24 +711,29 @@ before runs were named have no `run` at all.
 **What a publication says about it.** Before the build, `scripts/pages evidence` finds the
 `evidence` artifact recorded against the commit being published or its nearest ancestor. It
 chooses the nearest ancestor by history, not the newest upload. It writes
-`site/data/evidence.json`, which is never committed. It says exactly one of three things:
+`site/data/evidence.json`, which is never committed. It publishes the report as it was derived,
+and reads the manifest only to decide whether the run confirms it: a reason can withhold
+`current`, and never changes the report. ADR 0087 defines the states it says:
 
 | state | when | what the page says |
 |---|---|---|
-| current | the evidence was recorded against the published commit | CURRENT, with the commit and the run |
-| stale | the evidence is of an ancestor | STALE, with how many commits and changed files lie between |
+| current | the run is of the published commit, every job that ran tests measured a clean tree, the report was derived on a clean checkout and is carried, and nothing was absent, refused or failed | CURRENT, with the commit and the run |
+| stale | the run is of an ancestor, or it is of the published commit and recorded a failure | STALE, with how many commits and changed files lie between, or with the failures |
+| unknown | the run is of the published commit and cannot confirm the report: a tree not measured or not clean, a report absent or refused, or its own report not derived or not carried | UNKNOWN, with every reason |
 | unavailable | no retained artifact of this history, or one that cannot be read | UNKNOWN, with the reason |
 
-None of the three stops a publication. When a master run's evidence is kept while its commit is
-still the tip, the job dispatches `pages.yml`, and that publication says current. When master
-has moved on, the newer publication already carries the evidence as stale and the newer run
-will refresh it.
+Whatever withholds `current` is listed under the sentence. None of the states stops a
+publication. When a master run's evidence is kept while its commit is still the tip, the job
+dispatches `pages.yml`, and that publication says current when the run confirms the report.
+When master has moved on, the newer publication already carries the evidence as stale and the
+newer run will refresh it.
 
-```
+```sh
 scripts/pages evidence                          # this commit, fetched with gh
 scripts/pages evidence --from <dir> --out FILE  # a gathered directory, offline
 cat cargo-test-*.txt > cargo-test.txt   # the rust job's three lanes, joined
-scripts/ci/evidence-collect --out <dir> --suite suite.tsv --crate-output cargo-test.txt --coverage coverage.json
+scripts/ci/evidence-collect --out <dir> --suite suite.tsv --suite-tree suite-tree.json \
+  --crate-output cargo-test.txt --crate-tree crate-tree.json --coverage coverage.json
 ```
 
 The behavioural proof is `test/cases/357_ci_records_evidence.sh`.

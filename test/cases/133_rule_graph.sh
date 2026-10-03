@@ -28,8 +28,9 @@
 #      them would be left with nothing at all if it were deleted
 #  10  a rule the repository does not declare is a not-found, never an empty answer
 #  11  the corpus verdict says what was proven, not only whether anything is broken: a
-#      finding makes it `failing`; no finding with a blocking rule never run is `unproven`
-#      while `satisfied` stays true; only every blocking rule passing is `proven`
+#      finding makes it `failing`; no finding with a blocking rule never run, or passing
+#      with only its inputs unchanged, is `unproven` while `satisfied` stays true; only
+#      every blocking rule `proven` is `proven`
 . "$ROOT/test/lib.sh"
 MJB="$(rust_bin)" || rust_bin_exit $?
 export MAJORDOMUS_SHARE="$ROOT/share"
@@ -289,10 +290,22 @@ grep -rlE '^kind: rule' .ai/repo/rules | grep -v '/alpha\.v1\.md$' | while read 
 rr v2 report
 jqe v2 '[.rules[].rule.id] == ["project.alpha"] and .coverage.blocking == 1' \
   "the fixture did not narrow the corpus to one blocking rule"
-jqe v2 '.rules[0].state == "proven" or .rules[0].state == "inputs_unchanged"' \
-  "the one blocking rule does not carry its recorded pass"
-jqe v2 '.verdict == "proven" and .satisfied == true' \
-  "a corpus whose every blocking rule carries a current pass is not proven"
+# The deletions are uncommitted, so the tree has moved since alpha's run: its inputs are
+# unchanged, which is the absence of a known invalidation and not proof.
+jqe v2 '.rules[0].state == "inputs_unchanged"' \
+  "the one blocking rule does not carry its recorded pass, with the tree moved since"
+jqe v2 '.verdict == "unproven" and .satisfied == true' \
+  "a pass whose inputs are merely unchanged is not proven"
+
+# Commit the narrowing and record alpha's pass again, at the new HEAD: now the one blocking
+# rule is proven, and so is the corpus.
+git add -A >/dev/null && git commit -qm narrowed
+run_quiet "$W/rec2.err" "$MJB" evidence --repo "$T" record --suite "$W/report.tsv"
+rr v2b report
+jqe v2b '[.rules[].rule.id] == ["project.alpha"] and .rules[0].state == "proven"' \
+  "a pass recorded at this commit on a clean tree is not proven"
+jqe v2b '.verdict == "proven" and .satisfied == true' \
+  "a corpus whose every blocking rule is proven is not proven"
 
 # One more blocking rule, naming a case that is in the tree and was never run. Nothing is
 # broken — no finding, satisfied — and the corpus is no longer proven.

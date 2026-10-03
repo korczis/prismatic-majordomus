@@ -1,7 +1,7 @@
 +++
 title = "Every builtin module's page on the site links the page the crate's reference documents that module on, from the one module-to-page mapping the rustdoc check holds the published tree to, and only in a build that composed the reference"
 description = "Each builtin module has a page on the site, under /registry/modules/, and each module the crate"
-weight = 172
+weight = 174
 [extra]
 claim_id = "rustdoc-referenced"
 status = "guaranteed"

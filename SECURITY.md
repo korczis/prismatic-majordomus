@@ -36,6 +36,18 @@ it is described as real.
   multicast on the local segment only, rendezvous hubs on the owner's private network and
   tailnet, and `deny_unknown` trust listing the owner's three machines' keys and no other
   (`docs/MESH.md`, "This repository's mesh"; `test/cases/491_the_mesh_is_on_here.sh`).
+  Every session start says whether this checkout's server holds that declaration: the hook
+  runs the executable's `mesh doctor`, which asks the server on loopback, so the hook library
+  itself still sends no request (ADR 0059; `test/cases/494_the_mesh_is_declared_and_held.sh`).
+- **Pull-request integration reaches the forge only when asked to.** The Rust executable's
+  second declared exception (ADR 0101): `majordomus prs refresh`, `prs drain` and
+  `prs cleanup` run the GitHub CLI (`gh`) and `git fetch` against this repository's own
+  `origin`, with the person's own `gh` credentials. Nothing else does. `prs status`, `plan`,
+  `explain`, `events`, the HTTP routes under `/api/v1/pull-requests`, the MCP tools and the
+  Cockpit render the observation last recorded under `.ai/local/state/integration/`, with its
+  moment, and never reach the network. The executor never passes `--admin`, never force-pushes
+  and never closes a pull request without `--apply` and proof that its work is on master
+  (`test/cases/720_integration_follows_the_current_master.sh`).
 - **No evaluation of generated text.** Nothing that came from a worker, a model, a
   handover body, or a policy file is ever passed to `eval`, a shell, or a template
   engine that executes.
@@ -45,7 +57,36 @@ it is described as real.
   resolve outside the repository root.
 - **No silent overwrite.** Overwriting requires an explicit flag; the default is refusal
   naming the existing file. `state/` is never overwritten by any command.
-- **No recursive deletion.** Retention rotates to archived files; nothing is deleted.
+- **No recursive deletion but the four named here, and every deletion is accounted for.**
+  Retention rotates to archived files rather than removing them. A directory tree is removed
+  whole in four places only:
+  - the tool's own temporary directories;
+  - `majordomus web compose` empties its destination before it copies — `target/site`, or
+    the path `--destination` names — whatever that path already holds, and before it checks
+    that any producer ran, so `--destination` must name only a directory meant to be regenerated;
+  - `majordomus rules vendor update` replaces the vendored package under
+    `.ai/repo/rules/vendor/` whole, and refuses without `--force` when it was hand-edited;
+  - `majordomus worktree migrate` removes the original of a worktree only once its copy was
+    fingerprinted identical and git no longer registers it.
+
+  `majordomus migrate` removes the legacy `.majordomus/` files it replaces: derived files and
+  templates byte-identical to the tool's own outright, provider templates only after a backup
+  verified byte for byte, and then the directories left empty. Otherwise it removes files it
+  writes and owns (its own locks, leases and caches), and `majordomus recover` removes records,
+  and only what it has accounted for:
+  - a duplicate closed record of one episode, once its `changed_files` and `commits` are
+    folded into the oldest record, which says so in a `## Recovery` section;
+  - the open-session file of an episode stranded past the `session.stranded_after`
+    threshold (or an explicit `--older-than`), once its closed record is published;
+  - through the `recover.orphans` capability, a regular file of the two temporary shapes
+    this tool writes (`.tmp.*` in a record store, `<target>.mj-tmp`), older than that same
+    threshold, that is empty, whose episode is already published, or whose target already
+    exists. A temp holding the only copy of a record is published first and removed only
+    once its record exists; content it cannot classify, a file whose age it cannot read, and
+    every directory are reported and left where they are.
+
+  A fold, a recovered episode and a published temp are written to the ledger as
+  `session.recovered`, and `--check` prints the plan with its evidence and writes nothing.
 - **Handovers are `0600`.**
 - **Authorisation is derived, not ambient.** Any input that could relax a rule is either
   computed by Majordomus from git or corroborated against a real git object. An

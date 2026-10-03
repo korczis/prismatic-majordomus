@@ -62,10 +62,13 @@ while id="$(mj_yget "$CF" "commands.$i.id")"; [ -n "$id" ]; do
   { [ -n "$d" ] && [ "$d" != none ]; } \
     || report "$id" "declares no demo: in share/commands.yaml"
 
-  # the behavioural case, and a negative one: the site refuses a command that only ever passes
-  grep -rlq "^# majordomus-covers:.*\b$id\b" "$ROOT"/test/cases/*.sh 2>/dev/null \
+  # the behavioural case, and a negative one: the site refuses a command that only ever passes.
+  # A command is a whole whitespace-separated word of the header, as lib/commands.sh reads it:
+  # `script:scripts/ci/link-check` names a script, and `\b` would read `check` out of it.
+  w="([[:space:]]|$)"
+  grep -rlqE "^# majordomus-covers:(.*[[:space:]])?$id$w" "$ROOT"/test/cases/*.sh 2>/dev/null \
     || report "$id" "no test/cases/*.sh declares '# majordomus-covers: $id'"
-  grep -rlq "^# majordomus-negative:.*\b$id\b" "$ROOT"/test/cases/*.sh 2>/dev/null \
+  grep -rlqE "^# majordomus-negative:(.*[[:space:]])?$id$w" "$ROOT"/test/cases/*.sh 2>/dev/null \
     || report "$id" "no test/cases/*.sh declares '# majordomus-negative: $id'"
 done
 

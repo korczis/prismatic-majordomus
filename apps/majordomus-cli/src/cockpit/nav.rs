@@ -9,8 +9,8 @@
 //! counters and the validation every other caller passes through.
 //!
 //! What *is* written here is the areas: Overview, Capabilities, Commands, Executions,
-//! Objects, Directories, Graphs, Continuity, Worktrees, Health, Quality, Artifacts,
-//! Design, API. Those are concepts rather than
+//! Objects, Directories, Graphs, Continuity, Worktrees, Integration, Health, Quality,
+//! Artifacts, Design, API. Those are concepts rather than
 //! entities, they change when the Cockpit's own shape changes, and deriving them from
 //! anything would be deriving them from a list of exactly themselves.
 //!
@@ -53,6 +53,10 @@ pub enum Area {
     Continuity,
     /// The branch-to-worktree topology of the repository.
     Worktrees,
+    /// Who else is working in this repository, gathered from every checkout's board.
+    Peers,
+    /// The pull-request integration queue and its executor.
+    Integration,
     /// The discovered nodes of the mesh, and the machinery that observes them.
     Mesh,
     /// The declared model catalogue and its routing.
@@ -95,6 +99,13 @@ pub struct AreaInfo {
 /// The areas. Written here because they are concepts rather than entities; every catalogue
 /// under them is derived.
 ///
+/// Kept against the dispatcher by `cockpit::tests::every_area_has_a_route_and_every_route_its_area`:
+/// this list and `cockpit::STATIC_ROUTES` describe the same Cockpit, so an area with no route
+/// and a route with no area are both failures. Executions and Quality were the second kind —
+/// answered by the dispatcher, named by the module documentation above, and absent from here,
+/// which left `/cockpit/quality` unreachable by a reader, by the navigation crawl the browser
+/// probe derives its routes from, and therefore by every test.
+///
 /// Not the order the sidebar shows them in: `build` puts every section through the
 /// canonical order, so this sequence reaches no reader. It is the set the product model
 /// validates against, and nothing more.
@@ -117,6 +128,12 @@ pub fn areas() -> &'static [AreaInfo] {
             label: "Commands",
             href: "/cockpit/commands",
             area: Area::Commands,
+        },
+        AreaInfo {
+            id: "executions",
+            label: "Executions",
+            href: "/cockpit/executions",
+            area: Area::Executions,
         },
         AreaInfo {
             id: "objects",
@@ -149,6 +166,18 @@ pub fn areas() -> &'static [AreaInfo] {
             area: Area::Worktrees,
         },
         AreaInfo {
+            id: "peers",
+            label: "Peers",
+            href: "/cockpit/peers",
+            area: Area::Peers,
+        },
+        AreaInfo {
+            id: "integration",
+            label: "Integration",
+            href: "/cockpit/integration",
+            area: Area::Integration,
+        },
+        AreaInfo {
             id: "mesh",
             label: "Mesh",
             href: "/cockpit/mesh",
@@ -177,6 +206,12 @@ pub fn areas() -> &'static [AreaInfo] {
             label: "Health",
             href: "/cockpit/health",
             area: Area::Health,
+        },
+        AreaInfo {
+            id: "quality",
+            label: "Quality",
+            href: "/cockpit/quality",
+            area: Area::Quality,
         },
         AreaInfo {
             id: "artifacts",

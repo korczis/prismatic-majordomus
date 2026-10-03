@@ -1,7 +1,7 @@
 +++
 title = "Entering the repository converges on a server, by either door, without anything to remember"
 description = "Entering the repository converges on a server, by either door, without anything to remember"
-weight = 82
+weight = 88
 [extra]
 kind = "rule"
 slug = "project-entry-converges-2"

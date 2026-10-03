@@ -91,6 +91,12 @@ sources:
     pathspec: ':(glob).ai/repo/project/issues/*.yaml'
     required: false
 
+  - id: intent
+    kind: intent
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/project/intents/*.yaml'
+    required: false
+
   - id: document
     kind: document
     discovery: vcs
@@ -143,6 +149,12 @@ sources:
     kind: deployment
     discovery: vcs
     pathspec: ':(glob).ai/repo/deployments/*.yaml'
+    required: false
+
+  - id: curated
+    kind: knowledge
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/knowledge/curated/*.md'
     required: false
 
   - id: claim_page
@@ -307,6 +319,34 @@ weight: 10
 Because the fixture says so.
 ";
 
+/// A knowledge record the fixture declares, so that the capabilities reading one have an
+/// object to read: `knowledge_base.record`'s benchmark case is the first record of the index,
+/// and a fixture without one would hand the benchmark a lookup that answers not-found. Every
+/// required field, and the provenance a verified record must carry, pointing at a file the
+/// fixture tracks.
+pub const KNOWLEDGE: &str = "---
+schema: knowledge/v1
+id: fixture-note
+kind: knowledge
+class: convention
+title: The fixture reads its command line from docs/CLI.md
+description: A curated note that exists so the capabilities reading one have a record to read.
+status: verified
+epistemics: decided
+date: 2026-01-01
+tags:
+  - fixture
+provenance:
+  origin: authored
+  derived_from:
+    - file:docs/CLI.md
+---
+
+# The fixture reads its command line from docs/CLI.md
+
+Every command the fixture answers is specified there first.
+";
+
 /// A deployment the fixture declares, so that the capabilities reading one have an object
 /// to read. Every required field and nothing else: this is the smallest thing the contract
 /// calls a deployment, not a copy of the repository's own.
@@ -464,6 +504,22 @@ evidence_required:
   - proof
 ";
 
+pub const INTENT: &str = "id: fixture-intent
+title: The fixture's outcome is true
+statement: \"The outcome the fixture milestone reaches is true for its users.\"
+invariants:
+  - The fixture stays a valid repository
+milestones:
+  - fixture-milestone
+satisfaction:
+  - id: the-case-passes
+    criterion: The fixture's own case passes
+    evidence: test
+    ref: test/cases/00_x.sh
+governance:
+  - rule:project.alpha
+";
+
 const ISSUE: &str = "id: I0001
 milestone: fixture-milestone
 title: The bounded piece of work
@@ -545,7 +601,9 @@ true
             MILESTONE,
         );
         f.write(".ai/repo/project/issues/I0001.yaml", ISSUE);
+        f.write(".ai/repo/project/intents/fixture-intent.yaml", INTENT);
         f.write(".ai/repo/knowledge/sources.yaml", SOURCES);
+        f.write(".ai/repo/knowledge/curated/fixture-note.md", KNOWLEDGE);
         f.write(
             ".ai/repo/workflows/task-lifecycle.md",
             "# The task lifecycle\n\nstart, check, finish.\n",

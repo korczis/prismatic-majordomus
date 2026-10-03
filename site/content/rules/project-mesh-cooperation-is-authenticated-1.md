@@ -1,7 +1,7 @@
 +++
 title = "Mesh cooperation is admitted per link, replicated through one journal, and projected by every surface alike"
 description = "Mesh cooperation is admitted per link, replicated through one journal, and projected by every surface alike"
-weight = 97
+weight = 106
 [extra]
 kind = "rule"
 slug = "project-mesh-cooperation-is-authenticated-1"

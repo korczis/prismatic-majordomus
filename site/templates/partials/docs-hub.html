@@ -86,7 +86,12 @@
       list.append(li);
     }
   };
-  input.addEventListener('input', () => load().then(() => render(input.value.trim()))
-    .catch(() => { status.textContent = 'The index could not be loaded.'; }));
+  const run = () => load().then(() => render(input.value.trim()))
+    .catch(() => { status.textContent = 'The index could not be loaded.'; });
+  input.addEventListener('input', run);
+  // A search field elsewhere on the site (the kit's `search`) submits here as ?q=: arrive
+  // with the query in the box and its results listed.
+  const asked = new URLSearchParams(window.location.search).get('q');
+  if (asked) { input.value = asked; run(); }
 })();
 </script>

@@ -1323,6 +1323,24 @@ claims:
     responsibility: state
     note: continuity.state answers the worker's question about one episode, which is right for a briefing and blind to the other windows open on the same worktree, because state/session-current.yaml is a symlink the most recent start event re-aims. The five lifecycle capabilities read the store, the ledger and the index instead, decide every standing from what the repository can observe, and carry a remedy with every finding. They never write, they judge no thresholds — age is session.freshness and continuity.state's to report — and they declare no command line, because they read .ai/local/ and are served rather than shipped. The Cockpit's Continuity page is their projection and holds no session model of its own.
 
+  - id: connection-episode
+    claim: A client with no provider hooks gets an execution episode from the MCP connection, resumes its own after a crash, and never has its prompt claimed to be captured
+    source: docs/MCP.md
+    implementation: apps/majordomus-cli/src/episodes.rs
+    test: test/cases/200_generic_mcp_episode.sh
+    status: guaranteed
+    responsibility: state
+    note: The episode opens on episodes.attach and never on initialize, so a client that only reads the layer leaves no record; it is keyed by the external identity the client supplies and never by a peer id, which is handed out per connection; every message the client sends is its heartbeat; losing the connection detaches rather than closes, and a reconnect under the same identity resumes the same episode. Nothing here writes a session record - the board runs `capture session --provider generic`, the same command a provider hook's shim runs, and reports what it said. Prompt capture is declared impossible for the connection and is not attempted: an MCP server is handed tool calls, never the prompt that produced them. ADR 0103.
+
+  - id: provider-capability-evidence
+    claim: What each provider can do about the session lifecycle and prompt capture is one declaration with a citation per cell, every surface projects it, and no provider the declaration names goes unreported
+    source: docs/CONCEPTS.md
+    implementation: share/providers.yaml
+    test: test/cases/200_generic_mcp_episode.sh
+    status: guaranteed
+    responsibility: projection
+    note: share/providers.yaml carries an offers block per provider - episode (hooks, connection, none), prompts (hook, none), and the citation each was verified from; a word outside either vocabulary fails the read of the file rather than degrading to none. share::ProviderDeclaration and product::ProductProvider carry it and every surface is a projection. `capture status` joins it with the tree and reports two facts per aspect, the vendor's capability and this checkout's state, over the union of the declared providers and the adapter tables; `unsupported` is reserved for a provider that cannot do the thing and `unadapted` names a gap in this distribution. scripts/provider-evidence-check is the gate and the case holds it to its own negative. ADR 0103, rule project.a-provider-capability-cites-its-evidence.
+
   - id: adr-catalogue
     claim: An architecture decision is one file under the layer's adrs section, validated against the decision contract, with an identity nothing else claims, reciprocal supersession, and every reference it makes resolving
     source: docs/SCHEMAS.md
@@ -1522,22 +1540,40 @@ claims:
     note: The matrix binds a claim to a test by path, and the path check proves only that a file exists. The ledger under .ai/repo/evidence records the latest execution of every test with its outcome, duration, commit, tree state, source digest, time and origin; `majordomus evidence show` derives each claim's state from that join on every read, and a claim whose test nobody ran reads `not_run` rather than inheriting a guarantee from the file's existence.
 
   - id: evidence-recorded-in-ci
-    claim: CI records every test it ran with the commit and the run it happened in, and the site publishes that evidence as current, stale with its distance, or unavailable with the reason
+    claim: CI records every test it ran with the commit and the run it happened in, and the site publishes the tracked ledger's verdict at that commit as current only when CI's run of the published commit measured clean trees and nothing was absent, refused or failed; otherwise as stale with its distance or its failures, as unknown with its reasons, or as unavailable with the reason
     source: docs/EVIDENCE.md
     implementation: scripts/ci/evidence-collect
     test: test/cases/357_ci_records_evidence.sh
     status: guaranteed
     responsibility: none
-    note: The evidence job of validate.yml records the suite's and the crate's results through `majordomus evidence record --origin ci`, which stamps each execution with the run from its environment, and keeps them with the report and the coverage summary as the artifact `evidence`. `scripts/pages evidence` publishes the artifact of the commit being published or its nearest ancestor into site/data/evidence.json, never committed, and never shows an ancestor's evidence as current. ADR 68.
+    note: The evidence job of validate.yml derives the report first, through `majordomus evidence show` on its own checkout, measured clean or dirty, with the downloaded reports and its output under the runner's temporary directory, so that report is the tracked ledger's verdict at the run's commit. Only then does it record the suite's and the crate's results through `majordomus evidence record --origin ci`, which stamps each execution with the run from its environment; those rows are a run record, counted in the manifest and deciding no verdict, and a trunk run's rows reach the tracked ledger only through ADR 0080's recording pull request. The suite and the rust job each measure the tree they ran in, excluding only the outputs their run names at the paths where that run writes them (rust-check writes in the crate's directory), and the manifest's working tree is derived from those measurements; a report measured at another commit is refused, and a report that yielded no execution is absent. For a pull request the recorded commit is the merge commit that ran, with the head beside it. `scripts/pages evidence` publishes the artifact of the commit being published or its nearest ancestor into site/data/evidence.json, never committed, and withholds current, with every reason, whenever the run cannot confirm the report, a report the collector failed to derive or did not carry included. ADR 68, as ADR 0087 amends it.
 
   - id: rule-proof-is-named-and-resolves
-    claim: Every blocking rule names what proves it, and every path it names is in the tree
+    claim: Every rule names what proves it, and every path it names is in the tree
     source: docs/DOCTRINE.md
     implementation: scripts/ci/rule-proof-check
     test: test/cases/125_rule_proof.sh
     status: guaranteed
     responsibility: none
-    note: A rule could name a behavioural case in English prose, and nothing noticed when that case was renamed or deleted; the rule went on reading as enforced. The gate holds both halves of the relation. A named path that is not in the tree is `dangling` and is never ratcheted, because a proof that does not exist is worse than no proof. A blocking rule naming neither a validator nor a test nor a reason is `unproven`, which is the half no other check in this repository knows to look for.
+    note: A rule could name a behavioural case in English prose, and nothing noticed when that case was renamed or deleted; the rule went on reading as enforced. The gate holds both halves of the relation. A named path that is not in the tree is `dangling` and is never ratcheted, because a proof that does not exist is worse than no proof. A rule of either class naming neither a validator nor a test nor a reason is `unproven`, which is the half no other check in this repository knows to look for; advisory is not an exemption, and the one exemption is a vendored rule tagged `principle`, which the package pins by hash and which the gate counts on every run. `majordomus rules` reports the same `unproven` state for every class but calls it a finding only for a blocking rule; the gate is what refuses it for an advisory one.
+
+  - id: evidence-subjects-are-derived
+    claim: Every claim, rule, feature, command, capability, MCP tool and use case the repository declares is an evidence subject whose members and tests are derived from declarations that already exist, and a committed subject index that differs from that derivation is refused
+    source: docs/EVIDENCE.md
+    implementation: apps/majordomus-cli/src/evidence/subject.rs
+    test: test/cases/507_evidence_subjects_are_derived.sh
+    status: guaranteed
+    responsibility: none
+    note: '`majordomus generate site` writes site/data/registry/evidence-subjects.json from the claims matrix, the rules, the features, the use cases, the command registry, the documented command-line examples, the builtin capabilities and the first coverage and negative headers of every case; a capability is made of the claims implemented in the file its module is composed in, and a command word that both the shell tool and the executable answer to names both programs. Nothing lists a subject, a member or a route by hand, so adding a declaration adds its subject and removing it removes it. `generate --check` refuses a hand edit. The file carries structure only — no ledger row and no commit — so recording a run never makes it stale.'
+
+  - id: evidence-subject-commands-agree-with-the-command-pages
+    claim: The behavioural and negative tests the subject index names for a command are exactly the ones its command page lists, both read from the first coverage and negative header of each case
+    source: docs/EVIDENCE.md
+    implementation: apps/majordomus-cli/src/evidence/subject.rs
+    test: test/cases/507_evidence_subjects_are_derived.sh
+    status: guaranteed
+    responsibility: none
+    note: 'The case headers had several readers before the index: the site generator''s command pages, the command-coverage doctrine, the command-furnished gate and the use-case impact trace, and the last two match a command anywhere in any covers line between word boundaries rather than as a word of the first. The index reads the first line word for word, as the page does. The case holds the two equal, holds every case to one header of each kind, and holds each covers line to naming the same public commands under both readings, so the readers cannot yet disagree; the gate slice moves them onto the index. Two more shell derivations reach tests through declarations rather than headers: the capability pages give every capability the claims implemented in its module''s file, and the doctrine pages name the first test of each rule. The same case holds each of them equal to the index.'
 
   - id: rule-exemption-carries-its-reason
     claim: A rule that no program can express says so in its own front matter, with the reason, and is counted apart from every rule that has a gate
@@ -1610,6 +1646,33 @@ claims:
     status: guaranteed
     responsibility: none
     note: '`majordomus evidence show --check` exits 10 on any guaranteed claim the evidence does not support, and `scripts/evidence-check` ratchets that against .ai/repo/evidence-baseline.txt, which records the state per claim rather than a list of names. Two things fail: a guarantee the baseline recorded as supported that no longer is, and a supported guarantee that left the matrix. A claim the baseline never knew, with no recorded run, is new debt — named and counted, never a regression — because a ratchet that fired on growth taxed writing claims down. The gate is advisory while the baseline carries unsupported lines and `--strict` is the end state; only `guaranteed` is judged, because advisory, planned and rejected already say that a current proof is not what they claim.'
+
+  - id: evidence-judged-at-the-presented-revision
+    claim: A claim reads proven only when its passing run was recorded on a commit the presented revision contains, nothing but the evidence ledger changed between the two, and neither the recorded tree nor the presented tree was dirty; a run on a commit the presented revision does not contain reads stale; a named revision is judged by the ledger committed in it, and a clean failing run of the same test that the checkout holds uncommitted, recorded between the two, caps it at stale
+    source: docs/EVIDENCE.md
+    implementation: apps/majordomus-cli/src/evidence/freshness.rs
+    test: test/cases/502_evidence_is_judged_at_the_presented_revision.sh
+    status: guaranteed
+    responsibility: none
+    note: '`evidence::freshness` is the one truth table every surface reads, and only its proven row may render as verified. `evidence show --presented HEAD` judges the checked-out commit as committed, from the ledger that commit holds, against its tree measured without the working copy of the ledger; `--presented-tree` only weakens that measurement. A run the working ledger holds and the committed one does not is listed in `presented.uncommitted` and read only through the monotone rule, which withholds proven and never decides a verdict.'
+
+  - id: evidence-a-skip-is-not-run
+    claim: A test that declined to run reads not_run with a detail saying it declined, never proven and never failing, and a test that errored or timed out reads failing
+    source: docs/EVIDENCE.md
+    implementation: apps/majordomus-cli/src/evidence/freshness.rs
+    test: test/cases/502_evidence_is_judged_at_the_presented_revision.sh
+    status: guaranteed
+    responsibility: none
+    note: 'A recorded skip used to read failing, because every result that was not a pass did. It is the absence of a proof, not counter-evidence: the claim reads not_run with the detail that the test declined to run, and a guarantee resting on it is still a finding, one that says its test declined rather than that it was never recorded.'
+
+  - id: evidence-a-failure-outranks-an-absence
+    claim: A rule with a failing test reads failing whatever its other tests say, so a blocking rule whose tests are one failing and one not run is still a finding
+    source: docs/EVIDENCE.md
+    implementation: apps/majordomus-cli/src/evidence/freshness.rs
+    test: test/cases/502_evidence_is_judged_at_the_presented_revision.sh
+    status: guaranteed
+    responsibility: none
+    note: '`freshness::aggregate` is the one aggregation: failing if any part is failing, otherwise the weakest of the parts that can carry proof, otherwise the weakest of all. The declared order ranks failing above not_run, so a plain weakest-of over a failing test and a skipped one read not_run, which is not a finding, and hid the failure.'
 
   - id: mesh-off-by-default
     claim: No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error
@@ -1701,6 +1764,15 @@ claims:
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: The trust unit tests prove deny_unknown observes without trusting, allowlist and TOFU semantics, and that a key change under a known node id is rejected; the integration test proves a forged envelope is a counted refusal. Discovery still grants nothing: being heard or trusted admits no link on its own — a link needs the handshake of mesh-cooperation-links — and nothing a linked peer sends executes anything; the cooperation commands write this runtime's journal and, for a consumed handover, one record in this checkout's handovers directory (ADR 0067).
 
+  - id: mesh-declared-is-held
+    claim: An enabled mesh declaration whose shared server did not activate the mesh is a failed `runtime` check of `mesh doctor` (exit 10) carrying the server's reason, and a `Mesh: DECLARED ENABLED BUT NOT ACTIVE` line in the session-start briefing — never a quiet off; and this repository's committed declaration is tracked, enabled, allowlists the fleet and names a hub
+    source: docs/MESH.md
+    implementation: apps/majordomus-cli/src/mesh/doctor.rs
+    test: test/cases/494_the_mesh_is_declared_and_held.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: The runtime keeps one bit saying whether a shared server decided anything (activated, or declined with a reason); the doctor's `runtime` check reads the server's decision when the bit is set and reports an absence when it is not, and `majordomus mesh doctor` asks the running server for its report so that the verdict is the server's. The hook library renders the briefing line from that report and sends no request of its own. apps/majordomus-cli/tests/mesh.rs proves the three verdicts over a real server; the case proves the briefing answers and the exit code through the provider's start event, and reads this repository's committed declaration (ADR 0059). It does not make the mesh reach anybody, and hubs are started by hand.
+
   - id: models-one-declaration
     claim: Vendors and models are declared once in share/models.yaml, and the CLI, HTTP, OpenAPI, MCP and Cockpit render that one declaration with no model name of their own
     source: docs/MODELS.md
@@ -1727,6 +1799,87 @@ claims:
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: credential_env names an environment variable and only std::env::var_os(..).is_some() is ever consulted; the test walks the catalogue's JSON schema and refuses any property name that smells like a credential.
+
+  - id: knowledge-derived-at-the-boundary
+    claim: A provider's end event and its compaction event derive the knowledge the episode produced into candidate records under the tracked tree, from the ledger and git and never from a conversation, whether or not a task is active, and record that they did so in the ledger
+    source: docs/KNOWLEDGE.md
+    implementation: lib/knowledge.sh
+    test: test/cases/563_knowledge_is_derived_at_the_boundary.sh
+    status: guaranteed
+    responsibility: doctor
+    note: The close path in lib/session.sh runs the deriver after the session record is published and before session.closed is appended, so every close is followed by its knowledge.derived line; the compaction adapter calls it directly, independent of the checkpoint switch. A decision becomes a convention, a resolved question a fact, a blocked task a lesson, a verified completion a fact; a handover's Next Action is continuation state and is never derived from. Nothing reads a conversation, a prompt or a model.
+
+  - id: knowledge-derivation-is-idempotent
+    claim: A second derivation over the same evidence writes nothing, says so, and leaves the working tree unchanged; the record id is derived from the episode and a digest of the evidence so the same fact always lands in the same file
+    source: docs/KNOWLEDGE.md
+    implementation: lib/knowledge.sh
+    test: test/cases/564_knowledge_derivation_is_idempotent.sh
+    status: guaranteed
+    responsibility: layer
+    note: The record is composed into a temporary file in the same directory and compared byte for byte with the file the id names; identical is reported unchanged and the temporary file removed, different is renamed over it. The date is the evidence line's day, never the clock, and no random value enters the bytes, so the same ledger and the same git yield the same file on every machine.
+
+  - id: knowledge-failure-is-recorded
+    claim: A policy switch that is off derives nothing and says so; a derivation that fails inside a provider hook is recorded as provider.event.failed and the hook still exits 0
+    source: docs/KNOWLEDGE.md
+    implementation: lib/capture.sh
+    test: test/cases/565_knowledge_switch_and_failure_leave_evidence.sh
+    status: guaranteed
+    responsibility: doctor
+    note: session.knowledge_on_end and session.knowledge_on_compact are the two switches, read from the policy and independent of checkpoint_on_compact. A hook must return success to its provider and returning success is not the same as claiming the work happened, so the adapter reports the failure through mj_capture_session_failed with the deriver's last line as the reason and closes the episode regardless.
+
+  - id: knowledge-integrity
+    claim: Every knowledge record is schema-valid with no unknown key, uniquely identified, evidenced when verified, resolves every reference it names, and carries no conversation; check, doctor and `majordomus knowledge check` refuse a record that is not
+    source: docs/KNOWLEDGE.md
+    implementation: lib/knowledge.sh
+    test: test/cases/707_knowledge_check_refuses_malformed_records.sh
+    status: guaranteed
+    responsibility: doctor
+    note: mj_validate_knowledge_integrity reads candidates/ and curated/ once, refuses a candidate that claims verified, a dangling derived_from or relations target, a duplicate id across both directories, a key the generated allow-list does not carry, a superseded record with neither superseded_by nor a rejection, and a title, description or body line matching the transcript check that never-store-transcripts is kept by. References to the ledger and git (session, task, decision, commit) are resolved here, in one pass, and are external to the graph compiler, which never reports them as dangling.
+
+  - id: knowledge-writer-observed
+    claim: A repository in which episodes close and no knowledge derivation follows within the stale threshold is reported as a stopped writer by doctor and watch, and the finding clears when a derivation is written
+    source: docs/KNOWLEDGE.md
+    implementation: lib/knowledge.sh
+    test: test/cases/708_health_sees_a_stopped_knowledge_writer.sh
+    status: guaranteed
+    responsibility: doctor
+    note: mj_validate_knowledge_lifecycle compares two facts the way ADR 0052's validator does, episodes closing and derivations following, judged against session.freshness.stale_minutes; it also reads the lifecycle source for the call to the deriver while session.knowledge_on_end is on. A checkout whose ledger holds no knowledge.derived line is skipped rather than failed, so the day the deriver arrives no checkout turns red; the first derivation ends the skip. The Rust reader's knowledge_base.status makes the freshness half of the same judgement from the same numbers.
+
+  - id: knowledge-promotion-is-an-act
+    claim: verified is written only by promote with evidence on stdin or by a person editing the file, never by the deriver; promotion moves the record to curated/ and rejection supersedes it with a reason, each leaving a ledger line
+    source: docs/KNOWLEDGE.md
+    implementation: lib/knowledge.sh
+    test: test/cases/709_knowledge_promotion_is_an_act.sh
+    status: guaranteed
+    responsibility: layer
+    note: An empty stdin is refused because an act without evidence is an assertion, and stdin carrying a transcript marker is refused for the reason a record may not carry one. Promotion keeps derived_from, adds the promoting episode, appends the evidence under an Evidence section and writes knowledge.promoted; rejection rewrites the candidate in place as superseded with a Rejected section and writes knowledge.rejected. The deriver skips a promoted or superseded id, so neither act is undone by the next episode boundary.
+
+  - id: briefing-names-candidates
+    claim: The start briefing names the candidates awaiting review on this branch, count and ids, bounded and within the briefing budget, and prints their absence rather than omitting it
+    source: docs/KNOWLEDGE.md
+    implementation: lib/derive.sh
+    test: test/cases/710_briefing_names_the_candidates.sh
+    status: guaranteed
+    responsibility: handover
+    note: The section sits after the open questions and before the handover in the derived briefing, bounded the way the open-questions block is. A candidate's branch is the branch of the episode its derived_from names, read from the tracked session record or, while that record is not yet written, from the ledger; a candidate whose episode this checkout cannot resolve is named on its own line as unattributed rather than hidden.
+
+  - id: candidates-reviewed-not-accumulated
+    claim: More candidates than the policy cap, or a candidate older than the policy age, is an advisory doctor finding that names them; both numbers are declared once in the policy
+    source: docs/KNOWLEDGE.md
+    implementation: lib/knowledge.sh
+    test: test/cases/711_candidates_are_reviewed_not_accumulated.sh
+    status: guaranteed
+    responsibility: doctor
+    note: knowledge.candidates_max_files and knowledge.candidate_max_age_minutes are read with mj_pol_req and a missing key is reported at the rule's class. Review age is the age of the queue entry — the oldest knowledge.derived line naming the file, then the commit that added it, then the record's date — never the evidence day alone. A candidate version control does not track is named too, with the git add remedy after fix:, because a record git does not hold is discovered by nothing. The rule is dispatched from doctor only, so a full review queue never turns watch red.
+
+  - id: knowledge-served-on-every-surface
+    claim: The candidates awaiting review, one record by id with its references resolved, and the derivation status of the checkout are one declaration each and answer with the same content over the command line, HTTP and MCP
+    source: docs/KNOWLEDGE.md
+    implementation: apps/majordomus-cli/src/capability/builtin/knowledge_base.rs
+    test: apps/majordomus-cli/tests/knowledge_base.rs
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: knowledge_base.candidates, knowledge_base.record and knowledge_base.status are capability! blocks in one module; majordomus generate projects them to the HTTP routes, the OpenAPI document, the MCP tools and resources, the executable's knowledge subcommands, the cockpit's module catalogue and the benchmark inventory. The reader takes candidates from the index, the ledger from the session module and the thresholds from the continuity module's reading of the policy; it writes nothing and reports absence as absence.
 
   - id: new-code-is-covered
     claim: Every executable line, function and region a change adds or touches in the Rust crate must be covered by a test; a change that leaves new code uncovered is refused, and untouched legacy debt is left alone

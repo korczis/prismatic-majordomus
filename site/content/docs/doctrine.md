@@ -284,8 +284,12 @@ For each rule it joins the declaration to the tree and to the ledger of recorded
 </div>
 
 
-A rule's state is the **weakest of its parts**: one dangling case makes the rule dangling
-however many of its other cases pass. The two states nothing else in this repository can
+A rule's state is the **weakest of its parts**, with one precedence: a failing test makes
+the rule `failing` whatever its other tests say, because the ranking puts `failing` above
+`not run` and a failure must never hide behind an absence. Otherwise the rule is the weakest
+of the parts that can carry proof, and a path no runner and no gate drives counts only when
+it is all the rule has. One dangling case makes the rule dangling however many of its other
+cases pass. The two states nothing else in this repository can
 express are the last two, and they are the reason the graph exists. `dangling` is the
 one-way relation this repository keeps rediscovering — a proof verified by name, with the
 converse unowned, so a case renamed in January leaves a rule reading as enforced in June.
@@ -302,8 +306,8 @@ Because they are not findings, "no findings" is not "proven", and the report nev
 be read as the other. `satisfied` is exactly "there are no findings". The report's
 `verdict`, printed first in text and carried at the top of the JSON, is what the corpus can
 be said to prove: `failing` when there is any finding; `proven` only when every blocking
-rule is `proven` or `inputs unchanged`; `unproven` otherwise — a blocking rule never run,
-gated, reviewed or stale, or no blocking rule at all. A corpus with no recorded run behind
+rule is `proven`; `unproven` otherwise — a blocking rule never run, gated, reviewed or
+stale, a blocking rule whose inputs are merely unchanged, or no blocking rule at all. A corpus with no recorded run behind
 any blocking rule is `satisfied` and `unproven`, which is the truth about it.
 
 Both directions are readable. `rules show` answers what proves a rule; `rules proves`
@@ -372,6 +376,14 @@ doctrine `majordomus.publication-currency` runs the gates the CI model marks `at
 live, at the moment of the claim, and refuses `completed` while one of them says the
 publication is owed. It is run and never recorded: evidence whose subject can change while
 the tree stands still has no hash to expire against.
+
+The knowledge doctrines span both programs. `majordomus.knowledge-observed` and
+`majordomus.knowledge-integrity` are decided by validators in `lib/knowledge.sh`, beside the
+shell writer that derives the records, and the Rust reader's `knowledge_base.status` makes the
+freshness half of the same stopped-writer judgement from the same ledger and the same policy
+numbers; the wiring half — that the lifecycle source calls the deriver — is the shell
+validator's alone, because only the shell tool can read its own source. `KNOWLEDGE.md` has
+the three rules and what each one finds.
 
 ## Reading it from the command line
 

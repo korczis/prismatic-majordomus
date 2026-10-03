@@ -336,7 +336,7 @@ mj_uc_validate_all() {
     # the scenario: setup exists, stdin bodies exist, every step names a declared command,
     # step ids are unique, every step expects an exit code
     if mj_uc_has_scenario "$i"; then
-      local mode obl
+      local mode obl wrk
       mode="$(mj_uc_mode "$i")"
       case "$mode" in
         fixture)
@@ -355,7 +355,16 @@ mj_uc_validate_all() {
         case " $sids " in *" $sid "*) mj_uc_bad "$id" "step '$sid' is declared twice" "" ;; esac; sids="$sids $sid"
         mj_uc_get "$i" "scenario.steps.$k.run.0"; cmd="$MJ_V"
         mj_uc_get "$i" "scenario.steps.$k.obligation"; obl="$MJ_V"
-        if [ -n "$obl" ]; then
+        mj_uc_get "$i" "scenario.steps.$k.worker"; wrk="$MJ_V"
+        if [ -n "$wrk" ]; then
+          # a worker step is the change the tool is asked about, made by somebody else; it is
+          # the one step that is not the tool, so it is refused anywhere it could touch a
+          # repository that is not disposable
+          [ -z "$cmd" ] || mj_uc_bad "$id" "step '$sid' both runs '$cmd' and does worker '$wrk'; a step is one or the other" ""
+          [ -z "$obl" ] || mj_uc_bad "$id" "step '$sid' both does worker '$wrk' and asserts obligation '$obl'; a step is one or the other" ""
+          [ "$mode" = fixture ] || mj_uc_bad "$id" "step '$sid' does worker '$wrk' in a live scenario; only a disposable repository may be changed" "mode: fixture"
+          mj_uc_get "$i" "scenario.steps.$k.expect.exit"; case "$MJ_V" in ''|*[!0-9]*) mj_uc_bad "$id" "step '$sid' expects no exit code" "" ;; esac
+        elif [ -n "$obl" ]; then
           # an obligation step asserts that work was done; it runs nothing and there is
           # nothing in a fixture to owe it
           [ -z "$cmd" ] || mj_uc_bad "$id" "step '$sid' both runs '$cmd' and asserts obligation '$obl'; a step is one or the other" ""
@@ -468,6 +477,17 @@ mj_uc_cmd_validate() {
 # the executable at all — the suite job can, the site job cannot, and the catalogue each one
 # derived differed by seven lines. The advisor lines and the passing check line go, and the
 # remaining line becomes one token; a FAIL is kept whole, since a finding is the repository's.
+#
+# `knowledge nodes` (#620) is not masked here. It checks every file against the schema of its
+# kind through the executable's index, and it used to WARN when the recording job had none to
+# ask — the site job has none, the suite job and a laptop do — so the catalogue each derived
+# differed by that line. Hiding the line made the artifacts agree without making the
+# recording reproducible (#713). The scenario environment decides the question instead (see
+# mj_uc_run_one), and the line it then prints is the same on every machine.
+#
+# `session context` (#220) prints the fixture's commit as `- head: <7 hex>`, followed by
+# `(opened at <7 hex>)` when the head moved. A fixture commit's hash differs on every run, so
+# the catalogue that recorded it was never reproducible; both forms become `<head>`.
 mj_uc_normalise() { # repo-path
   local real; real="$(cd "$1" 2>/dev/null && pwd -P)"
   sed -E \
@@ -486,13 +506,16 @@ mj_uc_normalise() { # repo-path
     -e 's/(policy|match the last update \(|inputs )[0-9a-f]{12}/\1<hash12>/g' \
     -e 's/(head +)[0-9a-f]{7}/\1<head>/g' \
     -e 's/\(head [0-9a-f]{7}\)/(head <head>)/g' \
+    -e 's/^- head: [0-9a-f]{7}( |$)/- head: <head>\1/' \
+    -e 's/\(opened at [0-9a-f]{7}\)/(opened at <head>)/g' \
     -e 's/(  +)[0-9a-f]{7}(  |$)/\1<head>\2/g' \
     -e 's/( at | moved to )[0-9a-f]{7}([,;. ]|$)/\1<head>\2/g' \
     -e 's/^(> )?At [0-9a-f]{7}([,;. ]|$)/\1At <head>\2/g' \
     -e 's/^([a-z_-]+ +(cold|warm) +[a-z]+ +[0-9]+) +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+/\1  <ms>  <ms>  <ms>  <ms>/' \
     -e 's/^(INFO|WARN) +budget +([a-z]+) — .*$/·    budget      \2 — <timed against the policy budget>/' \
     -e 's/^(OK|WARN|FAIL) +checkpoint +([^ ]+) — .*$/·    checkpoint  \2 — <timed against the checkpoint interval>/' \
-    -e 's/(exit [0-9]+, )[0-9]+s$/\1<s>s/' \
+    -e 's/(exit [0-9]+, )[0-9]+s(,|  |$)/\1<s>s\2/' \
+    -e 's/, tree [0-9a-f]{12}/, tree <tree>/g' \
     -e 's/[0-9]+ ms/<n> ms/g' \
     -e 's/[0-9]+ ms of/<n> ms of/g' \
     -e 's/\([0-9]+[mhd] ago/(<age> ago/g' \
@@ -507,6 +530,18 @@ mj_uc_normalise() { # repo-path
     -e '/^INFO advisor +[^ ]+ — .* — optional$/d' \
     -e '/^OK +reasoning +- — reasoning check: /d' \
     -e 's/^(OK|INFO) +reasoning +.*$/·    reasoning   <decided by the advisors and the executable of the recording machine>/'
+}
+# an argv as a reader would type it: an argument a shell would split or expand is single-quoted,
+# so a recorded command can be pasted back into a terminal and run as it was
+mj_uc_shown() {
+  local a out="" q="'"
+  for a in "$@"; do
+    case "$a" in
+      ''|*[!A-Za-z0-9_./:=@%+,-]*) a="'${a//$q/$q\\$q$q}'" ;;
+    esac
+    out="$out${out:+ }$a"
+  done
+  printf '%s' "$out"
 }
 # a JSON string body: backslash and quote escaped, newlines and tabs as escapes, every
 # other control byte dropped; the newlines of a command's output are its structure
@@ -523,6 +558,11 @@ mj_uc_run_one() { # index, evidence-file, keep(0|1)
   # has installed. Reasoning's ci mode admits no advisor whatever is on PATH (ADR 0098),
   # which makes every advisor line `doctor` prints the same on a laptop and on a runner.
   MAJORDOMUS_REASONING_MODE=ci; export MAJORDOMUS_REASONING_MODE
+  # The same holds for the schema check `knowledge nodes` asks the executable's index for:
+  # whether the recorder could ask it is whether this machine built an executable (#713).
+  # The scenario says it is not asked, and the reader reports that, the same everywhere; the
+  # check itself is the suite's (case 405), which runs where an executable is built.
+  MAJORDOMUS_KNOWLEDGE_SCHEMA=unasked; export MAJORDOMUS_KNOWLEDGE_SCHEMA
   fix="$(mj_uc_fixture_dir)"
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj-uc.XXXXXX")"
   W="$tmp/repo"; mkdir -p "$W"
@@ -566,9 +606,15 @@ mj_uc_run_one() { # index, evidence-file, keep(0|1)
     while a="$(mj_uc_v "$i" "scenario.steps.$k.run.$argv_n")"; [ -n "$a" ]; do set -- "$@" "$a"; argv_n=$((argv_n+1)); done
     stdin_f="$(mj_uc_v "$i" "scenario.steps.$k.stdin")"
     want="$(mj_uc_v "$i" "scenario.steps.$k.expect.exit")"
+    local wrk actor=tool shown
+    wrk="$(mj_uc_v "$i" "scenario.steps.$k.worker")"
     raw="$tmp/step-$k.out"; rc=0; t0="$(mj_ms)"
-    if [ -n "$stdin_f" ]; then ( cd "$W" && "$MJ_BIN_DIR/majordomus" "$@" < "$fix/stdin/$stdin_f" ) > "$raw" 2>&1 || rc=$?
-    else ( cd "$W" && "$MJ_BIN_DIR/majordomus" "$@" < /dev/null ) > "$raw" 2>&1 || rc=$?; fi
+    if [ -n "$wrk" ]; then
+      # what a worker did: the shell line itself is what a reader is shown, not `sh -c`
+      actor=worker; set -- sh -c "$wrk"; shown="$wrk"
+      ( cd "$W" && sh -c "$wrk" < /dev/null ) > "$raw" 2>&1 || rc=$?
+    elif [ -n "$stdin_f" ]; then shown="majordomus $(mj_uc_shown "$@")"; ( cd "$W" && "$MJ_BIN_DIR/majordomus" "$@" < "$fix/stdin/$stdin_f" ) > "$raw" 2>&1 || rc=$?
+    else shown="majordomus $(mj_uc_shown "$@")"; ( cd "$W" && "$MJ_BIN_DIR/majordomus" "$@" < /dev/null ) > "$raw" 2>&1 || rc=$?; fi
     t1="$(mj_ms)"; dur=$((t1 - t0))
     norm="$(mj_uc_normalise "$W" < "$raw")"
     ok=1; asserts=""; fail_reason=""
@@ -600,7 +646,7 @@ mj_uc_run_one() { # index, evidence-file, keep(0|1)
       n=$((n+1))
     done
     [ "$first" = 1 ] || steps_json="$steps_json,"; first=0
-    steps_json="$steps_json{\"id\":\"$(mj_json_esc "$sid")\",\"command\":\"$(mj_json_esc "majordomus $*")\",\"argv\":$(printf '%s\n' "$@" | mj_uc_jarr),\"stdin\":$( [ -n "$stdin_f" ] && printf '"%s"' "$(mj_json_esc "$stdin_f")" || printf null ),\"exit\":$rc,\"expected_exit\":$want,\"output\":\"$(mj_uc_jesc "$(printf '%s' "$norm" | head -c 12000)")\",\"assertions\":[${asserts%,}],\"result\":\"$([ "$ok" = 1 ] && printf pass || printf fail)\",\"reason\":$( [ -n "$fail_reason" ] && printf '"%s"' "$(mj_json_esc "$fail_reason")" || printf null ),\"timing\":{\"duration_ms\":$dur}}"
+    steps_json="$steps_json{\"id\":\"$(mj_json_esc "$sid")\",\"actor\":\"$actor\",\"command\":\"$(mj_json_esc "$shown")\",\"argv\":$(printf '%s\n' "$@" | mj_uc_jarr),\"stdin\":$( [ -n "$stdin_f" ] && printf '"%s"' "$(mj_json_esc "$stdin_f")" || printf null ),\"exit\":$rc,\"expected_exit\":$want,\"output\":\"$(mj_uc_jesc "$(printf '%s' "$norm" | head -c 12000)")\",\"assertions\":[${asserts%,}],\"result\":\"$([ "$ok" = 1 ] && printf pass || printf fail)\",\"reason\":$( [ -n "$fail_reason" ] && printf '"%s"' "$(mj_json_esc "$fail_reason")" || printf null ),\"timing\":{\"duration_ms\":$dur}}"
     [ "$ok" = 1 ] || { all_ok=0; break; }
     k=$((k+1))
   done
@@ -920,8 +966,9 @@ mj_uc_cmd_impact() {
   done
   cmds="$(printf '%s\n' $cmds | LC_ALL=C sort -u | tr '\n' ' ')"; rules="$(printf '%s\n' $rules | LC_ALL=C sort -u | tr '\n' ' ')"; ucs="$(printf '%s\n' $ucs | LC_ALL=C sort -u | tr '\n' ' ')"
   cmds="${cmds% }"; rules="${rules% }"; ucs="${ucs% }"
-  # behavioural cases that declare coverage of an affected command, and the rules' tests
-  for c in $cmds; do cases="$cases $(grep -lE "^# majordomus-covers:.*\b$c\b" "$MJ_ROOT"/test/cases/*.sh 2>/dev/null | sed "s#^$MJ_ROOT/##" | tr '\n' ' ')"; done
+  # behavioural cases that declare coverage of an affected command, and the rules' tests. A
+  # command is a whole word of the header; a prefixed name (`script:.../link-check`) is not one.
+  for c in $cmds; do cases="$cases $(grep -lE "^# majordomus-covers:(.*[[:space:]])?$c([[:space:]]|\$)" "$MJ_ROOT"/test/cases/*.sh 2>/dev/null | sed "s#^$MJ_ROOT/##" | tr '\n' ' ')"; done
   # a changed rule's own proof: the cases its x-majordomus block names. Read from the resolved
   # rule set, which carries every rule, and not from the doctrine table, which carries only the
   # dispatched ones and was never loaded here — so a changed rule used to name no case at all.

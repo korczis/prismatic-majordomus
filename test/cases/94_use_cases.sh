@@ -225,7 +225,7 @@ git add -A >/dev/null && git -c core.hooksPath=/dev/null commit -qm "require cov
 expect_exit 10 "$MJ" check
 expect_grep 'FAIL use-case +command doctor — gap: 0 use case\(s\) name it, 0 run it; the policy requires an executable use case'
 printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover >/dev/null
-expect_exit 10 "$MJ" finish --outcome completed --verify-command true
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai"
 expect_grep 'FAIL use-case'
 expect_grep 'refused'
 
@@ -316,10 +316,13 @@ git checkout -q -- "$RULE"
 #     in a scratch copy of this tool's tree (never the real site/), with the catalogue pruned
 #     to the use cases whose scenarios walk the lifecycle and refuse something, which is the
 #     least the generator accepts; it executes them itself and embeds what they recorded.
+#     The challenge site/data/challenge.toml names is kept too: the generator refuses a
+#     challenge whose use case the catalogue does not have, and README.md's first transcript
+#     must be one of its recorded steps.
 command -v jq >/dev/null || { echo "    jq absent; the site half is not asserted"; exit 1; }
 SF="$T/site-fixture"
 fixture_repo "$SF" AGENTS.md docs site/data/marketing.toml site/content-src
-KEEP='know-which-tool-is-running hand-work-between-sessions run-several-workers-at-once carry-a-blocker-across-a-handover'
+KEEP='know-which-tool-is-running hand-work-between-sessions run-several-workers-at-once carry-a-blocker-across-a-handover catch-an-agent-that-says-it-is-done'
 for f in "$SF"/.ai/repo/use-cases/*.md "$SF"/.ai/repo/applications/*.md; do
   grep -q '^kind: context$' "$f" && continue
   case " $KEEP " in *" $(basename "$f" .md) "*) sed -i.bak 's/^applications: \[.*\]$/applications: []/' "$f"; rm -f "$f.bak" ;; *) rm -f "$f" ;; esac

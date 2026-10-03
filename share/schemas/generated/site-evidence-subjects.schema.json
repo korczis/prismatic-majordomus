@@ -1,0 +1,235 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/generated/site-evidence-subjects.schema.json",
+  "title": "Site evidence subjects",
+  "description": "site/data/registry/evidence-subjects.json: every declaration a verdict can be asked about — claim, rule, feature, command, capability, MCP tool, use case — with the subjects it is made of and the tests it reaches, derived by the executable from declarations that already exist. Structure only: no ledger content and no commit. Written by `majordomus generate site`.",
+  "type": "object",
+  "required": [
+    "schema",
+    "generated",
+    "generator",
+    "route",
+    "kinds",
+    "categories",
+    "pages",
+    "subjects",
+    "excluded"
+  ],
+  "properties": {
+    "schema": {
+      "const": "majordomus-site-evidence-subjects/v1"
+    },
+    "generated": {
+      "type": "string",
+      "pattern": "^GENERATED FILE"
+    },
+    "generator": {
+      "type": "object",
+      "required": [
+        "id",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "const": "majordomus-cli"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "route": {
+      "const": "/evidence/"
+    },
+    "kinds": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "properties": {
+          "kind": {
+            "$ref": "#/$defs/kind"
+          },
+          "section": {
+            "type": "string",
+            "pattern": "^[a-z-]+$"
+          }
+        }
+      }
+    },
+    "categories": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/category"
+      }
+    },
+    "pages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "kind",
+          "subject",
+          "path"
+        ],
+        "properties": {
+          "kind": {
+            "$ref": "#/$defs/kind"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^/evidence/[a-z-]+/[^/]+/$"
+          }
+        }
+      }
+    },
+    "subjects": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^(claim|rule|feature|command|capability|mcp|use_case):.+$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/entry"
+      }
+    },
+    "excluded": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(suite|crate):"
+      }
+    }
+  },
+  "$defs": {
+    "kind": {
+      "enum": [
+        "claim",
+        "rule",
+        "feature",
+        "command",
+        "capability",
+        "mcp",
+        "use_case"
+      ]
+    },
+    "category": {
+      "enum": [
+        "e2e",
+        "integration",
+        "unit",
+        "doctest",
+        "scenario"
+      ]
+    },
+    "entry": {
+      "type": "object",
+      "required": [
+        "kind",
+        "id",
+        "programs",
+        "members",
+        "routes",
+        "mechanisms",
+        "findings"
+      ],
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/kind"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string"
+        },
+        "page": {
+          "type": "string"
+        },
+        "alias_of": {
+          "type": "string"
+        },
+        "programs": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "native",
+              "shell"
+            ]
+          }
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "routes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/route"
+          }
+        },
+        "mechanisms": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "code",
+              "severity",
+              "subject",
+              "message"
+            ]
+          }
+        }
+      }
+    },
+    "route": {
+      "type": "object",
+      "required": [
+        "via"
+      ],
+      "properties": {
+        "via": {
+          "enum": [
+            "claim",
+            "rule",
+            "behaviour",
+            "negative",
+            "example",
+            "scenario"
+          ]
+        },
+        "test": {
+          "type": "string",
+          "pattern": "^(suite|crate|doc):"
+        },
+        "path": {
+          "type": "string"
+        },
+        "category": {
+          "$ref": "#/$defs/category"
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
