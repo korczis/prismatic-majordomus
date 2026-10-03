@@ -333,9 +333,9 @@ relay_check link "$ROOT/scripts/ci/link-check" "OK   links        " "FAIL "
 # markup alone. What each spec asserts is exercised in a browser by scripts/interaction-probe.
 relay_check controls "$ROOT/scripts/ci/interaction-check" "OK   controls     " "FAIL control       "
 # 7. assets present
-for a in app.css js/flowbite.min.js js/alpine.min.js js/theme.js js/mermaid.min.js js/diagrams.js js/graph.js js/cytoscape.min.js images/logo-mark.svg images/logo.svg images/social-card.png favicon.svg giallo-light.css giallo-dark.css; do
+for a in app.css js/nav.js js/alpine.min.js js/theme.js js/mermaid.min.js js/diagrams.js js/graph.js js/cytoscape.min.js images/logo-mark.svg images/logo.svg images/social-card.png favicon.svg giallo-light.css giallo-dark.css; do
   [ -f "$PUB/$a" ] || bad asset "$a missing from site/public"
-done; ok asset "css, flowbite, alpine, mermaid, cytoscape, theme, diagrams, graph, images, highlighting present"
+done; ok asset "css, nav, alpine, mermaid, cytoscape, theme, diagrams, graph, images, highlighting present"
 grep -qE '^[[:space:]]*\.dark ' "$PUB/giallo-dark.css" && ok darkcss "giallo-dark.css scoped under .dark" || bad darkcss "giallo-dark.css not scoped under .dark (site-build post-step)"
 # 7b. the status vocabulary: every state word a rendered badge carries is one the design
 # declaration files under a status. A word it does not know renders neutral and says nothing,
@@ -358,10 +358,10 @@ fi
 BASE_URL="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$##')"
 remote="$(grep -rhoE '<(script|link)[^>]+(src|href)="https?://[^"]+"' $pages | grep -v 'rel="canonical"' | grep -vF "\"$BASE_URL/" | head -1 || true)"
 if [ -n "$remote" ]; then bad offline "remote script or stylesheet: $remote"; else ok offline "every script and stylesheet is same-origin; the site works offline after build"; fi
-# 9. flowbite + alpine hooks are used, and initFlowbite is called once per page
-rows initflowbite | cut -f1 > "$PAGEROWS.9"
-while IFS= read -r p; do bad js "$p: initFlowbite() must appear exactly once"; done < "$PAGEROWS.9"; rm -f "$PAGEROWS.9"
-grep -q 'data-collapse-toggle="navbar-main"' "$PUB/index.html" && grep -q 'x-data=' "$PUB/index.html" && ok js "flowbite collapse and alpine x-data present; initFlowbite called once per page" || bad js "flowbite/alpine hooks missing on the homepage"
+# 9. the navbar and alpine hooks are used, and the navbar's script (site/nav.js) is loaded once per page
+rows navjs | cut -f1 > "$PAGEROWS.9"
+while IFS= read -r p; do bad js "$p: js/nav.js must be loaded exactly once"; done < "$PAGEROWS.9"; rm -f "$PAGEROWS.9"
+grep -q 'data-collapse-toggle="navbar-main"' "$PUB/index.html" && grep -q 'x-data=' "$PUB/index.html" && ok js "the navbar collapse and alpine x-data present; js/nav.js loaded once per page" || bad js "flowbite/alpine hooks missing on the homepage"
 # 10. mermaid: every diagram page has the runtime and at least one source block
 rows mermaid | cut -f1 > "$PAGEROWS.10"
 while IFS= read -r p; do bad mermaid "$p: has diagrams but no mermaid runtime"; done < "$PAGEROWS.10"; rm -f "$PAGEROWS.10"
