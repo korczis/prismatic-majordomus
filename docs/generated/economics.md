@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the token-economics methodology and every benchmark run committed under .ai/repo/benchmarks/economics; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.12.0 -->
+     Generator: majordomus-cli 0.13.0 -->
 # Token economics: benchmark report
 
 Generated from recorded evidence by `majordomus generate economics`. Every figure below is computed by one calculator (`apps/majordomus-cli/src/economics`) from the raw runs under `.ai/repo/benchmarks/economics/runs/`; nothing here is typed by hand.
@@ -37,9 +37,10 @@ At least 30 valid matched pairs; at least 4 task categories with 5 valid pairs e
 
 | suite | kind | freshness | runs | valid pairs | attempted | control failed | treatment failed | both failed | other | revisions | harness | models |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| context | context | current | 6 | 0 | 0 | 0 | 0 | 0 | 0 | `1cc12af61de4` `78f09f8af8e3` `8183164ade2d` `8d4486c1a9df` `94c515480804` `a588b8eb5fac` |  |  |
+| context | context | stale | 6 | 0 | 0 | 0 | 0 | 0 | 0 | `1cc12af61de4` `78f09f8af8e3` `8183164ade2d` `8d4486c1a9df` `94c515480804` `a588b8eb5fac` |  |  |
 | pilot | live | no evidence | 0 | 0 | 0 | 0 | 0 | 0 | 0 |  |  |  |
 
+- `context`: 1 record(s) were measured against inputs that have changed since: .ai/repo/benchmarks/economics/methodology.yaml, .ai/repo/benchmarks/economics/suites/context.yaml, apps/majordomus-cli/src/devcontext, .ai/repo/knowledge/sources.yaml
 
 ## Metrics
 
@@ -78,7 +79,9 @@ Formulas and warnings:
   - interval: percentile bootstrap of the median, each value resampled independently with replacement; 10000 resamples, seed 20260924.
   - tokens counted with o200k_base (tiktoken-rs 0.12.0), which is not the tokenizer of every model
   - the candidates are what the compiler's own graph walk judged relevant; a worker without the compiler would not necessarily have read them, so this ratio describes the selection, not a session's saving
+  - stale: a measured mechanism changed since this record
 - `context_cost_model_error`: counted selected tokens / the compiler's own estimate of them - 1, over all seeds.
+  - stale: a measured mechanism changed since this record
 
 ## Pairs
 

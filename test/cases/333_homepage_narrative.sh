@@ -27,7 +27,7 @@ fresh() {
   printf '<html><head><title>p</title></head><body>plain</body></html>\n' > "$F/site/public/docs/plain/index.html"
   printf '<html><head><title>d</title><script src="https://x.test/js/mermaid.min.js"></script></head><body><pre class="mermaid">graph TD</pre></body></html>\n' > "$F/site/public/docs/diagram/index.html"
   printf '[[groups]]\nlabel = "Plan"\nhref = "/plan/"\n\n[indexing]\nunlisted = ["plan"]\n' > "$F/site/data/nav.toml"
-  printf '%s\n' '{"features":[{"id":"good","route":"/features/good/","status":"stable"},{"id":"draft","route":"/features/draft/","status":"draft"}],"providers":[{"id":"one","title":"Tool One"},{"id":"two","title":"Tool Two","route":"/providers/two/"}],"evidence":{"available":false,"claims":{}}}' > "$F/site/data/registry/product.json"
+  printf '%s\n' '{"features":[{"id":"good","route":"/features/good/","status":"stable"},{"id":"draft","route":"/features/draft/","status":"draft"}],"domains":[],"providers":[{"id":"one","title":"Tool One"},{"id":"two","title":"Tool Two","route":"/providers/two/"}],"evidence":{"available":false,"claims":{}}}' > "$F/site/data/registry/product.json"
   printf '%s\n' '{"install_command":"curl -fsSL https://x.test/install.sh | sh","next_command":"majordomus init","verify_command":"majordomus --version","latest":{"version":"9.9.9","published_at":"2026-09-16T00:00:00Z"}}' > "$F/site/data/registry/distribution.json"
   mkdir -p "$F/site/data/generated" "$F/docs/generated" "$F/site/public/ref/api"
   # the topology: the app, and one surface site-build composes at /ref, whose pages are that
@@ -80,7 +80,7 @@ expect_finding() { # <exit> <pattern> <what>
 # --- a clean tree passes, every check reporting
 fresh
 expect_finding 0 '^OK   narrative ' "a clean tree"
-for c in substance honesty install runtime providers trust surfaces evidence declared weight indexing; do grep -q "^OK   $c " out.txt || { echo "    a clean tree did not report $c"; cat out.txt; exit 1; }; done
+for c in substance honesty map install runtime providers trust surfaces evidence declared weight indexing; do grep -q "^OK   $c " out.txt || { echo "    a clean tree did not report $c"; cat out.txt; exit 1; }; done
 
 # --- narrative, both directions and the order
 fresh; sed -i.bak 's#<section id="how">#<section id="extra"><a href="/x/">x</a></section><section id="how">#' "$F/site/public/index.html"
@@ -156,4 +156,26 @@ fresh; printf '%s\n' '{"surfaces":[{"id":"ref","kind":"static-directory","mount"
 expect_finding 10 '/ref/ is indexable and absent from sitemap.xml' "a served-only surface is not composed into the publication"
 fresh; rm "$F/docs/generated/web.json"
 expect_finding 12 'web.json is missing' "a topology that cannot be read"
+
+# --- the product map is the model's domains, both ways (ADR 0104). A tree whose model shows
+#     one domain, drawn with its member and page linked and its problem rendered, passes; the
+#     map drawing a domain the model does not show, missing one it does, leaving a member out,
+#     or a declared problem that is not a shown domain each fail
+domains() { # the model shows domain alpha, whose one member is the stable feature `good`
+  printf '%s\n' '{"features":[{"id":"good","route":"/features/good/","status":"stable"},{"id":"draft","route":"/features/draft/","status":"draft"}],"domains":[{"id":"alpha","route":"/domains/alpha/","status":"stable","features":[{"id":"good","route":"/features/good/"}]},{"id":"empty","route":"/domains/empty/","status":"stable","features":[]}],"providers":[{"id":"one","title":"Tool One"},{"id":"two","title":"Tool Two","route":"/providers/two/"}],"evidence":{"available":false,"claims":{}}}' > "$F/site/data/registry/product.json"
+  printf 'order = ["hero", "how", "install"]\nproblems = ["alpha"]\n\n[budget]\nassets_bytes = 100\ninline_json_bytes = 20\n' > "$F/site/data/homepage.toml"
+  sed -i.bak 's#<section id="how">#<section id="how"><a href="\#domain-alpha" data-problem="alpha">p</a><ol><li id="domain-alpha" data-domain="alpha"><a href="/features/good/">good</a><a href="/domains/alpha/">alpha</a></li></ol>#' "$F/site/public/index.html"
+}
+fresh; domains
+expect_finding 0 '^OK   map +the map draws the 1 domain' "a map that draws the model's domains"
+fresh; domains; sed -i.bak 's#<li id="domain-alpha"#<li data-domain="typed"></li><li id="domain-alpha"#' "$F/site/public/index.html"
+expect_finding 10 'the map draws \[typed, alpha\]' "a domain typed into the template"
+fresh; domains; sed -i.bak 's#data-domain="alpha"#data-x="alpha"#' "$F/site/public/index.html"
+expect_finding 10 'the product model shows \[alpha\]' "a shown domain the map does not draw"
+fresh; domains; sed -i.bak 's#data-domain="alpha"><a href="/features/good/">good</a>#data-domain="alpha">#' "$F/site/public/index.html"
+expect_finding 10 'member good is not linked from its own map entry' "a member linked elsewhere on the page and not in its entry"
+fresh; sed -i.bak 's#"domains":\[\],##' "$F/site/data/registry/product.json"
+expect_finding 10 'carries no domains key' "a model with no domains key is not a model with no domains"
+fresh; domains; printf 'order = ["hero", "how", "install"]\nproblems = ["empty"]\n\n[budget]\nassets_bytes = 100\ninline_json_bytes = 20\n' > "$F/site/data/homepage.toml"
+expect_finding 10 "problem 'empty', which is not a domain the map shows" "a problem whose domain is not shown"
 exit 0

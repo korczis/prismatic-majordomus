@@ -44,7 +44,12 @@ got="$(grep -o '✓' "$P/features/matrix/index.html" | wc -l | tr -d ' ')"
 hero_title="$(sed -n 's/^title = "\(.*\)"$/\1/p' "$ROOT/site/data/marketing.toml" | head -1 | sed 's/[][\.*^$+?(){}|/]/\\&/g')"
 expect_grep "<h1[^>]*>${hero_title}(</h1>|<span)" "$P/index.html"
 expect_grep 'id="install"' "$P/index.html"
-expect_grep 'id="chapters"' "$P/index.html"
+expect_grep 'id="map"' "$P/index.html"
+# the homepage's map is the product's domains (ADR 0104): drawn from product.json, one
+# disclosure per shown domain, each linking its page
+n_dom="$(jq '[.domains[] | select(.status == "stable" and (.features | length) > 0)] | length' "$ROOT/site/data/registry/product.json")"
+[ "$(grep -o 'data-domain="[a-z-]*"' "$P/index.html" | wc -l | tr -d ' ')" = "$n_dom" ] \
+  || { echo "    the homepage map does not draw the $n_dom domain(s) the product model shows"; exit 1; }
 # the routes that moved answer with a redirect rather than a 404
 for from in $(awk '/^from *= *"/ { f=$0; sub(/^from *= *"/,"",f); sub(/".*$/,"",f); print f }' "$ROOT/site/data/nav.toml"); do
   [ -f "$P${from}index.html" ] || { echo "    the moved route $from has no redirect"; exit 1; }
@@ -53,11 +58,13 @@ done
 expect_grep "v$(jq -r .version "$ROOT/site/data/generated/project.json")" "$P/index.html"
 for p in $(jq -r '.profiles[].slug' "$ROOT/site/data/generated/profiles.json"); do expect_grep "$p" "$P/profiles/index.html"; done
 expect_grep "$(jq -r '.principles[0]' "$ROOT/site/data/generated/lifecycle.json" | cut -d' ' -f1-3)" "$P/supervises/index.html"
-# the homepage's figure is the derived product graph, and the list under it is the same
-# graph without a script: the page is readable with Cytoscape blocked
-expect_grep 'data-graph="product-data"' "$P/index.html"
-expect_grep 'js/graph.js' "$P/index.html"
-expect_grep 'data-graph-fallback' "$P/index.html"
+# the derived product graph lives on /features/, and the list under it is the same graph
+# without a script: the page is readable with Cytoscape blocked. The homepage carries no
+# graph runtime; its map is the domains, as disclosures.
+expect_grep 'data-graph="product-data"' "$P/features/index.html"
+expect_grep 'js/graph.js' "$P/features/index.html"
+expect_grep 'data-graph-fallback' "$P/features/index.html"
+expect_no_grep 'js/graph.js' "$P/index.html"
 expect_grep 'class="mermaid' "$P/getting-started/index.html"; expect_grep 'js/mermaid.min.js' "$P/getting-started/index.html"
 expect_grep 'stateDiagram-v2' "$P/getting-started/index.html"
 # docs pages: typography container, syntax classes, anchors, wrapped tables, footnote, callout, fenced mermaid

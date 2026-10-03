@@ -1,9 +1,9 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.12.0
+# Generator: majordomus-cli 0.13.0
 schema: majordomus/capability-registry/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.12.0
+generator: majordomus-cli 0.13.0
 modules:
   - id: artifacts
     title: Generated artifacts
@@ -220,7 +220,7 @@ modules:
     description: "What this repository's product does for a person, as the features under the layer's features section declare it: each feature made of modules, commands, kinds, rules, documents, decisions, claims, use cases, Cockpit areas and web surfaces it names, with the interfaces it is exposed through, every count, the moments it answers and what is guaranteed derived from those references. The matrix of features against interfaces, the providers the tool has an adapter for, and the model's own validation. The homepage is a reader of this module and holds no inventory of its own."
     stability: behaviorally_verified
     source: builtin
-    capabilities: 5
+    capabilities: 6
   - id: quality
     title: Public API quality
     description: "What this executable's own public surface is held to, measured from its syntax tree: documentation that says more than the signature, an executable example on everything that carries behaviour, a module boundary something exercises, and every command of the command line accounted for against the capability registry. The rules are project.rust-public-api-quality and project.operation-transport-parity; this is the measurement of them."
@@ -31140,6 +31140,382 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/plan.rs
+  - id: product.domains
+    module: product
+    kind: query
+    title: The domains
+    description: "The few things the product controls, each declared once under the layer's features section with its promise and the failure it answers, and each holding the stable features that name it: their interfaces, the distinct claims, use cases, rules and capabilities behind them, and the operational moments they answer, all derived. A domain lists no features; a feature names its domain. The default is the stable set; pass status=any for every domain."
+    input:
+      name: DomainQuery
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          status:
+            type:
+              - string
+              - "null"
+            description: "Only domains of this status. Absent means the stable ones; pass `any` for every\ndomain the model holds."
+            default: null
+        description: Which domains to list.
+        title: DomainQuery
+    output:
+      name: DomainList
+      schema:
+        type: object
+        properties:
+          schema:
+            type: string
+            description: "`SCHEMA`."
+          fingerprint:
+            type: string
+            description: "The hash of the model's sources and derived facts."
+          count:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many domains are listed.
+          domains:
+            type: array
+            items:
+              "$ref": "#/$defs/ResolvedDomain"
+            description: "The domains, in presentation order: the stable ones, or every one with status=any."
+        required:
+          - schema
+          - fingerprint
+          - count
+          - domains
+        description: "Every domain of the product, each with what its features add up to."
+        title: DomainList
+        "$defs":
+          ResolvedDomain:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The identity, the slug and the file name."
+              title:
+                type: string
+                description: "The domain as a heading: one word or two."
+              headline:
+                type: string
+                description: "What the product does about this domain, in one sentence."
+              problem:
+                type: string
+                description: "The operational failure this domain answers, in one sentence."
+              status:
+                type: string
+                description: "`stable`, `draft` or `deprecated`."
+              weight:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: "Presentation order, lowest first."
+                default: 0
+              tags:
+                type: array
+                items:
+                  type: string
+                description: Free tags.
+                default: []
+              route:
+                type: string
+                description: "Derived: `/domains/<id>/`. Never authored; the schema refuses a `route` key."
+                default: ""
+              source:
+                type: string
+                description: "Derived: the repository-relative file the record came from."
+                default: ""
+              body:
+                type: string
+                description: "The Markdown body, without its front matter."
+              features:
+                type: array
+                items:
+                  "$ref": "#/$defs/DomainMember"
+                description: "Derived: the stable features that name it, in presentation order."
+              surfaces:
+                "$ref": "#/$defs/Surfaces"
+                description: "Derived: the interfaces any of its features is exposed through."
+              moments:
+                type: array
+                items:
+                  "$ref": "#/$defs/MomentRef"
+                description: "Derived: the operational moments its features answer, in the catalogue's order."
+              claim_refs:
+                type: array
+                items:
+                  "$ref": "#/$defs/ClaimRef"
+                description: "Derived: the distinct claims its features name, with their status and test."
+              use_case_refs:
+                type: array
+                items:
+                  "$ref": "#/$defs/UseCaseRef"
+                description: "Derived: the distinct use cases its features name."
+              counts:
+                "$ref": "#/$defs/DomainCounts"
+                description: "Derived: how much stands behind it."
+              evidence:
+                "$ref": "#/$defs/FeatureEvidence"
+                description: "Derived: what is guaranteed, by claim status."
+            required:
+              - id
+              - title
+              - headline
+              - problem
+              - status
+              - features
+              - surfaces
+              - moments
+              - claim_refs
+              - use_case_refs
+              - counts
+              - evidence
+            description: "One domain, resolved: the record as its file declares it, and everything derived from\nthe stable features that name it.\n\nThe declared record is flattened, so a reader sees one object: the domain's own fields\nbeside its derived members and counts.\n\n```\nuse majordomus_cli::product::{Domain, DomainCounts, FeatureEvidence, ResolvedDomain, Surfaces};\nlet domain: Domain = serde_json::from_value(serde_json::json!({\n    \"id\": \"context\", \"title\": \"Context\", \"status\": \"stable\",\n    \"headline\": \"h\", \"problem\": \"p\",\n}))\n.unwrap();\nlet resolved = ResolvedDomain {\n    domain,\n    features: vec![],\n    surfaces: Surfaces::default(),\n    moments: vec![],\n    claim_refs: vec![],\n    use_case_refs: vec![],\n    counts: DomainCounts::default(),\n    evidence: FeatureEvidence::default(),\n};\nlet v = serde_json::to_value(&resolved).unwrap();\nassert_eq!(v[\"id\"], \"context\", \"the record is flattened into the resolved view\");\nassert_eq!(v[\"counts\"][\"features\"], 0);\n```"
+          DomainMember:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The feature id.
+              label:
+                type: string
+                description: "The name a narrow column shows: the short title, or the title."
+              title:
+                type: string
+                description: The feature as a heading.
+              headline:
+                type: string
+                description: "The feature's promise."
+              route:
+                type: string
+                description: "`/features/<id>/`."
+              featured:
+                type: boolean
+                description: Whether the homepage shows it as a chapter.
+              surfaces:
+                "$ref": "#/$defs/Surfaces"
+                description: The interfaces it is exposed through.
+              claims:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many claims it names.
+              tested:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many of them are guaranteed and name the test that settles them.
+              use_cases:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many use cases show it in use.
+            required:
+              - id
+              - label
+              - title
+              - headline
+              - route
+              - featured
+              - surfaces
+              - claims
+              - tested
+              - use_cases
+            description: "One stable feature of a domain, as a card shows it.\n\n```\nuse majordomus_cli::product::{DomainMember, Surfaces};\nlet m = DomainMember {\n    id: \"finish-contract\".into(),\n    label: \"Finish contract\".into(),\n    title: \"Done is a contract\".into(),\n    headline: \"A worker does not define its own completion.\".into(),\n    route: \"/features/finish-contract/\".into(),\n    featured: true,\n    surfaces: Surfaces::default(),\n    claims: 3,\n    tested: 2,\n    use_cases: 1,\n};\nlet v = serde_json::to_value(&m).unwrap();\nassert_eq!(v[\"tested\"], 2);\nassert_eq!(v[\"surfaces\"][\"cli\"], false);\n```"
+          Surfaces:
+            type: object
+            properties:
+              cli:
+                type: boolean
+                description: "The command line: the executable's own, or the shell tool's."
+              api:
+                type: boolean
+                description: "The HTTP routes under `/api/v1/`, and the OpenAPI document over them."
+              mcp:
+                type: boolean
+                description: "MCP: a tool, or a resource."
+              cockpit:
+                type: boolean
+                description: The Cockpit.
+              docs:
+                type: boolean
+                description: The documentation.
+            required:
+              - cli
+              - api
+              - mcp
+              - cockpit
+              - docs
+            description: "The interfaces a feature is exposed through, decided from what its references project\nand from nothing a file says. Each is a fact with a reason a reader can check: `cli` is\ntrue when a module of the feature has a capability with a command-line path or the\nfeature names a shell command; `api` when a module has an HTTP route; `mcp` when a module\nhas an MCP tool or resource, or the feature names a kind, since every object of the layer\nis an MCP resource; `cockpit` when the feature names a Cockpit area or a module, since\nevery capability has a Cockpit page; `docs` when it names a document."
+          MomentRef:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The moment id.
+              title:
+                type: string
+                description: The title.
+              hook:
+                type: string
+                description: The first-person line an index shows.
+              route:
+                type: string
+                description: "`/why/<id>/`."
+            required:
+              - id
+              - title
+              - hook
+              - route
+            description: "One operational moment the feature answers: derived from the moments that name any of\nthe feature's commands, capabilities, claims or rules."
+          ClaimRef:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The claim id.
+              claim:
+                type: string
+                description: The sentence.
+              status:
+                type: string
+                description: "`guaranteed`, `advisory`, `planned` or `rejected`."
+              test:
+                type:
+                  - string
+                  - "null"
+                description: "The test that settles it, as `docs/CLAIMS.yaml` records it — the one field that makes a\nclaim checkable rather than stated. Absent where the claim declares none, and where it\ndeclares `-`: a planned or rejected claim has nothing to run yet, and rendering a dash\nas a test would be a projection inventing evidence."
+            required:
+              - id
+              - claim
+              - status
+            description: "One claim the feature names, with the status the matrix gives it."
+          UseCaseRef:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The use case id.
+              title:
+                type: string
+                description: The title.
+              category:
+                type:
+                  - string
+                  - "null"
+                description: The category it is filed under.
+            required:
+              - id
+              - title
+            description: One use case the feature names.
+          DomainCounts:
+            type: object
+            properties:
+              features:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Stable features filed under it.
+              claims:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Distinct claims its features name.
+              tested:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Distinct claims that are guaranteed and name the test that settles them: what the\nclaims declare, not whether a recorded run supports them (that verdict is the\nevidence ledger's)."
+              use_cases:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Distinct use cases its features name.
+              rules:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Distinct rules its features name.
+              enforced_rules:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Distinct rules among them the tool enforces.
+              capabilities:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Distinct capabilities behind its features.
+              moments:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Distinct operational moments its features answer.
+            required:
+              - features
+              - claims
+              - tested
+              - use_cases
+              - rules
+              - enforced_rules
+              - capabilities
+              - moments
+            description: "How much stands behind a domain: sums and distinct counts over its stable features.\n\n```\nuse majordomus_cli::product::DomainCounts;\nlet empty = DomainCounts::default();\nassert_eq!(empty.features, 0);\nlet v = serde_json::to_value(&empty).unwrap();\nfor key in [\"features\", \"claims\", \"tested\", \"use_cases\", \"rules\", \"enforced_rules\", \"capabilities\", \"moments\"] {\n    assert_eq!(v[key], 0, \"{key} is published, and zero for a domain nothing names\");\n}\n```"
+          FeatureEvidence:
+            type: object
+            properties:
+              claims:
+                type: object
+                additionalProperties:
+                  type: integer
+                  format: uint
+                  minimum: 0
+                description: "Claims by status: `guaranteed`, `advisory`, `planned`, `rejected`."
+              modules:
+                type: object
+                additionalProperties:
+                  type: integer
+                  format: uint
+                  minimum: 0
+                description: The modules it names by stability.
+            required:
+              - claims
+              - modules
+            description: "What is guaranteed about a feature, counted from the claims it names: never a word a\nperson wrote about the feature's maturity."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::product
+    exposure:
+      mcp:
+        tool: majordomus_product_domains
+        resource:
+          uri: majordomus://product/domains
+          name: product-domains
+      http:
+        method: GET
+        path: /api/v1/product/domains
+      cli:
+        path:
+          - product
+          - domains
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - product
+      - domains
+      - introspection
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 4
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/product.rs
   - id: product.feature
     module: product
     kind: query
@@ -31193,6 +31569,11 @@ capabilities:
             type: boolean
             description: Whether the homepage shows it as a chapter.
             default: false
+          domain:
+            type:
+              - string
+              - "null"
+            description: "The product domain it belongs to, by id: exactly one. Editorial; the domain's\nmembers are derived from this field and listed nowhere else."
           areas:
             type: array
             items:
@@ -31357,6 +31738,11 @@ capabilities:
           evidence:
             "$ref": "#/$defs/FeatureEvidence"
             description: "Derived: what is guaranteed."
+          domain_ref:
+            anyOf:
+              - "$ref": "#/$defs/DomainRef"
+              - type: "null"
+            description: "Derived: the domain its `domain` names, with its title and route, when that\nresolves. Absent for a feature that names none or names one that does not exist."
         required:
           - id
           - title
@@ -31533,7 +31919,7 @@ capabilities:
                 description: "`blocking` or `advisory`."
               enforced:
                 type: boolean
-                description: "Whether the tool enforces it: the rule carries an `x-majordomus` block."
+                description: "Whether a machine decides it: the block names a validator or tests, not only a reason\na person reviews it."
               path:
                 type: string
                 description: Repository-relative path.
@@ -31789,6 +32175,23 @@ capabilities:
               - claims
               - modules
             description: "What is guaranteed about a feature, counted from the claims it names: never a word a\nperson wrote about the feature's maturity."
+          DomainRef:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The domain id.
+              title:
+                type: string
+                description: The domain as a heading.
+              route:
+                type: string
+                description: "`/domains/<id>/`."
+            required:
+              - id
+              - title
+              - route
+            description: "A domain as a feature points at it: enough for a breadcrumb.\n\n```\nuse majordomus_cli::product::DomainRef;\nlet crumb = DomainRef {\n    id: \"context\".into(),\n    title: \"Context\".into(),\n    route: \"/domains/context/\".into(),\n};\nlet v = serde_json::to_value(&crumb).unwrap();\nassert_eq!(v[\"route\"], \"/domains/context/\");\nassert_eq!(serde_json::from_value::<DomainRef>(v).unwrap(), crumb);\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::product
@@ -31822,7 +32225,7 @@ capabilities:
     module: product
     kind: query
     title: The features
-    description: "Every product feature this repository declares, narrowed by any of the facets the model derives — featured, area, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too."
+    description: "Every product feature this repository declares, narrowed by any of the facets the model derives — featured, area, domain, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too."
     input:
       name: ProductQuery
       schema:
@@ -31846,6 +32249,12 @@ capabilities:
               - string
               - "null"
             description: Only features serving this operational area.
+            default: null
+          domain:
+            type:
+              - string
+              - "null"
+            description: Only features filed under this product domain.
             default: null
           module:
             type:
@@ -32023,6 +32432,11 @@ capabilities:
               featured:
                 type: boolean
                 description: Whether the homepage shows it.
+              domain:
+                type:
+                  - string
+                  - "null"
+                description: "The product domain it belongs to, when it names one."
               areas:
                 type: array
                 items:
@@ -46286,6 +46700,7 @@ declarative_kinds:
   - deployment
   - distribution-model
   - document
+  - domain
   - feature
   - gap
   - implementation

@@ -2030,6 +2030,18 @@ jq -r '.features[] | select(.status != "draft") | [.id, .title, .summary, .sourc
     # sections keep their level and its prose never competes with the heading above it
     mj_record_body "$ROOT/$source" | project_links "$source" | awk -f "$ROOT/scripts/lib/project-markdown.awk"
     printf '{%% endraw %%}\n'; } > "$CONTENT_ROOT/features/$id.md"; done
+# The product's domains (ADR 0104): the section, and one page per stable domain that a stable
+# feature names. Nothing here names a domain: adding .ai/repo/features/domains/<id>.md and
+# naming it from a feature is what puts /domains/<id>/ on the site and the domain on the
+# homepage map. The body is the domain's own file without its title, which the page renders.
+rm -rf "$CONTENT_ROOT/domains"
+mk_section domains "The product, by domain" "The few things Majordomus controls for AI-assisted work, each with the failure it answers and the features filed under it. Every member, interface and count is derived from the features that name the domain." domains-section.html domain.html 3
+jq -r '.domains[] | select(.status == "stable" and (.features | length) > 0) | [.id, .title, .headline, .source, (.weight|tostring)] | @tsv' "$PRODUCT_DATA" \
+  | while IFS="$MJ_TAB" read -r id title headline source weight; do
+  { printf -- '+++\ntitle = %s\ndescription = %s\nweight = %s\n[extra]\nid = %s\nsource = %s\n+++\n{%% raw %%}\n' \
+      "$(jstr "$title")" "$(printf '%s' "$headline" | jline)" "$weight" "$(jstr "$id")" "$(jstr "$source")"
+    mj_record_body "$ROOT/$source" | awk '!done && /^# / { done = 1; next } { print }' | project_links "$source" | awk -f "$ROOT/scripts/lib/project-markdown.awk"
+    printf '{%% endraw %%}\n'; } > "$CONTENT_ROOT/domains/$id.md"; done
 printf -- '+++\ntitle = "Every feature against every interface"\ndescription = "The matrix both ways: each feature against the command line, the HTTP API, MCP, the Cockpit and the documentation, and each capability module, public command and object kind against the features that name it. Every mark is derived; a gap is shown."\nweight = 1000\ntemplate = "features-matrix.html"\n[extra]\nsource = "majordomus product matrix"\n+++\n' > "$CONTENT_ROOT/features/matrix.md"
 
 mk_section commands "Commands" "One executable, $(jq '.commands | length' "$OUT/commands.json") subcommands. Exit codes are a contract." commands-section.html command.html 25
