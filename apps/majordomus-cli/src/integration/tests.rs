@@ -1510,6 +1510,7 @@ fn starvation_is_visible_and_changes_no_rank() {
                 reasons: Vec::new(),
                 detail: String::new(),
                 passed_over: vec![2],
+                head_after: None,
             },
         );
     }

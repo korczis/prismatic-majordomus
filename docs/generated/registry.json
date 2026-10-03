@@ -25889,6 +25889,13 @@
                     "minimum": 0
                   },
                   "description": "On a selection: the other actionable pull requests the executor chose this one over,\nin rank order. The wait of each is folded from it (`super::wait`)."
+                },
+                "head_after": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "On `refreshed`: the head the executor pushed. The refresh pipeline waits only for\nthe checks of a head named here."
                 }
               },
               "required": [
@@ -27677,6 +27684,13 @@
                     "minimum": 0
                   },
                   "description": "On a selection: the other actionable pull requests the executor chose this one over,\nin rank order. The wait of each is folded from it (`super::wait`)."
+                },
+                "head_after": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "On `refreshed`: the head the executor pushed. The refresh pipeline waits only for\nthe checks of a head named here."
                 }
               },
               "required": [

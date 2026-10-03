@@ -7313,6 +7313,7 @@ mod tests {
                 reasons: vec![],
                 detail: "merged #9".into(),
                 passed_over: vec![],
+                head_after: None,
             },
         );
         let lease = drain::IntegrationLease::acquire(&root, "master").expect("the lease");

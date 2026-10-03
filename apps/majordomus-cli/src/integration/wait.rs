@@ -102,6 +102,7 @@ pub fn record_transitions(root: &Path, queue: &IntegrationQueue) -> usize {
                     .map(|a| a.disposition.as_str().to_string())
                     .unwrap_or_default(),
                 passed_over: Vec::new(),
+                head_after: None,
             },
         );
         n += 1;
@@ -124,6 +125,7 @@ pub fn record_transitions(root: &Path, queue: &IntegrationQueue) -> usize {
                 reasons: Vec::new(),
                 detail,
                 passed_over: Vec::new(),
+                head_after: None,
             },
         );
         n += 1;

@@ -823,6 +823,7 @@ mod tests {
             reasons: vec![],
             detail: String::new(),
             passed_over: over,
+            head_after: None,
         };
         drain::record(&root, event(wait::BECAME_ACTIONABLE, 1, vec![]));
         for _ in 0..wait::STARVING_AFTER {

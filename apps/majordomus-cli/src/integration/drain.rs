@@ -16,6 +16,7 @@
 //! [`super::drain::cleanup`]'s, which demands stronger evidence and an explicit `--apply`.
 //! Only one executor per base branch runs at a time ([`IntegrationLease`]).
 
+use std::collections::BTreeSet;
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -217,6 +218,10 @@ pub struct IntegrationEvent {
     /// in rank order. The wait of each is folded from it ([`super::wait`]).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub passed_over: Vec<u64>,
+    /// On `refreshed`: the head the executor pushed. The refresh pipeline waits only for
+    /// the checks of a head named here.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub head_after: Option<String>,
 }
 
 fn actor() -> String {
@@ -276,6 +281,7 @@ fn event(
         reasons: pr.map(|a| a.reasons.clone()).unwrap_or_default(),
         detail: detail.into(),
         passed_over: Vec::new(),
+        head_after: None,
     }
 }
 
@@ -506,17 +512,29 @@ pub fn step(
 }
 
 /// The refresh half of a step, when nothing is ready. Pipeline depth one: while a pull
-/// request that already contains master waits for its checks, no other is refreshed —
-/// merging the first would put the second behind again and waste its CI run.
+/// request the executor refreshed waits for its checks, no other is refreshed — merging the
+/// first would put the second behind again and waste its CI run.
+///
+/// Only a check the executor started holds the pipeline: a required check *pending* on a
+/// head a `refreshed` event of the trail names as the one pushed. A check that never
+/// reports (`missing`) would hold every refresh forever, and one running on a head the
+/// author pushed is not the executor's run to wait for.
 fn refresh_step(
     root: &Path,
     integrator: &mut dyn Integrator,
     first: &IntegrationQueue,
     dry_run: bool,
 ) -> Result<Option<DrainStepOutcome>, String> {
+    let pushed: BTreeSet<(u64, String)> = events(root)
+        .into_iter()
+        .filter(|e| e.action == "refreshed")
+        .filter_map(|e| e.pr.zip(e.head_after))
+        .collect();
     if let Some(waiting) = first.assessments.iter().find(|a| {
         a.disposition == PullRequestDisposition::WaitingForChecks
+            && a.required_checks == super::RequiredCheckState::Pending
             && matches!(a.relation, super::RelationToMaster::UpToDate { .. })
+            && pushed.contains(&(a.number, a.evaluated_against.head_sha.clone()))
     }) {
         return Ok(Some(DrainStepOutcome::AwaitingChecks {
             pr: waiting.number,
@@ -577,6 +595,7 @@ fn refresh_step(
                 format!("new head {head_after}"),
             );
             e.master_after = Some(second.master_sha.clone());
+            e.head_after = Some(head_after.clone());
             record(root, e);
             Ok(Some(DrainStepOutcome::Refreshed {
                 pr: candidate.number,

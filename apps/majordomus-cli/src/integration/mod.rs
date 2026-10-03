@@ -293,9 +293,12 @@ pub fn build_queue(
     let relations: Vec<RelationToMaster> = obs.pull_requests.iter().map(relation).collect();
     let mut queue = QueueContext {
         open: obs.pull_requests.iter().map(|p| p.number).collect(),
+        // a fork's branch is not a branch of this repository, whatever it is called: a fork
+        // named `master` would otherwise stack every pull request onto itself
         heads: obs
             .pull_requests
             .iter()
+            .filter(|p| !p.cross_repository)
             .map(|p| (p.head_ref.clone(), p.number))
             .collect(),
         authored: BTreeMap::new(),

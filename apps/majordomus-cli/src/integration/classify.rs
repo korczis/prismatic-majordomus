@@ -133,56 +133,101 @@ fn worse(a: RequiredCheckState, b: RequiredCheckState) -> RequiredCheckState {
     }
 }
 
-/// The review state under the protection's requirement.
+/// The review state under the protection's requirement. The forge's own decision comes
+/// first: `REVIEW_REQUIRED` means some rule requires a review that has not been given — a
+/// ruleset or code owners can require one the branch protection does not — so it is pending
+/// whatever the protection says.
 pub fn review_state(decision: &str, required: Option<bool>) -> PullRequestReview {
     match (required, decision) {
         (_, "CHANGES_REQUESTED") => PullRequestReview::ChangesRequested,
         (_, "APPROVED") => PullRequestReview::Approved,
+        (_, "REVIEW_REQUIRED") => PullRequestReview::Pending,
         (Some(false), _) => PullRequestReview::NotRequired,
         (Some(true), _) => PullRequestReview::Pending,
         (None, _) => PullRequestReview::Unknown,
     }
 }
 
-/// Dependencies declared in a body: a line saying `Depends on #N`, `Stacked on #N`,
-/// `Requires #N` or `After #N`, case-insensitively. Prose that merely mentions a number is
-/// not a declaration.
+/// The markers that declare a dependency, lower-case. Each must open its line.
+pub const DEPENDENCY_MARKERS: &[&str] = &["depends on", "stacked on", "requires", "land after"];
+
+/// Dependencies declared in a body: a line that opens with `Depends on #N`, `Stacked on #N`,
+/// `Requires #N` or `Land after #N`, case-insensitively ([`marked_numbers`]). Prose that
+/// merely mentions a number, or uses a marker's words mid-sentence, is not a declaration.
 ///
 /// ```text
 /// use crate::integration::declared_dependencies;
 /// assert_eq!(declared_dependencies("Stacked on #601.\nSee #12 for context."), vec![601]);
+/// assert!(declared_dependencies("a regression introduced after #540").is_empty());
 /// ```text
 pub fn declared_dependencies(body: &str) -> Vec<u64> {
+    marked_numbers(body, DEPENDENCY_MARKERS)
+}
+
+/// The pull-request numbers a body declares under any of `markers`, in ascending order.
+///
+/// A declaration is line-anchored: the line opens — after leading space, at most one
+/// bullet (`-`, `*`, `+` or `1.`), any quote marks (`>`) and emphasis (`*`, `_`) — with a
+/// marker that ends at a word boundary, followed by one or more `#N`, separated by commas,
+/// `and` or `&`. A marker's words anywhere else on a line are prose. The one parser for
+/// every declaration a body can make, so that dependencies and any later kind of
+/// declaration agree on what counts as one.
+pub fn marked_numbers(body: &str, markers: &[&str]) -> Vec<u64> {
     let mut out = BTreeSet::new();
     for line in body.lines() {
         let lower = line.to_ascii_lowercase();
-        for marker in ["depends on", "stacked on", "requires", "after"] {
-            let mut rest = lower.as_str();
-            while let Some(at) = rest.find(marker) {
-                rest = &rest[at + marker.len()..];
-                let tail = rest.trim_start().trim_start_matches(['*', '`', '(']);
-                // a list of numbers after one marker: "stacked on #644 and #645"
-                let mut t = tail;
-                while let Some(stripped) = t.strip_prefix('#') {
-                    let digits: String = stripped
-                        .chars()
-                        .take_while(|c| c.is_ascii_digit())
-                        .collect();
-                    let Ok(n) = digits.parse::<u64>() else { break };
-                    out.insert(n);
-                    t = stripped[digits.len()..]
-                        .trim_start_matches([',', ')', '`', '*', '.'])
-                        .trim_start();
-                    t = t
-                        .strip_prefix("and ")
-                        .or_else(|| t.strip_prefix(", "))
-                        .unwrap_or(t)
-                        .trim_start();
-                }
+        let opening = line_opening(&lower);
+        for marker in markers {
+            let Some(rest) = opening.strip_prefix(marker) else {
+                continue;
+            };
+            if rest.starts_with(|c: char| c.is_ascii_alphanumeric()) {
+                // "requirements", "dependson": another word, not the marker
+                continue;
             }
+            out.extend(numbers(
+                rest.trim_start_matches([':', '*', '_', '`', '(', ' ']),
+            ));
         }
     }
     out.into_iter().collect()
+}
+
+/// A line without what may precede a declaration: space, quote marks, one list bullet and
+/// emphasis.
+fn line_opening(line: &str) -> &str {
+    let mut t = line.trim_start().trim_start_matches(['>', ' ']);
+    let ordered = t.trim_start_matches(|c: char| c.is_ascii_digit());
+    if ordered.len() < t.len() {
+        if let Some(rest) = ordered.strip_prefix(". ") {
+            t = rest;
+        }
+    } else if let Some(rest) = ["- ", "* ", "+ "].iter().find_map(|b| t.strip_prefix(b)) {
+        t = rest;
+    }
+    t.trim_start().trim_start_matches(['*', '_'])
+}
+
+/// The `#N` list at the start of `t`: "#644 and #645", "#14, #15 & #16".
+fn numbers(mut t: &str) -> Vec<u64> {
+    let mut out = Vec::new();
+    while let Some(stripped) = t.strip_prefix('#') {
+        let digits: String = stripped
+            .chars()
+            .take_while(|c| c.is_ascii_digit())
+            .collect();
+        let Ok(n) = digits.parse::<u64>() else { break };
+        out.push(n);
+        t = stripped[digits.len()..]
+            .trim_start_matches([',', ')', '`', '*', '_', '.'])
+            .trim_start();
+        t = ["and ", "& "]
+            .iter()
+            .find_map(|sep| t.strip_prefix(sep))
+            .unwrap_or(t)
+            .trim_start();
+    }
+    out
 }
 
 /// The planning risk of a change, with its factors.
@@ -246,7 +291,8 @@ pub fn overlaps(number: u64, authored: &BTreeMap<u64, Vec<String>>) -> Vec<PathO
 pub struct QueueContext {
     /// The numbers of every open pull request.
     pub open: BTreeSet<u64>,
-    /// Head branch name → number, for stacked pull requests.
+    /// Head branch name → number, for stacked pull requests: branches of this repository
+    /// only, since a fork's branch name says nothing about a branch here.
     pub heads: BTreeMap<String, u64>,
     /// Authored paths of every open pull request, by number.
     pub authored: BTreeMap<u64, Vec<String>>,
@@ -288,7 +334,11 @@ pub fn classify(
             satisfied: !queue.open.contains(&n),
         })
         .collect();
-    let stacked_on = queue.heads.get(&pr.base_ref).copied();
+    // only a pull request that targets another branch can be stacked, and never on itself
+    let stacked_on = (pr.base_ref != policy.base)
+        .then(|| queue.heads.get(&pr.base_ref).copied())
+        .flatten()
+        .filter(|n| *n != pr.number);
     if let Some(n) = stacked_on {
         if !dependencies.iter().any(|d| d.number == n) {
             dependencies.push(PullRequestDependency {
