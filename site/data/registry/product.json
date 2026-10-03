@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.12.0"
   },
-  "fingerprint": "db23666acd6691b2439845e46673ed5927a4554bab29e96129b67a7edd02fcd8",
+  "fingerprint": "764c6fbb66e34c12beeadbd8f28e43d6b10d66691ef112b184211afddb71f906",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1647,7 +1647,7 @@
     {
       "id": "evidence",
       "title": "Evidence",
-      "headline": "A claim names the test that settles it and the run that executed it, and every record names the commit, the branch and the session that made it.",
+      "headline": "A claim names the test that settles it, a recorded run is judged against the commit it ran at, and a claim with no recorded run says so.",
       "problem": "Claims outrun proof. The documentation says one thing, the runtime does another, and nobody can show which is true.",
       "status": "stable",
       "weight": 40,
@@ -2079,7 +2079,7 @@
         "tested": 26,
         "use_cases": 4,
         "rules": 13,
-        "enforced_rules": 13,
+        "enforced_rules": 10,
         "capabilities": 9,
         "moments": 19
       },
@@ -3103,7 +3103,7 @@
         "tested": 32,
         "use_cases": 9,
         "rules": 13,
-        "enforced_rules": 13,
+        "enforced_rules": 12,
         "capabilities": 54,
         "moments": 38
       },
@@ -3425,7 +3425,7 @@
           "identity": "project.derived-once@1",
           "title": "Derived state is computed once per state version",
           "class": "advisory",
-          "enforced": true,
+          "enforced": false,
           "path": ".ai/repo/rules/project/derived-once.v1.md"
         }
       ],
@@ -3663,7 +3663,7 @@
         "commands": 2,
         "objects": 285,
         "rules": 5,
-        "enforced_rules": 5,
+        "enforced_rules": 4,
         "docs": 3,
         "adrs": 4,
         "claims": 9,
@@ -11850,7 +11850,7 @@
           "identity": "project.performance-evidence@1",
           "title": "A performance claim carries its measurement",
           "class": "advisory",
-          "enforced": true,
+          "enforced": false,
           "path": ".ai/repo/rules/project/performance-evidence.v1.md"
         },
         {
@@ -11882,7 +11882,7 @@
           "identity": "project.hot-path-reads-once@1",
           "title": "A command reads each canonical file at most once",
           "class": "advisory",
-          "enforced": true,
+          "enforced": false,
           "path": ".ai/repo/rules/project/hot-path-reads-once.v1.md"
         },
         {
@@ -11890,7 +11890,7 @@
           "identity": "project.derived-once@1",
           "title": "Derived state is computed once per state version",
           "class": "advisory",
-          "enforced": true,
+          "enforced": false,
           "path": ".ai/repo/rules/project/derived-once.v1.md"
         }
       ],
@@ -12006,7 +12006,7 @@
         "commands": 1,
         "objects": 0,
         "rules": 6,
-        "enforced_rules": 6,
+        "enforced_rules": 3,
         "docs": 1,
         "adrs": 1,
         "claims": 6,
@@ -14615,7 +14615,7 @@
       "identity": "project.derived-once@1",
       "title": "Derived state is computed once per state version",
       "class": "advisory",
-      "enforced": true,
+      "enforced": false,
       "path": ".ai/repo/rules/project/derived-once.v1.md"
     },
     {
@@ -14655,7 +14655,7 @@
       "identity": "project.hot-path-reads-once@1",
       "title": "A command reads each canonical file at most once",
       "class": "advisory",
-      "enforced": true,
+      "enforced": false,
       "path": ".ai/repo/rules/project/hot-path-reads-once.v1.md"
     },
     {
@@ -14743,7 +14743,7 @@
       "identity": "project.performance-evidence@1",
       "title": "A performance claim carries its measurement",
       "class": "advisory",
-      "enforced": true,
+      "enforced": false,
       "path": ".ai/repo/rules/project/performance-evidence.v1.md"
     },
     {

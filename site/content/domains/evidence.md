@@ -1,6 +1,6 @@
 +++
 title = "Evidence"
-description = "A claim names the test that settles it and the run that executed it, and every record names the commit, the branch and the session that made it."
+description = "A claim names the test that settles it, a recorded run is judged against the commit it ran at, and a claim with no recorded run says so."
 weight = 40
 [extra]
 id = "evidence"

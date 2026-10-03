@@ -713,11 +713,15 @@ fn the_command_line_renders_the_domains_and_files_a_feature_under_its_own() {
     let (code, out, _) = common::run_in(&f.root(), &["product", "list", "--domain", "alpha"], "");
     assert_eq!(code, 0);
     assert!(out.contains("fixture-feature"), "{out}");
-    let (code, out, _) = common::run_in(&f.root(), &["product", "list", "--domain", "nowhere"], "");
-    assert_eq!(code, 0);
+    let (code, out, err) =
+        common::run_in(&f.root(), &["product", "list", "--domain", "nowhere"], "");
+    assert_ne!(
+        code, 0,
+        "a domain nothing declares is refused, not an empty filter: {out}"
+    );
     assert!(
-        !out.contains("fixture-feature"),
-        "a domain nothing names filters everything out: {out}"
+        err.contains("domain 'nowhere' is not one of alpha"),
+        "{err}"
     );
 
     let (code, out, _) = common::run_in(&f.root(), &["product", "show", "fixture-feature"], "");

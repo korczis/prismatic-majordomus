@@ -23,7 +23,9 @@
 {#- the build's provenance is a fact of the build, written by scripts/site-build and never
     committed; a plain `zola serve` has none, and the trust strip then says so -#}
 {%- set build = load_data(path="data/build.json", required=false) -%}
-{%- set blocking = [r for r in model.rules if r.class == "blocking"] -%}
+{#- a rule "stops the command" only when it is blocking and a machine decides it: a validator
+    or a gate's tests, never only a person's review (product.rs `machine_enforced`) -#}
+{%- set blocking = [r for r in model.rules if r.class == "blocking" and r.enforced] -%}
 {%- set base = config.base_url | trim_end(pat="/") -%}
 {#- the stages this page sets on the dark roles name the theme class the design declaration
     gives (share/design/tokens.yaml `theme.class`), never a literal -#}

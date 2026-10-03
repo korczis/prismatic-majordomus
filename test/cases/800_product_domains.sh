@@ -67,7 +67,7 @@ Because the case says so.
 Nothing the case does not say.
 MD
 git add -A >/dev/null && git commit -qm "one domain, one member"
-added="$(git diff --name-only HEAD~1 HEAD | LC_ALL=C sort | tr '\n' ' ')"
+added="$(git --no-pager diff --name-only HEAD~1 HEAD | LC_ALL=C sort | tr '\n' ' ')"
 [ "$added" = ".ai/repo/features/a-probe-feature.md .ai/repo/features/domains/a-probe-domain.md " ] \
   || { echo "    more than the two files changed: $added"; exit 1; }
 

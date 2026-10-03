@@ -1221,7 +1221,8 @@ pub fn product_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>
         "by_kind": by_kind,
         "providers": list["counts"]["providers"],
         "features": list["counts"]["features"],
-        "domains": domains.iter().filter(|d| d["status"].as_str() == Some("stable")).count(),
+        // the domains a reader is shown: stable, and named by a stable feature
+        "domains": ctx.product.public_domains().iter().filter(|d| !d.features.is_empty()).count(),
         "web_surfaces": ctx.web.surfaces.len(),
     });
 

@@ -435,6 +435,14 @@ fn product_features(ctx: &Context, input: ProductQuery) -> Result<FeatureList, C
             )));
         }
     }
+    // a domain nothing declares is a typo, not a filter that matches nothing
+    if let Some(d) = input.domain.as_deref().filter(|d| m.domain(d).is_none()) {
+        let known: Vec<&str> = m.domains().iter().map(|x| x.domain.id.as_str()).collect();
+        return Err(CapabilityError::InvalidInput(format!(
+            "domain '{d}' is not one of {}",
+            known.join(", ")
+        )));
+    }
     let status = input.status.as_deref().unwrap_or(STABLE);
     let text = input.q.as_ref().map(|s| s.to_lowercase());
     let features: Vec<FeatureSummary> = m

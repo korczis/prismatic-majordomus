@@ -278,7 +278,8 @@ pub struct RuleRef {
     pub title: String,
     /// `blocking` or `advisory`.
     pub class: String,
-    /// Whether the tool enforces it: the rule carries an `x-majordomus` block.
+    /// Whether a machine decides it: the block names a validator or tests, not only a reason
+    /// a person reviews it.
     pub enforced: bool,
     /// Repository-relative path.
     pub path: String,
@@ -840,6 +841,20 @@ fn resolve_module_areas(
         }
     }
     (areas, contested)
+}
+
+/// Whether a machine decides a rule: its enforcement block names a validator a command runs,
+/// or tests a gate runs (ADR 0048's dispatched and gated modes). A block naming only
+/// `reviewed_because` is enforced by a person and a rule with no block states a principle;
+/// neither is counted as enforced, because "enforced" on a page is read as "a machine refuses
+/// a violation".
+fn machine_enforced(meta: &Value) -> bool {
+    meta.get("x-majordomus").is_some_and(|x| {
+        x.get("validator").is_some()
+            || x.get("tests")
+                .and_then(Value::as_array)
+                .is_some_and(|t| !t.is_empty())
+    })
 }
 
 /// Levenshtein distance, for the nearest-candidate hint on an unresolved reference.
@@ -1728,7 +1743,7 @@ fn resolve(
                 identity: o.identity.clone(),
                 title: o.title.clone().unwrap_or_else(|| id.clone()),
                 class: meta_str(o, "class").unwrap_or_default(),
-                enforced: o.metadata.get("x-majordomus").is_some(),
+                enforced: machine_enforced(&o.metadata),
                 path: o.provenance.path.clone(),
             }),
             None => unknown(
@@ -2162,6 +2177,34 @@ mod tests {
             "counts": counts, "evidence": { "claims": {}, "modules": {} }
         }))
         .unwrap()
+    }
+
+    #[test]
+    fn a_rule_is_enforced_only_when_a_machine_decides_it() {
+        let rule =
+            |block: serde_json::Value| serde_json::json!({ "id": "r", "x-majordomus": block });
+        assert!(
+            machine_enforced(&rule(serde_json::json!({ "validator": "scope" }))),
+            "dispatched"
+        );
+        assert!(
+            machine_enforced(&rule(serde_json::json!({ "tests": ["test/cases/x.sh"] }))),
+            "gated"
+        );
+        assert!(
+            !machine_enforced(&rule(
+                serde_json::json!({ "reviewed_because": "a person reads it" })
+            )),
+            "reviewed is a person's act, not enforcement"
+        );
+        assert!(
+            !machine_enforced(&rule(serde_json::json!({ "tests": [] }))),
+            "no test named"
+        );
+        assert!(
+            !machine_enforced(&serde_json::json!({ "id": "a-principle" })),
+            "no block is a principle"
+        );
     }
 
     #[test]
