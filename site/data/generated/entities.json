@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 159,
+      "count": 160,
       "dir": "rules",
       "statuses": [
         "active"
@@ -117,7 +117,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 308
+      "count": 309
     },
     {
       "kind": "feature",
@@ -229,7 +229,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 159
+      "count": 160
     },
     {
       "kind": "scope",
@@ -253,7 +253,7 @@
       "route": "/skills/",
       "title": null,
       "reason": null,
-      "count": 6
+      "count": 7
     },
     {
       "kind": "taxonomy",
@@ -269,7 +269,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 338
+      "count": 339
     },
     {
       "kind": "use-case",
@@ -1810,13 +1810,6 @@
       "references": [
         {
           "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/capability/builtin/executions.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
           "label": "apps/majordomus-cli/src/execution/engine.rs",
           "kind": "file",
           "route": null,
@@ -1876,13 +1869,6 @@
           "label": "adr-0013",
           "kind": "adr",
           "route": "/adrs/adr-0013/",
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "docs/EXECUTIONS.md",
-          "kind": "document",
-          "route": null,
           "external": false
         },
         {
@@ -1976,52 +1962,10 @@
       "references": [
         {
           "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/capability/builtin/design.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/design/mod.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/design/render.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "scripts/ci/design-check",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "share/design/primitives.css",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
           "label": "share/design/tokens.yaml",
           "kind": "file",
           "route": null,
           "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "docs/DESIGN_SYSTEM.md",
-          "kind": "document",
-          "route": null,
-          "external": false
         },
         {
           "edge": "put_in_force",
@@ -2050,20 +1994,6 @@
           "kind": "rule",
           "route": "/rules/project-ui-conformance-1/",
           "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "test/cases/107_design_tokens.sh",
-          "kind": "test",
-          "route": null,
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "test/cases/109_design_system.sh",
-          "kind": "test",
-          "route": null,
-          "external": false
         }
       ],
       "referenced_by": []
@@ -2081,27 +2011,6 @@
       ],
       "source": ".ai/repo/adrs/0037-a-gate-whose-runner-is-scarce-is-planned-on-demand-so-that-the-verdict-arrives.md",
       "references": [
-        {
-          "edge": "put_in_force",
-          "label": ".ai/repo/ci/gates.yaml",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": ".github/workflows/pages.yml",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": ".github/workflows/validate.yml",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
         {
           "edge": "put_in_force",
           "label": "adr-0006",
@@ -8102,6 +8011,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.packs-carry-only-sources@1",
+          "kind": "rule",
+          "route": "/rules/project-packs-carry-only-sources-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.providers-are-data@1",
           "kind": "rule",
           "route": "/rules/project-providers-are-data-1/",
@@ -10247,6 +10163,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.packs-carry-only-sources@1",
+          "kind": "rule",
+          "route": "/rules/project-packs-carry-only-sources-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.the-lease-is-read-once@1",
           "kind": "rule",
           "route": "/rules/project-the-lease-is-read-once-1/",
@@ -10520,6 +10443,39 @@
           "external": false
         }
       ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.packs-carry-only-sources@1",
+      "identity": "project.packs-carry-only-sources@1",
+      "slug": "project-packs-carry-only-sources-1",
+      "cockpit": "/cockpit/objects/rule/project-packs-carry-only-sources-1",
+      "title": "A pack that leaves the machine carries only committed sources",
+      "status": "active",
+      "tags": [
+        "archive",
+        "privacy",
+        "review",
+        "evidence"
+      ],
+      "source": ".ai/repo/rules/project/packs-carry-only-sources.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.derived-once@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-once-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.no-machine-paths@1",
+          "kind": "rule",
+          "route": "/rules/project-no-machine-paths-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
     },
     {
       "kind": "rule",

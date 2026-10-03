@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 169 | 151 | 0 | 18 |
-| http | 167 | 151 | 0 | 16 |
-| mcp | 163 | 147 | 0 | 16 |
+| direct | 171 | 153 | 0 | 18 |
+| http | 169 | 153 | 0 | 16 |
+| mcp | 165 | 149 | 0 | 16 |
 | system | 13 | 13 | 0 | 0 |
-| total | 512 | 462 | 0 | 50 |
+| total | 518 | 468 | 0 | 50 |
 
 ## Capabilities
 
@@ -130,6 +130,8 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `objects.verify` | objects | query | — | covered | covered | covered | `bounded` |
 | `obligations.closure` | obligations | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `obligations.vocabulary` | obligations | query | process, 2 entries | covered | covered | covered | `default` |
+| `pack.plan` | pack | query | — | covered | covered | covered | `default-profile`, `chatgpt` |
+| `pack.verify` | pack | query | — | covered | covered | covered | `absent` |
 | `peers.announce` | peers | command | — | covered | covered | covered | `default` |
 | `peers.list` | peers | query | — | covered | covered | covered | `default` |
 | `perf.counters` | perf | query | — | covered | covered | covered | `default` |

@@ -6,27 +6,27 @@
     "version": "0.12.0"
   },
   "registry": {
-    "fingerprint": "2b025c18624648405bb59f230a0d182fa0da318d42918c392eb473f54b85e1d9",
+    "fingerprint": "0a53bdbe1fc98cef3556de1affeaa2219c06cc06d24bc54bc722522c8896b835",
     "summary": {
-      "total": 1856,
-      "builtin": 169,
-      "declarative": 1687,
+      "total": 1862,
+      "builtin": 171,
+      "declarative": 1691,
       "by_kind": {
         "command": 22,
-        "query": 147,
-        "resource": 1687
+        "query": 149,
+        "resource": 1691
       },
       "by_stability": {
-        "behaviorally_verified": 127,
+        "behaviorally_verified": 129,
         "experimental": 34,
-        "implemented": 1695
+        "implemented": 1699
       },
-      "mcp_tools": 163,
-      "mcp_resources": 1739,
-      "http_routes": 167,
-      "cli_commands": 88,
-      "modules": 83,
-      "benchmark_required": 151,
+      "mcp_tools": 165,
+      "mcp_resources": 1743,
+      "http_routes": 169,
+      "cli_commands": 90,
+      "modules": 84,
+      "benchmark_required": 153,
       "benchmark_waived": 18,
       "cached": 40
     },
@@ -39643,6 +39643,521 @@
         "source_path": "apps/majordomus-cli/src/capability/builtin/obligations.rs"
       },
       {
+        "id": "pack.plan",
+        "module": "pack",
+        "kind": "query",
+        "title": "Plan a source pack",
+        "description": "What a profile of share/archive.yaml would pack: the files carried and their bytes and o200k_base tokens, every file left out by reason (worktree, link, artifact, binary, derived, excluded; derived counted, the rest listed), the shards it is cut into within the profile's token budget and file count, and every finding that refuses the build — a file over the budget, too many shards, a machine path or credential in a selected file, an empty selection, a profile without limits. Reads git's index and blobs only; writes nothing.",
+        "input": {
+          "name": "PackPlanInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "profile": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "A profile of `share/archive.yaml`; its `default` when absent.",
+                "default": null
+              }
+            },
+            "description": "The input of `pack.plan`.\n\n```\nuse majordomus_cli::capability::builtin::pack::PackPlanInput;\nlet input = PackPlanInput { profile: Some(\"chatgpt\".into()) };\nassert_eq!(input.profile.as_deref(), Some(\"chatgpt\"));\n```",
+            "title": "PackPlanInput"
+          }
+        },
+        "output": {
+          "name": "PackPlan",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "measured": {
+                "type": "boolean",
+                "description": "Whether the tree could be read at all. `false` is not a pass."
+              },
+              "reason": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why it could not, when it could not."
+              },
+              "profile": {
+                "type": "string",
+                "description": "The profile planned."
+              },
+              "commit": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The commit `HEAD` names; the content is the index's, which equals it when\n`index_matches_head` is true."
+              },
+              "index_matches_head": {
+                "type": "boolean",
+                "description": "Whether the index holds exactly what `HEAD` holds. `false` means staged changes\ntravel with the pack under a commit id that does not contain them."
+              },
+              "tracked": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many files the index tracks."
+              },
+              "selected": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many the pack carries."
+              },
+              "bytes": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0,
+                "description": "The bytes of the content carried."
+              },
+              "tokens": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0,
+                "description": "The tokens of the content carried, in `o200k_base`."
+              },
+              "tokenizer": {
+                "type": "string",
+                "description": "The tokenizer the counts are in."
+              },
+              "limits": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/ShardLimits"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The limits applied."
+              },
+              "dropped": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0
+                },
+                "description": "How many files were left out, by reason."
+              },
+              "dropped_files": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/DroppedFile"
+                },
+                "description": "Every file left out for a reason other than `derived`."
+              },
+              "shards": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ShardPlan"
+                },
+                "description": "The shards, in order; the index is not one of them."
+              },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/PackFinding"
+                },
+                "description": "Every reason the pack cannot be built. Empty is the passing answer."
+              },
+              "passes": {
+                "type": "boolean",
+                "description": "`true` when the tree was measured and nothing was found."
+              }
+            },
+            "required": [
+              "measured",
+              "profile",
+              "index_matches_head",
+              "tracked",
+              "selected",
+              "bytes",
+              "tokens",
+              "tokenizer",
+              "dropped",
+              "dropped_files",
+              "shards",
+              "findings",
+              "passes"
+            ],
+            "description": "The plan of one pack: what it carries, what it leaves out and why, how it is cut into\nshards, and whether it may be built.",
+            "title": "PackPlan",
+            "$defs": {
+              "ShardLimits": {
+                "type": "object",
+                "properties": {
+                  "max_count": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "The most files the pack may hold, the index included."
+                  },
+                  "max_tokens": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The most tokens one file of the pack may hold, counted with `o200k_base`."
+                  }
+                },
+                "required": [
+                  "max_count",
+                  "max_tokens"
+                ],
+                "description": "The shard limits of a profile: the reader's own limits on what it can index."
+              },
+              "DroppedFile": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "description": "The path."
+                  },
+                  "reason": {
+                    "$ref": "#/$defs/DropReason",
+                    "description": "Why."
+                  }
+                },
+                "required": [
+                  "path",
+                  "reason"
+                ],
+                "description": "One dropped file the report names. Derived files are counted, not listed: they are a\nfunction of files that are in the pack."
+              },
+              "DropReason": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "worktree",
+                    "description": "A gitlink: a nested repository or worktree whose content is not in this index."
+                  },
+                  {
+                    "type": "string",
+                    "const": "link",
+                    "description": "A symbolic link, whose content is a path on the machine that committed it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "artifact",
+                    "description": "A path the distribution names as build output, a cache or a worktree container."
+                  },
+                  {
+                    "type": "string",
+                    "const": "binary",
+                    "description": "Not text: a NUL byte, content that is not UTF-8, or an extension on the binary list."
+                  },
+                  {
+                    "type": "string",
+                    "const": "derived",
+                    "description": "Marked `merge=derived` in `.gitattributes`: a projection of a file that is here."
+                  },
+                  {
+                    "type": "string",
+                    "const": "excluded",
+                    "description": "Matched by the profile's `exclude`."
+                  }
+                ],
+                "description": "Why a tracked file is not in the pack."
+              },
+              "ShardPlan": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "description": "The file name inside the pack."
+                  },
+                  "files": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "How many files it carries."
+                  },
+                  "first": {
+                    "type": "string",
+                    "description": "The first path it carries."
+                  },
+                  "last": {
+                    "type": "string",
+                    "description": "The last path it carries."
+                  },
+                  "bytes": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The bytes of the content it carries."
+                  },
+                  "tokens": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The tokens of the blocks it carries."
+                  }
+                },
+                "required": [
+                  "file",
+                  "files",
+                  "first",
+                  "last",
+                  "bytes",
+                  "tokens"
+                ],
+                "description": "One planned shard."
+              },
+              "PackFinding": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "A stable code: `pack.file_too_large`, `pack.too_many_shards`, `pack.index_too_large`, `pack.leak`,\n`pack.empty`, `pack.no_limits`, and from verification `pack.tampered`,\n`pack.not_text`, `pack.forbidden_path`, `pack.missing`, `pack.stray`,\n`pack.over_budget`, `pack.manifest`."
+                  },
+                  "path": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The path the finding is about, when it is about one."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "What is wrong."
+                  },
+                  "remedy": {
+                    "type": "string",
+                    "description": "What settles it."
+                  }
+                },
+                "required": [
+                  "code",
+                  "message",
+                  "remedy"
+                ],
+                "description": "A reason the pack cannot be built as planned."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::pack"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_pack_plan"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/pack/plan"
+          },
+          "cli": {
+            "path": [
+              "pack",
+              "plan"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "pack",
+          "archive",
+          "review",
+          "privacy"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/pack.rs"
+      },
+      {
+        "id": "pack.verify",
+        "module": "pack",
+        "kind": "query",
+        "title": "Verify a written source pack",
+        "description": "Read a pack directory inside the repository against its pack.json: every file it names is present with its digest and nothing else is, every carried file's content has the digest its marker records, no carried path is a binary, an artifact, a link or a gitlink under the profile the manifest names, no file is over the profile's token budget or holds a NUL byte or a leak, and there are no more files than the profile allows. An unreadable manifest is unmeasured, never a pass.",
+        "input": {
+          "name": "PackVerifyInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "dir": {
+                "type": "string",
+                "description": "The pack's directory, inside the repository: relative to its root, or absolute\nunder it."
+              }
+            },
+            "required": [
+              "dir"
+            ],
+            "description": "The input of `pack.verify`.\n\n```\nuse majordomus_cli::capability::builtin::pack::PackVerifyInput;\nlet input = PackVerifyInput { dir: \"tmp/packs/x\".into() };\nassert_eq!(input.dir, \"tmp/packs/x\");\n```",
+            "title": "PackVerifyInput"
+          }
+        },
+        "output": {
+          "name": "PackVerdict",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "measured": {
+                "type": "boolean",
+                "description": "Whether the pack could be read at all. `false` is not a pass."
+              },
+              "reason": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why it could not, when it could not."
+              },
+              "dir": {
+                "type": "string",
+                "description": "The directory read."
+              },
+              "profile": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The profile its manifest names."
+              },
+              "commit": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The commit its manifest names."
+              },
+              "files": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many files it holds, the index included."
+              },
+              "sources": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many source files its shards carry."
+              },
+              "largest_tokens": {
+                "type": "integer",
+                "format": "uint64",
+                "minimum": 0,
+                "description": "The tokens of its largest file."
+              },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/PackFinding"
+                },
+                "description": "Every finding. Empty is the passing answer."
+              },
+              "passes": {
+                "type": "boolean",
+                "description": "`true` when the pack was read and nothing was found."
+              }
+            },
+            "required": [
+              "measured",
+              "dir",
+              "files",
+              "sources",
+              "largest_tokens",
+              "findings",
+              "passes"
+            ],
+            "description": "The verdict on a written pack.",
+            "title": "PackVerdict",
+            "$defs": {
+              "PackFinding": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "A stable code: `pack.file_too_large`, `pack.too_many_shards`, `pack.index_too_large`, `pack.leak`,\n`pack.empty`, `pack.no_limits`, and from verification `pack.tampered`,\n`pack.not_text`, `pack.forbidden_path`, `pack.missing`, `pack.stray`,\n`pack.over_budget`, `pack.manifest`."
+                  },
+                  "path": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The path the finding is about, when it is about one."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "What is wrong."
+                  },
+                  "remedy": {
+                    "type": "string",
+                    "description": "What settles it."
+                  }
+                },
+                "required": [
+                  "code",
+                  "message",
+                  "remedy"
+                ],
+                "description": "A reason the pack cannot be built as planned."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::pack"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_pack_verify"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/pack/verify"
+          },
+          "cli": {
+            "path": [
+              "pack",
+              "verify"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "pack",
+          "archive",
+          "privacy",
+          "evidence"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/pack.rs"
+      },
+      {
         "id": "peers.announce",
         "module": "peers",
         "kind": "command",
@@ -64703,7 +65218,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 308,
+        "capabilities": 309,
         "capability_ids": []
       },
       {
@@ -65119,6 +65634,24 @@
         }
       },
       {
+        "id": "pack",
+        "title": "Source pack",
+        "description": "The tracked tree as a few token-bounded Markdown shards a language model's file search can index, with an index that orients the reader and a manifest that proves afterwards what left the machine: the git index's blobs only, never the working tree, and never a binary, a gitlink or worktree, a symbolic link, build output or a credential, whatever the index holds.",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 2,
+        "capability_ids": [
+          "pack.plan",
+          "pack.verify"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/pack.rs",
+        "rustdoc": {
+          "surface": "rustdoc",
+          "module": "majordomus_cli::capability::builtin::pack",
+          "path": "majordomus_cli/capability/builtin/pack/index.html"
+        }
+      },
+      {
         "id": "peers",
         "title": "Peers",
         "description": "The workers of this repository, named by their own initialize, and what each announced it is working on — gathered from the board of every checkout, because a server serves a checkout and a repository worked on through linked worktrees has one board per worktree. In memory; gone with the processes.",
@@ -65316,7 +65849,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 159,
+        "capabilities": 160,
         "capability_ids": []
       },
       {
@@ -65424,7 +65957,7 @@
         "title": "skill",
         "description": "Declarative objects of kind 'skill' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 6,
+        "capabilities": 7,
         "capability_ids": []
       },
       {
@@ -65459,7 +65992,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 338,
+        "capabilities": 339,
         "capability_ids": []
       },
       {
@@ -65549,7 +66082,7 @@
     ]
   },
   "index": {
-    "fingerprint": "9fb9a93362adeaa5c40426d766772b4416afa566019b3112ead73b5725ea57e3",
+    "fingerprint": "b244f9d63758b3c19152ef5134662d06df7856b9dfc062bdbeb9a3166f1029c1",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -65582,7 +66115,7 @@
       "critique": 1,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 308,
+      "document": 309,
       "feature": 27,
       "gap": 1,
       "implementation": 50,
@@ -65596,12 +66129,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 9,
-      "rule": 159,
+      "rule": 160,
       "scope": 1,
       "session": 22,
-      "skill": 6,
+      "skill": 7,
       "taxonomy": 10,
-      "test": 338,
+      "test": 339,
       "use-case": 48,
       "workspace": 1
     },
@@ -70170,6 +70703,16 @@
         "bytes": 455
       },
       {
+        "uri": "majordomus://document/.ai/repo/skills/pack-for-chatgpt/examples/upload-sources-to-a-project.md",
+        "kind": "document",
+        "identity": ".ai/repo/skills/pack-for-chatgpt/examples/upload-sources-to-a-project.md",
+        "title": "Upload the sources to a ChatGPT project",
+        "path": ".ai/repo/skills/pack-for-chatgpt/examples/upload-sources-to-a-project.md",
+        "section": "skills",
+        "source_class": "skill_example",
+        "bytes": 399
+      },
+      {
         "uri": "majordomus://document/.ai/repo/skills/pack-for-review/examples/second-opinion-from-another-model.md",
         "kind": "document",
         "identity": ".ai/repo/skills/pack-for-review/examples/second-opinion-from-another-model.md",
@@ -70349,7 +70892,7 @@
         "title": "Archiving the repository",
         "path": "docs/ARCHIVE.md",
         "source_class": "document",
-        "bytes": 7285
+        "bytes": 9932
       },
       {
         "uri": "majordomus://document/docs/BACKLOG.md",
@@ -73380,7 +73923,7 @@
         "identity": "lib/archive.sh",
         "path": "lib/archive.sh",
         "source_class": "library",
-        "bytes": 27216
+        "bytes": 28388
       },
       {
         "uri": "majordomus://implementation/lib/bench.sh",
@@ -77456,7 +77999,7 @@
         "path": ".ai/repo/prompts/review.md",
         "section": "prompts",
         "source_class": "prompt",
-        "bytes": 981
+        "bytes": 1061
       },
       {
         "uri": "majordomus://release-record/v0.10.0",
@@ -79470,6 +80013,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.packs-carry-only-sources@1",
+        "kind": "rule",
+        "identity": "project.packs-carry-only-sources@1",
+        "title": "A pack that leaves the machine carries only committed sources",
+        "description": "A snapshot handed to a model or a reader outside the repository is read from the git index and carries no binary, gitlink or worktree, symbolic link, build output or generated projection, never names the machine it was packed on, and is verified against its manifest after it is written and before it is sent.",
+        "path": ".ai/repo/rules/project/packs-carry-only-sources.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4005,
+        "tags": [
+          "archive",
+          "privacy",
+          "review",
+          "evidence"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.performance-evidence@1",
         "kind": "rule",
         "identity": "project.performance-evidence@1",
@@ -80356,6 +80916,23 @@
         ]
       },
       {
+        "uri": "majordomus://skill/pack-for-chatgpt",
+        "kind": "skill",
+        "identity": "pack-for-chatgpt",
+        "title": "Pack the sources for a ChatGPT project",
+        "description": "Turn a committed tree into token-bounded Markdown shards that a ChatGPT project's file search indexes, verified to carry no binary, worktree, link, build output, projection or leaked value, and hand them over with the commit they were cut from.",
+        "path": ".ai/repo/skills/pack-for-chatgpt/SKILL.md",
+        "section": "skills",
+        "source_class": "skill",
+        "bytes": 3953,
+        "tags": [
+          "review",
+          "archive",
+          "privacy",
+          "chatgpt"
+        ]
+      },
+      {
         "uri": "majordomus://skill/pack-for-review",
         "kind": "skill",
         "identity": "pack-for-review",
@@ -80364,7 +80941,7 @@
         "path": ".ai/repo/skills/pack-for-review/SKILL.md",
         "section": "skills",
         "source_class": "skill",
-        "bytes": 3140,
+        "bytes": 3319,
         "tags": [
           "review",
           "archive",
@@ -81840,7 +82417,7 @@
         "identity": "test/cases/391_skills_are_proven_capabilities.sh",
         "path": "test/cases/391_skills_are_proven_capabilities.sh",
         "source_class": "case",
-        "bytes": 9489
+        "bytes": 9506
       },
       {
         "uri": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
@@ -82963,6 +83540,14 @@
         "bytes": 7187
       },
       {
+        "uri": "majordomus://test/test/cases/871_pack_for_chatgpt.sh",
+        "kind": "test",
+        "identity": "test/cases/871_pack_for_chatgpt.sh",
+        "path": "test/cases/871_pack_for_chatgpt.sh",
+        "source_class": "case",
+        "bytes": 5779
+      },
+      {
         "uri": "majordomus://test/test/cases/87_release_pipeline.sh",
         "kind": "test",
         "identity": "test/cases/87_release_pipeline.sh",
@@ -83863,7 +84448,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 308
+      "objects": 309
     },
     {
       "name": "feature",
@@ -84007,7 +84592,7 @@
         "id",
         "version"
       ],
-      "objects": 159
+      "objects": 160
     },
     {
       "name": "scope",
@@ -84045,7 +84630,7 @@
       "identity": [
         "id"
       ],
-      "objects": 6
+      "objects": 7
     },
     {
       "name": "taxonomy",
@@ -84062,7 +84647,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 338
+      "objects": 339
     },
     {
       "name": "use-case",
@@ -109812,6 +110397,505 @@
       {
         "path": [
           "majordomus",
+          "pack"
+        ],
+        "route": "/docs/cli/pack/",
+        "executable": false,
+        "usage": "majordomus pack [OPTIONS] <COMMAND>",
+        "about": "The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract)"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "pack",
+              "plan"
+            ],
+            "route": "/docs/cli/pack/plan/",
+            "executable": true,
+            "usage": "majordomus pack plan [OPTIONS] [PROFILE]",
+            "about": "What a profile would pack: files carried, files left out by reason, the shards and every finding that refuses the build; exit 10 on a finding, 12 when the tree cannot be read",
+            "args": [
+              {
+                "name": "profile",
+                "positional": true,
+                "help": "A profile of share/archive.yaml (default: its `default`)",
+                "value_name": "PROFILE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "pack-plan-chatgpt-json",
+                "title": "What the ChatGPT profile would pack, before anything is written",
+                "description": "The same answer `GET /api/v1/pack/plan?profile=chatgpt` and the MCP tool `majordomus_pack_plan` return: the files carried with their bytes and o200k_base tokens, every file left out by reason under `/dropped` and `/dropped_files`, the shards under `/shards`, and every finding that would refuse the build under `/findings`. The exit code is the verdict: 0 when the pack can be built, 10 on a finding, 12 when the tree cannot be read.",
+                "argv": [
+                  "pack",
+                  "plan",
+                  "chatgpt",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus pack plan chatgpt --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /dropped, /shards, /findings, /passes"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "pack",
+              "build"
+            ],
+            "route": "/docs/cli/pack/build/",
+            "executable": true,
+            "usage": "majordomus pack build [OPTIONS] [PROFILE]",
+            "about": "Write the pack (index, shards, pack.json) and verify what was written; exit 10 when the plan or the written pack has a finding, and nothing is built from a plan with one",
+            "args": [
+              {
+                "name": "profile",
+                "positional": true,
+                "help": "A profile of share/archive.yaml (default: its `default`)",
+                "value_name": "PROFILE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "out",
+                "long": "out",
+                "positional": false,
+                "help": "Write here instead of tmp/packs/<repo>-<profile>-<commit>",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "force",
+                "long": "force",
+                "positional": false,
+                "help": "Replace a pack already at the destination (never a directory that is not a pack)",
+                "value_name": "FORCE",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "pack-build-chatgpt",
+                "title": "Write the ChatGPT pack and read it back",
+                "description": "Plans with the profile, writes `00-INDEX.md`, the shards and `pack.json` under `tmp/packs/` only when the plan passes, then verifies what it wrote: every digest, no stray file, no binary, artifact, link or worktree, every file within the token budget. It prints the plan and the verdict; the files to upload are the index and the shards.",
+                "argv": [
+                  "pack",
+                  "build",
+                  "chatgpt"
+                ],
+                "command": "majordomus pack build chatgpt",
+                "setup": [],
+                "expectation": "exits 0; prints pack verify: clean"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "pack",
+              "verify"
+            ],
+            "route": "/docs/cli/pack/verify/",
+            "executable": true,
+            "usage": "majordomus pack verify [OPTIONS] <DIR>",
+            "about": "Verify a written pack against its manifest and the profile it names; exit 10 on a finding, 12 when the manifest cannot be read",
+            "args": [
+              {
+                "name": "dir",
+                "positional": true,
+                "help": "The pack's directory, inside the repository",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "pack-verify-absent",
+                "title": "A directory that holds no pack",
+                "description": "A directory without a `pack.json` cannot be verified, and that is reported as unmeasured with exit 12 rather than as a clean pack: a verifier that passed what it could not read would pass anything.",
+                "argv": [
+                  "pack",
+                  "verify",
+                  "tmp/packs/absent"
+                ],
+                "command": "majordomus pack verify tmp/packs/absent",
+                "setup": [],
+                "expectation": "exits 12"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
+      },
+      {
+        "path": [
+          "majordomus",
           "dashboard"
         ],
         "route": "/docs/cli/dashboard/",
@@ -112005,6 +113089,26 @@
         "output": "Vocabulary"
       },
       {
+        "name": "majordomus_pack_plan",
+        "id": "pack.plan",
+        "title": "Plan a source pack",
+        "description": "What a profile of share/archive.yaml would pack: the files carried and their bytes and o200k_base tokens, every file left out by reason (worktree, link, artifact, binary, derived, excluded; derived counted, the rest listed), the shards it is cut into within the profile's token budget and file count, and every finding that refuses the build — a file over the budget, too many shards, a machine path or credential in a selected file, an empty selection, a profile without limits. Reads git's index and blobs only; writes nothing.",
+        "kind": "query",
+        "read_only": true,
+        "input": "PackPlanInput",
+        "output": "PackPlan"
+      },
+      {
+        "name": "majordomus_pack_verify",
+        "id": "pack.verify",
+        "title": "Verify a written source pack",
+        "description": "Read a pack directory inside the repository against its pack.json: every file it names is present with its digest and nothing else is, every carried file's content has the digest its marker records, no carried path is a binary, an artifact, a link or a gitlink under the profile the manifest names, no file is over the profile's token budget or holds a NUL byte or a leak, and there are no more files than the profile allows. An unreadable manifest is unmeasured, never a pass.",
+        "kind": "query",
+        "read_only": true,
+        "input": "PackVerifyInput",
+        "output": "PackVerdict"
+      },
+      {
         "name": "majordomus_announce",
         "id": "peers.announce",
         "title": "Announce what this peer is working on",
@@ -113603,6 +114707,18 @@
         "method": "GET",
         "path": "/api/v1/obligations",
         "id": "obligations.vocabulary",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/pack/plan",
+        "id": "pack.plan",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/pack/verify",
+        "id": "pack.verify",
         "kind": "query"
       },
       {
@@ -117783,6 +118899,93 @@
         "case": "default",
         "cached": true,
         "route": "GET /api/v1/obligations"
+      },
+      {
+        "key": "pack.plan|direct|default-profile",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "pack.plan",
+        "module": "pack",
+        "case": "default-profile",
+        "cached": false
+      },
+      {
+        "key": "pack.plan|direct|chatgpt",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "pack.plan",
+        "module": "pack",
+        "case": "chatgpt",
+        "cached": false
+      },
+      {
+        "key": "pack.plan|mcp|default-profile",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "pack.plan",
+        "module": "pack",
+        "case": "default-profile",
+        "cached": false,
+        "tool": "majordomus_pack_plan"
+      },
+      {
+        "key": "pack.plan|mcp|chatgpt",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "pack.plan",
+        "module": "pack",
+        "case": "chatgpt",
+        "cached": false,
+        "tool": "majordomus_pack_plan"
+      },
+      {
+        "key": "pack.plan|http|default-profile",
+        "kind": "capability",
+        "transport": "http",
+        "id": "pack.plan",
+        "module": "pack",
+        "case": "default-profile",
+        "cached": false,
+        "route": "GET /api/v1/pack/plan"
+      },
+      {
+        "key": "pack.plan|http|chatgpt",
+        "kind": "capability",
+        "transport": "http",
+        "id": "pack.plan",
+        "module": "pack",
+        "case": "chatgpt",
+        "cached": false,
+        "route": "GET /api/v1/pack/plan"
+      },
+      {
+        "key": "pack.verify|direct|absent",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "pack.verify",
+        "module": "pack",
+        "case": "absent",
+        "cached": false
+      },
+      {
+        "key": "pack.verify|mcp|absent",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "pack.verify",
+        "module": "pack",
+        "case": "absent",
+        "cached": false,
+        "tool": "majordomus_pack_verify"
+      },
+      {
+        "key": "pack.verify|http|absent",
+        "kind": "capability",
+        "transport": "http",
+        "id": "pack.verify",
+        "module": "pack",
+        "case": "absent",
+        "cached": false,
+        "route": "GET /api/v1/pack/verify"
       },
       {
         "key": "peers.announce|direct|default",
@@ -122503,6 +123706,48 @@
           "cases": 1
         },
         {
+          "subject": "pack.plan",
+          "module": "pack",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "pack.plan",
+          "module": "pack",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "pack.plan",
+          "module": "pack",
+          "transport": "http",
+          "state": "covered",
+          "cases": 2
+        },
+        {
+          "subject": "pack.verify",
+          "module": "pack",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "pack.verify",
+          "module": "pack",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "pack.verify",
+          "module": "pack",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "peers.announce",
           "module": "peers",
           "transport": "direct",
@@ -123807,22 +125052,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 169,
-          "covered": 151,
+          "required": 171,
+          "covered": 153,
           "missing": 0,
           "waived": 18,
           "inapplicable": 0
         },
         "http": {
-          "required": 167,
-          "covered": 151,
+          "required": 169,
+          "covered": 153,
           "missing": 0,
           "waived": 16,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 163,
-          "covered": 147,
+          "required": 165,
+          "covered": 149,
           "missing": 0,
           "waived": 16,
           "inapplicable": 0
@@ -123835,8 +125080,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 512,
-          "covered": 462,
+          "required": 518,
+          "covered": 468,
           "missing": 0,
           "waived": 50,
           "inapplicable": 0

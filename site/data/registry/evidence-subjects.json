@@ -599,6 +599,16 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:pack.plan",
+      "path": "/evidence/capabilities/pack-plan/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:pack.verify",
+      "path": "/evidence/capabilities/pack-verify/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:peers.announce",
       "path": "/evidence/capabilities/peers-announce/"
     },
@@ -2561,6 +2571,21 @@
       "kind": "command",
       "subject": "command:models route",
       "path": "/evidence/commands/models-route/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:pack build",
+      "path": "/evidence/commands/pack-build/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:pack plan",
+      "path": "/evidence/commands/pack-plan/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:pack verify",
+      "path": "/evidence/commands/pack-verify/"
     },
     {
       "kind": "command",
@@ -4624,6 +4649,56 @@
       "programs": [],
       "members": [],
       "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:pack.plan": {
+      "kind": "capability",
+      "id": "pack.plan",
+      "page": "/evidence/capabilities/pack-plan/",
+      "programs": [],
+      "members": [
+        "command:pack plan"
+      ],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:871_pack_for_chatgpt",
+          "path": "test/cases/871_pack_for_chatgpt.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:871_pack_for_chatgpt",
+          "path": "test/cases/871_pack_for_chatgpt.sh",
+          "category": "e2e"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:pack.verify": {
+      "kind": "capability",
+      "id": "pack.verify",
+      "page": "/evidence/capabilities/pack-verify/",
+      "programs": [],
+      "members": [
+        "command:pack verify"
+      ],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:871_pack_for_chatgpt",
+          "path": "test/cases/871_pack_for_chatgpt.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:871_pack_for_chatgpt",
+          "path": "test/cases/871_pack_for_chatgpt.sh",
+          "category": "e2e"
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -10332,6 +10407,12 @@
           "category": "e2e"
         },
         {
+          "via": "behaviour",
+          "test": "suite:871_pack_for_chatgpt",
+          "path": "test/cases/871_pack_for_chatgpt.sh",
+          "category": "e2e"
+        },
+        {
           "via": "negative",
           "test": "suite:130_archive",
           "path": "test/cases/130_archive.sh",
@@ -13561,6 +13642,63 @@
       "kind": "command",
       "id": "models route",
       "page": "/evidence/commands/models-route/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:pack build": {
+      "kind": "command",
+      "id": "pack build",
+      "page": "/evidence/commands/pack-build/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:pack plan": {
+      "kind": "command",
+      "id": "pack plan",
+      "page": "/evidence/commands/pack-plan/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:pack verify": {
+      "kind": "command",
+      "id": "pack verify",
+      "page": "/evidence/commands/pack-verify/",
       "programs": [
         "native"
       ],
@@ -17803,6 +17941,30 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_pack_plan": {
+      "kind": "mcp",
+      "id": "majordomus_pack_plan",
+      "alias_of": "capability:pack.plan",
+      "programs": [],
+      "members": [
+        "capability:pack.plan"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_pack_verify": {
+      "kind": "mcp",
+      "id": "majordomus_pack_verify",
+      "alias_of": "capability:pack.verify",
+      "programs": [],
+      "members": [
+        "capability:pack.verify"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_peers": {
       "kind": "mcp",
       "id": "majordomus_peers",
@@ -21360,6 +21522,37 @@
       "programs": [],
       "members": [],
       "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "rule:project.packs-carry-only-sources": {
+      "kind": "rule",
+      "id": "project.packs-carry-only-sources",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:130_archive",
+          "path": "test/cases/130_archive.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/130_archive.sh",
+            ".ai/repo/rules/project/packs-carry-only-sources.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:871_pack_for_chatgpt",
+          "path": "test/cases/871_pack_for_chatgpt.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/871_pack_for_chatgpt.sh",
+            ".ai/repo/rules/project/packs-carry-only-sources.v1.md"
+          ]
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },

@@ -155,6 +155,10 @@
       "description": "What a task owes before it may be called completed, and whether the evidence that discharged each obligation still describes this tree. The vocabulary is data the distribution ships and answers in any clone; the closure is read from the local half of the layer, which this process serves to the worker in front of it and never publishes. Read, never written: `majordomus evidence` records, and a second writer for one ledger would be a second account of the same events."
     },
     {
+      "name": "pack",
+      "description": "The tracked tree as a few token-bounded Markdown shards a language model's file search can index, with an index that orients the reader and a manifest that proves afterwards what left the machine: the git index's blobs only, never the working tree, and never a binary, a gitlink or worktree, a symbolic link, build output or a credential, whatever the index holds."
+    },
+    {
       "name": "peers",
       "description": "The workers of this repository, named by their own initialize, and what each announced it is working on — gathered from the board of every checkout, because a server serves a checkout and a repository worked on through linked worktrees has one board per worktree. In memory; gone with the processes."
     },
@@ -10799,6 +10803,198 @@
             "name": "obligation-closure"
           }
         }
+      }
+    },
+    "/api/v1/pack/plan": {
+      "get": {
+        "operationId": "pack.plan",
+        "summary": "Plan a source pack",
+        "description": "What a profile of share/archive.yaml would pack: the files carried and their bytes and o200k_base tokens, every file left out by reason (worktree, link, artifact, binary, derived, excluded; derived counted, the rest listed), the shards it is cut into within the profile's token budget and file count, and every finding that refuses the build — a file over the budget, too many shards, a machine path or credential in a selected file, an empty selection, a profile without limits. Reads git's index and blobs only; writes nothing.",
+        "tags": [
+          "pack"
+        ],
+        "parameters": [
+          {
+            "name": "profile",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "A profile of `share/archive.yaml`; its `default` when absent.",
+            "examples": {
+              "chatgpt": {
+                "value": "chatgpt"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plan a source pack: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PackPlan"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "pack.plan",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::pack"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_pack_plan"
+        },
+        "x-majordomus-cli": "pack plan"
+      }
+    },
+    "/api/v1/pack/verify": {
+      "get": {
+        "operationId": "pack.verify",
+        "summary": "Verify a written source pack",
+        "description": "Read a pack directory inside the repository against its pack.json: every file it names is present with its digest and nothing else is, every carried file's content has the digest its marker records, no carried path is a binary, an artifact, a link or a gitlink under the profile the manifest names, no file is over the profile's token budget or holds a NUL byte or a leak, and there are no more files than the profile allows. An unreadable manifest is unmeasured, never a pass.",
+        "tags": [
+          "pack"
+        ],
+        "parameters": [
+          {
+            "name": "dir",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The pack's directory, inside the repository: relative to its root, or absolute\nunder it.",
+            "examples": {
+              "absent": {
+                "value": "tmp/packs/absent"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Verify a written source pack: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PackVerdict"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "pack.verify",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::pack"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_pack_verify"
+        },
+        "x-majordomus-cli": "pack verify"
       }
     },
     "/api/v1/peers": {
@@ -25227,6 +25423,59 @@
         ],
         "description": "One file of the layer that is no longer what the index read."
       },
+      "DropReason": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "worktree",
+            "description": "A gitlink: a nested repository or worktree whose content is not in this index."
+          },
+          {
+            "type": "string",
+            "const": "link",
+            "description": "A symbolic link, whose content is a path on the machine that committed it."
+          },
+          {
+            "type": "string",
+            "const": "artifact",
+            "description": "A path the distribution names as build output, a cache or a worktree container."
+          },
+          {
+            "type": "string",
+            "const": "binary",
+            "description": "Not text: a NUL byte, content that is not UTF-8, or an extension on the binary list."
+          },
+          {
+            "type": "string",
+            "const": "derived",
+            "description": "Marked `merge=derived` in `.gitattributes`: a projection of a file that is here."
+          },
+          {
+            "type": "string",
+            "const": "excluded",
+            "description": "Matched by the profile's `exclude`."
+          }
+        ],
+        "description": "Why a tracked file is not in the pack."
+      },
+      "DroppedFile": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The path."
+          },
+          "reason": {
+            "$ref": "#/components/schemas/DropReason",
+            "description": "Why."
+          }
+        },
+        "required": [
+          "path",
+          "reason"
+        ],
+        "description": "One dropped file the report names. Derived files are counted, not listed: they are a\nfunction of files that are in the pack."
+      },
       "EconomicsCheck": {
         "type": "object",
         "properties": {
@@ -36995,6 +37244,229 @@
         ],
         "description": "One pair of claims that contain one another."
       },
+      "PackFinding": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "A stable code: `pack.file_too_large`, `pack.too_many_shards`, `pack.index_too_large`, `pack.leak`,\n`pack.empty`, `pack.no_limits`, and from verification `pack.tampered`,\n`pack.not_text`, `pack.forbidden_path`, `pack.missing`, `pack.stray`,\n`pack.over_budget`, `pack.manifest`."
+          },
+          "path": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The path the finding is about, when it is about one."
+          },
+          "message": {
+            "type": "string",
+            "description": "What is wrong."
+          },
+          "remedy": {
+            "type": "string",
+            "description": "What settles it."
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "remedy"
+        ],
+        "description": "A reason the pack cannot be built as planned."
+      },
+      "PackPlan": {
+        "type": "object",
+        "properties": {
+          "measured": {
+            "type": "boolean",
+            "description": "Whether the tree could be read at all. `false` is not a pass."
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why it could not, when it could not."
+          },
+          "profile": {
+            "type": "string",
+            "description": "The profile planned."
+          },
+          "commit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The commit `HEAD` names; the content is the index's, which equals it when\n`index_matches_head` is true."
+          },
+          "index_matches_head": {
+            "type": "boolean",
+            "description": "Whether the index holds exactly what `HEAD` holds. `false` means staged changes\ntravel with the pack under a commit id that does not contain them."
+          },
+          "tracked": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many files the index tracks."
+          },
+          "selected": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many the pack carries."
+          },
+          "bytes": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The bytes of the content carried."
+          },
+          "tokens": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The tokens of the content carried, in `o200k_base`."
+          },
+          "tokenizer": {
+            "type": "string",
+            "description": "The tokenizer the counts are in."
+          },
+          "limits": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ShardLimits"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The limits applied."
+          },
+          "dropped": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "description": "How many files were left out, by reason."
+          },
+          "dropped_files": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DroppedFile"
+            },
+            "description": "Every file left out for a reason other than `derived`."
+          },
+          "shards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShardPlan"
+            },
+            "description": "The shards, in order; the index is not one of them."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PackFinding"
+            },
+            "description": "Every reason the pack cannot be built. Empty is the passing answer."
+          },
+          "passes": {
+            "type": "boolean",
+            "description": "`true` when the tree was measured and nothing was found."
+          }
+        },
+        "required": [
+          "measured",
+          "profile",
+          "index_matches_head",
+          "tracked",
+          "selected",
+          "bytes",
+          "tokens",
+          "tokenizer",
+          "dropped",
+          "dropped_files",
+          "shards",
+          "findings",
+          "passes"
+        ],
+        "description": "The plan of one pack: what it carries, what it leaves out and why, how it is cut into\nshards, and whether it may be built."
+      },
+      "PackVerdict": {
+        "type": "object",
+        "properties": {
+          "measured": {
+            "type": "boolean",
+            "description": "Whether the pack could be read at all. `false` is not a pass."
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why it could not, when it could not."
+          },
+          "dir": {
+            "type": "string",
+            "description": "The directory read."
+          },
+          "profile": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The profile its manifest names."
+          },
+          "commit": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The commit its manifest names."
+          },
+          "files": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many files it holds, the index included."
+          },
+          "sources": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many source files its shards carry."
+          },
+          "largest_tokens": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The tokens of its largest file."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PackFinding"
+            },
+            "description": "Every finding. Empty is the passing answer."
+          },
+          "passes": {
+            "type": "boolean",
+            "description": "`true` when the pack was read and nothing was found."
+          }
+        },
+        "required": [
+          "measured",
+          "dir",
+          "files",
+          "sources",
+          "largest_tokens",
+          "findings",
+          "passes"
+        ],
+        "description": "The verdict on a written pack."
+      },
       "ParallelSet": {
         "type": "object",
         "properties": {
@@ -46889,6 +47361,72 @@
           }
         ],
         "description": "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
+      },
+      "ShardLimits": {
+        "type": "object",
+        "properties": {
+          "max_count": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "The most files the pack may hold, the index included."
+          },
+          "max_tokens": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The most tokens one file of the pack may hold, counted with `o200k_base`."
+          }
+        },
+        "required": [
+          "max_count",
+          "max_tokens"
+        ],
+        "description": "The shard limits of a profile: the reader's own limits on what it can index."
+      },
+      "ShardPlan": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "description": "The file name inside the pack."
+          },
+          "files": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many files it carries."
+          },
+          "first": {
+            "type": "string",
+            "description": "The first path it carries."
+          },
+          "last": {
+            "type": "string",
+            "description": "The last path it carries."
+          },
+          "bytes": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The bytes of the content it carries."
+          },
+          "tokens": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The tokens of the blocks it carries."
+          }
+        },
+        "required": [
+          "file",
+          "files",
+          "first",
+          "last",
+          "bytes",
+          "tokens"
+        ],
+        "description": "One planned shard."
       },
       "ShellFinding": {
         "type": "object",

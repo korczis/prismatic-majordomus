@@ -51,6 +51,7 @@ pub(crate) mod knowledge;
 pub(crate) mod mcp;
 pub(crate) mod mesh;
 pub(crate) mod models;
+pub(crate) mod pack;
 pub(crate) mod product;
 pub(crate) mod prs;
 pub(crate) mod quality;
@@ -106,6 +107,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Economics(args) => economics::run(args),
         Command::Entity(args) => entity::run(args),
         Command::Shell(args) => shell::run(args),
+        Command::Pack(args) => pack::run(args),
         Command::Dashboard(args) => dashboard::run(args),
         Command::Skills(args) => skills::run(args),
         Command::Knowledge(args) => knowledge::run(args),

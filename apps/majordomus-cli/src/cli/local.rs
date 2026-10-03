@@ -238,6 +238,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "closes pull requests on the forge whose work is provably on master, only with --apply.",
     },
     LocalCommand {
+        command: "pack build",
+        reason: LocalReason::WritesRepository,
+        note: "writes the pack's index, shards and manifest under tmp/packs/ (or --out), after planning with pack.plan and before verifying with pack.verify.",
+    },
+    LocalCommand {
         command: "worktree create",
         reason: LocalReason::WritesRepository,
         note: "creates a branch and a linked worktree on disk at the path the topology derives for it.",

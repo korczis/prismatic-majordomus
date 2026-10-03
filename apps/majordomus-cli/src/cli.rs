@@ -105,6 +105,8 @@ pub enum Command {
     Entity(EntityArgs),
     /// The repository's shell automation against the tracked migration inventory: every shell unit declared with an exemption, and every exemption naming a unit the tree still has
     Shell(ShellArgs),
+    /// The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output
+    Pack(PackArgs),
     /// The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it
     Dashboard(DashboardArgs),
     /// Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans
@@ -231,6 +233,67 @@ pub struct DashboardArgs {
 pub enum DashboardCommand {
     /// Is it healthy, what changed, what is broken, what needs action: every card with its value, the source's verdict, and the capability and pointer it was read from; exit 10 when the overview is fail or unknown
     Overview,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus pack`. The output shape is global, so it reads where a person writes it.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, PackArgs, PackCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "pack", "plan", "chatgpt"]).unwrap();
+/// let Command::Pack(args) = cli.command else { panic!("not the pack command") };
+/// let args: PackArgs = args;
+/// assert!(matches!(args.command, PackCommand::Plan { profile: Some(_) }));
+/// ```
+pub struct PackArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `plan`, `build` or `verify`. Required: the group runs nothing of its own.
+    pub command: PackCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus pack`: `plan` is the verdict before anything is written,
+/// `build` writes the pack and verifies what it wrote, and `verify` reads a written pack.
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, PackCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "pack", "build", "--out", "tmp/p", "--force"]).unwrap();
+/// let Command::Pack(args) = cli.command else { panic!("not the pack command") };
+/// assert!(matches!(args.command, PackCommand::Build { force: true, .. }));
+/// ```
+pub enum PackCommand {
+    /// What a profile would pack: files carried, files left out by reason, the shards and every finding that refuses the build; exit 10 on a finding, 12 when the tree cannot be read
+    Plan {
+        /// A profile of share/archive.yaml (default: its `default`)
+        profile: Option<String>,
+    },
+    /// Write the pack (index, shards, pack.json) and verify what was written; exit 10 when the plan or the written pack has a finding, and nothing is built from a plan with one
+    Build {
+        /// A profile of share/archive.yaml (default: its `default`)
+        profile: Option<String>,
+        /// Write here instead of tmp/packs/<repo>-<profile>-<commit>
+        #[arg(long, value_name = "DIR")]
+        out: Option<PathBuf>,
+        /// Replace a pack already at the destination (never a directory that is not a pack)
+        #[arg(long)]
+        force: bool,
+    },
+    /// Verify a written pack against its manifest and the profile it names; exit 10 on a finding, 12 when the manifest cannot be read
+    Verify {
+        /// The pack's directory, inside the repository
+        dir: String,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -4186,6 +4249,39 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["dashboard", "overview", "--format", "json"],
             setup: &[],
             expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "pack plan",
+        examples: &[ExampleDoc {
+            id: "pack-plan-chatgpt-json",
+            title: "What the ChatGPT profile would pack, before anything is written",
+            description: "The same answer `GET /api/v1/pack/plan?profile=chatgpt` and the MCP tool `majordomus_pack_plan` return: the files carried with their bytes and o200k_base tokens, every file left out by reason under `/dropped` and `/dropped_files`, the shards under `/shards`, and every finding that would refuse the build under `/findings`. The exit code is the verdict: 0 when the pack can be built, 10 on a finding, 12 when the tree cannot be read.",
+            argv: &["pack", "plan", "chatgpt", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/dropped", "/shards", "/findings", "/passes"]),
+        }],
+    },
+    CommandExamples {
+        command: "pack build",
+        examples: &[ExampleDoc {
+            id: "pack-build-chatgpt",
+            title: "Write the ChatGPT pack and read it back",
+            description: "Plans with the profile, writes `00-INDEX.md`, the shards and `pack.json` under `tmp/packs/` only when the plan passes, then verifies what it wrote: every digest, no stray file, no binary, artifact, link or worktree, every file within the token budget. It prints the plan and the verdict; the files to upload are the index and the shards.",
+            argv: &["pack", "build", "chatgpt"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["pack verify: clean"]),
+        }],
+    },
+    CommandExamples {
+        command: "pack verify",
+        examples: &[ExampleDoc {
+            id: "pack-verify-absent",
+            title: "A directory that holds no pack",
+            description: "A directory without a `pack.json` cannot be verified, and that is reported as unmeasured with exit 12 rather than as a clean pack: a verifier that passed what it could not read would pass anything.",
+            argv: &["pack", "verify", "tmp/packs/absent"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
         }],
     },
     CommandExamples {

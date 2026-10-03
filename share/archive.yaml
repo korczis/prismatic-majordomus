@@ -37,6 +37,15 @@ default: context
 # Dropped when a profile sets `binary: drop`. Extensions only, no dot.
 binary_extensions: ["png", "jpg", "jpeg", "gif", "webp", "ico", "svg", "pdf", "woff", "woff2", "ttf", "otf", "eot", "zip", "gz", "bz2", "xz", "tar", "mp3", "mp4", "mov", "wasm", "so", "dylib", "dll", "class", "jar"]
 
+# Dropped when a profile sets `artifacts: drop`, whatever the index holds: build output, a
+# dependency or cache directory, a worktree container, a minified bundle. A tree that
+# commits none of them loses nothing; one that commits one by accident does not send it.
+# The shell's archive lets `*` cross a `/` and the executable's pack does not, so every
+# pattern is written to select the same paths under both: `target/**` holds the top
+# level, `**/target/**` every level below it. The pack also drops every gitlink (a nested
+# repository or worktree) and every symbolic link under the same setting.
+artifact_paths: ["target/**", "**/target/**", "node_modules/**", "**/node_modules/**", "dist/**", "**/dist/**", "site/public/**", "tmp/**", ".ai/local/**", ".claude/worktrees/**", "**/.claude/worktrees/**", "*-wt/**", "**/*-wt/**", "**/__pycache__/**", "**/.cache/**", "**/.DS_Store", "**/*.min.js", "**/*.min.css", "**/*.map"]
+
 profiles:
   - id: context
     title: Context for a language model
@@ -44,6 +53,7 @@ profiles:
     source: tracked
     derived: drop
     binary: drop
+    artifacts: drop
     exclude: ["package-lock.json", ".ai/repo/*-baseline.txt"]
     # share/version.txt is a projection and is kept anyway: bin/majordomus reads its version
     # from it at start-up and refuses to run without it, and the restored copy is promised to
@@ -59,6 +69,33 @@ profiles:
       - "The behaviour that is actually guaranteed is in test/cases/ — every case is end to end against the real binary — and in docs/claims/ with docs/CLAIMS.yaml, which record what is guaranteed, advisory, planned or refused. Prefer those to prose when the two disagree."
       - "Nothing in this archive is executable as it stands: run _ARCHIVE/restore.sh once to put the file modes back and create a local git index, and the repository's own checks will run against the copy."
     note: The profile for handing the repository to a model that will read it. Dropping the projections is what makes it fit; keeping the canonical sources is what makes it complete.
+
+  - id: chatgpt
+    title: Sources for a ChatGPT project
+    summary: Every tracked source as token-bounded Markdown shards a ChatGPT project's file search indexes, without binaries, worktrees, links, build output, projections or recorded measurements.
+    source: tracked
+    derived: drop
+    binary: drop
+    artifacts: drop
+    # recorded measurements and ratchet baselines are evidence about the sources, not
+    # sources; a reader that needs them takes the audit profile
+    exclude: ["package-lock.json", "**/*-baseline.txt", "*-baseline.txt", ".ai/repo/benchmarks/**/runs/**", ".ai/repo/evidence/ledger.json"]
+    include: ["AGENTS.md", "CLAUDE.md", "docs/INSTALL.md"]
+    format: zip
+    manifest: true
+    restore: false
+    # what a ChatGPT project indexes: a text file of at most 2,000,000 tokens, and a bounded
+    # number of files per project. Half the token cap per shard keeps every shard well inside
+    # it; `majordomus pack build chatgpt` writes the shards and verifies them
+    shards:
+      max_count: 20
+      max_tokens: 1000000
+    orientation:
+      - "This pack is a source-only snapshot of the Majordomus repository, cut into Markdown shards for a ChatGPT project. It was read from the git index at the commit named in the section below, so it holds no build output, no dependency, no worktree, no binary and no local state, and none of the generated projections: every projection here is a function of a canonical file that is in the pack."
+      - "Each shard holds files in path order, and each file starts with a level-two heading that is its repository path, followed by its exact content in a fenced block. To find a file, search for its path."
+      - "Start with README.md, then docs/CONCEPTS.md for the vocabulary (task, episode, scope, claim, obligation, projection), then .ai/README.md, the provider-neutral context layer the repository defines and consumes. docs/CAPABILITIES.md with ADR 0002 and ADR 0004 under .ai/repo/adrs/ explains why every operation is declared once under apps/majordomus-cli/src/capability/builtin/ and projected to the command line, MCP, HTTP and the site."
+      - "What is guaranteed is in test/cases/ (end-to-end cases against the real binary) and in docs/claims/ with docs/CLAIMS.yaml. Prefer them to prose when the two disagree, and cite a file by its path and the commit when you answer."
+    note: The profile for a ChatGPT project. The zip is what the shell's archive makes of it, for a sandbox that unpacks; the shards are what `majordomus pack build chatgpt` makes of it, for file search.
 
   - id: audit
     title: A faithful copy the gates can run in
@@ -83,6 +120,7 @@ profiles:
     source: tracked
     derived: drop
     binary: drop
+    artifacts: drop
     exclude: ["apps/**", "site/**", "lib/**", "bin/**", "scripts/**", "test/**", "share/**", "examples/**", "deploy/**"]
     include: ["AGENTS.md", "CLAUDE.md", "README.md"]
     format: zip

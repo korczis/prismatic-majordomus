@@ -203,6 +203,10 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus entity show`](#majordomus-entity-show) | `/docs/cli/entity/show/` | One entity: its route, what it references, what references it, where it is served |
 | [`majordomus shell`](#majordomus-shell) | `/docs/cli/shell/` | The repository's shell automation against the tracked migration inventory: every shell unit declared with an exemption, and every exemption naming a unit the tree still has |
 | [`majordomus shell check`](#majordomus-shell-check) | `/docs/cli/shell/check/` | Refuse every shell unit the inventory does not declare, and every declaration whose unit is gone; exit 10 on a finding, 12 when the tree cannot be measured |
+| [`majordomus pack`](#majordomus-pack) | `/docs/cli/pack/` | The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output |
+| [`majordomus pack plan`](#majordomus-pack-plan) | `/docs/cli/pack/plan/` | What a profile would pack: files carried, files left out by reason, the shards and every finding that refuses the build; exit 10 on a finding, 12 when the tree cannot be read |
+| [`majordomus pack build`](#majordomus-pack-build) | `/docs/cli/pack/build/` | Write the pack (index, shards, pack.json) and verify what was written; exit 10 when the plan or the written pack has a finding, and nothing is built from a plan with one |
+| [`majordomus pack verify`](#majordomus-pack-verify) | `/docs/cli/pack/verify/` | Verify a written pack against its manifest and the profile it names; exit 10 on a finding, 12 when the manifest cannot be read |
 | [`majordomus dashboard`](#majordomus-dashboard) | `/docs/cli/dashboard/` | The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it |
 | [`majordomus dashboard overview`](#majordomus-dashboard-overview) | `/docs/cli/dashboard/overview/` | Is it healthy, what changed, what is broken, what needs action: every card with its value, the source's verdict, and the capability and pointer it was read from; exit 10 when the overview is fail or unknown |
 | [`majordomus skills`](#majordomus-skills) | `/docs/cli/skills/` | Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans |
@@ -219,7 +223,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus mesh`](#majordomus-mesh), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus prs`](#majordomus-prs), [`majordomus convergence`](#majordomus-convergence), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus mesh`](#majordomus-mesh), [`majordomus models`](#majordomus-models), [`majordomus reasoning`](#majordomus-reasoning), [`majordomus evidence`](#majordomus-evidence), [`majordomus served`](#majordomus-served), [`majordomus rules`](#majordomus-rules), [`majordomus intent`](#majordomus-intent), [`majordomus delivery`](#majordomus-delivery), [`majordomus economics`](#majordomus-economics), [`majordomus entity`](#majordomus-entity), [`majordomus shell`](#majordomus-shell), [`majordomus pack`](#majordomus-pack), [`majordomus dashboard`](#majordomus-dashboard), [`majordomus skills`](#majordomus-skills), [`majordomus knowledge`](#majordomus-knowledge).
 
 ```text
 majordomus <COMMAND>
@@ -5716,6 +5720,111 @@ Examples:
   ```
 
   Verified: exits 10.
+
+<a id="majordomus-pack"></a>
+## `majordomus pack`
+
+The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output
+
+Subcommands: [`majordomus pack plan`](#majordomus-pack-plan), [`majordomus pack build`](#majordomus-pack-build), [`majordomus pack verify`](#majordomus-pack-verify).
+
+```text
+majordomus pack [OPTIONS] <COMMAND>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+<a id="majordomus-pack-plan"></a>
+## `majordomus pack plan`
+
+What a profile would pack: files carried, files left out by reason, the shards and every finding that refuses the build; exit 10 on a finding, 12 when the tree cannot be read
+
+```text
+majordomus pack plan [OPTIONS] [PROFILE]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<PROFILE>` | `<PROFILE>` | — | A profile of share/archive.yaml (default: its `default`) |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What the ChatGPT profile would pack, before anything is written** — The same answer `GET /api/v1/pack/plan?profile=chatgpt` and the MCP tool `majordomus_pack_plan` return: the files carried with their bytes and o200k_base tokens, every file left out by reason under `/dropped` and `/dropped_files`, the shards under `/shards`, and every finding that would refuse the build under `/findings`. The exit code is the verdict: 0 when the pack can be built, 10 on a finding, 12 when the tree cannot be read.
+
+  ```console
+  $ majordomus pack plan chatgpt --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /dropped, /shards, /findings, /passes.
+
+<a id="majordomus-pack-build"></a>
+## `majordomus pack build`
+
+Write the pack (index, shards, pack.json) and verify what was written; exit 10 when the plan or the written pack has a finding, and nothing is built from a plan with one
+
+```text
+majordomus pack build [OPTIONS] [PROFILE]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<PROFILE>` | `<PROFILE>` | — | A profile of share/archive.yaml (default: its `default`) |
+| `--out` | `<DIR>` | — | Write here instead of tmp/packs/<repo>-<profile>-<commit> |
+| `--force` | flag | — | Replace a pack already at the destination (never a directory that is not a pack) |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Write the ChatGPT pack and read it back** — Plans with the profile, writes `00-INDEX.md`, the shards and `pack.json` under `tmp/packs/` only when the plan passes, then verifies what it wrote: every digest, no stray file, no binary, artifact, link or worktree, every file within the token budget. It prints the plan and the verdict; the files to upload are the index and the shards.
+
+  ```console
+  $ majordomus pack build chatgpt
+  ```
+
+  Verified: exits 0; prints pack verify: clean.
+
+<a id="majordomus-pack-verify"></a>
+## `majordomus pack verify`
+
+Verify a written pack against its manifest and the profile it names; exit 10 on a finding, 12 when the manifest cannot be read
+
+```text
+majordomus pack verify [OPTIONS] <DIR>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<DIR>` | `<DIR>` | required | The pack's directory, inside the repository |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **A directory that holds no pack** — A directory without a `pack.json` cannot be verified, and that is reported as unmeasured with exit 12 rather than as a clean pack: a verifier that passed what it could not read would pass anything.
+
+  ```console
+  $ majordomus pack verify tmp/packs/absent
+  ```
+
+  Verified: exits 12.
 
 <a id="majordomus-dashboard"></a>
 ## `majordomus dashboard`

@@ -230,6 +230,15 @@ gates:
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- skills verify
     summary: every active skill is named by a test and invoked by a workflow, prompt, profile, provider template, recipe or CI workflow; no test or invocation names a skill that does not exist
 
+  # The ChatGPT source pack of this repository can be built (rule
+  # project.packs-carry-only-sources): the plan of the `chatgpt` profile has no finding — no
+  # file over a shard's token budget, no more files than a ChatGPT project indexes, no file
+  # naming the checkout it was planned in. Reads the index's blobs; writes nothing.
+  - id: pack-plan
+    job: structure
+    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- pack plan chatgpt
+    summary: the chatgpt pack plans clean — every file within a shard's token budget, the shards within the file count, no source naming the checkout, never a binary, worktree, link or build artifact
+
   - id: rule-proof
     job: structure
     runs: scripts/ci/rule-proof-check
@@ -725,6 +734,13 @@ classes:
   - id: skills
     paths: [.ai/repo/skills/**, .ai/repo/prompts/**, .ai/repo/workflows/**, .ai/repo/profiles/**, .ai/repo/providers/**, .just/**, justfile, apps/majordomus-cli/src/skill/**, apps/majordomus-cli/src/capability/builtin/skills.rs, apps/majordomus-cli/src/commands/skills.rs, apps/majordomus-cli/tests/skills.rs, lib/skills.sh, test/cases/95_skills.sh, test/cases/391_skills_are_proven_capabilities.sh, .ai/repo/rules/project/skills-are-proven-capabilities.v1.md]
     gates: [skills-proof, shell-suite, rust-integration]
+
+  # the source pack and the archive: one profile declaration, the selection both read, the
+  # skill on top of them and the rule they hold. A change to any of them can move what a
+  # ChatGPT project is handed, so the pack is planned again and both suites run.
+  - id: pack
+    paths: [share/archive.yaml, lib/archive.sh, apps/majordomus-cli/src/pack/**, apps/majordomus-cli/src/capability/builtin/pack.rs, apps/majordomus-cli/src/commands/pack.rs, apps/majordomus-cli/src/quality/leak-patterns.tsv, .gitattributes, .ai/repo/skills/pack-for-chatgpt/**, .ai/repo/rules/project/packs-carry-only-sources.v1.md, test/cases/871_pack_for_chatgpt.sh, test/cases/130_archive.sh]
+    gates: [pack-plan, shell-suite, rust-integration]
 
   # the commit policy: the subsystem that judges a message, the gate that reads the history
   # through it, the hook that refuses with it, and the baseline of the commits that predate

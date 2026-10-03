@@ -1,7 +1,7 @@
 +++
 title = "Report by verification state"
 description = "Write the outcome of a piece of work as claims each marked VERIFIED, PARTIAL or BLOCKED by the evidence actually observed, so a reader can tell what was proved from what was only done or intended."
-weight = 6
+weight = 7
 [extra]
 id = "report-verification-state"
 status = "active"

@@ -1067,6 +1067,24 @@
         "status": "query"
       },
       {
+        "id": "capability:pack.plan",
+        "kind": "capability",
+        "label": "pack.plan",
+        "summary": "Plan a source pack",
+        "route": "/cockpit/capabilities/pack.plan",
+        "source": "apps/majordomus-cli/src/capability/builtin/pack.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:pack.verify",
+        "kind": "capability",
+        "label": "pack.verify",
+        "summary": "Verify a written source pack",
+        "route": "/cockpit/capabilities/pack.verify",
+        "source": "apps/majordomus-cli/src/capability/builtin/pack.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:peers.announce",
         "kind": "capability",
         "label": "peers.announce",
@@ -1589,14 +1607,6 @@
         "status": "query"
       },
       {
-        "id": "file:.ai/repo/ci/gates.yaml",
-        "kind": "file",
-        "label": "gates.yaml",
-        "summary": "named by the layer; not an object of this index",
-        "source": ".ai/repo/ci/gates.yaml",
-        "external": true
-      },
-      {
         "id": "file:.ai/repo/ci/pages.yaml",
         "kind": "file",
         "label": "pages.yaml",
@@ -1618,38 +1628,6 @@
         "label": "order-baseline.txt",
         "summary": "named by the layer; not an object of this index",
         "source": ".ai/repo/order-baseline.txt",
-        "external": true
-      },
-      {
-        "id": "file:.github/workflows/pages.yml",
-        "kind": "file",
-        "label": "pages.yml",
-        "summary": "named by the layer; not an object of this index",
-        "source": ".github/workflows/pages.yml",
-        "external": true
-      },
-      {
-        "id": "file:.github/workflows/validate.yml",
-        "kind": "file",
-        "label": "validate.yml",
-        "summary": "named by the layer; not an object of this index",
-        "source": ".github/workflows/validate.yml",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/capability/builtin/design.rs",
-        "kind": "file",
-        "label": "design.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/capability/builtin/design.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/capability/builtin/executions.rs",
-        "kind": "file",
-        "label": "executions.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/capability/builtin/executions.rs",
         "external": true
       },
       {
@@ -1730,14 +1708,6 @@
         "label": "semantics.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/command_graph/semantics.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/design/mod.rs",
-        "kind": "file",
-        "label": "mod.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/design/mod.rs",
         "external": true
       },
       {
@@ -2002,14 +1972,6 @@
         "label": "cockpit.css",
         "summary": "named by the layer; not an object of this index",
         "source": "share/cockpit/src/cockpit.css",
-        "external": true
-      },
-      {
-        "id": "file:share/design/primitives.css",
-        "kind": "file",
-        "label": "primitives.css",
-        "summary": "named by the layer; not an object of this index",
-        "source": "share/design/primitives.css",
         "external": true
       },
       {
@@ -10335,6 +10297,14 @@
         "summary": "Refactor a subsystem without changing its behaviour",
         "route": "/cockpit/objects/document/ai-repo-skills-implement-examples-refactor-without-behaviour-change-md",
         "source": ".ai/repo/skills/implement/examples/refactor-without-behaviour-change.md"
+      },
+      {
+        "id": "majordomus://document/.ai/repo/skills/pack-for-chatgpt/examples/upload-sources-to-a-project.md",
+        "kind": "document",
+        "label": ".ai/repo/skills/pack-for-chatgpt/examples/upload-sources-to-a-project.md",
+        "summary": "Upload the sources to a ChatGPT project",
+        "route": "/cockpit/objects/document/ai-repo-skills-pack-for-chatgpt-examples-upload-sources-to-a-project-md",
+        "source": ".ai/repo/skills/pack-for-chatgpt/examples/upload-sources-to-a-project.md"
       },
       {
         "id": "majordomus://document/.ai/repo/skills/pack-for-review/examples/second-opinion-from-another-model.md",
@@ -33318,6 +33288,28 @@
         }
       },
       {
+        "id": "majordomus://rule/project.packs-carry-only-sources@1",
+        "kind": "rule",
+        "label": "project.packs-carry-only-sources@1",
+        "summary": "A pack that leaves the machine carries only committed sources",
+        "route": "/cockpit/objects/rule/project-packs-carry-only-sources-1",
+        "source": ".ai/repo/rules/project/packs-carry-only-sources.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.derived-once@1",
+            "project.no-machine-paths@1"
+          ],
+          "tags": [
+            "archive",
+            "privacy",
+            "review",
+            "evidence"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.performance-evidence@1",
         "kind": "rule",
         "label": "project.performance-evidence@1",
@@ -36054,6 +36046,35 @@
         }
       },
       {
+        "id": "majordomus://skill/pack-for-chatgpt",
+        "kind": "skill",
+        "label": "pack-for-chatgpt",
+        "summary": "Pack the sources for a ChatGPT project",
+        "route": "/cockpit/objects/skill/pack-for-chatgpt",
+        "source": ".ai/repo/skills/pack-for-chatgpt/SKILL.md",
+        "status": "active",
+        "facts": {
+          "inputs": [
+            "a committed tree at the revision the conversation is about",
+            "the question the ChatGPT conversation is meant to answer"
+          ],
+          "outputs": [
+            "a verified pack directory under tmp/packs/ holding 00-INDEX.md, the shards and pack.json",
+            "the upload list, the commit, the token total and what the profile left out"
+          ],
+          "related": [
+            "pack-for-review",
+            "report-verification-state"
+          ],
+          "tags": [
+            "review",
+            "archive",
+            "privacy",
+            "chatgpt"
+          ]
+        }
+      },
+      {
         "id": "majordomus://skill/pack-for-review",
         "kind": "skill",
         "label": "pack-for-review",
@@ -36072,7 +36093,8 @@
           ],
           "related": [
             "repo-review",
-            "report-verification-state"
+            "report-verification-state",
+            "pack-for-chatgpt"
           ],
           "tags": [
             "review",
@@ -38396,6 +38418,13 @@
         "label": "test/cases/86_installer_platform.sh",
         "route": "/cockpit/objects/test/test-cases-86-installer-platform-sh",
         "source": "test/cases/86_installer_platform.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/871_pack_for_chatgpt.sh",
+        "kind": "test",
+        "label": "test/cases/871_pack_for_chatgpt.sh",
+        "route": "/cockpit/objects/test/test-cases-871-pack-for-chatgpt-sh",
+        "source": "test/cases/871_pack_for_chatgpt.sh"
       },
       {
         "id": "majordomus://test/test/cases/87_release_pipeline.sh",
@@ -40818,6 +40847,11 @@
         "label": "obligations"
       },
       {
+        "id": "module:pack",
+        "kind": "module",
+        "label": "pack"
+      },
+      {
         "id": "module:peers",
         "kind": "module",
         "label": "peers"
@@ -42852,6 +42886,46 @@
         "kind": "projects"
       },
       {
+        "source": "capability:pack.plan",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:pack.plan",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:pack.plan",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:pack.plan",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:pack.verify",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:pack.verify",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:pack.verify",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:pack.verify",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:peers.announce",
         "target": "projection:cockpit",
         "kind": "projects"
@@ -44603,11 +44677,6 @@
       },
       {
         "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/executions.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
         "target": "file:apps/majordomus-cli/src/execution/engine.rs",
         "kind": "put_in_force"
       },
@@ -44658,11 +44727,6 @@
       },
       {
         "source": "majordomus://adr/adr-0033",
-        "target": "majordomus://document/docs/EXECUTIONS.md",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
         "target": "majordomus://rule/project.execution-events-are-typed@1",
         "kind": "put_in_force"
       },
@@ -44693,31 +44757,6 @@
       },
       {
         "source": "majordomus://adr/adr-0036",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/design.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0036",
-        "target": "file:apps/majordomus-cli/src/design/mod.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0036",
-        "target": "file:apps/majordomus-cli/src/design/render.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0036",
-        "target": "file:scripts/ci/design-check",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0036",
-        "target": "file:share/design/primitives.css",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0036",
         "target": "file:share/design/tokens.yaml",
         "kind": "put_in_force"
       },
@@ -44725,11 +44764,6 @@
         "source": "majordomus://adr/adr-0036",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0036",
-        "target": "majordomus://document/docs/DESIGN_SYSTEM.md",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0036",
@@ -44749,31 +44783,6 @@
       {
         "source": "majordomus://adr/adr-0036",
         "target": "majordomus://rule/project.ui-conformance@1",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0036",
-        "target": "majordomus://test/test/cases/107_design_tokens.sh",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0036",
-        "target": "majordomus://test/test/cases/109_design_system.sh",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0037",
-        "target": "file:.ai/repo/ci/gates.yaml",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0037",
-        "target": "file:.github/workflows/pages.yml",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0037",
-        "target": "file:.github/workflows/validate.yml",
         "kind": "put_in_force"
       },
       {
@@ -46575,11 +46584,6 @@
         "source": "majordomus://claim/checkpoint-record",
         "target": "majordomus://test/test/cases/20_checkpoint.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/ci-planned-gates",
-        "target": "file:.ai/repo/ci/gates.yaml",
-        "kind": "defined_in"
       },
       {
         "source": "majordomus://claim/ci-planned-gates",
@@ -49378,11 +49382,6 @@
       },
       {
         "source": "majordomus://claim/site-deploys-from-verified-run",
-        "target": "file:.github/workflows/pages.yml",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/site-deploys-from-verified-run",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -50263,6 +50262,11 @@
       },
       {
         "source": "majordomus://document/.ai/repo/skills/implement/examples/refactor-without-behaviour-change.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/.ai/repo/skills/pack-for-chatgpt/examples/upload-sources-to-a-project.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -58022,6 +58026,21 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.packs-carry-only-sources@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.packs-carry-only-sources@1",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.packs-carry-only-sources@1",
+        "target": "majordomus://rule/project.no-machine-paths@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.performance-evidence@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -58627,9 +58646,29 @@
         "kind": "related_to"
       },
       {
+        "source": "majordomus://skill/pack-for-chatgpt",
+        "target": "kind:skill",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://skill/pack-for-chatgpt",
+        "target": "majordomus://skill/pack-for-review",
+        "kind": "related_to"
+      },
+      {
+        "source": "majordomus://skill/pack-for-chatgpt",
+        "target": "majordomus://skill/report-verification-state",
+        "kind": "related_to"
+      },
+      {
         "source": "majordomus://skill/pack-for-review",
         "target": "kind:skill",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://skill/pack-for-review",
+        "target": "majordomus://skill/pack-for-chatgpt",
+        "kind": "related_to"
       },
       {
         "source": "majordomus://skill/pack-for-review",
@@ -60238,6 +60277,11 @@
       },
       {
         "source": "majordomus://test/test/cases/86_installer_platform.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/871_pack_for_chatgpt.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -63137,6 +63181,16 @@
         "kind": "composes"
       },
       {
+        "source": "module:pack",
+        "target": "capability:pack.plan",
+        "kind": "composes"
+      },
+      {
+        "source": "module:pack",
+        "target": "capability:pack.verify",
+        "kind": "composes"
+      },
+      {
         "source": "module:peers",
         "target": "capability:peers.announce",
         "kind": "composes"
@@ -63429,8 +63483,8 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4496,
-      "acyclic": true,
+      "edges": 4500,
+      "acyclic": false,
       "truncated": true
     }
   }

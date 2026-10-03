@@ -47,7 +47,8 @@ Beyond "untracked", the subtractions are declared in
 | Term | Meaning |
 |---|---|
 | `derived: drop` | Drop every path `.gitattributes` marks `merge=derived`. |
-| `binary: drop` | Drop by file extension, from the one list at the top of the registry. |
+| `binary: drop` | Drop by file extension, from the one list at the top of the registry, and by content: what git judges `-text` in the index. |
+| `artifacts: drop` | Drop every path on the registry's `artifact_paths` list — build output, dependency and cache directories, worktree containers, minified bundles — and every symbolic link. An `include` never puts one back. |
 | `exclude:` | Shell globs, for what neither rule expresses. `*` matches `/` as well. |
 | `include:` | Shell globs, applied last, that put a dropped path back. |
 
@@ -104,6 +105,7 @@ check that reads more than the working tree will say so rather than being quietl
 |---|---|---|
 | `context` | A model that will read the repository | Every tracked source, without the projections generated from it. The default. |
 | `audit` | Running the repository's own checks on a copy | Every tracked file, nothing dropped. The derived artifacts are kept precisely because the freshness gates compare them against their sources. |
+| `chatgpt` | A ChatGPT project | The sources of `context`, without recorded measurements and ratchet baselines, with artifacts dropped and shard limits a ChatGPT project indexes. Built as shards by `majordomus pack`; as a zip by `majordomus archive chatgpt`. |
 | `governance` | Handing over the operating contract | `.ai/`, `docs/`, `AGENTS.md`, `CLAUDE.md`. No code, deliberately: it answers what the rules are and cannot answer how they are implemented. |
 
 </div>
@@ -123,6 +125,40 @@ majordomus archive audit --out /tmp/audit.zip
 cd /tmp && unzip -q audit.zip && cd <repository>
 sh _ARCHIVE/restore.sh && scripts/ci/command-furnished
 ```
+
+## The source pack: shards for a model's file search
+
+A chat model's project files are searched one text file at a time, each under a token
+ceiling, and a zip is not searched at all. `majordomus pack` (a command of the Rust
+executable, rule
+[`project.packs-carry-only-sources`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/packs-carry-only-sources.v1.md))
+writes the same selection as Markdown shards:
+
+```
+majordomus pack plan chatgpt          what would travel, what would not and why, the shards, every finding
+majordomus pack build chatgpt         write tmp/packs/<repo>-chatgpt-<commit>/ and verify it
+majordomus pack verify <dir>          verify a written pack again, before an upload
+```
+
+The content is the git index's blobs, never the working tree, carried exactly as committed.
+Each file is a block: a level-two heading that is its path, then a fenced block one backtick
+longer than any run of backticks in the file. `00-INDEX.md` opens with the profile's
+`orientation`, then the commit, the shards and everything left out; `pack.json` is the
+manifest the verifier reads, and need not be uploaded.
+
+Beyond what the profile drops, the pack drops every gitlink (a nested repository or worktree)
+and every file whose content is not UTF-8 text, and refuses to build when a selected file
+names its own checkout or the packing account's home directory, when one file is over the
+shard budget (`shards.max_tokens`, counted in `o200k_base`), or when the shards and the index
+are more files than `shards.max_count`. `pack verify` refuses a shard whose digest is not the
+manifest's, a file the manifest does not name, a forbidden path, a NUL byte and a file over
+the budget. The CI gate `pack-plan` plans the `chatgpt` profile on every change that can move
+it. The procedure is the skill `pack-for-chatgpt`.
+
+The two readers of the profiles differ in one way that the patterns are written around: the
+shell's globs let `*` cross `/` and the executable's do not, so every pattern in
+`artifact_paths` and in the `chatgpt` profile comes in the pair (`target/**`,
+`**/target/**`) that selects the same paths under both.
 
 ## Adding or changing a profile
 

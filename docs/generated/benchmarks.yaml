@@ -6,20 +6,20 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.12.0
 coverage:
   - scope: direct
-    required: 169
-    covered: 151
+    required: 171
+    covered: 153
     missing: 0
     waived: 18
     inapplicable: 0
   - scope: http
-    required: 167
-    covered: 151
+    required: 169
+    covered: 153
     missing: 0
     waived: 16
     inapplicable: 0
   - scope: mcp
-    required: 163
-    covered: 147
+    required: 165
+    covered: 149
     missing: 0
     waived: 16
     inapplicable: 0
@@ -30,8 +30,8 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 512
-    covered: 462
+    required: 518
+    covered: 468
     missing: 0
     waived: 50
     inapplicable: 0
@@ -1056,6 +1056,25 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: pack.plan
+    module: pack
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default-profile
+      - chatgpt
+  - id: pack.verify
+    module: pack
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - absent
   - id: peers.announce
     module: peers
     kind: command

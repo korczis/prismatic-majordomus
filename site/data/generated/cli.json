@@ -210,6 +210,12 @@
           "route": "/docs/cli/shell/"
         },
         {
+          "about": "The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output",
+          "command": "majordomus pack",
+          "name": "pack",
+          "route": "/docs/cli/pack/"
+        },
+        {
           "about": "The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it",
           "command": "majordomus dashboard",
           "name": "dashboard",
@@ -29928,6 +29934,586 @@
       "usage": "majordomus shell check [OPTIONS]"
     },
     {
+      "about": "The tracked tree as token-bounded text shards for a language model's file search: plan what a profile carries and leaves out, build it under tmp/packs/, and verify a written pack against its manifest; never a binary, a worktree, a link or build output",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [
+        {
+          "about": "What a profile would pack: files carried, files left out by reason, the shards and every finding that refuses the build; exit 10 on a finding, 12 when the tree cannot be read",
+          "command": "majordomus pack plan",
+          "name": "plan",
+          "route": "/docs/cli/pack/plan/"
+        },
+        {
+          "about": "Write the pack (index, shards, pack.json) and verify what was written; exit 10 when the plan or the written pack has a finding, and nothing is built from a plan with one",
+          "command": "majordomus pack build",
+          "name": "build",
+          "route": "/docs/cli/pack/build/"
+        },
+        {
+          "about": "Verify a written pack against its manifest and the profile it names; exit 10 on a finding, 12 when the manifest cannot be read",
+          "command": "majordomus pack verify",
+          "name": "verify",
+          "route": "/docs/cli/pack/verify/"
+        }
+      ],
+      "command": "majordomus pack",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "pack",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "pack"
+      ],
+      "route": "/docs/cli/pack/",
+      "usage": "majordomus pack [OPTIONS] <COMMAND>"
+    },
+    {
+      "about": "What a profile would pack: files carried, files left out by reason, the shards and every finding that refuses the build; exit 10 on a finding, 12 when the tree cannot be read",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus pack",
+          "name": "pack",
+          "route": "/docs/cli/pack/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "A profile of share/archive.yaml (default: its `default`)",
+          "name": "profile",
+          "positional": true,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PROFILE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus pack plan",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "pack",
+            "plan",
+            "chatgpt",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus pack plan chatgpt --format json",
+          "description": "The same answer `GET /api/v1/pack/plan?profile=chatgpt` and the MCP tool `majordomus_pack_plan` return: the files carried with their bytes and o200k_base tokens, every file left out by reason under `/dropped` and `/dropped_files`, the shards under `/shards`, and every finding that would refuse the build under `/findings`. The exit code is the verdict: 0 when the pack can be built, 10 on a finding, 12 when the tree cannot be read.",
+          "expectation": "exits 0; prints one JSON document carrying /dropped, /shards, /findings, /passes",
+          "id": "pack-plan-chatgpt-json",
+          "setup": [],
+          "title": "What the ChatGPT profile would pack, before anything is written"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "plan",
+      "parent_route": "/docs/cli/pack/",
+      "path": [
+        "majordomus",
+        "pack",
+        "plan"
+      ],
+      "route": "/docs/cli/pack/plan/",
+      "usage": "majordomus pack plan [OPTIONS] [PROFILE]"
+    },
+    {
+      "about": "Write the pack (index, shards, pack.json) and verify what was written; exit 10 when the plan or the written pack has a finding, and nothing is built from a plan with one",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus pack",
+          "name": "pack",
+          "route": "/docs/cli/pack/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "A profile of share/archive.yaml (default: its `default`)",
+          "name": "profile",
+          "positional": true,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PROFILE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Write here instead of tmp/packs/<repo>-<profile>-<commit>",
+          "long": "out",
+          "name": "out",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Replace a pack already at the destination (never a directory that is not a pack)",
+          "long": "force",
+          "name": "force",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "FORCE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus pack build",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "pack",
+            "build",
+            "chatgpt"
+          ],
+          "command": "majordomus pack build chatgpt",
+          "description": "Plans with the profile, writes `00-INDEX.md`, the shards and `pack.json` under `tmp/packs/` only when the plan passes, then verifies what it wrote: every digest, no stray file, no binary, artifact, link or worktree, every file within the token budget. It prints the plan and the verdict; the files to upload are the index and the shards.",
+          "expectation": "exits 0; prints pack verify: clean",
+          "id": "pack-build-chatgpt",
+          "setup": [],
+          "title": "Write the ChatGPT pack and read it back"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "build",
+      "parent_route": "/docs/cli/pack/",
+      "path": [
+        "majordomus",
+        "pack",
+        "build"
+      ],
+      "route": "/docs/cli/pack/build/",
+      "usage": "majordomus pack build [OPTIONS] [PROFILE]"
+    },
+    {
+      "about": "Verify a written pack against its manifest and the profile it names; exit 10 on a finding, 12 when the manifest cannot be read",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus pack",
+          "name": "pack",
+          "route": "/docs/cli/pack/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The pack's directory, inside the repository",
+          "name": "dir",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus pack verify",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "pack",
+            "verify",
+            "tmp/packs/absent"
+          ],
+          "command": "majordomus pack verify tmp/packs/absent",
+          "description": "A directory without a `pack.json` cannot be verified, and that is reported as unmeasured with exit 12 rather than as a clean pack: a verifier that passed what it could not read would pass anything.",
+          "expectation": "exits 12",
+          "id": "pack-verify-absent",
+          "setup": [],
+          "title": "A directory that holds no pack"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "verify",
+      "parent_route": "/docs/cli/pack/",
+      "path": [
+        "majordomus",
+        "pack",
+        "verify"
+      ],
+      "route": "/docs/cli/pack/verify/",
+      "usage": "majordomus pack verify [OPTIONS] <DIR>"
+    },
+    {
       "about": "The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it",
       "ancestors": [
         {
@@ -31251,10 +31837,10 @@
     }
   ],
   "counts": {
-    "arguments": 1341,
-    "commands": 199,
-    "examples": 201,
-    "runnable": 175
+    "arguments": 1366,
+    "commands": 203,
+    "examples": 204,
+    "runnable": 178
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.12.0",

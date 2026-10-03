@@ -41,6 +41,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `models` | Models | experimental | 2 | [`modules/models.md`](modules/models.md) |
 | `objects` | Objects | behaviorally_verified | 4 | [`modules/objects.md`](modules/objects.md) |
 | `obligations` | Obligations | behaviorally_verified | 2 | [`modules/obligations.md`](modules/obligations.md) |
+| `pack` | Source pack | behaviorally_verified | 2 | [`modules/pack.md`](modules/pack.md) |
 | `peers` | Peers | behaviorally_verified | 2 | [`modules/peers.md`](modules/peers.md) |
 | `perf` | Performance | behaviorally_verified | 1 | [`modules/perf.md`](modules/perf.md) |
 | `plan` | The plan and its derivations | behaviorally_verified | 9 | [`modules/plan.md`](modules/plan.md) |
@@ -176,6 +177,8 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `objects.verify` | `objects` | query | behaviorally_verified | `majordomus_verify_objects` | — | `GET /api/v1/objects/verify` | — | — | required |
 | `obligations.closure` | `obligations` | query | behaviorally_verified | `majordomus_obligation_closure` | `majordomus://obligations/closure` | `GET /api/v1/obligations/closure` | — | process, 2 entries, 2s | required |
 | `obligations.vocabulary` | `obligations` | query | behaviorally_verified | `majordomus_obligations` | `majordomus://obligations` | `GET /api/v1/obligations` | — | process, 2 entries | required |
+| `pack.plan` | `pack` | query | behaviorally_verified | `majordomus_pack_plan` | — | `GET /api/v1/pack/plan` | `majordomus pack plan` | — | required |
+| `pack.verify` | `pack` | query | behaviorally_verified | `majordomus_pack_verify` | — | `GET /api/v1/pack/verify` | `majordomus pack verify` | — | required |
 | `peers.announce` | `peers` | command | behaviorally_verified | `majordomus_announce` | — | `POST /api/v1/peers/announce` | — | — | required |
 | `peers.list` | `peers` | query | behaviorally_verified | `majordomus_peers` | — | `GET /api/v1/peers` | — | — | required |
 | `perf.counters` | `perf` | query | behaviorally_verified | `majordomus_perf` | — | `GET /api/v1/perf` | — | — | required |

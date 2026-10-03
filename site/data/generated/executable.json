@@ -2048,6 +2048,40 @@
       "tool": "majordomus_obligations"
     },
     {
+      "api_anchor": "/docs/api/pack/#op-pack-plan",
+      "claims": [],
+      "cli": "majordomus pack plan",
+      "id": "pack.plan",
+      "kind": "query",
+      "module": "pack",
+      "module_route": "/registry/modules/pack/",
+      "resource": null,
+      "route": "/registry/capabilities/pack-plan/",
+      "slug": "pack-plan",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/pack.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/pack.rs",
+      "tests": [],
+      "title": "Plan a source pack",
+      "tool": "majordomus_pack_plan"
+    },
+    {
+      "api_anchor": "/docs/api/pack/#op-pack-verify",
+      "claims": [],
+      "cli": "majordomus pack verify",
+      "id": "pack.verify",
+      "kind": "query",
+      "module": "pack",
+      "module_route": "/registry/modules/pack/",
+      "resource": null,
+      "route": "/registry/capabilities/pack-verify/",
+      "slug": "pack-verify",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/pack.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/pack.rs",
+      "tests": [],
+      "title": "Verify a written source pack",
+      "tool": "majordomus_pack_verify"
+    },
+    {
       "api_anchor": "/docs/api/peers/#op-peers-announce",
       "claims": [],
       "cli": null,
@@ -3551,9 +3585,9 @@
     ]
   },
   "counts": {
-    "capabilities": 169,
+    "capabilities": 171,
     "claims": 76,
-    "modules": 51
+    "modules": 52
   },
   "generator": "majordomus-cli 0.12.0",
   "modules": [
@@ -4495,6 +4529,27 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/obligations.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/obligations.rs",
       "title": "Obligations"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "pack.plan",
+          "route": "/registry/capabilities/pack-plan/",
+          "slug": "pack-plan"
+        },
+        {
+          "id": "pack.verify",
+          "route": "/registry/capabilities/pack-verify/",
+          "slug": "pack-verify"
+        }
+      ],
+      "claims": [],
+      "id": "pack",
+      "route": "/registry/modules/pack/",
+      "slug": "pack",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/pack.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/pack.rs",
+      "title": "Source pack"
     },
     {
       "capabilities": [
