@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "finish_transcript": "$ majordomus finish --outcome completed --verify-command \"make test\"\nOK   scope         t-20260903193012-a4f1 — 12 touched file(s), all within scope\nOK   verification  t-20260903193012-a4f1 — make test — exit 0, 41s\nOK   state         t-20260903193012-a4f1 — advanced (head 9b1e2d4)\nFAIL blockers      t-20260903193012-a4f1 — unresolved entry in open-questions.md  [reproduce: grep -n 'unresolved' .ai/local/state/open-questions.md]\nOK   note          t-20260903193012-a4f1 — 20260903T201455Z--main--9b1e2d4--c0ffee1234567890.md\nfinish: refused, 1 unmet",
+  "finish_transcript": "$ majordomus finish --outcome completed --verify-command 'sh test/parse.sh'\nOK   blockers    t-<id> — none open\nOK   note        t-<id> — <time>--main--<head>--<hash>.md\nOK   scope       t-<id> — 1 touched file(s), all within scope\nOK   state       t-<id> — exact (head <head>)\nFAIL verification t-<id> — sh test/parse.sh — exit 1, <s>s  [reproduce: sh test/parse.sh]\nfinish: refused, 1 unmet",
   "finish_checks": [
     "scope",
     "verification",
@@ -94,7 +94,8 @@
         "context-budget",
         "bootstrap-chain",
         "context-selection-counted",
-        "provider-projections-one-renderer"
+        "provider-projections-one-renderer",
+        "provider-capability-evidence"
       ],
       "doctrine_ids": [
         "majordomus.bootstrap-integrity",
@@ -135,7 +136,8 @@
         "local-state-ignored",
         "event-vocabulary",
         "task-dependencies",
-        "session-observability"
+        "session-observability",
+        "connection-episode"
       ],
       "doctrine_ids": [
         "majordomus.ai-layout-integrity",
@@ -236,7 +238,8 @@
       "claim_ids": [
         "handover-record",
         "no-transcripts",
-        "record-resolution"
+        "record-resolution",
+        "briefing-names-candidates"
       ],
       "doctrine_ids": [
         "majordomus.handover-integrity",
@@ -318,9 +321,16 @@
         "use-case-impact",
         "live-scenario-is-read-only",
         "live-scenario-evidence-is-local",
-        "skill-check"
+        "skill-check",
+        "knowledge-derived-at-the-boundary",
+        "knowledge-failure-is-recorded",
+        "knowledge-integrity",
+        "knowledge-writer-observed",
+        "candidates-reviewed-not-accumulated"
       ],
       "doctrine_ids": [
+        "majordomus.knowledge-integrity",
+        "majordomus.candidates-reviewed",
         "majordomus.ai-layout-integrity",
         "majordomus.layout-integrity",
         "majordomus.catalogue-integrity",
@@ -328,6 +338,7 @@
         "majordomus.doctrine-wiring-integrity",
         "majordomus.enforcement-wiring",
         "majordomus.command-coverage",
+        "majordomus.knowledge-observed",
         "majordomus.context-budget",
         "majordomus.retention-caps",
         "majordomus.rule-package-integrity",
@@ -439,9 +450,12 @@
         "adr-catalogue",
         "adr-traceability",
         "adr-propose",
-        "product-features-discovered"
+        "product-features-discovered",
+        "knowledge-derivation-is-idempotent",
+        "knowledge-promotion-is-an-act"
       ],
       "doctrine_ids": [
+        "majordomus.knowledge-integrity",
         "majordomus.ai-layout-integrity",
         "majordomus.context-integrity",
         "majordomus.adr-integrity",

@@ -120,8 +120,8 @@ export MAJORDOMUS_SHARE="$ROOT/share"
 # The runner under test, over three cases of its own, outside this checkout: driving the
 # real test/cases/ would mean running the whole suite to ask one question about one word.
 H="$W/harness"
-mkdir -p "$H/test/cases"
-cp "$ROOT/test/run.sh" "$ROOT/test/lib.sh" "$H/test/"
+mkdir -p "$H/test/cases" "$H/lib"
+cp "$ROOT/test/run.sh" "$ROOT/test/lib.sh" "$H/test/"; cp "$ROOT/lib/sha256.sh" "$H/lib/"
 cat > "$H/test/cases/01_passes.sh" <<'SH'
 . "$ROOT/test/lib.sh"
 expect_exit 0 true

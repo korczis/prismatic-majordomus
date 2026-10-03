@@ -149,6 +149,7 @@ pub mod ledger;
 pub mod provenance;
 pub mod record;
 pub mod run;
+pub mod subject;
 
 pub use coverage::{
     CommitId, EvidenceCoverage, EvidenceCoverageCount, EvidenceCoverageDimensions,
@@ -1521,6 +1522,7 @@ pub(crate) fn changed_since(root: &Path, commit: &str) -> Option<BTreeSet<String
 ///         kind_sources: vec![],
 ///         scope_origin: majordomus_cli::scope::Origin::Distribution,
 ///         scope_path: String::new(),
+///         observed: Default::default(),
 ///     },
 ///     objects: vec![claim],
 ///     diagnostics: vec![],
@@ -2214,6 +2216,7 @@ mod tests {
                     kind_sources: vec![],
                     scope_origin: crate::scope::Origin::Distribution,
                     scope_path: String::new(),
+                    observed: Default::default(),
                 },
                 objects,
                 diagnostics: vec![],

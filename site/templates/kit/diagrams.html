@@ -1,0 +1,108 @@
+{#- The kit's diagrams: a stack of layers, a fan that joins things to a hub, and a cycle of
+    four. Each is drawn from the data it is handed and needs no script: the curves of a fan
+    are computed here from how many rows each side has. See templates/kit/base.html. -#}
+
+{#- A model and the layers that build it: the cap carries the icon, the title and the line;
+    each layer is `title`, `text` and `tone`. `mono` sets the layer titles in monospace. -#}
+{% component stack(title, layers, text="", icon="database", mono=false, level="3") %}
+<div class="mj-stack{% if mono %} mj-stack--mono{% endif %}">
+  <div class="mj-stack-cap">
+    {{ <glyph icon={icon} size="lg" icon_size="lg" /> }}
+    <h{{ level }} class="mj-stack-title">{{ title }}</h{{ level }}>
+    {%- if text %}<p class="mj-stack-text">{{ text }}</p>{% endif %}
+  </div>
+  <ol class="mj-stack-layers">
+    {%- for l in layers %}<li class="mj-layer{% if l.tone %} mj-tone--{{ l.tone }}{% endif %}"><span class="mj-layer-title">{{ l.title }}</span>{% if l.text %}<span class="mj-layer-text">{{ l.text }}</span>{% endif %}</li>{% endfor %}
+  </ol>
+</div>
+{%- endcomponent stack %}
+
+{#- One cell of a fan, by kind: `route` (an interface row), `card` (a glyph, a title and a
+    line on a card), `point` (the same with no card) or `described` (a route and what it is
+    for). -#}
+{% component fan_cell(item, kind="route") %}
+{%- if kind == "card" -%}
+<div class="mj-panel p-4 sm:p-4{% if item.tone %} mj-tone--{{ item.tone }}{% endif %}">
+  {%- if item.icon %}{{ <glyph icon={item.icon} /> }}{% endif %}
+  <p class="mj-point-title mt-3 text-base">{{ item.title }}</p>
+  {%- if item.text %}<p class="mj-point-text text-sm">{{ item.text }}</p>{% endif %}
+</div>
+{%- elif kind == "point" -%}
+<div class="mj-point py-0">
+  {%- if item.icon %}{{ <glyph icon={item.icon} tone={item.tone or ""} size="sm" icon_size="sm" /> }}{% endif %}
+  <span class="min-w-0"><span class="mj-point-title">{{ item.title }}</span>{% if item.text %}<span class="mj-point-text">{{ item.text }}</span>{% endif %}</span>
+</div>
+{%- elif kind == "described" -%}
+{{ <routes items={[item]} described={true} /> }}
+{%- else -%}
+{{ <route name={item.name or item.title} path={item.path or item.text or ""} icon={item.icon or ""} tone={item.tone or ""} href={item.href or ""} /> }}
+{%- endif -%}
+{%- endcomponent fan_cell %}
+
+{#- The wires of one side of a fan, for `n` rows. `side` is in (rows converge on the hub) or
+    out (the hub fans out to the rows); `wiring` parallel draws each row straight across to
+    the hub's edge instead, which is how an annotation points at what it describes. The
+    drawing is stretched to the side's height, and every row's centre is at
+    (i + 1/2) / n of it because the rows are equal (`auto-rows-fr`). -#}
+{% component fan_wire(n, side="in", wiring="converge", dashed=false, label="") %}
+<div class="relative hidden min-w-0 lg:block" aria-hidden="true">
+  <svg class="mj-fan-wire{% if dashed %} mj-fan-wire--dashed{% endif %}" viewBox="0 0 100 100" preserveAspectRatio="none">
+    {%- for i in range(end=n) -%}
+    {%- set y = ((i + 0.5) * 100 / n) | round(precision=2) -%}
+    {%- if wiring == "parallel" %}<path d="M0,{{ y }} L100,{{ y }}"/>
+    {%- elif side == "in" %}<path d="M0,{{ y }} C50,{{ y }} 50,50 100,50"/>
+    {%- else %}<path d="M0,50 C50,50 50,{{ y }} 100,{{ y }}"/>{% endif -%}
+    {%- endfor -%}
+  </svg>
+  {%- if label %}<span class="mj-fan-label absolute left-1/2 top-1/2 w-16 -translate-x-1/2 -translate-y-1/2">{{ label }}</span>{% endif %}
+</div>
+{%- endcomponent fan_wire %}
+
+{#- A fan: `left` rows, the hub (the body), `right` rows, joined by wires. Either side may
+    be empty. `left_kind` and `right_kind` say how a row is drawn (see `fan_cell`). On a
+    narrow screen the parts stack, with an arrow between them for the wire. `hub="wide"`
+    gives the hub the width and the sides a narrow column, for cards that annotate a window. -#}
+{% component fan(left=[], right=[], left_kind="route", right_kind="route", wiring="converge", dashed=false, left_label="", right_label="", hub="") %}
+{%- set mode = "both" if left | length > 0 and right | length > 0 else ("in" if left | length > 0 else "out") -%}
+<div class="mj-fan mj-fan--{{ mode }}{% if hub == "wide" %} mj-fan--wide{% endif %}">
+  {%- if left | length > 0 %}
+  <ul class="mj-fan-side m-0 list-none p-0">
+    {%- for c in left %}<li class="mj-fan-cell">{{ <fan_cell item={c} kind={left_kind} /> }}</li>{% endfor %}
+  </ul>
+  {{ <fan_wire n={left | length} side="in" wiring={wiring} dashed={dashed} label={left_label} /> }}
+  <div class="mj-fan-step" aria-hidden="true">{{ <icon name="arrow-down" /> }}</div>
+  {%- endif %}
+  <div class="mj-fan-hub">{{ body }}</div>
+  {%- if right | length > 0 %}
+  <div class="mj-fan-step" aria-hidden="true">{{ <icon name="arrow-down" /> }}</div>
+  {{ <fan_wire n={right | length} side="out" wiring={wiring} dashed={dashed} label={right_label} /> }}
+  <ul class="mj-fan-side m-0 list-none p-0">
+    {%- for c in right %}<li class="mj-fan-cell">{{ <fan_cell item={c} kind={right_kind} /> }}</li>{% endfor %}
+  </ul>
+  {%- endif %}
+</div>
+{%- endcomponent fan %}
+
+{#- A cycle of four stages on the compass points, north first and clockwise, with the arc
+    that leads into each stage drawn in that stage's tone. A stage is `title` and `tone`.
+    The centre is the body. `id` must be unique on the page (the arrowheads need ids). -#}
+{% component cycle(stages, id) %}
+{%- set arcs = ["M88.64,60.35 A40,40 0 0 1 60.35,88.64", "M39.65,88.64 A40,40 0 0 1 11.36,60.35", "M11.36,39.65 A40,40 0 0 1 39.65,11.36", "M60.35,11.36 A40,40 0 0 1 88.64,39.65"] -%}
+{%- set into = [2, 3, 0, 1] -%}
+{%- set points = ["n", "e", "s", "w"] -%}
+<div class="mj-cycle">
+  <svg class="mj-cycle-ring" viewBox="0 0 100 100" aria-hidden="true">
+    {%- for a in arcs -%}
+    {%- set to = stages[into[loop.index0]] -%}
+    <g class="{% if to.tone %}mj-tone--{{ to.tone }}{% endif %}">
+      <defs><marker id="{{ id }}-arrow-{{ loop.index0 }}" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z"/></marker></defs>
+      <path d="{{ a }}" marker-end="url(#{{ id }}-arrow-{{ loop.index0 }})"/>
+    </g>
+    {%- endfor -%}
+  </svg>
+  <ol class="contents m-0 list-none p-0">
+    {%- for s in stages[:4] %}<li class="mj-cycle-node mj-cycle-node--{{ points[loop.index0] }}">{{ s.title }}</li>{% endfor %}
+  </ol>
+  <div class="mj-cycle-centre">{{ body }}</div>
+</div>
+{%- endcomponent cycle %}

@@ -334,6 +334,7 @@ pub(crate) fn complete(
     hashes: &BTreeMap<String, Option<String>>,
     standing: &BTreeMap<String, ObligationStanding>,
     closure_reachable: bool,
+    convergence: Option<&crate::convergence::ConvergenceReport>,
     on_demand: bool,
     now: &str,
     mut findings: Vec<String>,
@@ -376,7 +377,14 @@ pub(crate) fn complete(
         }
     }
 
-    let questions = done::answer(standing, &obligations, &gates, changed, closure_reachable);
+    let questions = done::answer(
+        standing,
+        &obligations,
+        &gates,
+        changed,
+        closure_reachable,
+        convergence,
+    );
 
     Completion {
         present: task.is_some(),
@@ -534,6 +542,7 @@ classes:
             &hashes(&m, "aaaa"),
             &BTreeMap::new(),
             false,
+            None,
             false,
             "now",
             vec![],
@@ -565,6 +574,7 @@ classes:
             &hashes(&m, "aaaa"),
             &BTreeMap::new(),
             false,
+            None,
             false,
             "now",
             vec![],
@@ -603,6 +613,7 @@ classes:
             &hashes(&m, "aaaa"),
             &BTreeMap::new(),
             false,
+            None,
             false,
             "now",
             vec![],
@@ -620,6 +631,7 @@ classes:
             &hashes(&m, "bbbb"),
             &BTreeMap::new(),
             false,
+            None,
             false,
             "now",
             vec![],
@@ -645,6 +657,7 @@ classes:
             &hashes(&m, "aaaa"),
             &BTreeMap::new(),
             false,
+            None,
             false,
             "now",
             vec![],

@@ -23,7 +23,7 @@ A worker reports success. The report is a paragraph, the evidence is the paragra
 # What you run
 
 - `question`: anything unresolved is recorded as state, and refuses completion while it stands
-- `finish`: --verify-command runs the project's own verification and records its exit code and duration
+- `finish`: --verify-command runs the project's own verification and records its exit code, its duration and the tree it ran over
 
 # Scenario
 
@@ -39,7 +39,7 @@ steps:
       exit: 0
       stdout_contains: ['^opened for t-']
   - id: refused-while-open
-    run: ['finish', '--outcome', 'completed', '--verify-command', 'true']
+    run: ['finish', '--outcome', 'completed', '--verify-command', 'test -d .ai']
     note: 'an open question is a blocker; completed is refused'
     expect:
       exit: 10
@@ -51,14 +51,14 @@ steps:
       exit: 0
       stdout_contains: ['resolved']
   - id: accepted
-    run: ['finish', '--outcome', 'completed', '--verify-command', 'true']
+    run: ['finish', '--outcome', 'completed', '--verify-command', 'test -d .ai']
     note: 'every line of the finish contract passes and the outcome is recorded'
     expect:
       exit: 0
       stdout_contains: ['completed']
 then:
   - 'finish writes nothing while any line of the contract fails'
-  - 'the verification command, its exit code and duration are recorded'
+  - 'the verification command, its exit code, its duration and the tree it ran over are recorded'
 ```
 
 # Outcome

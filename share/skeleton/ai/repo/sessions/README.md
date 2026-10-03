@@ -21,8 +21,20 @@ close` writes it; nothing else does, and nothing edits one afterwards.
 
 Everything in the front matter is **derived**. The times come from the clock, the heads and
 the commits from git, and every list — tasks, issues, milestones, checkpoints, handovers,
-decisions, questions, evidence — from the ledger's own events for that episode. The body is
-the only authored part: a summary of the work, given on standard input at close.
+decisions, questions, evidence — from the ledger's own events for that episode.
+
+The body is **composed, and never empty**. An authored summary on standard input at close is
+still taken where one is given, but it was for a long time the body's only producer, and the
+lifecycle closes an episode with `< /dev/null` — so on the automatic path, which is every
+path, the body was empty by construction. A record naming ninety-four commits and saying
+nothing about any of them is a receipt, not a record. Where no summary is authored, the body
+is composed from this episode's own checkpoints, decisions and questions and from what git
+and the ledger prove, and where the episode recorded nothing of its own the section **says
+so by name** and names the command that would have recorded something. Nothing here invents
+a summary: an acknowledged gap is a fact a reader can act on, and a fabricated narrative in
+an append-only record is one nobody can tell from a real one afterwards. The sections are
+declared in `policy.yaml` under `session.record_sections`, and one named there with no
+writer is a configuration error reported by name.
 
 ## What a record may not contain
 
@@ -66,15 +78,35 @@ majordomus session latest --path     # the newest that resolves in this worktree
 
 A record here says what the episode **produced**. What it was **given** is a different object
 and a local one: `session start` freezes the context the builder resolved into
-`.ai/local/session-contexts/<stamp>--<session-id>.md`, over a section for the worker's own
-notes, and `session close` appends the outcome and the path of the record it wrote here. The
-two share a `session_id` and answer opposite questions.
+`.ai/local/session-contexts/<stamp>--<session-id>.md`, and `session close` appends the
+outcome and the path of the record it wrote here. The two share a `session_id` and answer
+opposite questions.
+
+That file is the **opening snapshot** and nothing more. It used to carry a `## Notes`
+heading for the worker to hand-edit, and across the 23 episodes this repository's own
+checkout had opened by 2026-09-11, 23 carried the template and 0 carried a note: a heading
+with no producer is a database nobody writes to, and a lifecycle that depends on a model
+remembering to edit Markdown is not a lifecycle. The heading is gone. What replaced it is
+not a fourth noun for a "note" — `decision`, `question` and `checkpoint` already exist,
+already emit ledger events, and `mj_ledger_append` already stamps each line with the open
+episode's id (`project.no-new-nouns`). What they lacked was a reader.
+
+`majordomus session context` is that reader. It no longer prints a path; it **composes the
+episode's working context on every read** — its identity, git now against git at the open,
+and every checkpoint, decision and question the episode recorded, taken from the ledger
+lines carrying its session id. Nothing caches it, so nothing can serve a stale one, and
+nothing has to remember to refresh it. `--path` prints the opening snapshot instead, which
+is what this command printed before.
+
+Printing the composed context on an explicit request is within the layer's contract and not
+a breach of it: `.ai/README.md` forbids loading `local/` *implicitly* and names the context
+builder, "when a worker asks it", as one of the two routes by which local state legitimately
+reaches a model. What is composed is bounded to repository facts and the worker's own
+records — never the prompt archive, never a transcript.
 
 That half stays local because it names one machine and because it is a snapshot of a
 projection — re-resolving it later gives a different document, so no surface can reproduce it
-and none publishes it. Its contract is `majordomus.session-context/v1`, and
-`majordomus session context` prints its path rather than its content: local evidence is not
-poured into a terminal where a context can pick it up.
+and none publishes it. Its contract is `majordomus.session-context/v1`.
 
 Where a provider fires session events, neither half depends on a worker remembering to write
 it: `majordomus capture install` wires the hooks, and the episode opens and closes with the

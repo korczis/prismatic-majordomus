@@ -1,7 +1,7 @@
 +++
 title = "A verdict that never arrived is not a verdict"
 description = "A verdict that never arrived is not a verdict"
-weight = 101
+weight = 111
 [extra]
 kind = "rule"
 slug = "project-never-reported-is-not-green-1"

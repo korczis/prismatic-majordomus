@@ -1,7 +1,7 @@
 +++
 title = "Hand work over with a question still open, and keep it blocking"
 description = "Close a task into a handover while a question is unresolved, start the follow-up task, and see the same question still refuse acceptance there."
-weight = 18
+weight = 19
 [extra]
 id = "carry-a-blocker-across-a-handover"
 source = ".ai/repo/use-cases/carry-a-blocker-across-a-handover.md"
@@ -54,7 +54,7 @@ steps:
       exit: 0
       stdout_contains: ['^1  \[unresolved\]', 'tabs']
   - id: refused
-    run: ['finish', '--outcome', 'completed', '--verify-command', 'true']
+    run: ['finish', '--outcome', 'completed', '--verify-command', 'test -d .ai']
     note: 'completion of the follow-up is refused by the same entry'
     expect:
       exit: 10

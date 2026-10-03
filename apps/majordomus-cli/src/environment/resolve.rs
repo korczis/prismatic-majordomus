@@ -32,8 +32,8 @@ use crate::share::Share;
 use super::cache::{fingerprint_of, Cache, TOOLCHAIN_LIFETIME};
 use super::{
     services, toolchain, vcs, workflows, FieldSource, KindCount, LayerSummary, ProjectIdentity,
-    ProjectionState, ProviderState, RepositoryEnvironment, RepositoryIdentity, Resolution,
-    TierState, ToolchainAvailability, VcsState,
+    ProjectionState, ProviderState, ReasoningSummary, RepositoryEnvironment, RepositoryIdentity,
+    Resolution, TierState, ToolchainAvailability, VcsState,
 };
 
 /// How many refused files the `layer_degraded` warning names before it counts the rest. A
@@ -380,6 +380,21 @@ pub fn resolve(inputs: &Inputs<'_>, query: &EnvironmentQuery) -> RepositoryEnvir
             format!("{} is declared here and is not installed", missing.title),
         ));
     }
+    for mismatch in toolchains
+        .iter()
+        .filter(|t| t.availability == ToolchainAvailability::Mismatch)
+    {
+        diagnostics.push(Diagnostic::warning(
+            "toolchain_mismatch",
+            Some(mismatch.declared_by.clone()),
+            format!(
+                "{} {} is installed and this file declares {}",
+                mismatch.title,
+                mismatch.installed.as_deref().unwrap_or("?"),
+                mismatch.declared.as_deref().unwrap_or("?"),
+            ),
+        ));
+    }
 
     // ---------------------------------------------------------------- providers
     let (providers, provider_source) =
@@ -428,6 +443,30 @@ pub fn resolve(inputs: &Inputs<'_>, query: &EnvironmentQuery) -> RepositoryEnvir
         ),
     });
 
+    // ---------------------------------------------------------------- reasoning
+    // Presence only: a PATH lookup and a variable test per declared advisor, and the
+    // reasoning records' directory listing. No network and no model, at any tier.
+    let reasoning = inputs.share.and_then(|share| {
+        let declarations = share.providers().ok()?;
+        let situation =
+            crate::reasoning::Situation::resolve(root, Some(share.dir()), &declarations, &[])
+                .ok()?;
+        if situation.catalogue.advisors.is_empty() {
+            return None;
+        }
+        Some(ReasoningSummary {
+            operational: true,
+            mode: situation.mode.mode.as_str().to_string(),
+            unavailable: situation.states.len() - situation.available(),
+            available: situation
+                .states
+                .iter()
+                .filter(|a| a.status == crate::reasoning::AdvisorStatus::Available)
+                .map(|a| a.id.clone())
+                .collect(),
+        })
+    });
+
     let environment = RepositoryEnvironment {
         schema: RepositoryEnvironment::schema_id(),
         generated_at: crate::peers::rfc3339(std::time::SystemTime::now()),
@@ -440,6 +479,7 @@ pub fn resolve(inputs: &Inputs<'_>, query: &EnvironmentQuery) -> RepositoryEnvir
         workflows,
         providers,
         services,
+        reasoning,
         diagnostics,
         provenance,
     };

@@ -578,6 +578,37 @@ impl RuleState {
             RuleState::Proven | RuleState::InputsUnchanged | RuleState::Stale
         )
     }
+
+    /// The one declared mapping of a rule's state onto the evidence vocabulary, and whether
+    /// that state can carry proof when a subject aggregates it.
+    ///
+    /// A gate refuses violations, but no recorded run proves the behaviour, so `gated` reads
+    /// `not_run`. A reviewed exemption and a rule that names nothing read `no_test`; only a
+    /// blocking rule that names nothing drags a subject, because only for it is that a
+    /// defect. A dangling path reads `unrunnable` and still drags.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::ProofState;
+    /// use majordomus_cli::rules::{Class, RuleState};
+    ///
+    /// assert_eq!(RuleState::Gated.as_proof(Class::Blocking), (ProofState::NotRun, true));
+    /// assert_eq!(RuleState::Reviewed.as_proof(Class::Blocking), (ProofState::NoTest, false));
+    /// assert_eq!(RuleState::Unproven.as_proof(Class::Blocking), (ProofState::NoTest, true));
+    /// assert_eq!(RuleState::Unproven.as_proof(Class::Advisory), (ProofState::NoTest, false));
+    /// assert_eq!(RuleState::Dangling.as_proof(Class::Advisory), (ProofState::Unrunnable, true));
+    /// ```
+    pub fn as_proof(self, class: Class) -> (ProofState, bool) {
+        match self {
+            RuleState::Proven => (ProofState::Proven, true),
+            RuleState::InputsUnchanged => (ProofState::InputsUnchanged, true),
+            RuleState::Stale => (ProofState::Stale, true),
+            RuleState::Failing => (ProofState::Failing, true),
+            RuleState::NotRun | RuleState::Gated => (ProofState::NotRun, true),
+            RuleState::Unrunnable | RuleState::Dangling => (ProofState::Unrunnable, true),
+            RuleState::Reviewed => (ProofState::NoTest, false),
+            RuleState::Unproven => (ProofState::NoTest, class == Class::Blocking),
+        }
+    }
 }
 
 /// One rule, joined to everything the repository can show about it.
@@ -1017,7 +1048,7 @@ pub fn definitions(index: &Index) -> Vec<RuleDefinition> {
 /// thing this rule names — and that is answerable from the one line each gate states
 /// directly, its `runs:`. No gate id is written down here: a gate renamed in that file is
 /// renamed in this answer, which is the whole reason to read it rather than to restate it.
-fn gate_commands(root: &Path) -> Vec<(String, String)> {
+pub(crate) fn gate_commands(root: &Path) -> Vec<(String, String)> {
     let Ok(text) = std::fs::read_to_string(root.join(GATES_PATH)) else {
         return Vec::new();
     };
@@ -1044,7 +1075,7 @@ fn gate_commands(root: &Path) -> Vec<(String, String)> {
 /// drives the crate's tests, for a path under the crate's test directory. A path none of
 /// these resolves gets no gate, which is reported rather than guessed — an over-claimed
 /// gate is the same defect as an over-claimed test.
-fn gates_for(path: &str, commands: &[(String, String)]) -> Vec<String> {
+pub(crate) fn gates_for(path: &str, commands: &[(String, String)]) -> Vec<String> {
     let mut out: BTreeSet<String> = BTreeSet::new();
     for (gate, runs) in commands {
         let names_path = runs.split_whitespace().any(|w| w == path);
@@ -1087,6 +1118,59 @@ fn gate_runs_exactly(gate: &str, path: &str, commands: &[(String, String)]) -> b
     commands
         .iter()
         .any(|(g, runs)| g == gate && runs.split_whitespace().any(|w| w == path))
+}
+
+/// For every commit the ledger recorded a run against, its comparison with the working tree,
+/// through the one freshness function the evidence report uses.
+///
+/// Asked once per report, whatever the number of subjects: rules and skills both judge a
+/// test's run against these, and a subject never runs `git diff` of its own.
+pub(crate) fn ledger_comparisons(root: &Path, ledger: &Ledger) -> BTreeMap<String, Comparison> {
+    let presented = Presented::WorkingTree;
+    let mut comparisons: BTreeMap<String, Comparison> = BTreeMap::new();
+    for e in &ledger.executions {
+        comparisons
+            .entry(e.commit.clone())
+            .or_insert_with(|| freshness::compare(root, &e.commit, &presented));
+    }
+    comparisons
+}
+
+/// What the ledger says about one named test, for one subject file: the one judgement of a
+/// recorded run that rules and skills share, so the two can never disagree about a test.
+///
+/// No runner owns the path: `unrunnable`. Nothing recorded: `not_run`. Otherwise the run is
+/// judged by [`freshness::freshness`] at the working tree, with the test's source and the
+/// subject as its only declared inputs: a failing run is `failing`, a pass whose test or
+/// subject changed (or whose test no longer hashes to what ran, or that git cannot compare)
+/// is `stale`, and a pass is `proven` only when nothing changed but the ledger and the run
+/// measured a clean tree — a run recorded on a dirty tree is capped at `inputs_unchanged`.
+pub(crate) fn test_state(
+    root: &Path,
+    comparisons: &BTreeMap<String, Comparison>,
+    id: Option<&TestId>,
+    execution: Option<&Execution>,
+    subject: &str,
+) -> ProofState {
+    let recorded = match (id, execution) {
+        (None, _) => Recorded::Unrunnable,
+        (Some(_), None) => Recorded::NotRun,
+        (Some(_), Some(e)) => Recorded::Ran(e),
+    };
+    // what the subject names, and nothing else: the test and the subject's own file
+    let test_source = id.map(TestId::source).unwrap_or_default();
+    let inputs = [test_source.clone(), subject.to_string()];
+    let test_moved =
+        execution.is_some_and(|e| e.outcome.proves() && e.digest_matches(root) == Some(false));
+    freshness::freshness(
+        recorded,
+        Some(&inputs),
+        &test_source,
+        test_moved,
+        execution.and_then(|e| comparisons.get(&e.commit)),
+        TreeState::Clean,
+    )
+    .state
 }
 
 /// Map one test's [`ProofState`] onto the rule vocabulary. The two agree everywhere they
@@ -1171,15 +1255,7 @@ pub fn report(index: &Index, ledger: &Ledger) -> RulesReport {
         crate::git::GitState::Unavailable { .. } => (None, "unknown".to_string()),
     };
 
-    // Rules are judged at the working tree, through the one freshness function the evidence
-    // report uses: one comparison per commit the ledger names, shared by every rule.
-    let presented = Presented::WorkingTree;
-    let mut comparisons: BTreeMap<String, Comparison> = BTreeMap::new();
-    for e in &ledger.executions {
-        comparisons
-            .entry(e.commit.clone())
-            .or_insert_with(|| freshness::compare(&root, &e.commit, &presented));
-    }
+    let comparisons = ledger_comparisons(&root, ledger);
     let gate_commands = gate_commands(&root);
 
     let defs = definitions(index);
@@ -1230,26 +1306,13 @@ pub fn report(index: &Index, ledger: &Ledger) -> RulesReport {
                 .as_ref()
                 .and_then(|t| ledger.latest(&t.as_string()))
                 .cloned();
-            let recorded = match (&id, &execution) {
-                (None, _) => Recorded::Unrunnable,
-                (Some(_), None) => Recorded::NotRun,
-                (Some(_), Some(e)) => Recorded::Ran(e),
-            };
-            // what this rule names, and nothing else: the test and the rule's own definition
-            let test_source = id.as_ref().map(TestId::source).unwrap_or_default();
-            let inputs = [test_source.clone(), def.path.clone()];
-            let test_moved = execution
-                .as_ref()
-                .is_some_and(|e| e.outcome.proves() && e.digest_matches(&root) == Some(false));
-            let state = freshness::freshness(
-                recorded,
-                Some(&inputs),
-                &test_source,
-                test_moved,
-                execution.as_ref().and_then(|e| comparisons.get(&e.commit)),
-                TreeState::Clean,
-            )
-            .state;
+            let state = test_state(
+                &root,
+                &comparisons,
+                id.as_ref(),
+                execution.as_ref(),
+                &def.path,
+            );
             tests.push(TestProof {
                 gates,
                 kind,

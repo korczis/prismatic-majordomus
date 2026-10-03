@@ -1,7 +1,7 @@
 +++
 title = "GitHub Pages performance"
 description = "how a push becomes public: the publication path separated from the gates that decide merging, controlled against external latency, the derived trigger, the input fingerprint that replaces a generation, the caches and what each is worth, the budgets and where they live, how publication itself is measured, and the bottlenecks that remain"
-weight = 64
+weight = 69
 [extra]
 source = "docs/GITHUB_PAGES_PERFORMANCE.md"
 +++
@@ -413,6 +413,12 @@ scripts/site-deploy              # the full gate and the push, the way a person 
 ```
 
 `scripts/pages build` refuses a tree whose derived data is stale and tells you the two hashes.
+
+`scripts/pages current` also records its verdict, with the tree it checked, at
+`.ai/local/state/generation/check.json`. The pre-commit hook runs it, so after a commit that
+tree is HEAD's, and the preflight's `verification.docs` check reads the record
+(`docs/PREFLIGHT.md`). An unstaged edit is recorded with no tree, because the files that were
+checked are not the tree the index names.
 The cure is always the same: `scripts/generate-site-data` (or `just derive`) and commit the
 result.
 

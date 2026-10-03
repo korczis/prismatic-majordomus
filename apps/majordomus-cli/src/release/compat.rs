@@ -1041,9 +1041,10 @@ pub struct Baseline {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "ReleaseDiagnostic")]
 pub struct Diagnostic {
-    /// `tag-without-record`, `record-without-tag`, `tag-commit-mismatch`.
+    /// `tag-without-record`, `tag-predates-records`, `record-without-tag`,
+    /// `tag-commit-mismatch`.
     pub id: String,
-    /// Whether it stops a release or only warns.
+    /// Whether it stops a release, only warns, or only informs.
     pub severity: Severity,
     /// What is wrong, in one sentence.
     pub message: String,
@@ -1052,11 +1053,13 @@ pub struct Diagnostic {
 /// How much a diagnostic matters.
 ///
 /// An error says the plan itself cannot be trusted and blocks the verdict; a warning says
-/// something about the release state is wrong and the verdict stands anyway.
+/// something about the release state is wrong and the verdict stands anyway; a note says
+/// something true and not wrong, so that the warnings keep meaning what they say.
 ///
 /// ```
 /// use majordomus_cli::release::compat::Severity;
 /// assert_ne!(Severity::Error, Severity::Warning);
+/// assert_ne!(Severity::Warning, Severity::Note);
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -1066,6 +1069,8 @@ pub enum Severity {
     Error,
     /// The plan stands, and something is still wrong.
     Warning,
+    /// Nothing is wrong; the reader is told something about the release state anyway.
+    Note,
 }
 
 /// Every version tag this repository carries, newest last.
@@ -1110,6 +1115,123 @@ fn records(objects: &[Object]) -> Vec<(Version, String, Option<String>, Option<S
     list
 }
 
+/// The release a version is measured from, named without reading its surface.
+///
+/// ```
+/// use majordomus_cli::release::compat::LastRelease;
+/// let tagged = LastRelease {
+///     version: "0.5.0".into(),
+///     reference: "v0.5.0".into(),
+///     read_at: "v0.5.0".into(),
+///     recorded: false,
+/// };
+/// // a release known only from its tag is read at the tag itself
+/// assert_eq!(tagged.read_at, tagged.reference);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LastRelease {
+    /// `0.5.0`.
+    pub version: String,
+    /// `v0.5.0`: the release, as a reader recognises it.
+    pub reference: String,
+    /// The ref its tree is read from: the commit its record names, else its tag.
+    pub read_at: String,
+    /// Whether the layer holds a record for it, rather than only a tag.
+    pub recorded: bool,
+}
+
+/// The newest release by version: the highest the layer records, else the highest version
+/// tag. The one selection — [`analyze`]'s baseline and the version report's last release
+/// are both this, so the contract and the commit evidence always measure the same window.
+fn latest(
+    records: &[(Version, String, Option<String>, Option<String>)],
+    tags: &[String],
+) -> Option<LastRelease> {
+    match records.last() {
+        Some((_, raw, tag, commit)) => Some(LastRelease {
+            version: raw.clone(),
+            reference: tag.clone().unwrap_or_else(|| format!("v{raw}")),
+            read_at: commit
+                .clone()
+                .or_else(|| tag.clone())
+                .unwrap_or_else(|| format!("v{raw}")),
+            recorded: true,
+        }),
+        None => tags.last().map(|t| LastRelease {
+            version: t.trim_start_matches('v').to_string(),
+            reference: t.clone(),
+            read_at: t.clone(),
+            recorded: false,
+        }),
+    }
+}
+
+/// The release [`analyze`] measures from when no `--since` is given, named without reading
+/// its surface — `None` when nothing was published.
+///
+/// ```
+/// use majordomus_cli::release::compat::last_release;
+/// let dir = tempfile::tempdir().unwrap();
+/// assert_eq!(last_release(dir.path(), &[]), None);
+/// ```
+pub fn last_release(root: &Path, objects: &[Object]) -> Option<LastRelease> {
+    latest(&records(objects), &tags(root))
+}
+
+/// What to say about a tag the layer holds no release record for.
+///
+/// Two different things wear that shape, and calling both a defect is how the warning
+/// stopped being read. Recording began at the earliest record the layer holds: a tag below
+/// that version was cut before the practice existed, the release-record baseline
+/// (`.ai/repo/release-record-baseline.txt`) already carries it as known debt, and no record
+/// can be written for it now without inventing the digests a record is made of. A tag at or
+/// above that version with no record is the real defect — something was published and the
+/// evidence was not kept.
+///
+/// A tag whose name is not a version, and a layer with no records at all, both fall to the
+/// warning: neither can be shown to predate anything.
+///
+/// ```
+/// use majordomus_cli::release::compat::{unrecorded_tag, Severity};
+/// use majordomus_cli::release::version::Version;
+///
+/// let first = Version::parse("0.3.1").unwrap();
+/// let old = unrecorded_tag("v0.2.0", Some(&first));
+/// assert_eq!(old.severity, Severity::Note);
+/// assert_eq!(old.id, "tag-predates-records");
+///
+/// let new = unrecorded_tag("v0.4.0", Some(&first));
+/// assert_eq!(new.severity, Severity::Warning);
+/// assert_eq!(new.id, "tag-without-record");
+/// ```
+pub fn unrecorded_tag(tag: &str, first_recorded: Option<&Version>) -> Diagnostic {
+    let predates = match (first_recorded, Version::parse(tag.trim_start_matches('v'))) {
+        (Some(first), Some(v)) => v < *first,
+        _ => false,
+    };
+    match (predates, first_recorded) {
+        (true, Some(first)) => Diagnostic {
+            id: "tag-predates-records".into(),
+            severity: Severity::Note,
+            message: format!(
+                "{tag} is tagged and the layer holds no release record for it, because it \
+                 predates v{}.{}.{}, the earliest release this layer records; the changelog \
+                 and every baseline begin there",
+                first.major, first.minor, first.patch
+            ),
+        },
+        _ => Diagnostic {
+            id: "tag-without-record".into(),
+            severity: Severity::Warning,
+            message: format!(
+                "{tag} is tagged and the layer holds no release record for it; \
+                 the changelog and every baseline read the records, so this release is \
+                 invisible to them"
+            ),
+        },
+    }
+}
+
 /// Find the release to measure against, and say what is incoherent about the release state
 /// on the way.
 ///
@@ -1134,15 +1256,15 @@ fn resolve_baseline(
         .iter()
         .map(|(_, raw, tag, _)| tag.clone().unwrap_or_else(|| format!("v{raw}")))
         .collect();
+    // A tag with no record is two different things, and calling both a defect is how the
+    // warning stopped being read. Recording began at the earliest record this layer holds:
+    // every tag below that version was cut before the practice existed, and no record can be
+    // written for it now without inventing the digests a record is made of. A tag at or above
+    // that version with no record is the real defect — something was published and the layer
+    // did not keep the evidence.
+    let first_recorded = records.iter().map(|(v, ..)| v).min().cloned();
     for t in tagged.difference(&recorded_tags) {
-        diagnostics.push(Diagnostic {
-            id: "tag-without-record".into(),
-            severity: Severity::Warning,
-            message: format!(
-                "{t} is tagged and the layer holds no release record for it; \
-                 the changelog and every baseline read the records, so this release is invisible to them"
-            ),
-        });
+        diagnostics.push(unrecorded_tag(t, first_recorded.as_ref()));
     }
     for t in recorded_tags.difference(&tagged) {
         diagnostics.push(Diagnostic {
@@ -1165,28 +1287,21 @@ fn resolve_baseline(
             r.to_string(),
             r.to_string(),
         ),
-        None => match records.last() {
-            Some((_, raw, tag, commit)) => (
-                raw.clone(),
-                tag.clone().unwrap_or_else(|| format!("v{raw}")),
-                commit
-                    .clone()
-                    .or_else(|| tag.clone())
-                    .unwrap_or_else(|| format!("v{raw}")),
-            ),
-            None => match tags.last() {
-                Some(t) => {
+        None => match latest(&records, &tags) {
+            Some(last) => {
+                if !last.recorded {
                     diagnostics.push(Diagnostic {
                         id: "baseline-from-tag".into(),
                         severity: Severity::Warning,
                         message: format!(
-                            "the layer records no release, so {t} was taken as the baseline from git's tags alone"
+                            "the layer records no release, so {} was taken as the baseline from git's tags alone",
+                            last.reference
                         ),
                     });
-                    (t.trim_start_matches('v').to_string(), t.clone(), t.clone())
                 }
-                None => return Err(SurfaceError::NothingPublished),
-            },
+                (last.version, last.reference, last.read_at)
+            }
+            None => return Err(SurfaceError::NothingPublished),
         },
     };
 
@@ -1351,6 +1466,72 @@ pub struct VersionPlan {
 }
 
 impl VersionPlan {
+    /// The version the contract requires, when the analysis could measure one.
+    ///
+    /// The analysis still returns a plan when a fact it rests on is untrustworthy — a version
+    /// that is not three numbers (`baseline-version-malformed`, `declared-version-malformed`,
+    /// then a guess), a baseline whose record and tag name different commits
+    /// (`tag-commit-mismatch`), a version stated by hand (`writers-disagree`,
+    /// `version-stated-by-hand`) — so a caller that takes `required_version` as the
+    /// contract's answer must ask this instead. It is sound exactly when `release bump` would
+    /// write from it: any [`Severity::Error`] diagnostic ([`VersionPlan::has_errors`]) refuses,
+    /// with every error's message, one per line, as `bump` prints them.
+    ///
+    /// ```
+    /// # use majordomus_cli::release::compat::*;
+    /// # use majordomus_cli::release::version::Version;
+    /// # fn plan(required_version: &str, diagnostics: Vec<Diagnostic>) -> VersionPlan {
+    /// #   VersionPlan { policy: Policy::for_version(Version::parse("0.5.0").unwrap()),
+    /// #     baseline: Baseline { version: "0.5.0".into(), reference: "v0.5.0".into(),
+    /// #       read_at: "c".into(), commit: "c".into(), recorded: true, atoms: 1,
+    /// #       fingerprint: "sha256:a".into() },
+    /// #     declared_version: required_version.into(), tool_version: "0.5.0".into(),
+    /// #     writers_agree: true, atoms: 1, fingerprint: "sha256:b".into(),
+    /// #     implied: Impact::Minor, required: Impact::Minor, declared: Impact::None,
+    /// #     required_version: required_version.into(), status: Status::Blocked,
+    /// #     breaking: false, changes: Vec::new(),
+    /// #     commits: CommitEvidence { commits: 0, implied: Impact::None, breaking: Vec::new() },
+    /// #     understated: false, diagnostics }
+    /// # }
+    /// assert_eq!(plan("0.6.0", Vec::new()).measured_version(), Ok("0.6.0".into()));
+    /// // no version line in the manifest: the analysis echoes "", which is no answer
+    /// assert!(plan("", Vec::new()).measured_version().is_err());
+    /// let guessed = Diagnostic { id: "baseline-version-malformed".into(),
+    ///     severity: Severity::Error, message: "the baseline is not three numbers".into() };
+    /// assert_eq!(plan("0.6.0", vec![guessed]).measured_version(),
+    ///     Err("the baseline is not three numbers".into()));
+    /// // any error refuses, not only a malformed version: the plan bump would not write from
+    /// let moved = Diagnostic { id: "tag-commit-mismatch".into(),
+    ///     severity: Severity::Error, message: "the tag moved".into() };
+    /// let stale = Diagnostic { id: "projection-stale".into(),
+    ///     severity: Severity::Warning, message: "run scripts/derive".into() };
+    /// assert_eq!(plan("0.6.0", vec![stale.clone()]).measured_version(), Ok("0.6.0".into()));
+    /// let unsound = plan("0.6.0", vec![moved.clone(), stale, moved]);
+    /// assert!(unsound.has_errors());
+    /// assert_eq!(unsound.measured_version(), Err("the tag moved\nthe tag moved".into()));
+    /// ```
+    pub fn measured_version(&self) -> Result<String, String> {
+        // One soundness test with `release bump`: the plan it refuses to write from is the
+        // plan the report refuses to decide from, for the same reasons.
+        if self.has_errors() {
+            let errors: Vec<&str> = self
+                .diagnostics
+                .iter()
+                .filter(|d| d.severity == Severity::Error)
+                .map(|d| d.message.as_str())
+                .collect();
+            return Err(errors.join("\n"));
+        }
+        Version::parse(&self.required_version)
+            .map(|v| v.to_string())
+            .ok_or_else(|| {
+                format!(
+                    "the contract's required version '{}' is not three numbers",
+                    self.required_version
+                )
+            })
+    }
+
     /// How many changes moved the contract in each direction.
     ///
     /// ```
@@ -1648,6 +1829,35 @@ mod tests {
     /// The changes, for cases that assert on what was named rather than only how much.
     fn changes(base: Value, head: Value) -> Vec<SurfaceChange> {
         diff(&surface(base), &surface(head))
+    }
+
+    /// The two shapes of an unrecorded tag, and the two ways the question cannot be asked.
+    #[test]
+    fn a_tag_older_than_the_practice_is_a_note_and_a_newer_one_is_a_defect() {
+        let first = Version::parse("0.3.1").expect("a version");
+
+        // cut before the record practice began (.ai/repo/release-record-baseline.txt): a note
+        for tag in ["v0.1.0", "v0.2.0", "v0.3.0"] {
+            let d = unrecorded_tag(tag, Some(&first));
+            assert_eq!(d.severity, Severity::Note, "{tag}");
+            assert_eq!(d.id, "tag-predates-records", "{tag}");
+            assert!(d.message.contains("predates v0.3.1"), "{}", d.message);
+        }
+
+        // the same version as the earliest record is not below it, and above it is the defect
+        for tag in ["v0.3.1", "v0.4.0", "v1.0.0"] {
+            let d = unrecorded_tag(tag, Some(&first));
+            assert_eq!(d.severity, Severity::Warning, "{tag}");
+            assert_eq!(d.id, "tag-without-record", "{tag}");
+        }
+
+        // nothing recorded at all: there is no practice to predate
+        assert_eq!(unrecorded_tag("v0.1.0", None).severity, Severity::Warning);
+        // a tag that is not a version cannot be placed either way
+        assert_eq!(
+            unrecorded_tag("v0.2.0-ai-documents", Some(&first)).id,
+            "tag-without-record"
+        );
     }
 
     // ------------------------------------------------------------------- identity and bindings
@@ -2089,5 +2299,180 @@ mod tests {
         let v = json!({"b": 1, "a": {"d": 2, "c": [{"f": 3, "e": 4}]}, "description": "x"});
         let once = normalise(&v);
         assert_eq!(normalise(&once), once);
+    }
+
+    // ------------------------------------------------------------------- the baseline
+
+    /// A record as [`records`] reads it: the version, its raw spelling, its tag, its commit.
+    fn record(
+        raw: &str,
+        tag: Option<&str>,
+        commit: Option<&str>,
+    ) -> (Version, String, Option<String>, Option<String>) {
+        (
+            Version::parse(raw).expect("three numbers"),
+            raw.to_string(),
+            tag.map(str::to_string),
+            commit.map(str::to_string),
+        )
+    }
+
+    /// The baseline is the newest release the layer records, read at the commit the record
+    /// names; a tag stands in only when nothing is recorded, and says that it did.
+    #[test]
+    fn the_newest_release_is_the_layers_record_and_a_tag_only_stands_in_for_none() {
+        let tags = vec!["v0.1.0".to_string(), "v0.9.0".to_string()];
+        // a record wins over a newer tag, and is read at its own commit, named by its tag
+        let recorded = latest(&[record("0.5.0", Some("v0.5.0"), Some("abc123"))], &tags);
+        assert_eq!(
+            recorded,
+            Some(LastRelease {
+                version: "0.5.0".into(),
+                reference: "v0.5.0".into(),
+                read_at: "abc123".into(),
+                recorded: true,
+            })
+        );
+        // the newest of several records, by version
+        let newest = latest(
+            &[
+                record("0.2.0", Some("v0.2.0"), Some("aaa")),
+                record("0.3.0", Some("v0.3.0"), Some("bbb")),
+            ],
+            &[],
+        );
+        assert_eq!(newest.map(|l| l.read_at), Some("bbb".to_string()));
+        // a record that names no commit is read at its tag
+        let at_tag = latest(&[record("0.5.0", Some("v0.5.0"), None)], &[]).unwrap();
+        assert_eq!(
+            (at_tag.reference.as_str(), at_tag.read_at.as_str()),
+            ("v0.5.0", "v0.5.0")
+        );
+        // and one that names neither is the tag its version spells
+        let bare = latest(&[record("0.5.0", None, None)], &[]).unwrap();
+        assert_eq!(
+            (bare.reference.as_str(), bare.read_at.as_str()),
+            ("v0.5.0", "v0.5.0")
+        );
+        assert!(bare.recorded);
+        // nothing recorded: the newest tag, read at itself, and not a record
+        assert_eq!(
+            latest(&[], &tags),
+            Some(LastRelease {
+                version: "0.9.0".into(),
+                reference: "v0.9.0".into(),
+                read_at: "v0.9.0".into(),
+                recorded: false,
+            })
+        );
+        // nothing published at all
+        assert_eq!(latest(&[], &[]), None);
+    }
+
+    /// A git repository whose one commit carries `registry` at the registry's path and a
+    /// manifest declaring `version`, tagged `v<version>`: a release known only from git.
+    fn tagged(registry: Value, version: &str) -> tempfile::TempDir {
+        let dir = tempfile::tempdir().expect("a temporary directory");
+        let root = dir.path();
+        let git = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .current_dir(root)
+                .args(args)
+                .output()
+                .expect("git runs");
+            assert!(out.status.success(), "git {args:?}: {out:?}");
+        };
+        git(&["init", "-q"]);
+        git(&["config", "user.email", "t@example.com"]);
+        git(&["config", "user.name", "t"]);
+        let write = |rel: &str, text: &str| {
+            let p = root.join(rel);
+            std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+            std::fs::write(p, text).unwrap();
+        };
+        write(
+            crate::release::surface::REGISTRY,
+            &serde_json::to_string(&registry).unwrap(),
+        );
+        write(
+            crate::release::version::MANIFEST,
+            &format!("[package]\nname = \"majordomus-cli\"\nversion = \"{version}\"\n"),
+        );
+        git(&["add", "-A"]);
+        git(&["commit", "-q", "-m", "release"]);
+        git(&["tag", &format!("v{version}")]);
+        dir
+    }
+
+    /// With no `--since`, and a release git knows and the layer does not record, the
+    /// baseline is the tag — measured, at the tag's tree — and the answer says it was taken
+    /// from the tags alone rather than passing a tag off as a record.
+    #[test]
+    fn a_release_known_only_from_its_tag_is_the_baseline_and_says_so() {
+        let empty = json!({"schema": "majordomus/capability-registry/v1", "capabilities": []});
+        let dir = tagged(empty, "0.1.0");
+        let mut diagnostics = Vec::new();
+        let baseline =
+            resolve_baseline(dir.path(), &[], None, &mut diagnostics).expect("a baseline");
+        assert_eq!(baseline.version, "0.1.0");
+        assert_eq!(baseline.reference, "v0.1.0");
+        assert_eq!(baseline.read_at, "v0.1.0");
+        assert!(!baseline.recorded);
+        assert_eq!(
+            baseline.commit.len(),
+            40,
+            "the tag's commit: {}",
+            baseline.commit
+        );
+        let from_tag = diagnostics
+            .iter()
+            .find(|d| d.id == "baseline-from-tag")
+            .expect("the baseline says it came from a tag");
+        assert_eq!(from_tag.severity, Severity::Warning);
+        assert!(from_tag.message.contains("v0.1.0"), "{}", from_tag.message);
+        assert!(
+            diagnostics.iter().any(|d| d.id == "tag-without-record"),
+            "{diagnostics:?}"
+        );
+        assert!(diagnostics.iter().all(|d| d.severity == Severity::Warning));
+    }
+
+    /// The contract's answer is the plan's required version exactly when the plan is
+    /// sound: every error refuses, all of them named, and a required version that is not
+    /// three numbers is no answer either.
+    #[test]
+    fn the_measured_version_is_the_plans_answer_only_when_the_plan_is_sound() {
+        let empty = json!({"schema": "majordomus/capability-registry/v1", "capabilities": []});
+        let dir = tagged(empty, "0.1.0");
+        let registry = crate::capability::registry::CapabilityRegistry::builder()
+            .build()
+            .expect("an empty registry");
+        let plan = analyze(dir.path(), &registry, &[], None).expect("a plan");
+        // nothing moved since the tag: the contract requires the release already made
+        assert!(!plan.has_errors(), "{:?}", plan.diagnostics);
+        assert_eq!(plan.required_version, "0.1.0");
+        assert_eq!(plan.measured_version(), Ok("0.1.0".to_string()));
+
+        let error = |message: &str| Diagnostic {
+            id: "tag-commit-mismatch".into(),
+            severity: Severity::Error,
+            message: message.into(),
+        };
+        let mut unsound = plan.clone();
+        unsound.diagnostics.push(error("the tag moved"));
+        unsound
+            .diagnostics
+            .push(error("the record names another commit"));
+        assert_eq!(
+            unsound.measured_version(),
+            Err("the tag moved\nthe record names another commit".to_string())
+        );
+
+        let mut guessed = plan;
+        guessed.required_version = "0.1".into();
+        assert_eq!(
+            guessed.measured_version(),
+            Err("the contract's required version '0.1' is not three numbers".to_string())
+        );
     }
 }

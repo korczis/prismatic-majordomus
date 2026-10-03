@@ -492,6 +492,96 @@ Both read the same derivation, so the two directions cannot disagree. A claim th
 does not declare is a not-found rather than an empty answer: a typo that read as "this
 claim has no evidence" is the one answer these capabilities must never give.
 
+## Subjects: what a verdict is about
+
+A claim is one thing a reader asks about, and not the only one. A reader also asks whether
+a feature is proven, what tests a command, what proves a rule. Each of those is a *subject*:
+one declaration the repository already makes, named by a key `<kind>:<id>` — `claim:<id>`,
+`rule:<id>` (the rule's id without its version), `feature:<id>`, `command:<path>` (the words
+of a command joined by one space, `command:commit plan`), `capability:<id>`, `mcp:<tool>`
+and `use_case:<id>`. The subject index says, for every one of them, which subjects it is
+made of and which tests it reaches; nothing lists either by hand.
+
+| Kind | Its own routes | Its members |
+|---|---|---|
+| claim | the test the claim names, judged by the claim's source, implementation and test source | none |
+| rule | every path its enforcement block names that a runner drives; any other named path is listed as a mechanism | none |
+| command | the cases whose first covers line names it (behaviour) and whose first negative line names it (negative); for a documented example path, the binary that runs every example, where that binary exists | none |
+| capability | the cases whose first covers or negative line names `capability:<id>` | its command-line path, and every claim implemented in the file its module is composed in |
+| mcp | none | the capability that declares the tool, of which it is an alias |
+| use case | its scenario, which the ledger does not record | the commands it runs, the rules it exercises, the claims it evidences and the MCP tools it calls |
+| feature | none | the claims, rules, commands and use cases it names |
+
+A command word is a public command of the shell tool, a documented example path of the
+executable or a capability's command-line path, and the subject names the programs it
+belongs to. Those are the words of the command graph (`majordomus commands graph`): every
+command of the executable that can be run carries a documented example and a group that only
+holds commands carries none, so a group such as `evidence` is not a word of the executable,
+and a case holds the command subjects and their programs equal to the graph's. A word both
+programs answer to is one subject naming both, with the advisory finding
+`command_in_two_programs`: its header routes prove the shell tool and its example route
+proves the executable. The members form a graph with no cycles — a use case never
+includes the features that name it, and nothing includes a feature — and a reference that
+resolves to nothing is skipped here and reported by the product validation.
+
+A subject's verdict is the one aggregation the claims and the rules already use, over its
+parts: a failing part makes the subject failing; otherwise the verdict is the weakest of the
+parts that can carry proof; otherwise the weakest of all its parts; and a subject with no
+part reads `no_test`. The totals of its parts, by state, are always beside the verdict, so
+one `not_run` part is never hidden behind it. A subject is judged over its own routes and
+its members' own verdicts, never over its members' raw routes. It is judged at the presented
+revision, as `evidence show --presented` judges a claim: a claim route is the claim join's
+proof, a command's routes go through the same truth table and the same monotone rule over
+the working ledger's uncommitted run, and the rules report, which judges the working tree,
+is capped by the presented tree, so a rule-derived `proven` becomes `inputs unchanged` when
+the presented tree is not its commit, as every other route does. A surface that reads records
+beyond the tracked ledger may weaken a route before anything is aggregated, and never
+strengthen it: the route keeps the weaker of the two states.
+
+A rule subject reads its rule proof's state through one declared mapping:
+
+| Rule state | Evidence state | Can carry proof |
+|---|---|---|
+| `proven`, `inputs_unchanged`, `stale`, `failing`, `not_run`, `unrunnable` | the same word | yes |
+| `gated` | `not_run`: a gate refuses violations, and no recorded run proves the behaviour | yes |
+| `reviewed` | `no_test` | no |
+| `unproven` | `no_test` | only for a blocking rule, for which naming nothing is a defect |
+| `dangling` | `unrunnable`, and a subject made of it carries the finding `dangling_member` | yes |
+
+A scenario and a mechanism are listed so that a reader sees them, and neither ever decides
+a verdict: the ledger holds no scenario run, and a mechanism is a gate or a script that
+refuses violations rather than a run that passed. A feature whose members reach no test a
+runner drives carries the finding `feature_without_evidence`. The subject findings are
+advisory until the gate slice holds them.
+
+The committed index, `site/data/registry/evidence-subjects.json`, is written by
+`majordomus generate site` and carries structure only: no ledger row, no commit and no time,
+so recording a run never makes it stale, and `generate --check` refuses a copy that differs
+from the derivation. Shell and jq only join it. It replaces or holds equal the shell
+derivations of subject to test that came before it:
+
+- the command pages (`scripts/generate-site-data`) read the first covers and negative line
+  of every case, as the index does, and a case holds the two equal until the pages join the
+  index instead;
+- the command-coverage doctrine (`lib/commands.sh`) reads the same first line;
+- the `command-furnished` gate and the use-case impact trace match a command anywhere in
+  any covers line between word boundaries, so they would read a second header of a kind,
+  and a command inside a longer word (`capability:commit.plan` holds `plan`); a case holds
+  every case to one header of each kind, and its covers line to naming the same public
+  commands under both readings, so they cannot yet disagree; the gate slice moves them onto
+  the index;
+- the capability pages (`scripts/lib/executable-site.jq`) give every capability the claims
+  implemented in its module's file, and a case holds them equal to the index;
+- the doctrine pages name the first test of each rule, and a case holds every one of them to
+  a route or a mechanism of that rule.
+
+```sh
+jq '.subjects["feature:evidence"]' site/data/registry/evidence-subjects.json
+majordomus generate site --check
+```
+
+ADR 0087 (proposed) records the decision to index evidence by subject.
+
 ## The gate
 
 [`scripts/evidence-check`](../scripts/evidence-check) renders the executable's own answer
@@ -590,8 +680,8 @@ as ADR 0087 amends it.
 
 ```mermaid
 flowchart LR
-  suite["suite job<br>suite.tsv · suite-tree.json"]
-  crate["rust job<br>cargo-test.txt · crate-tree.json"]
+  suite["suite job, four shards<br>suite.tsv · suite-tree.json, joined"]
+  crate["rust job, three lanes<br>cargo-test-1..3.txt · crate-tree.json, joined"]
   cov["coverage job<br>coverage.json"]
   collect["evidence job<br>scripts/ci/evidence-collect"]
   artifact["artifact `evidence`<br>report · ledger · coverage · manifest"]
@@ -687,6 +777,7 @@ newer run will refresh it.
 ```sh
 scripts/pages evidence                          # this commit, fetched with gh
 scripts/pages evidence --from <dir> --out FILE  # a gathered directory, offline
+cat cargo-test-*.txt > cargo-test.txt   # the rust job's three lanes, joined
 scripts/ci/evidence-collect --out <dir> --suite suite.tsv --suite-tree suite-tree.json \
   --crate-output cargo-test.txt --crate-tree crate-tree.json --coverage coverage.json
 ```

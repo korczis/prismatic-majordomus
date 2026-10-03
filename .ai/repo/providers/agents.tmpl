@@ -39,6 +39,13 @@ semantic definition across projections is a design defect (`docs/CAPABILITIES.md
 New repository automation is a typed or scripted capability (ADR 0069), not shell;
 `majordomus shell check` refuses a shell unit `.ai/repo/automation/` does not exempt.
 
+Material engineering uncertainty is reasoned about through `majordomus reasoning` (ADR
+0098, `docs/REASONING.md`): record the assessment with its evidence, let
+`scripts/advisor-consult` ask whichever optional advisors the plan selects, settle a
+disagreement with an experiment rather than a count, record the conclusion, and continue.
+No advisor is needed; an absent one is reported state, never a reason to stop or to ask a
+person what to do.
+
 A capability you add or change has use cases: run `majordomus usecase impact` and the
 scenarios it names, and close a coverage gap (`majordomus usecase coverage`) with a use
 case that executes (`.ai/repo/workflows/use-cases.md`); `finish` refuses a required gap.

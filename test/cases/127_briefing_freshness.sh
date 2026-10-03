@@ -23,7 +23,7 @@ PATH="$(dirname "$MJ"):$PATH"; export PATH
 
 "$MJ" start "a task" --scope lib/ >/dev/null
 "$MJ" session start >/dev/null
-ctx="$("$MJ" session context | head -n 1)"
+ctx="$("$MJ" session context --path)"
 expect_file "$ctx"
 sid="$(sed -n 's/^session_id: //p' "$ctx")"
 frozen="$(sed -n 's/^head: //p' "$ctx")"
@@ -42,11 +42,16 @@ no_finding() { "$MJ" doctor > "$T/doctor.out" 2>&1 || true; grep -qE -- "$1" "$T
 # may warn: a guard that warned about every briefing would pass this file while telling the
 # worker nothing, which is what the negative assertions here exist for.
 #
-# The text form of `session context` is a path and stays one — callers consume it as a path —
-# so the label rides in the JSON and in the context builder instead.
-expect_exit 0 "$MJ" session context
+# The text form of `session context --path` is a path and stays one — callers consume it as
+# a path — so its label rides in the JSON. The composed text form of `session context` is a
+# surface that hands the worker its briefing, so it states the label itself.
+expect_exit 0 "$MJ" session context --path
 [ "$(printf '%s\n' "$LAST_OUT" | wc -l | tr -d ' ')" = 1 ] \
-  || { echo "    session context printed more than the path: $LAST_OUT"; exit 1; }
+  || { echo "    session context --path printed more than the path: $LAST_OUT"; exit 1; }
+expect_exit 0 "$MJ" --json session context --path
+expect_grep '"label":"exact"'
+expect_exit 0 "$MJ" session context
+expect_grep "briefing: exact at ${frozen:0:7}"
 
 expect_exit 0 "$MJ" --json session context
 expect_grep '"label":"exact"'
@@ -69,6 +74,8 @@ expect_grep '"label":"advanced"'
 expect_grep '"commits_since":2'
 # the document itself is evidence and is never rewritten underneath the prompt that used it
 expect_grep "\"recorded_head\":\"$frozen\""
+expect_exit 0 "$MJ" session context
+expect_grep "briefing: advanced — 2 commit\\(s\\) since it was frozen at ${frozen:0:7}"
 grep -qF "head: $frozen" "$ctx" \
   || { echo "    the frozen briefing was rewritten; it is evidence, not a cache"; exit 1; }
 

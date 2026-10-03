@@ -652,6 +652,20 @@ fn strip_ansi(line: &str) -> String {
 /// use majordomus_cli::evidence::parse_crate_binaries;
 /// assert!(parse_crate_binaries("nothing to see here").is_empty());
 /// ```
+/// The outputs of several lanes are joined end to end, so a binary whose run was cut short
+/// must not take the next result line, a doctest run's least of all: it stands as an
+/// error that ran nothing, and the doctest result belongs to no binary.
+/// ```
+/// use majordomus_cli::evidence::parse_crate_binaries;
+/// let joined = "     Running tests/cut.rs (target/debug/deps/cut-1a2b)\n\
+///                  Doc-tests majordomus_cli\n\
+///               test result: ok. 900 passed; 0 failed; finished in 600.00s\n";
+/// let got = parse_crate_binaries(joined);
+/// assert_eq!(got.len(), 1);
+/// assert_eq!(got[0].0, "cut");
+/// assert!(!got[0].1.proves());
+/// assert_eq!(got[0].2, 0);
+/// ```
 pub fn parse_crate_binaries(text: &str) -> Vec<(String, Outcome, u64)> {
     read_crate_output(text)
         .binaries

@@ -25,7 +25,9 @@ use super::fingerprint::{self, WorktreeFingerprint};
 use super::git;
 use super::identity::ResolvedPath;
 use super::lock::WorktreeLock;
-use super::model::{DiagnosticCode, DirtyState, Severity, Standing, TopologyDiagnostic, SCHEMA};
+use super::model::{
+    DiagnosticCode, DirtyState, RepositoryTopology, Severity, Standing, TopologyDiagnostic, SCHEMA,
+};
 use super::service::{display, Detail, WorktreeService};
 
 /// How a step moves its worktree.
@@ -139,9 +141,45 @@ pub fn plan(service: &WorktreeService) -> Result<MigrationPlan> {
 }
 
 /// The plan, optionally counting ephemeral worktrees as steps.
+///
+/// A plan states the uncommitted work of the work trees it moves, and of no others — every
+/// other line of it is read out of a standing, which costs no subprocess. So the topology
+/// is read without the per-work-tree `git status` first, and measured only when that
+/// reading shows there is a step to carry work. On a repository whose work trees are all
+/// where they belong that is the difference between 129 `git status` subprocesses and
+/// none, and the Cockpit's worktree page renders this beside the topology: it was paying
+/// for the same measurement twice.
 pub fn plan_with(service: &WorktreeService, include_ephemeral: bool) -> Result<MigrationPlan> {
-    let topology = service.topology(Detail::Full)?;
-    let container = service.container().path.clone();
+    let fast = service.topology(Detail::Fast)?;
+    let moves_something = fast
+        .worktrees
+        .iter()
+        .any(|w| is_step(w.standing, include_ephemeral));
+    let topology = if moves_something {
+        service.topology(Detail::Full)?
+    } else {
+        fast
+    };
+    Ok(plan_from(&topology, include_ephemeral))
+}
+
+/// Is a work tree with this standing one the migration would move?
+fn is_step(standing: Standing, include_ephemeral: bool) -> bool {
+    match standing {
+        Standing::Misplaced => true,
+        Standing::Ephemeral => include_ephemeral,
+        _ => false,
+    }
+}
+
+/// The plan a topology implies.
+///
+/// Pure: every step, every exception and every blocker is read out of the work trees the
+/// topology already judged, and the container it names is the topology's own. The
+/// migration plan is a projection of the topology and of nothing else, and this is the one
+/// place that is written.
+pub fn plan_from(topology: &RepositoryTopology, include_ephemeral: bool) -> MigrationPlan {
+    let container = topology.container.path.clone();
     let mut steps = Vec::new();
     let mut exceptions = Vec::new();
     for w in &topology.worktrees {
@@ -218,9 +256,9 @@ pub fn plan_with(service: &WorktreeService, include_ephemeral: bool) -> Result<M
     steps.sort_by_key(|s| s.action != MigrationAction::MoveViaStaging);
     let occupant_blocked = steps
         .iter()
-        .any(|s| s.outcome == StepOutcome::Blocked && s.from == display(&container));
+        .any(|s| s.outcome == StepOutcome::Blocked && s.from == container);
     if occupant_blocked {
-        for s in steps.iter_mut().filter(|s| s.from != display(&container)) {
+        for s in steps.iter_mut().filter(|s| s.from != container) {
             s.blockers.push(TopologyDiagnostic {
                 code: DiagnosticCode::ContainerOccupied,
                 severity: Severity::Error,
@@ -229,7 +267,7 @@ pub fn plan_with(service: &WorktreeService, include_ephemeral: bool) -> Result<M
                 expected: Some(s.to.clone()),
                 message: format!(
                     "the container {} is occupied by a worktree that cannot move yet",
-                    display(&container)
+                    container
                 ),
                 remedy: "unblock the container's occupant first".into(),
             });
@@ -241,9 +279,9 @@ pub fn plan_with(service: &WorktreeService, include_ephemeral: bool) -> Result<M
         .iter()
         .filter(|s| s.outcome == StepOutcome::Planned)
         .count();
-    Ok(MigrationPlan {
+    MigrationPlan {
         schema: SCHEMA.to_string(),
-        container: display(&container),
+        container,
         blocked: steps.len() - movable,
         movable,
         moved: 0,
@@ -252,7 +290,7 @@ pub fn plan_with(service: &WorktreeService, include_ephemeral: bool) -> Result<M
         exceptions,
         applied: false,
         moved_current: None,
-    })
+    }
 }
 
 /// Carry out the plan. Recomputed under the lock, never replayed from a plan the caller is

@@ -88,6 +88,15 @@ compared folded to lower case, with runs of whitespace collapsed and trailing se
 punctuation dropped: the difference has to be in what the description says, not in how it
 is typed.
 
+## A skill is a capability only when something proves it
+
+A valid file makes a skill exist. Whether it is tested (a test names it with
+`majordomus-skill: <id>` on a comment line and a recorded run of that test is current), used
+(a workflow, prompt, profile, provider template or recipe references `majordomus://skill/<id>`),
+documented and enforced is derived by the Rust executable's `skills status`, `skills explain`
+and `skills verify`, and never written down. An active skill no test names or nothing invokes
+is an orphan, and `doctor` refuses it when the executable is built.
+
 ## What is derived, and must not be edited
 
 `share/allow/skill.txt` (from the schema, by `majordomus generate allow`), the MCP

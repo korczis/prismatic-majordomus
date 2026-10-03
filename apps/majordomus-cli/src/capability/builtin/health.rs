@@ -139,6 +139,12 @@ pub struct Health {
     pub tallies: BTreeMap<String, usize>,
     /// Every dimension, in a stable order.
     pub checks: Vec<HealthCheck>,
+    /// When the state a check decided on was read, by check id: the freshness contract
+    /// ([`crate::index::AnswerObservation`]). A check absent here decided live, during this call.
+    /// `layer` and `git` are here because they judge the picture the index took, which is
+    /// as old as the index.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub observed: BTreeMap<String, crate::index::AnswerObservation>,
 }
 
 /// The answer to "is this process alive": the cheapest true thing this executable can
@@ -151,6 +157,14 @@ pub struct Liveness {
     pub alive: bool,
     /// This executable's version, so a rolling deployment can tell which build answered.
     pub version: String,
+    /// The commit this executable was built from, in full, or `unknown` when the build could
+    /// not name one. A version is what a build calls itself and two revisions share it; this
+    /// is what a deployment is checked against. Never omitted: an absent field would read as
+    /// a server too old to say, and `unknown` is a different, truthful answer.
+    pub commit: String,
+    /// Whether that commit's tree carried uncommitted changes when this executable was built;
+    /// `null` when the build did not know.
+    pub dirty: Option<bool>,
 }
 
 /// The answer to "can this process serve traffic": the local initialisation a request
@@ -162,6 +176,11 @@ pub struct Readiness {
     pub ready: bool,
     /// This executable's version.
     pub version: String,
+    /// The commit this executable was built from, or `unknown`; the same value `health.live`
+    /// answers.
+    pub commit: String,
+    /// Whether the build's tree was dirty; `null` when the build did not know.
+    pub dirty: Option<bool>,
     /// How many capabilities the registry holds; zero would mean nothing to serve.
     pub capabilities: usize,
     /// How many objects the index holds. Read from the index this process built at
@@ -178,6 +197,8 @@ fn liveness(_: &Context, _: Empty) -> Result<Liveness, CapabilityError> {
     Ok(Liveness {
         alive: true,
         version: crate::VERSION.into(),
+        commit: crate::COMMIT.into(),
+        dirty: crate::DIRTY,
     })
 }
 
@@ -190,6 +211,8 @@ fn readiness(ctx: &Context, _: Empty) -> Result<Readiness, CapabilityError> {
     Ok(Readiness {
         ready: capabilities > 0,
         version: crate::VERSION.into(),
+        commit: crate::COMMIT.into(),
+        dirty: crate::DIRTY,
         capabilities,
         objects,
         layer: match ctx.index.state {
@@ -214,6 +237,55 @@ fn record(checks: &mut Vec<HealthCheck>, p: &crate::execution::Progress, check: 
     );
     checks.push(check);
     p.progress(checks.len() as u64, None, "dimension(s) decided");
+}
+
+/// The attached-clients dimension, from the board this process holds (`None` when it holds
+/// none). Live peers only are counted as attached; a peer that is gone with its claims still
+/// shown, or one attached that has announced nothing, is worth a look, because the board then
+/// understates or overstates who is working here.
+fn peers_check(board: Option<&[crate::peers::Peer]>) -> HealthCheck {
+    let decided_by = "the peer board of the process holding this checkout's lease, tallied as `environment.preflight` tallies it";
+    let Some(peers) = board else {
+        return HealthCheck {
+            id: "peers".into(),
+            title: "Attached clients".into(),
+            status: HealthStatus::Unknown,
+            detail: "this process holds no peer board: it does not hold this checkout's lease, so who is attached is the server's to say".into(),
+            decided_by: decided_by.into(),
+            evidence: vec!["majordomus_peers".into(), "majordomus serve status".into()],
+            findings: Vec::new(),
+        };
+    };
+    let t = crate::environment::preflight::PeersObservation::of(peers);
+    let silent = t.attached - t.announced;
+    let mut findings = Vec::new();
+    if t.detached > 0 {
+        findings.push(format!(
+            "{} peer(s) are gone and the board still shows their claims",
+            t.detached
+        ));
+    }
+    if silent > 0 {
+        findings.push(format!(
+            "{silent} attached peer(s) have announced nothing, so the board understates who is here"
+        ));
+    }
+    HealthCheck {
+        id: "peers".into(),
+        title: "Attached clients".into(),
+        status: if findings.is_empty() {
+            HealthStatus::Ok
+        } else {
+            HealthStatus::Warn
+        },
+        detail: format!(
+            "{} attached ({} announced) · {} gone with claims still shown",
+            t.attached, t.announced, t.detached
+        ),
+        decided_by: decided_by.into(),
+        evidence: vec!["majordomus_peers".into()],
+        findings,
+    }
 }
 
 fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
@@ -337,7 +409,7 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
             title: "Version control".into(),
             status: git_status,
             detail: git_detail,
-            decided_by: "git, as the index asked it once at startup".into(),
+            decided_by: "git, as the index asked it when it was built".into(),
             evidence: vec!["git status".into()],
             findings: Vec::new(),
         },
@@ -514,19 +586,21 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
     );
 
     // --- the peers attached to this process
-    let peers = ctx.peers.list();
+    //
+    // Decided from the board and tallied the way preflight tallies it, so the two cards on
+    // one page cannot count the same board two ways. Only a process that holds this
+    // checkout's lease holds its board: anything else — the command line, a process whose
+    // lease was never published — has an empty board of its own, and an empty board it does
+    // not own is no evidence that nobody is attached.
     record(
         &mut checks,
         &ctx.progress,
-        HealthCheck {
-            id: "peers".into(),
-            title: "Attached clients".into(),
-            status: HealthStatus::Ok,
-            detail: format!("{} peer(s) attached to this process", peers.len()),
-            decided_by: "the in-memory peer board of this process".into(),
-            evidence: vec!["majordomus_peers".into()],
-            findings: Vec::new(),
-        },
+        peers_check(
+            crate::lease::held()
+                .is_some()
+                .then(|| ctx.peers.list())
+                .as_deref(),
+        ),
     );
 
     let status = checks
@@ -536,10 +610,19 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
     for c in &checks {
         *tallies.entry(c.status.as_str().into()).or_insert(0) += 1;
     }
+    let observed = [
+        ("layer", &index.repository.observed.index),
+        ("git", &index.repository.observed.git),
+    ]
+    .into_iter()
+    .filter(|(id, o)| !o.observed_at.is_empty() && checks.iter().any(|c| c.id == *id))
+    .map(|(id, o)| (id.to_string(), o.clone()))
+    .collect();
     Ok(Health {
         status,
         tallies,
         checks,
+        observed,
     })
 }
 
@@ -601,6 +684,49 @@ mod tests {
     use super::*;
     use crate::synthetic::{Shape, SyntheticRepository};
 
+    /// No board is no evidence: a process that holds no lease cannot say who is attached,
+    /// and says so rather than reporting an empty board as a healthy one.
+    #[test]
+    fn attached_clients_are_unknown_without_a_board() {
+        let c = peers_check(None);
+        assert_eq!(c.status, HealthStatus::Unknown, "{c:?}");
+    }
+
+    /// A board with every live peer announced is ok, and the count is of live peers only.
+    #[test]
+    fn attached_clients_are_ok_when_every_live_peer_announced() {
+        let board = crate::peers::PeerBoard::new();
+        let a = board.attach(crate::peers::Transport::Http);
+        board.announce(&a, "writing docs", vec!["docs".into()]);
+        let c = peers_check(Some(&board.list()));
+        assert_eq!(c.status, HealthStatus::Ok, "{c:?}");
+        assert!(
+            c.detail.starts_with("1 attached (1 announced) · 0 gone"),
+            "{c:?}"
+        );
+    }
+
+    /// An attached peer that announced nothing, and a gone peer whose claims the board still
+    /// shows, are each worth a look; and a gone peer is not counted as attached.
+    #[test]
+    fn attached_clients_warn_on_silent_or_gone_peers() {
+        let board = crate::peers::PeerBoard::new();
+        board.attach(crate::peers::Transport::Stdio);
+        let c = peers_check(Some(&board.list()));
+        assert_eq!(c.status, HealthStatus::Warn, "a silent peer: {c:?}");
+
+        let board = crate::peers::PeerBoard::new();
+        let gone = board.attach(crate::peers::Transport::Http);
+        board.announce(&gone, "left", vec!["a".into()]);
+        board.detach(&gone);
+        let c = peers_check(Some(&board.list()));
+        assert_eq!(c.status, HealthStatus::Warn, "a gone peer: {c:?}");
+        assert!(
+            c.detail.starts_with("0 attached (0 announced) · 1 gone"),
+            "{c:?}"
+        );
+    }
+
     /// Liveness says one thing and reads nothing: the counters prove it moved no
     /// canonical state, and the answer is the same whatever the layer holds.
     #[test]
@@ -620,6 +746,8 @@ mod tests {
         assert_eq!(a, b);
         assert!(a.alive);
         assert_eq!(a.version, crate::VERSION);
+        assert_eq!(a.commit, crate::COMMIT);
+        assert_eq!(a.dirty, crate::DIRTY);
     }
 
     /// Readiness reads what this process already holds — the registry it built and the
@@ -633,6 +761,8 @@ mod tests {
         assert_eq!(r.capabilities, ctx.registry.summary().total);
         assert_eq!(r.objects, ctx.index.objects.len());
         assert_eq!(r.layer, HealthStatus::Ok);
+        assert_eq!(r.commit, crate::COMMIT);
+        assert_eq!(r.dirty, crate::DIRTY);
     }
 
     /// Both are registered capabilities, so every projection carries them without a

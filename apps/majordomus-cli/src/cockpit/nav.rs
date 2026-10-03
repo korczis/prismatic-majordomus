@@ -9,8 +9,8 @@
 //! counters and the validation every other caller passes through.
 //!
 //! What *is* written here is the areas: Overview, Capabilities, Commands, Executions,
-//! Objects, Directories, Graphs, Continuity, Worktrees, Health, Quality, Artifacts,
-//! Design, API. Those are concepts rather than
+//! Objects, Directories, Graphs, Continuity, Worktrees, Integration, Health, Quality,
+//! Artifacts, Design, API. Those are concepts rather than
 //! entities, they change when the Cockpit's own shape changes, and deriving them from
 //! anything would be deriving them from a list of exactly themselves.
 //!
@@ -53,10 +53,16 @@ pub enum Area {
     Continuity,
     /// The branch-to-worktree topology of the repository.
     Worktrees,
+    /// Who else is working in this repository, gathered from every checkout's board.
+    Peers,
+    /// The pull-request integration queue and its executor.
+    Integration,
     /// The discovered nodes of the mesh, and the machinery that observes them.
     Mesh,
     /// The declared model catalogue and its routing.
     Models,
+    /// Reasoning: the optional advisors, and the session's uncertainties and conclusions.
+    Reasoning,
     /// Token economics, measured.
     Economics,
     /// The health report.
@@ -93,6 +99,13 @@ pub struct AreaInfo {
 /// The areas. Written here because they are concepts rather than entities; every catalogue
 /// under them is derived.
 ///
+/// Kept against the dispatcher by `cockpit::tests::every_area_has_a_route_and_every_route_its_area`:
+/// this list and `cockpit::STATIC_ROUTES` describe the same Cockpit, so an area with no route
+/// and a route with no area are both failures. Executions and Quality were the second kind —
+/// answered by the dispatcher, named by the module documentation above, and absent from here,
+/// which left `/cockpit/quality` unreachable by a reader, by the navigation crawl the browser
+/// probe derives its routes from, and therefore by every test.
+///
 /// Not the order the sidebar shows them in: `build` puts every section through the
 /// canonical order, so this sequence reaches no reader. It is the set the product model
 /// validates against, and nothing more.
@@ -115,6 +128,12 @@ pub fn areas() -> &'static [AreaInfo] {
             label: "Commands",
             href: "/cockpit/commands",
             area: Area::Commands,
+        },
+        AreaInfo {
+            id: "executions",
+            label: "Executions",
+            href: "/cockpit/executions",
+            area: Area::Executions,
         },
         AreaInfo {
             id: "objects",
@@ -147,6 +166,18 @@ pub fn areas() -> &'static [AreaInfo] {
             area: Area::Worktrees,
         },
         AreaInfo {
+            id: "peers",
+            label: "Peers",
+            href: "/cockpit/peers",
+            area: Area::Peers,
+        },
+        AreaInfo {
+            id: "integration",
+            label: "Integration",
+            href: "/cockpit/integration",
+            area: Area::Integration,
+        },
+        AreaInfo {
             id: "mesh",
             label: "Mesh",
             href: "/cockpit/mesh",
@@ -159,6 +190,12 @@ pub fn areas() -> &'static [AreaInfo] {
             area: Area::Models,
         },
         AreaInfo {
+            id: "reasoning",
+            label: "Reasoning",
+            href: "/cockpit/reasoning",
+            area: Area::Reasoning,
+        },
+        AreaInfo {
             id: "economics",
             label: "Economics",
             href: "/cockpit/economics",
@@ -169,6 +206,12 @@ pub fn areas() -> &'static [AreaInfo] {
             label: "Health",
             href: "/cockpit/health",
             area: Area::Health,
+        },
+        AreaInfo {
+            id: "quality",
+            label: "Quality",
+            href: "/cockpit/quality",
+            area: Area::Quality,
         },
         AreaInfo {
             id: "artifacts",
@@ -210,10 +253,22 @@ pub struct Item {
     /// never written here: the capability modules are grouped by the operational area the
     /// features that name them serve.
     pub group: Option<String>,
-    /// How many things are behind it, when the number is a fact and not decoration.
-    pub count: Option<usize>,
+    /// How many things are behind it, when the number is a fact and not decoration: `None`
+    /// for an entry that carries no count, and [`Count::Unknown`] for one whose count the
+    /// capability asked for it did not answer.
+    pub count: Option<Count>,
     /// Whether this is the page being shown.
     pub current: bool,
+}
+
+/// A count an entry shows: a number the capability answered, or the fact that it did not.
+/// A capability that failed is never a count of zero.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Count {
+    /// The number.
+    Known(usize),
+    /// The capability behind it did not answer.
+    Unknown,
 }
 
 /// A heading and its entries.
@@ -247,17 +302,17 @@ impl Navigation {
 /// The two fields of `repository.info` this file reads; the rest of the report is the
 /// health page's subject, and taking only these keeps the navigation's dependency on the
 /// capability to what it actually shows.
-#[derive(Default, serde::Deserialize)]
+#[derive(serde::Deserialize)]
 struct Held {
     objects: usize,
     kinds: std::collections::BTreeMap<String, usize>,
 }
 
-fn held(ctx: &Context) -> Held {
-    let Ok(value) = ctx.execute("repository.info", serde_json::json!({})) else {
-        return Held::default();
-    };
-    serde_json::from_value::<Held>(value).unwrap_or_default()
+/// `None` when `repository.info` did not answer, or answered something this file cannot
+/// read: the object count is then unknown, never zero.
+fn held(ctx: &Context) -> Option<Held> {
+    let value = ctx.execute("repository.info", serde_json::json!({})).ok()?;
+    serde_json::from_value::<Held>(value).ok()
 }
 
 /// Build the navigation for a request: the areas, then the catalogues derived from the
@@ -270,14 +325,24 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
     // navigation a projection instead of a second reader of the index (ADR 0012). One
     // call answers both catalogues below.
     let held = held(ctx);
+    build_with(ctx, here, held.as_ref(), &summary)
+}
+
+/// [`build`], over what `repository.info` answered (`None`: it did not).
+fn build_with(
+    ctx: &Context,
+    here: &str,
+    held: Option<&Held>,
+    summary: &crate::capability::registry::Summary,
+) -> Navigation {
     // the counts are facts of this context, decided per area: how many things are behind
     // an entry is not part of what an area is
-    let count = |a: Area| -> Option<usize> {
+    let count = |a: Area| -> Option<Count> {
         match a {
-            Area::Capabilities => Some(summary.total),
-            Area::Objects => Some(held.objects),
-            Area::Graphs => Some(graph::ids().len()),
-            Area::Api => Some(summary.http_routes),
+            Area::Capabilities => Some(Count::Known(summary.total)),
+            Area::Objects => Some(held.map_or(Count::Unknown, |h| Count::Known(h.objects))),
+            Area::Graphs => Some(Count::Known(graph::ids().len())),
+            Area::Api => Some(Count::Known(summary.http_routes)),
             _ => None,
         }
     };
@@ -311,7 +376,7 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
                     .module_area(m.id.as_str())
                     .and_then(|id| ctx.why.areas().iter().find(|a| a.id == id))
                     .map(|a| a.title.clone()),
-                count: Some(m.capabilities),
+                count: Some(Count::Known(m.capabilities)),
                 current: false,
             })
             .collect(),
@@ -321,14 +386,14 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
     let kinds = Section {
         title: "Object kinds".into(),
         items: held
-            .kinds
-            .iter()
+            .into_iter()
+            .flat_map(|h| &h.kinds)
             .map(|(kind, count)| Item {
                 label: kind.to_string(),
                 href: crate::entity::kind_route(kind),
                 area: Area::Objects,
                 group: None,
-                count: Some(*count),
+                count: Some(Count::Known(*count)),
                 current: false,
             })
             .collect(),
@@ -378,7 +443,7 @@ impl crate::order::Ordered for Item {
     }
 }
 
-fn item(label: &str, href: &str, area: Area, count: Option<usize>, here: &str) -> Item {
+fn item(label: &str, href: &str, area: Area, count: Option<Count>, here: &str) -> Item {
     Item {
         label: label.into(),
         href: href.into(),
@@ -497,6 +562,39 @@ mod tests {
         let labels: Vec<&str> = areas.items.iter().map(|i| i.label.as_str()).collect();
         assert_eq!(labels.first(), Some(&"API"));
         assert_eq!(labels.last(), Some(&"Worktrees"));
+    }
+
+    /// A `repository.info` that did not answer leaves the object count unknown and the kind
+    /// catalogue empty: never a count of zero, which reads as a repository that holds nothing.
+    #[test]
+    fn a_failed_repository_info_is_an_unknown_count_and_not_zero() {
+        let repo = repository();
+        let ctx = repo.context().expect("a context");
+        let nav = build_with(&ctx, "/cockpit", None, &ctx.registry.summary());
+        let objects = nav
+            .sections()
+            .iter()
+            .flat_map(|s| &s.items)
+            .find(|i| i.area == Area::Objects && i.href == "/cockpit/objects")
+            .expect("the Objects entry");
+        assert_eq!(objects.count, Some(Count::Unknown));
+        assert!(
+            nav.sections().iter().all(|s| s.title != "Object kinds"),
+            "no kind is listed from an answer that did not come"
+        );
+        // and the answer, when it comes, is the number
+        let nav = build(&ctx, "/cockpit");
+        let objects = nav
+            .sections()
+            .iter()
+            .flat_map(|s| &s.items)
+            .find(|i| i.area == Area::Objects && i.href == "/cockpit/objects")
+            .expect("the Objects entry");
+        assert!(
+            matches!(objects.count, Some(Count::Known(_))),
+            "{:?}",
+            objects.count
+        );
     }
 
     #[test]

@@ -85,7 +85,7 @@ pub fn run(args: WorktreeArgs) -> Result<u8> {
         Some(WorktreeCommand::Remove { selector, force }) => {
             remove(&svc()?, &selector, force, format, &mut out)
         }
-        Some(WorktreeCommand::Cleanup) => cleanup(&svc()?, format, &mut out),
+        Some(WorktreeCommand::Cleanup { remove }) => cleanup(&svc()?, format, remove, &mut out),
         Some(WorktreeCommand::Branches { without_worktree }) => {
             branches(&svc()?, without_worktree, &mut out)
         }
@@ -523,9 +523,18 @@ fn guard(
     Ok(if v.ok { 0 } else { EXIT_REFUSED })
 }
 
-fn cleanup(svc: &WorktreeService, format: OutputFormat, out: &mut Out<'_>) -> Result<u8> {
+fn cleanup(
+    svc: &WorktreeService,
+    format: OutputFormat,
+    remove: bool,
+    out: &mut Out<'_>,
+) -> Result<u8> {
     let t = svc.topology(Detail::Full).map_err(refuse)?;
     let eligible: Vec<&BranchState> = t.branches.iter().filter(|b| b.cleanup_eligible).collect();
+
+    if remove {
+        return reclaim(svc, &eligible, format, out);
+    }
     match format {
         OutputFormat::Json => json(out, &eligible)?,
         OutputFormat::Text => {
@@ -553,6 +562,130 @@ fn cleanup(svc: &WorktreeService, format: OutputFormat, out: &mut Out<'_>) -> Re
         }
     }
     Ok(0)
+}
+
+/// Is anything working inside this directory right now?
+///
+/// `lsof -a -d cwd` asks the kernel which processes have their working directory there, which
+/// is the only reading that is true at the moment it is taken. The mtime of a worktree is not:
+/// two of the four swept on 2026-09-15 looked untouched since the 12th and had live processes
+/// inside them. A missing `lsof` is not "nothing is running" — it is not knowing, and the
+/// caller refuses on `None` rather than removing.
+fn occupied(path: &str) -> Option<bool> {
+    let real = std::fs::canonicalize(path).ok()?;
+    let real = real.to_string_lossy().to_string();
+    let out = std::process::Command::new("lsof")
+        .args(["-a", "-d", "cwd", "-Fn"])
+        .output()
+        .ok()?;
+    let text = String::from_utf8_lossy(&out.stdout);
+    Some(text.lines().any(|l| {
+        l.strip_prefix('n')
+            .is_some_and(|p| p == real || p.starts_with(&format!("{real}/")))
+    }))
+}
+
+/// Remove the worktrees the listing offers, each re-measured immediately before it goes.
+///
+/// The listing and the removal are two moments, and everything that makes a worktree safe to
+/// remove can change between them. So the listing only nominates: the branch's standing against
+/// its remote, whether anything is running inside and the working tree's cleanliness are all
+/// read again by [`refusal`], one worktree at a time, and a candidate that fails any of them is
+/// named and skipped rather than removed.
+///
+/// Branches are never deleted. `git branch -d` refuses an unmerged branch on its own, but a
+/// branch is the only durable name a piece of work has, and the disk is what was scarce.
+fn reclaim(
+    svc: &WorktreeService,
+    eligible: &[&BranchState],
+    format: OutputFormat,
+    out: &mut Out<'_>,
+) -> Result<u8> {
+    let mut removed: Vec<String> = Vec::new();
+    let mut refused: Vec<(String, String)> = Vec::new();
+
+    for b in eligible {
+        let Some(path) = b.worktree.clone() else {
+            continue; // no worktree to reclaim; the branch alone costs nothing
+        };
+        if let Some(why) = refusal(svc, &b.name, &path) {
+            refused.push((b.name.clone(), why));
+            continue;
+        }
+        match svc.remove(&b.name, false) {
+            Ok(_) => removed.push(b.name.clone()),
+            Err(e) => refused.push((b.name.clone(), format!("{e}"))),
+        }
+    }
+
+    match format {
+        OutputFormat::Json => json(
+            out,
+            &serde_json::json!({
+                "removed": removed,
+                "refused": refused
+                    .iter()
+                    .map(|(n, r)| serde_json::json!({ "branch": n, "reason": r }))
+                    .collect::<Vec<_>>(),
+            }),
+        )?,
+        OutputFormat::Text => {
+            for n in &removed {
+                w(out, format!("removed   {n}"))?;
+            }
+            for (n, r) in &refused {
+                w(out, format!("refused   {n:<44} {r}"))?;
+            }
+            w(
+                out,
+                format!(
+                    "worktree cleanup: {} removed, {} refused; no branch was deleted",
+                    removed.len(),
+                    refused.len()
+                ),
+            )?;
+        }
+    }
+    Ok(0)
+}
+
+/// Why this worktree must not be removed now, or `None` when every reading says it is spare.
+///
+/// Each reading is taken here, at the moment of removal, and none comes from the listing that
+/// nominated the branch: a commit made, a push deleted or a file written after the listing is
+/// seen.
+fn refusal(svc: &WorktreeService, branch: &str, path: &str) -> Option<String> {
+    let primary = &svc.identity().primary_worktree().path;
+    // Commits that exist on one disk. `merged into the trunk` is about the branch's remote
+    // history and says nothing about a local head that ran ahead of it.
+    let now = match crate::worktree::state::branch(primary, branch) {
+        Ok(Some(now)) => now,
+        Ok(None) => return Some("the branch no longer exists".into()),
+        Err(e) => return Some(format!("could not read the branch: {e}")),
+    };
+    match &now.upstream {
+        None => return Some("no upstream: its commits are on this disk only".into()),
+        Some(u) if u.gone => return Some(format!("its upstream {} is gone", u.name)),
+        // `ahead` is unknown rather than zero when git could not compare the two, and an
+        // unknown count is not a reason to remove anything: it is refused with the others.
+        Some(u) if u.ahead.unwrap_or(1) > 0 => {
+            return Some(match u.ahead {
+                Some(n) => format!("{n} commit(s) ahead of {}: they reach no remote", u.name),
+                None => format!("cannot tell how far it is ahead of {}", u.name),
+            })
+        }
+        Some(_) => {}
+    }
+    match occupied(path) {
+        None => return Some("cannot tell whether anything is working inside it (no lsof)".into()),
+        Some(true) => return Some("a process has its working directory inside it".into()),
+        Some(false) => {}
+    }
+    match crate::worktree::state::dirty_state(std::path::Path::new(path)) {
+        Ok(d) if d.clean => None,
+        Ok(d) => Some(format!("uncommitted work: {}", d.summary())),
+        Err(e) => Some(format!("could not read its working tree: {e}")),
+    }
 }
 
 fn branches(svc: &WorktreeService, without_worktree: bool, out: &mut Out<'_>) -> Result<u8> {
@@ -603,6 +736,7 @@ fn create(
                 _ => w(out, format!("branch  {}", report.branch))?,
             }
             w(out, report.envrc.describe())?;
+            w(out, report.envrc_local.describe())?;
             w(
                 out,
                 format!("cd \"$(majordomus worktree path {})\"", report.branch),
@@ -865,4 +999,126 @@ fn remove(
         }
     }
     Ok(0)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::Path;
+
+    fn git(cwd: &Path, args: &[&str]) {
+        let out = std::process::Command::new("git")
+            .args([
+                "-c",
+                "user.email=t@t",
+                "-c",
+                "user.name=t",
+                "-c",
+                "commit.gpgsign=false",
+            ])
+            .args([
+                "-c",
+                "core.hooksPath=/dev/null",
+                "-c",
+                "init.defaultBranch=master",
+            ])
+            .args(args)
+            .current_dir(cwd)
+            .output()
+            .expect("run git");
+        assert!(
+            out.status.success(),
+            "git {} failed: {}",
+            args.join(" "),
+            String::from_utf8_lossy(&out.stderr)
+        );
+    }
+
+    /// A repository with its own remote and one worktree on `spare`: merged into the trunk,
+    /// pushed, clean, and therefore nominated by the listing.
+    fn nominated() -> (tempfile::TempDir, WorktreeService, BranchState) {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let root = tmp.path().canonicalize().expect("canonical tempdir");
+        git(&root, &["init", "-q", "--bare", "origin.git"]);
+        git(&root, &["init", "-q", "repo"]);
+        let repo = root.join("repo");
+        // absolute, so a push from inside the worktree reaches the same remote
+        let origin = root.join("origin.git").to_string_lossy().to_string();
+        git(&repo, &["remote", "add", "origin", origin.as_str()]);
+        std::fs::write(repo.join("one.txt"), "one\n").expect("write");
+        git(&repo, &["add", "-A"]);
+        git(&repo, &["commit", "-qm", "trunk"]);
+        git(&repo, &["push", "-q", "-u", "origin", "master"]);
+        git(&repo, &["switch", "-q", "-c", "spare"]);
+        std::fs::write(repo.join("spare.txt"), "spare\n").expect("write");
+        git(&repo, &["add", "-A"]);
+        git(&repo, &["commit", "-qm", "spare"]);
+        git(&repo, &["push", "-q", "-u", "origin", "spare"]);
+        git(&repo, &["switch", "-q", "master"]);
+        git(
+            &repo,
+            &["merge", "-q", "--no-ff", "-m", "merge spare", "spare"],
+        );
+        git(&repo, &["push", "-q", "origin", "master"]);
+        let svc = WorktreeService::open(&repo).expect("open the service");
+        let at = svc.expected_path_of("spare").expect("the path of spare");
+        let at = at.to_string_lossy().to_string();
+        git(&repo, &["worktree", "add", "-q", at.as_str(), "spare"]);
+        let t = svc.topology(Detail::Full).expect("topology");
+        let b = t
+            .branches
+            .into_iter()
+            .find(|b| b.name == "spare" && b.cleanup_eligible)
+            .expect("the listing nominates spare");
+        (tmp, svc, b)
+    }
+
+    #[test]
+    fn a_commit_made_after_the_listing_is_seen_by_the_reclaim() {
+        let (_tmp, svc, b) = nominated();
+        let path = b.worktree.clone().expect("a worktree");
+        git(
+            Path::new(&path),
+            &["commit", "-q", "--allow-empty", "-m", "on one disk only"],
+        );
+        // the listing still says zero ahead; the reading taken now does not
+        assert_eq!(b.upstream.as_ref().and_then(|u| u.ahead), Some(0));
+        let why = refusal(&svc, &b.name, &path).expect("refused");
+        assert!(why.contains("1 commit(s) ahead"), "{why}");
+    }
+
+    #[test]
+    fn an_upstream_deleted_after_the_listing_is_seen_by_the_reclaim() {
+        let (_tmp, svc, b) = nominated();
+        let path = b.worktree.clone().expect("a worktree");
+        git(
+            Path::new(&path),
+            &["push", "-q", "origin", "--delete", "spare"],
+        );
+        git(Path::new(&path), &["fetch", "-q", "--prune", "origin"]);
+        let why = refusal(&svc, &b.name, &path).expect("refused");
+        assert!(why.contains("is gone"), "{why}");
+    }
+
+    #[test]
+    fn work_written_after_the_listing_is_seen_by_the_reclaim() {
+        let (_tmp, svc, b) = nominated();
+        let path = b.worktree.clone().expect("a worktree");
+        if occupied(&path).is_none() {
+            eprintln!("no lsof: the occupancy reading refuses first, which is its own test");
+            return;
+        }
+        assert_eq!(
+            refusal(&svc, &b.name, &path),
+            None,
+            "nothing refuses a spare worktree"
+        );
+        std::fs::write(
+            Path::new(&path).join("spare.txt"),
+            "written after the listing\n",
+        )
+        .expect("write");
+        let why = refusal(&svc, &b.name, &path).expect("refused");
+        assert!(why.contains("uncommitted work"), "{why}");
+    }
 }

@@ -150,7 +150,7 @@ fn graph_of(ctx: &Context) -> CommandGraph {
     // the conventions are the fallback only for an index built without an application.
     let root = std::path::Path::new(&ctx.index.repository.root);
     let share = crate::share::Share::locate(ctx.index.share.as_deref(), root).ok();
-    load::fast_at(root, share.as_ref().map(|s| s.dir()))
+    load::fast_with(root, share.as_ref().map(|s| s.dir()), Some(&ctx.registry))
 }
 
 fn commands_list(ctx: &Context, filter: CommandFilter) -> Result<CommandIndex, CapabilityError> {
@@ -224,14 +224,25 @@ fn commands_graph(ctx: &Context, _: Empty) -> Result<CommandGraphReport, Capabil
     Ok(CommandGraphReport { graph, errors })
 }
 
+/// The serialised word of a unit variant: `local_mutation`, never `LocalMutation`.
+fn word(value: &impl Serialize) -> String {
+    serde_json::to_value(value)
+        .ok()
+        .and_then(|v| v.as_str().map(str::to_string))
+        .unwrap_or_default()
+}
+
 /// One line of the index.
 fn summary(node: &CommandNode) -> CommandSummary {
     CommandSummary {
         id: node.id.to_string(),
         invocation: node.invocation.clone(),
         summary: node.summary.clone(),
-        origin: format!("{:?}", node.origin).to_lowercase(),
-        effect: format!("{:?}", node.effect).to_lowercase(),
+        // The words the graph serialises and the filter accepts. `Debug` lowercased was
+        // `localmutation`, a word no filter takes, so every link built from a summary's
+        // effect answered 500.
+        origin: word(&node.origin),
+        effect: word(&node.effect),
         group: node.group.clone(),
         projections: node.projections.clone(),
     }
@@ -309,6 +320,16 @@ pub fn module() -> ModuleDescriptor {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A summary's effect is the word the filter takes: a Cockpit chip links with it, and
+    /// `localmutation` — what `Debug` lowercased gave — is refused, so the link answered 500.
+    #[test]
+    fn a_summary_speaks_the_filters_words() {
+        use crate::command_graph::{Effect, Origin};
+        assert_eq!(word(&Effect::LocalMutation), "local_mutation");
+        assert_eq!(word(&Effect::ReadOnly), "read_only");
+        assert_eq!(word(&Origin::Workflow), "workflow");
+    }
 
     /// The module's own documentation says three capabilities, all read-only, all answered
     /// by the command graph. That sentence is the thing every surface then derives from:

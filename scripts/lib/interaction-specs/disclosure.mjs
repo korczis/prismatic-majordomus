@@ -34,6 +34,12 @@ export default {
       // One click, and a second only if the first changed nothing — re-reading first, so a toggle
       // that landed between the last poll and now is not undone by a retry it no longer needs.
       const press = async (want) => {
+        // a summary in a tab panel that is not selected is reached by selecting its tab first
+        const tab = await c.locator.evaluate((s) => {
+          const panel = s.closest('[role="tabpanel"]');
+          return panel && panel.hidden ? panel.getAttribute('aria-labelledby') : null;
+        });
+        if (tab) await page.locator(`[id="${tab}"]`).click();
         await c.locator.click();
         if (await settles(want)) return true;
         if (await state() === want) return true;

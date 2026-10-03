@@ -1,7 +1,7 @@
 +++
 title = "GitHub Pages performance status"
 description = "the current numbers behind that document: the controlled budgets, the paths that start a publication, and the last measured build-and-check path per platform. Generated from `.ai/repo/ci/pages.yaml` and `.ai/repo/benchmarks/pages/`; never edited"
-weight = 65
+weight = 70
 [extra]
 source = "docs/PAGES_STATUS.md"
 +++
@@ -13,7 +13,7 @@ baselines under `.ai/repo/benchmarks/pages/`. Do not edit; measure with
 `scripts/pages benchmark --write-baseline` and regenerate. The architecture behind these
 numbers is `GITHUB_PAGES_PERFORMANCE.md`.
 
-Generated from canonical inputs `6eb035146828`.
+Generated from canonical inputs `e5e15276f660`.
 
 ## Controlled budget
 
@@ -45,6 +45,7 @@ publication path itself. `scripts/pages paths` prints this list and the workflow
 held to it.
 
 - `.ai/**`
+- `.ai/repo/doc-command-baseline.txt`
 - `.ai/repo/evidence-baseline.txt`
 - `.ai/repo/evidence/**`
 - `.envrc`
@@ -80,6 +81,7 @@ held to it.
 - `package.json`
 - `rust-toolchain.toml`
 - `scripts/ci/design-check`
+- `scripts/ci/doc-command-check`
 - `scripts/cockpit-assets`
 - `scripts/cockpit-probe`
 - `scripts/evidence-check`
@@ -112,6 +114,7 @@ held to it.
 - `site/data/registry/**`
 - `site/data/registry/design.json`
 - `test/**`
+- `test/cases/638_a_documented_command_is_run.sh`
 
 ## Measured
 

@@ -91,6 +91,12 @@ sources:
     pathspec: ':(glob).ai/repo/project/issues/*.yaml'
     required: false
 
+  - id: intent
+    kind: intent
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/project/intents/*.yaml'
+    required: false
+
   - id: document
     kind: document
     discovery: vcs
@@ -143,6 +149,12 @@ sources:
     kind: deployment
     discovery: vcs
     pathspec: ':(glob).ai/repo/deployments/*.yaml'
+    required: false
+
+  - id: curated
+    kind: knowledge
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/knowledge/curated/*.md'
     required: false
 
   - id: claim_page
@@ -307,6 +319,34 @@ weight: 10
 Because the fixture says so.
 ";
 
+/// A knowledge record the fixture declares, so that the capabilities reading one have an
+/// object to read: `knowledge_base.record`'s benchmark case is the first record of the index,
+/// and a fixture without one would hand the benchmark a lookup that answers not-found. Every
+/// required field, and the provenance a verified record must carry, pointing at a file the
+/// fixture tracks.
+pub const KNOWLEDGE: &str = "---
+schema: knowledge/v1
+id: fixture-note
+kind: knowledge
+class: convention
+title: The fixture reads its command line from docs/CLI.md
+description: A curated note that exists so the capabilities reading one have a record to read.
+status: verified
+epistemics: decided
+date: 2026-01-01
+tags:
+  - fixture
+provenance:
+  origin: authored
+  derived_from:
+    - file:docs/CLI.md
+---
+
+# The fixture reads its command line from docs/CLI.md
+
+Every command the fixture answers is specified there first.
+";
+
 /// A deployment the fixture declares, so that the capabilities reading one have an object
 /// to read. Every required field and nothing else: this is the smallest thing the contract
 /// calls a deployment, not a copy of the repository's own.
@@ -464,6 +504,22 @@ evidence_required:
   - proof
 ";
 
+pub const INTENT: &str = "id: fixture-intent
+title: The fixture's outcome is true
+statement: \"The outcome the fixture milestone reaches is true for its users.\"
+invariants:
+  - The fixture stays a valid repository
+milestones:
+  - fixture-milestone
+satisfaction:
+  - id: the-case-passes
+    criterion: The fixture's own case passes
+    evidence: test
+    ref: test/cases/00_x.sh
+governance:
+  - rule:project.alpha
+";
+
 const ISSUE: &str = "id: I0001
 milestone: fixture-milestone
 title: The bounded piece of work
@@ -545,7 +601,9 @@ true
             MILESTONE,
         );
         f.write(".ai/repo/project/issues/I0001.yaml", ISSUE);
+        f.write(".ai/repo/project/intents/fixture-intent.yaml", INTENT);
         f.write(".ai/repo/knowledge/sources.yaml", SOURCES);
+        f.write(".ai/repo/knowledge/curated/fixture-note.md", KNOWLEDGE);
         f.write(
             ".ai/repo/workflows/task-lifecycle.md",
             "# The task lifecycle\n\nstart, check, finish.\n",
@@ -888,4 +946,31 @@ pub fn dist_scope(repo: &majordomus_cli::Repository) -> majordomus_cli::scope::S
     let share =
         majordomus_cli::share::Share::locate(Some(&dist_share()), repo.root()).expect("share");
     majordomus_cli::scope::Scope::load(&share, repo).expect("scope")
+}
+
+/// `answer` with every `observed_at` and `stale_after` timestamp replaced by a placeholder,
+/// wherever it sits: in a structured result or in JSON carried as escaped text.
+pub fn without_observation_times(answer: &str) -> String {
+    const SHAPE: &[u8] = b"dddd-dd-ddTdd:dd:ddZ";
+    let fits = |b: &[u8]| {
+        b.len() >= SHAPE.len()
+            && SHAPE.iter().zip(b).all(|(s, c)| match s {
+                b'd' => c.is_ascii_digit(),
+                s => s == c,
+            })
+    };
+    let mut out = answer.to_string();
+    for key in ["observed_at", "stale_after"] {
+        let mut from = 0;
+        while let Some(at) = out[from..].find(key).map(|i| from + i + key.len()) {
+            from = at;
+            // past the closing quote, the colon and the opening quote, escaped or not
+            let end = (at + 8).min(out.len());
+            let Some(start) = (at..end).find(|&i| fits(&out.as_bytes()[i..])) else {
+                continue;
+            };
+            out.replace_range(start..start + SHAPE.len(), "<observed>");
+        }
+    }
+    out
 }

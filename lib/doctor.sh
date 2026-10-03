@@ -66,6 +66,7 @@ mj_cmd_doctor() {
 
   mj_doctrine_dispatch doctor
   mj_report_environment
+  mj_report_reasoning
   mj_report_budget doctor "$t_start"
   mj_finish_doctor
 }
@@ -320,6 +321,46 @@ mj_validate_retention() {
   hc="$(find "$MJ_STATE_DIR/checkpoints" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
   if [ "$hc" -le "$cap" ]; then mj_doctrine_ok retention "checkpoints" "$hc files, cap $cap"; else mj_doctrine_fail retention "checkpoints" "$hc files over cap $cap" "majordomus checkpoint --list | wc -l"; fi; fi
 
+  return 0
+}
+
+# Reasoning (ADR 0098). Reasoning is operational with no advisor at all, so absence of an
+# optional advisor is reported as information — never a warning, never a failure — and the
+# independent review capacity is a count. What does fail is a finding of `reasoning check`:
+# provider-independent code that names an advisor, CI that names a model credential, a
+# record claiming a review nobody planned. Read through the executable, never rebuilt here.
+mj_report_reasoning() {
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  local bin share advisors check
+  bin="$(mj_rust_bin "$MJ_HOME")"
+  if [ ! -x "$bin" ]; then
+    mj_info reasoning "-" "the executable is not built, so advisor availability is not reported here (bin/majordomus-cli reasoning advisors)"
+    return 0
+  fi
+  share="$(mj_rust_share "$MJ_ROOT")"
+  advisors="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+                 "$bin" reasoning advisors --repo "$MJ_ROOT" --format json ) 2>/dev/null )" || {
+    mj_info reasoning "-" "advisor availability could not be read (bin/majordomus-cli reasoning advisors)"; return 0; }
+  mj_ok reasoning "share/advisors.yaml" "$(printf '%s' "$advisors" | jq -r '"operational, mode \(.mode.mode) (\(.mode.source)); independent review capacity \(.available) advisor(s)"')"
+  printf '%s' "$advisors" | jq -r '.advisors[] | [.id, .status, .reason] | @tsv' | \
+    while IFS="$(printf '\t')" read -r id status reason; do
+      mj_info advisor "$id" "$status ($reason) — optional"
+    done
+  # exit 10 is the check's verdict on a finding, not a failure to run: the document is read
+  # either way, and an empty one is the failure to run
+  check="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+              "$bin" reasoning check --repo "$MJ_ROOT" --format json ) 2>/dev/null )" || true
+  if [ -z "$check" ]; then
+    mj_info reasoning "-" "reasoning check could not run (bin/majordomus-cli reasoning check)"
+  elif [ "$(printf '%s' "$check" | jq -r '.ok')" = true ]; then
+    mj_ok reasoning "-" "reasoning check: $(printf '%s' "$check" | jq -r '.checks | join(", ")') — no finding"
+  else
+    printf '%s' "$check" | jq -r '.findings[] | [.check, .subject, .message] | @tsv' | \
+      while IFS="$(printf '\t')" read -r c subject message; do
+        mj_fail reasoning "$subject" "$c: $message" "bin/majordomus-cli reasoning check"
+      done
+  fi
   return 0
 }
 

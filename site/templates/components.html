@@ -5,6 +5,18 @@
 <span class="mj-badge mj-badge--{{ status | lower }}">{{ status }}</span>
 {% endcomponent badge %}
 
+{#- A claim's evidence verdict, beside and never instead of its declared status: the state
+    `majordomus evidence show` derived for it, as data/registry/product.json carries it. The
+    badge names its claim, so scripts/ci/homepage-check can refuse a coloured verdict the
+    evidence does not back; with no dataset, or no verdict for the claim, it says unknown. -#}
+{% component evidence(claim, ev) %}
+{%- if ev.available and claim in ev.claims -%}
+<span class="mj-badge mj-badge--{{ ev.claims[claim].state }}" data-claim="{{ claim }}">{{ ev.claims[claim].label }}</span>
+{%- else -%}
+<span class="mj-badge mj-badge--unknown" data-claim="{{ claim }}">unknown</span>
+{%- endif -%}
+{% endcomponent evidence %}
+
 {#- A snippet with an Alpine copy button. Progressive: without JS the code is there and the button hidden (x-cloak). -#}
 {% component code(label, lang="bash", wrap=false) %}
 <figure class="not-format overflow-hidden rounded-base border border-default bg-neutral-primary-soft" x-data="{ copied: false }">
@@ -96,6 +108,16 @@
   {%- if lead %}<p class="mt-3 text-base leading-relaxed text-body sm:text-lg">{{ lead }}</p>{% endif -%}
 </div>
 {% endcomponent section_head %}
+
+{#- The homepage's chapter head: the same three facts as section_head — a number, a kicker and a
+    title, with an optional lead — set at landing-page scale. Words come from the caller's data. -#}
+{% component landing_head(number, kicker, title, lead="") %}
+<div class="mb-10 max-w-3xl">
+  <p class="mb-4 inline-flex items-center gap-2 rounded-full border border-brand-subtle bg-brand-softer px-3 py-1 font-mono text-xs uppercase tracking-widest text-fg-brand"><span class="font-semibold">{{ number }}</span><span aria-hidden="true" class="h-3 w-px bg-brand-subtle"></span>{{ kicker }}</p>
+  <h2 class="text-3xl font-extrabold leading-[1.08] tracking-tight text-balance text-heading sm:text-4xl lg:text-5xl">{{ title }}</h2>
+  {%- if lead %}<p class="mt-5 text-lg leading-relaxed text-body">{{ lead }}</p>{% endif -%}
+</div>
+{% endcomponent landing_head %}
 
 {#- A data-derived Mermaid diagram from diagrams.json, with provenance. Source visible without JS. -#}
 {% component diagram(key) %}

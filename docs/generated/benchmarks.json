@@ -1,30 +1,30 @@
 {
   "schema": "majordomus/benchmark-matrix/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.11.0",
+  "generator": "majordomus-cli 0.12.0",
   "coverage": [
     {
       "scope": "direct",
-      "required": 144,
-      "covered": 126,
+      "required": 167,
+      "covered": 148,
       "missing": 0,
-      "waived": 18,
+      "waived": 19,
       "inapplicable": 0
     },
     {
       "scope": "http",
-      "required": 141,
-      "covered": 126,
+      "required": 164,
+      "covered": 148,
       "missing": 0,
-      "waived": 15,
+      "waived": 16,
       "inapplicable": 0
     },
     {
       "scope": "mcp",
-      "required": 137,
-      "covered": 122,
+      "required": 160,
+      "covered": 144,
       "missing": 0,
-      "waived": 15,
+      "waived": 16,
       "inapplicable": 0
     },
     {
@@ -37,10 +37,10 @@
     },
     {
       "scope": "total",
-      "required": 435,
-      "covered": 387,
+      "required": 504,
+      "covered": 453,
       "missing": 0,
-      "waived": 48,
+      "waived": 51,
       "inapplicable": 0
     }
   ],
@@ -189,6 +189,18 @@
       "module": "continuity",
       "kind": "query",
       "cache": "process, 2 entries, 2s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "convergence.report",
+      "module": "convergence",
+      "kind": "query",
+      "cache": "—",
       "direct": "covered",
       "mcp": "covered",
       "http": "covered",
@@ -566,6 +578,42 @@
       ]
     },
     {
+      "id": "episodes.attach",
+      "module": "episodes",
+      "kind": "command",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "episodes.detach",
+      "module": "episodes",
+      "kind": "command",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "episodes.list",
+      "module": "episodes",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
       "id": "evidence.claim",
       "module": "evidence",
       "kind": "query",
@@ -787,6 +835,126 @@
       "module": "health",
       "kind": "query",
       "cache": "process, 4 entries, 5s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "integration.events",
+      "module": "integration",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "integration.explain",
+      "module": "integration",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "a-number"
+      ]
+    },
+    {
+      "id": "integration.queue",
+      "module": "integration",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "intents.list",
+      "module": "intents",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "intents.preflight",
+      "module": "intents",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "first-issue"
+      ]
+    },
+    {
+      "id": "intents.record",
+      "module": "intents",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "first-intent"
+      ]
+    },
+    {
+      "id": "intents.validate",
+      "module": "intents",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "knowledge_base.candidates",
+      "module": "knowledge_base",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "knowledge_base.record",
+      "module": "knowledge_base",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "first-record"
+      ]
+    },
+    {
+      "id": "knowledge_base.status",
+      "module": "knowledge_base",
+      "kind": "query",
+      "cache": "process, 2 entries, 2s",
       "direct": "covered",
       "mcp": "covered",
       "http": "covered",
@@ -1426,6 +1594,77 @@
       ]
     },
     {
+      "id": "reasoning.advisors",
+      "module": "reasoning",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "reasoning.check",
+      "module": "reasoning",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "reasoning.explain",
+      "module": "reasoning",
+      "kind": "query",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "reasoning.plan",
+      "module": "reasoning",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "material"
+      ]
+    },
+    {
+      "id": "reasoning.record",
+      "module": "reasoning",
+      "kind": "command",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "refused"
+      ]
+    },
+    {
+      "id": "reasoning.status",
+      "module": "reasoning",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "current",
+        "all"
+      ]
+    },
+    {
       "id": "recover.orphans",
       "module": "recover",
       "kind": "command",
@@ -1614,6 +1853,42 @@
     {
       "id": "shell.check",
       "module": "shell",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "skills.explain",
+      "module": "skills",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "first-skill"
+      ]
+    },
+    {
+      "id": "skills.status",
+      "module": "skills",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "skills.verify",
+      "module": "skills",
       "kind": "query",
       "cache": "—",
       "direct": "covered",

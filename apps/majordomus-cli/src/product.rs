@@ -33,6 +33,7 @@ use crate::capability::{Capability, CapabilityRegistry, Provenance};
 use crate::cockpit::nav;
 use crate::index::Index;
 use crate::model::{Object, Severity};
+use crate::share::ProviderOffers;
 use crate::web::Topology;
 use crate::why::Catalogue;
 
@@ -306,6 +307,12 @@ pub struct ClaimRef {
     pub claim: String,
     /// `guaranteed`, `advisory`, `planned` or `rejected`.
     pub status: String,
+    /// The test that settles it, as `docs/CLAIMS.yaml` records it — the one field that makes a
+    /// claim checkable rather than stated. Absent where the claim declares none, and where it
+    /// declares `-`: a planned or rejected claim has nothing to run yet, and rendering a dash
+    /// as a test would be a projection inventing evidence.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub test: Option<String>,
 }
 
 /// One use case the feature names.
@@ -479,6 +486,16 @@ pub struct ProductProvider {
     /// never moves it (ADR 0024).
     #[serde(default)]
     pub scratch_roots: Vec<String>,
+    /// What it can do about the session lifecycle, and where each answer was verified
+    /// (`share/providers.yaml`, ADR 0103). The capability, never the wiring: `hooks` says
+    /// the vendor fires session events, not that this repository has installed anything to
+    /// receive them. The other half — what is wired here, and whether driving it produced
+    /// anything — is `majordomus capture status`, which reads this same declaration and
+    /// joins it with the tree. It is not restated here because only the shell tool holds
+    /// the adapter table and can run a shim, and a second account it could not compute
+    /// correctly is worse than one reader more.
+    #[serde(default)]
+    pub offers: ProviderOffers,
 }
 
 /// One bootstrap a provider renders.
@@ -1281,6 +1298,7 @@ fn resolve(
                 id: id.clone(),
                 claim: o.title.clone().unwrap_or_else(|| id.clone()),
                 status: meta_str(o, "status").unwrap_or_default(),
+                test: meta_str(o, "test").filter(|t| t != "-"),
             }),
             None => unknown(
                 "claims",
@@ -1623,6 +1641,7 @@ fn providers(index: &Index) -> Vec<ProductProvider> {
                     .map(|(_, n)| n.clone())
                     .collect(),
                 scratch_roots: decl.scratch_roots.clone(),
+                offers: decl.offers.clone(),
             }
         })
         .collect();

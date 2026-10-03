@@ -174,7 +174,8 @@ else bad product "site/data/registry/product.json missing (regenerate: majordomu
 TD="$SITE/data/generated/terminal.json"
 if [ -f "$TD" ]; then
   term_bad=0
-  HOME_HTML="$(sed 's/&quot;/"/g; s/&#x27;/'"'"'/g; s/&lt;/</g; s/&gt;/>/g; s/&amp;/\&/g' "$PUB/index.html")"
+  # Zola writes an apostrophe as &#39;, and a recorded command now quotes its arguments with one
+  HOME_HTML="$(sed 's/&quot;/"/g; s/&#x27;/'"'"'/g; s/&#39;/'"'"'/g; s/&lt;/</g; s/&gt;/>/g; s/&amp;/\&/g' "$PUB/index.html")"
   n=0
   while IFS="$MJ_TAB" read -r cmd first; do
     n=$((n + 1))
@@ -197,6 +198,40 @@ EOF
   done
   [ "$term_bad" = 0 ] && ok terminal "$(jq -r '.counts.walkthrough' "$TD") lifecycle step(s) and $(jq -r '.counts.refusals' "$TD") refusal(s) on the homepage, each the command, the exit status and the stdout of a run recorded in $(jq -r '.counts.scenarios' "$TD") executed scenario(s); nothing on this page is typed"
 else bad terminal "site/data/generated/terminal.json missing (regenerate: scripts/generate-site-data)"; fi
+# 3b'. the challenge is a replay too, of one scenario from start to finish, and it is held the
+# same way in both directions: every step site/data/generated/challenge.json recorded is on
+# /challenge/ and in the homepage replay, command line and decision lines as the run printed
+# them, the page renders exactly as many steps as the run holds, the homepage's first call to
+# action leads there, and every comparison row links the guarantee it stands on. Its words
+# (site/data/challenge.toml) carry no number, like every other hand-written file on the site.
+CD="$SITE/data/generated/challenge.json"
+if [ -f "$SITE/data/challenge.toml" ]; then
+  if grep -vE '^\s*#' "$SITE/data/challenge.toml" | grep -qE '\b[0-9]+ ?%|\b[0-9]{2,}\b'; then bad promo "challenge.toml contains a number; numbers are computed, never written"; fi
+  if [ ! -f "$CD" ]; then bad challenge "site/data/generated/challenge.json missing (regenerate: scripts/generate-site-data)"
+  elif [ ! -f "$PUB/challenge/index.html" ]; then bad challenge "challenge.toml declares a challenge and /challenge/ was not built"
+  else
+    ch_bad=0
+    ch_text() { sed 's/<[^>]*>//g; s/&quot;/"/g; s/&#x27;/'"'"'/g; s/&#39;/'"'"'/g; s/&lt;/</g; s/&gt;/>/g; s/&amp;/\&/g' "$1"; }
+    CH_PAGE="$(ch_text "$PUB/challenge/index.html")"; CH_HOME="$(ch_text "$PUB/index.html")"
+    ch_n=0
+    while IFS= read -r want; do
+      [ -n "$want" ] || continue
+      ch_n=$((ch_n + 1))
+      printf '%s' "$CH_PAGE" | grep -qF -- "$want" || { bad challenge "/challenge/ does not carry the recorded line: $want"; ch_bad=1; }
+      printf '%s' "$CH_HOME" | grep -qF -- "$want" || { bad challenge "the homepage replay does not carry the recorded line: $want"; ch_bad=1; }
+    done <<EOF
+$(jq -r '.steps[] | ("$ " + .command), (.decision[] | split("  [reproduce:") | first)' "$CD")
+EOF
+    [ "$ch_n" -gt 0 ] || { bad challenge "challenge.json holds no recorded line to look for; a check over nothing has not passed"; ch_bad=1; }
+    panels="$(grep -o 'data-outcome="[a-z]*"' "$PUB/challenge/index.html" | wc -l | tr -d ' ')"
+    [ "$panels" = "$(jq '.steps | length' "$CD")" ] || { bad challenge "/challenge/ renders $panels step panel(s), the recorded run has $(jq '.steps | length' "$CD")"; ch_bad=1; }
+    grep -qE 'href="[^"]*/challenge/"[^>]*data-cta="challenge"' "$PUB/index.html" || { bad challenge "the homepage's first call to action does not lead to /challenge/"; ch_bad=1; }
+    for c in $(jq -r '.claims[].id' "$CD"); do
+      grep -qF "/guarantees/$c/" "$PUB/challenge/index.html" || { bad challenge "/challenge/ does not link the guarantee $c a comparison row stands on"; ch_bad=1; }
+    done
+    [ "$ch_bad" = 0 ] && ok challenge "$(jq -r '.counts.steps' "$CD") recorded step(s) and $(jq -r '.counts.refusals' "$CD") refusal(s) on /challenge/ and the homepage exactly as the run printed them ($ch_n line(s) matched); every comparison row links the guarantee it stands on"
+  fi
+fi
 # 3c. the marketing copy carries no capability claim: the words are positioning, and every
 # fact beside them comes out of the dataset above
 grep -qE '\b(surfaces?|capabilit(y|ies)|command line|MCP|HTTP API)\b *[:=] *\[' "$SITE/data/marketing.toml" \
@@ -249,35 +284,54 @@ fi
 # offline against the tree being published. This check used to grep root-relative hrefs, which Zola
 # never emits (it writes https://majordomus.dev/...), so it reported "every internal link resolves"
 # over an empty set while 197 links 404ed. The finding lines are relayed as they are.
-LC_OUT="$(mktemp "${TMPDIR:-/tmp}/mj.linkcheck.XXXXXX")"; lc_rc=0
-MJ_ROOT="$ROOT" "$ROOT/scripts/ci/link-check" > "$LC_OUT" 2>&1 || lc_rc=$?
-while IFS= read -r line; do
-  case "$line" in
-    "OK   "*) ok link "${line#OK   links        }" ;;
-    "FAIL "*) bad link "${line#FAIL }" ;;
-    "") ;;
-    # the closing summary of a run that found something restates its findings; only a run that could not
-    # decide at all (exit 12) has a line of its own to count
-    "link-check: "*) [ "$lc_rc" = 12 ] && bad link "$line" || printf '     %-12s %s\n' link "$line" ;;
-    *) [ "$lc_rc" = 0 ] || bad link "$line" ;;
-  esac
-done < "$LC_OUT"
-rm -f "$LC_OUT"
+# The relay that turns a delegated checker's output into this script's own verdicts: `OK …`
+# becomes an ok, `FAIL …` a failure, the closing summary counts only when the run could not
+# decide at all, and any other line counts when the run failed. It was written twice, once per
+# checker, and a verdict written twice is a verdict that can disagree with itself.
+#
+# It also had no answer for silence. Every branch asks "is this line bad?", and every one needs
+# a line to exist: a checker that dies before printing anything (a crash, a missing interpreter,
+# a new code path that exits early) leaves a non-zero status and an empty file, the loop never
+# runs, nothing is recorded, and the section reports as passed. That is the verdict #351 lost
+# from the other side, where `bad` ran in a pipeline's subshell and sixteen findings printed
+# while the script exited 0. So the relay answers for no output too, and it is one function;
+# test/cases/599_a_silent_check_is_not_a_pass.sh drives this definition as it is written here.
+#
+#   relay_check <subject> <script> <ok-prefix> <fail-prefix>
+#
+# <subject> is the column the verdicts are filed under; the prefixes are what the checker writes
+# ahead of its own message, stripped so the relayed line reads as this script's own.
+relay_check() {
+  local subject="$1" script="$2" ok_prefix="$3" fail_prefix="$4"
+  local out rc=0 before line name said
+  name="$(basename "$script")"
+  out="$(mktemp "${TMPDIR:-/tmp}/mj.relay.XXXXXX")"
+  before="$fails"
+  MJ_ROOT="$ROOT" "$script" > "$out" 2>&1 || rc=$?
+  while IFS= read -r line; do
+    case "$line" in
+      "OK   "*) ok "$subject" "${line#"$ok_prefix"}" ;;
+      "FAIL "*) bad "$subject" "${line#"$fail_prefix"}" ;;
+      "") ;;
+      # the closing summary of a run that found something restates its findings; only a run
+      # that could not decide at all (exit 12) has a line of its own to count
+      "$name: "*) [ "$rc" = 12 ] && bad "$subject" "$line" || printf '     %-12s %s\n' "$subject" "$line" ;;
+      *) [ "$rc" = 0 ] || bad "$subject" "$line" ;;
+    esac
+  done < "$out"
+  # the verdict for a failed run that recorded no failure: silent, or speaking only OK lines,
+  # blank lines or a summary. The message names which, so a reader is sent to the right cause.
+  said="printed nothing"; [ ! -s "$out" ] || said="printed no failure"
+  rm -f "$out"
+  [ "$rc" = 0 ] || [ "$fails" != "$before" ] \
+    || bad "$subject" "$name exited $rc and $said; a failed run that recorded no failure has not passed"
+  return 0
+}
+relay_check link "$ROOT/scripts/ci/link-check" "OK   links        " "FAIL "
 
 # 6b. every interactive control is claimed by exactly one behaviour spec: scripts/ci/interaction-check, from the
 # markup alone. What each spec asserts is exercised in a browser by scripts/interaction-probe.
-IC_OUT="$(mktemp "${TMPDIR:-/tmp}/mj.interactioncheck.XXXXXX")"; ic_rc=0
-MJ_ROOT="$ROOT" "$ROOT/scripts/ci/interaction-check" > "$IC_OUT" 2>&1 || ic_rc=$?
-while IFS= read -r line; do
-  case "$line" in
-    "OK   "*) ok controls "${line#OK   controls     }" ;;
-    "FAIL "*) bad controls "${line#FAIL control       }" ;;
-    "") ;;
-    "interaction-check: "*) [ "$ic_rc" = 12 ] && bad controls "$line" || printf '     %-12s %s\n' controls "$line" ;;
-    *) [ "$ic_rc" = 0 ] || bad controls "$line" ;;
-  esac
-done < "$IC_OUT"
-rm -f "$IC_OUT"
+relay_check controls "$ROOT/scripts/ci/interaction-check" "OK   controls     " "FAIL control       "
 # 7. assets present
 for a in app.css js/flowbite.min.js js/alpine.min.js js/theme.js js/mermaid.min.js js/diagrams.js js/graph.js js/cytoscape.min.js images/logo-mark.svg images/logo.svg images/social-card.png favicon.svg giallo-light.css giallo-dark.css; do
   [ -f "$PUB/$a" ] || bad asset "$a missing from site/public"
@@ -610,7 +664,9 @@ jq -r '.use_cases[] | .id as $u | .commands[] | "\($u) \(.)"' "$SITE/data/genera
   grep -q "/commands/$c/" "$PUB/use-cases/$u/index.html" || bad catalogue "use case $u does not link to the command page for $c"
 done < "$PAGEROWS.found"
 # every use case with a scenario shows the evidence of its run: the command lines the tool
-# executed, and the result; a page that shows a demonstration nobody ran is what this refuses
+# executed, and the result; a page that shows a demonstration nobody ran is what this refuses.
+# A worker step is shown as the line the worker ran, not as a command of the tool, so the count
+# is of the tool's steps.
 # A live scenario (ADR 38) asks about this repository as it is and is never run by the generator,
 # so it carries no evidence here: its page must say so rather than show a run.
 jq -r '.use_cases[] | select(.scenario != null and .scenario.mode == "live") | .id' "$SITE/data/generated/catalogue.json" > "$PAGEROWS.live"
@@ -618,7 +674,7 @@ while read -r u; do
   grep -q 'no run of it is shown here' "$PUB/use-cases/$u/index.html" \
     || bad evidence "use case $u has a live scenario and its page does not say that no run is shown"
 done < "$PAGEROWS.live"; rm -f "$PAGEROWS.live"
-jq -r '.use_cases[] | select(.scenario != null and .scenario.mode != "live") | .id as $u | .evidence as $e | "\($u) \($e.result // "none") \($e.steps | length)"' "$SITE/data/generated/catalogue.json" > "$PAGEROWS.found"; while read -r u res n; do
+jq -r '.use_cases[] | select(.scenario != null and .scenario.mode != "live") | .id as $u | .evidence as $e | "\($u) \($e.result // "none") \(($e.steps // []) | map(select((.actor // "tool") == "tool")) | length)"' "$SITE/data/generated/catalogue.json" > "$PAGEROWS.found"; while read -r u res n; do
   [ "$res" = pass ] || bad evidence "use case $u carries evidence '$res'; a page shows only a scenario that passed"
   [ "$(grep -c '\$ majordomus ' "$PUB/use-cases/$u/index.html")" -ge "$n" ] || bad evidence "use case $u renders fewer executed commands than its evidence has ($n)"
 done < "$PAGEROWS.found"
@@ -777,9 +833,11 @@ done < "$PAGEROWS.dupid"; rm -f "$PAGEROWS.dupid"
 # 13g. the homepage's story and the site's indexing policy, each against its one declaration:
 # site/data/homepage.toml's section order and site/data/nav.toml's [indexing]. The checks are
 # scripts/ci/homepage-check's (rule project.homepage-tells-a-declared-story) and are only
-# reported here, so the one script and test/cases/333 prove the same thing CI runs.
-HOMEROWS="$(mktemp "${TMPDIR:-/tmp}/mj-homepage.XXXXXX")"
-"$ROOT/scripts/ci/homepage-check" > "$HOMEROWS" 2>&1 || true
+# reported here, so the one script and test/cases/333 prove the same thing CI runs. Its lines
+# carry their own subjects and are relayed verbatim, so it keeps its own loop, but it owes the
+# same verdict for silence as relay_check: a failed run that recorded nothing has not passed.
+HOMEROWS="$(mktemp "${TMPDIR:-/tmp}/mj-homepage.XXXXXX")"; home_rc=0; home_before="$fails"
+"$ROOT/scripts/ci/homepage-check" > "$HOMEROWS" 2>&1 || home_rc=$?
 while IFS= read -r line; do
   case "$line" in
     OK*) printf '%s\n' "$line" ;;
@@ -787,7 +845,10 @@ while IFS= read -r line; do
     *) printf 'FAIL homepage     %s\n' "$line"; fails=$((fails+1)) ;;
   esac
 done < "$HOMEROWS"
+home_said="printed nothing"; [ ! -s "$HOMEROWS" ] || home_said="printed no failure"
 rm -f "$HOMEROWS"
+[ "$home_rc" = 0 ] || [ "$fails" != "$home_before" ] \
+  || bad homepage "homepage-check exited $home_rc and $home_said; a failed run that recorded no failure has not passed"
 
 # 13c. the why section links both ways: every moment reaches its commands, responsibilities and
 # claims, and every one of those pages carries a link back. A one-way link is how the section

@@ -161,6 +161,7 @@ majordomus worktree doctor                     # every diagnostic with its code 
 majordomus worktree migrate --plan             # what would move; changes nothing
 majordomus worktree migrate                    # move, verify, report
 majordomus worktree cleanup                    # what is merged and clean; deletes nothing
+majordomus worktree cleanup --remove           # removes those worktrees, refusing what it cannot prove
 ```
 
 | command | what it does | exit 10 when |
@@ -178,7 +179,8 @@ majordomus worktree cleanup                    # what is merged and clean; delet
 | `worktree guard [--quiet]` | may a commit proceed from here | no |
 | `worktree repair [--dry-run]` | drop stale registrations, repair git's links; deletes no directory | |
 | `worktree remove <branch\|path> [--force]` | remove one linked worktree; never the primary, never a branch, never dirty work unforced | refused |
-| `worktree cleanup` | branches merged into the trunk whose worktree is clean or absent, with the commands that would remove them | |
+| `worktree cleanup` | branches merged into the trunk, or into the remote-tracking branch the trunk follows, whose worktree is clean or absent, with the commands that would remove them. A primary checkout nobody has pulled does not hide what has already landed. | |
+| `worktree cleanup --remove` | removes those worktrees, each re-measured first; refuses a branch ahead of its remote, a worktree something is working in, uncommitted work, or a reading it could not take | |
 | `worktree branches [--without-worktree]` | every local branch, one per line | |
 
 `wt` is an alias for `worktree`. `--format json` is available everywhere and is the same
@@ -238,6 +240,15 @@ the report says which (`differs`, `not_approved_in_primary`). A branch with an `
 its own is a file the person has not read, and approving it for them is the one thing
 `direnv allow` exists to prevent. Without direnv on the PATH the outcome is
 `direnv_absent` and nothing is blocked, because nothing would load the file.
+
+The primary checkout's machine-local `.envrc.local` is shared in the same moment. The
+repository's `.envrc` sources `.envrc.local` from the directory it is entered from, and
+the adapter rule keeps that file free of the program a lookup of the primary checkout
+would need. So a new worktree gets a symlink to the primary checkout's `.envrc.local`, and
+the person's own exports, including keychain-backed secrets such as `OPENAI_API_KEY`, load
+there too, from one file. The link is made only where git ignores the name
+(`not_ignored` otherwise), and a worktree with an `.envrc.local` of its own keeps it
+(`own_kept`).
 
 The last step is the one with no mechanism behind it. Creating a worktree is one command;
 removing one is a decision nobody is prompted to make, and `cleanup` deliberately deletes
@@ -354,3 +365,30 @@ topology changes outside the process.
 | the gate | `scripts/ci/worktree-check`, gate `worktree-topology` in `.ai/repo/ci/gates.yaml` |
 | the tests | `apps/majordomus-cli/tests/worktree.rs`, `test/cases/96_worktree_topology.sh` |
 | the decision and the rule | ADR 21, `.ai/repo/rules/project/worktree-topology.v1.md` |
+
+## Reclaiming
+
+`majordomus worktree cleanup` lists what is spare: every branch merged into the trunk whose
+worktree is clean or absent. `--remove` removes those worktrees, and nothing else — branches
+are never deleted, because the disk is what runs out and a branch is the only durable name a
+piece of work has.
+
+The listing and the removal are two moments, and everything that makes a worktree safe to
+remove can change between them, so the listing only nominates: `--remove` reads the branch's
+standing against its remote, whether anything is running inside and whether the tree is clean
+again for each candidate immediately before it goes, and names what it refuses:
+
+| refusal | why it is not covered by "merged and clean" |
+|---|---|
+| ahead of its remote, no upstream, or upstream gone | the branch's merged history is on the remote; a commit on top of it is on one disk, and being merged says nothing about that |
+| a process has its working directory inside | mtime lies: two worktrees swept on 2026-09-15 looked untouched since the 12th and had live processes in them |
+| uncommitted work | read again at the moment of removal, not taken from the listing |
+| `lsof` is missing, or git could not compare with the upstream | not knowing is not the same as nothing being there |
+
+`test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh` plants a fixture with its own
+remote: a spare worktree, which goes, and a branch ahead of its remote, one never pushed, one
+whose remote branch was deleted, one with a process inside and one dirty before the listing,
+which stay. It includes the combination the refusals exist for: a branch merged into the
+trunk *and* carrying a commit its remote has never seen. What changes *after* the listing — a
+commit, a deleted remote branch, a file written — is planted by the unit tests of the reclaim
+in `apps/majordomus-cli/src/commands/worktree.rs`. A missing `lsof` is not planted anywhere.

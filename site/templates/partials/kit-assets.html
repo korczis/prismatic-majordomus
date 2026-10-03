@@ -1,0 +1,5 @@
+{#- The kit's stylesheet and behaviour, for a page composed of templates/kit/ components. The
+    sheet is the page's whole sheet (site/kit.tailwind.css): the page empties its `stylesheet`
+    block so app.css is not loaded beside it. -#}
+<link rel="stylesheet" href="{{ get_url(path="kit.css", cachebust=true) }}">
+<script defer src="{{ get_url(path="js/kit.js") }}"></script>

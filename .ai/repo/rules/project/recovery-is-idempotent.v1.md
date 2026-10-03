@@ -7,7 +7,7 @@ description: Before retrying interrupted work a worker establishes what already 
 statement: Recovery resumes from the last deterministic state a worker can establish, never from the assumption that nothing happened; work is not retried until it has been shown not to have succeeded.
 status: active
 class: advisory
-depends_on: [project.a-worker-that-stops-leaves-its-work-behind@1, project.destructive-sweeps-fail-closed@1]
+depends_on: [project.a-worker-that-stops-leaves-its-work-behind@2, project.destructive-sweeps-fail-closed@1]
 tags: [process, integration, agents]
 
 x-majordomus:

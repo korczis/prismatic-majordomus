@@ -1,7 +1,7 @@
 +++
 title = "Performance truth"
 description = "where a command's time goes (`MJ_TIMING=1`), what was slow and the shape of every fix, `majordomus bench` and its cold and warm distributions, local runs against the tracked baseline, the regression check and the budgets, and how to work on performance"
-weight = 20
+weight = 21
 [extra]
 source = "docs/PERFORMANCE.md"
 +++
@@ -36,8 +36,8 @@ per validator, the knowledge compiler one per stage, the site generator one per 
 A counter is one unit of work worth counting: a YAML flatten, a batch flatten, a batch
 hash, a git call. The counters are the structural evidence: a loop that regressed to one
 process per item shows up as a count that grows with the input, long before a clock notices
-it on a small repository. The clock is `EPOCHREALTIME` where bash has it, perl where it
-does not, whole seconds otherwise, and the report says which.
+it on a small repository. The clock is `EPOCHREALTIME` where bash has it and whole seconds
+otherwise, and the report says which.
 
 ## What was slow, and the shape of the fix
 

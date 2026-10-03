@@ -335,7 +335,7 @@ jq -e '(.available | not) and (.reason | length > 0) and (has("current") | not)'
 # This repository's own validate.yml, read job by job the way 26_ci_wiring reads it.
 WF="$ROOT/.github/workflows/validate.yml"
 job() {          # job <name> — that job's block
-  awk -v j="  $1:" '$0 == j {f=1; next} /^  [a-z]+:$/ {f=0} f' "$WF"
+  awk -v j="  $1:" '$0 == j {f=1; next} /^  [a-z][a-z-]*:$/ {f=0} f' "$WF"
 }
 step_with() {    # step_with <regex> — from the job block on stdin, every step whose text matches
   awk -v p="$1" '
@@ -343,7 +343,15 @@ step_with() {    # step_with <regex> — from the job block on stdin, every step
     { s = s $0 "\n" }
     END { if (s ~ p) printf "%s", s }'
 }
-suite_job="$(job suite)"; rust_job="$(job rust)"; evidence_job="$(job evidence)"
+# The suite runs in the suite-shard jobs (four shards, one measurement each, joined by the
+# suite job into the one ci-evidence-suite-tree the evidence job reads), so they are its
+# producer: the report is written there and the tree is measured there.
+suite_job="$(job suite-shard)"; rust_job="$(job rust)"; evidence_job="$(job evidence)"
+join_job="$(job suite)"
+printf '%s\n' "$join_job" | step_with 'name: ci-evidence-suite-tree\n' | grep -qF '${{ runner.temp }}/suite-tree.json' \
+  || { echo "    the suite job does not publish the shards' joined tree measurement"; exit 1; }
+printf '%s\n' "$suite_job" | grep -qF 'name: ci-evidence-suite-tree-${{ matrix.shard }}' \
+  || { echo "    the suite shards do not each publish their own tree measurement"; exit 1; }
 [ -n "$suite_job" ] && [ -n "$rust_job" ] && [ -n "$evidence_job" ] \
   || { echo "    validate.yml has no suite, rust or evidence job to read"; exit 1; }
 

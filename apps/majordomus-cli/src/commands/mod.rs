@@ -34,6 +34,7 @@ pub(crate) mod capabilities;
 pub(crate) mod command_graph;
 pub(crate) mod commit;
 pub(crate) mod completion;
+pub(crate) mod convergence;
 pub(crate) mod dashboard;
 pub(crate) mod delivery;
 pub(crate) mod devcontext;
@@ -45,17 +46,22 @@ pub(crate) mod env;
 pub(crate) mod evidence;
 pub(crate) mod executions;
 pub(crate) mod generate;
+pub(crate) mod intent;
+pub(crate) mod knowledge;
 pub(crate) mod mcp;
 pub(crate) mod mesh;
 pub(crate) mod models;
 pub(crate) mod product;
+pub(crate) mod prs;
 pub(crate) mod quality;
+pub(crate) mod reasoning;
 pub(crate) mod release;
 pub(crate) mod rules;
 pub(crate) mod scope;
 pub(crate) mod serve;
 pub(crate) mod served;
 pub(crate) mod shell;
+pub(crate) mod skills;
 pub(crate) mod web;
 pub(crate) mod why;
 pub(crate) mod worktree;
@@ -80,6 +86,8 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Commands(args) => command_graph::run(args),
         Command::Completion(args) => completion::run(args),
         Command::Worktree(args) => worktree::run(args),
+        Command::Prs(args) => prs::run(args),
+        Command::Convergence(args) => convergence::run(args),
         Command::Commit(args) => commit::run(args),
         Command::Product(args) => product::run(args),
         Command::Release(args) => release::run(args),
@@ -89,14 +97,18 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Devcontext(args) => devcontext::run(args),
         Command::Mesh(args) => mesh::run(args),
         Command::Models(args) => models::run(args),
+        Command::Reasoning(args) => reasoning::run(args),
         Command::Evidence(args) => evidence::run(args),
         Command::Served(args) => served::run(args),
         Command::Rules(args) => rules::run(args),
+        Command::Intent(args) => intent::run(args),
         Command::Delivery(args) => delivery::run(args),
         Command::Economics(args) => economics::run(args),
         Command::Entity(args) => entity::run(args),
         Command::Shell(args) => shell::run(args),
         Command::Dashboard(args) => dashboard::run(args),
+        Command::Skills(args) => skills::run(args),
+        Command::Knowledge(args) => knowledge::run(args),
     }
 }
 
@@ -134,6 +146,12 @@ mod tests {
             (&["majordomus", "why", "list"], |c| {
                 matches!(c, Command::Why(_))
             }),
+            (&["majordomus", "intent", "list"], |c| {
+                matches!(c, Command::Intent(_))
+            }),
+            (&["majordomus", "skills", "status"], |c| {
+                matches!(c, Command::Skills(_))
+            }),
             (&["majordomus", "devtask", "issue", "I0001"], |c| {
                 matches!(c, Command::Devtask(_))
             }),
@@ -158,6 +176,13 @@ mod tests {
             (
                 &["majordomus", "devcontext", "compile", "--issue", "I1"],
                 |c| matches!(c, Command::Devcontext(_)),
+            ),
+            (&["majordomus", "knowledge", "status"], |c| {
+                matches!(c, Command::Knowledge(_))
+            }),
+            (
+                &["majordomus", "knowledge", "record", "e1-0123456789ab"],
+                |c| matches!(c, Command::Knowledge(_)),
             ),
         ];
         for (argv, is_expected) in cases {

@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "statuses": {
-    "guaranteed": "Deterministic and blocking. Implemented, and a behavioural test proves it.",
+    "guaranteed": "Declared deterministic and blocking, implemented, and naming the behavioural test that is to prove it. Whether a recorded run supports it is the evidence verdict, shown beside it.",
     "advisory": "Projected into the worker's instructions. Whether a worker honours it is not observable from outside. Documentation, not enforcement.",
     "planned": "Specified and not implemented. Named so the omission is visible.",
     "rejected": "Considered and deliberately refused, with the reason recorded."
@@ -1912,6 +1912,32 @@
       "test_case": "171_session_observability"
     },
     {
+      "id": "connection-episode",
+      "claim": "A client with no provider hooks gets an execution episode from the MCP connection, resumes its own after a crash, and never has its prompt claimed to be captured",
+      "source": "docs/MCP.md",
+      "implementation": "apps/majordomus-cli/src/episodes.rs",
+      "test": "test/cases/200_generic_mcp_episode.sh",
+      "status": "guaranteed",
+      "note": "The episode opens on episodes.attach and never on initialize, so a client that only reads the layer leaves no record; it is keyed by the external identity the client supplies and never by a peer id, which is handed out per connection; every message the client sends is its heartbeat; losing the connection detaches rather than closes, and a reconnect under the same identity resumes the same episode. Nothing here writes a session record - the board runs `capture session --provider generic`, the same command a provider hook's shim runs, and reports what it said. Prompt capture is declared impossible for the connection and is not attempted: an MCP server is handed tool calls, never the prompt that produced them. ADR 0103.",
+      "responsibility": "state",
+      "source_route": "/docs/mcp/",
+      "command": null,
+      "test_case": "200_generic_mcp_episode"
+    },
+    {
+      "id": "provider-capability-evidence",
+      "claim": "What each provider can do about the session lifecycle and prompt capture is one declaration with a citation per cell, every surface projects it, and no provider the declaration names goes unreported",
+      "source": "docs/CONCEPTS.md",
+      "implementation": "share/providers.yaml",
+      "test": "test/cases/200_generic_mcp_episode.sh",
+      "status": "guaranteed",
+      "note": "share/providers.yaml carries an offers block per provider - episode (hooks, connection, none), prompts (hook, none), and the citation each was verified from; a word outside either vocabulary fails the read of the file rather than degrading to none. share::ProviderDeclaration and product::ProductProvider carry it and every surface is a projection. `capture status` joins it with the tree and reports two facts per aspect, the vendor's capability and this checkout's state, over the union of the declared providers and the adapter tables; `unsupported` is reserved for a provider that cannot do the thing and `unadapted` names a gap in this distribution. scripts/provider-evidence-check is the gate and the case holds it to its own negative. ADR 0103, rule project.a-provider-capability-cites-its-evidence.",
+      "responsibility": "projection",
+      "source_route": "/docs/concepts/",
+      "command": null,
+      "test_case": "200_generic_mcp_episode"
+    },
+    {
       "id": "adr-catalogue",
       "claim": "An architecture decision is one file under the layer's adrs section, validated against the decision contract, with an identity nothing else claims, reciprocal supersession, and every reference it makes resolving",
       "source": "docs/SCHEMAS.md",
@@ -2212,16 +2238,42 @@
     },
     {
       "id": "rule-proof-is-named-and-resolves",
-      "claim": "Every blocking rule names what proves it, and every path it names is in the tree",
+      "claim": "Every rule names what proves it, and every path it names is in the tree",
       "source": "docs/DOCTRINE.md",
       "implementation": "scripts/ci/rule-proof-check",
       "test": "test/cases/125_rule_proof.sh",
       "status": "guaranteed",
-      "note": "A rule could name a behavioural case in English prose, and nothing noticed when that case was renamed or deleted; the rule went on reading as enforced. The gate holds both halves of the relation. A named path that is not in the tree is `dangling` and is never ratcheted, because a proof that does not exist is worse than no proof. A blocking rule naming neither a validator nor a test nor a reason is `unproven`, which is the half no other check in this repository knows to look for.",
+      "note": "A rule could name a behavioural case in English prose, and nothing noticed when that case was renamed or deleted; the rule went on reading as enforced. The gate holds both halves of the relation. A named path that is not in the tree is `dangling` and is never ratcheted, because a proof that does not exist is worse than no proof. A rule of either class naming neither a validator nor a test nor a reason is `unproven`, which is the half no other check in this repository knows to look for; advisory is not an exemption, and the one exemption is a vendored rule tagged `principle`, which the package pins by hash and which the gate counts on every run. `majordomus rules` reports the same `unproven` state for every class but calls it a finding only for a blocking rule; the gate is what refuses it for an advisory one.",
       "responsibility": "none",
       "source_route": "/docs/doctrine/",
       "command": null,
       "test_case": "125_rule_proof"
+    },
+    {
+      "id": "evidence-subjects-are-derived",
+      "claim": "Every claim, rule, feature, command, capability, MCP tool and use case the repository declares is an evidence subject whose members and tests are derived from declarations that already exist, and a committed subject index that differs from that derivation is refused",
+      "source": "docs/EVIDENCE.md",
+      "implementation": "apps/majordomus-cli/src/evidence/subject.rs",
+      "test": "test/cases/507_evidence_subjects_are_derived.sh",
+      "status": "guaranteed",
+      "note": "`majordomus generate site` writes site/data/registry/evidence-subjects.json from the claims matrix, the rules, the features, the use cases, the command registry, the documented command-line examples, the builtin capabilities and the first coverage and negative headers of every case; a capability is made of the claims implemented in the file its module is composed in, and a command word that both the shell tool and the executable answer to names both programs. Nothing lists a subject, a member or a route by hand, so adding a declaration adds its subject and removing it removes it. `generate --check` refuses a hand edit. The file carries structure only — no ledger row and no commit — so recording a run never makes it stale.",
+      "responsibility": "none",
+      "source_route": "/docs/evidence/",
+      "command": null,
+      "test_case": "507_evidence_subjects_are_derived"
+    },
+    {
+      "id": "evidence-subject-commands-agree-with-the-command-pages",
+      "claim": "The behavioural and negative tests the subject index names for a command are exactly the ones its command page lists, both read from the first coverage and negative header of each case",
+      "source": "docs/EVIDENCE.md",
+      "implementation": "apps/majordomus-cli/src/evidence/subject.rs",
+      "test": "test/cases/507_evidence_subjects_are_derived.sh",
+      "status": "guaranteed",
+      "note": "The case headers had several readers before the index: the site generator''s command pages, the command-coverage doctrine, the command-furnished gate and the use-case impact trace, and the last two match a command anywhere in any covers line between word boundaries rather than as a word of the first. The index reads the first line word for word, as the page does. The case holds the two equal, holds every case to one header of each kind, and holds each covers line to naming the same public commands under both readings, so the readers cannot yet disagree; the gate slice moves them onto the index. Two more shell derivations reach tests through declarations rather than headers: the capability pages give every capability the claims implemented in its module''s file, and the doctrine pages name the first test of each rule. The same case holds each of them equal to the index.",
+      "responsibility": "none",
+      "source_route": "/docs/evidence/",
+      "command": null,
+      "test_case": "507_evidence_subjects_are_derived"
     },
     {
       "id": "rule-exemption-carries-its-reason",
@@ -2458,6 +2510,19 @@
       "test_case": "apps/majordomus-cli/tests/mesh_cooperation.rs"
     },
     {
+      "id": "mesh-compaction-keeps-what-is-live",
+      "claim": "Compacting the cooperation journal changes nothing live — a handover nobody has taken keeps its stream for a bounded retention, who took a handover and who answered a review stay with them, and a compacted runtime that beats again is fetched again whole",
+      "source": "docs/MESH.md",
+      "implementation": "apps/majordomus-cli/src/mesh/journal.rs",
+      "test": "test/cases/493_mesh_compaction_keeps_what_is_live.sh",
+      "status": "guaranteed",
+      "note": "Case 493 runs tests/mesh_compaction.rs, two runtimes linked through the real signed protocol over an in-process transport, because no black-box knob reaches compaction in bounded time (a server compacts every sixty heartbeats and keeps a dead stream fifteen minutes; only the heartbeat and the expiry are declarable). The journal's unit tests reproduce each defect PR 588 recorded, and its property test holds that compaction changes no live claim, open session, handover taker or review answer over random histories. Not covered — two runtimes may print different digests while each compacts on its own schedule; what is live agrees, and docs/MESH.md says so.",
+      "responsibility": "none",
+      "source_route": "/docs/mesh/",
+      "command": null,
+      "test_case": "493_mesh_compaction_keeps_what_is_live"
+    },
+    {
       "id": "mesh-network-acceptance",
       "claim": "Separate Linux nodes on a real network discover each other by multicast, link, share claims and handovers, and recover from a partition and a crash, in a lab CI runs",
       "source": "docs/MESH.md",
@@ -2482,6 +2547,19 @@
       "source_route": null,
       "command": null,
       "test_case": "apps/majordomus-cli/tests/mesh.rs"
+    },
+    {
+      "id": "mesh-declared-is-held",
+      "claim": "An enabled mesh declaration whose shared server did not activate the mesh is a failed `runtime` check of `mesh doctor` (exit 10) carrying the server's reason, and a `Mesh: DECLARED ENABLED BUT NOT ACTIVE` line in the session-start briefing — never a quiet off; and this repository's committed declaration is tracked, enabled, allowlists the fleet and names a hub",
+      "source": "docs/MESH.md",
+      "implementation": "apps/majordomus-cli/src/mesh/doctor.rs",
+      "test": "test/cases/494_the_mesh_is_declared_and_held.sh",
+      "status": "guaranteed",
+      "note": "The runtime keeps one bit saying whether a shared server decided anything (activated, or declined with a reason); the doctor's `runtime` check reads the server's decision when the bit is set and reports an absence when it is not, and `majordomus mesh doctor` asks the running server for its report so that the verdict is the server's. The hook library renders the briefing line from that report and sends no request of its own. apps/majordomus-cli/tests/mesh.rs proves the three verdicts over a real server; the case proves the briefing answers and the exit code through the provider's start event, and reads this repository's committed declaration (ADR 0059). It does not make the mesh reach anybody, and hubs are started by hand.",
+      "responsibility": "none",
+      "source_route": "/docs/mesh/",
+      "command": null,
+      "test_case": "494_the_mesh_is_declared_and_held"
     },
     {
       "id": "models-one-declaration",
@@ -2521,6 +2599,123 @@
       "source_route": "/docs/models/",
       "command": null,
       "test_case": "131_models"
+    },
+    {
+      "id": "knowledge-derived-at-the-boundary",
+      "claim": "A provider's end event and its compaction event derive the knowledge the episode produced into candidate records under the tracked tree, from the ledger and git and never from a conversation, whether or not a task is active, and record that they did so in the ledger",
+      "source": "docs/KNOWLEDGE.md",
+      "implementation": "lib/knowledge.sh",
+      "test": "test/cases/563_knowledge_is_derived_at_the_boundary.sh",
+      "status": "guaranteed",
+      "note": "The close path in lib/session.sh runs the deriver after the session record is published and before session.closed is appended, so every close is followed by its knowledge.derived line; the compaction adapter calls it directly, independent of the checkpoint switch. A decision becomes a convention, a resolved question a fact, a blocked task a lesson, a verified completion a fact; a handover's Next Action is continuation state and is never derived from. Nothing reads a conversation, a prompt or a model.",
+      "responsibility": "doctor",
+      "source_route": "/docs/knowledge/",
+      "command": "knowledge",
+      "test_case": "563_knowledge_is_derived_at_the_boundary"
+    },
+    {
+      "id": "knowledge-derivation-is-idempotent",
+      "claim": "A second derivation over the same evidence writes nothing, says so, and leaves the working tree unchanged; the record id is derived from the episode and a digest of the evidence so the same fact always lands in the same file",
+      "source": "docs/KNOWLEDGE.md",
+      "implementation": "lib/knowledge.sh",
+      "test": "test/cases/564_knowledge_derivation_is_idempotent.sh",
+      "status": "guaranteed",
+      "note": "The record is composed into a temporary file in the same directory and compared byte for byte with the file the id names; identical is reported unchanged and the temporary file removed, different is renamed over it. The date is the evidence line's day, never the clock, and no random value enters the bytes, so the same ledger and the same git yield the same file on every machine.",
+      "responsibility": "layer",
+      "source_route": "/docs/knowledge/",
+      "command": "knowledge",
+      "test_case": "564_knowledge_derivation_is_idempotent"
+    },
+    {
+      "id": "knowledge-failure-is-recorded",
+      "claim": "A policy switch that is off derives nothing and says so; a derivation that fails inside a provider hook is recorded as provider.event.failed and the hook still exits 0",
+      "source": "docs/KNOWLEDGE.md",
+      "implementation": "lib/capture.sh",
+      "test": "test/cases/565_knowledge_switch_and_failure_leave_evidence.sh",
+      "status": "guaranteed",
+      "note": "session.knowledge_on_end and session.knowledge_on_compact are the two switches, read from the policy and independent of checkpoint_on_compact. A hook must return success to its provider and returning success is not the same as claiming the work happened, so the adapter reports the failure through mj_capture_session_failed with the deriver's last line as the reason and closes the episode regardless.",
+      "responsibility": "doctor",
+      "source_route": "/docs/knowledge/",
+      "command": "capture",
+      "test_case": "565_knowledge_switch_and_failure_leave_evidence"
+    },
+    {
+      "id": "knowledge-integrity",
+      "claim": "Every knowledge record is schema-valid with no unknown key, uniquely identified, evidenced when verified, resolves every reference it names, and carries no conversation; check, doctor and `majordomus knowledge check` refuse a record that is not",
+      "source": "docs/KNOWLEDGE.md",
+      "implementation": "lib/knowledge.sh",
+      "test": "test/cases/707_knowledge_check_refuses_malformed_records.sh",
+      "status": "guaranteed",
+      "note": "mj_validate_knowledge_integrity reads candidates/ and curated/ once, refuses a candidate that claims verified, a dangling derived_from or relations target, a duplicate id across both directories, a key the generated allow-list does not carry, a superseded record with neither superseded_by nor a rejection, and a title, description or body line matching the transcript check that never-store-transcripts is kept by. References to the ledger and git (session, task, decision, commit) are resolved here, in one pass, and are external to the graph compiler, which never reports them as dangling.",
+      "responsibility": "doctor",
+      "source_route": "/docs/knowledge/",
+      "command": "knowledge",
+      "test_case": "707_knowledge_check_refuses_malformed_records"
+    },
+    {
+      "id": "knowledge-writer-observed",
+      "claim": "A repository in which episodes close and no knowledge derivation follows within the stale threshold is reported as a stopped writer by doctor and watch, and the finding clears when a derivation is written",
+      "source": "docs/KNOWLEDGE.md",
+      "implementation": "lib/knowledge.sh",
+      "test": "test/cases/708_health_sees_a_stopped_knowledge_writer.sh",
+      "status": "guaranteed",
+      "note": "mj_validate_knowledge_lifecycle compares two facts the way ADR 0052's validator does, episodes closing and derivations following, judged against session.freshness.stale_minutes; it also reads the lifecycle source for the call to the deriver while session.knowledge_on_end is on. A checkout whose ledger holds no knowledge.derived line is skipped rather than failed, so the day the deriver arrives no checkout turns red; the first derivation ends the skip. The Rust reader's knowledge_base.status makes the freshness half of the same judgement from the same numbers.",
+      "responsibility": "doctor",
+      "source_route": "/docs/knowledge/",
+      "command": "knowledge",
+      "test_case": "708_health_sees_a_stopped_knowledge_writer"
+    },
+    {
+      "id": "knowledge-promotion-is-an-act",
+      "claim": "verified is written only by promote with evidence on stdin or by a person editing the file, never by the deriver; promotion moves the record to curated/ and rejection supersedes it with a reason, each leaving a ledger line",
+      "source": "docs/KNOWLEDGE.md",
+      "implementation": "lib/knowledge.sh",
+      "test": "test/cases/709_knowledge_promotion_is_an_act.sh",
+      "status": "guaranteed",
+      "note": "An empty stdin is refused because an act without evidence is an assertion, and stdin carrying a transcript marker is refused for the reason a record may not carry one. Promotion keeps derived_from, adds the promoting episode, appends the evidence under an Evidence section and writes knowledge.promoted; rejection rewrites the candidate in place as superseded with a Rejected section and writes knowledge.rejected. The deriver skips a promoted or superseded id, so neither act is undone by the next episode boundary.",
+      "responsibility": "layer",
+      "source_route": "/docs/knowledge/",
+      "command": "knowledge",
+      "test_case": "709_knowledge_promotion_is_an_act"
+    },
+    {
+      "id": "briefing-names-candidates",
+      "claim": "The start briefing names the candidates awaiting review on this branch, count and ids, bounded and within the briefing budget, and prints their absence rather than omitting it",
+      "source": "docs/KNOWLEDGE.md",
+      "implementation": "lib/derive.sh",
+      "test": "test/cases/710_briefing_names_the_candidates.sh",
+      "status": "guaranteed",
+      "note": "The section sits after the open questions and before the handover in the derived briefing, bounded the way the open-questions block is. A candidate's branch is the branch of the episode its derived_from names, read from the tracked session record or, while that record is not yet written, from the ledger; a candidate whose episode this checkout cannot resolve is named on its own line as unattributed rather than hidden.",
+      "responsibility": "handover",
+      "source_route": "/docs/knowledge/",
+      "command": null,
+      "test_case": "710_briefing_names_the_candidates"
+    },
+    {
+      "id": "candidates-reviewed-not-accumulated",
+      "claim": "More candidates than the policy cap, or a candidate older than the policy age, is an advisory doctor finding that names them; both numbers are declared once in the policy",
+      "source": "docs/KNOWLEDGE.md",
+      "implementation": "lib/knowledge.sh",
+      "test": "test/cases/711_candidates_are_reviewed_not_accumulated.sh",
+      "status": "guaranteed",
+      "note": "knowledge.candidates_max_files and knowledge.candidate_max_age_minutes are read with mj_pol_req and a missing key is reported at the rule's class. Review age is the age of the queue entry — the oldest knowledge.derived line naming the file, then the commit that added it, then the record's date — never the evidence day alone. A candidate version control does not track is named too, with the git add remedy after fix:, because a record git does not hold is discovered by nothing. The rule is dispatched from doctor only, so a full review queue never turns watch red.",
+      "responsibility": "doctor",
+      "source_route": "/docs/knowledge/",
+      "command": "knowledge",
+      "test_case": "711_candidates_are_reviewed_not_accumulated"
+    },
+    {
+      "id": "knowledge-served-on-every-surface",
+      "claim": "The candidates awaiting review, one record by id with its references resolved, and the derivation status of the checkout are one declaration each and answer with the same content over the command line, HTTP and MCP",
+      "source": "docs/KNOWLEDGE.md",
+      "implementation": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
+      "test": "apps/majordomus-cli/tests/knowledge_base.rs",
+      "status": "guaranteed",
+      "note": "knowledge_base.candidates, knowledge_base.record and knowledge_base.status are capability! blocks in one module; majordomus generate projects them to the HTTP routes, the OpenAPI document, the MCP tools and resources, the executable's knowledge subcommands, the cockpit's module catalogue and the benchmark inventory. The reader takes candidates from the index, the ledger from the session module and the thresholds from the continuity module's reading of the policy; it writes nothing and reports absence as absence.",
+      "responsibility": "none",
+      "source_route": "/docs/knowledge/",
+      "command": null,
+      "test_case": "apps/majordomus-cli/tests/knowledge_base.rs"
     },
     {
       "id": "new-code-is-covered",
@@ -2638,6 +2833,97 @@
       "source_route": "/docs/evidence/",
       "command": null,
       "test_case": "413_a_skipped_case_is_not_a_proof"
+    },
+    {
+      "id": "reasoning-works-with-no-advisor",
+      "claim": "Majordomus reasons, decides, implements and validates with no advisor at all: absent advisors are reported as ordinary state, material uncertainty gets a structured local review, and the conclusion claims no independent review",
+      "source": "docs/REASONING.md",
+      "implementation": "apps/majordomus-cli/src/reasoning/policy.rs",
+      "test": "test/cases/730_reasoning_works_with_no_advisor.sh",
+      "status": "guaranteed",
+      "note": "the case builds its environment from nothing (env -i, a PATH holding git and node only, no credential), so it holds on a machine where every advisor is installed.",
+      "responsibility": "none",
+      "source_route": "/docs/reasoning/",
+      "command": null,
+      "test_case": "730_reasoning_works_with_no_advisor"
+    },
+    {
+      "id": "advisor-transports-share-one-contract",
+      "claim": "Every advisor transport is held to one contract — typed failures, deadlines, cancellation, normalised answers, reported usage, redacted secrets — proven against fakes with no network, model or credential",
+      "source": "docs/REASONING.md",
+      "implementation": "scripts/lib/advisors/contract.mjs",
+      "test": "test/cases/731_advisor_transport_contract.sh",
+      "status": "guaranteed",
+      "note": "node --test scripts/lib/advisors/contract.test.mjs; the case refuses a run of fewer tests than the suite holds.",
+      "responsibility": "none",
+      "source_route": "/docs/reasoning/",
+      "command": null,
+      "test_case": "731_advisor_transport_contract"
+    },
+    {
+      "id": "advice-is-weighed-not-counted",
+      "claim": "Advisors that disagree never decide by count: a conclusion is refused while a disagreement on its assessment is unsettled, a resolution needs evidence, and every answer received must be weighed",
+      "source": "docs/REASONING.md",
+      "implementation": "apps/majordomus-cli/src/reasoning/store.rs",
+      "test": "test/cases/732_disagreement_is_settled_by_evidence.sh",
+      "status": "guaranteed",
+      "note": "the case lets the minority position win once an experiment settles the disagreement.",
+      "responsibility": "none",
+      "source_route": "/docs/reasoning/",
+      "command": null,
+      "test_case": "732_disagreement_is_settled_by_evidence"
+    },
+    {
+      "id": "advisor-failure-is-recorded-and-recovers",
+      "claim": "An advisor that times out, is rate limited, refuses its credential or answers malformed is recorded as exactly that, never blocks the work, opens a circuit that closes again after its cooldown, and never fails the session",
+      "source": "docs/REASONING.md",
+      "implementation": "apps/majordomus-cli/src/reasoning/availability.rs",
+      "test": "test/cases/733_advisor_failure_and_recovery.sh",
+      "status": "guaranteed",
+      "note": "the circuit is derived from the recorded outcomes and the clock; the case shortens the cooldown with MAJORDOMUS_REASONING_COOLDOWN_SECONDS.",
+      "responsibility": "none",
+      "source_route": "/docs/reasoning/",
+      "command": null,
+      "test_case": "733_advisor_failure_and_recovery"
+    },
+    {
+      "id": "reasoning-survives-the-session",
+      "claim": "A decision and its provenance survive the session: the next session finds them in its context and handover, reuses a standing conclusion instead of consulting again, and reopens it only on new evidence",
+      "source": "docs/REASONING.md",
+      "implementation": "apps/majordomus-cli/src/reasoning/state.rs",
+      "test": "test/cases/734_reasoning_survives_the_session.sh",
+      "status": "guaranteed",
+      "note": "the scripted advisor of session B would hang if it were asked, so reuse is proven by the absence of a consultation.",
+      "responsibility": "none",
+      "source_route": "/docs/reasoning/",
+      "command": null,
+      "test_case": "734_reasoning_survives_the_session"
+    },
+    {
+      "id": "advisors-are-declared-once",
+      "claim": "Advisors are declared once, in share/advisors.yaml, by reference to the provider table and the model catalogue; a new advisor reaches the command line, the policy, HTTP, OpenAPI, MCP and the Cockpit with no consumer edited",
+      "source": "docs/REASONING.md",
+      "implementation": "share/advisors.yaml",
+      "test": "test/cases/735_a_new_advisor_needs_no_consumer_edit.sh",
+      "status": "guaranteed",
+      "note": "the case appends a representative advisor to a fixture catalogue and reads it back from every surface, then removes its executable and sees it unavailable everywhere.",
+      "responsibility": "none",
+      "source_route": "/docs/reasoning/",
+      "command": null,
+      "test_case": "735_a_new_advisor_needs_no_consumer_edit"
+    },
+    {
+      "id": "review-is-never-fabricated",
+      "claim": "A session cannot claim review it did not get: a consultation must name an advisor its recorded plan selected, a conclusion's review is computed, and reasoning check and doctor refuse a forged record, provider coupling, a model credential in CI and a refused claim in a document",
+      "source": "docs/REASONING.md",
+      "implementation": "apps/majordomus-cli/src/reasoning/check.rs",
+      "test": "test/cases/736_reasoning_check_refuses_drift.sh",
+      "status": "guaranteed",
+      "note": "a negative case: each defect is planted and must be named by reasoning check (exit 10) and by doctor.",
+      "responsibility": "none",
+      "source_route": "/docs/reasoning/",
+      "command": null,
+      "test_case": "736_reasoning_check_refuses_drift"
     }
   ]
 }

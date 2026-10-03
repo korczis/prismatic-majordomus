@@ -1,7 +1,7 @@
 +++
 title = "Obligation closure"
 description = "Obligation closure"
-weight = 30
+weight = 33
 [extra]
 kind = "rule"
 slug = "majordomus-obligation-closure-1"

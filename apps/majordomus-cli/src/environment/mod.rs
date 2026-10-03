@@ -224,6 +224,11 @@ pub enum ToolchainAvailability {
     Missing,
     /// Nobody asked: this resolution may not run a subprocess for it, and no cache held it.
     Unknown,
+    /// Installed and answering, and its version does not satisfy the one the repository
+    /// declares. Reported as itself rather than as installed, because a binary that is on
+    /// the path and answers the wrong version is the case a person otherwise debugs for an
+    /// hour (ADR 0064). Decided only when both versions are plain dotted numbers.
+    Mismatch,
 }
 
 /// What the layer holds, counted per kind, plus the registry the executable composes.
@@ -380,6 +385,31 @@ pub struct WorkflowEntrypoint {
     /// The workflow's description, when it has one.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
+}
+
+/// Reasoning as the environment reports it: a summary of `reasoning.advisors`, from the
+/// same derivation, never a provider list of its own.
+///
+/// ```
+/// use majordomus_cli::environment::ReasoningSummary;
+///
+/// let summary: ReasoningSummary = serde_json::from_value(serde_json::json!({
+///     "operational": true, "mode": "offline", "available": ["local"], "unavailable": 2,
+/// })).unwrap();
+/// assert!(summary.operational);
+/// assert_eq!(summary.available, ["local"]);
+/// assert_eq!(serde_json::to_value(&summary).unwrap()["unavailable"], 2);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct ReasoningSummary {
+    /// Reasoning works with no advisor at all; always `true`.
+    pub operational: bool,
+    /// The mode in force: `offline`, `ci`, `fast`, `standard`, `strict`.
+    pub mode: String,
+    /// The advisors that may be asked now, in preference order.
+    pub available: Vec<String>,
+    /// How many declared advisors may not, each optional.
+    pub unavailable: usize,
 }
 
 /// One provider projection the policy declares, and whether the file on disk still matches
@@ -559,6 +589,10 @@ pub struct RepositoryEnvironment {
     pub providers: Vec<ProviderState>,
     /// The local services, in the order the service table declares them.
     pub services: Vec<ServiceState>,
+    /// Reasoning (ADR 0098): operational whatever the advisors, the mode in force, and how
+    /// many optional advisors can be asked. Absent when the distribution declares none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reasoning: Option<ReasoningSummary>,
     /// Everything that went wrong or is worth knowing, in the order it was found.
     pub diagnostics: Vec<Diagnostic>,
     /// Where every field came from.

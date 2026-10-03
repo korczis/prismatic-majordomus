@@ -994,6 +994,88 @@ pub const PUBLIC_FEATURE_FIELDS: &[&str] = &[
     "evidence",
 ];
 
+/// Where the site's evidence verdicts come from, named in the dataset beside them.
+pub const EVIDENCE_PRODUCER: &str = "majordomus evidence show";
+
+/// The evidence verdict of every claim, as the site renders it beside the declared status:
+/// the `evidence` section of `product.json`.
+///
+/// A projection of the `evidence show` report, never a second opinion about it. A claim is
+/// `supported` when it declares `guaranteed` and the report has no finding against it. The
+/// state is the report's own word, hyphenated the way the design vocabulary spells it, with
+/// one deliberate weakening: `proven` is published as `inputs-unchanged`. This dataset is
+/// committed, and committing it is itself a change after any recorded run, so a verdict it
+/// carries can never be proof of the tree it is read from.
+///
+/// `available` is false when the ledger holds nothing or the index could not read the
+/// whole matrix: the verdicts are then about nothing, and a page says `unknown`.
+///
+/// ```
+/// use majordomus_cli::site::claim_evidence;
+/// let report = serde_json::json!({
+///     "subject": {"complete": true},
+///     "ledger": {"path": "l.json", "present": true, "executions": 2, "newest": "2026-09-01"},
+///     "claims": [
+///         {"id": "a", "status": "guaranteed", "state": "proven"},
+///         {"id": "b", "status": "guaranteed", "state": "not_run"},
+///         {"id": "c", "status": "advisory", "state": "no_test"}
+///     ],
+///     "findings": [{"claim": "b"}]
+/// });
+/// let e = claim_evidence(&report);
+/// assert_eq!(e["available"], true);
+/// assert_eq!(e["declared"], 2);
+/// assert_eq!(e["supported"], 1);
+/// assert_eq!(e["claims"]["a"]["state"], "inputs-unchanged", "never published as proven");
+/// assert_eq!(e["claims"]["b"]["supported"], false);
+/// assert_eq!(e["claims"]["c"]["supported"], false, "only a guarantee is judged");
+/// ```
+pub fn claim_evidence(report: &serde_json::Value) -> serde_json::Value {
+    let unsupported: std::collections::BTreeSet<&str> = report["findings"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(|f| f["claim"].as_str())
+        .collect();
+    let complete = report["subject"]["complete"].as_bool() == Some(true);
+    let present = report["ledger"]["present"].as_bool() == Some(true);
+    let mut claims = serde_json::Map::new();
+    let (mut declared, mut supported) = (0usize, 0usize);
+    for c in report["claims"].as_array().into_iter().flatten() {
+        let Some(id) = c["id"].as_str() else { continue };
+        let guaranteed = c["status"].as_str() == Some("guaranteed");
+        let is_supported = complete && guaranteed && !unsupported.contains(id);
+        declared += usize::from(guaranteed);
+        supported += usize::from(is_supported);
+        let state = match c["state"].as_str().unwrap_or("unknown") {
+            "proven" => "inputs-unchanged".to_string(),
+            s => s.replace('_', "-"),
+        };
+        claims.insert(
+            id.to_string(),
+            serde_json::json!({
+                "status": c["status"],
+                "state": state,
+                "label": state.replace('-', " "),
+                "supported": is_supported,
+            }),
+        );
+    }
+    serde_json::json!({
+        "producer": EVIDENCE_PRODUCER,
+        "available": complete && present,
+        "complete": complete,
+        "ledger": {
+            "path": report["ledger"]["path"],
+            "executions": report["ledger"]["executions"],
+            "newest": report["ledger"]["newest"],
+        },
+        "declared": declared,
+        "supported": supported,
+        "claims": claims,
+    })
+}
+
 /// The product model as the site's templates read it: `site/data/registry/product.json`.
 ///
 /// A projection of [`crate::product::ProductModel`] through the `product.*` capabilities, so the
@@ -1106,6 +1188,11 @@ pub fn product_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>
         .map(|a| serde_json::json!({ "id": a.id, "title": a.label, "route": a.href }))
         .collect();
 
+    // What the recorded evidence says about each claim, from the one derivation of it
+    // (`majordomus evidence show`), so that a page can put the declared status beside the
+    // verdict and never render the first as the second.
+    let evidence = claim_evidence(&run(&["evidence", "show"], serde_json::json!({}))?);
+
     let document = serde_json::json!({
         "schema": PRODUCT_SCHEMA,
         "generated": crate::generate::json_banner(PRODUCT_SOURCE),
@@ -1120,6 +1207,7 @@ pub fn product_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>
         "rules": rules,
         "cockpit_areas": cockpit_areas,
         "telemetry": telemetry,
+        "evidence": evidence,
         "valid": validation["valid"],
     });
 

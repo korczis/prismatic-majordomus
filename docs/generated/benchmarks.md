@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.11.0 -->
+     Generator: majordomus-cli 0.12.0 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 144 | 126 | 0 | 18 |
-| http | 141 | 126 | 0 | 15 |
-| mcp | 137 | 122 | 0 | 15 |
+| direct | 167 | 148 | 0 | 19 |
+| http | 164 | 148 | 0 | 16 |
+| mcp | 160 | 144 | 0 | 16 |
 | system | 13 | 13 | 0 | 0 |
-| total | 435 | 387 | 0 | 48 |
+| total | 504 | 453 | 0 | 51 |
 
 ## Capabilities
 
@@ -31,6 +31,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `commit.scopes` | commit | query | — | covered | covered | covered | `default` |
 | `commit.validate` | commit | query | — | covered | covered | covered | `conventional`, `not-conventional`, `merge` |
 | `continuity.state` | continuity | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `convergence.report` | convergence | query | — | covered | covered | covered | `default` |
 | `dashboard.overview` | dashboard | query | — | covered | covered | covered | `default` |
 | `delivery.feature` | delivery | query | — | waived | waived | waived | — |
 | `delivery.report` | delivery | query | — | waived | waived | waived | — |
@@ -61,6 +62,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `environment.explain` | environment | query | — | covered | covered | covered | `all`, `one-field` |
 | `environment.preflight` | environment | query | — | covered | covered | covered | `sealed` |
 | `environment.status` | environment | query | — | covered | covered | covered | `default` |
+| `episodes.attach` | episodes | command | — | covered | covered | covered | `default` |
+| `episodes.detach` | episodes | command | — | covered | covered | covered | `default` |
+| `episodes.list` | episodes | query | — | covered | covered | covered | `default` |
 | `evidence.claim` | evidence | query | — | covered | covered | covered | `first-claim` |
 | `evidence.record` | evidence | command | — | waived | — | — | — |
 | `evidence.report` | evidence | query | — | covered | covered | covered | `all`, `findings` |
@@ -80,6 +84,16 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `health.live` | health | query | — | covered | — | covered | `default` |
 | `health.ready` | health | query | — | covered | — | covered | `default` |
 | `health.report` | health | query | process, 4 entries, 5s | covered | covered | covered | `default` |
+| `integration.events` | integration | query | — | covered | covered | covered | `default` |
+| `integration.explain` | integration | query | — | covered | covered | covered | `a-number` |
+| `integration.queue` | integration | query | — | covered | covered | covered | `default` |
+| `intents.list` | intents | query | — | covered | covered | covered | `default` |
+| `intents.preflight` | intents | query | — | covered | covered | covered | `first-issue` |
+| `intents.record` | intents | query | — | covered | covered | covered | `first-intent` |
+| `intents.validate` | intents | query | — | covered | covered | covered | `default` |
+| `knowledge_base.candidates` | knowledge_base | query | — | covered | covered | covered | `default` |
+| `knowledge_base.record` | knowledge_base | query | — | covered | covered | covered | `first-record` |
+| `knowledge_base.status` | knowledge_base | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `lifecycle.closed` | lifecycle | query | process, 2 entries, 30s | covered | covered | covered | `default` |
 | `lifecycle.episodes` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `lifecycle.providers` | lifecycle | query | process, 2 entries | covered | covered | covered | `default` |
@@ -133,6 +147,12 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `product.validate` | product | query | process, 2 entries | covered | covered | covered | `default` |
 | `quality.report` | quality | query | process, 8 entries, 10s | covered | covered | covered | `default` |
 | `quality.rustdoc` | quality | query | process, 8 entries, 10s | covered | covered | covered | `default`, `missing-pages-summary` |
+| `reasoning.advisors` | reasoning | query | — | covered | covered | covered | `default` |
+| `reasoning.check` | reasoning | query | — | covered | covered | covered | `default` |
+| `reasoning.explain` | reasoning | query | — | waived | waived | waived | — |
+| `reasoning.plan` | reasoning | query | — | covered | covered | covered | `material` |
+| `reasoning.record` | reasoning | command | — | covered | covered | covered | `refused` |
+| `reasoning.status` | reasoning | query | — | covered | covered | covered | `current`, `all` |
 | `recover.orphans` | recover | command | — | covered | covered | covered | `check-twelve-hours`, `check-one-second` |
 | `release.analysis` | release | query | — | waived | waived | waived | — |
 | `release.changelog` | release | query | — | covered | covered | covered | `all`, `one-version` |
@@ -149,6 +169,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `session_domain.identity` | session_domain | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `session_domain.machine` | session_domain | query | process, 1 entries, 600s | covered | covered | covered | `default` |
 | `shell.check` | shell | query | — | covered | covered | covered | `default` |
+| `skills.explain` | skills | query | — | covered | covered | covered | `first-skill` |
+| `skills.status` | skills | query | — | covered | covered | covered | `default` |
+| `skills.verify` | skills | query | — | covered | covered | covered | `default` |
 | `trace.commit` | trace | query | — | covered | covered | covered | `head` |
 | `trace.issue` | trace | query | — | covered | covered | covered | `first-issue` |
 | `trace.report` | trace | query | — | covered | covered | covered | `default`, `ten` |

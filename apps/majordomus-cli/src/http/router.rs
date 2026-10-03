@@ -676,6 +676,12 @@ impl Router {
         let mut index = json!({
                 "name": "majordomus",
                 "version": self.version,
+                // the commit this executable was built from, the value `health.live` and
+                // `health.ready` answer under the same names: a checkout's server that
+                // answers from another commit than the checkout's HEAD is serving another
+                // tree, and a reader can only say so if the server names its own
+                "commit": crate::COMMIT,
+                "dirty": crate::DIRTY,
                 "description": crate::about::SUMMARY,
                 "reference": crate::about::REFERENCE_URL,
                 // the repository's name and not its path: this answer is served to whoever

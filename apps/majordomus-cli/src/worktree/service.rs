@@ -16,15 +16,15 @@ use std::path::{Path, PathBuf};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::direnv::{self, EnvrcApproval};
+use super::direnv::{self, EnvrcApproval, LocalOverrides};
 use super::error::{Result, WorktreeError};
 use super::git;
 use super::identity::{RepositoryIdentity, ResolvedPath, TrunkSource};
 use super::lock::WorktreeLock;
 use super::model::{
-    BranchState, ContainerView, DiagnosticCode, GuardVerdict, InspectReport, RepairReport,
-    RepositoryTopology, RepositoryView, Severity, Standing, StatusReport, TopologyDiagnostic,
-    TopologyTallies, TrunkView, WorktreeKind, WorktreeState, SCHEMA,
+    BranchState, ContainerView, DiagnosticCode, DirtyState, GuardVerdict, InspectReport,
+    RepairReport, RepositoryTopology, RepositoryView, Severity, Standing, StatusReport,
+    TopologyDiagnostic, TopologyTallies, TrunkView, WorktreeKind, WorktreeState, SCHEMA,
 };
 use super::path::{self, BranchName, CONTAINER_SUFFIX};
 use super::state::{self, BranchRef};
@@ -70,6 +70,13 @@ pub struct CreateReport {
     /// this path, or why it was not. A worktree that starts blocked is the recurring
     /// "direnv does not work again"; this says so before the first `cd` does.
     pub envrc: EnvrcApproval,
+    /// What became of the primary checkout's machine-local `.envrc.local` here.
+    #[serde(default = "default_local")]
+    pub envrc_local: LocalOverrides,
+}
+
+fn default_local() -> LocalOverrides {
+    LocalOverrides::NonePrimary
 }
 
 /// What a remove did.
@@ -198,6 +205,28 @@ impl WorktreeService {
         record: &WorktreeRecord,
         detail: Detail,
         branches: &BTreeMap<String, BranchRef>,
+    ) -> WorktreeState {
+        let dirty = Self::measures_dirty(record, detail)
+            .then(|| state::dirty_state(&record.path).ok())
+            .flatten();
+        self.judge_with(record, branches, dirty)
+    }
+
+    /// Does the topology take a `git status` of this work tree at this detail? The one
+    /// place the condition is written, because the whole topology takes these measurements
+    /// at once ([`state::dirty_states`]) and the batch must select exactly the work trees
+    /// [`Self::judge`] would have measured one at a time.
+    fn measures_dirty(record: &WorktreeRecord, detail: Detail) -> bool {
+        detail == Detail::Full && record.path.is_dir() && !record.bare
+    }
+
+    /// [`Self::judge`] with the uncommitted work already measured — or deliberately not
+    /// measured, which is what `None` means here, exactly as it does in the answer.
+    fn judge_with(
+        &self,
+        record: &WorktreeRecord,
+        branches: &BTreeMap<String, BranchRef>,
+        dirty: Option<DirtyState>,
     ) -> WorktreeState {
         let resolved = ResolvedPath::of(&record.path);
         let is_primary = self.identity.is_primary(record);
@@ -409,12 +438,6 @@ impl WorktreeService {
             });
         }
 
-        let dirty = if detail == Detail::Full && exists && !record.bare {
-            state::dirty_state(&record.path).ok()
-        } else {
-            None
-        };
-
         WorktreeState {
             path: path_text,
             kind: if is_primary {
@@ -550,15 +573,23 @@ impl WorktreeService {
             .map(|b| (b.name.clone(), b.clone()))
             .collect();
         let merged: Option<BTreeSet<String>> = match trunk.branch.as_deref() {
-            Some(t) => Some(state::merged_into(primary, t)?),
+            Some(t) => Some(state::merged_into_trunk(primary, t)?),
             None => None,
         };
 
-        let mut worktrees: Vec<WorktreeState> = self
-            .identity
-            .registered_worktrees()
+        // Every `git status` this topology needs, taken at once rather than one work tree
+        // after the next: the measurements do not depend on one another, and on a
+        // repository with a hundred-odd registered work trees the sequence was most of
+        // what a topology cost. Judging itself runs no subprocess.
+        let records = self.identity.registered_worktrees();
+        let probes: Vec<Option<&Path>> = records
             .iter()
-            .map(|r| self.judge(r, detail, &branches))
+            .map(|r| Self::measures_dirty(r, detail).then_some(r.path.as_path()))
+            .collect();
+        let mut worktrees: Vec<WorktreeState> = records
+            .iter()
+            .zip(state::dirty_states(&probes))
+            .map(|(r, d)| self.judge_with(r, &branches, d))
             .collect();
 
         // repository-wide facts
@@ -824,6 +855,7 @@ impl WorktreeService {
                     // Found rather than made, and approved all the same: a worktree that
                     // exists and is blocked is what `ensure` is most often asked about.
                     let envrc = direnv::approve(&primary, &existing.path);
+                    let envrc_local = direnv::link_local(&primary, &existing.path);
                     return Ok(CreateReport {
                         path: display(&existing.path),
                         branch: name.as_str().to_string(),
@@ -833,6 +865,7 @@ impl WorktreeService {
                         container_created: false,
                         existed: true,
                         envrc,
+                        envrc_local,
                     });
                 }
                 return Err(WorktreeError::WorktreeAlreadyExists {
@@ -908,6 +941,7 @@ impl WorktreeService {
             })?;
         // The path exists now; this is the moment direnv's approval is carried to it.
         let envrc = direnv::approve(&primary, &registered.path);
+        let envrc_local = direnv::link_local(&primary, &registered.path);
         Ok(CreateReport {
             path: display(&registered.path),
             branch: name.as_str().to_string(),
@@ -917,6 +951,7 @@ impl WorktreeService {
             container_created,
             existed: false,
             envrc,
+            envrc_local,
         })
     }
 

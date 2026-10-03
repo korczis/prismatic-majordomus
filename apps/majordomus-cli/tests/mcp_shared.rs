@@ -18,7 +18,7 @@ use std::process::{Child, ChildStdin, Command, Stdio};
 use std::sync::mpsc::{self, Receiver};
 use std::time::{Duration, Instant};
 
-use common::{Fixture, BIN};
+use common::{without_observation_times, Fixture, BIN};
 use serde_json::{json, Value};
 
 const WAIT: Duration = Duration::from_secs(20);
@@ -1201,16 +1201,39 @@ fn a_bridge_is_transparent_and_a_restarted_server_answers_the_same_bytes() {
     );
     assert_eq!(b.close(), 0);
     assert_eq!(a.close(), 0);
-    // a fresh server in the same repository answers byte for byte the same
+    // a fresh server in the same repository answers byte for byte the same, except for when
+    // it read the repository: the freshness contract says so, and a restart reads again
     let mut c = Mcp::spawn(&f.root(), &["--http-port", "0"]);
     c.wait_log("listening on http://");
     c.initialize("third");
     let again = answers(&mut c);
+    let unobserved = |v: &[String]| v.iter().map(|s| without_observation_times(s)).collect();
+    let (direct, again): (Vec<String>, Vec<String>) = (unobserved(&direct), unobserved(&again));
     assert_eq!(
         direct, again,
         "the same repository yields the same projection after a restart"
     );
     assert_eq!(c.close(), 0);
+}
+
+#[test]
+fn an_observation_time_is_masked_wherever_the_answer_carries_it() {
+    let plain = r#"{"observed_at":"2026-09-29T10:40:00Z","stale_after":"2026-09-29T10:42:00Z"}"#;
+    let escaped = r#"{"text":"{\"observed_at\":\"2027-01-01T00:00:00Z\"}"}"#;
+    assert_eq!(
+        without_observation_times(plain),
+        r#"{"observed_at":"<observed>","stale_after":"<observed>"}"#
+    );
+    assert_eq!(
+        without_observation_times(escaped),
+        r#"{"text":"{\"observed_at\":\"<observed>\"}"}"#
+    );
+    let other = r#"{"committed_at":"2026-09-29T10:40:00Z"}"#;
+    assert_eq!(
+        without_observation_times(other),
+        other,
+        "only an observation is masked"
+    );
 }
 
 #[test]

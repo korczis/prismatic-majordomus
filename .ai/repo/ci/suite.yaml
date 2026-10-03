@@ -11,6 +11,14 @@
 # alone only decides how long the repository waits before losing the verdict entirely.
 version: 1
 
+# ---------------------------------------------------------------- the shards
+# Since 2026-10-01 the suite runs as four duration-balanced shards (suite-shard in
+# validate.yml, MJ_TEST_SHARD in test/run.sh, dealt from suite-durations.tsv beside this
+# file), and the `suite` job joins their reports and proves every case ran exactly once. The
+# bound and the budgets below are unchanged and apply to the whole suite: the bound to every
+# shard job and to the aggregate, the budgets to the joined report. Re-measure the bound from
+# the first sharded runs; it was set for one runner doing all of it.
+
 # ---------------------------------------------------------------- the bound
 # `timeout-minutes` of the suite job. It is a backstop against a wedged runner, not a target:
 # every case already carries its own `majordomus-timeout:`. One declaration, two readers —
@@ -131,9 +139,21 @@ case_bound_seconds: 3600
 # grew the registry the case renders its reference from by 27 capabilities. 3100 is about a
 # tenth above 2817, re-derived from that uncensored cost, and stays below case_bound_seconds
 # as case 417 requires.
+#
+# Re-measured on 2026-10-03, when the integration batch int/batch-j (#723) refused the 38000
+# set above. The batch runs 15 more cases than master (331 against 316): #218's episodes,
+# #220's working context, #595's convergence, #612's skills and #672's knowledge, with their
+# coverage tests. Master itself had grown to within a twentieth of the old budget:
+#
+#   run 37073033410   39722 s over 331 cases   slowest 2784 s (77_rust_evidence)   int/batch-j
+#   run 37016293441   36006 s over 316 cases   slowest 2481 s (77_rust_evidence)   master 376ae594af
+#   run 37003795518   32560 s over 316 cases   slowest 2697 s (95_executable_reference)  int/batch-i
+#
+# 44000 is about a tenth above the worst total measured, 39722. The slowest case, 2784 s,
+# is still under its 3100, so that budget stands.
 budget:
-  # every case, summed; run 36480899795 (34503+ s) and the ones above
-  cases_seconds: 38000
+  # every case, summed; run 37073033410 (39722 s) and the ones above
+  cases_seconds: 44000
   # the single slowest case; one case that runs away is invisible in the total until it is
   # most of it, and it is also what decides whether the parallel phase can still be packed.
   # Re-derived from the uncensored 2817 s of run 36480899795: see above.

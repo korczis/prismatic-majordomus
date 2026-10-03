@@ -23,5 +23,12 @@
 @plugin "flowbite-typography";
 @source "../node_modules/flowbite";
 @source "./templates";
+/* the kit's templates and the pages composed of it are compiled by the kit's own entry
+   (site/kit.tailwind.css) into the one sheet those pages load: a page that does not load the
+   kit pays nothing for the utilities only the kit uses */
+@source not "./templates/kit";
+@source not "./templates/screens";
+@source not "./templates/kit-page.html";
+@source not "./templates/screen.html";
 @source "./content";
 @custom-variant dark (&:where(.dark, .dark *));

@@ -13,84 +13,292 @@
 # durable, it survives every session, and `git` already knows the answer.
 #
 # So: before implementing, ask this what else touches the paths you are about to touch.
+# On a pull request scripts/ci/collision-gate asks it for you, over the paths the pull
+# request adds.
 #
 #   scripts/collision-check apps/majordomus-cli/src/release
 #   scripts/collision-check --new apps/majordomus-cli/src/release docs/RELEASE.md
 #   scripts/collision-check --since origin/master src/foo
 #
-#   --new     report only paths that do not exist on the merge base: a *new* module two
-#             branches are both inventing is the expensive collision, and the one this
-#             exists for. An edit to a shared file is ordinary and is resolved by merging.
-#   --since   the ref branches are compared against; origin/master by default.
+#   --new        report only paths that do not exist on the base: a *new* module two
+#                branches are both inventing is the expensive collision, and the one this
+#                exists for. An edit to a shared file is ordinary and is resolved by merging.
+#   --since REF  the base branches are compared against; origin/master by default.
+#   --head REV   whose work is being checked; HEAD by default. In CI HEAD is a detached
+#                merge commit, so the gate names the pull request's own head here.
+#   --exclude R  a branch that is this work under another name (the pull request's own
+#                branch, whose name a detached checkout does not know); repeatable.
+#   --added      check the paths the head adds relative to its merge base with the base,
+#                rather than paths named here; implies --new. What the pull-request gate asks.
 #
-# Exit: 0 nothing else claims these paths · 11 something does (drift, the repository's own
-# code for "what you believe and what is true differ") · 2 usage.
+# Which branches can claim: every local and remote branch that is not merged into the base,
+# is not the base, and is not this work — the branch HEAD is on, its origin/ copy, and every
+# --exclude. A merged branch claims nothing: whatever it carried is the base's now, and a
+# merged branch holding an *older* version of a file the base has since changed is history,
+# not a competitor.
+#
+# What a claim is, for a path the base does not have (the --new question):
+#   same       the branch carries the same bytes as the head: the same work, copied (a
+#              rescue branch of it, a cherry-pick). Listed, never a collision.
+#   related    the path is already there at the merge base of the branch and the head: the
+#              two share the commit that added it — one is built on the other, or both on a
+#              third. Listed, never a collision: whoever lands second merges an edit.
+#   diverged   different here, but the branch carries another path the head adds with the
+#              same bytes: a copy of this work (a rescue, a re-cut) that has since moved on.
+#              Listed prominently, never a collision: it is one piece of work, one copy stale.
+#   collision  added on both sides independently, with different content. Somebody has to
+#              choose between two finished pieces of work. Exit 11.
+# With --added, a path the head's .gitattributes declares merge=derived is not examined: the
+# merge regenerates it, so two versions of it are two generations, not two designs.
+# For a path the base already has, every unmerged branch carrying a different version is a
+# collision, as it always was; --new is the question worth refusing on.
+#
+# Exit: 0 nothing collides · 11 something does (drift, the repository's own code for "what
+# you believe and what is true differ") · 12 could not measure — a shallow repository, a
+# base or head that does not resolve, or no branch to compare against, each of which would
+# otherwise read as "nothing claims this" when nothing was looked at · 2 usage.
 set -eu
+set -o pipefail
 
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 cd "$ROOT"
 
 base="origin/master"
+head="HEAD"
 only_new=0
+added=0
+n_derived=0
 paths=()
+excludes=()
 while [ $# -gt 0 ]; do
   case "$1" in
     --new) only_new=1; shift ;;
-    --since) base="${2:-}"; shift 2 ;;
-    -h|--help) sed -n '2,26p' "$0"; exit 0 ;;
+    --added) added=1; only_new=1; shift ;;
+    --since|--head|--exclude)
+      if [ $# -lt 2 ] || [ -z "$2" ]; then
+        printf 'collision-check: %s needs a value\n' "$1" >&2; exit 2
+      fi
+      case "$1" in
+        --since) base="$2" ;;
+        --head) head="$2" ;;
+        *) excludes+=("${2#refs/remotes/}") ;;
+      esac
+      shift 2 ;;
+    -h|--help) sed -n '2,/^set -eu$/{/^set -eu$/!p;}' "$0"; exit 0 ;;
     -*) printf 'collision-check: unknown option: %s\n' "$1" >&2; exit 2 ;;
     *) paths+=("$1"); shift ;;
   esac
 done
-[ "${#paths[@]}" -gt 0 ] || { printf 'collision-check: name at least one path\n' >&2; exit 2; }
+if [ "$added" = 1 ]; then
+  [ "${#paths[@]}" = 0 ] || { printf 'collision-check: --added reads the paths from the head; name none\n' >&2; exit 2; }
+else
+  [ "${#paths[@]}" -gt 0 ] || { printf 'collision-check: name at least one path\n' >&2; exit 2; }
+fi
 
-git rev-parse --verify -q "$base" >/dev/null 2>&1 || {
-  printf 'collision-check: `%s` does not resolve; fetch first\n' "$base" >&2
-  exit 2
+cannot() { printf 'collision-check: CANNOT MEASURE  %s\n' "$1" >&2; exit 12; }
+
+git rev-parse --git-dir >/dev/null 2>&1 || cannot "$ROOT is not a git repository"
+# A shallow history cannot say which branch is merged or what two branches share: every
+# branch tip is a graft with no past, so every branch looks unmerged and unrelated.
+if [ "$(git rev-parse --is-shallow-repository 2>/dev/null)" = true ]; then
+  cannot "the repository is shallow, so neither merged state nor shared history can be decided; git fetch --unshallow"
+fi
+git rev-parse --verify -q "$base^{commit}" >/dev/null 2>&1 \
+  || cannot "the base \`$base\` does not resolve here; git fetch origin before asking what claims a path"
+head_commit="$(git rev-parse --verify -q "$head^{commit}" 2>/dev/null)" \
+  || cannot "the head \`$head\` does not resolve here"
+
+here=""
+[ "$head" != HEAD ] || here="$(git symbolic-ref -q --short HEAD 2>/dev/null || true)"
+
+is_excluded() {   # is_excluded <short ref name>
+  local x
+  [ "$1" != "$base" ] || return 0
+  if [ -n "$here" ]; then
+    if [ "$1" = "$here" ] || [ "$1" = "origin/$here" ]; then return 0; fi
+  fi
+  for x in ${excludes[@]+"${excludes[@]}"}; do
+    # origin/<name> excluded is <name> excluded: a local branch of that name is the same work
+    if [ "$1" = "$x" ] || [ "origin/$1" = "$x" ]; then return 0; fi
+  done
+  return 1
 }
 
-here="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo HEAD)"
+# the branches, by full name so origin/HEAD (a pointer, not a branch) is never one of them
+branch_names() {   # branch_names [for-each-ref filter...]
+  local full short
+  git for-each-ref --format='%(refname)' "$@" refs/heads refs/remotes/origin | while IFS= read -r full; do
+    case "$full" in
+      refs/remotes/origin/HEAD) continue ;;
+      refs/heads/*) short="${full#refs/heads/}" ;;
+      refs/remotes/*) short="${full#refs/remotes/}" ;;
+      *) continue ;;
+    esac
+    is_excluded "$short" || printf '%s\n' "$short"
+  done
+}
 
-# Every branch that is not this one and is not the base, local and remote. A branch merged
-# long ago still lists here and that is correct: its files are on the base, so the loop
-# below finds no unique claim and says nothing.
-branches="$(git for-each-ref --format='%(refname:short)' refs/heads refs/remotes/origin \
-  | grep -v -x -e "$here" -e "$base" -e 'origin/HEAD' | LC_ALL=C sort -u)"
+visible="$(branch_names | LC_ALL=C sort -u)"
+if [ -z "$visible" ]; then
+  cannot "no branch but \`$base\` and this work is visible here (a single-branch clone, or nothing fetched), so there is nothing to compare against; git fetch origin '+refs/heads/*:refs/remotes/origin/*'"
+fi
+n_visible="$(printf '%s\n' "$visible" | grep -c . || true)"
+refs="$(branch_names --no-merged "$base" | LC_ALL=C sort -u)"
+n_refs="$(printf '%s' "$refs" | grep -c . || true)"
 
-found=0
-for path in "${paths[@]}"; do
-  # `--new` narrows to what the base does not have. A module two branches are both
-  # inventing has no merge resolution: one of them is thrown away, and that is the loss
-  # worth an interruption.
-  if [ "$only_new" = 1 ] && git cat-file -e "$base:$path" 2>/dev/null; then
-    continue
+if [ "$added" = 1 ]; then
+  fork="$(git merge-base "$base" "$head_commit" 2>/dev/null)" \
+    || cannot "\`$head\` and \`$base\` share no history, so what the head adds cannot be told apart from what the base has"
+  list="$(git -c core.quotePath=false diff --name-only --no-renames --diff-filter=A "$fork" "$head_commit")" \
+    || cannot "git diff between the merge base and \`$head\` failed, so what the head adds is unknown"
+  while IFS= read -r line; do
+    [ -z "$line" ] || paths+=("$line")
+  done <<< "$list"
+  if [ "${#paths[@]}" = 0 ]; then
+    printf 'collision-check: OK   `%s` adds no path relative to %s, so nothing is there for another branch to claim (%s unmerged of %s branch(es) visible)\n' \
+      "$head" "$base" "$n_refs" "$n_visible"
+    exit 0
   fi
-  claimants=""
-  for ref in $branches; do
-    # does the branch carry this path at all, and does it carry it differently from the base?
-    git cat-file -e "$ref:$path" 2>/dev/null || continue
-    if [ "$(git rev-parse "$ref:$path" 2>/dev/null)" = "$(git rev-parse "$base:$path" 2>/dev/null)" ]; then
+  # A path declared merge=derived is regenerated by the merge, never chosen between. The
+  # declarations are read from the head, which is where a pull request adding a derived tree
+  # declares it; a git too old for --source reads the checkout's.
+  attr_src=(--source "$head_commit")
+  git check-attr --source "$head_commit" merge -- .gitattributes >/dev/null 2>&1 || attr_src=()
+  kept=()
+  while IFS= read -r -d '' p && IFS= read -r -d '' _ && IFS= read -r -d '' v; do
+    if [ "$v" = derived ]; then n_derived=$((n_derived + 1)); else kept+=("$p"); fi
+  done < <(printf '%s\0' "${paths[@]}" | git check-attr ${attr_src[@]+"${attr_src[@]}"} -z --stdin merge)
+  if [ $(( ${#kept[@]} + n_derived )) != "${#paths[@]}" ]; then
+    cannot "git check-attr answered for $(( ${#kept[@]} + n_derived )) of ${#paths[@]} added path(s), so which of them are derived is unknown"
+  fi
+  if [ "${#kept[@]}" = 0 ]; then
+    printf 'collision-check: OK   every path `%s` adds (%s) is declared merge=derived, which the merge regenerates; nothing is there for another branch to claim\n' \
+      "$head" "$n_derived"
+    exit 0
+  fi
+  paths=("${kept[@]}")
+fi
+
+# Every (ref, path) object id in one process, per path: the base, the head, every branch.
+# Sets OID rather than printing it: a command substitution is a fork, and a pull request
+# adding two hundred paths against two hundred branches would pay forty thousand of them.
+oid_of() {   # the object id cat-file answered, or empty when the path is not there
+  case "$1" in *" missing"|"") OID="" ;; *) OID="${1%% *}" ;; esac
+}
+TAB="$(printf '\t')"
+EMPTY_BLOB="$(git hash-object -t blob /dev/null)"
+NL='
+'
+answers=()
+while IFS= read -r line; do answers+=("$line"); done < <(
+  for path in "${paths[@]}"; do
+    printf '%s:%s\n' "$base" "$path" "$head_commit" "$path"
+    for ref in $refs; do printf '%s:%s\n' "$ref" "$path"; done
+  done | git cat-file --batch-check='%(objectname)'
+)
+
+describe() {   # describe <ref> <path>
+  local when subject
+  when="$(git log -1 --format='%cr' "$1" -- "$2" 2>/dev/null || true)"
+  subject="$(git log -1 --format='%s' "$1" -- "$2" 2>/dev/null || true)"
+  printf '  %-52s %-14s %s\n' "$1" "${when:-unknown}" "${subject:0:60}"
+}
+
+collided=0
+notes=""   # kind<TAB>branch<TAB>path, for the claims that are not collisions
+coll=""    # path<TAB>branch<TAB>new|base, every candidate collision, printed after the loop
+evidence="" # branches carrying some added path byte for byte: copies of this work
+mb=()      # each branch's merge base with the head, by branch index, asked once
+i=0
+for path in "${paths[@]}"; do
+  oid_of "${answers[$i]:-}"; base_oid="$OID"; i=$((i + 1))
+  oid_of "${answers[$i]:-}"; head_oid="$OID"; i=$((i + 1))
+  if [ "$only_new" = 1 ] && [ -n "$base_oid" ]; then
+    i=$((i + n_refs)); continue
+  fi
+  j=0
+  for ref in $refs; do
+    oid_of "${answers[$i]:-}"; ref_oid="$OID"; i=$((i + 1)); j=$((j + 1))
+    [ -n "$ref_oid" ] || continue
+    [ "$ref_oid" != "$base_oid" ] || continue
+    if [ -n "$base_oid" ]; then
+      coll="${coll}${path}${TAB}${ref}${TAB}base${NL}"; continue
+    fi
+    if [ -n "$head_oid" ] && [ "$ref_oid" = "$head_oid" ]; then
+      notes="${notes}same${TAB}${ref}${TAB}${path}${NL}"
+      # identical bytes are evidence the branch is this work; an empty file is evidence of nothing
+      [ "$head_oid" = "$EMPTY_BLOB" ] || evidence="${evidence}${ref}${NL}"
       continue
     fi
-    claimants="$claimants $ref"
-  done
-  [ -n "$claimants" ] || continue
-  found=1
-  printf 'collision-check: %s is claimed by:\n' "$path"
-  for ref in $claimants; do
-    when="$(git log -1 --format='%cr' "$ref" -- "$path" 2>/dev/null || echo 'unknown')"
-    subject="$(git log -1 --format='%s' "$ref" -- "$path" 2>/dev/null || true)"
-    printf '  %-52s %-14s %s\n' "$ref" "$when" "${subject:0:60}"
+    [ -n "${mb[$j]+set}" ] || mb[$j]="$(git merge-base "$ref" "$head_commit" 2>/dev/null || true)"
+    if [ -n "${mb[$j]}" ] && git cat-file -e "${mb[$j]}:$path" 2>/dev/null; then
+      notes="${notes}related${TAB}${ref}${TAB}${path}${NL}"; continue
+    fi
+    coll="${coll}${path}${TAB}${ref}${TAB}new${NL}"
   done
 done
 
-if [ "$found" = 0 ]; then
-  printf 'collision-check: OK   nothing else claims '
-  printf '%s ' "${paths[@]}"
-  printf '\n'
+# Printed after the loop, because whether a branch is a copy of this work can be learned
+# from any path, including one examined after the path it differs on.
+is_same_work() { case "$NL$evidence" in *"$NL$1$NL"*) return 0 ;; *) return 1 ;; esac; }
+diverged=""
+last=""
+while IFS="$TAB" read -r path ref where; do
+  [ -n "$path" ] || continue
+  if [ "$where" = new ] && is_same_work "$ref"; then
+    diverged="${diverged}${ref}${TAB}${path}${NL}"; continue
+  fi
+  collided=1
+  if [ "$path" != "$last" ]; then
+    if [ "$where" = base ]; then
+      printf 'collision-check: COLLISION  %s is carried differently by:\n' "$path"
+    else
+      printf 'collision-check: COLLISION  %s is added independently, with different content, by:\n' "$path"
+    fi
+    last="$path"
+  fi
+  describe "$ref" "$path"
+done <<< "$coll"
+
+if [ -n "$diverged" ]; then
+  printf 'collision-check: DIVERGED   copies of this work (the same bytes on other paths it adds) that differ from it; not refused, but one of the two is stale:\n'
+  printf '%s' "$diverged" | awk -F '\t' '
+    { n[$1]++; if (!($1 in f)) { f[$1] = $2; o[++m] = $1 } }
+    END { for (x = 1; x <= m; x++) printf "  %-52s %d path(s) differ, e.g. %s\n", o[x], n[o[x]], f[o[x]] }'
+fi
+
+# One row per branch for what is not a collision: a follow-up built on a pushed branch shares
+# every path with it, and a row per path would bury the one collision a person must read.
+if [ -n "$notes" ]; then
+  printf 'collision-check: not collisions — branches carrying paths the head adds, as related work or as the same bytes:\n'
+  printf '%s' "$notes" | awk -F '\t' '
+    { k = $1 FS $2; n[k]++; if (!(k in first)) { first[k] = $3; order[++m] = k } }
+    END {
+      for (x = 1; x <= m; x++) {
+        split(order[x], a, FS)
+        how = (a[1] == "same") ? "with the same bytes" : "sharing the commit that added them"
+        printf "  %-52s %d path(s) %s, e.g. %s\n", a[2], n[order[x]], how, first[order[x]]
+      }
+    }'
+fi
+
+denominator="$n_refs unmerged of $n_visible branch(es) compared against $base"
+[ "$n_derived" = 0 ] || denominator="$denominator; $n_derived derived path(s) not examined, the merge regenerates them"
+if [ "$collided" = 0 ]; then
+  if [ "$added" = 1 ]; then
+    printf 'collision-check: OK   no other branch collides on the %s path(s) `%s` adds (%s):\n' \
+      "${#paths[@]}" "$head" "$denominator"
+    printf '  %s\n' "${paths[@]:0:20}"
+    [ "${#paths[@]}" -le 20 ] || printf '  ... and %s more\n' "$(( ${#paths[@]} - 20 ))"
+  else
+    printf 'collision-check: OK   no other branch collides on '
+    printf '%s ' "${paths[@]}"
+    printf '(%s)\n' "$denominator"
+  fi
   exit 0
 fi
 
+printf 'collision-check: %s\n' "$denominator"
 cat >&2 <<'WHY'
 
 Another branch is already there. Before implementing, read what it does: two designs
