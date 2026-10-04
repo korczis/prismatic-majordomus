@@ -153,6 +153,12 @@ documents:
       - json
       - markdown
       - yaml
+  - id: completion
+    schema: majordomus/completion-policy/v1
+    source: "the completion policy the distribution ships (share/completion.yaml), as gates.policy answers it"
+    formats:
+      - json
+      - yaml
   - id: deployment
     source: .ai/repo/deployments/majordomus.yaml
     formats:
@@ -747,6 +753,20 @@ artifacts:
     source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it
     bytes: 790539
     sha256: 94abc63206a4ddeae60136c703379e1d7fa03844d288089de8bd22b1d1350390
+  - path: docs/generated/completion.json
+    document: completion
+    format: json
+    schema: majordomus/completion-policy/v1
+    source: "the completion policy the distribution ships (share/completion.yaml), as gates.policy answers it"
+    bytes: 6993
+    sha256: 15b68d92a238ecbb561256f9a5c38c920fc58ab883c4d4c186db45edaa523196
+  - path: docs/generated/completion.yaml
+    document: completion
+    format: yaml
+    schema: majordomus/completion-policy/v1
+    source: "the completion policy the distribution ships (share/completion.yaml), as gates.policy answers it"
+    bytes: 5929
+    sha256: e4d9f45ce5026d0c370dd454496bffa6903b2f184402a31614dcb2f1903d0ce2
   - path: docs/generated/design.json
     document: design
     format: json
@@ -1523,7 +1543,7 @@ artifacts:
     schema: majordomus-site-registry/v2
     source: "the capability registry and the index of this repository's layer"
     bytes: 5443869
-    sha256: 7cffd534618088e731988ab481cf83fd9079b4f9a537bced2a30372ac2fba057
+    sha256: 97124f0a4a532af78051fece1f47107ba32de6383ade5171386d928b120226af
   - path: site/data/registry/why-graph.json
     document: site-why-graph
     format: json

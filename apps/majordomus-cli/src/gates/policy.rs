@@ -631,7 +631,11 @@ mod tests {
     fn the_source_names_the_distribution_never_this_machine() {
         let p = shipped();
         assert_eq!(p.source, format!("share/{POLICY_FILE}"));
-        assert!(!p.source.starts_with('/'), "an absolute source: {}", p.source);
+        assert!(
+            !p.source.starts_with('/'),
+            "an absolute source: {}",
+            p.source
+        );
     }
 
     #[test]

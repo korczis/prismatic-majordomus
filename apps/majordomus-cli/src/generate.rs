@@ -1151,7 +1151,7 @@ pub fn context_artifacts(
                 "completion",
                 COMPLETION_SCHEMA,
                 source,
-                completion_document(ctx)?,
+                capability_answer(ctx, "gates.policy")?,
             )
             .artifacts(version),
         );
@@ -1195,17 +1195,6 @@ pub fn context_artifacts(
         ));
     }
     Ok(out)
-}
-
-/// The completion policy as a published document: `gates.policy`'s answer, with the one
-/// value that names this machine — the path the loader read the file from — replaced by the
-/// file's name in the distribution, which is the same on every clone.
-fn completion_document(ctx: &Context) -> Result<Value> {
-    let mut value = capability_answer(ctx, "gates.policy")?;
-    if let Some(source) = value.get_mut("source") {
-        *source = Value::String(format!("share/{}", crate::gates::POLICY_FILE));
-    }
-    Ok(value)
 }
 
 /// What one capability answers with no input, as the value a generated document carries:

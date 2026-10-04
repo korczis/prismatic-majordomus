@@ -43,6 +43,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `capabilities` | `markdown` | — | the canonical Majordomus capability registry |
 | `changelog` | `json`, `markdown`, `yaml` | `majordomus/changelog/v1` | the layer's release records, the decisions dated in each release's window, and the commits in its range |
 | `cli` | `json`, `markdown`, `yaml` | `majordomus/cli/v1` | the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it |
+| `completion` | `json`, `yaml` | `majordomus/completion-policy/v1` | the completion policy the distribution ships (share/completion.yaml), as gates.policy answers it |
 | `deployment` | `text` | — | .ai/repo/deployments/majordomus.yaml |
 | `design` | `json`, `markdown`, `yaml` | `majordomus/design-system/v1` | share/design/tokens.yaml, the one declaration of the design |
 | `design-declaration` | `yaml` | — | share/design/tokens.yaml, the one declaration of the design |
@@ -179,6 +180,8 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/cli.json` | `cli` | json | 1014579 | `181decd2d21cdd93` |
 | `docs/generated/cli.md` | `cli` | markdown | 434961 | `b46a0504328c5bb7` |
 | `docs/generated/cli.yaml` | `cli` | yaml | 790539 | `94abc63206a4ddea` |
+| `docs/generated/completion.json` | `completion` | json | 6993 | `15b68d92a238ecbb` |
+| `docs/generated/completion.yaml` | `completion` | yaml | 5929 | `e4d9f45ce5026d0c` |
 | `docs/generated/design.json` | `design` | json | 155550 | `f23778beda60bc62` |
 | `docs/generated/design.md` | `design` | markdown | 11791 | `10626b451d7f0277` |
 | `docs/generated/design.yaml` | `design` | yaml | 126201 | `0258982f745ebcd0` |
@@ -305,7 +308,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 665557 | `52ddb98d54cb53fe` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 91561 | `dc148dc7a7e025e1` |
 | `site/data/registry/product.json` | `site-product` | json | 472112 | `ec31d0beaa3b6c59` |
-| `site/data/registry/registry.json` | `site-registry` | json | 5443869 | `7cffd534618088e7` |
+| `site/data/registry/registry.json` | `site-registry` | json | 5443869 | `97124f0a4a532af7` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `05965e98b5dc0c58` |
 | `site/data/registry/why.json` | `site-why` | json | 349952 | `1064db74576aeadd` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `861ed5a4aa3e3f4d` |
