@@ -67,7 +67,6 @@ H
 
   MJ_FINISH_OUTCOME="$outcome"; MJ_FINISH_VERIFY="$verify"; MJ_FINISH_NOTE="$note"
   MJ_FINISH_VEXIT=""; MJ_FINISH_VSECS=""; MJ_FINISH_VTREE=""
-  [ "$outcome" = completed ] && mj_finish_advance_version "$id"
   mj_doctrine_dispatch finish
 
   # The policy may name a requirement the registry does not define. That is a
@@ -102,6 +101,17 @@ H
     exit "$MJ_EX_CONTRACT"
   fi
 
+  # The version advance is the last act before the record, and only for a contract that
+  # holds (ADR 0106): a refused completion advances nothing and records nothing, so no
+  # reader of the ledger or the tree can take a refusal for accepted work. An advance that
+  # could not be made, or that does not leave the obligation satisfied, refuses here.
+  if [ "$outcome" = completed ] && ! mj_finish_advance_version "$id"; then
+    contract="$(printf '%s' "$contract" | sed 's/"majordomus.version-obligation":"pass"/"majordomus.version-obligation":"fail"/')"
+    mj_ledger_append task.refused "\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"unmet\":1,\"refused\":[\"majordomus.version-obligation\"],\"contract\":$contract"
+    [ "$MJ_JSON" = 1 ] || printf 'finish: refused, 1 unmet\nblocking doctrines:\n- majordomus.version-obligation\n'
+    exit "$MJ_EX_CONTRACT"
+  fi
+
   local now; now="$(mj_now)"
   sed -e "s/^outcome: .*/outcome: $outcome/" -e "s/^checkpoint_at: .*/checkpoint_at: $now/" "$MJ_CUR" > "$MJ_CUR.mj-tmp" && mv "$MJ_CUR.mj-tmp" "$MJ_CUR"
   [ -n "$note" ] && { mkdir -p "$MJ_STATE_DIR/completed"; cp "$note" "$MJ_STATE_DIR/completed/$id.md"; }
@@ -111,18 +121,18 @@ H
   [ "$MJ_JSON" = 1 ] || printf 'finish: %s %s\n' "$id" "$outcome"
 }
 
-# The version obligation is satisfied before the contract is judged (ADR 0106). Completed
-# work owes the policy's cadence over the trunk's version, and the advance is part of the
-# work: the verification command then runs over the advanced tree, and the doctrine that
-# judges the obligation (majordomus.version-obligation) reads a tree that already carries it.
-# The one writer does the write — `release advance` is `release bump`'s write with the
-# version the obligation chose — and `majordomus generate distribution` projects it into
-# share/version.txt, the projection the shell tool reads; scripts/derive does the rest. A satisfied
-# obligation writes nothing, so a finish refused for another reason and run again does not
-# advance twice. Anything the advance could not do is left to the doctrine to refuse with
-# the obligation's own remedy; nothing here decides a verdict.
+# The version obligation is satisfied once the rest of the contract holds (ADR 0106).
+# Completed work owes the policy's cadence over the trunk's version; the doctrine that judges
+# it (majordomus.version-obligation) accepts an obligation that is merely owed, because this
+# is where it is paid, and refuses one that cannot be — a tree behind its trunk, a trunk
+# nobody could read. The one writer does the write — `release advance` is `release bump`'s
+# write with the version the obligation chose — and `majordomus generate distribution`
+# projects it into share/version.txt, the projection the shell tool reads; scripts/derive
+# does the rest. The obligation is read again after the write and must hold. A satisfied
+# obligation writes nothing, so a finish run again does not advance twice. Returns 1, with
+# the finding printed, when the advance could not be made or did not leave it satisfied.
 mj_finish_advance_version() {
-  local id="$1" r selected=0 bin out rc=0 from to oid trunk tcommit
+  local id="$1" r selected=0 bin out rc=0 from to oid trunk tcommit state
   for r in $(mj_ylist "$MJ_POL_FLAT" verification.finish_requires); do
     [ "$r" = version_advanced ] && selected=1
   done
@@ -130,16 +140,29 @@ mj_finish_advance_version() {
   # shellcheck source=rust_bin.sh
   . "$MJ_LIB_DIR/rust_bin.sh"
   bin="$(mj_rust_bin "$MJ_HOME")"
+  # the doctrine refused a completion it could not read the obligation for, so a missing
+  # reader cannot reach this point with an obligation unread
   { [ -x "$bin" ] && command -v jq >/dev/null 2>&1; } || return 0
   out="$( "$bin" release obligation --format json --repo "$MJ_ROOT" 2>/dev/null )" || rc=$?
-  [ "$(printf '%s' "$out" | jq -r '.state // empty' 2>/dev/null)" = owed ] || return 0
+  state="$(printf '%s' "$out" | jq -r '.state // empty' 2>/dev/null)"
+  case "$state" in
+    satisfied|not-owed) return 0 ;;
+    owed) ;;
+    *) mj_fail version "$id" "the obligation is ${state:-unreadable} after the contract was judged, so no advance can be chosen" "$bin release obligation"; return 1 ;;
+  esac
   from="$(printf '%s' "$out" | jq -r '.declared')"; to="$(printf '%s' "$out" | jq -r '.minimum')"
   oid="$(printf '%s' "$out" | jq -r '.id')"
   trunk="$(printf '%s' "$out" | jq -r '.trunk.reference')"; tcommit="$(printf '%s' "$out" | jq -r '.trunk.commit')"
   rc=0; ( cd "$MJ_ROOT" && "$bin" release advance --repo "$MJ_ROOT" ) || rc=$?
-  [ "$rc" = 0 ] || { mj_info version "$oid" "release advance exited $rc; the doctrine judges what is left"; return 0; }
+  if [ "$rc" != 0 ]; then
+    mj_fail version "$oid" "release advance exited $rc, so the version was not raised from $from to $to" "$bin release advance"; return 1; fi
   rc=0; ( cd "$MJ_ROOT" && "$bin" generate distribution --repo "$MJ_ROOT" ) > /dev/null 2>&1 || rc=$?
   [ "$rc" = 0 ] || mj_info version "$oid" "majordomus generate distribution exited $rc after the advance; run scripts/derive before committing" "scripts/derive"
+  state="$( "$bin" release obligation --format json --repo "$MJ_ROOT" 2>/dev/null | jq -r '.state // empty' 2>/dev/null)" || state=""
+  case "$state" in
+    satisfied|not-owed) ;;
+    *) mj_fail version "$oid" "the advance to $to left the obligation ${state:-unreadable}" "$bin release obligation"; return 1 ;;
+  esac
   mj_ledger_append release.advanced "\"task_id\":\"$id\",\"obligation\":\"$(mj_json_esc "$oid")\",\"from\":\"$from\",\"to\":\"$to\",\"trunk\":\"$(mj_json_esc "$trunk")\",\"trunk_commit\":\"$tcommit\",\"effective\":\"$(printf '%s' "$out" | jq -r '.effective')\""
   [ "$MJ_JSON" = 1 ] || printf 'finish: version %s -> %s (obligation %s); scripts/derive refreshes the site data before the commit\n' "$from" "$to" "$oid"
   return 0

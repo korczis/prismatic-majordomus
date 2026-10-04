@@ -396,9 +396,17 @@ mj_validate_version_obligation() {
     MJ_DOCTRINE_SKIPPED=1; return 0
   fi
   id="$(mj_cur id)"
-  mj_finish_selected || {
-    mj_doctrine_skip version "$id" "not in verification.finish_requires"
-    MJ_DOCTRINE_SKIPPED=1; return 0; }
+  # Under finish the policy selects it (mj_finish_gate); under check it is reported only
+  # where the policy selects it too, because the reading costs a run of the executable and a
+  # repository that declares no cadence has no obligation to report.
+  if [ "$MJ_DOCTRINE_CMD" = finish ]; then
+    mj_finish_gate version || return 0
+  else
+    case " $(mj_ylist "$MJ_POL_FLAT" verification.finish_requires | tr '\n' ' ') " in
+      *" version_advanced "*) ;;
+      *) mj_doctrine_skip version "$id" "not in verification.finish_requires"; MJ_DOCTRINE_SKIPPED=1; return 0 ;;
+    esac
+  fi
   case "${MJ_FINISH_OUTCOME:-}" in
     ''|completed) ;;
     *) mj_doctrine_skip version "$id" "skipped for outcome $MJ_FINISH_OUTCOME: unfinished work owes no version"
@@ -436,6 +444,17 @@ mj_validate_version_obligation() {
   case "$state" in
     satisfied|not-owed)
       mj_doctrine_ok version "$oid" "$state: $declared covers the minimum $minimum" ;;
+    owed)
+      # Owed is what finish pays: once every other line of the contract holds, finish raises
+      # the version through the one writer and reads the obligation again before it records
+      # anything (mj_finish_advance_version). Paying it before the verdict would leave an
+      # advance behind every refused completion.
+      if [ "${MJ_FINISH_OUTCOME:-}" = completed ]; then
+        mj_doctrine_ok version "$oid" "owed: $declared -> $minimum, advanced through the one writer once every other line holds"
+      else
+        mj_doctrine_skip version "$oid" "owed: declared $declared, minimum $minimum; finish --outcome completed advances it" "$remedy"
+        MJ_DOCTRINE_SKIPPED=1
+      fi ;;
     *)
       if [ "${MJ_FINISH_OUTCOME:-}" = completed ]; then
         mj_doctrine_fail version "$oid" "$state: declared $declared, minimum $minimum — $reason" "$remedy"

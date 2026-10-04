@@ -11,7 +11,8 @@
 #
 #   unselected          the policy does not name the requirement      nothing advanced
 #   partial             unfinished work owes no version               nothing advanced
-#   completed           the obligation is satisfied first             1.4.0 -> 1.5.0, once
+#   refused completed   another line fails                            nothing advanced, nothing recorded
+#   completed           judged, then advanced                         1.4.0 -> 1.5.0, once
 #   retry               finish again, advance again                   still 1.5.0, one ledger line
 #   override            --level patch under the minimum               REFUSED, nothing written
 #   override above      --exact 1.9.0                                 accepted (then put back)
@@ -70,12 +71,26 @@ expect_exit 0 "$MJ" finish --outcome partial --verify-command "test -d .ai" --no
 [ "$(declared)" = 1.4.0 ] || { echo "    a partial outcome advanced the version to $(declared)"; exit 1; }
 [ "$(advances)" = 0 ] || { echo "    a partial outcome recorded an advance"; exit 1; }
 
+# --------------------------------------------------- check reports it and refuses nothing
+expect_exit 0 "$MJ" start "checked" --scope lib/,apps/,docs/,share/,site/
+expect_exit 0 "$MJ" check
+expect_no_grep 'command not found'
+expect_grep 'version +feature/a@1\.4\.0 — owed: declared 1\.4\.0, minimum 1\.5\.0'
+expect_exit 0 "$MJ" finish --outcome partial --verify-command "test -d .ai" --note "$S/note.md"
+
 # --------------------------------------------------- an override may not undershoot
 expect_exit 10 "$BIN" release bump --repo . --level patch
 expect_grep 'below 1\.5\.0, the minimum the version obligation'
 [ "$(declared)" = 1.4.0 ] || { echo "    a refused bump wrote $(declared)"; exit 1; }
 
-# --------------------------------------------------- completed: advanced once, then judged
+# --------------------------------------------------- a refused completion advances nothing
+expect_exit 0 "$MJ" start "refused" --scope lib/,apps/,docs/,share/,site/
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d nowhere" --note "$S/note.md"
+[ "$(declared)" = 1.4.0 ] || { echo "    a refused completion advanced the version to $(declared)"; exit 1; }
+[ "$(advances)" = 0 ] || { echo "    a refused completion recorded an advance"; exit 1; }
+expect_exit 0 "$MJ" finish --outcome partial --verify-command "test -d .ai" --note "$S/note.md"
+
+# --------------------------------------------------- completed: judged, then advanced once
 expect_exit 0 "$MJ" start "completed" --scope lib/,apps/,docs/,share/,site/
 expect_exit 0 "$MJ" finish --outcome completed --verify-command "test -d .ai" --note "$S/note.md"
 expect_grep 'version 1\.4\.0 -> 1\.5\.0'
