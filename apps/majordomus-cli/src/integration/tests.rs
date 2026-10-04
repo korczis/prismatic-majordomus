@@ -137,6 +137,8 @@ struct World {
     trail_root: Option<std::path::PathBuf>,
     /// The next observations fail with these words, once each.
     outages: Vec<String>,
+    /// Every closure comment that reached the forge.
+    close_comments: Vec<String>,
 }
 
 impl Default for World {
@@ -166,6 +168,7 @@ impl Default for World {
             verify_calls: 0,
             trail_root: None,
             outages: Vec::new(),
+            close_comments: Vec::new(),
         }
     }
 }
@@ -423,10 +426,20 @@ impl Integrator for World {
         Ok(s.head.clone())
     }
 
-    fn close(&mut self, pr: u64, _comment: &str) -> Result<(), String> {
+    fn close(&mut self, pr: u64, head_sha: &str, comment: &str) -> Result<(), String> {
         self.close_calls += 1;
+        self.close_comments.push(comment.to_string());
         if self.close_refuses.contains(&pr) {
             return Err("HTTP 403: Resource not accessible by integration".into());
+        }
+        let s = self
+            .open
+            .iter()
+            .find(|s| s.number == pr)
+            .ok_or("not open")?;
+        // the forge side of the guard: never a head a person pushed to meanwhile
+        if s.head != head_sha {
+            return Err(format!("#{pr}'s head moved to {}", s.head));
         }
         self.open.retain(|s| s.number != pr);
         Ok(())
@@ -1276,7 +1289,7 @@ fn cleanup_lists_only_what_is_provably_on_master() {
         fn refresh_branch(&mut self, _: &PullRequestAssessment, _: &str) -> Result<String, String> {
             unreachable!()
         }
-        fn close(&mut self, _: u64, _: &str) -> Result<(), String> {
+        fn close(&mut self, _: u64, _: &str, _: &str) -> Result<(), String> {
             unreachable!()
         }
     }
@@ -2124,7 +2137,7 @@ fn a_repository_that_cannot_be_read_ends_a_continuous_drain() {
         fn refresh_branch(&mut self, _: &PullRequestAssessment, _: &str) -> Result<String, String> {
             unreachable!()
         }
-        fn close(&mut self, _: u64, _: &str) -> Result<(), String> {
+        fn close(&mut self, _: u64, _: &str, _: &str) -> Result<(), String> {
             unreachable!()
         }
     }
@@ -2889,8 +2902,8 @@ impl Integrator for Shared {
     fn refresh_branch(&mut self, a: &PullRequestAssessment, base: &str) -> Result<String, String> {
         self.0.lock().unwrap().refresh_branch(a, base)
     }
-    fn close(&mut self, pr: u64, comment: &str) -> Result<(), String> {
-        self.0.lock().unwrap().close(pr, comment)
+    fn close(&mut self, pr: u64, head_sha: &str, comment: &str) -> Result<(), String> {
+        self.0.lock().unwrap().close(pr, head_sha, comment)
     }
 }
 
@@ -4599,4 +4612,100 @@ fn failure_classes_say_whether_the_next_candidate_may_be_tried() {
     }
     assert!(!C::VerificationFailed.recoverable());
     assert!(!C::Unreadable.recoverable());
+}
+
+// ---------------------------------------------------------------- cleanup closes only what it decided (WP8)
+
+/// Two superseded pull requests and one ready: what every cleanup test starts from.
+fn superseded_two() -> World {
+    let mut w = World {
+        open: vec![sim(1), sim(2), sim(3)],
+        ..Default::default()
+    };
+    w.open[0].redundant_after = Some(99);
+    w.open[1].redundant_after = Some(99);
+    w.merged = vec![99];
+    w
+}
+
+#[test]
+fn cleanup_apply_closes_only_superseded_with_its_deciding_reason() {
+    let root = scratch();
+    let mut w = superseded_two();
+    let items = drain::cleanup(&root, &mut w, true).unwrap();
+    let closed: Vec<u64> = items
+        .iter()
+        .filter(|i| i.action == "closed")
+        .map(|i| i.pr)
+        .collect();
+    assert_eq!(closed, [1, 2], "{items:?}");
+    assert!(
+        w.open.iter().any(|s| s.number == 3),
+        "the ready one is never closed"
+    );
+    // the comment names the reason that decided it, the base, the master and the head
+    let c = &w.close_comments[0];
+    assert!(
+        c.contains("on `master`") && c.contains("master m0") && c.contains("head h1.0"),
+        "{c}"
+    );
+    let cited = c
+        .split("Evidence: ")
+        .nth(1)
+        .and_then(|e| e.split(" (master").next())
+        .unwrap();
+    assert_eq!(
+        cited, "merge_changes_nothing",
+        "only the deciding reason is cited: {c}"
+    );
+}
+
+#[test]
+fn a_moved_head_is_not_closed() {
+    let root = scratch();
+    let mut w = superseded_two();
+    // between the first observation and the second, a person pushes to #1
+    w.meanwhile.push((2, Meanwhile::HeadMoves(1)));
+    let items = drain::cleanup(&root, &mut w, true).unwrap();
+    let by: BTreeMap<u64, String> = items.into_iter().map(|i| (i.pr, i.action)).collect();
+    assert!(by[&1].starts_with("stale_decision"), "{}", by[&1]);
+    assert_eq!(by[&2], "closed");
+    assert!(w.open.iter().any(|s| s.number == 1), "#1 is still open");
+    assert_eq!(w.close_calls, 1, "#1's closure never reached the forge");
+    assert!(trail_actions(&root).contains(&"stale_decision".to_string()));
+}
+
+#[test]
+fn the_forge_refuses_to_close_a_head_that_moved_after_the_decision() {
+    let mut w = superseded_two();
+    w.open[0].head = "h1.1".into();
+    let err = Integrator::close(&mut w, 1, "h1.0", "closing").unwrap_err();
+    assert!(err.contains("head moved"), "{err}");
+    assert!(w.open.iter().any(|s| s.number == 1));
+}
+
+#[test]
+fn a_failed_close_is_recorded_and_the_next_is_still_closed() {
+    let root = scratch();
+    let mut w = superseded_two();
+    w.close_refuses.insert(1);
+    let items = drain::cleanup(&root, &mut w, true).unwrap();
+    let by: BTreeMap<u64, String> = items.into_iter().map(|i| (i.pr, i.action)).collect();
+    assert!(by[&1].starts_with("close_failed"), "{}", by[&1]);
+    assert_eq!(by[&2], "closed");
+    let failed = drain::events(&root)
+        .into_iter()
+        .find(|e| e.action.as_str() == "close_failed")
+        .unwrap();
+    assert_eq!(failed.pr, Some(1));
+}
+
+#[test]
+fn a_cleanup_listing_closes_nothing_and_observes_once() {
+    let root = scratch();
+    let mut w = superseded_two();
+    let items = drain::cleanup(&root, &mut w, false).unwrap();
+    assert!(items.iter().all(|i| i.action == "would_close"), "{items:?}");
+    assert_eq!((w.close_calls, w.observations), (0, 1));
+    assert!(trail_actions(&root).is_empty());
 }

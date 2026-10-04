@@ -14660,7 +14660,7 @@
             "false"
           ],
           "global": false,
-          "help": "Close them",
+          "help": "Close them: each one observed again first and closed only if it is still superseded at the head that was decided on",
           "long": "apply",
           "name": "apply",
           "positional": false,
@@ -14668,6 +14668,20 @@
           "required": false,
           "takes_value": false,
           "value_name": "APPLY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "List them and close nothing: the default, spelled out",
+          "long": "dry-run",
+          "name": "dry_run",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "DRY_RUN"
         },
         {
           "defaults": [],
@@ -31708,7 +31722,7 @@
     }
   ],
   "counts": {
-    "arguments": 1366,
+    "arguments": 1367,
     "commands": 201,
     "examples": 203,
     "runnable": 177

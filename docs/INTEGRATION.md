@@ -237,10 +237,15 @@ no head, so a pull request refreshed by an older executor does not hold the pipe
 ## Cleanup
 
 Closing a pull request requires more evidence than merging one. `prs cleanup` lists the
-`superseded` ones and closes them only with `--apply`, with a comment that names the master
-and head that proved it. `possibly_redundant` is listed and left for a person. Age, shared
-paths and similar titles are not evidence of anything. Branches are not deleted. The
-repository's own setting decides that.
+`superseded` ones and closes them only with `--apply` (`--dry-run` spells out the default),
+with a comment that names the reason that decided it, the base, and the master and head that
+proved it. A closure is taken the way a merge is: the forge is observed again first, and the
+pull request is closed only if the second decision still says `superseded` against the same
+master and head, or the trail records a `stale_decision` and nothing is closed. The forge is
+asked for the pull request's state and head just before, and a head that moved is never
+closed. `possibly_redundant` is listed and left for a person. Age, shared paths and similar
+titles are not evidence of anything. Branches are not deleted. The repository's own setting
+decides that.
 
 ## Safety
 

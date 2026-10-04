@@ -2884,7 +2884,8 @@ majordomus prs cleanup [OPTIONS]
 
 | argument | value | default | description |
 |---|---|---|---|
-| `--apply` | flag | — | Close them |
+| `--apply` | flag | — | Close them: each one observed again first and closed only if it is still superseded at the head that was decided on |
+| `--dry-run` | flag | — | List them and close nothing: the default, spelled out |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |

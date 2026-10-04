@@ -279,16 +279,16 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             }
             Ok(drain_exit(&report))
         }
-        PrsCommand::Cleanup { apply } => {
-            let mut integrator = ForgeIntegrator {
-                root: &root,
-                lease: None,
-            };
-            let _lease = if apply {
+        PrsCommand::Cleanup { apply, .. } => {
+            let lease = if apply {
                 let base = executor_base(&root).map_err(unusable)?;
                 Some(IntegrationLease::acquire(&root, &base).map_err(unusable)?)
             } else {
                 None
+            };
+            let mut integrator = ForgeIntegrator {
+                root: &root,
+                lease: lease.as_ref(),
             };
             let items = drain::cleanup(&root, &mut integrator, apply).map_err(unusable)?;
             if format == OutputFormat::Json {

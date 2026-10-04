@@ -864,7 +864,7 @@ pub trait Integrator {
     /// head. Never a rewrite: the push is refused if the branch moved.
     fn refresh_branch(&mut self, a: &PullRequestAssessment, base: &str) -> Result<String, String>;
     /// Close a pull request with a comment saying why.
-    fn close(&mut self, pr: u64, comment: &str) -> Result<(), String>;
+    fn close(&mut self, pr: u64, head_sha: &str, comment: &str) -> Result<(), String>;
 }
 
 /// One integration step: observe, decide, observe again, act only on an unchanged
@@ -1874,7 +1874,32 @@ impl Integrator for ForgeIntegrator<'_> {
         })
     }
 
-    fn close(&mut self, pr: u64, comment: &str) -> Result<(), String> {
+    fn close(&mut self, pr: u64, head_sha: &str, comment: &str) -> Result<(), String> {
+        // the forge's own word on the pull request, just before: closed only while it is open
+        // at the head that was decided on, never one a person pushed to meanwhile
+        let now = super::retry::forge(|| {
+            gh(
+                self.root,
+                &[
+                    "pr",
+                    "view",
+                    &pr.to_string(),
+                    "--json",
+                    "state,headRefOid",
+                    "--jq",
+                    ".state + \" \" + .headRefOid",
+                ],
+            )
+        })?;
+        let (state, head) = now.trim().split_once(' ').unwrap_or((now.trim(), ""));
+        if state != "OPEN" {
+            return Err(format!("#{pr} is {state} on the forge, not open"));
+        }
+        if head != head_sha {
+            return Err(format!(
+                "#{pr}'s head moved to {head}; the closure was decided on {head_sha}"
+            ));
+        }
         gh(
             self.root,
             &["pr", "close", &pr.to_string(), "--comment", comment],
@@ -2035,44 +2060,7 @@ pub fn cleanup(
     let mut items = Vec::new();
     for a in &queue.assessments {
         let action = match a.disposition {
-            PullRequestDisposition::Superseded if apply => {
-                let body = format!(
-                    "Closed by `majordomus prs cleanup`: its work is already on `{}`.\n\nEvidence: {} (master {}, head {}).",
-                    queue.base,
-                    super::reason_list(&a.reasons, ", "),
-                    a.evaluated_against.master_sha,
-                    a.evaluated_against.head_sha
-                );
-                // on the trail before the forge hears of it: a closure the trail cannot name is
-                // not made, and nothing after it is attempted
-                record(
-                    root,
-                    event(IntegrationAction::CloseAttempted, Some(a), body.clone()),
-                )
-                .map_err(|e| {
-                    format!(
-                        "#{} was not closed: the trail could not record it first: {e}",
-                        a.number
-                    )
-                })?;
-                match integrator.close(a.number, &body) {
-                    Ok(()) => {
-                        record(
-                            root,
-                            event(IntegrationAction::ClosedSuperseded, Some(a), body)
-                                .with_evidence(a),
-                        )?;
-                        "closed".to_string()
-                    }
-                    Err(e) => {
-                        record(
-                            root,
-                            event(IntegrationAction::CloseFailed, Some(a), e.clone()),
-                        )?;
-                        format!("close_failed: {e}")
-                    }
-                }
-            }
+            PullRequestDisposition::Superseded if apply => close_superseded(root, integrator, a)?,
             PullRequestDisposition::Superseded => "would_close".into(),
             PullRequestDisposition::PossiblyRedundant => "left_for_a_person".into(),
             _ => continue,
@@ -2085,4 +2073,77 @@ pub fn cleanup(
         });
     }
     Ok(items)
+}
+
+/// Close one superseded pull request, as a merge is taken: observed again first, closed only
+/// if the second decision still says superseded against the same master and head, recorded
+/// before the forge hears of it, and refused by the forge side if the head moved meanwhile.
+/// The comment names the reason that decided it, the base, the master and the head.
+fn close_superseded(
+    root: &Path,
+    integrator: &mut dyn Integrator,
+    a: &PullRequestAssessment,
+) -> Result<String, String> {
+    let second = integrator.observe()?;
+    let again = second.get(a.number);
+    let stale = match again {
+        None => Some(format!("#{} is no longer open", a.number)),
+        Some(b) if b.evaluated_against != a.evaluated_against => Some(format!(
+            "master or the head moved: decided on master {} head {}, now master {} head {}",
+            a.evaluated_against.master_sha,
+            a.evaluated_against.head_sha,
+            b.evaluated_against.master_sha,
+            b.evaluated_against.head_sha
+        )),
+        Some(b) if b.disposition != PullRequestDisposition::Superseded => Some(format!(
+            "#{} is {} now, not superseded",
+            a.number,
+            b.disposition.as_str()
+        )),
+        Some(_) => None,
+    };
+    if let Some(what) = stale {
+        record(
+            root,
+            event(IntegrationAction::StaleDecision, Some(a), what.clone()),
+        )?;
+        return Ok(format!("stale_decision: {what}"));
+    }
+    let deciding = a
+        .reasons
+        .first()
+        .map(ToString::to_string)
+        .unwrap_or_else(|| "superseded".into());
+    let body = format!(
+        "Closed by `majordomus prs cleanup`: its work is already on `{}`.\n\nEvidence: {deciding} (master {}, head {}).",
+        second.base, a.evaluated_against.master_sha, a.evaluated_against.head_sha
+    );
+    // on the trail before the forge hears of it: a closure the trail cannot name is not made,
+    // and nothing after it is attempted
+    record(
+        root,
+        event(IntegrationAction::CloseAttempted, Some(a), body.clone()),
+    )
+    .map_err(|e| {
+        format!(
+            "#{} was not closed: the trail could not record it first: {e}",
+            a.number
+        )
+    })?;
+    match integrator.close(a.number, &a.evaluated_against.head_sha, &body) {
+        Ok(()) => {
+            record(
+                root,
+                event(IntegrationAction::ClosedSuperseded, Some(a), body).with_evidence(a),
+            )?;
+            Ok("closed".to_string())
+        }
+        Err(e) => {
+            record(
+                root,
+                event(IntegrationAction::CloseFailed, Some(a), e.clone()),
+            )?;
+            Ok(format!("close_failed: {e}"))
+        }
+    }
 }

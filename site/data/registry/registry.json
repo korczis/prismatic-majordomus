@@ -6,7 +6,7 @@
     "version": "0.13.0"
   },
   "registry": {
-    "fingerprint": "bbc1fa48afe7f46dcf36e9106db3f9e0294cf83e34c10ca0391dfe5fc55118e6",
+    "fingerprint": "d88defa76211d7c712631a87ff785ff2b5edb046cacd8cbf9234bc87b69e13f2",
     "summary": {
       "total": 1883,
       "builtin": 171,
@@ -67652,7 +67652,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2a3cbcab922330e4019e4e31220924fa65a7e2c762f0b623641b79d1d0a23d9b",
+    "fingerprint": "5ab465923b5fe0646e56e4d7d961e4a5b74e337088783fdd5a00b963dce29543",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -72824,7 +72824,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 25791
+        "bytes": 26233
       },
       {
         "uri": "majordomus://document/docs/KNOWLEDGE.md",
@@ -99046,8 +99046,22 @@
                 "name": "apply",
                 "long": "apply",
                 "positional": false,
-                "help": "Close them",
+                "help": "Close them: each one observed again first and closed only if it is still superseded at the head that was decided on",
                 "value_name": "APPLY",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "dry_run",
+                "long": "dry-run",
+                "positional": false,
+                "help": "List them and close nothing: the default, spelled out",
+                "value_name": "DRY_RUN",
                 "takes_value": false,
                 "required": false,
                 "global": false,

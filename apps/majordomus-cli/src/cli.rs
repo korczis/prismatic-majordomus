@@ -2888,9 +2888,12 @@ pub enum PrsCommand {
     },
     /// Close the pull requests whose work is provably on master already; without `--apply` it only lists them
     Cleanup {
-        /// Close them.
+        /// Close them: each one observed again first and closed only if it is still superseded at the head that was decided on.
         #[arg(long)]
         apply: bool,
+        /// List them and close nothing: the default, spelled out.
+        #[arg(long, conflicts_with = "apply")]
+        dry_run: bool,
     },
     /// The audit trail: every selection, merge, refusal, stale decision and closure this checkout's executor recorded
     Events,
