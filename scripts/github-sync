@@ -48,6 +48,21 @@
 #   MJ_GH_FIXTURE_ISSUES=<tsv> MJ_GH_FIXTURE_MILESTONES=<tsv> scripts/github-sync --check
 #     read the remote from files instead of the network, so reconciliation is provable
 #     offline. --apply refuses a fixture.
+#
+# What --apply may project. GitHub is shared and the trunk is the one plan everybody shares,
+# so --apply projects the trunk and nothing else: HEAD must be the tip of the remote's
+# default branch (refs/remotes/<remote>/HEAD, confirmed against the remote itself) and the
+# tree must be clean. Run from a feature branch or over uncommitted edits it would publish
+# that branch's plan as the shared one, and the next apply from master would undo it. One
+# apply runs at a time per repository, under a lock in the git common directory. --plan,
+# --check and --render only read, and run from any branch. MJ_GH_REMOTE names the remote
+# (default origin).
+#
+# Every mutation prints one line naming what it changed and why. A mutation GitHub refuses
+# is a FAIL line, the run goes on with the next record, and the exit is 13.
+#
+# Exit: 0 done, 2 usage, 11 drift (--check), 12 cannot run, 13 a mutation failed,
+# 15 --apply refused (the reason and the command that reproduces it are printed).
 set -eu
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -67,7 +82,7 @@ while [ $# -gt 0 ]; do
     --render) [ $# -ge 2 ] || { echo "github-sync: --render needs an id" >&2; exit 2; }; MODE=render; RENDER="$2"; shift 2 ;;
     --milestone) [ $# -ge 2 ] || { echo "github-sync: --milestone needs an id" >&2; exit 2; }; ONLY="$2"; shift 2 ;;
     --force) FORCE=1; shift ;;
-    -h|--help) sed -n '2,50p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,65p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "github-sync: unknown option $1" >&2; exit 2 ;;
   esac
 done
@@ -166,13 +181,111 @@ if [ -n "${MJ_GH_FIXTURE_ISSUES:-}" ] || [ -n "${MJ_GH_FIXTURE_MILESTONES:-}" ];
   FIXTURE=1
   [ "$MODE" = apply ] && { echo "github-sync: --apply refuses a fixture remote; unset MJ_GH_FIXTURE_*" >&2; exit 15; }
 fi
+
+# ---------------------------------------------------------------- what --apply may project
+# GitHub is the projection of the trunk, never of whichever tree an apply happened to run in.
+# An apply from a feature branch published that branch's plan — its statuses, its records —
+# as the shared one, and the remote stayed wrong until somebody noticed and re-applied from
+# master: the live remote carried records closed and claimed by a tree that was never the
+# trunk. So an apply proves where it stands before it reads the remote, and a refusal names
+# the reason and the command that shows it. The tracking ref is this checkout's memory of the
+# remote and can be stale, so the tip is asked of the remote as well: an old master is a tree
+# that was never the trunk's current plan either.
+GH_REMOTE="${MJ_GH_REMOTE:-origin}"
+apply_refused() {
+  printf 'github-sync: --apply refused: %s\n  reproduce: %s\n' "$1" "$2" >&2
+  exit 15
+}
+if [ "$MODE" = apply ]; then
+  trunk_ref="$(git -C "$MJ_ROOT" symbolic-ref -q "refs/remotes/$GH_REMOTE/HEAD" 2>/dev/null)" || trunk_ref=""
+  [ -n "$trunk_ref" ] || apply_refused \
+    "remote '$GH_REMOTE' has no known default branch (refs/remotes/$GH_REMOTE/HEAD is unset), so there is no trunk to project" \
+    "git -C $MJ_ROOT symbolic-ref refs/remotes/$GH_REMOTE/HEAD  # set it: git remote set-head $GH_REMOTE --auto"
+  trunk="${trunk_ref#"refs/remotes/$GH_REMOTE/"}"
+  head="$(git -C "$MJ_ROOT" rev-parse -q --verify HEAD 2>/dev/null)" || head=""
+  tip="$(git -C "$MJ_ROOT" rev-parse -q --verify "$trunk_ref" 2>/dev/null)" || tip=""
+  if [ -z "$head" ] || [ "$head" != "$tip" ]; then
+    on="$(git -C "$MJ_ROOT" symbolic-ref -q --short HEAD 2>/dev/null)" || on="a detached HEAD"
+    apply_refused \
+      "HEAD (${head:0:12} on $on) is not the tip of $GH_REMOTE/$trunk (${tip:0:12}); GitHub projects the trunk's plan, never a branch's" \
+      "git -C $MJ_ROOT rev-parse HEAD $trunk_ref"
+  fi
+  dirty="$(git -C "$MJ_ROOT" status --porcelain --untracked-files=all 2>/dev/null)" \
+    || apply_refused "git could not report the state of the tree" "git -C $MJ_ROOT status --porcelain"
+  if [ -n "$dirty" ]; then
+    apply_refused \
+      "the tree has $(printf '%s\n' "$dirty" | wc -l | tr -d ' ') uncommitted path(s) (first: $(printf '%s\n' "$dirty" | head -1 | cut -c4-)); only the committed trunk is projected" \
+      "git -C $MJ_ROOT status --porcelain --untracked-files=all"
+  fi
+  live="$(git -C "$MJ_ROOT" ls-remote --exit-code "$GH_REMOTE" "refs/heads/$trunk" 2>/dev/null | cut -f1)" || live=""
+  [ -n "$live" ] || apply_refused \
+    "remote '$GH_REMOTE' did not answer for refs/heads/$trunk, so this tree cannot be shown to be its tip" \
+    "git -C $MJ_ROOT ls-remote --exit-code $GH_REMOTE refs/heads/$trunk"
+  [ "$live" = "$head" ] || apply_refused \
+    "$GH_REMOTE/$trunk is at ${live:0:12} on the remote and this tree is at ${head:0:12}; the local view of the trunk is stale" \
+    "git -C $MJ_ROOT ls-remote $GH_REMOTE refs/heads/$trunk  # then: git fetch $GH_REMOTE && git merge --ff-only $GH_REMOTE/$trunk"
+
+  # One apply at a time. Two applies interleave their reads and writes — each lists the remote,
+  # then creates what it found missing — so the second creates the records the first is
+  # creating. A directory, because mkdir is the create-or-fail primitive; in the git common
+  # directory, because every worktree of the repository shares it and none of them tracks it.
+  # A held lock is refused, never waited on or broken: its owner line says who holds it, and
+  # only a person can tell a live apply from one that was killed without its trap running.
+  common="$(git -C "$MJ_ROOT" rev-parse --git-common-dir)"
+  case "$common" in /*) ;; *) common="$MJ_ROOT/$common" ;; esac
+  APPLY_LOCK="$(cd "$common" && pwd)/majordomus-github-sync.lock"
+  if ! mkdir "$APPLY_LOCK" 2>/dev/null; then
+    held="$(cat "$APPLY_LOCK/owner" 2>/dev/null)" || held="an owner it does not name"
+    apply_refused "another --apply holds $APPLY_LOCK ($held)" \
+      "cat $APPLY_LOCK/owner  # remove the directory only if that process is gone"
+  fi
+  printf 'host=%s pid=%s head=%s since=%s\n' "$(uname -n 2>/dev/null || printf unknown)" "$$" \
+    "$head" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$APPLY_LOCK/owner"
+  printf 'github-sync apply: %s at %s (%s/%s), %s\n' "$REPO" "${head:0:12}" "$GH_REMOTE" "$trunk" \
+    "lock $APPLY_LOCK"
+fi
+# releases only the lock this process took: a refusal above exits before taking one
+apply_unlock() {
+  [ -n "${APPLY_LOCK:-}" ] || return 0
+  grep -q " pid=$$ " "$APPLY_LOCK/owner" 2>/dev/null || return 0
+  rm -f "$APPLY_LOCK/owner"; rmdir "$APPLY_LOCK" 2>/dev/null || true
+}
+trap 'apply_unlock; mj_cleanup' EXIT
+
 if [ "$FIXTURE" = 0 ]; then
   command -v gh >/dev/null 2>&1 || { echo "github-sync: gh is required for --$MODE" >&2; exit 12; }
   gh auth status >/dev/null 2>&1 || { echo "github-sync: gh is not authenticated; --$MODE needs it" >&2; exit 12; }
 fi
 
-DRIFT=0
-note() { printf '%-6s %-9s %s\n' "$1" "$2" "$3"; [ "$1" = DRIFT ] && DRIFT=$((DRIFT + 1)); return 0; }
+DRIFT=0; FAILED=0
+note() {
+  printf '%-6s %-9s %s\n' "$1" "$2" "$3"
+  [ "$1" = DRIFT ] && DRIFT=$((DRIFT + 1))
+  [ "$1" = FAIL ] && FAILED=$((FAILED + 1))
+  return 0
+}
+
+# Every remote mutation goes through here: one line naming what changed and why, or a FAIL
+# line naming what GitHub refused and what it said. Close and reopen used to end in
+# `|| true` and a body or milestone edit in an `&&` chain, so a refused write printed nothing,
+# or printed `updated` over a write that never happened, and the run exited 0 over a remote
+# it had left half applied. A failure does not stop the run — the next record is independent
+# of this one, and the adapter is idempotent — but it decides the exit.
+#   applied <verb> <subject> <why> <command...>
+applied() {
+  local verb="$1" subject="$2" why="$3" err rc=0 said
+  shift 3
+  err="$(mktemp "${TMPDIR:-/tmp}/mj.err.XXXXXX")"
+  "$@" > /dev/null 2> "$err" || rc=$?
+  if [ "$rc" = 0 ]; then
+    note OK "$verb" "$subject — $why"
+  else
+    said="$(tr '\n' ' ' < "$err" | cut -c1-200)"
+    note FAIL "$verb" "$subject — $why: '$(printf '%s' "$*" | cut -c1-120)' exited $rc${said:+: $said}"
+  fi
+  rm -f "$err"
+  return 0
+}
 
 # A backfill is hundreds of mutations in a row, and GitHub answers that with a secondary
 # rate limit rather than a clean error. Pace them. MJ_GH_PACE overrides; 0 disables. The
@@ -183,7 +296,7 @@ pace() { [ "$MODE" = apply ] && [ "$PACE" != 0 ] && sleep "$PACE"; return 0; }
 
 REMOTE_MS="$(mktemp "${TMPDIR:-/tmp}/mj.ms.XXXXXX")"
 REMOTE_IS="$(mktemp "${TMPDIR:-/tmp}/mj.is.XXXXXX")"
-trap 'rm -f "$REMOTE_MS" "$REMOTE_IS"; mj_cleanup' EXIT
+trap 'rm -f "$REMOTE_MS" "$REMOTE_IS"; apply_unlock; mj_cleanup' EXIT
 if [ "$FIXTURE" = 1 ]; then
   [ -n "${MJ_GH_FIXTURE_MILESTONES:-}" ] && cat "$MJ_GH_FIXTURE_MILESTONES" > "$REMOTE_MS"
   [ -n "${MJ_GH_FIXTURE_ISSUES:-}" ] && cat "$MJ_GH_FIXTURE_ISSUES" > "$REMOTE_IS"
@@ -271,7 +384,10 @@ record_state() {
 # labels_of() can emit is what has to exist. A label that is already there is left alone,
 # including its colour and description, because those are somebody's choice and not ours.
 if [ "$MODE" = apply ]; then
-  have_labels="$(gh label list --repo "$REPO" --limit 200 --json name --jq '.[].name' 2>/dev/null || true)"
+  # A listing that failed is not an empty one: read as empty, every label would be "created"
+  # with --force, which rewrites the colour and description of one that exists.
+  have_labels="$(gh label list --repo "$REPO" --limit 200 --json name --jq '.[].name' 2>/dev/null)" \
+    || { echo "github-sync: could not list the labels of $REPO; nothing was changed (reproduce: gh label list --repo $REPO)" >&2; exit 12; }
   # The labels are gathered first and read in this shell: a loop fed by a pipe runs in a
   # subshell, where note() would count drift into a copy that is gone when the loop ends
   # (scripts/ci/shell-lint refuses the shape).
@@ -287,8 +403,8 @@ if [ "$MODE" = apply ]; then
       execution:parallel-safe) d="Derived: declares no scope overlap with its wave" ;;
       *)                       d="Derived from the canonical project model" ;;
     esac
-    gh label create "$l" --repo "$REPO" --description "$d" --force >/dev/null 2>&1 \
-      && note OK created "label $l" || note OK exists "label $l"
+    applied created "label $l" "the model emits it and $REPO has no such label" \
+      gh label create "$l" --repo "$REPO" --description "$d" --force
   done <<< "$wanted_labels"
 fi
 
@@ -300,8 +416,8 @@ for id in $(selected_milestones); do
   if [ -z "$num" ]; then
     note DRIFT missing "milestone $id is not on GitHub"
     if [ "$MODE" = apply ]; then
-      gh api -X POST "repos/$REPO/milestones" -f title="$(title_of "$id")" -f description="$desc" >/dev/null
-      note OK created "milestone $id"
+      applied created "milestone $id" "the canonical record has no counterpart on GitHub" \
+        gh api -X POST "repos/$REPO/milestones" -f title="$(title_of "$id")" -f description="$desc"
       pace
     fi
   else
@@ -309,9 +425,15 @@ for id in $(selected_milestones); do
     want=open; case "$(mj_pj_m_status "$id")" in DONE|CANCELLED) want=closed ;; esac
     if [ "$have" != "$want" ]; then
       note DRIFT state "milestone $id is $have on GitHub, canonically $want"
-      [ "$MODE" = apply ] && { gh api -X PATCH "repos/$REPO/milestones/$num" -f state="$want" -f description="$desc" >/dev/null; note OK updated "milestone $id"; }
+      if [ "$MODE" = apply ]; then
+        applied updated "milestone $id (#$num)" "state $have -> $want and description, from canonical status $(mj_pj_m_status "$id")" \
+          gh api -X PATCH "repos/$REPO/milestones/$num" -f state="$want" -f description="$desc"
+      fi
     else
-      [ "$MODE" = apply ] && gh api -X PATCH "repos/$REPO/milestones/$num" -f description="$desc" >/dev/null
+      if [ "$MODE" = apply ]; then
+        applied updated "milestone $id (#$num)" "description rewritten from the canonical record, which owns all of it" \
+          gh api -X PATCH "repos/$REPO/milestones/$num" -f description="$desc"
+      fi
       note OK insync "milestone $id (#$num)"
     fi
   fi
@@ -334,24 +456,35 @@ for id in $(selected_issues); do
     note DRIFT missing "issue $id is not on GitHub"
     if [ "$MODE" = apply ]; then
       tmp="$(mktemp "${TMPDIR:-/tmp}/mj.body.XXXXXX")"; printf '%s\n' "$body" > "$tmp"
+      # A refused creation is a FAIL line, not the end of the run: under `set -e` the bare
+      # assignment stopped the adapter mid-apply with no word about what it had not done. The
+      # `|| rc` takes the status of the last command of the branch taken, so in both branches
+      # that command is the creation.
+      err="$(mktemp "${TMPDIR:-/tmp}/mj.err.XXXXXX")"; rc=0
       if [ -n "$(remote_milestone_number "$ms")" ]; then
         url="$(gh issue create --repo "$REPO" --title "$(title_of "$id")" --body-file "$tmp" \
           --label "$(labels_of "$id")" --milestone "$(awk -F'\t' -v p="$ms — " 'index($2,p)==1 { print $2; exit }' "$REMOTE_MS")")"
       else
+        note DRIFT milestone "issue $id has no GitHub milestone; $ms does not exist there"
         url="$(gh issue create --repo "$REPO" --title "$(title_of "$id")" --body-file "$tmp" \
           --label "$(labels_of "$id")")"
-        note DRIFT milestone "issue $id has no GitHub milestone; $ms does not exist there"
-      fi
+      fi 2> "$err" || rc=$?
       rm -f "$tmp"
+      if [ "$rc" != 0 ]; then
+        note FAIL created "issue $id — the canonical record has no counterpart on GitHub: 'gh issue create --repo $REPO' exited $rc: $(tr '\n' ' ' < "$err" | cut -c1-200)"
+        rm -f "$err"; pace; continue
+      fi
+      rm -f "$err"
       # The number comes from the creation itself. Searching for the title back would put
       # identity in text a person may rewrite, which is the defect this issue removes.
       num="${url##*/}"
       case "$num" in ''|*[!0-9]*) note DRIFT created "issue $id was created but GitHub returned no number in '$url'"; num="" ;; esac
+      note OK created "issue $id${num:+ (#$num)} — the canonical record has no counterpart on GitHub"
       # a created issue starts open; canonical status decides whether it stays that way
       if [ "$want_state" = closed ] && [ -n "$num" ]; then
-        gh issue close "$num" --repo "$REPO" >/dev/null 2>&1 || true
+        applied closed "issue $id (#$num)" "created open, canonically $(mj_pj_i_status "$id")" \
+          gh issue close "$num" --repo "$REPO"
       fi
-      note OK created "issue $id${num:+ (#$num)}"
       pace
     fi
     continue
@@ -376,7 +509,10 @@ for id in $(selected_issues); do
   want_ms="$(awk -F'\t' -v p="$ms — " 'index($2,p)==1 { print $2; exit }' "$REMOTE_MS")"
   if [ -n "$want_ms" ] && [ "$(remote_issue_milestone "$id")" != "$want_ms" ]; then
     note DRIFT milestone "issue $id (#$num) is not on GitHub milestone $ms"
-    [ "$MODE" = apply ] && gh issue edit "$num" --repo "$REPO" --milestone "$want_ms" >/dev/null && note OK updated "issue $id milestone"
+    if [ "$MODE" = apply ]; then
+      applied updated "issue $id (#$num) milestone" "set to '$want_ms', its canonical milestone" \
+        gh issue edit "$num" --repo "$REPO" --milestone "$want_ms"
+    fi
   fi
   [ "$have_state" = "$want_state" ] || { changed=1; note DRIFT state "issue $id (#$num) is $have_state on GitHub, canonically $want_state"; }
   if [ "$have_state" = closed ] && [ "$(mj_pj_i_status "$id")" != DONE ] && [ "$(mj_pj_i_status "$id")" != CANCELLED ]; then
@@ -388,11 +524,25 @@ for id in $(selected_issues); do
     bodyf="$(mktemp "${TMPDIR:-/tmp}/mj.reg.XXXXXX")"
     region_content "$id" > "$bodyf"
     mj_region_splice "$hostf" "$bodyf" "$(canonical_hash "$id")" > "$tmp"
-    gh issue edit "$num" --repo "$REPO" --body-file "$tmp" >/dev/null
-    [ "$want_state" = closed ] && gh issue close "$num" --repo "$REPO" >/dev/null 2>&1 || true
-    [ "$want_state" = open ] && [ "$have_state" = closed ] && gh issue reopen "$num" --repo "$REPO" >/dev/null 2>&1 || true
+    # each write only when its own field differs, so every line printed is a change made
+    case "$st" in
+      behind)   why="body behind the canonical record" ;;
+      adopt)    why="body given its identity marker; it was matched by title" ;;
+      edited)   why="body: a hand-edited region overwritten under --force" ;;
+      conflict) why="body: a hand-edited region overwritten under --force; the record had moved" ;;
+      *)        why="" ;;
+    esac
+    [ -z "$why" ] || applied updated "issue $id (#$num)" "$why" \
+      gh issue edit "$num" --repo "$REPO" --body-file "$tmp"
+    if [ "$want_state" = closed ] && [ "$have_state" != closed ]; then
+      applied closed "issue $id (#$num)" "canonically $(mj_pj_i_status "$id")" \
+        gh issue close "$num" --repo "$REPO"
+    fi
+    if [ "$want_state" = open ] && [ "$have_state" = closed ]; then
+      applied reopened "issue $id (#$num)" "canonically $(mj_pj_i_status "$id")" \
+        gh issue reopen "$num" --repo "$REPO"
+    fi
     rm -f "$tmp" "$hostf" "$bodyf"
-    note OK updated "issue $id (#$num)"
     pace
   fi
   [ "$changed" = 0 ] && note OK insync "issue $id (#$num)"
@@ -423,5 +573,9 @@ done < "$UNMANAGED"
 rm -f "$UNMANAGED"
 
 printf '\ngithub-sync %s: %s drift finding(s)\n' "$MODE" "$DRIFT"
+if [ "$FAILED" -gt 0 ]; then
+  printf 'github-sync apply: %s mutation(s) failed (the FAIL lines above); the remote is partly applied. Fix the cause and run --apply again: it creates nothing twice.\n' "$FAILED" >&2
+  exit 13
+fi
 [ "$MODE" = check ] && [ "$DRIFT" -gt 0 ] && exit 11
 exit 0
