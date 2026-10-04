@@ -157,10 +157,10 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 
 | path | document | format | bytes | sha256 |
 |---|---|---|---|---|
-| `.bb/AGENTS.md` | `providers/bb` | markdown | 1476 | `33b0922683567f24` |
+| `.bb/AGENTS.md` | `providers/bb` | markdown | 2610 | `e43c51465f89713f` |
 | `.dockerignore` | `deployment` | text | 573 | `b5411ad35adb24ea` |
-| `AGENTS.md` | `providers/agents` | markdown | 7543 | `a54e546134cfd999` |
-| `CLAUDE.md` | `providers/claude-code` | markdown | 6832 | `15dc370eb8938e10` |
+| `AGENTS.md` | `providers/agents` | markdown | 8677 | `87412d4e09e3bb9e` |
+| `CLAUDE.md` | `providers/claude-code` | markdown | 7966 | `da8be045dd2879c5` |
 | `apps/majordomus-cli/src/cockpit/logo-mark.svg` | `design-mark` | text | 904 | `861ed5a4aa3e3f4d` |
 | `apps/majordomus-cli/src/design/tokens.yaml` | `design-declaration` | yaml | 21258 | `00b8199388d600db` |
 | `apps/majordomus-cli/src/web/tokens.css` | `design-tokens` | text | 9320 | `bcd7932862d8364d` |
@@ -304,8 +304,8 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `387872eadf4f1d6d` |
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 666260 | `96742530acf81a88` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 91561 | `dc148dc7a7e025e1` |
-| `site/data/registry/product.json` | `site-product` | json | 472432 | `316192faffb33a37` |
-| `site/data/registry/registry.json` | `site-registry` | json | 5464446 | `a91b60852f43ffaa` |
+| `site/data/registry/product.json` | `site-product` | json | 472537 | `4463123bed5d214a` |
+| `site/data/registry/registry.json` | `site-registry` | json | 5464446 | `bb0f1c9a7c89bdd2` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `05965e98b5dc0c58` |
 | `site/data/registry/why.json` | `site-why` | json | 349952 | `1064db74576aeadd` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `861ed5a4aa3e3f4d` |
