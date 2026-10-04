@@ -6,23 +6,23 @@
     "version": "0.13.0"
   },
   "registry": {
-    "fingerprint": "75d5d46c40dd61e4f2468362229cb764c9ebf8ffdea8721dd03d589120113335",
+    "fingerprint": "6650c8b39c078a1902482aa6c9be36c859a439fe686be1d165c8aa01f9692535",
     "summary": {
-      "total": 1880,
+      "total": 1881,
       "builtin": 170,
-      "declarative": 1710,
+      "declarative": 1711,
       "by_kind": {
         "command": 22,
         "query": 148,
-        "resource": 1710
+        "resource": 1711
       },
       "by_stability": {
         "behaviorally_verified": 128,
         "experimental": 34,
-        "implemented": 1718
+        "implemented": 1719
       },
       "mcp_tools": 164,
-      "mcp_resources": 1763,
+      "mcp_resources": 1764,
       "http_routes": 168,
       "cli_commands": 89,
       "modules": 84,
@@ -26716,10 +26716,15 @@
                 ],
                 "description": "The last merge the executor recorded, from the audit trail.",
                 "default": null
+              },
+              "throughput": {
+                "$ref": "#/$defs/IntegrationThroughput",
+                "description": "How fast the executor has turned work into master over the last\n`THROUGHPUT_WINDOW_DAYS` days, folded from the same trail."
               }
             },
             "required": [
-              "observed"
+              "observed",
+              "throughput"
             ],
             "description": "The queue, or why there is none.",
             "title": "IntegrationStatus",
@@ -27909,6 +27914,89 @@
                   }
                 ],
                 "description": "Why an act failed, as one class a person and a retry policy can act on. Declared so that\nthe trail's shape is settled before anything classifies: no event carries one yet."
+              },
+              "IntegrationThroughput": {
+                "type": "object",
+                "properties": {
+                  "window_days": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The window, in days, ending at the time the fold was asked for."
+                  },
+                  "merges": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Pull requests merged in the window."
+                  },
+                  "merges_per_day": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "`merges / window_days`."
+                  },
+                  "median_actionable_to_merged_secs": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Median seconds from becoming actionable to being merged; `None` when no merge in the\nwindow had a recorded `became_actionable` before it."
+                  },
+                  "ci_rounds_per_merge": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Median `refreshed` events between one merge and the next; `None` without a merge."
+                  },
+                  "median_cycle_secs": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Median seconds from a selection to its outcome; `None` when no selection in the window\nreached one."
+                  },
+                  "stale_decisions": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Decisions refused because master or the head moved after they were taken."
+                  },
+                  "merge_failures": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Merge attempts that failed."
+                  },
+                  "verification_failures": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Merges whose resulting master failed verification."
+                  },
+                  "unreadable_events": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Events in the trail whose time could not be read; they count toward nothing."
+                  }
+                },
+                "required": [
+                  "window_days",
+                  "merges",
+                  "merges_per_day",
+                  "stale_decisions",
+                  "merge_failures",
+                  "verification_failures",
+                  "unreadable_events"
+                ],
+                "description": "The integrator's throughput over a window of the trail."
               }
             }
           }
@@ -66610,7 +66698,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 347,
+        "capabilities": 348,
         "capability_ids": []
       },
       {
@@ -66700,7 +66788,7 @@
     ]
   },
   "index": {
-    "fingerprint": "0f6447c651660ead674f8ee19a6635d00db2ea5d7cbfc85323b582f2428dfda2",
+    "fingerprint": "7d0f958e1d1098ff6c1ff27d7ef3167ff3c439cd5fc0718953d27c848635a488",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -66753,7 +66841,7 @@
       "session": 22,
       "skill": 6,
       "taxonomy": 10,
-      "test": 347,
+      "test": 348,
       "use-case": 48,
       "workspace": 1
     },
@@ -84125,7 +84213,7 @@
         "identity": "test/cases/740_integration_is_visible_where_a_person_looks.sh",
         "path": "test/cases/740_integration_is_visible_where_a_person_looks.sh",
         "source_class": "case",
-        "bytes": 10244
+        "bytes": 10855
       },
       {
         "uri": "majordomus://test/test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
@@ -84302,6 +84390,14 @@
         "path": "test/cases/84_web_surfaces.sh",
         "source_class": "case",
         "bytes": 5718
+      },
+      {
+        "uri": "majordomus://test/test/cases/850_integration_drains_cycle_by_cycle.sh",
+        "kind": "test",
+        "identity": "test/cases/850_integration_drains_cycle_by_cycle.sh",
+        "path": "test/cases/850_integration_drains_cycle_by_cycle.sh",
+        "source_class": "case",
+        "bytes": 14572
       },
       {
         "uri": "majordomus://test/test/cases/855_racing_executors_merge_once.sh",
@@ -85485,7 +85581,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 347
+      "objects": 348
     },
     {
       "name": "use-case",

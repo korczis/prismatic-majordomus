@@ -44,6 +44,7 @@
 pub mod classify;
 pub mod drain;
 pub mod forge;
+pub mod metrics;
 pub mod model;
 pub mod relation;
 pub mod retry;

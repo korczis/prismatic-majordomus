@@ -532,6 +532,7 @@
     "schema-IntegrationQueue": "docs/api/integration/",
     "schema-IntegrationRisk": "docs/api/integration/",
     "schema-IntegrationStatus": "docs/api/integration/",
+    "schema-IntegrationThroughput": "docs/api/integration/",
     "schema-IntentCoverage": "docs/api/intents/",
     "schema-IntentCriterion": "docs/api/shared/",
     "schema-IntentEpisode": "docs/api/intent-realization/",
@@ -1026,7 +1027,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 168,
-    "schemas": 803,
+    "schemas": 804,
     "tags": 51
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1648,6 +1649,7 @@
     "IntegrationQueue": "integration",
     "IntegrationRisk": "integration",
     "IntegrationStatus": "integration",
+    "IntegrationThroughput": "integration",
     "IntentCoverage": "intents",
     "IntentCriterion": "shared",
     "IntentEpisode": "intent-realization",
@@ -22634,6 +22636,15 @@
           ],
           "required": false,
           "type": "IntegrationEvent | null"
+        },
+        {
+          "description": "How fast the executor has turned work into master over the last\n`THROUGHPUT_WINDOW_DAYS` days, folded from the same trail.",
+          "name": "throughput",
+          "refs": [
+            "IntegrationThroughput"
+          ],
+          "required": true,
+          "type": "IntegrationThroughput"
         }
       ],
       "type": "object",
@@ -22641,6 +22652,91 @@
         "integration.queue"
       ],
       "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The integrator's throughput over a window of the trail.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "IntegrationThroughput",
+      "properties": [
+        {
+          "description": "The window, in days, ending at the time the fold was asked for.",
+          "name": "window_days",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Pull requests merged in the window.",
+          "name": "merges",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "`merges / window_days`.",
+          "name": "merges_per_day",
+          "refs": [],
+          "required": true,
+          "type": "number (double)"
+        },
+        {
+          "description": "Median seconds from becoming actionable to being merged; `None` when no merge in the\nwindow had a recorded `became_actionable` before it.",
+          "name": "median_actionable_to_merged_secs",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Median `refreshed` events between one merge and the next; `None` without a merge.",
+          "name": "ci_rounds_per_merge",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Median seconds from a selection to its outcome; `None` when no selection in the window\nreached one.",
+          "name": "median_cycle_secs",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Decisions refused because master or the head moved after they were taken.",
+          "name": "stale_decisions",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Merge attempts that failed.",
+          "name": "merge_failures",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Merges whose resulting master failed verification.",
+          "name": "verification_failures",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Events in the trail whose time could not be read; they count toward nothing.",
+          "name": "unreadable_events",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationStatus"
+      ],
       "values": [],
       "variants": []
     },
