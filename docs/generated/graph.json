@@ -1757,14 +1757,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/http/ws.rs",
-        "kind": "file",
-        "label": "ws.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/http/ws.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/order.rs",
         "kind": "file",
         "label": "order.rs",
@@ -38439,6 +38431,13 @@
         "source": "test/cases/87b_release_archive_shape.sh"
       },
       {
+        "id": "majordomus://test/test/cases/885_a_replaced_server_stops_calling_itself_ready.sh",
+        "kind": "test",
+        "label": "test/cases/885_a_replaced_server_stops_calling_itself_ready.sh",
+        "route": "/cockpit/objects/test/test-cases-885-a-replaced-server-stops-calling-itself-ready-sh",
+        "source": "test/cases/885_a_replaced_server_stops_calling_itself_ready.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/88_rust_command_tested.sh",
         "kind": "test",
         "label": "test/cases/88_rust_command_tested.sh",
@@ -44646,11 +44645,6 @@
       {
         "source": "majordomus://adr/adr-0033",
         "target": "file:apps/majordomus-cli/src/http/events.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/http/ws.rs",
         "kind": "put_in_force"
       },
       {
@@ -60260,6 +60254,11 @@
       },
       {
         "source": "majordomus://test/test/cases/87b_release_archive_shape.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/885_a_replaced_server_stops_calling_itself_ready.sh",
         "target": "kind:test",
         "kind": "is_a"
       },

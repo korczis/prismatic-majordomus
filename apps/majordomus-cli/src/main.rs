@@ -8,6 +8,10 @@ use clap::Parser;
 use majordomus_cli::cli::{Cli, EXIT_USAGE};
 
 fn main() -> ExitCode {
+    // which bytes this process is, pinned before anything else runs: a server asked later
+    // whether its code still exists compares against this, not against the file at that
+    // path by then (I1502)
+    let _ = majordomus_cli::lease::started_as();
     let cli = match Cli::try_parse() {
         Ok(cli) => cli,
         Err(e) => {

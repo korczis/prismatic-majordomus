@@ -641,6 +641,49 @@ pub fn executable_identity() -> Option<ExecutableIdentity> {
 /// that no longer exists on disk. A lease naming some other path — a release install next
 /// to a debug build — makes no claim either way and is left alone, so two legitimate
 /// binaries never fight over the lease.
+static STARTED_AS: OnceLock<Option<ExecutableIdentity>> = OnceLock::new();
+
+/// The executable this process was started from, as it stood on disk when first asked.
+///
+/// `main` asks before anything else, so the answer is the file the process was loaded from,
+/// not whatever sits at that path later. A server that has been running for a day still
+/// knows which bytes it is: the comparison [`serving_replaced_code`] makes is against this,
+/// never against a second executable a client would have to hold (I1502).
+///
+/// ```
+/// use majordomus_cli::lease::started_as;
+/// let first = started_as().cloned();
+/// assert_eq!(started_as().cloned(), first, "pinned: the second answer is the first");
+/// ```
+pub fn started_as() -> Option<&'static ExecutableIdentity> {
+    STARTED_AS.get_or_init(executable_identity).as_ref()
+}
+
+/// Why this process is serving code that is no longer on disk, or `None` while the file it
+/// was started from is still the file at that path. The same judgement the lease reader
+/// makes from outside ([`ExecutableIdentity::replaced`]), made by the process about itself,
+/// so that the endpoint a client asks for readiness can say so.
+///
+/// ```
+/// use majordomus_cli::lease::serving_replaced_code;
+/// assert!(serving_replaced_code().is_none(), "a test binary has not been replaced under it");
+/// ```
+pub fn serving_replaced_code() -> Option<String> {
+    let me = started_as()?;
+    me.replaced()?;
+    // the reason is served to whoever can reach the socket, so it says what happened and not
+    // where the file is: the host's paths are of no use to a client and of some use to others
+    Some(if me.path.exists() {
+        "the executable this process was started from has been replaced since it started: \
+         it is serving code that is no longer on disk"
+            .to_string()
+    } else {
+        "the executable this process was started from has been removed since it started: \
+         it is serving code that is no longer on disk"
+            .to_string()
+    })
+}
+
 fn superseded(doc: &LeaseDocument) -> Option<String> {
     let recorded = doc.executable.as_ref()?;
     let mine = executable_identity()?;

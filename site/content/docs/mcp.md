@@ -77,7 +77,10 @@ said that two such servers belonged to one repository. Now the index route (`GET
 the git repository the checkout belongs to beside the checkout's own identity:
 `commit` is the commit the executable answering was built from, in full or `unknown`, and
 `dirty` whether its tree carried uncommitted changes (`null` when the build did not know) —
-the same two fields `GET /api/v1/live` and `GET /api/v1/ready` answer;
+the same two fields `GET /api/v1/live` and `GET /api/v1/ready` answer; `stale` is `null`
+while the executable the process was loaded from is still the file on disk, and says why
+once a rebuild has replaced or removed it — the process is then serving code that no longer
+exists, and `GET /api/v1/ready` answers `ready: false` with the same reason (I1502);
 `repository_id` is the checkout's (a digest of its root, what the lease probe compares),
 `git_repository_id` is the repository's (a digest of the git directory every worktree
 shares; absent where git cannot be asked), `linked_worktree` says whether this is the
@@ -158,7 +161,7 @@ next reader does not have to rediscover which one they are looking at.
 | the question | the answer | who asks it |
 |---|---|---|
 | Is a **surface's** producer's output on disk? | `http::Served::ready(surface_id)` — the directory a producer writes into has files in it; a route this executable answers is always ready | the home page (`GET /`), which renders a surface with no output as `not built` rather than serving a 404 |
-| Can **this process** answer a request? | `health.ready` — `GET /api/v1/ready`: the registry and the index it built at start-up, and how the layer read. Local initialisation only | a hosting platform's readiness probe. It contacts nothing outside this process on purpose: a readiness check that probes a dependency fails a deployment for something that is not this process |
+| Can **this process** answer a request? | `health.ready` — `GET /api/v1/ready`: the registry and the index it built at start-up, how the layer read, and whether the executable it was loaded from is still on disk — a replaced one makes it not ready, with the reason in `stale`. Local initialisation only | a hosting platform's readiness probe. It contacts nothing outside this process on purpose: a readiness check that probes a dependency fails a deployment for something that is not this process |
 | Does **anything** accept a connection at the address the lease published? | `environment::ServiceAvailability` — one TCP connect with a hard budget and no name resolution (`environment::probe::reachable`) | the environment snapshot, which runs on a shell prompt (`majordomus env`, `.envrc`) and may not spend an HTTP round trip or reach DNS to say what it knows |
 | Is what answers there **current**? | `ServerStanding` — `server.status`, from `lease::probe` (this checkout's identity, over HTTP) and the version and executable the lease carries | anyone who has to trust what the server says: `serve ensure`, `serve stop`, the `server` check of `health.report`, and the session briefing |
 

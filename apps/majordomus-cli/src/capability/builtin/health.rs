@@ -189,6 +189,12 @@ pub struct Readiness {
     /// Whether the layer read cleanly. A degraded layer is still served — the diagnostics
     /// are the point — so this reports rather than refuses.
     pub layer: HealthStatus,
+    /// Why this process is serving code that is no longer on disk: the executable it was
+    /// started from has been replaced or removed since. Present, `ready` is false — a server
+    /// answering with yesterday's code says so in the place it says it is ready, to a client
+    /// holding nothing but this answer (I1502).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub stale: Option<String>,
 }
 
 /// Liveness. No filesystem, no index traversal, no network: two fields this process can
@@ -208,8 +214,9 @@ fn liveness(_: &Context, _: Empty) -> Result<Liveness, CapabilityError> {
 fn readiness(ctx: &Context, _: Empty) -> Result<Readiness, CapabilityError> {
     let capabilities = ctx.registry.summary().total;
     let objects = ctx.index.objects.len();
+    let stale = crate::lease::serving_replaced_code();
     Ok(Readiness {
-        ready: capabilities > 0,
+        ready: capabilities > 0 && stale.is_none(),
         version: crate::VERSION.into(),
         commit: crate::COMMIT.into(),
         dirty: crate::DIRTY,
@@ -219,6 +226,7 @@ fn readiness(ctx: &Context, _: Empty) -> Result<Readiness, CapabilityError> {
             State::Degraded => HealthStatus::Warn,
             State::Ok => HealthStatus::Ok,
         },
+        stale,
     })
 }
 

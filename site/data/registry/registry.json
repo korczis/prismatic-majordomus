@@ -6,23 +6,23 @@
     "version": "0.12.0"
   },
   "registry": {
-    "fingerprint": "cc23db75991c8974df8e78c15105fb2dae8bc2c7758879c9113f7977cbe5d407",
+    "fingerprint": "823d5dfb3a698f06669861bc5bfc98319dd20c092cb06f1013e7fe988ede34ca",
     "summary": {
-      "total": 1863,
+      "total": 1864,
       "builtin": 169,
-      "declarative": 1694,
+      "declarative": 1695,
       "by_kind": {
         "command": 22,
         "query": 147,
-        "resource": 1694
+        "resource": 1695
       },
       "by_stability": {
         "behaviorally_verified": 127,
         "experimental": 34,
-        "implemented": 1702
+        "implemented": 1703
       },
       "mcp_tools": 163,
-      "mcp_resources": 1746,
+      "mcp_resources": 1747,
       "http_routes": 167,
       "cli_commands": 88,
       "modules": 83,
@@ -25151,6 +25151,13 @@
               "layer": {
                 "$ref": "#/$defs/HealthStatus",
                 "description": "Whether the layer read cleanly. A degraded layer is still served — the diagnostics\nare the point — so this reports rather than refuses."
+              },
+              "stale": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why this process is serving code that is no longer on disk: the executable it was\nstarted from has been replaced or removed since. Present, `ready` is false — a server\nanswering with yesterday's code says so in the place it says it is ready, to a client\nholding nothing but this answer (I1502)."
               }
             },
             "required": [
@@ -65459,7 +65466,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 342,
+        "capabilities": 343,
         "capability_ids": []
       },
       {
@@ -65549,7 +65556,7 @@
     ]
   },
   "index": {
-    "fingerprint": "0a19f927ffef6b8470d0674b9faad0f934a0d00afd90e958f50590176a449c1c",
+    "fingerprint": "52a13ad9271f84ed74424ab92f36b0c2c072ad0328aafa5f53c99a26b25b93d0",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -65601,7 +65608,7 @@
       "session": 22,
       "skill": 6,
       "taxonomy": 10,
-      "test": 342,
+      "test": 343,
       "use-case": 48,
       "workspace": 1
     },
@@ -70709,7 +70716,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 49823
+        "bytes": 50235
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -83047,6 +83054,14 @@
         "bytes": 4987
       },
       {
+        "uri": "majordomus://test/test/cases/885_a_replaced_server_stops_calling_itself_ready.sh",
+        "kind": "test",
+        "identity": "test/cases/885_a_replaced_server_stops_calling_itself_ready.sh",
+        "path": "test/cases/885_a_replaced_server_stops_calling_itself_ready.sh",
+        "source_class": "case",
+        "bytes": 4059
+      },
+      {
         "uri": "majordomus://test/test/cases/88_rust_command_tested.sh",
         "kind": "test",
         "identity": "test/cases/88_rust_command_tested.sh",
@@ -84130,7 +84145,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 342
+      "objects": 343
     },
     {
       "name": "use-case",

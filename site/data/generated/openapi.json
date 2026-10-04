@@ -32612,6 +32612,13 @@
           ],
           "required": true,
           "type": "HealthStatus"
+        },
+        {
+          "description": "Why this process is serving code that is no longer on disk: the executable it was\nstarted from has been replaced or removed since. Present, `ready` is false — a server\nanswering with yesterday's code says so in the place it says it is ready, to a client\nholding nothing but this answer (I1502).",
+          "name": "stale",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         }
       ],
       "type": "object",
