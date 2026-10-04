@@ -7,6 +7,76 @@ Every entry below is derived: a section per release the layer records, its decis
 
 Current version: **0.13.0**
 
+## v0.13.0 — 2026-10-04
+
+### Decisions
+
+- **ADR-0104** The product is filed under a few domains, and a feature names its one _(proposed)_
+- **ADR-0077** Published content may be written in the reader's language; the repository's own artifacts may not _(proposed)_
+
+### Added
+
+- **site**: the homepage is told overview first, and the product map is its domains (`b9f476920`)
+- **product**: the product is filed under a few domains, and a feature names its one (`6de049eae`)
+- **site**: two articles from one evidence base, and the rule change they needed (`d8c97273f`)
+- **serve**: what a lease contest is judged by is declared, not compiled (`64143f0ed`)
+- **ci**: the queue measures itself, and still cannot merge (`ab06f4382`)
+
+### Fixed
+
+- **site-check**: the homepage's navigation is read by landmark, not by its first 80 links (`b9a9a0e6b`)
+- **batch-n1**: the product-domains claim page carries the five sections (`c4557bc0f`)
+- **batch-n1**: the four CI findings on 487cedf (`70862769f`)
+- **site**: the bar lights the group that holds the section a page lives in (`d5051df78`)
+- **product**: what the product surface claims is what the model can back (`b1555082b`)
+- **rules**: land-and-publish describes the serialised pages group, not push cancellation (`98e7fd9ae`)
+- **lease**: the declared lease timings carry examples of what they answer (`7d8e0dde2`)
+- **env**: publish the server after startup and show one entry heading (`48f13f3a0`)
+- **site-data**: exit 13 names every internal step, and case 593 asserts what can fail (`bc2df49ff`)
+- **site-data**: a read that failed is not an empty repository (`fc885ff63`)
+- **serve**: a slow but live owner keeps its lease; a wedged one is still replaced (`48ce13299`)
+- **pages**: a deploy is not cancelled by the next merge (`ffb62646f`)
+
+### Performance
+
+- **site**: the navbar needs no Flowbite; its collapse and dropdowns are site/nav.js (`edeb6ec0a`)
+
+### Documentation
+
+- **product**: every public domain type carries an executable example (`cd7caaa1e`)
+- **cockpit**: the feature record states what the Cockpit can write (`f769f0d70`)
+
+### Tests
+
+- **env**: the entry's episode and checks are covered, not only their doc example (`487cedf6f`)
+- **product**: every changed line of the domain model is covered (`d00baded7`)
+- **shared**: a stopped server's listener is awaited, bounded, not probed once (`074b40046`)
+- **coverage**: a replacement that cannot be started is an error, not a ready server (`17a4fe283`)
+- **coverage**: the declared lease timings and the replaced-executable take-over are exercised (`86f785d5e`)
+- **reasoning**: a linked mesh runtime advises, and its absence leaves reasoning intact (`bd9026db3`)
+- **site**: the published pair must state the same figures (`1863e82ae`)
+- **serve**: the lease-declaration case is 354, not 349 (`e46c62acf`)
+
+### Housekeeping
+
+- **derive**: the projections follow the merge with the v0.12.0 record (`b40738da8`)
+- **release**: record v0.12.0 and the metadata it publishes (`a570e5c7b`)
+- **derive**: regenerate after merging master (`ec462fb4a`)
+- **derive**: the projections follow the merge with batch L (`0ddc56041`)
+- **derive**: re-derive after merging the Cockpit record fix (`9e4e6a47b`)
+- the lease branch follows master (`8980326f7`)
+- **derive**: the projections follow the merge with master (`9c7733cf2`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.13.0-aarch64-apple-darwin.tar.gz (`a556d96fcd8b`)
+- `macos-x86_64` — majordomus-v0.13.0-x86_64-apple-darwin.tar.gz (`08a686e7a082`)
+- `linux-x86_64-gnu` — majordomus-v0.13.0-x86_64-unknown-linux-gnu.tar.gz (`6c828fe60b3f`)
+- `linux-x86_64-musl` — majordomus-v0.13.0-x86_64-unknown-linux-musl.tar.gz (`71fd00c91e1b`)
+- `linux-aarch64-gnu` — majordomus-v0.13.0-aarch64-unknown-linux-gnu.tar.gz (`84ad1c317e21`)
+- `linux-aarch64-musl` — majordomus-v0.13.0-aarch64-unknown-linux-musl.tar.gz (`52038e7a81d4`)
+
+
 ## v0.12.0 — 2026-10-03
 
 ### Decisions
