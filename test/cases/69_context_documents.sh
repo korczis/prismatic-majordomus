@@ -202,8 +202,22 @@ expect_exit 15 "$MJ" context resolve ../
 expect_grep 'refused-path'
 expect_exit 15 "$MJ" context resolve /etc
 expect_grep 'refused-path'
-expect_exit 12 "$MJ" context resolve no/such/dir
-expect_grep 'no such path'
+# a path not created yet resolves from its ancestors: it is where new work is about to go
+root_chain="$(chain .)"
+expect_exit 0 "$MJ" context resolve no/such/dir
+expect_grep '^# no/such/dir does not exist yet: the documents of its ancestors apply$'
+[ "$(chain no/such/dir)" = "$root_chain" ] || { echo "    a path not created yet did not get its ancestors' chain: $(chain no/such/dir) vs $root_chain"; exit 1; }
+[ "$(chain "$A/alpha/deep/not-yet.md")" = "$(chain "$A/alpha/deep")" ] || { echo "    a file not created yet did not get its directory's chain"; exit 1; }
+# read as a file in its parent, like an existing file, unless a trailing slash says directory:
+# a `scope: directory` document of the parent applies to the first and not to the second
+cdoc "$A/epsilon/README.md" ai.repo.areas.epsilon directory 10
+expect_exit 0 "$MJ" context validate
+case " $(chain "$A/epsilon/new-file.md") " in *" ai.repo.areas.epsilon "*) ;; *) echo "    a file not created yet lost its directory's document"; exit 1 ;; esac
+case " $(chain "$A/epsilon/new-dir/") " in *" ai.repo.areas.epsilon "*) echo "    a directory not created yet took its parent's directory-scoped document"; exit 1 ;; esac
+rm -rf "$A/epsilon"
+# and the refusals still hold for a path that would leave the repository through one that does not exist
+expect_exit 15 "$MJ" context resolve no/such/../../../etc
+expect_grep 'refused-path'
 expect_exit 2 "$MJ" context resolve
 expect_grep 'which path'
 expect_exit 2 "$MJ" context validate extra
