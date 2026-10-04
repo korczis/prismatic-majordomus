@@ -719,7 +719,7 @@ classes:
 
     #[test]
     fn the_deployment_plan_implies_publication_and_verification_without_a_declaration() {
-        use crate::deploy::targets::{DeploymentTarget, DeploymentIdentity, TargetKind};
+        use crate::deploy::targets::{DeploymentIdentity, DeploymentTarget, TargetKind};
         let v: Vec<Obligation> = serde_json::from_str(
             r#"[
               {"id":"pages","title":"p","summary":"s","discharged_by":"scripts/pages verify","remote":true},

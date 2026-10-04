@@ -22,6 +22,7 @@
 //! visual views. With no JavaScript at all, every page still shows everything it knows.
 
 pub mod assets;
+pub(crate) mod completion;
 pub mod html;
 pub(crate) mod intents;
 pub(crate) mod nav;
@@ -88,6 +89,7 @@ pub const STATIC_ROUTES: &[(&str, &str)] = &[
     ("/cockpit/graphs", "graphs"),
     ("/cockpit/graphs/topology", ""),
     ("/cockpit/continuity", "continuity"),
+    ("/cockpit/completion", "completion"),
     ("/cockpit/intents", "intents"),
     ("/cockpit/worktrees", "worktrees"),
     ("/cockpit/peers", "peers"),
@@ -221,6 +223,7 @@ impl Cockpit {
             "/cockpit/graphs" => pages::graphs(ctx),
             "/cockpit/graphs/topology" => pages::topology(ctx),
             "/cockpit/continuity" => pages::continuity(ctx),
+            "/cockpit/completion" => completion::completion(ctx),
             "/cockpit/intents" => intents::list(ctx),
             "/cockpit/worktrees" => pages::worktrees(ctx),
             "/cockpit/peers" => pages::peers(ctx),
