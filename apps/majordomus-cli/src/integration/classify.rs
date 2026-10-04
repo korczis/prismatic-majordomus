@@ -311,6 +311,39 @@ pub fn declared_dependencies(body: &str) -> Vec<u64> {
     marked_numbers(body, DEPENDENCY_MARKERS)
 }
 
+/// The marker by which a body declares the pull request that replaces it, lower-case.
+pub const SUPERSEDED_BY_MARKERS: &[&str] = &["superseded by"];
+
+/// The marker by which a body declares the pull requests it replaces, lower-case.
+pub const SUPERSEDES_MARKERS: &[&str] = &["supersedes"];
+
+/// What one body declares about replacement, read by [`marked_numbers`] like a dependency.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct Supersessions {
+    /// `Superseded by #N`: the pull requests that replace this one.
+    pub superseded_by: Vec<u64>,
+    /// `Supersedes #N`: the pull requests this one replaces.
+    pub supersedes: Vec<u64>,
+}
+
+/// The supersessions declared in a body: a line that opens with `Superseded by #N` names this
+/// one's successor, and a line that opens with `Supersedes #N` names the pull requests this
+/// one replaces, from the other side. Line-anchored, as dependencies are: the words
+/// mid-sentence are prose.
+///
+/// ```text
+/// use crate::integration::classify::declared_supersessions;
+/// let s = declared_supersessions("Supersedes #12 and #14.\nsuperseded by #20 in spirit");
+/// assert_eq!((s.supersedes, s.superseded_by), (vec![12, 14], vec![20]));
+/// assert_eq!(declared_supersessions("this supersedes #3").supersedes, Vec::<u64>::new());
+/// ```text
+pub fn declared_supersessions(body: &str) -> Supersessions {
+    Supersessions {
+        superseded_by: marked_numbers(body, SUPERSEDED_BY_MARKERS),
+        supersedes: marked_numbers(body, SUPERSEDES_MARKERS),
+    }
+}
+
 /// The pull-request numbers a body declares under any of `markers`, in ascending order.
 ///
 /// A declaration is line-anchored: the line opens — after leading space, at most one
@@ -441,6 +474,44 @@ pub struct QueueContext {
     pub heads: BTreeMap<String, u64>,
     /// Authored paths of every open pull request, by number.
     pub authored: BTreeMap<u64, Vec<String>>,
+    /// The declared successors of each open pull request, by its number, in successor order:
+    /// from its own body (`Superseded by #N`) and from any other's, open or not
+    /// (`Supersedes #N`).
+    pub superseded_by: BTreeMap<u64, Vec<Successor>>,
+}
+
+/// One pull request declared to replace another.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Successor {
+    /// The successor.
+    pub number: u64,
+    /// Whose body declared it: the replaced one's own (`Superseded by`), or the successor's
+    /// (`Supersedes`).
+    pub declared_in: u64,
+    /// What became of it.
+    pub state: SuccessorState,
+}
+
+/// What became of a declared successor.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum SuccessorState {
+    /// Still open.
+    Open,
+    /// No longer open, and git finds its head in master: it landed.
+    Landed {
+        /// Its head, as the forge reported it.
+        head_sha: String,
+        /// Whether the forge calls it merged.
+        merged: bool,
+    },
+    /// No longer open, and its head is not in master: closed unmerged, or merged by a squash
+    /// or a rebase, which leaves no commit of its head on master.
+    NotLanded {
+        /// Whether the forge calls it merged.
+        merged: bool,
+    },
+    /// Not open, and the forge or git could not say what became of it.
+    Unread,
 }
 
 fn ev(
@@ -682,6 +753,67 @@ pub fn classify(
         relation_detail(relation),
         &git,
     ));
+    let successors: &[Successor] = queue
+        .superseded_by
+        .get(&pr.number)
+        .map_or(&[], Vec::as_slice);
+    for s in successors {
+        let declared = if s.declared_in == pr.number {
+            format!("its body says superseded by #{}", s.number)
+        } else {
+            format!("#{} says it supersedes #{}", s.declared_in, pr.number)
+        };
+        evidence.push(match &s.state {
+            SuccessorState::Open => ev(
+                EvidenceKind::Supersession,
+                "open",
+                format!("#{} ({declared}) is open", s.number),
+                &forge,
+            ),
+            SuccessorState::Landed { head_sha, merged } => ev(
+                EvidenceKind::Supersession,
+                "landed",
+                format!(
+                    "#{} ({declared}) is {}, and master contains its head {}",
+                    s.number,
+                    if *merged { "merged" } else { "closed" },
+                    short(head_sha)
+                ),
+                &EvidenceSource::Git {
+                    master_sha: master_sha.to_string(),
+                    head_sha: head_sha.clone(),
+                },
+            ),
+            SuccessorState::NotLanded { merged } => ev(
+                EvidenceKind::Supersession,
+                "not_landed",
+                format!(
+                    "#{} ({declared}) is {}, but master does not contain its head",
+                    s.number,
+                    if *merged {
+                        "merged by a squash or a rebase"
+                    } else {
+                        "closed unmerged"
+                    }
+                ),
+                &forge,
+            ),
+            SuccessorState::Unread => ev(
+                EvidenceKind::Supersession,
+                "unread",
+                format!(
+                    "#{} ({declared}) is not open, and what became of it could not be read",
+                    s.number
+                ),
+                &forge,
+            ),
+        });
+    }
+    let landed: Option<u64> = successors
+        .iter()
+        .filter(|s| matches!(s.state, SuccessorState::Landed { .. }))
+        .map(|s| s.number)
+        .min();
     for d in &dependencies {
         evidence.push(ev(
             EvidenceKind::Dependency,
@@ -712,7 +844,7 @@ pub fn classify(
     }
 
     // every gate, in policy order; each answers whatever the others said
-    let answers: [(IntegrationGate, Option<Failure>); 11] = [
+    let answers: [(IntegrationGate, Option<Failure>); 12] = [
         (
             IntegrationGate::Base,
             match stacked_on {
@@ -777,18 +909,26 @@ pub fn classify(
                 None
             },
         ),
+        (IntegrationGate::Supersession, supersession(successors)),
         (
             IntegrationGate::RelationToMaster,
             match relation {
                 RelationToMaster::Contained => fails(
-                    PullRequestDisposition::Superseded,
+                    PullRequestDisposition::Redundant,
                     vec![ReasonCode::HeadReachableFromMaster],
                     Some("close it: every commit is on master".into()),
                 ),
                 RelationToMaster::Superseded => fails(
-                    PullRequestDisposition::Superseded,
+                    PullRequestDisposition::Redundant,
                     vec![ReasonCode::MergeChangesNothing],
                     Some("close it: merging it into master changes no file".into()),
+                ),
+                RelationToMaster::PatchIdsUpstream { .. } => fails(
+                    PullRequestDisposition::Redundant,
+                    vec![ReasonCode::PatchIdsUpstream],
+                    Some(
+                        "close it: every one of its commits is on master as an equal patch".into(),
+                    ),
                 ),
                 RelationToMaster::DerivedOnly { .. } => fails(
                     PullRequestDisposition::PossiblyRedundant,
@@ -984,6 +1124,8 @@ pub fn classify(
             observed_at: observed_at.to_string(),
         },
         lane: disposition.lane(),
+        // `superseded` and its `by` together, never one without the other
+        superseded_by: landed.filter(|_| disposition == PullRequestDisposition::Superseded),
         disposition,
         reasons,
         gates,
@@ -1003,6 +1145,72 @@ pub fn classify(
     }
 }
 
+/// What the supersession gate answers for these declared successors: nothing when there is
+/// none. Of several, the strongest decides — one that landed makes it `superseded`, else one
+/// still open makes it wait for that one, else one closed without landing leaves it to a person
+/// (`possibly_redundant`), else it is `unknown` — and every successor gives its reason, the
+/// deciding kind first.
+fn supersession(successors: &[Successor]) -> Option<Failure> {
+    let of = |want: fn(&SuccessorState) -> bool| -> Vec<u64> {
+        successors
+            .iter()
+            .filter(|s| want(&s.state))
+            .map(|s| s.number)
+            .collect()
+    };
+    let landed = of(|s| matches!(s, SuccessorState::Landed { .. }));
+    let open = of(|s| matches!(s, SuccessorState::Open));
+    let not_landed = of(|s| matches!(s, SuccessorState::NotLanded { .. }));
+    let unread = of(|s| matches!(s, SuccessorState::Unread));
+    let mut reasons: Vec<ReasonCode> = Vec::new();
+    reasons.extend(
+        landed
+            .iter()
+            .map(|&number| ReasonCode::SupersededBy { number }),
+    );
+    reasons.extend(
+        open.iter()
+            .map(|&number| ReasonCode::SuccessorOpen { number }),
+    );
+    reasons.extend(
+        not_landed
+            .iter()
+            .map(|&number| ReasonCode::SuccessorNotLanded { number }),
+    );
+    reasons.extend(
+        unread
+            .iter()
+            .map(|&number| ReasonCode::SuccessorUnread { number }),
+    );
+    let (disposition, next) = if let Some(n) = landed.first() {
+        (
+            PullRequestDisposition::Superseded,
+            format!("close it: #{n}, which supersedes it, landed"),
+        )
+    } else if let Some(n) = open.first() {
+        (
+            PullRequestDisposition::WaitingForDependency,
+            format!("land #{n}, which supersedes it; this one is then closed, never merged"),
+        )
+    } else if let Some(n) = not_landed.first() {
+        (
+            PullRequestDisposition::PossiblyRedundant,
+            format!(
+                "#{n}, which was to supersede it, did not land: a person decides whether this \
+                 one is still wanted, and removes the declaration if so"
+            ),
+        )
+    } else {
+        // no successor at all, when none is unread either: the gate passes
+        let n = unread.first()?;
+        (
+            PullRequestDisposition::Unknown,
+            format!("majordomus prs refresh; #{n} could not be read"),
+        )
+    };
+    fails(disposition, reasons, Some(next))
+}
+
 /// The serialised word of any unit enum here.
 pub fn word<T: Serialize>(value: &T) -> String {
     match serde_json::to_value(value) {
@@ -1015,6 +1223,7 @@ fn relation_word(r: &RelationToMaster) -> &'static str {
     match r {
         RelationToMaster::Contained => "contained",
         RelationToMaster::Superseded => "superseded",
+        RelationToMaster::PatchIdsUpstream { .. } => "patch_ids_upstream",
         RelationToMaster::DerivedOnly { .. } => "derived_only",
         RelationToMaster::UpToDate { .. } => "up_to_date",
         RelationToMaster::Behind { .. } => "behind",
@@ -1027,6 +1236,9 @@ fn relation_detail(r: &RelationToMaster) -> String {
     match r {
         RelationToMaster::Contained => "the head is an ancestor of master".into(),
         RelationToMaster::Superseded => "merging it into master changes no file".into(),
+        RelationToMaster::PatchIdsUpstream { commits } => format!(
+            "every one of its {commits} commit(s) master lacks is on master as an equal patch"
+        ),
         RelationToMaster::DerivedOnly { paths } => {
             format!("only {} derived path(s) would change", paths.len())
         }

@@ -290,7 +290,7 @@ impl IntegrationQueue {
 /// carries as `merge`), and none otherwise. Never a squash or a rebase: the derived-file
 /// driver resolves merges, and either would replay commits it never saw. With none, every
 /// pull request not already on master is held (`merge_commit_not_allowed`); one that is stays
-/// `superseded`, since closing it needs no merge.
+/// `redundant`, since closing it needs no merge.
 pub fn policy_of(obs: &ForgeObservation) -> IntegrationPolicy {
     let merge_method = obs
         .merge_methods
@@ -351,11 +351,14 @@ pub fn rank(mut assessments: Vec<PullRequestAssessment>) -> Vec<PullRequestAsses
 }
 
 /// Build the queue from an observation, against `master_sha`. `relation` answers what a
-/// head is to master; the command line passes git, a test passes a table.
+/// head is to master; the command line passes git, a test passes a table. It is asked about
+/// every open pull request, and about every declared successor that is no longer open (a
+/// pull request built from what the forge reported of it): such a successor landed exactly
+/// when its head is `contained`.
 pub fn build_queue(
     obs: &ForgeObservation,
     master_sha: &str,
-    relation: impl FnMut(&PullRequestObservation) -> RelationToMaster,
+    mut relation: impl FnMut(&PullRequestObservation) -> RelationToMaster,
 ) -> IntegrationQueue {
     let policy = policy_of(obs);
     let mut diagnostics = Vec::new();
@@ -409,7 +412,7 @@ pub fn build_queue(
                 .join(" ")
         ));
     }
-    let relations: Vec<RelationToMaster> = obs.pull_requests.iter().map(relation).collect();
+    let relations: Vec<RelationToMaster> = obs.pull_requests.iter().map(&mut relation).collect();
     let mut queue = QueueContext {
         open: obs.pull_requests.iter().map(|p| p.number).collect(),
         // a fork's branch is not a branch of this repository, whatever it is called: a fork
@@ -421,7 +424,9 @@ pub fn build_queue(
             .map(|p| (p.head_ref.clone(), p.number))
             .collect(),
         authored: BTreeMap::new(),
+        superseded_by: BTreeMap::new(),
     };
+    queue.superseded_by = successors(obs, &queue.open, &mut relation);
     for (p, r) in obs.pull_requests.iter().zip(&relations) {
         let authored = match r {
             RelationToMaster::UpToDate { authored } | RelationToMaster::Behind { authored, .. } => {
@@ -533,6 +538,92 @@ pub fn executor_feedback(queue: &mut IntegrationQueue, trail: &[drain::Integrati
         queue.assessments = rank(std::mem::take(&mut queue.assessments));
         derive_heads(queue);
     }
+}
+
+/// The declared successors of every open pull request, each with what became of it: open; or
+/// no longer open and landed when `relation` finds its head contained in master; or not landed;
+/// or unread, when the forge did not report it or git could not answer.
+fn successors(
+    obs: &ForgeObservation,
+    open: &BTreeSet<u64>,
+    relation: &mut impl FnMut(&PullRequestObservation) -> RelationToMaster,
+) -> BTreeMap<u64, Vec<classify::Successor>> {
+    use classify::{declared_supersessions, Successor, SuccessorState};
+    // replaced → successor → whose body said so (the first to)
+    let mut declared: BTreeMap<u64, BTreeMap<u64, u64>> = BTreeMap::new();
+    let mut declare = |replaced: u64, successor: u64, by: u64| {
+        if replaced != successor && open.contains(&replaced) {
+            declared
+                .entry(replaced)
+                .or_default()
+                .entry(successor)
+                .or_insert(by);
+        }
+    };
+    for p in &obs.pull_requests {
+        let s = declared_supersessions(&p.body);
+        for m in s.superseded_by {
+            declare(p.number, m, p.number);
+        }
+        for n in s.supersedes {
+            declare(n, p.number, p.number);
+        }
+    }
+    for (m, r) in &obs.resolved {
+        for n in declared_supersessions(&r.body).supersedes {
+            declare(n, *m, *m);
+        }
+    }
+    let mut state_of = |m: u64| -> SuccessorState {
+        if open.contains(&m) {
+            return SuccessorState::Open;
+        }
+        let Some(r) = obs.resolved.get(&m) else {
+            return SuccessorState::Unread;
+        };
+        let head = PullRequestObservation {
+            number: m,
+            title: String::new(),
+            author: String::new(),
+            head_ref: String::new(),
+            head_sha: r.head_sha.clone(),
+            base_ref: obs.base.clone(),
+            draft: false,
+            labels: Vec::new(),
+            created_at: String::new(),
+            updated_at: String::new(),
+            body: r.body.clone(),
+            checks: Vec::new(),
+            review_decision: String::new(),
+            auto_merge: false,
+            cross_repository: false,
+            latest_reviews: Vec::new(),
+            review_requests: Vec::new(),
+        };
+        match relation(&head) {
+            RelationToMaster::Contained => SuccessorState::Landed {
+                head_sha: r.head_sha.clone(),
+                merged: r.merged,
+            },
+            RelationToMaster::Unknown { .. } => SuccessorState::Unread,
+            _ => SuccessorState::NotLanded { merged: r.merged },
+        }
+    };
+    let mut states: BTreeMap<u64, SuccessorState> = BTreeMap::new();
+    declared
+        .into_iter()
+        .map(|(n, by)| {
+            let list = by
+                .into_iter()
+                .map(|(m, declared_in)| Successor {
+                    number: m,
+                    declared_in,
+                    state: states.entry(m).or_insert_with(|| state_of(m)).clone(),
+                })
+                .collect();
+            (n, list)
+        })
+        .collect()
 }
 
 /// The queue of this checkout, from the last recorded observation, with relations decided
