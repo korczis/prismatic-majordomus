@@ -3,10 +3,11 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.12.0"
+    "version": "0.13.0"
   },
-  "fingerprint": "a423d2e8d250cf4db4767118f66d03215a4771a025d38d2f5c16fd5c8a0496f1",
+  "fingerprint": "826e2aa63c809e6889691e8b00fdec1d53777c6aaae0e11fcf1d474ba95f8c31",
   "route": "/features/",
+  "domain_route": "/domains/",
   "counts": {
     "features": 26,
     "features_all": 27,
@@ -16,8 +17,8 @@
     "modules_covered": 42,
     "commands": 30,
     "commands_covered": 30,
-    "kinds": 29,
-    "kinds_covered": 25
+    "kinds": 30,
+    "kinds_covered": 26
   },
   "surfaces": [
     {
@@ -51,6 +52,3069 @@
       "features": 26
     }
   ],
+  "domains": [
+    {
+      "id": "context",
+      "title": "Context",
+      "headline": "Every worker starts from what the repository already knows: the context that applies to its path, the handover the last session left, and the decisions already made.",
+      "problem": "Agents forget. What one session learned dies with its conversation, and the next one starts over.",
+      "status": "stable",
+      "weight": 10,
+      "tags": [
+        "context",
+        "continuity",
+        "knowledge"
+      ],
+      "route": "/domains/context/",
+      "source": ".ai/repo/features/domains/context.md",
+      "features": [
+        {
+          "id": "continuity",
+          "label": "Continuity",
+          "title": "Sessions, prompts and handovers that outlive the conversation",
+          "headline": "A session ends and the work does not: what the next worker needs is a typed record checked against git, not a transcript somebody hopes to find.",
+          "route": "/features/continuity/",
+          "featured": true,
+          "surfaces": {
+            "cli": true,
+            "api": true,
+            "mcp": true,
+            "cockpit": true,
+            "docs": true
+          },
+          "claims": 11,
+          "tested": 11,
+          "use_cases": 7
+        },
+        {
+          "id": "knowledge",
+          "label": "Knowledge",
+          "title": "Decisions and knowledge that compound instead of evaporating",
+          "headline": "What was decided, why, and what was rejected is recorded where the next session reads it, and a durable decision becomes an architecture record with typed links to what it put in force.",
+          "route": "/features/knowledge/",
+          "featured": true,
+          "surfaces": {
+            "cli": true,
+            "api": true,
+            "mcp": true,
+            "cockpit": true,
+            "docs": true
+          },
+          "claims": 9,
+          "tested": 7,
+          "use_cases": 5
+        },
+        {
+          "id": "context",
+          "label": "Context",
+          "title": "Every directory of the layer carries its contract, and a worker reads what applies",
+          "headline": "Context is a tree, not one file: the documents that apply to a path are resolved from the root down, the nearest one adds and never silently replaces, and a worker loads what its task needs and nothing more.",
+          "route": "/features/context/",
+          "featured": false,
+          "surfaces": {
+            "cli": true,
+            "api": true,
+            "mcp": true,
+            "cockpit": true,
+            "docs": true
+          },
+          "claims": 9,
+          "tested": 8,
+          "use_cases": 4
+        },
+        {
+          "id": "skills",
+          "label": "Skills",
+          "title": "Skills are procedures as data, discovered and checked, never registered",
+          "headline": "A skill is one directory under the layer; adding it is the whole act, and the command line, the website and MCP all read it from the same file.",
+          "route": "/features/skills/",
+          "featured": false,
+          "surfaces": {
+            "cli": true,
+            "api": false,
+            "mcp": true,
+            "cockpit": false,
+            "docs": true
+          },
+          "claims": 3,
+          "tested": 3,
+          "use_cases": 1
+        }
+      ],
+      "surfaces": {
+        "cli": true,
+        "api": true,
+        "mcp": true,
+        "cockpit": true,
+        "docs": true
+      },
+      "moments": [
+        {
+          "id": "re-explaining-context",
+          "title": "Re-explaining the same context to a brand-new session",
+          "hook": "re-explained the same context to a brand-new session",
+          "route": "/why/re-explaining-context/"
+        },
+        {
+          "id": "two-agents-one-bug",
+          "title": "Two agents fixing the same bug in two branches",
+          "hook": "found two agents fixing the same bug in two branches",
+          "route": "/why/two-agents-one-bug/"
+        },
+        {
+          "id": "strongest-model-renames-a-variable",
+          "title": "The strongest model, at maximum effort, renaming a variable",
+          "hook": "watched the strongest model, at maximum effort, rename a variable",
+          "route": "/why/strongest-model-renames-a-variable/"
+        },
+        {
+          "id": "two-rulebooks-one-repository",
+          "title": "Two different rulebooks for one repository",
+          "hook": "opened CLAUDE.md and AGENTS.md and found two different rulebooks for one repository",
+          "route": "/why/two-rulebooks-one-repository/"
+        },
+        {
+          "id": "re-arguing-a-settled-decision",
+          "title": "Re-arguing a decision that was settled last week",
+          "hook": "watched a session undo last week's decision, for the reason it was made",
+          "route": "/why/re-arguing-a-settled-decision/"
+        },
+        {
+          "id": "task-in-progress-for-three-weeks",
+          "title": "A task \"in progress\" that nobody has touched for three weeks",
+          "hook": "found a task \"in progress\" that nobody had touched for three weeks",
+          "route": "/why/task-in-progress-for-three-weeks/"
+        },
+        {
+          "id": "what-the-workers-did-last-night",
+          "title": "Asking what the workers did last night, and getting a transcript",
+          "hook": "asked what the workers did last night and had only transcripts to grep",
+          "route": "/why/what-the-workers-did-last-night/"
+        },
+        {
+          "id": "rule-in-a-readme-nobody-loaded",
+          "title": "The rule for that directory, in a README no session ever loaded",
+          "hook": "found the rule for that directory in a README no session ever loaded",
+          "route": "/why/rule-in-a-readme-nobody-loaded/"
+        },
+        {
+          "id": "three-roadmaps-none-of-them-true",
+          "title": "Three roadmaps, and none of them true",
+          "hook": "read three roadmaps for one project and believed none of them",
+          "route": "/why/three-roadmaps-none-of-them-true/"
+        },
+        {
+          "id": "discovery-never-becomes-knowledge",
+          "title": "A hard-won discovery that never became knowledge",
+          "hook": "spent an hour discovering something the repository already knew, twice",
+          "route": "/why/discovery-never-becomes-knowledge/"
+        },
+        {
+          "id": "context-budget-blown",
+          "title": "The instruction file that grew into a rulebook",
+          "hook": "watched the always-loaded instruction file grow past a thousand lines",
+          "route": "/why/context-budget-blown/"
+        },
+        {
+          "id": "one-agent-undoes-another",
+          "title": "One worker undoing another worker's change",
+          "hook": "watched one worker revert another worker's change, on purpose",
+          "route": "/why/one-agent-undoes-another/"
+        },
+        {
+          "id": "abandoned-worktree",
+          "title": "A worktree nobody can decide to delete",
+          "hook": "found five worktrees and could not say which of them still mattered",
+          "route": "/why/abandoned-worktree/"
+        },
+        {
+          "id": "worker-output-never-integrated",
+          "title": "Finished work that never reached the trunk",
+          "hook": "found finished work on a branch that nobody ever merged",
+          "route": "/why/worker-output-never-integrated/"
+        },
+        {
+          "id": "second-session-same-checkout",
+          "title": "Two sessions in one checkout, standing on each other",
+          "hook": "had two sessions writing into one checkout without either knowing",
+          "route": "/why/second-session-same-checkout/"
+        },
+        {
+          "id": "policy-changed-projection-stale",
+          "title": "The policy changed and its four copies did not",
+          "hook": "changed a policy in one place and found the old one still in force in three others",
+          "route": "/why/policy-changed-projection-stale/"
+        },
+        {
+          "id": "decision-only-in-a-transcript",
+          "title": "The decision exists, in a conversation nobody can find",
+          "hook": "went looking for why we chose this and found a chat log",
+          "route": "/why/decision-only-in-a-transcript/"
+        },
+        {
+          "id": "implementation-contradicts-the-decision",
+          "title": "Code that quietly contradicts a written decision",
+          "hook": "found code that contradicted a decision the repository had written down",
+          "route": "/why/implementation-contradicts-the-decision/"
+        },
+        {
+          "id": "code-without-an-issue",
+          "title": "A change that no plan ever asked for",
+          "hook": "found a substantial change that no issue, ticket or plan ever asked for",
+          "route": "/why/code-without-an-issue/"
+        },
+        {
+          "id": "issue-says-done-tests-disagree",
+          "title": "The issue says done and the repository disagrees",
+          "hook": "closed an issue whose acceptance criteria nothing had actually checked",
+          "route": "/why/issue-says-done-tests-disagree/"
+        },
+        {
+          "id": "milestone-status-unreconstructable",
+          "title": "Nobody can reconstruct where the milestone actually is",
+          "hook": "was asked how far the milestone had got and had to go and ask four people",
+          "route": "/why/milestone-status-unreconstructable/"
+        },
+        {
+          "id": "generated-artifacts-stale",
+          "title": "Green tests over stale generated files",
+          "hook": "had a green pipeline over generated files that no longer matched their sources",
+          "route": "/why/generated-artifacts-stale/"
+        },
+        {
+          "id": "weak-model-on-architecture",
+          "title": "A cheap worker deciding something expensive",
+          "hook": "let a fast, cheap session make a decision the whole codebase now lives with",
+          "route": "/why/weak-model-on-architecture/"
+        },
+        {
+          "id": "no-record-why-this-model",
+          "title": "Nobody can say why that worker was chosen",
+          "hook": "could not say why one provider was used for that work and another for this",
+          "route": "/why/no-record-why-this-model/"
+        },
+        {
+          "id": "spend-not-tied-to-outcomes",
+          "title": "Spend that cannot be tied to anything accepted",
+          "hook": "looked at the bill and could not say which of it produced anything",
+          "route": "/why/spend-not-tied-to-outcomes/"
+        },
+        {
+          "id": "failure-disappears-between-sessions",
+          "title": "A failure that was seen once and never again",
+          "hook": "lost a failure a worker had already reproduced, because the session ended",
+          "route": "/why/failure-disappears-between-sessions/"
+        },
+        {
+          "id": "three-copies-of-one-explanation",
+          "title": "Three copies of one explanation, and no way to tell which is current",
+          "hook": "found the same thing explained three times, slightly differently",
+          "route": "/why/three-copies-of-one-explanation/"
+        },
+        {
+          "id": "first-hour-in-an-unfamiliar-repository",
+          "title": "The first hour in a repository nobody can explain quickly",
+          "hook": "spent the first hour in an unfamiliar repository working out what was normal here",
+          "route": "/why/first-hour-in-an-unfamiliar-repository/"
+        },
+        {
+          "id": "contribution-that-could-not-have-known",
+          "title": "A fluent contribution that could not have known the rules",
+          "hook": "reviewed a well-written contribution that broke a convention it had no way to discover",
+          "route": "/why/contribution-that-could-not-have-known/"
+        },
+        {
+          "id": "same-dead-end-explored-twice",
+          "title": "The same dead end, explored twice",
+          "hook": "watched a worker spend a day on an approach that had already been ruled out",
+          "route": "/why/same-dead-end-explored-twice/"
+        },
+        {
+          "id": "result-cannot-be-reproduced",
+          "title": "A result nobody can reproduce, including its author",
+          "hook": "could not reproduce a result because nothing recorded the state it came from",
+          "route": "/why/result-cannot-be-reproduced/"
+        },
+        {
+          "id": "who-did-this-and-under-what-policy",
+          "title": "A change whose provenance cannot be reconstructed",
+          "hook": "was asked who made a change and under what policy, and had only a commit",
+          "route": "/why/who-did-this-and-under-what-policy/"
+        }
+      ],
+      "claim_refs": [
+        {
+          "id": "adr-catalogue",
+          "claim": "An architecture decision is one file under the layer's adrs section, validated against the decision contract, with an identity nothing else claims, reciprocal supersession, and every reference it makes resolving",
+          "status": "guaranteed",
+          "test": "test/cases/99_adr.sh"
+        },
+        {
+          "id": "adr-propose",
+          "claim": "majordomus adr propose writes a decision with status proposed and refuses to write any other status, allocates its identity under a lock so concurrent workers never collide, and records what the decision was derived from",
+          "status": "guaranteed",
+          "test": "test/cases/99_adr.sh"
+        },
+        {
+          "id": "adr-traceability",
+          "claim": "A decision states what it put in force as typed references, each one validated, and the reverse direction — what a rule, a document, an implementation or a case was decided by — is read from the knowledge graph rather than written down a second time",
+          "status": "guaranteed",
+          "test": "test/cases/99_adr.sh"
+        },
+        {
+          "id": "ai-layer-manifest",
+          "claim": "The repository's AI layer is one directory whose manifest names every section, readable without the tool",
+          "status": "guaranteed",
+          "test": "test/cases/01_init.sh"
+        },
+        {
+          "id": "checkpoint-record",
+          "claim": "A checkpoint is a capped progress record with computed identity, and a body over the cap is refused rather than truncated",
+          "status": "guaranteed",
+          "test": "test/cases/20_checkpoint.sh"
+        },
+        {
+          "id": "context-assembly",
+          "claim": "The context a worker is given is assembled from durable state in authority order, and what a profile excludes is excluded",
+          "status": "guaranteed",
+          "test": "test/cases/23_context.sh"
+        },
+        {
+          "id": "context-coverage",
+          "claim": "Every directory of the layer carries a context document, the exemption is declared by the contract that governs the subtree, and a descendant may narrow that requirement but never weaken it",
+          "status": "guaranteed",
+          "test": "test/cases/69_context_documents.sh"
+        },
+        {
+          "id": "context-documents",
+          "claim": "The context that applies to a path is composed from the layer's scoped documents, root to target, in one deterministic order with provenance, and a tree that does not validate resolves nothing",
+          "status": "guaranteed",
+          "test": "test/cases/69_context_documents.sh"
+        },
+        {
+          "id": "context-impact",
+          "claim": "The impact of a change set on the scoped context is reported from git — the documents, the scopes below them, moves with their ancestry, tracked sources to review, and stale projections — and an unrelated change reports nothing",
+          "status": "guaranteed",
+          "test": "test/cases/70_context_impact.sh"
+        },
+        {
+          "id": "context-selection-budget",
+          "claim": "The assembled context obeys a line budget, and every section it drops is named with its reason",
+          "status": "guaranteed",
+          "test": "test/cases/23_context.sh"
+        },
+        {
+          "id": "continuity-reachable",
+          "claim": "Every continuity store is proven reachable through its own command, not merely present on disk",
+          "status": "guaranteed",
+          "test": "test/cases/25_continuity_lifecycle.sh"
+        },
+        {
+          "id": "decision-attribution",
+          "claim": "A decision record without a task, a head and a reason is reported, and does not block",
+          "status": "advisory",
+          "test": "test/cases/21_decision_question.sh"
+        },
+        {
+          "id": "decision-record",
+          "claim": "A decision is recorded with its reason and its task, and is superseded by a later entry rather than edited",
+          "status": "guaranteed",
+          "test": "test/cases/21_decision_question.sh"
+        },
+        {
+          "id": "divergence-label",
+          "claim": "State read back is labelled exact, advanced, diverged or different_context against git",
+          "status": "guaranteed",
+          "test": "test/cases/04_start_check.sh"
+        },
+        {
+          "id": "handover-record",
+          "claim": "handover writes an append-only record with computed front matter and required sections",
+          "status": "guaranteed",
+          "test": "test/cases/05_handover.sh"
+        },
+        {
+          "id": "history-ledger-read",
+          "claim": "The ledger is readable back as operational history, filtered by task, event and time",
+          "status": "guaranteed",
+          "test": "test/cases/22_history.sh"
+        },
+        {
+          "id": "knowledge-served-on-every-surface",
+          "claim": "The candidates awaiting review, one record by id with its references resolved, and the derivation status of the checkout are one declaration each and answer with the same content over the command line, HTTP and MCP",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/knowledge_base.rs"
+        },
+        {
+          "id": "local-state-ignored",
+          "claim": "Checkout-local state lives under .ai/local/, is ignored by git, and is absent on a fresh clone or worktree",
+          "status": "guaranteed",
+          "test": "test/cases/01_init.sh"
+        },
+        {
+          "id": "minimum-context",
+          "claim": "A profile declares which context a worker should load and no more",
+          "status": "advisory",
+          "test": "test/cases/04_start_check.sh"
+        },
+        {
+          "id": "no-counts-in-context",
+          "claim": "A hardcoded count in the always-loaded file is a failure",
+          "status": "guaranteed",
+          "test": "test/cases/03_update.sh"
+        },
+        {
+          "id": "no-transcripts",
+          "claim": "A handover is a state record, not a transcript - its required sections must be present and non-empty, a placeholder body is refused, and its identity is computed and refused when written into the body; a transcript pasted into a section is not detected",
+          "status": "guaranteed",
+          "test": "test/cases/05_handover.sh"
+        },
+        {
+          "id": "prompt-assets",
+          "claim": "Every repository-local prompt asset renders, and an unknown token is a failure",
+          "status": "guaranteed",
+          "test": "test/cases/24_prompt_search.sh"
+        },
+        {
+          "id": "prompt-capture",
+          "claim": "A declared provider hook captures the person's raw prompts below the model, and doctor proves it by running it",
+          "status": "guaranteed",
+          "test": "test/cases/29_prompt_capture.sh"
+        },
+        {
+          "id": "record-resolution",
+          "claim": "The right prior record is resolved by worktree and branch, and an unrelated one is never offered",
+          "status": "guaranteed",
+          "test": "test/cases/23_context.sh"
+        },
+        {
+          "id": "record-search",
+          "claim": "Durable records are searchable literally, across kinds, without an index",
+          "status": "guaranteed",
+          "test": "test/cases/24_prompt_search.sh"
+        },
+        {
+          "id": "scope-declared",
+          "claim": "What a worker reads of the repository is declared once in .ai/repo/scope.yaml, out wins over in, and the Rust executable discovers, indexes and serves nothing outside it",
+          "status": "guaranteed",
+          "test": "test/cases/93_scope_policy.sh"
+        },
+        {
+          "id": "semantic-retrieval",
+          "claim": "Ranked or semantic retrieval over durable records is deliberately not implemented",
+          "status": "rejected"
+        },
+        {
+          "id": "session-lifecycle",
+          "claim": "A provider hook opens the episode below the model and hands the worker what the last one left, records what a compaction is about to discard, and closes the episode with a continuation record beside its envelope",
+          "status": "guaranteed",
+          "test": "test/cases/54_session_lifecycle_hooks.sh"
+        },
+        {
+          "id": "session-records",
+          "claim": "A closed execution episode is a shared object of the layer, written by the tool from git and the ledger, valid against a contract that admits no conversation and no absolute path, and discovered rather than registered",
+          "status": "guaranteed",
+          "test": "test/cases/63_session_records.sh"
+        },
+        {
+          "id": "skill-catalogue",
+          "claim": "A skill is one directory under the layer's skills section holding SKILL.md, discovered by the source class `skill` the shell tool and the Rust executable both read, so that adding the file is the whole registration and the catalogue, the command, doctor, MCP and the site all derive from it",
+          "status": "guaranteed",
+          "test": "test/cases/95_skills.sh"
+        },
+        {
+          "id": "skill-check",
+          "claim": "Every skill is validated against the allow-list generated from its schema, its directory, its sections and its references, a violation names the file and every reason, and a repository with no skills is reported rather than passed",
+          "status": "guaranteed",
+          "test": "test/cases/95_skills.sh"
+        },
+        {
+          "id": "skill-site-projection",
+          "claim": "The website's skills section is rendered from the skills catalogue, one page per skill carrying the skill's own body and examples, and a removed or renamed skill leaves no page, entry or link behind",
+          "status": "guaranteed",
+          "test": "test/cases/95_skills.sh"
+        }
+      ],
+      "use_case_refs": [
+        {
+          "id": "capture-the-prompts-that-started-the-work",
+          "title": "Keep the prompts that started the work, below the model rather than around it",
+          "category": "continuity"
+        },
+        {
+          "id": "checkpoint-long-work",
+          "title": "Checkpoint long work so a stop costs minutes, not the day",
+          "category": "continuity"
+        },
+        {
+          "id": "classify-what-belongs-in-the-context",
+          "title": "Decide what belongs in the AI context, as data",
+          "category": "knowledge"
+        },
+        {
+          "id": "document-every-directory-of-the-layer",
+          "title": "Refuse a directory of the layer that documents nothing",
+          "category": "knowledge"
+        },
+        {
+          "id": "find-an-object-without-reading-everything",
+          "title": "Find an object of the layer without reading everything",
+          "category": "mcp"
+        },
+        {
+          "id": "follow-a-skill-the-repository-defines",
+          "title": "Follow a procedure the repository defines, and add another one",
+          "category": "extension"
+        },
+        {
+          "id": "hand-work-between-sessions",
+          "title": "Hand unfinished work to the next session",
+          "category": "continuity"
+        },
+        {
+          "id": "keep-decisions-out-of-the-transcript",
+          "title": "Record a decision so the next worker can find it",
+          "category": "continuity"
+        },
+        {
+          "id": "keep-what-an-episode-learned",
+          "title": "Keep what an episode learned, without a model and without a conversation",
+          "category": "knowledge"
+        },
+        {
+          "id": "let-the-provider-draw-the-episode-boundary",
+          "title": "Have the session opened and closed without anybody remembering to",
+          "category": "continuity"
+        },
+        {
+          "id": "open-and-close-a-session",
+          "title": "Record what one worker did in one sitting",
+          "category": "continuity"
+        },
+        {
+          "id": "read-back-what-happened",
+          "title": "Read back what happened, and keep the ledger within its cap",
+          "category": "knowledge"
+        },
+        {
+          "id": "read-only-the-context-that-fits",
+          "title": "Read only the context that fits the budget, and know what was dropped",
+          "category": "continuity"
+        },
+        {
+          "id": "record-a-decision-before-it-is-forgotten",
+          "title": "Record a decision as data, and prove the tool cannot accept it for you",
+          "category": "knowledge"
+        },
+        {
+          "id": "recover-an-episode-nobody-closed",
+          "title": "Close an episode whose client never came back",
+          "category": "continuity"
+        },
+        {
+          "id": "resume-from-a-prompt-asset",
+          "title": "Start a session from a rendered framing, not a pasted transcript",
+          "category": "continuity"
+        },
+        {
+          "id": "trace-a-change-to-the-context-it-affects",
+          "title": "Trace a change to the context documents it affects",
+          "category": "knowledge"
+        }
+      ],
+      "counts": {
+        "features": 4,
+        "claims": 32,
+        "tested": 29,
+        "use_cases": 17,
+        "rules": 19,
+        "enforced_rules": 16,
+        "capabilities": 21,
+        "moments": 32
+      },
+      "evidence": {
+        "claims": {
+          "advisory": 2,
+          "guaranteed": 29,
+          "rejected": 1
+        },
+        "modules": {}
+      }
+    },
+    {
+      "id": "coordination",
+      "title": "Coordination",
+      "headline": "Every worker declares the paths it will touch, sees who else is working and where, and hears about a collision before it is committed.",
+      "problem": "Agents collide. Parallel workers edit the same paths, or build the same thing twice, without knowing about each other.",
+      "status": "stable",
+      "weight": 20,
+      "tags": [
+        "coordination",
+        "scope",
+        "worktrees"
+      ],
+      "route": "/domains/coordination/",
+      "source": ".ai/repo/features/domains/coordination.md",
+      "features": [
+        {
+          "id": "coordination",
+          "label": "Coordination",
+          "title": "Several agents on one repository, without stepping on each other",
+          "headline": "Every worker declares the paths it may touch, every session can see who else is attached and what they announced, and a collision is reported before it is committed.",
+          "route": "/features/coordination/",
+          "featured": true,
+          "surfaces": {
+            "cli": true,
+            "api": true,
+            "mcp": true,
+            "cockpit": true,
+            "docs": true
+          },
+          "claims": 5,
+          "tested": 5,
+          "use_cases": 2
+        },
+        {
+          "id": "worktrees",
+          "label": "Worktrees",
+          "title": "One branch, one worktree, at a path derived from git",
+          "headline": "A branch's worktree is where git says it is, never where somebody chose to put it, and a misplaced one is a diagnostic with a remedy rather than a mystery.",
+          "route": "/features/worktrees/",
+          "featured": true,
+          "surfaces": {
+            "cli": true,
+            "api": true,
+            "mcp": true,
+            "cockpit": true,
+            "docs": true
+          },
+          "claims": 3,
+          "tested": 3,
+          "use_cases": 2
+        },
+        {
+          "id": "mesh",
+          "label": "Mesh",
+          "title": "Sessions on several machines work one repository without colliding",
+          "headline": "Majordomus runtimes of one repository — on one machine or several — discover each other, link through a signed handshake, and share sessions, claims, handovers and reviews through one replicated journal that survives disconnects, crashes and partitions.",
+          "route": "/features/mesh/",
+          "featured": true,
+          "surfaces": {
+            "cli": true,
+            "api": true,
+            "mcp": true,
+            "cockpit": true,
+            "docs": true
+          },
+          "claims": 9,
+          "tested": 9,
+          "use_cases": 0
+        },
+        {
+          "id": "models",
+          "label": "Models",
+          "title": "The models the world offers, declared once and routed with reasons",
+          "headline": "One declared catalogue of vendors and models — capabilities, context, lifecycle, no fabricated facts — and a routing answer that names why every candidate was chosen or excluded.",
+          "route": "/features/models/",
+          "featured": true,
+          "surfaces": {
+            "cli": true,
+            "api": true,
+            "mcp": true,
+            "cockpit": true,
+            "docs": true
+          },
+          "claims": 3,
+          "tested": 3,
+          "use_cases": 0
+        },
+        {
+          "id": "reasoning",
+          "label": "Reasoning",
+          "title": "Reasoning that works with or without advisors, and review that is recorded rather than claimed",
+          "headline": "Material uncertainty becomes an evidence-backed decision — reviewed by whichever optional advisors are available, decided locally when none are, and carried to the next session as a record.",
+          "route": "/features/reasoning/",
+          "featured": true,
+          "surfaces": {
+            "cli": true,
+            "api": true,
+            "mcp": true,
+            "cockpit": true,
+            "docs": true
+          },
+          "claims": 7,
+          "tested": 7,
+          "use_cases": 0
+        },
+        {
+          "id": "planning",
+          "label": "Planning",
+          "title": "Milestones and issues as data; status derived, never stored",
+          "headline": "An issue records what happened to it and the engine derives whether it is blocked, ready, active, verifying or done from the dependency graph, so the roadmap cannot disagree with the plan.",
+          "route": "/features/planning/",
+          "featured": false,
+          "surfaces": {
+            "cli": true,
+            "api": true,
+            "mcp": true,
+            "cockpit": true,
+            "docs": true
+          },
+          "claims": 8,
+          "tested": 7,
+          "use_cases": 3
+        }
+      ],
+      "surfaces": {
+        "cli": true,
+        "api": true,
+        "mcp": true,
+        "cockpit": true,
+        "docs": true
+      },
+      "moments": [
+        {
+          "id": "re-explaining-context",
+          "title": "Re-explaining the same context to a brand-new session",
+          "hook": "re-explained the same context to a brand-new session",
+          "route": "/why/re-explaining-context/"
+        },
+        {
+          "id": "two-agents-one-bug",
+          "title": "Two agents fixing the same bug in two branches",
+          "hook": "found two agents fixing the same bug in two branches",
+          "route": "/why/two-agents-one-bug/"
+        },
+        {
+          "id": "strongest-model-renames-a-variable",
+          "title": "The strongest model, at maximum effort, renaming a variable",
+          "hook": "watched the strongest model, at maximum effort, rename a variable",
+          "route": "/why/strongest-model-renames-a-variable/"
+        },
+        {
+          "id": "done-because-the-model-said-so",
+          "title": "Accepting \"done\" because the model said so",
+          "hook": "accepted \"done\" because the model said so, and paid for it the next morning",
+          "route": "/why/done-because-the-model-said-so/"
+        },
+        {
+          "id": "task-in-progress-for-three-weeks",
+          "title": "A task \"in progress\" that nobody has touched for three weeks",
+          "hook": "found a task \"in progress\" that nobody had touched for three weeks",
+          "route": "/why/task-in-progress-for-three-weeks/"
+        },
+        {
+          "id": "three-roadmaps-none-of-them-true",
+          "title": "Three roadmaps, and none of them true",
+          "hook": "read three roadmaps for one project and believed none of them",
+          "route": "/why/three-roadmaps-none-of-them-true/"
+        },
+        {
+          "id": "one-agent-undoes-another",
+          "title": "One worker undoing another worker's change",
+          "hook": "watched one worker revert another worker's change, on purpose",
+          "route": "/why/one-agent-undoes-another/"
+        },
+        {
+          "id": "abandoned-worktree",
+          "title": "A worktree nobody can decide to delete",
+          "hook": "found five worktrees and could not say which of them still mattered",
+          "route": "/why/abandoned-worktree/"
+        },
+        {
+          "id": "worker-output-never-integrated",
+          "title": "Finished work that never reached the trunk",
+          "hook": "found finished work on a branch that nobody ever merged",
+          "route": "/why/worker-output-never-integrated/"
+        },
+        {
+          "id": "second-session-same-checkout",
+          "title": "Two sessions in one checkout, standing on each other",
+          "hook": "had two sessions writing into one checkout without either knowing",
+          "route": "/why/second-session-same-checkout/"
+        },
+        {
+          "id": "code-without-an-issue",
+          "title": "A change that no plan ever asked for",
+          "hook": "found a substantial change that no issue, ticket or plan ever asked for",
+          "route": "/why/code-without-an-issue/"
+        },
+        {
+          "id": "issue-says-done-tests-disagree",
+          "title": "The issue says done and the repository disagrees",
+          "hook": "closed an issue whose acceptance criteria nothing had actually checked",
+          "route": "/why/issue-says-done-tests-disagree/"
+        },
+        {
+          "id": "milestone-status-unreconstructable",
+          "title": "Nobody can reconstruct where the milestone actually is",
+          "hook": "was asked how far the milestone had got and had to go and ask four people",
+          "route": "/why/milestone-status-unreconstructable/"
+        },
+        {
+          "id": "weak-model-on-architecture",
+          "title": "A cheap worker deciding something expensive",
+          "hook": "let a fast, cheap session make a decision the whole codebase now lives with",
+          "route": "/why/weak-model-on-architecture/"
+        },
+        {
+          "id": "no-record-why-this-model",
+          "title": "Nobody can say why that worker was chosen",
+          "hook": "could not say why one provider was used for that work and another for this",
+          "route": "/why/no-record-why-this-model/"
+        },
+        {
+          "id": "spend-not-tied-to-outcomes",
+          "title": "Spend that cannot be tied to anything accepted",
+          "hook": "looked at the bill and could not say which of it produced anything",
+          "route": "/why/spend-not-tied-to-outcomes/"
+        },
+        {
+          "id": "result-cannot-be-reproduced",
+          "title": "A result nobody can reproduce, including its author",
+          "hook": "could not reproduce a result because nothing recorded the state it came from",
+          "route": "/why/result-cannot-be-reproduced/"
+        }
+      ],
+      "claim_refs": [
+        {
+          "id": "advice-is-weighed-not-counted",
+          "claim": "Advisors that disagree never decide by count: a conclusion is refused while a disagreement on its assessment is unsettled, a resolution needs evidence, and every answer received must be weighed",
+          "status": "guaranteed",
+          "test": "test/cases/732_disagreement_is_settled_by_evidence.sh"
+        },
+        {
+          "id": "advisor-failure-is-recorded-and-recovers",
+          "claim": "An advisor that times out, is rate limited, refuses its credential or answers malformed is recorded as exactly that, never blocks the work, opens a circuit that closes again after its cooldown, and never fails the session",
+          "status": "guaranteed",
+          "test": "test/cases/733_advisor_failure_and_recovery.sh"
+        },
+        {
+          "id": "advisor-transports-share-one-contract",
+          "claim": "Every advisor transport is held to one contract — typed failures, deadlines, cancellation, normalised answers, reported usage, redacted secrets — proven against fakes with no network, model or credential",
+          "status": "guaranteed",
+          "test": "test/cases/731_advisor_transport_contract.sh"
+        },
+        {
+          "id": "advisors-are-declared-once",
+          "claim": "Advisors are declared once, in share/advisors.yaml, by reference to the provider table and the model catalogue; a new advisor reaches the command line, the policy, HTTP, OpenAPI, MCP and the Cockpit with no consumer edited",
+          "status": "guaranteed",
+          "test": "test/cases/735_a_new_advisor_needs_no_consumer_edit.sh"
+        },
+        {
+          "id": "dag-validation",
+          "claim": "A cycle, a self-dependency and a dependency on an issue that does not exist are each refused by name",
+          "status": "guaranteed",
+          "test": "test/cases/42_dag_waves.sh"
+        },
+        {
+          "id": "evidence-gates-done",
+          "claim": "An issue cannot be completed while a required piece of evidence is missing",
+          "status": "guaranteed",
+          "test": "test/cases/41_project_status.sh"
+        },
+        {
+          "id": "execution-waves",
+          "claim": "Execution waves are computed from the graph, and issues in one wave that touch the same paths are reported as serialised",
+          "status": "guaranteed",
+          "test": "test/cases/42_dag_waves.sh"
+        },
+        {
+          "id": "github-projection",
+          "claim": "GitHub milestones and issues are generated from the canonical model, and a hand-edited generated region is reported rather than overwritten",
+          "status": "guaranteed",
+          "test": "test/cases/45_github_projection.sh"
+        },
+        {
+          "id": "mcp-peers",
+          "claim": "Every client attached to a checkout's server is a peer named by its own initialize, and majordomus_peers lists every worker of the repository - its own board and the board of every other checkout, each peer stamped with the worktree it is working in - while majordomus_announce tells the others what it is working on and which paths it expects to touch",
+          "status": "guaranteed",
+          "test": "test/cases/250_the_board_is_repository_wide.sh"
+        },
+        {
+          "id": "mesh-claims-cross-runtime",
+          "claim": "An exclusive claim made on one runtime excludes an overlapping claim on every linked runtime, and concurrent claims resolve to one named winner everywhere",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
+        },
+        {
+          "id": "mesh-cooperation-links",
+          "claim": "Two runtimes of one repository link only through a signed, replay-protected handshake that checks protocol, repository identity and trust, and every refusal is typed and visible",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
+        },
+        {
+          "id": "mesh-liveness-expiry",
+          "claim": "A runtime that stops beating — crashed, killed or partitioned — expires on its peers within the declared expiry, its claims stop excluding, and its restart reconnects as the same runtime without a duplicate",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
+        },
+        {
+          "id": "mesh-network-acceptance",
+          "claim": "Separate Linux nodes on a real network discover each other by multicast, link, share claims and handovers, and recover from a partition and a crash, in a lab CI runs",
+          "status": "guaranteed",
+          "test": "test/cases/414_mesh_lab_evidence.sh"
+        },
+        {
+          "id": "mesh-observation-not-authority",
+          "claim": "A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/mesh.rs"
+        },
+        {
+          "id": "mesh-off-by-default",
+          "claim": "No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/mesh.rs"
+        },
+        {
+          "id": "mesh-one-registry",
+          "claim": "Every discovery observation converges into one bounded registry, deduplicated by node and runtime identity across sources, replay-protected per instance, and every surface projects that registry and holds no peers of its own",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/mesh.rs"
+        },
+        {
+          "id": "mesh-repository-isolation",
+          "claim": "Runtimes serving different repositories never form a cooperative link, even when they discover each other",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
+        },
+        {
+          "id": "mesh-three-runtime-convergence",
+          "claim": "Runtimes linked only through a relay converge on one state digest, each event held once, with no replication loop",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
+        },
+        {
+          "id": "models-no-secret-fields",
+          "claim": "The model catalogue reports whether a vendor's named credential variable is set and can carry no secret value — the schema has no field one could hide in",
+          "status": "guaranteed",
+          "test": "test/cases/131_models.sh"
+        },
+        {
+          "id": "models-one-declaration",
+          "claim": "Vendors and models are declared once in share/models.yaml, and the CLI, HTTP, OpenAPI, MCP and Cockpit render that one declaration with no model name of their own",
+          "status": "guaranteed",
+          "test": "test/cases/131_models.sh"
+        },
+        {
+          "id": "models-routing-explains-itself",
+          "claim": "A routing decision names why the selected model was selected and, for every excluded model, the first check it failed — the same answer for the same question, with no hidden state",
+          "status": "guaranteed",
+          "test": "test/cases/131_models.sh"
+        },
+        {
+          "id": "overlap-report",
+          "claim": "Overlap between parallel workers is computed on claimed paths in both containment directions",
+          "status": "guaranteed",
+          "test": "test/cases/04_start_check.sh"
+        },
+        {
+          "id": "project-schema",
+          "claim": "Milestones and issues are canonical repository files, and a key nobody reads is an error",
+          "status": "guaranteed",
+          "test": "test/cases/40_project_model.sh"
+        },
+        {
+          "id": "project-status-derived",
+          "claim": "Issue and milestone status is derived from recorded facts and is stored nowhere",
+          "status": "guaranteed",
+          "test": "test/cases/41_project_status.sh"
+        },
+        {
+          "id": "reasoning-survives-the-session",
+          "claim": "A decision and its provenance survive the session: the next session finds them in its context and handover, reuses a standing conclusion instead of consulting again, and reopens it only on new evidence",
+          "status": "guaranteed",
+          "test": "test/cases/734_reasoning_survives_the_session.sh"
+        },
+        {
+          "id": "reasoning-works-with-no-advisor",
+          "claim": "Majordomus reasons, decides, implements and validates with no advisor at all: absent advisors are reported as ordinary state, material uncertainty gets a structured local review, and the conclusion claims no independent review",
+          "status": "guaranteed",
+          "test": "test/cases/730_reasoning_works_with_no_advisor.sh"
+        },
+        {
+          "id": "review-is-never-fabricated",
+          "claim": "A session cannot claim review it did not get: a consultation must name an advisor its recorded plan selected, a conclusion's review is computed, and reasoning check and doctor refuse a forged record, provider coupling, a model credential in CI and a refused claim in a document",
+          "status": "guaranteed",
+          "test": "test/cases/736_reasoning_check_refuses_drift.sh"
+        },
+        {
+          "id": "roadmap-derived",
+          "claim": "The roadmap is derived from milestone state, and no document may be a second authority for it",
+          "status": "guaranteed",
+          "test": "test/cases/49_roadmap_doctrine.sh"
+        },
+        {
+          "id": "scope-enforcement",
+          "claim": "A touched file outside the claimed scope is a failure, not a warning",
+          "status": "guaranteed",
+          "test": "test/cases/04_start_check.sh"
+        },
+        {
+          "id": "scoped-task",
+          "claim": "A task is started with a declared file scope and a profile, and only one task is active per checkout",
+          "status": "guaranteed",
+          "test": "test/cases/04_start_check.sh"
+        },
+        {
+          "id": "task-dependencies",
+          "claim": "A task record has no dependencies; sequencing between sessions is not represented",
+          "status": "rejected"
+        },
+        {
+          "id": "worktree-migration-lossless",
+          "claim": "A misplaced worktree is brought to its canonical path with its modified, staged, unstaged and untracked work intact, verified by a fingerprint taken before and after the move, and a step is reported as moved only when the two are equal",
+          "status": "guaranteed",
+          "test": "test/cases/96_worktree_topology.sh"
+        },
+        {
+          "id": "worktree-ownership",
+          "claim": "A task record names the checkout it belongs to, and another checkout is never held to its scope",
+          "status": "guaranteed",
+          "test": "test/cases/27_foreign_task.sh"
+        },
+        {
+          "id": "worktree-topology-derived",
+          "claim": "A branch's worktree path is derived from git identity and the branch name alone — the primary checkout's sibling named with -wt, then the branch with its hierarchy kept — and is the same answer from every directory of every worktree, with nothing registered or configured",
+          "status": "guaranteed",
+          "test": "test/cases/96_worktree_topology.sh"
+        }
+      ],
+      "use_case_refs": [
+        {
+          "id": "complete-an-issue-only-with-its-evidence",
+          "title": "Complete an issue only when its evidence exists",
+          "category": "completion"
+        },
+        {
+          "id": "deliver-issues-in-waves",
+          "title": "Deliver issues in waves the graph computes, and take the next one",
+          "category": "workers"
+        },
+        {
+          "id": "plan-the-work-as-data",
+          "title": "Keep the plan as milestones and issues the tool can validate",
+          "category": "knowledge"
+        },
+        {
+          "id": "resume-in-the-right-worktree",
+          "title": "Resume in the right worktree, never against somebody else’s task",
+          "category": "continuity"
+        },
+        {
+          "id": "run-several-workers-at-once",
+          "title": "Run several workers in one repository without them colliding",
+          "category": "workers"
+        },
+        {
+          "id": "work-on-a-branch-in-its-canonical-worktree",
+          "title": "Work on a branch in the one worktree it belongs to",
+          "category": "workers"
+        }
+      ],
+      "counts": {
+        "features": 6,
+        "claims": 34,
+        "tested": 33,
+        "use_cases": 6,
+        "rules": 13,
+        "enforced_rules": 11,
+        "capabilities": 60,
+        "moments": 17
+      },
+      "evidence": {
+        "claims": {
+          "guaranteed": 33,
+          "rejected": 1
+        },
+        "modules": {}
+      }
+    },
+    {
+      "id": "governance",
+      "title": "Governance",
+      "headline": "The rules are written once, in the repository, projected into every tool's instructions, and a blocking rule stops the command instead of advising it.",
+      "problem": "Rules drift. Each tool keeps its own instruction file, and a rule nobody wired into enforcement is only a suggestion.",
+      "status": "stable",
+      "weight": 30,
+      "tags": [
+        "governance",
+        "policy",
+        "rules"
+      ],
+      "route": "/domains/governance/",
+      "source": ".ai/repo/features/domains/governance.md",
+      "features": [
+        {
+          "id": "doctrine",
+          "label": "Doctrine",
+          "title": "Rules a machine decides, wired, tested and CI-blocking",
+          "headline": "A rule is enforced when a validator decides it, a command runs it, a test proves it and CI blocks on it; anything less is documentation, and the tool knows the difference.",
+          "route": "/features/doctrine/",
+          "featured": true,
+          "surfaces": {
+            "cli": true,
+            "api": true,
+            "mcp": true,
+            "cockpit": true,
+            "docs": true
+          },
+          "claims": 12,
+          "tested": 12,
+          "use_cases": 4
+        },
+        {
+          "id": "policy",
+          "label": "Policy",
+          "title": "One policy, projected into every tool's instruction file",
+          "headline": "Every provider the tool declares — an agent, an orchestrator that runs agents, any tool that reads AGENTS.md — gets the same rules from the same place, because their instruction files are generated from one policy and never written by hand; the providers are the table in docs/generated/providers.md.",
+          "route": "/features/policy/",
+          "featured": false,
+          "surfaces": {
+            "cli": true,
+            "api": false,
+            "mcp": true,
+            "cockpit": false,
+            "docs": true
+          },
+          "claims": 14,
+          "tested": 10,
+          "use_cases": 3
+        },
+        {
+          "id": "commit",
+          "label": "Commits",
+          "title": "A commit message is a value this repository judges, not a convention it hopes for",
+          "headline": "The commit message has one grammar, one policy and one verdict; the scope it is written under is learned from the repository's own history rather than kept in a table, and a message that does not satisfy the policy is refused while it is still being written.",
+          "route": "/features/commit/",
+          "featured": true,
+          "surfaces": {
+            "cli": true,
+            "api": true,
+            "mcp": true,
+            "cockpit": true,
+            "docs": true
+          },
+          "claims": 3,
+          "tested": 3,
+          "use_cases": 1
+        }
+      ],
+      "surfaces": {
+        "cli": true,
+        "api": true,
+        "mcp": true,
+        "cockpit": true,
+        "docs": true
+      },
+      "moments": [
+        {
+          "id": "re-explaining-context",
+          "title": "Re-explaining the same context to a brand-new session",
+          "hook": "re-explained the same context to a brand-new session",
+          "route": "/why/re-explaining-context/"
+        },
+        {
+          "id": "two-agents-one-bug",
+          "title": "Two agents fixing the same bug in two branches",
+          "hook": "found two agents fixing the same bug in two branches",
+          "route": "/why/two-agents-one-bug/"
+        },
+        {
+          "id": "strongest-model-renames-a-variable",
+          "title": "The strongest model, at maximum effort, renaming a variable",
+          "hook": "watched the strongest model, at maximum effort, rename a variable",
+          "route": "/why/strongest-model-renames-a-variable/"
+        },
+        {
+          "id": "done-because-the-model-said-so",
+          "title": "Accepting \"done\" because the model said so",
+          "hook": "accepted \"done\" because the model said so, and paid for it the next morning",
+          "route": "/why/done-because-the-model-said-so/"
+        },
+        {
+          "id": "two-rulebooks-one-repository",
+          "title": "Two different rulebooks for one repository",
+          "hook": "opened CLAUDE.md and AGENTS.md and found two different rulebooks for one repository",
+          "route": "/why/two-rulebooks-one-repository/"
+        },
+        {
+          "id": "task-in-progress-for-three-weeks",
+          "title": "A task \"in progress\" that nobody has touched for three weeks",
+          "hook": "found a task \"in progress\" that nobody had touched for three weeks",
+          "route": "/why/task-in-progress-for-three-weeks/"
+        },
+        {
+          "id": "what-the-workers-did-last-night",
+          "title": "Asking what the workers did last night, and getting a transcript",
+          "hook": "asked what the workers did last night and had only transcripts to grep",
+          "route": "/why/what-the-workers-did-last-night/"
+        },
+        {
+          "id": "rule-in-a-readme-nobody-loaded",
+          "title": "The rule for that directory, in a README no session ever loaded",
+          "hook": "found the rule for that directory in a README no session ever loaded",
+          "route": "/why/rule-in-a-readme-nobody-loaded/"
+        },
+        {
+          "id": "three-roadmaps-none-of-them-true",
+          "title": "Three roadmaps, and none of them true",
+          "hook": "read three roadmaps for one project and believed none of them",
+          "route": "/why/three-roadmaps-none-of-them-true/"
+        },
+        {
+          "id": "context-budget-blown",
+          "title": "The instruction file that grew into a rulebook",
+          "hook": "watched the always-loaded instruction file grow past a thousand lines",
+          "route": "/why/context-budget-blown/"
+        },
+        {
+          "id": "one-agent-undoes-another",
+          "title": "One worker undoing another worker's change",
+          "hook": "watched one worker revert another worker's change, on purpose",
+          "route": "/why/one-agent-undoes-another/"
+        },
+        {
+          "id": "abandoned-worktree",
+          "title": "A worktree nobody can decide to delete",
+          "hook": "found five worktrees and could not say which of them still mattered",
+          "route": "/why/abandoned-worktree/"
+        },
+        {
+          "id": "worker-output-never-integrated",
+          "title": "Finished work that never reached the trunk",
+          "hook": "found finished work on a branch that nobody ever merged",
+          "route": "/why/worker-output-never-integrated/"
+        },
+        {
+          "id": "second-session-same-checkout",
+          "title": "Two sessions in one checkout, standing on each other",
+          "hook": "had two sessions writing into one checkout without either knowing",
+          "route": "/why/second-session-same-checkout/"
+        },
+        {
+          "id": "policy-changed-projection-stale",
+          "title": "The policy changed and its four copies did not",
+          "hook": "changed a policy in one place and found the old one still in force in three others",
+          "route": "/why/policy-changed-projection-stale/"
+        },
+        {
+          "id": "enforcement-nothing-invokes",
+          "title": "A rule enforced by a hook that never runs",
+          "hook": "found a rule everyone believed was enforced and nothing ever invoked",
+          "route": "/why/enforcement-nothing-invokes/"
+        },
+        {
+          "id": "implementation-contradicts-the-decision",
+          "title": "Code that quietly contradicts a written decision",
+          "hook": "found code that contradicted a decision the repository had written down",
+          "route": "/why/implementation-contradicts-the-decision/"
+        },
+        {
+          "id": "code-without-an-issue",
+          "title": "A change that no plan ever asked for",
+          "hook": "found a substantial change that no issue, ticket or plan ever asked for",
+          "route": "/why/code-without-an-issue/"
+        },
+        {
+          "id": "issue-says-done-tests-disagree",
+          "title": "The issue says done and the repository disagrees",
+          "hook": "closed an issue whose acceptance criteria nothing had actually checked",
+          "route": "/why/issue-says-done-tests-disagree/"
+        },
+        {
+          "id": "milestone-status-unreconstructable",
+          "title": "Nobody can reconstruct where the milestone actually is",
+          "hook": "was asked how far the milestone had got and had to go and ask four people",
+          "route": "/why/milestone-status-unreconstructable/"
+        },
+        {
+          "id": "feature-without-a-test",
+          "title": "A capability the documentation promises and nothing proves",
+          "hook": "read a promise in the README that no test stood behind",
+          "route": "/why/feature-without-a-test/"
+        },
+        {
+          "id": "api-changed-contract-did-not",
+          "title": "The interface changed and its contract document did not",
+          "hook": "shipped an interface change whose contract document still described the old one",
+          "route": "/why/api-changed-contract-did-not/"
+        },
+        {
+          "id": "documented-command-no-longer-works",
+          "title": "The documented command that no longer works",
+          "hook": "pasted a command from the documentation and watched it fail",
+          "route": "/why/documented-command-no-longer-works/"
+        },
+        {
+          "id": "generated-artifacts-stale",
+          "title": "Green tests over stale generated files",
+          "hook": "had a green pipeline over generated files that no longer matched their sources",
+          "route": "/why/generated-artifacts-stale/"
+        },
+        {
+          "id": "weak-model-on-architecture",
+          "title": "A cheap worker deciding something expensive",
+          "hook": "let a fast, cheap session make a decision the whole codebase now lives with",
+          "route": "/why/weak-model-on-architecture/"
+        },
+        {
+          "id": "no-record-why-this-model",
+          "title": "Nobody can say why that worker was chosen",
+          "hook": "could not say why one provider was used for that work and another for this",
+          "route": "/why/no-record-why-this-model/"
+        },
+        {
+          "id": "spend-not-tied-to-outcomes",
+          "title": "Spend that cannot be tied to anything accepted",
+          "hook": "looked at the bill and could not say which of it produced anything",
+          "route": "/why/spend-not-tied-to-outcomes/"
+        },
+        {
+          "id": "three-copies-of-one-explanation",
+          "title": "Three copies of one explanation, and no way to tell which is current",
+          "hook": "found the same thing explained three times, slightly differently",
+          "route": "/why/three-copies-of-one-explanation/"
+        },
+        {
+          "id": "site-claims-nothing-proves",
+          "title": "A public page promising something nothing tests",
+          "hook": "published a page that promised more than any test could support",
+          "route": "/why/site-claims-nothing-proves/"
+        },
+        {
+          "id": "first-hour-in-an-unfamiliar-repository",
+          "title": "The first hour in a repository nobody can explain quickly",
+          "hook": "spent the first hour in an unfamiliar repository working out what was normal here",
+          "route": "/why/first-hour-in-an-unfamiliar-repository/"
+        },
+        {
+          "id": "contribution-that-could-not-have-known",
+          "title": "A fluent contribution that could not have known the rules",
+          "hook": "reviewed a well-written contribution that broke a convention it had no way to discover",
+          "route": "/why/contribution-that-could-not-have-known/"
+        },
+        {
+          "id": "result-cannot-be-reproduced",
+          "title": "A result nobody can reproduce, including its author",
+          "hook": "could not reproduce a result because nothing recorded the state it came from",
+          "route": "/why/result-cannot-be-reproduced/"
+        },
+        {
+          "id": "who-did-this-and-under-what-policy",
+          "title": "A change whose provenance cannot be reconstructed",
+          "hook": "was asked who made a change and under what policy, and had only a commit",
+          "route": "/why/who-did-this-and-under-what-policy/"
+        }
+      ],
+      "claim_refs": [
+        {
+          "id": "a-finding-names-how-to-see-it-again",
+          "claim": "Every finding a command reports names the command that reproduces it",
+          "status": "guaranteed",
+          "test": "test/cases/138_governance_gates.sh"
+        },
+        {
+          "id": "authored-files-are-english",
+          "claim": "Every authored file in this repository is spelled in English, and a proper noun, a test fixture or a published translation that is not carries its reason beside the check",
+          "status": "guaranteed",
+          "test": "test/cases/138_governance_gates.sh"
+        },
+        {
+          "id": "bootstrap-chain",
+          "claim": "Provider instruction files are thin bootstraps that point at the AI layer and carry no rule of their own",
+          "status": "guaranteed",
+          "test": "test/cases/03_update.sh"
+        },
+        {
+          "id": "capability-class",
+          "claim": "A profile names a capability class rather than a vendor model",
+          "status": "advisory",
+          "test": "test/cases/03_update.sh"
+        },
+        {
+          "id": "commit-message-is-judged",
+          "claim": "A commit message that does not satisfy the repository's declared commit policy is refused at the moment it is written, and the history's existing debt is recorded and may not grow",
+          "status": "guaranteed",
+          "test": "test/cases/274_commit_policy.sh"
+        },
+        {
+          "id": "commit-plan-is-refusable",
+          "claim": "A commit plan carries a fingerprint of the repository, the worktree, HEAD and the exact change set it was derived from, so a plan acted on after the tree moved is refused with the reason rather than applied",
+          "status": "guaranteed",
+          "test": "test/cases/274_commit_policy.sh"
+        },
+        {
+          "id": "commit-scopes-are-learned",
+          "claim": "The scope vocabulary a commit is judged against is learned from this repository's own history rather than kept in a table, so a subsystem committed today is in the vocabulary today and a scope outside it is a warning rather than a refusal",
+          "status": "guaranteed",
+          "test": "test/cases/274_commit_policy.sh"
+        },
+        {
+          "id": "context-budget",
+          "claim": "The always-loaded instruction file has a line budget with a failing check",
+          "status": "guaranteed",
+          "test": "test/cases/03_update.sh"
+        },
+        {
+          "id": "dispatcher-wiring",
+          "claim": "Wiring is found in a hook or in any subhook of the directory that hook dispatches to",
+          "status": "guaranteed",
+          "test": "test/cases/14_wiring_dispatcher.sh"
+        },
+        {
+          "id": "doctrine-class-decides",
+          "claim": "A doctrine's class is what decides whether a violation stops the command, not a label beside it",
+          "status": "guaranteed",
+          "test": "test/cases/17_doctrine_enforcement.sh"
+        },
+        {
+          "id": "doctrine-registry",
+          "claim": "Every rule the tool enforces is declared once, as a rule object in the repository's effective set, and doctor proves each one is reached by the command that claims to run it",
+          "status": "guaranteed",
+          "test": "test/cases/18_doctrine_wiring.sh"
+        },
+        {
+          "id": "drift-watch",
+          "claim": "watch reports policy, projection, state, scope, handover, verification, staleness and retention drift",
+          "status": "guaranteed",
+          "test": "test/cases/07_watch.sh"
+        },
+        {
+          "id": "effort-escalation",
+          "claim": "Escalating reasoning effort after repeated blocked attempts is recorded rather than assumed",
+          "status": "advisory",
+          "test": "test/cases/03_update.sh"
+        },
+        {
+          "id": "init-refuses",
+          "claim": "Installing into a repository that already has an installation is refused",
+          "status": "guaranteed",
+          "test": "test/cases/01_init.sh"
+        },
+        {
+          "id": "no-silent-overwrite",
+          "claim": "A hand-edited instruction file is never silently overwritten",
+          "status": "guaranteed",
+          "test": "test/cases/03_update.sh"
+        },
+        {
+          "id": "policy-parse",
+          "claim": "The canonical policy is parsed and rejected if it contains an unknown key",
+          "status": "guaranteed",
+          "test": "test/cases/00_yaml_flatten.sh"
+        },
+        {
+          "id": "profile-axes",
+          "claim": "Capability class, reasoning effort, output verbosity, context and verification are five independent axes",
+          "status": "advisory",
+          "test": "test/cases/03_update.sh"
+        },
+        {
+          "id": "profile-validate",
+          "claim": "Every profile is parsed, its unknown keys rejected, and the default profile proven to exist",
+          "status": "guaranteed",
+          "test": "test/cases/02_doctor_basic.sh"
+        },
+        {
+          "id": "projection-fingerprint",
+          "claim": "Every generated instruction file carries its own stamp, and a hand edit is detected",
+          "status": "guaranteed",
+          "test": "test/cases/03_update.sh"
+        },
+        {
+          "id": "projection-generation",
+          "claim": "Provider instruction files are generated from the one policy, deterministically",
+          "status": "guaranteed",
+          "test": "test/cases/03_update.sh"
+        },
+        {
+          "id": "provider-projections-one-renderer",
+          "claim": "The provider bootstraps the policy declares (AGENTS.md, CLAUDE.md, GEMINI.md, ...) are a target of majordomus generate, rendered from the policy and the provider templates byte for byte as the shell tool renders them, and generate --check refuses a hand-edited or stale one in CI",
+          "status": "guaranteed",
+          "test": "test/cases/93_rust_provider_projections.sh"
+        },
+        {
+          "id": "region-projection",
+          "claim": "A projection can own only the region between its markers, leaving the rest of the file untouched",
+          "status": "guaranteed",
+          "test": "test/cases/13_region_projection.sh"
+        },
+        {
+          "id": "rule-exemption-carries-its-reason",
+          "claim": "A rule that no program can express says so in its own front matter, with the reason, and is counted apart from every rule that has a gate",
+          "status": "guaranteed",
+          "test": "test/cases/125_rule_proof.sh"
+        },
+        {
+          "id": "rule-proof-is-named-and-resolves",
+          "claim": "Every rule names what proves it, and every path it names is in the tree",
+          "status": "guaranteed",
+          "test": "test/cases/125_rule_proof.sh"
+        },
+        {
+          "id": "rule-resolution",
+          "claim": "The effective rule set is resolved as a dependency graph in a deterministic order, and a set that does not resolve is applied by nothing",
+          "status": "guaranteed",
+          "test": "test/cases/67_rule_dag.sh"
+        },
+        {
+          "id": "rule-state-is-derived-from-what-ran",
+          "claim": "A rule's proof state is derived from the tree and the ledger together, and a mechanism that refuses violations is never reported as a run that passed",
+          "status": "guaranteed",
+          "test": "test/cases/133_rule_graph.sh"
+        },
+        {
+          "id": "shared-policy",
+          "claim": "One policy will be shared across repositories and workers",
+          "status": "planned"
+        },
+        {
+          "id": "vendored-rule-package",
+          "claim": "The rule baseline is vendored into the repository with a manifest naming every file and its hash, and a hand edit is detected and refused",
+          "status": "guaranteed",
+          "test": "test/cases/67_rule_dag.sh"
+        },
+        {
+          "id": "wiring-reconciliation",
+          "claim": "Every enforcement the policy declares is reconciled against what actually runs",
+          "status": "guaranteed",
+          "test": "test/cases/03_update.sh"
+        }
+      ],
+      "use_case_refs": [
+        {
+          "id": "adopt-an-existing-repository",
+          "title": "Adopt a repository that already has its own rules",
+          "category": "adoption"
+        },
+        {
+          "id": "find-out-what-drifted",
+          "title": "Find out what has drifted since anyone last looked",
+          "category": "drift"
+        },
+        {
+          "id": "gate-ci-on-the-tool-itself",
+          "title": "Gate CI on the tool itself, with an exit code that is a contract",
+          "category": "policy"
+        },
+        {
+          "id": "keep-the-bootstrap-thin-and-within-budget",
+          "title": "Keep every provider bootstrap thin, generated and within budget",
+          "category": "drift"
+        },
+        {
+          "id": "plan-a-commit-and-judge-its-message",
+          "title": "Divide a working tree into commits, and hold every message to a policy",
+          "category": "policy"
+        },
+        {
+          "id": "prove-a-rule-is-enforced",
+          "title": "Prove a rule is actually enforced, not merely written down",
+          "category": "policy"
+        },
+        {
+          "id": "read-the-rules-the-tool-applies",
+          "title": "See which rules apply here and what enforces them",
+          "category": "policy"
+        },
+        {
+          "id": "trust-the-policy-before-reading-it",
+          "title": "Trust the policy and the profiles only after they are validated",
+          "category": "policy"
+        }
+      ],
+      "counts": {
+        "features": 3,
+        "claims": 29,
+        "tested": 25,
+        "use_cases": 8,
+        "rules": 17,
+        "enforced_rules": 17,
+        "capabilities": 10,
+        "moments": 33
+      },
+      "evidence": {
+        "claims": {
+          "advisory": 3,
+          "guaranteed": 25,
+          "planned": 1
+        },
+        "modules": {}
+      }
+    },
+    {
+      "id": "evidence",
+      "title": "Evidence",
+      "headline": "A claim names the test that settles it, a recorded run is judged against the commit it ran at, and a claim with no recorded run says so.",
+      "problem": "Claims outrun proof. The documentation says one thing, the runtime does another, and nobody can show which is true.",
+      "status": "stable",
+      "weight": 40,
+      "tags": [
+        "evidence",
+        "provenance",
+        "claims"
+      ],
+      "route": "/domains/evidence/",
+      "source": ".ai/repo/features/domains/evidence.md",
+      "features": [
+        {
+          "id": "economics",
+          "label": "Economics",
+          "title": "Token economics, measured from matched runs and never typed",
+          "headline": "What a coding session consumes with Majordomus and without it, from matched runs judged by the same hidden tests, with every number labelled by how it was obtained and published only past a declared rule.",
+          "route": "/features/economics/",
+          "featured": false,
+          "surfaces": {
+            "cli": true,
+            "api": true,
+            "mcp": true,
+            "cockpit": true,
+            "docs": true
+          },
+          "claims": 3,
+          "tested": 2,
+          "use_cases": 0
+        },
+        {
+          "id": "provenance",
+          "label": "Provenance",
+          "title": "Every record names the commit, the branch and the episode that made it",
+          "headline": "Who did what, under which task, at which commit, in which session is a ledger the tool writes and a person can read back, not a memory of a conversation.",
+          "route": "/features/provenance/",
+          "featured": true,
+          "surfaces": {
+            "cli": true,
+            "api": false,
+            "mcp": true,
+            "cockpit": true,
+            "docs": true
+          },
+          "claims": 9,
+          "tested": 6,
+          "use_cases": 2
+        },
+        {
+          "id": "use-cases",
+          "label": "Use cases",
+          "title": "Every use case is executed against the tool, not described",
+          "headline": "What a person does with the tool is one file with a scenario the tool runs against itself; the page shows that execution, and a public command no use case runs is a gap the tool reports.",
+          "route": "/features/use-cases/",
+          "featured": false,
+          "surfaces": {
+            "cli": true,
+            "api": false,
+            "mcp": true,
+            "cockpit": false,
+            "docs": true
+          },
+          "claims": 4,
+          "tested": 4,
+          "use_cases": 1
+        },
+        {
+          "id": "evidence",
+          "label": "Evidence",
+          "title": "A claim is proven by a run that happened, not by a file that exists",
+          "headline": "Every claim is joined to the execution recorded for its test — the outcome, the commit, the tree, the digest and the command that produces it again — and a run against this commit is never reported as the same thing as a run whose inputs merely have not changed.",
+          "route": "/features/evidence/",
+          "featured": true,
+          "surfaces": {
+            "cli": true,
+            "api": true,
+            "mcp": true,
+            "cockpit": true,
+            "docs": true
+          },
+          "claims": 8,
+          "tested": 8,
+          "use_cases": 0
+        },
+        {
+          "id": "benchmarks",
+          "label": "Benchmarks",
+          "title": "Every claim about speed is a recorded measurement",
+          "headline": "Every externally callable operation is timed directly, over MCP and over HTTP, the denominator is generated from the registry, and a regression against the accepted baseline fails the check.",
+          "route": "/features/benchmarks/",
+          "featured": false,
+          "surfaces": {
+            "cli": true,
+            "api": true,
+            "mcp": true,
+            "cockpit": true,
+            "docs": true
+          },
+          "claims": 6,
+          "tested": 6,
+          "use_cases": 1
+        }
+      ],
+      "surfaces": {
+        "cli": true,
+        "api": true,
+        "mcp": true,
+        "cockpit": true,
+        "docs": true
+      },
+      "moments": [
+        {
+          "id": "re-explaining-context",
+          "title": "Re-explaining the same context to a brand-new session",
+          "hook": "re-explained the same context to a brand-new session",
+          "route": "/why/re-explaining-context/"
+        },
+        {
+          "id": "two-rulebooks-one-repository",
+          "title": "Two different rulebooks for one repository",
+          "hook": "opened CLAUDE.md and AGENTS.md and found two different rulebooks for one repository",
+          "route": "/why/two-rulebooks-one-repository/"
+        },
+        {
+          "id": "task-in-progress-for-three-weeks",
+          "title": "A task \"in progress\" that nobody has touched for three weeks",
+          "hook": "found a task \"in progress\" that nobody had touched for three weeks",
+          "route": "/why/task-in-progress-for-three-weeks/"
+        },
+        {
+          "id": "what-the-workers-did-last-night",
+          "title": "Asking what the workers did last night, and getting a transcript",
+          "hook": "asked what the workers did last night and had only transcripts to grep",
+          "route": "/why/what-the-workers-did-last-night/"
+        },
+        {
+          "id": "abandoned-worktree",
+          "title": "A worktree nobody can decide to delete",
+          "hook": "found five worktrees and could not say which of them still mattered",
+          "route": "/why/abandoned-worktree/"
+        },
+        {
+          "id": "worker-output-never-integrated",
+          "title": "Finished work that never reached the trunk",
+          "hook": "found finished work on a branch that nobody ever merged",
+          "route": "/why/worker-output-never-integrated/"
+        },
+        {
+          "id": "policy-changed-projection-stale",
+          "title": "The policy changed and its four copies did not",
+          "hook": "changed a policy in one place and found the old one still in force in three others",
+          "route": "/why/policy-changed-projection-stale/"
+        },
+        {
+          "id": "code-without-an-issue",
+          "title": "A change that no plan ever asked for",
+          "hook": "found a substantial change that no issue, ticket or plan ever asked for",
+          "route": "/why/code-without-an-issue/"
+        },
+        {
+          "id": "milestone-status-unreconstructable",
+          "title": "Nobody can reconstruct where the milestone actually is",
+          "hook": "was asked how far the milestone had got and had to go and ask four people",
+          "route": "/why/milestone-status-unreconstructable/"
+        },
+        {
+          "id": "feature-without-a-test",
+          "title": "A capability the documentation promises and nothing proves",
+          "hook": "read a promise in the README that no test stood behind",
+          "route": "/why/feature-without-a-test/"
+        },
+        {
+          "id": "api-changed-contract-did-not",
+          "title": "The interface changed and its contract document did not",
+          "hook": "shipped an interface change whose contract document still described the old one",
+          "route": "/why/api-changed-contract-did-not/"
+        },
+        {
+          "id": "documented-command-no-longer-works",
+          "title": "The documented command that no longer works",
+          "hook": "pasted a command from the documentation and watched it fail",
+          "route": "/why/documented-command-no-longer-works/"
+        },
+        {
+          "id": "generated-artifacts-stale",
+          "title": "Green tests over stale generated files",
+          "hook": "had a green pipeline over generated files that no longer matched their sources",
+          "route": "/why/generated-artifacts-stale/"
+        },
+        {
+          "id": "no-record-why-this-model",
+          "title": "Nobody can say why that worker was chosen",
+          "hook": "could not say why one provider was used for that work and another for this",
+          "route": "/why/no-record-why-this-model/"
+        },
+        {
+          "id": "spend-not-tied-to-outcomes",
+          "title": "Spend that cannot be tied to anything accepted",
+          "hook": "looked at the bill and could not say which of it produced anything",
+          "route": "/why/spend-not-tied-to-outcomes/"
+        },
+        {
+          "id": "failure-disappears-between-sessions",
+          "title": "A failure that was seen once and never again",
+          "hook": "lost a failure a worker had already reproduced, because the session ended",
+          "route": "/why/failure-disappears-between-sessions/"
+        },
+        {
+          "id": "site-claims-nothing-proves",
+          "title": "A public page promising something nothing tests",
+          "hook": "published a page that promised more than any test could support",
+          "route": "/why/site-claims-nothing-proves/"
+        },
+        {
+          "id": "result-cannot-be-reproduced",
+          "title": "A result nobody can reproduce, including its author",
+          "hook": "could not reproduce a result because nothing recorded the state it came from",
+          "route": "/why/result-cannot-be-reproduced/"
+        },
+        {
+          "id": "who-did-this-and-under-what-policy",
+          "title": "A change whose provenance cannot be reconstructed",
+          "hook": "was asked who made a change and under what policy, and had only a commit",
+          "route": "/why/who-did-this-and-under-what-policy/"
+        }
+      ],
+      "claim_refs": [
+        {
+          "id": "benchmark-coverage-derived",
+          "claim": "Every externally callable operation of the Rust executable is a benchmark target with a denominator generated from the registry, and a missing case fails the structural check",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/bench_units.rs"
+        },
+        {
+          "id": "catalogue-resolves",
+          "claim": "A use case or application cannot name a command, doctrine or claim that does not exist, and the two catalogues cannot disagree about which applies to which",
+          "status": "guaranteed",
+          "test": "test/cases/28_catalogue.sh"
+        },
+        {
+          "id": "context-selection-counted",
+          "claim": "What the context compiler selects, out of what it judged relevant, is counted in tokens of a named tokenizer and recorded, never estimated",
+          "status": "guaranteed",
+          "test": "test/cases/430_economics.sh"
+        },
+        {
+          "id": "cost-per-outcome",
+          "claim": "Cost per accepted outcome will be reported from measured data only",
+          "status": "planned"
+        },
+        {
+          "id": "economics-claims-gated",
+          "claim": "A quantity about tokens, context or cost typed into hand-written prose is refused, and a claim bound to a metric cannot be guaranteed while its evidence does not stand",
+          "status": "guaranteed",
+          "test": "test/cases/431_economics_claims_gated.sh"
+        },
+        {
+          "id": "event-vocabulary",
+          "claim": "The ledger's event vocabulary is closed, on the way in and on the way out",
+          "status": "guaranteed",
+          "test": "test/cases/33_event_registry.sh"
+        },
+        {
+          "id": "evidence-a-failure-outranks-an-absence",
+          "claim": "A rule with a failing test reads failing whatever its other tests say, so a blocking rule whose tests are one failing and one not run is still a finding",
+          "status": "guaranteed",
+          "test": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
+        },
+        {
+          "id": "evidence-a-skip-is-not-run",
+          "claim": "A test that declined to run reads not_run with a detail saying it declined, never proven and never failing, and a test that errored or timed out reads failing",
+          "status": "guaranteed",
+          "test": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
+        },
+        {
+          "id": "evidence-currency-is-not-collapsed",
+          "claim": "A run recorded against this commit and a run whose inputs merely have not changed since are reported as different states, never as one",
+          "status": "guaranteed",
+          "test": "test/cases/124_evidence.sh"
+        },
+        {
+          "id": "evidence-judged-at-the-presented-revision",
+          "claim": "A claim reads proven only when its passing run was recorded on a commit the presented revision contains, nothing but the evidence ledger changed between the two, and neither the recorded tree nor the presented tree was dirty; a run on a commit the presented revision does not contain reads stale; a named revision is judged by the ledger committed in it, and a clean failing run of the same test that the checkout holds uncommitted, recorded between the two, caps it at stale",
+          "status": "guaranteed",
+          "test": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
+        },
+        {
+          "id": "evidence-navigates-both-ways",
+          "claim": "Every claim names the test that proves it and every test names the claims it proves, from one derivation",
+          "status": "guaranteed",
+          "test": "test/cases/124_evidence.sh"
+        },
+        {
+          "id": "evidence-partial-run-preserves-the-rest",
+          "claim": "Recording one test's result never erases the evidence recorded for any other test",
+          "status": "guaranteed",
+          "test": "test/cases/124_evidence.sh"
+        },
+        {
+          "id": "evidence-proof-is-an-execution",
+          "claim": "A claim's proof is an execution that was recorded with the commit it ran against, not a test path that resolves",
+          "status": "guaranteed",
+          "test": "test/cases/124_evidence.sh"
+        },
+        {
+          "id": "evidence-unsupported-guarantee-is-reported",
+          "claim": "A claim that declares a guarantee no recorded run supports is named by a gate rather than displayed as guaranteed",
+          "status": "guaranteed",
+          "test": "test/cases/124_evidence.sh"
+        },
+        {
+          "id": "execution-cache-equivalence",
+          "claim": "A cached capability of the Rust executable answers the same value uncached, cold and warm, a hit runs no handler, errors and commands are never cached, and the key carries the registry fingerprint",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/executor.rs"
+        },
+        {
+          "id": "git-identity",
+          "claim": "Identity fields on every state record are computed from git and never authored",
+          "status": "guaranteed",
+          "test": "test/cases/04_start_check.sh"
+        },
+        {
+          "id": "history-ledger-read",
+          "claim": "The ledger is readable back as operational history, filtered by task, event and time",
+          "status": "guaranteed",
+          "test": "test/cases/22_history.sh"
+        },
+        {
+          "id": "hot-path-no-rebuild",
+          "claim": "After startup, no MCP or HTTP request of the Rust executable scans the repository, builds the index or the registry, derives a schema or builds a projection, and perf.counters proves it",
+          "status": "guaranteed",
+          "test": "test/cases/91_canonical_architecture.sh"
+        },
+        {
+          "id": "ledger-integrity",
+          "claim": "Every line of the append-only ledger is a well-formed event, and a malformed line is a failure rather than a skipped record",
+          "status": "guaranteed",
+          "test": "test/cases/22_history.sh"
+        },
+        {
+          "id": "record-retention",
+          "claim": "Rotating the ledger archives the oldest lines and never deletes them",
+          "status": "guaranteed",
+          "test": "test/cases/22_history.sh"
+        },
+        {
+          "id": "retention-caps",
+          "claim": "The append-only ledger and handover store have retention caps that are checked",
+          "status": "guaranteed",
+          "test": "test/cases/02_doctor_basic.sh"
+        },
+        {
+          "id": "rust-coverage-floor",
+          "claim": "Coverage of the Rust crate is measured with test code out of the denominator, on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold or under the session/continuity domain's own floor in scripts/session-coverage-threshold",
+          "status": "guaranteed",
+          "test": "test/cases/77_rust_evidence.sh"
+        },
+        {
+          "id": "rust-evidence-gates",
+          "claim": "Every gate the Rust executable must pass is one script, scripts/rust-check, and CI runs that script on every change that can reach the crate",
+          "status": "guaranteed",
+          "test": "test/cases/77_rust_evidence.sh"
+        },
+        {
+          "id": "rust-hot-path-benchmarks",
+          "claim": "The paths of the Rust executable that scale with the repository carry criterion benchmarks that build on every push, and every executable capability declares its benchmark policy, required or waived for a typed reason",
+          "status": "guaranteed",
+          "test": "test/cases/77_rust_evidence.sh"
+        },
+        {
+          "id": "task-commit-attribution",
+          "claim": "A task will know which commits it produced, rather than inferring them from a range",
+          "status": "planned"
+        },
+        {
+          "id": "telemetry",
+          "claim": "Execution telemetry will be recorded once a provider exposes it honestly",
+          "status": "planned"
+        },
+        {
+          "id": "token-savings-measured",
+          "claim": "Majordomus will state a total-token change only from matched, verified runs that meet the methodology's publication rule",
+          "status": "planned"
+        },
+        {
+          "id": "use-case-coverage",
+          "claim": "Every public command is named and run by an active use case, a guaranteed claim or an MCP tool without one is a named gap, and the policy says which gaps fail doctor, check and finish",
+          "status": "guaranteed",
+          "test": "test/cases/94_use_cases.sh"
+        },
+        {
+          "id": "use-case-evidence",
+          "claim": "A use case's scenario executes against the real tool in a disposable repository, every step's exit code and output are asserted, and the normalised evidence is what the site shows",
+          "status": "guaranteed",
+          "test": "test/cases/94_use_cases.sh"
+        },
+        {
+          "id": "use-case-impact",
+          "claim": "From the files a change touched, the tool names the commands, rules, use cases, scenarios and behavioural cases affected, and scaffolds a draft for a capability no use case covers",
+          "status": "guaranteed",
+          "test": "test/cases/94_use_cases.sh"
+        }
+      ],
+      "use_case_refs": [
+        {
+          "id": "add-a-use-case-and-prove-it",
+          "title": "Add a use case and let the tool prove it",
+          "category": "extension"
+        },
+        {
+          "id": "open-and-close-a-session",
+          "title": "Record what one worker did in one sitting",
+          "category": "continuity"
+        },
+        {
+          "id": "prove-performance-with-benchmarks",
+          "title": "Prove the tool is fast, not assume it, and refuse a regression",
+          "category": "performance"
+        },
+        {
+          "id": "read-back-what-happened",
+          "title": "Read back what happened, and keep the ledger within its cap",
+          "category": "knowledge"
+        }
+      ],
+      "counts": {
+        "features": 5,
+        "claims": 30,
+        "tested": 26,
+        "use_cases": 4,
+        "rules": 13,
+        "enforced_rules": 10,
+        "capabilities": 9,
+        "moments": 19
+      },
+      "evidence": {
+        "claims": {
+          "guaranteed": 26,
+          "planned": 4
+        },
+        "modules": {}
+      }
+    },
+    {
+      "id": "completion",
+      "title": "Completion",
+      "headline": "Done is a contract the repository evaluates line by line. Work is not accepted while any line fails, and a refusal stays on the record.",
+      "problem": "Done is cheap. A worker can report success before the repository's own checks hold.",
+      "status": "stable",
+      "weight": 50,
+      "tags": [
+        "completion",
+        "finish",
+        "verification"
+      ],
+      "route": "/domains/completion/",
+      "source": ".ai/repo/features/domains/completion.md",
+      "features": [
+        {
+          "id": "coverage",
+          "label": "Coverage",
+          "title": "New code is covered, measured once and asked two questions",
+          "headline": "One coverage measurement, test code out of the denominator, holds a crate floor, a floor over the session/continuity domain, and — the invariant of #214 — every executable line a change touches.",
+          "route": "/features/coverage/",
+          "featured": false,
+          "surfaces": {
+            "cli": false,
+            "api": false,
+            "mcp": false,
+            "cockpit": false,
+            "docs": true
+          },
+          "claims": 1,
+          "tested": 1,
+          "use_cases": 0
+        },
+        {
+          "id": "finish-contract",
+          "label": "Finish contract",
+          "title": "Done is a contract, evaluated line by line and refused when unmet",
+          "headline": "A worker does not get to define its own successful completion: every line of the finish contract is printed pass or fail, the task is not accepted until all of them pass, and every time it was claimed done and was not is on the record.",
+          "route": "/features/finish-contract/",
+          "featured": true,
+          "surfaces": {
+            "cli": true,
+            "api": true,
+            "mcp": true,
+            "cockpit": true,
+            "docs": true
+          },
+          "claims": 9,
+          "tested": 9,
+          "use_cases": 7
+        },
+        {
+          "id": "ci",
+          "label": "CI",
+          "title": "CI planned from one model, the site deployed from its verified run",
+          "headline": "A change runs the gates its paths can affect, every gate is the same script a person runs, and the public site is published only from a commit whose derived data proved current.",
+          "route": "/features/ci/",
+          "featured": false,
+          "surfaces": {
+            "cli": true,
+            "api": false,
+            "mcp": false,
+            "cockpit": false,
+            "docs": true
+          },
+          "claims": 6,
+          "tested": 6,
+          "use_cases": 1
+        }
+      ],
+      "surfaces": {
+        "cli": true,
+        "api": true,
+        "mcp": true,
+        "cockpit": true,
+        "docs": true
+      },
+      "moments": [
+        {
+          "id": "re-explaining-context",
+          "title": "Re-explaining the same context to a brand-new session",
+          "hook": "re-explained the same context to a brand-new session",
+          "route": "/why/re-explaining-context/"
+        },
+        {
+          "id": "two-agents-one-bug",
+          "title": "Two agents fixing the same bug in two branches",
+          "hook": "found two agents fixing the same bug in two branches",
+          "route": "/why/two-agents-one-bug/"
+        },
+        {
+          "id": "strongest-model-renames-a-variable",
+          "title": "The strongest model, at maximum effort, renaming a variable",
+          "hook": "watched the strongest model, at maximum effort, rename a variable",
+          "route": "/why/strongest-model-renames-a-variable/"
+        },
+        {
+          "id": "done-because-the-model-said-so",
+          "title": "Accepting \"done\" because the model said so",
+          "hook": "accepted \"done\" because the model said so, and paid for it the next morning",
+          "route": "/why/done-because-the-model-said-so/"
+        },
+        {
+          "id": "two-rulebooks-one-repository",
+          "title": "Two different rulebooks for one repository",
+          "hook": "opened CLAUDE.md and AGENTS.md and found two different rulebooks for one repository",
+          "route": "/why/two-rulebooks-one-repository/"
+        },
+        {
+          "id": "re-arguing-a-settled-decision",
+          "title": "Re-arguing a decision that was settled last week",
+          "hook": "watched a session undo last week's decision, for the reason it was made",
+          "route": "/why/re-arguing-a-settled-decision/"
+        },
+        {
+          "id": "task-in-progress-for-three-weeks",
+          "title": "A task \"in progress\" that nobody has touched for three weeks",
+          "hook": "found a task \"in progress\" that nobody had touched for three weeks",
+          "route": "/why/task-in-progress-for-three-weeks/"
+        },
+        {
+          "id": "what-the-workers-did-last-night",
+          "title": "Asking what the workers did last night, and getting a transcript",
+          "hook": "asked what the workers did last night and had only transcripts to grep",
+          "route": "/why/what-the-workers-did-last-night/"
+        },
+        {
+          "id": "rule-in-a-readme-nobody-loaded",
+          "title": "The rule for that directory, in a README no session ever loaded",
+          "hook": "found the rule for that directory in a README no session ever loaded",
+          "route": "/why/rule-in-a-readme-nobody-loaded/"
+        },
+        {
+          "id": "three-roadmaps-none-of-them-true",
+          "title": "Three roadmaps, and none of them true",
+          "hook": "read three roadmaps for one project and believed none of them",
+          "route": "/why/three-roadmaps-none-of-them-true/"
+        },
+        {
+          "id": "context-budget-blown",
+          "title": "The instruction file that grew into a rulebook",
+          "hook": "watched the always-loaded instruction file grow past a thousand lines",
+          "route": "/why/context-budget-blown/"
+        },
+        {
+          "id": "one-agent-undoes-another",
+          "title": "One worker undoing another worker's change",
+          "hook": "watched one worker revert another worker's change, on purpose",
+          "route": "/why/one-agent-undoes-another/"
+        },
+        {
+          "id": "abandoned-worktree",
+          "title": "A worktree nobody can decide to delete",
+          "hook": "found five worktrees and could not say which of them still mattered",
+          "route": "/why/abandoned-worktree/"
+        },
+        {
+          "id": "worker-output-never-integrated",
+          "title": "Finished work that never reached the trunk",
+          "hook": "found finished work on a branch that nobody ever merged",
+          "route": "/why/worker-output-never-integrated/"
+        },
+        {
+          "id": "second-session-same-checkout",
+          "title": "Two sessions in one checkout, standing on each other",
+          "hook": "had two sessions writing into one checkout without either knowing",
+          "route": "/why/second-session-same-checkout/"
+        },
+        {
+          "id": "policy-changed-projection-stale",
+          "title": "The policy changed and its four copies did not",
+          "hook": "changed a policy in one place and found the old one still in force in three others",
+          "route": "/why/policy-changed-projection-stale/"
+        },
+        {
+          "id": "enforcement-nothing-invokes",
+          "title": "A rule enforced by a hook that never runs",
+          "hook": "found a rule everyone believed was enforced and nothing ever invoked",
+          "route": "/why/enforcement-nothing-invokes/"
+        },
+        {
+          "id": "implementation-contradicts-the-decision",
+          "title": "Code that quietly contradicts a written decision",
+          "hook": "found code that contradicted a decision the repository had written down",
+          "route": "/why/implementation-contradicts-the-decision/"
+        },
+        {
+          "id": "code-without-an-issue",
+          "title": "A change that no plan ever asked for",
+          "hook": "found a substantial change that no issue, ticket or plan ever asked for",
+          "route": "/why/code-without-an-issue/"
+        },
+        {
+          "id": "issue-says-done-tests-disagree",
+          "title": "The issue says done and the repository disagrees",
+          "hook": "closed an issue whose acceptance criteria nothing had actually checked",
+          "route": "/why/issue-says-done-tests-disagree/"
+        },
+        {
+          "id": "milestone-status-unreconstructable",
+          "title": "Nobody can reconstruct where the milestone actually is",
+          "hook": "was asked how far the milestone had got and had to go and ask four people",
+          "route": "/why/milestone-status-unreconstructable/"
+        },
+        {
+          "id": "feature-without-a-test",
+          "title": "A capability the documentation promises and nothing proves",
+          "hook": "read a promise in the README that no test stood behind",
+          "route": "/why/feature-without-a-test/"
+        },
+        {
+          "id": "api-changed-contract-did-not",
+          "title": "The interface changed and its contract document did not",
+          "hook": "shipped an interface change whose contract document still described the old one",
+          "route": "/why/api-changed-contract-did-not/"
+        },
+        {
+          "id": "documented-command-no-longer-works",
+          "title": "The documented command that no longer works",
+          "hook": "pasted a command from the documentation and watched it fail",
+          "route": "/why/documented-command-no-longer-works/"
+        },
+        {
+          "id": "generated-artifacts-stale",
+          "title": "Green tests over stale generated files",
+          "hook": "had a green pipeline over generated files that no longer matched their sources",
+          "route": "/why/generated-artifacts-stale/"
+        },
+        {
+          "id": "weak-model-on-architecture",
+          "title": "A cheap worker deciding something expensive",
+          "hook": "let a fast, cheap session make a decision the whole codebase now lives with",
+          "route": "/why/weak-model-on-architecture/"
+        },
+        {
+          "id": "no-record-why-this-model",
+          "title": "Nobody can say why that worker was chosen",
+          "hook": "could not say why one provider was used for that work and another for this",
+          "route": "/why/no-record-why-this-model/"
+        },
+        {
+          "id": "spend-not-tied-to-outcomes",
+          "title": "Spend that cannot be tied to anything accepted",
+          "hook": "looked at the bill and could not say which of it produced anything",
+          "route": "/why/spend-not-tied-to-outcomes/"
+        },
+        {
+          "id": "three-copies-of-one-explanation",
+          "title": "Three copies of one explanation, and no way to tell which is current",
+          "hook": "found the same thing explained three times, slightly differently",
+          "route": "/why/three-copies-of-one-explanation/"
+        },
+        {
+          "id": "site-claims-nothing-proves",
+          "title": "A public page promising something nothing tests",
+          "hook": "published a page that promised more than any test could support",
+          "route": "/why/site-claims-nothing-proves/"
+        },
+        {
+          "id": "result-cannot-be-reproduced",
+          "title": "A result nobody can reproduce, including its author",
+          "hook": "could not reproduce a result because nothing recorded the state it came from",
+          "route": "/why/result-cannot-be-reproduced/"
+        }
+      ],
+      "claim_refs": [
+        {
+          "id": "blocker-store",
+          "claim": "An entry in the questions store that does not parse blocks acceptance exactly as an unresolved question does",
+          "status": "guaranteed",
+          "test": "test/cases/21_decision_question.sh"
+        },
+        {
+          "id": "blocker-survives-handover",
+          "claim": "A blocking question keeps blocking after the work is handed to a new task",
+          "status": "guaranteed",
+          "test": "test/cases/50_blocker_across_handover.sh"
+        },
+        {
+          "id": "ci-planned-gates",
+          "claim": "A change runs the gates its paths can affect, decided by one model of what affects what, and a change to the pipeline itself or a path the model does not know runs every gate",
+          "status": "guaranteed",
+          "test": "test/cases/94_ci_plan.sh"
+        },
+        {
+          "id": "ci-verdict",
+          "claim": "The verdict status is green only when planning succeeded and every gate the plan selected ran in a job that succeeded; a failed or cancelled job, a selected gate whose job was skipped, or a plan that selected nothing is red",
+          "status": "guaranteed",
+          "test": "test/cases/94_ci_plan.sh"
+        },
+        {
+          "id": "consistency-check",
+          "claim": "check reports whether state, scope, blockers and checkpoint age are consistent right now",
+          "status": "guaranteed",
+          "test": "test/cases/04_start_check.sh"
+        },
+        {
+          "id": "exit-code-contract",
+          "claim": "Exit codes are a contract, and no code means \"warn and continue\"",
+          "status": "guaranteed",
+          "test": "test/cases/03_update.sh"
+        },
+        {
+          "id": "finish-contract",
+          "claim": "finish evaluates the finish contract line by line and refuses when any line is unmet",
+          "status": "guaranteed",
+          "test": "test/cases/06_finish.sh"
+        },
+        {
+          "id": "finish-refusal-is-recorded",
+          "claim": "every refused finish appends a task.refused event naming the outcome claimed, the unmet count and the doctrines that refused, and finish --check writes none",
+          "status": "guaranteed",
+          "test": "test/cases/06_finish.sh"
+        },
+        {
+          "id": "new-code-is-covered",
+          "claim": "Every executable line, function and region a change adds or touches in the Rust crate must be covered by a test; a change that leaves new code uncovered is refused, and untouched legacy debt is left alone",
+          "status": "guaranteed",
+          "test": "test/cases/132_coverage_differential.sh"
+        },
+        {
+          "id": "open-question-gate",
+          "claim": "An unresolved question blocks acceptance, and an entry the gate cannot parse is a failure rather than a silent pass",
+          "status": "guaranteed",
+          "test": "test/cases/21_decision_question.sh"
+        },
+        {
+          "id": "reproduce-command",
+          "claim": "Every finding carries the command that reproduces it",
+          "status": "guaranteed",
+          "test": "test/cases/02_doctor_basic.sh"
+        },
+        {
+          "id": "rust-evidence-gates",
+          "claim": "Every gate the Rust executable must pass is one script, scripts/rust-check, and CI runs that script on every change that can reach the crate",
+          "status": "guaranteed",
+          "test": "test/cases/77_rust_evidence.sh"
+        },
+        {
+          "id": "site-deploy-one-path",
+          "claim": "The site is deployed by one script, scripts/site-deploy, from a terminal or from the publication workflow; it refuses a dirty tree, a commit master does not contain and a build that is not HEAD's, pushes site/public to gh-pages with the source commit named, and pushes nothing when the output is unchanged",
+          "status": "guaranteed",
+          "test": "test/cases/96_site_deploy.sh"
+        },
+        {
+          "id": "site-deploys-from-verified-run",
+          "claim": "Publication is gated on everything that can make the published site wrong and waits for nothing else; the checks that decide whether a change may merge run beside it on the same commit, not in front of it",
+          "status": "guaranteed",
+          "test": "test/cases/97_pages_fast_path.sh"
+        },
+        {
+          "id": "suite-parallel",
+          "claim": "The behavioural suite runs a bounded number of cases at a time with the serial runner's semantics, a case that writes into the checkout declares itself exclusive and runs alone, and the parallel phase fails naming the paths when the checkout changed under it",
+          "status": "guaranteed",
+          "test": "test/cases/94_ci_plan.sh"
+        },
+        {
+          "id": "typed-outcome",
+          "claim": "An outcome is a value from a closed vocabulary, not free text",
+          "status": "guaranteed",
+          "test": "test/cases/06_finish.sh"
+        }
+      ],
+      "use_case_refs": [
+        {
+          "id": "accept-or-refuse-finished-work",
+          "title": "Decide whether finished work is actually finished",
+          "category": "completion"
+        },
+        {
+          "id": "block-acceptance-on-an-open-question",
+          "title": "Block acceptance on a question nobody has answered",
+          "category": "completion"
+        },
+        {
+          "id": "carry-a-blocker-across-a-handover",
+          "title": "Hand work over with a question still open, and keep it blocking",
+          "category": "continuity"
+        },
+        {
+          "id": "catch-an-agent-that-says-it-is-done",
+          "title": "Catch an agent that says it is done when it is not",
+          "category": "completion"
+        },
+        {
+          "id": "gate-ci-on-the-tool-itself",
+          "title": "Gate CI on the tool itself, with an exit code that is a contract",
+          "category": "policy"
+        },
+        {
+          "id": "know-whether-this-work-is-finished",
+          "title": "Know whether the work in this checkout is finished",
+          "category": "completion"
+        },
+        {
+          "id": "prove-what-a-task-owed-before-calling-it-done",
+          "title": "Prove what a task owed before calling it done",
+          "category": "completion"
+        },
+        {
+          "id": "say-what-reached-the-remote-and-what-did-not",
+          "title": "Say what reached the remote and what did not",
+          "category": "completion"
+        }
+      ],
+      "counts": {
+        "features": 3,
+        "claims": 16,
+        "tested": 16,
+        "use_cases": 8,
+        "rules": 12,
+        "enforced_rules": 10,
+        "capabilities": 4,
+        "moments": 31
+      },
+      "evidence": {
+        "claims": {
+          "guaranteed": 16
+        },
+        "modules": {}
+      }
+    },
+    {
+      "id": "surfaces",
+      "title": "Surfaces",
+      "headline": "One declaration in the repository becomes the command line, the HTTP API, MCP, the Cockpit, the documentation and this site, and a projection that disagrees with it fails the build.",
+      "problem": "Interfaces disagree. The command line, the API, the docs and the website each keep a copy, and the copies drift.",
+      "status": "stable",
+      "weight": 60,
+      "tags": [
+        "surfaces",
+        "interfaces",
+        "projection"
+      ],
+      "route": "/domains/surfaces/",
+      "source": ".ai/repo/features/domains/surfaces.md",
+      "features": [
+        {
+          "id": "declare-once",
+          "label": "Declare once",
+          "title": "Declare once, derive every interface",
+          "headline": "A capability is written in one place, and the command line, the HTTP API, the OpenAPI document, MCP, the Cockpit, the reference and this website are projections of it.",
+          "route": "/features/declare-once/",
+          "featured": true,
+          "surfaces": {
+            "cli": true,
+            "api": true,
+            "mcp": true,
+            "cockpit": true,
+            "docs": true
+          },
+          "claims": 9,
+          "tested": 9,
+          "use_cases": 1
+        },
+        {
+          "id": "interfaces",
+          "label": "Interfaces",
+          "title": "One registry over the command line, HTTP, OpenAPI, Swagger UI and MCP",
+          "headline": "Every agent, script and person reads the same repository through the interface it already speaks, and none of the interfaces is maintained by hand.",
+          "route": "/features/interfaces/",
+          "featured": false,
+          "surfaces": {
+            "cli": true,
+            "api": true,
+            "mcp": true,
+            "cockpit": true,
+            "docs": true
+          },
+          "claims": 11,
+          "tested": 11,
+          "use_cases": 3
+        },
+        {
+          "id": "cockpit",
+          "label": "Cockpit",
+          "title": "The Cockpit: the registry rendered for a person",
+          "headline": "The same server that answers agents renders every capability, object, graph, worktree and health check as pages, with a runner generated from each capability's own schema; nothing on it is a second list.",
+          "route": "/features/cockpit/",
+          "featured": true,
+          "surfaces": {
+            "cli": false,
+            "api": true,
+            "mcp": true,
+            "cockpit": true,
+            "docs": true
+          },
+          "claims": 1,
+          "tested": 1,
+          "use_cases": 0
+        },
+        {
+          "id": "install",
+          "label": "Install",
+          "title": "One command to install, one to initialise, nothing else to trust",
+          "headline": "The installer downloads one archive for your machine, verifies its digest against the release metadata before unpacking anything, and installs atomically; no git, no Rust, no Node, no root.",
+          "route": "/features/install/",
+          "featured": false,
+          "surfaces": {
+            "cli": true,
+            "api": true,
+            "mcp": true,
+            "cockpit": true,
+            "docs": true
+          },
+          "claims": 8,
+          "tested": 8,
+          "use_cases": 4
+        },
+        {
+          "id": "why",
+          "label": "Why",
+          "title": "The failure modes it answers are objects, not marketing pages",
+          "headline": "Every operational moment the tool exists for is one file with the signals that identify it and the mechanisms that answer it, and a reader's own symptoms resolve to a diagnosis by counting, not by inference.",
+          "route": "/features/why/",
+          "featured": false,
+          "surfaces": {
+            "cli": true,
+            "api": true,
+            "mcp": true,
+            "cockpit": true,
+            "docs": true
+          },
+          "claims": 3,
+          "tested": 3,
+          "use_cases": 1
+        }
+      ],
+      "surfaces": {
+        "cli": true,
+        "api": true,
+        "mcp": true,
+        "cockpit": true,
+        "docs": true
+      },
+      "moments": [
+        {
+          "id": "re-explaining-context",
+          "title": "Re-explaining the same context to a brand-new session",
+          "hook": "re-explained the same context to a brand-new session",
+          "route": "/why/re-explaining-context/"
+        },
+        {
+          "id": "two-agents-one-bug",
+          "title": "Two agents fixing the same bug in two branches",
+          "hook": "found two agents fixing the same bug in two branches",
+          "route": "/why/two-agents-one-bug/"
+        },
+        {
+          "id": "strongest-model-renames-a-variable",
+          "title": "The strongest model, at maximum effort, renaming a variable",
+          "hook": "watched the strongest model, at maximum effort, rename a variable",
+          "route": "/why/strongest-model-renames-a-variable/"
+        },
+        {
+          "id": "done-because-the-model-said-so",
+          "title": "Accepting \"done\" because the model said so",
+          "hook": "accepted \"done\" because the model said so, and paid for it the next morning",
+          "route": "/why/done-because-the-model-said-so/"
+        },
+        {
+          "id": "two-rulebooks-one-repository",
+          "title": "Two different rulebooks for one repository",
+          "hook": "opened CLAUDE.md and AGENTS.md and found two different rulebooks for one repository",
+          "route": "/why/two-rulebooks-one-repository/"
+        },
+        {
+          "id": "re-arguing-a-settled-decision",
+          "title": "Re-arguing a decision that was settled last week",
+          "hook": "watched a session undo last week's decision, for the reason it was made",
+          "route": "/why/re-arguing-a-settled-decision/"
+        },
+        {
+          "id": "task-in-progress-for-three-weeks",
+          "title": "A task \"in progress\" that nobody has touched for three weeks",
+          "hook": "found a task \"in progress\" that nobody had touched for three weeks",
+          "route": "/why/task-in-progress-for-three-weeks/"
+        },
+        {
+          "id": "what-the-workers-did-last-night",
+          "title": "Asking what the workers did last night, and getting a transcript",
+          "hook": "asked what the workers did last night and had only transcripts to grep",
+          "route": "/why/what-the-workers-did-last-night/"
+        },
+        {
+          "id": "rule-in-a-readme-nobody-loaded",
+          "title": "The rule for that directory, in a README no session ever loaded",
+          "hook": "found the rule for that directory in a README no session ever loaded",
+          "route": "/why/rule-in-a-readme-nobody-loaded/"
+        },
+        {
+          "id": "three-roadmaps-none-of-them-true",
+          "title": "Three roadmaps, and none of them true",
+          "hook": "read three roadmaps for one project and believed none of them",
+          "route": "/why/three-roadmaps-none-of-them-true/"
+        },
+        {
+          "id": "discovery-never-becomes-knowledge",
+          "title": "A hard-won discovery that never became knowledge",
+          "hook": "spent an hour discovering something the repository already knew, twice",
+          "route": "/why/discovery-never-becomes-knowledge/"
+        },
+        {
+          "id": "context-budget-blown",
+          "title": "The instruction file that grew into a rulebook",
+          "hook": "watched the always-loaded instruction file grow past a thousand lines",
+          "route": "/why/context-budget-blown/"
+        },
+        {
+          "id": "one-agent-undoes-another",
+          "title": "One worker undoing another worker's change",
+          "hook": "watched one worker revert another worker's change, on purpose",
+          "route": "/why/one-agent-undoes-another/"
+        },
+        {
+          "id": "abandoned-worktree",
+          "title": "A worktree nobody can decide to delete",
+          "hook": "found five worktrees and could not say which of them still mattered",
+          "route": "/why/abandoned-worktree/"
+        },
+        {
+          "id": "worker-output-never-integrated",
+          "title": "Finished work that never reached the trunk",
+          "hook": "found finished work on a branch that nobody ever merged",
+          "route": "/why/worker-output-never-integrated/"
+        },
+        {
+          "id": "second-session-same-checkout",
+          "title": "Two sessions in one checkout, standing on each other",
+          "hook": "had two sessions writing into one checkout without either knowing",
+          "route": "/why/second-session-same-checkout/"
+        },
+        {
+          "id": "policy-changed-projection-stale",
+          "title": "The policy changed and its four copies did not",
+          "hook": "changed a policy in one place and found the old one still in force in three others",
+          "route": "/why/policy-changed-projection-stale/"
+        },
+        {
+          "id": "enforcement-nothing-invokes",
+          "title": "A rule enforced by a hook that never runs",
+          "hook": "found a rule everyone believed was enforced and nothing ever invoked",
+          "route": "/why/enforcement-nothing-invokes/"
+        },
+        {
+          "id": "decision-only-in-a-transcript",
+          "title": "The decision exists, in a conversation nobody can find",
+          "hook": "went looking for why we chose this and found a chat log",
+          "route": "/why/decision-only-in-a-transcript/"
+        },
+        {
+          "id": "implementation-contradicts-the-decision",
+          "title": "Code that quietly contradicts a written decision",
+          "hook": "found code that contradicted a decision the repository had written down",
+          "route": "/why/implementation-contradicts-the-decision/"
+        },
+        {
+          "id": "code-without-an-issue",
+          "title": "A change that no plan ever asked for",
+          "hook": "found a substantial change that no issue, ticket or plan ever asked for",
+          "route": "/why/code-without-an-issue/"
+        },
+        {
+          "id": "issue-says-done-tests-disagree",
+          "title": "The issue says done and the repository disagrees",
+          "hook": "closed an issue whose acceptance criteria nothing had actually checked",
+          "route": "/why/issue-says-done-tests-disagree/"
+        },
+        {
+          "id": "milestone-status-unreconstructable",
+          "title": "Nobody can reconstruct where the milestone actually is",
+          "hook": "was asked how far the milestone had got and had to go and ask four people",
+          "route": "/why/milestone-status-unreconstructable/"
+        },
+        {
+          "id": "feature-without-a-test",
+          "title": "A capability the documentation promises and nothing proves",
+          "hook": "read a promise in the README that no test stood behind",
+          "route": "/why/feature-without-a-test/"
+        },
+        {
+          "id": "api-changed-contract-did-not",
+          "title": "The interface changed and its contract document did not",
+          "hook": "shipped an interface change whose contract document still described the old one",
+          "route": "/why/api-changed-contract-did-not/"
+        },
+        {
+          "id": "documented-command-no-longer-works",
+          "title": "The documented command that no longer works",
+          "hook": "pasted a command from the documentation and watched it fail",
+          "route": "/why/documented-command-no-longer-works/"
+        },
+        {
+          "id": "generated-artifacts-stale",
+          "title": "Green tests over stale generated files",
+          "hook": "had a green pipeline over generated files that no longer matched their sources",
+          "route": "/why/generated-artifacts-stale/"
+        },
+        {
+          "id": "weak-model-on-architecture",
+          "title": "A cheap worker deciding something expensive",
+          "hook": "let a fast, cheap session make a decision the whole codebase now lives with",
+          "route": "/why/weak-model-on-architecture/"
+        },
+        {
+          "id": "no-record-why-this-model",
+          "title": "Nobody can say why that worker was chosen",
+          "hook": "could not say why one provider was used for that work and another for this",
+          "route": "/why/no-record-why-this-model/"
+        },
+        {
+          "id": "spend-not-tied-to-outcomes",
+          "title": "Spend that cannot be tied to anything accepted",
+          "hook": "looked at the bill and could not say which of it produced anything",
+          "route": "/why/spend-not-tied-to-outcomes/"
+        },
+        {
+          "id": "failure-disappears-between-sessions",
+          "title": "A failure that was seen once and never again",
+          "hook": "lost a failure a worker had already reproduced, because the session ended",
+          "route": "/why/failure-disappears-between-sessions/"
+        },
+        {
+          "id": "three-copies-of-one-explanation",
+          "title": "Three copies of one explanation, and no way to tell which is current",
+          "hook": "found the same thing explained three times, slightly differently",
+          "route": "/why/three-copies-of-one-explanation/"
+        },
+        {
+          "id": "site-claims-nothing-proves",
+          "title": "A public page promising something nothing tests",
+          "hook": "published a page that promised more than any test could support",
+          "route": "/why/site-claims-nothing-proves/"
+        },
+        {
+          "id": "first-hour-in-an-unfamiliar-repository",
+          "title": "The first hour in a repository nobody can explain quickly",
+          "hook": "spent the first hour in an unfamiliar repository working out what was normal here",
+          "route": "/why/first-hour-in-an-unfamiliar-repository/"
+        },
+        {
+          "id": "contribution-that-could-not-have-known",
+          "title": "A fluent contribution that could not have known the rules",
+          "hook": "reviewed a well-written contribution that broke a convention it had no way to discover",
+          "route": "/why/contribution-that-could-not-have-known/"
+        },
+        {
+          "id": "same-dead-end-explored-twice",
+          "title": "The same dead end, explored twice",
+          "hook": "watched a worker spend a day on an approach that had already been ruled out",
+          "route": "/why/same-dead-end-explored-twice/"
+        },
+        {
+          "id": "result-cannot-be-reproduced",
+          "title": "A result nobody can reproduce, including its author",
+          "hook": "could not reproduce a result because nothing recorded the state it came from",
+          "route": "/why/result-cannot-be-reproduced/"
+        },
+        {
+          "id": "who-did-this-and-under-what-policy",
+          "title": "A change whose provenance cannot be reconstructed",
+          "hook": "was asked who made a change and under what policy, and had only a commit",
+          "route": "/why/who-did-this-and-under-what-policy/"
+        }
+      ],
+      "claim_refs": [
+        {
+          "id": "capability-registry",
+          "claim": "Every capability of the Rust executable is defined once, and the registry refuses a duplicate id or a colliding projection name, naming both parties",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/registry.rs"
+        },
+        {
+          "id": "cli-documentation-executable",
+          "claim": "Every command of the Rust executable's command line carries a summary, help on every argument and, where it runs, at least one example, the root carries a long description, and every example shown to a reader is executed against the built executable",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/cli_examples.rs"
+        },
+        {
+          "id": "cockpit-is-a-projection-of-the-registry",
+          "claim": "A capability added to the registry appears in the Cockpit's listing, navigation and search and on a page of its own with a form generated from its schema, without one line of the Cockpit being edited",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/cockpit.rs"
+        },
+        {
+          "id": "derivation-one-graph",
+          "claim": "Every committed derived artifact of the repository is regenerated by one command in dependency order and checked by one read-only command that names every stale artifact, a second regeneration on a clean tree changes nothing, and no derived file records the commit it lands in",
+          "status": "guaranteed",
+          "test": "test/cases/400_derivation_is_one_graph.sh"
+        },
+        {
+          "id": "derived-data-current",
+          "claim": "A commit whose derived data is behind its canonical inputs is refused before it exists, and a repository that unwires that gate is a doctor failure",
+          "status": "guaranteed",
+          "test": "test/cases/56_derived_current_gate.sh"
+        },
+        {
+          "id": "derived-not-declared",
+          "claim": "What the tool knows about itself is written once and derived everywhere else, and a second copy is a test failure",
+          "status": "guaranteed",
+          "test": "test/cases/28_no_hardcoded_values.sh"
+        },
+        {
+          "id": "distribution-canonical-model",
+          "claim": "Every platform, artifact name and installation URL is derived from one model, and a projection that disagrees with it is refused",
+          "status": "guaranteed",
+          "test": "test/cases/84_distribution_model.sh"
+        },
+        {
+          "id": "executable-reference-derived",
+          "claim": "The site's pages about the Rust executable (one per module, one per capability, the command line, the MCP surface, the benchmarks, the executable's own narrative) are derived from the registry manifest and the registry dataset the executable generates, nothing names a capability by hand, and a capability that joins or leaves the registry gains or loses its page, its index entries and its links from the generators alone",
+          "status": "guaranteed",
+          "test": "test/cases/95_executable_reference.sh"
+        },
+        {
+          "id": "generated-artifacts-typed",
+          "claim": "Every generated artifact declares the document it projects, the encoding it is written in, the schema its content satisfies and its source, and a structured document is written in every encoding it is committed in from one value",
+          "status": "guaranteed",
+          "test": "test/cases/52_generated_artifact_typing.sh"
+        },
+        {
+          "id": "generated-projections-checked",
+          "claim": "The committed projections, the OpenAPI document, the capability reference and the allow-lists, are regenerated from the registry and the schemas, and generate --check refuses a stale one",
+          "status": "guaranteed",
+          "test": "test/cases/76_capabilities_projections.sh"
+        },
+        {
+          "id": "install-command-is-derived",
+          "claim": "The documented one-line install command is composed from the model's parts, and a document that states a different one fails the suite",
+          "status": "guaranteed",
+          "test": "test/cases/84_distribution_model.sh"
+        },
+        {
+          "id": "installer-verifies-before-installing",
+          "claim": "The installer verifies an artifact's digest and inspects its archive before anything is unpacked, and any failure leaves the previous installation working",
+          "status": "guaranteed",
+          "test": "test/cases/85_installer.sh"
+        },
+        {
+          "id": "interfaces-are-projections",
+          "claim": "MCP, HTTP, OpenAPI, Swagger UI, the capabilities commands and the generated reference are derived from the registry, and a change to one definition reaches every one of them",
+          "status": "guaranteed",
+          "test": "test/cases/76_capabilities_projections.sh"
+        },
+        {
+          "id": "legacy-migration",
+          "claim": "A repository on the pre-.ai layout is migrated once, explicitly, with a previewed plan and a verified backup of its local state, and the command is idempotent afterwards",
+          "status": "guaranteed",
+          "test": "test/cases/66_migrate_legacy.sh"
+        },
+        {
+          "id": "mcp-client-autostart",
+          "claim": "An MCP client opened in the repository starts the server itself, building the executable when it must, through the client configurations at the root and bin/majordomus-mcp",
+          "status": "guaranteed",
+          "test": "test/cases/90_mcp_shared_server.sh"
+        },
+        {
+          "id": "mcp-data-driven",
+          "claim": "What the MCP server serves is decided by the manifest, the declared source classes and each file's front matter, so an object added to the layer is served with no change to the executable",
+          "status": "guaranteed",
+          "test": "test/cases/72_rust_mcp.sh"
+        },
+        {
+          "id": "mcp-lease-resilience",
+          "claim": "Nothing a client leaves behind locks another client out of the shared server; a corrupt, empty, stale or abandoned lease is taken over and named, a client that cannot share is served alone with the reason logged, and a signal removes the lease before the server dies",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/mcp_shared.rs"
+        },
+        {
+          "id": "mcp-peers",
+          "claim": "Every client attached to a checkout's server is a peer named by its own initialize, and majordomus_peers lists every worker of the repository - its own board and the board of every other checkout, each peer stamped with the worktree it is working in - while majordomus_announce tells the others what it is working on and which paths it expects to touch",
+          "status": "guaranteed",
+          "test": "test/cases/250_the_board_is_repository_wide.sh"
+        },
+        {
+          "id": "mcp-shared-server",
+          "claim": "One shared server serves a checkout: the first majordomus mcp binds loopback HTTP with Swagger UI and MCP over HTTP beside its stdio session and logs the URL, every later client of that checkout attaches to it, and it ends when the last client leaves",
+          "status": "guaranteed",
+          "test": "test/cases/90_mcp_shared_server.sh"
+        },
+        {
+          "id": "mcp-stdio-surface",
+          "claim": "The Rust executable serves the repository's AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout",
+          "status": "guaranteed",
+          "test": "test/cases/72_rust_mcp.sh"
+        },
+        {
+          "id": "mcp-uri-resolution",
+          "claim": "A majordomus:// URI resolves the same way through the MCP resource read, the majordomus_get tool and the HTTP object route, and majordomus://repository answers repository.info as a JSON document tagged builtin",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/http_serve.rs"
+        },
+        {
+          "id": "no-network",
+          "claim": "Nothing performs a network call, evaluates generated text, or deletes recursively",
+          "status": "guaranteed",
+          "test": "test/cases/08_no_forbidden_constructs.sh"
+        },
+        {
+          "id": "openapi-inferred",
+          "claim": "The OpenAPI document is inferred, the tags are the modules, the examples are the benchmark cases, the responses are the router's statuses by kind, the prose is the one text every projection shares, and the site's API reference is rendered from the committed document",
+          "status": "guaranteed",
+          "test": "test/cases/92_openapi_reference.sh"
+        },
+        {
+          "id": "release-is-complete-or-absent",
+          "claim": "A release publishes an artifact for every supported target or it is not published",
+          "status": "guaranteed",
+          "test": "test/cases/87_release_pipeline.sh"
+        },
+        {
+          "id": "rust-binary-artifact",
+          "claim": "The Rust executable the rust gate built is published as an artifact with its provenance, and every Rust case drives the executable MAJORDOMUS_BIN names instead of building one",
+          "status": "guaranteed",
+          "test": "test/cases/401_the_rust_artifact_carries_its_provenance.sh"
+        },
+        {
+          "id": "site-registry-dataset",
+          "claim": "The site's Registry page is rendered from site/data/registry/registry.json, a dataset majordomus generate site derives from the registry and the index with their fingerprints, and generate --check refuses a stale one in CI",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/projections.rs"
+        },
+        {
+          "id": "tool-location-independent",
+          "claim": "The tool runs read-only from any location, and two locations of one version agree about one repository",
+          "status": "guaranteed",
+          "test": "test/cases/65_tool_root_independence.sh"
+        },
+        {
+          "id": "web-namespaces-reserved",
+          "claim": "/docs serves this repository's documentation and /swagger serves the Swagger UI, and neither may take the other's mount",
+          "status": "guaranteed",
+          "test": "test/cases/89_web_surface.sh"
+        },
+        {
+          "id": "web-surface-declared-once",
+          "claim": "Every web surface is declared once at its producer and resolved into one topology, from which the router, the landing page and the machine-readable index are each projected",
+          "status": "guaranteed",
+          "test": "test/cases/89_web_surface.sh"
+        },
+        {
+          "id": "why-catalogue-discovered",
+          "claim": "An operational moment is one file under the layer, discovered rather than registered, and answered by the command line, the HTTP API, the OpenAPI document, MCP, the derived graph and the website with nothing else changed",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/why.rs"
+        },
+        {
+          "id": "why-diagnosis-explainable",
+          "claim": "A diagnosis of a reader's own symptoms is deterministic counting over the catalogue's metadata, and every recommendation names the moments that produced it",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/why.rs"
+        },
+        {
+          "id": "why-references-resolve",
+          "claim": "Every reference a moment makes resolves against the thing it names, and one that does not is an error carrying the nearest candidate",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/why.rs"
+        }
+      ],
+      "use_case_refs": [
+        {
+          "id": "extend-what-the-executable-serves",
+          "title": "Extend what the executable serves by adding a file, never by rebuilding it",
+          "category": "extension"
+        },
+        {
+          "id": "find-an-object-without-reading-everything",
+          "title": "Find an object of the layer without reading everything",
+          "category": "mcp"
+        },
+        {
+          "id": "hand-the-repository-to-a-reader",
+          "title": "Hand the repository to someone who cannot clone it",
+          "category": "knowledge"
+        },
+        {
+          "id": "install-the-tool-in-one-command",
+          "title": "Install the tool in one command, on a machine with no toolchain",
+          "category": "adoption"
+        },
+        {
+          "id": "know-which-tool-is-running",
+          "title": "Check the version before trusting a diagnosis",
+          "category": "adoption"
+        },
+        {
+          "id": "migrate-from-the-old-layout",
+          "title": "Move a repository from the pre-.ai layout to the layer",
+          "category": "adoption"
+        },
+        {
+          "id": "say-what-the-tool-is-for",
+          "title": "Say what your work is for, once, and have every surface say it",
+          "category": "extension"
+        },
+        {
+          "id": "see-what-the-repository-holds-without-reading-it",
+          "title": "See what the repository holds, and run one of its capabilities, without reading a file",
+          "category": "mcp"
+        },
+        {
+          "id": "serve-the-layer-to-ai-clients",
+          "title": "Serve the repository's AI layer to every AI client through one shared server",
+          "category": "mcp"
+        }
+      ],
+      "counts": {
+        "features": 5,
+        "claims": 32,
+        "tested": 32,
+        "use_cases": 9,
+        "rules": 13,
+        "enforced_rules": 12,
+        "capabilities": 54,
+        "moments": 38
+      },
+      "evidence": {
+        "claims": {
+          "guaranteed": 32
+        },
+        "modules": {}
+      }
+    }
+  ],
   "features": [
     {
       "id": "declare-once",
@@ -61,6 +3125,7 @@
       "status": "stable",
       "weight": 10,
       "featured": true,
+      "domain": "surfaces",
       "areas": [
         "documentation",
         "governance"
@@ -78,6 +3143,7 @@
       ],
       "kinds": [
         "feature",
+        "domain",
         "command",
         "claim"
       ],
@@ -200,6 +3266,16 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/product.rs",
           "capabilities": [
             {
+              "id": "product.domains",
+              "title": "The domains",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_product_domains",
+              "resource": "majordomus://product/domains",
+              "route": "GET /api/v1/product/domains",
+              "cli": "majordomus product domains"
+            },
+            {
               "id": "product.feature",
               "title": "One feature",
               "kind": "query",
@@ -299,12 +3375,16 @@
           "objects": 27
         },
         {
+          "name": "domain",
+          "objects": 6
+        },
+        {
           "name": "command",
           "objects": 31
         },
         {
           "name": "claim",
-          "objects": 221
+          "objects": 222
         }
       ],
       "rule_refs": [
@@ -345,7 +3425,7 @@
           "identity": "project.derived-once@1",
           "title": "Derived state is computed once per state version",
           "class": "advisory",
-          "enforced": true,
+          "enforced": false,
           "path": ".ai/repo/rules/project/derived-once.v1.md"
         }
       ],
@@ -575,15 +3655,15 @@
         "why"
       ],
       "counts": {
-        "capabilities": 11,
-        "mcp_tools": 11,
-        "mcp_resources": 285,
-        "http_routes": 11,
-        "cli_paths": 10,
+        "capabilities": 12,
+        "mcp_tools": 12,
+        "mcp_resources": 293,
+        "http_routes": 12,
+        "cli_paths": 11,
         "commands": 2,
-        "objects": 279,
+        "objects": 286,
         "rules": 5,
-        "enforced_rules": 5,
+        "enforced_rules": 4,
         "docs": 3,
         "adrs": 4,
         "claims": 9,
@@ -597,6 +3677,11 @@
         "modules": {
           "behaviorally_verified": 4
         }
+      },
+      "domain_ref": {
+        "id": "surfaces",
+        "title": "Surfaces",
+        "route": "/domains/surfaces/"
       }
     },
     {
@@ -608,6 +3693,7 @@
       "status": "stable",
       "weight": 20,
       "featured": false,
+      "domain": "surfaces",
       "areas": [
         "documentation",
         "observability",
@@ -1343,6 +4429,11 @@
           "behaviorally_verified": 5,
           "implemented": 1
         }
+      },
+      "domain_ref": {
+        "id": "surfaces",
+        "title": "Surfaces",
+        "route": "/domains/surfaces/"
       }
     },
     {
@@ -1354,6 +4445,7 @@
       "status": "stable",
       "weight": 30,
       "featured": true,
+      "domain": "coordination",
       "areas": [
         "coordination"
       ],
@@ -1836,6 +4928,11 @@
           "behaviorally_verified": 3,
           "experimental": 1
         }
+      },
+      "domain_ref": {
+        "id": "coordination",
+        "title": "Coordination",
+        "route": "/domains/coordination/"
       }
     },
     {
@@ -1847,6 +4944,7 @@
       "status": "stable",
       "weight": 40,
       "featured": true,
+      "domain": "coordination",
       "areas": [
         "coordination",
         "work-tracking"
@@ -2066,6 +5164,11 @@
         "modules": {
           "behaviorally_verified": 1
         }
+      },
+      "domain_ref": {
+        "id": "coordination",
+        "title": "Coordination",
+        "route": "/domains/coordination/"
       }
     },
     {
@@ -2077,6 +5180,7 @@
       "status": "stable",
       "weight": 45,
       "featured": true,
+      "domain": "coordination",
       "areas": [
         "coordination"
       ],
@@ -2453,6 +5557,11 @@
         "modules": {
           "experimental": 1
         }
+      },
+      "domain_ref": {
+        "id": "coordination",
+        "title": "Coordination",
+        "route": "/domains/coordination/"
       }
     },
     {
@@ -2464,6 +5573,7 @@
       "status": "stable",
       "weight": 46,
       "featured": true,
+      "domain": "coordination",
       "areas": [
         "coordination"
       ],
@@ -2611,6 +5721,11 @@
         "modules": {
           "experimental": 1
         }
+      },
+      "domain_ref": {
+        "id": "coordination",
+        "title": "Coordination",
+        "route": "/domains/coordination/"
       }
     },
     {
@@ -2622,6 +5737,7 @@
       "status": "stable",
       "weight": 47,
       "featured": false,
+      "domain": "evidence",
       "areas": [
         "observability",
         "cost"
@@ -2787,6 +5903,11 @@
         "modules": {
           "behaviorally_verified": 1
         }
+      },
+      "domain_ref": {
+        "id": "evidence",
+        "title": "Evidence",
+        "route": "/domains/evidence/"
       }
     },
     {
@@ -2798,6 +5919,7 @@
       "status": "stable",
       "weight": 47,
       "featured": true,
+      "domain": "coordination",
       "areas": [
         "coordination"
       ],
@@ -3028,6 +6150,11 @@
         "modules": {
           "experimental": 1
         }
+      },
+      "domain_ref": {
+        "id": "coordination",
+        "title": "Coordination",
+        "route": "/domains/coordination/"
       }
     },
     {
@@ -3039,6 +6166,7 @@
       "status": "stable",
       "weight": 50,
       "featured": true,
+      "domain": "context",
       "areas": [
         "context",
         "coordination"
@@ -3664,6 +6792,11 @@
         "modules": {
           "behaviorally_verified": 4
         }
+      },
+      "domain_ref": {
+        "id": "context",
+        "title": "Context",
+        "route": "/domains/context/"
       }
     },
     {
@@ -3675,6 +6808,7 @@
       "status": "stable",
       "weight": 60,
       "featured": true,
+      "domain": "context",
       "areas": [
         "decisions",
         "context"
@@ -3860,7 +6994,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 79
+          "objects": 80
         },
         {
           "name": "knowledge",
@@ -3868,7 +7002,7 @@
         },
         {
           "name": "document",
-          "objects": 309
+          "objects": 310
         }
       ],
       "rule_refs": [
@@ -4141,11 +7275,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 392,
+        "mcp_resources": 394,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 389,
+        "objects": 391,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -4163,6 +7297,11 @@
         "modules": {
           "behaviorally_verified": 2
         }
+      },
+      "domain_ref": {
+        "id": "context",
+        "title": "Context",
+        "route": "/domains/context/"
       }
     },
     {
@@ -4174,6 +7313,7 @@
       "status": "stable",
       "weight": 70,
       "featured": true,
+      "domain": "governance",
       "areas": [
         "governance",
         "verification"
@@ -4751,17 +7891,23 @@
         "modules": {
           "behaviorally_verified": 2
         }
+      },
+      "domain_ref": {
+        "id": "governance",
+        "title": "Governance",
+        "route": "/domains/governance/"
       }
     },
     {
       "id": "coverage",
       "title": "New code is covered, measured once and asked two questions",
       "short_title": "Coverage",
-      "headline": "One coverage measurement, test code out of the denominator, holds a crate floor, a floor over the session/continuity domain, and — the invariant of",
+      "headline": "One coverage measurement, test code out of the denominator, holds a crate floor, a floor over the session/continuity domain, and — the invariant of #214 — every executable line a change touches.",
       "summary": "scripts/rust-coverage is the one coverage authority: a single cargo-llvm-cov export, test code excluded from both sides of every fraction, one rule for lines, functions and regions. Three questions read that judgment — a crate-wide line floor, a floor over the session/continuity domain, and the changed-code differential gate that refuses new debt while leaving untouched legacy debt alone. The differential intersects the export with the lines git says a change touched against the branch's merge-base, working tree included, and distinguishes PASS, FAIL, UNKNOWN and BLOCKED so a crashed tool or an unresolvable base is never a silent green.",
       "status": "stable",
       "weight": 72,
       "featured": false,
+      "domain": "completion",
       "areas": [
         "verification"
       ],
@@ -4853,6 +7999,11 @@
           "guaranteed": 1
         },
         "modules": {}
+      },
+      "domain_ref": {
+        "id": "completion",
+        "title": "Completion",
+        "route": "/domains/completion/"
       }
     },
     {
@@ -4864,6 +8015,7 @@
       "status": "stable",
       "weight": 80,
       "featured": true,
+      "domain": "completion",
       "areas": [
         "verification"
       ],
@@ -5328,6 +8480,11 @@
         "modules": {
           "behaviorally_verified": 2
         }
+      },
+      "domain_ref": {
+        "id": "completion",
+        "title": "Completion",
+        "route": "/domains/completion/"
       }
     },
     {
@@ -5339,6 +8496,7 @@
       "status": "stable",
       "weight": 90,
       "featured": false,
+      "domain": "governance",
       "areas": [
         "governance",
         "context"
@@ -5772,6 +8930,11 @@
           "planned": 1
         },
         "modules": {}
+      },
+      "domain_ref": {
+        "id": "governance",
+        "title": "Governance",
+        "route": "/domains/governance/"
       }
     },
     {
@@ -5783,6 +8946,7 @@
       "status": "stable",
       "weight": 100,
       "featured": true,
+      "domain": "surfaces",
       "areas": [
         "observability"
       ],
@@ -6116,6 +9280,11 @@
         "modules": {
           "behaviorally_verified": 2
         }
+      },
+      "domain_ref": {
+        "id": "surfaces",
+        "title": "Surfaces",
+        "route": "/domains/surfaces/"
       }
     },
     {
@@ -6127,6 +9296,7 @@
       "status": "stable",
       "weight": 110,
       "featured": true,
+      "domain": "evidence",
       "areas": [
         "observability",
         "cost"
@@ -6478,6 +9648,11 @@
           "planned": 3
         },
         "modules": {}
+      },
+      "domain_ref": {
+        "id": "evidence",
+        "title": "Evidence",
+        "route": "/domains/evidence/"
       }
     },
     {
@@ -6489,6 +9664,7 @@
       "status": "stable",
       "weight": 120,
       "featured": false,
+      "domain": "surfaces",
       "areas": [
         "verification",
         "documentation"
@@ -6838,6 +10014,11 @@
           "behaviorally_verified": 1,
           "implemented": 1
         }
+      },
+      "domain_ref": {
+        "id": "surfaces",
+        "title": "Surfaces",
+        "route": "/domains/surfaces/"
       }
     },
     {
@@ -6849,6 +10030,7 @@
       "status": "stable",
       "weight": 130,
       "featured": false,
+      "domain": "coordination",
       "areas": [
         "work-tracking"
       ],
@@ -7338,6 +10520,11 @@
         "modules": {
           "behaviorally_verified": 5
         }
+      },
+      "domain_ref": {
+        "id": "coordination",
+        "title": "Coordination",
+        "route": "/domains/coordination/"
       }
     },
     {
@@ -7349,6 +10536,7 @@
       "status": "stable",
       "weight": 140,
       "featured": false,
+      "domain": "context",
       "areas": [
         "context"
       ],
@@ -7522,7 +10710,7 @@
       "kind_refs": [
         {
           "name": "context",
-          "objects": 35
+          "objects": 36
         },
         {
           "name": "scope",
@@ -7811,11 +10999,11 @@
       "counts": {
         "capabilities": 7,
         "mcp_tools": 7,
-        "mcp_resources": 40,
+        "mcp_resources": 41,
         "http_routes": 7,
         "cli_paths": 4,
         "commands": 1,
-        "objects": 36,
+        "objects": 37,
         "rules": 6,
         "enforced_rules": 5,
         "docs": 2,
@@ -7832,6 +11020,11 @@
         "modules": {
           "behaviorally_verified": 3
         }
+      },
+      "domain_ref": {
+        "id": "context",
+        "title": "Context",
+        "route": "/domains/context/"
       }
     },
     {
@@ -7843,6 +11036,7 @@
       "status": "stable",
       "weight": 150,
       "featured": false,
+      "domain": "evidence",
       "areas": [
         "verification",
         "documentation"
@@ -8043,6 +11237,11 @@
           "guaranteed": 4
         },
         "modules": {}
+      },
+      "domain_ref": {
+        "id": "evidence",
+        "title": "Evidence",
+        "route": "/domains/evidence/"
       }
     },
     {
@@ -8054,6 +11253,7 @@
       "status": "stable",
       "weight": 160,
       "featured": false,
+      "domain": "context",
       "areas": [
         "documentation"
       ],
@@ -8191,6 +11391,11 @@
           "guaranteed": 3
         },
         "modules": {}
+      },
+      "domain_ref": {
+        "id": "context",
+        "title": "Context",
+        "route": "/domains/context/"
       }
     },
     {
@@ -8202,6 +11407,7 @@
       "status": "stable",
       "weight": 170,
       "featured": false,
+      "domain": "surfaces",
       "areas": [
         "documentation"
       ],
@@ -8414,6 +11620,11 @@
         "modules": {
           "behaviorally_verified": 1
         }
+      },
+      "domain_ref": {
+        "id": "surfaces",
+        "title": "Surfaces",
+        "route": "/domains/surfaces/"
       }
     },
     {
@@ -8425,6 +11636,7 @@
       "status": "stable",
       "weight": 175,
       "featured": true,
+      "domain": "evidence",
       "areas": [
         "verification",
         "governance"
@@ -8628,6 +11840,11 @@
         "modules": {
           "behaviorally_verified": 1
         }
+      },
+      "domain_ref": {
+        "id": "evidence",
+        "title": "Evidence",
+        "route": "/domains/evidence/"
       }
     },
     {
@@ -8639,6 +11856,7 @@
       "status": "stable",
       "weight": 180,
       "featured": false,
+      "domain": "evidence",
       "areas": [
         "verification",
         "cost"
@@ -8729,7 +11947,7 @@
           "identity": "project.performance-evidence@1",
           "title": "A performance claim carries its measurement",
           "class": "advisory",
-          "enforced": true,
+          "enforced": false,
           "path": ".ai/repo/rules/project/performance-evidence.v1.md"
         },
         {
@@ -8761,7 +11979,7 @@
           "identity": "project.hot-path-reads-once@1",
           "title": "A command reads each canonical file at most once",
           "class": "advisory",
-          "enforced": true,
+          "enforced": false,
           "path": ".ai/repo/rules/project/hot-path-reads-once.v1.md"
         },
         {
@@ -8769,7 +11987,7 @@
           "identity": "project.derived-once@1",
           "title": "Derived state is computed once per state version",
           "class": "advisory",
-          "enforced": true,
+          "enforced": false,
           "path": ".ai/repo/rules/project/derived-once.v1.md"
         }
       ],
@@ -8885,7 +12103,7 @@
         "commands": 1,
         "objects": 0,
         "rules": 6,
-        "enforced_rules": 6,
+        "enforced_rules": 3,
         "docs": 1,
         "adrs": 1,
         "claims": 6,
@@ -8899,6 +12117,11 @@
         "modules": {
           "behaviorally_verified": 1
         }
+      },
+      "domain_ref": {
+        "id": "evidence",
+        "title": "Evidence",
+        "route": "/domains/evidence/"
       }
     },
     {
@@ -8910,6 +12133,7 @@
       "status": "stable",
       "weight": 190,
       "featured": false,
+      "domain": "completion",
       "areas": [
         "verification"
       ],
@@ -9214,6 +12438,11 @@
           "guaranteed": 6
         },
         "modules": {}
+      },
+      "domain_ref": {
+        "id": "completion",
+        "title": "Completion",
+        "route": "/domains/completion/"
       }
     },
     {
@@ -9225,6 +12454,7 @@
       "status": "draft",
       "weight": 200,
       "featured": false,
+      "domain": "surfaces",
       "areas": [
         "governance"
       ],
@@ -9396,6 +12626,11 @@
           "behaviorally_verified": 1,
           "experimental": 1
         }
+      },
+      "domain_ref": {
+        "id": "surfaces",
+        "title": "Surfaces",
+        "route": "/domains/surfaces/"
       }
     },
     {
@@ -9407,6 +12642,7 @@
       "status": "stable",
       "weight": 205,
       "featured": true,
+      "domain": "governance",
       "areas": [
         "governance",
         "work-tracking"
@@ -9639,6 +12875,11 @@
         "modules": {
           "behaviorally_verified": 1
         }
+      },
+      "domain_ref": {
+        "id": "governance",
+        "title": "Governance",
+        "route": "/domains/governance/"
       }
     }
   ],
@@ -10799,7 +14040,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (79)",
+        "title": "adr (80)",
         "features": [
           "knowledge"
         ]
@@ -10827,7 +14068,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (221)",
+        "title": "claim (222)",
         "features": [
           "declare-once"
         ]
@@ -10841,7 +14082,7 @@
       },
       {
         "id": "context",
-        "title": "context (35)",
+        "title": "context (36)",
         "features": [
           "context"
         ]
@@ -10861,6 +14102,13 @@
         "title": "distribution-model (1)",
         "features": [
           "install"
+        ]
+      },
+      {
+        "id": "domain",
+        "title": "domain (6)",
+        "features": [
+          "declare-once"
         ]
       },
       {
@@ -11485,7 +14733,7 @@
       "identity": "project.derived-once@1",
       "title": "Derived state is computed once per state version",
       "class": "advisory",
-      "enforced": true,
+      "enforced": false,
       "path": ".ai/repo/rules/project/derived-once.v1.md"
     },
     {
@@ -11525,7 +14773,7 @@
       "identity": "project.hot-path-reads-once@1",
       "title": "A command reads each canonical file at most once",
       "class": "advisory",
-      "enforced": true,
+      "enforced": false,
       "path": ".ai/repo/rules/project/hot-path-reads-once.v1.md"
     },
     {
@@ -11613,7 +14861,7 @@
       "identity": "project.performance-evidence@1",
       "title": "A performance claim carries its measurement",
       "class": "advisory",
-      "enforced": true,
+      "enforced": false,
       "path": ".ai/repo/rules/project/performance-evidence.v1.md"
     },
     {
@@ -11866,29 +15114,30 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1863,
-    "builtin": 169,
-    "declarative": 1694,
+    "capabilities": 1875,
+    "builtin": 170,
+    "declarative": 1705,
     "modules": 51,
-    "mcp_tools": 163,
-    "mcp_resources": 1746,
-    "http_routes": 167,
-    "cli_commands": 175,
+    "mcp_tools": 164,
+    "mcp_resources": 1758,
+    "http_routes": 168,
+    "cli_commands": 176,
     "shell_commands": 30,
-    "kinds": 32,
-    "objects": 1694,
+    "kinds": 33,
+    "objects": 1705,
     "by_kind": {
-      "adr": 79,
+      "adr": 80,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 221,
+      "claim": 222,
       "command": 31,
-      "context": 35,
+      "context": 36,
       "critique": 1,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 309,
+      "document": 310,
+      "domain": 6,
       "feature": 27,
       "gap": 1,
       "implementation": 50,
@@ -11907,12 +15156,13 @@
       "session": 22,
       "skill": 6,
       "taxonomy": 10,
-      "test": 342,
+      "test": 343,
       "use-case": 48,
       "workspace": 1
     },
     "providers": 6,
     "features": 26,
+    "domains": 6,
     "web_surfaces": 10
   },
   "evidence": {
@@ -11924,7 +15174,7 @@
       "executions": 14,
       "newest": "2026-09-17T01:14:59Z"
     },
-    "declared": 205,
+    "declared": 206,
     "supported": 0,
     "claims": {
       "a-finding-names-how-to-see-it-again": {
@@ -12768,6 +16018,12 @@
         "supported": false
       },
       "policy-parse": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "product-domains-derived": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",

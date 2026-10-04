@@ -8,6 +8,7 @@ headline: What was decided, why, and what was rejected is recorded where the nex
 summary: Decisions are recorded with their reason and their task, open questions block acceptance until resolved, architecture decision records carry typed references to the rules, claims, files and tests they put in force, and the graph of all of it is derived from those references rather than drawn.
 status: stable
 weight: 60
+domain: context
 featured: true
 areas: [decisions, context]
 modules: [graph, knowledge_base]

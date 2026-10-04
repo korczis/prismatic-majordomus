@@ -65,6 +65,11 @@
       "description": "True when the homepage shows the feature as one of its chapters. The homepage takes the featured set in weight order; it names none of them. Editorial: this is the one decision nothing can derive.",
       "type": "boolean"
     },
+    "domain": {
+      "description": "The product domain this feature belongs to: exactly one, named by the id of a domain under .ai/repo/features/domains/. The domain is the feature's place in the product's top-level model \u2014 the homepage map, the domain page, the breadcrumb \u2014 and a stable feature names one whenever the layer declares any domain. Editorial; the domain's members, surfaces and evidence are derived from the features that name it.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
     "areas": {
       "description": "The operational areas of the why catalogue this feature serves, when it serves one. Each must name an area under the why section; the taxonomy is that catalogue's and is not declared a second time here. A feature about the tool itself rather than about operations names none.",
       "type": "array",

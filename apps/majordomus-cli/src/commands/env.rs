@@ -580,7 +580,10 @@ fn enter_command(
                 mode,
                 &presentation,
             );
-            eprint!("{}", preflight::compact(&preflight, presentation.unicode));
+            eprint!(
+                "{}",
+                preflight::entry_details(&preflight, presentation.unicode)
+            );
         }
     }
     if with_bridge {

@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.12.0",
+  "generator": "majordomus-cli 0.13.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -21,6 +21,7 @@
       "distribution-model": "an object of kind `distribution-model`",
       "doctrine": "a doctrine a scenario exercises",
       "document": "an object of kind `document`",
+      "domain": "an object of kind `domain`",
       "feature": "an object of kind `feature`",
       "file": "a file the layer names and does not hold as an object",
       "gap": "an object of kind `gap`",
@@ -1175,6 +1176,15 @@
         "status": "query"
       },
       {
+        "id": "capability:product.domains",
+        "kind": "capability",
+        "label": "product.domains",
+        "summary": "The domains",
+        "route": "/cockpit/capabilities/product.domains",
+        "source": "apps/majordomus-cli/src/capability/builtin/product.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:product.feature",
         "kind": "capability",
         "label": "product.feature",
@@ -1645,14 +1655,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/capability/builtin/release.rs",
-        "kind": "file",
-        "label": "release.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/capability/builtin/release.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/capability/builtin/worktree.rs",
         "kind": "file",
         "label": "worktree.rs",
@@ -1685,46 +1687,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/command_graph/semantics.rs",
-        "kind": "file",
-        "label": "semantics.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/command_graph/semantics.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/design/render.rs",
-        "kind": "file",
-        "label": "render.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/design/render.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/execution/engine.rs",
-        "kind": "file",
-        "label": "engine.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/execution/engine.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/execution/event.rs",
-        "kind": "file",
-        "label": "event.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/execution/event.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/execution/mod.rs",
-        "kind": "file",
-        "label": "mod.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/execution/mod.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/graph.rs",
         "kind": "file",
         "label": "graph.rs",
@@ -1733,35 +1695,11 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/http/events.rs",
-        "kind": "file",
-        "label": "events.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/http/events.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/http/router.rs",
         "kind": "file",
         "label": "router.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/http/router.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/http/swagger.rs",
-        "kind": "file",
-        "label": "swagger.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/http/swagger.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/http/ws.rs",
-        "kind": "file",
-        "label": "ws.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/http/ws.rs",
         "external": true
       },
       {
@@ -1813,14 +1751,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/web/html.rs",
-        "kind": "file",
-        "label": "html.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/web/html.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/web/report/ui.rs",
         "kind": "file",
         "label": "ui.rs",
@@ -1866,14 +1796,6 @@
         "label": "path.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/worktree/path.rs",
-        "external": true
-      },
-      {
-        "id": "file:scripts/ci/design-check",
-        "kind": "file",
-        "label": "design-check",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/ci/design-check",
         "external": true
       },
       {
@@ -1933,14 +1855,6 @@
         "external": true
       },
       {
-        "id": "file:scripts/release-version",
-        "kind": "file",
-        "label": "release-version",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/release-version",
-        "external": true
-      },
-      {
         "id": "file:scripts/ui",
         "kind": "file",
         "label": "ui",
@@ -1954,14 +1868,6 @@
         "label": "cockpit.css",
         "summary": "named by the layer; not an object of this index",
         "source": "share/cockpit/src/cockpit.css",
-        "external": true
-      },
-      {
-        "id": "file:share/design/tokens.yaml",
-        "kind": "file",
-        "label": "tokens.yaml",
-        "summary": "named by the layer; not an object of this index",
-        "source": "share/design/tokens.yaml",
         "external": true
       },
       {
@@ -2045,6 +1951,12 @@
         "kind": "kind",
         "label": "document",
         "summary": "every object of kind `document`"
+      },
+      {
+        "id": "kind:domain",
+        "kind": "kind",
+        "label": "domain",
+        "summary": "every object of kind `domain`"
       },
       {
         "id": "kind:feature",
@@ -4186,6 +4098,35 @@
             "providers",
             "mcp",
             "governance"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0104",
+        "kind": "adr",
+        "label": "adr-0104",
+        "summary": "The product is filed under a few domains, and a feature names its one",
+        "route": "/cockpit/objects/adr/adr-0104",
+        "source": ".ai/repo/adrs/0104-the-product-is-filed-under-a-few-domains-and-a-feature-names-its-one.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-03",
+          "related": [
+            "file:.ai/repo/adrs/0023-product-features-are-objects-of-the-layer-and-the-landing-page-is-a-projection.md",
+            "file:.ai/repo/adrs/0026-a-capability-modules-area-is-derived-from-the-features-that-name-it.md",
+            "rule:project.no-new-nouns",
+            "rule:project.product-surface-derived",
+            "rule:project.homepage-tells-a-declared-story",
+            "file:apps/majordomus-cli/src/product.rs",
+            "test:apps/majordomus-cli/tests/product.rs",
+            "file:.ai/repo/features/README.md",
+            "file:share/schemas/majordomus/domain/domain.v1.schema.json"
+          ],
+          "tags": [
+            "architecture",
+            "taxonomy",
+            "projections",
+            "product"
           ]
         }
       },
@@ -7000,6 +6941,21 @@
         }
       },
       {
+        "id": "majordomus://claim/product-domains-derived",
+        "kind": "claim",
+        "label": "product-domains-derived",
+        "summary": "The product is filed under a few domains declared once as files of the layer; a feature names exactly one, and every domain's members, interfaces, guarantees and use cases are derived from the features that name it, so a stable feature cannot be left out of the product map without the model refusing it",
+        "route": "/cockpit/objects/claim/product-domains-derived",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/product.rs",
+          "responsibility": "layer",
+          "source": "docs/PRODUCT.md",
+          "test": "test/cases/800_product_domains.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/product-features-discovered",
         "kind": "claim",
         "label": "product-features-discovered",
@@ -9722,6 +9678,33 @@
         }
       },
       {
+        "id": "majordomus://context/ai.repo.features.domains",
+        "kind": "context",
+        "label": "ai.repo.features.domains",
+        "summary": "Product domains",
+        "route": "/cockpit/objects/context/ai-repo-features-domains",
+        "source": ".ai/repo/features/domains/README.md",
+        "status": "active",
+        "facts": {
+          "audience": [
+            "human",
+            "agent"
+          ],
+          "composition": "extend",
+          "order": 110,
+          "providers": [
+            "*"
+          ],
+          "scope": "subtree",
+          "tracks": [
+            "apps/majordomus-cli/src/product.rs",
+            "site/templates/domain.html",
+            "site/templates/domains-section.html",
+            "site/templates/partials/domain-map.html"
+          ]
+        }
+      },
+      {
         "id": "majordomus://context/ai.repo.knowledge",
         "kind": "context",
         "label": "ai.repo.knowledge",
@@ -12113,6 +12096,14 @@
         "source": "docs/claims/policy-parse.md"
       },
       {
+        "id": "majordomus://document/docs/claims/product-domains-derived.md",
+        "kind": "document",
+        "label": "docs/claims/product-domains-derived.md",
+        "summary": "The product is filed under domains, and the domain lists nothing",
+        "route": "/cockpit/objects/document/docs-claims-product-domains-derived-md",
+        "source": "docs/claims/product-domains-derived.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/product-features-discovered.md",
         "kind": "document",
         "label": "docs/claims/product-features-discovered.md",
@@ -12753,6 +12744,120 @@
         "source": "docs/claims/worktree-topology-derived.md"
       },
       {
+        "id": "majordomus://domain/completion",
+        "kind": "domain",
+        "label": "completion",
+        "summary": "Completion",
+        "route": "/cockpit/objects/domain/completion",
+        "source": ".ai/repo/features/domains/completion.md",
+        "status": "stable",
+        "facts": {
+          "headline": "Done is a contract the repository evaluates line by line. Work is not accepted while any line fails, and a refusal stays on the record.",
+          "problem": "Done is cheap. A worker can report success before the repository's own checks hold.",
+          "tags": [
+            "completion",
+            "finish",
+            "verification"
+          ],
+          "weight": 50
+        }
+      },
+      {
+        "id": "majordomus://domain/context",
+        "kind": "domain",
+        "label": "context",
+        "summary": "Context",
+        "route": "/cockpit/objects/domain/context",
+        "source": ".ai/repo/features/domains/context.md",
+        "status": "stable",
+        "facts": {
+          "headline": "Every worker starts from what the repository already knows: the context that applies to its path, the handover the last session left, and the decisions already made.",
+          "problem": "Agents forget. What one session learned dies with its conversation, and the next one starts over.",
+          "tags": [
+            "context",
+            "continuity",
+            "knowledge"
+          ],
+          "weight": 10
+        }
+      },
+      {
+        "id": "majordomus://domain/coordination",
+        "kind": "domain",
+        "label": "coordination",
+        "summary": "Coordination",
+        "route": "/cockpit/objects/domain/coordination",
+        "source": ".ai/repo/features/domains/coordination.md",
+        "status": "stable",
+        "facts": {
+          "headline": "Every worker declares the paths it will touch, sees who else is working and where, and hears about a collision before it is committed.",
+          "problem": "Agents collide. Parallel workers edit the same paths, or build the same thing twice, without knowing about each other.",
+          "tags": [
+            "coordination",
+            "scope",
+            "worktrees"
+          ],
+          "weight": 20
+        }
+      },
+      {
+        "id": "majordomus://domain/evidence",
+        "kind": "domain",
+        "label": "evidence",
+        "summary": "Evidence",
+        "route": "/cockpit/objects/domain/evidence",
+        "source": ".ai/repo/features/domains/evidence.md",
+        "status": "stable",
+        "facts": {
+          "headline": "A claim names the test that settles it, a recorded run is judged against the commit it ran at, and a claim with no recorded run says so.",
+          "problem": "Claims outrun proof. The documentation says one thing, the runtime does another, and nobody can show which is true.",
+          "tags": [
+            "evidence",
+            "provenance",
+            "claims"
+          ],
+          "weight": 40
+        }
+      },
+      {
+        "id": "majordomus://domain/governance",
+        "kind": "domain",
+        "label": "governance",
+        "summary": "Governance",
+        "route": "/cockpit/objects/domain/governance",
+        "source": ".ai/repo/features/domains/governance.md",
+        "status": "stable",
+        "facts": {
+          "headline": "The rules are written once, in the repository, projected into every tool's instructions, and a blocking rule stops the command instead of advising it.",
+          "problem": "Rules drift. Each tool keeps its own instruction file, and a rule nobody wired into enforcement is only a suggestion.",
+          "tags": [
+            "governance",
+            "policy",
+            "rules"
+          ],
+          "weight": 30
+        }
+      },
+      {
+        "id": "majordomus://domain/surfaces",
+        "kind": "domain",
+        "label": "surfaces",
+        "summary": "Surfaces",
+        "route": "/cockpit/objects/domain/surfaces",
+        "source": ".ai/repo/features/domains/surfaces.md",
+        "status": "stable",
+        "facts": {
+          "headline": "One declaration in the repository becomes the command line, the HTTP API, MCP, the Cockpit, the documentation and this site, and a projection that disagrees with it fails the build.",
+          "problem": "Interfaces disagree. The command line, the API, the docs and the website each keep a copy, and the copies drift.",
+          "tags": [
+            "surfaces",
+            "interfaces",
+            "projection"
+          ],
+          "weight": 60
+        }
+      },
+      {
         "id": "majordomus://feature/benchmarks",
         "kind": "feature",
         "label": "benchmarks",
@@ -12782,6 +12887,7 @@
           "docs": [
             "docs/PERFORMANCE.md"
           ],
+          "domain": "evidence",
           "featured": false,
           "headline": "Every externally callable operation is timed directly, over MCP and over HTTP, the denominator is generated from the registry, and a regression against the accepted baseline fails the check.",
           "modules": [
@@ -12841,6 +12947,7 @@
             "docs/CI.md",
             "docs/GITHUB_PAGES_PERFORMANCE.md"
           ],
+          "domain": "completion",
           "featured": false,
           "headline": "A change runs the gates its paths can affect, every gate is the same script a person runs, and the public site is published only from a commit whose derived data proved current.",
           "related": [
@@ -12899,6 +13006,7 @@
           "docs": [
             "docs/COCKPIT.md"
           ],
+          "domain": "surfaces",
           "featured": true,
           "modules": [
             "health",
@@ -12946,6 +13054,7 @@
           "docs": [
             "docs/COMMIT.md"
           ],
+          "domain": "governance",
           "featured": true,
           "modules": [
             "commit"
@@ -13008,6 +13117,7 @@
             "docs/CONTEXT.md",
             "docs/SCOPE.md"
           ],
+          "domain": "context",
           "featured": false,
           "kinds": [
             "context",
@@ -13092,6 +13202,7 @@
             "docs/CONTINUITY.md",
             "docs/CONTEXT.md"
           ],
+          "domain": "context",
           "featured": true,
           "headline": "A session ends and the work does not: what the next worker needs is a typed record checked against git, not a transcript somebody hopes to find.",
           "kinds": [
@@ -13180,6 +13291,7 @@
             "docs/ADOPTION.md",
             "docs/INTEGRATION.md"
           ],
+          "domain": "coordination",
           "featured": true,
           "headline": "Every worker declares the paths it may touch, every session can see who else is attached and what they announced, and a collision is reported before it is committed.",
           "modules": [
@@ -13235,8 +13347,9 @@
           "docs": [
             "docs/COVERAGE.md"
           ],
+          "domain": "completion",
           "featured": false,
-          "headline": "One coverage measurement, test code out of the denominator, holds a crate floor, a floor over the session/continuity domain, and — the invariant of",
+          "headline": "One coverage measurement, test code out of the denominator, holds a crate floor, a floor over the session/continuity domain, and — the invariant of #214 — every executable line a change touches.",
           "modules": [],
           "related": [
             "doctrine",
@@ -13297,10 +13410,12 @@
             "docs/DYNAMICITY.md",
             "docs/GITHUB_PAGES_ARCHITECTURE.md"
           ],
+          "domain": "surfaces",
           "featured": true,
           "headline": "A capability is written in one place, and the command line, the HTTP API, the OpenAPI document, MCP, the Cockpit, the reference and this website are projections of it.",
           "kinds": [
             "feature",
+            "domain",
             "command",
             "claim"
           ],
@@ -13356,6 +13471,7 @@
           "docs": [
             "docs/DELIVERY.md"
           ],
+          "domain": "surfaces",
           "featured": false,
           "headline": "The port, the routes, the resources and the build inputs of a hosted executable are stated once, and the container definition and the provider configuration are projections that cannot drift from it.",
           "kinds": [
@@ -13416,6 +13532,7 @@
             "docs/DOCTRINE.md",
             "docs/DOGFOODING.md"
           ],
+          "domain": "governance",
           "featured": true,
           "headline": "A rule is enforced when a validator decides it, a command runs it, a test proves it and CI blocks on it; anything less is documentation, and the tool knows the difference.",
           "kinds": [
@@ -13480,6 +13597,7 @@
           "docs": [
             "docs/ECONOMICS.md"
           ],
+          "domain": "evidence",
           "featured": false,
           "modules": [
             "economics"
@@ -13532,6 +13650,7 @@
           "docs": [
             "docs/EVIDENCE.md"
           ],
+          "domain": "evidence",
           "featured": true,
           "modules": [
             "evidence"
@@ -13585,6 +13704,7 @@
             "docs/CLI.md",
             "docs/DESIGN.md"
           ],
+          "domain": "completion",
           "featured": true,
           "modules": [
             "gates",
@@ -13656,6 +13776,7 @@
             "docs/INSTALL.md",
             "docs/DISTRIBUTION.md"
           ],
+          "domain": "surfaces",
           "featured": false,
           "headline": "The installer downloads one archive for your machine, verifies its digest against the release metadata before unpacking anything, and installs atomically; no git, no Rust, no Node, no root.",
           "kinds": [
@@ -13729,6 +13850,7 @@
             "docs/WEB.md",
             "docs/CAPABILITIES.md"
           ],
+          "domain": "surfaces",
           "featured": false,
           "headline": "Every agent, script and person reads the same repository through the interface it already speaks, and none of the interfaces is maintained by hand.",
           "modules": [
@@ -13817,6 +13939,7 @@
             "docs/CONTINUITY.md",
             "docs/CONCEPTS.md"
           ],
+          "domain": "context",
           "featured": true,
           "headline": "What was decided, why, and what was rejected is recorded where the next session reads it, and a durable decision becomes an architecture record with typed links to what it put in force.",
           "kinds": [
@@ -13887,6 +14010,7 @@
           "docs": [
             "docs/MESH.md"
           ],
+          "domain": "coordination",
           "featured": true,
           "kinds": [
             "mesh-declaration"
@@ -13940,6 +14064,7 @@
           "docs": [
             "docs/MODELS.md"
           ],
+          "domain": "coordination",
           "featured": true,
           "headline": "One declared catalogue of vendors and models — capabilities, context, lifecycle, no fabricated facts — and a routing answer that names why every candidate was chosen or excluded.",
           "modules": [
@@ -13991,6 +14116,7 @@
             "docs/PLANNING.md",
             "docs/ROADMAP.md"
           ],
+          "domain": "coordination",
           "featured": false,
           "headline": "An issue records what happened to it and the engine derives whether it is blocked, ready, active, verifying or done from the dependency graph, so the roadmap cannot disagree with the plan.",
           "kinds": [
@@ -14069,6 +14195,7 @@
             "docs/SCHEMAS.md",
             "docs/ADOPTION.md"
           ],
+          "domain": "governance",
           "featured": false,
           "kinds": [
             "policy",
@@ -14146,6 +14273,7 @@
             "docs/CONTINUITY.md",
             "docs/ECONOMICS.md"
           ],
+          "domain": "evidence",
           "featured": true,
           "headline": "Who did what, under which task, at which commit, in which session is a ledger the tool writes and a person can read back, not a memory of a conversation.",
           "kinds": [
@@ -14204,6 +14332,7 @@
           "docs": [
             "docs/REASONING.md"
           ],
+          "domain": "coordination",
           "featured": true,
           "headline": "Material uncertainty becomes an evidence-backed decision — reviewed by whichever optional advisors are available, decided locally when none are, and carried to the next session as a record.",
           "modules": [
@@ -14253,6 +14382,7 @@
           "docs": [
             "docs/CONCEPTS.md"
           ],
+          "domain": "context",
           "featured": false,
           "headline": "A skill is one directory under the layer; adding it is the whole act, and the command line, the website and MCP all read it from the same file.",
           "kinds": [
@@ -14304,6 +14434,7 @@
             "docs/USE_CASES.md",
             "docs/CATALOGUE.md"
           ],
+          "domain": "evidence",
           "featured": false,
           "headline": "What a person does with the tool is one file with a scenario the tool runs against itself; the page shows that execution, and a public command no use case runs is a gap the tool reports.",
           "kinds": [
@@ -14354,6 +14485,7 @@
           "docs": [
             "docs/WHY.md"
           ],
+          "domain": "surfaces",
           "featured": false,
           "kinds": [
             "moment",
@@ -14408,6 +14540,7 @@
           "docs": [
             "docs/WORKTREES.md"
           ],
+          "domain": "coordination",
           "featured": true,
           "headline": "A branch's worktree is where git says it is, never where somebody chose to put it, and a misplaced one is a diagnostic with a remedy rather than a mystery.",
           "modules": [
@@ -38341,6 +38474,13 @@
         "source": "test/cases/79_bench_command.sh"
       },
       {
+        "id": "majordomus://test/test/cases/800_product_domains.sh",
+        "kind": "test",
+        "label": "test/cases/800_product_domains.sh",
+        "route": "/cockpit/objects/test/test-cases-800-product-domains-sh",
+        "source": "test/cases/800_product_domains.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/80_bench_persistence.sh",
         "kind": "test",
         "label": "test/cases/80_bench_persistence.sh",
@@ -43059,6 +43199,26 @@
         "kind": "projects"
       },
       {
+        "source": "capability:product.domains",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:product.domains",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:product.domains",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:product.domains",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:product.feature",
         "target": "projection:cli",
         "kind": "projects"
@@ -44515,33 +44675,8 @@
       },
       {
         "source": "majordomus://adr/adr-0029",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/release.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0029",
-        "target": "file:apps/majordomus-cli/src/command_graph/semantics.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0029",
-        "target": "file:scripts/release-version",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0029",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0029",
-        "target": "majordomus://document/docs/DISTRIBUTION.md",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0029",
-        "target": "majordomus://document/docs/RELEASE.md",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0029",
@@ -44570,31 +44705,6 @@
       },
       {
         "source": "majordomus://adr/adr-0031",
-        "target": "file:apps/majordomus-cli/src/design/render.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0031",
-        "target": "file:apps/majordomus-cli/src/http/swagger.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0031",
-        "target": "file:apps/majordomus-cli/src/web/html.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0031",
-        "target": "file:scripts/ci/design-check",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0031",
-        "target": "file:share/design/tokens.yaml",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0031",
         "target": "kind:adr",
         "kind": "is_a"
       },
@@ -44619,39 +44729,9 @@
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0031",
-        "target": "majordomus://test/test/cases/107_design_tokens.sh",
-        "kind": "put_in_force"
-      },
-      {
         "source": "majordomus://adr/adr-0032",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/execution/engine.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/execution/event.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/execution/mod.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/http/events.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/http/ws.rs",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0033",
@@ -44707,11 +44787,6 @@
         "source": "majordomus://adr/adr-0035",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0036",
-        "target": "file:share/design/tokens.yaml",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0036",
@@ -45951,6 +46026,41 @@
       {
         "source": "majordomus://adr/adr-0103",
         "target": "majordomus://rule/project.a-provider-capability-cites-its-evidence@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0104",
+        "target": "file:apps/majordomus-cli/src/product.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0104",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0104",
+        "target": "majordomus://adr/adr-0023",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0104",
+        "target": "majordomus://adr/adr-0026",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0104",
+        "target": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0104",
+        "target": "majordomus://rule/project.no-new-nouns@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0104",
+        "target": "majordomus://rule/project.product-surface-derived@1",
         "kind": "put_in_force"
       },
       {
@@ -48464,6 +48574,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/product-domains-derived",
+        "target": "file:apps/majordomus-cli/src/product.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/product-domains-derived",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/product-domains-derived",
+        "target": "majordomus://document/docs/PRODUCT.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/product-domains-derived",
+        "target": "majordomus://test/test/cases/800_product_domains.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/product-features-discovered",
         "target": "file:apps/majordomus-cli/src/product.rs",
         "kind": "implemented_by"
@@ -50014,6 +50144,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://context/ai.repo.features.domains",
+        "target": "file:apps/majordomus-cli/src/product.rs",
+        "kind": "tracks"
+      },
+      {
+        "source": "majordomus://context/ai.repo.features.domains",
+        "target": "kind:context",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://context/ai.repo.knowledge",
         "target": "kind:context",
         "kind": "is_a"
@@ -51369,6 +51509,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/product-domains-derived.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/product-features-discovered.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -51766,6 +51911,36 @@
       {
         "source": "majordomus://document/docs/claims/worktree-topology-derived.md",
         "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://domain/completion",
+        "target": "kind:domain",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://domain/context",
+        "target": "kind:domain",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://domain/coordination",
+        "target": "kind:domain",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://domain/evidence",
+        "target": "kind:domain",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://domain/governance",
+        "target": "kind:domain",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://domain/surfaces",
+        "target": "kind:domain",
         "kind": "is_a"
       },
       {
@@ -60194,6 +60369,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/800_product_domains.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/80_bench_persistence.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -63210,6 +63390,11 @@
       },
       {
         "source": "module:product",
+        "target": "capability:product.domains",
+        "kind": "composes"
+      },
+      {
+        "source": "module:product",
         "target": "capability:product.feature",
         "kind": "composes"
       },
@@ -63441,7 +63626,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4493,
+      "edges": 4502,
       "acyclic": true,
       "truncated": true
     }

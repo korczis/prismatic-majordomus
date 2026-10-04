@@ -8,6 +8,7 @@ headline: A worker does not get to define its own successful completion: every l
 summary: A task starts with a declared scope and a profile; check reports whether the task is consistent with policy, scope and state; finish evaluates the policy's contract — scope respected, verification ran, state updated, no open blockers, a note present — and refuses with the reproducing command when any line fails.
 status: stable
 weight: 80
+domain: completion
 featured: true
 areas: [verification]
 commands: [start, check, finish, question]
