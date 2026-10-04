@@ -14,7 +14,7 @@ mj_cmd_decision() {
     --help|-h|"") cat <<H
 usage: majordomus decision add "<what was decided>" --why "<rationale>"
                                [--rejected "<alternatives>"] [--evidence "<file, test or measurement>"]
-                               [--supersedes "<text from an earlier decision>"]
+                               [--supersedes "<part of an earlier decision's title>"]
        majordomus decision list [--task <id>] [--limit <n>]
        majordomus decision show "<text>"
   appends one entry to .ai/local/state/decisions.md; the task id and git head are computed
@@ -52,8 +52,20 @@ mj_decision_add() {
   local task_id=none
   mj_load_current && task_id="$(mj_cur id)"
 
+  # A supersession names one decision, by its title. The text used to be searched for
+  # anywhere in the file, so a field label (`--supersedes Why`) or a word of some rationale
+  # was accepted as "a recorded decision", and the entry pointed at nothing in particular.
+  # It is matched against the titles alone, must identify exactly one, and the title it
+  # identified is what is recorded, so `list` can say which decision it replaced.
   if [ "$supersedes" != "-" ]; then
-    grep -qF -- "$supersedes" "$file" || mj_die "$MJ_EX_USAGE" "decision add: --supersedes '$supersedes' matches no recorded decision"
+    local matched n
+    matched="$(mj_decision_titles "$file" | grep -F -- "$supersedes" || true)"
+    n="$(printf '%s' "$matched" | grep -c '' || true)"
+    case "$n" in
+      0) mj_die "$MJ_EX_USAGE" "decision add: --supersedes '$supersedes' matches no recorded decision's title (majordomus decision list)" ;;
+      1) supersedes="$matched" ;;
+      *) mj_die "$MJ_EX_USAGE" "decision add: --supersedes '$supersedes' matches $n recorded decisions; quote more of one title: $(printf '%s' "$matched" | paste -sd '|' - | sed 's/|/; /g')" ;;
+    esac
   fi
 
   printf '\n## %s — %s\nTask: %s\nHead: %s\nWhy: %s\nRejected: %s\nEvidence: %s\nSupersedes: %s\n' \
@@ -62,20 +74,43 @@ mj_decision_add() {
   printf 'recorded: %s\n' "$title"
 }
 
+# the title of every recorded decision, oldest first: the heading after its date
+mj_decision_titles() {
+  [ -f "$1" ] || return 0
+  awk '
+    /<!--/ { c=1 } /-->/ { c=0; next }
+    c { next }
+    /^## / { t = $0; sub(/^## [^ ]+ — /, "", t); print t }' "$1"
+}
+
 # print entries, newest first. mj_decision_entries FILE [TASK] [LIMIT]
+# An entry a later one superseded says so under its heading: the file is append-only, so
+# the record itself never changes, and without the mark a reader of `list` could not tell
+# a replaced decision from a standing one. A later entry's `Supersedes:` is the replaced
+# title; one recorded before titles were required may be any part of it.
 mj_decision_entries() {
   awk -v want="${2:-}" -v limit="${3:-0}" '
     /<!--/ { c=1 } /-->/ { c=0; next }
     c { next }
-    /^## / { n++; head[n]=$0; body[n]=""; task[n]=""; next }
+    /^## / { n++; head[n]=$0; body[n]=""; task[n]=""; sup[n]=""
+             t=$0; sub(/^## [^ ]+ — /, "", t); title[n]=t; next }
     n>0 && /^Task: / { task[n]=substr($0,7) }
+    n>0 && /^Supersedes: / { s=substr($0,13); if (s!="-") sup[n]=s }
     n>0 { body[n]=body[n] $0 "\n" }
     END{
+      for (j=1; j<=n; j++) {
+        if (sup[j]=="") continue
+        exact=0
+        for (i=1; i<j; i++) if (title[i]==sup[j]) { by[i]=title[j]; exact=1 }
+        if (!exact) for (i=1; i<j; i++) if (index(title[i], sup[j])>0) by[i]=title[j]
+      }
       shown=0
       for (i=n; i>=1; i--) {
         if (want!="" && task[i]!=want) continue
         if (limit>0 && shown>=limit) break
-        printf "%s\n%s", head[i], body[i]
+        printf "%s\n", head[i]
+        if (by[i]!="") printf "Superseded by: %s\n", by[i]
+        printf "%s", body[i]
         shown++
       }
       if (shown==0) print "(none)"
