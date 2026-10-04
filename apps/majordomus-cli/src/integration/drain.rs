@@ -1698,7 +1698,17 @@ fn gh(root: &Path, args: &[&str]) -> Result<String, String> {
     if out.status.success() {
         Ok(String::from_utf8_lossy(&out.stdout).into_owned())
     } else {
-        Err(String::from_utf8_lossy(&out.stderr).trim().to_string())
+        let said = String::from_utf8_lossy(&out.stderr).trim().to_string();
+        // a refusal that says nothing is still named: which question, and how it ended
+        Err(if said.is_empty() {
+            format!(
+                "gh {} failed ({}) and said nothing",
+                args.iter().take(3).copied().collect::<Vec<_>>().join(" "),
+                out.status
+            )
+        } else {
+            said
+        })
     }
 }
 
