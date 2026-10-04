@@ -181,10 +181,8 @@ pub fn marked_numbers(body: &str, markers: &[&str]) -> Vec<u64> {
             let Some(rest) = opening.strip_prefix(marker) else {
                 continue;
             };
-            if rest.starts_with(|c: char| c.is_ascii_alphanumeric()) {
-                // "requirements", "dependson": another word, not the marker
-                continue;
-            }
+            // "requirements", "dependson": another word, not the marker — the trim below
+            // removes no letter, so `numbers` finds no `#` at the start of one
             out.extend(numbers(
                 rest.trim_start_matches([':', '*', '_', '`', '(', ' ']),
             ));

@@ -1670,6 +1670,7 @@ fn a_dependency_marker_starts_its_line() {
         ),
         ("Dependson #17", none.clone()),
         ("Stacked onto #18", none.clone()),
+        ("Requires2 #19", none.clone()),
         ("Depends on #x", none.clone()),
         ("Requires #20 & #21", vec![20, 21]),
         ("+ Requires #22", vec![22]),
