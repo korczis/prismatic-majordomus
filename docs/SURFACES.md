@@ -391,6 +391,13 @@ flowchart TD
   "ours" and prints that the file is now stale, so a merge never hand-merges a projection;
   derive regenerates it afterwards. `doctor` fails a clone that has not registered the
   driver.
+- The manifest and the lock are `merge=version` (ADR 0106 §8b), written into the same block
+  by `scripts/gitattributes` from the version writer's own constants. `majordomus release
+  merge-version` takes the version line out of the merge and leaves the number to
+  `release advance`. It is registered by the same recipe as the derived driver, `just
+  derive-merge-driver`, and by `core-check` in CI, and `doctor` fails a clone without it
+  (enforcement entry `version-merge-driver`). A batch composer that merges without it gets a
+  text conflict on the version line.
 
 ### 8.3 How a document becomes a page
 

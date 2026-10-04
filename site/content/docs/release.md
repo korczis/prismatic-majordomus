@@ -615,6 +615,22 @@ always did, and the number is then decided by the advance. So:
 A branch is never left claiming a number another branch already landed with, and a major one
 side owed is never lowered by the merge.
 
+The driver is declared per clone, like the derived one, and git merges the version line as
+text, silently, wherever it is not. `just derive-merge-driver` declares both; `core-check`
+declares both in CI; `doctor` refuses a clone without either. The declaration it writes is:
+
+```console
+git config merge.version.name "the version line: merged version-neutrally, decided by release advance"
+git config merge.version.driver 'MAJORDOMUS_NO_BUILD=1 bin/majordomus-cli release merge-version %O %A %B %P; s=$?; [ $s -le 1 ] && exit $s; git merge-file %A %O %B'
+```
+
+It never builds, and where the executable cannot answer — an older one without the
+subcommand — it falls back to git's own text merge, so it changes nothing in a checkout that
+predates it. `prs drain --refresh` and `scripts/unblock` do not depend on it: each names the
+driver with its own executable for the merge it makes, and asks for the advance only where
+the merge policy marks a file `merge=version`. The refresh records the version it advanced to
+in the integration trail as a `version_advanced` event.
+
 ### A retry advances nothing
 
 The advance is idempotent by construction: it writes the minimum only when the declared

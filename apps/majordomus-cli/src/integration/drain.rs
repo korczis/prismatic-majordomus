@@ -198,7 +198,8 @@ pub struct IntegrationEvent {
     pub actor: String,
     /// What (`selected`, `refresh_selected`, `stale_decision`, `merge_attempted`,
     /// `merge_succeeded`, `merge_failed`, `verification_failed`, `refreshed`,
-    /// `refresh_failed`, `closed_superseded`, `idle`, and the two transitions the wait is
+    /// `version_advanced`, `refresh_failed`, `closed_superseded`, `idle`, and the two
+    /// transitions the wait is
     /// folded from: `became_actionable`, `left_actionable`).
     pub action: String,
     /// The pull request, when one.
@@ -1006,23 +1007,13 @@ impl Integrator for ForgeIntegrator<'_> {
             // the version the merge result must carry is the obligation against the master it
             // now contains, not the number either side chose: two branches that advanced from
             // one trunk land on two versions, and a major one side owed is kept
-            let advance = Command::new(&exe)
-                .args(["release", "advance", "--base", &master])
-                .current_dir(&dir)
-                .env_remove("MAJORDOMUS_SHARE")
-                .output()
-                .map_err(|e| format!("release advance could not run: {e}"))?;
-            if !advance.status.success() {
-                let _ = git_in(&["merge", "--abort"]);
-                return Err(format!(
-                    "release advance refused the merge result: {}",
-                    String::from_utf8_lossy(&advance.stdout)
-                        .lines()
-                        .chain(String::from_utf8_lossy(&advance.stderr).lines())
-                        .rfind(|l| !l.trim().is_empty())
-                        .unwrap_or("no reason given")
-                ));
-            }
+            let advanced = match advance_version(&dir, &exe, &master) {
+                Ok(v) => v,
+                Err(e) => {
+                    let _ = git_in(&["merge", "--abort"]);
+                    return Err(e);
+                }
+            };
             // the derived artifacts of the merge result, regenerated rather than resolved
             let target = root.join("apps/majordomus-cli/target");
             let derive = Command::new(dir.join("scripts/derive"))
@@ -1044,7 +1035,11 @@ impl Integrator for ForgeIntegrator<'_> {
                 ));
             }
             git_in(&["add", "-A"])?;
-            let message = format!("Merge {base} into {} with its derived artifacts regenerated\n\nBrought in by majordomus prs drain so that the required checks run against master {master}.", a.head_ref);
+            let advance_line = advanced
+                .as_deref()
+                .map(|v| format!(" The version advances to {v} against that master (ADR 0106)."))
+                .unwrap_or_default();
+            let message = format!("Merge {base} into {} with its derived artifacts regenerated\n\nBrought in by majordomus prs drain so that the required checks run against master {master}.{advance_line}", a.head_ref);
             let commit = Command::new("git")
                 .arg("-C")
                 .arg(&dir)
@@ -1080,6 +1075,15 @@ impl Integrator for ForgeIntegrator<'_> {
                     String::from_utf8_lossy(&push.stderr).trim()
                 ));
             }
+            if let Some(v) = &advanced {
+                let mut e = event(
+                    "version_advanced",
+                    Some(a),
+                    format!("the merge result advanced to {v} against master {master}"),
+                );
+                e.master_after = Some(master.clone());
+                record(root, e);
+            }
             Ok(new_head)
         })();
         let _ = Command::new("git")
@@ -1090,6 +1094,54 @@ impl Integrator for ForgeIntegrator<'_> {
             .status();
         result
     }
+}
+
+/// The version step of a refresh (ADR 0106 §8b), run in the scratch worktree once the trunk is
+/// merged in: `release advance --base <master>` raises the merged tree to the obligation
+/// against the master it now contains. Asked only of a repository with a version writer —
+/// one whose tracked files the generated merge policy marks `merge=version`, the same
+/// question `scripts/unblock` asks — so a repository without one refreshes as it always did.
+/// Returns the version the tree declares after the step, `None` when there is no writer, and
+/// an error, never a silent skip, when the obligation cannot be met or read.
+pub(super) fn advance_version(
+    dir: &Path,
+    exe: &Path,
+    master: &str,
+) -> Result<Option<String>, String> {
+    let writer = Command::new("git")
+        .arg("-C")
+        .arg(dir)
+        .args(["ls-files", ":(attr:merge=version)"])
+        .output()
+        .map_err(|e| format!("git ls-files could not run: {e}"))?;
+    if !writer.status.success() {
+        return Err(format!(
+            "git ls-files: {}",
+            String::from_utf8_lossy(&writer.stderr).trim()
+        ));
+    }
+    if writer.stdout.iter().all(u8::is_ascii_whitespace) {
+        return Ok(None);
+    }
+    let advance = Command::new(exe)
+        .args(["release", "advance", "--base", master])
+        .current_dir(dir)
+        .env_remove("MAJORDOMUS_SHARE")
+        .output()
+        .map_err(|e| format!("release advance could not run: {e}"))?;
+    if !advance.status.success() {
+        return Err(format!(
+            "release advance refused the merge result: {}",
+            String::from_utf8_lossy(&advance.stdout)
+                .lines()
+                .chain(String::from_utf8_lossy(&advance.stderr).lines())
+                .rfind(|l| !l.trim().is_empty())
+                .unwrap_or("no reason given")
+        ));
+    }
+    crate::release::version::declared(dir)
+        .map(Some)
+        .ok_or_else(|| "release advance left no version declared in the merge result".into())
 }
 
 /// What cleanup would do, or did, for one pull request.

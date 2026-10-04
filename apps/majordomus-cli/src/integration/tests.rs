@@ -1022,3 +1022,51 @@ fn a_repository_that_cannot_be_read_ends_a_continuous_drain() {
     assert_eq!(report.cycles, 0);
     assert_eq!(report.failure.as_deref(), Some("HTTP 401: Bad credentials"));
 }
+
+/// The version step of a refresh is asked only of a repository with a version writer (ADR
+/// 0106 §8b), and a writer that cannot be run is an error, never a refresh that skipped it.
+#[test]
+fn a_refresh_advances_the_version_only_where_the_merge_policy_names_a_writer() {
+    let dir = tempfile::tempdir().unwrap();
+    let git = |args: &[&str]| {
+        let ok = std::process::Command::new("git")
+            .arg("-C")
+            .arg(dir.path())
+            .args(args)
+            .env("GIT_AUTHOR_NAME", "t")
+            .env("GIT_AUTHOR_EMAIL", "t@example.com")
+            .env("GIT_COMMITTER_NAME", "t")
+            .env("GIT_COMMITTER_EMAIL", "t@example.com")
+            .output()
+            .unwrap();
+        assert!(ok.status.success(), "git {args:?}");
+    };
+    git(&["init", "-q"]);
+    std::fs::write(dir.path().join("a.txt"), "a\n").unwrap();
+    git(&["add", "-A"]);
+    git(&["commit", "-qm", "base"]);
+    let nowhere = dir.path().join("no-such-executable");
+
+    // no file is merge=version: nothing is asked, so the executable is never run
+    assert_eq!(
+        super::drain::advance_version(dir.path(), &nowhere, "HEAD"),
+        Ok(None)
+    );
+
+    // a writer is declared: the step runs, and an executable that cannot is an error
+    std::fs::create_dir_all(dir.path().join("apps/majordomus-cli")).unwrap();
+    std::fs::write(
+        dir.path().join("apps/majordomus-cli/Cargo.toml"),
+        "[package]\nname = \"majordomus-cli\"\nversion = \"1.0.0\"\n",
+    )
+    .unwrap();
+    std::fs::write(
+        dir.path().join(".gitattributes"),
+        "apps/majordomus-cli/Cargo.toml merge=version\n",
+    )
+    .unwrap();
+    git(&["add", "-A"]);
+    git(&["commit", "-qm", "writer"]);
+    let refused = super::drain::advance_version(dir.path(), &nowhere, "HEAD").unwrap_err();
+    assert!(refused.contains("could not run"), "{refused}");
+}
