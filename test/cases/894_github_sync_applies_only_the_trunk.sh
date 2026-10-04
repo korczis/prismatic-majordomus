@@ -8,7 +8,8 @@
 # feature branch, or over uncommitted edits, it published that tree's plan as the shared one,
 # and the live remote carried state, closed and unmanaged findings that came from a tree that
 # was never the trunk. Close and reopen ended in `|| true`, so a write GitHub refused printed
-# nothing and the run exited 0 over a half-applied remote.
+# nothing and the run exited 0 over a half-applied remote. The adapter's own tree is checked
+# as well: a branch's copy of it, run against a clean trunk, posted that branch's renderer.
 #
 # Offline: `gh` is a stub on PATH that answers the listings from fixture files, logs every
 # call, and refuses the subcommand MJ_STUB_FAIL names. The remote is a bare repository in
@@ -176,3 +177,59 @@ expect_exit 13 fail_create
 expect_grep "FAIL +created +issue I0002 — the canonical record has no counterpart on GitHub: 'gh issue create --repo example/fixture' exited 1: HTTP 403: refused by the stub"
 expect_grep 'OK +closed +issue I0001 \(#7\)'
 [ ! -e "$LOCK" ] || { echo "    a failed apply left its lock behind"; exit 1; }
+
+# --- a body and a milestone assignment that differ are written, each with its own line, and
+#     a refused `issue edit` is a FAIL for each. I0002 here is as an early projection left
+#     it: open, no identity marker, no milestone.
+ED_TSV="$T/edit.tsv"
+{ grep 'I0001 — ' "$IS_TSV"
+  printf '8\tI0002 — Issue I0002\topen\t%s\t\t\n' "$(printf 'written before the marker\n' | base64 | tr -d '\n')"; } > "$ED_TSV"
+apply_edit() {
+  PATH="$STUB:$PATH" MJ_GH_PACE=0 MJ_STUB_MS="$MS_TSV" MJ_STUB_IS="$ED_TSV" MJ_STUB_LOG="$LOG" \
+    "$SYNC" --apply
+}
+: > "$LOG"
+expect_exit 0 apply_edit
+expect_grep 'OK +updated +issue I0002 \(#8\) milestone — set to .M000 — Milestone M000., its canonical milestone'
+expect_grep 'OK +updated +issue I0002 \(#8\) — body given its identity marker; it was matched by title'
+grep -q '^issue edit 8 --repo example/fixture --body-file ' "$LOG" || { echo "    no body edit of #8 was sent:"; cat "$LOG"; exit 1; }
+grep -qx 'issue edit 8 --repo example/fixture --milestone M000 — Milestone M000' "$LOG" \
+  || { echo "    no milestone edit of #8 was sent:"; cat "$LOG"; exit 1; }
+fail_edit() { MJ_STUB_FAIL="issue edit" apply_edit; }
+expect_exit 13 fail_edit
+expect_grep "FAIL +updated +issue I0002 \(#8\) milestone — set to .M000 — Milestone M000., its canonical milestone: 'gh issue edit 8 --repo example/fixture --milestone M000 — Milestone M000' exited 1: HTTP 403"
+expect_grep "FAIL +updated +issue I0002 \(#8\) — body given its identity marker; it was matched by title: 'gh issue edit 8 --repo example/fixture --body-file "
+expect_grep 'OK +closed +issue I0001 \(#7\)'
+expect_grep '2 mutation\(s\) failed'
+
+# --- the adapter's own tree is projected too: its renderer, hashes and state mapping. A
+#     feature branch's copy run with its cwd in the clean trunk passed every check above.
+#     Here the adapter is loaded from a worktree of the same repository on a feature branch.
+printf '/wt/\n' >> .git/info/exclude
+git worktree add -q -b feature/adapter "$T/wt" "$TRUNK"
+mkdir -p "$T/wt/scripts"
+ln -s "$SYNC" "$T/wt/scripts/github-sync"
+ln -s "$ROOT/lib" "$T/wt/lib"; ln -s "$ROOT/bin" "$T/wt/bin"; ln -s "$ROOT/share" "$T/wt/share"
+git -C "$T/wt" add -A >/dev/null; git -C "$T/wt" commit -qm "a branch's own adapter" >/dev/null
+apply_from_wt() {
+  PATH="$STUB:$PATH" MJ_GH_PACE=0 MJ_STUB_MS="$MS_TSV" MJ_STUB_IS="$IS_TSV" MJ_STUB_LOG="$LOG" \
+    "$T/wt/scripts/github-sync" --apply
+}
+: > "$LOG"
+expect_exit 15 apply_from_wt
+expect_grep "refused: the adapter runs from .*/wt \([0-9a-f]{12} on feature/adapter\), not from the trunk at [0-9a-f]{12}"
+expect_grep 'reproduce: git -C .*/wt rev-parse HEAD'
+no_gh_call
+# ...and once that tree is the trunk, at its tip and clean, it may project it
+git merge -q --ff-only feature/adapter
+git -C "$T/remote.git" fetch -q --no-prune "$T" HEAD:refs/heads/trunk
+git fetch -q origin
+: > "$LOG"
+expect_exit 0 apply_from_wt
+expect_grep 'OK +closed +issue I0001 \(#7\)'
+# ...but not with uncommitted edits in it
+echo "an edit" > "$T/wt/notes.txt"
+: > "$LOG"
+expect_exit 15 apply_from_wt
+expect_grep "refused: the adapter runs from .*/wt \([0-9a-f]{12} on feature/adapter, with uncommitted changes\)"
+no_gh_call

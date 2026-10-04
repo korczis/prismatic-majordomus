@@ -58,6 +58,12 @@
 # --check and --render only read, and run from any branch. MJ_GH_REMOTE names the remote
 # (default origin).
 #
+# The adapter's own code is part of what is projected: the renderer, the hashes, the labels
+# and the state mapping all come from the tree this script is loaded from. When that tree is
+# a checkout of the repository being projected, it must be the trunk too, at the same commit
+# and clean. When it belongs to another repository (an installed copy, a separate clone of
+# the tool), it is not guarded; it is whatever the person running it chose to run.
+#
 # Every mutation prints one line naming what it changed and why. A mutation GitHub refuses
 # is a FAIL line, the run goes on with the next record, and the exit is 13.
 #
@@ -82,7 +88,7 @@ while [ $# -gt 0 ]; do
     --render) [ $# -ge 2 ] || { echo "github-sync: --render needs an id" >&2; exit 2; }; MODE=render; RENDER="$2"; shift 2 ;;
     --milestone) [ $# -ge 2 ] || { echo "github-sync: --milestone needs an id" >&2; exit 2; }; ONLY="$2"; shift 2 ;;
     --force) FORCE=1; shift ;;
-    -h|--help) sed -n '2,65p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,71p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "github-sync: unknown option $1" >&2; exit 2 ;;
   esac
 done
@@ -216,6 +222,27 @@ if [ "$MODE" = apply ]; then
     apply_refused \
       "the tree has $(printf '%s\n' "$dirty" | wc -l | tr -d ' ') uncommitted path(s) (first: $(printf '%s\n' "$dirty" | head -1 | cut -c4-)); only the committed trunk is projected" \
       "git -C $MJ_ROOT status --porcelain --untracked-files=all"
+  fi
+  # The tree the adapter is loaded from renders every body, hash and label it posts. A feature
+  # branch's scripts/github-sync run with its cwd in a clean trunk checkout passed every check
+  # above, which all read MJ_ROOT, and published that branch's renderer over the trunk's plan.
+  # So when ROOT is a checkout of this same repository, it must be the trunk as well.
+  abs_common() {
+    local c; c="$(git -C "$1" rev-parse --git-common-dir 2>/dev/null)" || return 1
+    case "$c" in /*) ;; *) c="$1/$c" ;; esac
+    (cd "$c" 2>/dev/null && pwd -P)
+  }
+  self_common="$(abs_common "$ROOT")" || self_common=""
+  if [ -n "$self_common" ] && [ "$self_common" = "$(abs_common "$MJ_ROOT")" ]; then
+    self_head="$(git -C "$ROOT" rev-parse -q --verify HEAD 2>/dev/null)" || self_head=""
+    self_dirty="$(git -C "$ROOT" status --porcelain --untracked-files=all 2>/dev/null)" \
+      || self_dirty="(git could not report it)"
+    if [ "$self_head" != "$head" ] || [ -n "$self_dirty" ]; then
+      self_on="$(git -C "$ROOT" symbolic-ref -q --short HEAD 2>/dev/null)" || self_on="a detached HEAD"
+      apply_refused \
+        "the adapter runs from $ROOT (${self_head:0:12} on $self_on$([ -z "$self_dirty" ] || printf ', with uncommitted changes')), not from the trunk at ${head:0:12}; its renderer and state mapping would be published as the trunk's" \
+        "git -C $ROOT rev-parse HEAD; git -C $ROOT status --porcelain  # run $MJ_ROOT/scripts/github-sync instead"
+    fi
   fi
   live="$(git -C "$MJ_ROOT" ls-remote --exit-code "$GH_REMOTE" "refs/heads/$trunk" 2>/dev/null | cut -f1)" || live=""
   [ -n "$live" ] || apply_refused \
