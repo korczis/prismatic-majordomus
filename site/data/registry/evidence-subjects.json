@@ -1349,6 +1349,61 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:intent-closes-github-milestones",
+      "path": "/evidence/claims/intent-closes-github-milestones/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:intent-cockpit-pages",
+      "path": "/evidence/claims/intent-cockpit-pages/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:intent-command-deployment-evidence",
+      "path": "/evidence/claims/intent-command-deployment-evidence/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:intent-criteria-covered",
+      "path": "/evidence/claims/intent-criteria-covered/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:intent-in-session-context",
+      "path": "/evidence/claims/intent-in-session-context/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:intent-links-resolve",
+      "path": "/evidence/claims/intent-links-resolve/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:intent-plan-reviewed",
+      "path": "/evidence/claims/intent-plan-reviewed/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:intent-preflight-names-the-intent",
+      "path": "/evidence/claims/intent-preflight-names-the-intent/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:intent-realization-held-to-evidence",
+      "path": "/evidence/claims/intent-realization-held-to-evidence/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:intent-refused-at-plan-start",
+      "path": "/evidence/claims/intent-refused-at-plan-start/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:intent-stage-derived",
+      "path": "/evidence/claims/intent-stage-derived/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:interfaces-are-projections",
       "path": "/evidence/claims/interfaces-are-projections/"
     },
@@ -7384,6 +7439,239 @@
             "docs/INSTALL.md",
             "share/install/install.sh.in",
             "test/cases/85_installer.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:intent-closes-github-milestones": {
+      "kind": "claim",
+      "id": "intent-closes-github-milestones",
+      "status": "planned",
+      "page": "/evidence/claims/intent-closes-github-milestones/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "inputs": [
+            "docs/PLANNING.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:intent-cockpit-pages": {
+      "kind": "claim",
+      "id": "intent-cockpit-pages",
+      "status": "guaranteed",
+      "page": "/evidence/claims/intent-cockpit-pages/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "crate:intent_realization",
+          "path": "apps/majordomus-cli/tests/intent_realization.rs",
+          "category": "integration",
+          "inputs": [
+            "docs/COCKPIT.md",
+            "apps/majordomus-cli/src/cockpit/intents.rs",
+            "apps/majordomus-cli/tests/intent_realization.rs"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:intent-command-deployment-evidence": {
+      "kind": "claim",
+      "id": "intent-command-deployment-evidence",
+      "status": "planned",
+      "page": "/evidence/claims/intent-command-deployment-evidence/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "inputs": [
+            "docs/PLANNING.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:intent-criteria-covered": {
+      "kind": "claim",
+      "id": "intent-criteria-covered",
+      "status": "guaranteed",
+      "page": "/evidence/claims/intent-criteria-covered/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:386_a_plan_is_held_to_its_intent",
+          "path": "test/cases/386_a_plan_is_held_to_its_intent.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/PLANNING.md",
+            "apps/majordomus-cli/src/intent_plan.rs",
+            "test/cases/386_a_plan_is_held_to_its_intent.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:intent-in-session-context": {
+      "kind": "claim",
+      "id": "intent-in-session-context",
+      "status": "planned",
+      "page": "/evidence/claims/intent-in-session-context/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "inputs": [
+            "docs/PLANNING.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:intent-links-resolve": {
+      "kind": "claim",
+      "id": "intent-links-resolve",
+      "status": "guaranteed",
+      "page": "/evidence/claims/intent-links-resolve/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:367_an_intent_is_satisfied_only_by_evidence",
+          "path": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/PLANNING.md",
+            "apps/majordomus-cli/src/intent.rs",
+            "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:intent-plan-reviewed": {
+      "kind": "claim",
+      "id": "intent-plan-reviewed",
+      "status": "guaranteed",
+      "page": "/evidence/claims/intent-plan-reviewed/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:386_a_plan_is_held_to_its_intent",
+          "path": "test/cases/386_a_plan_is_held_to_its_intent.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/PLANNING.md",
+            "apps/majordomus-cli/src/intent_review.rs",
+            "test/cases/386_a_plan_is_held_to_its_intent.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:intent-preflight-names-the-intent": {
+      "kind": "claim",
+      "id": "intent-preflight-names-the-intent",
+      "status": "guaranteed",
+      "page": "/evidence/claims/intent-preflight-names-the-intent/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "crate:intent",
+          "path": "apps/majordomus-cli/tests/intent.rs",
+          "category": "integration",
+          "inputs": [
+            "docs/PLANNING.md",
+            "apps/majordomus-cli/src/intent.rs",
+            "apps/majordomus-cli/tests/intent.rs"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:intent-realization-held-to-evidence": {
+      "kind": "claim",
+      "id": "intent-realization-held-to-evidence",
+      "status": "guaranteed",
+      "page": "/evidence/claims/intent-realization-held-to-evidence/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:388_an_intent_is_realised_across_providers_and_held_to_reality",
+          "path": "test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/PLANNING.md",
+            "apps/majordomus-cli/src/intent_realization.rs",
+            "test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:intent-refused-at-plan-start": {
+      "kind": "claim",
+      "id": "intent-refused-at-plan-start",
+      "status": "planned",
+      "page": "/evidence/claims/intent-refused-at-plan-start/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "inputs": [
+            "docs/PLANNING.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:intent-stage-derived": {
+      "kind": "claim",
+      "id": "intent-stage-derived",
+      "status": "guaranteed",
+      "page": "/evidence/claims/intent-stage-derived/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:367_an_intent_is_satisfied_only_by_evidence",
+          "path": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/PLANNING.md",
+            "apps/majordomus-cli/src/intent.rs",
+            "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh"
           ]
         }
       ],
@@ -16512,6 +16800,13 @@
         "claim:evidence-gates-done",
         "claim:execution-waves",
         "claim:github-projection",
+        "claim:intent-cockpit-pages",
+        "claim:intent-criteria-covered",
+        "claim:intent-links-resolve",
+        "claim:intent-plan-reviewed",
+        "claim:intent-preflight-names-the-intent",
+        "claim:intent-realization-held-to-evidence",
+        "claim:intent-stage-derived",
         "claim:project-schema",
         "claim:project-status-derived",
         "claim:roadmap-derived",
@@ -23926,6 +24221,7 @@
     "suite:829_ci_fails_on_a_skip",
     "suite:85_deployment_bind",
     "suite:86_deployment_projections",
+    "suite:892_what_is_said_of_intents_is_what_the_claims_matrix_says",
     "suite:93_schema_integrity",
     "suite:93_workspace_kind",
     "suite:97_development_semantics_gate",

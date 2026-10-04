@@ -69,7 +69,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 222
+      "count": 233
     },
     {
       "kind": "command",
@@ -92,7 +92,7 @@
       "projection": "none",
       "route": null,
       "title": null,
-      "reason": "A critique is the adversarial pass over one intent's plan, written for the worker who must resolve its findings before work starts (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
+      "reason": "A critique is the adversarial pass over one intent's plan, written by a worker, and work started under the intent without it or with a blocking finding open fails intent validation (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
       "count": 1
     },
     {
@@ -117,7 +117,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 310
+      "count": 321
     },
     {
       "kind": "domain",
@@ -156,7 +156,7 @@
       "projection": "none",
       "route": null,
       "title": null,
-      "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` answers for the intent itself.",
+      "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` and the Cockpit's /cockpit/intents answer for the intent itself.",
       "count": 2
     },
     {
@@ -277,7 +277,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 346
+      "count": 347
     },
     {
       "kind": "use-case",
@@ -741,22 +741,7 @@
         "web"
       ],
       "source": ".ai/repo/adrs/0013-every-web-surface-is-discovered-from-its-producer-resolved-o.md",
-      "references": [
-        {
-          "edge": "put_in_force",
-          "label": ".ai/repo/ci/pages.yaml",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/http/router.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        }
-      ],
+      "references": [],
       "referenced_by": [
         {
           "edge": "put_in_force",
@@ -887,20 +872,6 @@
       "references": [
         {
           "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/why.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "ai.repo.why",
-          "kind": "context",
-          "route": "/context/",
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
           "label": "project.interfaces-are-projections@1",
           "kind": "rule",
           "route": "/rules/project-interfaces-are-projections-1/",
@@ -911,13 +882,6 @@
           "label": "project.why-catalogue-is-canonical@1",
           "kind": "rule",
           "route": "/rules/project-why-catalogue-is-canonical-1/",
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "test/cases/98_why_catalogue.sh",
-          "kind": "test",
-          "route": null,
           "external": false
         }
       ],
@@ -1033,41 +997,6 @@
       "references": [
         {
           "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/worktree/migrate.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/worktree/mod.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/worktree/path.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "docs/WORKTREES.md",
-          "kind": "document",
-          "route": null,
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
           "label": "project.interfaces-are-projections@1",
           "kind": "rule",
           "route": "/rules/project-interfaces-are-projections-1/",
@@ -1115,62 +1044,6 @@
       "references": [
         {
           "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/web/report/ui.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/web/validate.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "scripts/lib/ui-audit.mjs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "scripts/lib/ui-contrast.mjs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "scripts/lib/ui-discover.mjs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "scripts/lib/ui-routes.mjs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "scripts/lib/ui-static.mjs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "scripts/ui",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
           "label": "project.ui-conformance@1",
           "kind": "rule",
           "route": "/rules/project-ui-conformance-1/",
@@ -1181,13 +1054,6 @@
           "label": "project.web-surface-topology@1",
           "kind": "rule",
           "route": "/rules/project-web-surface-topology-1/",
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "test/cases/85_ui_conformance.sh",
-          "kind": "test",
-          "route": null,
           "external": false
         }
       ],
@@ -1209,41 +1075,6 @@
       ],
       "source": ".ai/repo/adrs/0023-product-features-are-objects-of-the-layer-and-the-landing-page-is-a-projection.md",
       "references": [
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/capability/builtin/product.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/product.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "site/templates/index.html",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "ai.repo.features",
-          "kind": "context",
-          "route": "/context/",
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "docs/PRODUCT.md",
-          "kind": "document",
-          "route": null,
-          "external": false
-        },
         {
           "edge": "put_in_force",
           "label": "project.interfaces-are-projections@1",
@@ -1270,13 +1101,6 @@
           "label": "project.why-catalogue-is-canonical@1",
           "kind": "rule",
           "route": "/rules/project-why-catalogue-is-canonical-1/",
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "test/cases/97_product_features.sh",
-          "kind": "test",
-          "route": null,
           "external": false
         }
       ],
@@ -1347,27 +1171,6 @@
       "references": [
         {
           "edge": "put_in_force",
-          "label": ".ai/repo/order-baseline.txt",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/order.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "scripts/ci/order-check",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
           "label": "project.canonical-order@1",
           "kind": "rule",
           "route": "/rules/project-canonical-order-1/",
@@ -1406,34 +1209,6 @@
       ],
       "source": ".ai/repo/adrs/0026-a-capability-modules-area-is-derived-from-the-features-that-name-it.md",
       "references": [
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/cockpit/nav.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/product.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "ai.repo.features",
-          "kind": "context",
-          "route": "/context/",
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "ai.repo.why",
-          "kind": "context",
-          "route": "/context/",
-          "external": false
-        },
         {
           "edge": "put_in_force",
           "label": "project.canonical-order@1",
@@ -1500,13 +1275,6 @@
       ],
       "source": ".ai/repo/adrs/0028-the-crates-public-surface-is-measured-by-the-crate-and-absence.md",
       "references": [
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/quality/mod.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
         {
           "edge": "put_in_force",
           "label": "project.interfaces-are-projections@1",
@@ -4174,13 +3942,6 @@
       ],
       "source": ".ai/repo/adrs/0104-the-product-is-filed-under-a-few-domains-and-a-feature-names-its-one.md",
       "references": [
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/product.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
         {
           "edge": "put_in_force",
           "label": "adr-0023",
