@@ -753,7 +753,22 @@ pub fn step(
             what,
         });
     }
-    let method = second.policy.merge_method.clone();
+    // no merge commit allowed holds every pull request, so a ready one has one; never another
+    let Some(method) = second.policy.merge_method.clone() else {
+        let what = "the repository allows no merge commit".to_string();
+        record(
+            root,
+            event(
+                IntegrationAction::StaleDecision,
+                Some(&candidate),
+                what.clone(),
+            ),
+        )?;
+        return Ok(DrainStepOutcome::StaleDecision {
+            pr: candidate.number,
+            what,
+        });
+    };
     // on the trail before it reaches the forge: a merge the trail cannot name is not asked for
     let attempted = event(
         IntegrationAction::MergeAttempted,

@@ -301,8 +301,12 @@ pub enum PullRequestDisposition {
     NeedsRepair,
     /// Conflicts on authored paths: a person resolves them.
     Conflicting,
-    /// A blocking label holds it.
+    /// A label whose policy is to hold holds it, or the repository allows no merge commit,
+    /// which is the only way the executor merges.
     Blocked,
+    /// The forge has auto-merge armed on it: the forge would merge it on its own, outside the
+    /// executor and against whatever master is then. Held until a person disarms it.
+    Unsafe,
     /// Its head already landed, or its patch is already fully on master: strong evidence,
     /// eligible for closure under policy.
     Superseded,
@@ -317,8 +321,7 @@ pub enum PullRequestDisposition {
 
 impl PullRequestDisposition {
     /// Every disposition, in declaration order.
-    #[cfg(test)]
-    pub const ALL: [PullRequestDisposition; 13] = [
+    pub const ALL: [PullRequestDisposition; 14] = [
         PullRequestDisposition::Ready,
         PullRequestDisposition::NeedsRefresh,
         PullRequestDisposition::WaitingForChecks,
@@ -328,6 +331,7 @@ impl PullRequestDisposition {
         PullRequestDisposition::NeedsRepair,
         PullRequestDisposition::Conflicting,
         PullRequestDisposition::Blocked,
+        PullRequestDisposition::Unsafe,
         PullRequestDisposition::Superseded,
         PullRequestDisposition::PossiblyRedundant,
         PullRequestDisposition::OtherBase,
@@ -351,6 +355,7 @@ impl PullRequestDisposition {
             PullRequestDisposition::NeedsRepair => "needs_repair",
             PullRequestDisposition::Conflicting => "conflicting",
             PullRequestDisposition::Blocked => "blocked",
+            PullRequestDisposition::Unsafe => "unsafe",
             PullRequestDisposition::Superseded => "superseded",
             PullRequestDisposition::PossiblyRedundant => "possibly_redundant",
             PullRequestDisposition::OtherBase => "other_base",
@@ -374,6 +379,7 @@ impl PullRequestDisposition {
             }
             PullRequestDisposition::Draft
             | PullRequestDisposition::Blocked
+            | PullRequestDisposition::Unsafe
             | PullRequestDisposition::OtherBase
             | PullRequestDisposition::Unknown => IntegrationLane::Held,
         }
@@ -394,7 +400,8 @@ pub enum IntegrationLane {
     Repair,
     /// Its work is on master already.
     Cleanup,
-    /// Not asking to be merged, or undecidable.
+    /// Not asking to be merged, held by a label or a setting, unsafe for the executor, or
+    /// undecidable.
     Held,
 }
 
@@ -415,7 +422,7 @@ pub enum EvidenceKind {
     RelationToMaster,
     /// One declared dependency.
     Dependency,
-    /// One blocking label.
+    /// One label whose policy is to hold.
     Label,
     /// Whether it is a draft; always emitted.
     Draft,
@@ -423,11 +430,13 @@ pub enum EvidenceKind {
     Base,
     /// How old the observation is. Declared so the vocabulary is settled; nothing emits it yet.
     Freshness,
-    /// Whether the forge has auto-merge armed. Declared so the vocabulary is settled;
-    /// nothing emits it yet.
+    /// The forge has auto-merge armed; emitted whenever it is.
     AutoMerge,
     /// A declared supersession. Declared so the vocabulary is settled; nothing emits it yet.
     Supersession,
+    /// What the repository's settings allow the executor; emitted when they allow no merge
+    /// commit.
+    RepositorySettings,
 }
 
 impl EvidenceKind {
@@ -445,6 +454,7 @@ impl EvidenceKind {
             EvidenceKind::Freshness => "freshness",
             EvidenceKind::AutoMerge => "auto_merge",
             EvidenceKind::Supersession => "supersession",
+            EvidenceKind::RepositorySettings => "repository_settings",
         }
     }
 }
@@ -528,10 +538,15 @@ pub enum IntegrationGate {
     Base,
     /// It is not a draft.
     Draft,
-    /// It carries no blocking label.
+    /// It carries no label whose policy is to hold.
     Label,
+    /// The forge has no auto-merge armed on it.
+    AutoMerge,
     /// Its head is not on master already, and git could say that it merges cleanly.
     RelationToMaster,
+    /// The repository allows a merge commit, the only way the executor merges. Asked after
+    /// the relation, so work already on master is still `superseded` and may be closed.
+    MergeMethod,
     /// Every declared dependency has landed.
     Dependency,
     /// The review policy is satisfied on the head.
@@ -546,11 +561,13 @@ pub enum IntegrationGate {
 
 impl IntegrationGate {
     /// Every gate, in policy order.
-    pub const ALL: [IntegrationGate; 9] = [
+    pub const ALL: [IntegrationGate; 11] = [
         IntegrationGate::Base,
         IntegrationGate::Draft,
         IntegrationGate::Label,
+        IntegrationGate::AutoMerge,
         IntegrationGate::RelationToMaster,
+        IntegrationGate::MergeMethod,
         IntegrationGate::Dependency,
         IntegrationGate::Review,
         IntegrationGate::NoFailingCheck,
@@ -564,6 +581,8 @@ impl IntegrationGate {
             IntegrationGate::Base => "base",
             IntegrationGate::Draft => "draft",
             IntegrationGate::Label => "label",
+            IntegrationGate::AutoMerge => "auto_merge",
+            IntegrationGate::MergeMethod => "merge_method",
             IntegrationGate::RelationToMaster => "relation_to_master",
             IntegrationGate::Dependency => "dependency",
             IntegrationGate::Review => "review",
@@ -586,7 +605,8 @@ pub struct GateResult {
 
 /// What [`ReasonCode`]'s schema says, since its wire form is a string: the vocabulary.
 const REASON_VOCABULARY: &str = "A reason code, `code` or `code:payload`, one of: \
-`stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `head_reachable_from_master`, \
+`stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, \
+`merge_commit_not_allowed`, `head_reachable_from_master`, \
 `merge_changes_nothing`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, \
 `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, \
 `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, \
@@ -610,11 +630,16 @@ pub enum ReasonCode {
     },
     /// `draft`.
     Draft,
-    /// `label:NAME`: a blocking label holds it.
+    /// `label:NAME`: a label whose policy is to hold holds it.
     Label {
         /// The label, as the forge spells it.
         name: String,
     },
+    /// `auto_merge_armed`: the forge would merge it on its own, outside the executor.
+    AutoMergeArmed,
+    /// `merge_commit_not_allowed`: the repository's settings allow no merge commit, and the
+    /// executor never squashes or rebases.
+    MergeCommitNotAllowed,
     /// `head_reachable_from_master`: every commit already landed.
     HeadReachableFromMaster,
     /// `merge_changes_nothing`: its patch is already fully on master.
@@ -681,6 +706,8 @@ impl ReasonCode {
             ReasonCode::BaseIs { .. } => "base_is",
             ReasonCode::Draft => "draft",
             ReasonCode::Label { .. } => "label",
+            ReasonCode::AutoMergeArmed => "auto_merge_armed",
+            ReasonCode::MergeCommitNotAllowed => "merge_commit_not_allowed",
             ReasonCode::HeadReachableFromMaster => "head_reachable_from_master",
             ReasonCode::MergeChangesNothing => "merge_changes_nothing",
             ReasonCode::OnlyDerivedArtifactsDiffer => "only_derived_artifacts_differ",
@@ -768,6 +795,8 @@ impl std::str::FromStr for ReasonCode {
                 state: serde_json::from_value(word(p)).map_err(|_| bad())?,
             },
             ("draft", None) => ReasonCode::Draft,
+            ("auto_merge_armed", None) => ReasonCode::AutoMergeArmed,
+            ("merge_commit_not_allowed", None) => ReasonCode::MergeCommitNotAllowed,
             ("head_reachable_from_master", None) => ReasonCode::HeadReachableFromMaster,
             ("merge_changes_nothing", None) => ReasonCode::MergeChangesNothing,
             ("only_derived_artifacts_differ", None) => ReasonCode::OnlyDerivedArtifactsDiffer,

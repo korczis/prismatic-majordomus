@@ -36,22 +36,60 @@ pub struct IntegrationPolicy {
     /// skipped required check is otherwise `missing`.
     #[serde(default)]
     pub skipped_permitted: Vec<String>,
-    /// Labels that hold a pull request whatever else is true.
-    pub blocking_labels: Vec<String>,
-    /// The merge method the executor asks the forge for.
-    pub merge_method: String,
+    /// The labels that have an effect, each with its effect: [`LABEL_POLICY`], copied.
+    pub labels: Vec<LabelPolicy>,
+    /// The merge method the executor asks the forge for: `merge` when the repository allows a
+    /// merge commit, and `None` when it does not. There is no other: the derived-file driver
+    /// resolves merges, and a squash or rebase would replay commits it never saw, so with
+    /// `None` every pull request the relation to master does not already decide is held
+    /// (`merge_commit_not_allowed`), never merged otherwise.
+    pub merge_method: Option<String>,
 }
 
-/// The labels that hold a pull request. One list, here; the forge's own label names are
-/// compared case-insensitively against it.
-pub const BLOCKING_LABELS: &[&str] = &[
-    "do-not-merge",
-    "do not merge",
-    "blocked",
-    "hold",
-    "on-hold",
-    "wip",
-    "manual-merge",
+/// What a label does to a pull request that carries it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum LabelEffect {
+    /// It holds the pull request whatever else is true: `blocked`, with `label:NAME`.
+    Hold,
+}
+
+/// One label with an effect. The forge's label names are compared with `name`
+/// case-insensitively.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct LabelPolicy {
+    /// The label, lower-case.
+    pub name: std::borrow::Cow<'static, str>,
+    /// What it does.
+    pub effect: LabelEffect,
+}
+
+impl LabelPolicy {
+    const fn hold(name: &'static str) -> Self {
+        LabelPolicy {
+            name: std::borrow::Cow::Borrowed(name),
+            effect: LabelEffect::Hold,
+        }
+    }
+
+    /// Whether `label`, as the forge spells it, is this one.
+    pub fn names(&self, label: &str) -> bool {
+        self.name.eq_ignore_ascii_case(label)
+    }
+}
+
+/// The label policy: every label that has an effect, and the effect. The one table — the
+/// policy ([`IntegrationPolicy::labels`]) copies it and the classifier reads that copy; no
+/// other list of labels exists. There is no label that opts out of the executor's refresh
+/// (owner decision D11), so every effect is `hold`.
+pub const LABEL_POLICY: &[LabelPolicy] = &[
+    LabelPolicy::hold("do-not-merge"),
+    LabelPolicy::hold("do not merge"),
+    LabelPolicy::hold("blocked"),
+    LabelPolicy::hold("hold"),
+    LabelPolicy::hold("on-hold"),
+    LabelPolicy::hold("wip"),
+    LabelPolicy::hold("manual-merge"),
 ];
 
 /// Path prefixes whose change makes a pull request high-risk to integrate.
@@ -496,9 +534,9 @@ pub fn classify(
         .iter()
         .filter(|l| {
             policy
-                .blocking_labels
+                .labels
                 .iter()
-                .any(|b| b.eq_ignore_ascii_case(l))
+                .any(|p| p.effect == LabelEffect::Hold && p.names(l))
         })
         .collect();
 
@@ -648,9 +686,26 @@ pub fn classify(
     for l in &blocking {
         evidence.push(ev(EvidenceKind::Label, "blocking", (*l).clone(), &forge));
     }
+    if pr.auto_merge {
+        evidence.push(ev(
+            EvidenceKind::AutoMerge,
+            "armed",
+            "the forge has auto-merge armed: it would merge on its own, outside the executor",
+            &forge,
+        ));
+    }
+    if policy.merge_method.is_none() {
+        evidence.push(ev(
+            EvidenceKind::RepositorySettings,
+            "merge_commit_not_allowed",
+            "the repository's settings allow no merge commit; the executor merges only with one, \
+             never by a squash or a rebase",
+            &forge,
+        ));
+    }
 
     // every gate, in policy order; each answers whatever the others said
-    let answers: [(IntegrationGate, Option<Failure>); 9] = [
+    let answers: [(IntegrationGate, Option<Failure>); 11] = [
         (
             IntegrationGate::Base,
             match stacked_on {
@@ -700,6 +755,22 @@ pub fn classify(
             },
         ),
         (
+            IntegrationGate::AutoMerge,
+            if pr.auto_merge {
+                fails(
+                    PullRequestDisposition::Unsafe,
+                    vec![ReasonCode::AutoMergeArmed],
+                    Some(format!(
+                        "disarm auto-merge (gh pr merge {} --disable-auto); the executor merges \
+                         one at a time against the current master",
+                        pr.number
+                    )),
+                )
+            } else {
+                None
+            },
+        ),
+        (
             IntegrationGate::RelationToMaster,
             match relation {
                 RelationToMaster::Contained => fails(
@@ -736,6 +807,22 @@ pub fn classify(
                     )),
                 ),
                 RelationToMaster::UpToDate { .. } | RelationToMaster::Behind { .. } => None,
+            },
+        ),
+        (
+            IntegrationGate::MergeMethod,
+            if policy.merge_method.is_none() {
+                fails(
+                    PullRequestDisposition::Blocked,
+                    vec![ReasonCode::MergeCommitNotAllowed],
+                    Some(
+                        "allow merge commits in the repository's settings; the executor never \
+                         squashes or rebases"
+                            .into(),
+                    ),
+                )
+            } else {
+                None
             },
         ),
         (IntegrationGate::Dependency, {
