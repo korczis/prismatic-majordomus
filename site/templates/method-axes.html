@@ -1,7 +1,7 @@
 {% extends "page.html" %}
 {% block body %}
 {%- set m = load_data(path="data/generated/method.json") -%}
-<article class="format max-w-3xl break-words dark:format-invert lg:format-lg" tabindex="0">{{ page.content | safe }}</article>
+<article class="format max-w-3xl break-words dark:format-invert lg:format-lg [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline" tabindex="0">{{ page.content | safe }}</article>
 
 <section class="mt-12" aria-labelledby="axes">
   <div class="mb-8 max-w-3xl">

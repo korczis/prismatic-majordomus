@@ -209,12 +209,19 @@ jobs:
         if: steps.publication-owed.outputs.owed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+        # A rebuild helps only a tree that is already right: gh-pages built from this very
+        # commit, whose GitHub build errored. An errored build of an older tree is the case a
+        # deploy repairs — a push deploy that failed before publishing over a build that had
+        # errored too — and asking to rebuild it would republish the stale site and skip the
+        # deploy, every thirty minutes. test/cases/625 runs this step against both trees.
         run: |
           state="$(scripts/pages built --porcelain 2>/dev/null | cut -f1)"
-          if [ "$state" = errored ]; then remedy=rebuild; else remedy=deploy; fi
+          published="$(git show origin/gh-pages:build.json 2>/dev/null | sed -n 's/^  "commit": *"\([0-9a-f]*\)".*/\1/p')"
+          head="$(git rev-parse HEAD)"
+          if [ "$state" = errored ] && [ "$published" = "$head" ]; then remedy=rebuild; else remedy=deploy; fi
           echo "remedy=$remedy" >> "$GITHUB_OUTPUT"
-          echo "the publication is owed; GitHub's build of gh-pages is ${state:-unreadable}, so the remedy is $remedy"
-          printf '\nGitHub'"'"'s build of gh-pages is %s, so the remedy is **%s**.\n' "${state:-unreadable}" "$remedy" >> "$GITHUB_STEP_SUMMARY"
+          echo "the publication is owed; gh-pages carries ${published:-no readable commit} for $head and GitHub's build of it is ${state:-unreadable}, so the remedy is $remedy"
+          printf '\ngh-pages carries %s for %s; GitHub'"'"'s build of it is %s, so the remedy is **%s**.\n' "${published:-no readable commit}" "$head" "${state:-unreadable}" "$remedy" >> "$GITHUB_STEP_SUMMARY"
 
       # the remedy for a build that errored on a tree that is already right
       - id: ask-rebuild

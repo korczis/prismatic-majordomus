@@ -30,7 +30,7 @@
     {%- endif %}
 
     {#- the body is the skill's own file, copied by the generator; nothing here rewrites it -#}
-    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto" tabindex="0">{{ page.content | safe }}</article>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline" tabindex="0">{{ page.content | safe }}</article>
 
     {%- if s.examples | length > 0 %}
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Examples</h2>
@@ -40,7 +40,7 @@
       <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="text-base font-semibold text-heading">{{ e.title }}</h3>
         <p class="mt-1 break-all font-mono text-xs text-body-subtle">{{ e.path }}</p>
-        <div class="format mt-3 max-w-none break-words text-sm dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full" tabindex="0">{{ e.body | markdown | safe }}</div>
+        <div class="format mt-3 max-w-none break-words text-sm dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline" tabindex="0">{{ e.body | markdown | safe }}</div>
       </section>
       {%- endfor %}
     </div>

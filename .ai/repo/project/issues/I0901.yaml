@@ -35,4 +35,39 @@ evidence_required:
   - object_indexed
 risk: "A schema written for one deployment becomes either a Kubernetes-grade abstraction nobody needs or a Fly file with a different extension. It has to be generic where a second provider would plausibly reuse it and concrete everywhere else."
 created_at: 2026-09-06
-updated_at: 2026-09-10
+updated_at: 2026-10-04T10:00:11Z
+started_at: 2026-10-04T09:55:21Z
+started_event: sha256:3123ebbc178cc682288eec0f9735a2ae28e4974ab4874911313c5b23c08673ea
+verified_at: 2026-10-04T09:59:52Z
+verified_event: sha256:257f73020c90af8cfd27a4ce7eac9f497c0ee1c64fe49043e12865d7d4b9e2b4
+completed_at: 2026-10-04T10:00:11Z
+completed_event: sha256:b99ecd9dd4aebe3dcdfc21578309bbe5e10827ea7b476cab602f930f2ea194d7
+evidence:
+  - covers: kind_registered
+    type: artifact
+    command: "grep -n -A3 '^  deployment:' share/kinds.yaml"
+    result: "share/kinds.yaml declares kind deployment against schema majordomus.deployment/v1; share/allow/deployment.txt (41 keys) is generated from that schema"
+    artifact: "share/kinds.yaml"
+    commit: f075170530ac32cb634a514eb35e970c8a9412e9
+    recorded_at: 2026-10-04T09:55:33Z
+  - covers: object_indexed
+    type: test
+    command: "bin/majordomus-cli run objects.list --input '{\"kind\":\"deployment\"}' --format json; bin/majordomus-cli run objects.get --input '{\"uri\":\"majordomus://deployment/majordomus\"}'"
+    result: "objects.list returns one object majordomus://deployment/majordomus at .ai/repo/deployments/majordomus.yaml; objects.get reads it (state succeeded); the generic object surface, no deployment-specific listing code"
+    artifact: ".ai/repo/deployments/majordomus.yaml"
+    commit: f075170530ac32cb634a514eb35e970c8a9412e9
+    recorded_at: 2026-10-04T09:55:39Z
+  - covers: keys_closed
+    type: test
+    command: "bash test/run.sh 84_deployment_contract"
+    result: "ok 84_deployment_contract: doctor refuses an unknown key by name (key(s) the contract does not have: fly_api_token), a foreign schema, a missing region, a credential, a duplicate identity; the restored object is accepted"
+    artifact: "test/cases/84_deployment_contract.sh"
+    commit: f075170530ac32cb634a514eb35e970c8a9412e9
+    recorded_at: 2026-10-04T09:59:32Z
+  - covers: directory_contract
+    type: artifact
+    command: "grep -nE 'uthoritative|enerated|egenerat' .ai/repo/deployments/README.md; bin/majordomus doctor | grep deployment"
+    result: "the context/v1 README ai.repo.deployments has sections 'What is authoritative and what is generated' and 'Regenerate' (ADR 0011); doctor: OK deployment .ai/repo/deployments/ — 1 deployment(s), no credential, one identity each"
+    artifact: ".ai/repo/deployments/README.md"
+    commit: f075170530ac32cb634a514eb35e970c8a9412e9
+    recorded_at: 2026-10-04T09:59:43Z
