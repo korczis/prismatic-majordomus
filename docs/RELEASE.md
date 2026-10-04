@@ -552,9 +552,14 @@ The obligation is owed by a change set, never by a conversation, and an episode 
 a provider's session closing, a terminal dying — owes nothing; only an accepted completion
 or an integration does. Every path the change set touches is classified by what makes it
 machine output: a path the trunk's `.gitattributes` marks `merge=derived` is a projection, a
-file under `.ai/repo/releases/` is publication evidence, and the manifest and lock are a
-version advance when they differ from the base exactly as the writer would have written them.
-Anything else is work. That classification is what ends the release pipeline's own follow-up
+record the change set adds under `.ai/repo/releases/` is publication evidence, and the manifest
+and lock are a version advance when they differ from the base exactly as the writer would have
+written them. A new record's own projections — the public metadata and the stable pointer the
+record generator writes from it under `site/static/releases/`, and the `.gitattributes` lines
+that mark the new metadata `merge=derived` — are recognised from what the generator declares,
+because the trunk cannot mark a file it does not have yet. Editing or deleting a published
+record is work. Anything else is work, and trunk attributes git cannot read leave the change
+set `unverified` rather than guessed. That classification is what ends the release pipeline's own follow-up
 commits: a release record landing after publication carries no work and raises nothing, so a
 merge, its advance, its derived refresh and its record terminate after one advance.
 
@@ -618,9 +623,13 @@ what a deploy of stale derived data publishes — is `mismatched`, a measured no
 `finish --outcome completed` judges its whole contract first — scope, verification, state,
 blockers, continuity, the at-finish gates — and pays an owed obligation only when nothing
 else is unmet: it runs `release advance` and `generate distribution`, reads the obligation
-again (it must now hold), and records `release.advanced` before `task.finished`. A refused
-completion advances nothing, so the ledger never carries an advance for work that was not
-accepted. The at-finish gates (`publication_current`) are what make a completion wait for
+again (it must now hold), and records `release.advanced` — named by its `event_id`, the
+subject, the trunk commit and the task it paid — before `task.finished`. A refused completion
+advances nothing, so the ledger never carries an advance for work that was not accepted: when
+the advance, the projection or the re-read fails, every file the advance could change (the
+manifest, the lock and each file `generate distribution` writes) is put back to the bytes it
+held before, and finish refuses. The writer itself is atomic: both files change or neither
+does. The at-finish gates (`publication_current`) are what make a completion wait for
 the served site: completed means the work is integrated and published, not that it was
 intended to be.
 
@@ -645,6 +654,8 @@ are listed as unreleased until the next record ships them.
 | the version line conflicts in a merge | `merge=version` was not declared in this clone | `just derive-merge-driver`, merge again, then `majordomus release advance` |
 | a branch went stale | `release obligation` says `owed` or `behind`; the `version-obligation` gate refuses | merge the trunk (`majordomus prs drain --refresh`, `scripts/unblock <branch>`), which advances against it |
 | the merge failed | nothing advanced on the trunk | retry the landing; the obligation is recomputed against the trunk as it is |
+| finish refused after the advance | the manifest, the lock and the distribution's projections are as they were; `task.refused` names `majordomus.version-obligation` | fix what the refusal names (`generate distribution`, a trunk that moved) and finish again; nothing needs putting back by hand |
+| `release obligation` says `unverified` and names `.gitattributes` | git could not read the trunk's attributes, so no path was classified | `git fetch origin`; check `git check-attr --source origin/master merge -- <path>` answers |
 | the deploy failed | the version is unchanged; `pages-check` reports a publication owed | rerun the pages workflow; no advance is owed again |
 | the public verification failed | `served observe` says `stale` or `mismatched`, `scripts/pages verify --commit` refuses | rerun the deploy and verify again; the version is never bumped to recover |
 
@@ -689,7 +700,7 @@ appended is refused, naming the tag.
 | | |
 |---|---|
 | `apps/majordomus-cli/src/release/commits.rs` | the parser: the conventional shapes, both spellings of breaking, an unknown lowercase type, and a subject that is not conventional kept whole; and the resolution: an id the layer holds becomes a reference carrying that record's title, an id of the same shape that names nothing does not, a name mentioned twice is carried once, and a word that merely starts with the letter is not an id |
-| `apps/majordomus-cli/src/release/version.rs` | the contract decides `next`, and an unmeasurable one decides nothing — `next` absent, `undecided`, with the reason; the report's `next` and the writer's default target are one selection; a contract that requires no release never answers the last release; the commit inference raises the last release, not the declared version; the bump is a total function of the changes, raising zeroes what it supersedes, a version that is not three numbers is refused, writing touches only the manifest's line and the lock's own entry, the projection round-trips through the generated file, a stale projection warns and one nothing derives is refused, and a version written by hand is found where a generated one is not |
+| `apps/majordomus-cli/src/release/version.rs` | the contract decides `next`, and an unmeasurable one decides nothing — `next` absent, `undecided`, with the reason; the report's `next` and the writer's default target are one selection; a contract that requires no release never answers the last release; the commit inference raises the last release, not the declared version; the bump is a total function of the changes, raising zeroes what it supersedes, a version that is not three numbers is refused, writing touches only the manifest's line and the lock's own entry and changes both or neither — a lock that cannot be written or fails to land leaves the manifest byte-identical — the projection round-trips through the generated file, a stale projection warns and one nothing derives is refused, and a version written by hand is found where a generated one is not |
 | `apps/majordomus-cli/src/release/changelog.rs` | a decision belongs to the release whose window contains its date, the unreleased window opens after the last release, a timestamp and a date compare on the day they share, and the groups reach the renderer in rank order whatever order the commits arrived in |
 | `test/cases/103_release_projection.sh` | the whole surface against the real executable, in a disposable repository with a real history: which commits fall in which range, which decision belongs to which window, a record added with nothing else edited, a subject that follows no convention carried rather than dropped, a fixture whose repository is not a forge the tool knows producing no link rather than a guessed one, a commit naming one id the layer holds and one it does not, and every exit code above |
 | `test/cases/743_release_version_answers_with_the_contract.sh` | on a fixture whose commits say BREAKING and whose surface only grew, `release version`'s `next` is `release analyze`'s required version, decided by the contract, with the commits' major shown as evidence, and `release bump --dry-run` raises to that same 0.11.0; with no published baseline `next` is absent, `decided_by: undecided` with its reason, a bump with no target refuses with exit 12 and a named one is still written, the manifest raised to 0.11.0; a version stated by hand in `lib/` leaves the plan unsound, so `next` is absent, `decided_by: undecided` with the `version-stated-by-hand` message, and `release bump --dry-run` refuses with exit 12 and that same message; a version already raised to the requirement is not raised again; a manifest with no version line is not passed off as the contract's answer and a bump with no target refuses it; after a published release with only a `fix:` since and an unchanged surface, `next` is a patch above it and not the release itself, and `release bump --dry-run` raises to that same 0.11.1; and with a version declared above the minimum the commit inference still raises the last release |
@@ -701,7 +712,8 @@ appended is refused, naming the tag.
 | `apps/majordomus-cli/src/release/reconcile.rs` | the version driver: two advances from one trunk merge to the greater with no conflict, a major one side owed survives the merge, a dependency edit still merges and two competing edits of one dependency still conflict with the version line outside the conflict, the lock merges the same way, a side whose version cannot be read is merged as git would with no number invented, and the driver writes over `%A` and reports a conflict by its exit |
 | `test/cases/873_concurrent_branches_never_share_a_version.sh` | two branches advanced from 1.10.0: A lands 1.11.0 and B, refreshed by merging the trunk and advancing against it, lands 1.12.0, never A's number; a branch advanced once against a trunk that advanced twice is merged by the driver alone — without it the version line conflicts, which the case is shown to fail on — and goes one past the trunk with its dependency edit; a branch below the trunk's version is `behind` |
 | `test/cases/872_an_episode_end_is_not_a_completion.sh` | a provider's episode ending with work on the bench hands the task over and advances nothing; a completion refused by its own verification leaves the version and the ledger as they were; the same work, accepted, advances 1.4.0 to 1.5.0 once |
-| `test/cases/874_the_release_pipeline_does_not_advance_itself.sh` | one piece of work merged with its advance takes the trunk to 1.5.0, and a projection refresh, the release record and the two together each leave it there with the automation's advance run after every merge; the next piece of work takes it to 1.6.0 — and a record written where the classification does not recognise evidence makes the case fail at that step |
+| `test/cases/874_the_release_pipeline_does_not_advance_itself.sh` | one piece of work merged with its advance takes the trunk to 1.5.0, and a projection refresh, the release record, and a record landed as #748 landed it — the new record, its generated metadata and pointer, the attribute line marking the new metadata derived, and the refresh — each leave it there, with the gate green on the merge and the automation's advance run after every merge; a published record edited by hand is work and advances to 1.6.0, the next piece of work to 1.7.0; and trunk attributes git cannot read are `unverified`, exit 12 — a record written where the classification does not recognise evidence makes the case fail at that step |
+| `test/cases/877_a_refused_advance_leaves_the_version_as_it_was.sh` | a completion whose re-read after the advance answers `unverified`, and one whose `generate distribution` fails after it, are both refused with `task.refused` naming `majordomus.version-obligation`, and leave every file in the work tree byte-identical to before the advance with no `release.advanced`; the same work accepted advances once, its `event_id` naming the subject, the trunk commit and the task, and a replay appends nothing |
 | `test/cases/875_a_failed_deploy_is_retried_on_the_same_version.sh` | integrated work at 1.5.0 is `stale` while the deploy has failed, the retry writes nothing, half a deploy (the new commit with the old version) is `mismatched`, and only the integrated commit at 1.5.0 is `served` |
 | `test/cases/876_unblock_reconciles_the_version.sh` | a branch at 1.11.0 against a trunk that reached 1.12.0 conflicts under git alone; `scripts/unblock` merges it through the version driver, advances it to 1.13.0, commits that as a release advance and pushes it as a fast-forward of the branch, leaving the checkout it ran from untouched |
 | `test/cases/384_a_deployment_is_evidence.sh` | the served build is held to the version its commit declares: agreeing is `served`, stating another is `mismatched` (exit 10), and a build stating none keeps the commit's verdict |

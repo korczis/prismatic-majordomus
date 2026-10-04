@@ -63,11 +63,11 @@ events:
 
   - id: release.advanced
     title: Version advanced for completed work
-    summary: Finish satisfied a version obligation through the one writer before judging the contract.
+    summary: Finish judged the whole contract, then paid the version obligation it held through the one writer.
     emitted_by: finish
-    requires: [task_id, obligation, from, to, trunk, trunk_commit]
+    requires: [event_id, task_id, obligation, from, to, trunk, trunk_commit]
     public: true
-    note: "Written by finish --outcome completed when the version obligation (ADR 0106) was owed and release advance raised the version: obligation is its identity (the branch and the trunk version it advances from), from and to the declared versions, trunk and trunk_commit what it was computed against, effective the bump over the trunk. A satisfied obligation writes nothing and appends nothing, so a repeated finish leaves one line per advance, never two."
+    note: "Written by finish --outcome completed only after every other line of the contract held, when the version obligation (ADR 0106) was owed and release advance raised the version, generate distribution projected it and a second reading found the obligation satisfied; if any of those fails, every file the advance could change is restored and finish refuses with task.refused instead. event_id names the line by what it paid: release.advanced/<subject>@<trunk_commit>/<task_id> — the branch (or HEAD@<commit>), the full trunk commit the obligation was computed against, and the task that paid it — so the question which event paid this advance has one answer. The obligation itself stays a predicate and carries no counter: obligation is its identity (the subject and the trunk version it advances from), from and to the declared versions, trunk and trunk_commit what it was computed against, effective the bump over the trunk. A satisfied obligation writes nothing and appends nothing, so a repeated finish leaves one line per advance, never two."
 
   - id: decision.recorded
     title: Decision recorded

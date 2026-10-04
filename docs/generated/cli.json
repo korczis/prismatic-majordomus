@@ -15736,7 +15736,7 @@
               {
                 "id": "release-advance-dry-run",
                 "title": "Satisfying it, through the one writer",
-                "description": "Computes the obligation against the trunk as it is now and, when it is owed, raises the version to its minimum with the writer `release bump` uses — the manifest's version line and the lock's record of it, read back. When it already holds it writes nothing, so a retried finish or a rerun workflow cannot advance twice. A tree behind the trunk is refused: the trunk is merged first, then the advance is computed from the version that won. `finish --outcome completed` runs it before the contract is judged. This fixture has no trunk, so nothing can be decided and it exits 12.",
+                "description": "Computes the obligation against the trunk as it is now and, when it is owed, raises the version to its minimum with the writer `release bump` uses — the manifest's version line and the lock's record of it, read back. When it already holds it writes nothing, so a retried finish or a rerun workflow cannot advance twice. A tree behind the trunk is refused: the trunk is merged first, then the advance is computed from the version that won. `finish --outcome completed` runs it only after the rest of its contract holds, projects it into `share/version.txt` and reads the obligation again, and puts every file back when any of that fails. This fixture has no trunk, so nothing can be decided and it exits 12.",
                 "argv": [
                   "release",
                   "advance",

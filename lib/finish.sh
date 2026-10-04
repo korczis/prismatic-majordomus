@@ -106,7 +106,11 @@ H
   # reader of the ledger or the tree can take a refusal for accepted work. An advance that
   # could not be made, or that does not leave the obligation satisfied, refuses here.
   if [ "$outcome" = completed ] && ! mj_finish_advance_version "$id"; then
-    contract="$(printf '%s' "$contract" | sed 's/"majordomus.version-obligation":"pass"/"majordomus.version-obligation":"fail"/')"
+    # The contract is JSON, so it is edited as JSON: jq is present here, because the advance
+    # that just refused could not have run without it.
+    local judged
+    if judged="$(printf '%s' "$contract" | jq -c '.["majordomus.version-obligation"] = "fail"' 2>/dev/null)" \
+      && [ -n "$judged" ]; then contract="$judged"; fi
     mj_ledger_append task.refused "\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"unmet\":1,\"refused\":[\"majordomus.version-obligation\"],\"contract\":$contract"
     [ "$MJ_JSON" = 1 ] || printf 'finish: refused, 1 unmet\nblocking doctrines:\n- majordomus.version-obligation\n'
     exit "$MJ_EX_CONTRACT"
@@ -129,10 +133,17 @@ H
 # write with the version the obligation chose — and `majordomus generate distribution`
 # projects it into share/version.txt, the projection the shell tool reads; scripts/derive
 # does the rest. The obligation is read again after the write and must hold. A satisfied
-# obligation writes nothing, so a finish run again does not advance twice. Returns 1, with
-# the finding printed, when the advance could not be made or did not leave it satisfied.
+# obligation writes nothing, so a finish run again does not advance twice.
+#
+# All of it holds or none of it is left behind. Before anything is written, the files the
+# advance can change — the manifest, the lock, and every file `generate distribution` writes,
+# which it names by generating into a scratch directory first — are copied aside; when the
+# advance, the projection or the re-read fails, each is put back to the bytes it held (or
+# removed, if it did not exist), and finish refuses. A projection that cannot be generated is
+# a refusal, not a note: the contract requires the version the shell tool reads to be the one
+# the manifest declares. Returns 1, with the finding printed, whenever it refuses.
 mj_finish_advance_version() {
-  local id="$1" r selected=0 bin out rc=0 from to oid trunk tcommit state
+  local id="$1" r selected=0 bin out rc=0 from to oid subject trunk tcommit state snap plan
   for r in $(mj_ylist "$MJ_POL_FLAT" verification.finish_requires); do
     [ "$r" = version_advanced ] && selected=1
   done
@@ -151,21 +162,70 @@ mj_finish_advance_version() {
     *) mj_fail version "$id" "the obligation is ${state:-unreadable} after the contract was judged, so no advance can be chosen" "$bin release obligation"; return 1 ;;
   esac
   from="$(printf '%s' "$out" | jq -r '.declared')"; to="$(printf '%s' "$out" | jq -r '.minimum')"
-  oid="$(printf '%s' "$out" | jq -r '.id')"
+  oid="$(printf '%s' "$out" | jq -r '.id')"; subject="$(printf '%s' "$out" | jq -r '.subject')"
   trunk="$(printf '%s' "$out" | jq -r '.trunk.reference')"; tcommit="$(printf '%s' "$out" | jq -r '.trunk.commit')"
+
+  snap="$(mktemp -d "${TMPDIR:-/tmp}/mj-advance.XXXXXX")" || {
+    mj_fail version "$oid" "no scratch directory for the files the advance would change, so nothing was advanced" "df -h"; return 1; }
+  rc=0; plan="$( cd "$MJ_ROOT" && "$bin" generate distribution --repo "$MJ_ROOT" --out "$snap/plan" 2>/dev/null )" || rc=$?
+  if [ "$rc" != 0 ]; then
+    rm -rf "$snap"
+    mj_fail version "$oid" "majordomus generate distribution cannot project the version here (exit $rc), so the advance from $from to $to was not made" "$bin generate distribution"; return 1; fi
+  printf '%s\n%s\n%s\n' "$MJ_RELEASE_MANIFEST" "$MJ_RELEASE_LOCK" "$plan" | LC_ALL=C sort -u | sed '/^$/d' > "$snap/paths"
+  mj_finish_save_version_files "$snap"
+
   rc=0; ( cd "$MJ_ROOT" && "$bin" release advance --repo "$MJ_ROOT" ) || rc=$?
   if [ "$rc" != 0 ]; then
-    mj_fail version "$oid" "release advance exited $rc, so the version was not raised from $from to $to" "$bin release advance"; return 1; fi
+    mj_finish_restore_version_files "$snap"
+    mj_fail version "$oid" "release advance exited $rc, so the version was not raised from $from to $to; every file it could change is as it was" "$bin release advance"; return 1; fi
   rc=0; ( cd "$MJ_ROOT" && "$bin" generate distribution --repo "$MJ_ROOT" ) > /dev/null 2>&1 || rc=$?
-  [ "$rc" = 0 ] || mj_info version "$oid" "majordomus generate distribution exited $rc after the advance; run scripts/derive before committing" "scripts/derive"
+  if [ "$rc" != 0 ]; then
+    mj_finish_restore_version_files "$snap"
+    mj_fail version "$oid" "majordomus generate distribution exited $rc after the advance to $to, so share/version.txt would not state it; the advance is undone" "$bin generate distribution"; return 1; fi
   state="$( "$bin" release obligation --format json --repo "$MJ_ROOT" 2>/dev/null | jq -r '.state // empty' 2>/dev/null)" || state=""
   case "$state" in
     satisfied|not-owed) ;;
-    *) mj_fail version "$oid" "the advance to $to left the obligation ${state:-unreadable}" "$bin release obligation"; return 1 ;;
+    *) mj_finish_restore_version_files "$snap"
+       mj_fail version "$oid" "the advance to $to left the obligation ${state:-unreadable}; the advance is undone" "$bin release obligation"; return 1 ;;
   esac
-  mj_ledger_append release.advanced "\"task_id\":\"$id\",\"obligation\":\"$(mj_json_esc "$oid")\",\"from\":\"$from\",\"to\":\"$to\",\"trunk\":\"$(mj_json_esc "$trunk")\",\"trunk_commit\":\"$tcommit\",\"effective\":\"$(printf '%s' "$out" | jq -r '.effective')\""
+  rm -rf "$snap"
+  # The obligation is a predicate and has no counter; the event that paid it is named by what
+  # it was paid against — the subject, the trunk commit and the task — so a reader can find
+  # the one line that paid a given advance (share/events.yaml, release.advanced).
+  mj_ledger_append release.advanced "\"event_id\":\"$(mj_json_esc "release.advanced/$subject@$tcommit/$id")\",\"task_id\":\"$id\",\"obligation\":\"$(mj_json_esc "$oid")\",\"from\":\"$from\",\"to\":\"$to\",\"trunk\":\"$(mj_json_esc "$trunk")\",\"trunk_commit\":\"$tcommit\",\"effective\":\"$(printf '%s' "$out" | jq -r '.effective')\""
   [ "$MJ_JSON" = 1 ] || printf 'finish: version %s -> %s (obligation %s); scripts/derive refreshes the site data before the commit\n' "$from" "$to" "$oid"
   return 0
+}
+
+# The two files the one writer edits, as release::version names them.
+MJ_RELEASE_MANIFEST="apps/majordomus-cli/Cargo.toml"
+MJ_RELEASE_LOCK="apps/majordomus-cli/Cargo.lock"
+
+# mj_finish_save_version_files <snapshot-dir>: copy every path listed in <dir>/paths, as it is
+# in the work tree now, under <dir>/before/; a path that does not exist is listed in
+# <dir>/absent instead, so that putting it back means removing it.
+mj_finish_save_version_files() {
+  local snap="$1" p
+  : > "$snap/absent"
+  while IFS= read -r p; do
+    if [ -f "$MJ_ROOT/$p" ]; then
+      mkdir -p "$snap/before/$(dirname "$p")" && cp -p "$MJ_ROOT/$p" "$snap/before/$p"
+    else
+      printf '%s\n' "$p" >> "$snap/absent"
+    fi
+  done < "$snap/paths"
+}
+
+# mj_finish_restore_version_files <snapshot-dir>: put every saved path back to the bytes it
+# held, remove every path that did not exist, and drop the snapshot. Byte copies, never an
+# edit of the version: what is restored is the file, not a number in it.
+mj_finish_restore_version_files() {
+  local snap="$1" p
+  while IFS= read -r p; do
+    if [ -f "$snap/before/$p" ]; then cp -p "$snap/before/$p" "$MJ_ROOT/$p"
+    elif grep -Fxq -- "$p" "$snap/absent"; then rm -f "$MJ_ROOT/$p"; fi
+  done < "$snap/paths"
+  rm -rf "$snap"
 }
 
 # the doctrine index whose policy_key is <key>, or failure

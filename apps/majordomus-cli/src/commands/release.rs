@@ -995,10 +995,9 @@ mod tests {
         }
     }
 
-    /// The report a person reads: the stated version, the release it is measured from, the
-    /// `next` with who decided it, and the commits as evidence — in that order, one write.
-    /// Each severity prints as its own word, padded to one width so the messages after it
-    /// line up; a note is not printed as a warning nor a warning as an error.
+    /// An owed obligation of `feature/x` over a trunk at 1.8.0 this tree does not contain:
+    /// the contract given, `work` authored paths (sampled at eight), a minor cadence, and a
+    /// minimum of 2.0.0 — the value every test of the rendering and the advance starts from.
     fn obligation(
         contract: release::obligation::ContractRequirement,
         work: usize,
@@ -1242,6 +1241,8 @@ mod tests {
         assert!(text.contains("majordomus release advance"));
     }
 
+    /// Each severity prints as its own word, padded to one width so the messages after it
+    /// line up; a note is not printed as a warning nor a warning as an error.
     #[test]
     fn every_severity_prints_as_its_own_word_at_one_width() {
         assert_eq!(severity_word(Severity::Error), "ERROR  ");
@@ -1249,6 +1250,8 @@ mod tests {
         assert_eq!(severity_word(Severity::Note), "NOTE   ");
     }
 
+    /// The report a person reads: the stated version, the release it is measured from, the
+    /// `next` with who decided it, and the commits as evidence — in that order, one write.
     #[test]
     fn the_version_report_names_who_decided_next_and_labels_the_commits_as_evidence() {
         assert_eq!(

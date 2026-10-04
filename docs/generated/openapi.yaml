@@ -35018,7 +35018,7 @@ components:
         - effective
         - state
         - reasons
-      description: "The version obligation of a tree against its trunk.\n\n```\nuse majordomus_cli::release::obligation::{assemble, Observation, ContractRequirement, ReleasePolicy, PathClass, VersionObligation};\nuse majordomus_cli::release::compat::Impact;\nuse majordomus_cli::release::version::Version;\nlet o: VersionObligation = assemble(\n    Observation { subject: \"feature/x\".into(), trunk: Err(\"no trunk\".into()),\n                  declared: Version::parse(\"1.0.0\"), paths: vec![(\"lib/a.sh\".into(), PathClass::Work)] },\n    ContractRequirement { baseline: None, required: Impact::None, floor: None, unmeasured: None },\n    &ReleasePolicy::default(),\n);\nassert_eq!(o.schema, \"majordomus/version-obligation/v1\");\nassert_eq!(o.state.as_str(), \"unverified\");\n```"
+      description: "The version obligation of a tree against its trunk.\n\n```\nuse majordomus_cli::release::obligation::{assemble, Observation, ContractRequirement, ReleasePolicy, PathClass, VersionObligation};\nuse majordomus_cli::release::compat::Impact;\nuse majordomus_cli::release::version::Version;\nlet o: VersionObligation = assemble(\n    Observation { subject: \"feature/x\".into(), trunk: Err(\"no trunk\".into()),\n                  declared: Version::parse(\"1.0.0\"), paths: vec![(\"lib/a.sh\".into(), PathClass::Work)],\n                  unclassified: None },\n    ContractRequirement { baseline: None, required: Impact::None, floor: None, unmeasured: None },\n    &ReleasePolicy::default(),\n);\nassert_eq!(o.schema, \"majordomus/version-obligation/v1\");\nassert_eq!(o.state.as_str(), \"unverified\");\n```"
     VersionObligationCadence:
       type: object
       properties:

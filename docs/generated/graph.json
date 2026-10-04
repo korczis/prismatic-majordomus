@@ -1702,14 +1702,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/quality/mod.rs",
-        "kind": "file",
-        "label": "mod.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/quality/mod.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/web/report/ui.rs",
         "kind": "file",
         "label": "ui.rs",
@@ -4073,13 +4065,24 @@
             "rule:project.integration-follows-the-current-master",
             "file:apps/majordomus-cli/src/release/obligation.rs",
             "file:apps/majordomus-cli/src/release/version.rs",
+            "file:apps/majordomus-cli/src/release/reconcile.rs",
             "file:apps/majordomus-cli/src/commands/release.rs",
+            "file:apps/majordomus-cli/src/integration/drain.rs",
+            "file:apps/majordomus-cli/src/integration/relation.rs",
+            "file:apps/majordomus-cli/src/served.rs",
             "file:lib/finish.sh",
+            "file:share/events.yaml",
             "file:.ai/repo/policy.yaml",
             "file:.ai/repo/ci/gates.yaml",
             "test:test/cases/801_completed_work_advances_the_version.sh",
             "test:test/cases/802_a_merge_carries_its_version_advance.sh",
             "test:test/cases/803_the_version_has_one_writer.sh",
+            "test:test/cases/872_an_episode_end_is_not_a_completion.sh",
+            "test:test/cases/873_concurrent_branches_never_share_a_version.sh",
+            "test:test/cases/874_the_release_pipeline_does_not_advance_itself.sh",
+            "test:test/cases/875_a_failed_deploy_is_retried_on_the_same_version.sh",
+            "test:test/cases/876_unblock_reconciles_the_version.sh",
+            "test:test/cases/877_a_refused_advance_leaves_the_version_as_it_was.sh",
             "test:apps/majordomus-cli/tests/release_obligation.rs"
           ],
           "tags": [
@@ -38499,6 +38502,13 @@
         "source": "test/cases/876_unblock_reconciles_the_version.sh"
       },
       {
+        "id": "majordomus://test/test/cases/877_a_refused_advance_leaves_the_version_as_it_was.sh",
+        "kind": "test",
+        "label": "test/cases/877_a_refused_advance_leaves_the_version_as_it_was.sh",
+        "route": "/cockpit/objects/test/test-cases-877-a-refused-advance-leaves-the-version-as-it-was-sh",
+        "source": "test/cases/877_a_refused_advance_leaves_the_version_as_it_was.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/87_release_pipeline.sh",
         "kind": "test",
         "label": "test/cases/87_release_pipeline.sh",
@@ -44536,11 +44546,6 @@
         "source": "majordomus://adr/adr-0027",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0028",
-        "target": "file:apps/majordomus-cli/src/quality/mod.rs",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0028",
@@ -60394,6 +60399,11 @@
       },
       {
         "source": "majordomus://test/test/cases/876_unblock_reconciles_the_version.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/877_a_refused_advance_leaves_the_version_as_it_was.sh",
         "target": "kind:test",
         "kind": "is_a"
       },

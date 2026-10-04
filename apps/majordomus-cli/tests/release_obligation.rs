@@ -419,7 +419,10 @@ fn outside_a_repository_neither_command_answers() {
 #[test]
 fn a_trunk_with_no_common_history_is_not_contained() {
     let f = fixture();
-    let home = f.git(&["symbolic-ref", "--short", "HEAD"]).trim().to_string();
+    let home = f
+        .git(&["symbolic-ref", "--short", "HEAD"])
+        .trim()
+        .to_string();
     f.git(&["checkout", "-q", "--orphan", "elsewhere"]);
     f.commit("an unrelated root");
     f.git(&["update-ref", "refs/remotes/origin/master", "HEAD"]);

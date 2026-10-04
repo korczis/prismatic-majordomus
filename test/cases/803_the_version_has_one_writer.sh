@@ -12,7 +12,13 @@
 #   Rust     release::version::write is called from commands/release.rs and nowhere else
 #   adapters no hook, script, recipe or workflow rewrites the manifest, the lock or the
 #            projection with sed -i, perl, cargo set-version, tee or a redirection
+#   driver   the merge driver (release/reconcile.rs) changes the version line only through
+#            the writer's pure rewrites (version::rewrite_manifest, version::rewrite_lock),
+#            names nothing else of release::version but the readers and the two paths, and
+#            writes no file but the %A git hands it and its own scratch copies — so a direct
+#            write of the manifest or the lock added there is caught
 . "$ROOT/test/lib.sh"
+S_DRIVER="$(mktemp "${TMPDIR:-/tmp}/mj803.XXXXXX")"; trap 'rm -f "$S_DRIVER"' EXIT
 
 # one_writer <root>: prints every violation, exits 1 when there is one
 one_writer() {
@@ -25,6 +31,27 @@ one_writer() {
             lib scripts bin .githooks .claude/hooks .github/workflows justfile .just 2>/dev/null \
           | grep -E 'sed -i|perl |set-version|tee |>> *"?[$A-Za-z_/{}.-]*(Cargo\.(toml|lock)|version\.txt)|> *"?[$A-Za-z_/{}.-]*(Cargo\.(toml|lock)|version\.txt)' || true)"
   [ -z "$hits" ] || { printf 'second adapter writer: %s\n' "$hits"; bad=1; }
+  driver_pure "$root" || bad=1
+  return "$bad"
+}
+
+# driver_pure <root>: the merge driver's non-test code uses the writer's pure rewrites and
+# nothing that writes the version files itself. Prints every violation, exits 1 on one.
+driver_pure() {
+  local root="$1" src="apps/majordomus-cli/src/release/reconcile.rs" body bad=0 hits f
+  body="$(awk '/^#\[cfg\(test\)\]/ { exit } { printf "%d:%s\n", NR, $0 }' "$root/$src" 2>/dev/null)"
+  [ -n "$body" ] || { printf 'merge driver: %s is not in the tree\n' "$src"; return 1; }
+  for f in rewrite_manifest rewrite_lock; do
+    grep -q "version::$f" <<<"$body" || { printf 'merge driver: %s no longer uses version::%s\n' "$src" "$f"; bad=1; }
+  done
+  # of release::version, only the pure rewrites, the readers, the two paths and the type
+  hits="$(grep -oE 'version::[A-Za-z_]+' <<<"$body" | sort -u \
+          | grep -vxE 'version::(rewrite_manifest|rewrite_lock|declared_in|locked_in|MANIFEST|LOCK|Version)' || true)"
+  [ -z "$hits" ] || { printf 'merge driver: %s uses %s\n' "$src" "$(tr '\n' ' ' <<<"$hits")"; bad=1; }
+  # a file is written only to the %A git hands the driver, or to its scratch copies
+  hits="$(grep -E 'fs::(write|rename|copy|OpenOptions)|File::(create|options)|OpenOptions::' <<<"$body" \
+          | grep -vE 'std::fs::write\(ours, |std::fs::File::create\(&p\)' || true)"
+  [ -z "$hits" ] || { printf 'merge driver writes outside %%A: %s\n' "$hits"; bad=1; }
   return "$bad"
 }
 
@@ -37,6 +64,21 @@ mkdir -p fx/apps/majordomus-cli/src/release fx/apps/majordomus-cli/src/commands 
 echo 'pub fn write() {}' > fx/apps/majordomus-cli/src/release/version.rs
 echo 'fn w() { version::write(root, to); }' > fx/apps/majordomus-cli/src/commands/release.rs
 echo 'echo ok' > fx/lib/finish.sh
+cat > fx/apps/majordomus-cli/src/release/reconcile.rs <<'RS'
+use super::version::{self, Version};
+fn rewrite(file: VersionFile, text: &str, to: &str) -> String {
+    match file {
+        VersionFile::Manifest => version::rewrite_manifest(text, to),
+        VersionFile::Lock => version::rewrite_lock(text, to),
+    }
+}
+fn scratch(p: &Path) { std::fs::File::create(&p); }
+pub fn drive(ours: &Path, merged: &str) { std::fs::write(ours, merged); }
+#[cfg(test)]
+mod tests {
+    fn t() { std::fs::write(&o, "x"); }
+}
+RS
 git -C fx add -A && git -C fx commit -qm base
 expect_exit 0 one_writer fx
 
@@ -62,3 +104,28 @@ echo 'printf "version=1.2.0\n" > share/version.txt' > fx/.claude/hooks/majordomu
 git -C fx add -A
 expect_exit 1 one_writer fx
 expect_grep 'second adapter writer: .claude/hooks/majordomus-session-end'
+git -C fx rm -q --cached .claude/hooks/majordomus-session-end && rm fx/.claude/hooks/majordomus-session-end
+
+# the merge driver writes the manifest itself instead of the %A git handed it
+R=fx/apps/majordomus-cli/src/release/reconcile.rs
+cp "$R" "$S_DRIVER"
+sed -i.bak 's|^pub fn drive(ours: &Path, merged: &str) { std::fs::write(ours, merged); }$|pub fn drive(root: \&Path, merged: \&str) { std::fs::write(root.join(version::MANIFEST), merged); }|' "$R"
+rm -f "$R.bak"; git -C fx add -A
+expect_exit 1 one_writer fx
+expect_grep 'merge driver writes outside %A: .*root.join\(version::MANIFEST\)'
+cp "$S_DRIVER" "$R"; git -C fx add -A
+expect_exit 0 one_writer fx
+
+# the merge driver calls the writer, or rewrites the version line its own way
+printf 'fn advance(root: &Path) { version::write(root, "1.2.0"); }\n' > "$R.extra"
+awk -v extra="$(cat "$R.extra")" '/^#\[cfg\(test\)\]/ { print extra } { print }' "$S_DRIVER" > "$R"; rm -f "$R.extra"
+git -C fx add -A
+expect_exit 1 one_writer fx
+expect_grep 'second Rust writer: apps/majordomus-cli/src/release/reconcile.rs'
+expect_grep 'merge driver: apps/majordomus-cli/src/release/reconcile.rs uses version::write'
+sed 's/version::rewrite_lock(text, to)/text.replace(\"1.1.0\", to)/' "$S_DRIVER" > "$R"
+git -C fx add -A
+expect_exit 1 one_writer fx
+expect_grep 'merge driver: apps/majordomus-cli/src/release/reconcile.rs no longer uses version::rewrite_lock'
+cp "$S_DRIVER" "$R"; git -C fx add -A
+expect_exit 0 one_writer fx

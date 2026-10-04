@@ -846,6 +846,12 @@ pub fn diagnose(root: &Path) -> Vec<Diagnostic> {
 /// untouched. [`PROJECTION`], the generator stamps and the changelog are not written here:
 /// they are derived, and `scripts/derive` derives them.
 ///
+/// Both files change or neither does. A file that may not be written is refused before
+/// anything moves; each new text is staged beside its file and renamed over it; and when a
+/// later rename fails, every file already replaced is put back to the bytes it held. A
+/// manifest raised over a lock that still states the old version is the half-applied bump the
+/// one-writer rule exists to prevent, so it is never left behind by an error.
+///
 /// ```
 /// use majordomus_cli::release::version::{declared, write, MANIFEST};
 /// let dir = tempfile::tempdir().unwrap();
@@ -855,26 +861,108 @@ pub fn diagnose(root: &Path) -> Vec<Diagnostic> {
 /// assert_eq!(declared(dir.path()).as_deref(), Some("0.9.0"));
 /// ```
 pub fn write(root: &Path, to: &str) -> std::io::Result<Vec<String>> {
-    let mut written = Vec::new();
+    write_with(root, to, &|staged, target| std::fs::rename(staged, target))
+}
 
+/// One file the writer changes: where, and its text before and after.
+struct Rewrite {
+    rel: &'static str,
+    path: std::path::PathBuf,
+    before: String,
+    after: String,
+}
+
+/// [`write`], with the step that puts a staged text in place given as `place` — the seam a
+/// test uses to make the second file's step fail after the first has been replaced.
+fn write_with(
+    root: &Path,
+    to: &str,
+    place: &dyn Fn(&Path, &Path) -> std::io::Result<()>,
+) -> std::io::Result<Vec<String>> {
+    let mut plan = Vec::new();
     let manifest = root.join(MANIFEST);
     let text = std::fs::read_to_string(&manifest)?;
     let out = rewrite_manifest(&text, to);
     if out != text {
-        std::fs::write(&manifest, out)?;
-        written.push(MANIFEST.to_string());
+        plan.push(Rewrite {
+            rel: MANIFEST,
+            path: manifest,
+            before: text,
+            after: out,
+        });
     }
-
     let lock = root.join(LOCK);
     if let Ok(text) = std::fs::read_to_string(&lock) {
         let out = rewrite_lock(&text, to);
         if out != text {
-            std::fs::write(&lock, out)?;
-            written.push(LOCK.to_string());
+            plan.push(Rewrite {
+                rel: LOCK,
+                path: lock,
+                before: text,
+                after: out,
+            });
         }
     }
 
-    Ok(written)
+    // A rename replaces a file whatever its mode says, so a file this process may not write
+    // is refused here, before anything has moved.
+    for r in &plan {
+        std::fs::OpenOptions::new().write(true).open(&r.path)?;
+    }
+    let mut staged = Vec::new();
+    for r in &plan {
+        match stage(&r.path, &r.after) {
+            Ok(tmp) => staged.push(tmp),
+            Err(e) => {
+                for tmp in &staged {
+                    let _ = std::fs::remove_file(tmp);
+                }
+                return Err(e);
+            }
+        }
+    }
+    for (i, (r, tmp)) in plan.iter().zip(&staged).enumerate() {
+        if let Err(e) = place(tmp, &r.path) {
+            for tmp in &staged[i..] {
+                let _ = std::fs::remove_file(tmp);
+            }
+            for done in &plan[..i] {
+                if let Err(back) = stage(&done.path, &done.before).and_then(|tmp| {
+                    std::fs::rename(&tmp, &done.path).inspect_err(|_| {
+                        let _ = std::fs::remove_file(&tmp);
+                    })
+                }) {
+                    return Err(std::io::Error::new(
+                        e.kind(),
+                        format!(
+                            "{e}; and {} could not be put back to its previous text: {back}",
+                            done.rel
+                        ),
+                    ));
+                }
+            }
+            return Err(e);
+        }
+    }
+    Ok(plan.iter().map(|r| r.rel.to_string()).collect())
+}
+
+/// `text` written beside `target` under a name of this process's own, with the target's
+/// permissions, ready to be renamed over it.
+fn stage(target: &Path, text: &str) -> std::io::Result<std::path::PathBuf> {
+    let name = target
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_default();
+    let tmp = target.with_file_name(format!(".{name}.mj-write-{}", std::process::id()));
+    if let Err(e) = std::fs::write(&tmp, text) {
+        let _ = std::fs::remove_file(&tmp);
+        return Err(e);
+    }
+    if let Ok(meta) = std::fs::metadata(target) {
+        let _ = std::fs::set_permissions(&tmp, meta.permissions());
+    }
+    Ok(tmp)
 }
 
 /// The manifest's text with its `[package] version` line stating `to`, and nothing else
@@ -1182,9 +1270,15 @@ mod tests {
         )
         .unwrap();
         std::fs::set_permissions(&lock, std::fs::Permissions::from_mode(0o444)).unwrap();
+        let manifest_before = std::fs::read(&manifest).unwrap();
         assert!(
             write(dir.path(), "0.10.0").is_err(),
             "a lock that cannot be written is an error"
+        );
+        assert_eq!(
+            std::fs::read(&manifest).unwrap(),
+            manifest_before,
+            "a lock that cannot be written leaves the manifest as it was, never half a bump"
         );
         std::fs::set_permissions(&lock, std::fs::Permissions::from_mode(0o644)).unwrap();
 
@@ -1194,6 +1288,52 @@ mod tests {
             "a manifest that cannot be written is an error"
         );
         std::fs::set_permissions(&manifest, std::fs::Permissions::from_mode(0o644)).unwrap();
+    }
+
+    /// The lock's rename fails after the manifest's has succeeded: the manifest is put back,
+    /// both files are byte-identical to what they were, and no staged file is left beside
+    /// them.
+    #[test]
+    fn a_lock_that_fails_to_land_leaves_both_files_as_they_were() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        tree(root, "0.3.1");
+        let (manifest, lock) = (root.join(MANIFEST), root.join(LOCK));
+        let before = (
+            std::fs::read(&manifest).unwrap(),
+            std::fs::read(&lock).unwrap(),
+        );
+        let failing_lock = |staged: &Path, target: &Path| {
+            if target.ends_with("Cargo.lock") {
+                Err(std::io::Error::other("the disk is full"))
+            } else {
+                std::fs::rename(staged, target)
+            }
+        };
+        let err = write_with(root, "0.4.0", &failing_lock).unwrap_err();
+        assert!(err.to_string().contains("the disk is full"), "{err}");
+        assert_eq!(
+            (
+                std::fs::read(&manifest).unwrap(),
+                std::fs::read(&lock).unwrap()
+            ),
+            before,
+            "an injected lock failure left a half-written version"
+        );
+        let leftovers: Vec<String> = std::fs::read_dir(root.join("apps/majordomus-cli"))
+            .unwrap()
+            .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+            .filter(|n| n.contains("mj-write"))
+            .collect();
+        assert!(
+            leftovers.is_empty(),
+            "staged files left behind: {leftovers:?}"
+        );
+        // the same write, unobstructed, lands both
+        assert_eq!(
+            write(root, "0.4.0").unwrap(),
+            vec![MANIFEST.to_string(), LOCK.to_string()]
+        );
     }
 
     fn change(kind: ChangeKind, breaking: bool) -> Change {

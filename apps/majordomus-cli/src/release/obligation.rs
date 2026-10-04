@@ -31,9 +31,14 @@
 //! The obligation is owed by a change set, not by a conversation. Every path the tree
 //! changes against its merge base with the trunk is classified by what makes it machine
 //! output rather than by a message somebody wrote: a path the trunk's `.gitattributes` marks
-//! `merge=derived` is a projection, a release record is publication evidence, and the
-//! manifest and lock are a version advance when they differ only by what [`super::version::
-//! write`] would have written. Anything else is work. A change set that carries no work —
+//! `merge=derived` is a projection, a release record the change set *adds* is publication
+//! evidence — and what the record generator writes from it (its public metadata, the stable
+//! pointer, and the `merge=derived` lines declaring them, which the trunk cannot carry for a
+//! file it does not have yet) are that record's projections — and the manifest and lock are
+//! a version advance when they differ only by what [`super::version::write`] would have
+//! written. A published record edited by hand is work, and so is anything else. Trunk
+//! attributes that cannot be read leave the change set unclassified, and the verdict
+//! `unverified`, never a guess. A change set that carries no work —
 //! a projection refresh, a release record landing after publication, an advance on its own —
 //! owes no cadence, which is what stops the release pipeline's own follow-up commits from
 //! raising the version they were written to record.
@@ -57,7 +62,7 @@
 //! assert_eq!(second.minimum.to_string(), "1.12.0");
 //! ```
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 use std::process::Command;
 
@@ -148,9 +153,10 @@ impl ReleasePolicy {
 #[serde(rename_all = "kebab-case")]
 #[schemars(rename = "VersionPathClass")]
 pub enum PathClass {
-    /// A path the trunk's `.gitattributes` marks `merge=derived`: a generator rewrites it.
+    /// A path the trunk's `.gitattributes` marks `merge=derived`, or one the record generator
+    /// writes from a release record the same change set adds: a generator rewrites it.
     Derived,
-    /// A release record: evidence of a publication that already happened.
+    /// A release record the change set adds: evidence of a publication that already happened.
     ReleaseEvidence,
     /// The manifest or the lock, differing only by what the version writer writes.
     VersionAdvance,
@@ -437,7 +443,8 @@ pub struct PathCounts {
 /// use majordomus_cli::release::version::Version;
 /// let o: VersionObligation = assemble(
 ///     Observation { subject: "feature/x".into(), trunk: Err("no trunk".into()),
-///                   declared: Version::parse("1.0.0"), paths: vec![("lib/a.sh".into(), PathClass::Work)] },
+///                   declared: Version::parse("1.0.0"), paths: vec![("lib/a.sh".into(), PathClass::Work)],
+///                   unclassified: None },
 ///     ContractRequirement { baseline: None, required: Impact::None, floor: None, unmeasured: None },
 ///     &ReleasePolicy::default(),
 /// );
@@ -560,14 +567,23 @@ pub fn decide(
 /// The class of one changed path.
 ///
 /// `derived` is the subset of the change set the trunk's `.gitattributes` marks
-/// `merge=derived`; `base` and `head` read a path's text at the merge base and in this tree,
-/// for the two files a version advance writes.
+/// `merge=derived`, together with the [`record_projections`] of the records the change set
+/// adds; `base` and `head` read a path's text at the merge base and in this tree.
+///
+/// A release record is evidence only when the change set *adds* it: the publish job writes a
+/// record once, after the publication it describes. A published record edited, or deleted, is
+/// a change to what the repository says it published — authored, and so work, or a hand edit
+/// could ride the record's exemption past the cadence.
 ///
 /// ```
 /// use majordomus_cli::release::obligation::{classify, PathClass};
 /// let derived = std::collections::BTreeSet::new();
 /// let none = |_: &str| None;
-/// assert_eq!(classify(".ai/repo/releases/v1.0.0.yaml", &derived, &none, &none), PathClass::ReleaseEvidence);
+/// let record = |_: &str| Some("schema: release/v1\n".to_string());
+/// // added: absent at the base, present here
+/// assert_eq!(classify(".ai/repo/releases/v1.0.0.yaml", &derived, &none, &record), PathClass::ReleaseEvidence);
+/// // edited: present on both sides
+/// assert_eq!(classify(".ai/repo/releases/v1.0.0.yaml", &derived, &record, &record), PathClass::Work);
 /// assert_eq!(classify("lib/finish.sh", &derived, &none, &none), PathClass::Work);
 /// ```
 pub fn classify(
@@ -579,8 +595,12 @@ pub fn classify(
     if derived.contains(path) {
         return PathClass::Derived;
     }
-    if path.starts_with(RELEASE_RECORDS) && path.ends_with(".yaml") {
-        return PathClass::ReleaseEvidence;
+    if record_tag(path).is_some() {
+        return if base(path).is_none() && head(path).is_some() {
+            PathClass::ReleaseEvidence
+        } else {
+            PathClass::Work
+        };
     }
     let rewrite: Option<fn(&str, &str) -> String> = if path == version::MANIFEST {
         Some(version::rewrite_manifest)
@@ -605,12 +625,129 @@ pub fn classify(
     PathClass::Work
 }
 
+/// The tag a release record's path names — `v1.2.0` for `.ai/repo/releases/v1.2.0.yaml` —
+/// when the path is a record: a `.yaml` directly under [`RELEASE_RECORDS`], which is exactly
+/// what the record reader loads (`distribution::release::Releases::load`).
+fn record_tag(path: &str) -> Option<&str> {
+    let tag = path.strip_prefix(RELEASE_RECORDS)?.strip_suffix(".yaml")?;
+    (!tag.is_empty() && !tag.contains('/')).then_some(tag)
+}
+
+/// The paths the record generator writes from the release record of `tag`: its public
+/// metadata and the stable pointer, which `majordomus generate` renders from the records
+/// (`generate.rs`, from `distribution::release::{PUBLIC_DIR, LATEST}`). Read from the
+/// generator's own constants, so the classification follows what the generator declares
+/// and not a list kept here.
+///
+/// ```
+/// use majordomus_cli::release::obligation::record_projections;
+/// assert_eq!(
+///     record_projections("v0.13.0"),
+///     ["site/static/releases/v0.13.0.json", "site/static/releases/latest.json"]
+/// );
+/// ```
+pub fn record_projections(tag: &str) -> [String; 2] {
+    use crate::distribution::release::{LATEST, PUBLIC_DIR};
+    [
+        format!("{PUBLIC_DIR}/{tag}.json"),
+        format!("{PUBLIC_DIR}/{LATEST}.json"),
+    ]
+}
+
+/// The paths of a change set that are projections of the release records it adds, though
+/// the trunk's `.gitattributes` cannot say so: a record's public metadata is a new file, and
+/// the `merge=derived` line that declares it arrives in the same change set (#748 added
+/// `v0.13.0.yaml`, `v0.13.0.json` and its attribute line together, and the trunk's attributes
+/// call the JSON `unspecified`). So, for every record the change set adds — absent at the base,
+/// present here — the files [`record_projections`] names are projections, and so is
+/// `.gitattributes` when the only attributes it adds are `<one of them> merge=derived` and it
+/// removes none (comments are not attributes: the generated block's path count changes with
+/// every path it declares). A change set that adds no record gets nothing from here, and an
+/// edited or deleted record adds nothing either, so a hand edit cannot borrow the exemption.
+///
+/// ```
+/// use majordomus_cli::release::obligation::release_unit;
+/// let changed: Vec<String> = [".ai/repo/releases/v2.0.0.yaml", "site/static/releases/v2.0.0.json",
+///                             ".gitattributes", "lib/a.sh"].map(String::from).to_vec();
+/// let base = |p: &str| (p == ".gitattributes").then(|| "x merge=derived\n".to_string());
+/// let head = |p: &str| Some(if p == ".gitattributes" {
+///     "x merge=derived\nsite/static/releases/v2.0.0.json merge=derived\n".to_string()
+/// } else { "{}".to_string() });
+/// let unit = release_unit(&changed, &base, &head);
+/// assert!(unit.contains("site/static/releases/v2.0.0.json") && unit.contains(".gitattributes"));
+/// assert!(!unit.contains("lib/a.sh"));
+/// ```
+pub fn release_unit(
+    changed: &[String],
+    base: &dyn Fn(&str) -> Option<String>,
+    head: &dyn Fn(&str) -> Option<String>,
+) -> BTreeSet<String> {
+    let projections: BTreeSet<String> = changed
+        .iter()
+        .filter(|p| record_tag(p).is_some() && base(p).is_none() && head(p).is_some())
+        .flat_map(|p| record_projections(record_tag(p).unwrap_or_default()))
+        .collect();
+    let mut unit: BTreeSet<String> = changed
+        .iter()
+        .filter(|p| projections.contains(*p))
+        .cloned()
+        .collect();
+    let attributes = ".gitattributes";
+    if !projections.is_empty() && changed.iter().any(|p| p == attributes) {
+        if let Some(after) = head(attributes) {
+            if only_marks_derived(
+                base(attributes).as_deref().unwrap_or(""),
+                &after,
+                &projections,
+            ) {
+                unit.insert(attributes.to_string());
+            }
+        }
+    }
+    unit
+}
+
+/// Whether `after` differs from `before` only by attribute lines `<path> merge=derived` for
+/// paths in `allowed`, at least one of them, with no attribute line removed or changed.
+fn only_marks_derived(before: &str, after: &str, allowed: &BTreeSet<String>) -> bool {
+    fn lines(text: &str) -> BTreeMap<String, usize> {
+        let mut out = BTreeMap::new();
+        for line in text.lines() {
+            let words: Vec<&str> = line.split_whitespace().collect();
+            if words.is_empty() || words[0].starts_with('#') {
+                continue;
+            }
+            *out.entry(words.join(" ")).or_insert(0) += 1;
+        }
+        out
+    }
+    let (before, after) = (lines(before), lines(after));
+    if before
+        .iter()
+        .any(|(line, n)| after.get(line).copied().unwrap_or(0) < *n)
+    {
+        return false;
+    }
+    let mut added = 0;
+    for (line, n) in &after {
+        if *n <= before.get(line).copied().unwrap_or(0) {
+            continue;
+        }
+        match line.split(' ').collect::<Vec<_>>().as_slice() {
+            [path, "merge=derived"] if allowed.contains(*path) => added += 1,
+            _ => return false,
+        }
+    }
+    added > 0
+}
+
 /// The inputs an obligation is decided from that git and the policy provide, read once.
 #[derive(Debug, Clone)]
 ///
 /// ```
 /// use majordomus_cli::release::obligation::Observation;
-/// let o = Observation { subject: "HEAD@0123456789ab".into(), trunk: Err("unread".into()), declared: None, paths: vec![] };
+/// let o = Observation { subject: "HEAD@0123456789ab".into(), trunk: Err("unread".into()), declared: None,
+///                       paths: vec![], unclassified: None };
 /// assert!(o.trunk.is_err());
 /// ```
 pub struct Observation {
@@ -622,6 +759,10 @@ pub struct Observation {
     pub declared: Option<Version>,
     /// Every changed path against the merge base, with its class.
     pub paths: Vec<(String, PathClass)>,
+    /// Why the changed paths could not be classified, when they could not — the trunk's
+    /// attributes were unreadable. The obligation is then `unverified`: an empty set of
+    /// projections would make every derived path work, and a guess is never a verdict.
+    pub unclassified: Option<String>,
 }
 
 fn git(root: &Path, args: &[&str]) -> Option<String> {
@@ -686,6 +827,7 @@ pub fn observe(root: &Path, trunk_ref: &str) -> Observation {
             )),
             declared,
             paths: Vec::new(),
+            unclassified: None,
         };
     };
     let trunk_version = git(root, &["show", &format!("{commit}:{}", version::MANIFEST)])
@@ -700,6 +842,7 @@ pub fn observe(root: &Path, trunk_ref: &str) -> Observation {
             )),
             declared,
             paths: Vec::new(),
+            unclassified: None,
         };
     };
     // A merge of the trunk in progress — `git merge --no-commit <trunk>`, which is how a
@@ -728,16 +871,33 @@ pub fn observe(root: &Path, trunk_ref: &str) -> Observation {
         &["ls-files", "--others", "--exclude-standard", "-z"],
     )));
     let changed: Vec<String> = changed.into_iter().collect();
-    let derived = crate::integration::relation::derived_paths(root, &commit, &changed);
     let at_base = |p: &str| git(root, &["show", &format!("{base}:{p}")]);
     let in_tree = |p: &str| std::fs::read_to_string(root.join(p)).ok();
-    let paths = changed
-        .into_iter()
-        .map(|p| {
-            let class = classify(&p, &derived, &at_base, &in_tree);
-            (p, class)
-        })
-        .collect();
+    // The trunk's attributes say which paths a generator rewrites. When they cannot be read
+    // nothing is classified: an empty set would make every projection work, a guess that
+    // owes a minor nobody owes — so the obligation is unverified instead.
+    let (paths, unclassified) =
+        match crate::integration::relation::derived_paths(root, &commit, &changed) {
+            Ok(mut derived) => {
+                derived.extend(release_unit(&changed, &at_base, &in_tree));
+                let paths = changed
+                    .into_iter()
+                    .map(|p| {
+                        let class = classify(&p, &derived, &at_base, &in_tree);
+                        (p, class)
+                    })
+                    .collect();
+                (paths, None)
+            }
+            Err(why) => (
+                Vec::new(),
+                Some(format!(
+                    "the trunk's .gitattributes ({}) could not be read, so no changed path \
+                     could be classified: {why}",
+                    &commit[..commit.len().min(12)]
+                )),
+            ),
+        };
 
     Observation {
         subject,
@@ -749,6 +909,7 @@ pub fn observe(root: &Path, trunk_ref: &str) -> Observation {
         }),
         declared,
         paths,
+        unclassified,
     }
 }
 
@@ -818,7 +979,8 @@ pub fn contract_of(analysis: Result<super::compat::VersionPlan, String>) -> Cont
 ///                     version: "0.12.0".into(), contained: true };
 /// let o = assemble(
 ///     Observation { subject: "feature/x".into(), trunk: Ok(trunk), declared: Version::parse("0.12.0"),
-///                   paths: vec![("lib/a.sh".into(), PathClass::Work)] },
+///                   paths: vec![("lib/a.sh".into(), PathClass::Work)],
+///                   unclassified: None },
 ///     ContractRequirement { baseline: Some("v0.12.0".into()), required: Impact::None,
 ///                           floor: Some("0.12.0".into()), unmeasured: None },
 ///     &ReleasePolicy { cadence: Impact::Minor, trunk: None },
@@ -886,6 +1048,9 @@ pub fn assemble(
         Ok(t) => t,
         Err(why) => return unverified(why, None),
     };
+    if let Some(why) = observation.unclassified.clone() {
+        return unverified(why, Some(trunk));
+    }
     let Some(trunk_version) = Version::parse(&trunk.version) else {
         return unverified(
             format!("the trunk declares '{}'", trunk.version),
@@ -1260,9 +1425,16 @@ mod tests {
             classify("share/version.txt", &derived, &base, &head),
             PathClass::Derived
         );
+        let absent = |_: &str| None;
+        assert_eq!(
+            classify(".ai/repo/releases/v0.6.0.yaml", &derived, &absent, &head),
+            PathClass::ReleaseEvidence,
+            "a record the change set adds"
+        );
         assert_eq!(
             classify(".ai/repo/releases/v0.6.0.yaml", &derived, &base, &head),
-            PathClass::ReleaseEvidence
+            PathClass::Work,
+            "a published record edited"
         );
         assert_eq!(
             classify(".ai/repo/releases/README.md", &derived, &base, &head),
@@ -1288,6 +1460,7 @@ mod tests {
                 trunk: Err("no trunk".into()),
                 declared: Some(v("0.1.0")),
                 paths: vec![("lib/a.sh".into(), PathClass::Work)],
+                unclassified: None,
             },
             ContractRequirement {
                 baseline: None,
@@ -1322,6 +1495,7 @@ mod tests {
                     ("lib/a.sh".into(), PathClass::Work),
                     ("docs/generated/x.json".into(), PathClass::Derived),
                 ],
+                unclassified: None,
             },
             ContractRequirement {
                 baseline: Some("v1.8.0".into()),
@@ -1488,6 +1662,7 @@ mod tests {
                 trunk: Ok(trunk("next")),
                 declared: Some(v("1.0.0")),
                 paths: Vec::new(),
+                unclassified: None,
             },
             quiet_contract(),
             &policy,
@@ -1502,6 +1677,7 @@ mod tests {
                 trunk: Ok(trunk("1.0.0")),
                 declared: None,
                 paths: Vec::new(),
+                unclassified: None,
             },
             quiet_contract(),
             &policy,
@@ -1521,6 +1697,7 @@ mod tests {
                 trunk: Ok(trunk("1.0.0")),
                 declared: Some(v("1.0.0")),
                 paths: vec![("docs/generated/x.json".into(), PathClass::Derived)],
+                unclassified: None,
             },
             quiet_contract(),
             &ReleasePolicy {
@@ -1563,6 +1740,7 @@ mod tests {
                 trunk: Ok(trunk("1.0.0")),
                 declared: Some(v("1.0.0")),
                 paths,
+                unclassified: None,
             },
             quiet_contract(),
             &ReleasePolicy {
@@ -1572,5 +1750,168 @@ mod tests {
         );
         assert_eq!(o.paths.work, WORK_EXAMPLES + 3);
         assert_eq!(o.paths.work_examples.len(), WORK_EXAMPLES);
+    }
+
+    /// A release record is evidence once: when the change set adds it. Editing or deleting a
+    /// published record is authored work, so a hand edit cannot ride the record's exemption.
+    #[test]
+    fn a_release_record_is_evidence_only_when_the_change_set_adds_it() {
+        let derived = BTreeSet::new();
+        let text = |_: &str| Some("schema: release/v1\nversion: 1.5.0\n".to_string());
+        let other = |_: &str| Some("schema: release/v1\nversion: 1.5.0\nnote: x\n".to_string());
+        let none = |_: &str| None;
+        let record = ".ai/repo/releases/v1.5.0.yaml";
+        assert_eq!(
+            classify(record, &derived, &none, &text),
+            PathClass::ReleaseEvidence
+        );
+        assert_eq!(classify(record, &derived, &text, &other), PathClass::Work);
+        assert_eq!(
+            classify(record, &derived, &text, &none),
+            PathClass::Work,
+            "a deleted record"
+        );
+        assert_eq!(
+            classify(".ai/repo/releases/old/v1.0.0.yaml", &derived, &none, &text),
+            PathClass::Work,
+            "only a record the reader loads is one"
+        );
+        // an added record's projections, once the unit has named them, are derived
+        let changed = vec![
+            record.to_string(),
+            "site/static/releases/v1.5.0.json".to_string(),
+        ];
+        let unit = release_unit(&changed, &none, &text);
+        assert_eq!(
+            classify("site/static/releases/v1.5.0.json", &unit, &none, &text),
+            PathClass::Derived
+        );
+        // an edited record names no projections at all
+        assert!(release_unit(&changed, &text, &other).is_empty());
+    }
+
+    /// The change set of #748 (e08aec8651), path for path where it matters: a new record, its
+    /// public metadata, the stable pointer, and `.gitattributes` gaining the one line that
+    /// marks the new metadata `merge=derived` — plus the generated block's path count, a
+    /// comment. The trunk's attributes cannot mark a file the trunk does not have, so before
+    /// the unit was read from the generator the JSON was work and the record owed a minor.
+    #[test]
+    fn a_release_record_with_its_generated_metadata_and_attribute_line_is_one_unit() {
+        let attrs_before = "# 165 path(s) from docs/generated/artifacts.json\n\
+                            site/static/releases/latest.json merge=derived\n\
+                            site/static/releases/v0.12.0.json merge=derived\n";
+        let attrs_after = "# 166 path(s) from docs/generated/artifacts.json\n\
+                           site/static/releases/latest.json merge=derived\n\
+                           site/static/releases/v0.12.0.json merge=derived\n\
+                           site/static/releases/v0.13.0.json   merge=derived\n";
+        let changed: Vec<String> = [
+            ".ai/repo/releases/v0.13.0.yaml",
+            ".gitattributes",
+            "site/static/releases/latest.json",
+            "site/static/releases/v0.13.0.json",
+        ]
+        .map(String::from)
+        .to_vec();
+        let base_with = |attrs: &'static str| {
+            move |p: &str| match p {
+                ".gitattributes" => Some(attrs.to_string()),
+                "site/static/releases/latest.json" => Some("{}".to_string()),
+                _ => None,
+            }
+        };
+        let head_with = |attrs: &'static str| {
+            move |p: &str| match p {
+                ".gitattributes" => Some(attrs.to_string()),
+                _ => Some("{}".to_string()),
+            }
+        };
+        // the trunk marks latest.json, and not the new metadata
+        let mut derived: BTreeSet<String> = ["site/static/releases/latest.json".to_string()].into();
+        derived.extend(release_unit(
+            &changed,
+            &base_with(attrs_before),
+            &head_with(attrs_after),
+        ));
+        let classes: Vec<PathClass> = changed
+            .iter()
+            .map(|p| {
+                classify(
+                    p,
+                    &derived,
+                    &base_with(attrs_before),
+                    &head_with(attrs_after),
+                )
+            })
+            .collect();
+        assert_eq!(
+            classes,
+            [
+                PathClass::ReleaseEvidence,
+                PathClass::Derived,
+                PathClass::Derived,
+                PathClass::Derived
+            ]
+        );
+        assert_eq!(Carries::of(classes), Carries::ReleaseEvidence);
+
+        // .gitattributes that also marks a path the generator does not write from the record
+        let sneaky = "site/static/releases/latest.json merge=derived\n\
+                      site/static/releases/v0.12.0.json merge=derived\n\
+                      site/static/releases/v0.13.0.json merge=derived\n\
+                      lib/finish.sh merge=derived\n";
+        assert!(
+            !release_unit(&changed, &base_with(attrs_before), &head_with(sneaky))
+                .contains(".gitattributes")
+        );
+        // ... or that removes an attribute
+        let removes = "site/static/releases/v0.13.0.json merge=derived\n\
+                       site/static/releases/v0.12.0.json merge=derived\n";
+        assert!(
+            !release_unit(&changed, &base_with(attrs_before), &head_with(removes))
+                .contains(".gitattributes")
+        );
+        // ... or that changes another attribute's value
+        let retargets = "site/static/releases/latest.json merge=union\n\
+                         site/static/releases/v0.12.0.json merge=derived\n\
+                         site/static/releases/v0.13.0.json merge=derived\n";
+        assert!(
+            !release_unit(&changed, &base_with(attrs_before), &head_with(retargets))
+                .contains(".gitattributes")
+        );
+        // ... or that only rewrites a comment, which marks nothing the record needs
+        let comment = "# 166 path(s)\nsite/static/releases/latest.json merge=derived\n\
+                       site/static/releases/v0.12.0.json merge=derived\n";
+        assert!(
+            !release_unit(&changed, &base_with(attrs_before), &head_with(comment))
+                .contains(".gitattributes")
+        );
+        // no record added: nothing is a projection of one
+        let without: Vec<String> = changed[1..].to_vec();
+        assert!(
+            release_unit(&without, &base_with(attrs_before), &head_with(attrs_after)).is_empty()
+        );
+    }
+
+    /// Trunk attributes nobody could read classify nothing, and the verdict is unverified —
+    /// never the empty set of projections that would make every derived path work.
+    #[test]
+    fn an_unclassified_change_set_is_unverified() {
+        let o = assemble(
+            Observation {
+                subject: "feature/x".into(),
+                trunk: Ok(trunk("1.0.0")),
+                declared: Some(v("1.0.0")),
+                paths: Vec::new(),
+                unclassified: Some("git check-attr failed".into()),
+            },
+            quiet_contract(),
+            &ReleasePolicy {
+                cadence: Impact::Minor,
+                trunk: None,
+            },
+        );
+        assert_eq!(o.state, ObligationState::Unverified);
+        assert!(o.reasons[0].contains("git check-attr failed"));
+        assert_eq!(o.trunk.map(|t| t.version), Some("1.0.0".into()));
     }
 }

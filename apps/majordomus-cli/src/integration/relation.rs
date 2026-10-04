@@ -33,10 +33,16 @@ pub fn has_commit(root: &Path, commit: &str) -> bool {
         .unwrap_or(false)
 }
 
-/// The subset of `paths` that master's `.gitattributes` marks `merge=derived`.
-pub fn derived_paths(root: &Path, master: &str, paths: &[String]) -> BTreeSet<String> {
+/// The subset of `paths` that master's `.gitattributes` marks `merge=derived`, or why git
+/// could not say. A failure is an error and never an empty set: an empty set reads as "no
+/// path here is derived", which turns every projection into authored work.
+pub fn derived_paths(
+    root: &Path,
+    master: &str,
+    paths: &[String],
+) -> Result<BTreeSet<String>, String> {
     if paths.is_empty() {
-        return BTreeSet::new();
+        return Ok(BTreeSet::new());
     }
     let mut cmd = Command::new("git");
     cmd.arg("-C")
@@ -44,30 +50,54 @@ pub fn derived_paths(root: &Path, master: &str, paths: &[String]) -> BTreeSet<St
         .args(["check-attr", "--source", master, "-z", "--stdin", "merge"])
         .stdin(std::process::Stdio::piped())
         .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::null());
-    let Ok(mut child) = cmd.spawn() else {
-        return BTreeSet::new();
-    };
-    if let Some(mut stdin) = child.stdin.take() {
-        use std::io::Write;
-        let mut input = Vec::new();
-        for p in paths {
-            input.extend_from_slice(p.as_bytes());
-            input.push(0);
-        }
-        let _ = stdin.write_all(&input);
+        .stderr(std::process::Stdio::piped());
+    let mut child = cmd
+        .spawn()
+        .map_err(|e| format!("git check-attr could not run: {e}"))?;
+    let mut input = Vec::new();
+    for p in paths {
+        input.extend_from_slice(p.as_bytes());
+        input.push(0);
     }
-    let Ok(out) = child.wait_with_output() else {
-        return BTreeSet::new();
-    };
+    // Written from a thread of its own: git answers while it reads, and a long list would
+    // otherwise fill the answer's pipe while this side is still writing the question.
+    let writer = child.stdin.take().map(|mut stdin| {
+        std::thread::spawn(move || {
+            use std::io::Write;
+            stdin.write_all(&input)
+        })
+    });
+    let out = child
+        .wait_with_output()
+        .map_err(|e| format!("git check-attr did not finish: {e}"))?;
+    if let Some(writer) = writer {
+        match writer.join() {
+            Ok(Ok(())) => {}
+            Ok(Err(e)) => return Err(format!("git check-attr could not be given the paths: {e}")),
+            Err(_) => return Err("git check-attr could not be given the paths".into()),
+        }
+    }
+    if !out.status.success() {
+        return Err(format!(
+            "git check-attr --source {master} exited {}: {}",
+            out.status
+                .code()
+                .map_or_else(|| "on a signal".to_string(), |c| c.to_string()),
+            String::from_utf8_lossy(&out.stderr)
+                .lines()
+                .next()
+                .unwrap_or("")
+                .trim()
+        ));
+    }
     // -z output: path NUL attribute NUL value NUL, repeated
     let text = String::from_utf8_lossy(&out.stdout);
     let fields: Vec<&str> = text.split('\0').collect();
-    fields
+    Ok(fields
         .chunks(3)
         .filter(|c| c.len() == 3 && c[2] == "derived")
         .map(|c| c[0].to_string())
-        .collect()
+        .collect())
 }
 
 /// What `head` is to `master`, with the authored paths it changes.
@@ -135,7 +165,10 @@ pub fn relation_to_master(root: &Path, master: &str, head: &str) -> RelationToMa
     };
     let mut all: Vec<String> = changed.clone();
     all.extend(conflicted.iter().cloned());
-    let derived = derived_paths(root, master, &all);
+    let derived = match derived_paths(root, master, &all) {
+        Ok(d) => d,
+        Err(reason) => return RelationToMaster::Unknown { reason },
+    };
     // a conflict on a derived path is the regeneration's to resolve, not a person's
     let authored_conflicts: Vec<String> = conflicted
         .iter()
@@ -171,5 +204,41 @@ pub fn relation_to_master(root: &Path, master: &str, head: &str) -> RelationToMa
             RelationToMaster::Behind { behind, authored }
         }
         Err(reason) => RelationToMaster::Unknown { reason },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Attributes git could not read are an error, never the empty set that would call every
+    /// projection authored; an empty question is answered without asking git at all.
+    #[test]
+    fn unreadable_attributes_are_an_error_and_not_an_empty_set() {
+        let dir = tempfile::tempdir().unwrap();
+        let git = |args: &[&str]| {
+            assert!(Command::new("git")
+                .arg("-C")
+                .arg(dir.path())
+                .args(args)
+                .output()
+                .unwrap()
+                .status
+                .success());
+        };
+        git(&["init", "-q"]);
+        git(&["config", "user.email", "t@example.com"]);
+        git(&["config", "user.name", "t"]);
+        std::fs::write(dir.path().join(".gitattributes"), "gen/** merge=derived\n").unwrap();
+        git(&["add", "-A"]);
+        git(&["commit", "-qm", "base"]);
+        let paths = vec!["gen/x.json".to_string(), "lib/a.sh".to_string()];
+        let derived = derived_paths(dir.path(), "HEAD", &paths).unwrap();
+        assert_eq!(derived, ["gen/x.json".to_string()].into());
+        let err = derived_paths(dir.path(), "no-such-commit", &paths).unwrap_err();
+        assert!(err.contains("check-attr"), "{err}");
+        assert!(derived_paths(dir.path(), "no-such-commit", &[])
+            .unwrap()
+            .is_empty());
     }
 }

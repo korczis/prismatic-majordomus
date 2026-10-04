@@ -6,23 +6,23 @@
     "version": "0.12.0"
   },
   "registry": {
-    "fingerprint": "14d0aa2f454ae1111e02dce00af7c44050bac7c511653fb68d9285c3f0f349df",
+    "fingerprint": "9b25c2b66fa4fc4ef68b9be62866df8e7a5e416e49df02df1d093af813498e17",
     "summary": {
-      "total": 1881,
+      "total": 1882,
       "builtin": 170,
-      "declarative": 1711,
+      "declarative": 1712,
       "by_kind": {
         "command": 22,
         "query": 148,
-        "resource": 1711
+        "resource": 1712
       },
       "by_stability": {
         "behaviorally_verified": 127,
         "experimental": 34,
-        "implemented": 1720
+        "implemented": 1721
       },
       "mcp_tools": 164,
-      "mcp_resources": 1763,
+      "mcp_resources": 1764,
       "http_routes": 168,
       "cli_commands": 88,
       "modules": 83,
@@ -52736,7 +52736,7 @@
               "state",
               "reasons"
             ],
-            "description": "The version obligation of a tree against its trunk.\n\n```\nuse majordomus_cli::release::obligation::{assemble, Observation, ContractRequirement, ReleasePolicy, PathClass, VersionObligation};\nuse majordomus_cli::release::compat::Impact;\nuse majordomus_cli::release::version::Version;\nlet o: VersionObligation = assemble(\n    Observation { subject: \"feature/x\".into(), trunk: Err(\"no trunk\".into()),\n                  declared: Version::parse(\"1.0.0\"), paths: vec![(\"lib/a.sh\".into(), PathClass::Work)] },\n    ContractRequirement { baseline: None, required: Impact::None, floor: None, unmeasured: None },\n    &ReleasePolicy::default(),\n);\nassert_eq!(o.schema, \"majordomus/version-obligation/v1\");\nassert_eq!(o.state.as_str(), \"unverified\");\n```",
+            "description": "The version obligation of a tree against its trunk.\n\n```\nuse majordomus_cli::release::obligation::{assemble, Observation, ContractRequirement, ReleasePolicy, PathClass, VersionObligation};\nuse majordomus_cli::release::compat::Impact;\nuse majordomus_cli::release::version::Version;\nlet o: VersionObligation = assemble(\n    Observation { subject: \"feature/x\".into(), trunk: Err(\"no trunk\".into()),\n                  declared: Version::parse(\"1.0.0\"), paths: vec![(\"lib/a.sh\".into(), PathClass::Work)],\n                  unclassified: None },\n    ContractRequirement { baseline: None, required: Impact::None, floor: None, unmeasured: None },\n    &ReleasePolicy::default(),\n);\nassert_eq!(o.schema, \"majordomus/version-obligation/v1\");\nassert_eq!(o.state.as_str(), \"unverified\");\n```",
             "title": "VersionObligation",
             "$defs": {
               "VersionObligationTrunk": {
@@ -65838,7 +65838,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 350,
+        "capabilities": 351,
         "capability_ids": []
       },
       {
@@ -65928,7 +65928,7 @@
     ]
   },
   "index": {
-    "fingerprint": "9090c7eaaf5f498d7222aec4ca6fb5eda9a00b495a332950a19a4f427d86d57f",
+    "fingerprint": "2b62dd7599e7c8358a5f08c8b69e4666e4d631b8b52f683bd1ceab183fd4aa2f",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -65980,7 +65980,7 @@
       "session": 22,
       "skill": 6,
       "taxonomy": 10,
-      "test": 350,
+      "test": 351,
       "use-case": 48,
       "workspace": 1
     },
@@ -67293,7 +67293,7 @@
         "path": ".ai/repo/adrs/0106-integrated-work-advances-the-version-by-at-least-the-cadence-over-the-trunk.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 13020,
+        "bytes": 17309,
         "tags": [
           "release",
           "versioning",
@@ -71243,7 +71243,7 @@
         "title": "The release — a changelog nobody writes, and one writer for the version",
         "path": "docs/RELEASE.md",
         "source_class": "document",
-        "bytes": 51192
+        "bytes": 53504
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -73997,7 +73997,7 @@
         "identity": "lib/finish.sh",
         "path": "lib/finish.sh",
         "source_class": "library",
-        "bytes": 18969
+        "bytes": 22390
       },
       {
         "uri": "majordomus://implementation/lib/gates.sh",
@@ -83443,7 +83443,7 @@
         "identity": "test/cases/803_the_version_has_one_writer.sh",
         "path": "test/cases/803_the_version_has_one_writer.sh",
         "source_class": "case",
-        "bytes": 3682
+        "bytes": 7613
       },
       {
         "uri": "majordomus://test/test/cases/80_bench_persistence.sh",
@@ -83563,7 +83563,7 @@
         "identity": "test/cases/874_the_release_pipeline_does_not_advance_itself.sh",
         "path": "test/cases/874_the_release_pipeline_does_not_advance_itself.sh",
         "source_class": "case",
-        "bytes": 4263
+        "bytes": 7973
       },
       {
         "uri": "majordomus://test/test/cases/875_a_failed_deploy_is_retried_on_the_same_version.sh",
@@ -83580,6 +83580,14 @@
         "path": "test/cases/876_unblock_reconciles_the_version.sh",
         "source_class": "case",
         "bytes": 5230
+      },
+      {
+        "uri": "majordomus://test/test/cases/877_a_refused_advance_leaves_the_version_as_it_was.sh",
+        "kind": "test",
+        "identity": "test/cases/877_a_refused_advance_leaves_the_version_as_it_was.sh",
+        "path": "test/cases/877_a_refused_advance_leaves_the_version_as_it_was.sh",
+        "source_class": "case",
+        "bytes": 7540
       },
       {
         "uri": "majordomus://test/test/cases/87_release_pipeline.sh",
@@ -84681,7 +84689,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 350
+      "objects": 351
     },
     {
       "name": "use-case",
@@ -100455,7 +100463,7 @@
               {
                 "id": "release-advance-dry-run",
                 "title": "Satisfying it, through the one writer",
-                "description": "Computes the obligation against the trunk as it is now and, when it is owed, raises the version to its minimum with the writer `release bump` uses — the manifest's version line and the lock's record of it, read back. When it already holds it writes nothing, so a retried finish or a rerun workflow cannot advance twice. A tree behind the trunk is refused: the trunk is merged first, then the advance is computed from the version that won. `finish --outcome completed` runs it before the contract is judged. This fixture has no trunk, so nothing can be decided and it exits 12.",
+                "description": "Computes the obligation against the trunk as it is now and, when it is owed, raises the version to its minimum with the writer `release bump` uses — the manifest's version line and the lock's record of it, read back. When it already holds it writes nothing, so a retried finish or a rerun workflow cannot advance twice. A tree behind the trunk is refused: the trunk is merged first, then the advance is computed from the version that won. `finish --outcome completed` runs it only after the rest of its contract holds, projects it into `share/version.txt` and reads the obligation again, and puts every file back when any of that fails. This fixture has no trunk, so nothing can be decided and it exits 12.",
                 "argv": [
                   "release",
                   "advance",
