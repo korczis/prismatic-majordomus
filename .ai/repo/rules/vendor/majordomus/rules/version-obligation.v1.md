@@ -3,8 +3,8 @@ id: majordomus.version-obligation
 version: 1
 kind: rule
 title: Completed work does not leave the trunk on its version
-description: A repository that declares a completion cadence owes, for every change set that carries work, a version at least that much above the trunk's — and at least what the public contract requires since the last release. finish applies it through the one writer before the contract is judged, and refuses completed while it does not hold.
-statement: When the policy declares release.cadence, finish --outcome completed first satisfies the version obligation through `release advance` and then refuses completed unless the declared version reaches the minimum the obligation computes against the trunk as it is now — the larger of the contract's floor and the trunk's version raised by the cadence. An obligation that could not be read is unverified and never a pass. A change set that carries no work owes no cadence, and a satisfied obligation is satisfied however often it is asked.
+description: A repository that declares a completion cadence owes, for every change set that carries work, a version at least that much above the trunk's — and at least what the public contract requires since the last release. finish judges the rest of the contract first and, only when it holds, applies the advance through the one writer; it refuses completed while the obligation cannot be satisfied.
+statement: When the policy declares release.cadence, finish --outcome completed judges every other line of the contract, then satisfies the version obligation through `release advance` and reads it again, and refuses completed unless the declared version reaches the minimum the obligation computes against the trunk as it is now — the larger of the contract's floor and the trunk's version raised by the cadence. An obligation that could not be read is unverified and never a pass. A change set that carries no work owes no cadence, and a satisfied obligation is satisfied however often it is asked.
 status: active
 class: blocking
 depends_on: [majordomus.completion-gates@1]
@@ -51,18 +51,17 @@ outcome does.
 requirement on, and `release.cadence` names the cadence. A repository that declares no
 cadence is judged by the contract alone, as before.
 
-**`finish --outcome completed` applies it first.** Before the contract is judged it runs
-`release advance`, which computes the obligation against the trunk and, when it is owed,
-raises the version to the minimum with the one writer — the manifest's version line and the
-lock's record of it — then regenerates the version's projection with `majordomus generate
-distribution`; `scripts/derive` refreshes the rest before the commit. The
-advance is recorded in the ledger as `release.advanced`, with the obligation's identity, the
-trunk and both versions. The verification command then runs over the advanced tree.
-
-**Then it is judged.** The obligation must hold: `satisfied` or `not-owed`. `owed` and
-`behind` refuse with the remedy; `unverified` — the trunk could not be read, the executable
-is not built — refuses too, because `completed` claims the obligation holds and nothing read
-it.
+**`finish --outcome completed` judges first and advances last.** The doctrine reads the
+obligation with the rest of the contract: `satisfied` and `not-owed` hold, `owed` holds as
+*to be paid*, and `behind` and `unverified` — a tree behind its trunk, a trunk or a reader
+nobody could reach — refuse. Only when every line of the contract holds does `finish` run
+`release advance`, which raises the version to the minimum with the one writer — the
+manifest's version line and the lock's record of it — regenerate the version's projection
+with `majordomus generate distribution`, and read the obligation again: it must now hold. The
+advance is recorded as `release.advanced`, with the obligation's identity, the trunk and both
+versions, and `task.finished` follows it. A completion refused for any reason advances
+nothing and records no advance, so neither the tree nor the ledger can be read as accepted
+work that was not.
 
 **`check` reports it and refuses nothing.** A check is asked many times while work is in
 progress, and an advance owed by unfinished work is not a defect yet.
@@ -74,14 +73,16 @@ are honest about unfinished work and owe no version.
 
 A violation is a `FAIL` finding under the category `version`, naming the obligation's
 identity, the declared version, the minimum and why each input requires what it does.
-`finish` exits 10 and writes no completion; the advance the pre-step made stays in the tree
-as part of the work, and a second `finish` finds it satisfied.
+`finish` exits 10 and writes no completion and no advance. An advance that could not be made,
+or that did not leave the obligation satisfied, refuses the same way, named under this
+doctrine.
 
 # Verification
 
 `mj_validate_version_obligation` decides it, dispatched from `check` and `finish`, by asking
 the executable's `release obligation`. `test/cases/801_completed_work_advances_the_version.sh`
 proves it against fixture repositories with a trunk: a completed finish advances the version
-once and a repeated finish does not advance it again; an outcome other than completed owes
+once and a repeated finish does not advance it again; a completion refused by another line
+advances nothing; `check` reports the obligation and refuses nothing; an outcome other than completed owes
 nothing; a change set of projections only owes nothing; a tree whose trunk moved past it is
 refused; and a trunk that cannot be read is unverified and refused.

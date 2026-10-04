@@ -113,11 +113,13 @@ surface: both are repository mutations.
 
 **7. `finish` applies it; a gate enforces it.**
 
-- `finish --outcome completed` runs `release advance` before the contract is judged when the
-  policy selects `version_advanced`, projects `share/version.txt` with `generate
-  distribution`, records `release.advanced` in the ledger, and then the doctrine
-  `majordomus.version-obligation` refuses `completed` unless the obligation holds.
-  `unverified` refuses too. Other outcomes owe nothing; `check` reports and refuses nothing.
+- `finish --outcome completed`, when the policy selects `version_advanced`, judges the whole
+  contract first: the doctrine `majordomus.version-obligation` accepts an obligation that is
+  satisfied, not owed, or owed and payable, and refuses `behind` and `unverified`. Only when
+  every line holds does it run `release advance`, project `share/version.txt` with `generate
+  distribution`, read the obligation again — it must hold — and record `release.advanced`
+  before `task.finished`. A refused completion advances nothing and records no advance.
+  Other outcomes owe nothing; `check` reports and refuses nothing.
 - The gate `version-obligation` is `always` planned in the structure job and runs
   `release obligation --base HEAD^1` over the pull request's merge ref and over every merge
   pushed to master. It holds whatever path the merge took.

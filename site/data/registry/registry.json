@@ -6,7 +6,7 @@
     "version": "0.12.0"
   },
   "registry": {
-    "fingerprint": "21727a1bac688f04fe64dab6a8e10030ec7efea83e923e993ab44821051263cc",
+    "fingerprint": "f70197320f2822b37c59f4a4147f302bc0fcfa696353d176c5e17c8fbd933345",
     "summary": {
       "total": 1869,
       "builtin": 170,
@@ -65918,7 +65918,7 @@
     ]
   },
   "index": {
-    "fingerprint": "530dd31624a387862870225ff1944e2a15fe8b14382ea27d980eddfcecd21ec5",
+    "fingerprint": "a18668f8f61d9894a34e9369c2b2ecb2c0090510a6f561e9df662ec4e35f00ff",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -67283,7 +67283,7 @@
         "path": ".ai/repo/adrs/0106-integrated-work-advances-the-version-by-at-least-the-cadence-over-the-trunk.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 12409,
+        "bytes": 12599,
         "tags": [
           "release",
           "versioning",
@@ -73930,7 +73930,7 @@
         "identity": "lib/finish.sh",
         "path": "lib/finish.sh",
         "source_class": "library",
-        "bytes": 17396
+        "bytes": 18969
       },
       {
         "uri": "majordomus://implementation/lib/gates.sh",
@@ -73938,7 +73938,7 @@
         "identity": "lib/gates.sh",
         "path": "lib/gates.sh",
         "source_class": "library",
-        "bytes": 24770
+        "bytes": 25926
       },
       {
         "uri": "majordomus://implementation/lib/handover.sh",
@@ -78861,11 +78861,11 @@
         "kind": "rule",
         "identity": "majordomus.version-obligation@1",
         "title": "Completed work does not leave the trunk on its version",
-        "description": "A repository that declares a completion cadence owes, for every change set that carries work, a version at least that much above the trunk's — and at least what the public contract requires since the last release. finish applies it through the one writer before the contract is judged, and refuses completed while it does not hold.",
+        "description": "A repository that declares a completion cadence owes, for every change set that carries work, a version at least that much above the trunk's — and at least what the public contract requires since the last release. finish judges the rest of the contract first and, only when it holds, applies the advance through the one writer; it refuses completed while the obligation cannot be satisfied.",
         "path": ".ai/repo/rules/vendor/majordomus/rules/version-obligation.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 5304,
+        "bytes": 5593,
         "tags": [
           "tasks",
           "completion",
@@ -83360,7 +83360,7 @@
         "identity": "test/cases/801_completed_work_advances_the_version.sh",
         "path": "test/cases/801_completed_work_advances_the_version.sh",
         "source_class": "case",
-        "bytes": 8957
+        "bytes": 10036
       },
       {
         "uri": "majordomus://test/test/cases/802_a_merge_carries_its_version_advance.sh",
