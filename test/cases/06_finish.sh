@@ -104,6 +104,24 @@ expect_grep 'lacks section\(s\): Reason'
 printf '# Reason\nnot there\n' >> "$n2"
 expect_exit 0 "$MJ" finish --outcome no_match --note "$n2"
 expect_grep 'INFO verification .* skipped for outcome no_match'
+# A note from a pipe (here a process substitution, as /dev/stdin with a heredoc is) is read
+# once: the doctrine and the record take the same text. A second read used to find it empty,
+# and the record's cp failed after the outcome was written: completed, no task.finished line.
+"$MJ" start "t3b" --scope lib >/dev/null
+id=$(sed -n 's/^id: //p' .ai/local/state/current.yaml)
+expect_exit 0 "$MJ" finish --outcome no_match \
+  --note <(printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n# Reason\npiped\n')
+expect_grep 'OK +note'
+expect_grep '^# Reason$' ".ai/local/state/completed/$id.md"
+expect_grep '^piped$' ".ai/local/state/completed/$id.md"
+[ ! -e ".ai/local/state/completed/$id.md.pending" ] || { echo "    the staged note was left behind"; exit 1; }
+expect_grep "\"event\":\"task.finished\".*\"task_id\":\"$id\".*\"outcome\":\"no_match\"" "$LEDGER"
+# a note that cannot be read is a refusal of the note doctrine, as before, and writes no record
+"$MJ" start "t3c" --scope lib >/dev/null
+expect_exit 10 "$MJ" finish --outcome no_match --note /nonexistent/note.md
+expect_grep 'FAIL note'
+expect_grep '^outcome: active$' .ai/local/state/current.yaml
+expect_exit 0 "$MJ" finish --outcome no_match --note "$n2"
 # --check fails on out-of-scope work
 "$MJ" start "t4" --scope lib >/dev/null
 echo x > test/other && git add test/other && git commit -qm oos
