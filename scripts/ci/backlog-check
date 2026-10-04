@@ -19,6 +19,8 @@
 #     relation; checking only one side is how this class of defect survives)
 #   - the rule exists and names the forge constraint, so the reason is written down once
 #   - no document instructs a reader to merge a pull request on GitHub
+#   - no script, recipe, workflow or library merges around the integrator: no `gh pr merge`,
+#     no REST merge call, no `--admin`, no force push to the trunk (ADR 0101)
 #   - the behavioural case exists
 #
 #   scripts/ci/backlog-check             the structural findings
@@ -180,6 +182,27 @@ if [ -n "$advertises" ]; then
   echo "$advertises" | head -5 | sed 's/^/       /'
 else
   ok "no document advertises the forge merge button"
+fi
+
+# 4b. nothing merges around the integrator.
+# A pull request reaches master through `majordomus prs` and nothing else: it refreshes
+# master and the head immediately before acting, merges one, verifies the result and plans
+# again (ADR 0101). Every other route skips some of that — a `gh pr merge` in a script trusts
+# whatever the caller last looked at, a REST merge call does the same with more typing,
+# `--admin` steps over the required checks, and a force push to the trunk rewrites what
+# every other branch was measured against. The integrator itself is Rust and is not read
+# here. A comment may name the forbidden forms; a line that runs one may not. A force push
+# of anything but the trunk (a release branch the publish job rebuilds) is not this gate's
+# business.
+bypass="$(grep -rnE 'gh[[:space:]]+pr[[:space:]]+merge|pulls/[^[:space:]]*/merge|--admin([[:space:]]|$)|push[[:space:]].*(-f|--force|--force-with-lease)([[:space:]]|=|$).*(master|main)([[:space:]"'"'"']|$)|push[[:space:]].*\+(refs/heads/)?(master|main)' \
+  scripts .just justfile .github lib bin 2>/dev/null \
+  | grep -vE '^[^:]*:[0-9]+:[[:space:]]*#' \
+  | grep -v '^scripts/ci/backlog-check:' || true)"
+if [ -n "$bypass" ]; then
+  fail "a script merges around the integrator (majordomus prs, ADR 0101); land pull requests with majordomus prs drain:"
+  echo "$bypass" | head -5 | sed 's/^/       /'
+else
+  ok "nothing merges around the integrator: no gh pr merge, REST merge, --admin or force push to the trunk"
 fi
 
 # 5b. the suite's own servers have a bounded life.
