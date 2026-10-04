@@ -311,7 +311,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `861ed5a4aa3e3f4d` |
 | `site/static/images/logo-mark.svg` | `design-mark` | text | 904 | `861ed5a4aa3e3f4d` |
 | `site/static/images/logo.svg` | `design-logo` | text | 1059 | `19f0d7c8178e9d25` |
-| `site/static/install.sh` | `installer` | text | 31115 | `330730f99e7701ec` |
+| `site/static/install.sh` | `installer` | text | 31451 | `fb5c54c696fd3130` |
 | `site/static/releases/latest.json` | `release/latest` | json | 2397 | `e3d6bf49c49ac776` |
 | `site/static/releases/v0.10.0.json` | `release/v0.10.0` | json | 2397 | `d5d062b81a621263` |
 | `site/static/releases/v0.11.0.json` | `release/v0.11.0` | json | 2397 | `d314f8a7caa0916f` |
