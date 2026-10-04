@@ -102,6 +102,13 @@ struct World {
     merge_refuses: BTreeSet<u64>,
     /// The forge does not show a merge it accepted.
     verify_fails: bool,
+    /// On this observation (1-based), the audit trail at this path stops taking appends:
+    /// a directory is put where the file was.
+    sabotage_on: Option<(usize, std::path::PathBuf)>,
+    /// How many times a merge reached the forge.
+    merge_calls: usize,
+    /// How many times a refresh reached the branch.
+    refresh_calls: usize,
 }
 
 impl Default for World {
@@ -117,6 +124,9 @@ impl Default for World {
             reviews_required: Some(false),
             merge_refuses: BTreeSet::new(),
             verify_fails: false,
+            sabotage_on: None,
+            merge_calls: 0,
+            refresh_calls: 0,
         }
     }
 }
@@ -237,10 +247,18 @@ impl Integrator for World {
         for what in &now {
             self.happen(what);
         }
+        if let Some((_, trail)) = self
+            .sabotage_on
+            .as_ref()
+            .filter(|(at, _)| *at == self.observations)
+        {
+            unwritable(trail);
+        }
         Ok(self.queue())
     }
 
     fn merge(&mut self, pr: u64, head_sha: &str, method: &str) -> Result<(), String> {
+        self.merge_calls += 1;
         assert_eq!(method, "merge", "the repository's merge method");
         if self.merge_refuses.contains(&pr) {
             return Err(
@@ -285,6 +303,7 @@ impl Integrator for World {
     }
 
     fn refresh_branch(&mut self, a: &PullRequestAssessment, _base: &str) -> Result<String, String> {
+        self.refresh_calls += 1;
         let master = self.master;
         let s = self
             .open
@@ -302,6 +321,8 @@ impl Integrator for World {
     }
 }
 
+/// A scratch repository: the audit trail is the repository's, under its common git
+/// directory, so a scratch root is a git repository of its own.
 fn scratch() -> std::path::PathBuf {
     let d = std::env::temp_dir().join(format!(
         "mj-integration-{}-{}",
@@ -312,7 +333,19 @@ fn scratch() -> std::path::PathBuf {
             .as_nanos()
     ));
     std::fs::create_dir_all(&d).unwrap();
+    git(&d, &["init", "-q"]);
     d
+}
+
+/// Where the repository's audit trail is: one file under the common git directory.
+fn trail_of(root: &std::path::Path) -> std::path::PathBuf {
+    root.join(".git/majordomus/integration/events.jsonl")
+}
+
+/// Make the audit trail refuse every append (and every read): a directory where the file is.
+fn unwritable(trail: &std::path::Path) {
+    let _ = std::fs::remove_file(trail);
+    std::fs::create_dir_all(trail).unwrap();
 }
 
 fn disposition(q: &IntegrationQueue, n: u64) -> PullRequestDisposition {
@@ -1951,4 +1984,188 @@ fn a_repository_that_cannot_be_read_ends_a_continuous_drain() {
     );
     assert_eq!(report.cycles, 0);
     assert_eq!(report.failure.as_deref(), Some("HTTP 401: Bad credentials"));
+}
+
+// ---------------------------------------------------------------- the audit trail
+
+/// The outcome's wire word: what the command line and a capability read.
+fn outcome_word(out: &DrainStepOutcome) -> String {
+    serde_json::to_value(out).unwrap()["outcome"]
+        .as_str()
+        .unwrap_or_default()
+        .to_string()
+}
+
+fn trail_actions(root: &std::path::Path) -> Vec<String> {
+    drain::events(root)
+        .into_iter()
+        .map(|e| e.action.as_str().to_string())
+        .collect()
+}
+
+#[test]
+fn a_trail_that_cannot_be_written_merges_nothing() {
+    let root = scratch();
+    unwritable(&trail_of(&root));
+    let mut w = World {
+        open: vec![sim(1)],
+        ..Default::default()
+    };
+    let out = drain::step(&root, &mut w, false, false);
+    assert!(out.is_err(), "a step went on without its trail: {out:?}");
+    assert_eq!(w.merge_calls, 0, "a merge reached the forge unrecorded");
+    assert!(w.merged.is_empty());
+}
+
+#[test]
+fn a_merge_whose_attempt_cannot_be_recorded_is_refused() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1)],
+        // the trail breaks between the selection and the merge it would precede
+        sabotage_on: Some((2, trail_of(&root))),
+        ..Default::default()
+    };
+    let out = drain::step(&root, &mut w, false, false).expect("a typed refusal, not an error");
+    assert_eq!(outcome_word(&out), "trail_unwritable", "{out:?}");
+    assert_eq!(w.merge_calls, 0, "a merge reached the forge unrecorded");
+    assert!(w.merged.is_empty());
+}
+
+#[test]
+fn a_refresh_whose_attempt_cannot_be_recorded_is_refused() {
+    let root = scratch();
+    let mut w = one_behind();
+    w.sabotage_on = Some((2, trail_of(&root)));
+    let out = drain::step(&root, &mut w, false, true).expect("a typed refusal, not an error");
+    assert_eq!(outcome_word(&out), "trail_unwritable", "{out:?}");
+    assert_eq!(w.refresh_calls, 0, "a refresh was pushed unrecorded");
+    assert!(w.open.iter().all(|s| s.contains == 0));
+}
+
+#[test]
+fn a_drain_stops_on_a_trail_that_cannot_be_written() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1), sim(2)],
+        sabotage_on: Some((2, trail_of(&root))),
+        ..Default::default()
+    };
+    let report = drain::drain(&root, &mut w, 2, false, false).unwrap();
+    assert_eq!(report.steps.len(), 1, "{report:?}");
+    assert!(report.merged.is_empty());
+    assert!(report.stopped.contains("trail"), "{}", report.stopped);
+    assert_eq!(w.merge_calls, 0);
+}
+
+/// One trail line exactly as the executor wrote it before its action was typed.
+fn old_line(action: &str) -> String {
+    format!(
+        r#"{{"at":"2026-10-01T00:00:00Z","actor":"t (pid 1 on h)","action":"{action}","pr":1,"master_before":"m0","head_sha":"h1","master_after":null,"reasons":["ready"],"detail":"d"}}"#
+    )
+}
+
+#[test]
+fn trail_lines_written_with_a_string_action_still_parse() {
+    for word in [
+        "selected",
+        "refresh_selected",
+        "stale_decision",
+        "merge_attempted",
+        "merge_succeeded",
+        "merge_failed",
+        "verification_failed",
+        "refreshed",
+        "refresh_failed",
+        "closed_superseded",
+        "idle",
+        "became_actionable",
+        "left_actionable",
+    ] {
+        let line = old_line(word);
+        let e: drain::IntegrationEvent =
+            serde_json::from_str(&line).unwrap_or_else(|err| panic!("{word}: {err}"));
+        assert_eq!(e.action.as_str(), word);
+        let again = serde_json::to_value(&e).unwrap();
+        assert_eq!(again["action"], word, "the wire word is unchanged");
+        for absent in ["evidence", "class", "merge_commit"] {
+            assert!(
+                again.get(absent).is_none(),
+                "{absent} is written when empty"
+            );
+        }
+    }
+    // a word the executor never writes is not an action
+    assert!(serde_json::from_str::<drain::IntegrationEvent>(&old_line("merge_suceeded")).is_err());
+}
+
+#[test]
+fn a_checkouts_own_trail_is_moved_into_the_repositorys_once() {
+    let root = scratch();
+    let old = root.join(".ai/local/state/integration/events.jsonl");
+    std::fs::create_dir_all(old.parent().unwrap()).unwrap();
+    std::fs::write(
+        &old,
+        format!(
+            "{}\n{}\n",
+            old_line("selected"),
+            old_line("merge_succeeded")
+        ),
+    )
+    .unwrap();
+    let lines = |p: &std::path::Path| {
+        std::fs::read_to_string(p)
+            .map(|t| t.lines().count())
+            .unwrap_or(0)
+    };
+    assert_eq!(trail_actions(&root), ["selected", "merge_succeeded"]);
+    assert_eq!(
+        lines(&trail_of(&root)),
+        2,
+        "the repository's trail holds them"
+    );
+    // asked again, nothing is appended twice
+    assert_eq!(drain::events(&root).len(), 2);
+    assert_eq!(lines(&trail_of(&root)), 2);
+    // nor after the repository's trail is removed: the move happens once, ever
+    std::fs::remove_file(trail_of(&root)).unwrap();
+    assert!(drain::events(&root).is_empty());
+    assert_eq!(lines(&trail_of(&root)), 0);
+}
+
+#[test]
+fn the_lease_is_recorded_when_taken_and_when_given_back() {
+    let root = scratch();
+    {
+        let _lease = drain::IntegrationLease::acquire(&root, "master").unwrap();
+        assert_eq!(trail_actions(&root), ["lease_acquired"]);
+    }
+    assert_eq!(trail_actions(&root), ["lease_acquired", "lease_released"]);
+}
+
+#[test]
+fn a_continuous_drain_is_recorded_when_it_starts_and_stops() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1)],
+        ..Default::default()
+    };
+    let stop = std::sync::atomic::AtomicBool::new(false);
+    let report = drain::continuous(
+        &root,
+        &mut w,
+        continuous_opts(Some(1)),
+        &stop,
+        &mut |_| {},
+        &mut |_, _| {},
+    );
+    assert_eq!(report.merged, vec![1]);
+    let trail = drain::events(&root);
+    assert_eq!(
+        trail.first().map(|e| e.action.as_str()),
+        Some("continuous_started")
+    );
+    let last = trail.last().unwrap();
+    assert_eq!(last.action.as_str(), "continuous_stopped");
+    assert_eq!(last.detail, report.stopped);
 }
