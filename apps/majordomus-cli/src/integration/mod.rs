@@ -52,6 +52,7 @@ mod tests;
 pub mod wait;
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use schemars::JsonSchema;
@@ -67,17 +68,75 @@ pub(crate) use relation::relation_to_master;
 
 /// Where this checkout's integration state lives, relative to the repository root.
 pub const STATE_DIR: &str = ".ai/local/state/integration";
+/// Where the repository's integration state lives, relative to the common git directory:
+/// what every worktree shares — the audit trail and the last queue's summary.
+pub const COMMON_STATE_DIR: &str = "majordomus/integration";
 /// The last forge observation.
 pub const OBSERVATION_FILE: &str = "observation.json";
 /// Relations already computed, keyed by `master..head` commit ids: immutable, so never
 /// invalidated. Nothing but a pair of full commit ids is ever a key.
 pub const RELATIONS_FILE: &str = "relations.json";
-/// The audit trail of every integration action.
+/// The audit trail of every integration action, one per repository.
 pub const EVENTS_FILE: &str = "events.jsonl";
+/// Left beside the repository's trail once a checkout's own trail was moved into it: the
+/// move happens once, ever.
+pub const TRAIL_MOVED_MARKER: &str = "events.moved-from";
 
-/// The path of one state file.
+/// The path of one state file of this checkout.
 pub fn state_path(root: &Path, file: &str) -> PathBuf {
     root.join(STATE_DIR).join(file)
+}
+
+/// The path of one state file of the repository, under its common git directory.
+pub fn common_state_path(root: &Path, file: &str) -> Result<PathBuf, String> {
+    Ok(drain::common_dir(root)?.join(COMMON_STATE_DIR).join(file))
+}
+
+/// The error of a file operation, naming the file.
+pub(crate) fn at<E: std::fmt::Display>(path: &Path) -> impl FnOnce(E) -> String + '_ {
+    move |e| format!("{}: {e}", path.display())
+}
+
+/// The repository's audit trail. A checkout that still carries a trail of its own from
+/// before the trail was the repository's (`.ai/local/state/integration/events.jsonl`) has it
+/// appended to the repository's the first time this is asked while the repository has none;
+/// a marker keeps that from ever happening twice. A second checkout's old trail is left
+/// where it is: appended after another's, its lines would fold out of order.
+pub fn events_path(root: &Path) -> Result<PathBuf, String> {
+    let path = common_state_path(root, EVENTS_FILE)?;
+    let old = state_path(root, EVENTS_FILE);
+    if path.exists() || !old.is_file() {
+        return Ok(path);
+    }
+    move_trail(&old, &path).map(|()| path)
+}
+
+/// Append `old` to the repository's trail at `path`, once. The marker is taken with
+/// `create_new` before anything is appended, so of two processes that both find no trail,
+/// one appends; and a trail removed afterwards is not refilled.
+fn move_trail(old: &Path, path: &Path) -> Result<(), String> {
+    let dir = path.parent().unwrap_or(path);
+    let marker = dir.join(TRAIL_MOVED_MARKER);
+    // a directory that cannot be made is said by the marker's open below, which then fails
+    let _ = std::fs::create_dir_all(dir);
+    match std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&marker)
+    {
+        Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => Ok(()),
+        taken => taken
+            .and_then(|mut m| writeln!(m, "{}", old.display()))
+            .and_then(|()| std::fs::read_to_string(old))
+            .and_then(|text| {
+                std::fs::OpenOptions::new()
+                    .create(true)
+                    .append(true)
+                    .open(path)
+                    .and_then(|mut trail| writeln!(trail, "{}", text.trim_end_matches('\n')))
+            })
+            .map_err(at(path)),
+    }
 }
 
 /// The last recorded observation, if any.
@@ -410,14 +469,18 @@ pub fn queue_of(root: &Path) -> Result<IntegrationQueue, String> {
         let _ = write_atomic(&cache_path, &text);
     }
     wait::annotate(&mut queue, &drain::events(root));
-    // the summary a briefing reads without deciding a single relation (QueueSummary)
-    if let Ok(text) = serde_json::to_string_pretty(&QueueSummary::of(&queue)) {
-        let _ = write_atomic(&state_path(root, SUMMARY_FILE), &(text + "\n"));
+    // the summary a briefing reads without deciding a single relation (QueueSummary), the
+    // repository's like the trail it sits beside
+    if let (Ok(path), Ok(text)) = (
+        common_state_path(root, SUMMARY_FILE),
+        serde_json::to_string_pretty(&QueueSummary::of(&queue)),
+    ) {
+        let _ = write_atomic(&path, &(text + "\n"));
     }
     Ok(queue)
 }
 
-/// The last queue built in this checkout, summarised.
+/// The last queue built in the repository, summarised.
 pub const SUMMARY_FILE: &str = "summary.json";
 
 /// What the last queue built said, in a few numbers: what a session briefing prints without
@@ -459,21 +522,35 @@ impl QueueSummary {
         }
     }
 
-    /// The summary recorded in this checkout, if any.
+    /// The summary recorded in the repository, if any.
     pub fn load(root: &Path) -> Option<Self> {
-        std::fs::read_to_string(state_path(root, SUMMARY_FILE))
+        std::fs::read_to_string(common_state_path(root, SUMMARY_FILE).ok()?)
             .ok()
             .and_then(|t| serde_json::from_str(&t).ok())
     }
 }
 
-/// Observe the forge, fetch what it names, and record the observation. The network step;
-/// the only one outside the executor.
+/// Observe the forge, fetch what it names, and record the observation — in the checkout's
+/// state, and as an `observed` line of the repository's trail. The network step; the only
+/// one outside the executor.
 pub fn refresh(root: &Path) -> Result<ForgeObservation, String> {
     use forge::Forge;
     let obs = forge::GhForge { root }.observe().map_err(|e| e.0)?;
     forge::fetch(root, &obs).map_err(|e| e.0)?;
     store_observation(root, &obs)?;
+    drain::record(
+        root,
+        drain::IntegrationEvent {
+            master_before: Some(obs.base_sha.clone()),
+            detail: format!(
+                "{} open pull request(s) of {} at {}",
+                obs.pull_requests.len(),
+                obs.repository,
+                obs.observed_at
+            ),
+            ..drain::IntegrationEvent::of(drain::IntegrationAction::Observed)
+        },
+    )?;
     Ok(obs)
 }
 

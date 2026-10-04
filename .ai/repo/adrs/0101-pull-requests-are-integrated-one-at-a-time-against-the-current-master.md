@@ -100,7 +100,11 @@ with one canonical state, one classification and one executor.
    with its age. SECURITY.md names the exception.
 9. **Every act is recorded.** Selections, stale decisions, merge attempts, merges with the
    master before and after, refusals, refreshes and closures go to an append-only trail that
-   the `integration.events` capability serves.
+   the `integration.events` capability serves. The trail is the repository's, not a
+   checkout's: one file under the common git directory,
+   `<git-common-dir>/majordomus/integration/events.jsonl`, beside the lease, so every
+   worktree writes and reads the same one. Each act is appended before it is taken, and an
+   act the trail cannot record is not taken.
 
 ## Consequences
 

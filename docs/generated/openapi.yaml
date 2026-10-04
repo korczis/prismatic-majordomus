@@ -8119,7 +8119,7 @@ paths:
     get:
       operationId: integration.events
       summary: The integration audit trail
-      description: "Every action this checkout's executor recorded, oldest first: selections, stale decisions, merge attempts, merges with the master before and after, refusals, refreshes, verification failures and closures, each with its actor, the pull request, the head and the decision's reasons."
+      description: "Every action the repository's executors recorded, from any of its worktrees, oldest first: the lease taken and given back, observations, selections, stale decisions, each act's attempt before it and its outcome after — merges with the master before and after, refusals, refreshes, verification failures and closures — each with a typed action, its actor, the pull request, the head, the decision's reasons and, on an act, the evidence it was decided on. The trail is one file under the common git directory, so every worktree reads the same one."
       tags:
         - integration
       parameters: []
@@ -19985,6 +19985,33 @@ components:
             type: string
           description: Several short values.
       description: "One fact a node carries from its object's front matter, in the shapes a node can hold."
+    FailureClass:
+      oneOf:
+        - type: string
+          const: stale
+          description: Master or the head moved since the decision.
+        - type: string
+          const: conflict
+          description: The merge of master conflicts.
+        - type: string
+          const: new_failing_check
+          description: A required check failed that had passed.
+        - type: string
+          const: review_revoked
+          description: An approval was withdrawn.
+        - type: string
+          const: transient
+          description: The forge or the network failed in a way that passes.
+        - type: string
+          const: policy_violation
+          description: The branch protection refused it.
+        - type: string
+          const: verification_failed
+          description: What landed could not be verified.
+        - type: string
+          const: unreadable
+          description: The forge or git could not be read.
+      description: "Why an act failed, as one class a person and a retry policy can act on. Declared so that\nthe trail's shape is settled before anything classifies: no event carries one yet."
     Feature:
       oneOf:
         - type: string
@@ -21602,6 +21629,72 @@ components:
           const: unknown
           description: "The trunk is unknown, so there is nothing to measure the branch against."
       description: "How a branch stands to the trunk, which is what decides which commits are its own."
+    IntegrationAction:
+      oneOf:
+        - type: string
+          const: lease_acquired
+          description: "The executor took the base branch's lease."
+        - type: string
+          const: lease_released
+          description: It gave the lease back.
+        - type: string
+          const: continuous_started
+          description: A continuous drain started.
+        - type: string
+          const: continuous_stopped
+          description: A continuous drain stopped; the detail says why.
+        - type: string
+          const: observed
+          description: The forge was observed and the observation recorded.
+        - type: string
+          const: became_actionable
+          description: A pull request became actionable (ready or refreshable).
+        - type: string
+          const: left_actionable
+          description: A pull request stopped being actionable.
+        - type: string
+          const: selected
+          description: The first ready pull request was chosen to merge.
+        - type: string
+          const: refresh_selected
+          description: The first refreshable pull request was chosen to bring master into.
+        - type: string
+          const: stale_decision
+          description: The decision went stale between planning and acting; nothing was done.
+        - type: string
+          const: merge_attempted
+          description: A merge is about to be asked of the forge.
+        - type: string
+          const: merge_succeeded
+          description: The merge landed and was verified.
+        - type: string
+          const: merge_failed
+          description: The forge refused the merge.
+        - type: string
+          const: verification_failed
+          description: What landed could not be verified.
+        - type: string
+          const: refresh_attempted
+          description: Master is about to be merged into a branch and pushed.
+        - type: string
+          const: refreshed
+          description: Master was brought into the branch and pushed.
+        - type: string
+          const: refresh_failed
+          description: Bringing master in failed.
+        - type: string
+          const: close_attempted
+          description: A superseded pull request is about to be closed.
+        - type: string
+          const: closed_superseded
+          description: It was closed.
+        - type: string
+          const: close_failed
+          description: Closing it failed.
+        - type: string
+          const: idle
+          description: Nothing was ready.
+      description: "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
     IntegrationEvent:
       type: object
       properties:
@@ -21612,8 +21705,8 @@ components:
           type: string
           description: "Who: the git identity, the process and the machine."
         action:
-          type: string
-          description: "What (`selected`, `refresh_selected`, `stale_decision`, `merge_attempted`,\n`merge_succeeded`, `merge_failed`, `verification_failed`, `refreshed`,\n`refresh_failed`, `closed_superseded`, `idle`, and the two transitions the wait is\nfolded from: `became_actionable`, `left_actionable`)."
+          "$ref": "#/components/schemas/IntegrationAction"
+          description: "What (`IntegrationAction`)."
         pr:
           type:
             - integer
@@ -21656,6 +21749,21 @@ components:
             - string
             - "null"
           description: "On `refreshed`: the head the executor pushed. The refresh pipeline waits only for\nthe checks of a head named here."
+        evidence:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IntegrationEvidence"
+          description: "On `merge_attempted`, `merge_succeeded`, `refresh_selected` and `closed_superseded`:\nthe assessment's evidence the act was decided on."
+        class:
+          anyOf:
+            - "$ref": "#/components/schemas/FailureClass"
+            - type: "null"
+          description: "On a failure: its class, once one is decided."
+        merge_commit:
+          type:
+            - string
+            - "null"
+          description: "On `merge_succeeded`: the merge commit, once it is read."
       required:
         - at
         - actor
@@ -25452,7 +25560,7 @@ components:
           minimum: 0
           description: The pull request chosen instead.
         action:
-          type: string
+          "$ref": "#/components/schemas/IntegrationAction"
           description: "What it was chosen for (`selected` to merge, `refresh_selected` to bring master in)."
       required:
         - at

@@ -6,7 +6,7 @@
     "version": "0.12.0"
   },
   "registry": {
-    "fingerprint": "ba9516374e25603cdb91e7befc121b83deb189cc47c639cf8ee6584062557a25",
+    "fingerprint": "e23d20ae1511e21d550bd389def936d9a8709df6a208a9ace961c96590c293b4",
     "summary": {
       "total": 1863,
       "builtin": 169,
@@ -25422,7 +25422,7 @@
         "module": "integration",
         "kind": "query",
         "title": "The integration audit trail",
-        "description": "Every action this checkout's executor recorded, oldest first: selections, stale decisions, merge attempts, merges with the master before and after, refusals, refreshes, verification failures and closures, each with its actor, the pull request, the head and the decision's reasons.",
+        "description": "Every action the repository's executors recorded, from any of its worktrees, oldest first: the lease taken and given back, observations, selections, stale decisions, each act's attempt before it and its outcome after — merges with the master before and after, refusals, refreshes, verification failures and closures — each with a typed action, its actor, the pull request, the head, the decision's reasons and, on an act, the evidence it was decided on. The trail is one file under the common git directory, so every worktree reads the same one.",
         "input": {
           "name": "Empty",
           "schema": {
@@ -25463,8 +25463,8 @@
                     "description": "Who: the git identity, the process and the machine."
                   },
                   "action": {
-                    "type": "string",
-                    "description": "What (`selected`, `refresh_selected`, `stale_decision`, `merge_attempted`,\n`merge_succeeded`, `merge_failed`, `verification_failed`, `refreshed`,\n`refresh_failed`, `closed_superseded`, `idle`, and the two transitions the wait is\nfolded from: `became_actionable`, `left_actionable`)."
+                    "$ref": "#/$defs/IntegrationAction",
+                    "description": "What (`IntegrationAction`)."
                   },
                   "pr": {
                     "type": [
@@ -25522,6 +25522,31 @@
                       "null"
                     ],
                     "description": "On `refreshed`: the head the executor pushed. The refresh pipeline waits only for\nthe checks of a head named here."
+                  },
+                  "evidence": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/IntegrationEvidence"
+                    },
+                    "description": "On `merge_attempted`, `merge_succeeded`, `refresh_selected` and `closed_superseded`:\nthe assessment's evidence the act was decided on."
+                  },
+                  "class": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/FailureClass"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "On a failure: its class, once one is decided."
+                  },
+                  "merge_commit": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "On `merge_succeeded`: the merge commit, once it is read."
                   }
                 },
                 "required": [
@@ -25532,6 +25557,184 @@
                   "detail"
                 ],
                 "description": "One entry of the audit trail."
+              },
+              "IntegrationAction": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "lease_acquired",
+                    "description": "The executor took the base branch's lease."
+                  },
+                  {
+                    "type": "string",
+                    "const": "lease_released",
+                    "description": "It gave the lease back."
+                  },
+                  {
+                    "type": "string",
+                    "const": "continuous_started",
+                    "description": "A continuous drain started."
+                  },
+                  {
+                    "type": "string",
+                    "const": "continuous_stopped",
+                    "description": "A continuous drain stopped; the detail says why."
+                  },
+                  {
+                    "type": "string",
+                    "const": "observed",
+                    "description": "The forge was observed and the observation recorded."
+                  },
+                  {
+                    "type": "string",
+                    "const": "became_actionable",
+                    "description": "A pull request became actionable (ready or refreshable)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "left_actionable",
+                    "description": "A pull request stopped being actionable."
+                  },
+                  {
+                    "type": "string",
+                    "const": "selected",
+                    "description": "The first ready pull request was chosen to merge."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refresh_selected",
+                    "description": "The first refreshable pull request was chosen to bring master into."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stale_decision",
+                    "description": "The decision went stale between planning and acting; nothing was done."
+                  },
+                  {
+                    "type": "string",
+                    "const": "merge_attempted",
+                    "description": "A merge is about to be asked of the forge."
+                  },
+                  {
+                    "type": "string",
+                    "const": "merge_succeeded",
+                    "description": "The merge landed and was verified."
+                  },
+                  {
+                    "type": "string",
+                    "const": "merge_failed",
+                    "description": "The forge refused the merge."
+                  },
+                  {
+                    "type": "string",
+                    "const": "verification_failed",
+                    "description": "What landed could not be verified."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refresh_attempted",
+                    "description": "Master is about to be merged into a branch and pushed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refreshed",
+                    "description": "Master was brought into the branch and pushed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refresh_failed",
+                    "description": "Bringing master in failed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "close_attempted",
+                    "description": "A superseded pull request is about to be closed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "closed_superseded",
+                    "description": "It was closed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "close_failed",
+                    "description": "Closing it failed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "idle",
+                    "description": "Nothing was ready."
+                  }
+                ],
+                "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
+              },
+              "IntegrationEvidence": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "description": "What kind of fact (`required_checks`, `relation_to_master`, `review`, `label`,\n`dependency`, `draft`, `base`)."
+                  },
+                  "status": {
+                    "type": "string",
+                    "description": "What it said, as a word."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "The detail a person reads."
+                  }
+                },
+                "required": [
+                  "kind",
+                  "status",
+                  "detail"
+                ],
+                "description": "One piece of evidence behind a disposition: what was read, and what it said."
+              },
+              "FailureClass": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "stale",
+                    "description": "Master or the head moved since the decision."
+                  },
+                  {
+                    "type": "string",
+                    "const": "conflict",
+                    "description": "The merge of master conflicts."
+                  },
+                  {
+                    "type": "string",
+                    "const": "new_failing_check",
+                    "description": "A required check failed that had passed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "review_revoked",
+                    "description": "An approval was withdrawn."
+                  },
+                  {
+                    "type": "string",
+                    "const": "transient",
+                    "description": "The forge or the network failed in a way that passes."
+                  },
+                  {
+                    "type": "string",
+                    "const": "policy_violation",
+                    "description": "The branch protection refused it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "verification_failed",
+                    "description": "What landed could not be verified."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unreadable",
+                    "description": "The forge or git could not be read."
+                  }
+                ],
+                "description": "Why an act failed, as one class a person and a retry policy can act on. Declared so that\nthe trail's shape is settled before anything classifies: no event carries one yet."
               }
             }
           }
@@ -26269,7 +26472,7 @@
                     "description": "The pull request chosen instead."
                   },
                   "action": {
-                    "type": "string",
+                    "$ref": "#/$defs/IntegrationAction",
                     "description": "What it was chosen for (`selected` to merge, `refresh_selected` to bring master in)."
                   }
                 },
@@ -26279,6 +26482,116 @@
                   "action"
                 ],
                 "description": "One time the executor chose another pull request."
+              },
+              "IntegrationAction": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "lease_acquired",
+                    "description": "The executor took the base branch's lease."
+                  },
+                  {
+                    "type": "string",
+                    "const": "lease_released",
+                    "description": "It gave the lease back."
+                  },
+                  {
+                    "type": "string",
+                    "const": "continuous_started",
+                    "description": "A continuous drain started."
+                  },
+                  {
+                    "type": "string",
+                    "const": "continuous_stopped",
+                    "description": "A continuous drain stopped; the detail says why."
+                  },
+                  {
+                    "type": "string",
+                    "const": "observed",
+                    "description": "The forge was observed and the observation recorded."
+                  },
+                  {
+                    "type": "string",
+                    "const": "became_actionable",
+                    "description": "A pull request became actionable (ready or refreshable)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "left_actionable",
+                    "description": "A pull request stopped being actionable."
+                  },
+                  {
+                    "type": "string",
+                    "const": "selected",
+                    "description": "The first ready pull request was chosen to merge."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refresh_selected",
+                    "description": "The first refreshable pull request was chosen to bring master into."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stale_decision",
+                    "description": "The decision went stale between planning and acting; nothing was done."
+                  },
+                  {
+                    "type": "string",
+                    "const": "merge_attempted",
+                    "description": "A merge is about to be asked of the forge."
+                  },
+                  {
+                    "type": "string",
+                    "const": "merge_succeeded",
+                    "description": "The merge landed and was verified."
+                  },
+                  {
+                    "type": "string",
+                    "const": "merge_failed",
+                    "description": "The forge refused the merge."
+                  },
+                  {
+                    "type": "string",
+                    "const": "verification_failed",
+                    "description": "What landed could not be verified."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refresh_attempted",
+                    "description": "Master is about to be merged into a branch and pushed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refreshed",
+                    "description": "Master was brought into the branch and pushed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refresh_failed",
+                    "description": "Bringing master in failed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "close_attempted",
+                    "description": "A superseded pull request is about to be closed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "closed_superseded",
+                    "description": "It was closed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "close_failed",
+                    "description": "Closing it failed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "idle",
+                    "description": "Nothing was ready."
+                  }
+                ],
+                "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
               }
             }
           }
@@ -27137,7 +27450,7 @@
                     "description": "The pull request chosen instead."
                   },
                   "action": {
-                    "type": "string",
+                    "$ref": "#/$defs/IntegrationAction",
                     "description": "What it was chosen for (`selected` to merge, `refresh_selected` to bring master in)."
                   }
                 },
@@ -27147,6 +27460,116 @@
                   "action"
                 ],
                 "description": "One time the executor chose another pull request."
+              },
+              "IntegrationAction": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "lease_acquired",
+                    "description": "The executor took the base branch's lease."
+                  },
+                  {
+                    "type": "string",
+                    "const": "lease_released",
+                    "description": "It gave the lease back."
+                  },
+                  {
+                    "type": "string",
+                    "const": "continuous_started",
+                    "description": "A continuous drain started."
+                  },
+                  {
+                    "type": "string",
+                    "const": "continuous_stopped",
+                    "description": "A continuous drain stopped; the detail says why."
+                  },
+                  {
+                    "type": "string",
+                    "const": "observed",
+                    "description": "The forge was observed and the observation recorded."
+                  },
+                  {
+                    "type": "string",
+                    "const": "became_actionable",
+                    "description": "A pull request became actionable (ready or refreshable)."
+                  },
+                  {
+                    "type": "string",
+                    "const": "left_actionable",
+                    "description": "A pull request stopped being actionable."
+                  },
+                  {
+                    "type": "string",
+                    "const": "selected",
+                    "description": "The first ready pull request was chosen to merge."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refresh_selected",
+                    "description": "The first refreshable pull request was chosen to bring master into."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stale_decision",
+                    "description": "The decision went stale between planning and acting; nothing was done."
+                  },
+                  {
+                    "type": "string",
+                    "const": "merge_attempted",
+                    "description": "A merge is about to be asked of the forge."
+                  },
+                  {
+                    "type": "string",
+                    "const": "merge_succeeded",
+                    "description": "The merge landed and was verified."
+                  },
+                  {
+                    "type": "string",
+                    "const": "merge_failed",
+                    "description": "The forge refused the merge."
+                  },
+                  {
+                    "type": "string",
+                    "const": "verification_failed",
+                    "description": "What landed could not be verified."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refresh_attempted",
+                    "description": "Master is about to be merged into a branch and pushed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refreshed",
+                    "description": "Master was brought into the branch and pushed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "refresh_failed",
+                    "description": "Bringing master in failed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "close_attempted",
+                    "description": "A superseded pull request is about to be closed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "closed_superseded",
+                    "description": "It was closed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "close_failed",
+                    "description": "Closing it failed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "idle",
+                    "description": "Nothing was ready."
+                  }
+                ],
+                "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
               },
               "QueueTallies": {
                 "type": "object",
@@ -27258,8 +27681,8 @@
                     "description": "Who: the git identity, the process and the machine."
                   },
                   "action": {
-                    "type": "string",
-                    "description": "What (`selected`, `refresh_selected`, `stale_decision`, `merge_attempted`,\n`merge_succeeded`, `merge_failed`, `verification_failed`, `refreshed`,\n`refresh_failed`, `closed_superseded`, `idle`, and the two transitions the wait is\nfolded from: `became_actionable`, `left_actionable`)."
+                    "$ref": "#/$defs/IntegrationAction",
+                    "description": "What (`IntegrationAction`)."
                   },
                   "pr": {
                     "type": [
@@ -27317,6 +27740,31 @@
                       "null"
                     ],
                     "description": "On `refreshed`: the head the executor pushed. The refresh pipeline waits only for\nthe checks of a head named here."
+                  },
+                  "evidence": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/IntegrationEvidence"
+                    },
+                    "description": "On `merge_attempted`, `merge_succeeded`, `refresh_selected` and `closed_superseded`:\nthe assessment's evidence the act was decided on."
+                  },
+                  "class": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/FailureClass"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "On a failure: its class, once one is decided."
+                  },
+                  "merge_commit": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "On `merge_succeeded`: the merge commit, once it is read."
                   }
                 },
                 "required": [
@@ -27327,6 +27775,51 @@
                   "detail"
                 ],
                 "description": "One entry of the audit trail."
+              },
+              "FailureClass": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "stale",
+                    "description": "Master or the head moved since the decision."
+                  },
+                  {
+                    "type": "string",
+                    "const": "conflict",
+                    "description": "The merge of master conflicts."
+                  },
+                  {
+                    "type": "string",
+                    "const": "new_failing_check",
+                    "description": "A required check failed that had passed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "review_revoked",
+                    "description": "An approval was withdrawn."
+                  },
+                  {
+                    "type": "string",
+                    "const": "transient",
+                    "description": "The forge or the network failed in a way that passes."
+                  },
+                  {
+                    "type": "string",
+                    "const": "policy_violation",
+                    "description": "The branch protection refused it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "verification_failed",
+                    "description": "What landed could not be verified."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unreadable",
+                    "description": "The forge or git could not be read."
+                  }
+                ],
+                "description": "Why an act failed, as one class a person and a retry policy can act on. Declared so that\nthe trail's shape is settled before anything classifies: no event carries one yet."
               }
             }
           }
@@ -65563,7 +66056,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ebee5cc520a6e9c3004693fab3095435d1927e800cd1e84f0812ff8627a64399",
+    "fingerprint": "e9aa9c4908564a0a64cec60de91433c46a742bad830733b8b85f242b5a16d9db",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -66892,7 +67385,7 @@
         "path": ".ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 7690,
+        "bytes": 8005,
         "tags": [
           "integration",
           "git",
@@ -70696,7 +71189,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 14399
+        "bytes": 16959
       },
       {
         "uri": "majordomus://document/docs/KNOWLEDGE.md",
@@ -82746,7 +83239,7 @@
         "identity": "test/cases/720_integration_follows_the_current_master.sh",
         "path": "test/cases/720_integration_follows_the_current_master.sh",
         "source_class": "case",
-        "bytes": 11948
+        "bytes": 12879
       },
       {
         "uri": "majordomus://test/test/cases/721_the_suite_shards_are_the_whole_suite.sh",
@@ -82834,7 +83327,7 @@
         "identity": "test/cases/740_integration_is_visible_where_a_person_looks.sh",
         "path": "test/cases/740_integration_is_visible_where_a_person_looks.sh",
         "source_class": "case",
-        "bytes": 8559
+        "bytes": 10244
       },
       {
         "uri": "majordomus://test/test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
@@ -111640,7 +112133,7 @@
         "name": "majordomus_integration_events",
         "id": "integration.events",
         "title": "The integration audit trail",
-        "description": "Every action this checkout's executor recorded, oldest first: selections, stale decisions, merge attempts, merges with the master before and after, refusals, refreshes, verification failures and closures, each with its actor, the pull request, the head and the decision's reasons.",
+        "description": "Every action the repository's executors recorded, from any of its worktrees, oldest first: the lease taken and given back, observations, selections, stale decisions, each act's attempt before it and its outcome after — merges with the master before and after, refusals, refreshes, verification failures and closures — each with a typed action, its actor, the pull request, the head, the decision's reasons and, on an act, the evidence it was decided on. The trail is one file under the common git directory, so every worktree reads the same one.",
         "kind": "query",
         "read_only": true,
         "input": "Empty",

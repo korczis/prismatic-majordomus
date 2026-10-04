@@ -5328,7 +5328,7 @@ pub fn integration(ctx: &Context) -> Page {
         .map(|e| {
             row(vec![
                 text_cell(e.at.clone()),
-                cell(mono(&e.action)),
+                cell(mono(e.action.as_str())),
                 text_cell(e.pr.map(|n| format!("#{n}")).unwrap_or_else(|| "-".into())),
                 text_cell(e.detail.clone()),
                 text_cell(e.actor.clone()),
@@ -7305,17 +7305,15 @@ mod tests {
             drain::IntegrationEvent {
                 at: "2026-10-01T00:01:00Z".into(),
                 actor: "test".into(),
-                action: "merge_succeeded".into(),
                 pr: Some(9),
                 master_before: Some(sha.clone()),
                 head_sha: Some(sha.clone()),
                 master_after: Some(sha.clone()),
-                reasons: vec![],
                 detail: "merged #9".into(),
-                passed_over: vec![],
-                head_after: None,
+                ..drain::IntegrationEvent::of(drain::IntegrationAction::MergeSucceeded)
             },
-        );
+        )
+        .expect("recorded");
         let lease = drain::IntegrationLease::acquire(&root, "master").expect("the lease");
 
         let ctx = repo.context().expect("a context");

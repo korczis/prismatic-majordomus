@@ -15,6 +15,16 @@
 //! master, never force-pushes, and never closes a pull request — closure is
 //! [`super::drain::cleanup`]'s, which demands stronger evidence and an explicit `--apply`.
 //! Only one executor per base branch runs at a time ([`IntegrationLease`]).
+//!
+//! # The trail comes first
+//!
+//! Every act is appended to the repository's audit trail ([`record`]) before it is taken: a
+//! merge after `merge_attempted`, a refresh push after `refresh_attempted`, a closure after
+//! `close_attempted`. When that line cannot be written, the act is not taken — the step says
+//! [`DrainStepOutcome::TrailUnwritable`] and the drain stops — because an act the trail
+//! cannot name is one nobody can audit afterwards. The trail is one file under the common
+//! git directory ([`super::events_path`]), so every worktree of the repository writes and
+//! reads the same one.
 
 use std::collections::BTreeMap;
 use std::fs;
@@ -27,8 +37,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::{
-    local_master, queue_of, refresh, state_path, IntegrationQueue, PullRequestAssessment,
-    PullRequestDisposition, EVENTS_FILE,
+    at, events_path, local_master, queue_of, refresh, IntegrationEvidence, IntegrationQueue,
+    PullRequestAssessment, PullRequestDisposition,
 };
 
 /// A lease untouched for this long belongs to a process that is gone.
@@ -52,6 +62,8 @@ pub const REFRESHED_HEAD_REPORTS_WITHIN: Duration = Duration::from_secs(4 * 3600
 pub struct IntegrationLease {
     path: PathBuf,
     token: String,
+    /// The repository whose trail records the lease's release.
+    root: PathBuf,
 }
 
 /// Who holds the lease.
@@ -67,7 +79,8 @@ pub struct LeaseHolder {
     pub since: u64,
 }
 
-fn common_dir(root: &Path) -> Result<PathBuf, String> {
+/// The common git directory of the repository at `root`: the one every worktree shares.
+pub(super) fn common_dir(root: &Path) -> Result<PathBuf, String> {
     let out = Command::new("git")
         .arg("-C")
         .arg(root)
@@ -108,7 +121,8 @@ impl IntegrationLease {
     }
 
     /// Take the lease, or say who holds it. A lease untouched for [`LEASE_STALE_AFTER`] is
-    /// reclaimed: its holder stopped without releasing it.
+    /// reclaimed: its holder stopped without releasing it. Taking it is recorded
+    /// (`lease_acquired`); a lease the trail cannot record is given back at once and refused.
     pub fn acquire(root: &Path, base: &str) -> Result<Self, String> {
         let path = Self::path_for(&common_dir(root)?, base);
         if let Some(dir) = path.parent() {
@@ -129,7 +143,21 @@ impl IntegrationLease {
             {
                 Ok(mut f) => {
                     let _ = f.write_all(token.as_bytes());
-                    return Ok(IntegrationLease { path, token });
+                    let taken = IntegrationEvent {
+                        detail: token.clone(),
+                        ..IntegrationEvent::of(IntegrationAction::LeaseAcquired)
+                    };
+                    if let Err(e) = record(root, taken) {
+                        let _ = fs::remove_file(&path);
+                        return Err(format!(
+                            "the integration lease was given back: the trail could not record it: {e}"
+                        ));
+                    }
+                    return Ok(IntegrationLease {
+                        path,
+                        token,
+                        root: root.to_path_buf(),
+                    });
                 }
                 Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
                     let stale = fs::metadata(&path)
@@ -195,8 +223,128 @@ impl Drop for IntegrationLease {
     fn drop(&mut self) {
         if fs::read_to_string(&self.path).is_ok_and(|c| c.trim() == self.token) {
             let _ = fs::remove_file(&self.path);
+            let released = IntegrationEvent {
+                detail: self.token.clone(),
+                ..IntegrationEvent::of(IntegrationAction::LeaseReleased)
+            };
+            if let Err(e) = record(&self.root, released) {
+                // a destructor cannot refuse; it says so where a person reads
+                eprintln!(
+                    "majordomus: the integration lease was released, but the trail could not record it: {e}"
+                );
+            }
         }
     }
+}
+
+/// What one line of the audit trail records. The wire word is the variant's `snake_case`
+/// name — the same word each was written as while the action was a string — so every line
+/// written before still parses, and a word nobody writes is not an action.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum IntegrationAction {
+    /// The executor took the base branch's lease.
+    LeaseAcquired,
+    /// It gave the lease back.
+    LeaseReleased,
+    /// A continuous drain started.
+    ContinuousStarted,
+    /// A continuous drain stopped; the detail says why.
+    ContinuousStopped,
+    /// The forge was observed and the observation recorded.
+    Observed,
+    /// A pull request became actionable (ready or refreshable).
+    BecameActionable,
+    /// A pull request stopped being actionable.
+    LeftActionable,
+    /// The first ready pull request was chosen to merge.
+    Selected,
+    /// The first refreshable pull request was chosen to bring master into.
+    RefreshSelected,
+    /// The decision went stale between planning and acting; nothing was done.
+    StaleDecision,
+    /// A merge is about to be asked of the forge.
+    MergeAttempted,
+    /// The merge landed and was verified.
+    MergeSucceeded,
+    /// The forge refused the merge.
+    MergeFailed,
+    /// What landed could not be verified.
+    VerificationFailed,
+    /// Master is about to be merged into a branch and pushed.
+    RefreshAttempted,
+    /// Master was brought into the branch and pushed.
+    Refreshed,
+    /// Bringing master in failed.
+    RefreshFailed,
+    /// A superseded pull request is about to be closed.
+    CloseAttempted,
+    /// It was closed.
+    ClosedSuperseded,
+    /// Closing it failed.
+    CloseFailed,
+    /// Nothing was ready.
+    Idle,
+}
+
+impl IntegrationAction {
+    /// The wire word.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            IntegrationAction::LeaseAcquired => "lease_acquired",
+            IntegrationAction::LeaseReleased => "lease_released",
+            IntegrationAction::ContinuousStarted => "continuous_started",
+            IntegrationAction::ContinuousStopped => "continuous_stopped",
+            IntegrationAction::Observed => "observed",
+            IntegrationAction::BecameActionable => "became_actionable",
+            IntegrationAction::LeftActionable => "left_actionable",
+            IntegrationAction::Selected => "selected",
+            IntegrationAction::RefreshSelected => "refresh_selected",
+            IntegrationAction::StaleDecision => "stale_decision",
+            IntegrationAction::MergeAttempted => "merge_attempted",
+            IntegrationAction::MergeSucceeded => "merge_succeeded",
+            IntegrationAction::MergeFailed => "merge_failed",
+            IntegrationAction::VerificationFailed => "verification_failed",
+            IntegrationAction::RefreshAttempted => "refresh_attempted",
+            IntegrationAction::Refreshed => "refreshed",
+            IntegrationAction::RefreshFailed => "refresh_failed",
+            IntegrationAction::CloseAttempted => "close_attempted",
+            IntegrationAction::ClosedSuperseded => "closed_superseded",
+            IntegrationAction::CloseFailed => "close_failed",
+            IntegrationAction::Idle => "idle",
+        }
+    }
+}
+
+impl std::fmt::Display for IntegrationAction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.pad(self.as_str())
+    }
+}
+
+/// Why an act failed, as one class a person and a retry policy can act on. Declared so that
+/// the trail's shape is settled before anything classifies: no event carries one yet.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum FailureClass {
+    /// Master or the head moved since the decision.
+    Stale,
+    /// The merge of master conflicts.
+    Conflict,
+    /// A required check failed that had passed.
+    NewFailingCheck,
+    /// An approval was withdrawn.
+    ReviewRevoked,
+    /// The forge or the network failed in a way that passes.
+    Transient,
+    /// The branch protection refused it.
+    PolicyViolation,
+    /// What landed could not be verified.
+    VerificationFailed,
+    /// The forge or git could not be read.
+    Unreadable,
 }
 
 /// One entry of the audit trail.
@@ -206,11 +354,8 @@ pub struct IntegrationEvent {
     pub at: String,
     /// Who: the git identity, the process and the machine.
     pub actor: String,
-    /// What (`selected`, `refresh_selected`, `stale_decision`, `merge_attempted`,
-    /// `merge_succeeded`, `merge_failed`, `verification_failed`, `refreshed`,
-    /// `refresh_failed`, `closed_superseded`, `idle`, and the two transitions the wait is
-    /// folded from: `became_actionable`, `left_actionable`).
-    pub action: String,
+    /// What ([`IntegrationAction`]).
+    pub action: IntegrationAction,
     /// The pull request, when one.
     pub pr: Option<u64>,
     /// Master before.
@@ -231,6 +376,44 @@ pub struct IntegrationEvent {
     /// the checks of a head named here.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub head_after: Option<String>,
+    /// On `merge_attempted`, `merge_succeeded`, `refresh_selected` and `closed_superseded`:
+    /// the assessment's evidence the act was decided on.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub evidence: Vec<IntegrationEvidence>,
+    /// On a failure: its class, once one is decided.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub class: Option<FailureClass>,
+    /// On `merge_succeeded`: the merge commit, once it is read.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub merge_commit: Option<String>,
+}
+
+impl IntegrationEvent {
+    /// An event of `action` with nothing else said; [`record`] fills the moment and the actor.
+    pub fn of(action: IntegrationAction) -> Self {
+        IntegrationEvent {
+            at: String::new(),
+            actor: String::new(),
+            action,
+            pr: None,
+            master_before: None,
+            head_sha: None,
+            master_after: None,
+            reasons: Vec::new(),
+            detail: String::new(),
+            passed_over: Vec::new(),
+            head_after: None,
+            evidence: Vec::new(),
+            class: None,
+            merge_commit: None,
+        }
+    }
+
+    /// The same event, carrying the evidence `a` was decided on.
+    fn with_evidence(mut self, a: &PullRequestAssessment) -> Self {
+        self.evidence = a.evidence.clone();
+        self
+    }
 }
 
 fn actor() -> String {
@@ -244,30 +427,67 @@ fn actor() -> String {
     format!("{who} (pid {} on {})", std::process::id(), host())
 }
 
-/// Append one event to the audit trail. The trail is append-only JSON lines.
-pub fn record(root: &Path, mut event: IntegrationEvent) -> IntegrationEvent {
+/// Append one event to the repository's audit trail, append-only JSON lines. The event as
+/// written, or why it could not be: a caller about to act on the forge does not act then.
+pub fn record(root: &Path, mut event: IntegrationEvent) -> Result<IntegrationEvent, String> {
     if event.at.is_empty() {
         event.at = crate::peers::rfc3339(SystemTime::now());
     }
     if event.actor.is_empty() {
         event.actor = actor();
     }
-    let path = state_path(root, EVENTS_FILE);
-    if let Some(dir) = path.parent() {
-        let _ = fs::create_dir_all(dir);
+    if let Some(why) = injected_failure() {
+        return Err(why);
     }
-    if let (Ok(line), Ok(mut f)) = (
-        serde_json::to_string(&event),
-        fs::OpenOptions::new().create(true).append(true).open(&path),
-    ) {
-        let _ = writeln!(f, "{line}");
-    }
-    event
+    let path = events_path(root)?;
+    let dir = path.parent().unwrap_or(&path);
+    fs::create_dir_all(dir)
+        .and_then(|()| serde_json::to_string(&event).map_err(std::io::Error::other))
+        .and_then(|line| {
+            fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(&path)
+                .and_then(|mut f| writeln!(f, "{line}"))
+        })
+        .map_err(at(&path))?;
+    Ok(event)
 }
 
-/// Every recorded event, oldest first.
+#[cfg(test)]
+thread_local! {
+    /// Tests only: which trail write on this thread fails, counted from 1; 0 for none. Every
+    /// write the executor makes can fail, and a test walks a run through each of them.
+    pub(crate) static FAIL_WRITE: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+}
+
+#[cfg(test)]
+fn injected_failure() -> Option<String> {
+    FAIL_WRITE.with(|n| match n.get() {
+        0 => None,
+        1 => {
+            n.set(0);
+            Some("the trail refused the write (injected)".into())
+        }
+        k => {
+            n.set(k - 1);
+            None
+        }
+    })
+}
+
+#[cfg(not(test))]
+fn injected_failure() -> Option<String> {
+    None
+}
+
+/// Every recorded event of the repository, oldest first; nothing when the trail cannot be
+/// found.
 pub fn events(root: &Path) -> Vec<IntegrationEvent> {
-    fs::read_to_string(state_path(root, EVENTS_FILE))
+    let Ok(path) = events_path(root) else {
+        return Vec::new();
+    };
+    fs::read_to_string(path)
         .unwrap_or_default()
         .lines()
         .filter_map(|l| serde_json::from_str(l).ok())
@@ -275,22 +495,17 @@ pub fn events(root: &Path) -> Vec<IntegrationEvent> {
 }
 
 fn event(
-    action: &str,
+    action: IntegrationAction,
     pr: Option<&PullRequestAssessment>,
     detail: impl Into<String>,
 ) -> IntegrationEvent {
     IntegrationEvent {
-        at: String::new(),
-        actor: String::new(),
-        action: action.into(),
         pr: pr.map(|a| a.number),
         master_before: pr.map(|a| a.evaluated_against.master_sha.clone()),
         head_sha: pr.map(|a| a.evaluated_against.head_sha.clone()),
-        master_after: None,
         reasons: pr.map(|a| a.reasons.clone()).unwrap_or_default(),
         detail: detail.into(),
-        passed_over: Vec::new(),
-        head_after: None,
+        ..IntegrationEvent::of(action)
     }
 }
 
@@ -376,6 +591,17 @@ pub enum DrainStepOutcome {
         /// What did not hold.
         reason: String,
     },
+    /// The act was not taken, because the trail could not record it first: nothing reached
+    /// the forge or the branch. The drain stops — a trail that cannot be written is not a
+    /// fault of one pull request.
+    TrailUnwritable {
+        /// The pull request.
+        pr: u64,
+        /// The event that could not be written: `merge_attempted` or `refresh_attempted`.
+        unrecorded: IntegrationAction,
+        /// Why the trail refused it.
+        reason: String,
+    },
 }
 
 /// A source of queues and a merger. The command line uses the forge and git; the tests use
@@ -392,6 +618,8 @@ pub trait Integrator {
     /// and a fresh derive, pushed as a fast-forward of the observed head. Returns the new
     /// head. Never a rewrite: the push is refused if the branch moved.
     fn refresh_branch(&mut self, a: &PullRequestAssessment, base: &str) -> Result<String, String>;
+    /// Close a pull request with a comment saying why.
+    fn close(&mut self, pr: u64, comment: &str) -> Result<(), String>;
 }
 
 /// One integration step: observe, decide, observe again, act only on an unchanged
@@ -406,7 +634,7 @@ pub fn step(
     if !dry_run {
         // what became or stopped being actionable since the trail's last word: the wait
         // of every pull request is folded from these, so a dry run leaves them out too
-        super::wait::record_transitions(root, &first);
+        super::wait::record_transitions(root, &first)?;
     }
     let Some(candidate) = first.next_merge.and_then(|n| first.get(n).cloned()) else {
         if allow_refresh {
@@ -432,7 +660,7 @@ pub fn step(
             )
         };
         if !dry_run {
-            record(root, event("idle", None, why.clone()));
+            record(root, event(IntegrationAction::Idle, None, why.clone()))?;
         }
         return Ok(DrainStepOutcome::Idle { why });
     };
@@ -441,9 +669,13 @@ pub fn step(
             pr: candidate.number,
         });
     }
-    let mut selected = event("selected", Some(&candidate), "the first ready pull request");
+    let mut selected = event(
+        IntegrationAction::Selected,
+        Some(&candidate),
+        "the first ready pull request",
+    );
     selected.passed_over = others(&first, PullRequestDisposition::Ready, candidate.number);
-    record(root, selected);
+    record(root, selected)?;
     // the decision is re-taken from a new observation; acting on the first one would be
     // acting on a picture of the repository that may already be wrong
     let second = integrator.observe()?;
@@ -470,18 +702,32 @@ pub fn step(
     if let Some(what) = stale {
         record(
             root,
-            event("stale_decision", Some(&candidate), what.clone()),
-        );
+            event(
+                IntegrationAction::StaleDecision,
+                Some(&candidate),
+                what.clone(),
+            ),
+        )?;
         return Ok(DrainStepOutcome::StaleDecision {
             pr: candidate.number,
             what,
         });
     }
     let method = second.policy.merge_method.clone();
-    record(
-        root,
-        event("merge_attempted", Some(&candidate), format!("--{method}")),
-    );
+    // on the trail before it reaches the forge: a merge the trail cannot name is not asked for
+    let attempted = event(
+        IntegrationAction::MergeAttempted,
+        Some(&candidate),
+        format!("--{method}"),
+    )
+    .with_evidence(&candidate);
+    if let Err(reason) = record(root, attempted) {
+        return Ok(DrainStepOutcome::TrailUnwritable {
+            pr: candidate.number,
+            unrecorded: IntegrationAction::MergeAttempted,
+            reason,
+        });
+    }
     if let Err(reason) = integrator.merge(
         candidate.number,
         &candidate.evaluated_against.head_sha,
@@ -489,8 +735,12 @@ pub fn step(
     ) {
         record(
             root,
-            event("merge_failed", Some(&candidate), reason.clone()),
-        );
+            event(
+                IntegrationAction::MergeFailed,
+                Some(&candidate),
+                reason.clone(),
+            ),
+        )?;
         return Ok(DrainStepOutcome::MergeRefused {
             pr: candidate.number,
             reason,
@@ -498,9 +748,14 @@ pub fn step(
     }
     match integrator.verify(candidate.number, &candidate.evaluated_against.head_sha) {
         Ok(master_after) => {
-            let mut e = event("merge_succeeded", Some(&candidate), "merged and verified");
+            let mut e = event(
+                IntegrationAction::MergeSucceeded,
+                Some(&candidate),
+                "merged and verified",
+            )
+            .with_evidence(&candidate);
             e.master_after = Some(master_after.clone());
-            record(root, e);
+            record(root, e)?;
             Ok(DrainStepOutcome::Merged {
                 pr: candidate.number,
                 master_before: candidate.evaluated_against.master_sha.clone(),
@@ -510,8 +765,12 @@ pub fn step(
         Err(reason) => {
             record(
                 root,
-                event("verification_failed", Some(&candidate), reason.clone()),
-            );
+                event(
+                    IntegrationAction::VerificationFailed,
+                    Some(&candidate),
+                    reason.clone(),
+                ),
+            )?;
             Ok(DrainStepOutcome::VerificationFailed {
                 pr: candidate.number,
                 reason,
@@ -539,7 +798,10 @@ fn refresh_step(
     // each pushed head with the moment it was pushed; on a trail line without a readable
     // time a pending check still holds, and a missing one does not
     let mut pushed: BTreeMap<(u64, String), Option<i64>> = BTreeMap::new();
-    for e in events(root).into_iter().filter(|e| e.action == "refreshed") {
+    for e in events(root)
+        .into_iter()
+        .filter(|e| e.action == IntegrationAction::Refreshed)
+    {
         if let Some(key) = e.pr.zip(e.head_after) {
             let at = crate::peers::epoch_seconds(&e.at);
             let slot = pushed.entry(key).or_insert(at);
@@ -579,16 +841,17 @@ fn refresh_step(
         }));
     }
     let mut selected = event(
-        "refresh_selected",
+        IntegrationAction::RefreshSelected,
         Some(&candidate),
         "the first pull request that needs master",
-    );
+    )
+    .with_evidence(&candidate);
     selected.passed_over = others(
         first,
         PullRequestDisposition::NeedsRefresh,
         candidate.number,
     );
-    record(root, selected);
+    record(root, selected)?;
     let second = integrator.observe()?;
     let fresh = second.get(candidate.number);
     let stale = match fresh {
@@ -605,23 +868,40 @@ fn refresh_step(
     if let Some(what) = stale {
         record(
             root,
-            event("stale_decision", Some(&candidate), what.clone()),
-        );
+            event(
+                IntegrationAction::StaleDecision,
+                Some(&candidate),
+                what.clone(),
+            ),
+        )?;
         return Ok(Some(DrainStepOutcome::StaleDecision {
             pr: candidate.number,
             what,
         }));
     }
+    // on the trail before anything is pushed: a push the trail cannot name is not made
+    let attempted = event(
+        IntegrationAction::RefreshAttempted,
+        Some(&candidate),
+        format!("master {} into {}", second.master_sha, candidate.head_ref),
+    );
+    if let Err(reason) = record(root, attempted) {
+        return Ok(Some(DrainStepOutcome::TrailUnwritable {
+            pr: candidate.number,
+            unrecorded: IntegrationAction::RefreshAttempted,
+            reason,
+        }));
+    }
     match integrator.refresh_branch(&candidate, &second.base) {
         Ok(head_after) => {
             let mut e = event(
-                "refreshed",
+                IntegrationAction::Refreshed,
                 Some(&candidate),
                 format!("new head {head_after}"),
             );
             e.master_after = Some(second.master_sha.clone());
             e.head_after = Some(head_after.clone());
-            record(root, e);
+            record(root, e)?;
             Ok(Some(DrainStepOutcome::Refreshed {
                 pr: candidate.number,
                 head_before: candidate.evaluated_against.head_sha.clone(),
@@ -631,8 +911,12 @@ fn refresh_step(
         Err(reason) => {
             record(
                 root,
-                event("refresh_failed", Some(&candidate), reason.clone()),
-            );
+                event(
+                    IntegrationAction::RefreshFailed,
+                    Some(&candidate),
+                    reason.clone(),
+                ),
+            )?;
             Ok(Some(DrainStepOutcome::RefreshFailed {
                 pr: candidate.number,
                 reason,
@@ -702,6 +986,13 @@ pub fn drain(
             DrainStepOutcome::VerificationFailed { pr, reason } => {
                 Some(format!("#{pr} could not be verified after merging: {reason}"))
             }
+            DrainStepOutcome::TrailUnwritable {
+                pr,
+                unrecorded,
+                reason,
+            } => Some(format!(
+                "the trail could not record {unrecorded}, so nothing was done for #{pr} ({reason}); nothing further is attempted while the trail cannot be written"
+            )),
         };
         report.steps.push(outcome);
         if let Some(why) = stop {
@@ -768,6 +1059,20 @@ pub fn continuous(
         stopped: String::new(),
         failure: None,
     };
+    let started = IntegrationEvent {
+        detail: format!(
+            "every {} s, at most {} merge(s) a cycle, refresh allowed: {}",
+            opts.interval.as_secs(),
+            opts.max_per_cycle,
+            opts.allow_refresh
+        ),
+        ..IntegrationEvent::of(IntegrationAction::ContinuousStarted)
+    };
+    if let Err(e) = record(root, started) {
+        out.stopped = "the trail could not record the start; nothing is attempted".into();
+        out.failure = Some(e);
+        return out;
+    }
     loop {
         if stop.load(Ordering::SeqCst) {
             out.stopped = "asked to stop; the step in progress finished first".into();
@@ -801,6 +1106,15 @@ pub fn continuous(
             );
             break;
         }
+        if let Some(DrainStepOutcome::TrailUnwritable { reason, .. }) = report
+            .steps
+            .iter()
+            .find(|s| matches!(s, DrainStepOutcome::TrailUnwritable { .. }))
+        {
+            out.stopped = report.stopped.clone();
+            out.failure = Some(reason.clone());
+            break;
+        }
         if opts.cycles.is_some_and(|n| out.cycles >= n) {
             out.stopped = format!("{} cycle(s), the bound asked for", out.cycles);
             break;
@@ -811,6 +1125,14 @@ pub fn continuous(
             sleep(slice);
             left = left.saturating_sub(slice);
         }
+    }
+    let stopped = IntegrationEvent {
+        detail: out.stopped.clone(),
+        ..IntegrationEvent::of(IntegrationAction::ContinuousStopped)
+    };
+    if let Err(e) = record(root, stopped) {
+        // the first failure is the one that stopped the drain; this one is said after it
+        out.failure.get_or_insert(e);
     }
     out
 }
@@ -986,6 +1308,14 @@ impl Integrator for ForgeIntegrator<'_> {
         Ok(master)
     }
 
+    fn close(&mut self, pr: u64, comment: &str) -> Result<(), String> {
+        gh(
+            self.root,
+            &["pr", "close", &pr.to_string(), "--comment", comment],
+        )
+        .map(|_| ())
+    }
+
     fn refresh_branch(&mut self, a: &PullRequestAssessment, base: &str) -> Result<String, String> {
         let root = self.root;
         let common = common_dir(root)?;
@@ -1144,15 +1474,34 @@ pub fn cleanup(
                     a.evaluated_against.master_sha,
                     a.evaluated_against.head_sha
                 );
-                match gh(
+                // on the trail before the forge hears of it: a closure the trail cannot name is
+                // not made, and nothing after it is attempted
+                record(
                     root,
-                    &["pr", "close", &a.number.to_string(), "--comment", &body],
-                ) {
-                    Ok(_) => {
-                        record(root, event("closed_superseded", Some(a), body));
+                    event(IntegrationAction::CloseAttempted, Some(a), body.clone()),
+                )
+                .map_err(|e| {
+                    format!(
+                        "#{} was not closed: the trail could not record it first: {e}",
+                        a.number
+                    )
+                })?;
+                match integrator.close(a.number, &body) {
+                    Ok(()) => {
+                        record(
+                            root,
+                            event(IntegrationAction::ClosedSuperseded, Some(a), body)
+                                .with_evidence(a),
+                        )?;
                         "closed".to_string()
                     }
-                    Err(e) => format!("close_failed: {e}"),
+                    Err(e) => {
+                        record(
+                            root,
+                            event(IntegrationAction::CloseFailed, Some(a), e.clone()),
+                        )?;
+                        format!("close_failed: {e}")
+                    }
                 }
             }
             PullRequestDisposition::Superseded => "would_close".into(),

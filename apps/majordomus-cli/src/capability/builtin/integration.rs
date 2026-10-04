@@ -94,7 +94,7 @@ fn integration_queue(ctx: &Context, _: Empty) -> Result<IntegrationStatus, Capab
     let last_merge = crate::integration::drain::events(root)
         .into_iter()
         .rev()
-        .find(|e| e.action == "merge_succeeded");
+        .find(|e| e.action == crate::integration::drain::IntegrationAction::MergeSucceeded);
     Ok(match crate::integration::queue_of(root) {
         Ok(q) => IntegrationStatus {
             observed: true,
@@ -199,7 +199,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "integration.events",
                 title: "The integration audit trail",
-                description: "Every action this checkout's executor recorded, oldest first: selections, stale decisions, merge attempts, merges with the master before and after, refusals, refreshes, verification failures and closures, each with its actor, the pull request, the head and the decision's reasons.",
+                description: "Every action the repository's executors recorded, from any of its worktrees, oldest first: the lease taken and given back, observations, selections, stale decisions, each act's attempt before it and its outcome after — merges with the master before and after, refusals, refreshes, verification failures and closures — each with a typed action, its actor, the pull request, the head, the decision's reasons and, on an act, the evidence it was decided on. The trail is one file under the common git directory, so every worktree reads the same one.",
                 input: Empty,
                 output: IntegrationEvents,
                 stability: Stability::Experimental,
