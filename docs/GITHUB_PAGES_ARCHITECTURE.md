@@ -111,7 +111,12 @@ asking while GitHub is building kills that build. `scripts/pages rebuild` theref
 when the build of the commit errored *and* nothing is building, reads that state through
 `scripts/pages built --porcelain` (the one reader of it), exits 12 without asking when the state
 cannot be read or a build is in flight, and reads the state again after asking.
-`test/cases/625_a_rebuild_is_asked_only_when_it_helps.sh` holds each of those.
+"gh-pages is right" is measured, not assumed: the `owed` job chooses the rebuild only when the
+top-level `commit` of gh-pages' `build.json` is the trunk commit the run checked out. An errored
+build of an older tree — a push deploy that failed before publishing, over a build that had
+errored too — is deployed, because rebuilding it would republish the stale site on every run.
+`test/cases/625_a_rebuild_is_asked_only_when_it_helps.sh` holds each of those, the last by
+running the workflow's own remedy step against both trees.
 
 ## Projection pipeline
 

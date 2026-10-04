@@ -5,7 +5,8 @@
 # except the network's address.
 #
 # What is proved: a first install, an idempotent second, an upgrade, a refused downgrade,
-# a pinned version, --init, the PATH hint, and — the half that matters — that every failure
+# a pinned version, --init, the PATH hint, an upgrade that keeps a superseded tree a process
+# still runs from (and removes it once nothing does), and — the half that matters — that every failure
 # leaves a working installation working: a wrong digest, no digest tool or a malformed digest,
 # a truncated download, an archive that escapes its own directory, an archive that carries a
 # link, a missing release, and a destination that cannot be written.
@@ -209,10 +210,25 @@ printf '%s\n' "$out" | grep -q "newer than the latest stable release" \
 install_run --version "v$older" >/dev/null 2>&1 || { echo "    a pinned older version did not install"; exit 1; }
 [ "$("$BIN/majordomus" version)" = "majordomus $older" ] || { echo "    the pinned older version is not what ran"; exit 1; }
 [ -d "$HOMEDIR/.local/share/majordomus/versions/$VERSION" ] && { echo "    the superseded tree was left behind"; exit 1; }
+# a process still runs from the older tree — a server started before the upgrade — so the
+# upgrade must keep that tree: removing it leaves the server serving 404s for its own share/
+old_tree="$HOMEDIR/.local/share/majordomus/versions/$older"
+printf '#!/bin/sh\nsleep 300\n' > "$old_tree/libexec/holder"; chmod 755 "$old_tree/libexec/holder"
+"$old_tree/libexec/holder" & holder=$!
+trap 'kill $holder 2>/dev/null; stop_http' EXIT INT TERM HUP
 cp "$T/latest.good" "$FIX/releases/latest.json"
 out="$(install_run)"
 printf '%s\n' "$out" | grep -q "installed successfully" || { echo "    the upgrade did not run: $out"; exit 1; }
 [ "$("$BIN/majordomus" version)" = "majordomus $VERSION" ] || { echo "    the upgrade did not take"; exit 1; }
+[ -d "$old_tree/share" ] || { echo "    the upgrade removed a tree a running process uses"; exit 1; }
+printf '%s\n' "$out" | grep -q "kept the superseded tree $old_tree" \
+  || { echo "    the kept tree was not named: $out"; exit 1; }
+printf '%s\n' "$out" | grep -q "$holder .*libexec/holder" || { echo "    the holder was not named: $out"; exit 1; }
+# once nothing runs from it, the next install removes it
+kill "$holder"; wait "$holder" 2>/dev/null || true
+trap 'stop_http' EXIT INT TERM HUP
+install_run --force >/dev/null 2>&1 || { echo "    a forced reinstall failed"; exit 1; }
+[ -d "$old_tree" ] && { echo "    an unused superseded tree was left behind"; exit 1; }
 
 # --- a destination that cannot be written is named, and sudo is never reached -------------------------
 mkdir -p "$T/readonly" && chmod 500 "$T/readonly"

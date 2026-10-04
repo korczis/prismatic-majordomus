@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.13.0",
+  "generator": "majordomus-cli 0.13.1",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -1655,14 +1655,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/cli/local.rs",
-        "kind": "file",
-        "label": "local.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/cli/local.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/cockpit/mod.rs",
         "kind": "file",
         "label": "mod.rs",
@@ -1716,30 +1708,6 @@
         "label": "mod.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/quality/mod.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/quality/parity.rs",
-        "kind": "file",
-        "label": "parity.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/quality/parity.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/quality/policy.rs",
-        "kind": "file",
-        "label": "policy.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/quality/policy.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/quality/source.rs",
-        "kind": "file",
-        "label": "source.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/quality/source.rs",
         "external": true
       },
       {
@@ -17638,6 +17606,7 @@
             "The extractor version is part of the manifest, so a change to the extractor invalidates it",
             "The measured cost of a no-op sync and of a cold sync on this repository is recorded as evidence"
           ],
+          "cancelled": true,
           "created_at": "2026-09-04",
           "current_state": "Nothing is generated and nothing is cached. The site generator's --check mode is the precedent for a command that reports drift between canonical input and derived output without regenerating it.",
           "depends_on": [
@@ -17663,7 +17632,7 @@
             "test/cases/68_knowledge_manifest.sh"
           ],
           "slug": "knowledge-manifest",
-          "updated_at": "2026-09-04",
+          "updated_at": "2026-10-04",
           "validation": [
             "bash test/run.sh 68_knowledge_manifest"
           ]
@@ -17687,7 +17656,7 @@
           "created_at": "2026-09-04",
           "current_state": "`majordomus search` is a literal grep over the six operational record kinds and must keep that contract unchanged. Nothing searches the repository's canonical artifacts.",
           "depends_on": [
-            "I0810"
+            "I0809"
           ],
           "evidence_required": [
             "query_explainable",
@@ -19238,6 +19207,8 @@
         "route": "/cockpit/objects/issue/i0901",
         "source": ".ai/repo/project/issues/I0901.yaml",
         "facts": {
+          "completed_at": "2026-10-04T10:00:11Z",
+          "completed_event": "sha256:b99ecd9dd4aebe3dcdfc21578309bbe5e10827ea7b476cab602f930f2ea194d7",
           "created_at": "2026-09-06",
           "depends_on": [],
           "evidence_required": [
@@ -19262,11 +19233,15 @@
             "share/schemas"
           ],
           "slug": "deployment-kind",
-          "updated_at": "2026-09-10",
+          "started_at": "2026-10-04T09:55:21Z",
+          "started_event": "sha256:3123ebbc178cc682288eec0f9735a2ae28e4974ab4874911313c5b23c08673ea",
+          "updated_at": "2026-10-04T10:00:11Z",
           "validation": [
             "bash test/run.sh",
             "bin/majordomus doctor"
-          ]
+          ],
+          "verified_at": "2026-10-04T09:59:52Z",
+          "verified_event": "sha256:257f73020c90af8cfd27a4ce7eac9f497c0ee1c64fe49043e12865d7d4b9e2b4"
         }
       },
       {
@@ -20975,6 +20950,8 @@
             "Runtime state is an overlay over the definitions, distinguishable in the response",
             "A test exercises the operation against a running server rather than a mock"
           ],
+          "completed_at": "2026-10-04T10:11:46Z",
+          "completed_event": "sha256:af8b77f1ed46772ea458a809b1415c9e0f7852db8407bb8ebffd3b5020dc8837",
           "created_at": "2026-09-06",
           "current_state": "The Cockpit renders in-process. No capability serves the aggregate graph.",
           "depends_on": [
@@ -20999,11 +20976,15 @@
             "apps/majordomus-cli/src/capability/builtin/graph.rs"
           ],
           "slug": "runtime-graph-read",
-          "updated_at": "2026-09-06",
+          "started_at": "2026-10-04T10:11:17Z",
+          "started_event": "sha256:463264f9562133c078de77b0f39c00f92a1744fbfade547ea3b07bf7a4b02577",
+          "updated_at": "2026-10-04T10:11:46Z",
           "validation": [
             "cargo test --workspace --all-features",
             "majordomus generate --check"
           ],
+          "verified_at": "2026-10-04T10:11:35Z",
+          "verified_event": "sha256:f7748bbfa37ff77a1a89c2d8931ba91927ff8683c31fcc72a7bde1de5697c4aa",
           "why": "A route added by hand for the Cockpit would be the one endpoint missing from OpenAPI, from the reference and from the smoke suite. The registry exists precisely so that does not happen."
         }
       },
@@ -26574,6 +26555,45 @@
             "bash test/run.sh 390_unresolved_relation_refuses_generation",
             "cargo test --lib graph::",
             "scripts/derive-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1967",
+        "kind": "issue",
+        "label": "I1967",
+        "summary": "A reporter that sets a flag is a reporter",
+        "route": "/cockpit/objects/issue/i1967",
+        "source": ".ai/repo/project/issues/I1967.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A function that sets a flag rather than incrementing a counter is discovered as a reporter",
+            "A call to such a reporter inside a pipeline-fed loop is refused, with the file and line",
+            "The known-answer fixture holds a flag-setting reporter, and the guard refuses itself when it does not find it"
+          ],
+          "created_at": "2026-10-04",
+          "depends_on": [],
+          "evidence_required": [
+            "a_flag_setting_reporter_is_discovered"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Rewriting gates that are already correct: the guard names what is lost, not what offends taste",
+            "A check assembled from another program's output that dies silently, which I1513 named as its third face and test/cases/341 covers on its own"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "risk": "Low. The guard can only refuse shapes that already lose a verdict; a false alarm on a flag nobody reads is answered by naming the reporter it found.",
+          "scope": [
+            "scripts/lib/counting-functions.awk",
+            "scripts/ci/shell-lint",
+            "test/cases"
+          ],
+          "slug": "a-flag-setting-reporter-is-a-reporter",
+          "updated_at": "2026-10-04",
+          "validation": [
+            "bash scripts/ci/shell-lint"
           ]
         }
       },
@@ -38510,6 +38530,27 @@
         "source": "test/cases/81_bench_baseline.sh"
       },
       {
+        "id": "majordomus://test/test/cases/820_a_prose_heading_reads_as_a_heading.sh",
+        "kind": "test",
+        "label": "test/cases/820_a_prose_heading_reads_as_a_heading.sh",
+        "route": "/cockpit/objects/test/test-cases-820-a-prose-heading-reads-as-a-heading-sh",
+        "source": "test/cases/820_a_prose_heading_reads_as_a_heading.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/828_a_server_holding_its_lease_is_not_reaped.sh",
+        "kind": "test",
+        "label": "test/cases/828_a_server_holding_its_lease_is_not_reaped.sh",
+        "route": "/cockpit/objects/test/test-cases-828-a-server-holding-its-lease-is-not-reaped-sh",
+        "source": "test/cases/828_a_server_holding_its_lease_is_not_reaped.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/829_ci_fails_on_a_skip.sh",
+        "kind": "test",
+        "label": "test/cases/829_ci_fails_on_a_skip.sh",
+        "route": "/cockpit/objects/test/test-cases-829-ci-fails-on-a-skip-sh",
+        "source": "test/cases/829_ci_fails_on_a_skip.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/82_bench_check.sh",
         "kind": "test",
         "label": "test/cases/82_bench_check.sh",
@@ -44625,27 +44666,7 @@
       },
       {
         "source": "majordomus://adr/adr-0028",
-        "target": "file:apps/majordomus-cli/src/cli/local.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0028",
         "target": "file:apps/majordomus-cli/src/quality/mod.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0028",
-        "target": "file:apps/majordomus-cli/src/quality/parity.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0028",
-        "target": "file:apps/majordomus-cli/src/quality/policy.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0028",
-        "target": "file:apps/majordomus-cli/src/quality/source.rs",
         "kind": "put_in_force"
       },
       {
@@ -53185,7 +53206,7 @@
       },
       {
         "source": "majordomus://issue/I0811",
-        "target": "majordomus://issue/I0810",
+        "target": "majordomus://issue/I0809",
         "kind": "depends_on"
       },
       {
@@ -56361,6 +56382,16 @@
       {
         "source": "majordomus://issue/I1966",
         "target": "majordomus://milestone/capability-graph",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1967",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1967",
+        "target": "majordomus://milestone/development-runtime",
         "kind": "belongs_to"
       },
       {
@@ -60394,6 +60425,21 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/820_a_prose_heading_reads_as_a_heading.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/828_a_server_holding_its_lease_is_not_reaped.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/829_ci_fails_on_a_skip.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/82_bench_check.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -63636,7 +63682,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4501,
+      "edges": 4502,
       "acyclic": true,
       "truncated": true
     }

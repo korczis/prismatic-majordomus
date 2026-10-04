@@ -3,26 +3,26 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.13.0"
+    "version": "0.13.1"
   },
   "registry": {
-    "fingerprint": "7761b52e34bf980ea05bf63329363d1a613dfa1a3e30900f8fb399b8d6a1db44",
+    "fingerprint": "68d4a21c20650cca68727ac7b347f1cf5e29447368b396c1173466b667f01229",
     "summary": {
-      "total": 1876,
+      "total": 1880,
       "builtin": 170,
-      "declarative": 1706,
+      "declarative": 1710,
       "by_kind": {
         "command": 22,
         "query": 148,
-        "resource": 1706
+        "resource": 1710
       },
       "by_stability": {
         "behaviorally_verified": 128,
         "experimental": 34,
-        "implemented": 1714
+        "implemented": 1718
       },
       "mcp_tools": 164,
-      "mcp_resources": 1759,
+      "mcp_resources": 1763,
       "http_routes": 168,
       "cli_commands": 89,
       "modules": 84,
@@ -55380,7 +55380,7 @@
                   {
                     "type": "string",
                     "const": "gate",
-                    "description": "An executable check a CI gate runs as its own command."
+                    "description": "An executable check a CI gate runs as its own command, or a unit-test module the\ngate running the crate's `cargo test` compiles."
                   },
                   {
                     "type": "string",
@@ -55388,7 +55388,7 @@
                     "description": "Neither. Nothing can run it, so nothing can ever record it."
                   }
                 ],
-                "description": "What a path a rule names actually is, decided by what drives it rather than by where it\nsits.\n\nThe corpus names two kinds and this distinction is the difference between a verdict and\na mechanism. A **case** is driven by a runner, so an execution of it can be recorded and\nthe repository can show that it passed. A **gate** is an executable check a CI gate runs\nas its own command: it refuses violations on every run, and this repository records no\nverdict for it, so what can be shown is the mechanism and not the result. Anything else\na rule names is proof only in prose.\n# Example\n\n```\nuse majordomus_cli::rules::ArtifactKind;\nassert_eq!(ArtifactKind::Case.label(), \"case\");\nassert_eq!(ArtifactKind::Gate.label(), \"gate\");\n```"
+                "description": "What a path a rule names actually is, decided by what drives it rather than by where it\nsits.\n\nThe corpus names two kinds and this distinction is the difference between a verdict and\na mechanism. A **case** is driven by a runner, so an execution of it can be recorded and\nthe repository can show that it passed. A **gate** is an executable check a CI gate runs\nas its own command, or a unit-test module (`src/<module>/tests.rs`) the gate running the\ncrate's `cargo test` compiles: it refuses violations on every run, and this repository\nrecords no verdict for it, so what can be shown is the mechanism and not the result.\nAnything else a rule names is proof only in prose.\n# Example\n\n```\nuse majordomus_cli::rules::ArtifactKind;\nassert_eq!(ArtifactKind::Case.label(), \"case\");\nassert_eq!(ArtifactKind::Gate.label(), \"gate\");\n```"
               },
               "ProofState": {
                 "oneOf": [
@@ -56257,7 +56257,7 @@
                   {
                     "type": "string",
                     "const": "gate",
-                    "description": "An executable check a CI gate runs as its own command."
+                    "description": "An executable check a CI gate runs as its own command, or a unit-test module the\ngate running the crate's `cargo test` compiles."
                   },
                   {
                     "type": "string",
@@ -56265,7 +56265,7 @@
                     "description": "Neither. Nothing can run it, so nothing can ever record it."
                   }
                 ],
-                "description": "What a path a rule names actually is, decided by what drives it rather than by where it\nsits.\n\nThe corpus names two kinds and this distinction is the difference between a verdict and\na mechanism. A **case** is driven by a runner, so an execution of it can be recorded and\nthe repository can show that it passed. A **gate** is an executable check a CI gate runs\nas its own command: it refuses violations on every run, and this repository records no\nverdict for it, so what can be shown is the mechanism and not the result. Anything else\na rule names is proof only in prose.\n# Example\n\n```\nuse majordomus_cli::rules::ArtifactKind;\nassert_eq!(ArtifactKind::Case.label(), \"case\");\nassert_eq!(ArtifactKind::Gate.label(), \"gate\");\n```"
+                "description": "What a path a rule names actually is, decided by what drives it rather than by where it\nsits.\n\nThe corpus names two kinds and this distinction is the difference between a verdict and\na mechanism. A **case** is driven by a runner, so an execution of it can be recorded and\nthe repository can show that it passed. A **gate** is an executable check a CI gate runs\nas its own command, or a unit-test module (`src/<module>/tests.rs`) the gate running the\ncrate's `cargo test` compiles: it refuses violations on every run, and this repository\nrecords no verdict for it, so what can be shown is the mechanism and not the result.\nAnything else a rule names is proof only in prose.\n# Example\n\n```\nuse majordomus_cli::rules::ArtifactKind;\nassert_eq!(ArtifactKind::Case.label(), \"case\");\nassert_eq!(ArtifactKind::Gate.label(), \"gate\");\n```"
               },
               "ProofState": {
                 "oneOf": [
@@ -65514,7 +65514,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 244,
+        "capabilities": 245,
         "capability_ids": []
       },
       {
@@ -66014,7 +66014,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 343,
+        "capabilities": 346,
         "capability_ids": []
       },
       {
@@ -66104,7 +66104,7 @@
     ]
   },
   "index": {
-    "fingerprint": "cb36977d21c73984827e17bc4c31c66785146021ceb880f8a03ef843d65bd589",
+    "fingerprint": "debdf41624f20beb64b1820d068ab8631ab826bc2f3072682636fd4b9d2bd531",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -66143,7 +66143,7 @@
       "gap": 1,
       "implementation": 50,
       "intent": 2,
-      "issue": 244,
+      "issue": 245,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 23,
@@ -66157,7 +66157,7 @@
       "session": 22,
       "skill": 6,
       "taxonomy": 10,
-      "test": 343,
+      "test": 346,
       "use-case": 48,
       "workspace": 1
     },
@@ -71231,7 +71231,7 @@
         "title": "GitHub Pages architecture",
         "path": "docs/GITHUB_PAGES_ARCHITECTURE.md",
         "source_class": "document",
-        "bytes": 51772
+        "bytes": 52225
       },
       {
         "uri": "majordomus://document/docs/GITHUB_PAGES_PERFORMANCE.md",
@@ -71258,7 +71258,7 @@
         "title": "How Majordomus works — one repository model, many projections",
         "path": "docs/HOW_IT_WORKS.md",
         "source_class": "document",
-        "bytes": 74120
+        "bytes": 93418
       },
       {
         "uri": "majordomus://document/docs/INSTALL.md",
@@ -71357,7 +71357,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 73988
+        "bytes": 76027
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -71393,7 +71393,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 22352
+        "bytes": 22515
       },
       {
         "uri": "majordomus://document/docs/REASONING.md",
@@ -74219,7 +74219,7 @@
         "identity": "lib/doctor.sh",
         "path": "lib/doctor.sh",
         "source_class": "library",
-        "bytes": 73822
+        "bytes": 75500
       },
       {
         "uri": "majordomus://implementation/lib/doctrine.sh",
@@ -75116,7 +75116,7 @@
         "path": ".ai/repo/project/issues/I0810.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2296
+        "bytes": 3168
       },
       {
         "uri": "majordomus://issue/I0811",
@@ -75490,7 +75490,7 @@
         "path": ".ai/repo/project/issues/I0901.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3193
+        "bytes": 5615
       },
       {
         "uri": "majordomus://issue/I0902",
@@ -75897,7 +75897,7 @@
         "path": ".ai/repo/project/issues/I1006.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1818
+        "bytes": 3746
       },
       {
         "uri": "majordomus://issue/I1007",
@@ -77174,6 +77174,17 @@
         "section": "project",
         "source_class": "issue",
         "bytes": 5124
+      },
+      {
+        "uri": "majordomus://issue/I1967",
+        "kind": "issue",
+        "identity": "I1967",
+        "title": "A reporter that sets a flag is a reporter",
+        "description": "Make the pipeline-count guard discover a reporter that records a failure by setting a flag, not only one that increments a counter, so a call to it inside a construct that discards the flag is refused like a lost count.",
+        "path": ".ai/repo/project/issues/I1967.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2737
       },
       {
         "uri": "majordomus://knowledge/start-here",
@@ -82673,7 +82684,7 @@
         "identity": "test/cases/409_every_tile_names_its_proof.sh",
         "path": "test/cases/409_every_tile_names_its_proof.sh",
         "source_class": "case",
-        "bytes": 5503
+        "bytes": 5535
       },
       {
         "uri": "majordomus://test/test/cases/40_project_model.sh",
@@ -83289,7 +83300,7 @@
         "identity": "test/cases/625_a_rebuild_is_asked_only_when_it_helps.sh",
         "path": "test/cases/625_a_rebuild_is_asked_only_when_it_helps.sh",
         "source_class": "case",
-        "bytes": 7953
+        "bytes": 10579
       },
       {
         "uri": "majordomus://test/test/cases/62_session_divergence.sh",
@@ -83668,6 +83679,30 @@
         "bytes": 3169
       },
       {
+        "uri": "majordomus://test/test/cases/820_a_prose_heading_reads_as_a_heading.sh",
+        "kind": "test",
+        "identity": "test/cases/820_a_prose_heading_reads_as_a_heading.sh",
+        "path": "test/cases/820_a_prose_heading_reads_as_a_heading.sh",
+        "source_class": "case",
+        "bytes": 3949
+      },
+      {
+        "uri": "majordomus://test/test/cases/828_a_server_holding_its_lease_is_not_reaped.sh",
+        "kind": "test",
+        "identity": "test/cases/828_a_server_holding_its_lease_is_not_reaped.sh",
+        "path": "test/cases/828_a_server_holding_its_lease_is_not_reaped.sh",
+        "source_class": "case",
+        "bytes": 3533
+      },
+      {
+        "uri": "majordomus://test/test/cases/829_ci_fails_on_a_skip.sh",
+        "kind": "test",
+        "identity": "test/cases/829_ci_fails_on_a_skip.sh",
+        "path": "test/cases/829_ci_fails_on_a_skip.sh",
+        "source_class": "case",
+        "bytes": 4361
+      },
+      {
         "uri": "majordomus://test/test/cases/82_bench_check.sh",
         "kind": "test",
         "identity": "test/cases/82_bench_check.sh",
@@ -83721,7 +83756,7 @@
         "identity": "test/cases/85_installer.sh",
         "path": "test/cases/85_installer.sh",
         "source_class": "case",
-        "bytes": 17916
+        "bytes": 19137
       },
       {
         "uri": "majordomus://test/test/cases/85_ui_conformance.sh",
@@ -84705,7 +84740,7 @@
       "identity": [
         "id"
       ],
-      "objects": 244
+      "objects": 245
     },
     {
       "name": "knowledge",
@@ -84857,7 +84892,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 343
+      "objects": 346
     },
     {
       "name": "use-case",
