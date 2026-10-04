@@ -301,9 +301,17 @@ pub fn diff(before: &Snapshot, after: &Snapshot) -> Vec<Moved> {
 }
 
 /// Every mirrored local ref that is not what origin serves: `refs/remotes/origin/<base>`
-/// against `refs/heads/<base>`, and each `refs/majordomus/prs/<n>` against
-/// `refs/pull/<n>/head`. A mirror where origin serves nothing is as wrong as a stale one.
-pub fn mirror_mismatches(remote: &str, local: &str, base: &str) -> Vec<String> {
+/// against `refs/heads/<base>`, and each `refs/majordomus/prs/<n>` the refresh mirrored —
+/// `observed`, the open pull requests and the successors it read — against
+/// `refs/pull/<n>/head`. A mirror where origin serves nothing is as wrong as a stale one. A
+/// mirror of a pull request the refresh did not observe is no mirror of this refresh: it is
+/// not judged, because nothing the queue decides reads it.
+pub fn mirror_mismatches(
+    remote: &str,
+    local: &str,
+    base: &str,
+    observed: &std::collections::BTreeSet<u64>,
+) -> Vec<String> {
     let served = ref_lines(remote);
     let serves = |r: &str| served.iter().find(|(_, x)| x == r).map(|(s, _)| s.clone());
     let mut found = Vec::new();
@@ -311,6 +319,9 @@ pub fn mirror_mismatches(remote: &str, local: &str, base: &str) -> Vec<String> {
         let wanted = if r == format!("refs/remotes/origin/{base}") {
             serves(&format!("refs/heads/{base}"))
         } else if let Some(n) = r.strip_prefix("refs/majordomus/prs/") {
+            if !n.parse::<u64>().is_ok_and(|n| observed.contains(&n)) {
+                continue;
+            }
             Some(serves(&format!("refs/pull/{n}/head")).unwrap_or_default())
         } else {
             continue;
@@ -404,10 +415,17 @@ pub fn prove_dry_run(root: &Path) -> Result<DryRunProof, String> {
 
     let after = snapshot(root, &base)?;
     let moved = diff(&before, &after);
+    let observed: std::collections::BTreeSet<u64> = obs
+        .pull_requests
+        .iter()
+        .map(|p| p.number)
+        .chain(obs.resolved.keys().copied())
+        .collect();
     let mirrors = mirror_mismatches(
         &git(root, &["ls-remote", "origin"])?,
         &git(root, &["for-each-ref", "--format=%(objectname) %(refname)"])?,
         &base,
+        &observed,
     );
     let queue = super::queue_of(root)?;
     let classification = queue
@@ -501,10 +519,23 @@ mod tests {
     fn a_mirror_must_equal_what_origin_serves() {
         let remote = "a refs/heads/master\nb refs/pull/1/head\n";
         let local = "z refs/remotes/origin/master\nb refs/majordomus/prs/1\nq refs/majordomus/prs/9\nx refs/heads/mine\n";
-        let found = mirror_mismatches(remote, local, "master");
+        let found = mirror_mismatches(remote, local, "master", &[1, 9].into());
         assert_eq!(found.len(), 2, "{found:?}");
         assert!(found[0].contains("refs/majordomus/prs/9") && found[0].contains("serves nothing"));
         assert!(found[1].contains("refs/remotes/origin/master is z"));
+    }
+
+    /// A mirror of a pull request that is no longer open — merged days ago, its mirror left at
+    /// the head it had then — is not this refresh's mirror and does not fail the proof.
+    #[test]
+    fn a_mirror_of_a_pull_request_not_observed_is_not_judged() {
+        let remote = "a refs/heads/master\nb refs/pull/1/head\nc refs/pull/698/head\n";
+        let local = "a refs/remotes/origin/master\nb refs/majordomus/prs/1\nstale refs/majordomus/prs/698\n";
+        assert!(mirror_mismatches(remote, local, "master", &[1].into()).is_empty());
+        assert_eq!(
+            mirror_mismatches(remote, local, "master", &[1, 698].into()).len(),
+            1
+        );
     }
 
     #[test]
