@@ -55,7 +55,8 @@ BEGIN {
     # tool's own skeleton `sources.yaml` and absent here, so every feature was an `unknown`
     # node with no edge to the claims, use cases and ADRs it names — 100 unknown nodes in
     # this repository, found by a repository that adopted the tool (OSCILLA, 2026-10-04).
-    known = " policy scope context profile prompt rule milestone issue claim document session handover checkpoint decision question doctrine implementation test adr skill use-case application taxonomy knowledge session feature moment area audience deployment intent mesh-declaration workspace release-record critique gap command distribution-model "
+    # `domain` joined the skeleton with the product domains (batch N1) and is read the same way.
+    known = " policy scope context profile prompt rule milestone issue claim document session handover checkpoint decision question doctrine implementation test adr skill use-case application taxonomy knowledge session feature moment area audience deployment intent mesh-declaration workspace release-record critique gap command distribution-model domain "
     # The edge types are a closed set. An undeclared type is a defect rather than a new
     # vocabulary word, because a reader who cannot enumerate the relations cannot tell a
     # missing one from one that was never modelled.
@@ -198,18 +199,22 @@ function extract_one(i, k,   p, id, title) {
 }
 
 function is_product_kind(k) {
-    return index(" feature moment area audience deployment intent mesh-declaration workspace ", " " k " ") > 0
+    return index(" feature moment area audience deployment intent mesh-declaration workspace domain ", " " k " ") > 0
 }
 
 # A feature -> what it is made of. Its front matter names each part against the registry
 # that owns it (`.ai/repo/features/README.md`), so each named rule, ADR, claim and use case
 # is an edge to that node, and each named document is an edge to that file. The reference
 # is all the record states about the relation, so the relation is `references` and nothing
-# stronger: a feature does not implement a rule or prove a claim by naming it.
+# stronger: a feature does not implement a rule or prove a claim by naming it. The one domain
+# a feature names is where it belongs in the product model, so that edge is `part_of`, the
+# relation an issue has to its milestone.
 function edges_feature(si,   p, id, from, n, v, field, pairs, fk_pair) {
     p = spath[si]
     id = f(p, "id"); if (id == "") return
     from = node_id("feature", id)
+    v = f(p, "domain")
+    if (v != "") add_edge(from, node_id("domain", v), "part_of", p ":domain")
     split("rules:rule adrs:adr claims:claim use_cases:use-case", pairs, " ")
     for (field in pairs) {
         split(pairs[field], fk_pair, ":")
