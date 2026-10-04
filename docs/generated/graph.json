@@ -1680,14 +1680,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/order.rs",
-        "kind": "file",
-        "label": "order.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/order.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/product.rs",
         "kind": "file",
         "label": "product.rs",
@@ -1813,14 +1805,6 @@
         "label": "kinds.yaml",
         "summary": "named by the layer; not an object of this index",
         "source": "share/kinds.yaml",
-        "external": true
-      },
-      {
-        "id": "file:site/templates/index.html",
-        "kind": "file",
-        "label": "index.html",
-        "summary": "named by the layer; not an object of this index",
-        "source": "site/templates/index.html",
         "external": true
       },
       {
@@ -36538,13 +36522,6 @@
         "source": "test/cases/111_session_per_provider.sh"
       },
       {
-        "id": "majordomus://test/test/cases/111_unblock.sh",
-        "kind": "test",
-        "label": "test/cases/111_unblock.sh",
-        "route": "/cockpit/objects/test/test-cases-111-unblock-sh",
-        "source": "test/cases/111_unblock.sh"
-      },
-      {
         "id": "majordomus://test/test/cases/112_version_matches_surface.sh",
         "kind": "test",
         "label": "test/cases/112_version_matches_surface.sh",
@@ -38608,6 +38585,27 @@
         "label": "test/cases/90_mcp_shared_server.sh",
         "route": "/cockpit/objects/test/test-cases-90-mcp-shared-server-sh",
         "source": "test/cases/90_mcp_shared_server.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/910_nothing_merges_around_the_integrator.sh",
+        "kind": "test",
+        "label": "test/cases/910_nothing_merges_around_the_integrator.sh",
+        "route": "/cockpit/objects/test/test-cases-910-nothing-merges-around-the-integrator-sh",
+        "source": "test/cases/910_nothing_merges_around_the_integrator.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/911_repair_decides_and_moves_nothing.sh",
+        "kind": "test",
+        "label": "test/cases/911_repair_decides_and_moves_nothing.sh",
+        "route": "/cockpit/objects/test/test-cases-911-repair-decides-and-moves-nothing-sh",
+        "source": "test/cases/911_repair_decides_and_moves_nothing.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/912_repair_acts_under_the_lease_and_the_trail.sh",
+        "kind": "test",
+        "label": "test/cases/912_repair_acts_under_the_lease_and_the_trail.sh",
+        "route": "/cockpit/objects/test/test-cases-912-repair-acts-under-the-lease-and-the-trail-sh",
+        "source": "test/cases/912_repair_acts_under_the_lease_and_the_trail.sh"
       },
       {
         "id": "majordomus://test/test/cases/91_canonical_architecture.sh",
@@ -44510,11 +44508,6 @@
       },
       {
         "source": "majordomus://adr/adr-0023",
-        "target": "file:site/templates/index.html",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0023",
         "target": "kind:adr",
         "kind": "is_a"
       },
@@ -44549,19 +44542,9 @@
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0023",
-        "target": "majordomus://test/test/cases/97_product_features.sh",
-        "kind": "put_in_force"
-      },
-      {
         "source": "majordomus://adr/adr-0024",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0025",
-        "target": "file:apps/majordomus-cli/src/order.rs",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0025",
@@ -47885,11 +47868,6 @@
       },
       {
         "source": "majordomus://claim/landing-page-is-a-projection",
-        "target": "file:site/templates/index.html",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/landing-page-is-a-projection",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -50101,11 +50079,6 @@
       {
         "source": "majordomus://context/ai.repo.features",
         "target": "file:apps/majordomus-cli/src/product.rs",
-        "kind": "tracks"
-      },
-      {
-        "source": "majordomus://context/ai.repo.features",
-        "target": "file:site/templates/index.html",
         "kind": "tracks"
       },
       {
@@ -58989,11 +58962,6 @@
         "kind": "is_a"
       },
       {
-        "source": "majordomus://test/test/cases/111_unblock.sh",
-        "target": "kind:test",
-        "kind": "is_a"
-      },
-      {
         "source": "majordomus://test/test/cases/112_version_matches_surface.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -60465,6 +60433,21 @@
       },
       {
         "source": "majordomus://test/test/cases/90_mcp_shared_server.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/910_nothing_merges_around_the_integrator.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/911_repair_decides_and_moves_nothing.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/912_repair_acts_under_the_lease_and_the_trail.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -63641,7 +63624,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4503,
+      "edges": 4500,
       "acyclic": true,
       "truncated": true
     }

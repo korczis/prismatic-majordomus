@@ -1,7 +1,7 @@
 +++
 title = "majordomus commit history"
 description = "Judge every commit in a range of history against the commit policy, in one pass; exit 10 when any carries an error"
-weight = 97
+weight = 98
 [extra]
 route = "/docs/cli/commit/history/"
 command = "majordomus commit history"

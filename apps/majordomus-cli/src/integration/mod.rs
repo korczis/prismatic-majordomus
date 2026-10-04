@@ -48,6 +48,7 @@ pub mod metrics;
 pub mod model;
 pub mod proof;
 pub mod relation;
+pub mod repair;
 pub mod retry;
 #[cfg(test)]
 mod tests;
