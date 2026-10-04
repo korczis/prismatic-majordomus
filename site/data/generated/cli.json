@@ -17373,6 +17373,12 @@
           "command": "majordomus release advance",
           "name": "advance",
           "route": "/docs/cli/release/advance/"
+        },
+        {
+          "about": "The git merge driver for the version line (`merge=version`): merge a version file with the base and both sides rewritten to the greater declared version, so the version never conflicts and the advance decides it; git invokes it as `release merge-version %O %A %B %P`",
+          "command": "majordomus release merge-version",
+          "name": "merge-version",
+          "route": "/docs/cli/release/merge-version/"
         }
       ],
       "command": "majordomus release",
@@ -18286,6 +18292,183 @@
       ],
       "route": "/docs/cli/release/advance/",
       "usage": "majordomus release advance [OPTIONS]"
+    },
+    {
+      "about": "The git merge driver for the version line (`merge=version`): merge a version file with the base and both sides rewritten to the greater declared version, so the version never conflicts and the advance decides it; git invokes it as `release merge-version %O %A %B %P`",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus release",
+          "name": "release",
+          "route": "/docs/cli/release/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The merge base's version of the file (git's %O)",
+          "name": "base",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "BASE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Our version, overwritten with the result (git's %A)",
+          "name": "ours",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "OURS"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Their version (git's %B)",
+          "name": "theirs",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "THEIRS"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The repository path being merged (git's %P)",
+          "name": "path",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "How to render the answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus release merge-version",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "release",
+            "merge-version",
+            "absent-base",
+            "absent-ours",
+            "absent-theirs",
+            "apps/majordomus-cli/Cargo.toml"
+          ],
+          "command": "majordomus release merge-version absent-base absent-ours absent-theirs apps/majordomus-cli/Cargo.toml",
+          "description": "Git runs the driver with the three versions of a conflicted file and the path it is merging; the driver rewrites all three to the greater declared version, merges the rest with git's own three-way merge, writes the result over `%A`, and exits 0 when every hunk merged or 1 when conflict markers were left, as git requires of a driver. Files it cannot read are not a merge at all, so it writes nothing and exits 12.",
+          "expectation": "exits 12",
+          "id": "release-merge-version-unreadable",
+          "setup": [],
+          "title": "The version driver, asked about files that are not there"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "merge-version",
+      "parent_route": "/docs/cli/release/",
+      "path": [
+        "majordomus",
+        "release",
+        "merge-version"
+      ],
+      "route": "/docs/cli/release/merge-version/",
+      "usage": "majordomus release merge-version [OPTIONS] <BASE> <OURS> <THEIRS> <PATH>"
     },
     {
       "about": "What this executable's own public surface is held to: documentation, executable examples, module coverage, and every command accounted for against the capability registry",
@@ -31562,10 +31745,10 @@
     }
   ],
   "counts": {
-    "arguments": 1354,
-    "commands": 201,
-    "examples": 203,
-    "runnable": 177
+    "arguments": 1363,
+    "commands": 202,
+    "examples": 204,
+    "runnable": 178
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.12.0",

@@ -373,8 +373,9 @@ pub trait Integrator {
     fn merge(&mut self, pr: u64, head_sha: &str, method: &str) -> Result<(), String>;
     /// After a merge: the pull request's state on the forge and this clone's master.
     fn verify(&mut self, pr: u64, head_sha: &str) -> Result<String, String>;
-    /// Bring master into a pull request's branch — a merge commit with the derived driver
-    /// and a fresh derive, pushed as a fast-forward of the observed head. Returns the new
+    /// Bring master into a pull request's branch — a merge commit with the derived and the
+    /// version drivers, the version advanced against that master (ADR 0106), and a fresh
+    /// derive, pushed as a fast-forward of the observed head. Returns the new
     /// head. Never a rewrite: the push is refused if the branch moved.
     fn refresh_branch(&mut self, a: &PullRequestAssessment, base: &str) -> Result<String, String>;
 }
@@ -988,10 +989,39 @@ impl Integrator for ForgeIntegrator<'_> {
                 String::from_utf8_lossy(&add.stderr).trim()
             ));
         }
+        // this executable, for the version driver and the advance: the scratch worktree is at
+        // the branch's head, whose own build may predate both, and a clone's configuration is
+        // not something a refresh may depend on (ADR 0106 §8b)
+        let exe = std::env::current_exe()
+            .map_err(|e| format!("cannot name this executable for the version driver: {e}"))?;
+        let driver = format!(
+            "merge.version.driver={} release merge-version %O %A %B %P",
+            exe.display()
+        );
         let result = (|| -> Result<String, String> {
-            if let Err(e) = git_in(&["merge", "--no-commit", "--no-ff", &master]) {
+            if let Err(e) = git_in(&["-c", &driver, "merge", "--no-commit", "--no-ff", &master]) {
                 let _ = git_in(&["merge", "--abort"]);
                 return Err(format!("the merge of master conflicts after all: {e}"));
+            }
+            // the version the merge result must carry is the obligation against the master it
+            // now contains, not the number either side chose: two branches that advanced from
+            // one trunk land on two versions, and a major one side owed is kept
+            let advance = Command::new(&exe)
+                .args(["release", "advance", "--base", &master])
+                .current_dir(&dir)
+                .env_remove("MAJORDOMUS_SHARE")
+                .output()
+                .map_err(|e| format!("release advance could not run: {e}"))?;
+            if !advance.status.success() {
+                let _ = git_in(&["merge", "--abort"]);
+                return Err(format!(
+                    "release advance refused the merge result: {}",
+                    String::from_utf8_lossy(&advance.stdout)
+                        .lines()
+                        .chain(String::from_utf8_lossy(&advance.stderr).lines())
+                        .rfind(|l| !l.trim().is_empty())
+                        .unwrap_or("no reason given")
+                ));
             }
             // the derived artifacts of the merge result, regenerated rather than resolved
             let target = root.join("apps/majordomus-cli/target");

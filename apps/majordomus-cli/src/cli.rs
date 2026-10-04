@@ -1320,6 +1320,21 @@ pub enum ReleaseCommand {
         #[arg(long)]
         dry_run: bool,
     },
+    /// The git merge driver for the version line (`merge=version`): merge a version file with the base and both sides rewritten to the greater declared version, so the version never conflicts and the advance decides it; git invokes it as `release merge-version %O %A %B %P`
+    MergeVersion {
+        /// The merge base's version of the file (git's %O)
+        #[arg(value_name = "BASE")]
+        base: std::path::PathBuf,
+        /// Our version, overwritten with the result (git's %A)
+        #[arg(value_name = "OURS")]
+        ours: std::path::PathBuf,
+        /// Their version (git's %B)
+        #[arg(value_name = "THEIRS")]
+        theirs: std::path::PathBuf,
+        /// The repository path being merged (git's %P)
+        #[arg(value_name = "PATH")]
+        path: String,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -3986,6 +4001,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             title: "Satisfying it, through the one writer",
             description: "Computes the obligation against the trunk as it is now and, when it is owed, raises the version to its minimum with the writer `release bump` uses — the manifest's version line and the lock's record of it, read back. When it already holds it writes nothing, so a retried finish or a rerun workflow cannot advance twice. A tree behind the trunk is refused: the trunk is merged first, then the advance is computed from the version that won. `finish --outcome completed` runs it before the contract is judged. This fixture has no trunk, so nothing can be decided and it exits 12.",
             argv: &["release", "advance", "--dry-run"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "release merge-version",
+        examples: &[ExampleDoc {
+            id: "release-merge-version-unreadable",
+            title: "The version driver, asked about files that are not there",
+            description: "Git runs the driver with the three versions of a conflicted file and the path it is merging; the driver rewrites all three to the greater declared version, merges the rest with git's own three-way merge, writes the result over `%A`, and exits 0 when every hunk merged or 1 when conflict markers were left, as git requires of a driver. Files it cannot read are not a merge at all, so it writes nothing and exits 12.",
+            argv: &["release", "merge-version", "absent-base", "absent-ours", "absent-theirs", "apps/majordomus-cli/Cargo.toml"],
             setup: &[],
             expect: Expect::ExitCode(12),
         }],

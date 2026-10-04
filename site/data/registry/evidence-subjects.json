@@ -2729,6 +2729,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:release merge-version",
+      "path": "/evidence/commands/release-merge-version/"
+    },
+    {
+      "kind": "command",
       "subject": "command:release obligation",
       "path": "/evidence/commands/release-obligation/"
     },
@@ -4959,7 +4964,20 @@
       "page": "/evidence/capabilities/release-obligation/",
       "programs": [],
       "members": [],
-      "routes": [],
+      "routes": [
+        {
+          "via": "behaviour",
+          "test": "suite:873_concurrent_branches_never_share_a_version",
+          "path": "test/cases/873_concurrent_branches_never_share_a_version.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:873_concurrent_branches_never_share_a_version",
+          "path": "test/cases/873_concurrent_branches_never_share_a_version.sh",
+          "category": "e2e"
+        }
+      ],
       "mechanisms": [],
       "findings": []
     },
@@ -14396,6 +14414,25 @@
       "kind": "command",
       "id": "release changelog",
       "page": "/evidence/commands/release-changelog/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:release merge-version": {
+      "kind": "command",
+      "id": "release merge-version",
+      "page": "/evidence/commands/release-merge-version/",
       "programs": [
         "native"
       ],

@@ -58,6 +58,32 @@ pub fn run(args: ReleaseArgs) -> Result<u8> {
             let base = base.clone();
             advance(&args, base.as_deref(), dry_run)
         }
+        Some(ReleaseCommand::MergeVersion {
+            ref base,
+            ref ours,
+            ref theirs,
+            ref path,
+        }) => merge_version(base, ours, theirs, path),
+    }
+}
+
+/// The merge driver git runs for `merge=version` (`%O %A %B %P`): 0 when every hunk merged,
+/// 1 when conflict markers were left for a person, as git requires of a driver, and 12 when
+/// a file could not be read, which is no merge at all. It needs no repository: git runs it
+/// inside a merge, with the three versions in temporary files.
+fn merge_version(
+    base: &std::path::Path,
+    ours: &std::path::Path,
+    theirs: &std::path::Path,
+    path: &str,
+) -> Result<u8> {
+    match crate::release::reconcile::drive(base, ours, theirs, path) {
+        Ok(true) => Ok(0),
+        Ok(false) => Ok(1),
+        Err(why) => {
+            eprintln!("majordomus: release merge-version: {why}");
+            Ok(EXIT_UNREADABLE)
+        }
     }
 }
 

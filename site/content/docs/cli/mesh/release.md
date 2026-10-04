@@ -1,7 +1,7 @@
 +++
 title = "majordomus mesh release"
 description = "Release a claim this server's current run holds"
-weight = 136
+weight = 137
 [extra]
 route = "/docs/cli/mesh/release/"
 command = "majordomus mesh release"

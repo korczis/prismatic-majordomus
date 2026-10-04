@@ -40,6 +40,7 @@ pub mod commits;
 pub mod compat;
 pub mod model;
 pub mod obligation;
+pub mod reconcile;
 pub mod surface;
 pub mod version;
 

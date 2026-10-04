@@ -6,23 +6,23 @@
     "version": "0.12.0"
   },
   "registry": {
-    "fingerprint": "9d3defdffbbf8a5464dda6c9abec9998f6d4eec1ca6f2bb0601624cf1c7ee674",
+    "fingerprint": "9b5a974f4b06bc9e641779db2380e8ad56d027c5fd553f84f0b4e565e1d79872",
     "summary": {
-      "total": 1869,
+      "total": 1870,
       "builtin": 170,
-      "declarative": 1699,
+      "declarative": 1700,
       "by_kind": {
         "command": 22,
         "query": 148,
-        "resource": 1699
+        "resource": 1700
       },
       "by_stability": {
         "behaviorally_verified": 127,
         "experimental": 34,
-        "implemented": 1708
+        "implemented": 1709
       },
       "mcp_tools": 164,
-      "mcp_resources": 1751,
+      "mcp_resources": 1752,
       "http_routes": 168,
       "cli_commands": 88,
       "modules": 83,
@@ -65838,7 +65838,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 344,
+        "capabilities": 345,
         "capability_ids": []
       },
       {
@@ -65928,7 +65928,7 @@
     ]
   },
   "index": {
-    "fingerprint": "b028cc1724103512f5f0edb091a47beef2d5e83f0ec84f04f620f6f7880b4a62",
+    "fingerprint": "c48c6cbc4b24cb201de3ffe3008df9dcf146b7d50b42a785356e98922f256566",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -65980,7 +65980,7 @@
       "session": 22,
       "skill": 6,
       "taxonomy": 10,
-      "test": 344,
+      "test": 345,
       "use-case": 48,
       "workspace": 1
     },
@@ -71213,7 +71213,7 @@
         "title": "The release — a changelog nobody writes, and one writer for the version",
         "path": "docs/RELEASE.md",
         "source_class": "document",
-        "bytes": 39635
+        "bytes": 46264
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -77800,7 +77800,7 @@
         "path": ".ai/repo/policy.yaml",
         "section": "policy",
         "source_class": "policy",
-        "bytes": 20281
+        "bytes": 20790
       },
       {
         "uri": "majordomus://profile/debugging",
@@ -83477,6 +83477,14 @@
         "bytes": 7187
       },
       {
+        "uri": "majordomus://test/test/cases/873_concurrent_branches_never_share_a_version.sh",
+        "kind": "test",
+        "identity": "test/cases/873_concurrent_branches_never_share_a_version.sh",
+        "path": "test/cases/873_concurrent_branches_never_share_a_version.sh",
+        "source_class": "case",
+        "bytes": 5907
+      },
+      {
         "uri": "majordomus://test/test/cases/87_release_pipeline.sh",
         "kind": "test",
         "identity": "test/cases/87_release_pipeline.sh",
@@ -84576,7 +84584,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 344
+      "objects": 345
     },
     {
       "name": "use-case",
@@ -100357,6 +100365,166 @@
                   "--dry-run"
                 ],
                 "command": "majordomus release advance --dry-run",
+                "setup": [],
+                "expectation": "exits 12"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "release",
+              "merge-version"
+            ],
+            "route": "/docs/cli/release/merge-version/",
+            "executable": true,
+            "usage": "majordomus release merge-version [OPTIONS] <BASE> <OURS> <THEIRS> <PATH>",
+            "about": "The git merge driver for the version line (`merge=version`): merge a version file with the base and both sides rewritten to the greater declared version, so the version never conflicts and the advance decides it; git invokes it as `release merge-version %O %A %B %P`",
+            "args": [
+              {
+                "name": "base",
+                "positional": true,
+                "help": "The merge base's version of the file (git's %O)",
+                "value_name": "BASE",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "ours",
+                "positional": true,
+                "help": "Our version, overwritten with the result (git's %A)",
+                "value_name": "OURS",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "theirs",
+                "positional": true,
+                "help": "Their version (git's %B)",
+                "value_name": "THEIRS",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "path",
+                "positional": true,
+                "help": "The repository path being merged (git's %P)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "How to render the answer",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "release-merge-version-unreadable",
+                "title": "The version driver, asked about files that are not there",
+                "description": "Git runs the driver with the three versions of a conflicted file and the path it is merging; the driver rewrites all three to the greater declared version, merges the rest with git's own three-way merge, writes the result over `%A`, and exits 0 when every hunk merged or 1 when conflict markers were left, as git requires of a driver. Files it cannot read are not a merge at all, so it writes nothing and exits 12.",
+                "argv": [
+                  "release",
+                  "merge-version",
+                  "absent-base",
+                  "absent-ours",
+                  "absent-theirs",
+                  "apps/majordomus-cli/Cargo.toml"
+                ],
+                "command": "majordomus release merge-version absent-base absent-ours absent-theirs apps/majordomus-cli/Cargo.toml",
                 "setup": [],
                 "expectation": "exits 12"
               }

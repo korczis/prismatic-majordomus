@@ -591,6 +591,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "prints what integrating this tree requires the version to become, and why.",
     },
     LocalCommand {
+        command: "release merge-version",
+        reason: LocalReason::WritesRepository,
+        note: "git's merge driver for the version line: it writes the merged file over git's %A, which is a write into a merge in progress and meaningless over a socket.",
+    },
+    LocalCommand {
         command: "release advance",
         reason: LocalReason::WritesRepository,
         note: "satisfies the version obligation through the one writer `release bump` uses; nothing when it already holds.",

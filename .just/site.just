@@ -66,12 +66,14 @@ derive:
 derive-check:
     scripts/derive-check
 
-# Declare the `derived` merge driver this clone needs, so .gitattributes resolves the derived artifacts on merge instead of conflicting on their fingerprints (scripts/merge-derived).
+# Declare the merge drivers this clone needs: `derived` resolves the derived artifacts instead of conflicting on their fingerprints (scripts/merge-derived), `version` takes the version line out of a merge of the manifest and the lock (release merge-version, ADR 0106 §8b) and falls back to git's own text merge where the executable lacks it.
 [group('site')]
 derive-merge-driver:
     git config merge.derived.name "derived artifacts: resolve to ours, regenerate before committing"
     git config merge.derived.driver "{{root}}/scripts/merge-derived %O %A %B %P"
-    @echo "merge.derived wired; .gitattributes now resolves the derived artifacts on merge"
+    git config merge.version.name "the version line: merged version-neutrally, decided by release advance"
+    git config merge.version.driver 'MAJORDOMUS_NO_BUILD=1 bin/majordomus-cli release merge-version %O %A %B %P; s=$?; [ $s -le 1 ] && exit $s; git merge-file %A %O %B'
+    @echo "merge.derived and merge.version wired; .gitattributes now resolves derived artifacts and the version line on merge"
 
 # Take the conflict off a branch GitHub reports as CONFLICTING over derived files alone: merge master in where the driver exists, derive, commit, push the branch (scripts/unblock). `just unblock 137`, `just unblock feature/x --dry-run`.
 [group('site')]

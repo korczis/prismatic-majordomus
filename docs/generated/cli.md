@@ -124,6 +124,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus release bump`](#majordomus-release-bump) | `/docs/cli/release/bump/` | Raise the version in the one place it is authored, to at least what the public contract requires; scripts/derive derives the rest |
 | [`majordomus release obligation`](#majordomus-release-obligation) | `/docs/cli/release/obligation/` | What integrating this tree into the trunk requires the version to become: the larger of the public contract's requirement and the completion cadence over the trunk's version (ADR 0106); exit 10 when it is owed |
 | [`majordomus release advance`](#majordomus-release-advance) | `/docs/cli/release/advance/` | Satisfy the version obligation through the one writer: raise the version to the minimum the obligation computes against the current trunk, and nothing when it already holds; scripts/derive derives the rest |
+| [`majordomus release merge-version`](#majordomus-release-merge-version) | `/docs/cli/release/merge-version/` | The git merge driver for the version line (`merge=version`): merge a version file with the base and both sides rewritten to the greater declared version, so the version never conflicts and the advance decides it; git invokes it as `release merge-version %O %A %B %P` |
 | [`majordomus quality`](#majordomus-quality) | `/docs/cli/quality/` | What this executable's own public surface is held to: documentation, executable examples, module coverage, and every command accounted for against the capability registry |
 | [`majordomus quality report`](#majordomus-quality-report) | `/docs/cli/quality/report/` | Measure the crate and report every finding, with the rule it breaks and what to do about it |
 | [`majordomus quality rustdoc`](#majordomus-quality-rustdoc) | `/docs/cli/quality/rustdoc/` | Judge the crate's rustdoc tree against the crate: every page present, HEAD's, nothing broken or leaked |
@@ -3351,7 +3352,7 @@ Examples:
 
 What this project has shipped and what it would ship next: the changelog derived from the layer's own records, the version authored in one place and projected for the shell tool, and the one command that raises it
 
-Subcommands: [`majordomus release changelog`](#majordomus-release-changelog), [`majordomus release version`](#majordomus-release-version), [`majordomus release analyze`](#majordomus-release-analyze), [`majordomus release bump`](#majordomus-release-bump), [`majordomus release obligation`](#majordomus-release-obligation), [`majordomus release advance`](#majordomus-release-advance).
+Subcommands: [`majordomus release changelog`](#majordomus-release-changelog), [`majordomus release version`](#majordomus-release-version), [`majordomus release analyze`](#majordomus-release-analyze), [`majordomus release bump`](#majordomus-release-bump), [`majordomus release obligation`](#majordomus-release-obligation), [`majordomus release advance`](#majordomus-release-advance), [`majordomus release merge-version`](#majordomus-release-merge-version).
 
 ```text
 majordomus release [OPTIONS] [COMMAND]
@@ -3541,6 +3542,37 @@ Examples:
 
   ```console
   $ majordomus release advance --dry-run
+  ```
+
+  Verified: exits 12.
+
+<a id="majordomus-release-merge-version"></a>
+## `majordomus release merge-version`
+
+The git merge driver for the version line (`merge=version`): merge a version file with the base and both sides rewritten to the greater declared version, so the version never conflicts and the advance decides it; git invokes it as `release merge-version %O %A %B %P`
+
+```text
+majordomus release merge-version [OPTIONS] <BASE> <OURS> <THEIRS> <PATH>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<BASE>` | `<BASE>` | required | The merge base's version of the file (git's %O) |
+| `<OURS>` | `<OURS>` | required | Our version, overwritten with the result (git's %A) |
+| `<THEIRS>` | `<THEIRS>` | required | Their version (git's %B) |
+| `<PATH>` | `<PATH>` | required | The repository path being merged (git's %P) |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | How to render the answer (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The version driver, asked about files that are not there** — Git runs the driver with the three versions of a conflicted file and the path it is merging; the driver rewrites all three to the greater declared version, merges the rest with git's own three-way merge, writes the result over `%A`, and exits 0 when every hunk merged or 1 when conflict markers were left, as git requires of a driver. Files it cannot read are not a merge at all, so it writes nothing and exits 12.
+
+  ```console
+  $ majordomus release merge-version absent-base absent-ours absent-theirs apps/majordomus-cli/Cargo.toml
   ```
 
   Verified: exits 12.

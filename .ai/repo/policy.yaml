@@ -245,6 +245,14 @@ enforcement:
     path: scripts/merge-derived
     args: []
     wired_by: git-config:merge.derived.driver
+  # The manifest and the lock are `merge=version` (ADR 0106 §8b): two branches advanced from
+  # one trunk would otherwise conflict on the version line at every refresh. The driver takes
+  # that line out of the merge and leaves the number to `release advance`; like the derived
+  # driver it is declared per clone, and git merges as text, silently, where it is not.
+  - name: version-merge-driver
+    path: bin/majordomus-cli
+    args: [release, merge-version]
+    wired_by: git-config:merge.version.driver
   - name: prompt-capture
     path: bin/majordomus
     args: [capture, prompt]
