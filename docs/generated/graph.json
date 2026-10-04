@@ -1655,14 +1655,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/cli/local.rs",
-        "kind": "file",
-        "label": "local.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/cli/local.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/cockpit/mod.rs",
         "kind": "file",
         "label": "mod.rs",
@@ -36802,6 +36794,13 @@
         "source": "test/cases/132_health_sees_a_stopped_writer.sh"
       },
       {
+        "id": "majordomus://test/test/cases/132b_a_new_branch_owes_no_records_yet.sh",
+        "kind": "test",
+        "label": "test/cases/132b_a_new_branch_owes_no_records_yet.sh",
+        "route": "/cockpit/objects/test/test-cases-132b-a-new-branch-owes-no-records-yet-sh",
+        "source": "test/cases/132b_a_new_branch_owes_no_records_yet.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/133_plan_transition.sh",
         "kind": "test",
         "label": "test/cases/133_plan_transition.sh",
@@ -44622,11 +44621,6 @@
         "source": "majordomus://adr/adr-0027",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0028",
-        "target": "file:apps/majordomus-cli/src/cli/local.rs",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0028",
@@ -59170,6 +59164,11 @@
       },
       {
         "source": "majordomus://test/test/cases/132_health_sees_a_stopped_writer.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/132b_a_new_branch_owes_no_records_yet.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
