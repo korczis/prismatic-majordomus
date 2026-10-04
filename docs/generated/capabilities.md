@@ -29,7 +29,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `episodes` | Episodes | behaviorally_verified | 3 | [`modules/episodes.md`](modules/episodes.md) |
 | `evidence` | Evidence | behaviorally_verified | 4 | [`modules/evidence.md`](modules/evidence.md) |
 | `executions` | Executions | behaviorally_verified | 7 | [`modules/executions.md`](modules/executions.md) |
-| `gates` | Completion gates | behaviorally_verified | 2 | [`modules/gates.md`](modules/gates.md) |
+| `gates` | Completion gates | behaviorally_verified | 3 | [`modules/gates.md`](modules/gates.md) |
 | `graph` | Graphs | behaviorally_verified | 2 | [`modules/graph.md`](modules/graph.md) |
 | `health` | Health | behaviorally_verified | 3 | [`modules/health.md`](modules/health.md) |
 | `integration` | Pull-request integration | experimental | 3 | [`modules/integration.md`](modules/integration.md) |
@@ -124,6 +124,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `executions.start` | `executions` | command | behaviorally_verified | `majordomus_execution_start` | — | `POST /api/v1/executions/start` | `majordomus run` | — | required |
 | `gates.completion` | `gates` | query | behaviorally_verified | `majordomus_completion` | `majordomus://gates/completion` | `GET /api/v1/gates/completion` | — | — | required |
 | `gates.model` | `gates` | query | behaviorally_verified | `majordomus_gates` | `majordomus://gates` | `GET /api/v1/gates` | — | process, 4 entries, 5s | required |
+| `gates.policy` | `gates` | query | behaviorally_verified | `majordomus_completion_policy` | `majordomus://gates/policy` | `GET /api/v1/gates/policy` | — | process, 4 entries, 5s | required |
 | `graph.get` | `graph` | query | behaviorally_verified | `majordomus_graph` | — | `GET /api/v1/graph` | — | process, 16 entries | required |
 | `graph.list` | `graph` | query | behaviorally_verified | `majordomus_graphs` | `majordomus://graphs` | `GET /api/v1/graphs` | — | — | required |
 | `health.live` | `health` | query | behaviorally_verified | — | — | `GET /api/v1/live` | — | — | required |

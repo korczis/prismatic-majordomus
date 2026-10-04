@@ -41,6 +41,10 @@
       },
       "description": "The obligations this task owes before the outcome completed is available. Token names come from share/obligations.yaml. Absent or empty means the task owes nothing beyond the rest of the contract, which is how every task behaved before obligations existed."
     },
+    "issue": {
+      "type": "string",
+      "description": "The issue of the plan this work serves (I0001), or none for work the plan does not track, declared as such. Absent means the task never said; majordomus check reports that as owed."
+    },
     "started_at": {
       "type": "string"
     },

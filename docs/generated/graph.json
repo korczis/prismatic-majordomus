@@ -599,6 +599,15 @@
         "status": "query"
       },
       {
+        "id": "capability:gates.policy",
+        "kind": "capability",
+        "label": "gates.policy",
+        "summary": "The completion policy",
+        "route": "/cockpit/capabilities/gates.policy",
+        "source": "apps/majordomus-cli/src/capability/builtin/gates.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:graph.get",
         "kind": "capability",
         "label": "graph.get",
@@ -1754,14 +1763,6 @@
         "label": "swagger.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/http/swagger.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/http/ws.rs",
-        "kind": "file",
-        "label": "ws.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/http/ws.rs",
         "external": true
       },
       {
@@ -42034,6 +42035,21 @@
         "kind": "projects"
       },
       {
+        "source": "capability:gates.policy",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.policy",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:gates.policy",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:graph.get",
         "target": "projection:cockpit",
         "kind": "projects"
@@ -44646,11 +44662,6 @@
       {
         "source": "majordomus://adr/adr-0033",
         "target": "file:apps/majordomus-cli/src/http/events.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/http/ws.rs",
         "kind": "put_in_force"
       },
       {
@@ -62889,6 +62900,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:gates",
+        "target": "capability:gates.policy",
+        "kind": "composes"
+      },
+      {
         "source": "module:graph",
         "target": "capability:graph.get",
         "kind": "composes"
@@ -63441,7 +63457,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4493,
+      "edges": 4496,
       "acyclic": true,
       "truncated": true
     }

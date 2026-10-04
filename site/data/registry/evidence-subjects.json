@@ -339,6 +339,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:gates.policy",
+      "path": "/evidence/capabilities/gates-policy/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:graph.get",
       "path": "/evidence/capabilities/graph-get/"
     },
@@ -4051,6 +4056,16 @@
       "kind": "capability",
       "id": "gates.model",
       "page": "/evidence/capabilities/gates-model/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:gates.policy": {
+      "kind": "capability",
+      "id": "gates.policy",
+      "page": "/evidence/capabilities/gates-policy/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -16800,6 +16815,18 @@
       "programs": [],
       "members": [
         "capability:gates.completion"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_completion_policy": {
+      "kind": "mcp",
+      "id": "majordomus_completion_policy",
+      "alias_of": "capability:gates.policy",
+      "programs": [],
+      "members": [
+        "capability:gates.policy"
       ],
       "routes": [],
       "mechanisms": [],

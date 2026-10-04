@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 169 | 151 | 0 | 18 |
-| http | 167 | 151 | 0 | 16 |
-| mcp | 163 | 147 | 0 | 16 |
+| direct | 170 | 152 | 0 | 18 |
+| http | 168 | 152 | 0 | 16 |
+| mcp | 164 | 148 | 0 | 16 |
 | system | 13 | 13 | 0 | 0 |
-| total | 512 | 462 | 0 | 50 |
+| total | 515 | 465 | 0 | 50 |
 
 ## Capabilities
 
@@ -78,6 +78,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `executions.start` | executions | command | — | covered | covered | covered | `demonstrate` |
 | `gates.completion` | gates | query | — | covered | covered | covered | `this-task`, `one-source-file`, `a-document`, `everything-on-demand` |
 | `gates.model` | gates | query | process, 4 entries, 5s | covered | covered | covered | `default` |
+| `gates.policy` | gates | query | process, 4 entries, 5s | covered | covered | covered | `default` |
 | `graph.get` | graph | query | process, 16 entries | covered | covered | covered | `registry`, `layer`, `rules`, `adrs`, `use-cases`, `why`, `product`, `composed` |
 | `graph.list` | graph | query | — | covered | covered | covered | `default` |
 | `health.live` | health | query | — | covered | — | covered | `default` |

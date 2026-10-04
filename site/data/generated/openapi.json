@@ -58,6 +58,7 @@
     "op-executions-start": "docs/api/executions/",
     "op-gates-completion": "docs/api/gates/",
     "op-gates-model": "docs/api/gates/",
+    "op-gates-policy": "docs/api/gates/",
     "op-graph-get": "docs/api/graph/",
     "op-graph-list": "docs/api/graph/",
     "op-health-live": "docs/api/health/",
@@ -291,6 +292,7 @@
     "schema-CompiledContext": "docs/api/devcontext/",
     "schema-CompilerPolicy": "docs/api/devcontext/",
     "schema-Completion": "docs/api/gates/",
+    "schema-CompletionPolicyReport": "docs/api/gates/",
     "schema-ConclusionView": "docs/api/reasoning/",
     "schema-Concurrency": "docs/api/deploy/",
     "schema-Confidence": "docs/api/environment/",
@@ -330,9 +332,12 @@
     "schema-DemonstrateReport": "docs/api/executions/",
     "schema-DependencyCertainty": "docs/api/integration/",
     "schema-DeploymentCheck": "docs/api/deploy/",
+    "schema-DeploymentIdentity": "docs/api/gates/",
     "schema-DeploymentList": "docs/api/deploy/",
+    "schema-DeploymentPlan": "docs/api/gates/",
     "schema-DeploymentStanding": "docs/api/served/",
     "schema-DeploymentStatus": "docs/api/deploy/",
+    "schema-DeploymentTarget": "docs/api/gates/",
     "schema-DeploymentView": "docs/api/deploy/",
     "schema-DesignReport": "docs/api/design/",
     "schema-Desired": "docs/api/server/",
@@ -568,6 +573,7 @@
     "schema-LeaseView": "docs/api/server/",
     "schema-LedgerMark": "docs/api/knowledge-base/",
     "schema-Libc": "docs/api/distribution/",
+    "schema-LifecycleStage": "docs/api/gates/",
     "schema-LimitsView": "docs/api/executions/",
     "schema-LinkRefusal": "docs/api/mesh/",
     "schema-LinkReply": "docs/api/mesh/",
@@ -715,6 +721,7 @@
     "schema-QualityAnswer": "docs/api/quality/",
     "schema-QualityReport": "docs/api/quality/",
     "schema-QualitySeverity": "docs/api/quality/",
+    "schema-QuestionDecl": "docs/api/gates/",
     "schema-QueueTallies": "docs/api/integration/",
     "schema-Readiness": "docs/api/health/",
     "schema-ReadinessVerdict": "docs/api/devtask/",
@@ -882,6 +889,9 @@
     "schema-Source": "docs/api/design/",
     "schema-Spelling": "docs/api/session-domain/",
     "schema-Stability": "docs/api/shared/",
+    "schema-StageDecl": "docs/api/gates/",
+    "schema-StageReport": "docs/api/gates/",
+    "schema-StageState": "docs/api/gates/",
     "schema-Stance": "docs/api/reasoning/",
     "schema-Standing": "docs/api/worktree/",
     "schema-StartInput": "docs/api/executions/",
@@ -914,6 +924,7 @@
     "schema-Surfaces": "docs/api/product/",
     "schema-Tallies": "docs/api/mesh/",
     "schema-Tally": "docs/api/repository/",
+    "schema-TargetKind": "docs/api/gates/",
     "schema-TargetStatus": "docs/api/distribution/",
     "schema-TargetView": "docs/api/distribution/",
     "schema-TaskReadiness": "docs/api/devtask/",
@@ -948,6 +959,7 @@
     "schema-VendorView": "docs/api/models/",
     "schema-Verdict": "docs/api/repository/",
     "schema-VerifyReport": "docs/api/objects/",
+    "schema-VersionSummary": "docs/api/gates/",
     "schema-Violation": "docs/api/quality/",
     "schema-ViolationCode": "docs/api/quality/",
     "schema-Vocabulary": "docs/api/obligations/",
@@ -1015,8 +1027,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 167,
-    "schemas": 794,
+    "operations": 168,
+    "schemas": 805,
     "tags": 51
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1160,6 +1172,7 @@
     "executions.start": "executions",
     "gates.completion": "gates",
     "gates.model": "gates",
+    "gates.policy": "gates",
     "graph.get": "graph",
     "graph.list": "graph",
     "health.live": "health",
@@ -1397,6 +1410,7 @@
     "CompiledContext": "devcontext",
     "CompilerPolicy": "devcontext",
     "Completion": "gates",
+    "CompletionPolicyReport": "gates",
     "ConclusionView": "reasoning",
     "Concurrency": "deploy",
     "Confidence": "environment",
@@ -1436,9 +1450,12 @@
     "DemonstrateReport": "executions",
     "DependencyCertainty": "integration",
     "DeploymentCheck": "deploy",
+    "DeploymentIdentity": "gates",
     "DeploymentList": "deploy",
+    "DeploymentPlan": "gates",
     "DeploymentStanding": "served",
     "DeploymentStatus": "deploy",
+    "DeploymentTarget": "gates",
     "DeploymentView": "deploy",
     "DesignReport": "design",
     "Desired": "server",
@@ -1674,6 +1691,7 @@
     "LeaseView": "server",
     "LedgerMark": "knowledge-base",
     "Libc": "distribution",
+    "LifecycleStage": "gates",
     "LimitsView": "executions",
     "LinkRefusal": "mesh",
     "LinkReply": "mesh",
@@ -1821,6 +1839,7 @@
     "QualityAnswer": "quality",
     "QualityReport": "quality",
     "QualitySeverity": "quality",
+    "QuestionDecl": "gates",
     "QueueTallies": "integration",
     "Readiness": "health",
     "ReadinessVerdict": "devtask",
@@ -1988,6 +2007,9 @@
     "Source": "design",
     "Spelling": "session-domain",
     "Stability": "shared",
+    "StageDecl": "gates",
+    "StageReport": "gates",
+    "StageState": "gates",
     "Stance": "reasoning",
     "Standing": "worktree",
     "StartInput": "executions",
@@ -2020,6 +2042,7 @@
     "Surfaces": "product",
     "Tallies": "mesh",
     "Tally": "repository",
+    "TargetKind": "gates",
     "TargetStatus": "distribution",
     "TargetView": "distribution",
     "TaskReadiness": "devtask",
@@ -2054,6 +2077,7 @@
     "VendorView": "models",
     "Verdict": "repository",
     "VerifyReport": "objects",
+    "VersionSummary": "gates",
     "Violation": "quality",
     "ViolationCode": "quality",
     "Vocabulary": "obligations",
@@ -2127,6 +2151,13 @@
         {
           "description": "The commit it started at.",
           "name": "head",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The issue of the plan this work serves, or `none` for work the plan does not track,\ndeclared as such. Absent means the task never said, which the completion report\nreports as owed rather than as nothing.",
+          "name": "issue",
           "refs": [],
           "required": false,
           "type": "string"
@@ -8494,7 +8525,7 @@
       "variants": []
     },
     {
-      "description": "```\nuse majordomus_cli::gates::Completion;\n\n// the document every surface reads, as `gates.completion` answers with it. The property\n// that matters is the one asserted here: a gate that never reported leaves the task\n// finishable and *unverified*, which is a different thing from a task that passed.\nlet c: Completion = serde_json::from_value(serde_json::json!({\n    \"present\": true,\n    \"model\": \".ai/repo/ci/gates.yaml\",\n    \"plan\": { \"mode\": \"affected\", \"reason\": \"1 path in 1 class\", \"changed\": [\"docs/CLI.md\"],\n              \"classes\": [], \"unclassified\": [], \"selected\": {}, \"excluded\": {} },\n    \"finishable\": true,\n    \"unverified\": [\"reference-check\"],\n    \"tallies\": { \"queued\": 1 },\n    \"gates\": [],\n    \"obligations\": [],\n    \"questions\": []\n}))\n.unwrap();\nassert!(c.finishable, \"absence of a verdict does not refuse\");\nassert_eq!(c.unverified, [\"reference-check\"], \"and it is never silently accepted\");\nassert!(c.blocking.is_empty());\n```\nWhether the active task may be called finished, and everything the answer rests on.\n\n`finishable` is the field a caller acts on and the one thing no surface may recompute:\nthe shell tool's `check` and `finish` read it, the HTTP API serves it, the Cockpit\nrenders it, and all of them are reading this one execution.",
+      "description": "```\nuse majordomus_cli::gates::Completion;\n\n// the document every surface reads, as `gates.completion` answers with it. The property\n// that matters is the one asserted here: a gate that never reported leaves the task\n// finishable and *unverified*, which is a different thing from a task that passed.\nlet c: Completion = serde_json::from_value(serde_json::json!({\n    \"present\": true,\n    \"model\": \".ai/repo/ci/gates.yaml\",\n    \"plan\": { \"mode\": \"affected\", \"reason\": \"1 path in 1 class\", \"changed\": [\"docs/CLI.md\"],\n              \"classes\": [], \"unclassified\": [], \"selected\": {}, \"excluded\": {} },\n    \"finishable\": true,\n    \"unverified\": [\"reference-check\"],\n    \"tallies\": { \"queued\": 1 },\n    \"gates\": [],\n    \"obligations\": [],\n    \"questions\": [],\n    \"policy\": \"share/completion.yaml\",\n    \"stage\": { \"id\": \"gates\", \"title\": \"Gates\", \"state\": \"pending\", \"complete\": false,\n               \"owing\": [\"ci\"], \"stages\": [] },\n    \"verified\": false,\n    \"complete\": false,\n    \"deployment\": { \"targets\": [] }\n}))\n.unwrap();\nassert!(c.finishable, \"absence of a verdict does not refuse\");\nassert_eq!(c.unverified, [\"reference-check\"], \"and it is never silently accepted\");\nassert!(c.blocking.is_empty());\n// and the three words a reader acts on are three different facts\nassert!(!c.verified, \"finishable and unverified: nothing refused, something never reported\");\nassert!(!c.complete, \"and nothing is complete while a question is owed\");\nassert_eq!(c.stage.id, \"gates\");\n```\nWhether the active task may be called finished, and everything the answer rests on.\n\n`finishable` is the field a caller acts on and the one thing no surface may recompute:\nthe shell tool's `check` and `finish` read it, the HTTP API serves it, the Cockpit\nrenders it, and all of them are reading this one execution.",
       "home": "gates",
       "is_enum": false,
       "name": "Completion",
@@ -8587,6 +8618,54 @@
           "type": "array of DoneQuestion"
         },
         {
+          "description": "The completion policy the questions were taken from.",
+          "name": "policy",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where the task stands in the lifecycle, derived from the questions in the policy's\norder: the first stage blocked, else the first stage pending, else complete.",
+          "name": "stage",
+          "refs": [
+            "LifecycleStage"
+          ],
+          "required": true,
+          "type": "LifecycleStage"
+        },
+        {
+          "description": "True when `finishable` holds and every required gate has reported over this tree:\nnothing refuses and nothing is silent.",
+          "name": "verified",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "True only when every question of the policy passes or is exempt. This is the one\nfield that may be read as \"done\", and no surface computes it a second time.",
+          "name": "complete",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The structural version analysis, when it could be made.",
+          "name": "version",
+          "refs": [
+            "VersionSummary"
+          ],
+          "required": false,
+          "type": "VersionSummary | null"
+        },
+        {
+          "description": "Which deployment targets the change reaches, and why each applies or does not.",
+          "name": "deployment",
+          "refs": [
+            "DeploymentPlan"
+          ],
+          "required": true,
+          "type": "DeploymentPlan"
+        },
+        {
           "description": "What could not be established, each as one line. Never empty when something was\nskipped: a gap is reported rather than left to be inferred.",
           "name": "findings",
           "refs": [],
@@ -8597,6 +8676,74 @@
       "type": "object",
       "used_by": [
         "gates.completion"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The completion policy, as every projection states it: the stages, the questions and\nthe source each is answered from, plus the fragment the provider bootstraps carry.\nThe policy is flattened into the report, so a reader of `gates.policy` sees the same\nkeys the file carries with the derived fields beside them.\n\n```\nuse majordomus_cli::capability::builtin::gates::CompletionPolicyReport;\nuse majordomus_cli::gates::CompletionPolicy;\n\nlet policy = CompletionPolicy::parse(\n    \"version: 1\\nstages:\\n  - id: a\\n    title: Alpha\\n    summary: s\\nquestions:\\n  - id: q\\n    stage: a\\n    question: Is it?\\n    source: gate:site-check\\n    remediation: run it\\n\",\n    \"share/completion.yaml\",\n)\n.unwrap();\nlet report = CompletionPolicyReport {\n    fragment: policy.bootstrap_fragment(),\n    problems: policy.validate(&[]),\n    unanswered_gates: policy.unanswered_gates(&[]),\n    policy,\n};\nassert_eq!(report.fragment, \"- Alpha: q\\n\");\nassert_eq!(report.unanswered_gates, [\"q:site-check\"]);\nlet json = serde_json::to_value(&report).unwrap();\nassert_eq!(json[\"stages\"][0][\"id\"], \"a\", \"the policy's own keys, flattened\");\nassert!(json.get(\"problems\").is_none(), \"a coherent distribution writes no problems\");\n```",
+      "home": "gates",
+      "is_enum": false,
+      "name": "CompletionPolicyReport",
+      "properties": [
+        {
+          "description": "The format version the file states.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Where it was read from.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The lifecycle, in order.",
+          "name": "stages",
+          "refs": [
+            "StageDecl"
+          ],
+          "required": true,
+          "type": "array of StageDecl"
+        },
+        {
+          "description": "Every question, in declaration order.",
+          "name": "questions",
+          "refs": [
+            "QuestionDecl"
+          ],
+          "required": true,
+          "type": "array of QuestionDecl"
+        },
+        {
+          "description": "The generated section of an instruction file (AGENTS.md, CLAUDE.md): one line per\nstage with the questions that belong to it. The shell tool renders the same bytes.",
+          "name": "fragment",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What does not resolve against the vocabulary the policy is shipped beside: a token\n`share/obligations.yaml` lacks. Empty in a coherent distribution, and never silently so.",
+          "name": "problems",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The questions answered by a gate this repository's CI model does not declare, as\n`question:gate`. Not a problem: the report answers them `exempt` by name. Listed so\nthat a repository can see what the policy would ask and it never does.",
+          "name": "unanswered_gates",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "gates.policy"
       ],
       "used_by_schemas": [],
       "values": [],
@@ -10888,6 +11035,42 @@
       "variants": []
     },
     {
+      "description": "What a live surface is expected to be serving, or what it states it serves: the same\nshape on both sides of a comparison. Every field is optional because no surface states\nall three, and a field that is absent is not written when the identity is serialised.\n\n```\nuse majordomus_cli::deploy::targets::DeploymentIdentity;\n\nlet expected = DeploymentIdentity {\n    commit: Some(\"abc123\".into()),\n    version: Some(\"0.6.0\".into()),\n    tag: None,\n};\nassert!(!expected.is_empty());\nlet json = serde_json::to_string(&expected).unwrap();\nassert!(!json.contains(\"tag\"), \"an absent field is not written: {json}\");\n```",
+      "home": "gates",
+      "is_enum": false,
+      "name": "DeploymentIdentity",
+      "properties": [
+        {
+          "description": "The commit, when the surface reports one.",
+          "name": "commit",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The version, when the surface reports one.",
+          "name": "version",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The release tag, when the surface reports one.",
+          "name": "tag",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DeploymentTarget"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Every deployment the layer declares.",
       "home": "deploy",
       "is_enum": false,
@@ -10924,6 +11107,37 @@
         "deploy.list"
       ],
       "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Every target, applicable or not, with what could not be derived alongside. The plan\nis what a deployment command shows before it acts and what a verifier is handed\nafterwards: the applicable targets are asked, and the rest are reported with the reason\nthe plan gave, never silently dropped.\n\n```\nuse majordomus_cli::deploy::targets::{plan, DeploymentPlan, PlanFacts};\n\nlet facts = PlanFacts {\n    site_base_url: Some(\"https://example.test\".into()),\n    site_inputs: vec![\"docs/**\".into()],\n    ..Default::default()\n};\nlet deployment: DeploymentPlan = plan(&facts, &[\"README.md\".into()], false);\nassert_eq!(deployment.targets.len(), 1, \"the site is a target even when not reached\");\nassert_eq!(deployment.applicable().count(), 0);\nassert!(\n    deployment.findings.iter().any(|f| f.contains(\"no release record\")),\n    \"{:?}\",\n    deployment.findings\n);\n```",
+      "home": "gates",
+      "is_enum": false,
+      "name": "DeploymentPlan",
+      "properties": [
+        {
+          "description": "The targets, in a stable order: pages, release, then each application by id.",
+          "name": "targets",
+          "refs": [
+            "DeploymentTarget"
+          ],
+          "required": true,
+          "type": "array of DeploymentTarget"
+        },
+        {
+          "description": "What could not be derived, each as one line.",
+          "name": "findings",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Completion"
+      ],
       "values": [],
       "variants": []
     },
@@ -10995,6 +11209,88 @@
       "variants": []
     },
     {
+      "description": "One surface the change may reach, applicable or not, with the reason either way. A\ntarget is normally derived by `plan`; the fields are public so that a test, or a\ncaller that already knows its surfaces, can write one down, and the empty lists are\nleft out of the serialised form.\n\n```\nuse majordomus_cli::deploy::targets::{DeploymentTarget, DeploymentIdentity, TargetKind};\n\nlet target = DeploymentTarget {\n    id: \"pages\".into(),\n    kind: TargetKind::Pages,\n    url: Some(\"https://example.test\".into()),\n    identity_url: Some(\"https://example.test/build.json\".into()),\n    applicable: false,\n    reason: \"the change touches nothing the site is built from\".into(),\n    expected: DeploymentIdentity::default(),\n    inputs: vec![\"docs/**\".into()],\n    because: vec![],\n};\nlet json = serde_json::to_value(&target).unwrap();\nassert_eq!(json[\"kind\"], \"pages\");\nassert_eq!(json[\"inputs\"], serde_json::json!([\"docs/**\"]));\nassert!(json.get(\"because\").is_none(), \"an empty list is not written\");\n```",
+      "home": "gates",
+      "is_enum": false,
+      "name": "DeploymentTarget",
+      "properties": [
+        {
+          "description": "The target's identity: `pages`, `release`, or the deployment object's id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Which kind of surface it is.",
+          "name": "kind",
+          "refs": [
+            "TargetKind"
+          ],
+          "required": true,
+          "type": "TargetKind"
+        },
+        {
+          "description": "Where it is served, when known.",
+          "name": "url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The address that states the surface's own identity, when known.",
+          "name": "identity_url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether the change reaches it.",
+          "name": "applicable",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why it applies, or why it does not.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the surface is expected to serve once the change is deployed.",
+          "name": "expected",
+          "refs": [
+            "DeploymentIdentity"
+          ],
+          "required": false,
+          "type": "DeploymentIdentity"
+        },
+        {
+          "description": "The pathspecs whose change makes the target applicable, when paths do.",
+          "name": "inputs",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The changed paths that made it applicable, when paths did.",
+          "name": "because",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DeploymentPlan"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One deployment as this process reads it, with where it came from.",
       "home": "deploy",
       "is_enum": false,
@@ -11057,6 +11353,13 @@
           "refs": [],
           "required": true,
           "type": "string"
+        },
+        {
+          "description": "Where it answers, once it is active: the public origin a verifier asks for\n`/api/v1/distribution/build`. Stated only for an active deployment; a declared one\nhas nothing to ask.",
+          "name": "url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         },
         {
           "description": "What is shipped and what it is built from.",
@@ -13098,7 +13401,7 @@
       "variants": []
     },
     {
-      "description": "```\nuse majordomus_cli::gates::{DoneQuestion, GateStatus};\n\nlet q = DoneQuestion {\n    id: \"pushed\".into(),\n    question: \"Has the commit reached the remote?\".into(),\n    status: GateStatus::Queued,\n    evidence: \"the obligation is owed\".into(),\n    source: \"obligation push (obligations.closure)\".into(),\n    remediation: \"git push\".into(),\n};\n// every question names what answered it and what would settle it: a question with\n// neither is a checklist line, which is the artifact this type exists instead of\nassert!(!q.source.is_empty() && !q.remediation.is_empty());\nassert!(q.status.unverified());\n```\nOne question of the done invariant, and what answered it.",
+      "description": "```\nuse majordomus_cli::gates::{DoneQuestion, GateStatus};\n\nlet q = DoneQuestion {\n    id: \"pushed\".into(),\n    stage: \"commit\".into(),\n    question: \"Has the commit reached the remote?\".into(),\n    status: GateStatus::Queued,\n    evidence: \"the obligation is owed\".into(),\n    source: \"obligation push (obligations.closure)\".into(),\n    remediation: \"git push\".into(),\n};\n// every question names what answered it and what would settle it: a question with\n// neither is a checklist line, which is the artifact this type exists instead of\nassert!(!q.source.is_empty() && !q.remediation.is_empty());\nassert!(q.status.unverified());\n```\nOne question of the done invariant, and what answered it.",
       "home": "gates",
       "is_enum": false,
       "name": "DoneQuestion",
@@ -13106,6 +13409,13 @@
         {
           "description": "The question's identity, stable across reports.",
           "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The lifecycle stage the policy places it in.",
+          "name": "stage",
           "refs": [],
           "required": true,
           "type": "string"
@@ -16243,6 +16553,7 @@
         "executions.start",
         "gates.model",
         "gates.completion",
+        "gates.policy",
         "graph.get",
         "graph.list",
         "health.report",
@@ -24564,6 +24875,67 @@
       "variants": []
     },
     {
+      "description": "Where the task stands: the one stage a reader acts on, and every stage behind and\nahead of it. Produced by `derive_stage` and by nothing else, so the stage a report\nnames is always the fold over the answers and never a word somebody wrote down.\n\n```\nuse majordomus_cli::gates::{DoneQuestion, GateStatus, LifecycleStage, StageDecl, StageState, derive_stage};\n\nlet stages = [StageDecl { id: \"build\".into(), title: \"Build\".into(), summary: \"s\".into() }];\nlet owed = DoneQuestion {\n    id: \"committed\".into(), stage: \"build\".into(), question: \"Is it committed?\".into(),\n    status: GateStatus::Queued, evidence: \"owed\".into(), source: \"s\".into(), remediation: \"git commit\".into(),\n};\nlet stage: LifecycleStage = derive_stage(&stages, &[owed]);\nassert_eq!((stage.id.as_str(), stage.state), (\"build\", StageState::Pending));\nassert_eq!(stage.owing, [\"committed\"]);\nassert!(!stage.complete, \"a question still owed is a task not completed\");\nassert_eq!(stage.stages.len(), 1);\n```",
+      "home": "gates",
+      "is_enum": false,
+      "name": "LifecycleStage",
+      "properties": [
+        {
+          "description": "The stage the task stands at: the first one blocked, else the first one pending,\nelse the last stage of the policy.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "That stage as a heading.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it stands.",
+          "name": "state",
+          "refs": [
+            "StageState"
+          ],
+          "required": true,
+          "type": "StageState"
+        },
+        {
+          "description": "True only when every stage is complete or empty. The word `completed` is earned\nhere and nowhere else.",
+          "name": "complete",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The questions still owed or refusing at the stage the task stands at.",
+          "name": "owing",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Every stage of the policy, in order.",
+          "name": "stages",
+          "refs": [
+            "StageReport"
+          ],
+          "required": true,
+          "type": "array of StageReport"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Completion"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "What this process's execution store keeps.",
       "home": "executions",
       "is_enum": false,
@@ -32518,6 +32890,56 @@
           "value": "warning"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "One question of the policy, as declared.\n\n`source` is carried as the text the file states (`obligation:tests`, `gates`,\n`release:impact`), never as a structure: every projection — the report, the site's\ndataset written with or without the executable, the bootstrap fragment — then states the\nsame bytes for the same question, and a reader compares the two by eye. `Self::kind`\nparses it; `CompletionPolicy::parse` has already refused a text nothing answers.\n\n```\nuse majordomus_cli::gates::{QuestionDecl, QuestionSource};\n\nlet decl = QuestionDecl {\n    id: \"pushed\".into(),\n    stage: \"commit\".into(),\n    question: \"Has the commit reached the remote?\".into(),\n    source: \"obligation:push\".into(),\n    remediation: \"git push\".into(),\n};\nassert_eq!(decl.kind(), QuestionSource::Obligation(\"push\".into()));\n// the source is carried as text, and serialises as the text the file stated\nassert_eq!(serde_json::to_value(&decl).unwrap()[\"source\"], \"obligation:push\");\n```",
+      "home": "gates",
+      "is_enum": false,
+      "name": "QuestionDecl",
+      "properties": [
+        {
+          "description": "The question's identity, stable across reports.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The stage it belongs to.",
+          "name": "stage",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The question, as a person would ask it.",
+          "name": "question",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What answers it, as the policy states it.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What would settle it, as a command.",
+          "name": "remediation",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CompletionPolicyReport"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -42370,6 +42792,126 @@
       "variants": []
     },
     {
+      "description": "One stage of the lifecycle, in the order the policy states them. A stage carries no\nquestion of its own: the questions name it by `id`, and\n`CompletionPolicy::questions_of` gathers them back, so a stage is a heading over\nwhatever the policy hangs under it.\n\n```\nuse majordomus_cli::gates::StageDecl;\n\nlet stage = StageDecl {\n    id: \"commit\".into(),\n    title: \"Commit and push\".into(),\n    summary: \"The work is in the branch's history.\".into(),\n};\n// the same shape the file carries, so a report and the policy agree byte for byte\nlet json = serde_json::to_value(&stage).unwrap();\nassert_eq!(json[\"id\"], \"commit\");\nassert_eq!(serde_json::from_value::<StageDecl>(json).unwrap(), stage);\n```",
+      "home": "gates",
+      "is_enum": false,
+      "name": "StageDecl",
+      "properties": [
+        {
+          "description": "The stage's identity, stable across reports.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The stage as a heading.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it means for the stage to be complete.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CompletionPolicyReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One stage of the lifecycle, with what its questions said. Every stage of the policy\ngets one, in the policy's order, so a reader sees the stages behind the task as well\nas the one it stands at; `owing` is written only when something is owed.\n\n```\nuse majordomus_cli::gates::{StageReport, StageState};\n\nlet report = StageReport {\n    id: \"commit\".into(),\n    title: \"Commit and push\".into(),\n    state: StageState::Complete,\n    questions: vec![\"committed\".into(), \"pushed\".into()],\n    owing: Vec::new(),\n};\nlet json = serde_json::to_value(&report).unwrap();\nassert_eq!(json[\"state\"], \"complete\");\nassert!(json.get(\"owing\").is_none(), \"nothing owed is nothing written\");\n```",
+      "home": "gates",
+      "is_enum": false,
+      "name": "StageReport",
+      "properties": [
+        {
+          "description": "The stage's identity.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The stage as a heading.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it stands.",
+          "name": "state",
+          "refs": [
+            "StageState"
+          ],
+          "required": true,
+          "type": "StageState"
+        },
+        {
+          "description": "The questions of this stage, in policy order.",
+          "name": "questions",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The questions still owed or refusing, in policy order.",
+          "name": "owing",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "LifecycleStage"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where one stage stands, folded from the answers to its questions and never set by\nanybody. A refusal anywhere in the stage makes it blocked whatever else passed; a\nstage with nothing owed is complete; one with an unanswered question is pending; and\na stage the change asks nothing of is empty, which neither blocks nor completes.\n\n```\nuse majordomus_cli::gates::StageState;\n\nassert_eq!(StageState::Blocked.as_str(), \"blocked\");\n// serialised as the same word the report prints, so no reader meets two spellings\nassert_eq!(serde_json::to_string(&StageState::Pending).unwrap(), \"\\\"pending\\\"\");\nassert_eq!(serde_json::from_str::<StageState>(\"\\\"empty\\\"\").unwrap(), StageState::Empty);\n```",
+      "home": "gates",
+      "is_enum": true,
+      "name": "StageState",
+      "properties": [],
+      "type": "\"complete\" | \"pending\" | \"blocked\" | \"empty\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "LifecycleStage",
+        "StageReport"
+      ],
+      "values": [
+        {
+          "description": "Every question of the stage passes or is exempt.",
+          "value": "complete"
+        },
+        {
+          "description": "A question of the stage has not been answered: queued or unknown.",
+          "value": "pending"
+        },
+        {
+          "description": "A question of the stage refuses: failing, stale, or blocked by one that is.",
+          "value": "blocked"
+        },
+        {
+          "description": "The stage declares no question that applies here.",
+          "value": "empty"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "Where an advisor's answer stands relative to the executor's hypothesis.\n\nA completed consultation must state its stance; the store refuses one without it. The\nstance is a label for the timeline, not a vote: agreement settles nothing.\n\n```\nuse majordomus_cli::reasoning::record::Stance;\n\nlet s: Stance = serde_json::from_str(\"\\\"alternative\\\"\").unwrap();\nassert_eq!(s, Stance::Alternative);\nassert!(serde_json::from_str::<Stance>(\"\\\"agrees\\\"\").is_err());\n```",
       "home": "reasoning",
       "is_enum": true,
@@ -43874,6 +44416,33 @@
         "ScopeReport"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "The three kinds of surface a deployment target can be. The order is the plan's order:\npages, then the release, then each application, so a report reads the same way every\ntime, and the serialised word is the lowercase name.\n\n```\nuse majordomus_cli::deploy::targets::TargetKind;\n\nassert!(TargetKind::Pages < TargetKind::Release);\nassert!(TargetKind::Release < TargetKind::Application);\nlet json = serde_json::to_string(&TargetKind::Application).unwrap();\nassert_eq!(json, \"\\\"application\\\"\");\n```",
+      "home": "gates",
+      "is_enum": true,
+      "name": "TargetKind",
+      "properties": [],
+      "type": "\"pages\" | \"release\" | \"application\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "DeploymentTarget"
+      ],
+      "values": [
+        {
+          "description": "The published static site.",
+          "value": "pages"
+        },
+        {
+          "description": "The published release metadata and artifacts.",
+          "value": "release"
+        },
+        {
+          "description": "A running instance of the executable, declared as a deployment object.",
+          "value": "application"
+        }
+      ],
       "variants": []
     },
     {
@@ -45640,6 +46209,70 @@
         "objects.verify"
       ],
       "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "```\nuse majordomus_cli::gates::VersionSummary;\nlet v: VersionSummary = serde_json::from_value(serde_json::json!({\n    \"baseline\": \"0.5.0\", \"declared\": \"0.6.0\", \"required\": \"0.6.0\",\n    \"impact\": \"minor\", \"status\": \"ok\", \"breaking\": false, \"changes\": 12\n})).unwrap();\n// the one sentence every surface shows about the version, reduced from the plan\n// `release.analysis` answers with; nothing here is measured a second time\nassert!(v.ok());\n```\nThe structural version analysis, reduced to what a completion report states.",
+      "home": "gates",
+      "is_enum": false,
+      "name": "VersionSummary",
+      "properties": [
+        {
+          "description": "The last released version the tree was measured against.",
+          "name": "baseline",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The version the tree declares.",
+          "name": "declared",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The smallest version the contract allows the tree to declare.",
+          "name": "required",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The impact the contract movement requires (`none`, `patch`, `minor`, `major`).",
+          "name": "impact",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`ok` when the declared version is at least the required one, else `blocked`.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether anything a caller could hold is gone.",
+          "name": "breaking",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "How many movements of the contract were found.",
+          "name": "changes",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Completion"
+      ],
       "values": [],
       "variants": []
     },
@@ -50614,6 +51247,13 @@
               "name": "on_demand",
               "required": false,
               "type": "boolean"
+            },
+            {
+              "description": "Settle the obligations something can establish — a commit, a push, the trunk, the\npublished site, the deployed surfaces — live, at HEAD. On by default; a report that\npasses `false` reads the ledger alone and says a live token is owed, never proven.",
+              "examples": [],
+              "name": "live",
+              "required": false,
+              "type": "boolean"
             }
           ],
           "path": "/api/v1/gates/completion",
@@ -50652,6 +51292,63 @@
           "result_schema": "Completion",
           "stability": "behaviorally_verified",
           "summary": "Whether this task may be called finished"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
+          "cache_detail": "max_entries=4, ttl_seconds=5",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/gates/policy\"",
+          "description": "The one definition of done: the lifecycle stages in order, every question a task must answer before it may be called finished, and the source each answer is taken from — an obligation of share/obligations.yaml, a gate of the CI model, the structural release analysis, the change set, the task record or the continuity store. Read from share/completion.yaml; every surface that states what done means, the generated section of the provider bootstraps included, is a projection of this answer. A source the policy names and the repository lacks is reported as a problem rather than silently unanswerable.",
+          "home": "gates",
+          "id": "gates.policy",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "completion-policy",
+            "uri": "majordomus://gates/policy"
+          },
+          "mcp_tool": "majordomus_completion_policy",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/gates/policy",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::gates",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The completion policy: the result.",
+              "schema": "CompletionPolicyReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "CompletionPolicyReport",
+          "stability": "behaviorally_verified",
+          "summary": "The completion policy"
         }
       ],
       "slug": "gates"
