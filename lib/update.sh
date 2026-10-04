@@ -160,12 +160,40 @@ mj_build_fragments() {
         state_updated)    printf -- '- **state updated** — the task record is at or behind HEAD, not diverged\n' ;;
         no_open_blockers) printf -- '- **no open blockers** — no unresolved entry for this task in open-questions.md\n' ;;
         note_present)     printf -- '- **note present** — a handover or completion note with the required sections exists\n' ;;
+        obligations_met)  printf -- '- **obligations met** — every token the task declared in \`requires\` is discharged by evidence that still describes this tree\n' ;;
+        gates_passed)     printf -- '- **gates passed** — no gate the change selects refuses, and none is stale\n' ;;
         *)                printf -- '- **%s**\n' "$r" ;;
       esac
     done
   } > "$d/FINISH_CONTRACT"
+  # The definition of done, one line per stage of share/completion.yaml with the questions
+  # that belong to it: the same bytes `gates.policy` answers as `fragment`, so the generated
+  # section of a bootstrap and the executable's answer cannot differ (generate --check would
+  # find the stamp wrong). Rendered from the policy file, never from a copy of it.
+  mj_completion_fragment > "$d/COMPLETION_CONTRACT"
   mj_ylist "$MJ_POL_FLAT" handover.required_sections | sed 's/^/`# /; s/$/`/' | paste -sd, - | sed 's/,/, /g' > "$d/REQUIRED_SECTIONS"
 }
+# One line per stage of share/completion.yaml: `- <title>: <question ids>`. A stage with no
+# question is skipped. The Rust renderer (`CompletionPolicy::bootstrap_fragment`) writes the
+# same bytes from the same file; neither reads the other. Plain items, not `- **bold**`:
+# mj_validate_bootstrap refuses a bootstrap carrying rule bullets of its own, and this is a
+# projection of the policy, not a rule corpus.
+mj_completion_fragment() {
+  # the distribution the executable reads when one is named, else the tool's own — the same
+  # resolution the Rust renderer makes, so the two cannot render from different policies
+  local reg="${MAJORDOMUS_SHARE:-$MJ_BIN_DIR/../share}/completion.yaml"
+  [ -f "$reg" ] || mj_die "$MJ_EX_INTERNAL" "completion policy missing: $reg"
+  awk '
+    /^stages:/   { sect="stages"; next }
+    /^questions:/{ sect="questions"; next }
+    sect=="stages" && /^  - id: /    { n++; sid[n]=$3; next }
+    sect=="stages" && /^    title: / { sub(/^    title: /, ""); title[n]=$0; next }
+    sect=="questions" && /^  - id: /   { qid=$3; next }
+    sect=="questions" && /^    stage: /{ qs=$2; if (qn[qs]=="") qn[qs]=qid; else qn[qs]=qn[qs] ", " qid; next }
+    END { for (i=1;i<=n;i++) if (qn[sid[i]]!="") printf "- %s: %s\n", title[i], qn[sid[i]] }
+  ' "$reg"
+}
+
 # the policy values a template or body may name inline
 mj_render_tokens() {
   sed -e "s|{{CHECKPOINT_DEFAULT}}|$(mj_pol profiles.checkpoint_interval_default)|g" \
