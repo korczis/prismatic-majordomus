@@ -1541,6 +1541,27 @@ fn the_relation_is_decided_on_the_observed_head_alone() {
     assert!(keys.iter().all(|k| commit_ids(k) && !k.contains("refs/")));
 }
 
+/// A cache written before only commit ids were kept may hold `<master>..refs/...` keys. They
+/// are dropped on the next read even while master stands still, so the file never carries a
+/// ref past one queue.
+#[test]
+fn a_ref_keyed_relation_written_earlier_is_dropped_while_master_stands_still() {
+    let RelationFixture { dir, master, heads } = relation_fixture();
+    observed(&dir, &master, vec![observed_pr(3, &heads["authored"])]);
+    let stale = format!("{master}..refs/majordomus/prs/3");
+    let path = crate::integration::state_path(&dir, crate::integration::RELATIONS_FILE);
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    std::fs::write(
+        &path,
+        format!("{{\"entries\":{{\"{stale}\":{{\"kind\":\"up_to_date\",\"authored\":[]}}}}}}"),
+    )
+    .unwrap();
+    crate::integration::queue_of(&dir).unwrap();
+    let keys = cached_keys(&dir);
+    assert!(!keys.contains(&stale), "{keys:?}");
+    assert!(keys.iter().all(|k| commit_ids(k) && !k.contains("refs/")));
+}
+
 /// A repository whose master's `.gitattributes` cannot be read, and a head that changes only
 /// the derived file it names: git merges and diffs it, and cannot say which path is derived.
 fn unreadable_attributes() -> (std::path::PathBuf, String, String) {

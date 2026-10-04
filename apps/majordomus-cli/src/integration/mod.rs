@@ -385,10 +385,13 @@ pub fn queue_of(root: &Path) -> Result<IntegrationQueue, String> {
         .ok()
         .and_then(|t| serde_json::from_str(&t).ok())
         .unwrap_or_default();
-    // bounded: only the current master's entries are worth keeping
-    cache
-        .entries
-        .retain(|k, _| k.starts_with(&format!("{master}..")));
+    // bounded: only the current master's entries are worth keeping, and only a pair of
+    // commit ids is a fact — a key written before refs were refused names a ref, which may
+    // hold another commit tomorrow, and is dropped even while master stands still
+    cache.entries.retain(|k, _| {
+        k.split_once("..")
+            .is_some_and(|(m, h)| m == master && is_object_id(m) && is_object_id(h))
+    });
     let mut queue = build_queue(&obs, &master, |p| {
         // decided on exactly the head the forge reported, which the assessment names as
         // evaluated: a head that moved during the refresh is not in this clone, and what
