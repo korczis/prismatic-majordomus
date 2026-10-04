@@ -8,6 +8,7 @@ headline: An issue records what happened to it and the engine derives whether it
 summary: Milestones are outcome specifications and issues are execution contracts, one YAML file each; the dependency graph decides execution waves and the next ready issue; a milestone whose dependencies are not accepted is blocked whatever its own issues say; and the GitHub projection is rendered offline from the same model.
 status: stable
 weight: 130
+domain: coordination
 featured: false
 areas: [work-tracking]
 commands: [plan]

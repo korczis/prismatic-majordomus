@@ -3,7 +3,7 @@
   "jsonSchemaDialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "info": {
     "title": "Majordomus",
-    "version": "0.12.0",
+    "version": "0.13.0",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "description": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document.",
     "license": {
@@ -11943,6 +11943,107 @@
         }
       }
     },
+    "/api/v1/product/domains": {
+      "get": {
+        "operationId": "product.domains",
+        "summary": "The domains",
+        "description": "The few things the product controls, each declared once under the layer's features section with its promise and the failure it answers, and each holding the stable features that name it: their interfaces, the distinct claims, use cases, rules and capabilities behind them, and the operational moments they answer, all derived. A domain lists no features; a feature names its domain. The default is the stable set; pass status=any for every domain.",
+        "tags": [
+          "product"
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only domains of this status. Absent means the stable ones; pass `any` for every\ndomain the model holds.",
+            "examples": {
+              "any": {
+                "value": "any"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The domains: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "product.domains",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::product"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "process",
+          "max_entries": 4
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_product_domains",
+          "resource": {
+            "uri": "majordomus://product/domains",
+            "name": "product-domains"
+          }
+        },
+        "x-majordomus-cli": "product domains"
+      }
+    },
     "/api/v1/product/feature": {
       "get": {
         "operationId": "product.feature",
@@ -12044,7 +12145,7 @@
       "get": {
         "operationId": "product.features",
         "summary": "The features",
-        "description": "Every product feature this repository declares, narrowed by any of the facets the model derives — featured, area, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too.",
+        "description": "Every product feature this repository declares, narrowed by any of the facets the model derives — featured, area, domain, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too.",
         "tags": [
           "product"
         ],
@@ -12083,6 +12184,20 @@
             "examples": {
               "by-area": {
                 "value": "context"
+              }
+            }
+          },
+          {
+            "name": "domain",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only features filed under this product domain.",
+            "examples": {
+              "by-domain": {
+                "value": "completion"
               }
             }
           },
@@ -25149,6 +25264,190 @@
         ],
         "description": "One document, and the encodings it is committed in."
       },
+      "DomainCounts": {
+        "type": "object",
+        "properties": {
+          "features": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Stable features filed under it."
+          },
+          "claims": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Distinct claims its features name."
+          },
+          "tested": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Distinct claims that are guaranteed and name the test that settles them: what the\nclaims declare, not whether a recorded run supports them (that verdict is the\nevidence ledger's)."
+          },
+          "use_cases": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Distinct use cases its features name."
+          },
+          "rules": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Distinct rules its features name."
+          },
+          "enforced_rules": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Distinct rules among them the tool enforces."
+          },
+          "capabilities": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Distinct capabilities behind its features."
+          },
+          "moments": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Distinct operational moments its features answer."
+          }
+        },
+        "required": [
+          "features",
+          "claims",
+          "tested",
+          "use_cases",
+          "rules",
+          "enforced_rules",
+          "capabilities",
+          "moments"
+        ],
+        "description": "How much stands behind a domain: sums and distinct counts over its stable features.\n\n```\nuse majordomus_cli::product::DomainCounts;\nlet empty = DomainCounts::default();\nassert_eq!(empty.features, 0);\nlet v = serde_json::to_value(&empty).unwrap();\nfor key in [\"features\", \"claims\", \"tested\", \"use_cases\", \"rules\", \"enforced_rules\", \"capabilities\", \"moments\"] {\n    assert_eq!(v[key], 0, \"{key} is published, and zero for a domain nothing names\");\n}\n```"
+      },
+      "DomainList": {
+        "type": "object",
+        "properties": {
+          "schema": {
+            "type": "string",
+            "description": "`SCHEMA`."
+          },
+          "fingerprint": {
+            "type": "string",
+            "description": "The hash of the model's sources and derived facts."
+          },
+          "count": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many domains are listed."
+          },
+          "domains": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResolvedDomain"
+            },
+            "description": "The domains, in presentation order: the stable ones, or every one with status=any."
+          }
+        },
+        "required": [
+          "schema",
+          "fingerprint",
+          "count",
+          "domains"
+        ],
+        "description": "Every domain of the product, each with what its features add up to."
+      },
+      "DomainMember": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The feature id."
+          },
+          "label": {
+            "type": "string",
+            "description": "The name a narrow column shows: the short title, or the title."
+          },
+          "title": {
+            "type": "string",
+            "description": "The feature as a heading."
+          },
+          "headline": {
+            "type": "string",
+            "description": "The feature's promise."
+          },
+          "route": {
+            "type": "string",
+            "description": "`/features/<id>/`."
+          },
+          "featured": {
+            "type": "boolean",
+            "description": "Whether the homepage shows it as a chapter."
+          },
+          "surfaces": {
+            "$ref": "#/components/schemas/Surfaces",
+            "description": "The interfaces it is exposed through."
+          },
+          "claims": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many claims it names."
+          },
+          "tested": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many of them are guaranteed and name the test that settles them."
+          },
+          "use_cases": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many use cases show it in use."
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "title",
+          "headline",
+          "route",
+          "featured",
+          "surfaces",
+          "claims",
+          "tested",
+          "use_cases"
+        ],
+        "description": "One stable feature of a domain, as a card shows it.\n\n```\nuse majordomus_cli::product::{DomainMember, Surfaces};\nlet m = DomainMember {\n    id: \"finish-contract\".into(),\n    label: \"Finish contract\".into(),\n    title: \"Done is a contract\".into(),\n    headline: \"A worker does not define its own completion.\".into(),\n    route: \"/features/finish-contract/\".into(),\n    featured: true,\n    surfaces: Surfaces::default(),\n    claims: 3,\n    tested: 2,\n    use_cases: 1,\n};\nlet v = serde_json::to_value(&m).unwrap();\nassert_eq!(v[\"tested\"], 2);\nassert_eq!(v[\"surfaces\"][\"cli\"], false);\n```"
+      },
+      "DomainRef": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The domain id."
+          },
+          "title": {
+            "type": "string",
+            "description": "The domain as a heading."
+          },
+          "route": {
+            "type": "string",
+            "description": "`/domains/<id>/`."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "route"
+        ],
+        "description": "A domain as a feature points at it: enough for a breadcrumb.\n\n```\nuse majordomus_cli::product::DomainRef;\nlet crumb = DomainRef {\n    id: \"context\".into(),\n    title: \"Context\".into(),\n    route: \"/domains/context/\".into(),\n};\nlet v = serde_json::to_value(&crumb).unwrap();\nassert_eq!(v[\"route\"], \"/domains/context/\");\nassert_eq!(serde_json::from_value::<DomainRef>(v).unwrap(), crumb);\n```"
+      },
       "DoneQuestion": {
         "type": "object",
         "properties": {
@@ -29766,6 +30065,13 @@
           "featured": {
             "type": "boolean",
             "description": "Whether the homepage shows it."
+          },
+          "domain": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The product domain it belongs to, when it names one."
           },
           "areas": {
             "type": "array",
@@ -43944,6 +44250,115 @@
         ],
         "description": "What a colour reference resolved to."
       },
+      "ResolvedDomain": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The identity, the slug and the file name."
+          },
+          "title": {
+            "type": "string",
+            "description": "The domain as a heading: one word or two."
+          },
+          "headline": {
+            "type": "string",
+            "description": "What the product does about this domain, in one sentence."
+          },
+          "problem": {
+            "type": "string",
+            "description": "The operational failure this domain answers, in one sentence."
+          },
+          "status": {
+            "type": "string",
+            "description": "`stable`, `draft` or `deprecated`."
+          },
+          "weight": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "Presentation order, lowest first.",
+            "default": 0
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Free tags.",
+            "default": []
+          },
+          "route": {
+            "type": "string",
+            "description": "Derived: `/domains/<id>/`. Never authored; the schema refuses a `route` key.",
+            "default": ""
+          },
+          "source": {
+            "type": "string",
+            "description": "Derived: the repository-relative file the record came from.",
+            "default": ""
+          },
+          "body": {
+            "type": "string",
+            "description": "The Markdown body, without its front matter."
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DomainMember"
+            },
+            "description": "Derived: the stable features that name it, in presentation order."
+          },
+          "surfaces": {
+            "$ref": "#/components/schemas/Surfaces",
+            "description": "Derived: the interfaces any of its features is exposed through."
+          },
+          "moments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MomentRef"
+            },
+            "description": "Derived: the operational moments its features answer, in the catalogue's order."
+          },
+          "claim_refs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClaimRef"
+            },
+            "description": "Derived: the distinct claims its features name, with their status and test."
+          },
+          "use_case_refs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UseCaseRef"
+            },
+            "description": "Derived: the distinct use cases its features name."
+          },
+          "counts": {
+            "$ref": "#/components/schemas/DomainCounts",
+            "description": "Derived: how much stands behind it."
+          },
+          "evidence": {
+            "$ref": "#/components/schemas/FeatureEvidence",
+            "description": "Derived: what is guaranteed, by claim status."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "headline",
+          "problem",
+          "status",
+          "features",
+          "surfaces",
+          "moments",
+          "claim_refs",
+          "use_case_refs",
+          "counts",
+          "evidence"
+        ],
+        "description": "One domain, resolved: the record as its file declares it, and everything derived from\nthe stable features that name it.\n\nThe declared record is flattened, so a reader sees one object: the domain's own fields\nbeside its derived members and counts.\n\n```\nuse majordomus_cli::product::{Domain, DomainCounts, FeatureEvidence, ResolvedDomain, Surfaces};\nlet domain: Domain = serde_json::from_value(serde_json::json!({\n    \"id\": \"context\", \"title\": \"Context\", \"status\": \"stable\",\n    \"headline\": \"h\", \"problem\": \"p\",\n}))\n.unwrap();\nlet resolved = ResolvedDomain {\n    domain,\n    features: vec![],\n    surfaces: Surfaces::default(),\n    moments: vec![],\n    claim_refs: vec![],\n    use_case_refs: vec![],\n    counts: DomainCounts::default(),\n    evidence: FeatureEvidence::default(),\n};\nlet v = serde_json::to_value(&resolved).unwrap();\nassert_eq!(v[\"id\"], \"context\", \"the record is flattened into the resolved view\");\nassert_eq!(v[\"counts\"][\"features\"], 0);\n```"
+      },
       "ResolvedReference": {
         "type": "object",
         "properties": {
@@ -44014,6 +44429,13 @@
             "type": "boolean",
             "description": "Whether the homepage shows it as a chapter.",
             "default": false
+          },
+          "domain": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The product domain it belongs to, by id: exactly one. Editorial; the domain's\nmembers are derived from this field and listed nowhere else."
           },
           "areas": {
             "type": "array",
@@ -44236,6 +44658,17 @@
           "evidence": {
             "$ref": "#/components/schemas/FeatureEvidence",
             "description": "Derived: what is guaranteed."
+          },
+          "domain_ref": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DomainRef"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Derived: the domain its `domain` names, with its title and route, when that\nresolves. Absent for a feature that names none or names one that does not exist."
           }
         },
         "required": [
@@ -45204,7 +45637,7 @@
           },
           "enforced": {
             "type": "boolean",
-            "description": "Whether the tool enforces it: the rule carries an `x-majordomus` block."
+            "description": "Whether a machine decides it: the block names a validator or tests, not only a reason\na person reviews it."
           },
           "path": {
             "type": "string",
@@ -50821,7 +51254,7 @@
     }
   },
   "x-majordomus": {
-    "generator": "majordomus-cli 0.12.0",
+    "generator": "majordomus-cli 0.13.0",
     "infrastructure": [
       {
         "id": "home",
@@ -50891,5 +51324,5 @@
     ]
   },
   "x-majordomus-generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical Majordomus capability registry; regenerate with `majordomus generate`",
-  "x-majordomus-generator": "majordomus-cli 0.12.0"
+  "x-majordomus-generator": "majordomus-cli 0.13.0"
 }

@@ -326,6 +326,21 @@ kinds:
       field: schema
       supported: [feature/v1]
 
+  # A product domain: one of the few things the product controls, under which every feature
+  # is filed exactly once. The domain states its promise and the failure it answers; which
+  # features it holds, the interfaces they reach, the claims and use cases behind them and
+  # the moments they answer are derived from the features that name it (ADR 0104).
+  domain:
+    format: markdown
+    front_matter: required
+    schema: majordomus.domain/v1
+    identity: [id]
+    title: title
+    description: headline
+    schema_version:
+      field: schema
+      supported: [domain/v1]
+
   deployment:
     format: yaml
     # the identity fixes the path: share/schemas/majordomus/deployment/deployment.v1.schema.json

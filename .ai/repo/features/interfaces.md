@@ -8,6 +8,7 @@ headline: Every agent, script and person reads the same repository through the i
 summary: The Rust executable serves the layer read-only over stdio MCP, MCP over HTTP, routes under /api/v1/, an OpenAPI document with a Swagger UI, and a command line, all derived from the capability registry; one shared server per repository, and every attached client is a peer the others can see.
 status: stable
 weight: 20
+domain: surfaces
 featured: false
 areas: [documentation, observability, coordination]
 modules: [repository, objects, web, environment, executions, commands]

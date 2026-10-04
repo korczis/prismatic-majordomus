@@ -66,7 +66,7 @@ document. A feature therefore cannot claim a surface the registry does not have.
 `apps/majordomus-cli/src/product.rs` resolves every reference against the index, the
 capability registry, the command registry, the why catalogue and the web topology, and is
 the only place any of this is decided.
-`apps/majordomus-cli/src/capability/builtin/product.rs` declares five capabilities over it
+`apps/majordomus-cli/src/capability/builtin/product.rs` declares six capabilities over it
 with `capability!`, so the command line, the HTTP routes, the OpenAPI operations, the MCP
 tools and resources and the generated reference are projections of one declaration
 ([ADR 2](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0002-canonical-capability-registry.md), `docs/CAPABILITIES.md`).
@@ -77,6 +77,7 @@ tools and resources and the generated reference are projections of one declarati
 |---|---|---|---|
 | every feature | `majordomus product list` | `GET /api/v1/product/features` | `majordomus_features`, `majordomus://product` |
 | one feature | `majordomus product show <id>` | `GET /api/v1/product/feature` | `majordomus_feature`, `majordomus://feature/<id>` |
+| the domains | `majordomus product domains` | `GET /api/v1/product/domains` | `majordomus_product_domains`, `majordomus://product/domains` |
 | the matrix | `majordomus product matrix` | `GET /api/v1/product/matrix` | `majordomus_product_matrix` |
 | the providers | `majordomus product providers` | `GET /api/v1/product/providers` | `majordomus_providers` |
 | the refusals | `majordomus product validate` | `GET /api/v1/product/validate` | `majordomus_product_validate` |
@@ -84,11 +85,32 @@ tools and resources and the generated reference are projections of one declarati
 </div>
 
 
+## Domains: the product's shape above the feature
+
+A **domain** is one of the few things the product controls — context, coordination,
+governance, evidence, completion and surfaces, as this repository declares them — stated once
+in `.ai/repo/features/domains/<id>.md` (kind `domain`, schema `domain/v1`) with its title, a
+one-sentence `headline`, a one-sentence `problem` and a `weight` that orders every listing
+of domains ([ADR 104](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0104-the-product-is-filed-under-a-few-domains-and-a-feature-names-its-one.md)).
+
+A feature names exactly one domain in its own `domain` field, and a domain lists nothing:
+its members are the stable features that name it, and their union of surfaces, the distinct
+claims, use cases, rules and capabilities behind them and the moments they answer are
+derived, never written. `product validate` refuses a domain that does not exist (with the
+nearest candidate), a stable feature that names none while any is declared, and a stable
+feature under a domain that is not stable; a domain no stable feature names is a warning
+and is shown nowhere.
+
+The areas of the why catalogue are not domains and are not replaced by them. An area is
+where operations hurt, a feature may serve several, and moments, the diagnosis and the
+Cockpit's sidebar are filed by area. A domain is where the product answers, and a feature
+has exactly one.
+
 ## The public projection boundary
 
 `majordomus generate site` writes `site/data/registry/product.json` and
-`product-graph.json`. The dataset is not the model serialised: `PUBLIC_FEATURE_FIELDS` in
-`apps/majordomus-cli/src/site.rs` is an allow-list, and each field is copied by name. A
+`product-graph.json`. The dataset is not the model serialised: `PUBLIC_FEATURE_FIELDS` and
+`PUBLIC_DOMAIN_FIELDS` in `apps/majordomus-cli/src/site.rs` are allow-lists, and each field is copied by name. A
 field added to the model does not reach a published page until somebody adds it to that
 list, which is the point — accidental exclusion is not a boundary, and a field nobody
 allowed is not published.
@@ -167,22 +189,25 @@ hand fails the check rather than the reader.
 ## The homepage's story, and what search engines are shown
 
 The homepage is an argument with an order, and the order is data: `site/data/homepage.toml`
-lists the ids of the sections the page renders — hero, recognise, how, refuses, chapters, proof,
-built, install — which is what hurts, how this answers it, what it refuses, what it does for the
-part that hurts you, what proves it, what is not built, and how to try it. Nothing about the
-order is decided in `site/templates/index.html`.
+lists the ids of the sections the page renders — hero, recognise, map, how, refuses, surfaces,
+proof, install. It is told overview first: what this is, what goes wrong without it, what it
+controls, how one task moves through it, the proof that "done" can be refused, how one
+declaration reaches every interface, the evidence, and how to start. Reference-level material —
+the lifecycle transcripts, the full catalogue of failure modes, every recorded refusal, a
+capability on all its surfaces — stays on the page behind a disclosure rather than in the first
+reading of it. Nothing about the order is decided in `site/templates/index.html`.
 
 <div class="overflow-x-auto" tabindex="0">
 
 | Section | What it shows | Where it comes from |
 |---|---|---|
-| `hero` | the positioning, and the lifecycle replayed | `marketing.toml`, `terminal.json` |
-| `recognise` | the pain, in the first person | the Why catalogue's featured moments |
-| `how` | declare, derive, verify, each with a figure | `manifesto.toml` `[how]`, the rules, the product telemetry, the recorded refusals |
-| `refuses` | every recorded refusal of a lifecycle command | `terminal.json` |
-| `chapters` | every stable feature, grouped by the area it serves, and the composed graph | `product.json`, the Why catalogue's areas |
-| `proof` | the model's size and every claim counted by its real status | `product.json`, `docs/CLAIMS.yaml` |
-| `built` | each stage with its honest mark, the boundary, and what is not built | `manifesto.toml` |
+| `hero` | the positioning, one install command, and the verdict a worker that said it was done received, line by line | `marketing.toml`, `distribution.json`, `challenge.json` |
+| `recognise` | three failures, each a domain's `problem`; the featured moments behind a disclosure | `homepage.toml` `problems`, `product.json` domains, the Why catalogue |
+| `map` | the product's domains as disclosures: the failure each answers, its features, its counts | `product.json` domains (ADR 0104), via `partials/domain-map.html` |
+| `how` | the task lifecycle in its order; the recorded run of each step behind a disclosure | `terminal.json` |
+| `refuses` | the challenge stepped through, and every other recorded refusal behind a disclosure | `challenge.json`, `terminal.json` |
+| `surfaces` | declaration to interfaces, the model's size, the providers, one capability on every surface | `product.json`, `registry.json` |
+| `proof` | every claim counted by its declared status, what a recorded run supports, where the page came from, what is not built | `docs/CLAIMS.yaml`, `product.json` `evidence`, `manifesto.toml` |
 | `install` | the install, next-step and verification commands | `distribution.json` |
 
 </div>
@@ -203,10 +228,10 @@ homepage or a sitemap that drifts from its declaration is refused before the Pag
 publishes it. `test/cases/333_homepage_narrative.sh` proves each check by breaking it.
 
 The homepage's weight is declared in the same file, as `[budget]`: the scripts and stylesheets
-it loads from the site and the graph data it carries inline. The composed product graph is
-published at `/graphs/product.json` by `scripts/site-build` and fetched when the drawing first
-comes into view, with the node-by-node list one link away on `/features/`; and no page loads
-the Mermaid runtime unless it carries a diagram. The same check reports the current weight on
+it loads from the site and the graph data it carries inline. The homepage loads no graph
+runtime: its map is the domains, as native disclosures, and the composed product graph is on
+`/features/`, published at `/graphs/product.json` and fetched when the drawing first comes into
+view; no page loads the Mermaid runtime unless it carries a diagram. The same check reports the current weight on
 every build, so raising a budget is a reviewed change to `homepage.toml`, never a silent one.
 
 To add a homepage section: write it in `index.html` with an `id`, put that id where it belongs
