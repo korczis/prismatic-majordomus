@@ -94,8 +94,8 @@ fn compose_with(root: &Path, objects: &[Object], unreleased: bool) -> Changelog 
         .filter(|o| o.kind == RELEASE_KIND)
         .filter_map(|o| record_of(&o.metadata, &mut diagnostics))
         .collect();
-    // Newest first, by the date the record carries: the order a changelog is read in.
-    records.sort_by(|a, b| b.date.cmp(&a.date));
+    // Newest first: the order a changelog is read in.
+    records.sort_by(newest_first);
 
     let decisions = decisions_of(root, objects);
     // Which commits each release's tree holds, read once per release for every decision
@@ -230,6 +230,22 @@ fn grouped(mut changes: Vec<Change>) -> Vec<ChangeGroup> {
 }
 
 /// One release record, from its metadata.
+/// Newest first, by the date a record carries, and by its version when two share a moment.
+///
+/// A minor per integrated change set (ADR 0106) puts more releases on one day, and a tie
+/// left to the index's order would follow the record files' names — where `v0.10.0.yaml`
+/// sorts before `v0.9.0.yaml`. The version breaks it numerically; a version that is not
+/// three numbers falls back to its text, so the order is total and deterministic.
+fn newest_first(a: &Record, b: &Record) -> std::cmp::Ordering {
+    use super::version::Version;
+    b.date.cmp(&a.date).then_with(|| {
+        match (Version::parse(&a.version), Version::parse(&b.version)) {
+            (Some(x), Some(y)) => y.cmp(&x),
+            _ => b.version.cmp(&a.version),
+        }
+    })
+}
+
 fn record_of(metadata: &Value, diagnostics: &mut Vec<String>) -> Option<Record> {
     let version = metadata.get("version")?.as_str()?.to_string();
     let tag = metadata
@@ -615,6 +631,38 @@ mod tests {
                 member: None,
             },
         }
+    }
+
+    fn record(version: &str, date: &str) -> Record {
+        Record {
+            version: version.into(),
+            tag: format!("v{version}"),
+            date: date.into(),
+            commit: "c".into(),
+            notes: None,
+            artifacts: Vec::new(),
+        }
+    }
+
+    /// Many small releases (ADR 0106): ordered newest first by date, and by version — as
+    /// numbers, not as file names — when several share a moment.
+    #[test]
+    fn many_releases_on_one_day_are_ordered_by_their_version_as_numbers() {
+        let day = "2026-10-04T10:00:00Z";
+        let mut records = vec![
+            record("0.10.0", day),
+            record("0.11.0", day),
+            record("0.9.0", day),
+            record("0.12.0", "2026-10-05T09:00:00Z"),
+            record("0.8.0", "2026-10-03T09:00:00Z"),
+            record("next", day),
+        ];
+        records.sort_by(newest_first);
+        let order: Vec<&str> = records.iter().map(|r| r.version.as_str()).collect();
+        assert_eq!(
+            order,
+            ["0.12.0", "next", "0.11.0", "0.10.0", "0.9.0", "0.8.0"]
+        );
     }
 
     #[test]

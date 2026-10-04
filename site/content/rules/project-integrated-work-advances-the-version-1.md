@@ -43,7 +43,8 @@ classified by a commit message. A change set with no other path owes no cadence,
 what lets the release pipeline land its record without raising the version it records.
 
 **Written once.** `release advance` chooses the version and `release bump`'s write applies
-it; nothing else writes the manifest's version line.
+it; nothing else writes the manifest's version line, and no hook, script, recipe or workflow
+rewrites the manifest, the lock or `share/version.txt` (`test/cases/803_the_version_has_one_writer.sh`).
 
 **Enforced without the automation.** The gate `version-obligation` is `always` planned and
 runs `release obligation --base HEAD^1` in the structure job, on every pull request's merge

@@ -1774,14 +1774,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/web/html.rs",
-        "kind": "file",
-        "label": "html.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/web/html.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/web/report/ui.rs",
         "kind": "file",
         "label": "ui.rs",
@@ -4175,6 +4167,7 @@
             "file:.ai/repo/ci/gates.yaml",
             "test:test/cases/801_completed_work_advances_the_version.sh",
             "test:test/cases/802_a_merge_carries_its_version_advance.sh",
+            "test:test/cases/803_the_version_has_one_writer.sh",
             "test:apps/majordomus-cli/tests/release_obligation.rs"
           ],
           "tags": [
@@ -38396,6 +38389,13 @@
         "source": "test/cases/802_a_merge_carries_its_version_advance.sh"
       },
       {
+        "id": "majordomus://test/test/cases/803_the_version_has_one_writer.sh",
+        "kind": "test",
+        "label": "test/cases/803_the_version_has_one_writer.sh",
+        "route": "/cockpit/objects/test/test-cases-803-the-version-has-one-writer-sh",
+        "source": "test/cases/803_the_version_has_one_writer.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/80_bench_persistence.sh",
         "kind": "test",
         "label": "test/cases/80_bench_persistence.sh",
@@ -44641,11 +44641,6 @@
       {
         "source": "majordomus://adr/adr-0031",
         "target": "file:apps/majordomus-cli/src/design/render.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0031",
-        "target": "file:apps/majordomus-cli/src/web/html.rs",
         "kind": "put_in_force"
       },
       {
@@ -60305,6 +60300,11 @@
       },
       {
         "source": "majordomus://test/test/cases/802_a_merge_carries_its_version_advance.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/803_the_version_has_one_writer.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
