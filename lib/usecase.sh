@@ -529,7 +529,14 @@ mj_uc_normalise() { # repo-path
     -e '/: printf: write error: Broken pipe$/d' \
     -e '/^INFO advisor +[^ ]+ — .* — optional$/d' \
     -e '/^OK +reasoning +- — reasoning check: /d' \
-    -e 's/^(OK|INFO) +reasoning +.*$/·    reasoning   <decided by the advisors and the executable of the recording machine>/'
+    -e 's/^(OK|INFO) +reasoning +.*$/·    reasoning   <decided by the advisors and the executable of the recording machine>/' |
+  # a handover's Completion section is the completion report of whatever machine wrote it: its
+  # stage and owed questions when the executable is reachable there, a "not derived" line when
+  # it is not. Either is true of that machine and of no other, so the recorded evidence keeps
+  # the heading and stands one line in for the body, and a derive and its check agree.
+  awk '/^#{1,3} Completion$/ { print; print ""; print "<the completion report of the recording machine>"; skip = 1; next }
+       skip && /^#{1,3} / { skip = 0; print ""; print; next }
+       !skip { print }'
 }
 # an argv as a reader would type it: an argument a shell would split or expand is single-quoted,
 # so a recorded command can be pasted back into a terminal and run as it was
