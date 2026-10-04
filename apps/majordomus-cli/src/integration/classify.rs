@@ -44,6 +44,13 @@ pub struct IntegrationPolicy {
     /// `None` every pull request the relation to master does not already decide is held
     /// (`merge_commit_not_allowed`), never merged otherwise.
     pub merge_method: Option<String>,
+    /// Whether the base requires a branch to be up to date before it merges (the
+    /// protection's `required_status_checks.strict`, or a ruleset's): the forge-side half of
+    /// the guard against a merge onto a master nobody tested with the change. The executor's
+    /// half is its parent check after every merge. `Some(false)` is the owner's to change
+    /// (decision D8) and decides no disposition; `None` when unread.
+    #[serde(default)]
+    pub up_to_date_required: Option<bool>,
 }
 
 /// What a label does to a pull request that carries it.

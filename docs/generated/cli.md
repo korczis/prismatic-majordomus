@@ -2856,6 +2856,7 @@ majordomus prs drain [OPTIONS]
 | `--refresh` | flag | — | When nothing is ready, bring master into the first pull request that needs it (a merge commit with the derived driver and a fresh derive, pushed as a fast-forward), so that its checks run against the current master |
 | `--continuous` | flag | — | Drain, wait `--interval` seconds, and drain again until stopped, holding the lease throughout; each cycle is bounded by `--max` and observes before every step. Ctrl-C or SIGTERM lets the step in progress finish, then releases the lease; a second signal ends it at once. Never with `--dry-run` |
 | `--interval` | `<INTERVAL>` | `300` | With `--continuous`: seconds between cycles, 30 to 900 |
+| `--resume-after-failure` | flag | — | A merge an earlier drain could not verify stops every drain until a person has looked at it: this records that someone has (`failure_acknowledged` on the trail), then drains. Never with `--dry-run` |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |

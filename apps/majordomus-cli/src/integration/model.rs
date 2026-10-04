@@ -523,7 +523,7 @@ pub struct IntegrationEvidence {
 /// The revisions a decision was taken against, and when the forge was observed. A decision is
 /// valid only while both revisions still hold: the executor compares them with what it
 /// re-reads before it acts.
-#[derive(Debug, Clone, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Default, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct EvaluatedAgainst {
     /// The master commit.
     pub master_sha: String,

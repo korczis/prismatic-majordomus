@@ -338,7 +338,12 @@ repository's own setting decides that.
   and 856 race separate processes through the command line. A holder that ends, even by a
   crash, releases the lease at once; a live holder is never taken over. A record untouched
   for 30 minutes is reported stale to observers (`prs brief`, `prs status`), which never
-  take the lease.
+  take the lease. The executor renews its record before every observation, and a refresh
+  keeps it fresh while the branch's derive runs. When the path no longer names the file
+  the executor locked, or the record names another holder, the lease is lost: the drain
+  stops as on any systemic failure (`prs drain` exits 12) and acts on nothing. The lease
+  is taken for the base the forge was last observed to name, observed first when this
+  checkout never asked, never for a guessed `master`.
 - Every act is appended to the audit trail before it happens. The trail is one file per
   repository, `<git-common-dir>/majordomus/integration/events.jsonl`, beside the lease, so
   every worktree writes the same trail and `prs events`, `prs brief`, `prs status`, the
@@ -364,6 +369,7 @@ repository's own setting decides that.
   | `stale_decision` | master or the head moved between the decision and the act |
   | `merge_attempted` | before the merge, with its evidence |
   | `merge_succeeded`, `merge_failed`, `verification_failed` | after it |
+  | `failure_acknowledged` | a person looked at a merge that could not be verified (`prs drain --resume-after-failure`) |
   | `refresh_attempted` | before master is merged into the branch and pushed |
   | `refreshed` (with the head it pushed), `refresh_failed` | after it |
   | `close_attempted` | before a redundant or superseded pull request is closed |
@@ -382,6 +388,27 @@ repository's own setting decides that.
   (`observed`).
 - A refused merge and a stale decision are specific to the candidate: the next step
   re-plans. A verification failure stops the drain.
+- A merge is verified where it landed, not where the forge says it is. The base is fetched,
+  and the commit right after the decision's master on master's first-parent line must be
+  this merge: its first parent the master the decision was taken against and, for a merge
+  commit, its second parent the head that was decided on. A merge that landed on top of
+  another one, onto a master nobody tested with it, fails as `unexpected_master` even
+  though the forge calls it merged. The commit is recorded as `merge_commit` on
+  `merge_succeeded`. This is the executor's half of the guard; the forge's half is the
+  protection's "require branches to be up to date" (`required_status_checks.strict`). The
+  queue's policy says whether the base requires it (`up_to_date_required`), and `prs status`
+  and the Cockpit show it; it decides no disposition, and turning it on is the owner's act
+  (decision D8).
+- A merge whose answer was lost (a timeout, a dropped connection) is asked whether it
+  landed, never asked to merge again: landed and proved, it is `merge_succeeded`; not
+  landed, `merge_failed`.
+- An executor that stopped between asking for a merge and verifying it leaves a
+  `merge_attempted` with no end. The next drain verifies that merge first and records how
+  it ended, before it decides anything.
+- A verification failure holds every later drain (owner decision D7). Until a person has
+  looked and run `prs drain --resume-after-failure`, which records `failure_acknowledged`,
+  a drain merges nothing, says why, and exits 10; `--continuous` stops. A dry run still
+  plans.
 - Transient failures of the forge are asked again (`crate::integration::retry`): a timeout,
   a 5xx, a rate limit or a dropped connection, at most four attempts with waits of 2, 4 and
   8 seconds. Anything else, such as a refusal, a 401, a 404 or a moved head, is the answer and
@@ -403,6 +430,7 @@ repository's own setting decides that.
 | `majordomus prs brief` | no | one line for a briefing: the last queue built in the repository, the lease, the last merge; nothing in a checkout that never observed the forge |
 | `majordomus prs refresh` | yes | observe the forge and fetch every open head |
 | `majordomus prs drain [--max N] [--dry-run] [--refresh]` | yes | integrate, one merge at a time |
+| `majordomus prs drain --resume-after-failure` | yes | record that a person looked at an unverified merge, then drain |
 | `majordomus prs drain --continuous [--interval S] [--max N] [--refresh]` | yes | drain, wait, drain again until stopped |
 | `majordomus prs cleanup [--apply]` | yes | close what is provably on master, or superseded by a successor that landed |
 

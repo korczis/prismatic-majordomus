@@ -32429,6 +32429,11 @@
           },
           {
             "type": "string",
+            "const": "failure_acknowledged",
+            "description": "A person looked at a merge that could not be verified and lets drains merge again\n(`prs drain --resume-after-failure`)."
+          },
+          {
+            "type": "string",
             "const": "refresh_attempted",
             "description": "Master is about to be merged into a branch and pushed."
           },
@@ -32857,6 +32862,14 @@
               "null"
             ],
             "description": "The merge method the executor asks the forge for: `merge` when the repository allows a\nmerge commit, and `None` when it does not. There is no other: the derived-file driver\nresolves merges, and a squash or rebase would replay commits it never saw, so with\n`None` every pull request the relation to master does not already decide is held\n(`merge_commit_not_allowed`), never merged otherwise."
+          },
+          "up_to_date_required": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether the base requires a branch to be up to date before it merges (the\nprotection's `required_status_checks.strict`, or a ruleset's): the forge-side half of\nthe guard against a merge onto a master nobody tested with the change. The executor's\nhalf is its parent check after every merge. `Some(false)` is the owner's to change\n(decision D8) and decides no disposition; `None` when unread.",
+            "default": null
           }
         },
         "required": [

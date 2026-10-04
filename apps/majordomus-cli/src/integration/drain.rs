@@ -37,8 +37,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::{
-    at, events_path, local_master, queue_of, refresh, IntegrationEvidence, IntegrationQueue,
-    PullRequestAssessment, PullRequestDisposition,
+    at, events_path, local_master, queue_of, refresh, EvaluatedAgainst, IntegrationEvidence,
+    IntegrationQueue, PullRequestAssessment, PullRequestDisposition,
 };
 
 /// A lease untouched for this long belongs to a process that is gone.
@@ -144,6 +144,34 @@ fn names_file(path: &Path, file: &fs::File) -> bool {
     }
 }
 
+/// How often a kept-alive lease renews its record: well inside [`LEASE_STALE_AFTER`].
+pub const KEEP_ALIVE_EVERY: Duration = Duration::from_secs(60);
+/// How promptly a keep-alive notices it was asked to stop.
+const KEEP_ALIVE_POLL: Duration = Duration::from_millis(200);
+
+/// Replace the holder record through the locked file, never the path: a path written to
+/// after something removed it would be a new, unlocked file a second executor could take.
+fn write_record(file: &fs::File, token: &str) -> std::io::Result<()> {
+    use std::os::unix::fs::FileExt;
+    file.set_len(0)?;
+    file.write_all_at(token.as_bytes(), 0)
+}
+
+/// A lease's record kept fresh by a thread, until this is dropped.
+pub struct LeaseKeepAlive {
+    stop: std::sync::Arc<std::sync::atomic::AtomicBool>,
+    thread: Option<std::thread::JoinHandle<()>>,
+}
+
+impl Drop for LeaseKeepAlive {
+    fn drop(&mut self) {
+        self.stop.store(true, std::sync::atomic::Ordering::SeqCst);
+        if let Some(t) = self.thread.take() {
+            let _ = t.join();
+        }
+    }
+}
+
 impl IntegrationLease {
     /// The lease file of a base branch.
     pub fn path_for(common: &Path, base: &str) -> PathBuf {
@@ -215,15 +243,64 @@ impl IntegrationLease {
         Err(format!("{}: could not be taken", path.display()))
     }
 
-    /// Mark the lease alive: a long drain renews it between steps.
-    pub fn renew(&self) {
-        // through the locked file, never the path: a path written to after something
-        // removed it would be a new, unlocked file that a second executor could take
-        use std::os::unix::fs::FileExt;
-        let _ = self
-            .file
-            .set_len(0)
-            .and_then(|()| self.file.write_all_at(self.token.as_bytes(), 0));
+    /// Mark the lease alive: a long drain renews it between steps. Refused when the lease is
+    /// no longer this executor's — the path names another file, or the record another
+    /// holder — and the drain stops on that, as on any systemic failure: an executor that
+    /// lost its lease must not act as if it held one.
+    pub fn renew(&self) -> Result<(), String> {
+        if !names_file(&self.path, &self.file) {
+            return Err(format!(
+                "the integration lease was lost: {} no longer names the file this executor locked",
+                self.path.display()
+            ));
+        }
+        let held = fs::read_to_string(&self.path).unwrap_or_default();
+        if held.trim() != self.token {
+            return Err(format!(
+                "the integration lease was lost: {} names another holder: {}",
+                self.path.display(),
+                held.trim()
+            ));
+        }
+        write_record(&self.file, &self.token).map_err(|e| format!("{}: {e}", self.path.display()))
+    }
+
+    /// Keep the record fresh while one long act runs — a refresh's derive can outlast what an
+    /// observer calls stale — until the returned guard is dropped. It renews only while the
+    /// lease is still this executor's, and never acts on anything.
+    pub fn keep_alive(&self) -> LeaseKeepAlive {
+        self.keep_alive_every(KEEP_ALIVE_EVERY)
+    }
+
+    /// [`keep_alive`](Self::keep_alive) at a chosen interval.
+    pub(crate) fn keep_alive_every(&self, every: Duration) -> LeaseKeepAlive {
+        let poll = KEEP_ALIVE_POLL.min(every);
+        let stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let thread = self.file.try_clone().ok().and_then(|file| {
+            let (path, token, stop) = (self.path.clone(), self.token.clone(), stop.clone());
+            std::thread::Builder::new()
+                .name("majordomus-integration-keep-alive".into())
+                .spawn(move || {
+                    use std::sync::atomic::Ordering;
+                    let mut waited = Duration::ZERO;
+                    while !stop.load(Ordering::SeqCst) {
+                        std::thread::sleep(poll);
+                        waited += poll;
+                        if waited < every {
+                            continue;
+                        }
+                        waited = Duration::ZERO;
+                        let mine = names_file(&path, &file)
+                            && fs::read_to_string(&path).is_ok_and(|c| c.trim() == token);
+                        if !mine {
+                            return;
+                        }
+                        let _ = write_record(&file, &token);
+                    }
+                })
+                .ok()
+        });
+        LeaseKeepAlive { stop, thread }
     }
 
     /// Who holds the lease of `base` now, read without taking it: what an observer shows.
@@ -260,8 +337,12 @@ pub struct IntegrationLeaseState {
 
 impl Drop for IntegrationLease {
     fn drop(&mut self) {
-        // unlinked while the lock is held, closed after: see `acquire`
-        if fs::read_to_string(&self.path).is_ok_and(|c| c.trim() == self.token) {
+        // unlinked while the lock is held, closed after: see `acquire`. Only while the path
+        // still names the file this lease locked: two holders' records can read the same
+        // (one process, one second), so the record alone cannot say whose file it is.
+        if names_file(&self.path, &self.file)
+            && fs::read_to_string(&self.path).is_ok_and(|c| c.trim() == self.token)
+        {
             let _ = fs::remove_file(&self.path);
             let released = IntegrationEvent {
                 detail: self.token.clone(),
@@ -313,6 +394,9 @@ pub enum IntegrationAction {
     MergeFailed,
     /// What landed could not be verified.
     VerificationFailed,
+    /// A person looked at a merge that could not be verified and lets drains merge again
+    /// (`prs drain --resume-after-failure`).
+    FailureAcknowledged,
     /// Master is about to be merged into a branch and pushed.
     RefreshAttempted,
     /// Master was brought into the branch and pushed.
@@ -350,6 +434,7 @@ impl IntegrationAction {
             IntegrationAction::MergeSucceeded => "merge_succeeded",
             IntegrationAction::MergeFailed => "merge_failed",
             IntegrationAction::VerificationFailed => "verification_failed",
+            IntegrationAction::FailureAcknowledged => "failure_acknowledged",
             IntegrationAction::RefreshAttempted => "refresh_attempted",
             IntegrationAction::Refreshed => "refreshed",
             IntegrationAction::RefreshFailed => "refresh_failed",
@@ -635,6 +720,14 @@ pub enum DrainStepOutcome {
         /// What did not hold.
         reason: String,
     },
+    /// Nothing is merged: a merge of an earlier drain could not be verified, and no drain
+    /// merges until a person has looked (`prs drain --resume-after-failure`).
+    Halted {
+        /// The pull request whose merge was not verified.
+        pr: Option<u64>,
+        /// What did not hold then.
+        reason: String,
+    },
     /// The act was not taken, because the trail could not record it first: nothing reached
     /// the forge or the branch. The drain stops — a trail that cannot be written is not a
     /// fault of one pull request.
@@ -648,6 +741,34 @@ pub enum DrainStepOutcome {
     },
 }
 
+/// What a verification proved.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Landed {
+    /// The base branch's tip after the merge, fetched.
+    pub master_after: String,
+    /// The commit that is this merge — the first-parent successor of the master the
+    /// decision was taken against. `None` for a rebase merge, which has no such commit.
+    pub merge_commit: Option<String>,
+}
+
+/// Why a merge is not verified.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum NotLanded {
+    /// The forge does not show the pull request merged: nothing landed.
+    NotMerged(String),
+    /// Something landed, or the forge or master could not be read, and what landed is not
+    /// proved to be this merge onto the master it was decided against.
+    Unproved(String),
+}
+
+impl std::fmt::Display for NotLanded {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NotLanded::NotMerged(w) | NotLanded::Unproved(w) => f.write_str(w),
+        }
+    }
+}
+
 /// A source of queues and a merger. The command line uses the forge and git; the tests use
 /// a scripted repository, which is how the re-plan-after-every-merge property is proved
 /// without a network.
@@ -656,8 +777,11 @@ pub trait Integrator {
     fn observe(&mut self) -> Result<IntegrationQueue, String>;
     /// Merge one pull request, requiring the forge's head to still be `head_sha`.
     fn merge(&mut self, pr: u64, head_sha: &str, method: &str) -> Result<(), String>;
-    /// After a merge: the pull request's state on the forge and this clone's master.
-    fn verify(&mut self, pr: u64, head_sha: &str) -> Result<String, String>;
+    /// After a merge, or after a merge whose answer was lost: whether the forge shows the
+    /// pull request merged, and that what landed is this merge — of `at.head_sha` onto
+    /// `at.master_sha` — and nothing else.
+    fn verify(&mut self, pr: u64, at: &EvaluatedAgainst, method: &str)
+        -> Result<Landed, NotLanded>;
     /// Bring master into a pull request's branch — a merge commit with the derived driver
     /// and a fresh derive, pushed as a fast-forward of the observed head. Returns the new
     /// head. Never a rewrite: the push is refused if the branch moved.
@@ -787,11 +911,24 @@ pub fn step(
             reason,
         });
     }
-    if let Err(reason) = integrator.merge(
-        candidate.number,
-        &candidate.evaluated_against.head_sha,
-        &method,
-    ) {
+    let at = candidate.evaluated_against.clone();
+    if let Err(reason) = integrator.merge(candidate.number, &at.head_sha, &method) {
+        // A merge whose answer was lost may have landed: it is asked whether it did, never
+        // asked to merge again (retry::forge never retries a merge).
+        if super::retry::transient(&reason) {
+            match integrator.verify(candidate.number, &at, &method) {
+                Ok(landed) => {
+                    return merged(
+                        root,
+                        &candidate,
+                        landed,
+                        format!("merged, although the forge's answer was lost: {reason}"),
+                    )
+                }
+                Err(NotLanded::Unproved(why)) => return unverified(root, &candidate, why),
+                Err(NotLanded::NotMerged(_)) => {}
+            }
+        }
         record(
             root,
             event(
@@ -805,37 +942,157 @@ pub fn step(
             reason,
         });
     }
-    match integrator.verify(candidate.number, &candidate.evaluated_against.head_sha) {
-        Ok(master_after) => {
-            let mut e = event(
-                IntegrationAction::MergeSucceeded,
-                Some(&candidate),
-                "merged and verified",
-            )
-            .with_evidence(&candidate);
-            e.master_after = Some(master_after.clone());
-            record(root, e)?;
-            Ok(DrainStepOutcome::Merged {
-                pr: candidate.number,
-                master_before: candidate.evaluated_against.master_sha.clone(),
-                master_after,
-            })
-        }
-        Err(reason) => {
-            record(
-                root,
-                event(
-                    IntegrationAction::VerificationFailed,
-                    Some(&candidate),
-                    reason.clone(),
-                ),
-            )?;
-            Ok(DrainStepOutcome::VerificationFailed {
-                pr: candidate.number,
-                reason,
-            })
-        }
+    match integrator.verify(candidate.number, &at, &method) {
+        Ok(landed) => merged(root, &candidate, landed, "merged and verified".into()),
+        Err(e) => unverified(root, &candidate, e.to_string()),
     }
+}
+
+/// Record a verified merge.
+fn merged(
+    root: &Path,
+    candidate: &PullRequestAssessment,
+    landed: Landed,
+    detail: String,
+) -> Result<DrainStepOutcome, String> {
+    let mut e =
+        event(IntegrationAction::MergeSucceeded, Some(candidate), detail).with_evidence(candidate);
+    e.master_after = Some(landed.master_after.clone());
+    e.merge_commit = landed.merge_commit;
+    record(root, e)?;
+    Ok(DrainStepOutcome::Merged {
+        pr: candidate.number,
+        master_before: candidate.evaluated_against.master_sha.clone(),
+        master_after: landed.master_after,
+    })
+}
+
+/// Record a merge that is not verified: the drain stops, and the next one waits for a person.
+fn unverified(
+    root: &Path,
+    candidate: &PullRequestAssessment,
+    reason: String,
+) -> Result<DrainStepOutcome, String> {
+    record(
+        root,
+        event(
+            IntegrationAction::VerificationFailed,
+            Some(candidate),
+            reason.clone(),
+        ),
+    )?;
+    Ok(DrainStepOutcome::VerificationFailed {
+        pr: candidate.number,
+        reason,
+    })
+}
+
+/// A merge the trail says was asked for, and nothing says how it ended: the executor
+/// stopped between asking and verifying. It is verified now — asked whether it landed,
+/// never asked again — and its end recorded, before anything else is decided.
+pub fn reconcile(
+    root: &Path,
+    integrator: &mut dyn Integrator,
+) -> Result<Option<DrainStepOutcome>, String> {
+    let trail = events(root);
+    let Some(i) = trail
+        .iter()
+        .rposition(|e| e.action == IntegrationAction::MergeAttempted)
+    else {
+        return Ok(None);
+    };
+    let asked = &trail[i];
+    let ended = trail[i + 1..].iter().any(|e| {
+        e.pr == asked.pr
+            && matches!(
+                e.action,
+                IntegrationAction::MergeSucceeded
+                    | IntegrationAction::MergeFailed
+                    | IntegrationAction::VerificationFailed
+            )
+    });
+    let (Some(pr), Some(master_sha), Some(head_sha)) = (
+        asked.pr,
+        asked.master_before.clone(),
+        asked.head_sha.clone(),
+    ) else {
+        return Ok(None);
+    };
+    if ended {
+        return Ok(None);
+    }
+    // decided when the merge was asked for: the attempt's own moment
+    let at = EvaluatedAgainst {
+        master_sha,
+        head_sha,
+        observed_at: asked.at.clone(),
+    };
+    let method = asked
+        .detail
+        .strip_prefix("--")
+        .unwrap_or("merge")
+        .to_string();
+    let of = |action, detail: String| IntegrationEvent {
+        pr: Some(pr),
+        master_before: Some(at.master_sha.clone()),
+        head_sha: Some(at.head_sha.clone()),
+        reasons: asked.reasons.clone(),
+        detail,
+        ..IntegrationEvent::of(action)
+    };
+    Ok(Some(match integrator.verify(pr, &at, &method) {
+        Ok(landed) => {
+            let mut e = of(
+                IntegrationAction::MergeSucceeded,
+                "reconciled: the merge the last executor asked for landed".into(),
+            );
+            e.master_after = Some(landed.master_after.clone());
+            e.merge_commit = landed.merge_commit;
+            record(root, e)?;
+            DrainStepOutcome::Merged {
+                pr,
+                master_before: at.master_sha.clone(),
+                master_after: landed.master_after,
+            }
+        }
+        Err(NotLanded::NotMerged(why)) => {
+            let reason =
+                format!("reconciled: the merge the last executor asked for never landed: {why}");
+            record(root, of(IntegrationAction::MergeFailed, reason.clone()))?;
+            DrainStepOutcome::MergeRefused { pr, reason }
+        }
+        Err(NotLanded::Unproved(why)) => {
+            record(root, of(IntegrationAction::VerificationFailed, why.clone()))?;
+            DrainStepOutcome::VerificationFailed { pr, reason: why }
+        }
+    }))
+}
+
+/// The merge that stops every drain until a person acknowledges it (owner decision D7):
+/// the last `verification_failed` of the trail, unless a `failure_acknowledged` follows it.
+pub fn halted_by(root: &Path) -> Option<(Option<u64>, String)> {
+    events(root)
+        .into_iter()
+        .rev()
+        .find(|e| {
+            matches!(
+                e.action,
+                IntegrationAction::VerificationFailed | IntegrationAction::FailureAcknowledged
+            )
+        })
+        .filter(|e| e.action == IntegrationAction::VerificationFailed)
+        .map(|e| (e.pr, e.detail))
+}
+
+/// Let drains merge again after a person looked at the merge that could not be verified.
+pub fn acknowledge_failure(root: &Path, by: &str) -> Result<IntegrationEvent, String> {
+    record(
+        root,
+        IntegrationEvent {
+            detail: by.to_string(),
+            ..IntegrationEvent::of(IntegrationAction::FailureAcknowledged)
+        },
+    )
 }
 
 /// The refresh half of a step, when nothing is ready. Pipeline depth one: while a pull
@@ -1013,6 +1270,24 @@ pub fn drain(
         merged: Vec::new(),
         stopped: String::new(),
     };
+    if !dry_run {
+        // an earlier executor's merge that was asked for and never ended is ended first
+        if let Some(outcome) = reconcile(root, integrator)? {
+            if let DrainStepOutcome::Merged { pr, .. } = &outcome {
+                report.merged.push(*pr);
+            }
+            report.steps.push(outcome);
+        }
+        if let Some((pr, reason)) = halted_by(root) {
+            report.stopped = format!(
+                "{} could not be verified after merging ({reason}); nothing merges until a \
+                 person has looked and run `prs drain --resume-after-failure`",
+                pr.map_or_else(|| "a merge".to_string(), |n| format!("#{n}"))
+            );
+            report.steps.push(DrainStepOutcome::Halted { pr, reason });
+            return Ok(report);
+        }
+    }
     let max_steps = max.saturating_mul(3).max(3);
     while report.merged.len() < max {
         if report.steps.len() >= max_steps {
@@ -1045,6 +1320,7 @@ pub fn drain(
             DrainStepOutcome::VerificationFailed { pr, reason } => {
                 Some(format!("#{pr} could not be verified after merging: {reason}"))
             }
+            DrainStepOutcome::Halted { reason, .. } => Some(reason.clone()),
             DrainStepOutcome::TrailUnwritable {
                 pr,
                 unrecorded,
@@ -1165,6 +1441,14 @@ pub fn continuous(
             );
             break;
         }
+        if report
+            .steps
+            .iter()
+            .any(|s| matches!(s, DrainStepOutcome::Halted { .. }))
+        {
+            out.stopped = report.stopped.clone();
+            break;
+        }
         if let Some(DrainStepOutcome::TrailUnwritable { reason, .. }) = report
             .steps
             .iter()
@@ -1267,10 +1551,85 @@ fn gh(root: &Path, args: &[&str]) -> Result<String, String> {
     }
 }
 
+/// What landed on `master`, proved from git alone: the decision's master is on master's
+/// first-parent line, and the commit right after it there is this merge — its first parent
+/// that master and, for a merge commit, its second parent the head that was decided on. A
+/// merge that landed after another one, onto a master nobody tested together with it, is
+/// refused by name: it is the one thing a merge-after-decision can do wrong that the forge
+/// would still call merged. The merge commit, or `None` for a rebase merge, which leaves no
+/// single commit to name.
+pub(crate) fn landing(
+    root: &Path,
+    at: &EvaluatedAgainst,
+    method: &str,
+    master: &str,
+) -> Result<Option<String>, String> {
+    let git = |args: &[&str]| -> Option<String> {
+        let out = Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .args(args)
+            .output()
+            .ok()?;
+        out.status
+            .success()
+            .then(|| String::from_utf8_lossy(&out.stdout).trim().to_string())
+    };
+    let contains = |a: &str, b: &str| {
+        Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .args(["merge-base", "--is-ancestor", a, b])
+            .status()
+            .is_ok_and(|s| s.success())
+    };
+    if !contains(&at.master_sha, master) {
+        return Err(format!(
+            "master {master} does not contain {}, the master the merge was decided against",
+            at.master_sha
+        ));
+    }
+    if method == "rebase" {
+        // a rebase leaves copies of the head's commits, not the head and not one commit
+        return Ok(None);
+    }
+    let after = git(&[
+        "rev-list",
+        "--first-parent",
+        "--reverse",
+        &format!("{}..{master}", at.master_sha),
+    ])
+    .unwrap_or_default();
+    let Some(merge) = after.lines().next().map(str::to_string) else {
+        return Err(format!(
+            "master is still {master}: nothing landed on the master the merge was decided against"
+        ));
+    };
+    if git(&["rev-parse", &format!("{merge}^1")]).as_deref() != Some(at.master_sha.as_str()) {
+        return Err(format!(
+            "{} is not on master's first-parent line: the commit after it there is {merge}",
+            at.master_sha
+        ));
+    }
+    if method == "merge" {
+        let second = git(&["rev-parse", &format!("{merge}^2")]);
+        if second.as_deref() != Some(at.head_sha.as_str()) {
+            return Err(format!(
+                "unexpected_master: the commit merged onto {} is {merge}, a merge of {}, not \
+                 of {}: another change landed between the decision and this merge",
+                at.master_sha,
+                second.as_deref().unwrap_or("nothing"),
+                at.head_sha
+            ));
+        }
+    }
+    Ok(Some(merge))
+}
+
 impl Integrator for ForgeIntegrator<'_> {
     fn observe(&mut self) -> Result<IntegrationQueue, String> {
         if let Some(l) = self.lease {
-            l.renew();
+            l.renew()?;
         }
         refresh(self.root)?;
         queue_of(self.root)
@@ -1295,7 +1654,12 @@ impl Integrator for ForgeIntegrator<'_> {
         .map(|_| ())
     }
 
-    fn verify(&mut self, pr: u64, head_sha: &str) -> Result<String, String> {
+    fn verify(
+        &mut self,
+        pr: u64,
+        at: &EvaluatedAgainst,
+        method: &str,
+    ) -> Result<Landed, NotLanded> {
         let deadline = Instant::now() + MERGE_VISIBLE_WITHIN;
         loop {
             // a read, so asked again on an outage: the merge before it is never retried,
@@ -1313,21 +1677,24 @@ impl Integrator for ForgeIntegrator<'_> {
                         ".state",
                     ],
                 )
-            })?;
+            })
+            .map_err(|e| NotLanded::Unproved(format!("the forge could not be asked: {e}")))?;
             if state.trim() == "MERGED" {
                 break;
             }
             if Instant::now() >= deadline {
-                return Err(format!(
+                return Err(NotLanded::NotMerged(format!(
                     "the forge still says {} after {:?}",
                     state.trim(),
                     MERGE_VISIBLE_WITHIN
-                ));
+                )));
             }
             std::thread::sleep(Duration::from_secs(3));
         }
-        let obs = super::load_observation(self.root)?
-            .ok_or_else(|| "no observation to verify against".to_string())?;
+        let unproved = NotLanded::Unproved;
+        let obs = super::load_observation(self.root)
+            .map_err(unproved)?
+            .ok_or_else(|| NotLanded::Unproved("no observation to verify against".into()))?;
         super::retry::forge(|| {
             let fetch = Command::new("git")
                 .arg("-C")
@@ -1349,22 +1716,15 @@ impl Integrator for ForgeIntegrator<'_> {
                     String::from_utf8_lossy(&fetch.stderr).trim()
                 ))
             }
-        })?;
+        })
+        .map_err(NotLanded::Unproved)?;
         let master = local_master(self.root, &obs.base)
-            .ok_or_else(|| "master is unreadable after the merge".to_string())?;
-        let contained = Command::new("git")
-            .arg("-C")
-            .arg(self.root)
-            .args(["merge-base", "--is-ancestor", head_sha, &master])
-            .status()
-            .map(|s| s.success())
-            .unwrap_or(false);
-        if !contained {
-            return Err(format!(
-                "the merged head {head_sha} is not an ancestor of master {master}"
-            ));
-        }
-        Ok(master)
+            .ok_or_else(|| NotLanded::Unproved("master is unreadable after the merge".into()))?;
+        let merge_commit = landing(self.root, at, method, &master).map_err(NotLanded::Unproved)?;
+        Ok(Landed {
+            master_after: master,
+            merge_commit,
+        })
     }
 
     fn close(&mut self, pr: u64, comment: &str) -> Result<(), String> {
@@ -1376,6 +1736,9 @@ impl Integrator for ForgeIntegrator<'_> {
     }
 
     fn refresh_branch(&mut self, a: &PullRequestAssessment, base: &str) -> Result<String, String> {
+        // a refresh runs the repository's derive, which can outlast what an observer calls a
+        // stale lease: the record is kept fresh for as long as it runs
+        let _alive = self.lease.map(IntegrationLease::keep_alive);
         let root = self.root;
         let common = common_dir(root)?;
         let dir = common

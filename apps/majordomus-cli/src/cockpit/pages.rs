@@ -5194,7 +5194,7 @@ pub fn integration(ctx: &Context) -> Page {
             (
                 "Policy",
                 Node::Element(el("span").text(format!(
-                    "required checks: {}; review required: {}; merge method: {}",
+                    "required checks: {}; review required: {}; merge method: {}; branches up to date: {}",
                     q.policy
                         .required_checks
                         .as_ref()
@@ -5219,7 +5219,13 @@ pub fn integration(ctx: &Context) -> Page {
                     q.policy
                         .merge_method
                         .as_deref()
-                        .unwrap_or("none — merge commits are not allowed, nothing can be ready")
+                        .unwrap_or("none — merge commits are not allowed, nothing can be ready"),
+                    match q.policy.up_to_date_required {
+                        Some(true) => "required",
+                        Some(false) =>
+                            "not required — only the executor's parent check guards a merge (D8)",
+                        None => "unread",
+                    }
                 ))),
             ),
         ]),
@@ -7331,6 +7337,7 @@ mod tests {
                 observed_at: "2026-10-01T00:00:00Z".into(),
                 required_checks: Some(vec!["ci".into()]),
                 review_policy: Some(Default::default()),
+                up_to_date_required: Some(true),
                 merge_methods: vec!["merge".into()],
                 pull_requests: vec![
                     observed_pr(1, &sha, CheckRunState::Passed),

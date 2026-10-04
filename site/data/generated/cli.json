@@ -14512,6 +14512,20 @@
           "value_name": "INTERVAL"
         },
         {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "A merge an earlier drain could not verify stops every drain until a person has looked at it: this records that someone has (`failure_acknowledged` on the trail), then drains. Never with `--dry-run`",
+          "long": "resume-after-failure",
+          "name": "resume_after_failure",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "RESUME_AFTER_FAILURE"
+        },
+        {
           "defaults": [],
           "global": true,
           "help": "Start the search for the repository root here (default: the current directory)",
@@ -31694,7 +31708,7 @@
     }
   ],
   "counts": {
-    "arguments": 1365,
+    "arguments": 1366,
     "commands": 201,
     "examples": 203,
     "runnable": 177

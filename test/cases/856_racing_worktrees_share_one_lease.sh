@@ -41,6 +41,7 @@ case "\$1 \$2" in
   "api repos/o/r") echo '{"allow_merge_commit":true}' ;;
   "api repos/o/r/commits/master") printf '{"sha":"%s"}\n' "\$(git -C "$ORIGIN" rev-parse master)" ;;
   "api repos/o/r/branches/master/protection") echo '{"required_status_checks":{"contexts":["ci"]}}' ;;
+  "api repos/o/r/rules/branches/master") echo '[]' ;;
   "pr list") if [ -f "$STATE/merged-1" ]; then echo '[]'; else cat "$STATE/prs.json"; fi ;;
   "pr merge")
     t="\$(mktemp -d)"

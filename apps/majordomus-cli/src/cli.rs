@@ -2882,6 +2882,9 @@ pub enum PrsCommand {
         /// With `--continuous`: seconds between cycles, 30 to 900
         #[arg(long, default_value_t = 300, value_parser = clap::value_parser!(u64).range(crate::integration::drain::INTERVAL_SECONDS))]
         interval: u64,
+        /// A merge an earlier drain could not verify stops every drain until a person has looked at it: this records that someone has (`failure_acknowledged` on the trail), then drains. Never with `--dry-run`
+        #[arg(long, conflicts_with = "dry_run")]
+        resume_after_failure: bool,
     },
     /// Close the pull requests whose work is provably on master already; without `--apply` it only lists them
     Cleanup {
