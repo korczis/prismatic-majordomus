@@ -56,9 +56,8 @@ expect_grep 'unknown command: nonsense'
 expect_grep 'usage: majordomus <command>'
 
 # Two programs answer to the name `majordomus`, and the repository's own instructions name
-# commands of both, so an unknown command that belongs to the Rust executable must say which
-# program has it and how to reach it — a worker who followed those instructions and got only
-# "unknown command" has nowhere to go. The command probed with is read from the projection of
+# commands of both, so a command that belongs to the Rust executable is run by it — a worker
+# who followed those instructions and got only "unknown command" has nowhere to go. The command probed with is read from the projection of
 # the clap declaration rather than written here: a command name in a test is the catalogue
 # project.commands-are-projections forbids.
 CLI_DOC="$ROOT/docs/generated/cli.yaml"
@@ -74,12 +73,21 @@ if [ -f "$CLI_DOC" ]; then
   if printf '%s\n' "$COMMANDS" | grep -qx "$native"; then
     echo "    $native is dispatched by both programs; this check needs one that is not"; exit 1
   fi
-  expect_exit 2 "$MJ" "$native"
-  expect_grep "$native is a command of the Rust executable"
-  # and it names the launcher that runs it, which builds the executable when it must
-  expect_grep "bin/majordomus-cli $native"
-  # the pointer is the answer, so the usage text of the wrong program is not also dumped
-  expect_no_grep 'usage: majordomus <command>'
+  # forwarded through the launcher, never building here: MAJORDOMUS_NO_BUILD makes an
+  # unbuilt checkout's launcher answer for itself (exit 12, "majordomus-cli: ..."), which is
+  # proof enough that the command reached it; a built one prints the executable's help
+  set +e
+  out="$(MAJORDOMUS_NO_BUILD=1 "$MJ" "$native" --help 2>&1)"; rc=$?
+  set -e
+  case "$out" in
+    *"unknown command"*) echo "    $native was refused by the shell tool instead of run: $out"; exit 1 ;;
+  esac
+  case "$rc:$out" in
+    0:*"Usage: majordomus-cli $native"*|12:*"majordomus-cli: "*) ;;
+    *) echo "    $native did not reach the Rust executable (exit $rc): $out"; exit 1 ;;
+  esac
+  # the wrong program's usage text is not dumped either
+  case "$out" in *'usage: majordomus <command>'*) echo "    the shell tool's usage was printed for $native"; exit 1 ;; esac
 fi
 
 # every command refuses an argument it does not know rather than ignoring it. Commands with
