@@ -1819,4 +1819,227 @@ mod tests {
             Ok(current)
         );
     }
+
+    /// A tree of files, each written with its parent directories.
+    fn prose_tree(root: &Path, files: &[(&str, &str)]) {
+        for (path, text) in files {
+            let full = root.join(path);
+            std::fs::create_dir_all(full.parent().unwrap()).unwrap();
+            std::fs::write(full, text).unwrap();
+        }
+    }
+
+    /// `git init` and `git add -A` in `root`, isolated from any repository the test runs in.
+    fn tracked(root: &Path) {
+        for args in [&["init", "-q"][..], &["add", "-A"][..]] {
+            let out = std::process::Command::new("git")
+                .env_remove("GIT_DIR")
+                .env_remove("GIT_WORK_TREE")
+                .env_remove("GIT_INDEX_FILE")
+                .arg("-C")
+                .arg(root)
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}: {out:?}");
+        }
+    }
+
+    /// Every shape the label scanner decides: a label, and each way a `v` followed by
+    /// numbers is not one.
+    #[test]
+    fn a_label_is_two_numbers_standing_alone() {
+        assert_eq!(version_labels("v0.1"), ["v0.1"]);
+        assert_eq!(version_labels("in v10.20, not v3."), ["v10.20"]);
+        assert_eq!(version_labels("(v0.1) and \"v2.0\""), ["v0.1", "v2.0"]);
+        // joined to what comes before it
+        assert!(version_labels("dev0.1 api-v0.1 /v0.1 x.v0.1 _v0.1").is_empty());
+        // not a version after the v
+        assert!(version_labels("via vx.1 v.1 v1 v1. v1.x").is_empty());
+        // a release, or glued to what follows
+        assert!(version_labels("v0.3.1 v0.1a v0.1_x v0.1-rc").is_empty());
+        // a dot that ends a sentence is not a patch
+        assert_eq!(version_labels("It is v0.1."), ["v0.1"]);
+    }
+
+    /// The prose population: what is hand-written and read, and every way a file is not.
+    #[test]
+    fn the_prose_is_what_a_person_wrote() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        prose_tree(
+            root,
+            &[
+                ("README.md", "x"),
+                ("AGENTS.md", "x"),
+                ("CLAUDE.md", "x"),
+                ("docs/A.md", "x"),
+                ("docs/notes.txt", "x"),
+                ("docs/generated/listed.md", "x"),
+                ("site/content/limitations.md", "x"),
+                ("site/content/architecture.md", "x"),
+                ("site/content-src/architecture.md", "x"),
+                ("site/content/docs/design.md", "x"),
+                ("site/data/nav.toml", "x"),
+                ("site/data/generated/x.toml", "x"),
+                ("site/data/x.json", "x"),
+                ("site/templates/page.html", "x"),
+                (".ai/repo/README.md", "x"),
+                (".ai/repo/adrs/0001-x.md", "x"),
+                (".ai/repo/sessions/s.md", "x"),
+                (".ai/repo/policy.yaml", "x"),
+                (".ai/repo/providers/claude.tmpl", "x"),
+                ("share/providers/claude.tmpl", "x"),
+                ("share/providers/notes.md", "x"),
+                ("share/providers/x.yaml", "x"),
+                (
+                    GENERATED_MANIFEST,
+                    r#"{"artifacts":[{"path":"docs/generated/listed.md"}]}"#,
+                ),
+            ],
+        );
+        tracked(root);
+        assert_eq!(
+            prose_files(root),
+            [
+                ".ai/repo/README.md",
+                ".ai/repo/providers/claude.tmpl",
+                "AGENTS.md",
+                "CLAUDE.md",
+                "README.md",
+                "docs/A.md",
+                "share/providers/claude.tmpl",
+                "site/content-src/architecture.md",
+                "site/content/limitations.md",
+                "site/data/nav.toml",
+                "site/templates/page.html",
+            ]
+        );
+    }
+
+    /// Where git cannot list the tree, the roots are walked: a file root is taken as it is
+    /// and a directory root is read whole, so nothing goes unread for want of a checkout.
+    #[test]
+    fn a_tree_nobody_committed_is_still_read() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        prose_tree(root, &[("README.md", "x"), ("docs/sub/B.md", "x")]);
+        assert_eq!(
+            walk(root, &["README.md", "docs", "missing"]),
+            ["docs/sub/B.md", "README.md"]
+        );
+        assert_eq!(prose_files(root), ["docs/sub/B.md", "README.md"]);
+    }
+
+    /// Only text somebody wrote is read: not a missing file, an oversized one, or one its
+    /// generator stamped.
+    #[test]
+    fn a_stamped_or_oversized_file_is_not_authored() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        let big = "x".repeat(LARGEST_READ as usize + 1);
+        prose_tree(
+            root,
+            &[
+                ("a.md", "v0.1\n"),
+                ("b.md", "<!-- generated by majordomus -->\nv0.1\n"),
+                ("c.md", "\u{feff}  # GENERATED FILE\nv0.1\n"),
+                ("d.md", &big),
+            ],
+        );
+        assert_eq!(authored_text(root, "a.md").as_deref(), Some("v0.1\n"));
+        assert_eq!(authored_text(root, "b.md"), None);
+        assert_eq!(authored_text(root, "c.md"), None);
+        assert_eq!(authored_text(root, "d.md"), None);
+        assert_eq!(authored_text(root, "gone.md"), None);
+    }
+
+    /// The history file: comments and blank lines are not entries, an entry's reason is
+    /// everything after its path, and an absent file declares nothing.
+    #[test]
+    fn the_history_reads_a_path_and_its_reason() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        assert!(label_history(root).is_empty());
+        prose_tree(
+            root,
+            &[(
+                LABEL_HISTORY,
+                "# a comment\n\n  docs/A.md  the design phase, dated \ndocs/B.md\n",
+            )],
+        );
+        assert_eq!(
+            label_history(root),
+            [
+                (
+                    3,
+                    "docs/A.md".to_string(),
+                    "the design phase, dated".to_string()
+                ),
+                (4, "docs/B.md".to_string(), String::new()),
+            ]
+        );
+    }
+
+    /// Each finding the label check makes, and the exemption that holds only while its
+    /// document still carries a label.
+    #[test]
+    fn a_label_is_refused_unless_its_document_is_declared_history() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        prose_tree(
+            root,
+            &[
+                (
+                    "README.md",
+                    "# Tool\nWhat v0.1 does not do, in v0.2.\nRelease v0.3.1.\n",
+                ),
+                ("docs/DESIGN.md", "The v0.1 specification.\n"),
+                ("docs/PLAIN.md", "No label here.\n"),
+                // stamped by its generator: the label is its source's, not found here
+                (
+                    "docs/STAMPED.md",
+                    "<!-- generated by x -->\nThe v0.1 notes.\n",
+                ),
+                (
+                    LABEL_HISTORY,
+                    "docs/DESIGN.md dated\ndocs/PLAIN.md it once had one\n\
+                     docs/GONE.md removed\nREADME.md\n",
+                ),
+            ],
+        );
+        tracked(root);
+        let found = label_diagnostics(root);
+        let messages: Vec<&str> = found.iter().map(|d| d.message.as_str()).collect();
+        assert!(found.iter().all(|d| d.severity == Severity::Error));
+        assert_eq!(found.len(), 5, "{messages:#?}");
+        assert_eq!(found[0].id, LABEL_IN_PROSE);
+        assert!(messages[0].starts_with("README.md:2 names the version it describes as `v0.1`"));
+        assert!(messages[1].starts_with("README.md:2 names the version it describes as `v0.2`"));
+        assert_eq!(found[2].id, LABEL_HISTORY_INVALID);
+        assert!(messages[2].contains(":2 exempts docs/PLAIN.md, which names no version label"));
+        assert!(messages[3].contains(":3 exempts docs/GONE.md, which is not tracked"));
+        assert!(messages[4].contains(":4 exempts README.md and says nothing about why"));
+    }
+
+    /// The label check is part of the one diagnosis the gate runs, and only where the
+    /// product lives.
+    #[test]
+    fn the_diagnosis_carries_the_label_check_where_the_product_lives() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        prose_tree(root, &[("README.md", "What v0.1 does not do.\n")]);
+        tracked(root);
+        assert!(diagnose(root).is_empty(), "not the product's repository");
+        prose_tree(
+            root,
+            &[
+                (MANIFEST, "[package]\nversion = \"0.9.0\"\n"),
+                (PROJECTION, "version=0.9.0\n"),
+            ],
+        );
+        let found = diagnose(root);
+        assert_eq!(found.len(), 1, "{found:?}");
+        assert_eq!(found[0].id, LABEL_IN_PROSE);
+    }
 }

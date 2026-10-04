@@ -83,6 +83,6 @@ expect_exit 10 "$RB" release version
 expect_grep 'exempts docs/DESIGN\.md, which names no version label any more'
 
 # ------------------------------------------------------- 5. this repository's prose is clean
-cd "$ROOT"
+cd "$ROOT" || exit 1
 expect_exit 0 "$RB" release version || {
   echo "    this repository's prose names a version label:"; printf '%s\n' "$LAST_OUT" | grep -E 'version-label-(in-prose|history-invalid)' | sed 's/^/      /'; exit 1; }

@@ -59,10 +59,10 @@ second is why each limitation names its evidence.
 
 ```sh
 bin/majordomus-cli release version          # the version-authored-once gate
-bash test/run.sh 890_prose_states_no_version
+bash test/run.sh 900_prose_states_no_version
 ```
 
-`test/cases/890_prose_states_no_version.sh` proves the refusal against a fixture repository —
+`test/cases/900_prose_states_no_version.sh` proves the refusal against a fixture repository —
 a label refused, a release mention and a declared history allowed, and each invalid history
 entry refused — and that this repository's own prose is clean.
 {% endraw %}
