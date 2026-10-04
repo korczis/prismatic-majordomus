@@ -694,23 +694,34 @@ pub fn milestone(ctx: &Context, id: &str) -> Page {
 /// and events, and the issue page reads the record back once the execution has finished.
 /// Both routes come from the registry that declares them; this page names no path.
 fn moves(ctx: &Context, issue: &str, startable: bool) -> El {
-    let Some(capability) = ctx.registry.get("plan.transition") else {
+    // every fact about a capability is asked of `capabilities.describe`, the way every page
+    // learns one, so this page reads no registry of its own (ADR 0089)
+    let describe =
+        |id: &str| ask::<serde_json::Value>(ctx, "capabilities.describe", json!({ "id": id })).ok();
+    let http_path = |id: &str| {
+        describe(id).and_then(|c| {
+            c.pointer("/exposure/http/path")
+                .and_then(serde_json::Value::as_str)
+                .map(String::from)
+        })
+    };
+    let Some(capability) = describe("plan.transition") else {
         return card(
             "Moves",
             nothing("This executable has no `plan.transition`, so no move can be made from here."),
         );
     };
-    let start = ctx
-        .registry
-        .get("executions.start")
-        .and_then(|s| s.exposure.http.as_ref())
-        .map(|h| h.path.clone());
-    let follow = ctx
-        .registry
-        .get("executions.get")
-        .and_then(|s| s.exposure.http.as_ref())
-        .map(|h| h.path.clone());
-    let (Some(start), Some(follow)) = (start, follow) else {
+    let capability_id = capability["id"]
+        .as_str()
+        .unwrap_or("plan.transition")
+        .to_string();
+    let effect = capability
+        .pointer("/execution/effect")
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or("repository_mutation")
+        .to_string();
+    let (Some(start), Some(follow)) = (http_path("executions.start"), http_path("executions.get"))
+    else {
         return card(
             "Moves",
             nothing("This executable starts no execution over HTTP, so the Cockpit cannot make a move. The command line still can."),
@@ -749,10 +760,10 @@ fn moves(ctx: &Context, issue: &str, startable: bool) -> El {
         el("form")
             .class("mj-runner")
             .attr("data-mj-transition", issue)
-            .attr("data-mj-capability", capability.id.as_str())
+            .attr("data-mj-capability", capability_id)
             .attr("data-mj-start", start)
             .attr("data-mj-follow", follow)
-            .attr("data-mj-effect", word(&capability.execution.effect))
+            .attr("data-mj-effect", effect)
             .attr("novalidate", "")
             .child(alert(
                 "warn",
