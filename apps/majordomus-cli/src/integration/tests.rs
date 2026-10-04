@@ -1562,6 +1562,20 @@ fn a_ref_keyed_relation_written_earlier_is_dropped_while_master_stands_still() {
     assert!(keys.iter().all(|k| commit_ids(k) && !k.contains("refs/")));
 }
 
+/// Enough paths that git's answer fills its stdout pipe before all of them are written: the
+/// attributes are still read, because the paths are written while the answer is read.
+#[test]
+fn derived_paths_of_many_paths_does_not_wait_on_itself() {
+    let RelationFixture { dir, master, .. } = relation_fixture();
+    let mut paths: Vec<String> = (0..20_000)
+        .map(|i| format!("site/data/generated/a-rather-long-directory-name/file-{i:05}.json"))
+        .collect();
+    // the one derived path, last: its answer comes only after every other
+    paths.push("gen.json".into());
+    let derived = super::relation::derived_paths(&dir, &master, &paths).unwrap();
+    assert_eq!(derived.into_iter().collect::<Vec<_>>(), vec!["gen.json"]);
+}
+
 /// A repository whose master's `.gitattributes` cannot be read, and a head that changes only
 /// the derived file it names: git merges and diffs it, and cannot say which path is derived.
 fn unreadable_attributes() -> (std::path::PathBuf, String, String) {

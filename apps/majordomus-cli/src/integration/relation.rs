@@ -58,10 +58,15 @@ pub fn derived_paths(
         .spawn()
         .and_then(|mut child| {
             use std::io::Write;
-            // stdin is piped, so it is there; it is closed at the end of this statement, and
-            // a write git refused shows in its exit status, which is read below
-            let _ = child.stdin.take().map(|mut stdin| stdin.write_all(&input));
-            child.wait_with_output()
+            // written from another thread while this one reads: git answers as it reads, and
+            // with enough paths its stdout pipe fills while a write from here would still be
+            // blocked on its stdin — each waiting on the other. A write git refused shows in
+            // its exit status, which is read below; stdin closes when the writer ends.
+            let stdin = child.stdin.take();
+            let writer = std::thread::spawn(move || stdin.map(|mut s| s.write_all(&input)));
+            let out = child.wait_with_output();
+            let _ = writer.join();
+            out
         })
         .map_err(|e| format!("git check-attr could not run: {e}"))?;
     if !out.status.success() {
