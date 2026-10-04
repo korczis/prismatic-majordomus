@@ -2836,6 +2836,21 @@ mod tests {
         o
     }
 
+    /// Entry draws the repository and the branch itself, so what it adds is the episode and
+    /// the checks — the same two the standalone compact form carries under its own heading.
+    #[test]
+    fn the_entry_details_are_the_compact_form_without_its_heading() {
+        let p = derive(&at_head());
+        let full = compact(&p, true);
+        assert!(full.starts_with("◆ demo · master · no episode"), "{full}");
+        assert!(full.ends_with(&compact_checks(&p, true)), "{full}");
+        let details = entry_details(&p, false);
+        assert!(details.starts_with("  no episode\n "), "{details}");
+        assert!(!details.contains("demo"), "a second heading: {details}");
+        assert!(details.ends_with(&compact_checks(&p, false)), "{details}");
+        assert_eq!(compact_episode(&p), "no episode");
+    }
+
     #[test]
     fn every_check_that_proves_something_names_its_evidence() {
         let mut o = at_head();
