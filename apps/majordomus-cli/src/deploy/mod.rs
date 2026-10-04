@@ -21,6 +21,7 @@ use crate::model::Object;
 
 pub mod render;
 pub mod targets;
+pub mod verify;
 
 /// The kind a deployment object is discovered as.
 pub const KIND: &str = "deployment";

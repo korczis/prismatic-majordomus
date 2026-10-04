@@ -14,9 +14,13 @@ use serde::{Deserialize, Serialize};
 
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{Exposure, McpExposure, McpResource, Stability};
+use crate::capability::model::{
+    BenchmarkPolicy, Exposure, McpExposure, McpResource, Stability, WaiverReason,
+};
 use crate::capability::module::ModuleDescriptor;
 use crate::capability::CachePolicy;
+use crate::deploy::targets::DeploymentPlan;
+use crate::deploy::verify::{self, CurlFetcher, Fetcher, VerificationReport};
 use crate::deploy::{Deployment, Refusal, Workspace, KIND};
 use crate::{capability, module};
 
@@ -158,7 +162,99 @@ impl BenchmarkCases for GetDeploymentInput {
     }
 }
 
-/// The module.
+/// The default asks every published surface whether it serves this checkout's HEAD; a
+/// caller names another commit, a subset of targets, or the change set to derive
+/// applicability from.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+/// What to verify, and against which revision.
+pub struct VerifyInput {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The commit every target is expected to serve. Absent means this checkout's HEAD.
+    pub expected_commit: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The targets to ask, by id (`pages`, `release`, a deployment's id). Absent means
+    /// every target that applies.
+    pub targets: Option<Vec<String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The changed paths to derive applicability from. Absent means every target that
+    /// exists is asked, which is the question after a deployment.
+    pub changed: Option<Vec<String>>,
+}
+
+impl BenchmarkCases for VerifyInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        vec![
+            NamedCase::new("every-target", VerifyInput::default()),
+            // every optional field filled, so each query parameter has an example
+            NamedCase::new(
+                "one-target-against-a-commit",
+                VerifyInput {
+                    expected_commit: Some("0123456789abcdef0123456789abcdef01234567".into()),
+                    targets: Some(vec!["pages".into()]),
+                    changed: Some(vec!["site/content/_index.md".into()]),
+                },
+            ),
+        ]
+    }
+}
+
+/// The plan and the live answers, as one document: what would be asked, what was, and
+/// what each surface stated.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct DeploymentVerification {
+    /// The commit the targets were expected to serve, when one was known.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub expected_commit: Option<String>,
+    /// Which targets exist and which apply.
+    pub plan: DeploymentPlan,
+    /// What each was found to serve.
+    #[serde(flatten)]
+    pub report: VerificationReport,
+}
+
+fn deploy_verify(
+    ctx: &Context,
+    input: VerifyInput,
+) -> Result<DeploymentVerification, CapabilityError> {
+    deploy_verify_with(ctx, input, &CurlFetcher)
+}
+
+/// The verification over any fetcher: `curl` when the capability runs, a table of answers
+/// when a test does, so the plan, the selection and the comparison are proved without a
+/// network.
+fn deploy_verify_with(
+    ctx: &Context,
+    input: VerifyInput,
+    fetcher: &dyn Fetcher,
+) -> Result<DeploymentVerification, CapabilityError> {
+    let root = std::path::PathBuf::from(&ctx.index.repository.root);
+    let expected = match input.expected_commit {
+        Some(c) => Some(c),
+        None => crate::gates::head_of(&root),
+    };
+    let model = crate::gates::GateModel::load(&root).ok();
+    let everything = input.changed.is_none();
+    let changed = input.changed.unwrap_or_default();
+    let mut plan =
+        super::gates::deployment_plan(ctx, model.as_ref(), &changed, expected.clone(), everything);
+    if let Some(only) = &input.targets {
+        for t in &mut plan.targets {
+            if !only.iter().any(|o| o == &t.id) {
+                t.applicable = false;
+                t.reason = "not among the targets asked for".into();
+            }
+        }
+    }
+    let now = crate::peers::rfc3339(std::time::SystemTime::now());
+    let report = verify::verify(&plan, fetcher, &now);
+    Ok(DeploymentVerification {
+        expected_commit: expected,
+        plan,
+        report,
+    })
+}
+
 pub fn module() -> ModuleDescriptor {
     module! {
         id: "deploy",
@@ -207,6 +303,26 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Process { max_entries: 2, ttl_seconds: Some(5) },
                 handler: deploy_check,
             },
+            capability! {
+                id: "deploy.verify",
+                title: "What the deployed surfaces are serving",
+                description: "Live verification: every surface the change reaches — the published site, the published release metadata, each active deployment — is asked for the identity it states (the commit, version or tag at its own address) and compared with what this checkout expects. A surface stating an older identity is stale, one that does not answer is unreachable, and neither is a pass: a deploy command that exited 0 with the old revision still live is exactly what this refuses. The request carries no header and the evidence carries no body beyond the fields compared. The one capability of this executable that reaches the network, and it reaches only addresses the repository itself declares.",
+                input: VerifyInput,
+                output: DeploymentVerification,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: Some(McpExposure {
+                        tool: Some("majordomus_deploy_verify".into()),
+                        resource: None,
+                    }),
+                    http: get("/api/v1/deployments/verify"),
+                    cli: None,
+                },
+                tags: ["deployments", "verification", "evidence", "live"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::ExternalDependency },
+                handler: deploy_verify,
+            },
         ],
     }
 }
@@ -245,13 +361,24 @@ mod tests {
     /// second list would be the defect; this one pins that the module composes what it
     /// says it does.
     #[test]
-    fn the_module_declares_the_reads_and_nothing_else() {
+    fn the_default_verification_asks_everything_against_head() {
+        let i = VerifyInput::default();
+        assert!(i.expected_commit.is_none() && i.targets.is_none() && i.changed.is_none());
+        let json = serde_json::to_string(&i).unwrap();
+        assert_eq!(json, "{}", "nothing is serialised that was not asked");
+    }
+
+    #[test]
+    fn the_module_declares_the_reads_and_the_one_live_verification() {
         let ids: Vec<String> = module()
             .capabilities
             .iter()
             .map(|c| c.capability.id.to_string())
             .collect();
-        assert_eq!(ids, ["deploy.list", "deploy.get", "deploy.check"]);
+        assert_eq!(
+            ids,
+            ["deploy.list", "deploy.get", "deploy.check", "deploy.verify"]
+        );
     }
 
     /// A deployment id the layer does not have is refused by name rather than answered
@@ -283,5 +410,87 @@ mod tests {
         let check = deploy_check(&ctx, Empty {}).expect("checked");
         assert!(check.ok);
         assert_eq!(check.decided, 0);
+    }
+
+    const HEAD: &str = "0123456789abcdef0123456789abcdef01234567";
+
+    /// A synthetic repository whose site is published at `https://site.test`, and the
+    /// question the capability is asked about it: the site alone, against `HEAD`.
+    fn published() -> (crate::synthetic::SyntheticRepository, VerifyInput) {
+        let repo = crate::synthetic::SyntheticRepository::new(crate::synthetic::Shape::default())
+            .expect("a synthetic repository");
+        std::fs::create_dir_all(repo.root().join("site")).unwrap();
+        std::fs::write(
+            repo.root().join("site/config.toml"),
+            "base_url = \"https://site.test/\"\n",
+        )
+        .unwrap();
+        let input = VerifyInput {
+            expected_commit: Some(HEAD.into()),
+            targets: Some(vec!["pages".into()]),
+            changed: None,
+        };
+        (repo, input)
+    }
+
+    /// The capability end to end over a table of answers: the plan is built from the
+    /// repository, the selection narrows it, and the site's stated commit decides.
+    #[test]
+    fn a_site_serving_the_expected_commit_is_verified() {
+        let (repo, input) = published();
+        let ctx = repo.context().expect("a context");
+        let fetcher = verify::StaticFetcher::default().answers(
+            "https://site.test/build.json",
+            &format!(r#"{{"commit":"{HEAD}"}}"#),
+        );
+        let v = deploy_verify_with(&ctx, input, &fetcher).expect("verified");
+        assert_eq!(v.expected_commit.as_deref(), Some(HEAD));
+        assert!(v.report.ok, "{:?}", v.report);
+        assert_eq!(v.report.asked, 1, "only the target asked for is asked");
+        let pages = v
+            .report
+            .verifications
+            .iter()
+            .find(|x| x.target == "pages")
+            .unwrap();
+        assert_eq!(pages.status, verify::VerificationStatus::Verified);
+    }
+
+    /// The deploy that exited 0 with the old revision still live: refused by name.
+    #[test]
+    fn a_site_serving_an_older_commit_is_stale_and_refuses() {
+        let (repo, input) = published();
+        let ctx = repo.context().expect("a context");
+        let fetcher = verify::StaticFetcher::default().answers(
+            "https://site.test/build.json",
+            r#"{"commit":"fedcba9876543210"}"#,
+        );
+        let v = deploy_verify_with(&ctx, input, &fetcher).expect("answered");
+        assert!(!v.report.ok);
+        assert_eq!(v.report.refusing, ["pages"]);
+        assert_eq!(
+            v.report.verifications[0].status,
+            verify::VerificationStatus::Stale
+        );
+    }
+
+    /// A surface that does not answer is not a pass, and neither is a report that asked
+    /// nothing because the selection named no target the repository has.
+    #[test]
+    fn silence_and_an_empty_selection_are_not_passes() {
+        let (repo, input) = published();
+        let ctx = repo.context().expect("a context");
+        let silent = verify::StaticFetcher::default();
+        let v = deploy_verify_with(&ctx, input.clone(), &silent).expect("answered");
+        assert!(!v.report.ok);
+        assert_eq!(v.report.refusing, ["pages"]);
+
+        let none = VerifyInput {
+            targets: Some(vec!["absent".into()]),
+            ..input
+        };
+        let v = deploy_verify_with(&ctx, none, &silent).expect("answered");
+        assert_eq!(v.report.asked, 0);
+        assert!(!v.report.ok, "a report that asked nothing verified nothing");
     }
 }
