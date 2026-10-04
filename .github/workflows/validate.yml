@@ -503,10 +503,15 @@ jobs:
   # file as the code it tests, so its denominator contained the tests and the number moved
   # whenever a test was added or deleted. scripts/rust-coverage is the same measurement with
   # that subtracted; it runs the same suite once and post-processes the JSON export.
+  #
+  # Its bound is measured, not guessed: the job took 23 min on 2026-10-04 (run 37195144596)
+  # and was killed at its old bound of 25 min on the next run of the same batch (37199016404),
+  # while two master runs shared the runners. A kill by the job bound reads as `cancelled`,
+  # not as a failure (scripts/ci/step-bound-check), so the bound leaves room for contention.
   coverage:
     needs: plan
     if: needs.plan.outputs.rust_coverage == 'true' || needs.plan.outputs.coverage_differential == 'true'
-    timeout-minutes: 25
+    timeout-minutes: 40
     runs-on: ubuntu-latest
     defaults:
       run:
