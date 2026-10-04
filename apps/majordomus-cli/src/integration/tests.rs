@@ -2583,3 +2583,240 @@ fn outside_a_repository_there_is_no_summary() {
     assert!(super::QueueSummary::load(&dir).is_none());
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+// ---------------------------------------------------------------- executors racing (WP27)
+//
+// Two executors started at the same instant on one base: exactly one holds the lease at any
+// moment, and no pull request is merged twice. Threads here; two processes, and two
+// worktrees of one repository, in cases 855 and 856.
+
+/// How many executors race in each round, and how many rounds: a race lost once in a
+/// thousand starts must still lose inside one run of the suite.
+const RACERS: usize = 8;
+const ROUNDS: usize = 25;
+
+/// Every executor of a round takes the lease at one instant and keeps whatever it got until
+/// every other one has tried; the number of leases held at once is returned.
+fn race_for_the_lease(root: &std::path::Path) -> usize {
+    use std::sync::{Arc, Barrier};
+    let start = Arc::new(Barrier::new(RACERS));
+    let tried = Arc::new(Barrier::new(RACERS));
+    let racers: Vec<_> = (0..RACERS)
+        .map(|_| {
+            let (root, start, tried) = (root.to_path_buf(), start.clone(), tried.clone());
+            std::thread::spawn(move || {
+                start.wait();
+                let lease = drain::IntegrationLease::acquire(&root, "master");
+                tried.wait();
+                match lease {
+                    Ok(_) => true,
+                    Err(e) => {
+                        // refused, by name: never a lease taken and lost unsaid
+                        assert!(
+                            e.contains("another integration executor holds")
+                                || e.contains("could not be taken"),
+                            "{e}"
+                        );
+                        false
+                    }
+                }
+            })
+        })
+        .collect();
+    racers
+        .into_iter()
+        .map(|r| r.join().expect("a racer panicked"))
+        .filter(|won| *won)
+        .count()
+}
+
+#[test]
+fn executors_started_at_one_instant_take_one_lease() {
+    for round in 0..ROUNDS {
+        let root = scratch();
+        assert_eq!(race_for_the_lease(&root), 1, "round {round}");
+        // the winner took it once and gave it back once; the losers recorded nothing
+        assert_eq!(
+            trail_actions(&root),
+            ["lease_acquired", "lease_released"],
+            "round {round}"
+        );
+        let _ = std::fs::remove_dir_all(&root);
+    }
+}
+
+#[test]
+fn executors_reclaiming_one_stale_lease_take_it_once() {
+    for round in 0..ROUNDS {
+        let root = scratch();
+        // a holder that stopped without releasing: its lease is past LEASE_STALE_AFTER
+        let path = drain::IntegrationLease::path_for(&root.join(".git"), "master");
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(&path, "a holder that is gone").unwrap();
+        age_lease(&path, drain::LEASE_STALE_AFTER * 2);
+        assert_eq!(race_for_the_lease(&root), 1, "round {round}");
+        let _ = std::fs::remove_dir_all(&root);
+    }
+}
+
+/// Make the lease file's record look `age` old, as a holder that stopped renewing leaves it.
+fn age_lease(path: &std::path::Path, age: std::time::Duration) {
+    std::fs::File::options()
+        .write(true)
+        .open(path)
+        .and_then(|f| f.set_modified(std::time::SystemTime::now() - age))
+        .unwrap();
+}
+
+#[test]
+fn a_record_whose_holder_is_gone_is_taken_over_at_once() {
+    let root = scratch();
+    // a holder that crashed a moment ago: its record is fresh, but nobody holds the lock
+    let path = drain::IntegrationLease::path_for(&root.join(".git"), "master");
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    std::fs::write(
+        &path,
+        r#"{"pid":1,"host":"gone","base":"master","since":0}"#,
+    )
+    .unwrap();
+    let lease = drain::IntegrationLease::acquire(&root, "master").expect("taken over");
+    let held = drain::IntegrationLease::read(&root, "master")
+        .unwrap()
+        .unwrap();
+    assert_eq!(
+        held.holder.unwrap().pid,
+        std::process::id(),
+        "the record is the new holder's"
+    );
+    drop(lease);
+    assert!(drain::IntegrationLease::read(&root, "master")
+        .unwrap()
+        .is_none());
+}
+
+#[test]
+fn a_live_holder_is_never_taken_over_however_old_its_record() {
+    let root = scratch();
+    let lease = drain::IntegrationLease::acquire(&root, "master").unwrap();
+    let path = drain::IntegrationLease::path_for(&root.join(".git"), "master");
+    age_lease(&path, drain::LEASE_STALE_AFTER * 2);
+    // an observer calls it stale; an executor still cannot take it
+    assert!(
+        drain::IntegrationLease::read(&root, "master")
+            .unwrap()
+            .unwrap()
+            .stale
+    );
+    let err = match drain::IntegrationLease::acquire(&root, "master") {
+        Ok(_) => panic!("a live holder's lease was taken over"),
+        Err(e) => e,
+    };
+    assert!(err.contains("another integration executor holds"), "{err}");
+    // renewing writes through the held file, and freshens it
+    lease.renew();
+    assert!(
+        !drain::IntegrationLease::read(&root, "master")
+            .unwrap()
+            .unwrap()
+            .stale
+    );
+    drop(lease);
+    assert_eq!(trail_actions(&root), ["lease_acquired", "lease_released"]);
+}
+
+/// One scripted forge that several executors observe and merge through.
+struct Shared(std::sync::Arc<std::sync::Mutex<World>>);
+
+impl Integrator for Shared {
+    fn observe(&mut self) -> Result<IntegrationQueue, String> {
+        self.0.lock().unwrap().observe()
+    }
+    fn merge(&mut self, pr: u64, head_sha: &str, method: &str) -> Result<(), String> {
+        self.0.lock().unwrap().merge(pr, head_sha, method)
+    }
+    fn verify(&mut self, pr: u64, head_sha: &str) -> Result<String, String> {
+        self.0.lock().unwrap().verify(pr, head_sha)
+    }
+    fn refresh_branch(&mut self, a: &PullRequestAssessment, base: &str) -> Result<String, String> {
+        self.0.lock().unwrap().refresh_branch(a, base)
+    }
+    fn close(&mut self, pr: u64, comment: &str) -> Result<(), String> {
+        self.0.lock().unwrap().close(pr, comment)
+    }
+}
+
+#[test]
+fn racing_executors_merge_each_pull_request_once() {
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::{Arc, Barrier, Mutex};
+    for round in 0..ROUNDS / 5 {
+        let root = scratch();
+        // three ready changes: each merge puts the others behind, so the queue is only
+        // emptied by several drains, merging and refreshing in turn
+        let world = Arc::new(Mutex::new(World {
+            open: vec![sim(1), sim(2), sim(3)],
+            ..Default::default()
+        }));
+        let holding = Arc::new(AtomicBool::new(false));
+        let start = Arc::new(Barrier::new(RACERS));
+        let racers: Vec<_> = (0..RACERS)
+            .map(|_| {
+                let (root, world, holding, start) =
+                    (root.clone(), world.clone(), holding.clone(), start.clone());
+                std::thread::spawn(move || {
+                    let mut merged = Vec::new();
+                    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
+                    start.wait();
+                    while !world.lock().unwrap().open.is_empty() {
+                        assert!(
+                            std::time::Instant::now() < deadline,
+                            "the queue never emptied"
+                        );
+                        let Ok(lease) = drain::IntegrationLease::acquire(&root, "master") else {
+                            std::thread::yield_now();
+                            continue;
+                        };
+                        assert!(
+                            !holding.swap(true, Ordering::SeqCst),
+                            "two executors held the lease at once"
+                        );
+                        let report =
+                            drain::drain(&root, &mut Shared(world.clone()), 3, false, true)
+                                .unwrap();
+                        merged.extend(report.merged);
+                        holding.store(false, Ordering::SeqCst);
+                        drop(lease);
+                    }
+                    merged
+                })
+            })
+            .collect();
+        let mut merged: Vec<u64> = racers
+            .into_iter()
+            .flat_map(|r| r.join().expect("a racer panicked"))
+            .collect();
+        merged.sort_unstable();
+        assert_eq!(
+            merged,
+            [1, 2, 3],
+            "round {round}: what the executors merged"
+        );
+        let w = world.lock().unwrap();
+        assert_eq!(
+            w.merge_calls, 3,
+            "round {round}: a merge reached the forge twice"
+        );
+        // each change merged after its own refresh, once: #1 needed none
+        assert_eq!(
+            w.refresh_calls, 2,
+            "round {round}: a branch was refreshed twice"
+        );
+        let attempted = trail_actions(&root)
+            .iter()
+            .filter(|a| *a == "merge_attempted")
+            .count();
+        assert_eq!(attempted, 3, "round {round}: the trail");
+        drop(w);
+        let _ = std::fs::remove_dir_all(&root);
+    }
+}

@@ -59,11 +59,18 @@ pub const REFRESHED_HEAD_REPORTS_WITHIN: Duration = Duration::from_secs(4 * 3600
 /// The one executor of a base branch: an exclusive file under the *common* git directory,
 /// so every worktree of the repository contends on the same file and no other repository
 /// sees it. Read-only observers never take it.
+///
+/// Holding it is holding an exclusive `flock` on that file's descriptor, for the life of
+/// this value. The kernel decides who holds it, so executors started at the same instant
+/// cannot both win, and a holder that ends — even by a crash — releases it at once. The
+/// holder record written into the file says who holds it; it decides nothing.
 pub struct IntegrationLease {
     path: PathBuf,
     token: String,
     /// The repository whose trail records the lease's release.
     root: PathBuf,
+    /// The open lock file: closing it gives the `flock` back.
+    file: fs::File,
 }
 
 /// Who holds the lease.
@@ -112,6 +119,31 @@ fn now_secs() -> u64 {
         .unwrap_or(0)
 }
 
+/// An exclusive `flock` on `file`, without waiting: `false` when another descriptor holds it.
+/// Released when the file is closed.
+fn try_lock_exclusive(file: &fs::File) -> std::io::Result<bool> {
+    use std::os::unix::io::AsRawFd;
+    // SAFETY: the descriptor belongs to `file`, which is open for the whole call.
+    if unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0 {
+        return Ok(true);
+    }
+    let e = std::io::Error::last_os_error();
+    if e.kind() == std::io::ErrorKind::WouldBlock {
+        Ok(false)
+    } else {
+        Err(e)
+    }
+}
+
+/// Whether `path` still names the file `file` has open.
+fn names_file(path: &Path, file: &fs::File) -> bool {
+    use std::os::unix::fs::MetadataExt;
+    match (fs::metadata(path), file.metadata()) {
+        (Ok(a), Ok(b)) => a.dev() == b.dev() && a.ino() == b.ino(),
+        _ => false,
+    }
+}
+
 impl IntegrationLease {
     /// The lease file of a base branch.
     pub fn path_for(common: &Path, base: &str) -> PathBuf {
@@ -120,8 +152,9 @@ impl IntegrationLease {
             .join(format!("integration-{}.lock", base.replace('/', "-")))
     }
 
-    /// Take the lease, or say who holds it. A lease untouched for [`LEASE_STALE_AFTER`] is
-    /// reclaimed: its holder stopped without releasing it. Taking it is recorded
+    /// Take the lease, or say who holds it. Another executor that holds the `flock` is a
+    /// refusal, however old its record; a record whose holder no longer holds the lock — it
+    /// stopped without releasing — is taken over at once. Taking it is recorded
     /// (`lease_acquired`); a lease the trail cannot record is given back at once and refused.
     pub fn acquire(root: &Path, base: &str) -> Result<Self, String> {
         let path = Self::path_for(&common_dir(root)?, base);
@@ -135,56 +168,62 @@ impl IntegrationLease {
             since: now_secs(),
         };
         let token = serde_json::to_string(&holder).map_err(|e| e.to_string())?;
-        for _ in 0..2 {
-            match fs::OpenOptions::new()
+        // A holder that releases unlinks the file before it closes it, so an executor that
+        // opened the old file in between locks a file nobody can find any more: it must see
+        // that the path still names the file it locked, or open the path again.
+        for _ in 0..8 {
+            let mut file = fs::OpenOptions::new()
+                .read(true)
                 .write(true)
-                .create_new(true)
+                .create(true)
+                .truncate(false)
                 .open(&path)
-            {
-                Ok(mut f) => {
-                    let _ = f.write_all(token.as_bytes());
-                    let taken = IntegrationEvent {
-                        detail: token.clone(),
-                        ..IntegrationEvent::of(IntegrationAction::LeaseAcquired)
-                    };
-                    if let Err(e) = record(root, taken) {
-                        let _ = fs::remove_file(&path);
-                        return Err(format!(
-                            "the integration lease was given back: the trail could not record it: {e}"
-                        ));
-                    }
-                    return Ok(IntegrationLease {
-                        path,
-                        token,
-                        root: root.to_path_buf(),
-                    });
-                }
-                Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
-                    let stale = fs::metadata(&path)
-                        .and_then(|m| m.modified())
-                        .ok()
-                        .and_then(|m| SystemTime::now().duration_since(m).ok())
-                        .is_some_and(|age| age > LEASE_STALE_AFTER);
-                    if stale {
-                        let _ = fs::remove_file(&path);
-                        continue;
-                    }
-                    let held = fs::read_to_string(&path).unwrap_or_default();
-                    return Err(format!(
-                        "another integration executor holds {}: {}",
-                        path.display(),
-                        held.trim()
-                    ));
-                }
-                Err(e) => return Err(format!("{}: {e}", path.display())),
+                .map_err(|e| format!("{}: {e}", path.display()))?;
+            if !try_lock_exclusive(&file).map_err(|e| format!("{}: {e}", path.display()))? {
+                let held = fs::read_to_string(&path).unwrap_or_default();
+                return Err(format!(
+                    "another integration executor holds {}: {}",
+                    path.display(),
+                    held.trim()
+                ));
             }
+            if !names_file(&path, &file) {
+                continue;
+            }
+            file.set_len(0)
+                .and_then(|()| file.write_all(token.as_bytes()))
+                .and_then(|()| file.flush())
+                .map_err(|e| format!("{}: {e}", path.display()))?;
+            let taken = IntegrationEvent {
+                detail: token.clone(),
+                ..IntegrationEvent::of(IntegrationAction::LeaseAcquired)
+            };
+            if let Err(e) = record(root, taken) {
+                // unlinked while still locked, so nobody takes the record this leaves
+                let _ = fs::remove_file(&path);
+                return Err(format!(
+                    "the integration lease was given back: the trail could not record it: {e}"
+                ));
+            }
+            return Ok(IntegrationLease {
+                path,
+                token,
+                root: root.to_path_buf(),
+                file,
+            });
         }
         Err(format!("{}: could not be taken", path.display()))
     }
 
     /// Mark the lease alive: a long drain renews it between steps.
     pub fn renew(&self) {
-        let _ = fs::write(&self.path, &self.token);
+        // through the locked file, never the path: a path written to after something
+        // removed it would be a new, unlocked file that a second executor could take
+        use std::os::unix::fs::FileExt;
+        let _ = self
+            .file
+            .set_len(0)
+            .and_then(|()| self.file.write_all_at(self.token.as_bytes(), 0));
     }
 
     /// Who holds the lease of `base` now, read without taking it: what an observer shows.
@@ -221,6 +260,7 @@ pub struct IntegrationLeaseState {
 
 impl Drop for IntegrationLease {
     fn drop(&mut self) {
+        // unlinked while the lock is held, closed after: see `acquire`
         if fs::read_to_string(&self.path).is_ok_and(|c| c.trim() == self.token) {
             let _ = fs::remove_file(&self.path);
             let released = IntegrationEvent {
