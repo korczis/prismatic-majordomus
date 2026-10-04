@@ -22,7 +22,7 @@ expect_grep 'OK   wiring +doctor-on-commit — wired via .git/hooks/pre-commit$'
 
 # a linked worktree: the same hooks, found where git keeps them
 git worktree add -q -b feature/linked "$T/linked" >/dev/null 2>&1
-cd "$T/linked"
+cd "$T/linked" || exit 1
 expect_exit 0 "$MJ" doctor
 expect_no_grep 'FAIL wiring'
 expect_grep 'OK   wiring +doctor-on-commit — wired via '
