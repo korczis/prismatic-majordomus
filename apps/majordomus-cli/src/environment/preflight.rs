@@ -2849,6 +2849,26 @@ mod tests {
         assert!(!details.contains("demo"), "a second heading: {details}");
         assert!(details.ends_with(&compact_checks(&p, false)), "{details}");
         assert_eq!(compact_episode(&p), "no episode");
+
+        // an episode this checkout opened is named by its id, in both forms
+        let mut o = at_head();
+        o.episode = Some(EpisodeObservation {
+            id: "s-20261004-ab12".into(),
+            this_checkout: true,
+            ..Default::default()
+        });
+        let p = derive(&o);
+        assert_eq!(compact_episode(&p), "episode s-20261004-ab12");
+        assert!(compact(&p, false).contains("- episode s-20261004-ab12"));
+        assert!(entry_details(&p, true).starts_with("  episode s-20261004-ab12\n"));
+
+        // one another checkout opened proves nothing here, so it is not named
+        o.episode = Some(EpisodeObservation {
+            id: "s-elsewhere".into(),
+            this_checkout: false,
+            ..Default::default()
+        });
+        assert_eq!(compact_episode(&derive(&o)), "no episode");
     }
 
     #[test]

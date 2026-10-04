@@ -179,24 +179,24 @@
       "unit": "ratio",
       "formula": "median over seeds of 1 - selected_tokens / candidate_tokens, where candidates are the distinct files the compiler judged relevant to the work (selected, or left out only for budget) and selected are those it put in the budget, counted with the named tokenizer; files it judged irrelevant are reported, never divided by",
       "not": "not total token savings: it says what the compiler selected from what it found relevant, not what a session consumed, and a session remains free to read anything",
-      "value": 0.972718706215,
+      "value": 0.973524956013,
       "status": "measured",
-      "n": 243,
+      "n": 244,
       "distribution": {
-        "n": 243,
-        "mean": 0.975020302368,
-        "median": 0.972718706215,
-        "p25": 0.972532074466,
-        "p75": 0.979730628767,
-        "p95": 0.981106822069,
-        "min": 0.967328846441,
-        "max": 0.981584131349,
-        "sd": 0.004181995598
+        "n": 244,
+        "mean": 0.975477441801,
+        "median": 0.973524956013,
+        "p25": 0.972147546616,
+        "p75": 0.98013670582,
+        "p95": 0.981590955941,
+        "min": 0.968009571491,
+        "max": 0.982013527641,
+        "sd": 0.004141690795
       },
       "interval": {
         "level_bp": 9500,
-        "low": 0.972697218154,
-        "high": 0.973150442266,
+        "low": 0.97321695715,
+        "high": 0.974095236327,
         "method": "percentile bootstrap of the median, each value resampled independently with replacement",
         "resamples": 10000,
         "seed": 20260924
@@ -445,12 +445,13 @@
         "I1962",
         "I1963",
         "I1964",
-        "I1965"
+        "I1965",
+        "I1966"
       ],
       "warnings": [
         "tokens counted with o200k_base (tiktoken-rs 0.12.0), which is not the tokenizer of every model",
         "the candidates are what the compiler's own graph walk judged relevant; a worker without the compiler would not necessarily have read them, so this ratio describes the selection, not a session's saving",
-        "stale: a measured mechanism changed since this record"
+        "dirty: this record was measured from a working tree with uncommitted changes"
       ]
     },
     {
@@ -461,9 +462,9 @@
       "unit": "ratio",
       "formula": "counted selected tokens / the compiler's own estimate of them - 1, over all seeds",
       "not": "not a saving: it says how far the budget's unit is from counted tokens",
-      "value": -0.025585172567,
+      "value": -0.028112817838,
       "status": "measured",
-      "n": 243,
+      "n": 244,
       "suite": "context",
       "evidence": [
         "I0001",
@@ -708,10 +709,11 @@
         "I1962",
         "I1963",
         "I1964",
-        "I1965"
+        "I1965",
+        "I1966"
       ],
       "warnings": [
-        "stale: a measured mechanism changed since this record"
+        "dirty: this record was measured from a working tree with uncommitted changes"
       ]
     }
   ],
@@ -721,9 +723,8 @@
       "kind": "context",
       "version": 1,
       "title": "Context selection, counted",
-      "freshness": "stale",
-      "freshness_detail": "1 record(s) were measured against inputs that have changed since: .ai/repo/benchmarks/economics/methodology.yaml, .ai/repo/benchmarks/economics/suites/context.yaml, apps/majordomus-cli/src/devcontext, .ai/repo/knowledge/sources.yaml",
-      "runs": 6,
+      "freshness": "current",
+      "runs": 7,
       "pairs": {
         "declared": 0,
         "attempted": 0,
@@ -735,6 +736,7 @@
       },
       "revisions": [
         "1cc12af61de40456670620d92ba6ed6fb63aada4",
+        "487cedf6f5a36eed7d0f6b3f5f0ad08bfcb176fe",
         "78f09f8af8e3372fd7a972c69307117a0e20af2b",
         "8183164ade2d0c9cc2199c1379432b0aac84f0bb",
         "8d4486c1a9dfaa8a45e56cb57887a77b82106a7d",
@@ -924,22 +926,22 @@
   ],
   "segments": [],
   "context": {
-    "revision": "8d4486c1a9dfaa8a45e56cb57887a77b82106a7d",
-    "measured_at": "2026-10-03T05:11:05Z",
+    "revision": "487cedf6f5a36eed7d0f6b3f5f0ad08bfcb176fe",
+    "measured_at": "2026-10-04T02:41:01Z",
     "tokenizer": {
       "encoding": "o200k_base",
       "implementation": "tiktoken-rs 0.12.0"
     },
-    "seeds": 243,
-    "candidate_tokens": 235922798,
-    "considered_tokens": 235922798,
-    "selected_tokens": 5719169,
-    "estimated_selected_tokens": 5869337,
+    "seeds": 244,
+    "candidate_tokens": 243181067,
+    "considered_tokens": 243181067,
+    "selected_tokens": 5790498,
+    "estimated_selected_tokens": 5957994,
     "excluded_tokens": {
-      "budget": 230203629,
+      "budget": 237390569,
       "unresolved": 0
     },
-    "seeds_over_budget_counted": 63,
+    "seeds_over_budget_counted": 94,
     "budget_tokens": 24000
   },
   "history": [
@@ -996,6 +998,15 @@
       "metric": "context_reduction_ratio",
       "value": 0.972718706215,
       "n": 243
+    },
+    {
+      "suite": "context",
+      "methodology": 1,
+      "revision": "487cedf6f5a36eed7d0f6b3f5f0ad08bfcb176fe",
+      "at": "2026-10-04T02:41:01Z",
+      "metric": "context_reduction_ratio",
+      "value": 0.973524956013,
+      "n": 244
     }
   ],
   "variants": [
