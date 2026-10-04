@@ -328,15 +328,17 @@ mod tests {
         // offers is free on every local address. A loopback probe may offer a port another
         // socket holds on a host address: macOS lets the provider's SO_REUSEADDR wildcard
         // bind share it, Linux refuses unless that other socket set SO_REUSEADDR too.
-        let port = {
+        //
+        // The probe is dropped before the provider binds, so the port is only free at the
+        // moment it is offered. Under a fully parallel run (llvm-cov on a machine running
+        // several sessions' suites) another test took it in between, and the provider's
+        // bind failed with "cannot bind udp port" — a race of the test, not a defect of the
+        // provider. That one failure is retried on a freshly probed port; any other error
+        // still fails the test, and so does a port that is taken on every attempt.
+        let fresh_port = || {
             let probe = UdpSocket::bind((Ipv4Addr::UNSPECIFIED, 0)).unwrap();
             probe.local_addr().unwrap().port()
         };
-        let mut provider = MulticastProvider::new(MulticastConfig {
-            port,
-            interval_seconds: 1,
-            ..MulticastConfig::default()
-        });
         let (tx, rx) = std::sync::mpsc::channel();
         let stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
         let ctx = crate::mesh::provider::ProviderContext {
@@ -353,7 +355,25 @@ mod tests {
 
         // The one hard assertion: the provider comes up. A host that cannot bind the port
         // or join the group is a real failure of the provider's own contract.
-        provider.start(&ctx).unwrap();
+        let (port, provider) = {
+            let mut attempt = 0;
+            loop {
+                attempt += 1;
+                let port = fresh_port();
+                let mut provider = MulticastProvider::new(MulticastConfig {
+                    port,
+                    interval_seconds: 1,
+                    ..MulticastConfig::default()
+                });
+                match provider.start(&ctx) {
+                    Ok(()) => break (port, provider),
+                    Err(e) if attempt < 8 && e.to_string().contains("cannot bind udp port") => {
+                        continue
+                    }
+                    Err(e) => panic!("the provider did not start (attempt {attempt}): {e}"),
+                }
+            }
+        };
         assert_eq!(provider.status().state, MeshProviderState::Running);
         assert_eq!(provider.id(), "udp_multicast");
 
