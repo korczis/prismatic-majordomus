@@ -165,10 +165,15 @@ refreshed pull request waits for its checks, no other is refreshed, because merg
 would put the second behind again. Throughput is therefore one pull request per run of the
 required check, which is the true cost of this repository's mechanics.
 
-Only a run the executor started holds the pipeline: a required check that is *pending* on the
-head a `refreshed` event recorded as pushed (`head_after`). A required check that never
-reports on a head (`missing`) does not hold it, and neither does a check running on a head the
-author pushed. Otherwise one silent check would stop every refresh.
+Only a run the executor started holds the pipeline: the required check of the head a
+`refreshed` event recorded as pushed (`head_after`), while it is *pending* or *missing*. Both
+count, because the forge creates no check run for an aggregate job such as this repository's
+`ci` until every job it needs has finished, so the executor's own head reads as `missing` for
+most of its run. A `missing` check holds the pipeline only for `REFRESHED_HEAD_REPORTS_WITHIN`
+(four hours) after that event. Past it, the check is taken never to report and the next pull
+request is refreshed, so one silent check cannot stop every refresh. A check running on a head
+the author pushed holds nothing. A `refreshed` event recorded before `head_after` existed names
+no head, so a pull request refreshed by an older executor does not hold the pipeline.
 
 ## Cleanup
 

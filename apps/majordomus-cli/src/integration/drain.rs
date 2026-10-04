@@ -16,7 +16,7 @@
 //! [`super::drain::cleanup`]'s, which demands stronger evidence and an explicit `--apply`.
 //! Only one executor per base branch runs at a time ([`IntegrationLease`]).
 
-use std::collections::BTreeSet;
+use std::collections::BTreeMap;
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -36,6 +36,15 @@ pub const LEASE_STALE_AFTER: Duration = Duration::from_secs(1800);
 
 /// How long a merge is given to show as merged on the forge before verification fails.
 pub const MERGE_VISIBLE_WITHIN: Duration = Duration::from_secs(60);
+
+/// How long a required check that has not reported (`missing`) on a head the executor pushed
+/// still holds the refresh pipeline, counted from the `refreshed` event. A forge creates no
+/// check run for an aggregate job until every job it needs has finished, so for most of a CI
+/// run the executor's own head reads as `missing`, not `pending`. Four hours sits above the
+/// slowest healthy suite measured here (about 150 minutes, `.github/workflows/validate.yml`)
+/// with queue time and margin; past it the check is taken never to report, and the pipeline
+/// moves on rather than freezing. A run that still reports later costs one wasted CI run.
+pub const REFRESHED_HEAD_REPORTS_WITHIN: Duration = Duration::from_secs(4 * 3600);
 
 /// The one executor of a base branch: an exclusive file under the *common* git directory,
 /// so every worktree of the repository contends on the same file and no other repository
@@ -515,26 +524,42 @@ pub fn step(
 /// request the executor refreshed waits for its checks, no other is refreshed — merging the
 /// first would put the second behind again and waste its CI run.
 ///
-/// Only a check the executor started holds the pipeline: a required check *pending* on a
-/// head a `refreshed` event of the trail names as the one pushed. A check that never
-/// reports (`missing`) would hold every refresh forever, and one running on a head the
-/// author pushed is not the executor's run to wait for.
+/// Only a head the executor pushed holds the pipeline — one a `refreshed` event of the trail
+/// names as `head_after` — and only while its required check is *pending*, or *missing* for
+/// less than [`REFRESHED_HEAD_REPORTS_WITHIN`] since that event: an aggregate check is not
+/// created until the jobs it needs finish, and a check that never reports must not hold every
+/// refresh forever. A check running on a head the author pushed is not the executor's run to
+/// wait for.
 fn refresh_step(
     root: &Path,
     integrator: &mut dyn Integrator,
     first: &IntegrationQueue,
     dry_run: bool,
 ) -> Result<Option<DrainStepOutcome>, String> {
-    let pushed: BTreeSet<(u64, String)> = events(root)
-        .into_iter()
-        .filter(|e| e.action == "refreshed")
-        .filter_map(|e| e.pr.zip(e.head_after))
-        .collect();
+    // each pushed head with the moment it was pushed; on a trail line without a readable
+    // time a pending check still holds, and a missing one does not
+    let mut pushed: BTreeMap<(u64, String), Option<i64>> = BTreeMap::new();
+    for e in events(root).into_iter().filter(|e| e.action == "refreshed") {
+        if let Some(key) = e.pr.zip(e.head_after) {
+            let at = crate::peers::epoch_seconds(&e.at);
+            let slot = pushed.entry(key).or_insert(at);
+            *slot = (*slot).max(at);
+        }
+    }
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_or(0, |d| d.as_secs() as i64);
+    let within = REFRESHED_HEAD_REPORTS_WITHIN.as_secs() as i64;
     if let Some(waiting) = first.assessments.iter().find(|a| {
         a.disposition == PullRequestDisposition::WaitingForChecks
-            && a.required_checks == super::RequiredCheckState::Pending
             && matches!(a.relation, super::RelationToMaster::UpToDate { .. })
-            && pushed.contains(&(a.number, a.evaluated_against.head_sha.clone()))
+            && pushed
+                .get(&(a.number, a.evaluated_against.head_sha.clone()))
+                .is_some_and(|at| {
+                    a.required_checks == super::RequiredCheckState::Pending
+                        || (a.required_checks == super::RequiredCheckState::Missing
+                            && at.is_some_and(|t| now - t < within))
+                })
     }) {
         return Ok(Some(DrainStepOutcome::AwaitingChecks {
             pr: waiting.number,

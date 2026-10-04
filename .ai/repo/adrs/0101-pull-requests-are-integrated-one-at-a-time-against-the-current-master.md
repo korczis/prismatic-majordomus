@@ -84,8 +84,11 @@ with one canonical state, one classification and one executor.
    `project.land-and-publish` already prescribes. The pipeline is one deep: while a
    refreshed pull request waits for its checks, no other is refreshed, because merging the
    first would put the second behind again and waste its CI run. Only a run the executor
-   started holds it: a required check pending on the head a `refreshed` event recorded as
-   pushed. A check that never reports, or one on a head the author pushed, holds nothing.
+   started holds it: the required check of the head a `refreshed` event recorded as pushed,
+   while it is pending or missing. Missing counts because an aggregate check is not created
+   until the jobs it needs finish, but it holds only for a bound after the push (four hours),
+   so a check that never reports cannot freeze every refresh. A check on a head the author
+   pushed holds nothing.
 6. **Cleanup demands more than merging.** Only a pull request whose head is an ancestor of
    master, or whose merge changes no file, is closed, and only with `--apply`. One that
    differs only in derived output is `possibly_redundant` and is left for a person. Age,

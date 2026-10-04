@@ -924,35 +924,42 @@ fn a_conflict_after_a_merge_is_skipped_and_the_next_is_worked_on() {
     );
 }
 
+/// The executor's own refreshed head holds the pipeline while its required check runs —
+/// whether the forge reports it as pending or has not created it yet, which is how an
+/// aggregate check that needs every other job reads for most of a CI run.
 #[test]
 fn a_refreshed_pull_request_waiting_for_checks_holds_the_pipeline() {
-    let root = scratch();
-    let mut w = World {
-        open: vec![sim(1), sim(2)],
-        master: 1,
-        ..Default::default()
-    };
-    // the executor brings master into #1, the older of the two
-    let out = drain::step(&root, &mut w, false, true).unwrap();
-    assert!(
-        matches!(out, DrainStepOutcome::Refreshed { pr: 1, .. }),
-        "{out:?}"
-    );
-    // and the required check now runs on the head it pushed
-    w.open[0].ci_pending = true;
-    assert_eq!(
-        disposition(&w.queue(), 1),
-        PullRequestDisposition::WaitingForChecks
-    );
-    let report = drain::drain(&root, &mut w, 1, false, true).unwrap();
-    assert_eq!(
-        report.steps,
-        vec![DrainStepOutcome::AwaitingChecks { pr: 1 }]
-    );
-    assert_eq!(
-        w.open[1].contains, 0,
-        "#2 was refreshed while the executor waits for #1's checks"
-    );
+    for (unreported, pending) in [(false, true), (true, false)] {
+        let root = scratch();
+        let mut w = World {
+            open: vec![sim(1), sim(2)],
+            master: 1,
+            ..Default::default()
+        };
+        // the executor brings master into #1, the older of the two
+        let out = drain::step(&root, &mut w, false, true).unwrap();
+        assert!(
+            matches!(out, DrainStepOutcome::Refreshed { pr: 1, .. }),
+            "{out:?}"
+        );
+        // and the required check now runs on the head it pushed
+        w.open[0].ci_pending = pending;
+        w.open[0].ci_unreported = unreported;
+        assert_eq!(
+            disposition(&w.queue(), 1),
+            PullRequestDisposition::WaitingForChecks
+        );
+        let report = drain::drain(&root, &mut w, 1, false, true).unwrap();
+        assert_eq!(
+            report.steps,
+            vec![DrainStepOutcome::AwaitingChecks { pr: 1 }],
+            "unreported {unreported}, pending {pending}"
+        );
+        assert_eq!(
+            w.open[1].contains, 0,
+            "#2 was refreshed while the executor waits for #1's checks"
+        );
+    }
 }
 
 /// The pipeline waits only for a check it started: a required check that never reports
@@ -983,10 +990,11 @@ fn a_check_the_executor_did_not_start_does_not_hold_the_refresh_pipeline() {
     }
 }
 
-/// A required check that never reports does not hold the pipeline even on the head the
-/// executor pushed itself: only a check still running there is the executor's to wait for.
+/// A required check that has not reported on the executor's own head holds the pipeline only
+/// for [`drain::REFRESHED_HEAD_REPORTS_WITHIN`] after the push: past that it is taken never to
+/// report, and the next pull request is refreshed rather than every refresh freezing.
 #[test]
-fn an_unreported_check_on_the_executors_own_head_does_not_hold_the_refresh_pipeline() {
+fn an_unreported_check_on_the_executors_own_head_holds_the_pipeline_only_for_a_bound() {
     let root = scratch();
     let mut w = World {
         open: vec![sim(1), sim(2)],
@@ -1006,6 +1014,24 @@ fn an_unreported_check_on_the_executors_own_head_does_not_hold_the_refresh_pipel
         q.get(1).unwrap().required_checks,
         RequiredCheckState::Missing
     );
+    // the push is now older than the bound
+    let past = std::time::SystemTime::now()
+        - drain::REFRESHED_HEAD_REPORTS_WITHIN
+        - std::time::Duration::from_secs(60);
+    let trail: Vec<String> = drain::events(&root)
+        .into_iter()
+        .map(|mut e| {
+            if e.action == "refreshed" {
+                e.at = crate::peers::rfc3339(past);
+            }
+            serde_json::to_string(&e).unwrap()
+        })
+        .collect();
+    std::fs::write(
+        super::state_path(&root, super::EVENTS_FILE),
+        trail.join("\n") + "\n",
+    )
+    .unwrap();
     let out = drain::step(&root, &mut w, false, true).unwrap();
     assert!(
         matches!(out, DrainStepOutcome::Refreshed { pr: 2, .. }),
