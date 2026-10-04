@@ -56,6 +56,8 @@ case "\$1 \$2" in
   "api repos/o/r") echo '{"allow_merge_commit":true,"allow_squash_merge":true,"allow_rebase_merge":false}' ;;
   "api repos/o/r/commits/master") printf '{"sha":"%s"}\n' "\$(git -C "$ORIGIN" rev-parse master)" ;;
   "api repos/o/r/branches/master/protection") echo '{"required_status_checks":{"contexts":["ci"]}}' ;;
+  # the rulesets that apply to master: none, as a branch with only a protection answers
+  "api repos/o/r/rules/branches/master") echo '[]' ;;
   "pr list")
     if [ -f "$STATE/merged-1" ]; then sed 's/^\[.*},{/[{/' "$STATE/prs.json"; else cat "$STATE/prs.json"; fi ;;
   "pr merge")

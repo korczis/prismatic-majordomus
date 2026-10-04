@@ -761,10 +761,13 @@ mod tests {
             checks: vec![CheckObservation {
                 name: "ci".into(),
                 state,
+                ..Default::default()
             }],
             review_decision: String::new(),
             auto_merge: false,
             cross_repository: false,
+            latest_reviews: Vec::new(),
+            review_requests: Vec::new(),
         }
     }
 
@@ -817,7 +820,7 @@ mod tests {
                 base_sha: sha.clone(),
                 observed_at: "2026-10-01T00:00:00Z".into(),
                 required_checks: Some(vec!["ci".into()]),
-                reviews_required: Some(false),
+                review_policy: Some(Default::default()),
                 merge_methods: vec!["merge".into()],
                 pull_requests: vec![
                     pr(1, &heads[0], CheckRunState::Passed),

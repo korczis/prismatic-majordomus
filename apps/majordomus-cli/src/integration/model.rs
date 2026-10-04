@@ -49,26 +49,109 @@ pub struct PullRequestObservation {
     /// refreshed from here.
     #[serde(default)]
     pub cross_repository: bool,
+    /// Each reviewer's latest review, with the commit it was given on. A review is about one
+    /// commit: an approval of another commit is not an approval of the head.
+    #[serde(default)]
+    pub latest_reviews: Vec<ReviewObservation>,
+    /// Who has been asked to review and has not yet: logins, or team slugs.
+    #[serde(default)]
+    pub review_requests: Vec<String>,
+}
+
+/// One reviewer's latest review.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct ReviewObservation {
+    /// The reviewer's login.
+    pub author: String,
+    /// The forge's word for it, verbatim (`APPROVED`, `CHANGES_REQUESTED`, `COMMENTED`,
+    /// `DISMISSED`).
+    pub state: String,
+    /// The commit the review was given on; empty when the forge did not say.
+    #[serde(default)]
+    pub commit: String,
+}
+
+/// What the base requires of reviews, read from its protection and rulesets together.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct ReviewPolicy {
+    /// How many approving reviews a merge needs; 0 when none.
+    pub approvals: u64,
+    /// Whether a code owner's approval is required.
+    pub code_owners: bool,
+    /// Whether the forge dismisses an approval when the head moves.
+    pub dismiss_stale: bool,
+}
+
+/// One check the base requires: a status context, and the app that must write it when the
+/// protection binds it to one. A check of that name from any other writer is not this one.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
+pub struct RequiredCheck {
+    /// The status context, or the check run's name.
+    pub context: String,
+    /// The app bound to it, when the protection names one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub app_id: Option<u64>,
+}
+
+impl From<&str> for RequiredCheck {
+    fn from(context: &str) -> Self {
+        RequiredCheck {
+            context: context.to_string(),
+            app_id: None,
+        }
+    }
+}
+
+impl std::fmt::Display for RequiredCheck {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.app_id {
+            Some(app) => write!(f, "{} (app {app})", self.context),
+            None => f.write_str(&self.context),
+        }
+    }
+}
+
+/// What reported a check: a check run (written by an app) or a commit status context.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum CheckKind {
+    /// A check run.
+    #[default]
+    CheckRun,
+    /// A commit status context.
+    StatusContext,
 }
 
 /// One check run or status context on a head commit.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct CheckObservation {
     /// The check's name or status context.
     pub name: String,
     /// Where it stands.
     pub state: CheckRunState,
+    /// What reported it.
+    #[serde(default)]
+    pub kind: CheckKind,
+    /// The app that wrote it, when the forge said.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub app_id: Option<u64>,
+    /// When it completed (or, for a status context, was set), RFC 3339; empty while it runs
+    /// or when the forge did not say. The newest report of a context is its verdict.
+    #[serde(default)]
+    pub completed_at: String,
 }
 
 /// Where one check run stands.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum CheckRunState {
     /// Completed and passed.
     Passed,
     /// Completed and failed (failure, timed out, cancelled, action required).
     Failed,
-    /// Queued or running.
+    /// Queued or running; also what a report that says nothing is taken to be, so a
+    /// default is never a pass.
+    #[default]
     Pending,
     /// Completed as skipped or neutral.
     Skipped,
@@ -82,6 +165,9 @@ pub enum CheckRunState {
 pub enum RequiredCheckState {
     /// Every required check passed on this head.
     Passed,
+    /// Every required check passed, at least one of them by a skip the policy permits for
+    /// that context. A skip the policy does not permit is not a pass: it is `missing`.
+    Skipped,
     /// A required check is queued or running.
     Pending,
     /// A required check failed.
@@ -104,6 +190,11 @@ pub enum PullRequestReview {
     ChangesRequested,
     /// A required review has not been given.
     Pending,
+    /// The approvals were given on another commit than the head: an approval is of one
+    /// commit, and these are not of this one.
+    Stale,
+    /// The approvals are there, but a code owner's is still required.
+    CodeOwnersPending,
     /// The protection could not be read.
     Unknown,
 }

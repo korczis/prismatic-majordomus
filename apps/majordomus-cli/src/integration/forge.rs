@@ -14,10 +14,13 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use super::model::{CheckObservation, CheckRunState, PullRequestObservation};
+use super::model::{
+    CheckKind, CheckObservation, CheckRunState, PullRequestObservation, RequiredCheck,
+    ReviewObservation, ReviewPolicy,
+};
 
 /// The recorded observation's schema version.
-pub const OBSERVATION_SCHEMA: u32 = 1;
+pub const OBSERVATION_SCHEMA: u32 = 2;
 
 /// Where the pull-request heads are fetched to: a namespace of this tool's own, so no
 /// fetch ever moves a ref a person or another tool owns.
@@ -36,11 +39,13 @@ pub struct ForgeObservation {
     pub base_sha: String,
     /// When, RFC 3339.
     pub observed_at: String,
-    /// The status contexts the base's protection requires; `None` when it could not be
-    /// read (every required-check verdict is then unknown).
-    pub required_checks: Option<Vec<String>>,
-    /// Whether the protection requires an approving review; `None` when unread.
-    pub reviews_required: Option<bool>,
+    /// The checks the base requires, from its branch protection and its rulesets together,
+    /// each with the app bound to it; `None` when either could not be read (every
+    /// required-check verdict is then unknown, never passed).
+    pub required_checks: Option<Vec<RequiredCheck>>,
+    /// What the base requires of reviews, from its protection and rulesets together; `None`
+    /// when either could not be read.
+    pub review_policy: Option<ReviewPolicy>,
     /// The merge methods the repository allows, in the forge's words (`merge`, `squash`,
     /// `rebase`).
     pub merge_methods: Vec<String>,
@@ -168,14 +173,35 @@ pub fn pull_request_of(v: &Value) -> Option<PullRequestObservation> {
             .and_then(Value::as_array)
             .map(|a| {
                 a.iter()
-                    .map(|c| CheckObservation {
-                        name: c
-                            .get("name")
-                            .or_else(|| c.get("context"))
-                            .and_then(Value::as_str)
-                            .unwrap_or("")
-                            .to_string(),
-                        state: check_state(c),
+                    .map(|c| {
+                        let text = |k: &str| c.get(k).and_then(Value::as_str).unwrap_or("");
+                        let kind = if text("__typename") == "StatusContext" {
+                            CheckKind::StatusContext
+                        } else {
+                            CheckKind::CheckRun
+                        };
+                        CheckObservation {
+                            name: c
+                                .get("name")
+                                .or_else(|| c.get("context"))
+                                .and_then(Value::as_str)
+                                .unwrap_or("")
+                                .to_string(),
+                            state: check_state(c),
+                            kind,
+                            // the app, where the forge names it (a check run's suite's app)
+                            app_id: c
+                                .pointer("/app/databaseId")
+                                .or_else(|| c.pointer("/checkSuite/app/databaseId"))
+                                .and_then(Value::as_u64),
+                            completed_at: match text("completedAt") {
+                                // a check run's zero time means it has not completed
+                                "" | "0001-01-01T00:00:00Z" => text("startedAt")
+                                    .trim_start_matches("0001-01-01T00:00:00Z")
+                                    .to_string(),
+                                t => t.to_string(),
+                            },
+                        }
                     })
                     .collect()
             })
@@ -189,38 +215,168 @@ pub fn pull_request_of(v: &Value) -> Option<PullRequestObservation> {
             .get("isCrossRepository")
             .and_then(Value::as_bool)
             .unwrap_or(false),
+        latest_reviews: v
+            .get("latestReviews")
+            .and_then(Value::as_array)
+            .map(|a| {
+                a.iter()
+                    .map(|r| ReviewObservation {
+                        author: r
+                            .pointer("/author/login")
+                            .and_then(Value::as_str)
+                            .unwrap_or("")
+                            .to_string(),
+                        state: r
+                            .get("state")
+                            .and_then(Value::as_str)
+                            .unwrap_or("")
+                            .to_ascii_uppercase(),
+                        commit: r
+                            .pointer("/commit/oid")
+                            .and_then(Value::as_str)
+                            .unwrap_or("")
+                            .to_string(),
+                    })
+                    .collect()
+            })
+            .unwrap_or_default(),
+        review_requests: v
+            .get("reviewRequests")
+            .and_then(Value::as_array)
+            .map(|a| {
+                a.iter()
+                    .filter_map(|r| {
+                        r.get("login")
+                            .or_else(|| r.get("slug"))
+                            .or_else(|| r.get("name"))
+                            .and_then(Value::as_str)
+                            .map(str::to_string)
+                    })
+                    .collect()
+            })
+            .unwrap_or_default(),
     })
 }
 
-/// The required contexts and review requirement from a branch-protection document.
-pub fn protection_of(v: &Value) -> (Option<Vec<String>>, Option<bool>) {
-    // a set: the protection lists a context under `contexts` and again under `checks`, and
-    // the order is the set's, so no sort sits beside what renders it
-    let mut contexts: std::collections::BTreeSet<String> = v
+/// Union two readings of the required checks: a context required by either is required,
+/// once, bound to an app when either source binds it.
+fn union_checks(a: Vec<RequiredCheck>, b: Vec<RequiredCheck>) -> Vec<RequiredCheck> {
+    let mut by_context: std::collections::BTreeMap<String, Option<u64>> =
+        std::collections::BTreeMap::new();
+    for c in a.into_iter().chain(b) {
+        let slot = by_context.entry(c.context).or_insert(None);
+        if slot.is_none() {
+            *slot = c.app_id;
+        }
+    }
+    by_context
+        .into_iter()
+        .map(|(context, app_id)| RequiredCheck { context, app_id })
+        .collect()
+}
+
+/// Union two review requirements: the stricter of each.
+fn union_reviews(a: ReviewPolicy, b: ReviewPolicy) -> ReviewPolicy {
+    ReviewPolicy {
+        approvals: a.approvals.max(b.approvals),
+        code_owners: a.code_owners || b.code_owners,
+        dismiss_stale: a.dismiss_stale || b.dismiss_stale,
+    }
+}
+
+/// The required checks and review requirement the rulesets that apply to a branch add,
+/// from `repos/{r}/rules/branches/{base}`: its `required_status_checks` rules (a context and
+/// the `integration_id` bound to it) and its `pull_request` rules.
+pub fn rules_of(v: &Value) -> (Vec<RequiredCheck>, ReviewPolicy) {
+    let mut checks = Vec::new();
+    let mut reviews = ReviewPolicy::default();
+    for rule in v.as_array().into_iter().flatten() {
+        let params = rule.get("parameters");
+        match rule.get("type").and_then(Value::as_str) {
+            Some("required_status_checks") => {
+                for c in params
+                    .and_then(|p| p.get("required_status_checks"))
+                    .and_then(Value::as_array)
+                    .into_iter()
+                    .flatten()
+                {
+                    if let Some(context) = c.get("context").and_then(Value::as_str) {
+                        checks.push(RequiredCheck {
+                            context: context.to_string(),
+                            app_id: c.get("integration_id").and_then(Value::as_u64),
+                        });
+                    }
+                }
+            }
+            Some("pull_request") => {
+                let p = |k: &str| params.and_then(|p| p.get(k));
+                reviews = union_reviews(
+                    reviews,
+                    ReviewPolicy {
+                        approvals: p("required_approving_review_count")
+                            .and_then(Value::as_u64)
+                            .unwrap_or(0),
+                        code_owners: p("require_code_owner_review")
+                            .and_then(Value::as_bool)
+                            .unwrap_or(false),
+                        dismiss_stale: p("dismiss_stale_reviews_on_push")
+                            .and_then(Value::as_bool)
+                            .unwrap_or(false),
+                    },
+                );
+            }
+            _ => {}
+        }
+    }
+    (union_checks(checks, Vec::new()), reviews)
+}
+
+/// The required checks and review requirement from a branch-protection document. A
+/// context the protection lists under `contexts` and again under `checks` is one check,
+/// bound to the app `checks` names for it.
+pub fn protection_of(v: &Value) -> (Vec<RequiredCheck>, ReviewPolicy) {
+    let listed: Vec<RequiredCheck> = v
         .pointer("/required_status_checks/contexts")
         .and_then(Value::as_array)
         .map(|a| {
             a.iter()
-                .filter_map(|c| c.as_str().map(str::to_string))
+                .filter_map(|c| c.as_str().map(RequiredCheck::from))
                 .collect()
         })
         .unwrap_or_default();
-    if let Some(checks) = v
+    let bound: Vec<RequiredCheck> = v
         .pointer("/required_status_checks/checks")
         .and_then(Value::as_array)
-    {
-        contexts.extend(
-            checks
-                .iter()
-                .filter_map(|c| c.get("context").and_then(Value::as_str).map(str::to_string)),
-        );
-    }
-    let reviews = v
-        .pointer("/required_pull_request_reviews/required_approving_review_count")
-        .and_then(Value::as_u64)
-        .map(|n| n > 0)
-        .or(Some(v.get("required_pull_request_reviews").is_some()));
-    (Some(contexts.into_iter().collect()), reviews)
+        .map(|a| {
+            a.iter()
+                .filter_map(|c| {
+                    Some(RequiredCheck {
+                        context: c.get("context")?.as_str()?.to_string(),
+                        app_id: c.get("app_id").and_then(Value::as_u64),
+                    })
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    let reviews = match v.get("required_pull_request_reviews") {
+        // a review section without a count still asks for one
+        Some(r) => ReviewPolicy {
+            approvals: r
+                .get("required_approving_review_count")
+                .and_then(Value::as_u64)
+                .unwrap_or(1),
+            code_owners: r
+                .get("require_code_owner_reviews")
+                .and_then(Value::as_bool)
+                .unwrap_or(false),
+            dismiss_stale: r
+                .get("dismiss_stale_reviews")
+                .and_then(Value::as_bool)
+                .unwrap_or(false),
+        },
+        None => ReviewPolicy::default(),
+    };
+    (union_checks(bound, listed), reviews)
 }
 
 impl Forge for GhForge<'_> {
@@ -273,14 +429,33 @@ impl Forge for GhForge<'_> {
                 &format!("repos/{repository}/branches/{base}/protection"),
             ],
         )?;
-        let (required_checks, reviews_required) = if ok {
+        let protection: Option<(Vec<RequiredCheck>, ReviewPolicy)> = if ok {
             serde_json::from_str::<Value>(&out)
+                .ok()
                 .map(|v| protection_of(&v))
-                .unwrap_or((None, None))
         } else if err.contains("Branch not protected") || out.contains("Branch not protected") {
-            (Some(Vec::new()), Some(false))
+            Some((Vec::new(), ReviewPolicy::default()))
         } else {
-            (None, None)
+            None
+        };
+        // the rulesets that apply to the base add requirements the protection does not list;
+        // a ruleset read that fails leaves the requirement unread, as an unread protection does
+        let (ok, out, _) = gh_retrying(
+            root,
+            &["api", &format!("repos/{repository}/rules/branches/{base}")],
+        )?;
+        let rules: Option<(Vec<RequiredCheck>, ReviewPolicy)> = if ok {
+            serde_json::from_str::<Value>(&out)
+                .ok()
+                .map(|v| rules_of(&v))
+        } else {
+            None
+        };
+        let (required_checks, review_policy) = match (protection, rules) {
+            (Some((pc, pr)), Some((rc, rr))) => {
+                (Some(union_checks(pc, rc)), Some(union_reviews(pr, rr)))
+            }
+            _ => (None, None),
         };
         let list = gh_json(
             root,
@@ -292,7 +467,7 @@ impl Forge for GhForge<'_> {
                 "--limit",
                 "500",
                 "--json",
-                "number,title,author,headRefName,headRefOid,baseRefName,isDraft,labels,createdAt,updatedAt,body,statusCheckRollup,reviewDecision,autoMergeRequest,isCrossRepository",
+                "number,title,author,headRefName,headRefOid,baseRefName,isDraft,labels,createdAt,updatedAt,body,statusCheckRollup,reviewDecision,latestReviews,reviewRequests,autoMergeRequest,isCrossRepository",
             ],
         )?;
         // keyed by number, so the observation is in number order whatever the forge listed
@@ -314,7 +489,7 @@ impl Forge for GhForge<'_> {
             base_sha,
             observed_at: crate::peers::rfc3339(std::time::SystemTime::now()),
             required_checks,
-            reviews_required,
+            review_policy,
             merge_methods,
             pull_requests,
         })
@@ -453,33 +628,168 @@ mod tests {
     }
 
     #[test]
-    fn a_protection_names_its_contexts_once_and_its_review_requirement() {
+    fn a_protection_names_its_checks_once_with_their_app_and_its_review_policy() {
         let both = json!({
             "required_status_checks": {
                 "contexts": ["ci", "lint"],
-                "checks": [{"context": "ci"}, {"context": "docs"}]
+                "checks": [{"context": "ci", "app_id": 15368}, {"context": "docs"}]
             },
-            "required_pull_request_reviews": {"required_approving_review_count": 1}
+            "required_pull_request_reviews": {
+                "required_approving_review_count": 2,
+                "require_code_owner_reviews": true,
+                "dismiss_stale_reviews": true
+            }
         });
-        let (contexts, reviews) = protection_of(&both);
-        assert_eq!(contexts.unwrap(), ["ci", "docs", "lint"]);
-        assert_eq!(reviews, Some(true));
+        let (checks, reviews) = protection_of(&both);
+        assert_eq!(
+            checks,
+            vec![
+                RequiredCheck {
+                    context: "ci".into(),
+                    app_id: Some(15368)
+                },
+                RequiredCheck::from("docs"),
+                RequiredCheck::from("lint"),
+            ],
+            "a context listed twice is one check, bound to the app `checks` names"
+        );
+        assert_eq!(
+            reviews,
+            ReviewPolicy {
+                approvals: 2,
+                code_owners: true,
+                dismiss_stale: true
+            }
+        );
 
         let none_required = json!({
             "required_status_checks": {"contexts": []},
             "required_pull_request_reviews": {"required_approving_review_count": 0}
         });
-        assert_eq!(protection_of(&none_required).1, Some(false));
+        let (checks, reviews) = protection_of(&none_required);
+        assert!(checks.is_empty());
+        assert_eq!(reviews.approvals, 0);
 
         let reviews_without_count = json!({"required_pull_request_reviews": {}});
-        let (contexts, reviews) = protection_of(&reviews_without_count);
-        assert_eq!(contexts.unwrap(), Vec::<String>::new());
         assert_eq!(
-            reviews,
-            Some(true),
+            protection_of(&reviews_without_count).1.approvals,
+            1,
             "a review section without a count still asks for one"
         );
+        assert_eq!(protection_of(&json!({})).1, ReviewPolicy::default());
+    }
 
-        assert_eq!(protection_of(&json!({})).1, Some(false));
+    #[test]
+    fn the_rulesets_add_required_checks_bound_to_an_app_and_a_review_policy() {
+        let rules = json!([
+            {"type": "deletion"},
+            {"type": "required_status_checks", "parameters": {
+                "strict_required_status_checks_policy": false,
+                "required_status_checks": [
+                    {"context": "ci", "integration_id": 15368},
+                    {"context": "build"}
+                ]
+            }},
+            {"type": "pull_request", "parameters": {
+                "required_approving_review_count": 1,
+                "require_code_owner_review": true,
+                "dismiss_stale_reviews_on_push": false
+            }}
+        ]);
+        let (checks, reviews) = rules_of(&rules);
+        assert_eq!(
+            checks,
+            vec![
+                RequiredCheck::from("build"),
+                RequiredCheck {
+                    context: "ci".into(),
+                    app_id: Some(15368)
+                },
+            ]
+        );
+        assert_eq!(
+            reviews,
+            ReviewPolicy {
+                approvals: 1,
+                code_owners: true,
+                dismiss_stale: false
+            }
+        );
+        // a branch no ruleset applies to adds nothing
+        assert_eq!(rules_of(&json!([])), (Vec::new(), ReviewPolicy::default()));
+        // the two sources union: a context either requires, the stricter review rule of each
+        let (pc, pr) = protection_of(&json!({
+            "required_status_checks": {"contexts": ["ci", "lint"]},
+            "required_pull_request_reviews": {"required_approving_review_count": 2}
+        }));
+        let (rc, rr) = rules_of(&rules);
+        assert_eq!(
+            union_checks(pc, rc),
+            vec![
+                RequiredCheck::from("build"),
+                RequiredCheck {
+                    context: "ci".into(),
+                    app_id: Some(15368)
+                },
+                RequiredCheck::from("lint"),
+            ]
+        );
+        assert_eq!(
+            union_reviews(pr, rr),
+            ReviewPolicy {
+                approvals: 2,
+                code_owners: true,
+                dismiss_stale: false
+            }
+        );
+    }
+
+    #[test]
+    fn a_check_entry_records_what_wrote_it_and_when_it_completed() {
+        let p = pull_request_of(&json!({
+            "number": 3,
+            "statusCheckRollup": [
+                {"__typename": "CheckRun", "name": "ci", "status": "COMPLETED", "conclusion": "SUCCESS",
+                 "startedAt": "2026-09-01T00:00:00Z", "completedAt": "2026-09-01T00:05:00Z",
+                 "app": {"databaseId": 15368}},
+                {"__typename": "CheckRun", "name": "ci", "status": "IN_PROGRESS",
+                 "startedAt": "2026-09-01T00:06:00Z", "completedAt": "0001-01-01T00:00:00Z"},
+                {"__typename": "StatusContext", "context": "ci", "state": "SUCCESS",
+                 "startedAt": "2026-09-01T00:07:00Z"}
+            ]
+        }))
+        .unwrap();
+        assert_eq!(p.checks[0].kind, CheckKind::CheckRun);
+        assert_eq!(p.checks[0].app_id, Some(15368));
+        assert_eq!(p.checks[0].completed_at, "2026-09-01T00:05:00Z");
+        assert_eq!(
+            p.checks[1].completed_at, "2026-09-01T00:06:00Z",
+            "a run that has not completed is placed by when it started"
+        );
+        assert_eq!(p.checks[2].kind, CheckKind::StatusContext);
+        assert_eq!(p.checks[2].app_id, None);
+        assert_eq!(p.checks[2].completed_at, "2026-09-01T00:07:00Z");
+    }
+
+    #[test]
+    fn the_latest_reviews_are_read_with_the_commit_each_was_given_on() {
+        let p = pull_request_of(&json!({
+            "number": 4,
+            "latestReviews": [
+                {"author": {"login": "ana"}, "state": "APPROVED", "commit": {"oid": "c1"}},
+                {"author": {"login": "bo"}, "state": "changes_requested", "commit": {"oid": "c2"}},
+                {"author": {"login": "cy"}, "state": "COMMENTED"}
+            ],
+            "reviewRequests": [{"login": "dee"}, {"slug": "core"}, {"__typename": "Bot"}]
+        }))
+        .unwrap();
+        assert_eq!(p.latest_reviews.len(), 3);
+        assert_eq!(p.latest_reviews[0].commit, "c1");
+        assert_eq!(p.latest_reviews[1].state, "CHANGES_REQUESTED");
+        assert_eq!(
+            p.latest_reviews[2].commit, "",
+            "a review without a commit says so"
+        );
+        assert_eq!(p.review_requests, ["dee", "core"]);
     }
 }

@@ -18369,7 +18369,7 @@ capabilities:
     module: integration
     kind: query
     title: The integration audit trail
-    description: "Every action this checkout's executor recorded, oldest first: selections, stale decisions, merge attempts, merges with the master before and after, refusals, refreshes, verification failures and closures, each with its actor, the pull request, the head and the decision's reasons."
+    description: "Every action the repository's executors recorded, from any of its worktrees, oldest first: the lease taken and given back, observations, selections, stale decisions, each act's attempt before it and its outcome after — merges with the master before and after, refusals, refreshes, verification failures and closures — each with a typed action, its actor, the pull request, the head, the decision's reasons and, on an act, the evidence it was decided on. The trail is one file under the common git directory, so every worktree reads the same one."
     input:
       name: Empty
       schema:
@@ -18402,8 +18402,8 @@ capabilities:
                 type: string
                 description: "Who: the git identity, the process and the machine."
               action:
-                type: string
-                description: "What (`selected`, `refresh_selected`, `stale_decision`, `merge_attempted`,\n`merge_succeeded`, `merge_failed`, `verification_failed`, `refreshed`,\n`refresh_failed`, `closed_superseded`, `idle`, and the two transitions the wait is\nfolded from: `became_actionable`, `left_actionable`)."
+                "$ref": "#/$defs/IntegrationAction"
+                description: "What (`IntegrationAction`)."
               pr:
                 type:
                   - integer
@@ -18441,6 +18441,26 @@ capabilities:
                   format: uint64
                   minimum: 0
                 description: "On a selection: the other actionable pull requests the executor chose this one over,\nin rank order. The wait of each is folded from it (`super::wait`)."
+              head_after:
+                type:
+                  - string
+                  - "null"
+                description: "On `refreshed`: the head the executor pushed. The refresh pipeline waits only for\nthe checks of a head named here."
+              evidence:
+                type: array
+                items:
+                  "$ref": "#/$defs/IntegrationEvidence"
+                description: "On `merge_attempted`, `merge_succeeded`, `refresh_selected` and `closed_superseded`:\nthe assessment's evidence the act was decided on."
+              class:
+                anyOf:
+                  - "$ref": "#/$defs/FailureClass"
+                  - type: "null"
+                description: "On a failure: its class, once one is decided."
+              merge_commit:
+                type:
+                  - string
+                  - "null"
+                description: "On `merge_succeeded`: the merge commit, once it is read."
             required:
               - at
               - actor
@@ -18448,6 +18468,116 @@ capabilities:
               - reasons
               - detail
             description: One entry of the audit trail.
+          IntegrationAction:
+            oneOf:
+              - type: string
+                const: lease_acquired
+                description: "The executor took the base branch's lease."
+              - type: string
+                const: lease_released
+                description: It gave the lease back.
+              - type: string
+                const: continuous_started
+                description: A continuous drain started.
+              - type: string
+                const: continuous_stopped
+                description: A continuous drain stopped; the detail says why.
+              - type: string
+                const: observed
+                description: The forge was observed and the observation recorded.
+              - type: string
+                const: became_actionable
+                description: A pull request became actionable (ready or refreshable).
+              - type: string
+                const: left_actionable
+                description: A pull request stopped being actionable.
+              - type: string
+                const: selected
+                description: The first ready pull request was chosen to merge.
+              - type: string
+                const: refresh_selected
+                description: The first refreshable pull request was chosen to bring master into.
+              - type: string
+                const: stale_decision
+                description: The decision went stale between planning and acting; nothing was done.
+              - type: string
+                const: merge_attempted
+                description: A merge is about to be asked of the forge.
+              - type: string
+                const: merge_succeeded
+                description: The merge landed and was verified.
+              - type: string
+                const: merge_failed
+                description: The forge refused the merge.
+              - type: string
+                const: verification_failed
+                description: What landed could not be verified.
+              - type: string
+                const: refresh_attempted
+                description: Master is about to be merged into a branch and pushed.
+              - type: string
+                const: refreshed
+                description: Master was brought into the branch and pushed.
+              - type: string
+                const: refresh_failed
+                description: Bringing master in failed.
+              - type: string
+                const: close_attempted
+                description: A superseded pull request is about to be closed.
+              - type: string
+                const: closed_superseded
+                description: It was closed.
+              - type: string
+                const: close_failed
+                description: Closing it failed.
+              - type: string
+                const: idle
+                description: Nothing was ready.
+            description: "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
+          IntegrationEvidence:
+            type: object
+            properties:
+              kind:
+                type: string
+                description: "What kind of fact (`required_checks`, `relation_to_master`, `review`, `label`,\n`dependency`, `draft`, `base`)."
+              status:
+                type: string
+                description: "What it said, as a word."
+              detail:
+                type: string
+                description: The detail a person reads.
+            required:
+              - kind
+              - status
+              - detail
+            description: "One piece of evidence behind a disposition: what was read, and what it said."
+          FailureClass:
+            oneOf:
+              - type: string
+                const: stale
+                description: Master or the head moved since the decision.
+              - type: string
+                const: conflict
+                description: The merge of master conflicts.
+              - type: string
+                const: new_failing_check
+                description: A required check failed that had passed.
+              - type: string
+                const: review_revoked
+                description: An approval was withdrawn.
+              - type: string
+                const: transient
+                description: The forge or the network failed in a way that passes.
+              - type: string
+                const: policy_violation
+                description: The branch protection refused it.
+              - type: string
+                const: verification_failed
+                description: What landed could not be verified.
+              - type: string
+                const: unreadable
+                description: The forge or git could not be read.
+            description: "Why an act failed, as one class a person and a retry policy can act on. Declared so that\nthe trail's shape is settled before anything classifies: no event carries one yet."
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::integration
@@ -18722,6 +18852,9 @@ capabilities:
                 const: passed
                 description: Every required check passed on this head.
               - type: string
+                const: skipped
+                description: "Every required check passed, at least one of them by a skip the policy permits for\nthat context. A skip the policy does not permit is not a pass: it is `missing`."
+              - type: string
                 const: pending
                 description: A required check is queued or running.
               - type: string
@@ -18748,6 +18881,12 @@ capabilities:
               - type: string
                 const: pending
                 description: A required review has not been given.
+              - type: string
+                const: stale
+                description: "The approvals were given on another commit than the head: an approval is of one\ncommit, and these are not of this one."
+              - type: string
+                const: code_owners_pending
+                description: "The approvals are there, but a code owner's is still required."
               - type: string
                 const: unknown
                 description: The protection could not be read.
@@ -18951,13 +19090,79 @@ capabilities:
                 minimum: 0
                 description: The pull request chosen instead.
               action:
-                type: string
+                "$ref": "#/$defs/IntegrationAction"
                 description: "What it was chosen for (`selected` to merge, `refresh_selected` to bring master in)."
             required:
               - at
               - for_pr
               - action
             description: One time the executor chose another pull request.
+          IntegrationAction:
+            oneOf:
+              - type: string
+                const: lease_acquired
+                description: "The executor took the base branch's lease."
+              - type: string
+                const: lease_released
+                description: It gave the lease back.
+              - type: string
+                const: continuous_started
+                description: A continuous drain started.
+              - type: string
+                const: continuous_stopped
+                description: A continuous drain stopped; the detail says why.
+              - type: string
+                const: observed
+                description: The forge was observed and the observation recorded.
+              - type: string
+                const: became_actionable
+                description: A pull request became actionable (ready or refreshable).
+              - type: string
+                const: left_actionable
+                description: A pull request stopped being actionable.
+              - type: string
+                const: selected
+                description: The first ready pull request was chosen to merge.
+              - type: string
+                const: refresh_selected
+                description: The first refreshable pull request was chosen to bring master into.
+              - type: string
+                const: stale_decision
+                description: The decision went stale between planning and acting; nothing was done.
+              - type: string
+                const: merge_attempted
+                description: A merge is about to be asked of the forge.
+              - type: string
+                const: merge_succeeded
+                description: The merge landed and was verified.
+              - type: string
+                const: merge_failed
+                description: The forge refused the merge.
+              - type: string
+                const: verification_failed
+                description: What landed could not be verified.
+              - type: string
+                const: refresh_attempted
+                description: Master is about to be merged into a branch and pushed.
+              - type: string
+                const: refreshed
+                description: Master was brought into the branch and pushed.
+              - type: string
+                const: refresh_failed
+                description: Bringing master in failed.
+              - type: string
+                const: close_attempted
+                description: A superseded pull request is about to be closed.
+              - type: string
+                const: closed_superseded
+                description: It was closed.
+              - type: string
+                const: close_failed
+                description: Closing it failed.
+              - type: string
+                const: idle
+                description: Nothing was ready.
+            description: "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::integration
@@ -19113,13 +19318,19 @@ capabilities:
                   - array
                   - "null"
                 items:
+                  "$ref": "#/$defs/RequiredCheck"
+                description: "The checks the base requires, from its branch protection and rulesets, each with the\napp bound to it. `None` when they could not be read: every required-check verdict is\nthen `unknown`, never `passed`. An empty set is unknown too (owner decision D5): a\nbase that requires nothing proves nothing about a head, so nothing merges onto it."
+              review_policy:
+                anyOf:
+                  - "$ref": "#/$defs/ReviewPolicy"
+                  - type: "null"
+                description: "What the base requires of reviews; `None` when unread."
+              skipped_permitted:
+                type: array
+                items:
                   type: string
-                description: "The status contexts the branch protection requires, as read from the forge.\n`None` when the protection could not be read: every required-check verdict is then\n`unknown`, never `passed`."
-              reviews_required:
-                type:
-                  - boolean
-                  - "null"
-                description: "Whether the branch protection requires an approving review; `None` when unread."
+                description: "Contexts whose skip counts as a pass. Empty unless a repository says otherwise: a\nskipped required check is otherwise `missing`."
+                default: []
               blocking_labels:
                 type: array
                 items:
@@ -19133,6 +19344,41 @@ capabilities:
               - blocking_labels
               - merge_method
             description: "What the repository requires before a merge, as observed from the forge and the\nrepository — never a list kept here beside it."
+          RequiredCheck:
+            type: object
+            properties:
+              context:
+                type: string
+                description: "The status context, or the check run's name."
+              app_id:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "The app bound to it, when the protection names one."
+            required:
+              - context
+            description: "One check the base requires: a status context, and the app that must write it when the\nprotection binds it to one. A check of that name from any other writer is not this one."
+          ReviewPolicy:
+            type: object
+            properties:
+              approvals:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: How many approving reviews a merge needs; 0 when none.
+              code_owners:
+                type: boolean
+                description: "Whether a code owner's approval is required."
+              dismiss_stale:
+                type: boolean
+                description: Whether the forge dismisses an approval when the head moves.
+            required:
+              - approvals
+              - code_owners
+              - dismiss_stale
+            description: "What the base requires of reviews, read from its protection and rulesets together."
           PullRequestAssessment:
             type: object
             properties:
@@ -19317,6 +19563,9 @@ capabilities:
                 const: passed
                 description: Every required check passed on this head.
               - type: string
+                const: skipped
+                description: "Every required check passed, at least one of them by a skip the policy permits for\nthat context. A skip the policy does not permit is not a pass: it is `missing`."
+              - type: string
                 const: pending
                 description: A required check is queued or running.
               - type: string
@@ -19343,6 +19592,12 @@ capabilities:
               - type: string
                 const: pending
                 description: A required review has not been given.
+              - type: string
+                const: stale
+                description: "The approvals were given on another commit than the head: an approval is of one\ncommit, and these are not of this one."
+              - type: string
+                const: code_owners_pending
+                description: "The approvals are there, but a code owner's is still required."
               - type: string
                 const: unknown
                 description: The protection could not be read.
@@ -19546,13 +19801,79 @@ capabilities:
                 minimum: 0
                 description: The pull request chosen instead.
               action:
-                type: string
+                "$ref": "#/$defs/IntegrationAction"
                 description: "What it was chosen for (`selected` to merge, `refresh_selected` to bring master in)."
             required:
               - at
               - for_pr
               - action
             description: One time the executor chose another pull request.
+          IntegrationAction:
+            oneOf:
+              - type: string
+                const: lease_acquired
+                description: "The executor took the base branch's lease."
+              - type: string
+                const: lease_released
+                description: It gave the lease back.
+              - type: string
+                const: continuous_started
+                description: A continuous drain started.
+              - type: string
+                const: continuous_stopped
+                description: A continuous drain stopped; the detail says why.
+              - type: string
+                const: observed
+                description: The forge was observed and the observation recorded.
+              - type: string
+                const: became_actionable
+                description: A pull request became actionable (ready or refreshable).
+              - type: string
+                const: left_actionable
+                description: A pull request stopped being actionable.
+              - type: string
+                const: selected
+                description: The first ready pull request was chosen to merge.
+              - type: string
+                const: refresh_selected
+                description: The first refreshable pull request was chosen to bring master into.
+              - type: string
+                const: stale_decision
+                description: The decision went stale between planning and acting; nothing was done.
+              - type: string
+                const: merge_attempted
+                description: A merge is about to be asked of the forge.
+              - type: string
+                const: merge_succeeded
+                description: The merge landed and was verified.
+              - type: string
+                const: merge_failed
+                description: The forge refused the merge.
+              - type: string
+                const: verification_failed
+                description: What landed could not be verified.
+              - type: string
+                const: refresh_attempted
+                description: Master is about to be merged into a branch and pushed.
+              - type: string
+                const: refreshed
+                description: Master was brought into the branch and pushed.
+              - type: string
+                const: refresh_failed
+                description: Bringing master in failed.
+              - type: string
+                const: close_attempted
+                description: A superseded pull request is about to be closed.
+              - type: string
+                const: closed_superseded
+                description: It was closed.
+              - type: string
+                const: close_failed
+                description: Closing it failed.
+              - type: string
+                const: idle
+                description: Nothing was ready.
+            description: "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
           QueueTallies:
             type: object
             properties:
@@ -19635,8 +19956,8 @@ capabilities:
                 type: string
                 description: "Who: the git identity, the process and the machine."
               action:
-                type: string
-                description: "What (`selected`, `refresh_selected`, `stale_decision`, `merge_attempted`,\n`merge_succeeded`, `merge_failed`, `verification_failed`, `refreshed`,\n`refresh_failed`, `closed_superseded`, `idle`, and the two transitions the wait is\nfolded from: `became_actionable`, `left_actionable`)."
+                "$ref": "#/$defs/IntegrationAction"
+                description: "What (`IntegrationAction`)."
               pr:
                 type:
                   - integer
@@ -19674,6 +19995,26 @@ capabilities:
                   format: uint64
                   minimum: 0
                 description: "On a selection: the other actionable pull requests the executor chose this one over,\nin rank order. The wait of each is folded from it (`super::wait`)."
+              head_after:
+                type:
+                  - string
+                  - "null"
+                description: "On `refreshed`: the head the executor pushed. The refresh pipeline waits only for\nthe checks of a head named here."
+              evidence:
+                type: array
+                items:
+                  "$ref": "#/$defs/IntegrationEvidence"
+                description: "On `merge_attempted`, `merge_succeeded`, `refresh_selected` and `closed_superseded`:\nthe assessment's evidence the act was decided on."
+              class:
+                anyOf:
+                  - "$ref": "#/$defs/FailureClass"
+                  - type: "null"
+                description: "On a failure: its class, once one is decided."
+              merge_commit:
+                type:
+                  - string
+                  - "null"
+                description: "On `merge_succeeded`: the merge commit, once it is read."
             required:
               - at
               - actor
@@ -19681,6 +20022,33 @@ capabilities:
               - reasons
               - detail
             description: One entry of the audit trail.
+          FailureClass:
+            oneOf:
+              - type: string
+                const: stale
+                description: Master or the head moved since the decision.
+              - type: string
+                const: conflict
+                description: The merge of master conflicts.
+              - type: string
+                const: new_failing_check
+                description: A required check failed that had passed.
+              - type: string
+                const: review_revoked
+                description: An approval was withdrawn.
+              - type: string
+                const: transient
+                description: The forge or the network failed in a way that passes.
+              - type: string
+                const: policy_violation
+                description: The branch protection refused it.
+              - type: string
+                const: verification_failed
+                description: What landed could not be verified.
+              - type: string
+                const: unreadable
+                description: The forge or git could not be read.
+            description: "Why an act failed, as one class a person and a retry policy can act on. Declared so that\nthe trail's shape is settled before anything classifies: no event carries one yet."
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::integration

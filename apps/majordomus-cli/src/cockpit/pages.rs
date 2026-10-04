@@ -5186,11 +5186,23 @@ pub fn integration(ctx: &Context) -> Page {
                     q.policy
                         .required_checks
                         .as_ref()
-                        .map(|c| if c.is_empty() { "none".to_string() } else { c.join(", ") })
+                        .map(|c| if c.is_empty() {
+                            "none — nothing can be ready".to_string()
+                        } else {
+                            c.iter().map(ToString::to_string).collect::<Vec<_>>().join(", ")
+                        })
                         .unwrap_or_else(|| "unread — nothing can be ready".into()),
                     q.policy
-                        .reviews_required
-                        .map(|r| r.to_string())
+                        .review_policy
+                        .map(|r| if r.approvals == 0 && !r.code_owners {
+                            "no".to_string()
+                        } else {
+                            format!(
+                                "{} approval(s){}",
+                                r.approvals.max(1),
+                                if r.code_owners { ", a code owner's" } else { "" }
+                            )
+                        })
                         .unwrap_or_else(|| "unread".into()),
                     q.policy.merge_method
                 ))),
@@ -7259,10 +7271,13 @@ mod tests {
             checks: vec![crate::integration::CheckObservation {
                 name: "ci".into(),
                 state,
+                ..Default::default()
             }],
             review_decision: String::new(),
             auto_merge: false,
             cross_repository: false,
+            latest_reviews: Vec::new(),
+            review_requests: Vec::new(),
         }
     }
 
@@ -7290,7 +7305,7 @@ mod tests {
                 base_sha: sha.clone(),
                 observed_at: "2026-10-01T00:00:00Z".into(),
                 required_checks: Some(vec!["ci".into()]),
-                reviews_required: Some(false),
+                review_policy: Some(Default::default()),
                 merge_methods: vec!["merge".into()],
                 pull_requests: vec![
                     observed_pr(1, &sha, CheckRunState::Passed),

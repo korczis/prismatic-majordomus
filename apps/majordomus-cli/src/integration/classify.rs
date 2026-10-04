@@ -12,9 +12,10 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::model::{
-    CheckRunState, DependencyCertainty, EvaluatedAgainst, IntegrationEvidence, IntegrationRisk,
-    PathOverlap, PullRequestAssessment, PullRequestDependency, PullRequestDisposition,
-    PullRequestObservation, PullRequestReview, RelationToMaster, RequiredCheckState,
+    CheckKind, CheckRunState, DependencyCertainty, EvaluatedAgainst, IntegrationEvidence,
+    IntegrationRisk, PathOverlap, PullRequestAssessment, PullRequestDependency,
+    PullRequestDisposition, PullRequestObservation, PullRequestReview, RelationToMaster,
+    RequiredCheck, RequiredCheckState, ReviewPolicy,
 };
 
 /// What the repository requires before a merge, as observed from the forge and the
@@ -23,12 +24,17 @@ use super::model::{
 pub struct IntegrationPolicy {
     /// The branch integrated into.
     pub base: String,
-    /// The status contexts the branch protection requires, as read from the forge.
-    /// `None` when the protection could not be read: every required-check verdict is then
-    /// `unknown`, never `passed`.
-    pub required_checks: Option<Vec<String>>,
-    /// Whether the branch protection requires an approving review; `None` when unread.
-    pub reviews_required: Option<bool>,
+    /// The checks the base requires, from its branch protection and rulesets, each with the
+    /// app bound to it. `None` when they could not be read: every required-check verdict is
+    /// then `unknown`, never `passed`. An empty set is unknown too (owner decision D5): a
+    /// base that requires nothing proves nothing about a head, so nothing merges onto it.
+    pub required_checks: Option<Vec<RequiredCheck>>,
+    /// What the base requires of reviews; `None` when unread.
+    pub review_policy: Option<ReviewPolicy>,
+    /// Contexts whose skip counts as a pass. Empty unless a repository says otherwise: a
+    /// skipped required check is otherwise `missing`.
+    #[serde(default)]
+    pub skipped_permitted: Vec<String>,
     /// Labels that hold a pull request whatever else is true.
     pub blocking_labels: Vec<String>,
     /// The merge method the executor asks the forge for.
@@ -72,59 +78,102 @@ const CODE: &[&str] = &["apps/", "bin/", "lib/", "scripts/"];
 /// More authored paths than this is a large change.
 const LARGE: usize = 40;
 
-/// The required-check verdict for one head, from the checks reported on it.
+/// The state of each required check on one head, in the order the base requires them.
+///
+/// For each context, only the reports that may stand for it are read: when the base binds
+/// the context to an app, a status context or another app's check run of that name is not
+/// it. Of those, a report still running makes the check pending; otherwise the newest
+/// completed report is the verdict, so a failure followed by a passing re-run has passed.
+/// A skip is a pass only for a context in `skipped_permitted`; otherwise it is `missing`.
+pub fn required_check_states(
+    checks: &[super::model::CheckObservation],
+    required: &[RequiredCheck],
+    skipped_permitted: &[String],
+) -> Vec<(String, RequiredCheckState)> {
+    required
+        .iter()
+        .map(|req| {
+            let reports: Vec<&super::model::CheckObservation> = checks
+                .iter()
+                .filter(|c| c.name == req.context)
+                .filter(|c| match req.app_id {
+                    None => true,
+                    // bound to an app: a check run from it, or one whose app is unreported
+                    Some(app) => c.kind == CheckKind::CheckRun && c.app_id.is_none_or(|a| a == app),
+                })
+                .collect();
+            let state = if reports.is_empty() {
+                RequiredCheckState::Missing
+            } else if reports.iter().any(|c| c.state == CheckRunState::Pending) {
+                RequiredCheckState::Pending
+            } else {
+                let newest = reports
+                    .iter()
+                    .filter(|c| !c.completed_at.is_empty())
+                    .max_by(|a, b| a.completed_at.cmp(&b.completed_at));
+                // without a time to order them by, the worst report stands
+                let states: Vec<CheckRunState> = match newest {
+                    Some(c) => vec![c.state],
+                    None => reports.iter().map(|c| c.state).collect(),
+                };
+                if states.contains(&CheckRunState::Failed) {
+                    RequiredCheckState::Failed
+                } else if states.iter().all(|s| *s == CheckRunState::Passed) {
+                    RequiredCheckState::Passed
+                } else if skipped_permitted.iter().any(|p| p == &req.context) {
+                    RequiredCheckState::Skipped
+                } else {
+                    // skipped or neutral is not a pass of a required check
+                    RequiredCheckState::Missing
+                }
+            };
+            (req.context.clone(), state)
+        })
+        .collect()
+}
+
+/// The required-check verdict for one head: the worst of [`required_check_states`].
+/// Unread requirements are `unknown`, and so is an empty set (owner decision D5): a base
+/// that requires no check has proved nothing about this head. The module is private, so
+/// the example is text; the unit tests run the same assertions.
 ///
 /// ```text
-/// use crate::integration::{required_checks, CheckObservation, CheckRunState, RequiredCheckState};
-/// let ci = |state| vec![CheckObservation { name: "ci".into(), state }];
-/// let req = Some(vec!["ci".to_string()]);
-/// assert_eq!(required_checks(&ci(CheckRunState::Passed), req.as_deref()), RequiredCheckState::Passed);
+/// use majordomus_cli::integration::{CheckObservation, CheckRunState, RequiredCheck, RequiredCheckState};
+/// use majordomus_cli::integration::classify::required_checks;
+/// let ci = |state| vec![CheckObservation { name: "ci".into(), state, ..Default::default() }];
+/// let req: Vec<RequiredCheck> = vec!["ci".into()];
+/// assert_eq!(required_checks(&ci(CheckRunState::Passed), Some(&req), &[]), RequiredCheckState::Passed);
 /// // a green check that is not the required one proves nothing
-/// let other = vec![CheckObservation { name: "suite".into(), state: CheckRunState::Passed }];
-/// assert_eq!(required_checks(&other, req.as_deref()), RequiredCheckState::Missing);
-/// // unread protection is never a pass
-/// assert_eq!(required_checks(&ci(CheckRunState::Passed), None), RequiredCheckState::Unknown);
-/// ```text
+/// let other = vec![CheckObservation { name: "suite".into(), state: CheckRunState::Passed, ..Default::default() }];
+/// assert_eq!(required_checks(&other, Some(&req), &[]), RequiredCheckState::Missing);
+/// // unread protection is never a pass, and neither is a base that requires nothing
+/// assert_eq!(required_checks(&ci(CheckRunState::Passed), None, &[]), RequiredCheckState::Unknown);
+/// assert_eq!(required_checks(&ci(CheckRunState::Passed), Some(&[]), &[]), RequiredCheckState::Unknown);
+/// ```
 pub fn required_checks(
     checks: &[super::model::CheckObservation],
-    required: Option<&[String]>,
+    required: Option<&[RequiredCheck]>,
+    skipped_permitted: &[String],
 ) -> RequiredCheckState {
     let Some(required) = required else {
         return RequiredCheckState::Unknown;
     };
-    let mut verdict = RequiredCheckState::Passed;
-    for name in required {
-        // the newest report of a context wins; the forge lists re-runs as separate entries,
-        // and any failing one among the latest reports is a failure
-        let states: Vec<CheckRunState> = checks
-            .iter()
-            .filter(|c| &c.name == name)
-            .map(|c| c.state)
-            .collect();
-        let this = if states.is_empty() {
-            RequiredCheckState::Missing
-        } else if states.contains(&CheckRunState::Pending) {
-            RequiredCheckState::Pending
-        } else if states.iter().all(|s| *s == CheckRunState::Passed) {
-            RequiredCheckState::Passed
-        } else if states.contains(&CheckRunState::Failed) {
-            RequiredCheckState::Failed
-        } else {
-            // skipped or neutral is not a pass of a required check
-            RequiredCheckState::Missing
-        };
-        verdict = worse(verdict, this);
+    if required.is_empty() {
+        return RequiredCheckState::Unknown;
     }
-    verdict
+    required_check_states(checks, required, skipped_permitted)
+        .into_iter()
+        .fold(RequiredCheckState::Passed, |v, (_, s)| worse(v, s))
 }
 
 fn worse(a: RequiredCheckState, b: RequiredCheckState) -> RequiredCheckState {
     let rank = |r| match r {
         RequiredCheckState::Passed => 0,
-        RequiredCheckState::Pending => 1,
-        RequiredCheckState::Missing => 2,
-        RequiredCheckState::Unknown => 3,
-        RequiredCheckState::Failed => 4,
+        RequiredCheckState::Skipped => 1,
+        RequiredCheckState::Pending => 2,
+        RequiredCheckState::Missing => 3,
+        RequiredCheckState::Unknown => 4,
+        RequiredCheckState::Failed => 5,
     };
     if rank(b) > rank(a) {
         b
@@ -133,18 +182,70 @@ fn worse(a: RequiredCheckState, b: RequiredCheckState) -> RequiredCheckState {
     }
 }
 
-/// The review state under the protection's requirement. The forge's own decision comes
-/// first: `REVIEW_REQUIRED` means some rule requires a review that has not been given — a
-/// ruleset or code owners can require one the branch protection does not — so it is pending
-/// whatever the protection says.
-pub fn review_state(decision: &str, required: Option<bool>) -> PullRequestReview {
-    match (required, decision) {
-        (_, "CHANGES_REQUESTED") => PullRequestReview::ChangesRequested,
-        (_, "APPROVED") => PullRequestReview::Approved,
-        (_, "REVIEW_REQUIRED") => PullRequestReview::Pending,
-        (Some(false), _) => PullRequestReview::NotRequired,
-        (Some(true), _) => PullRequestReview::Pending,
-        (None, _) => PullRequestReview::Unknown,
+/// The review state of one head under the base's review policy.
+///
+/// A reviewer asking for changes holds it whatever else is true, and the forge's own
+/// `REVIEW_REQUIRED` is never "not required": a rule this policy does not list can require
+/// a review. An approval counts only on the commit it was given on. When the policy
+/// requires approvals, the head's are counted against its number; approvals of another
+/// commit that would have made it are `stale`, whatever the forge's own decision says
+/// (with dismissal off, the forge keeps counting them); and with enough approvals on the
+/// head, a code-owner requirement the forge still reports unmet is `code_owners_pending`.
+/// When the policy could not be read, the forge's decision is believed only where a review
+/// on the head stands behind it; anything else is `unknown`, never a pass.
+pub fn review_state(
+    pr: &PullRequestObservation,
+    policy: Option<&ReviewPolicy>,
+) -> PullRequestReview {
+    let decision = pr.review_decision.as_str();
+    if decision == "CHANGES_REQUESTED" {
+        return PullRequestReview::ChangesRequested;
+    }
+    let approved = |r: &&super::model::ReviewObservation| r.state == "APPROVED";
+    let on_head = pr
+        .latest_reviews
+        .iter()
+        .filter(approved)
+        .filter(|r| r.commit == pr.head_sha)
+        .count() as u64;
+    let elsewhere = pr
+        .latest_reviews
+        .iter()
+        .filter(approved)
+        .filter(|r| !r.commit.is_empty() && r.commit != pr.head_sha)
+        .count() as u64;
+    let needed = policy.map(|p| {
+        if p.approvals == 0 && !p.code_owners {
+            0
+        } else {
+            p.approvals.max(1)
+        }
+    });
+    match needed {
+        None => match decision {
+            "REVIEW_REQUIRED" => PullRequestReview::Pending,
+            "APPROVED" if on_head > 0 => PullRequestReview::Approved,
+            "APPROVED" if elsewhere > 0 => PullRequestReview::Stale,
+            _ => PullRequestReview::Unknown,
+        },
+        Some(0) => match decision {
+            "APPROVED" => PullRequestReview::Approved,
+            "REVIEW_REQUIRED" => PullRequestReview::Pending,
+            _ => PullRequestReview::NotRequired,
+        },
+        Some(n) if on_head >= n => {
+            if decision == "REVIEW_REQUIRED" {
+                if policy.is_some_and(|p| p.code_owners) {
+                    PullRequestReview::CodeOwnersPending
+                } else {
+                    PullRequestReview::Pending
+                }
+            } else {
+                PullRequestReview::Approved
+            }
+        }
+        Some(n) if elsewhere > 0 && on_head + elsewhere >= n => PullRequestReview::Stale,
+        Some(_) => PullRequestReview::Pending,
     }
 }
 
@@ -312,8 +413,12 @@ pub fn classify(
     policy: &IntegrationPolicy,
     queue: &QueueContext,
 ) -> PullRequestAssessment {
-    let checks = required_checks(&pr.checks, policy.required_checks.as_deref());
-    let review = review_state(&pr.review_decision, policy.reviews_required);
+    let checks = required_checks(
+        &pr.checks,
+        policy.required_checks.as_deref(),
+        &policy.skipped_permitted,
+    );
+    let review = review_state(pr, policy.review_policy.as_ref());
     let authored: Vec<String> = match relation {
         RelationToMaster::UpToDate { authored } | RelationToMaster::Behind { authored, .. } => {
             authored.clone()
@@ -347,22 +452,76 @@ pub fn classify(
         }
     }
 
-    let mut evidence = vec![
-        ev(
+    let mut evidence = vec![match &policy.required_checks {
+        Some(r) if r.is_empty() => ev(
+            "required_checks",
+            "none_required",
+            "the base requires no check: a head can prove nothing to it, so nothing merges (D5)",
+        ),
+        Some(r) => ev(
             "required_checks",
             word(&checks),
-            match &policy.required_checks {
-                Some(r) => format!("required: {}", r.join(", ")),
-                None => "the branch protection could not be read".into(),
-            },
+            required_check_states(&pr.checks, r, &policy.skipped_permitted)
+                .iter()
+                .zip(r)
+                .map(|((_, s), req)| format!("{req}: {}", word(s)))
+                .collect::<Vec<_>>()
+                .join(", "),
         ),
-        ev("review", word(&review), pr.review_decision.clone()),
-        ev(
-            "relation_to_master",
-            relation_word(relation),
-            relation_detail(relation),
+        None => ev(
+            "required_checks",
+            word(&checks),
+            "the branch protection or rulesets could not be read",
         ),
-    ];
+    }];
+    evidence.push(ev(
+        "review",
+        word(&review),
+        match policy.review_policy {
+            Some(p) => format!(
+                "{} approval(s) required{}{}; the forge says {}",
+                p.approvals,
+                if p.code_owners {
+                    ", a code owner's among them"
+                } else {
+                    ""
+                },
+                if p.dismiss_stale {
+                    ", stale approvals dismissed"
+                } else {
+                    ""
+                },
+                if pr.review_decision.is_empty() {
+                    "nothing"
+                } else {
+                    pr.review_decision.as_str()
+                }
+            ),
+            None => "the review policy could not be read".into(),
+        },
+    ));
+    for r in &pr.latest_reviews {
+        evidence.push(ev(
+            "review",
+            r.state.to_ascii_lowercase(),
+            format!(
+                "{} on {}",
+                r.author,
+                if r.commit.is_empty() {
+                    "an unreported commit".to_string()
+                } else if r.commit == pr.head_sha {
+                    "the head".to_string()
+                } else {
+                    format!("another commit ({})", short(&r.commit))
+                }
+            ),
+        ));
+    }
+    evidence.extend([ev(
+        "relation_to_master",
+        relation_word(relation),
+        relation_detail(relation),
+    )]);
     for d in &dependencies {
         evidence.push(ev(
             "dependency",
@@ -455,7 +614,10 @@ pub fn classify(
                     )
                 } else if matches!(
                     review,
-                    PullRequestReview::ChangesRequested | PullRequestReview::Pending
+                    PullRequestReview::ChangesRequested
+                        | PullRequestReview::Pending
+                        | PullRequestReview::Stale
+                        | PullRequestReview::CodeOwnersPending
                 ) {
                     (
                         PullRequestDisposition::WaitingForReview,
@@ -500,9 +662,12 @@ pub fn classify(
                         )
                 } else {
                     match checks {
-                        RequiredCheckState::Passed => (
+                        RequiredCheckState::Passed | RequiredCheckState::Skipped => (
                             PullRequestDisposition::Ready,
-                            vec!["contains_master".into(), "required_checks_passed".into()],
+                            vec![
+                                "contains_master".into(),
+                                format!("required_checks_{}", word(&checks)),
+                            ],
                             Some("merge it".into()),
                         ),
                         RequiredCheckState::Pending | RequiredCheckState::Missing => (
@@ -510,6 +675,18 @@ pub fn classify(
                             vec![format!("required_checks:{}", word(&checks))],
                             Some("wait for the required checks on this head".into()),
                         ),
+                        RequiredCheckState::Unknown
+                            if policy.required_checks.as_ref().is_some_and(Vec::is_empty) =>
+                        {
+                            (
+                                PullRequestDisposition::Unknown,
+                                vec!["no_required_checks".into()],
+                                Some(format!(
+                                    "require a check on {} in its protection or a ruleset",
+                                    policy.base
+                                )),
+                            )
+                        }
                         RequiredCheckState::Unknown => (
                             PullRequestDisposition::Unknown,
                             vec!["required_checks_unread".into()],
@@ -595,4 +772,9 @@ fn relation_detail(r: &RelationToMaster) -> String {
         RelationToMaster::Conflicting { paths } => format!("conflicts on {}", paths.join(", ")),
         RelationToMaster::Unknown { reason } => reason.clone(),
     }
+}
+
+/// A commit, abbreviated for a person.
+fn short(sha: &str) -> &str {
+    sha.get(..10).unwrap_or(sha)
 }

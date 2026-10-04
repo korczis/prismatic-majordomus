@@ -463,6 +463,7 @@
     "schema-FacetValue": "docs/api/why/",
     "schema-Facets": "docs/api/why/",
     "schema-Fact": "docs/api/graph/",
+    "schema-FailureClass": "docs/api/integration/",
     "schema-Feature": "docs/api/web/",
     "schema-FeatureCounts": "docs/api/product/",
     "schema-FeatureDelivery": "docs/api/delivery/",
@@ -520,6 +521,7 @@
     "schema-InstallabilityReport": "docs/api/distribution/",
     "schema-InstanceId": "docs/api/mesh/",
     "schema-Integration": "docs/api/trace/",
+    "schema-IntegrationAction": "docs/api/integration/",
     "schema-IntegrationEvent": "docs/api/integration/",
     "schema-IntegrationEvents": "docs/api/integration/",
     "schema-IntegrationEvidence": "docs/api/integration/",
@@ -792,6 +794,7 @@
     "schema-RepositoryReport": "docs/api/repository/",
     "schema-RepositoryTopology": "docs/api/worktree/",
     "schema-RepositoryView": "docs/api/worktree/",
+    "schema-RequiredCheck": "docs/api/integration/",
     "schema-RequiredCheckState": "docs/api/integration/",
     "schema-Resolution": "docs/api/environment/",
     "schema-Resolved": "docs/api/design/",
@@ -804,6 +807,7 @@
     "schema-ReviewAnswer": "docs/api/mesh/",
     "schema-ReviewAnswerInput": "docs/api/mesh/",
     "schema-ReviewPlan": "docs/api/reasoning/",
+    "schema-ReviewPolicy": "docs/api/integration/",
     "schema-ReviewRequestInput": "docs/api/mesh/",
     "schema-ReviewState": "docs/api/mesh/",
     "schema-ReviewView": "docs/api/mesh/",
@@ -1022,7 +1026,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 168,
-    "schemas": 799,
+    "schemas": 803,
     "tags": 51
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1575,6 +1579,7 @@
     "FacetValue": "why",
     "Facets": "why",
     "Fact": "graph",
+    "FailureClass": "integration",
     "Feature": "web",
     "FeatureCounts": "product",
     "FeatureDelivery": "delivery",
@@ -1632,6 +1637,7 @@
     "InstallabilityReport": "distribution",
     "InstanceId": "mesh",
     "Integration": "trace",
+    "IntegrationAction": "integration",
     "IntegrationEvent": "integration",
     "IntegrationEvents": "integration",
     "IntegrationEvidence": "integration",
@@ -1904,6 +1910,7 @@
     "RepositoryReport": "repository",
     "RepositoryTopology": "worktree",
     "RepositoryView": "worktree",
+    "RequiredCheck": "integration",
     "RequiredCheckState": "integration",
     "Resolution": "environment",
     "Resolved": "design",
@@ -1916,6 +1923,7 @@
     "ReviewAnswer": "mesh",
     "ReviewAnswerInput": "mesh",
     "ReviewPlan": "reasoning",
+    "ReviewPolicy": "integration",
     "ReviewRequestInput": "mesh",
     "ReviewState": "mesh",
     "ReviewView": "mesh",
@@ -18999,6 +19007,53 @@
       "variants": []
     },
     {
+      "description": "Why an act failed, as one class a person and a retry policy can act on. Declared so that\nthe trail's shape is settled before anything classifies: no event carries one yet.",
+      "home": "integration",
+      "is_enum": true,
+      "name": "FailureClass",
+      "properties": [],
+      "type": "\"stale\" | \"conflict\" | \"new_failing_check\" | \"review_revoked\" | \"transient\" | \"policy_violation\" | \"verification_failed\" | \"unreadable\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationEvent"
+      ],
+      "values": [
+        {
+          "description": "Master or the head moved since the decision.",
+          "value": "stale"
+        },
+        {
+          "description": "The merge of master conflicts.",
+          "value": "conflict"
+        },
+        {
+          "description": "A required check failed that had passed.",
+          "value": "new_failing_check"
+        },
+        {
+          "description": "An approval was withdrawn.",
+          "value": "review_revoked"
+        },
+        {
+          "description": "The forge or the network failed in a way that passes.",
+          "value": "transient"
+        },
+        {
+          "description": "The branch protection refused it.",
+          "value": "policy_violation"
+        },
+        {
+          "description": "What landed could not be verified.",
+          "value": "verification_failed"
+        },
+        {
+          "description": "The forge or git could not be read.",
+          "value": "unreadable"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "A capability of the running process a surface needs in order to exist.\n\nThe registry describes the effective process, not the maximum one: a build or an\ninvocation that answers no MCP has no MCP surface, and the home page cannot link to\none. Stating the dependency as data is what keeps that automatic.",
       "home": "web",
       "is_enum": true,
@@ -21928,6 +21983,106 @@
       "variants": []
     },
     {
+      "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action.",
+      "home": "integration",
+      "is_enum": true,
+      "name": "IntegrationAction",
+      "properties": [],
+      "type": "\"lease_acquired\" | \"lease_released\" | \"continuous_started\" | \"continuous_stopped\" | \"observed\" | \"became_actionable\" | \"left_actionable\" | \"selected\" | \"refresh_selected\" | \"stale_decision\" | \"merge_attempted\" | \"merge_succeeded\" | \"merge_failed\" | \"verification_failed\" | \"refresh_attempted\" | \"refreshed\" | \"refresh_failed\" | \"close_attempted\" | \"closed_superseded\" | \"close_failed\" | \"idle\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationEvent",
+        "PassedOver"
+      ],
+      "values": [
+        {
+          "description": "The executor took the base branch's lease.",
+          "value": "lease_acquired"
+        },
+        {
+          "description": "It gave the lease back.",
+          "value": "lease_released"
+        },
+        {
+          "description": "A continuous drain started.",
+          "value": "continuous_started"
+        },
+        {
+          "description": "A continuous drain stopped; the detail says why.",
+          "value": "continuous_stopped"
+        },
+        {
+          "description": "The forge was observed and the observation recorded.",
+          "value": "observed"
+        },
+        {
+          "description": "A pull request became actionable (ready or refreshable).",
+          "value": "became_actionable"
+        },
+        {
+          "description": "A pull request stopped being actionable.",
+          "value": "left_actionable"
+        },
+        {
+          "description": "The first ready pull request was chosen to merge.",
+          "value": "selected"
+        },
+        {
+          "description": "The first refreshable pull request was chosen to bring master into.",
+          "value": "refresh_selected"
+        },
+        {
+          "description": "The decision went stale between planning and acting; nothing was done.",
+          "value": "stale_decision"
+        },
+        {
+          "description": "A merge is about to be asked of the forge.",
+          "value": "merge_attempted"
+        },
+        {
+          "description": "The merge landed and was verified.",
+          "value": "merge_succeeded"
+        },
+        {
+          "description": "The forge refused the merge.",
+          "value": "merge_failed"
+        },
+        {
+          "description": "What landed could not be verified.",
+          "value": "verification_failed"
+        },
+        {
+          "description": "Master is about to be merged into a branch and pushed.",
+          "value": "refresh_attempted"
+        },
+        {
+          "description": "Master was brought into the branch and pushed.",
+          "value": "refreshed"
+        },
+        {
+          "description": "Bringing master in failed.",
+          "value": "refresh_failed"
+        },
+        {
+          "description": "A superseded pull request is about to be closed.",
+          "value": "close_attempted"
+        },
+        {
+          "description": "It was closed.",
+          "value": "closed_superseded"
+        },
+        {
+          "description": "Closing it failed.",
+          "value": "close_failed"
+        },
+        {
+          "description": "Nothing was ready.",
+          "value": "idle"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "One entry of the audit trail.",
       "home": "integration",
       "is_enum": false,
@@ -21948,11 +22103,13 @@
           "type": "string"
         },
         {
-          "description": "What (`selected`, `refresh_selected`, `stale_decision`, `merge_attempted`,\n`merge_succeeded`, `merge_failed`, `verification_failed`, `refreshed`,\n`refresh_failed`, `closed_superseded`, `idle`, and the two transitions the wait is\nfolded from: `became_actionable`, `left_actionable`).",
+          "description": "What (`IntegrationAction`).",
           "name": "action",
-          "refs": [],
+          "refs": [
+            "IntegrationAction"
+          ],
           "required": true,
-          "type": "string"
+          "type": "IntegrationAction"
         },
         {
           "description": "The pull request, when one.",
@@ -22002,6 +22159,38 @@
           "refs": [],
           "required": false,
           "type": "array of integer (uint64)"
+        },
+        {
+          "description": "On `refreshed`: the head the executor pushed. The refresh pipeline waits only for\nthe checks of a head named here.",
+          "name": "head_after",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "On `merge_attempted`, `merge_succeeded`, `refresh_selected` and `closed_superseded`:\nthe assessment's evidence the act was decided on.",
+          "name": "evidence",
+          "refs": [
+            "IntegrationEvidence"
+          ],
+          "required": false,
+          "type": "array of IntegrationEvidence"
+        },
+        {
+          "description": "On a failure: its class, once one is decided.",
+          "name": "class",
+          "refs": [
+            "FailureClass"
+          ],
+          "required": false,
+          "type": "FailureClass | null"
+        },
+        {
+          "description": "On `merge_succeeded`: the merge commit, once it is read.",
+          "name": "merge_commit",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         }
       ],
       "type": "object",
@@ -22068,6 +22257,7 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
+        "IntegrationEvent",
         "PullRequestAssessment"
       ],
       "values": [],
@@ -22219,18 +22409,29 @@
           "type": "string"
         },
         {
-          "description": "The status contexts the branch protection requires, as read from the forge.\n`None` when the protection could not be read: every required-check verdict is then\n`unknown`, never `passed`.",
+          "description": "The checks the base requires, from its branch protection and rulesets, each with the\napp bound to it. `None` when they could not be read: every required-check verdict is\nthen `unknown`, never `passed`. An empty set is unknown too (owner decision D5): a\nbase that requires nothing proves nothing about a head, so nothing merges onto it.",
           "name": "required_checks",
-          "refs": [],
+          "refs": [
+            "RequiredCheck"
+          ],
           "required": false,
           "type": "array | null"
         },
         {
-          "description": "Whether the branch protection requires an approving review; `None` when unread.",
-          "name": "reviews_required",
+          "description": "What the base requires of reviews; `None` when unread.",
+          "name": "review_policy",
+          "refs": [
+            "ReviewPolicy"
+          ],
+          "required": false,
+          "type": "ReviewPolicy | null"
+        },
+        {
+          "description": "Contexts whose skip counts as a pass. Empty unless a repository says otherwise: a\nskipped required check is otherwise `missing`.",
+          "name": "skipped_permitted",
           "refs": [],
           "required": false,
-          "type": "boolean | null"
+          "type": "array of string"
         },
         {
           "description": "Labels that hold a pull request whatever else is true.",
@@ -28827,9 +29028,11 @@
         {
           "description": "What it was chosen for (`selected` to merge, `refresh_selected` to bring master in).",
           "name": "action",
-          "refs": [],
+          "refs": [
+            "IntegrationAction"
+          ],
           "required": true,
-          "type": "string"
+          "type": "IntegrationAction"
         }
       ],
       "type": "object",
@@ -32613,7 +32816,7 @@
       "is_enum": true,
       "name": "PullRequestReview",
       "properties": [],
-      "type": "\"not_required\" | \"approved\" | \"changes_requested\" | \"pending\" | \"unknown\"",
+      "type": "\"not_required\" | \"approved\" | \"changes_requested\" | \"pending\" | \"stale\" | \"code_owners_pending\" | \"unknown\"",
       "used_by": [],
       "used_by_schemas": [
         "PullRequestAssessment"
@@ -32634,6 +32837,14 @@
         {
           "description": "A required review has not been given.",
           "value": "pending"
+        },
+        {
+          "description": "The approvals were given on another commit than the head: an approval is of one\ncommit, and these are not of this one.",
+          "value": "stale"
+        },
+        {
+          "description": "The approvals are there, but a code owner's is still required.",
+          "value": "code_owners_pending"
         },
         {
           "description": "The protection could not be read.",
@@ -37611,12 +37822,41 @@
       "variants": []
     },
     {
+      "description": "One check the base requires: a status context, and the app that must write it when the\nprotection binds it to one. A check of that name from any other writer is not this one.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "RequiredCheck",
+      "properties": [
+        {
+          "description": "The status context, or the check run's name.",
+          "name": "context",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The app bound to it, when the protection names one.",
+          "name": "app_id",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationPolicy"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The state of the repository's *required* checks on one head, which is the only check\nstate a merge decision reads. A visible green check that is not required proves nothing,\nand a required check that is absent is not a pass.",
       "home": "integration",
       "is_enum": true,
       "name": "RequiredCheckState",
       "properties": [],
-      "type": "\"passed\" | \"pending\" | \"failed\" | \"missing\" | \"unknown\"",
+      "type": "\"passed\" | \"skipped\" | \"pending\" | \"failed\" | \"missing\" | \"unknown\"",
       "used_by": [],
       "used_by_schemas": [
         "PullRequestAssessment"
@@ -37625,6 +37865,10 @@
         {
           "description": "Every required check passed on this head.",
           "value": "passed"
+        },
+        {
+          "description": "Every required check passed, at least one of them by a skip the policy permits for\nthat context. A skip the policy does not permit is not a pass: it is `missing`.",
+          "value": "skipped"
         },
         {
           "description": "A required check is queued or running.",
@@ -38561,6 +38805,42 @@
       ],
       "used_by_schemas": [
         "StoredPlan"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the base requires of reviews, read from its protection and rulesets together.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "ReviewPolicy",
+      "properties": [
+        {
+          "description": "How many approving reviews a merge needs; 0 when none.",
+          "name": "approvals",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Whether a code owner's approval is required.",
+          "name": "code_owners",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether the forge dismisses an approval when the head moves.",
+          "name": "dismiss_stale",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationPolicy"
       ],
       "values": [],
       "variants": []
@@ -51483,7 +51763,7 @@
           "cache_detail": "",
           "cli": "prs events",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/pull-requests/events\"",
-          "description": "Every action this checkout's executor recorded, oldest first: selections, stale decisions, merge attempts, merges with the master before and after, refusals, refreshes, verification failures and closures, each with its actor, the pull request, the head and the decision's reasons.",
+          "description": "Every action the repository's executors recorded, from any of its worktrees, oldest first: the lease taken and given back, observations, selections, stale decisions, each act's attempt before it and its outcome after — merges with the master before and after, refusals, refreshes, verification failures and closures — each with a typed action, its actor, the pull request, the head, the decision's reasons and, on an act, the evidence it was decided on. The trail is one file under the common git directory, so every worktree reads the same one.",
           "home": "integration",
           "id": "integration.events",
           "kind": "query",
