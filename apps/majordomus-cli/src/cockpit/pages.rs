@@ -5038,15 +5038,27 @@ fn o_path(p: &OverlapPath) -> String {
 
 // ---------------------------------------------------------------- integration
 
-/// The badge status of a disposition: what the reader should feel about it.
+/// The badge status of a disposition: what the reader should feel about it. Of the cleanup
+/// lane, what cleanup closes (`redundant`, `superseded`) warns, and what only a person may
+/// close (`possibly_redundant`) is as undecided as a held one.
 fn disposition_status(d: crate::integration::PullRequestDisposition) -> &'static str {
     use crate::integration::IntegrationLane as L;
-    match d.lane() {
-        L::Ready => "ok",
-        L::Waiting => "info",
-        L::Repair => "fail",
-        L::Cleanup => "warn",
-        L::Held => "unknown",
+    use crate::integration::PullRequestDisposition as D;
+    match (d.lane(), d) {
+        (L::Cleanup, D::PossiblyRedundant) => "unknown",
+        (L::Ready, _) => "ok",
+        (L::Waiting, _) => "info",
+        (L::Repair, _) => "fail",
+        (L::Cleanup, _) => "warn",
+        (L::Held, _) => "unknown",
+    }
+}
+
+/// The disposition as a badge says it: `superseded` names its successor.
+fn disposition_label(a: &crate::integration::PullRequestAssessment) -> String {
+    match a.superseded_by {
+        Some(by) => format!("{} by #{by}", a.disposition.as_str()),
+        None => a.disposition.as_str().to_string(),
     }
 }
 
@@ -5254,7 +5266,7 @@ pub fn integration(ctx: &Context) -> Page {
         (
             IntegrationLane::Waiting,
             "Waiting",
-            "Nothing is waiting on a refresh, a check, a review or a dependency.",
+            "Nothing is waiting on a refresh, a check, a review, a dependency or a successor.",
         ),
         (
             IntegrationLane::Repair,
@@ -5264,7 +5276,8 @@ pub fn integration(ctx: &Context) -> Page {
         (
             IntegrationLane::Cleanup,
             "Cleanup",
-            "No open pull request's work is on master already.",
+            "No open pull request's work is on master already, and none was superseded by one \
+             that landed.",
         ),
         (IntegrationLane::Held, "Held", held_note.as_str()),
     ];
@@ -5300,7 +5313,7 @@ pub fn integration(ctx: &Context) -> Page {
                     ),
                     cell(badge(
                         disposition_status(a.disposition),
-                        a.disposition.as_str(),
+                        disposition_label(a),
                     )),
                     text_cell(word(&a.risk)),
                     text_cell(crate::integration::reason_list(&a.reasons, ", ")),
@@ -7324,6 +7337,7 @@ mod tests {
                     observed_pr(2, &sha, CheckRunState::Failed),
                     observed_pr(3, &sha, CheckRunState::Pending),
                 ],
+                resolved: Default::default(),
             },
         )
         .expect("an observation");

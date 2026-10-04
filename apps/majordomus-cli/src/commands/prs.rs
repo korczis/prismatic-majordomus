@@ -297,7 +297,8 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             } else if items.is_empty() {
                 w(
                     &mut out,
-                    "nothing to clean up: no open pull request's work is on master already",
+                    "nothing to clean up: no open pull request's work is on master already, and \
+                     none was superseded by one that landed",
                 )?;
             } else {
                 for i in &items {
@@ -679,6 +680,9 @@ fn explain(
             integration::classify::word(&a.lane)
         ),
     )?;
+    if let Some(by) = a.superseded_by {
+        w(out, format!("  superseded:   by #{by}, which landed"))?;
+    }
     w(
         out,
         format!(
@@ -895,6 +899,7 @@ mod tests {
                     held,
                     dependent,
                 ],
+                resolved: Default::default(),
             },
         )
         .unwrap();

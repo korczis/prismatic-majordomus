@@ -4,7 +4,7 @@
 # a local bare origin, with no network:
 #
 #   1. refresh, plan, drain --dry-run and cleanup (listing only) over a ready pull request and
-#      a superseded one: the remote refs, the open pull requests, the audit trail, the lease
+#      a redundant one: the remote refs, the open pull requests, the audit trail, the lease
 #      and the local refs are byte-identical before and after; the fetched mirrors equal what
 #      origin serves; nothing reached the forge but reads; the classification is printed
 #   2. a forge that moves while the cycle runs is caught: exit 10, naming what moved
@@ -19,7 +19,7 @@ gitq init -q --bare -b master "$ORIGIN"
 gitq clone -q "$ORIGIN" "$W" 2>/dev/null
 cd "$W" || exit 1
 echo base > a.txt; gitq add a.txt; gitq commit -qm base; gitq push -q origin HEAD:master
-# #2 is already in master: merging it changes no file, so it is superseded
+# #2 is already in master: merging it changes no file, so it is redundant
 gitq checkout -qb feature/2; echo two > two.txt; gitq add two.txt; gitq commit -qm two
 gitq push -q origin HEAD:refs/heads/feature/2 HEAD:refs/pull/2/head
 gitq checkout -q master; gitq merge -q --no-ff feature/2 -m "two, landed"; gitq push -q origin HEAD:master
@@ -82,13 +82,13 @@ printf '%s' "$p" | jq -e '.before.sections[] | select(.name == "forge") | .lines
 printf '%s' "$p" | jq -e '.steps[] | select(.step == "drain --dry-run") | .summary | test("would merge #1")' >/dev/null \
   || { echo "    the dry run did not select #1: $(printf '%s' "$p" | jq -c .steps)"; exit 1; }
 printf '%s' "$p" | jq -e '.steps[] | select(.step == "cleanup") | .summary | test("#2 would_close")' >/dev/null \
-  || { echo "    cleanup did not list the superseded #2: $(printf '%s' "$p" | jq -c .steps)"; exit 1; }
+  || { echo "    cleanup did not list the redundant #2: $(printf '%s' "$p" | jq -c .steps)"; exit 1; }
 [ "$(printf '%s' "$p" | jq -c '.moved, .mirrors')" = "$(printf '[]\n[]')" ] || { echo "    moved or mirrors are not empty"; exit 1; }
 # the refresh fetched, and the mirrors are exactly what origin serves
 [ "$(git rev-parse refs/majordomus/prs/1)" = "$H1" ] || { echo "    the mirror of #1 is not its head"; exit 1; }
 # the classification is printed, one line per open pull request
 printf '%s\n' "$out" | grep -Eq "^  #1  ${H1:0:12}  ready" || { echo "    #1 is not printed as ready: $out"; exit 1; }
-printf '%s\n' "$out" | grep -Eq "^  #2  ${H2:0:12}  superseded" || { echo "    #2 is not printed as superseded: $out"; exit 1; }
+printf '%s\n' "$out" | grep -Eq "^  #2  ${H2:0:12}  redundant" || { echo "    #2 is not printed as redundant: $out"; exit 1; }
 
 # ---------------------------------------------------------------- 2. a forge that moves is caught
 rc=0; out="$(INTRUDE=1 proof 2>&1)" || rc=$?

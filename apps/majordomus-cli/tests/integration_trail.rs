@@ -183,7 +183,7 @@ fn every_act_is_on_the_repositorys_trail_before_it_is_taken() {
         [
             "lease_acquired",
             "close_attempted",
-            "closed_superseded",
+            "closed_redundant",
             "lease_released"
         ],
         "{out}"
@@ -192,7 +192,7 @@ fn every_act_is_on_the_repositorys_trail_before_it_is_taken() {
         .as_array()
         .unwrap()
         .iter()
-        .find(|e| e["action"] == "closed_superseded")
+        .find(|e| e["action"] == "closed_redundant")
         .unwrap();
     assert_eq!(closed["pr"], 2);
     assert!(

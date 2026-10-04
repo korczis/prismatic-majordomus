@@ -46,8 +46,8 @@ it is described as real.
   `explain`, `events`, the HTTP routes under `/api/v1/pull-requests`, the MCP tools and the
   Cockpit render the observation last recorded under `.ai/local/state/integration/`, with its
   moment, and never reach the network. The executor never passes `--admin`, never force-pushes
-  and never closes a pull request without `--apply` and proof that its work is on master
-  (`test/cases/720_integration_follows_the_current_master.sh`).
+  and never closes a pull request without `--apply` and proof that its work is on master, or
+  that a declared successor landed (`test/cases/720_integration_follows_the_current_master.sh`).
 - **No evaluation of generated text.** Nothing that came from a worker, a model, a
   handover body, or a policy file is ever passed to `eval`, a shell, or a template
   engine that executes.

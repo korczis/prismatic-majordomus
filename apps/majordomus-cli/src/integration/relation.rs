@@ -5,7 +5,9 @@
 //! generator rewrites anyway. `git merge-tree --write-tree` performs the real merge in the
 //! object database — no work tree, no index, no ref moves — with this clone's drivers, and
 //! `git check-attr merge` says which of the paths it touches are derived, from master's own
-//! `.gitattributes`. Neither list is kept here.
+//! `.gitattributes`. Neither list is kept here. Where the merge would conflict or change only
+//! derived output, `git cherry` says whether every commit of the head is on master already as
+//! an equal patch ([`patches_upstream`]).
 
 use std::collections::BTreeSet;
 use std::path::Path;
@@ -85,6 +87,30 @@ pub fn derived_paths(
         .collect())
 }
 
+/// How many commits `head` has that `master` lacks, when every one of them is on master
+/// already as an equal patch: `git cherry` marks each `-`. `None` for a partial match, for no
+/// commit at all, when git fails, and for a head that carries a merge commit of its own in
+/// that range — `git cherry` skips merges, and a merge's own resolution has no patch to
+/// compare, so a match of the rest proves nothing about it.
+///
+/// It is asked only where it can change the answer: when the merge would conflict, or would
+/// change only derived output. Where a clean merge changes authored paths, master lacks
+/// something the head carries (a landed change master reverted since, say), and equal patches
+/// do not make that redundant.
+pub fn patches_upstream(root: &Path, master: &str, head: &str) -> Option<u64> {
+    let range = format!("{master}..{head}");
+    let (ok, merges) = git(root, &["rev-list", "--count", "--min-parents=2", &range]).ok()?;
+    if !ok || merges.trim() != "0" {
+        return None;
+    }
+    let (ok, out) = git(root, &["cherry", master, head]).ok()?;
+    if !ok {
+        return None;
+    }
+    let marks: Vec<&str> = out.lines().filter(|l| !l.trim().is_empty()).collect();
+    (!marks.is_empty() && marks.iter().all(|l| l.starts_with("- "))).then_some(marks.len() as u64)
+}
+
 /// What `head` is to `master`, with the authored paths it changes.
 ///
 /// ```text
@@ -161,6 +187,11 @@ pub fn relation_to_master(root: &Path, master: &str, head: &str) -> RelationToMa
         .cloned()
         .collect();
     if !authored_conflicts.is_empty() {
+        // a change that landed by a cherry-pick and that master then moved past conflicts
+        // with master; its patches say it landed
+        if let Some(commits) = patches_upstream(root, master, head) {
+            return RelationToMaster::PatchIdsUpstream { commits };
+        }
         return RelationToMaster::Conflicting {
             paths: authored_conflicts,
         };
@@ -174,6 +205,9 @@ pub fn relation_to_master(root: &Path, master: &str, head: &str) -> RelationToMa
         return RelationToMaster::Superseded;
     }
     if authored.is_empty() {
+        if let Some(commits) = patches_upstream(root, master, head) {
+            return RelationToMaster::PatchIdsUpstream { commits };
+        }
         let paths: BTreeSet<String> = changed.into_iter().chain(conflicted).collect();
         return RelationToMaster::DerivedOnly {
             paths: paths.into_iter().collect(),

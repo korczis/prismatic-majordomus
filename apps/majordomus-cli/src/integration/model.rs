@@ -209,6 +209,14 @@ pub enum RelationToMaster {
     Contained,
     /// Merging the head into master changes nothing: its patch is already fully there.
     Superseded,
+    /// The merge would conflict or change only derived output, but every commit the head has
+    /// and master lacks is on master already as an equal patch (`git cherry` marks each `-`):
+    /// the change landed, and master moved on past it. Never a partial match, and never a
+    /// head that carries a merge commit of its own, whose resolution has no patch to compare.
+    PatchIdsUpstream {
+        /// How many commits, every one of them already on master.
+        commits: u64,
+    },
     /// Merging changes only derived artifacts: the authored change is already on master,
     /// and what differs is output the generators rewrite.
     DerivedOnly {
@@ -307,11 +315,16 @@ pub enum PullRequestDisposition {
     /// The forge has auto-merge armed on it: the forge would merge it on its own, outside the
     /// executor and against whatever master is then. Held until a person disarms it.
     Unsafe,
-    /// Its head already landed, or its patch is already fully on master: strong evidence,
-    /// eligible for closure under policy.
+    /// Its head already landed, its merge changes nothing, or every one of its commits is on
+    /// master as an equal patch: strong evidence from git, eligible for closure under policy.
+    /// (Before 0.13 this was the word `superseded`.)
+    Redundant,
+    /// Its body, or the body of another pull request, declares that a successor replaces it,
+    /// and that successor landed: no longer open, its head contained in master. The successor
+    /// is [`PullRequestAssessment::superseded_by`]. Eligible for closure under policy.
     Superseded,
-    /// Only derived artifacts would change: the authored change appears to be on master
-    /// already. Surfaced for a person; never closed automatically.
+    /// Weak evidence: only derived artifacts would change, or its declared successor was closed
+    /// without its head landing. Surfaced for a person; never closed automatically.
     PossiblyRedundant,
     /// Targets a branch other than the integration base.
     OtherBase,
@@ -321,7 +334,7 @@ pub enum PullRequestDisposition {
 
 impl PullRequestDisposition {
     /// Every disposition, in declaration order.
-    pub const ALL: [PullRequestDisposition; 14] = [
+    pub const ALL: [PullRequestDisposition; 15] = [
         PullRequestDisposition::Ready,
         PullRequestDisposition::NeedsRefresh,
         PullRequestDisposition::WaitingForChecks,
@@ -332,6 +345,7 @@ impl PullRequestDisposition {
         PullRequestDisposition::Conflicting,
         PullRequestDisposition::Blocked,
         PullRequestDisposition::Unsafe,
+        PullRequestDisposition::Redundant,
         PullRequestDisposition::Superseded,
         PullRequestDisposition::PossiblyRedundant,
         PullRequestDisposition::OtherBase,
@@ -356,6 +370,7 @@ impl PullRequestDisposition {
             PullRequestDisposition::Conflicting => "conflicting",
             PullRequestDisposition::Blocked => "blocked",
             PullRequestDisposition::Unsafe => "unsafe",
+            PullRequestDisposition::Redundant => "redundant",
             PullRequestDisposition::Superseded => "superseded",
             PullRequestDisposition::PossiblyRedundant => "possibly_redundant",
             PullRequestDisposition::OtherBase => "other_base",
@@ -374,9 +389,9 @@ impl PullRequestDisposition {
             PullRequestDisposition::NeedsRepair | PullRequestDisposition::Conflicting => {
                 IntegrationLane::Repair
             }
-            PullRequestDisposition::Superseded | PullRequestDisposition::PossiblyRedundant => {
-                IntegrationLane::Cleanup
-            }
+            PullRequestDisposition::Redundant
+            | PullRequestDisposition::Superseded
+            | PullRequestDisposition::PossiblyRedundant => IntegrationLane::Cleanup,
             PullRequestDisposition::Draft
             | PullRequestDisposition::Blocked
             | PullRequestDisposition::Unsafe
@@ -398,7 +413,7 @@ pub enum IntegrationLane {
     Waiting,
     /// A person must change the branch.
     Repair,
-    /// Its work is on master already.
+    /// Its work is on master already, or a successor that landed replaced it.
     Cleanup,
     /// Not asking to be merged, held by a label or a setting, unsafe for the executor, or
     /// undecidable.
@@ -432,7 +447,8 @@ pub enum EvidenceKind {
     Freshness,
     /// The forge has auto-merge armed; emitted whenever it is.
     AutoMerge,
-    /// A declared supersession. Declared so the vocabulary is settled; nothing emits it yet.
+    /// One declared successor: which pull request replaces this one, whose body said so, and
+    /// whether it landed. One entry per successor declared.
     Supersession,
     /// What the repository's settings allow the executor; emitted when they allow no merge
     /// commit.
@@ -542,10 +558,14 @@ pub enum IntegrationGate {
     Label,
     /// The forge has no auto-merge armed on it.
     AutoMerge,
+    /// No successor is declared to replace it. Asked before the relation to master, because
+    /// a pull request whose successor landed usually conflicts with what the successor
+    /// brought, and is superseded rather than conflicting.
+    Supersession,
     /// Its head is not on master already, and git could say that it merges cleanly.
     RelationToMaster,
     /// The repository allows a merge commit, the only way the executor merges. Asked after
-    /// the relation, so work already on master is still `superseded` and may be closed.
+    /// the relation, so work already on master is still `redundant` and may be closed.
     MergeMethod,
     /// Every declared dependency has landed.
     Dependency,
@@ -561,11 +581,12 @@ pub enum IntegrationGate {
 
 impl IntegrationGate {
     /// Every gate, in policy order.
-    pub const ALL: [IntegrationGate; 11] = [
+    pub const ALL: [IntegrationGate; 12] = [
         IntegrationGate::Base,
         IntegrationGate::Draft,
         IntegrationGate::Label,
         IntegrationGate::AutoMerge,
+        IntegrationGate::Supersession,
         IntegrationGate::RelationToMaster,
         IntegrationGate::MergeMethod,
         IntegrationGate::Dependency,
@@ -582,6 +603,7 @@ impl IntegrationGate {
             IntegrationGate::Draft => "draft",
             IntegrationGate::Label => "label",
             IntegrationGate::AutoMerge => "auto_merge",
+            IntegrationGate::Supersession => "supersession",
             IntegrationGate::MergeMethod => "merge_method",
             IntegrationGate::RelationToMaster => "relation_to_master",
             IntegrationGate::Dependency => "dependency",
@@ -606,8 +628,10 @@ pub struct GateResult {
 /// What [`ReasonCode`]'s schema says, since its wire form is a string: the vocabulary.
 const REASON_VOCABULARY: &str = "A reason code, `code` or `code:payload`, one of: \
 `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, \
-`merge_commit_not_allowed`, `head_reachable_from_master`, \
-`merge_changes_nothing`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, \
+`merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, \
+`successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, \
+`merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, \
+`relation_unknown:WHY`, \
 `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, \
 `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, \
 `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, \
@@ -640,10 +664,37 @@ pub enum ReasonCode {
     /// `merge_commit_not_allowed`: the repository's settings allow no merge commit, and the
     /// executor never squashes or rebases.
     MergeCommitNotAllowed,
+    /// `superseded_by:#N`: a declared successor, N, landed (no longer open, its head contained
+    /// in master).
+    SupersededBy {
+        /// The successor.
+        number: u64,
+    },
+    /// `successor_open:#N`: a declared successor, N, is still open; this one waits for it to
+    /// land and must not land itself meanwhile.
+    SuccessorOpen {
+        /// The successor.
+        number: u64,
+    },
+    /// `successor_not_landed:#N`: a declared successor, N, is no longer open, but its head is
+    /// not contained in master (closed unmerged, or merged by a squash or a rebase).
+    SuccessorNotLanded {
+        /// The successor.
+        number: u64,
+    },
+    /// `successor_unread:#N`: a declared successor, N, is not open, and the forge or git could
+    /// not say what became of it.
+    SuccessorUnread {
+        /// The successor.
+        number: u64,
+    },
     /// `head_reachable_from_master`: every commit already landed.
     HeadReachableFromMaster,
     /// `merge_changes_nothing`: its patch is already fully on master.
     MergeChangesNothing,
+    /// `patch_ids_upstream`: every commit it has and master lacks is on master as an equal
+    /// patch.
+    PatchIdsUpstream,
     /// `only_derived_artifacts_differ`.
     OnlyDerivedArtifactsDiffer,
     /// `relation_unknown:WHY`: git could not say what the head is to master.
@@ -708,8 +759,13 @@ impl ReasonCode {
             ReasonCode::Label { .. } => "label",
             ReasonCode::AutoMergeArmed => "auto_merge_armed",
             ReasonCode::MergeCommitNotAllowed => "merge_commit_not_allowed",
+            ReasonCode::SupersededBy { .. } => "superseded_by",
+            ReasonCode::SuccessorOpen { .. } => "successor_open",
+            ReasonCode::SuccessorNotLanded { .. } => "successor_not_landed",
+            ReasonCode::SuccessorUnread { .. } => "successor_unread",
             ReasonCode::HeadReachableFromMaster => "head_reachable_from_master",
             ReasonCode::MergeChangesNothing => "merge_changes_nothing",
+            ReasonCode::PatchIdsUpstream => "patch_ids_upstream",
             ReasonCode::OnlyDerivedArtifactsDiffer => "only_derived_artifacts_differ",
             ReasonCode::RelationUnknown { .. } => "relation_unknown",
             ReasonCode::ConflictsOn { .. } => "conflicts_on",
@@ -741,7 +797,12 @@ fn wire_word<T: Serialize>(value: &T) -> String {
 impl std::fmt::Display for ReasonCode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ReasonCode::StackedOn { number } | ReasonCode::DependsOn { number } => {
+            ReasonCode::StackedOn { number }
+            | ReasonCode::DependsOn { number }
+            | ReasonCode::SupersededBy { number }
+            | ReasonCode::SuccessorOpen { number }
+            | ReasonCode::SuccessorNotLanded { number }
+            | ReasonCode::SuccessorUnread { number } => {
                 write!(f, "{}:#{number}", self.code())
             }
             ReasonCode::BaseIs { base: s }
@@ -779,6 +840,18 @@ impl std::str::FromStr for ReasonCode {
             ("depends_on", Some(p)) => ReasonCode::DependsOn {
                 number: number(p).ok_or_else(bad)?,
             },
+            ("superseded_by", Some(p)) => ReasonCode::SupersededBy {
+                number: number(p).ok_or_else(bad)?,
+            },
+            ("successor_open", Some(p)) => ReasonCode::SuccessorOpen {
+                number: number(p).ok_or_else(bad)?,
+            },
+            ("successor_not_landed", Some(p)) => ReasonCode::SuccessorNotLanded {
+                number: number(p).ok_or_else(bad)?,
+            },
+            ("successor_unread", Some(p)) => ReasonCode::SuccessorUnread {
+                number: number(p).ok_or_else(bad)?,
+            },
             ("base_is", Some(p)) => ReasonCode::BaseIs { base: p.into() },
             ("label", Some(p)) => ReasonCode::Label { name: p.into() },
             ("relation_unknown", Some(p)) => ReasonCode::RelationUnknown { reason: p.into() },
@@ -799,6 +872,7 @@ impl std::str::FromStr for ReasonCode {
             ("merge_commit_not_allowed", None) => ReasonCode::MergeCommitNotAllowed,
             ("head_reachable_from_master", None) => ReasonCode::HeadReachableFromMaster,
             ("merge_changes_nothing", None) => ReasonCode::MergeChangesNothing,
+            ("patch_ids_upstream", None) => ReasonCode::PatchIdsUpstream,
             ("only_derived_artifacts_differ", None) => ReasonCode::OnlyDerivedArtifactsDiffer,
             ("review_policy_unread", None) => ReasonCode::ReviewPolicyUnread,
             ("required_check_failed", None) => ReasonCode::RequiredCheckFailed,
@@ -914,6 +988,12 @@ pub struct PullRequestAssessment {
     pub evaluated_against: EvaluatedAgainst,
     /// The classification.
     pub disposition: PullRequestDisposition,
+    /// The successor that landed and replaces it, exactly when the disposition is
+    /// `superseded`: the disposition stays one word on the wire, and this is its `by`.
+    /// Absent otherwise; a successor still open, or closed without landing, is in the
+    /// `supersession` evidence and the reasons instead.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub superseded_by: Option<u64>,
     /// The queue it is in.
     pub lane: IntegrationLane,
     /// Machine-readable reasons, one for every failing gate's every finding, in policy order:

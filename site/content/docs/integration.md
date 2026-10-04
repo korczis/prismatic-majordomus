@@ -41,6 +41,14 @@ When git cannot say which paths are derived, because `git check-attr` failed, th
 `unknown` too, never "nothing is derived". A relation is cached only under a pair of full
 commit ids, and an `unknown` is never cached.
 
+Where the merge would conflict, or would change only derived output, `git cherry` is asked as
+well. When every commit the head has and master lacks is on master already as an equal patch,
+the relation is `patch_ids_upstream`: the change landed, by a cherry-pick say, and master moved
+past it. A partial match never gives it. Neither does a head with a merge commit of its own in
+that range, because a merge's resolution has no patch to compare, nor a clean merge that
+changes authored paths: there master lacks something the head carries, such as a landed change
+that master has reverted since.
+
 ## Dispositions
 
 Every open pull request has exactly one. They are decided in the order below, so an earlier
@@ -55,7 +63,11 @@ answer wins. `ready` is reached only after every other question is answered in i
 | `draft` | held | a draft | mark it ready |
 | `blocked` | held | carries a label that holds it (see the label policy below) | remove it |
 | `unsafe` | held | the forge has auto-merge armed on it, so the forge would merge it on its own | disarm it: `gh pr merge <n> --disable-auto` |
-| `superseded` | cleanup | its head is an ancestor of master, or merging it changes no file | `prs cleanup --apply` closes it |
+| `superseded` | cleanup | a declared successor landed: it is not open, and master contains its head (see supersession markers below); `superseded_by` names it | `prs cleanup --apply` closes it |
+| `waiting_for_dependency` | waiting | a declared successor is still open | land the successor; this one is then closed, never merged |
+| `possibly_redundant` | cleanup | a declared successor was closed without its head landing | a person decides |
+| `unknown` | held | a declared successor is not open and could not be read | `prs refresh` |
+| `redundant` | cleanup | its head is an ancestor of master, merging it changes no file, or every one of its commits is on master as an equal patch | `prs cleanup --apply` closes it |
 | `possibly_redundant` | cleanup | merging it changes only derived artifacts | a person decides |
 | `unknown` | held | its head is not fetched, git failed, or the branch protection could not be read | `prs refresh` |
 | `conflicting` | repair | the merge conflicts on an authored path | the author resolves it |
@@ -85,7 +97,8 @@ The order above is a list of gates, and every gate is asked whatever the others 
 | `draft` | it is not a draft | `draft` |
 | `label` | no label that holds it | `label:NAME`, one per label |
 | `auto_merge` | the forge has no auto-merge armed on it | `auto_merge_armed` |
-| `relation_to_master` | its merge is clean and changes something | `head_reachable_from_master`, `merge_changes_nothing`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT` |
+| `supersession` | no successor is declared | `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, one per successor |
+| `relation_to_master` | its merge is clean and changes something | `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT` |
 | `merge_method` | the repository allows a merge commit | `merge_commit_not_allowed` |
 | `dependency` | every declared dependency landed | `depends_on:#N`, one per open dependency |
 | `review` | the review policy is satisfied on the head | `review:STATE`, or `review_policy_unread` |
@@ -111,8 +124,9 @@ forge observation at its moment, or git on the named master and head. Evidence f
 `draft` is always there. So is `required_checks`, with one `required_check` per context the
 base requires, and `review` and `relation_to_master`. `dependency` appears per declared
 dependency, `label` per label that holds it, `auto_merge` whenever the forge has auto-merge
-armed, and `repository_settings` when the settings allow no merge commit. `freshness` and
-`supersession` are reserved kinds. `evaluated_against` names the master, the head and the moment of the
+armed, `repository_settings` when the settings allow no merge commit, and `supersession` per
+declared successor (`open`, `landed`, `not_landed` or `unread`; that one `landed` is git's, on
+master and the successor's head). `freshness` is a reserved kind. `evaluated_against` names the master, the head and the moment of the
 observation; two decisions are the same when the master and head are.
 
 ### Label policy
@@ -155,8 +169,9 @@ every pull request the relation to master does not already decide is `blocked` w
 `merge_commit_not_allowed` and `repository_settings` evidence, and the queue says why. The
 executor never falls back to a squash or a rebase. The `merge_method` gate comes after
 `relation_to_master` because closing work that is already on master does not depend on the
-merge setting: a `superseded` pull request stays `superseded`, lists
-`merge_commit_not_allowed` after its own reason, and `prs cleanup --apply` still closes it.
+merge setting: a `redundant` pull request stays `redundant`, lists
+`merge_commit_not_allowed` after its own reason, and `prs cleanup --apply` still closes it. So
+does a `superseded` one.
 
 ### Review states
 
@@ -195,6 +210,39 @@ the marker, so `- **Depends on:** #7` declares a dependency. More numbers follow
 `and` or `&`: `Stacked on #644 and #645`. The same words anywhere else in a line are prose:
 `a regression introduced after #540` and `thereafter #5` declare nothing, and neither does a
 bare `After #N`. A dependency is satisfied once that pull request is no longer open.
+
+### Supersession markers
+
+A pull request is replaced by another when a line of a body declares it, read by the same
+line-anchored parser as a dependency:
+
+- `Superseded by #N` in its own body names N as its successor;
+- `Supersedes #M` in N's body names N as the successor of M, from the other side.
+
+The `supersession` gate is asked before `relation_to_master`, because a pull request whose
+successor landed usually conflicts with what the successor brought, and it is superseded, not
+conflicting. What became of the successor decides:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| The successor | Disposition | Reason |
+|---|---|---|
+| is no longer open, and master contains its head: it landed | `superseded`, with `superseded_by: N` | `superseded_by:#N` |
+| is still open | `waiting_for_dependency` | `successor_open:#N` |
+| is no longer open, and master does not contain its head (closed unmerged, or merged by a squash or a rebase) | `possibly_redundant` | `successor_not_landed:#N` |
+| is not open and could not be read | `unknown` | `successor_unread:#N` |
+
+</div>
+
+
+Of several successors, one that landed decides, then one still open, then one that did not
+land. On the wire the disposition stays one word, and `superseded_by` (present only with
+`superseded`) is its successor. A successor that is no longer open is not among the open pull
+requests, so the observation also reads the closed pull requests whose body declares a
+supersession (one search, newest 200) and each named successor that is not open (`gh pr view`),
+and fetches their heads; git, not the forge's `merged`, says whether a head landed. The search
+index can lag a merge by a moment: until it catches up, the replaced pull request is decided by
+its relation alone, which after its successor's merge is no longer `ready`.
 
 A pull request that targets another branch is stacked on the open pull request whose head is
 that branch. Only branches of this repository count. A fork's branch says nothing about a
@@ -266,9 +314,17 @@ no head, so a pull request refreshed by an older executor does not hold the pipe
 ## Cleanup
 
 Closing a pull request requires more evidence than merging one. `prs cleanup` lists the
-`superseded` ones and closes them only with `--apply`, with a comment that names the master
-and head that proved it. `possibly_redundant` is listed and left for a person. Age, shared
-paths and similar titles are not evidence of anything. Branches are not deleted. The
+`redundant` and `superseded` ones and closes them only with `--apply`, with a comment that
+names the master and head that proved it; a superseded one's comment opens with its successor
+(`Superseded by #N, which landed.`). `possibly_redundant` is listed and left for a person,
+whether its evidence is derived output or a successor that did not land. Age, shared paths and
+similar titles are not evidence of anything.
+
+Before 0.13 (owner decision D2) the word `superseded` meant what `redundant` means now, and its
+closure was recorded as `closed_superseded`. The strong case is `redundant` now, closed as
+`closed_redundant`; `superseded` and `closed_superseded` mean only a declared successor that
+landed. Older trail lines still read: a `closed_superseded` line written before carries
+`head_reachable_from_master` or `merge_changes_nothing`, never `superseded_by:#N`. Branches are not deleted. The
 repository's own setting decides that.
 
 ## Safety
@@ -310,11 +366,11 @@ repository's own setting decides that.
   | `merge_succeeded`, `merge_failed`, `verification_failed` | after it |
   | `refresh_attempted` | before master is merged into the branch and pushed |
   | `refreshed` (with the head it pushed), `refresh_failed` | after it |
-  | `close_attempted` | before a superseded pull request is closed |
-  | `closed_superseded` (with its evidence), `close_failed` | after it |
+  | `close_attempted` | before a redundant or superseded pull request is closed |
+  | `closed_redundant`, `closed_superseded` (with its evidence), `close_failed` | after it |
   | `idle` | nothing was ready |
 
-  An event may also carry `evidence` (the assessment's, on the four acts named above),
+  An event may also carry `evidence` (the assessment's, on the acts named above as carrying it),
   `class` (why it failed, once classified) and `merge_commit`. Each is left out when empty,
   and a line written before they existed reads with them empty.
 - A checkout that kept its own trail under `.ai/local/state/integration/events.jsonl` has
@@ -348,7 +404,7 @@ repository's own setting decides that.
 | `majordomus prs refresh` | yes | observe the forge and fetch every open head |
 | `majordomus prs drain [--max N] [--dry-run] [--refresh]` | yes | integrate, one merge at a time |
 | `majordomus prs drain --continuous [--interval S] [--max N] [--refresh]` | yes | drain, wait, drain again until stopped |
-| `majordomus prs cleanup [--apply]` | yes | close what is provably on master |
+| `majordomus prs cleanup [--apply]` | yes | close what is provably on master, or superseded by a successor that landed |
 
 </div>
 

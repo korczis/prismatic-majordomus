@@ -17302,7 +17302,7 @@
           "value": "auto_merge"
         },
         {
-          "description": "A declared supersession. Declared so the vocabulary is settled; nothing emits it yet.",
+          "description": "One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per successor declared.",
           "value": "supersession"
         },
         {
@@ -22261,7 +22261,7 @@
       "is_enum": true,
       "name": "IntegrationAction",
       "properties": [],
-      "type": "\"lease_acquired\" | \"lease_released\" | \"continuous_started\" | \"continuous_stopped\" | \"observed\" | \"became_actionable\" | \"left_actionable\" | \"selected\" | \"refresh_selected\" | \"stale_decision\" | \"merge_attempted\" | \"merge_succeeded\" | \"merge_failed\" | \"verification_failed\" | \"refresh_attempted\" | \"refreshed\" | \"refresh_failed\" | \"close_attempted\" | \"closed_superseded\" | \"close_failed\" | \"idle\"",
+      "type": "\"lease_acquired\" | \"lease_released\" | \"continuous_started\" | \"continuous_stopped\" | \"observed\" | \"became_actionable\" | \"left_actionable\" | \"selected\" | \"refresh_selected\" | \"stale_decision\" | \"merge_attempted\" | \"merge_succeeded\" | \"merge_failed\" | \"verification_failed\" | \"refresh_attempted\" | \"refreshed\" | \"refresh_failed\" | \"close_attempted\" | \"closed_redundant\" | \"closed_superseded\" | \"close_failed\" | \"idle\"",
       "used_by": [],
       "used_by_schemas": [
         "IntegrationEvent",
@@ -22337,11 +22337,15 @@
           "value": "refresh_failed"
         },
         {
-          "description": "A superseded pull request is about to be closed.",
+          "description": "A redundant or superseded pull request is about to be closed.",
           "value": "close_attempted"
         },
         {
-          "description": "It was closed.",
+          "description": "A redundant one was closed.",
+          "value": "closed_redundant"
+        },
+        {
+          "description": "A superseded one was closed (before 0.13, a line with this word recorded what is now\n`closed_redundant`).",
           "value": "closed_superseded"
         },
         {
@@ -22441,7 +22445,7 @@
           "type": "string | null"
         },
         {
-          "description": "On `merge_attempted`, `merge_succeeded`, `refresh_selected` and `closed_superseded`:\nthe assessment's evidence the act was decided on.",
+          "description": "On `merge_attempted`, `merge_succeeded`, `refresh_selected` and the closures:\nthe assessment's evidence the act was decided on.",
           "name": "evidence",
           "refs": [
             "IntegrationEvidence"
@@ -22612,7 +22616,7 @@
       "is_enum": true,
       "name": "IntegrationGate",
       "properties": [],
-      "type": "\"base\" | \"draft\" | \"label\" | \"auto_merge\" | \"relation_to_master\" | \"merge_method\" | \"dependency\" | \"review\" | \"no_failing_check\" | \"freshness\" | \"required_checks\"",
+      "type": "\"base\" | \"draft\" | \"label\" | \"auto_merge\" | \"supersession\" | \"relation_to_master\" | \"merge_method\" | \"dependency\" | \"review\" | \"no_failing_check\" | \"freshness\" | \"required_checks\"",
       "used_by": [],
       "used_by_schemas": [
         "GateResult"
@@ -22635,11 +22639,15 @@
           "value": "auto_merge"
         },
         {
+          "description": "No successor is declared to replace it. Asked before the relation to master, because\na pull request whose successor landed usually conflicts with what the successor\nbrought, and is superseded rather than conflicting.",
+          "value": "supersession"
+        },
+        {
           "description": "Its head is not on master already, and git could say that it merges cleanly.",
           "value": "relation_to_master"
         },
         {
-          "description": "The repository allows a merge commit, the only way the executor merges. Asked after\nthe relation, so work already on master is still `superseded` and may be closed.",
+          "description": "The repository allows a merge commit, the only way the executor merges. Asked after\nthe relation, so work already on master is still `redundant` and may be closed.",
           "value": "merge_method"
         },
         {
@@ -22690,7 +22698,7 @@
           "value": "repair"
         },
         {
-          "description": "Its work is on master already.",
+          "description": "Its work is on master already, or a successor that landed replaced it.",
           "value": "cleanup"
         },
         {
@@ -33177,6 +33185,13 @@
           "type": "PullRequestDisposition"
         },
         {
+          "description": "The successor that landed and replaces it, exactly when the disposition is\n`superseded`: the disposition stays one word on the wire, and this is its `by`.\nAbsent otherwise; a successor still open, or closed without landing, is in the\n`supersession` evidence and the reasons instead.",
+          "name": "superseded_by",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
           "description": "The queue it is in.",
           "name": "lane",
           "refs": [
@@ -33355,7 +33370,7 @@
       "is_enum": true,
       "name": "PullRequestDisposition",
       "properties": [],
-      "type": "\"ready\" | \"needs_refresh\" | \"waiting_for_checks\" | \"waiting_for_review\" | \"waiting_for_dependency\" | \"draft\" | \"needs_repair\" | \"conflicting\" | \"blocked\" | \"unsafe\" | \"superseded\" | \"possibly_redundant\" | \"other_base\" | \"unknown\"",
+      "type": "\"ready\" | \"needs_refresh\" | \"waiting_for_checks\" | \"waiting_for_review\" | \"waiting_for_dependency\" | \"draft\" | \"needs_repair\" | \"conflicting\" | \"blocked\" | \"unsafe\" | \"redundant\" | \"superseded\" | \"possibly_redundant\" | \"other_base\" | \"unknown\"",
       "used_by": [],
       "used_by_schemas": [
         "PullRequestAssessment"
@@ -33402,11 +33417,15 @@
           "value": "unsafe"
         },
         {
-          "description": "Its head already landed, or its patch is already fully on master: strong evidence,\neligible for closure under policy.",
+          "description": "Its head already landed, its merge changes nothing, or every one of its commits is on\nmaster as an equal patch: strong evidence from git, eligible for closure under policy.\n(Before 0.13 this was the word `superseded`.)",
+          "value": "redundant"
+        },
+        {
+          "description": "Its body, or the body of another pull request, declares that a successor replaces it,\nand that successor landed: no longer open, its head contained in master. The successor\nis `PullRequestAssessment::superseded_by`. Eligible for closure under policy.",
           "value": "superseded"
         },
         {
-          "description": "Only derived artifacts would change: the authored change appears to be on master\nalready. Surfaced for a person; never closed automatically.",
+          "description": "Weak evidence: only derived artifacts would change, or its declared successor was closed\nwithout its head landing. Surfaced for a person; never closed automatically.",
           "value": "possibly_redundant"
         },
         {
@@ -36337,7 +36356,7 @@
       "is_enum": false,
       "name": "RelationToMaster",
       "properties": [],
-      "type": "one of 7 variants",
+      "type": "one of 8 variants",
       "used_by": [],
       "used_by_schemas": [
         "PullRequestAssessment"
@@ -36366,6 +36385,26 @@
               "refs": [],
               "required": true,
               "type": "\"superseded\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The merge would conflict or change only derived output, but every commit the head has\nand master lacks is on master already as an equal patch (`git cherry` marks each `-`):\nthe change landed, and master moved on past it. Never a partial match, and never a\nhead that carries a merge commit of its own, whose resolution has no patch to compare.",
+          "properties": [
+            {
+              "description": "How many commits, every one of them already on master.",
+              "name": "commits",
+              "refs": [],
+              "required": true,
+              "type": "integer (uint64)"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"patch_ids_upstream\""
             }
           ],
           "type": "object"
@@ -52360,7 +52399,7 @@
       "slug": "health"
     },
     {
-      "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing.",
+      "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), redundant (its work is on master already), superseded (by a declared successor that landed, named in superseded_by), possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing.",
       "name": "integration",
       "operations": [
         {

@@ -1744,14 +1744,6 @@
         "external": true
       },
       {
-        "id": "file:scripts/ci/order-check",
-        "kind": "file",
-        "label": "order-check",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/ci/order-check",
-        "external": true
-      },
-      {
         "id": "file:scripts/cockpit-probe",
         "kind": "file",
         "label": "cockpit-probe",
@@ -4005,7 +3997,8 @@
             "file:apps/majordomus-cli/src/capability/builtin/integration.rs",
             "file:apps/majordomus-cli/src/integration/tests.rs",
             "file:docs/INTEGRATION.md",
-            "test:test/cases/720_integration_follows_the_current_master.sh"
+            "test:test/cases/720_integration_follows_the_current_master.sh",
+            "test:test/cases/861_a_successor_that_landed_supersedes.sh"
           ],
           "tags": [
             "integration",
@@ -38561,6 +38554,13 @@
         "source": "test/cases/85_ui_conformance.sh"
       },
       {
+        "id": "majordomus://test/test/cases/861_a_successor_that_landed_supersedes.sh",
+        "kind": "test",
+        "label": "test/cases/861_a_successor_that_landed_supersedes.sh",
+        "route": "/cockpit/objects/test/test-cases-861-a-successor-that-landed-supersedes-sh",
+        "source": "test/cases/861_a_successor_that_landed_supersedes.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/86_deployment_projections.sh",
         "kind": "test",
         "label": "test/cases/86_deployment_projections.sh",
@@ -44561,11 +44561,6 @@
       {
         "source": "majordomus://adr/adr-0025",
         "target": "file:apps/majordomus-cli/src/order.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0025",
-        "target": "file:scripts/ci/order-check",
         "kind": "put_in_force"
       },
       {
@@ -60430,6 +60425,11 @@
       },
       {
         "source": "majordomus://test/test/cases/85_ui_conformance.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/861_a_successor_that_landed_supersedes.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
