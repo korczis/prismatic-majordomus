@@ -104,7 +104,20 @@ pub fn latest(root: &Path) -> Result<PathBuf, String> {
                 // nothing outside it is ever published.
                 && p.canonicalize().is_ok_and(|real| real.starts_with(&real_dir))
         })
-        .max()
+        // The name's timestamp is the moment the record describes, to the second; two
+        // records written inside one second differ there only by a random suffix, which
+        // orders nothing. Within one second the later write is the newer record — the
+        // tie the shell resolver breaks by ledger position.
+        .max_by_key(|p| {
+            let name = p
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or_default()
+                .to_string();
+            let second = name.split("--").next().unwrap_or_default().to_string();
+            let written = std::fs::metadata(p).and_then(|m| m.modified()).ok();
+            (second, written, name)
+        })
         .ok_or_else(|| format!("no handover record under {}", dir.display()))
 }
 
@@ -474,6 +487,38 @@ mod tests {
     use crate::mesh::journal::StreamId;
 
     const RECORD: &str = "---\nschema_version: 1\ncreated_at: 2026-09-15T10:00:00Z\ntask_id: t-1\nprofile: implementation\nowner: \"k\"\nrepository_id: /somewhere/.git\nworktree: /somewhere\nbranch: feature/x\nhead: abcdef1234\nworking_tree: dirty\nchanged_files:\n  - apps/x.rs\n---\n\n# Objective\nship\n# Current State\nhalf\n# Next Action\nrest\n";
+
+    #[test]
+    fn two_records_of_one_second_resolve_to_the_later_write_not_the_larger_suffix() {
+        let root = tempfile::tempdir().unwrap();
+        let dir = directory(root.path());
+        std::fs::create_dir_all(&dir).unwrap();
+        let earlier = dir.join("20261004T010000Z--b--0000000--ffff.md");
+        let later = dir.join("20261004T010000Z--b--0000000--0000.md");
+        std::fs::write(&earlier, "---\n---\nfirst").unwrap();
+        std::fs::write(&later, "---\n---\nsecond").unwrap();
+        let at = std::time::SystemTime::now();
+        let set = |p: &Path, t: std::time::SystemTime| {
+            std::fs::File::options()
+                .write(true)
+                .open(p)
+                .unwrap()
+                .set_modified(t)
+                .unwrap();
+        };
+        set(&earlier, at - std::time::Duration::from_millis(500));
+        set(&later, at);
+        assert_eq!(
+            latest(root.path()).unwrap(),
+            later,
+            "the suffix orders nothing"
+        );
+        // and a record of a later second still wins whatever its write time
+        let next = dir.join("20261004T010001Z--b--0000000--0000.md");
+        std::fs::write(&next, "---\n---\nthird").unwrap();
+        set(&next, at - std::time::Duration::from_secs(60));
+        assert_eq!(latest(root.path()).unwrap(), next);
+    }
 
     #[test]
     fn a_hostile_handover_is_written_inside_the_directory_with_no_injected_keys() {
