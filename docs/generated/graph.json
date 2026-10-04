@@ -1757,14 +1757,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/http/ws.rs",
-        "kind": "file",
-        "label": "ws.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/http/ws.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/order.rs",
         "kind": "file",
         "label": "order.rs",
@@ -38390,6 +38382,13 @@
         "source": "test/cases/84_web_surfaces.sh"
       },
       {
+        "id": "majordomus://test/test/cases/850_integration_drains_cycle_by_cycle.sh",
+        "kind": "test",
+        "label": "test/cases/850_integration_drains_cycle_by_cycle.sh",
+        "route": "/cockpit/objects/test/test-cases-850-integration-drains-cycle-by-cycle-sh",
+        "source": "test/cases/850_integration_drains_cycle_by_cycle.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/85_deployment_bind.sh",
         "kind": "test",
         "label": "test/cases/85_deployment_bind.sh",
@@ -44646,11 +44645,6 @@
       {
         "source": "majordomus://adr/adr-0033",
         "target": "file:apps/majordomus-cli/src/http/events.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/http/ws.rs",
         "kind": "put_in_force"
       },
       {
@@ -60225,6 +60219,11 @@
       },
       {
         "source": "majordomus://test/test/cases/84_web_surfaces.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/850_integration_drains_cycle_by_cycle.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
