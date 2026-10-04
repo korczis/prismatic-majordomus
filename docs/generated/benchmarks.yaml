@@ -1,25 +1,25 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.12.0
+# Generator: majordomus-cli 0.13.1
 schema: majordomus/benchmark-matrix/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.12.0
+generator: majordomus-cli 0.13.1
 coverage:
   - scope: direct
-    required: 169
-    covered: 151
+    required: 170
+    covered: 152
     missing: 0
     waived: 18
     inapplicable: 0
   - scope: http
-    required: 167
-    covered: 151
+    required: 168
+    covered: 152
     missing: 0
     waived: 16
     inapplicable: 0
   - scope: mcp
-    required: 163
-    covered: 147
+    required: 164
+    covered: 148
     missing: 0
     waived: 16
     inapplicable: 0
@@ -30,8 +30,8 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 512
-    covered: 462
+    required: 515
+    covered: 465
     missing: 0
     waived: 50
     inapplicable: 0
@@ -1170,6 +1170,16 @@ capabilities:
     cases:
       - whole-plan
       - one-milestone
+  - id: product.domains
+    module: product
+    kind: query
+    cache: "process, 4 entries"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - stable
+      - any
   - id: product.feature
     module: product
     kind: query
@@ -1190,6 +1200,7 @@ capabilities:
       - all
       - featured
       - by-area
+      - by-domain
   - id: product.matrix
     module: product
     kind: query

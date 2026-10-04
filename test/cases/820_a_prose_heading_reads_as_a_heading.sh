@@ -20,7 +20,7 @@ trap 'rm -rf "$S"' EXIT
 # renders page content, whose class list lacks the anchor colour or the anchor underline rule;
 # prints `checked N` last, N being the number of such containers it read
 unstyled() {
-  find "$1" -name '*.html' -type f | sort | while IFS= read -r f; do
+  find "$1" -name '*.html' -type f | LC_ALL=C sort | while IFS= read -r f; do
     grep -q 'content | safe' "$f" || continue
     # every class attribute on a line, not only the first: a wrapper and its container can
     # share one line, and reading only the wrapper would leave the container unchecked

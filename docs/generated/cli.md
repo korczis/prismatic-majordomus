@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.12.0 -->
+     Generator: majordomus-cli 0.13.1 -->
 # Command line of the Rust executable
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
@@ -114,6 +114,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus product`](#majordomus-product) | `/docs/cli/product/` | The product: what this repository's tool does for a person, as the features under the layer declare it, with every surface, count and moment derived; the matrix of features against interfaces; the providers; and the model's own validation |
 | [`majordomus product list`](#majordomus-product-list) | `/docs/cli/product/list/` | Every feature, narrowed by any filter, with the surfaces derived for each |
 | [`majordomus product show`](#majordomus-product-show) | `/docs/cli/product/show/` | One feature in full: what it is made of, resolved, and everything derived from that |
+| [`majordomus product domains`](#majordomus-product-domains) | `/docs/cli/product/domains/` | The domains of the product, each with the stable features that name it and what they add up to |
 | [`majordomus product matrix`](#majordomus-product-matrix) | `/docs/cli/product/matrix/` | Every feature against every interface, and every module, command and kind against the features that name it |
 | [`majordomus product providers`](#majordomus-product-providers) | `/docs/cli/product/providers/` | Every provider the tool has an adapter for, with what this repository does with it |
 | [`majordomus product validate`](#majordomus-product-validate) | `/docs/cli/product/validate/` | Every finding over the model; exit 10 when any is an error |
@@ -3134,7 +3135,7 @@ Examples:
 
 The product: what this repository's tool does for a person, as the features under the layer declare it, with every surface, count and moment derived; the matrix of features against interfaces; the providers; and the model's own validation
 
-Subcommands: [`majordomus product list`](#majordomus-product-list), [`majordomus product show`](#majordomus-product-show), [`majordomus product matrix`](#majordomus-product-matrix), [`majordomus product providers`](#majordomus-product-providers), [`majordomus product validate`](#majordomus-product-validate).
+Subcommands: [`majordomus product list`](#majordomus-product-list), [`majordomus product show`](#majordomus-product-show), [`majordomus product domains`](#majordomus-product-domains), [`majordomus product matrix`](#majordomus-product-matrix), [`majordomus product providers`](#majordomus-product-providers), [`majordomus product validate`](#majordomus-product-validate).
 
 ```text
 majordomus product [OPTIONS] [COMMAND]
@@ -3150,6 +3151,7 @@ majordomus product [OPTIONS] [COMMAND]
 | `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
 | `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
 | `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
+| `--domain` | `<DOMAIN>` | — | Only features filed under this product domain (accepted by every subcommand) |
 | `--module` | `<MODULE>` | — | Only features made of this capability module (accepted by every subcommand) |
 | `--names-command` | `<NAMES_COMMAND>` | — | Only features made of this shell command (accepted by every subcommand) |
 | `--surface` | `<SURFACE>` | — | Only features exposed through this surface: cli, api, mcp, cockpit or docs (accepted by every subcommand) |
@@ -3184,6 +3186,7 @@ majordomus product list [OPTIONS]
 | `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
 | `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
 | `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
+| `--domain` | `<DOMAIN>` | — | Only features filed under this product domain (accepted by every subcommand) |
 | `--module` | `<MODULE>` | — | Only features made of this capability module (accepted by every subcommand) |
 | `--names-command` | `<NAMES_COMMAND>` | — | Only features made of this shell command (accepted by every subcommand) |
 | `--surface` | `<SURFACE>` | — | Only features exposed through this surface: cli, api, mcp, cockpit or docs (accepted by every subcommand) |
@@ -3227,6 +3230,7 @@ majordomus product show [OPTIONS] <ID>
 | `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
 | `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
 | `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
+| `--domain` | `<DOMAIN>` | — | Only features filed under this product domain (accepted by every subcommand) |
 | `--module` | `<MODULE>` | — | Only features made of this capability module (accepted by every subcommand) |
 | `--names-command` | `<NAMES_COMMAND>` | — | Only features made of this shell command (accepted by every subcommand) |
 | `--surface` | `<SURFACE>` | — | Only features exposed through this surface: cli, api, mcp, cockpit or docs (accepted by every subcommand) |
@@ -3241,6 +3245,41 @@ Examples:
   ```
 
   Verified: exits 0; prints fixture-feature, surfaces, derived.
+
+<a id="majordomus-product-domains"></a>
+## `majordomus product domains`
+
+The domains of the product, each with the stable features that name it and what they add up to
+
+```text
+majordomus product domains [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
+| `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
+| `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
+| `--domain` | `<DOMAIN>` | — | Only features filed under this product domain (accepted by every subcommand) |
+| `--module` | `<MODULE>` | — | Only features made of this capability module (accepted by every subcommand) |
+| `--names-command` | `<NAMES_COMMAND>` | — | Only features made of this shell command (accepted by every subcommand) |
+| `--surface` | `<SURFACE>` | — | Only features exposed through this surface: cli, api, mcp, cockpit or docs (accepted by every subcommand) |
+| `-q`, `--query` | `<QUERY>` | — | Case-insensitive text over identities, titles, headlines, summaries, tags and bodies (accepted by every subcommand) |
+
+Examples:
+
+- **The few things the product controls, and the features under each** — One block per domain in presentation order: its promise, the failure it answers, and the stable features that name it, with the interfaces, claims and use cases they add up to. A domain lists nothing itself; every member and count is derived from the features.
+
+  ```console
+  $ majordomus product domains
+  ```
+
+  Verified: exits 0; prints domain(s).
 
 <a id="majordomus-product-matrix"></a>
 ## `majordomus product matrix`
@@ -3261,6 +3300,7 @@ majordomus product matrix [OPTIONS]
 | `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
 | `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
 | `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
+| `--domain` | `<DOMAIN>` | — | Only features filed under this product domain (accepted by every subcommand) |
 | `--module` | `<MODULE>` | — | Only features made of this capability module (accepted by every subcommand) |
 | `--names-command` | `<NAMES_COMMAND>` | — | Only features made of this shell command (accepted by every subcommand) |
 | `--surface` | `<SURFACE>` | — | Only features exposed through this surface: cli, api, mcp, cockpit or docs (accepted by every subcommand) |
@@ -3295,6 +3335,7 @@ majordomus product providers [OPTIONS]
 | `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
 | `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
 | `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
+| `--domain` | `<DOMAIN>` | — | Only features filed under this product domain (accepted by every subcommand) |
 | `--module` | `<MODULE>` | — | Only features made of this capability module (accepted by every subcommand) |
 | `--names-command` | `<NAMES_COMMAND>` | — | Only features made of this shell command (accepted by every subcommand) |
 | `--surface` | `<SURFACE>` | — | Only features exposed through this surface: cli, api, mcp, cockpit or docs (accepted by every subcommand) |
@@ -3329,6 +3370,7 @@ majordomus product validate [OPTIONS]
 | `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
 | `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
 | `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
+| `--domain` | `<DOMAIN>` | — | Only features filed under this product domain (accepted by every subcommand) |
 | `--module` | `<MODULE>` | — | Only features made of this capability module (accepted by every subcommand) |
 | `--names-command` | `<NAMES_COMMAND>` | — | Only features made of this shell command (accepted by every subcommand) |
 | `--surface` | `<SURFACE>` | — | Only features exposed through this surface: cli, api, mcp, cockpit or docs (accepted by every subcommand) |

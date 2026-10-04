@@ -8,6 +8,7 @@ headline: Every operational moment the tool exists for is one file with the sign
 summary: Moments, audiences and areas are kinds of the layer; a moment names the commands, capabilities, claims, rules and use cases that answer it, each reference validated; the catalogue, the questionnaire, the diagnosis and every page and filter are derived from those files.
 status: stable
 weight: 170
+domain: surfaces
 featured: false
 areas: [documentation]
 modules: [why]

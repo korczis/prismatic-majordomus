@@ -8,6 +8,7 @@ headline: A skill is one directory under the layer; adding it is the whole act, 
 summary: A skill is a provider-neutral procedure for one bounded kind of work, front matter under a schema over a body with a purpose, a procedure and an output contract; the source class discovers it, skills check holds every one to its contract, and nothing loads a skill unless the task is about it.
 status: stable
 weight: 160
+domain: context
 featured: false
 areas: [documentation]
 commands: [skills]

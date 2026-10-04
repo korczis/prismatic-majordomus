@@ -82,12 +82,15 @@ enters without bringing the runtime up; `NO_COLOR` makes the output plain, and u
 there is no banner at all. The `env` group of the justfile
 (`.just/env.just`) carries the recipes a person runs.
 
-Under the banner, entry draws the compact **preflight**: what is proven about this checkout, as
+Under the banner, entry draws the episode and compact **preflight** checks without repeating
+the repository heading: what is proven about this checkout, as
 opposed to what it is. The server and its surfaces, the briefing, the rules, the recorded test runs
 and the deployment each get a verdict with its evidence. It is a separate value,
 `environment::preflight::Preflight`, and [`PREFLIGHT.md`](PREFLIGHT.md) describes it. The banner
 takes one thing from it: a service is drawn as answering only when the preflight verified the
-server behind it, never on the strength of a connection alone.
+server behind it, never on the strength of a connection alone. The server publishes its URL
+only after its request workers start, so the lease-triggered reload can reach it. While it
+prepares its routes, its lease remains in the starting state.
 
 ## What is canonical, and what is derived
 

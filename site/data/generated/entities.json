@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 79,
+      "count": 80,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 79
+      "count": 80
     },
     {
       "kind": "application",
@@ -69,7 +69,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 221
+      "count": 222
     },
     {
       "kind": "command",
@@ -85,7 +85,7 @@
       "route": "/context/",
       "title": null,
       "reason": null,
-      "count": 35
+      "count": 36
     },
     {
       "kind": "critique",
@@ -117,7 +117,15 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 309
+      "count": 310
+    },
+    {
+      "kind": "domain",
+      "projection": "section",
+      "route": "/domains/",
+      "title": null,
+      "reason": null,
+      "count": 6
     },
     {
       "kind": "feature",
@@ -157,7 +165,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 244
+      "count": 245
     },
     {
       "kind": "knowledge",
@@ -221,7 +229,7 @@
       "route": "/changelog/",
       "title": null,
       "reason": null,
-      "count": 9
+      "count": 10
     },
     {
       "kind": "rule",
@@ -269,7 +277,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 342
+      "count": 346
     },
     {
       "kind": "use-case",
@@ -1272,7 +1280,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0104",
+          "kind": "adr",
+          "route": "/adrs/adr-0104/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -1440,7 +1456,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0104",
+          "kind": "adr",
+          "route": "/adrs/adr-0104/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -1478,52 +1502,10 @@
       "references": [
         {
           "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/capability/builtin/quality.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/cli/local.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
           "label": "apps/majordomus-cli/src/quality/mod.rs",
           "kind": "file",
           "route": null,
           "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/quality/parity.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/quality/policy.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/quality/source.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "docs/QUALITY.md",
-          "kind": "document",
-          "route": null,
-          "external": false
         },
         {
           "edge": "put_in_force",
@@ -1579,41 +1561,6 @@
       ],
       "source": ".ai/repo/adrs/0029-the-changelog-is-a-projection-and-the-version-has-one-writer.md",
       "references": [
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/capability/builtin/release.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/command_graph/semantics.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "scripts/release-version",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "docs/DISTRIBUTION.md",
-          "kind": "document",
-          "route": null,
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "docs/RELEASE.md",
-          "kind": "document",
-          "route": null,
-          "external": false
-        },
         {
           "edge": "put_in_force",
           "label": "project.conventional-commits@2",
@@ -1688,41 +1635,6 @@
       "references": [
         {
           "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/design/render.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/http/swagger.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/web/html.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "scripts/ci/design-check",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "share/design/tokens.yaml",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
           "label": "project.derived-files-regenerated@1",
           "kind": "rule",
           "route": "/rules/project-derived-files-regenerated-1/",
@@ -1747,13 +1659,6 @@
           "label": "project.ui-conformance@1",
           "kind": "rule",
           "route": "/rules/project-ui-conformance-1/",
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "test/cases/107_design_tokens.sh",
-          "kind": "test",
-          "route": null,
           "external": false
         }
       ],
@@ -1808,41 +1713,6 @@
       ],
       "source": ".ai/repo/adrs/0033-an-execution-is-a-watched-capability-call-not-a-second-registry.md",
       "references": [
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/execution/engine.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/execution/event.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/execution/mod.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/http/events.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/http/ws.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
         {
           "edge": "put_in_force",
           "label": "adr-0002",
@@ -1960,13 +1830,6 @@
       ],
       "source": ".ai/repo/adrs/0036-the-design-system-is-a-typed-declaration-and-every-first-party-surface-consumes-its-projections.md",
       "references": [
-        {
-          "edge": "put_in_force",
-          "label": "share/design/tokens.yaml",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
         {
           "edge": "put_in_force",
           "label": "project.design-tokens-declared-once@2",
@@ -4290,6 +4153,67 @@
           "label": "project.a-provider-capability-cites-its-evidence@1",
           "kind": "rule",
           "route": "/rules/project-a-provider-capability-cites-its-evidence-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0104",
+      "identity": "adr-0104",
+      "slug": "adr-0104",
+      "cockpit": "/cockpit/objects/adr/adr-0104",
+      "title": "The product is filed under a few domains, and a feature names its one",
+      "status": "proposed",
+      "tags": [
+        "architecture",
+        "taxonomy",
+        "projections",
+        "product"
+      ],
+      "source": ".ai/repo/adrs/0104-the-product-is-filed-under-a-few-domains-and-a-feature-names-its-one.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/product.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0023",
+          "kind": "adr",
+          "route": "/adrs/adr-0023/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0026",
+          "kind": "adr",
+          "route": "/adrs/adr-0026/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.homepage-tells-a-declared-story@1",
+          "kind": "rule",
+          "route": "/rules/project-homepage-tells-a-declared-story-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.no-new-nouns@1",
+          "kind": "rule",
+          "route": "/rules/project-no-new-nouns-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.product-surface-derived@1",
+          "kind": "rule",
+          "route": "/rules/project-product-surface-derived-1/",
           "external": false
         }
       ],
@@ -9143,7 +9067,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0104",
+          "kind": "adr",
+          "route": "/adrs/adr-0104/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",
@@ -10346,6 +10278,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0104",
+          "kind": "adr",
+          "route": "/adrs/adr-0104/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.canonical-order@1",
           "kind": "rule",
@@ -10583,6 +10522,13 @@
           "label": "adr-0089",
           "kind": "adr",
           "route": "/adrs/adr-0089/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0104",
+          "kind": "adr",
+          "route": "/adrs/adr-0104/",
           "external": false
         },
         {

@@ -8,6 +8,7 @@ headline: A change runs the gates its paths can affect, every gate is the same s
 summary: The gate model names every validation gate and which classes of paths select it; the workflow is a thin adapter over that plan; the publication path proves the committed derived data current by its input hash and renders it; and the tool supervises its own repository with its own hooks.
 status: stable
 weight: 190
+domain: completion
 featured: false
 areas: [verification]
 commands: [doctor, watch]

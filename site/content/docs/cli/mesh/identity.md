@@ -1,7 +1,7 @@
 +++
 title = "majordomus mesh identity"
 description = "This machine's node identity, public half only; absent is an answer, not an error"
-weight = 126
+weight = 127
 [extra]
 route = "/docs/cli/mesh/identity/"
 command = "majordomus mesh identity"
