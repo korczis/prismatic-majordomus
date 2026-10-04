@@ -163,9 +163,17 @@ case_bound_seconds: 3600
 #
 # 3450 is about a tenth above the worst uncensored cost, 3168, and stays under
 # case_bound_seconds (3600) as case 417 requires.
+#
+# The total moved the same way on the next run of the same batch, with every case passing:
+#
+#   run 37214316674   45524 s over 346 cases   slowest 3114 s (95_executable_reference)  int/batch-n2
+#   run 37207794591   37318 s over 346 cases   slowest 3168 s (95_executable_reference)  int/batch-n2
+#
+# The same tree cost 22% more on the second run: runner load, not growth. 50000 is about a
+# tenth above the worst total measured, 45524.
 budget:
-  # every case, summed; run 37073033410 (39722 s) and the ones above
-  cases_seconds: 44000
+  # every case, summed; run 37214316674 (45524 s) and the ones above
+  cases_seconds: 50000
   # the single slowest case; one case that runs away is invisible in the total until it is
   # most of it, and it is also what decides whether the parallel phase can still be packed.
   # Re-derived from the uncensored 3168 s of run 37207794591: see above.
