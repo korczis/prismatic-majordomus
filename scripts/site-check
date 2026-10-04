@@ -726,8 +726,11 @@ for id in $(jq -r '.issues[] | select(.status=="READY") | .id' "$PJ"); do
   grep -qF "plan/$(printf '%s' "$id" | tr 'A-Z' 'a-z')/" "$PUB/plan/index.html" || bad tiles "READY issue $id is not linked from /plan/"
 done
 ok tiles "every profile, claim, status, responsibility, command, doctrine, use case, application and why-moment has its own page"
-# 13d. every navigation target resolves
-for href in $(grep -oE 'href="[^"]*"' "$PUB/index.html" | sed -n '1,80p' | sed -E "s#href=\"$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$##')##; s#\"##g; s#[?].*\$##" | grep -E '^/' | LC_ALL=C sort -u); do t="$PUB$href"; [ -f "$t/index.html" ] || [ -f "$t" ] || bad nav "navigation/hero link $href does not resolve"; done
+# 13d. every navigation target resolves. The navigation and the hero are the page up to the end
+# of the hero's section, read by landmark: a fixed count of the first links (it was 80) stopped
+# reaching the menu's last items once the homepage and the bar carried more links than that, and
+# a missing reference surface then went unreported here. A page with no hero is read whole.
+for href in $(awk '{ print } /id="hero"/ { h = 1 } h && /<\/section>/ { exit }' "$PUB/index.html" | grep -oE 'href="[^"]*"' | sed -E "s#href=\"$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed 's#/$##')##; s#\"##g; s#[?].*\$##" | grep -E '^/' | LC_ALL=C sort -u); do t="$PUB$href"; [ -f "$t/index.html" ] || [ -f "$t" ] || bad nav "navigation/hero link $href does not resolve"; done
 ok nav "every navigation link on the homepage resolves"
 # 13e. and the other direction: every section the site publishes is reachable from the menu.
 #
