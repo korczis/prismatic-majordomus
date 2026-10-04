@@ -25,6 +25,7 @@ verification:
     - obligations_met
     - gates_passed
     - publication_current
+    - version_advanced
 
 checkpoint:
   max_body_lines: 40                     # a checkpoint is a progress note, not a report
@@ -295,6 +296,24 @@ commit:
   fix_requires_test: warning
   reference_unresolved: error
   breaking_unexplained: error
+
+# ---------------------------------------------------------------- the version follows the work
+# The public contract decides what compatibility requires of a release (ADR 0051), and it is
+# silent about most work: a fix, a test, a document or a refactor behind the boundary moves
+# no contract, so the trunk took dozens of them on one version and the version stopped naming
+# what was being served. The cadence is the least a change set carrying work advances the
+# trunk's version by, measured against the version the trunk declares — not the last
+# release — so two branches that both start from it cannot both land claiming the next one.
+# The larger of the two requirements is owed; a breaking change on 1.x is still a major.
+#
+# `finish --outcome completed` applies it through the one writer (`release advance`), and the
+# `version-obligation` gate refuses a merge into the trunk that carries work without it. A
+# change set that carries no work — projections, a release record, an advance alone — owes
+# nothing, which is what keeps the release pipeline's own follow-ups from raising the version
+# they record. ADR 0106.
+release:
+  cadence: minor
+  trunk: origin/master
 
 # ---------------------------------------------------------------- the shared server's lease
 # One server serves a checkout, and a lease file decides which process owns it. These four

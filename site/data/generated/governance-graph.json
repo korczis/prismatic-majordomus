@@ -268,6 +268,11 @@
       "target": "rule:majordomus.completion-gates"
     },
     {
+      "kind": "depends_on",
+      "source": "rule:majordomus.version-obligation",
+      "target": "rule:majordomus.completion-gates"
+    },
+    {
       "kind": "decided_by",
       "source": "rule:majordomus.knowledge-integrity",
       "target": "validator:knowledge_integrity"
@@ -506,6 +511,11 @@
       "kind": "decided_by",
       "source": "rule:majordomus.publication-currency",
       "target": "validator:publication_currency"
+    },
+    {
+      "kind": "decided_by",
+      "source": "rule:majordomus.version-obligation",
+      "target": "validator:version_obligation"
     },
     {
       "kind": "run_by",
@@ -959,6 +969,16 @@
     },
     {
       "kind": "run_by",
+      "source": "validator:version_obligation",
+      "target": "command:check"
+    },
+    {
+      "kind": "run_by",
+      "source": "validator:version_obligation",
+      "target": "command:finish"
+    },
+    {
+      "kind": "run_by",
       "source": "validator:wiring",
       "target": "command:doctor"
     },
@@ -1201,6 +1221,11 @@
       "kind": "proved_by",
       "source": "rule:majordomus.publication-currency",
       "target": "test:test/cases/275_publication_is_current.sh"
+    },
+    {
+      "kind": "proved_by",
+      "source": "rule:majordomus.version-obligation",
+      "target": "test:test/cases/801_completed_work_advances_the_version.sh"
     }
   ],
   "generator": "scripts/lib/governance-graph.jq",
@@ -1799,6 +1824,17 @@
     },
     {
       "external": false,
+      "id": "rule:majordomus.version-obligation",
+      "kind": "rule",
+      "label": "version-obligation",
+      "note": "exit 10 · version",
+      "role": "text",
+      "route": "/doctrines/version-obligation/",
+      "status": "blocking",
+      "summary": "A repository that declares a completion cadence owes, for every change set that carries work, a version at least that much above the trunk's — and at least what the public contract requires since the last release. finish applies it through the one writer before the contract is judged, and refuses completed while it does not hold."
+    },
+    {
+      "external": false,
       "id": "validator:adr",
       "kind": "validator",
       "label": "mj_validate_adr",
@@ -2175,6 +2211,14 @@
     },
     {
       "external": false,
+      "id": "validator:version_obligation",
+      "kind": "validator",
+      "label": "mj_validate_version_obligation",
+      "role": "muted",
+      "summary": "Decides the rule. Declared in lib/gates.sh."
+    },
+    {
+      "external": false,
       "id": "validator:wiring",
       "kind": "validator",
       "label": "mj_validate_wiring",
@@ -2498,6 +2542,14 @@
       "id": "test:test/cases/711_candidates_are_reviewed_not_accumulated.sh",
       "kind": "test",
       "label": "test/cases/711_candidates_are_reviewed_not_accumulated.sh",
+      "role": "good",
+      "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
+    },
+    {
+      "external": false,
+      "id": "test:test/cases/801_completed_work_advances_the_version.sh",
+      "kind": "test",
+      "label": "test/cases/801_completed_work_advances_the_version.sh",
       "role": "good",
       "summary": "A behavioural case. It proves the validator answers, not that the rule is written down."
     },

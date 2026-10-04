@@ -67,6 +67,7 @@ H
 
   MJ_FINISH_OUTCOME="$outcome"; MJ_FINISH_VERIFY="$verify"; MJ_FINISH_NOTE="$note"
   MJ_FINISH_VEXIT=""; MJ_FINISH_VSECS=""; MJ_FINISH_VTREE=""
+  [ "$outcome" = completed ] && mj_finish_advance_version "$id"
   mj_doctrine_dispatch finish
 
   # The policy may name a requirement the registry does not define. That is a
@@ -108,6 +109,40 @@ H
   local cps=0; cps="$(find "$MJ_STATE_DIR/checkpoints" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
   mj_ledger_append task.finished "\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"contract\":$contract,\"verify\":$vj,\"checkpoints\":$cps"
   [ "$MJ_JSON" = 1 ] || printf 'finish: %s %s\n' "$id" "$outcome"
+}
+
+# The version obligation is satisfied before the contract is judged (ADR 0106). Completed
+# work owes the policy's cadence over the trunk's version, and the advance is part of the
+# work: the verification command then runs over the advanced tree, and the doctrine that
+# judges the obligation (majordomus.version-obligation) reads a tree that already carries it.
+# The one writer does the write — `release advance` is `release bump`'s write with the
+# version the obligation chose — and `majordomus generate distribution` projects it into
+# share/version.txt, the projection the shell tool reads; scripts/derive does the rest. A satisfied
+# obligation writes nothing, so a finish refused for another reason and run again does not
+# advance twice. Anything the advance could not do is left to the doctrine to refuse with
+# the obligation's own remedy; nothing here decides a verdict.
+mj_finish_advance_version() {
+  local id="$1" r selected=0 bin out rc=0 from to oid trunk tcommit
+  for r in $(mj_ylist "$MJ_POL_FLAT" verification.finish_requires); do
+    [ "$r" = version_advanced ] && selected=1
+  done
+  [ "$selected" = 1 ] || return 0
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_HOME")"
+  { [ -x "$bin" ] && command -v jq >/dev/null 2>&1; } || return 0
+  out="$( "$bin" release obligation --format json --repo "$MJ_ROOT" 2>/dev/null )" || rc=$?
+  [ "$(printf '%s' "$out" | jq -r '.state // empty' 2>/dev/null)" = owed ] || return 0
+  from="$(printf '%s' "$out" | jq -r '.declared')"; to="$(printf '%s' "$out" | jq -r '.minimum')"
+  oid="$(printf '%s' "$out" | jq -r '.id')"
+  trunk="$(printf '%s' "$out" | jq -r '.trunk.reference')"; tcommit="$(printf '%s' "$out" | jq -r '.trunk.commit')"
+  rc=0; ( cd "$MJ_ROOT" && "$bin" release advance --repo "$MJ_ROOT" ) || rc=$?
+  [ "$rc" = 0 ] || { mj_info version "$oid" "release advance exited $rc; the doctrine judges what is left"; return 0; }
+  rc=0; ( cd "$MJ_ROOT" && "$bin" generate distribution --repo "$MJ_ROOT" ) > /dev/null 2>&1 || rc=$?
+  [ "$rc" = 0 ] || mj_info version "$oid" "majordomus generate distribution exited $rc after the advance; run scripts/derive before committing" "scripts/derive"
+  mj_ledger_append release.advanced "\"task_id\":\"$id\",\"obligation\":\"$(mj_json_esc "$oid")\",\"from\":\"$from\",\"to\":\"$to\",\"trunk\":\"$(mj_json_esc "$trunk")\",\"trunk_commit\":\"$tcommit\",\"effective\":\"$(printf '%s' "$out" | jq -r '.effective')\""
+  [ "$MJ_JSON" = 1 ] || printf 'finish: version %s -> %s (obligation %s); scripts/derive refreshes the site data before the commit\n' "$from" "$to" "$oid"
+  return 0
 }
 
 # the doctrine index whose policy_key is <key>, or failure

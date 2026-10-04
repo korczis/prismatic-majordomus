@@ -1319,11 +1319,36 @@
         "majordomus.completion-gates@1"
       ],
       "source": "share/standard/majordomus/rules/publication-currency.v1.md"
+    },
+    {
+      "id": "majordomus.version-obligation",
+      "slug": "version-obligation",
+      "title": "Completed work does not leave the trunk on its version",
+      "class": "blocking",
+      "principle": "",
+      "statement": "When the policy declares release.cadence, finish --outcome completed first satisfies the version obligation through `release advance` and then refuses completed unless the declared version reaches the minimum the obligation computes against the trunk as it is now — the larger of the contract's floor and the trunk's version raised by the cadence. An obligation that could not be read is unverified and never a pass. A change set that carries no work owes no cadence, and a satisfied obligation is satisfied however often it is asked.",
+      "summary": "A repository that declares a completion cadence owes, for every change set that carries work, a version at least that much above the trunk's — and at least what the public contract requires since the last release. finish applies it through the one writer before the contract is judged, and refuses completed while it does not hold.",
+      "validator": "version_obligation",
+      "validator_function": "mj_validate_version_obligation",
+      "defined_in": "lib/gates.sh",
+      "category": "version",
+      "enforced_by": [
+        "check",
+        "finish"
+      ],
+      "exit_code": 10,
+      "policy_key": "version_advanced",
+      "claims": [],
+      "test": "test/cases/801_completed_work_advances_the_version.sh",
+      "depends_on": [
+        "majordomus.completion-gates@1"
+      ],
+      "source": "share/standard/majordomus/rules/version-obligation.v1.md"
     }
   ],
   "counts": {
-    "declared": 48,
-    "blocking": 42,
+    "declared": 49,
+    "blocking": 43,
     "advisory": 6
   },
   "index": {
@@ -1374,6 +1399,7 @@
     "majordomus.verification-integrity": 44,
     "majordomus.obligation-closure": 45,
     "majordomus.completion-gates": 46,
-    "majordomus.publication-currency": 47
+    "majordomus.publication-currency": 47,
+    "majordomus.version-obligation": 48
   }
 }

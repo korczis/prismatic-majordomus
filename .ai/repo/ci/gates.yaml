@@ -664,6 +664,22 @@ gates:
     runs: bin/majordomus-cli release version
     summary: the version is authored in one place — share/version.txt, the projection the shell tool reads, states what the crate manifest declares, and no version is written by hand in bin/, lib/, scripts/ or share/ outside a generated artifact
 
+  # A merge into the trunk that carries work carries its version advance (ADR 0106): the
+  # larger of what the contract requires since the last release and the policy's cadence over
+  # the version the trunk declares. Measured against the merge's first parent, which is the
+  # trunk the change actually lands on — so of two branches that advanced from one trunk, the
+  # second is refused once the first has landed, and the bypass `finish` cannot see (a merge
+  # assembled by hand, or through the forge) is refused all the same. `always`, because what
+  # owes the advance is any authored path, and no class can name every one; a change set of
+  # projections, release records or the advance alone owes nothing, so the release pipeline's
+  # own follow-ups pass. It calls the executable directly, which the structure job already
+  # builds: an adapter script would be a shell unit with nothing to do (ADR 0069).
+  - id: version-obligation
+    job: structure
+    always: true
+    runs: bin/majordomus-cli release obligation --base HEAD^1
+    summary: a merge that carries work declares at least the larger of the contract's requirement and the minor cadence over the version its first parent declares, and a merge of projections or release evidence owes nothing
+
   # A page's link into its own source names the commit the site was built from, not master:
   # a link to master points at whatever the file says today, and the page beside it says
   # what the file said when it was rendered. The templates make those links through

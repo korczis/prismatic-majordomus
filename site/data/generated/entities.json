@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 79,
+      "count": 80,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 159,
+      "count": 161,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 79
+      "count": 80
     },
     {
       "kind": "application",
@@ -229,7 +229,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 159
+      "count": 161
     },
     {
       "kind": "scope",
@@ -269,7 +269,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 342
+      "count": 344
     },
     {
       "kind": "use-case",
@@ -1695,13 +1695,6 @@
         },
         {
           "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/http/swagger.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
           "label": "apps/majordomus-cli/src/web/html.rs",
           "kind": "file",
           "route": null,
@@ -1747,13 +1740,6 @@
           "label": "project.ui-conformance@1",
           "kind": "rule",
           "route": "/rules/project-ui-conformance-1/",
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "test/cases/107_design_tokens.sh",
-          "kind": "test",
-          "route": null,
           "external": false
         }
       ],
@@ -1808,41 +1794,6 @@
       ],
       "source": ".ai/repo/adrs/0033-an-execution-is-a-watched-capability-call-not-a-second-registry.md",
       "references": [
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/execution/engine.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/execution/event.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/execution/mod.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/http/events.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/http/ws.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
         {
           "edge": "put_in_force",
           "label": "adr-0002",
@@ -4296,6 +4247,67 @@
       "referenced_by": []
     },
     {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0106",
+      "identity": "adr-0106",
+      "slug": "adr-0106",
+      "cockpit": "/cockpit/objects/adr/adr-0106",
+      "title": "Integrated work advances the version by at least the cadence over the trunk, and the contract's requirement still wins when it is larger",
+      "status": "proposed",
+      "tags": [
+        "release",
+        "versioning",
+        "lifecycle",
+        "integration"
+      ],
+      "source": ".ai/repo/adrs/0106-integrated-work-advances-the-version-by-at-least-the-cadence-over-the-trunk.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "majordomus.version-obligation@1",
+          "kind": "rule",
+          "route": "/rules/majordomus-version-obligation-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.integrated-work-advances-the-version@1",
+          "kind": "rule",
+          "route": "/rules/project-integrated-work-advances-the-version-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.integration-follows-the-current-master@1",
+          "kind": "rule",
+          "route": "/rules/project-integration-follows-the-current-master-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.land-and-publish@1",
+          "kind": "rule",
+          "route": "/rules/project-land-and-publish-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.release-is-a-projection@2",
+          "kind": "rule",
+          "route": "/rules/project-release-is-a-projection-2/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.the-version-is-measured@2",
+          "kind": "rule",
+          "route": "/rules/project-the-version-is-measured-2/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
       "kind": "rule",
       "id": "majordomus://rule/majordomus.adr-integrity@1",
       "identity": "majordomus.adr-integrity@1",
@@ -4746,6 +4758,13 @@
           "label": "majordomus.publication-currency@1",
           "kind": "rule",
           "route": "/rules/majordomus-publication-currency-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "majordomus.version-obligation@1",
+          "kind": "rule",
+          "route": "/rules/majordomus-version-obligation-1/",
           "external": false
         }
       ]
@@ -7057,6 +7076,40 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/majordomus.version-obligation@1",
+      "identity": "majordomus.version-obligation@1",
+      "slug": "majordomus-version-obligation-1",
+      "cockpit": "/cockpit/objects/rule/majordomus-version-obligation-1",
+      "title": "Completed work does not leave the trunk on its version",
+      "status": "active",
+      "tags": [
+        "tasks",
+        "completion",
+        "release",
+        "version"
+      ],
+      "source": ".ai/repo/rules/vendor/majordomus/rules/version-obligation.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "majordomus.completion-gates@1",
+          "kind": "rule",
+          "route": "/rules/majordomus-completion-gates-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0106",
+          "kind": "adr",
+          "route": "/adrs/adr-0106/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.a-brief-is-kept-as-received@1",
       "identity": "project.a-brief-is-kept-as-received@1",
       "slug": "project-a-brief-is-kept-as-received-1",
@@ -9217,6 +9270,61 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.integrated-work-advances-the-version@1",
+      "identity": "project.integrated-work-advances-the-version@1",
+      "slug": "project-integrated-work-advances-the-version-1",
+      "cockpit": "/cockpit/objects/rule/project-integrated-work-advances-the-version-1",
+      "title": "A merge into the trunk that carries work carries its version advance",
+      "status": "active",
+      "tags": [
+        "release",
+        "versioning",
+        "integration",
+        "lifecycle"
+      ],
+      "source": ".ai/repo/rules/project/integrated-work-advances-the-version.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.integration-follows-the-current-master@1",
+          "kind": "rule",
+          "route": "/rules/project-integration-follows-the-current-master-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.land-and-publish@1",
+          "kind": "rule",
+          "route": "/rules/project-land-and-publish-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.release-is-a-projection@2",
+          "kind": "rule",
+          "route": "/rules/project-release-is-a-projection-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-version-is-measured@2",
+          "kind": "rule",
+          "route": "/rules/project-the-version-is-measured-2/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0106",
+          "kind": "adr",
+          "route": "/adrs/adr-0106/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.integration-follows-the-current-master@1",
       "identity": "project.integration-follows-the-current-master@1",
       "slug": "project-integration-follows-the-current-master-1",
@@ -9254,6 +9362,20 @@
           "label": "adr-0101",
           "kind": "adr",
           "route": "/adrs/adr-0101/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0106",
+          "kind": "adr",
+          "route": "/adrs/adr-0106/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.integrated-work-advances-the-version@1",
+          "kind": "rule",
+          "route": "/rules/project-integrated-work-advances-the-version-1/",
           "external": false
         }
       ]
@@ -9635,6 +9757,20 @@
           "label": "adr-0101",
           "kind": "adr",
           "route": "/adrs/adr-0101/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0106",
+          "kind": "adr",
+          "route": "/adrs/adr-0106/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.integrated-work-advances-the-version@1",
+          "kind": "rule",
+          "route": "/rules/project-integrated-work-advances-the-version-1/",
           "external": false
         },
         {
@@ -10800,6 +10936,20 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0106",
+          "kind": "adr",
+          "route": "/adrs/adr-0106/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.integrated-work-advances-the-version@1",
+          "kind": "rule",
+          "route": "/rules/project-integrated-work-advances-the-version-1/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.the-version-is-measured@2",
           "kind": "rule",
@@ -11494,6 +11644,20 @@
           "label": "adr-0085",
           "kind": "adr",
           "route": "/adrs/adr-0085/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0106",
+          "kind": "adr",
+          "route": "/adrs/adr-0106/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.integrated-work-advances-the-version@1",
+          "kind": "rule",
+          "route": "/rules/project-integrated-work-advances-the-version-1/",
           "external": false
         }
       ]

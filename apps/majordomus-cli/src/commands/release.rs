@@ -1,8 +1,11 @@
 //! `majordomus release`: the changelog, the version, and the one writer that raises it.
 //!
 //! The read half delegates to the capabilities, so the command line renders exactly what
-//! HTTP and MCP answer with. `bump` does not: it writes tracked files, which no capability
-//! may do, and the exposure policy keeps it off every machine surface for that reason.
+//! HTTP and MCP answer with. `bump` and `advance` do not: they write tracked files, which no
+//! capability may do, and the exposure policy keeps them off every machine surface for that
+//! reason. They share one write ([`write_and_verify`]) and differ only in how the version is
+//! chosen: `bump` from the contract or an explicit override, `advance` from the version
+//! obligation (ADR 0106).
 
 use std::io::Write;
 
@@ -10,6 +13,7 @@ use crate::app::App;
 use crate::cli::{OutputFormat, ReleaseArgs, ReleaseCommand};
 use crate::error::{Error, Result};
 use crate::release::compat::{Impact, Severity, Status, VersionPlan};
+use crate::release::obligation::{ObligationState, VersionObligation};
 use crate::release::{self, changelog, version};
 
 /// Exit code when the version is not stated the way it must be — the projection behind or
@@ -46,6 +50,208 @@ pub fn run(args: ReleaseArgs) -> Result<u8> {
             ref exact,
             dry_run,
         }) => bump(&args, level.as_deref(), exact.as_deref(), dry_run),
+        Some(ReleaseCommand::Obligation { ref base }) => {
+            let base = base.clone();
+            render_obligation(&args, base.as_deref())
+        }
+        Some(ReleaseCommand::Advance { ref base, dry_run }) => {
+            let base = base.clone();
+            advance(&args, base.as_deref(), dry_run)
+        }
+    }
+}
+
+/// The version obligation, through the capability, so the command line renders the value
+/// HTTP and MCP answer with. Exits with the verdict: 0 holds, 10 owed or behind, 12 unread.
+fn render_obligation(args: &ReleaseArgs, base: Option<&str>) -> Result<u8> {
+    let app = App::load(&args.repo)?;
+    let o = obligation_of(&app, base)?;
+    let stdout = std::io::stdout();
+    let mut out = stdout.lock();
+    match args.format {
+        OutputFormat::Json => writeln!(
+            out,
+            "{}",
+            serde_json::to_string_pretty(&o).unwrap_or_default()
+        )
+        .map_err(Error::Transport)?,
+        OutputFormat::Text => out
+            .write_all(obligation_text(&o).as_bytes())
+            .map_err(Error::Transport)?,
+    }
+    Ok(o.state.exit_code())
+}
+
+/// The obligation, asked through the one execution path.
+fn obligation_of(app: &App, base: Option<&str>) -> Result<VersionObligation> {
+    let mut input = serde_json::Map::new();
+    if let Some(b) = base {
+        input.insert("base".into(), serde_json::Value::String(b.to_string()));
+    }
+    let value = app
+        .context
+        .execute("release.obligation", serde_json::Value::Object(input))
+        .map_err(|e| Error::Refused {
+            code: EXIT_UNREADABLE,
+            reason: e.to_string(),
+        })?;
+    serde_json::from_value(value).map_err(|e| Error::Protocol {
+        reason: e.to_string(),
+    })
+}
+
+/// The obligation for a person at a terminal: the inputs first, the verdict, then why.
+///
+/// ```text
+/// Majordomus version obligation
+///   subject     feature/x
+///   trunk       origin/master 0123456789ab declares 0.12.0
+///   ...
+/// ```
+pub fn obligation_text(o: &VersionObligation) -> String {
+    let mut s = String::from("Majordomus version obligation\n");
+    let mut line = |k: &str, v: String| s.push_str(&format!("  {k:<12}{v}\n"));
+    line("subject", o.subject.clone());
+    line(
+        "trunk",
+        match &o.trunk {
+            Some(t) => format!(
+                "{} {} declares {}{}",
+                t.reference,
+                &t.commit[..t.commit.len().min(12)],
+                t.version,
+                if t.contained {
+                    ""
+                } else {
+                    " (not contained in this tree)"
+                }
+            ),
+            None => "unreadable".into(),
+        },
+    );
+    line("declared", o.declared.clone());
+    line(
+        "carries",
+        format!(
+            "{} ({} authored, {} derived, {} release record(s), {} version advance)",
+            o.carries.as_str(),
+            o.paths.work,
+            o.paths.derived,
+            o.paths.release_evidence,
+            o.paths.version_advance
+        ),
+    );
+    line(
+        "contract",
+        match (&o.contract.unmeasured, &o.contract.baseline) {
+            (Some(_), _) => "not measured".into(),
+            (None, Some(b)) => format!(
+                "{} since {b}{}",
+                o.contract.required.as_str(),
+                o.contract
+                    .floor
+                    .as_ref()
+                    .map(|f| format!(", at least {f}"))
+                    .unwrap_or_default()
+            ),
+            (None, None) => "none".into(),
+        },
+    );
+    line(
+        "cadence",
+        format!(
+            "{} of the policy's {}, at least {}",
+            o.cadence.required.as_str(),
+            o.cadence.policy.as_str(),
+            o.cadence.floor
+        ),
+    );
+    line("effective", o.effective.as_str().to_string());
+    line("minimum", o.minimum.clone());
+    line("state", o.state.as_str().to_string());
+    line("id", o.id.clone());
+    s.push_str("  why\n");
+    for r in &o.reasons {
+        s.push_str(&format!("    {r}\n"));
+    }
+    if !o.paths.work_examples.is_empty() {
+        s.push_str("  work\n");
+        for p in &o.paths.work_examples {
+            s.push_str(&format!("    {p}\n"));
+        }
+        if o.paths.work > o.paths.work_examples.len() {
+            s.push_str(&format!(
+                "    ... and {} more\n",
+                o.paths.work - o.paths.work_examples.len()
+            ));
+        }
+    }
+    if let Some(r) = &o.remedy {
+        s.push_str(&format!("  remedy      {r}\n"));
+    }
+    s
+}
+
+/// `release advance`: satisfy the obligation through the one writer.
+///
+/// The obligation decides the version and [`write_and_verify`] writes it — the same write
+/// `release bump` makes — so there is one writer and two ways of choosing what it writes.
+/// It is idempotent by construction: the obligation is a predicate over the tree and the
+/// trunk, so once the declared version reaches the minimum, asking again writes nothing.
+fn advance(args: &ReleaseArgs, base: Option<&str>, dry_run: bool) -> Result<u8> {
+    let app = App::load(&args.repo)?;
+    let root = std::path::Path::new(&app.index().repository.root).to_path_buf();
+    let o = obligation_of(&app, base)?;
+    let stdout = std::io::stdout();
+    let mut out = stdout.lock();
+    let id = &o.id;
+    match o.state {
+        ObligationState::Satisfied | ObligationState::NotOwed => {
+            writeln!(
+                out,
+                "release: the obligation {id} holds ({}): {} covers the minimum {}; nothing written",
+                o.state.as_str(),
+                o.declared,
+                o.minimum
+            )
+            .map_err(Error::Transport)?;
+            Ok(0)
+        }
+        ObligationState::Unverified | ObligationState::Behind => {
+            writeln!(
+                out,
+                "release: REFUSED the obligation {id} is {}, so no version can be chosen for it",
+                o.state.as_str()
+            )
+            .map_err(Error::Transport)?;
+            out.write_all(obligation_text(&o).as_bytes())
+                .map_err(Error::Transport)?;
+            writeln!(out, "         nothing was written").map_err(Error::Transport)?;
+            Ok(o.state.exit_code())
+        }
+        ObligationState::Owed => {
+            let trunk = o.trunk.as_ref().map_or("the trunk", |t| t.version.as_str());
+            writeln!(
+                out,
+                "release: {} -> {} (obligation {id}: {} over {trunk}; contract {}, cadence {})",
+                o.declared,
+                o.minimum,
+                o.effective.as_str(),
+                o.contract.required.as_str(),
+                o.cadence.required.as_str()
+            )
+            .map_err(Error::Transport)?;
+            if dry_run {
+                writeln!(out, "         {} (unwritten)", version::MANIFEST)
+                    .map_err(Error::Transport)?;
+                writeln!(out, "         {} (unwritten)", version::LOCK)
+                    .map_err(Error::Transport)?;
+                writeln!(out, "         {}", derived_after(&o.minimum))
+                    .map_err(Error::Transport)?;
+                return Ok(0);
+            }
+            write_and_verify(&root, &o.minimum, &mut out)
+        }
     }
 }
 
@@ -582,6 +788,39 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
             return Ok(EXIT_UNDER_VERSIONED);
         }
     }
+    // The obligation's floor (ADR 0106): where the policy declares a cadence, a change set
+    // carrying work owes it over the trunk's version, and no override may undershoot that
+    // either. Without a cadence nothing is asked, so a repository that declares none is
+    // judged by the contract alone, exactly as before.
+    let policy = release::obligation::policy_of(&root);
+    if policy.cadence != Impact::None {
+        let o = release::obligation::obligation(
+            &root,
+            &app.context.registry,
+            &app.index().objects,
+            &policy,
+            None,
+        );
+        if let Some(min) = version::Version::parse(&o.minimum) {
+            if to < min && o.state != ObligationState::Unverified {
+                writeln!(
+                    out,
+                    "release: REFUSED {to} is below {min}, the minimum the version obligation {} computes",
+                    o.id
+                )
+                .map_err(Error::Transport)?;
+                for r in &o.reasons {
+                    writeln!(out, "         {r}").map_err(Error::Transport)?;
+                }
+                writeln!(
+                    out,
+                    "         nothing was written; see `majordomus release obligation`, or run `majordomus release advance`"
+                )
+                .map_err(Error::Transport)?;
+                return Ok(EXIT_UNDER_VERSIONED);
+            }
+        }
+    }
     if to < current {
         writeln!(
             out,
@@ -647,7 +886,14 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
         return Ok(0);
     }
 
-    let written = version::write(&root, &to).map_err(|e| Error::io(root.clone(), e))?;
+    write_and_verify(&root, &to, &mut out)
+}
+
+/// The one write: the manifest's version line and the lock's record of it, then both read
+/// back. `release bump` and `release advance` both end here, so there is one writer however
+/// the version was chosen.
+fn write_and_verify(root: &std::path::Path, to: &str, out: &mut impl Write) -> Result<u8> {
+    let written = version::write(root, to).map_err(|e| Error::io(root.to_path_buf(), e))?;
     for f in &written {
         writeln!(out, "         {f} written").map_err(Error::Transport)?;
     }
@@ -655,8 +901,8 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
     // to prevent, so the writer proves its own work rather than leaving it to the build or
     // the release that finds out at its first step. The projection is not read: it is stale
     // now by design, and deriving it is the next step, not this one.
-    let after_manifest = version::declared(&root).unwrap_or_default();
-    let after_lock = version::locked(&root);
+    let after_manifest = version::declared(root).unwrap_or_default();
+    let after_lock = version::locked(root);
     let lock_disagrees = after_lock.as_deref().is_some_and(|v| v != to);
     if after_manifest != to || lock_disagrees {
         writeln!(
@@ -670,7 +916,7 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
         return Ok(EXIT_DISAGREE);
     }
     writeln!(out, "         {} now declares {to}", version::MANIFEST).map_err(Error::Transport)?;
-    writeln!(out, "         {}", derived_after(&to)).map_err(Error::Transport)?;
+    writeln!(out, "         {}", derived_after(to)).map_err(Error::Transport)?;
     Ok(0)
 }
 

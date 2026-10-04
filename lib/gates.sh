@@ -379,3 +379,70 @@ mj_validate_publication_currency() {
   done
   return 0
 }
+
+# ---------------------------------------------------------------- the version obligation
+# Asked of the executable, never decided here: `release obligation` computes the larger of
+# what the public contract requires since the last release and the policy's completion
+# cadence over the trunk's version (ADR 0106), and this reads its verdict. `finish` has
+# already run `release advance` (mj_finish_advance_version) when the outcome is completed,
+# so an obligation still owed here is one the one writer could not satisfy — a tree behind
+# its trunk, a trunk nobody could read — and it refuses with the obligation's own remedy.
+# Under `check` it only reports: an advance owed by unfinished work is not a defect yet.
+mj_validate_version_obligation() {
+  local id bin out rc=0 state minimum declared oid remedy reason
+
+  if ! mj_load_current; then
+    mj_doctrine_skip version "-" "no active task; nothing claims to be finished"
+    MJ_DOCTRINE_SKIPPED=1; return 0
+  fi
+  id="$(mj_cur id)"
+  mj_finish_selected || {
+    mj_doctrine_skip version "$id" "not in verification.finish_requires"
+    MJ_DOCTRINE_SKIPPED=1; return 0; }
+  case "${MJ_FINISH_OUTCOME:-}" in
+    ''|completed) ;;
+    *) mj_doctrine_skip version "$id" "skipped for outcome $MJ_FINISH_OUTCOME: unfinished work owes no version"
+       MJ_DOCTRINE_SKIPPED=1; return 0 ;;
+  esac
+
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_HOME")"
+  if [ ! -x "$bin" ] || ! command -v jq >/dev/null 2>&1; then
+    if [ "${MJ_FINISH_OUTCOME:-}" = completed ]; then
+      mj_doctrine_fail version "$id" "the obligation reader is not available (executable $bin, jq), so the version obligation is unverified and never a pass" "bin/majordomus-cli release obligation"
+    else
+      mj_doctrine_skip version "$id" "the obligation reader is not available here (executable $bin, jq)"
+      MJ_DOCTRINE_SKIPPED=1
+    fi
+    return 0
+  fi
+  out="$( "$bin" release obligation --format json --repo "$MJ_ROOT" 2>/dev/null )" || rc=$?
+  state="$(printf '%s' "$out" | jq -r '.state // empty' 2>/dev/null)" || state=""
+  if [ -z "$state" ]; then
+    if [ "${MJ_FINISH_OUTCOME:-}" = completed ]; then
+      mj_doctrine_fail version "$id" "the executable could not answer release obligation (exit $rc), so it is unverified and never a pass" "$bin release obligation"
+    else
+      mj_doctrine_skip version "$id" "the executable could not answer release obligation (exit $rc)"
+      MJ_DOCTRINE_SKIPPED=1
+    fi
+    return 0
+  fi
+  minimum="$(printf '%s' "$out" | jq -r '.minimum')"
+  declared="$(printf '%s' "$out" | jq -r '.declared')"
+  oid="$(printf '%s' "$out" | jq -r '.id')"
+  remedy="$(printf '%s' "$out" | jq -r '.remedy // "majordomus release obligation"')"
+  reason="$(printf '%s' "$out" | jq -r '.reasons | join("; ")')"
+  case "$state" in
+    satisfied|not-owed)
+      mj_doctrine_ok version "$oid" "$state: $declared covers the minimum $minimum" ;;
+    *)
+      if [ "${MJ_FINISH_OUTCOME:-}" = completed ]; then
+        mj_doctrine_fail version "$oid" "$state: declared $declared, minimum $minimum — $reason" "$remedy"
+      else
+        mj_doctrine_skip version "$oid" "$state: declared $declared, minimum $minimum; finish --outcome completed advances it" "$remedy"
+        MJ_DOCTRINE_SKIPPED=1
+      fi ;;
+  esac
+  return 0
+}

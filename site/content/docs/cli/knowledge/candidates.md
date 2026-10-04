@@ -1,7 +1,7 @@
 +++
 title = "majordomus knowledge candidates"
 description = "The candidate records awaiting review, with the branch of the episode each came from and how long each has waited"
-weight = 197
+weight = 199
 [extra]
 route = "/docs/cli/knowledge/candidates/"
 command = "majordomus knowledge candidates"

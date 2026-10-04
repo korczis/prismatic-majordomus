@@ -17361,6 +17361,18 @@
           "command": "majordomus release bump",
           "name": "bump",
           "route": "/docs/cli/release/bump/"
+        },
+        {
+          "about": "What integrating this tree into the trunk requires the version to become: the larger of the public contract's requirement and the completion cadence over the trunk's version (ADR 0106); exit 10 when it is owed",
+          "command": "majordomus release obligation",
+          "name": "obligation",
+          "route": "/docs/cli/release/obligation/"
+        },
+        {
+          "about": "Satisfy the version obligation through the one writer: raise the version to the minimum the obligation computes against the current trunk, and nothing when it already holds; scripts/derive derives the rest",
+          "command": "majordomus release advance",
+          "name": "advance",
+          "route": "/docs/cli/release/advance/"
         }
       ],
       "command": "majordomus release",
@@ -17975,6 +17987,305 @@
       ],
       "route": "/docs/cli/release/bump/",
       "usage": "majordomus release bump [OPTIONS]"
+    },
+    {
+      "about": "What integrating this tree into the trunk requires the version to become: the larger of the public contract's requirement and the completion cadence over the trunk's version (ADR 0106); exit 10 when it is owed",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus release",
+          "name": "release",
+          "route": "/docs/cli/release/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The ref the work is integrated into, instead of the policy's trunk",
+          "long": "base",
+          "name": "base",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "REF"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "How to render the answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus release obligation",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "release",
+            "obligation",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus release obligation --format json",
+          "description": "The larger of what the public contract requires since the last release and the completion cadence the policy declares, which a change set carrying work owes over the trunk's own version — so two branches that both start from one trunk cannot both land claiming the next version. Every changed path is classified as work, a derived projection, a release record or a version advance, and only work owes the cadence. The same value answers `GET /api/v1/release/obligation` and the `majordomus_release_obligation` MCP tool, and the `version-obligation` gate runs it against the merge's first parent. This fixture has no trunk to measure against, so the verdict is `unverified` with exit 12 — a trunk nobody could read is never reported as nothing owed.",
+          "expectation": "exits 12",
+          "id": "release-obligation",
+          "setup": [],
+          "title": "What integrating this tree requires the version to become"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "obligation",
+      "parent_route": "/docs/cli/release/",
+      "path": [
+        "majordomus",
+        "release",
+        "obligation"
+      ],
+      "route": "/docs/cli/release/obligation/",
+      "usage": "majordomus release obligation [OPTIONS]"
+    },
+    {
+      "about": "Satisfy the version obligation through the one writer: raise the version to the minimum the obligation computes against the current trunk, and nothing when it already holds; scripts/derive derives the rest",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus release",
+          "name": "release",
+          "route": "/docs/cli/release/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The ref the work is integrated into, instead of the policy's trunk",
+          "long": "base",
+          "name": "base",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "REF"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Say what would change and write nothing",
+          "long": "dry-run",
+          "name": "dry_run",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "DRY_RUN"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "How to render the answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus release advance",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "release",
+            "advance",
+            "--dry-run"
+          ],
+          "command": "majordomus release advance --dry-run",
+          "description": "Computes the obligation against the trunk as it is now and, when it is owed, raises the version to its minimum with the writer `release bump` uses — the manifest's version line and the lock's record of it, read back. When it already holds it writes nothing, so a retried finish or a rerun workflow cannot advance twice. A tree behind the trunk is refused: the trunk is merged first, then the advance is computed from the version that won. `finish --outcome completed` runs it before the contract is judged. This fixture has no trunk, so nothing can be decided and it exits 12.",
+          "expectation": "exits 12",
+          "id": "release-advance-dry-run",
+          "setup": [],
+          "title": "Satisfying it, through the one writer"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "advance",
+      "parent_route": "/docs/cli/release/",
+      "path": [
+        "majordomus",
+        "release",
+        "advance"
+      ],
+      "route": "/docs/cli/release/advance/",
+      "usage": "majordomus release advance [OPTIONS]"
     },
     {
       "about": "What this executable's own public surface is held to: documentation, executable examples, module coverage, and every command accounted for against the capability registry",
@@ -31251,10 +31562,10 @@
     }
   ],
   "counts": {
-    "arguments": 1341,
-    "commands": 199,
-    "examples": 201,
-    "runnable": 175
+    "arguments": 1354,
+    "commands": 201,
+    "examples": 203,
+    "runnable": 177
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.12.0",

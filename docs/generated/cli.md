@@ -122,6 +122,8 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus release version`](#majordomus-release-version) | `/docs/cli/release/version/` | The version the crate manifest declares, whether the projection the shell tool reads states it, any version written by hand where the tool's files live, and the bump the commits since the last release imply |
 | [`majordomus release analyze`](#majordomus-release-analyze) | `/docs/cli/release/analyze/` | What the public contract did since the last release, and the smallest version this tree may therefore declare |
 | [`majordomus release bump`](#majordomus-release-bump) | `/docs/cli/release/bump/` | Raise the version in the one place it is authored, to at least what the public contract requires; scripts/derive derives the rest |
+| [`majordomus release obligation`](#majordomus-release-obligation) | `/docs/cli/release/obligation/` | What integrating this tree into the trunk requires the version to become: the larger of the public contract's requirement and the completion cadence over the trunk's version (ADR 0106); exit 10 when it is owed |
+| [`majordomus release advance`](#majordomus-release-advance) | `/docs/cli/release/advance/` | Satisfy the version obligation through the one writer: raise the version to the minimum the obligation computes against the current trunk, and nothing when it already holds; scripts/derive derives the rest |
 | [`majordomus quality`](#majordomus-quality) | `/docs/cli/quality/` | What this executable's own public surface is held to: documentation, executable examples, module coverage, and every command accounted for against the capability registry |
 | [`majordomus quality report`](#majordomus-quality-report) | `/docs/cli/quality/report/` | Measure the crate and report every finding, with the rule it breaks and what to do about it |
 | [`majordomus quality rustdoc`](#majordomus-quality-rustdoc) | `/docs/cli/quality/rustdoc/` | Judge the crate's rustdoc tree against the crate: every page present, HEAD's, nothing broken or leaked |
@@ -3349,7 +3351,7 @@ Examples:
 
 What this project has shipped and what it would ship next: the changelog derived from the layer's own records, the version authored in one place and projected for the shell tool, and the one command that raises it
 
-Subcommands: [`majordomus release changelog`](#majordomus-release-changelog), [`majordomus release version`](#majordomus-release-version), [`majordomus release analyze`](#majordomus-release-analyze), [`majordomus release bump`](#majordomus-release-bump).
+Subcommands: [`majordomus release changelog`](#majordomus-release-changelog), [`majordomus release version`](#majordomus-release-version), [`majordomus release analyze`](#majordomus-release-analyze), [`majordomus release bump`](#majordomus-release-bump), [`majordomus release obligation`](#majordomus-release-obligation), [`majordomus release advance`](#majordomus-release-advance).
 
 ```text
 majordomus release [OPTIONS] [COMMAND]
@@ -3482,6 +3484,63 @@ Examples:
 
   ```console
   $ majordomus release bump --dry-run
+  ```
+
+  Verified: exits 12.
+
+<a id="majordomus-release-obligation"></a>
+## `majordomus release obligation`
+
+What integrating this tree into the trunk requires the version to become: the larger of the public contract's requirement and the completion cadence over the trunk's version (ADR 0106); exit 10 when it is owed
+
+```text
+majordomus release obligation [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--base` | `<REF>` | — | The ref the work is integrated into, instead of the policy's trunk |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | How to render the answer (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What integrating this tree requires the version to become** — The larger of what the public contract requires since the last release and the completion cadence the policy declares, which a change set carrying work owes over the trunk's own version — so two branches that both start from one trunk cannot both land claiming the next version. Every changed path is classified as work, a derived projection, a release record or a version advance, and only work owes the cadence. The same value answers `GET /api/v1/release/obligation` and the `majordomus_release_obligation` MCP tool, and the `version-obligation` gate runs it against the merge's first parent. This fixture has no trunk to measure against, so the verdict is `unverified` with exit 12 — a trunk nobody could read is never reported as nothing owed.
+
+  ```console
+  $ majordomus release obligation --format json
+  ```
+
+  Verified: exits 12.
+
+<a id="majordomus-release-advance"></a>
+## `majordomus release advance`
+
+Satisfy the version obligation through the one writer: raise the version to the minimum the obligation computes against the current trunk, and nothing when it already holds; scripts/derive derives the rest
+
+```text
+majordomus release advance [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--base` | `<REF>` | — | The ref the work is integrated into, instead of the policy's trunk |
+| `--dry-run` | flag | — | Say what would change and write nothing |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | How to render the answer (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Satisfying it, through the one writer** — Computes the obligation against the trunk as it is now and, when it is owed, raises the version to its minimum with the writer `release bump` uses — the manifest's version line and the lock's record of it, read back. When it already holds it writes nothing, so a retried finish or a rerun workflow cannot advance twice. A tree behind the trunk is refused: the trunk is merged first, then the advance is computed from the version that won. `finish --outcome completed` runs it before the contract is judged. This fixture has no trunk, so nothing can be decided and it exits 12.
+
+  ```console
+  $ majordomus release advance --dry-run
   ```
 
   Verified: exits 12.

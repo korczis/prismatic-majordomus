@@ -5,7 +5,7 @@
 
 What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the public contract requires it to become — or that it cannot be measured, and so decides nothing — with what the commits since the last release imply beside it as evidence.
 
-Stability: implemented. Capabilities: 3.
+Stability: implemented. Capabilities: 4.
 
 ## `release.analysis` — What the public contract did, and the smallest version it allows
 
@@ -50,6 +50,28 @@ Every release the layer records, newest first, with the work that has not been r
 | `version` | string or null | no | One version, or `unreleased`; every section when absent. |
 
 Output: `ReleaseChangelog`.
+
+## `release.obligation` — What integrating this tree requires the version to become
+
+The version obligation of this tree against the trunk it is integrated into (ADR 0106): the larger of what the public contract requires since the last release (ADR 0051) and the completion cadence the policy declares (`release.cadence`), which a change set owes over the trunk's own version when it carries work. Every changed path is classified by what makes it machine output — a projection the trunk's .gitattributes marks derived, a release record, the manifest and lock differing only by the version — and anything else is work; a change set that carries no work owes no cadence, so the release pipeline's follow-ups never raise the version they record. The verdict is a predicate, not a count: satisfied when the declared version reaches the minimum computed against the trunk as it is now, owed when it does not, behind when the trunk already declares more, and unverified — never a pass — when the trunk cannot be read. `release advance` satisfies it through the one writer; `finish --outcome completed` asks it; the `version-obligation` gate refuses a merge that does not hold it.
+
+| | |
+|---|---|
+| kind | query |
+| stability | implemented |
+| MCP tool | `majordomus_release_obligation` |
+| HTTP | `GET /api/v1/release/obligation` |
+| cache | — |
+| benchmark | waived (published_history) |
+| provenance | builtin majordomus_cli::capability::builtin::release |
+| tags | release, version, lifecycle |
+
+| input | type | required | description |
+|---|---|---|---|
+| `base` | string or null | no | The ref the work is integrated into, instead of the policy's trunk: `origin/master`,
+or `HEAD^1` for the first parent of a merge. |
+
+Output: `VersionObligation`.
 
 ## `release.version` — The version, and the one the contract requires next
 

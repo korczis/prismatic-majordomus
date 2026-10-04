@@ -1319,6 +1319,15 @@
         "status": "query"
       },
       {
+        "id": "capability:release.obligation",
+        "kind": "capability",
+        "label": "release.obligation",
+        "summary": "What integrating this tree requires the version to become",
+        "route": "/cockpit/capabilities/release.obligation",
+        "source": "apps/majordomus-cli/src/capability/builtin/release.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:release.version",
         "kind": "capability",
         "label": "release.version",
@@ -1701,30 +1710,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/execution/engine.rs",
-        "kind": "file",
-        "label": "engine.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/execution/engine.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/execution/event.rs",
-        "kind": "file",
-        "label": "event.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/execution/event.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/execution/mod.rs",
-        "kind": "file",
-        "label": "mod.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/execution/mod.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/graph.rs",
         "kind": "file",
         "label": "graph.rs",
@@ -1733,35 +1718,11 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/http/events.rs",
-        "kind": "file",
-        "label": "events.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/http/events.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/http/router.rs",
         "kind": "file",
         "label": "router.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/http/router.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/http/swagger.rs",
-        "kind": "file",
-        "label": "swagger.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/http/swagger.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/http/ws.rs",
-        "kind": "file",
-        "label": "ws.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/http/ws.rs",
         "external": true
       },
       {
@@ -4186,6 +4147,41 @@
             "providers",
             "mcp",
             "governance"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0106",
+        "kind": "adr",
+        "label": "adr-0106",
+        "summary": "Integrated work advances the version by at least the cadence over the trunk, and the contract's requirement still wins when it is larger",
+        "route": "/cockpit/objects/adr/adr-0106",
+        "source": ".ai/repo/adrs/0106-integrated-work-advances-the-version-by-at-least-the-cadence-over-the-trunk.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-04",
+          "related": [
+            "rule:project.integrated-work-advances-the-version",
+            "rule:majordomus.version-obligation",
+            "rule:project.the-version-is-measured",
+            "rule:project.release-is-a-projection",
+            "rule:project.land-and-publish",
+            "rule:project.integration-follows-the-current-master",
+            "file:apps/majordomus-cli/src/release/obligation.rs",
+            "file:apps/majordomus-cli/src/release/version.rs",
+            "file:apps/majordomus-cli/src/commands/release.rs",
+            "file:lib/finish.sh",
+            "file:.ai/repo/policy.yaml",
+            "file:.ai/repo/ci/gates.yaml",
+            "test:test/cases/801_completed_work_advances_the_version.sh",
+            "test:test/cases/802_a_merge_carries_its_version_advance.sh",
+            "test:apps/majordomus-cli/tests/release_obligation.rs"
+          ],
+          "tags": [
+            "release",
+            "versioning",
+            "lifecycle",
+            "integration"
           ]
         }
       },
@@ -31986,6 +31982,27 @@
         }
       },
       {
+        "id": "majordomus://rule/majordomus.version-obligation@1",
+        "kind": "rule",
+        "label": "majordomus.version-obligation@1",
+        "summary": "Completed work does not leave the trunk on its version",
+        "route": "/cockpit/objects/rule/majordomus-version-obligation-1",
+        "source": ".ai/repo/rules/vendor/majordomus/rules/version-obligation.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "majordomus.completion-gates@1"
+          ],
+          "tags": [
+            "tasks",
+            "completion",
+            "release",
+            "version"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.a-brief-is-kept-as-received@1",
         "kind": "rule",
         "label": "project.a-brief-is-kept-as-received@1",
@@ -32933,6 +32950,30 @@
           "tags": [
             "provenance",
             "dependencies"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.integrated-work-advances-the-version@1",
+        "kind": "rule",
+        "label": "project.integrated-work-advances-the-version@1",
+        "summary": "A merge into the trunk that carries work carries its version advance",
+        "route": "/cockpit/objects/rule/project-integrated-work-advances-the-version-1",
+        "source": ".ai/repo/rules/project/integrated-work-advances-the-version.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.land-and-publish@1",
+            "project.the-version-is-measured@2",
+            "project.release-is-a-projection@2",
+            "project.integration-follows-the-current-master@1"
+          ],
+          "tags": [
+            "release",
+            "versioning",
+            "integration",
+            "lifecycle"
           ]
         }
       },
@@ -38341,6 +38382,20 @@
         "source": "test/cases/79_bench_command.sh"
       },
       {
+        "id": "majordomus://test/test/cases/801_completed_work_advances_the_version.sh",
+        "kind": "test",
+        "label": "test/cases/801_completed_work_advances_the_version.sh",
+        "route": "/cockpit/objects/test/test-cases-801-completed-work-advances-the-version-sh",
+        "source": "test/cases/801_completed_work_advances_the_version.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/802_a_merge_carries_its_version_advance.sh",
+        "kind": "test",
+        "label": "test/cases/802_a_merge_carries_its_version_advance.sh",
+        "route": "/cockpit/objects/test/test-cases-802-a-merge-carries-its-version-advance-sh",
+        "source": "test/cases/802_a_merge_carries_its_version_advance.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/80_bench_persistence.sh",
         "kind": "test",
         "label": "test/cases/80_bench_persistence.sh",
@@ -43364,6 +43419,21 @@
         "kind": "projects"
       },
       {
+        "source": "capability:release.obligation",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:release.obligation",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:release.obligation",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:release.version",
         "target": "projection:cockpit",
         "kind": "projects"
@@ -44575,11 +44645,6 @@
       },
       {
         "source": "majordomus://adr/adr-0031",
-        "target": "file:apps/majordomus-cli/src/http/swagger.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0031",
         "target": "file:apps/majordomus-cli/src/web/html.rs",
         "kind": "put_in_force"
       },
@@ -44619,39 +44684,9 @@
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0031",
-        "target": "majordomus://test/test/cases/107_design_tokens.sh",
-        "kind": "put_in_force"
-      },
-      {
         "source": "majordomus://adr/adr-0032",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/execution/engine.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/execution/event.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/execution/mod.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/http/events.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/http/ws.rs",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0033",
@@ -45951,6 +45986,41 @@
       {
         "source": "majordomus://adr/adr-0103",
         "target": "majordomus://rule/project.a-provider-capability-cites-its-evidence@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0106",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0106",
+        "target": "majordomus://rule/majordomus.version-obligation@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0106",
+        "target": "majordomus://rule/project.integrated-work-advances-the-version@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0106",
+        "target": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0106",
+        "target": "majordomus://rule/project.land-and-publish@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0106",
+        "target": "majordomus://rule/project.release-is-a-projection@2",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0106",
+        "target": "majordomus://rule/project.the-version-is-measured@2",
         "kind": "put_in_force"
       },
       {
@@ -57214,6 +57284,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://rule/majordomus.version-obligation@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/majordomus.version-obligation@1",
+        "target": "majordomus://rule/majordomus.completion-gates@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.a-brief-is-kept-as-received@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -57831,6 +57911,31 @@
       {
         "source": "majordomus://rule/project.independent-of-prismatic@1",
         "target": "majordomus://rule/project.clean-room@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.integrated-work-advances-the-version@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.integrated-work-advances-the-version@1",
+        "target": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.integrated-work-advances-the-version@1",
+        "target": "majordomus://rule/project.land-and-publish@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.integrated-work-advances-the-version@1",
+        "target": "majordomus://rule/project.release-is-a-projection@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.integrated-work-advances-the-version@1",
+        "target": "majordomus://rule/project.the-version-is-measured@2",
         "kind": "depends_on"
       },
       {
@@ -60190,6 +60295,16 @@
       },
       {
         "source": "majordomus://test/test/cases/79_bench_command.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/801_completed_work_advances_the_version.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/802_a_merge_carries_its_version_advance.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -63290,6 +63405,11 @@
       },
       {
         "source": "module:release",
+        "target": "capability:release.obligation",
+        "kind": "composes"
+      },
+      {
+        "source": "module:release",
         "target": "capability:release.version",
         "kind": "composes"
       },
@@ -63441,7 +63561,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4493,
+      "edges": 4506,
       "acyclic": true,
       "truncated": true
     }

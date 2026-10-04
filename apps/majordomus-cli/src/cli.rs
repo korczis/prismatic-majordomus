@@ -1305,6 +1305,21 @@ pub enum ReleaseCommand {
         #[arg(long)]
         dry_run: bool,
     },
+    /// What integrating this tree into the trunk requires the version to become: the larger of the public contract's requirement and the completion cadence over the trunk's version (ADR 0106); exit 10 when it is owed
+    Obligation {
+        /// The ref the work is integrated into, instead of the policy's trunk
+        #[arg(long, value_name = "REF")]
+        base: Option<String>,
+    },
+    /// Satisfy the version obligation through the one writer: raise the version to the minimum the obligation computes against the current trunk, and nothing when it already holds; scripts/derive derives the rest
+    Advance {
+        /// The ref the work is integrated into, instead of the policy's trunk
+        #[arg(long, value_name = "REF")]
+        base: Option<String>,
+        /// Say what would change and write nothing
+        #[arg(long)]
+        dry_run: bool,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -3949,6 +3964,28 @@ pub const EXAMPLES: &[CommandExamples] = &[
             title: "Raising it, in the one place it is authored",
             description: "The one writer, and it computes nothing: it reads the plan `release analyze` prints and applies it, so the version it writes is the measured minimum rather than a judgement of its own. `--level` and `--exact` name a higher version when a person means more than the contract did, and are refused below the minimum with nothing written — an override that could undershoot would make the measurement decorative. It rewrites the manifest's one version line and the lock's record of it, reads both back, and leaves share/version.txt and the generator stamps to scripts/derive. A repository that has published nothing has no baseline to raise from — the example runs in one — and says so with exit 12 rather than inventing a number.",
             argv: &["release", "bump", "--dry-run"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "release obligation",
+        examples: &[ExampleDoc {
+            id: "release-obligation",
+            title: "What integrating this tree requires the version to become",
+            description: "The larger of what the public contract requires since the last release and the completion cadence the policy declares, which a change set carrying work owes over the trunk's own version — so two branches that both start from one trunk cannot both land claiming the next version. Every changed path is classified as work, a derived projection, a release record or a version advance, and only work owes the cadence. The same value answers `GET /api/v1/release/obligation` and the `majordomus_release_obligation` MCP tool, and the `version-obligation` gate runs it against the merge's first parent. This fixture has no trunk to measure against, so the verdict is `unverified` with exit 12 — a trunk nobody could read is never reported as nothing owed.",
+            argv: &["release", "obligation", "--format", "json"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "release advance",
+        examples: &[ExampleDoc {
+            id: "release-advance-dry-run",
+            title: "Satisfying it, through the one writer",
+            description: "Computes the obligation against the trunk as it is now and, when it is owed, raises the version to its minimum with the writer `release bump` uses — the manifest's version line and the lock's record of it, read back. When it already holds it writes nothing, so a retried finish or a rerun workflow cannot advance twice. A tree behind the trunk is refused: the trunk is merged first, then the advance is computed from the version that won. `finish --outcome completed` runs it before the contract is judged. This fixture has no trunk, so nothing can be decided and it exits 12.",
+            argv: &["release", "advance", "--dry-run"],
             setup: &[],
             expect: Expect::ExitCode(12),
         }],

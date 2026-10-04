@@ -307,7 +307,20 @@ pub fn declared_in(manifest: &str) -> Option<String> {
 /// assert_eq!(locked(dir.path()), None);
 /// ```
 pub fn locked(root: &Path) -> Option<String> {
-    let text = std::fs::read_to_string(root.join(LOCK)).ok()?;
+    locked_in(&std::fs::read_to_string(root.join(LOCK)).ok()?)
+}
+
+/// The version a lock file's text records for this crate: [`locked`] without the read, the
+/// way [`declared_in`] is [`declared`] without it.
+///
+/// ```
+/// use majordomus_cli::release::version::locked_in;
+/// let lock = "[[package]]\nname = \"serde\"\nversion = \"1.0.0\"\n\n\
+///             [[package]]\nname = \"majordomus-cli\"\nversion = \"0.12.0\"\n";
+/// assert_eq!(locked_in(lock).as_deref(), Some("0.12.0"));
+/// assert_eq!(locked_in("[[package]]\nname = \"serde\"\nversion = \"1.0.0\"\n"), None);
+/// ```
+pub fn locked_in(text: &str) -> Option<String> {
     let mut in_package = false;
     for line in text.lines() {
         let line = line.trim();
@@ -846,6 +859,40 @@ pub fn write(root: &Path, to: &str) -> std::io::Result<Vec<String>> {
 
     let manifest = root.join(MANIFEST);
     let text = std::fs::read_to_string(&manifest)?;
+    let out = rewrite_manifest(&text, to);
+    if out != text {
+        std::fs::write(&manifest, out)?;
+        written.push(MANIFEST.to_string());
+    }
+
+    let lock = root.join(LOCK);
+    if let Ok(text) = std::fs::read_to_string(&lock) {
+        let out = rewrite_lock(&text, to);
+        if out != text {
+            std::fs::write(&lock, out)?;
+            written.push(LOCK.to_string());
+        }
+    }
+
+    Ok(written)
+}
+
+/// The manifest's text with its `[package] version` line stating `to`, and nothing else
+/// changed: the transformation [`write`] applies, as a function of text.
+///
+/// Pure so that a reader can ask whether two manifests differ *only* by what the writer
+/// does — [`crate::release::obligation`] does, to tell a change that is only a version
+/// advance from a change to the build.
+///
+/// ```
+/// use majordomus_cli::release::version::rewrite_manifest;
+/// let text = "[package]\nversion = \"0.8.0\"\n\n[dependencies]\nx = { version = \"0.8.0\" }\n";
+/// assert_eq!(
+///     rewrite_manifest(text, "0.9.0"),
+///     "[package]\nversion = \"0.9.0\"\n\n[dependencies]\nx = { version = \"0.8.0\" }\n"
+/// );
+/// ```
+pub fn rewrite_manifest(text: &str, to: &str) -> String {
     let mut out = String::with_capacity(text.len());
     let mut in_package = false;
     let mut done = false;
@@ -862,40 +909,41 @@ pub fn write(root: &Path, to: &str) -> std::io::Result<Vec<String>> {
         out.push_str(line);
         out.push('\n');
     }
-    if out != text {
-        std::fs::write(&manifest, out)?;
-        written.push(MANIFEST.to_string());
-    }
+    out
+}
 
-    // The lock's own entry, and only it: the `version` line that follows
-    // `name = "majordomus-cli"`. Every other `version` in the file belongs to a dependency.
-    let lock = root.join(LOCK);
-    if let Ok(text) = std::fs::read_to_string(&lock) {
-        let mut out = String::with_capacity(text.len());
-        let mut here = false;
-        let mut done = false;
-        for line in text.lines() {
-            let trimmed = line.trim();
-            if trimmed == "[[package]]" {
-                here = false;
-            } else if trimmed == "name = \"majordomus-cli\"" {
-                here = true;
-            } else if here && !done && trimmed.starts_with("version") && trimmed.contains('"') {
-                out.push_str(&format!("version = \"{to}\"\n"));
-                here = false;
-                done = true;
-                continue;
-            }
-            out.push_str(line);
-            out.push('\n');
+/// The lock's text with its own `majordomus-cli` entry stating `to`: the `version` line that
+/// follows `name = "majordomus-cli"`. Every other `version` in the file belongs to a
+/// dependency and is left as it is.
+///
+/// ```
+/// use majordomus_cli::release::version::rewrite_lock;
+/// let text = "[[package]]\nname = \"majordomus-cli\"\nversion = \"0.8.0\"\n\n\
+///             [[package]]\nname = \"serde\"\nversion = \"0.8.0\"\n";
+/// let out = rewrite_lock(text, "0.9.0");
+/// assert!(out.contains("name = \"majordomus-cli\"\nversion = \"0.9.0\""));
+/// assert!(out.contains("name = \"serde\"\nversion = \"0.8.0\""));
+/// ```
+pub fn rewrite_lock(text: &str, to: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let mut here = false;
+    let mut done = false;
+    for line in text.lines() {
+        let trimmed = line.trim();
+        if trimmed == "[[package]]" {
+            here = false;
+        } else if trimmed == "name = \"majordomus-cli\"" {
+            here = true;
+        } else if here && !done && trimmed.starts_with("version") && trimmed.contains('"') {
+            out.push_str(&format!("version = \"{to}\"\n"));
+            here = false;
+            done = true;
+            continue;
         }
-        if out != text {
-            std::fs::write(&lock, out)?;
-            written.push(LOCK.to_string());
-        }
+        out.push_str(line);
+        out.push('\n');
     }
-
-    Ok(written)
+    out
 }
 
 /// The version the commit subjects imply: the last release raised by their bump — from the
