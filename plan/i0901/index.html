@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=9e8abe6cb04ff0398a84">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=f132cc838205a6f386c7">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -29,7 +29,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.13.0 -->
+     Generator: majordomus-cli 0.13.1 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -158,12 +158,9 @@
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="min-w-0">
-  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--ready">READY</span>
+  <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--done">DONE</span>
 <span class="text-sm text-body">wave 0 · p0 · deep-work profile · parallel safe</span></p>
   <p class="mt-3 text-sm text-body">Part of <a href="https://majordomus.dev/plan/fly-deployment/" class="text-fg-brand underline">fly-deployment — A deployment is a projection of the repository model, and a reachable URL is its evidence</a>.</p>
-  <div class="mt-6 rounded-base border border-default bg-neutral-primary-soft p-4">
-    <p class="text-sm text-body">Ready. Every dependency is done, so <code class="font-mono text-heading">majordomus plan start I0901</code> will be accepted.</p>
-  </div>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Objective</h2>
   <p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">Register `deployment` as a kind of the AI layer — allowed keys, schema, directory contract — and describe this repository&#39;s own deployment as one object under .ai/repo/deployments/, so that every later projection reads one file and no provider file is ever authoritative.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A Dockerfile and a fly.toml written by hand would restate the port, the routes, the resources and the build inputs that the repository already knows. The layer already has a mechanism for canonical facts: a kind, its allowed keys, its schema and its directory contract. Deployment is a kind, and everything downstream is a projection.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Current state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">The kind exists on the trunk: share/kinds.yaml declares deployment against the schema majordomus.deployment/v1, share/allow/deployment.txt closes its keys and is generated from that schema, and .ai/repo/deployments/majordomus.yaml describes this repository&#39;s own deployment beside the directory&#39;s README. The work reached master with feature/deployment-core and nothing was ever recorded against this issue, so the milestone reads PLANNED 0/32 while its first artifacts are on the trunk. Measured on master 6042f4286, 2026-09-10; not marked complete here because this issue&#39;s own validation (bash test/run.sh, bin/majordomus doctor) has not been rerun against that tree.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Desired state</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A deployment object is indexed, readable through the same object surface as every other kind, closed by an allow file, described by a schema, and living in a directory that carries its own context document.</p>
@@ -178,8 +175,8 @@
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Dependencies</h2>
   <p class="mt-2 text-sm text-body">None. This issue is a root of the graph.</p>
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What waits on this</h2>
-  <ul class="mt-3 grid gap-2 sm:grid-cols-2"><li class="min-w-0"><a href="https://majordomus.dev/plan/i0902/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0902</span><span class="mj-badge mj-badge--blocked">BLOCKED</span>
-<span class="min-w-0 break-words text-sm text-heading">The deployment object becomes typed Rust that refuses nonsense</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/plan/i0924/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0924</span><span class="mj-badge mj-badge--blocked">BLOCKED</span>
+  <ul class="mt-3 grid gap-2 sm:grid-cols-2"><li class="min-w-0"><a href="https://majordomus.dev/plan/i0902/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0902</span><span class="mj-badge mj-badge--ready">READY</span>
+<span class="min-w-0 break-words text-sm text-heading">The deployment object becomes typed Rust that refuses nonsense</span></a></li><li class="min-w-0"><a href="https://majordomus.dev/plan/i0924/" class="flex min-w-0 items-start gap-2 rounded-base border border-default bg-neutral-primary-soft px-3 py-2 hover:bg-neutral-secondary-medium"><span class="font-mono text-xs text-body-subtle">I0924</span><span class="mj-badge mj-badge--ready">READY</span>
 <span class="min-w-0 break-words text-sm text-heading">The decision is recorded where architecture decisions are recorded</span></a></li>
   </ul>
 
@@ -194,17 +191,22 @@
 <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body"><li class="font-mono text-heading break-words">kind_registered</li><li class="font-mono text-heading break-words">keys_closed</li><li class="font-mono text-heading break-words">directory_contract</li><li class="font-mono text-heading break-words">object_indexed</li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Evidence</h2>
-  <p class="mt-2 text-sm text-body">None recorded. Every token above needs a command or an artifact behind it before this issue can be completed; narrative is refused.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Risk</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A schema written for one deployment becomes either a Kubernetes-grade abstraction nobody needs or a Fly file with a different extension. It has to be generic where a second provider would plausibly reuse it and concrete everywhere else.</p>
+  <div class="mt-4 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[34rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-2">covers</th><th scope="col" class="px-4 py-2">type</th><th scope="col" class="px-4 py-2">command</th><th scope="col" class="px-4 py-2">result</th><th scope="col" class="px-4 py-2">at commit</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">kind_registered</td><td class="px-4 py-2 font-mono text-xs text-body">artifact</td><td class="px-4 py-2 font-mono text-xs text-body break-words">grep -n -A3 &#39;^  deployment:&#39; share/kinds.yaml</td><td class="px-4 py-2 text-body">share/kinds.yaml declares kind deployment against schema majordomus.deployment/v1; share/allow/deployment.txt (41 keys) is generated from that schema</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">f075170</td></tr><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">object_indexed</td><td class="px-4 py-2 font-mono text-xs text-body">test</td><td class="px-4 py-2 font-mono text-xs text-body break-words">bin/majordomus-cli run objects.list --input &#39;{\&quot;kind\&quot;:\&quot;deployment\&quot;}&#39; --format json; bin/majordomus-cli run objects.get --input &#39;{\&quot;uri\&quot;:\&quot;majordomus://deployment/majordomus\&quot;}&#39;</td><td class="px-4 py-2 text-body">objects.list returns one object majordomus://deployment/majordomus at .ai/repo/deployments/majordomus.yaml; objects.get reads it (state succeeded); the generic object surface, no deployment-specific listing code</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">f075170</td></tr><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">keys_closed</td><td class="px-4 py-2 font-mono text-xs text-body">test</td><td class="px-4 py-2 font-mono text-xs text-body break-words">bash test/run.sh 84_deployment_contract</td><td class="px-4 py-2 text-body">ok 84_deployment_contract: doctor refuses an unknown key by name (key(s) the contract does not have: fly_api_token), a foreign schema, a missing region, a credential, a duplicate identity; the restored object is accepted</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">f075170</td></tr><tr class="border-t border-default align-top"><td class="px-4 py-2 font-mono text-xs text-heading">directory_contract</td><td class="px-4 py-2 font-mono text-xs text-body">artifact</td><td class="px-4 py-2 font-mono text-xs text-body break-words">grep -nE &#39;uthoritative|enerated|egenerat&#39; .ai/repo/deployments/README.md; bin/majordomus doctor | grep deployment</td><td class="px-4 py-2 text-body">the context/v1 README ai.repo.deployments has sections &#39;What is authoritative and what is generated&#39; and &#39;Regenerate&#39; (ADR 0011); doctor: OK deployment .ai/repo/deployments/ — 1 deployment(s), no credential, one identity each</td><td class="px-4 py-2 font-mono text-xs text-body-subtle">f075170</td></tr></tbody>
+    </table>
+  </div><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Risk</h2><p class="mt-2 max-w-3xl break-words text-base leading-relaxed text-body">A schema written for one deployment becomes either a Kubernetes-grade abstraction nobody needs or a Fly file with a different extension. It has to be generic where a second provider would plausibly reuse it and concrete everywhere else.</p>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Timeline</h2>
   <dl class="mt-3 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">started</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verified</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
-    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">completed</dt><dd class="mt-1 font-mono text-sm text-heading break-words">—</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">started</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-04T09:55:21Z</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">verified</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-04T09:59:52Z</dd></div>
+    <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">completed</dt><dd class="mt-1 font-mono text-sm text-heading break-words">2026-10-04T10:00:11Z</dd></div>
   </dl>
   <p class="mt-3 max-w-3xl text-sm text-body">Those three fields, the evidence above and the state of the dependencies are all the status is made of. There is no status field to disagree with them.</p>
 
-  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/e08aec8651ba2d06dd917428f112d39865e1d2ac/.ai/repo/project/issues/I0901.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I0901.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I0901</code>.</p>
+  <p class="mt-8 text-sm text-body">Canonical record: <a href="https://github.com/korczis/prismatic-majordomus/blob/2a4fe055b8b101ed2d2ac61fc0e8cb22ff5392e5/.ai/repo/project/issues/I0901.yaml" class="break-all font-mono text-fg-brand underline inline-block py-1">.ai/repo/project/issues/I0901.yaml</a>. Read it back with <code class="font-mono text-heading">majordomus plan show I0901</code>.</p>
 </div>
 
 </div>
@@ -264,7 +266,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.13.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/e08aec8651ba2d06dd917428f112d39865e1d2ac" class="font-mono underline">e08aec8</a> · inputs <span class="font-mono">a14012a7f5f5</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.13.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2a4fe055b8b101ed2d2ac61fc0e8cb22ff5392e5" class="font-mono underline">2a4fe05</a> · inputs <span class="font-mono">eb61c3a5321b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

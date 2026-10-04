@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=9e8abe6cb04ff0398a84">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=f132cc838205a6f386c7">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -29,7 +29,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.13.0 -->
+     Generator: majordomus-cli 0.13.1 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -163,7 +163,7 @@
 <span class="text-sm text-body">Declared deterministic and blocking, implemented, and naming the behavioural test that is to prove it. Whether a recorded run supports it is the evidence verdict, shown beside it.</span></p>
     <p class="mt-3 flex flex-wrap items-center gap-3"><span class="text-xs font-semibold uppercase tracking-wide text-body-subtle">recorded evidence</span><span class="mj-badge mj-badge--not-run" data-claim="vendored-rule-package">not run</span><span class="text-sm text-body">Declared guaranteed, and not supported by a recorded run: the test is named, and no passing run of the current inputs is recorded. <a href="https://majordomus.dev/evidence/" class="text-fg-brand underline">how evidence is recorded</a></span></p>
     <p class="mt-6 max-w-3xl break-words text-base leading-relaxed text-heading">rules vendor status reports an edited, missing or stray file; rules vendor update refuses over it until --force, and never touches rules/project/. A newer executable reports a newer package and does not apply it.</p>
-    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-8 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0"><h2 id="what-it-means"><a class="zola-anchor" href="#what-it-means" aria-label="Anchor link for: what-it-means">What it means</a></h2>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-8 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline" tabindex="0"><h2 id="what-it-means"><a class="zola-anchor" href="#what-it-means" aria-label="Anchor link for: what-it-means">What it means</a></h2>
 <p>The rules Majordomus ships are not read from the executable at run time. <code>init</code> copies the package from <code>share/standard/majordomus/</code> into <code>.ai/repo/rules/vendor/majordomus/</code>, manifest included, and from then on the repository's copy is the one that applies. The manifest names every rule file with its identity and its content hash, so an edit under <code>vendor/</code>, a listed file that is missing, or a stray file beside the manifest is detected by name. A newer executable reports that it ships a different package and never applies it; the baseline changes only when <code>majordomus rules vendor update</code> is asked for.</p>
 <h2 id="how-it-works"><a class="zola-anchor" href="#how-it-works" aria-label="Anchor link for: how-it-works">How it works</a></h2>
 <p><code>mj_rules_manifest_check</code> in <code>lib/rules.sh</code> compares each listed file's hash and identity against the manifest and lists what is present but unlisted. <code>rules vendor status</code> prints the vendored and shipped revisions, the integrity of the vendored copy (exit <code>10</code> on any problem) and whether the two packages are the same (exit <code>11</code> when the executable ships a different one). <code>rules vendor update</code> refuses (<code>15</code>) over a vendored copy that fails its manifest unless <code>--force</code>, stages the new package beside the target and swaps it in atomically, writes a <code>rules.vendored</code> ledger event, and never touches <code>rules/project/</code>. <code>update</code>, <code>doctor</code> and <code>check</code> do not write under <code>vendor/</code> at all.</p>
@@ -177,13 +177,13 @@
 <h2 id="why-it-exists"><a class="zola-anchor" href="#why-it-exists" aria-label="Anchor link for: why-it-exists">Why it exists</a></h2>
 <p>A baseline that lives in the executable changes whenever the executable does, silently, on every machine at a different time. Vendoring makes the rule set a fact of the repository, reviewable in a diff and changed on purpose. <code>test/cases/67_rule_dag.sh</code> edits, removes and adds files under <code>vendor/</code>, hands the repository to a newer distribution, and proves that nothing changes until <code>update</code> is asked for and that <code>rules/project/</code> survives it byte for byte.</p>
 </article>
-    <p class="mt-2 text-xs text-body-subtle">Detail rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/e08aec8651ba2d06dd917428f112d39865e1d2ac/docs/claims/vendored-rule-package.md" class="font-mono underline">docs/claims/vendored-rule-package.md</a>.</p>
+    <p class="mt-2 text-xs text-body-subtle">Detail rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/2a4fe055b8b101ed2d2ac61fc0e8cb22ff5392e5/docs/claims/vendored-rule-package.md" class="font-mono underline">docs/claims/vendored-rule-package.md</a>.</p>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Provenance</h2>
     <dl class="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-[auto_1fr]">
-      <dt class="text-body-subtle">defined in</dt><dd class="min-w-0 break-all"><a href="https://majordomus.dev/docs/doctrine/" class="font-medium text-fg-brand hover:underline">read it on this site</a> · <a href="https://github.com/korczis/prismatic-majordomus/blob/e08aec8651ba2d06dd917428f112d39865e1d2ac/docs/DOCTRINE.md" class="font-mono text-fg-brand hover:underline">docs/DOCTRINE.md</a></dd>
-      <dt class="text-body-subtle">implemented in</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/e08aec8651ba2d06dd917428f112d39865e1d2ac/lib/rules.sh" class="font-mono text-fg-brand hover:underline">lib/rules.sh</a> · <a href="https://majordomus.dev/commands/rules/" class="font-medium text-fg-brand hover:underline">majordomus rules</a></dd>
-      <dt class="text-body-subtle">test it names</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/e08aec8651ba2d06dd917428f112d39865e1d2ac/test/cases/67_rule_dag.sh" class="font-mono text-fg-brand hover:underline">test/cases/67_rule_dag.sh</a></dd>
+      <dt class="text-body-subtle">defined in</dt><dd class="min-w-0 break-all"><a href="https://majordomus.dev/docs/doctrine/" class="font-medium text-fg-brand hover:underline">read it on this site</a> · <a href="https://github.com/korczis/prismatic-majordomus/blob/2a4fe055b8b101ed2d2ac61fc0e8cb22ff5392e5/docs/DOCTRINE.md" class="font-mono text-fg-brand hover:underline">docs/DOCTRINE.md</a></dd>
+      <dt class="text-body-subtle">implemented in</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/2a4fe055b8b101ed2d2ac61fc0e8cb22ff5392e5/lib/rules.sh" class="font-mono text-fg-brand hover:underline">lib/rules.sh</a> · <a href="https://majordomus.dev/commands/rules/" class="font-medium text-fg-brand hover:underline">majordomus rules</a></dd>
+      <dt class="text-body-subtle">test it names</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/2a4fe055b8b101ed2d2ac61fc0e8cb22ff5392e5/test/cases/67_rule_dag.sh" class="font-mono text-fg-brand hover:underline">test/cases/67_rule_dag.sh</a></dd>
       <dt class="text-body-subtle">claim id</dt><dd class="font-mono text-heading">vendored-rule-package</dd>
     </dl>
 
@@ -294,7 +294,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.13.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/e08aec8651ba2d06dd917428f112d39865e1d2ac" class="font-mono underline">e08aec8</a> · inputs <span class="font-mono">a14012a7f5f5</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.13.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2a4fe055b8b101ed2d2ac61fc0e8cb22ff5392e5" class="font-mono underline">2a4fe05</a> · inputs <span class="font-mono">eb61c3a5321b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>
