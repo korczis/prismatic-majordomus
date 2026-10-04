@@ -1,4 +1,4 @@
-// The mobile menu: Flowbite's collapse. The toggle opens the panel it names and says so, and closes it again.
+// The mobile menu: the navbar's collapse (site/nav.js). The toggle opens the panel it names and says so, and closes it again.
 export default {
   id: 'nav-collapse',
   title: 'the mobile menu opens and closes the panel it names',

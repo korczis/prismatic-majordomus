@@ -385,10 +385,11 @@ semantic tokens (`bg-neutral-primary-soft`, `text-heading`, `border-default`, `r
 are used throughout. The theme names Inter first; it is not loaded, so the stack falls to the
 system font on purpose.
 
-Flowbite JS is vendored from the pinned package. Its bundle exposes `window.initFlowbite` and
-does not call it (verified in `node_modules/flowbite/dist/flowbite.js`), so `base.html` calls
-it once on `DOMContentLoaded`. The navbar uses `data-collapse-toggle`; nothing else needs
-Flowbite JS yet.
+Flowbite's JavaScript is not loaded. The only two things the site used it for, the navbar's
+mobile collapse (`data-collapse-toggle`) and its dropdowns (`data-dropdown-toggle`), are
+`site/nav.js`, about 2 KB, which `base.html` loads deferred and site-check requires exactly
+once per page. Removing the 134 KB bundle took the homepage from 338555 to 207140 bytes of
+scripts and stylesheets. Flowbite's styles stay; they are CSS, compiled into `app.css`.
 
 The homepage is a projection of `site/data/registry/product.json`, which the executable
 writes from the features of the layer, the capability registry and the web topology. Every
@@ -609,17 +610,19 @@ deployment" turns that branch into the served site, and it has its own status, w
 `errored` for a branch that was pushed perfectly — it was, on 2026-09-10 at 17:35, and the
 site served the previous commit for 27 minutes with nothing red anywhere.
 
-The workflow's own conclusion does not answer the question either. `pages.yml` cancels a
-superseded run (`cancel-in-progress` for a push, never for a dispatch, which is the recovery
-path), and a cancelled run is not a failure: on 2026-09-09/10, fourteen of seventeen
-cancelled runs had already pushed `gh-pages` before they died, and no reader could tell them
-from the three that had not. So the run says which it was — an annotation and a line in its
-summary — and cancellation itself cannot strand the site, because a run is only ever
-cancelled by a newer run of the same workflow starting, and that chain ends in a run that
+The workflow's own conclusion does not answer the question either. `pages.yml` serialises its
+runs and never cancels the one in flight (`cancel-in-progress: false`; cancelling it starved
+publication on 2026-09-12, when every superseding run was itself superseded), but GitHub drops
+an older *pending* run for a newer one, and a cancelled run is not a failure: on 2026-09-09/10,
+while a push still cancelled the run in flight, fourteen of seventeen cancelled runs had already
+pushed `gh-pages` before they died, and no reader could tell them from the three that had not.
+So the run says which it was — an annotation and a line in its summary — and cancellation
+itself cannot strand the site, because a pending run is only ever dropped for a newer run of
+the same workflow, and the run in flight always finishes: the chain ends in a run that
 publishes or in one that goes red.
 
-What *is* left stale is a run that was cancelled before publishing and whose successor then
-failed to build. Nothing in the deploy can report that, because by then there is no deploy.
+What *is* left stale is a run that never published and whose successor then failed to
+build. Nothing in the deploy can report that, because by then there is no deploy.
 The reader is the `pages-live` gate (`scripts/ci/pages-check`), which runs on every full
 validation and asks four things: the published commit is on master, master has not moved past
 it beyond the deploy window (30 minutes, sized from a 25-minute Actions queue observed on
