@@ -2701,183 +2701,234 @@
 <a href=#2701 id=2701 data-nosnippet>2701</a>/// ```
 <a href=#2702 id=2702 data-nosnippet>2702</a></span><span class="kw">pub fn </span>compact(p: <span class="kw-2">&amp;</span>Preflight, unicode: bool) -&gt; String {
 <a href=#2703 id=2703 data-nosnippet>2703</a>    <span class="kw">let </span>bullet = <span class="kw">if </span>unicode { <span class="string">"·" </span>} <span class="kw">else </span>{ <span class="string">"-" </span>};
-<a href=#2704 id=2704 data-nosnippet>2704</a>    <span class="kw">let </span>episode = p
-<a href=#2705 id=2705 data-nosnippet>2705</a>        .check(<span class="string">"session.episode"</span>)
-<a href=#2706 id=2706 data-nosnippet>2706</a>        .filter(|c| c.verdict.proves())
-<a href=#2707 id=2707 data-nosnippet>2707</a>        .and_then(|c| c.evidence.first())
-<a href=#2708 id=2708 data-nosnippet>2708</a>        .and_then(|e| e.observed.strip_prefix(<span class="string">"session_id "</span>))
-<a href=#2709 id=2709 data-nosnippet>2709</a>        .map(|id| <span class="macro">format!</span>(<span class="string">"episode {id}"</span>))
-<a href=#2710 id=2710 data-nosnippet>2710</a>        .unwrap_or_else(|| <span class="string">"no episode"</span>.into());
-<a href=#2711 id=2711 data-nosnippet>2711</a>    <span class="kw">let </span><span class="kw-2">mut </span>out = <span class="macro">format!</span>(
-<a href=#2712 id=2712 data-nosnippet>2712</a>        <span class="string">"{} {} {bullet} {} {bullet} {episode}\n "</span>,
-<a href=#2713 id=2713 data-nosnippet>2713</a>        <span class="kw">if </span>unicode { <span class="string">"◆" </span>} <span class="kw">else </span>{ <span class="string">"&gt;" </span>},
-<a href=#2714 id=2714 data-nosnippet>2714</a>        p.repository,
-<a href=#2715 id=2715 data-nosnippet>2715</a>        p.branch.as_deref().unwrap_or(<span class="string">"detached"</span>),
-<a href=#2716 id=2716 data-nosnippet>2716</a>    );
-<a href=#2717 id=2717 data-nosnippet>2717</a>    <span class="kw">let </span>shown = [
-<a href=#2718 id=2718 data-nosnippet>2718</a>        (<span class="string">"governance.rules"</span>, <span class="string">"rules"</span>),
-<a href=#2719 id=2719 data-nosnippet>2719</a>        (<span class="string">"session.context"</span>, <span class="string">"context"</span>),
-<a href=#2720 id=2720 data-nosnippet>2720</a>        (<span class="string">"integration.server"</span>, <span class="string">"server"</span>),
-<a href=#2721 id=2721 data-nosnippet>2721</a>        (<span class="string">"integration.mcp"</span>, <span class="string">"mcp"</span>),
-<a href=#2722 id=2722 data-nosnippet>2722</a>        (<span class="string">"integration.cockpit"</span>, <span class="string">"cockpit"</span>),
-<a href=#2723 id=2723 data-nosnippet>2723</a>        (<span class="string">"verification.tests"</span>, <span class="string">"tests"</span>),
-<a href=#2724 id=2724 data-nosnippet>2724</a>        (<span class="string">"verification.enforcement"</span>, <span class="string">"enforced"</span>),
-<a href=#2725 id=2725 data-nosnippet>2725</a>        (<span class="string">"verification.deployment"</span>, <span class="string">"deploy"</span>),
-<a href=#2726 id=2726 data-nosnippet>2726</a>    ];
-<a href=#2727 id=2727 data-nosnippet>2727</a>    <span class="kw">let </span>parts: Vec&lt;String&gt; = shown
-<a href=#2728 id=2728 data-nosnippet>2728</a>        .iter()
-<a href=#2729 id=2729 data-nosnippet>2729</a>        .filter_map(|(id, label)| {
-<a href=#2730 id=2730 data-nosnippet>2730</a>            p.check(id)
-<a href=#2731 id=2731 data-nosnippet>2731</a>                .map(|c| <span class="macro">format!</span>(<span class="string">"{label} {}"</span>, mark(c.verdict, unicode)))
-<a href=#2732 id=2732 data-nosnippet>2732</a>        })
-<a href=#2733 id=2733 data-nosnippet>2733</a>        .collect();
-<a href=#2734 id=2734 data-nosnippet>2734</a>    <span class="kw">let _ </span>= <span class="macro">write!</span>(out, <span class="string">" {}"</span>, parts.join(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">" {bullet} "</span>)));
-<a href=#2735 id=2735 data-nosnippet>2735</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(first) = p.attention.first().and_then(|id| p.check(id)) {
-<a href=#2736 id=2736 data-nosnippet>2736</a>        <span class="kw">let _ </span>= <span class="macro">write!</span>(
-<a href=#2737 id=2737 data-nosnippet>2737</a>            out,
-<a href=#2738 id=2738 data-nosnippet>2738</a>            <span class="string">"\n  {} {} {}: {}"</span>,
-<a href=#2739 id=2739 data-nosnippet>2739</a>            mark(first.verdict, unicode),
-<a href=#2740 id=2740 data-nosnippet>2740</a>            first.title,
-<a href=#2741 id=2741 data-nosnippet>2741</a>            first.verdict.as_str(),
-<a href=#2742 id=2742 data-nosnippet>2742</a>            first.summary
-<a href=#2743 id=2743 data-nosnippet>2743</a>        );
-<a href=#2744 id=2744 data-nosnippet>2744</a>        <span class="kw">if </span>p.attention.len() &gt; <span class="number">1 </span>{
-<a href=#2745 id=2745 data-nosnippet>2745</a>            <span class="kw">let _ </span>= <span class="macro">write!</span>(
-<a href=#2746 id=2746 data-nosnippet>2746</a>                out,
-<a href=#2747 id=2747 data-nosnippet>2747</a>                <span class="string">" (+{} more: majordomus env preflight)"</span>,
-<a href=#2748 id=2748 data-nosnippet>2748</a>                p.attention.len() - <span class="number">1
-<a href=#2749 id=2749 data-nosnippet>2749</a>            </span>);
-<a href=#2750 id=2750 data-nosnippet>2750</a>        }
-<a href=#2751 id=2751 data-nosnippet>2751</a>    }
-<a href=#2752 id=2752 data-nosnippet>2752</a>    out.push(<span class="string">'\n'</span>);
-<a href=#2753 id=2753 data-nosnippet>2753</a>    out
-<a href=#2754 id=2754 data-nosnippet>2754</a>}
-<a href=#2755 id=2755 data-nosnippet>2755</a>
-<a href=#2756 id=2756 data-nosnippet>2756</a><span class="doccomment">/// The whole preflight, a section per heading and a line per claim, with its evidence.
-<a href=#2757 id=2757 data-nosnippet>2757</a>///
-<a href=#2758 id=2758 data-nosnippet>2758</a>/// ```
-<a href=#2759 id=2759 data-nosnippet>2759</a>/// use majordomus_cli::environment::preflight::{full, derive, Observations};
-<a href=#2760 id=2760 data-nosnippet>2760</a>/// let text = full(&amp;derive(&amp;Observations::empty("demo", 0)), true);
-<a href=#2761 id=2761 data-nosnippet>2761</a>/// assert!(text.starts_with("MAJORDOMUS PREFLIGHT"));
-<a href=#2762 id=2762 data-nosnippet>2762</a>/// assert!(text.contains("Verification"));
-<a href=#2763 id=2763 data-nosnippet>2763</a>/// ```
-<a href=#2764 id=2764 data-nosnippet>2764</a></span><span class="kw">pub fn </span>full(p: <span class="kw-2">&amp;</span>Preflight, unicode: bool) -&gt; String {
-<a href=#2765 id=2765 data-nosnippet>2765</a>    <span class="kw">let </span><span class="kw-2">mut </span>out = <span class="macro">format!</span>(
-<a href=#2766 id=2766 data-nosnippet>2766</a>        <span class="string">"MAJORDOMUS PREFLIGHT  {} {} {}\n"</span>,
-<a href=#2767 id=2767 data-nosnippet>2767</a>        p.repository,
-<a href=#2768 id=2768 data-nosnippet>2768</a>        p.branch.as_deref().unwrap_or(<span class="string">"detached"</span>),
-<a href=#2769 id=2769 data-nosnippet>2769</a>        p.head.as_deref().map(short).unwrap_or(<span class="string">""</span>)
-<a href=#2770 id=2770 data-nosnippet>2770</a>    );
-<a href=#2771 id=2771 data-nosnippet>2771</a>    <span class="kw">for </span>section <span class="kw">in </span><span class="kw-2">&amp;</span>p.sections {
-<a href=#2772 id=2772 data-nosnippet>2772</a>        <span class="kw">let _ </span>= <span class="macro">write!</span>(out, <span class="string">"\n{}\n"</span>, section.title);
-<a href=#2773 id=2773 data-nosnippet>2773</a>        <span class="kw">for </span>c <span class="kw">in </span><span class="kw-2">&amp;</span>section.checks {
-<a href=#2774 id=2774 data-nosnippet>2774</a>            <span class="kw">let _ </span>= <span class="macro">writeln!</span>(
-<a href=#2775 id=2775 data-nosnippet>2775</a>                out,
-<a href=#2776 id=2776 data-nosnippet>2776</a>                <span class="string">"  {:&lt;13} {} {:&lt;14} {}"</span>,
-<a href=#2777 id=2777 data-nosnippet>2777</a>                c.title,
-<a href=#2778 id=2778 data-nosnippet>2778</a>                mark(c.verdict, unicode),
-<a href=#2779 id=2779 data-nosnippet>2779</a>                c.verdict.as_str(),
-<a href=#2780 id=2780 data-nosnippet>2780</a>                c.summary
-<a href=#2781 id=2781 data-nosnippet>2781</a>            );
-<a href=#2782 id=2782 data-nosnippet>2782</a>            <span class="kw">for </span>e <span class="kw">in </span><span class="kw-2">&amp;</span>c.evidence {
-<a href=#2783 id=2783 data-nosnippet>2783</a>                <span class="kw">let _ </span>= <span class="macro">writeln!</span>(
-<a href=#2784 id=2784 data-nosnippet>2784</a>                    out,
-<a href=#2785 id=2785 data-nosnippet>2785</a>                    <span class="string">"  {:&lt;13}   {:&lt;14} {}: {}"</span>,
-<a href=#2786 id=2786 data-nosnippet>2786</a>                    <span class="string">""</span>, <span class="string">""</span>, e.source, e.observed
-<a href=#2787 id=2787 data-nosnippet>2787</a>                );
-<a href=#2788 id=2788 data-nosnippet>2788</a>            }
-<a href=#2789 id=2789 data-nosnippet>2789</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(next) = <span class="kw-2">&amp;</span>c.next {
-<a href=#2790 id=2790 data-nosnippet>2790</a>                <span class="kw">if </span>c.verdict.urgency().is_some() {
-<a href=#2791 id=2791 data-nosnippet>2791</a>                    <span class="kw">let _ </span>= <span class="macro">writeln!</span>(out, <span class="string">"  {:&lt;13}   {:&lt;14} next: {next}"</span>, <span class="string">""</span>, <span class="string">""</span>);
-<a href=#2792 id=2792 data-nosnippet>2792</a>                }
-<a href=#2793 id=2793 data-nosnippet>2793</a>            }
-<a href=#2794 id=2794 data-nosnippet>2794</a>        }
-<a href=#2795 id=2795 data-nosnippet>2795</a>    }
-<a href=#2796 id=2796 data-nosnippet>2796</a>    <span class="kw">if </span>p.attention.is_empty() {
-<a href=#2797 id=2797 data-nosnippet>2797</a>        out.push_str(<span class="string">"\nNothing needs a look.\n"</span>);
-<a href=#2798 id=2798 data-nosnippet>2798</a>    } <span class="kw">else </span>{
-<a href=#2799 id=2799 data-nosnippet>2799</a>        <span class="kw">let _ </span>= <span class="macro">writeln!</span>(out, <span class="string">"\nNeeds a look: {}"</span>, p.attention.join(<span class="string">", "</span>));
-<a href=#2800 id=2800 data-nosnippet>2800</a>    }
-<a href=#2801 id=2801 data-nosnippet>2801</a>    out
-<a href=#2802 id=2802 data-nosnippet>2802</a>}
-<a href=#2803 id=2803 data-nosnippet>2803</a>
-<a href=#2804 id=2804 data-nosnippet>2804</a><span class="attr">#[cfg(test)]
-<a href=#2805 id=2805 data-nosnippet>2805</a></span><span class="kw">mod </span>tests {
-<a href=#2806 id=2806 data-nosnippet>2806</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#2807 id=2807 data-nosnippet>2807</a>
-<a href=#2808 id=2808 data-nosnippet>2808</a>    <span class="kw">fn </span>head() -&gt; String {
-<a href=#2809 id=2809 data-nosnippet>2809</a>        <span class="string">"c"</span>.repeat(<span class="number">40</span>)
-<a href=#2810 id=2810 data-nosnippet>2810</a>    }
-<a href=#2811 id=2811 data-nosnippet>2811</a>
-<a href=#2812 id=2812 data-nosnippet>2812</a>    <span class="kw">fn </span>at_head() -&gt; Observations {
-<a href=#2813 id=2813 data-nosnippet>2813</a>        <span class="kw">let </span><span class="kw-2">mut </span>o = Observations::empty(<span class="string">"demo"</span>, <span class="number">0</span>);
-<a href=#2814 id=2814 data-nosnippet>2814</a>        o.git = <span class="prelude-val">Some</span>(GitObservation {
-<a href=#2815 id=2815 data-nosnippet>2815</a>            branch: <span class="prelude-val">Some</span>(<span class="string">"master"</span>.into()),
-<a href=#2816 id=2816 data-nosnippet>2816</a>            head: <span class="prelude-val">Some</span>(head()),
-<a href=#2817 id=2817 data-nosnippet>2817</a>            clean: <span class="bool-val">true</span>,
-<a href=#2818 id=2818 data-nosnippet>2818</a>            changed: <span class="number">0</span>,
-<a href=#2819 id=2819 data-nosnippet>2819</a>        });
-<a href=#2820 id=2820 data-nosnippet>2820</a>        o
-<a href=#2821 id=2821 data-nosnippet>2821</a>    }
-<a href=#2822 id=2822 data-nosnippet>2822</a>
-<a href=#2823 id=2823 data-nosnippet>2823</a>    <span class="attr">#[test]
-<a href=#2824 id=2824 data-nosnippet>2824</a>    </span><span class="kw">fn </span>every_check_that_proves_something_names_its_evidence() {
-<a href=#2825 id=2825 data-nosnippet>2825</a>        <span class="kw">let </span><span class="kw-2">mut </span>o = at_head();
-<a href=#2826 id=2826 data-nosnippet>2826</a>        o.policy = PolicyObservation::Parsed;
-<a href=#2827 id=2827 data-nosnippet>2827</a>        o.adrs = <span class="prelude-val">Some</span>(<span class="number">3</span>);
-<a href=#2828 id=2828 data-nosnippet>2828</a>        o.rules = RulesObservation::Counted(RulesTally {
-<a href=#2829 id=2829 data-nosnippet>2829</a>            head: <span class="prelude-val">Some</span>(head()),
-<a href=#2830 id=2830 data-nosnippet>2830</a>            working_tree: <span class="string">"clean"</span>.into(),
-<a href=#2831 id=2831 data-nosnippet>2831</a>            rules: <span class="number">2</span>,
-<a href=#2832 id=2832 data-nosnippet>2832</a>            proven: <span class="number">2</span>,
-<a href=#2833 id=2833 data-nosnippet>2833</a>            ..Default::default()
-<a href=#2834 id=2834 data-nosnippet>2834</a>        });
-<a href=#2835 id=2835 data-nosnippet>2835</a>        <span class="kw">for </span>c <span class="kw">in </span>derive(<span class="kw-2">&amp;</span>o).sections.iter().flat_map(|s| <span class="kw-2">&amp;</span>s.checks) {
-<a href=#2836 id=2836 data-nosnippet>2836</a>            <span class="kw">if </span>c.verdict.proves() {
-<a href=#2837 id=2837 data-nosnippet>2837</a>                <span class="macro">assert!</span>(!c.evidence.is_empty(), <span class="string">"{} proves with no evidence"</span>, c.id);
-<a href=#2838 id=2838 data-nosnippet>2838</a>            }
-<a href=#2839 id=2839 data-nosnippet>2839</a>        }
-<a href=#2840 id=2840 data-nosnippet>2840</a>    }
-<a href=#2841 id=2841 data-nosnippet>2841</a>
-<a href=#2842 id=2842 data-nosnippet>2842</a>    <span class="attr">#[test]
-<a href=#2843 id=2843 data-nosnippet>2843</a>    </span><span class="kw">fn </span>attention_is_ordered_by_urgency() {
-<a href=#2844 id=2844 data-nosnippet>2844</a>        <span class="kw">let </span><span class="kw-2">mut </span>o = at_head();
-<a href=#2845 id=2845 data-nosnippet>2845</a>        o.policy = PolicyObservation::Refused(<span class="string">"bad"</span>.into());
-<a href=#2846 id=2846 data-nosnippet>2846</a>        <span class="kw">let </span>p = derive(<span class="kw-2">&amp;</span>o);
-<a href=#2847 id=2847 data-nosnippet>2847</a>        <span class="macro">assert_eq!</span>(
-<a href=#2848 id=2848 data-nosnippet>2848</a>            p.attention.first().map(String::as_str),
-<a href=#2849 id=2849 data-nosnippet>2849</a>            <span class="prelude-val">Some</span>(<span class="string">"governance.policy"</span>)
-<a href=#2850 id=2850 data-nosnippet>2850</a>        );
-<a href=#2851 id=2851 data-nosnippet>2851</a>    }
+<a href=#2704 id=2704 data-nosnippet>2704</a>    <span class="kw">let </span>episode = compact_episode(p);
+<a href=#2705 id=2705 data-nosnippet>2705</a>    <span class="kw">let </span><span class="kw-2">mut </span>out = <span class="macro">format!</span>(
+<a href=#2706 id=2706 data-nosnippet>2706</a>        <span class="string">"{} {} {bullet} {} {bullet} {episode}\n "</span>,
+<a href=#2707 id=2707 data-nosnippet>2707</a>        <span class="kw">if </span>unicode { <span class="string">"◆" </span>} <span class="kw">else </span>{ <span class="string">"&gt;" </span>},
+<a href=#2708 id=2708 data-nosnippet>2708</a>        p.repository,
+<a href=#2709 id=2709 data-nosnippet>2709</a>        p.branch.as_deref().unwrap_or(<span class="string">"detached"</span>),
+<a href=#2710 id=2710 data-nosnippet>2710</a>    );
+<a href=#2711 id=2711 data-nosnippet>2711</a>    out.push_str(<span class="kw-2">&amp;</span>compact_checks(p, unicode));
+<a href=#2712 id=2712 data-nosnippet>2712</a>    out
+<a href=#2713 id=2713 data-nosnippet>2713</a>}
+<a href=#2714 id=2714 data-nosnippet>2714</a>
+<a href=#2715 id=2715 data-nosnippet>2715</a><span class="doccomment">/// Entry already drew the repository and branch. Keep its episode and checks without a
+<a href=#2716 id=2716 data-nosnippet>2716</a>/// second repository heading; the standalone compact preflight retains its own heading.
+<a href=#2717 id=2717 data-nosnippet>2717</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>entry_details(p: <span class="kw-2">&amp;</span>Preflight, unicode: bool) -&gt; String {
+<a href=#2718 id=2718 data-nosnippet>2718</a>    <span class="macro">format!</span>(<span class="string">"  {}\n {}"</span>, compact_episode(p), compact_checks(p, unicode))
+<a href=#2719 id=2719 data-nosnippet>2719</a>}
+<a href=#2720 id=2720 data-nosnippet>2720</a>
+<a href=#2721 id=2721 data-nosnippet>2721</a><span class="kw">fn </span>compact_episode(p: <span class="kw-2">&amp;</span>Preflight) -&gt; String {
+<a href=#2722 id=2722 data-nosnippet>2722</a>    p.check(<span class="string">"session.episode"</span>)
+<a href=#2723 id=2723 data-nosnippet>2723</a>        .filter(|c| c.verdict.proves())
+<a href=#2724 id=2724 data-nosnippet>2724</a>        .and_then(|c| c.evidence.first())
+<a href=#2725 id=2725 data-nosnippet>2725</a>        .and_then(|e| e.observed.strip_prefix(<span class="string">"session_id "</span>))
+<a href=#2726 id=2726 data-nosnippet>2726</a>        .map(|id| <span class="macro">format!</span>(<span class="string">"episode {id}"</span>))
+<a href=#2727 id=2727 data-nosnippet>2727</a>        .unwrap_or_else(|| <span class="string">"no episode"</span>.into())
+<a href=#2728 id=2728 data-nosnippet>2728</a>}
+<a href=#2729 id=2729 data-nosnippet>2729</a>
+<a href=#2730 id=2730 data-nosnippet>2730</a><span class="kw">fn </span>compact_checks(p: <span class="kw-2">&amp;</span>Preflight, unicode: bool) -&gt; String {
+<a href=#2731 id=2731 data-nosnippet>2731</a>    <span class="kw">let </span>bullet = <span class="kw">if </span>unicode { <span class="string">"·" </span>} <span class="kw">else </span>{ <span class="string">"-" </span>};
+<a href=#2732 id=2732 data-nosnippet>2732</a>    <span class="kw">let </span><span class="kw-2">mut </span>out = String::new();
+<a href=#2733 id=2733 data-nosnippet>2733</a>    <span class="kw">let </span>shown = [
+<a href=#2734 id=2734 data-nosnippet>2734</a>        (<span class="string">"governance.rules"</span>, <span class="string">"rules"</span>),
+<a href=#2735 id=2735 data-nosnippet>2735</a>        (<span class="string">"session.context"</span>, <span class="string">"context"</span>),
+<a href=#2736 id=2736 data-nosnippet>2736</a>        (<span class="string">"integration.server"</span>, <span class="string">"server"</span>),
+<a href=#2737 id=2737 data-nosnippet>2737</a>        (<span class="string">"integration.mcp"</span>, <span class="string">"mcp"</span>),
+<a href=#2738 id=2738 data-nosnippet>2738</a>        (<span class="string">"integration.cockpit"</span>, <span class="string">"cockpit"</span>),
+<a href=#2739 id=2739 data-nosnippet>2739</a>        (<span class="string">"verification.tests"</span>, <span class="string">"tests"</span>),
+<a href=#2740 id=2740 data-nosnippet>2740</a>        (<span class="string">"verification.enforcement"</span>, <span class="string">"enforced"</span>),
+<a href=#2741 id=2741 data-nosnippet>2741</a>        (<span class="string">"verification.deployment"</span>, <span class="string">"deploy"</span>),
+<a href=#2742 id=2742 data-nosnippet>2742</a>    ];
+<a href=#2743 id=2743 data-nosnippet>2743</a>    <span class="kw">let </span>parts: Vec&lt;String&gt; = shown
+<a href=#2744 id=2744 data-nosnippet>2744</a>        .iter()
+<a href=#2745 id=2745 data-nosnippet>2745</a>        .filter_map(|(id, label)| {
+<a href=#2746 id=2746 data-nosnippet>2746</a>            p.check(id)
+<a href=#2747 id=2747 data-nosnippet>2747</a>                .map(|c| <span class="macro">format!</span>(<span class="string">"{label} {}"</span>, mark(c.verdict, unicode)))
+<a href=#2748 id=2748 data-nosnippet>2748</a>        })
+<a href=#2749 id=2749 data-nosnippet>2749</a>        .collect();
+<a href=#2750 id=2750 data-nosnippet>2750</a>    <span class="kw">let _ </span>= <span class="macro">write!</span>(out, <span class="string">" {}"</span>, parts.join(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">" {bullet} "</span>)));
+<a href=#2751 id=2751 data-nosnippet>2751</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(first) = p.attention.first().and_then(|id| p.check(id)) {
+<a href=#2752 id=2752 data-nosnippet>2752</a>        <span class="kw">let _ </span>= <span class="macro">write!</span>(
+<a href=#2753 id=2753 data-nosnippet>2753</a>            out,
+<a href=#2754 id=2754 data-nosnippet>2754</a>            <span class="string">"\n  {} {} {}: {}"</span>,
+<a href=#2755 id=2755 data-nosnippet>2755</a>            mark(first.verdict, unicode),
+<a href=#2756 id=2756 data-nosnippet>2756</a>            first.title,
+<a href=#2757 id=2757 data-nosnippet>2757</a>            first.verdict.as_str(),
+<a href=#2758 id=2758 data-nosnippet>2758</a>            first.summary
+<a href=#2759 id=2759 data-nosnippet>2759</a>        );
+<a href=#2760 id=2760 data-nosnippet>2760</a>        <span class="kw">if </span>p.attention.len() &gt; <span class="number">1 </span>{
+<a href=#2761 id=2761 data-nosnippet>2761</a>            <span class="kw">let _ </span>= <span class="macro">write!</span>(
+<a href=#2762 id=2762 data-nosnippet>2762</a>                out,
+<a href=#2763 id=2763 data-nosnippet>2763</a>                <span class="string">" (+{} more: majordomus env preflight)"</span>,
+<a href=#2764 id=2764 data-nosnippet>2764</a>                p.attention.len() - <span class="number">1
+<a href=#2765 id=2765 data-nosnippet>2765</a>            </span>);
+<a href=#2766 id=2766 data-nosnippet>2766</a>        }
+<a href=#2767 id=2767 data-nosnippet>2767</a>    }
+<a href=#2768 id=2768 data-nosnippet>2768</a>    out.push(<span class="string">'\n'</span>);
+<a href=#2769 id=2769 data-nosnippet>2769</a>    out
+<a href=#2770 id=2770 data-nosnippet>2770</a>}
+<a href=#2771 id=2771 data-nosnippet>2771</a>
+<a href=#2772 id=2772 data-nosnippet>2772</a><span class="doccomment">/// The whole preflight, a section per heading and a line per claim, with its evidence.
+<a href=#2773 id=2773 data-nosnippet>2773</a>///
+<a href=#2774 id=2774 data-nosnippet>2774</a>/// ```
+<a href=#2775 id=2775 data-nosnippet>2775</a>/// use majordomus_cli::environment::preflight::{full, derive, Observations};
+<a href=#2776 id=2776 data-nosnippet>2776</a>/// let text = full(&amp;derive(&amp;Observations::empty("demo", 0)), true);
+<a href=#2777 id=2777 data-nosnippet>2777</a>/// assert!(text.starts_with("MAJORDOMUS PREFLIGHT"));
+<a href=#2778 id=2778 data-nosnippet>2778</a>/// assert!(text.contains("Verification"));
+<a href=#2779 id=2779 data-nosnippet>2779</a>/// ```
+<a href=#2780 id=2780 data-nosnippet>2780</a></span><span class="kw">pub fn </span>full(p: <span class="kw-2">&amp;</span>Preflight, unicode: bool) -&gt; String {
+<a href=#2781 id=2781 data-nosnippet>2781</a>    <span class="kw">let </span><span class="kw-2">mut </span>out = <span class="macro">format!</span>(
+<a href=#2782 id=2782 data-nosnippet>2782</a>        <span class="string">"MAJORDOMUS PREFLIGHT  {} {} {}\n"</span>,
+<a href=#2783 id=2783 data-nosnippet>2783</a>        p.repository,
+<a href=#2784 id=2784 data-nosnippet>2784</a>        p.branch.as_deref().unwrap_or(<span class="string">"detached"</span>),
+<a href=#2785 id=2785 data-nosnippet>2785</a>        p.head.as_deref().map(short).unwrap_or(<span class="string">""</span>)
+<a href=#2786 id=2786 data-nosnippet>2786</a>    );
+<a href=#2787 id=2787 data-nosnippet>2787</a>    <span class="kw">for </span>section <span class="kw">in </span><span class="kw-2">&amp;</span>p.sections {
+<a href=#2788 id=2788 data-nosnippet>2788</a>        <span class="kw">let _ </span>= <span class="macro">write!</span>(out, <span class="string">"\n{}\n"</span>, section.title);
+<a href=#2789 id=2789 data-nosnippet>2789</a>        <span class="kw">for </span>c <span class="kw">in </span><span class="kw-2">&amp;</span>section.checks {
+<a href=#2790 id=2790 data-nosnippet>2790</a>            <span class="kw">let _ </span>= <span class="macro">writeln!</span>(
+<a href=#2791 id=2791 data-nosnippet>2791</a>                out,
+<a href=#2792 id=2792 data-nosnippet>2792</a>                <span class="string">"  {:&lt;13} {} {:&lt;14} {}"</span>,
+<a href=#2793 id=2793 data-nosnippet>2793</a>                c.title,
+<a href=#2794 id=2794 data-nosnippet>2794</a>                mark(c.verdict, unicode),
+<a href=#2795 id=2795 data-nosnippet>2795</a>                c.verdict.as_str(),
+<a href=#2796 id=2796 data-nosnippet>2796</a>                c.summary
+<a href=#2797 id=2797 data-nosnippet>2797</a>            );
+<a href=#2798 id=2798 data-nosnippet>2798</a>            <span class="kw">for </span>e <span class="kw">in </span><span class="kw-2">&amp;</span>c.evidence {
+<a href=#2799 id=2799 data-nosnippet>2799</a>                <span class="kw">let _ </span>= <span class="macro">writeln!</span>(
+<a href=#2800 id=2800 data-nosnippet>2800</a>                    out,
+<a href=#2801 id=2801 data-nosnippet>2801</a>                    <span class="string">"  {:&lt;13}   {:&lt;14} {}: {}"</span>,
+<a href=#2802 id=2802 data-nosnippet>2802</a>                    <span class="string">""</span>, <span class="string">""</span>, e.source, e.observed
+<a href=#2803 id=2803 data-nosnippet>2803</a>                );
+<a href=#2804 id=2804 data-nosnippet>2804</a>            }
+<a href=#2805 id=2805 data-nosnippet>2805</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(next) = <span class="kw-2">&amp;</span>c.next {
+<a href=#2806 id=2806 data-nosnippet>2806</a>                <span class="kw">if </span>c.verdict.urgency().is_some() {
+<a href=#2807 id=2807 data-nosnippet>2807</a>                    <span class="kw">let _ </span>= <span class="macro">writeln!</span>(out, <span class="string">"  {:&lt;13}   {:&lt;14} next: {next}"</span>, <span class="string">""</span>, <span class="string">""</span>);
+<a href=#2808 id=2808 data-nosnippet>2808</a>                }
+<a href=#2809 id=2809 data-nosnippet>2809</a>            }
+<a href=#2810 id=2810 data-nosnippet>2810</a>        }
+<a href=#2811 id=2811 data-nosnippet>2811</a>    }
+<a href=#2812 id=2812 data-nosnippet>2812</a>    <span class="kw">if </span>p.attention.is_empty() {
+<a href=#2813 id=2813 data-nosnippet>2813</a>        out.push_str(<span class="string">"\nNothing needs a look.\n"</span>);
+<a href=#2814 id=2814 data-nosnippet>2814</a>    } <span class="kw">else </span>{
+<a href=#2815 id=2815 data-nosnippet>2815</a>        <span class="kw">let _ </span>= <span class="macro">writeln!</span>(out, <span class="string">"\nNeeds a look: {}"</span>, p.attention.join(<span class="string">", "</span>));
+<a href=#2816 id=2816 data-nosnippet>2816</a>    }
+<a href=#2817 id=2817 data-nosnippet>2817</a>    out
+<a href=#2818 id=2818 data-nosnippet>2818</a>}
+<a href=#2819 id=2819 data-nosnippet>2819</a>
+<a href=#2820 id=2820 data-nosnippet>2820</a><span class="attr">#[cfg(test)]
+<a href=#2821 id=2821 data-nosnippet>2821</a></span><span class="kw">mod </span>tests {
+<a href=#2822 id=2822 data-nosnippet>2822</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#2823 id=2823 data-nosnippet>2823</a>
+<a href=#2824 id=2824 data-nosnippet>2824</a>    <span class="kw">fn </span>head() -&gt; String {
+<a href=#2825 id=2825 data-nosnippet>2825</a>        <span class="string">"c"</span>.repeat(<span class="number">40</span>)
+<a href=#2826 id=2826 data-nosnippet>2826</a>    }
+<a href=#2827 id=2827 data-nosnippet>2827</a>
+<a href=#2828 id=2828 data-nosnippet>2828</a>    <span class="kw">fn </span>at_head() -&gt; Observations {
+<a href=#2829 id=2829 data-nosnippet>2829</a>        <span class="kw">let </span><span class="kw-2">mut </span>o = Observations::empty(<span class="string">"demo"</span>, <span class="number">0</span>);
+<a href=#2830 id=2830 data-nosnippet>2830</a>        o.git = <span class="prelude-val">Some</span>(GitObservation {
+<a href=#2831 id=2831 data-nosnippet>2831</a>            branch: <span class="prelude-val">Some</span>(<span class="string">"master"</span>.into()),
+<a href=#2832 id=2832 data-nosnippet>2832</a>            head: <span class="prelude-val">Some</span>(head()),
+<a href=#2833 id=2833 data-nosnippet>2833</a>            clean: <span class="bool-val">true</span>,
+<a href=#2834 id=2834 data-nosnippet>2834</a>            changed: <span class="number">0</span>,
+<a href=#2835 id=2835 data-nosnippet>2835</a>        });
+<a href=#2836 id=2836 data-nosnippet>2836</a>        o
+<a href=#2837 id=2837 data-nosnippet>2837</a>    }
+<a href=#2838 id=2838 data-nosnippet>2838</a>
+<a href=#2839 id=2839 data-nosnippet>2839</a>    <span class="doccomment">/// Entry draws the repository and the branch itself, so what it adds is the episode and
+<a href=#2840 id=2840 data-nosnippet>2840</a>    /// the checks — the same two the standalone compact form carries under its own heading.
+<a href=#2841 id=2841 data-nosnippet>2841</a>    </span><span class="attr">#[test]
+<a href=#2842 id=2842 data-nosnippet>2842</a>    </span><span class="kw">fn </span>the_entry_details_are_the_compact_form_without_its_heading() {
+<a href=#2843 id=2843 data-nosnippet>2843</a>        <span class="kw">let </span>p = derive(<span class="kw-2">&amp;</span>at_head());
+<a href=#2844 id=2844 data-nosnippet>2844</a>        <span class="kw">let </span>full = compact(<span class="kw-2">&amp;</span>p, <span class="bool-val">true</span>);
+<a href=#2845 id=2845 data-nosnippet>2845</a>        <span class="macro">assert!</span>(full.starts_with(<span class="string">"◆ demo · master · no episode"</span>), <span class="string">"{full}"</span>);
+<a href=#2846 id=2846 data-nosnippet>2846</a>        <span class="macro">assert!</span>(full.ends_with(<span class="kw-2">&amp;</span>compact_checks(<span class="kw-2">&amp;</span>p, <span class="bool-val">true</span>)), <span class="string">"{full}"</span>);
+<a href=#2847 id=2847 data-nosnippet>2847</a>        <span class="kw">let </span>details = entry_details(<span class="kw-2">&amp;</span>p, <span class="bool-val">false</span>);
+<a href=#2848 id=2848 data-nosnippet>2848</a>        <span class="macro">assert!</span>(details.starts_with(<span class="string">"  no episode\n "</span>), <span class="string">"{details}"</span>);
+<a href=#2849 id=2849 data-nosnippet>2849</a>        <span class="macro">assert!</span>(!details.contains(<span class="string">"demo"</span>), <span class="string">"a second heading: {details}"</span>);
+<a href=#2850 id=2850 data-nosnippet>2850</a>        <span class="macro">assert!</span>(details.ends_with(<span class="kw-2">&amp;</span>compact_checks(<span class="kw-2">&amp;</span>p, <span class="bool-val">false</span>)), <span class="string">"{details}"</span>);
+<a href=#2851 id=2851 data-nosnippet>2851</a>        <span class="macro">assert_eq!</span>(compact_episode(<span class="kw-2">&amp;</span>p), <span class="string">"no episode"</span>);
 <a href=#2852 id=2852 data-nosnippet>2852</a>
-<a href=#2853 id=2853 data-nosnippet>2853</a>    <span class="attr">#[test]
-<a href=#2854 id=2854 data-nosnippet>2854</a>    </span><span class="kw">fn </span>a_handover_judged_stale_is_stale_whatever_its_divergence() {
-<a href=#2855 id=2855 data-nosnippet>2855</a>        <span class="kw">let </span><span class="kw-2">mut </span>o = at_head();
-<a href=#2856 id=2856 data-nosnippet>2856</a>        o.handover = <span class="prelude-val">Some</span>(HandoverObservation {
-<a href=#2857 id=2857 data-nosnippet>2857</a>            path: <span class="string">"h.md"</span>.into(),
-<a href=#2858 id=2858 data-nosnippet>2858</a>            freshness: Freshness::Stale,
-<a href=#2859 id=2859 data-nosnippet>2859</a>            reason: <span class="string">"10d old"</span>.into(),
-<a href=#2860 id=2860 data-nosnippet>2860</a>            divergence: <span class="string">"advanced"</span>.into(),
-<a href=#2861 id=2861 data-nosnippet>2861</a>        });
-<a href=#2862 id=2862 data-nosnippet>2862</a>        <span class="macro">assert_eq!</span>(
-<a href=#2863 id=2863 data-nosnippet>2863</a>            derive(<span class="kw-2">&amp;</span>o).check(<span class="string">"session.handover"</span>).unwrap().verdict,
-<a href=#2864 id=2864 data-nosnippet>2864</a>            Verdict::Stale
-<a href=#2865 id=2865 data-nosnippet>2865</a>        );
-<a href=#2866 id=2866 data-nosnippet>2866</a>    }
-<a href=#2867 id=2867 data-nosnippet>2867</a>
-<a href=#2868 id=2868 data-nosnippet>2868</a>    <span class="attr">#[test]
-<a href=#2869 id=2869 data-nosnippet>2869</a>    </span><span class="kw">fn </span>the_scalar_reader_takes_top_level_keys_only() {
-<a href=#2870 id=2870 data-nosnippet>2870</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
-<a href=#2871 id=2871 data-nosnippet>2871</a>        <span class="kw">let </span>f = dir.path().join(<span class="string">"s.yaml"</span>);
-<a href=#2872 id=2872 data-nosnippet>2872</a>        std::fs::write(
-<a href=#2873 id=2873 data-nosnippet>2873</a>            <span class="kw-2">&amp;</span>f,
-<a href=#2874 id=2874 data-nosnippet>2874</a>            <span class="string">"session_id: s-1\n# c\nnested:\n  inner: x\nowner: \"k\"\n"</span>,
-<a href=#2875 id=2875 data-nosnippet>2875</a>        )
-<a href=#2876 id=2876 data-nosnippet>2876</a>        .unwrap();
-<a href=#2877 id=2877 data-nosnippet>2877</a>        <span class="kw">let </span>m = read_scalars(<span class="kw-2">&amp;</span>f).unwrap();
-<a href=#2878 id=2878 data-nosnippet>2878</a>        <span class="macro">assert_eq!</span>(m[<span class="string">"session_id"</span>], <span class="string">"s-1"</span>);
-<a href=#2879 id=2879 data-nosnippet>2879</a>        <span class="macro">assert_eq!</span>(m[<span class="string">"owner"</span>], <span class="string">"k"</span>);
-<a href=#2880 id=2880 data-nosnippet>2880</a>        <span class="macro">assert!</span>(!m.contains_key(<span class="string">"inner"</span>));
-<a href=#2881 id=2881 data-nosnippet>2881</a>    }
-<a href=#2882 id=2882 data-nosnippet>2882</a>}
+<a href=#2853 id=2853 data-nosnippet>2853</a>        <span class="comment">// an episode this checkout opened is named by its id, in both forms
+<a href=#2854 id=2854 data-nosnippet>2854</a>        </span><span class="kw">let </span><span class="kw-2">mut </span>o = at_head();
+<a href=#2855 id=2855 data-nosnippet>2855</a>        o.episode = <span class="prelude-val">Some</span>(EpisodeObservation {
+<a href=#2856 id=2856 data-nosnippet>2856</a>            id: <span class="string">"s-20261004-ab12"</span>.into(),
+<a href=#2857 id=2857 data-nosnippet>2857</a>            this_checkout: <span class="bool-val">true</span>,
+<a href=#2858 id=2858 data-nosnippet>2858</a>            ..Default::default()
+<a href=#2859 id=2859 data-nosnippet>2859</a>        });
+<a href=#2860 id=2860 data-nosnippet>2860</a>        <span class="kw">let </span>p = derive(<span class="kw-2">&amp;</span>o);
+<a href=#2861 id=2861 data-nosnippet>2861</a>        <span class="macro">assert_eq!</span>(compact_episode(<span class="kw-2">&amp;</span>p), <span class="string">"episode s-20261004-ab12"</span>);
+<a href=#2862 id=2862 data-nosnippet>2862</a>        <span class="macro">assert!</span>(compact(<span class="kw-2">&amp;</span>p, <span class="bool-val">false</span>).contains(<span class="string">"- episode s-20261004-ab12"</span>));
+<a href=#2863 id=2863 data-nosnippet>2863</a>        <span class="macro">assert!</span>(entry_details(<span class="kw-2">&amp;</span>p, <span class="bool-val">true</span>).starts_with(<span class="string">"  episode s-20261004-ab12\n"</span>));
+<a href=#2864 id=2864 data-nosnippet>2864</a>
+<a href=#2865 id=2865 data-nosnippet>2865</a>        <span class="comment">// one another checkout opened proves nothing here, so it is not named
+<a href=#2866 id=2866 data-nosnippet>2866</a>        </span>o.episode = <span class="prelude-val">Some</span>(EpisodeObservation {
+<a href=#2867 id=2867 data-nosnippet>2867</a>            id: <span class="string">"s-elsewhere"</span>.into(),
+<a href=#2868 id=2868 data-nosnippet>2868</a>            this_checkout: <span class="bool-val">false</span>,
+<a href=#2869 id=2869 data-nosnippet>2869</a>            ..Default::default()
+<a href=#2870 id=2870 data-nosnippet>2870</a>        });
+<a href=#2871 id=2871 data-nosnippet>2871</a>        <span class="macro">assert_eq!</span>(compact_episode(<span class="kw-2">&amp;</span>derive(<span class="kw-2">&amp;</span>o)), <span class="string">"no episode"</span>);
+<a href=#2872 id=2872 data-nosnippet>2872</a>    }
+<a href=#2873 id=2873 data-nosnippet>2873</a>
+<a href=#2874 id=2874 data-nosnippet>2874</a>    <span class="attr">#[test]
+<a href=#2875 id=2875 data-nosnippet>2875</a>    </span><span class="kw">fn </span>every_check_that_proves_something_names_its_evidence() {
+<a href=#2876 id=2876 data-nosnippet>2876</a>        <span class="kw">let </span><span class="kw-2">mut </span>o = at_head();
+<a href=#2877 id=2877 data-nosnippet>2877</a>        o.policy = PolicyObservation::Parsed;
+<a href=#2878 id=2878 data-nosnippet>2878</a>        o.adrs = <span class="prelude-val">Some</span>(<span class="number">3</span>);
+<a href=#2879 id=2879 data-nosnippet>2879</a>        o.rules = RulesObservation::Counted(RulesTally {
+<a href=#2880 id=2880 data-nosnippet>2880</a>            head: <span class="prelude-val">Some</span>(head()),
+<a href=#2881 id=2881 data-nosnippet>2881</a>            working_tree: <span class="string">"clean"</span>.into(),
+<a href=#2882 id=2882 data-nosnippet>2882</a>            rules: <span class="number">2</span>,
+<a href=#2883 id=2883 data-nosnippet>2883</a>            proven: <span class="number">2</span>,
+<a href=#2884 id=2884 data-nosnippet>2884</a>            ..Default::default()
+<a href=#2885 id=2885 data-nosnippet>2885</a>        });
+<a href=#2886 id=2886 data-nosnippet>2886</a>        <span class="kw">for </span>c <span class="kw">in </span>derive(<span class="kw-2">&amp;</span>o).sections.iter().flat_map(|s| <span class="kw-2">&amp;</span>s.checks) {
+<a href=#2887 id=2887 data-nosnippet>2887</a>            <span class="kw">if </span>c.verdict.proves() {
+<a href=#2888 id=2888 data-nosnippet>2888</a>                <span class="macro">assert!</span>(!c.evidence.is_empty(), <span class="string">"{} proves with no evidence"</span>, c.id);
+<a href=#2889 id=2889 data-nosnippet>2889</a>            }
+<a href=#2890 id=2890 data-nosnippet>2890</a>        }
+<a href=#2891 id=2891 data-nosnippet>2891</a>    }
+<a href=#2892 id=2892 data-nosnippet>2892</a>
+<a href=#2893 id=2893 data-nosnippet>2893</a>    <span class="attr">#[test]
+<a href=#2894 id=2894 data-nosnippet>2894</a>    </span><span class="kw">fn </span>attention_is_ordered_by_urgency() {
+<a href=#2895 id=2895 data-nosnippet>2895</a>        <span class="kw">let </span><span class="kw-2">mut </span>o = at_head();
+<a href=#2896 id=2896 data-nosnippet>2896</a>        o.policy = PolicyObservation::Refused(<span class="string">"bad"</span>.into());
+<a href=#2897 id=2897 data-nosnippet>2897</a>        <span class="kw">let </span>p = derive(<span class="kw-2">&amp;</span>o);
+<a href=#2898 id=2898 data-nosnippet>2898</a>        <span class="macro">assert_eq!</span>(
+<a href=#2899 id=2899 data-nosnippet>2899</a>            p.attention.first().map(String::as_str),
+<a href=#2900 id=2900 data-nosnippet>2900</a>            <span class="prelude-val">Some</span>(<span class="string">"governance.policy"</span>)
+<a href=#2901 id=2901 data-nosnippet>2901</a>        );
+<a href=#2902 id=2902 data-nosnippet>2902</a>    }
+<a href=#2903 id=2903 data-nosnippet>2903</a>
+<a href=#2904 id=2904 data-nosnippet>2904</a>    <span class="attr">#[test]
+<a href=#2905 id=2905 data-nosnippet>2905</a>    </span><span class="kw">fn </span>a_handover_judged_stale_is_stale_whatever_its_divergence() {
+<a href=#2906 id=2906 data-nosnippet>2906</a>        <span class="kw">let </span><span class="kw-2">mut </span>o = at_head();
+<a href=#2907 id=2907 data-nosnippet>2907</a>        o.handover = <span class="prelude-val">Some</span>(HandoverObservation {
+<a href=#2908 id=2908 data-nosnippet>2908</a>            path: <span class="string">"h.md"</span>.into(),
+<a href=#2909 id=2909 data-nosnippet>2909</a>            freshness: Freshness::Stale,
+<a href=#2910 id=2910 data-nosnippet>2910</a>            reason: <span class="string">"10d old"</span>.into(),
+<a href=#2911 id=2911 data-nosnippet>2911</a>            divergence: <span class="string">"advanced"</span>.into(),
+<a href=#2912 id=2912 data-nosnippet>2912</a>        });
+<a href=#2913 id=2913 data-nosnippet>2913</a>        <span class="macro">assert_eq!</span>(
+<a href=#2914 id=2914 data-nosnippet>2914</a>            derive(<span class="kw-2">&amp;</span>o).check(<span class="string">"session.handover"</span>).unwrap().verdict,
+<a href=#2915 id=2915 data-nosnippet>2915</a>            Verdict::Stale
+<a href=#2916 id=2916 data-nosnippet>2916</a>        );
+<a href=#2917 id=2917 data-nosnippet>2917</a>    }
+<a href=#2918 id=2918 data-nosnippet>2918</a>
+<a href=#2919 id=2919 data-nosnippet>2919</a>    <span class="attr">#[test]
+<a href=#2920 id=2920 data-nosnippet>2920</a>    </span><span class="kw">fn </span>the_scalar_reader_takes_top_level_keys_only() {
+<a href=#2921 id=2921 data-nosnippet>2921</a>        <span class="kw">let </span>dir = tempfile::tempdir().unwrap();
+<a href=#2922 id=2922 data-nosnippet>2922</a>        <span class="kw">let </span>f = dir.path().join(<span class="string">"s.yaml"</span>);
+<a href=#2923 id=2923 data-nosnippet>2923</a>        std::fs::write(
+<a href=#2924 id=2924 data-nosnippet>2924</a>            <span class="kw-2">&amp;</span>f,
+<a href=#2925 id=2925 data-nosnippet>2925</a>            <span class="string">"session_id: s-1\n# c\nnested:\n  inner: x\nowner: \"k\"\n"</span>,
+<a href=#2926 id=2926 data-nosnippet>2926</a>        )
+<a href=#2927 id=2927 data-nosnippet>2927</a>        .unwrap();
+<a href=#2928 id=2928 data-nosnippet>2928</a>        <span class="kw">let </span>m = read_scalars(<span class="kw-2">&amp;</span>f).unwrap();
+<a href=#2929 id=2929 data-nosnippet>2929</a>        <span class="macro">assert_eq!</span>(m[<span class="string">"session_id"</span>], <span class="string">"s-1"</span>);
+<a href=#2930 id=2930 data-nosnippet>2930</a>        <span class="macro">assert_eq!</span>(m[<span class="string">"owner"</span>], <span class="string">"k"</span>);
+<a href=#2931 id=2931 data-nosnippet>2931</a>        <span class="macro">assert!</span>(!m.contains_key(<span class="string">"inner"</span>));
+<a href=#2932 id=2932 data-nosnippet>2932</a>    }
+<a href=#2933 id=2933 data-nosnippet>2933</a>}
 </code></pre></div></section></main></body></html>

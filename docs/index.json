@@ -2,18 +2,18 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "e45ce7c3e32a32c5d3037312c61e7beca5bf23da",
-  "source_version": "0.12.0",
-  "registry_fingerprint": "cc23db75991c8974df8e78c15105fb2dae8bc2c7758879c9113f7977cbe5d407"
+  "commit": "f075170530ac32cb634a514eb35e970c8a9412e9",
+  "source_version": "0.13.0",
+  "registry_fingerprint": "c0e0ed63086a4c994d22549bc0e540abfdd91455daee271a93b95f6679f05e7a"
  },
  "counts": {
-  "pages": 1820,
-  "capabilities": 1863,
-  "cli_commands": 88,
-  "http_routes": 167,
-  "mcp_tools": 163,
-  "mcp_resources": 1746,
-  "modules": 83
+  "pages": 1831,
+  "capabilities": 1875,
+  "cli_commands": 89,
+  "http_routes": 168,
+  "mcp_tools": 164,
+  "mcp_resources": 1758,
+  "modules": 84
  },
  "kinds": [
   {
@@ -22,7 +22,7 @@
    "route": "/adrs/",
    "title": "Decisions",
    "reason": null,
-   "count": 79
+   "count": 80
   },
   {
    "kind": "application",
@@ -54,7 +54,7 @@
    "route": "/guarantees/",
    "title": null,
    "reason": null,
-   "count": 221
+   "count": 222
   },
   {
    "kind": "command",
@@ -70,7 +70,7 @@
    "route": "/context/",
    "title": null,
    "reason": null,
-   "count": 35
+   "count": 36
   },
   {
    "kind": "critique",
@@ -102,7 +102,15 @@
    "route": null,
    "title": null,
    "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-   "count": 309
+   "count": 310
+  },
+  {
+   "kind": "domain",
+   "projection": "section",
+   "route": "/domains/",
+   "title": null,
+   "reason": null,
+   "count": 6
   },
   {
    "kind": "feature",
@@ -254,7 +262,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 342
+   "count": 343
   },
   {
    "kind": "use-case",
@@ -915,6 +923,14 @@
    "kind": "adr",
    "id": "majordomus://adr/adr-0103",
    "source": ".ai/repo/adrs/0103-every-client-gets-an-episode-and-every-provider-capability-cites-its-evidence.md"
+  },
+  {
+   "route": "/adrs/adr-0104/",
+   "title": "The product is filed under a few domains, and a feature names its one",
+   "description": "The product is filed under a few domains, and a feature names its one",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0104",
+   "source": ".ai/repo/adrs/0104-the-product-is-filed-under-a-few-domains-and-a-feature-names-its-one.md"
   },
   {
    "route": "/applications/",
@@ -2022,6 +2038,11 @@
    "description": "The product: what this repository's tool does for a person, as the features under the layer declare it, with every surface, count and moment derived; the matrix of features against interfaces; the providers; and the model's own validation"
   },
   {
+   "route": "/docs/cli/product/domains/",
+   "title": "majordomus product domains",
+   "description": "The domains of the product, each with the stable features that name it and what they add up to"
+  },
+  {
    "route": "/docs/cli/product/list/",
    "title": "majordomus product list",
    "description": "Every feature, narrowed by any filter, with the surfaces derived for each"
@@ -2967,6 +2988,41 @@
    "description": "Tvrzení, které nemůže spadnout, je jen dobře naformátovaná próza. Jak jsem donutil repozitář odmítat vlastní dokumentaci, co to dneska dokazuje a kde to přestává platit."
   },
   {
+   "route": "/domains/",
+   "title": "The product, by domain",
+   "description": "The few things Majordomus controls for AI-assisted work, each with the failure it answers and the features filed under it. Every member, interface and count is derived from the features that name the domain."
+  },
+  {
+   "route": "/domains/completion/",
+   "title": "Completion",
+   "description": "Done is a contract the repository evaluates line by line. Work is not accepted while any line fails, and a refusal stays on the record."
+  },
+  {
+   "route": "/domains/context/",
+   "title": "Context",
+   "description": "Every worker starts from what the repository already knows: the context that applies to its path, the handover the last session left, and the decisions already made."
+  },
+  {
+   "route": "/domains/coordination/",
+   "title": "Coordination",
+   "description": "Every worker declares the paths it will touch, sees who else is working and where, and hears about a collision before it is committed."
+  },
+  {
+   "route": "/domains/evidence/",
+   "title": "Evidence",
+   "description": "A claim names the test that settles it, a recorded run is judged against the commit it ran at, and a claim with no recorded run says so."
+  },
+  {
+   "route": "/domains/governance/",
+   "title": "Governance",
+   "description": "The rules are written once, in the repository, projected into every tool's instructions, and a blocking rule stops the command instead of advising it."
+  },
+  {
+   "route": "/domains/surfaces/",
+   "title": "Surfaces",
+   "description": "One declaration in the repository becomes the command line, the HTTP API, MCP, the Cockpit, the documentation and this site, and a projection that disagrees with it fails the build."
+  },
+  {
    "route": "/economics/",
    "title": "Token economics",
    "description": "What a coding session consumes with Majordomus and without it, from matched runs judged by the same hidden tests. Every number is generated from recorded evidence and labelled by how it was obtained."
@@ -3845,6 +3901,11 @@
    "route": "/guarantees/policy-parse/",
    "title": "The canonical policy is parsed and rejected if it contains an unknown key",
    "description": ".ai/repo/policy.yaml is read by a parser that knows exactly which keys may appear at every level. A key it does not know — a typo, a field from a newer version, a field someone invented — is an error, not a silent no-op. The same rule applies to every profile file."
+  },
+  {
+   "route": "/guarantees/product-domains-derived/",
+   "title": "The product is filed under a few domains declared once as files of the layer; a feature names exactly one, and every domain's members, interfaces, guarantees and use cases are derived from the features that name it, so a stable feature cannot be left out of the product map without the model refusing it",
+   "description": "A domain is one Markdown file under .ai/repo/features/domains/: a title, a one-sentence"
   },
   {
    "route": "/guarantees/product-features-discovered/",
@@ -6337,6 +6398,11 @@
    "description": "The topological layering of the issue graph: an issue enters a wave only once every dependency has left it, so its wave is one past the longest path to it. Sharing a wave is a necessary condition for running two issues at once, not a sufficient one — overlapping scope serialises them, and every such overlap is reported beside the waves rather than left for two workers to discover in a merge conflict."
   },
   {
+   "route": "/registry/capabilities/product-domains/",
+   "title": "product.domains",
+   "description": "The few things the product controls, each declared once under the layer's features section with its promise and the failure it answers, and each holding the stable features that name it: their interfaces, the distinct claims, use cases, rules and capabilities behind them, and the operational moments they answer, all derived. A domain lists no features; a feature names its domain. The default is the stable set; pass status=any for every domain."
+  },
+  {
    "route": "/registry/capabilities/product-feature/",
    "title": "product.feature",
    "description": "One product feature in full: the record as its file declares it, and everything derived from what it names — the capabilities of its modules with their tools, routes and command-line paths, the commands with their summaries, the objects of its kinds counted, the rules with their class and whether the tool enforces them, the documents, the decisions, the claims with their status, the use cases, the Cockpit areas and web surfaces with their routes, the moments it answers, and the interfaces all of that adds up to."
@@ -6344,7 +6410,7 @@
   {
    "route": "/registry/capabilities/product-features/",
    "title": "product.features",
-   "description": "Every product feature this repository declares, narrowed by any of the facets the model derives — featured, area, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too."
+   "description": "Every product feature this repository declares, narrowed by any of the facets the model derives — featured, area, domain, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too."
   },
   {
    "route": "/registry/capabilities/product-matrix/",
@@ -8130,8 +8196,8 @@
   },
   {
    "route": "/rustdoc/",
-   "title": "majordomus-cli 0.12.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.12.0, built from commit e45ce7c3e32a32c5d3037312c61e7beca5bf23da: the public items of the library and of the executable, and the source they were built from."
+   "title": "majordomus-cli 0.13.0 — Rust API reference",
+   "description": "The rustdoc reference of majordomus-cli 0.13.0, built from commit f075170530ac32cb634a514eb35e970c8a9412e9: the public items of the library and of the executable, and the source they were built from."
   },
   {
    "route": "/rustdoc/majordomus/",
