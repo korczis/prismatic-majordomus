@@ -215,6 +215,50 @@ and while a blocking finding is open, `executing_with_open_blocker`. Both are fa
 Codex, Gemini — does the observing and the criticising, and the repository refuses the result
 when it does not hold together. Nothing here derives a plan from an intent automatically.
 
+### Preflight: may this work proceed, and what is it held to
+
+`majordomus intent preflight --issue <id>` (or `--path <p>`, repeated) is the one join a session
+or a transition consumes before work begins; the `intents.preflight` capability answers the
+same value over HTTP and MCP. An issue is followed through the criteria it declares in `serves`
+— never through its milestone alone — and its links are judged by the coverage `intent
+validate` reports from, so the two cannot disagree about which link is broken. The verdict is
+one of three:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| verdict | when | exit |
+|---|---|---|
+| `serves` | every link holds, and each intent served has a critique with no blocking finding open | `0` |
+| `maintenance` | the issue serves nothing under a milestone no live intent names, where validation allows it | `0` |
+| `refused` | any cause below | `10` |
+
+</div>
+
+
+<div class="overflow-x-auto" tabindex="0">
+
+| cause | what it means |
+|---|---|
+| `unknown_issue` | the issue named is not in the plan |
+| `no_issue_covers_paths` | no open issue's scope covers any of the paths |
+| `issue_serves_nothing` | the issue's milestone realises a live intent and the issue serves none of its criteria |
+| `serves_another_intent` | it serves a criterion of an intent that does not name its milestone |
+| `serves_unknown_criterion` | it serves an intent or a criterion that does not exist, or a malformed reference |
+| `intent_not_critiqued` | an intent it serves has no critique |
+| `open_blocking_finding` | the critique of an intent it serves has a blocking finding still `open` |
+
+</div>
+
+
+With paths, every open issue whose scope covers one is judged and listed with its own
+verdict; the answer is the worst of them, so one served issue never vouches for another that
+serves nothing. Served work beside maintenance answers `serves`.
+
+The answer carries the intents the work serves and no other: each with its statement, the
+served criteria with the live state of their evidence, its invariants, non-goals and
+governance, its critique with the blocking findings still open, and its recorded gap bounded
+to the served criteria.
+
 ### Realization: who is making it true, and whether reality agrees
 
 An intent belongs to the project, not to the session working on it. Which work realises it is
