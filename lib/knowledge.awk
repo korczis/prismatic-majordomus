@@ -50,7 +50,12 @@ BEGIN {
     # used it, so every contract degraded to `document` on this side: eleven of them in this
     # repository collided as `document:<path>` claimed by two classes, and the verdict named
     # the same path on both sides of "claimed by". One vocabulary, two engines, out of step.
-    known = " policy scope context profile prompt rule milestone issue claim document session handover checkpoint decision question doctrine implementation test adr skill use-case application taxonomy knowledge session "
+    # The same drift happened again with the product registries: `feature`, `moment`, `area`,
+    # `audience`, `deployment`, `intent`, `workspace` and seven more were declared by the
+    # tool's own skeleton `sources.yaml` and absent here, so every feature was an `unknown`
+    # node with no edge to the claims, use cases and ADRs it names — 100 unknown nodes in
+    # this repository, found by a repository that adopted the tool (OSCILLA, 2026-10-04).
+    known = " policy scope context profile prompt rule milestone issue claim document session handover checkpoint decision question doctrine implementation test adr skill use-case application taxonomy knowledge session feature moment area audience deployment intent mesh-declaration workspace release-record critique gap command distribution-model "
     # The edge types are a closed set. An undeclared type is a defect rather than a new
     # vocabulary word, because a reader who cannot enumerate the relations cannot tell a
     # missing one from one that was never modelled.
@@ -120,6 +125,7 @@ END {
         else if (k == "document") edges_links(i)
         else if (k == "adr")      edges_adr(i)
         else if (k == "knowledge") edges_knowledge(i)
+        else if (k == "feature")  edges_feature(i)
     }
     report_edges()
 }
@@ -172,11 +178,16 @@ function extract_one(i, k,   p, id, title) {
     else if (k == "session")                   id = f(p, "session_id")
     else if (k == "profile" || k == "prompt")  id = f(p, "name")
     else if (k == "handover" || k == "checkpoint") id = basename_noext(p)
+    # the product registries name themselves the way an ADR does; a release record is named
+    # by the version it records. A critique, a gap, the command table and the distribution
+    # model declare no identity of their own, so the file is the object.
+    else if (is_product_kind(k))               id = f(p, "id")
+    else if (k == "release-record")            id = f(p, "version")
 
     title = ""
     if      (k == "milestone" || k == "issue" || k == "rule") title = f(p, "title")
     else if (k == "adr" || k == "skill" || k == "use-case" || k == "application" || k == "session") title = f(p, "title")
-    else if (k == "knowledge")                 title = f(p, "title")
+    else if (k == "knowledge" || is_product_kind(k)) title = f(p, "title")
     else if (k == "profile" || k == "prompt")  title = f(p, "description")
     # a document and a taxonomy carry no identity of their own: the file is the object,
     # and its first heading, or the comment the file opens with, is what a reader sees
@@ -184,6 +195,35 @@ function extract_one(i, k,   p, id, title) {
 
     if (id == "") id = p
     emit(node_id(k, id), k, sscope[i], p, shash[i], title)
+}
+
+function is_product_kind(k) {
+    return index(" feature moment area audience deployment intent mesh-declaration workspace ", " " k " ") > 0
+}
+
+# A feature -> what it is made of. Its front matter names each part against the registry
+# that owns it (`.ai/repo/features/README.md`), so each named rule, ADR, claim and use case
+# is an edge to that node, and each named document is an edge to that file. The reference
+# is all the record states about the relation, so the relation is `references` and nothing
+# stronger: a feature does not implement a rule or prove a claim by naming it.
+function edges_feature(si,   p, id, from, n, v, field, pairs, fk_pair) {
+    p = spath[si]
+    id = f(p, "id"); if (id == "") return
+    from = node_id("feature", id)
+    split("rules:rule adrs:adr claims:claim use_cases:use-case", pairs, " ")
+    for (field in pairs) {
+        split(pairs[field], fk_pair, ":")
+        for (n = 0; ; n++) {
+            v = f(p, fk_pair[1] "." n)
+            if (v == "") break
+            add_edge(from, node_id(fk_pair[2], v), "references", p ":" fk_pair[1] "." n)
+        }
+    }
+    for (n = 0; ; n++) {
+        v = f(p, "docs." n)
+        if (v == "") break
+        path_edge(from, v, "references", p ":docs." n)
+    }
 }
 
 # A decision -> what it put in force. The record states one direction, in `related`, and the
