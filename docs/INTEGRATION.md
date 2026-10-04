@@ -175,7 +175,12 @@ repository's own setting decides that.
   and 856 race separate processes through the command line. A holder that ends, even by a
   crash, releases the lease at once; a live holder is never taken over. A record untouched
   for 30 minutes is reported stale to observers (`prs brief`, `prs status`), which never
-  take the lease.
+  take the lease. The executor renews its record before every observation, and a refresh
+  keeps it fresh while the branch's derive runs. When the path no longer names the file
+  the executor locked, or the record names another holder, the lease is lost: the drain
+  stops as on any systemic failure (`prs drain` exits 12) and acts on nothing. The lease
+  is taken for the base the forge was last observed to name, observed first when this
+  checkout never asked, never for a guessed `master`.
 - Every act is appended to the audit trail before it happens. The trail is one file per
   repository, `<git-common-dir>/majordomus/integration/events.jsonl`, beside the lease, so
   every worktree writes the same trail and `prs events`, `prs brief`, `prs status`, the

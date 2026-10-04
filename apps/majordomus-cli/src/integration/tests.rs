@@ -2713,7 +2713,7 @@ fn a_live_holder_is_never_taken_over_however_old_its_record() {
     };
     assert!(err.contains("another integration executor holds"), "{err}");
     // renewing writes through the held file, and freshens it
-    lease.renew();
+    lease.renew().unwrap();
     assert!(
         !drain::IntegrationLease::read(&root, "master")
             .unwrap()
@@ -2819,4 +2819,95 @@ fn racing_executors_merge_each_pull_request_once() {
         drop(w);
         let _ = std::fs::remove_dir_all(&root);
     }
+}
+
+// ---------------------------------------------------------------- a lease renewed or lost (WP5)
+
+#[test]
+fn a_lease_taken_over_cannot_be_renewed_and_its_successor_survives() {
+    let root = scratch();
+    let first = drain::IntegrationLease::acquire(&root, "master").unwrap();
+    let path = drain::IntegrationLease::path_for(&root.join(".git"), "master");
+    // something removed the file: the first executor's lock now guards a file nobody finds
+    std::fs::remove_file(&path).unwrap();
+    let second = drain::IntegrationLease::acquire(&root, "master").expect("a new file, free");
+    let err = first.renew().unwrap_err();
+    assert!(err.contains("lease was lost"), "{err}");
+    second.renew().expect("the successor renews");
+    // giving the lost lease back leaves the successor's record where it is
+    drop(first);
+    let held = drain::IntegrationLease::read(&root, "master")
+        .unwrap()
+        .unwrap();
+    assert_eq!(held.holder.unwrap().pid, std::process::id());
+    assert!(path.is_file());
+    drop(second);
+    assert!(!path.exists());
+}
+
+#[test]
+fn a_record_naming_another_holder_cannot_be_renewed() {
+    let root = scratch();
+    let lease = drain::IntegrationLease::acquire(&root, "master").unwrap();
+    let path = drain::IntegrationLease::path_for(&root.join(".git"), "master");
+    std::fs::write(&path, "another holder").unwrap();
+    let err = lease.renew().unwrap_err();
+    assert!(err.contains("names another holder"), "{err}");
+    // and the record is not overwritten by the refused renewal
+    assert_eq!(std::fs::read_to_string(&path).unwrap(), "another holder");
+}
+
+#[test]
+fn a_kept_alive_lease_stays_fresh_and_stops_when_dropped() {
+    let root = scratch();
+    let lease = drain::IntegrationLease::acquire(&root, "master").unwrap();
+    let path = drain::IntegrationLease::path_for(&root.join(".git"), "master");
+    age_lease(&path, drain::LEASE_STALE_AFTER * 2);
+    assert!(
+        drain::IntegrationLease::read(&root, "master")
+            .unwrap()
+            .unwrap()
+            .stale
+    );
+    {
+        let _alive = lease.keep_alive_every(std::time::Duration::from_millis(20));
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
+        while drain::IntegrationLease::read(&root, "master")
+            .unwrap()
+            .unwrap()
+            .stale
+        {
+            assert!(
+                std::time::Instant::now() < deadline,
+                "the keep-alive never renewed"
+            );
+            std::thread::sleep(std::time::Duration::from_millis(10));
+        }
+    }
+    // stopped: the record ages again and nothing writes it
+    age_lease(&path, drain::LEASE_STALE_AFTER * 2);
+    std::thread::sleep(std::time::Duration::from_millis(100));
+    assert!(
+        drain::IntegrationLease::read(&root, "master")
+            .unwrap()
+            .unwrap()
+            .stale
+    );
+}
+
+#[test]
+fn a_keep_alive_never_writes_a_lease_that_was_lost() {
+    let root = scratch();
+    let first = drain::IntegrationLease::acquire(&root, "master").unwrap();
+    let path = drain::IntegrationLease::path_for(&root.join(".git"), "master");
+    let _alive = first.keep_alive_every(std::time::Duration::from_millis(10));
+    std::fs::remove_file(&path).unwrap();
+    let second = drain::IntegrationLease::acquire(&root, "master").unwrap();
+    std::thread::sleep(std::time::Duration::from_millis(100));
+    let held = std::fs::read_to_string(&path).unwrap();
+    assert!(
+        held.contains(&format!("\"pid\":{}", std::process::id())),
+        "{held}"
+    );
+    second.renew().expect("the successor's record is intact");
 }

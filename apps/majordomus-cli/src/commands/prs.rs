@@ -145,11 +145,7 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             continuous: true,
             interval,
         } => {
-            let base = integration::load_observation(&root)
-                .ok()
-                .flatten()
-                .map(|o| o.base)
-                .unwrap_or_else(|| "master".into());
+            let base = executor_base(&root).map_err(unusable)?;
             // the lease for the whole run: a second worker is refused here, before it acts
             let lease = IntegrationLease::acquire(&root, &base).map_err(unusable)?;
             let stop = drain::stop_on_signals();
@@ -213,11 +209,7 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             ..
         } => {
             // a dry run changes nothing, and observers never contend with the executor
-            let base = integration::load_observation(&root)
-                .ok()
-                .flatten()
-                .map(|o| o.base)
-                .unwrap_or_else(|| "master".into());
+            let base = executor_base(&root).map_err(unusable)?;
             let lease = if dry_run {
                 None
             } else {
@@ -245,11 +237,7 @@ pub fn run(args: PrsArgs) -> Result<u8> {
                 lease: None,
             };
             let _lease = if apply {
-                let base = integration::load_observation(&root)
-                    .ok()
-                    .flatten()
-                    .map(|o| o.base)
-                    .unwrap_or_else(|| "master".into());
+                let base = executor_base(&root).map_err(unusable)?;
                 Some(IntegrationLease::acquire(&root, &base).map_err(unusable)?)
             } else {
                 None
@@ -315,6 +303,16 @@ pub fn run(args: PrsArgs) -> Result<u8> {
 /// The exit code of a bounded drain: 12 when an act was withheld because the trail could not
 /// record it — the repository is not usable for integration until it can — 10 when a merge
 /// could not be verified, 0 otherwise.
+/// The base branch an executor takes the lease of: the one the forge was last observed to
+/// name, observed now when this checkout never asked. Never a guessed `master`: a lease
+/// taken on a name the repository does not use excludes nobody.
+fn executor_base(root: &std::path::Path) -> std::result::Result<String, String> {
+    match integration::load_observation(root)? {
+        Some(o) => Ok(o.base),
+        None => integration::refresh(root).map(|o| o.base),
+    }
+}
+
 fn drain_exit(report: &drain::DrainReport) -> u8 {
     let stopped_on = |f: fn(&DrainStepOutcome) -> bool| report.steps.iter().any(f);
     if stopped_on(|s| matches!(s, DrainStepOutcome::TrailUnwritable { .. })) {
