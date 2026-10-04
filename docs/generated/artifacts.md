@@ -305,13 +305,13 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 663899 | `b20f3263f385fe4d` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 91561 | `dc148dc7a7e025e1` |
 | `site/data/registry/product.json` | `site-product` | json | 471757 | `8d7a8ab4c09c813e` |
-| `site/data/registry/registry.json` | `site-registry` | json | 5407586 | `66c90dbdd19bade3` |
+| `site/data/registry/registry.json` | `site-registry` | json | 5407586 | `d73b4b9a38317ac7` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `05965e98b5dc0c58` |
 | `site/data/registry/why.json` | `site-why` | json | 349952 | `1064db74576aeadd` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `861ed5a4aa3e3f4d` |
 | `site/static/images/logo-mark.svg` | `design-mark` | text | 904 | `861ed5a4aa3e3f4d` |
 | `site/static/images/logo.svg` | `design-logo` | text | 1059 | `19f0d7c8178e9d25` |
-| `site/static/install.sh` | `installer` | text | 30121 | `1c597707d447c27a` |
+| `site/static/install.sh` | `installer` | text | 31115 | `330730f99e7701ec` |
 | `site/static/releases/latest.json` | `release/latest` | json | 2397 | `e3d6bf49c49ac776` |
 | `site/static/releases/v0.10.0.json` | `release/v0.10.0` | json | 2397 | `d5d062b81a621263` |
 | `site/static/releases/v0.11.0.json` | `release/v0.11.0` | json | 2397 | `d314f8a7caa0916f` |
