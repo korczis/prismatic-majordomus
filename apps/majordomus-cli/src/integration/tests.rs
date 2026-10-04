@@ -992,51 +992,82 @@ fn a_check_the_executor_did_not_start_does_not_hold_the_refresh_pipeline() {
 
 /// A required check that has not reported on the executor's own head holds the pipeline only
 /// for [`drain::REFRESHED_HEAD_REPORTS_WITHIN`] after the push: past that it is taken never to
-/// report, and the next pull request is refreshed rather than every refresh freezing.
+/// report, and the next pull request is refreshed rather than every refresh freezing. A trail
+/// line whose time cannot be read bounds a missing check to nothing, while a pending one still
+/// holds; a `refreshed` line written before `head_after` existed names no head and holds
+/// nothing, whatever the check.
 #[test]
 fn an_unreported_check_on_the_executors_own_head_holds_the_pipeline_only_for_a_bound() {
-    let root = scratch();
-    let mut w = World {
-        open: vec![sim(1), sim(2)],
-        master: 1,
-        ..Default::default()
-    };
-    let out = drain::step(&root, &mut w, false, true).unwrap();
-    assert!(
-        matches!(out, DrainStepOutcome::Refreshed { pr: 1, .. }),
-        "{out:?}"
+    let past = crate::peers::rfc3339(
+        std::time::SystemTime::now()
+            - drain::REFRESHED_HEAD_REPORTS_WITHIN
+            - std::time::Duration::from_secs(60),
     );
-    // the head the executor pushed never gets its required check reported
-    w.open[0].ci_unreported = true;
-    let q = w.queue();
-    assert_eq!(disposition(&q, 1), PullRequestDisposition::WaitingForChecks);
-    assert_eq!(
-        q.get(1).unwrap().required_checks,
-        RequiredCheckState::Missing
-    );
-    // the push is now older than the bound
-    let past = std::time::SystemTime::now()
-        - drain::REFRESHED_HEAD_REPORTS_WITHIN
-        - std::time::Duration::from_secs(60);
-    let trail: Vec<String> = drain::events(&root)
-        .into_iter()
-        .map(|mut e| {
-            if e.action == "refreshed" {
-                e.at = crate::peers::rfc3339(past);
-            }
-            serde_json::to_string(&e).unwrap()
-        })
-        .collect();
-    std::fs::write(
-        super::state_path(&root, super::EVENTS_FILE),
-        trail.join("\n") + "\n",
-    )
-    .unwrap();
-    let out = drain::step(&root, &mut w, false, true).unwrap();
-    assert!(
-        matches!(out, DrainStepOutcome::Refreshed { pr: 2, .. }),
-        "{out:?}"
-    );
+    type Rewrite = fn(&mut drain::IntegrationEvent, &str);
+    let aged: Rewrite = |e, past| e.at = past.to_string();
+    let unreadable: Rewrite = |e, _| e.at = "not a time".into();
+    let legacy: Rewrite = |e, _| e.head_after = None;
+    // (rewrite of the refreshed line, check pending rather than unreported, #1 still holds)
+    for (what, rewrite, pending, holds) in [
+        ("aged past the bound", aged, false, false),
+        (
+            "unreadable time, unreported check",
+            unreadable,
+            false,
+            false,
+        ),
+        ("unreadable time, pending check", unreadable, true, true),
+        ("no head_after, pending check", legacy, true, false),
+    ] {
+        let root = scratch();
+        let mut w = World {
+            open: vec![sim(1), sim(2)],
+            master: 1,
+            ..Default::default()
+        };
+        let out = drain::step(&root, &mut w, false, true).unwrap();
+        assert!(
+            matches!(out, DrainStepOutcome::Refreshed { pr: 1, .. }),
+            "{what}: {out:?}"
+        );
+        // the head the executor pushed never gets its required check reported
+        w.open[0].ci_unreported = !pending;
+        w.open[0].ci_pending = pending;
+        let q = w.queue();
+        assert_eq!(disposition(&q, 1), PullRequestDisposition::WaitingForChecks);
+        assert_eq!(
+            q.get(1).unwrap().required_checks,
+            if pending {
+                RequiredCheckState::Pending
+            } else {
+                RequiredCheckState::Missing
+            },
+            "{what}"
+        );
+        let trail: Vec<String> = drain::events(&root)
+            .into_iter()
+            .map(|mut e| {
+                if e.action == "refreshed" {
+                    rewrite(&mut e, &past);
+                }
+                serde_json::to_string(&e).unwrap()
+            })
+            .collect();
+        std::fs::write(
+            super::state_path(&root, super::EVENTS_FILE),
+            trail.join("\n") + "\n",
+        )
+        .unwrap();
+        let out = drain::step(&root, &mut w, false, true).unwrap();
+        if holds {
+            assert_eq!(out, DrainStepOutcome::AwaitingChecks { pr: 1 }, "{what}");
+        } else {
+            assert!(
+                matches!(out, DrainStepOutcome::Refreshed { pr: 2, .. }),
+                "{what}: {out:?}"
+            );
+        }
+    }
 }
 
 #[test]
