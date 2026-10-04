@@ -16,7 +16,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{CachePolicy, CliExposure, Exposure, Stability};
+use crate::capability::model::{
+    BenchmarkPolicy, CachePolicy, CliExposure, Exposure, Stability, WaiverReason,
+};
 use crate::capability::module::ModuleDescriptor;
 use crate::integration::{
     drain::{IntegrationEvent, IntegrationLease, IntegrationLeaseState},
@@ -172,12 +174,19 @@ fn integration_events(ctx: &Context, _: Empty) -> Result<IntegrationEvents, Capa
     })
 }
 
+fn integration_prove_dry_run(
+    ctx: &Context,
+    _: Empty,
+) -> Result<crate::integration::proof::DryRunProof, CapabilityError> {
+    crate::integration::proof::prove_dry_run(root(ctx)).map_err(CapabilityError::Refused)
+}
+
 /// The `integration` module.
 pub fn module() -> ModuleDescriptor {
     module! {
         id: "integration",
         title: "Pull-request integration",
-        description: "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network.",
+        description: "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing.",
         stability: Stability::Experimental,
         capabilities: [
             capability! {
@@ -228,6 +237,23 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Disabled,
                 handler: integration_events,
             },
+            capability! {
+                id: "integration.prove_dry_run",
+                title: "Proof that a dry run moves nothing",
+                description: "Runs the executor's non-mutating cycle — refresh, plan, drain --dry-run and cleanup without --apply — between two snapshots of everything it could move if it were wrong: every ref origin serves, every open pull request's number, head, state and labels, the integration audit trail, the executor's lease, and every local ref outside the two namespaces the refresh mirrors. `ok` is true exactly when the snapshots are equal and refs/remotes/origin/<base> and every refs/majordomus/prs/<n> equal what origin serves. A read that reaches the network: the refresh asks the forge through the GitHub CLI and fetches the base and the pull-request heads, and like every read it rewrites the observation, relation and summary caches. It merges, closes and pushes nothing, and takes no input that could make it.",
+                input: Empty,
+                output: crate::integration::proof::DryRunProof,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_pull_requests_prove_dry_run"),
+                    http: get("/api/v1/pull-requests/prove-dry-run"),
+                    cli: Some(CliExposure { path: vec!["prs".into(), "prove-dry-run".into()] }),
+                },
+                tags: ["integration", "pull-requests", "proof", "live"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::ExternalDependency },
+                handler: integration_prove_dry_run,
+            },
         ],
     }
 }
@@ -237,7 +263,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn every_capability_is_an_offline_query() {
+    fn every_capability_is_a_query_and_none_caches() {
         let m = module();
         let ids: Vec<&str> = m
             .capabilities
@@ -249,7 +275,8 @@ mod tests {
             [
                 "integration.queue",
                 "integration.explain",
-                "integration.events"
+                "integration.events",
+                "integration.prove_dry_run"
             ]
         );
         for e in m.capabilities {
