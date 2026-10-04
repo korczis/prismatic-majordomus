@@ -28593,12 +28593,18 @@ capabilities:
     title: What this task still owes
     description: "Every obligation the active task declared, joined with what the vocabulary says about it and with the evidence that does or does not discharge it: what is owed, what is discharged, and what has gone stale — with the recorded input hash and the tree's current one, or the recorded commit and its label, so a reader can see against what. The judgement is the one `finish` applies, reproduced rather than re-decided, and the staleness words are the repository's only four. A checkout with no task reports that, rather than reporting nothing owed."
     input:
-      name: Empty
+      name: ClosureInput
       schema:
         type: object
         additionalProperties: false
-        description: No input.
-        title: Empty
+        properties:
+          live:
+            type:
+              - boolean
+              - "null"
+            description: "Settle every token whose fact something can establish — a commit, a push, the\ntrunk, the published site, the deployed surfaces — live, at HEAD, before reading\nthe ledger. On by default: a page rendered from a cache may pass `false` to read\nthe ledger alone, and such a report says a live token is owed rather than proven."
+        description: "```\nuse majordomus_cli::capability::builtin::obligations::ClosureInput;\n// the default settles every establishable token live, at HEAD\nassert!(ClosureInput::default().live.is_none());\n```\nHow the closure is judged. The one choice a caller makes is whether the tokens\nsomething can establish are settled live before the ledger is read; the judgement of\neach token is the same whichever a caller chooses, and a report that skipped the live\npass says a live token is owed rather than proven."
+        title: ClosureInput
     output:
       name: Closure
       schema:
@@ -28699,6 +28705,10 @@ capabilities:
               id:
                 type: string
                 description: "The token, as the task's `requires` names it."
+              declared:
+                type: boolean
+                description: "True when the task's `requires` names it. An establishable token the task did not\ndeclare is judged here too, live, so that the completion report can answer for it\nwhen the change implies it; it never counts toward `closed`."
+                default: true
               title:
                 type: string
                 description: From the vocabulary; the token itself when it declares none.
@@ -28921,6 +28931,9 @@ capabilities:
               note:
                 type: string
                 description: What the vocabulary says about the token beyond its summary.
+              established_by:
+                type: string
+                description: "What settles the fact without asking a worker: `git` for a fact git already holds,\na command for one a command already answers, `none` (or absent) for one nothing\ncan settle. A token that names something is decided live, at HEAD, and its recorded\nevidence is consulted only where the live answer is undecidable."
             required:
               - id
               - title

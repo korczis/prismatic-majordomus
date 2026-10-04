@@ -401,14 +401,18 @@ impl CompletionPolicy {
     /// )
     /// .unwrap();
     /// let policy = CompletionPolicy::load(share.path()).unwrap();
-    /// assert!(policy.source.ends_with(POLICY_FILE), "the report names where it came from");
+    /// assert_eq!(policy.source, format!("share/{POLICY_FILE}"), "named as the distribution names it");
+    /// assert!(!policy.source.starts_with('/'), "never by where this machine keeps it");
     /// assert_eq!(policy.questions[0].id, "q");
     /// ```
     pub fn load(share_dir: &std::path::Path) -> Result<Self, String> {
         let path = share_dir.join(POLICY_FILE);
         let text =
             std::fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))?;
-        Self::parse(&text, &path.to_string_lossy())
+        // the source is named as the distribution names it, never by where this machine keeps
+        // it: every surface that serves the policy (MCP, HTTP, the Cockpit, the site) carries
+        // this string, and an absolute path would publish the reader's home directory
+        Self::parse(&text, &format!("share/{POLICY_FILE}"))
     }
 
     /// The problems a policy has on its own: a duplicate id, a question naming a stage the
@@ -618,6 +622,16 @@ mod tests {
     fn shipped() -> CompletionPolicy {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share");
         CompletionPolicy::load(&root).expect("the shipped policy parses")
+    }
+
+    /// The policy's source is what every surface that serves it repeats: a path relative to
+    /// the distribution, never where this machine keeps the file. An absolute one would put
+    /// the reader's home directory on the site, in the OpenAPI examples and in every answer.
+    #[test]
+    fn the_source_names_the_distribution_never_this_machine() {
+        let p = shipped();
+        assert_eq!(p.source, format!("share/{POLICY_FILE}"));
+        assert!(!p.source.starts_with('/'), "an absolute source: {}", p.source);
     }
 
     #[test]

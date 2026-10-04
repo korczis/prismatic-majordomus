@@ -7,7 +7,7 @@
 # shellcheck source=check.sh
 . "$MJ_LIB_DIR/check.sh"
 mj_cmd_start() {
-  local task="" scope="" requires="" profile="" owner="${USER:-unknown}"
+  local task="" scope="" requires="" profile="" owner="${USER:-unknown}" issue=""
   while [ $# -gt 0 ]; do case "$1" in
     --scope) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--scope needs paths"; scope="$scope,$2"; shift 2 ;;
     --scope=*) scope="$scope,${1#--scope=}"; shift ;;
@@ -15,10 +15,12 @@ mj_cmd_start() {
     --requires=*) requires="$requires,${1#--requires=}"; shift ;;
     --profile) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--profile needs a name"; profile="$2"; shift 2 ;;
     --profile=*) profile="${1#--profile=}"; shift ;;
+    --issue) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--issue needs an issue id, or none"; issue="$2"; shift 2 ;;
+    --issue=*) issue="${1#--issue=}"; shift ;;
     --owner) [ $# -ge 2 ] || mj_die "$MJ_EX_USAGE" "--owner needs a value"; owner="$2"; shift 2 ;;
     --help|-h) cat <<H
 usage: majordomus start "<task>" --scope <path>[,<path>...] [--requires <token>[,<token>...]]
-                       [--profile <name>] [--owner <who>]
+                       [--profile <name>] [--owner <who>] [--issue <id>|none]
   one active task per checkout; refuses (15) while a task is active — handover or finish it first
   scope paths are normalised (no trailing /, no escapes); overlap with other worktrees is reported
   --requires  what this task owes before it may be called completed: tokens of
@@ -88,6 +90,7 @@ H
     printf 'id: %s\ntask: "%s"\nprofile: %s\nowner: "%s"\nscope:\n' "$id" "$(printf '%s' "$task" | sed 's/"/\\"/g')" "$profile" "$owner"
     for p in $norm; do printf '  - %s\n' "$p"; done
     if [ -n "$req_norm" ]; then printf 'requires:\n'; for tok in $req_norm; do printf '  - %s\n' "$tok"; done; fi
+    [ -n "$issue" ] && printf 'issue: %s\n' "$issue"
     printf 'started_at: %s\ncheckpoint_at: %s\noutcome: active\n' "$now" "$now"
     printf '# computed from git; never authored\nrepository_id: %s\nworktree: %s\nbranch: %s\nhead: %s\nworking_tree: %s\n' \
       "$(mj_git_repo_id)" "$MJ_ROOT" "$(mj_git_branch)" "$(mj_git_head)" "$(mj_git_dirty)"

@@ -171,6 +171,7 @@
         2,
         10,
         12,
+        13,
         15
       ],
       "tests": {
@@ -476,7 +477,7 @@
       "requires_repository": true,
       "requires_installed": true,
       "json_output": false,
-      "syntax": "majordomus start \"<task>\" --scope <path>[,<path>...] [--requires <token>[,<token>...]] [--profile <name>] [--owner <who>]",
+      "syntax": "majordomus start \"<task>\" --scope <path>[,<path>...] [--requires <token>[,<token>...]] [--profile <name>] [--owner <who>] [--issue <id>|none]",
       "demo": "start-scope",
       "note": "One active task per checkout. Scope paths are normalised, and overlap with other worktrees' active tasks is reported rather than refused. --requires records what the task owes, from the vocabulary in share/obligations.yaml; a token it does not declare is refused here rather than at the moment a worker tries to discharge it.",
       "reads": [
@@ -812,7 +813,8 @@
           "25_continuity_lifecycle",
           "32_refusal_lifecycle",
           "33_event_registry",
-          "368_mesh_handover_resolves"
+          "368_mesh_handover_resolves",
+          "880_completion_is_proved"
         ],
         "negative": [
           "05_handover"
@@ -911,7 +913,8 @@
           "25_continuity_lifecycle",
           "32_refusal_lifecycle",
           "578_an_unknown_gate_refuses_completed",
-          "707_knowledge_check_refuses_malformed_records"
+          "707_knowledge_check_refuses_malformed_records",
+          "880_completion_is_proved"
         ],
         "negative": [
           "04_start_check",
@@ -1025,7 +1028,8 @@
           "32_refusal_lifecycle",
           "33_event_registry",
           "572_verification_records_the_tree_it_proved",
-          "578_an_unknown_gate_refuses_completed"
+          "578_an_unknown_gate_refuses_completed",
+          "880_completion_is_proved"
         ],
         "negative": [
           "06_finish",
@@ -1039,7 +1043,8 @@
           "275_publication_is_current",
           "32_refusal_lifecycle",
           "572_verification_records_the_tree_it_proved",
-          "578_an_unknown_gate_refuses_completed"
+          "578_an_unknown_gate_refuses_completed",
+          "880_completion_is_proved"
         ]
       },
       "demo_data": {
@@ -1602,7 +1607,7 @@
       "requires_repository": true,
       "requires_installed": true,
       "json_output": true,
-      "syntax": "majordomus evidence (--covers <token> [--type <kind>] (--command <cmd> | --artifact <ref>) | --gate <id> --exit <status>) [--result <r>] [--json]",
+      "syntax": "majordomus evidence --covers <token> (--command <cmd> | --artifact <ref>) [--type <kind>] [--result <r>] | --gate <id> --exit <status> [--command <cmd>] | --run-gates",
       "demo": "obligation-evidence",
       "note": null,
       "reads": [
@@ -1623,7 +1628,8 @@
       "tests": {
         "behaviour": [
           "103_obligations",
-          "131_completion_gates"
+          "131_completion_gates",
+          "880_completion_is_proved"
         ],
         "negative": [
           "103_obligations",

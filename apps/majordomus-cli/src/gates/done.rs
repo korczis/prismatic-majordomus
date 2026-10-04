@@ -367,8 +367,12 @@ pub(crate) fn answer(policy: &CompletionPolicy, inputs: &DoneInputs<'_>) -> Vec<
                                 "convergence.report".to_string(),
                             )
                         } else {
+                            // owed, not wrong: a branch still being worked is at risk until it
+                            // is pushed, which the `pushed` question also waits for. A failure
+                            // here would read every task in progress as blocked in the stage
+                            // fold; queued keeps `complete` false and names the holdings.
                             (
-                                GateStatus::Fail,
+                                GateStatus::Queued,
                                 format!("{}: {}", report.summary(), at_risk.join(", ")),
                                 "convergence.report".to_string(),
                             )
@@ -820,7 +824,8 @@ mod tests {
         };
         let q = Fx::new().answer_with(Some(&at_risk));
         let question = q.iter().find(|q| q.id == "no-stale-topology").unwrap();
-        assert_eq!(question.status, GateStatus::Fail);
+        // owed, never a pass, and never a failure that would read work in progress as blocked
+        assert_eq!(question.status, GateStatus::Queued);
         assert!(
             question.evidence.contains("feature/never-pushed"),
             "the finding must name the holding, not only count it: {}",
