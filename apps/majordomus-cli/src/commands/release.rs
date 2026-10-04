@@ -87,43 +87,46 @@ fn merge_version(
     }
 }
 
-/// The version obligation, through the capability, so the command line renders the value
-/// HTTP and MCP answer with. Exits with the verdict: 0 holds, 10 owed or behind, 12 unread.
+/// The version obligation, the value HTTP and MCP answer with, rendered for a person or as
+/// JSON. Exits with the verdict: 0 holds, 10 owed or behind, 12 unread.
 fn render_obligation(args: &ReleaseArgs, base: Option<&str>) -> Result<u8> {
     let app = App::load(&args.repo)?;
-    let o = obligation_of(&app, base)?;
-    let stdout = std::io::stdout();
-    let mut out = stdout.lock();
-    match args.format {
-        OutputFormat::Json => writeln!(
-            out,
-            "{}",
-            serde_json::to_string_pretty(&o).unwrap_or_default()
-        )
-        .map_err(Error::Transport)?,
-        OutputFormat::Text => out
-            .write_all(obligation_text(&o).as_bytes())
-            .map_err(Error::Transport)?,
-    }
-    Ok(o.state.exit_code())
+    let o = obligation_of(&app, base);
+    report_obligation(&mut std::io::stdout().lock(), args.format, &o)
 }
 
-/// The obligation, asked through the one execution path.
-fn obligation_of(app: &App, base: Option<&str>) -> Result<VersionObligation> {
-    let mut input = serde_json::Map::new();
-    if let Some(b) = base {
-        input.insert("base".into(), serde_json::Value::String(b.to_string()));
-    }
-    let value = app
-        .context
-        .execute("release.obligation", serde_json::Value::Object(input))
-        .map_err(|e| Error::Refused {
-            code: EXIT_UNREADABLE,
-            reason: e.to_string(),
-        })?;
-    serde_json::from_value(value).map_err(|e| Error::Protocol {
-        reason: e.to_string(),
-    })
+/// Write the obligation in a format, whole, and answer with its verdict's exit.
+fn report_obligation(
+    out: &mut impl Write,
+    format: OutputFormat,
+    o: &VersionObligation,
+) -> Result<u8> {
+    let body = match format {
+        OutputFormat::Json => format!("{}\n", serde_json::to_string_pretty(o).unwrap_or_default()),
+        OutputFormat::Text => obligation_text(o),
+    };
+    put(out, &body).map(|()| o.state.exit_code())
+}
+
+/// One write of a whole report, so a reader that has gone away is one transport failure,
+/// reported as one, and never half a report followed by an exit that claims success.
+fn put(out: &mut impl Write, text: &str) -> Result<()> {
+    out.write_all(text.as_bytes()).map_err(Error::Transport)
+}
+
+/// The obligation: the same function the `release.obligation` capability answers with, over the
+/// same repository, policy and registry — one decision, so the command line, HTTP and MCP
+/// cannot render different values.
+fn obligation_of(app: &App, base: Option<&str>) -> VersionObligation {
+    let root = std::path::Path::new(&app.index().repository.root);
+    let policy = release::obligation::policy_of(root);
+    release::obligation::obligation(
+        root,
+        &app.context.registry,
+        &app.index().objects,
+        &policy,
+        base,
+    )
 }
 
 /// The obligation for a person at a terminal: the inputs first, the verdict, then why.
@@ -227,56 +230,63 @@ pub fn obligation_text(o: &VersionObligation) -> String {
 fn advance(args: &ReleaseArgs, base: Option<&str>, dry_run: bool) -> Result<u8> {
     let app = App::load(&args.repo)?;
     let root = std::path::Path::new(&app.index().repository.root).to_path_buf();
-    let o = obligation_of(&app, base)?;
-    let stdout = std::io::stdout();
-    let mut out = stdout.lock();
+    let o = obligation_of(&app, base);
+    advance_with(&mut std::io::stdout().lock(), &root, &o, dry_run)
+}
+
+/// What `release advance` does with an obligation already computed: nothing when it holds, a
+/// refusal when no version can be chosen, and the one write when it is owed.
+fn advance_with(
+    out: &mut impl Write,
+    root: &std::path::Path,
+    o: &VersionObligation,
+    dry_run: bool,
+) -> Result<u8> {
     let id = &o.id;
     match o.state {
-        ObligationState::Satisfied | ObligationState::NotOwed => {
-            writeln!(
-                out,
-                "release: the obligation {id} holds ({}): {} covers the minimum {}; nothing written",
+        ObligationState::Satisfied | ObligationState::NotOwed => put(
+            out,
+            &format!(
+                "release: the obligation {id} holds ({}): {} covers the minimum {}; nothing written\n",
                 o.state.as_str(),
                 o.declared,
                 o.minimum
-            )
-            .map_err(Error::Transport)?;
-            Ok(0)
-        }
-        ObligationState::Unverified | ObligationState::Behind => {
-            writeln!(
-                out,
-                "release: REFUSED the obligation {id} is {}, so no version can be chosen for it",
-                o.state.as_str()
-            )
-            .map_err(Error::Transport)?;
-            out.write_all(obligation_text(&o).as_bytes())
-                .map_err(Error::Transport)?;
-            writeln!(out, "         nothing was written").map_err(Error::Transport)?;
-            Ok(o.state.exit_code())
-        }
+            ),
+        )
+        .map(|()| 0),
+        ObligationState::Unverified | ObligationState::Behind => put(
+            out,
+            &format!(
+                "release: REFUSED the obligation {id} is {}, so no version can be chosen for it\n{}         nothing was written\n",
+                o.state.as_str(),
+                obligation_text(o)
+            ),
+        )
+        .map(|()| o.state.exit_code()),
         ObligationState::Owed => {
             let trunk = o.trunk.as_ref().map_or("the trunk", |t| t.version.as_str());
-            writeln!(
-                out,
-                "release: {} -> {} (obligation {id}: {} over {trunk}; contract {}, cadence {})",
+            let head = format!(
+                "release: {} -> {} (obligation {id}: {} over {trunk}; contract {}, cadence {})\n",
                 o.declared,
                 o.minimum,
                 o.effective.as_str(),
                 o.contract.required.as_str(),
                 o.cadence.required.as_str()
-            )
-            .map_err(Error::Transport)?;
+            );
             if dry_run {
-                writeln!(out, "         {} (unwritten)", version::MANIFEST)
-                    .map_err(Error::Transport)?;
-                writeln!(out, "         {} (unwritten)", version::LOCK)
-                    .map_err(Error::Transport)?;
-                writeln!(out, "         {}", derived_after(&o.minimum))
-                    .map_err(Error::Transport)?;
-                return Ok(0);
+                return put(
+                    out,
+                    &format!(
+                        "{head}         {} (unwritten)\n         {} (unwritten)\n         {}\n",
+                        version::MANIFEST,
+                        version::LOCK,
+                        derived_after(&o.minimum)
+                    ),
+                )
+                .map(|()| 0);
             }
-            write_and_verify(&root, &o.minimum, &mut out)
+            write_and_verify(root, &o.minimum)
+                .and_then(|(code, report)| put(out, &format!("{head}{report}")).map(|()| code))
         }
     }
 }
@@ -829,21 +839,8 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
         );
         if let Some(min) = version::Version::parse(&o.minimum) {
             if to < min && o.state != ObligationState::Unverified {
-                writeln!(
-                    out,
-                    "release: REFUSED {to} is below {min}, the minimum the version obligation {} computes",
-                    o.id
-                )
-                .map_err(Error::Transport)?;
-                for r in &o.reasons {
-                    writeln!(out, "         {r}").map_err(Error::Transport)?;
-                }
-                writeln!(
-                    out,
-                    "         nothing was written; see `majordomus release obligation`, or run `majordomus release advance`"
-                )
-                .map_err(Error::Transport)?;
-                return Ok(EXIT_UNDER_VERSIONED);
+                return put(&mut out, &obligation_refusal(&to, &min, &o))
+                    .map(|()| EXIT_UNDER_VERSIONED);
             }
         }
     }
@@ -912,17 +909,18 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
         return Ok(0);
     }
 
-    write_and_verify(&root, &to, &mut out)
+    write_and_verify(&root, &to).and_then(|(code, report)| put(&mut out, &report).map(|()| code))
 }
 
 /// The one write: the manifest's version line and the lock's record of it, then both read
 /// back. `release bump` and `release advance` both end here, so there is one writer however
 /// the version was chosen.
-fn write_and_verify(root: &std::path::Path, to: &str, out: &mut impl Write) -> Result<u8> {
+fn write_and_verify(root: &std::path::Path, to: &str) -> Result<(u8, String)> {
     let written = version::write(root, to).map_err(|e| Error::io(root.to_path_buf(), e))?;
-    for f in &written {
-        writeln!(out, "         {f} written").map_err(Error::Transport)?;
-    }
+    let mut report: String = written
+        .iter()
+        .map(|f| format!("         {f} written\n"))
+        .collect();
     // Read both back. A half-applied bump is exactly the failure the one-writer rule exists
     // to prevent, so the writer proves its own work rather than leaving it to the build or
     // the release that finds out at its first step. The projection is not read: it is stale
@@ -931,19 +929,38 @@ fn write_and_verify(root: &std::path::Path, to: &str, out: &mut impl Write) -> R
     let after_lock = version::locked(root);
     let lock_disagrees = after_lock.as_deref().is_some_and(|v| v != to);
     if after_manifest != to || lock_disagrees {
-        writeln!(
-            out,
-            "release: the bump did not take ({} states '{after_manifest}', {} states '{}')",
+        report.push_str(&format!(
+            "release: the bump did not take ({} states '{after_manifest}', {} states '{}')\n",
             version::MANIFEST,
             version::LOCK,
             after_lock.as_deref().unwrap_or("nothing")
-        )
-        .map_err(Error::Transport)?;
-        return Ok(EXIT_DISAGREE);
+        ));
+        return Ok((EXIT_DISAGREE, report));
     }
-    writeln!(out, "         {} now declares {to}", version::MANIFEST).map_err(Error::Transport)?;
-    writeln!(out, "         {}", derived_after(to)).map_err(Error::Transport)?;
-    Ok(0)
+    report.push_str(&format!(
+        "         {} now declares {to}\n         {}\n",
+        version::MANIFEST,
+        derived_after(to)
+    ));
+    Ok((0, report))
+}
+
+/// Why `release bump` refuses a version under the obligation's minimum: the minimum, every
+/// reason the obligation gives for it, and the two commands that answer it.
+fn obligation_refusal(
+    to: &version::Version,
+    min: &version::Version,
+    o: &VersionObligation,
+) -> String {
+    let mut s = format!(
+        "release: REFUSED {to} is below {min}, the minimum the version obligation {} computes\n",
+        o.id
+    );
+    for r in &o.reasons {
+        s.push_str(&format!("         {r}\n"));
+    }
+    s.push_str("         nothing was written; see `majordomus release obligation`, or run `majordomus release advance`\n");
+    s
 }
 
 /// What a bump leaves for the derivation: the one sentence both the dry run and the write
@@ -982,6 +999,249 @@ mod tests {
     /// `next` with who decided it, and the commits as evidence — in that order, one write.
     /// Each severity prints as its own word, padded to one width so the messages after it
     /// line up; a note is not printed as a warning nor a warning as an error.
+    fn obligation(
+        contract: release::obligation::ContractRequirement,
+        work: usize,
+    ) -> VersionObligation {
+        use release::obligation::*;
+        VersionObligation {
+            schema: OBLIGATION_SCHEMA.into(),
+            id: "feature/x@1.8.0".into(),
+            subject: "feature/x".into(),
+            trunk: Some(Trunk {
+                reference: "origin/master".into(),
+                commit: "0123456789abcdef0123".into(),
+                version: "1.8.0".into(),
+                contained: false,
+            }),
+            declared: "1.8.0".into(),
+            carries: Carries::Work,
+            paths: PathCounts {
+                work,
+                derived: 2,
+                release_evidence: 0,
+                version_advance: 0,
+                work_examples: (0..work.min(8)).map(|i| format!("lib/{i}.sh")).collect(),
+            },
+            contract,
+            cadence: CadenceRequirement {
+                policy: Impact::Minor,
+                required: Impact::Minor,
+                floor: "1.9.0".into(),
+            },
+            minimum: "2.0.0".into(),
+            effective: Impact::Major,
+            state: ObligationState::Owed,
+            reasons: vec!["the public contract requires major since v1.8.0".into()],
+            remedy: Some("majordomus release advance".into()),
+        }
+    }
+
+    /// Every input the obligation was decided from is on the page, in the order a person
+    /// checks them: the trunk (and that this tree is not on it), the contract, the cadence,
+    /// the verdict, why, the work — sampled, with the rest counted — and the remedy.
+    #[test]
+    fn the_obligation_text_names_every_input_and_the_remedy() {
+        use release::obligation::ContractRequirement;
+        let measured = ContractRequirement {
+            baseline: Some("v1.8.0".into()),
+            required: Impact::Major,
+            floor: Some("2.0.0".into()),
+            unmeasured: None,
+        };
+        let text = obligation_text(&obligation(measured, 11));
+        for line in [
+            "trunk       origin/master 0123456789ab declares 1.8.0 (not contained in this tree)",
+            "carries     work (11 authored, 2 derived, 0 release record(s), 0 version advance)",
+            "contract    major since v1.8.0, at least 2.0.0",
+            "cadence     minor of the policy's minor, at least 1.9.0",
+            "effective   major",
+            "minimum     2.0.0",
+            "state       owed",
+            "    lib/7.sh",
+            "    ... and 3 more",
+            "remedy      majordomus release advance",
+        ] {
+            assert!(text.contains(line), "missing {line:?} in:\n{text}");
+        }
+
+        let unmeasured = ContractRequirement {
+            baseline: None,
+            required: Impact::None,
+            floor: None,
+            unmeasured: Some("nothing published".into()),
+        };
+        assert!(obligation_text(&obligation(unmeasured, 1)).contains("contract    not measured"));
+
+        let quiet = ContractRequirement {
+            baseline: None,
+            required: Impact::None,
+            floor: None,
+            unmeasured: None,
+        };
+        let mut o = obligation(quiet, 0);
+        o.trunk = None;
+        o.remedy = None;
+        let text = obligation_text(&o);
+        assert!(
+            text.contains("contract    none") && text.contains("trunk       unreadable"),
+            "{text}"
+        );
+        assert!(
+            !text.contains("  work\n") && !text.contains("remedy"),
+            "{text}"
+        );
+    }
+
+    /// A writer whose reader has gone away.
+    struct Gone;
+    impl Write for Gone {
+        fn write(&mut self, _: &[u8]) -> std::io::Result<usize> {
+            Err(std::io::Error::new(std::io::ErrorKind::BrokenPipe, "gone"))
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    fn manifest_at(version: &str) -> tempfile::TempDir {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(dir.path().join("apps/majordomus-cli")).unwrap();
+        std::fs::write(
+            dir.path().join(version::MANIFEST),
+            format!("[package]\nversion = \"{version}\"\n"),
+        )
+        .unwrap();
+        dir
+    }
+
+    fn quiet() -> release::obligation::ContractRequirement {
+        release::obligation::ContractRequirement {
+            baseline: None,
+            required: Impact::None,
+            floor: None,
+            unmeasured: None,
+        }
+    }
+
+    /// A report is written whole or not at all: a reader that went away is a transport
+    /// failure, whatever the report was.
+    #[test]
+    fn a_report_to_a_reader_that_went_away_is_a_transport_failure() {
+        assert!(matches!(put(&mut Gone, "x"), Err(Error::Transport(_))));
+        let o = obligation(quiet(), 1);
+        assert!(report_obligation(&mut Gone, OutputFormat::Text, &o).is_err());
+        let dir = manifest_at("1.8.0");
+        assert!(advance_with(&mut Gone, dir.path(), &o, false).is_err());
+        assert_eq!(
+            super::version::declared(dir.path()).as_deref(),
+            Some("2.0.0"),
+            "the write is made before the report"
+        );
+    }
+
+    #[test]
+    fn the_obligation_reports_in_either_format_and_exits_with_its_verdict() {
+        let o = obligation(quiet(), 1);
+        let mut text = Vec::new();
+        assert_eq!(
+            report_obligation(&mut text, OutputFormat::Text, &o).unwrap(),
+            10
+        );
+        assert!(String::from_utf8(text)
+            .unwrap()
+            .starts_with("Majordomus version obligation"));
+        let mut json = Vec::new();
+        assert_eq!(
+            report_obligation(&mut json, OutputFormat::Json, &o).unwrap(),
+            10
+        );
+        let v: serde_json::Value = serde_json::from_slice(&json).unwrap();
+        assert_eq!(v["state"], "owed");
+    }
+
+    /// Each arm of `release advance`: nothing when it holds, a refusal when no version can
+    /// be chosen, the plan on a dry run, and the one write when it is owed.
+    #[test]
+    fn the_advance_answers_each_verdict_its_own_way() {
+        let dir = manifest_at("1.8.0");
+        let mut o = obligation(quiet(), 1);
+
+        o.state = ObligationState::Satisfied;
+        let mut out = Vec::new();
+        assert_eq!(advance_with(&mut out, dir.path(), &o, false).unwrap(), 0);
+        assert!(String::from_utf8(out)
+            .unwrap()
+            .contains("holds (satisfied)"));
+
+        o.state = ObligationState::Behind;
+        let mut out = Vec::new();
+        assert_eq!(advance_with(&mut out, dir.path(), &o, false).unwrap(), 10);
+        let text = String::from_utf8(out).unwrap();
+        assert!(
+            text.contains("REFUSED the obligation feature/x@1.8.0 is behind")
+                && text.contains("nothing was written")
+        );
+
+        o.state = ObligationState::Owed;
+        let mut out = Vec::new();
+        assert_eq!(advance_with(&mut out, dir.path(), &o, true).unwrap(), 0);
+        assert!(String::from_utf8(out).unwrap().contains("(unwritten)"));
+        assert_eq!(
+            super::version::declared(dir.path()).as_deref(),
+            Some("1.8.0"),
+            "a dry run writes nothing"
+        );
+
+        let mut out = Vec::new();
+        assert_eq!(advance_with(&mut out, dir.path(), &o, false).unwrap(), 0);
+        let text = String::from_utf8(out).unwrap();
+        assert!(
+            text.contains("1.8.0 -> 2.0.0") && text.contains("now declares 2.0.0"),
+            "{text}"
+        );
+        o.trunk = None;
+        o.minimum = "2.1.0".into();
+        let mut out = Vec::new();
+        advance_with(&mut out, dir.path(), &o, true).unwrap();
+        assert!(String::from_utf8(out).unwrap().contains("over the trunk"));
+    }
+
+    /// The writer reads its own work back: a manifest with no version line is a bump that
+    /// did not take, and a manifest it cannot write is an error, not a report.
+    #[test]
+    fn the_write_is_read_back_and_a_failure_is_named() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(dir.path().join("apps/majordomus-cli")).unwrap();
+        std::fs::write(
+            dir.path().join(version::MANIFEST),
+            "[package]\nname = \"x\"\n",
+        )
+        .unwrap();
+        let (code, report) = write_and_verify(dir.path(), "1.0.0").unwrap();
+        assert_eq!(code, EXIT_DISAGREE);
+        assert!(report.contains("the bump did not take"), "{report}");
+
+        let dir = manifest_at("1.0.0");
+        let manifest = dir.path().join(version::MANIFEST);
+        std::fs::set_permissions(&manifest, std::fs::Permissions::from_mode(0o444)).unwrap();
+        assert!(write_and_verify(dir.path(), "1.1.0").is_err());
+        let o = obligation(quiet(), 1);
+        assert!(advance_with(&mut Vec::new(), dir.path(), &o, false).is_err());
+        std::fs::set_permissions(&manifest, std::fs::Permissions::from_mode(0o644)).unwrap();
+    }
+
+    #[test]
+    fn a_refused_override_names_the_minimum_every_reason_and_the_way_out() {
+        let o = obligation(quiet(), 1);
+        let v = |s| version::Version::parse(s).unwrap();
+        let text = obligation_refusal(&v("1.8.1"), &v("2.0.0"), &o);
+        assert!(text.starts_with("release: REFUSED 1.8.1 is below 2.0.0, the minimum the version obligation feature/x@1.8.0 computes"));
+        assert!(text.contains("the public contract requires major since v1.8.0"));
+        assert!(text.contains("majordomus release advance"));
+    }
+
     #[test]
     fn every_severity_prints_as_its_own_word_at_one_width() {
         assert_eq!(severity_word(Severity::Error), "ERROR  ");

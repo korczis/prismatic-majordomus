@@ -27,6 +27,7 @@ related:
   - file:.ai/repo/ci/gates.yaml
   - test:test/cases/801_completed_work_advances_the_version.sh
   - test:test/cases/802_a_merge_carries_its_version_advance.sh
+  - test:test/cases/803_the_version_has_one_writer.sh
   - test:apps/majordomus-cli/tests/release_obligation.rs
 ---
 
@@ -208,4 +209,8 @@ orders, the termination of the pipeline's follow-ups, and the classification of 
 advance. `apps/majordomus-cli/tests/release_obligation.rs` runs the command line against git
 repositories with a trunk. `test/cases/801_completed_work_advances_the_version.sh` proves the
 finish half, and `test/cases/802_a_merge_carries_its_version_advance.sh` runs the gate exactly
-as the CI model declares it.
+as the CI model declares it. `test/cases/803_the_version_has_one_writer.sh` holds the writer to
+one caller and refuses a hook, script or workflow that rewrites the version itself. The
+changelog orders releases that share a moment by version, as numbers, so many small releases
+compose deterministically (`release::changelog`'s
+`many_releases_on_one_day_are_ordered_by_their_version_as_numbers`).

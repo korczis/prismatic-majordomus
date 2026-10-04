@@ -32,10 +32,14 @@ declared() { sed -n 's/^version = "\(.*\)"$/\1/p' apps/majordomus-cli/Cargo.toml
 advances() { grep -c '"event":"release.advanced"' .ai/local/state/ledger.jsonl 2>/dev/null || true; }
 obligation() { "$BIN" release obligation --repo . "$@"; }
 
+# The fixture carries the tool's share as this repository does, so the version's projection
+# (share/version.txt) is the fixture's own and `generate distribution` writes it there.
+cp -R "$ROOT/share" share
+export MAJORDOMUS_SHARE="$PWD/share"
 mkdir -p apps/majordomus-cli lib docs/generated .ai/repo/releases
 printf '[package]\nname = "majordomus-cli"\nversion = "1.4.0"\n' > apps/majordomus-cli/Cargo.toml
 printf '[[package]]\nname = "majordomus-cli"\nversion = "1.4.0"\n' > apps/majordomus-cli/Cargo.lock
-printf 'docs/generated/** merge=derived\n' > .gitattributes
+printf 'docs/generated/** merge=derived\nshare/version.txt merge=derived\n' > .gitattributes
 echo '{}' > docs/generated/x.json
 echo 'a() { :; }' > lib/a.sh
 git add -A >/dev/null && git commit -qm base
@@ -97,6 +101,9 @@ expect_exit 0 "$MJ" finish --outcome completed --verify-command "test -d .ai" --
 expect_grep 'version 1\.4\.0 -> 1\.5\.0'
 [ "$(declared)" = 1.5.0 ] || { echo "    completed work left the version at $(declared)"; exit 1; }
 grep -q 'version = "1.5.0"' apps/majordomus-cli/Cargo.lock || { echo "    the lock's record was not advanced with the manifest"; exit 1; }
+# the projection the shell tool reads states the advanced version: the advance is projected,
+# never left for a reader to find stale, and nothing but the generator wrote it
+grep -qx 'version=1.5.0' share/version.txt || { echo "    share/version.txt does not state the advanced version:"; cat share/version.txt 2>/dev/null; exit 1; }
 [ "$(advances)" = 1 ] || { echo "    expected one release.advanced line, found $(advances)"; exit 1; }
 grep '"event":"release.advanced"' .ai/local/state/ledger.jsonl | grep -q '"obligation":"feature/a@1.4.0"' \
   || { echo "    the advance does not carry the obligation's identity"; exit 1; }

@@ -1151,6 +1151,51 @@ pub fn default_target(report: &VersionReport, current: Version) -> Result<Versio
 mod tests {
     use super::*;
 
+    /// The writer touches what exists: a tree with no lock writes the manifest alone, and a
+    /// file it cannot write is an error returned, never a version half-written in silence.
+    #[test]
+    fn the_writer_reports_what_it_wrote_and_what_it_could_not() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(dir.path().join("apps/majordomus-cli")).unwrap();
+        let manifest = dir.path().join(MANIFEST);
+        std::fs::write(&manifest, "[package]\nversion = \"0.8.0\"\n").unwrap();
+        assert_eq!(
+            locked(dir.path()),
+            None,
+            "no lock is no version, never a guess"
+        );
+        assert_eq!(
+            write(dir.path(), "0.9.0").unwrap(),
+            vec![MANIFEST.to_string()]
+        );
+        assert_eq!(
+            write(dir.path(), "0.9.0").unwrap(),
+            Vec::<String>::new(),
+            "unchanged is unwritten"
+        );
+
+        let lock = dir.path().join(LOCK);
+        std::fs::write(
+            &lock,
+            "[[package]]\nname = \"majordomus-cli\"\nversion = \"0.9.0\"\n",
+        )
+        .unwrap();
+        std::fs::set_permissions(&lock, std::fs::Permissions::from_mode(0o444)).unwrap();
+        assert!(
+            write(dir.path(), "0.10.0").is_err(),
+            "a lock that cannot be written is an error"
+        );
+        std::fs::set_permissions(&lock, std::fs::Permissions::from_mode(0o644)).unwrap();
+
+        std::fs::set_permissions(&manifest, std::fs::Permissions::from_mode(0o444)).unwrap();
+        assert!(
+            write(dir.path(), "0.11.0").is_err(),
+            "a manifest that cannot be written is an error"
+        );
+        std::fs::set_permissions(&manifest, std::fs::Permissions::from_mode(0o644)).unwrap();
+    }
+
     fn change(kind: ChangeKind, breaking: bool) -> Change {
         Change {
             kind,

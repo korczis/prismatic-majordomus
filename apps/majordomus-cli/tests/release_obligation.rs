@@ -351,3 +351,79 @@ fn a_merge_of_the_trunk_in_progress_contains_it_and_measures_from_it() {
     );
     assert_eq!(v["minimum"], "1.6.0");
 }
+
+/// An obligation nobody could read sets no floor of its own: the bump falls back to the
+/// contract's, and an explicit version is written. The gate and finish refuse an unverified
+/// obligation; the writer does not invent a minimum for it.
+#[test]
+fn an_unreadable_obligation_sets_no_floor_on_the_bump() {
+    let f = fixture();
+    f.git(&["update-ref", "-d", "refs/remotes/origin/master"]);
+    f.write("lib/a.sh", "#!/usr/bin/env bash\necho changed\n");
+    let (code, out, _) = run_in(&f.root(), &["release", "bump", "--exact", "1.4.1"], "");
+    assert_eq!(code, 0, "{out}");
+    assert_eq!(declared(&f), "1.4.1");
+}
+
+/// The capability every machine surface serves answers with the value the command line
+/// renders: one decision, reached through the one execution path.
+#[test]
+fn the_capability_answers_with_the_command_lines_value() {
+    let f = fixture();
+    f.write("lib/a.sh", "#!/usr/bin/env bash\necho changed\n");
+    let (code, out, err) = run_in(
+        &f.root(),
+        &[
+            "run",
+            "release.obligation",
+            "--input",
+            "{}",
+            "--format",
+            "json",
+        ],
+        "",
+    );
+    assert_eq!(code, 0, "{err}");
+    let v: Value = serde_json::from_str(&out).unwrap();
+    let answer = &v["output"];
+    let (_, cli) = json(&f, &[]);
+    assert_eq!(answer, &cli, "the capability and the command line disagree");
+    let (code, out, _) = run_in(
+        &f.root(),
+        &[
+            "run",
+            "release.obligation",
+            "--input",
+            r#"{"base":"refs/remotes/origin/nowhere"}"#,
+            "--format",
+            "json",
+        ],
+        "",
+    );
+    assert_eq!(code, 0);
+    let v: Value = serde_json::from_str(&out).unwrap();
+    assert_eq!(v["output"]["state"], "unverified");
+}
+
+#[test]
+fn outside_a_repository_neither_command_answers() {
+    let plain = Fixture::plain_dir();
+    for args in [&["release", "obligation"][..], &["release", "advance"][..]] {
+        let (code, _, err) = run_in(&plain.root(), args, "");
+        assert_ne!(code, 0, "{args:?} answered outside a repository: {err}");
+    }
+}
+
+/// A trunk this tree shares no history with is not contained, and the tree's change set is
+/// measured from the trunk itself.
+#[test]
+fn a_trunk_with_no_common_history_is_not_contained() {
+    let f = fixture();
+    let home = f.git(&["symbolic-ref", "--short", "HEAD"]).trim().to_string();
+    f.git(&["checkout", "-q", "--orphan", "elsewhere"]);
+    f.commit("an unrelated root");
+    f.git(&["update-ref", "refs/remotes/origin/master", "HEAD"]);
+    f.git(&["checkout", "-q", &home]);
+    let (_, v) = json(&f, &[]);
+    assert_eq!(v["trunk"]["contained"], false, "{v}");
+}
