@@ -186,8 +186,15 @@ repository's own setting decides that.
 ## Safety
 
 - One executor per base branch: `drain` and `cleanup --apply` hold an exclusive lease at
-  `<git-common-dir>/majordomus/locks/integration-<base>.lock`, with the holder recorded. A
-  lease untouched for 30 minutes is reclaimed. Observers never take it.
+  `<git-common-dir>/majordomus/locks/integration-<base>.lock`, with the holder recorded.
+  Holding it is holding an exclusive `flock` on that file for the executor's life, so the
+  kernel decides who holds it: of executors started at the same instant, in one checkout
+  or in several worktrees of the repository, exactly one holds it and no pull request is
+  merged twice. The integration unit tests race eight executors per round, and cases 855
+  and 856 race separate processes through the command line. A holder that ends, even by a
+  crash, releases the lease at once; a live holder is never taken over. A record untouched
+  for 30 minutes is reported stale to observers (`prs brief`, `prs status`), which never
+  take the lease.
 - Every act is appended to the audit trail before it happens. The trail is one file per
   repository, `<git-common-dir>/majordomus/integration/events.jsonl`, beside the lease, so
   every worktree writes the same trail and `prs events`, `prs brief`, `prs status`, the
