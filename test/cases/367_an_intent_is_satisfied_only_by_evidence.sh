@@ -1,5 +1,5 @@
 # majordomus-covers: none
-# claims: none
+# claims: intent-links-resolve, intent-stage-derived
 # An intent is satisfied only by evidence, and never by the work around it being finished.
 #
 # An intent names the milestones that realise it and the tests that settle it. Its stage is

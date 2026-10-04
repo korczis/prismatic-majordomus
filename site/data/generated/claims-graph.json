@@ -870,6 +870,105 @@
       "note": "The adapter has exited 11 on drift since it was written and nothing called it, so the projection decayed to a tenth of the model over five days with every build green. The gate refuses behind, edited, conflict, unmanaged, state and milestone outright, and ratchets the backlog of unprojected records against .ai/repo/ci/github-drift-baseline.txt, which may fall and may never rise."
     },
     {
+      "id": "claim:intent-stage-derived",
+      "kind": "claim",
+      "label": "An intent's stage is derived from the milestones that realise it and each criterion from the evidence ledger, and it is satisfied only while every criterion has a current passing run",
+      "status": "guaranteed",
+      "route": "/guarantees/intent-stage-derived/",
+      "external": false,
+      "note": "Nothing about an intent is stored but its statement. A passing run while a milestone is open meets the criterion and satisfies nothing; closing the milestone satisfies it; changing the test after its run makes the evidence stale and the intent falls back to verifying, and a failing run is not evidence either, with the intent file untouched throughout. `majordomus intent list`, `intent show`, the HTTP API and the MCP tools answer from the same derivation."
+    },
+    {
+      "id": "claim:intent-links-resolve",
+      "kind": "claim",
+      "label": "An intent whose criterion names evidence that resolves to nothing is refused by name",
+      "status": "guaranteed",
+      "route": "/guarantees/intent-links-resolve/",
+      "external": false,
+      "note": "`majordomus intent validate` exits 10 with `unresolved_evidence_ref` naming the intent, and the intent-check gate runs it. A milestone or governance entry that resolves to nothing is refused the same way. A reference to nothing would otherwise read as a planned intent forever."
+    },
+    {
+      "id": "claim:intent-criteria-covered",
+      "kind": "claim",
+      "label": "Once work exists under an intent, a criterion no issue serves, an issue under its milestones that serves nothing and a link to a criterion that does not exist are each refused by name",
+      "status": "guaranteed",
+      "route": "/guarantees/intent-criteria-covered/",
+      "external": false,
+      "note": "An issue names the criterion it serves in `serves`; coverage from criterion to issue is derived on every read and `majordomus intent coverage` prints it, with the reason every issue exists. An intent with no work yet is `intent_not_planned`, a warning, because that is where every intent starts."
+    },
+    {
+      "id": "claim:intent-plan-reviewed",
+      "kind": "claim",
+      "label": "A gap that leaves a criterion unanswered is refused, and an issue serving an intent that started without a critique or while a blocking finding is open fails intent validation",
+      "status": "guaranteed",
+      "route": "/guarantees/intent-plan-reviewed/",
+      "external": false,
+      "note": "The refusal is `majordomus intent validate` and the intent-check gate, after the start. `plan start` itself succeeds; refusing the start is intent-refused-at-plan-start, which is planned. Majordomus writes neither record. A worker observes and criticises, and the repository refuses what does not hold together."
+    },
+    {
+      "id": "claim:intent-realization-held-to-evidence",
+      "kind": "claim",
+      "label": "The work realising an intent is joined across sessions, providers and handovers, and an intent whose milestones are all closed while a criterion's evidence fails is refused naming that criterion",
+      "status": "guaranteed",
+      "route": "/guarantees/intent-realization-held-to-evidence/",
+      "external": false,
+      "note": "`majordomus intent realization` exits 10 with `closed_work_contradicted` and the intent-realization gate runs it; `intent explain` says why an intent stands where it stands. Every link says how it is known: declared, observed, derived or inferred. Closed work that is merely unproven, and an issue closed while the criterion it serves is unmet, are warnings rather than refusals."
+    },
+    {
+      "id": "claim:intent-preflight-names-the-intent",
+      "kind": "claim",
+      "label": "Before work on an issue starts, the intent it serves is named with the governance that applies, and work whose issue reaches no intent is refused naming the missing link",
+      "status": "guaranteed",
+      "route": "/guarantees/intent-preflight-names-the-intent/",
+      "external": false,
+      "note": "`majordomus intent preflight --issue <id>` follows the issue to its milestone and the milestone to the intents naming it, and exits 10 naming the unknown issue or the milestone no intent names; the MCP tool answers the same. It is a question a worker asks, not a step any command takes for it: `plan start` does not run it."
+    },
+    {
+      "id": "claim:intent-cockpit-pages",
+      "kind": "claim",
+      "label": "The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>",
+      "status": "guaranteed",
+      "route": "/guarantees/intent-cockpit-pages/",
+      "external": false,
+      "note": "Both pages render the intent-realization capabilities and decide nothing themselves. Each criterion links the test object it names and the issue serving it, the realising work carries its providers and the provenance of its link, and an intent the repository does not hold is a 404."
+    },
+    {
+      "id": "claim:intent-in-session-context",
+      "kind": "claim",
+      "label": "A session will load the intents its task serves when it starts",
+      "status": "planned",
+      "route": "/guarantees/intent-in-session-context/",
+      "external": false,
+      "note": "`majordomus context` compiles rules, handovers, decisions and the plan, and no intent record is among them. A worker reaches an intent only by asking `majordomus intent` for it."
+    },
+    {
+      "id": "claim:intent-refused-at-plan-start",
+      "kind": "claim",
+      "label": "Starting an issue that serves an intent with no critique, or with a blocking finding open, will be refused when it is started rather than reported afterwards",
+      "status": "planned",
+      "route": "/guarantees/intent-refused-at-plan-start/",
+      "external": false,
+      "note": "Today `plan start` succeeds, and `intent validate` names `executing_without_critique` or `executing_with_open_blocker` once the work has started. That half is intent-plan-reviewed."
+    },
+    {
+      "id": "claim:intent-closes-github-milestones",
+      "kind": "claim",
+      "label": "A milestone will be closed on GitHub only once the intents it realises are satisfied",
+      "status": "planned",
+      "route": "/guarantees/intent-closes-github-milestones/",
+      "external": false,
+      "note": "The GitHub projection closes a milestone from its derived plan status alone and reads no intent. Closed work the evidence contradicts is refused by the intent-realization gate, not by the tracker."
+    },
+    {
+      "id": "claim:intent-command-deployment-evidence",
+      "kind": "claim",
+      "label": "A criterion settled by a command or by a deployment will be met by recorded evidence",
+      "status": "planned",
+      "route": "/guarantees/intent-command-deployment-evidence/",
+      "external": false,
+      "note": "Such a criterion resolves and reads `not_derivable`, and never meets a criterion by itself, because the evidence ledger records runs of tests and claims only. An intent whose criteria are all of these kinds cannot be satisfied today."
+    },
+    {
       "id": "claim:mcp-stdio-surface",
       "kind": "claim",
       "label": "The Rust executable serves the repository's AI layer to an MCP client over stdio, read-only, with protocol frames alone on stdout",
@@ -2090,6 +2189,13 @@
       "external": false
     },
     {
+      "id": "impl:apps/majordomus-cli/src/cockpit/intents.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/cockpit/intents.rs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:apps/majordomus-cli/src/cockpit/mod.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/cockpit/mod.rs",
@@ -2191,6 +2297,34 @@
       "id": "impl:apps/majordomus-cli/src/index.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/index.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/intent.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/intent.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/intent_plan.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/intent_plan.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/intent_realization.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/intent_realization.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/intent_review.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/intent_review.rs",
       "route": null,
       "external": false
     },
@@ -3224,6 +3358,20 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/http_serve.rs"
     },
     {
+      "id": "test:apps/majordomus-cli/tests/intent.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/intent.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/intent.rs"
+    },
+    {
+      "id": "test:apps/majordomus-cli/tests/intent_realization.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/intent_realization.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/intent_realization.rs"
+    },
+    {
       "id": "test:apps/majordomus-cli/tests/knowledge_base.rs",
       "kind": "test",
       "label": "apps/majordomus-cli/tests/knowledge_base.rs",
@@ -3572,6 +3720,27 @@
       "label": "test/cases/359_live_scenarios.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/359_live_scenarios.sh"
+    },
+    {
+      "id": "test:test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
+      "kind": "test",
+      "label": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/367_an_intent_is_satisfied_only_by_evidence.sh"
+    },
+    {
+      "id": "test:test/cases/386_a_plan_is_held_to_its_intent.sh",
+      "kind": "test",
+      "label": "test/cases/386_a_plan_is_held_to_its_intent.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/386_a_plan_is_held_to_its_intent.sh"
+    },
+    {
+      "id": "test:test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh",
+      "kind": "test",
+      "label": "test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh"
     },
     {
       "id": "test:test/cases/400_derivation_is_one_graph.sh",
@@ -4558,6 +4727,61 @@
     },
     {
       "source": "claim:github-projection-gated",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:intent-stage-derived",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:intent-links-resolve",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:intent-criteria-covered",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:intent-plan-reviewed",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:intent-realization-held-to-evidence",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:intent-preflight-names-the-intent",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:intent-cockpit-pages",
+      "target": "source:docs/COCKPIT.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:intent-in-session-context",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:intent-refused-at-plan-start",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:intent-closes-github-milestones",
+      "target": "source:docs/PLANNING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:intent-command-deployment-evidence",
       "target": "source:docs/PLANNING.md",
       "kind": "specified_by"
     },
@@ -5627,6 +5851,41 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:intent-stage-derived",
+      "target": "impl:apps/majordomus-cli/src/intent.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:intent-links-resolve",
+      "target": "impl:apps/majordomus-cli/src/intent.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:intent-criteria-covered",
+      "target": "impl:apps/majordomus-cli/src/intent_plan.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:intent-plan-reviewed",
+      "target": "impl:apps/majordomus-cli/src/intent_review.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:intent-realization-held-to-evidence",
+      "target": "impl:apps/majordomus-cli/src/intent_realization.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:intent-preflight-names-the-intent",
+      "target": "impl:apps/majordomus-cli/src/intent.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:intent-cockpit-pages",
+      "target": "impl:apps/majordomus-cli/src/cockpit/intents.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:mcp-stdio-surface",
       "target": "impl:apps/majordomus-cli/src/mcp/protocol.rs",
       "kind": "implemented_by"
@@ -6684,6 +6943,41 @@
     {
       "source": "claim:github-projection-gated",
       "target": "test:test/cases/97_github_gate.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:intent-stage-derived",
+      "target": "test:test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:intent-links-resolve",
+      "target": "test:test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:intent-criteria-covered",
+      "target": "test:test/cases/386_a_plan_is_held_to_its_intent.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:intent-plan-reviewed",
+      "target": "test:test/cases/386_a_plan_is_held_to_its_intent.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:intent-realization-held-to-evidence",
+      "target": "test:test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:intent-preflight-names-the-intent",
+      "target": "test:apps/majordomus-cli/tests/intent.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:intent-cockpit-pages",
+      "target": "test:apps/majordomus-cli/tests/intent_realization.rs",
       "kind": "proved_by"
     },
     {

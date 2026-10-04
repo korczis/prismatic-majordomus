@@ -21,9 +21,17 @@ branches and commits from git, `scripts/traceability` joins the pull requests Gi
 and a commit no execution contract accounts for is reported as unattributed rather than
 quietly left out.
 
+Above the milestones, an intent states what must become true and the evidence that settles
+it. `majordomus intent` derives its stage from the plan and each criterion from the evidence
+ledger, answers which intent the work on an issue serves when a worker asks, refuses a
+criterion no issue serves and work that started before its plan was critiqued, and joins the
+work realising it across sessions and providers; the Cockpit shows the same answers at `/cockpit/intents`.
+
 ## What it does not do
 
 It does not talk to GitHub on its own: the projection of issues and milestones is rendered
 offline and applied only when a person runs the sync with a token. Nothing here estimates
-effort or schedules dates.
+effort or schedules dates. An intent is judged after the fact, not enforced when work
+starts: `plan start` does not refuse an issue whose intent has no critique, a session does not
+load intents, and the GitHub projection closes a milestone without reading them.
 {% endraw %}

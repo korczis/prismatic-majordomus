@@ -1,5 +1,5 @@
 # majordomus-covers: none
-# claims: none
+# claims: intent-realization-held-to-evidence
 # An intent is realised across two providers and a handover, and is satisfied only while
 # reality says so.
 #

@@ -184,9 +184,11 @@ over the plan: findings classed by the question asked — `missed_requirement`,
 `planned` into an issue that serves the intent, or `rejected` with a reason. A dismissal
 nobody can read is not a resolution.
 
-Work does not start before the plan has been reviewed: an issue serving an intent that is
+Work is held to the review of its plan once it has started: an issue serving an intent that is
 `ACTIVE`, `VERIFY` or `DONE` while the intent has no critique is `executing_without_critique`,
-and while a blocking finding is open, `executing_with_open_blocker`. Both are failures.
+and while a blocking finding is open, `executing_with_open_blocker`. Both are failures of
+`intent validate` and the `intent-check` gate. `plan start` itself does not refuse the start;
+refusing it there is planned (`intent-refused-at-plan-start` in [`CLAIMS.yaml`](CLAIMS.yaml)).
 
 **Majordomus judges these records; it does not write them.** A person or a worker — Claude,
 Codex, Gemini — does the observing and the criticising, and the repository refuses the result
@@ -236,6 +238,21 @@ link. Both pages render the capabilities above and decide nothing themselves.
 `test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh` is the loop end
 to end: declared, realised across two providers and a handover, closed while one case fails,
 fixed, satisfied, broken again and repaired — with the intent file byte-identical throughout.
+
+### What intents do not do yet
+
+Each of these is a `planned` claim in [`CLAIMS.yaml`](CLAIMS.yaml), and the homepage lists them
+from there:
+
+- `intent-in-session-context` — a session does not load the intents its task serves; a worker
+  reaches one only by asking `majordomus intent` for it.
+- `intent-refused-at-plan-start` — `plan start` lets an issue start before its intent's plan was
+  critiqued; `intent validate` names it afterwards.
+- `intent-closes-github-milestones` — the GitHub projection closes a milestone from its derived
+  plan status alone and reads no intent.
+- `intent-command-deployment-evidence` — a criterion settled by a `command` or a `deployment`
+  resolves and reads `not_derivable`; the ledger records runs of tests and claims only, so such
+  a criterion is never met.
 
 ## Traceability: what realised an issue, and what an issue realised
 
