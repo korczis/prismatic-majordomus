@@ -4,14 +4,24 @@ One active task per checkout. A task claims the paths it may touch and the profi
 under; everything else is derived from Git and from what the task records.
 
 ```
-majordomus start "<task>" --scope <paths> [--requires <tokens>] [--profile <name>]
+majordomus start "<task>" --scope <paths> [--requires <tokens>] [--profile <name>] [--issue <id>|none]
 majordomus context            # what you need to know now; run this first, every session
    ... work ...
 majordomus checkpoint         # progress, on stdin, at the profile's interval
-majordomus check              # before claiming anything is done
+majordomus check              # where the task stands, and what the stage still owes
+majordomus evidence --run-gates            # run every gate the change selects; record each exit
+majordomus evidence --covers <token> --command '<what proved it>'
 majordomus handover < note.md # to continue in another session, or
 majordomus finish --outcome <completed|partial|blocked|no_match|failed> --verify-command "<cmd>"
 ```
+
+Done is not a claim. `check` prints the lifecycle stage the completion report derived and
+what it owes there, and `finish --outcome completed` is refused while any question of the
+completion policy (`share/completion.yaml`) is still owed — naming each one and the command
+that settles it. Run `check` and say what it said; never report work as done, complete or
+implemented on your own account. `--issue <id>` records the issue this work serves, or
+`none` for work the plan does not track; the weaker outcomes are not refused and record the
+stage they stopped at. `docs/COMPLETION.md` is the reference.
 
 Before `start`, establish where you are. A branch's work happens in its canonical
 worktree — `<repo>-wt/<branch>`, derived from git and never chosen — and the trunk's in
@@ -32,10 +42,12 @@ A scope says where a worker may write. `--requires` says what the worker *owes*:
 `share/obligations.yaml` — `implementation`, `tests`, `docs`, `generated`, `rules`,
 `commit`, `push`, `target`, `pages`, `deploy`, `verify`. `check` reports each one,
 `majordomus evidence --covers <token> --command <cmd>` discharges the ones a worker
-records, and git or the publication probe settles the rest live at HEAD without a ledger
-line. A token the vocabulary does not declare is refused at `start`, not at the moment you
-try to discharge it. Declare what the work owes when you begin it: a task that promises
-nothing is told, truthfully and uselessly, that it promises nothing.
+records, and git, the publication probe and `deploy.verify` settle the rest live at HEAD
+without a ledger line. A token the vocabulary does not declare is refused at `start`, not
+at the moment you try to discharge it. Declare what the work owes when you begin it: a task
+that promises nothing is told, truthfully and uselessly, that it promises nothing — and the
+change set implies tokens of its own whether or not the task declared them, which `check`
+reports and `evidence --covers` declares on the record when it discharges one.
 
 `start` refuses while a task is active here: hand it over or finish it first. `check` and
 `finish --outcome completed` fail on a touched file outside the claimed scope; the other

@@ -17,6 +17,18 @@ the task lifecycle is `.ai/repo/workflows/task-lifecycle.md`; the default profil
 `{{DEFAULT_PROFILE}}`. `AGENTS.md` carries the same bootstrap for every
 other worker, and a rule that exists in one of these files and not in `.ai/` is a bug.
 
+Done is not a claim. A task is finished when the completion report says so — `majordomus
+check` prints where it stands, `majordomus evidence --run-gates` runs and records every
+gate the change selects, and `majordomus finish --outcome completed` is refused until every
+question of the completion policy (`share/completion.yaml`, the one definition of done)
+passes or is exempt: the code, its tests, the documents, the generated artifacts, the
+gates, the measured version impact, the trunk, the published surfaces and the live
+verification of what they serve. Never report work as done, complete or implemented on
+your own account: run `majordomus check`, and say what it said. The stages, each with the
+questions that must pass, are:
+
+{{COMPLETION_CONTRACT}}
+
 Linked git worktrees of this repository live at `<repository>-wt/<branch>` — the primary
 checkout's sibling named with `-wt`, then the branch name with its hierarchy kept — derived
 from git and never chosen or registered; the primary checkout hosts the trunk. Before
