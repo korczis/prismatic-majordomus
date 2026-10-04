@@ -918,14 +918,17 @@ fn a_path_nothing_drives_does_not_drag_down_a_rule_that_also_names_a_case() {
 
 /// A synthetic repository whose CI model runs the crate's tests through `rust-check`, with
 /// one crate module that keeps its `#[cfg(test)] mod tests` in a file of its own and one
-/// that declares a `tests` module the test build does not own.
+/// that declares a `tests` module the test build does not own. Two more gates name the crate
+/// runner in modes that run no test, so a binding by the runner's name alone is visible.
 fn crate_with_unit_test_modules() -> crate::synthetic::SyntheticRepository {
     let repo = crate::synthetic::SyntheticRepository::small().unwrap();
     std::fs::create_dir_all(repo.root().join(".ai/repo/ci")).unwrap();
     std::fs::write(
         repo.root().join(GATES_PATH),
         "gates:\n  - id: rust-check\n    runs: scripts/rust-check --ci\n  - id: shell-suite\n    \
-         runs: bash test/run.sh\n",
+         runs: bash test/run.sh\n  - id: rust-integration\n    runs: scripts/rust-check \
+         --integration\n  - id: site-build\n    runs: scripts/rust-check --doc && \
+         scripts/site-build\n",
     )
     .unwrap();
     let src = repo.root().join("apps/majordomus-cli/src");
@@ -980,7 +983,10 @@ fn a_unit_test_module_in_its_own_file_is_run_by_the_crate_gate() {
     assert_eq!(p.tests[0].kind, ArtifactKind::Gate);
     assert_eq!(p.tests[0].gates, ["rust-check"]);
     assert_eq!(p.state, RuleState::Gated);
-    assert!(p.satisfied, "the gate that runs the crate's tests runs this module");
+    assert!(
+        p.satisfied,
+        "the gate that runs the crate's tests runs this module"
+    );
 }
 
 /// The binding is to what the test build compiles, not to a file name or a directory: the

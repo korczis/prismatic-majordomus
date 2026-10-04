@@ -6,7 +6,7 @@
     "version": "0.12.0"
   },
   "registry": {
-    "fingerprint": "cc23db75991c8974df8e78c15105fb2dae8bc2c7758879c9113f7977cbe5d407",
+    "fingerprint": "8e39788af65673ea9b72944f7cd74bf036997783970a51de376ae904b889becc",
     "summary": {
       "total": 1863,
       "builtin": 169,
@@ -54834,7 +54834,7 @@
                   {
                     "type": "string",
                     "const": "gate",
-                    "description": "An executable check a CI gate runs as its own command."
+                    "description": "An executable check a CI gate runs as its own command, or a unit-test module the\ngate running the crate's `cargo test` compiles."
                   },
                   {
                     "type": "string",
@@ -54842,7 +54842,7 @@
                     "description": "Neither. Nothing can run it, so nothing can ever record it."
                   }
                 ],
-                "description": "What a path a rule names actually is, decided by what drives it rather than by where it\nsits.\n\nThe corpus names two kinds and this distinction is the difference between a verdict and\na mechanism. A **case** is driven by a runner, so an execution of it can be recorded and\nthe repository can show that it passed. A **gate** is an executable check a CI gate runs\nas its own command: it refuses violations on every run, and this repository records no\nverdict for it, so what can be shown is the mechanism and not the result. Anything else\na rule names is proof only in prose.\n# Example\n\n```\nuse majordomus_cli::rules::ArtifactKind;\nassert_eq!(ArtifactKind::Case.label(), \"case\");\nassert_eq!(ArtifactKind::Gate.label(), \"gate\");\n```"
+                "description": "What a path a rule names actually is, decided by what drives it rather than by where it\nsits.\n\nThe corpus names two kinds and this distinction is the difference between a verdict and\na mechanism. A **case** is driven by a runner, so an execution of it can be recorded and\nthe repository can show that it passed. A **gate** is an executable check a CI gate runs\nas its own command, or a unit-test module (`src/<module>/tests.rs`) the gate running the\ncrate's `cargo test` compiles: it refuses violations on every run, and this repository\nrecords no verdict for it, so what can be shown is the mechanism and not the result.\nAnything else a rule names is proof only in prose.\n# Example\n\n```\nuse majordomus_cli::rules::ArtifactKind;\nassert_eq!(ArtifactKind::Case.label(), \"case\");\nassert_eq!(ArtifactKind::Gate.label(), \"gate\");\n```"
               },
               "ProofState": {
                 "oneOf": [
@@ -55711,7 +55711,7 @@
                   {
                     "type": "string",
                     "const": "gate",
-                    "description": "An executable check a CI gate runs as its own command."
+                    "description": "An executable check a CI gate runs as its own command, or a unit-test module the\ngate running the crate's `cargo test` compiles."
                   },
                   {
                     "type": "string",
@@ -55719,7 +55719,7 @@
                     "description": "Neither. Nothing can run it, so nothing can ever record it."
                   }
                 ],
-                "description": "What a path a rule names actually is, decided by what drives it rather than by where it\nsits.\n\nThe corpus names two kinds and this distinction is the difference between a verdict and\na mechanism. A **case** is driven by a runner, so an execution of it can be recorded and\nthe repository can show that it passed. A **gate** is an executable check a CI gate runs\nas its own command: it refuses violations on every run, and this repository records no\nverdict for it, so what can be shown is the mechanism and not the result. Anything else\na rule names is proof only in prose.\n# Example\n\n```\nuse majordomus_cli::rules::ArtifactKind;\nassert_eq!(ArtifactKind::Case.label(), \"case\");\nassert_eq!(ArtifactKind::Gate.label(), \"gate\");\n```"
+                "description": "What a path a rule names actually is, decided by what drives it rather than by where it\nsits.\n\nThe corpus names two kinds and this distinction is the difference between a verdict and\na mechanism. A **case** is driven by a runner, so an execution of it can be recorded and\nthe repository can show that it passed. A **gate** is an executable check a CI gate runs\nas its own command, or a unit-test module (`src/<module>/tests.rs`) the gate running the\ncrate's `cargo test` compiles: it refuses violations on every run, and this repository\nrecords no verdict for it, so what can be shown is the mechanism and not the result.\nAnything else a rule names is proof only in prose.\n# Example\n\n```\nuse majordomus_cli::rules::ArtifactKind;\nassert_eq!(ArtifactKind::Case.label(), \"case\");\nassert_eq!(ArtifactKind::Gate.label(), \"gate\");\n```"
               },
               "ProofState": {
                 "oneOf": [
@@ -65549,7 +65549,7 @@
     ]
   },
   "index": {
-    "fingerprint": "0a19f927ffef6b8470d0674b9faad0f934a0d00afd90e958f50590176a449c1c",
+    "fingerprint": "eb18a67c8bb04342ac97dd23a8e5afeca871fff8af0897cdf50f77a238f90779",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
