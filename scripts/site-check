@@ -249,7 +249,7 @@ EOF_CARDS
   FX_TEMPLATES="$SITE/templates/features-section.html $SITE/templates/feature.html $SITE/templates/partials/feature-card.html $SITE/templates/partials/feature-surfaces.html"
   for id in $(jq -r '.features[].id, (.domains[]?.id)' "$PD" | LC_ALL=C sort -u); do
     # shellcheck disable=SC2086
-    hit="$(grep -lE "(==|!=|in) *\\[?[\"']$id[\"']" $FX_TEMPLATES 2>/dev/null || true)"
+    hit="$(grep -lE "(==|!=|in) *\\[?[\"']${id}[\"']" $FX_TEMPLATES 2>/dev/null || true)"
     [ -z "$hit" ] || { bad features "'$id' is selected by hand in: $(printf '%s' "$hit" | sed "s#^$ROOT/##" | tr '\n' ' ')"; fx_bad=1; }
   done
   # shellcheck disable=SC2086
