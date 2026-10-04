@@ -388,18 +388,38 @@ mj_phase_end() {
 # mj_count <name>: one unit of a kind of work worth counting (a parse, a git call)
 mj_count() { mj_timing_on || return 0; printf 'count\t%s\t1\n' "$1" >> "$MJ_TIMING_FILE"; }
 # The report: phases ranked by time, counters summed, on stderr so the command's own
-# output is untouched, in the same shape whatever the command was.
+# output is untouched, in the same shape whatever the command was. Under --json it is the
+# same data as one line of JSON (docs/SCHEMAS.md, "The timing report"), so a check can
+# compare one run's breakdown with another's; the text form is for a person reading it.
+# Both forms are read from the one aggregation below, in the one order, so neither can
+# carry a phase or a counter the other lacks.
 mj_timing_report() {
   mj_timing_on || return 0
   [ -n "$MJ_TIMING_FILE" ] && [ -f "$MJ_TIMING_FILE" ] || return 0
-  local tab; tab="$(printf '\t')"
-  {
-    printf 'TIMING clock=%s total=%s ms\n' "$MJ_TIMING_CLOCK" "$(( $(mj_ms) - MJ_TIMING_T0 ))"
+  local tab total rows
+  tab="$(printf '\t')"
+  total="$(( $(mj_ms) - MJ_TIMING_T0 ))"
+  # kind <TAB> amount <TAB> calls <TAB> name: phases by time, then counters by count
+  rows="$(
     awk -F'\t' '$1=="phase" { t[$2]+=$3; n[$2]++ } END { for (k in t) printf "phase\t%d\t%d\t%s\n", t[k], n[k], k }' "$MJ_TIMING_FILE" \
-      | LC_ALL=C sort -t "$tab" -k2,2nr | awk -F'\t' '{ printf "phase  %8d ms  %4d x  %s\n", $2, $3, $4 }'
-    awk -F'\t' '$1=="count" { c[$2]+=$3 } END { for (k in c) printf "count\t%d\t%s\n", c[k], k }' "$MJ_TIMING_FILE" \
-      | LC_ALL=C sort -t "$tab" -k2,2nr | awk -F'\t' '{ printf "count  %8d     %s\n", $2, $3 }'
-  } >&2
+      | LC_ALL=C sort -t "$tab" -k2,2nr -k4,4
+    awk -F'\t' '$1=="count" { c[$2]+=$3 } END { for (k in c) printf "count\t%d\t0\t%s\n", c[k], k }' "$MJ_TIMING_FILE" \
+      | LC_ALL=C sort -t "$tab" -k2,2nr -k4,4
+  )"
+  if [ "${MJ_JSON:-0}" = 1 ]; then
+    printf '%s\n' "$rows" | awk -F'\t' -v clock="$MJ_TIMING_CLOCK" -v total="$total" '
+      function q(s) { gsub(/\\/, "\\\\", s); gsub(/"/, "\\\"", s); gsub(/\t/, "\\t", s); return "\"" s "\"" }
+      $1 == "phase" { p = p (p == "" ? "" : ",") "{\"name\":" q($4) ",\"ms\":" $2 ",\"calls\":" $3 "}" }
+      $1 == "count" { c = c (c == "" ? "" : ",") "{\"name\":" q($4) ",\"count\":" $2 "}" }
+      END { printf "{\"timing\":{\"clock\":%s,\"total_ms\":%d,\"phases\":[%s],\"counters\":[%s]}}\n", q(clock), total, p, c }' >&2
+  else
+    {
+      printf 'TIMING clock=%s total=%s ms\n' "$MJ_TIMING_CLOCK" "$total"
+      printf '%s\n' "$rows" | awk -F'\t' '
+        $1 == "phase" { printf "phase  %8d ms  %4d x  %s\n", $2, $3, $4 }
+        $1 == "count" { printf "count  %8d     %s\n", $2, $4 }'
+    } >&2
+  fi
   rm -f "$MJ_TIMING_FILE"
 }
 # The same instant as mj_now, in the form a record's filename uses. It reads the same
