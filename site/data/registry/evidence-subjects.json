@@ -15273,6 +15273,12 @@
           "category": "e2e"
         },
         {
+          "via": "behaviour",
+          "test": "suite:900_prose_states_no_version",
+          "path": "test/cases/900_prose_states_no_version.sh",
+          "category": "e2e"
+        },
+        {
           "via": "negative",
           "test": "suite:15_command_surface",
           "path": "test/cases/15_command_surface.sh",
@@ -21541,6 +21547,27 @@
         "scripts/derive-check",
         "scripts/site-check"
       ],
+      "findings": []
+    },
+    "rule:project.prose-states-no-version": {
+      "kind": "rule",
+      "id": "project.prose-states-no-version",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:900_prose_states_no_version",
+          "path": "test/cases/900_prose_states_no_version.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/900_prose_states_no_version.sh",
+            ".ai/repo/rules/project/prose-states-no-version.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
       "findings": []
     },
     "rule:project.provider-support-is-declared": {

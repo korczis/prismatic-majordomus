@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 159,
+      "count": 160,
       "dir": "rules",
       "statuses": [
         "active"
@@ -237,7 +237,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 159
+      "count": 160
     },
     {
       "kind": "scope",
@@ -277,7 +277,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 349
+      "count": 350
     },
     {
       "kind": "use-case",
@@ -1345,20 +1345,6 @@
       ],
       "source": ".ai/repo/adrs/0025-presentation-order-is-one-total-order-owned-by-the-crate-not-a-decision-each-surface-makes.md",
       "references": [
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/order.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "scripts/ci/order-check",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
         {
           "edge": "put_in_force",
           "label": "project.canonical-order@1",
@@ -10507,6 +10493,32 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.prose-states-no-version@1",
+      "identity": "project.prose-states-no-version@1",
+      "slug": "project-prose-states-no-version-1",
+      "cockpit": "/cockpit/objects/rule/project-prose-states-no-version-1",
+      "title": "Prose describes the tool as it stands, without a version label",
+      "status": "active",
+      "tags": [
+        "release",
+        "version",
+        "documentation",
+        "claims"
+      ],
+      "source": ".ai/repo/rules/project/prose-states-no-version.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.release-is-a-projection@2",
+          "kind": "rule",
+          "route": "/rules/project-release-is-a-projection-2/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.provider-support-is-declared@1",
       "identity": "project.provider-support-is-declared@1",
       "slug": "project-provider-support-is-declared-1",
@@ -10708,6 +10720,13 @@
           "label": "adr-0085",
           "kind": "adr",
           "route": "/adrs/adr-0085/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.prose-states-no-version@1",
+          "kind": "rule",
+          "route": "/rules/project-prose-states-no-version-1/",
           "external": false
         },
         {

@@ -16,7 +16,7 @@ majordomus check --explain | grep '^  context\.'
 
 ## What it does not cover
 
-**Advisory.** Nothing measures what the worker actually read. The budget on the always-loaded file is the only guaranteed part of context control in v0.1; runtime clamps on read size are planned.
+**Advisory.** Nothing measures what the worker actually read. The budget on the always-loaded file is the only guaranteed part of context control; runtime clamps on read size are planned.
 
 ## Why it exists
 

@@ -1671,14 +1671,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/order.rs",
-        "kind": "file",
-        "label": "order.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/order.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/product.rs",
         "kind": "file",
         "label": "product.rs",
@@ -1732,14 +1724,6 @@
         "label": "path.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/worktree/path.rs",
-        "external": true
-      },
-      {
-        "id": "file:scripts/ci/order-check",
-        "kind": "file",
-        "label": "order-check",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/ci/order-check",
         "external": true
       },
       {
@@ -33522,6 +33506,27 @@
         }
       },
       {
+        "id": "majordomus://rule/project.prose-states-no-version@1",
+        "kind": "rule",
+        "label": "project.prose-states-no-version@1",
+        "summary": "Prose describes the tool as it stands, without a version label",
+        "route": "/cockpit/objects/rule/project-prose-states-no-version-1",
+        "source": ".ai/repo/rules/project/prose-states-no-version.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.release-is-a-projection@2"
+          ],
+          "tags": [
+            "release",
+            "version",
+            "documentation",
+            "claims"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.provider-support-is-declared@1",
         "kind": "rule",
         "label": "project.provider-support-is-declared@1",
@@ -38644,6 +38649,13 @@
         "label": "test/cases/89_web_surface.sh",
         "route": "/cockpit/objects/test/test-cases-89-web-surface-sh",
         "source": "test/cases/89_web_surface.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/900_prose_states_no_version.sh",
+        "kind": "test",
+        "label": "test/cases/900_prose_states_no_version.sh",
+        "route": "/cockpit/objects/test/test-cases-900-prose-states-no-version-sh",
+        "source": "test/cases/900_prose_states_no_version.sh"
       },
       {
         "id": "majordomus://test/test/cases/90_mcp_shared_server.sh",
@@ -44580,16 +44592,6 @@
         "source": "majordomus://adr/adr-0024",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0025",
-        "target": "file:apps/majordomus-cli/src/order.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0025",
-        "target": "file:scripts/ci/order-check",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0025",
@@ -58237,6 +58239,16 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.prose-states-no-version@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.prose-states-no-version@1",
+        "target": "majordomus://rule/project.release-is-a-projection@2",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.provider-support-is-declared@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -60493,6 +60505,11 @@
       },
       {
         "source": "majordomus://test/test/cases/89_web_surface.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/900_prose_states_no_version.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -63669,7 +63686,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4500,
+      "edges": 4501,
       "acyclic": true,
       "truncated": true
     }
