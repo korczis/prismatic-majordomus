@@ -485,8 +485,8 @@ pub struct IntegrationEvent {
     pub head_sha: Option<String>,
     /// Master after.
     pub master_after: Option<String>,
-    /// The decision's reason codes.
-    pub reasons: Vec<String>,
+    /// The decision's reasons; a code an older executor wrote reads back verbatim.
+    pub reasons: Vec<super::ReasonCode>,
     /// What happened, for a person.
     pub detail: String,
     /// On a selection: the other actionable pull requests the executor chose this one over,
@@ -1568,7 +1568,7 @@ pub struct CleanupItem {
     /// Its disposition when decided.
     pub disposition: PullRequestDisposition,
     /// The evidence, as reason codes.
-    pub reasons: Vec<String>,
+    pub reasons: Vec<super::ReasonCode>,
     /// `would_close`, `closed`, `left_for_a_person`, or `close_failed: <why>`.
     pub action: String,
 }
@@ -1594,7 +1594,7 @@ pub fn cleanup(
                 let body = format!(
                     "Closed by `majordomus prs cleanup`: its work is already on `{}`.\n\nEvidence: {} (master {}, head {}).",
                     queue.base,
-                    a.reasons.join(", "),
+                    super::reason_list(&a.reasons, ", "),
                     a.evaluated_against.master_sha,
                     a.evaluated_against.head_sha
                 );

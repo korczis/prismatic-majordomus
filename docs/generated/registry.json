@@ -25881,9 +25881,10 @@
                 "reasons": {
                   "type": "array",
                   "items": {
+                    "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `head_reachable_from_master`, `merge_changes_nothing`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`. A code outside this list (an older trail's) is carried verbatim.",
                     "type": "string"
                   },
-                  "description": "The decision's reason codes."
+                  "description": "The decision's reasons; a code an older executor wrote reads back verbatim."
                 },
                 "detail": {
                   "type": "string",
@@ -26054,8 +26055,8 @@
               "type": "object",
               "properties": {
                 "kind": {
-                  "type": "string",
-                  "description": "What kind of fact (`required_checks`, `relation_to_master`, `review`, `label`,\n`dependency`, `draft`, `base`)."
+                  "$ref": "#/$defs/EvidenceKind",
+                  "description": "What kind of fact."
                 },
                 "status": {
                   "type": "string",
@@ -26064,6 +26065,17 @@
                 "detail": {
                   "type": "string",
                   "description": "The detail a person reads."
+                },
+                "source": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/EvidenceSource"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Where it was read. Every assessment names it; a trail line written before evidence\ncarried it has none."
                 }
               },
               "required": [
@@ -26071,7 +26083,113 @@
                 "status",
                 "detail"
               ],
-              "description": "One piece of evidence behind a disposition: what was read, and what it said."
+              "description": "One piece of evidence behind a disposition: what was read, where, and what it said."
+            },
+            "EvidenceKind": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "required_check",
+                  "description": "One required check's state on the head: one entry per context the base requires."
+                },
+                {
+                  "type": "string",
+                  "const": "required_checks",
+                  "description": "The required checks together: their verdict, and each context's state."
+                },
+                {
+                  "type": "string",
+                  "const": "review",
+                  "description": "The review policy and the forge's decision, or one reviewer's latest review."
+                },
+                {
+                  "type": "string",
+                  "const": "relation_to_master",
+                  "description": "What the head is to master, as git decided it."
+                },
+                {
+                  "type": "string",
+                  "const": "dependency",
+                  "description": "One declared dependency."
+                },
+                {
+                  "type": "string",
+                  "const": "label",
+                  "description": "One blocking label."
+                },
+                {
+                  "type": "string",
+                  "const": "draft",
+                  "description": "Whether it is a draft; always emitted."
+                },
+                {
+                  "type": "string",
+                  "const": "base",
+                  "description": "The branch it targets; always emitted."
+                },
+                {
+                  "type": "string",
+                  "const": "freshness",
+                  "description": "How old the observation is. Declared so the vocabulary is settled; nothing emits it yet."
+                },
+                {
+                  "type": "string",
+                  "const": "auto_merge",
+                  "description": "Whether the forge has auto-merge armed. Declared so the vocabulary is settled;\nnothing emits it yet."
+                },
+                {
+                  "type": "string",
+                  "const": "supersession",
+                  "description": "A declared supersession. Declared so the vocabulary is settled; nothing emits it yet."
+                }
+              ],
+              "description": "What kind of fact a piece of evidence is. The wire words are the ones the evidence carried\nwhile its kind was a string, so a trail written then still reads."
+            },
+            "EvidenceSource": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "observed_at": {
+                      "type": "string",
+                      "description": "When the forge was observed, RFC 3339."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "forge"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "observed_at"
+                  ],
+                  "description": "The forge observation, at its moment."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "master_sha": {
+                      "type": "string",
+                      "description": "The master commit."
+                    },
+                    "head_sha": {
+                      "type": "string",
+                      "description": "The head commit."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "git"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "master_sha",
+                    "head_sha"
+                  ],
+                  "description": "Git, on this pair of commits."
+                }
+              ],
+              "description": "Where a piece of evidence was read."
             },
             "FailureClass": {
               "oneOf": [
@@ -26166,7 +26284,7 @@
       "module": "integration",
       "kind": "query",
       "title": "Why one pull request is where it is",
-      "description": "One pull request's assessment — disposition, lane, reasons, next action, the master and head it was decided against, required checks, review, relation to master, dependencies, overlaps, risk with its factors, and every piece of evidence — with its rank in the queue. `found: false` with the reason when it is not open or nothing is observed.",
+      "description": "One pull request's assessment — disposition, lane, reasons, every gate of the policy with whether it passed, next action, the master and head it was decided against and when the forge was observed, required checks, review, relation to master, dependencies, overlaps, risk with its factors, and every piece of evidence — with its rank in the queue. `found: false` with the reason when it is not open or nothing is observed.",
       "input": {
         "name": "PullRequestExplainInput",
         "schema": {
@@ -26284,9 +26402,18 @@
                 "reasons": {
                   "type": "array",
                   "items": {
+                    "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `head_reachable_from_master`, `merge_changes_nothing`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`. A code outside this list (an older trail's) is carried verbatim.",
                     "type": "string"
                   },
-                  "description": "Machine-readable reason codes, most decisive first."
+                  "description": "Machine-readable reasons, one for every failing gate's every finding, in policy order:\nthe first is the decisive one. A ready pull request carries why it is ready."
+                },
+                "gates": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/GateResult"
+                  },
+                  "description": "Every gate of the policy, in order, and whether it passed.",
+                  "default": []
                 },
                 "next_action": {
                   "type": [
@@ -26395,13 +26522,18 @@
                 "head_sha": {
                   "type": "string",
                   "description": "The pull request's head commit."
+                },
+                "observed_at": {
+                  "type": "string",
+                  "description": "When the forge was observed, RFC 3339; empty in a value written before it was named.",
+                  "default": ""
                 }
               },
               "required": [
                 "master_sha",
                 "head_sha"
               ],
-              "description": "The revisions a decision was taken against. A decision is valid only while both still\nhold: the executor compares them with what it re-reads before it acts."
+              "description": "The revisions a decision was taken against, and when the forge was observed. A decision is\nvalid only while both revisions still hold: the executor compares them with what it\nre-reads before it acts."
             },
             "PullRequestDisposition": {
               "oneOf": [
@@ -26502,6 +26634,74 @@
                 }
               ],
               "description": "The queues the Cockpit and the status table group pull requests into."
+            },
+            "GateResult": {
+              "type": "object",
+              "properties": {
+                "gate": {
+                  "$ref": "#/$defs/IntegrationGate",
+                  "description": "The gate."
+                },
+                "passed": {
+                  "type": "boolean",
+                  "description": "Whether it passed. A gate that fails only because an earlier one did (the head is not\nfresh when its merge conflicts) fails without a reason of its own."
+                }
+              },
+              "required": [
+                "gate",
+                "passed"
+              ],
+              "description": "How one gate answered."
+            },
+            "IntegrationGate": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "base",
+                  "description": "It targets the integration base."
+                },
+                {
+                  "type": "string",
+                  "const": "draft",
+                  "description": "It is not a draft."
+                },
+                {
+                  "type": "string",
+                  "const": "label",
+                  "description": "It carries no blocking label."
+                },
+                {
+                  "type": "string",
+                  "const": "relation_to_master",
+                  "description": "Its head is not on master already, and git could say that it merges cleanly."
+                },
+                {
+                  "type": "string",
+                  "const": "dependency",
+                  "description": "Every declared dependency has landed."
+                },
+                {
+                  "type": "string",
+                  "const": "review",
+                  "description": "The review policy is satisfied on the head."
+                },
+                {
+                  "type": "string",
+                  "const": "no_failing_check",
+                  "description": "No required check failed on the head."
+                },
+                {
+                  "type": "string",
+                  "const": "freshness",
+                  "description": "The head contains the current master."
+                },
+                {
+                  "type": "string",
+                  "const": "required_checks",
+                  "description": "Every required check passed on the head."
+                }
+              ],
+              "description": "One question of the policy, in the order `IntegrationGate::ALL` asks them. The\ndisposition is the first that fails; every one is answered."
             },
             "RequiredCheckState": {
               "oneOf": [
@@ -26805,8 +27005,8 @@
               "type": "object",
               "properties": {
                 "kind": {
-                  "type": "string",
-                  "description": "What kind of fact (`required_checks`, `relation_to_master`, `review`, `label`,\n`dependency`, `draft`, `base`)."
+                  "$ref": "#/$defs/EvidenceKind",
+                  "description": "What kind of fact."
                 },
                 "status": {
                   "type": "string",
@@ -26815,6 +27015,17 @@
                 "detail": {
                   "type": "string",
                   "description": "The detail a person reads."
+                },
+                "source": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/EvidenceSource"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Where it was read. Every assessment names it; a trail line written before evidence\ncarried it has none."
                 }
               },
               "required": [
@@ -26822,7 +27033,113 @@
                 "status",
                 "detail"
               ],
-              "description": "One piece of evidence behind a disposition: what was read, and what it said."
+              "description": "One piece of evidence behind a disposition: what was read, where, and what it said."
+            },
+            "EvidenceKind": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "required_check",
+                  "description": "One required check's state on the head: one entry per context the base requires."
+                },
+                {
+                  "type": "string",
+                  "const": "required_checks",
+                  "description": "The required checks together: their verdict, and each context's state."
+                },
+                {
+                  "type": "string",
+                  "const": "review",
+                  "description": "The review policy and the forge's decision, or one reviewer's latest review."
+                },
+                {
+                  "type": "string",
+                  "const": "relation_to_master",
+                  "description": "What the head is to master, as git decided it."
+                },
+                {
+                  "type": "string",
+                  "const": "dependency",
+                  "description": "One declared dependency."
+                },
+                {
+                  "type": "string",
+                  "const": "label",
+                  "description": "One blocking label."
+                },
+                {
+                  "type": "string",
+                  "const": "draft",
+                  "description": "Whether it is a draft; always emitted."
+                },
+                {
+                  "type": "string",
+                  "const": "base",
+                  "description": "The branch it targets; always emitted."
+                },
+                {
+                  "type": "string",
+                  "const": "freshness",
+                  "description": "How old the observation is. Declared so the vocabulary is settled; nothing emits it yet."
+                },
+                {
+                  "type": "string",
+                  "const": "auto_merge",
+                  "description": "Whether the forge has auto-merge armed. Declared so the vocabulary is settled;\nnothing emits it yet."
+                },
+                {
+                  "type": "string",
+                  "const": "supersession",
+                  "description": "A declared supersession. Declared so the vocabulary is settled; nothing emits it yet."
+                }
+              ],
+              "description": "What kind of fact a piece of evidence is. The wire words are the ones the evidence carried\nwhile its kind was a string, so a trail written then still reads."
+            },
+            "EvidenceSource": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "observed_at": {
+                      "type": "string",
+                      "description": "When the forge was observed, RFC 3339."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "forge"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "observed_at"
+                  ],
+                  "description": "The forge observation, at its moment."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "master_sha": {
+                      "type": "string",
+                      "description": "The master commit."
+                    },
+                    "head_sha": {
+                      "type": "string",
+                      "description": "The head commit."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "git"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "master_sha",
+                    "head_sha"
+                  ],
+                  "description": "Git, on this pair of commits."
+                }
+              ],
+              "description": "Where a piece of evidence was read."
             },
             "ExecutorWait": {
               "type": "object",
@@ -27574,9 +27891,18 @@
                 "reasons": {
                   "type": "array",
                   "items": {
+                    "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `head_reachable_from_master`, `merge_changes_nothing`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`. A code outside this list (an older trail's) is carried verbatim.",
                     "type": "string"
                   },
-                  "description": "Machine-readable reason codes, most decisive first."
+                  "description": "Machine-readable reasons, one for every failing gate's every finding, in policy order:\nthe first is the decisive one. A ready pull request carries why it is ready."
+                },
+                "gates": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/GateResult"
+                  },
+                  "description": "Every gate of the policy, in order, and whether it passed.",
+                  "default": []
                 },
                 "next_action": {
                   "type": [
@@ -27685,13 +28011,18 @@
                 "head_sha": {
                   "type": "string",
                   "description": "The pull request's head commit."
+                },
+                "observed_at": {
+                  "type": "string",
+                  "description": "When the forge was observed, RFC 3339; empty in a value written before it was named.",
+                  "default": ""
                 }
               },
               "required": [
                 "master_sha",
                 "head_sha"
               ],
-              "description": "The revisions a decision was taken against. A decision is valid only while both still\nhold: the executor compares them with what it re-reads before it acts."
+              "description": "The revisions a decision was taken against, and when the forge was observed. A decision is\nvalid only while both revisions still hold: the executor compares them with what it\nre-reads before it acts."
             },
             "PullRequestDisposition": {
               "oneOf": [
@@ -27792,6 +28123,74 @@
                 }
               ],
               "description": "The queues the Cockpit and the status table group pull requests into."
+            },
+            "GateResult": {
+              "type": "object",
+              "properties": {
+                "gate": {
+                  "$ref": "#/$defs/IntegrationGate",
+                  "description": "The gate."
+                },
+                "passed": {
+                  "type": "boolean",
+                  "description": "Whether it passed. A gate that fails only because an earlier one did (the head is not\nfresh when its merge conflicts) fails without a reason of its own."
+                }
+              },
+              "required": [
+                "gate",
+                "passed"
+              ],
+              "description": "How one gate answered."
+            },
+            "IntegrationGate": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "base",
+                  "description": "It targets the integration base."
+                },
+                {
+                  "type": "string",
+                  "const": "draft",
+                  "description": "It is not a draft."
+                },
+                {
+                  "type": "string",
+                  "const": "label",
+                  "description": "It carries no blocking label."
+                },
+                {
+                  "type": "string",
+                  "const": "relation_to_master",
+                  "description": "Its head is not on master already, and git could say that it merges cleanly."
+                },
+                {
+                  "type": "string",
+                  "const": "dependency",
+                  "description": "Every declared dependency has landed."
+                },
+                {
+                  "type": "string",
+                  "const": "review",
+                  "description": "The review policy is satisfied on the head."
+                },
+                {
+                  "type": "string",
+                  "const": "no_failing_check",
+                  "description": "No required check failed on the head."
+                },
+                {
+                  "type": "string",
+                  "const": "freshness",
+                  "description": "The head contains the current master."
+                },
+                {
+                  "type": "string",
+                  "const": "required_checks",
+                  "description": "Every required check passed on the head."
+                }
+              ],
+              "description": "One question of the policy, in the order `IntegrationGate::ALL` asks them. The\ndisposition is the first that fails; every one is answered."
             },
             "RequiredCheckState": {
               "oneOf": [
@@ -28095,8 +28494,8 @@
               "type": "object",
               "properties": {
                 "kind": {
-                  "type": "string",
-                  "description": "What kind of fact (`required_checks`, `relation_to_master`, `review`, `label`,\n`dependency`, `draft`, `base`)."
+                  "$ref": "#/$defs/EvidenceKind",
+                  "description": "What kind of fact."
                 },
                 "status": {
                   "type": "string",
@@ -28105,6 +28504,17 @@
                 "detail": {
                   "type": "string",
                   "description": "The detail a person reads."
+                },
+                "source": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/EvidenceSource"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Where it was read. Every assessment names it; a trail line written before evidence\ncarried it has none."
                 }
               },
               "required": [
@@ -28112,7 +28522,113 @@
                 "status",
                 "detail"
               ],
-              "description": "One piece of evidence behind a disposition: what was read, and what it said."
+              "description": "One piece of evidence behind a disposition: what was read, where, and what it said."
+            },
+            "EvidenceKind": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "required_check",
+                  "description": "One required check's state on the head: one entry per context the base requires."
+                },
+                {
+                  "type": "string",
+                  "const": "required_checks",
+                  "description": "The required checks together: their verdict, and each context's state."
+                },
+                {
+                  "type": "string",
+                  "const": "review",
+                  "description": "The review policy and the forge's decision, or one reviewer's latest review."
+                },
+                {
+                  "type": "string",
+                  "const": "relation_to_master",
+                  "description": "What the head is to master, as git decided it."
+                },
+                {
+                  "type": "string",
+                  "const": "dependency",
+                  "description": "One declared dependency."
+                },
+                {
+                  "type": "string",
+                  "const": "label",
+                  "description": "One blocking label."
+                },
+                {
+                  "type": "string",
+                  "const": "draft",
+                  "description": "Whether it is a draft; always emitted."
+                },
+                {
+                  "type": "string",
+                  "const": "base",
+                  "description": "The branch it targets; always emitted."
+                },
+                {
+                  "type": "string",
+                  "const": "freshness",
+                  "description": "How old the observation is. Declared so the vocabulary is settled; nothing emits it yet."
+                },
+                {
+                  "type": "string",
+                  "const": "auto_merge",
+                  "description": "Whether the forge has auto-merge armed. Declared so the vocabulary is settled;\nnothing emits it yet."
+                },
+                {
+                  "type": "string",
+                  "const": "supersession",
+                  "description": "A declared supersession. Declared so the vocabulary is settled; nothing emits it yet."
+                }
+              ],
+              "description": "What kind of fact a piece of evidence is. The wire words are the ones the evidence carried\nwhile its kind was a string, so a trail written then still reads."
+            },
+            "EvidenceSource": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "observed_at": {
+                      "type": "string",
+                      "description": "When the forge was observed, RFC 3339."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "forge"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "observed_at"
+                  ],
+                  "description": "The forge observation, at its moment."
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "master_sha": {
+                      "type": "string",
+                      "description": "The master commit."
+                    },
+                    "head_sha": {
+                      "type": "string",
+                      "description": "The head commit."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "git"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "master_sha",
+                    "head_sha"
+                  ],
+                  "description": "Git, on this pair of commits."
+                }
+              ],
+              "description": "Where a piece of evidence was read."
             },
             "ExecutorWait": {
               "type": "object",
@@ -28426,9 +28942,10 @@
                 "reasons": {
                   "type": "array",
                   "items": {
+                    "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `head_reachable_from_master`, `merge_changes_nothing`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`. A code outside this list (an older trail's) is carried verbatim.",
                     "type": "string"
                   },
-                  "description": "The decision's reason codes."
+                  "description": "The decision's reasons; a code an older executor wrote reads back verbatim."
                 },
                 "detail": {
                   "type": "string",

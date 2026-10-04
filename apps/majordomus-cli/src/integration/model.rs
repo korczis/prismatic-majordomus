@@ -398,26 +398,473 @@ pub enum IntegrationLane {
     Held,
 }
 
-/// One piece of evidence behind a disposition: what was read, and what it said.
+/// What kind of fact a piece of evidence is. The wire words are the ones the evidence carried
+/// while its kind was a string, so a trail written then still reads.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum EvidenceKind {
+    /// One required check's state on the head: one entry per context the base requires.
+    RequiredCheck,
+    /// The required checks together: their verdict, and each context's state.
+    RequiredChecks,
+    /// The review policy and the forge's decision, or one reviewer's latest review.
+    Review,
+    /// What the head is to master, as git decided it.
+    RelationToMaster,
+    /// One declared dependency.
+    Dependency,
+    /// One blocking label.
+    Label,
+    /// Whether it is a draft; always emitted.
+    Draft,
+    /// The branch it targets; always emitted.
+    Base,
+    /// How old the observation is. Declared so the vocabulary is settled; nothing emits it yet.
+    Freshness,
+    /// Whether the forge has auto-merge armed. Declared so the vocabulary is settled;
+    /// nothing emits it yet.
+    AutoMerge,
+    /// A declared supersession. Declared so the vocabulary is settled; nothing emits it yet.
+    Supersession,
+}
+
+impl EvidenceKind {
+    /// The wire word.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            EvidenceKind::RequiredCheck => "required_check",
+            EvidenceKind::RequiredChecks => "required_checks",
+            EvidenceKind::Review => "review",
+            EvidenceKind::RelationToMaster => "relation_to_master",
+            EvidenceKind::Dependency => "dependency",
+            EvidenceKind::Label => "label",
+            EvidenceKind::Draft => "draft",
+            EvidenceKind::Base => "base",
+            EvidenceKind::Freshness => "freshness",
+            EvidenceKind::AutoMerge => "auto_merge",
+            EvidenceKind::Supersession => "supersession",
+        }
+    }
+}
+
+impl std::fmt::Display for EvidenceKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.pad(self.as_str())
+    }
+}
+
+impl PartialEq<&str> for EvidenceKind {
+    fn eq(&self, other: &&str) -> bool {
+        self.as_str() == *other
+    }
+}
+
+/// Where a piece of evidence was read.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case", tag = "kind")]
+pub enum EvidenceSource {
+    /// The forge observation, at its moment.
+    Forge {
+        /// When the forge was observed, RFC 3339.
+        observed_at: String,
+    },
+    /// Git, on this pair of commits.
+    Git {
+        /// The master commit.
+        master_sha: String,
+        /// The head commit.
+        head_sha: String,
+    },
+}
+
+/// One piece of evidence behind a disposition: what was read, where, and what it said.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IntegrationEvidence {
-    /// What kind of fact (`required_checks`, `relation_to_master`, `review`, `label`,
-    /// `dependency`, `draft`, `base`).
-    pub kind: String,
+    /// What kind of fact.
+    pub kind: EvidenceKind,
     /// What it said, as a word.
     pub status: String,
     /// The detail a person reads.
     pub detail: String,
+    /// Where it was read. Every assessment names it; a trail line written before evidence
+    /// carried it has none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source: Option<EvidenceSource>,
 }
 
-/// The revisions a decision was taken against. A decision is valid only while both still
-/// hold: the executor compares them with what it re-reads before it acts.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// The revisions a decision was taken against, and when the forge was observed. A decision is
+/// valid only while both revisions still hold: the executor compares them with what it
+/// re-reads before it acts.
+#[derive(Debug, Clone, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct EvaluatedAgainst {
     /// The master commit.
     pub master_sha: String,
     /// The pull request's head commit.
     pub head_sha: String,
+    /// When the forge was observed, RFC 3339; empty in a value written before it was named.
+    #[serde(default)]
+    pub observed_at: String,
+}
+
+/// Two are equal when they name the same revisions. The moment is when, not what: the same
+/// master and head observed a moment later is the same decision, which is what the executor's
+/// stale-decision comparison asks.
+impl PartialEq for EvaluatedAgainst {
+    fn eq(&self, other: &Self) -> bool {
+        self.master_sha == other.master_sha && self.head_sha == other.head_sha
+    }
+}
+
+/// One question of the policy, in the order [`IntegrationGate::ALL`] asks them. The
+/// disposition is the first that fails; every one is answered.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum IntegrationGate {
+    /// It targets the integration base.
+    Base,
+    /// It is not a draft.
+    Draft,
+    /// It carries no blocking label.
+    Label,
+    /// Its head is not on master already, and git could say that it merges cleanly.
+    RelationToMaster,
+    /// Every declared dependency has landed.
+    Dependency,
+    /// The review policy is satisfied on the head.
+    Review,
+    /// No required check failed on the head.
+    NoFailingCheck,
+    /// The head contains the current master.
+    Freshness,
+    /// Every required check passed on the head.
+    RequiredChecks,
+}
+
+impl IntegrationGate {
+    /// Every gate, in policy order.
+    pub const ALL: [IntegrationGate; 9] = [
+        IntegrationGate::Base,
+        IntegrationGate::Draft,
+        IntegrationGate::Label,
+        IntegrationGate::RelationToMaster,
+        IntegrationGate::Dependency,
+        IntegrationGate::Review,
+        IntegrationGate::NoFailingCheck,
+        IntegrationGate::Freshness,
+        IntegrationGate::RequiredChecks,
+    ];
+
+    /// The wire word.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            IntegrationGate::Base => "base",
+            IntegrationGate::Draft => "draft",
+            IntegrationGate::Label => "label",
+            IntegrationGate::RelationToMaster => "relation_to_master",
+            IntegrationGate::Dependency => "dependency",
+            IntegrationGate::Review => "review",
+            IntegrationGate::NoFailingCheck => "no_failing_check",
+            IntegrationGate::Freshness => "freshness",
+            IntegrationGate::RequiredChecks => "required_checks",
+        }
+    }
+}
+
+/// How one gate answered.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct GateResult {
+    /// The gate.
+    pub gate: IntegrationGate,
+    /// Whether it passed. A gate that fails only because an earlier one did (the head is not
+    /// fresh when its merge conflicts) fails without a reason of its own.
+    pub passed: bool,
+}
+
+/// What [`ReasonCode`]'s schema says, since its wire form is a string: the vocabulary.
+const REASON_VOCABULARY: &str = "A reason code, `code` or `code:payload`, one of: \
+`stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `head_reachable_from_master`, \
+`merge_changes_nothing`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, \
+`conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, \
+`required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, \
+`no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, \
+`required_checks_skipped`. A code outside this list (an older trail's) is carried verbatim.";
+
+/// One machine-readable reason, typed. Its wire form is the `code` or `code:payload` string
+/// the reasons always had ([`std::fmt::Display`] and [`std::str::FromStr`]), so the trail,
+/// the OpenAPI string arrays and the Cockpit read what they read before.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ReasonCode {
+    /// `stacked_on:#N`: it targets the head branch of open pull request N.
+    StackedOn {
+        /// The pull request it is stacked on.
+        number: u64,
+    },
+    /// `base_is:BRANCH`: it targets another branch than the base, and no open one's head.
+    BaseIs {
+        /// The branch it targets.
+        base: String,
+    },
+    /// `draft`.
+    Draft,
+    /// `label:NAME`: a blocking label holds it.
+    Label {
+        /// The label, as the forge spells it.
+        name: String,
+    },
+    /// `head_reachable_from_master`: every commit already landed.
+    HeadReachableFromMaster,
+    /// `merge_changes_nothing`: its patch is already fully on master.
+    MergeChangesNothing,
+    /// `only_derived_artifacts_differ`.
+    OnlyDerivedArtifactsDiffer,
+    /// `relation_unknown:WHY`: git could not say what the head is to master.
+    RelationUnknown {
+        /// Why.
+        reason: String,
+    },
+    /// `conflicts_on:COUNT`: the merge conflicts on this many authored paths (the paths are
+    /// in the relation; the wire form has always carried the count).
+    ConflictsOn {
+        /// How many authored paths conflict.
+        count: usize,
+    },
+    /// `depends_on:#N`: a declared dependency is still open.
+    DependsOn {
+        /// The pull request it waits for.
+        number: u64,
+    },
+    /// `review:STATE`: the review policy is not satisfied.
+    Review {
+        /// The review state.
+        state: PullRequestReview,
+    },
+    /// `review_policy_unread`.
+    ReviewPolicyUnread,
+    /// `required_check_failed`.
+    RequiredCheckFailed,
+    /// `behind_master:COMMITS`: the head does not contain master.
+    BehindMaster {
+        /// Commits on master the head does not have.
+        commits: u64,
+    },
+    /// `fork_head`: the head is a fork's branch, which cannot be refreshed from here.
+    ForkHead,
+    /// `required_checks:STATE`: the required checks have not all passed.
+    RequiredChecks {
+        /// Their verdict.
+        state: RequiredCheckState,
+    },
+    /// `no_required_checks`: the base requires none (owner decision D5).
+    NoRequiredChecks,
+    /// `required_checks_unread`.
+    RequiredChecksUnread,
+    /// `contains_master`: why a ready one is ready.
+    ContainsMaster,
+    /// `required_checks_passed`: why a ready one is ready.
+    RequiredChecksPassed,
+    /// `required_checks_skipped`: ready, a permitted skip among its checks.
+    RequiredChecksSkipped,
+    /// A code this vocabulary does not name, verbatim: what an older trail line may carry.
+    /// Nothing here produces one, and [`std::str::FromStr`] refuses it.
+    Unrecognised(String),
+}
+
+impl ReasonCode {
+    /// The code: the wire form before its payload.
+    pub fn code(&self) -> &str {
+        match self {
+            ReasonCode::StackedOn { .. } => "stacked_on",
+            ReasonCode::BaseIs { .. } => "base_is",
+            ReasonCode::Draft => "draft",
+            ReasonCode::Label { .. } => "label",
+            ReasonCode::HeadReachableFromMaster => "head_reachable_from_master",
+            ReasonCode::MergeChangesNothing => "merge_changes_nothing",
+            ReasonCode::OnlyDerivedArtifactsDiffer => "only_derived_artifacts_differ",
+            ReasonCode::RelationUnknown { .. } => "relation_unknown",
+            ReasonCode::ConflictsOn { .. } => "conflicts_on",
+            ReasonCode::DependsOn { .. } => "depends_on",
+            ReasonCode::Review { .. } => "review",
+            ReasonCode::ReviewPolicyUnread => "review_policy_unread",
+            ReasonCode::RequiredCheckFailed => "required_check_failed",
+            ReasonCode::BehindMaster { .. } => "behind_master",
+            ReasonCode::ForkHead => "fork_head",
+            ReasonCode::RequiredChecks { .. } => "required_checks",
+            ReasonCode::NoRequiredChecks => "no_required_checks",
+            ReasonCode::RequiredChecksUnread => "required_checks_unread",
+            ReasonCode::ContainsMaster => "contains_master",
+            ReasonCode::RequiredChecksPassed => "required_checks_passed",
+            ReasonCode::RequiredChecksSkipped => "required_checks_skipped",
+            ReasonCode::Unrecognised(s) => s.split_once(':').map_or(s.as_str(), |(c, _)| c),
+        }
+    }
+}
+
+/// The serialised word of a unit enum.
+fn wire_word<T: Serialize>(value: &T) -> String {
+    match serde_json::to_value(value) {
+        Ok(serde_json::Value::String(s)) => s,
+        _ => "unknown".into(),
+    }
+}
+
+impl std::fmt::Display for ReasonCode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ReasonCode::StackedOn { number } | ReasonCode::DependsOn { number } => {
+                write!(f, "{}:#{number}", self.code())
+            }
+            ReasonCode::BaseIs { base: s }
+            | ReasonCode::Label { name: s }
+            | ReasonCode::RelationUnknown { reason: s } => write!(f, "{}:{s}", self.code()),
+            ReasonCode::ConflictsOn { count } => write!(f, "{}:{count}", self.code()),
+            ReasonCode::BehindMaster { commits } => write!(f, "{}:{commits}", self.code()),
+            ReasonCode::Review { state } => write!(f, "{}:{}", self.code(), wire_word(state)),
+            ReasonCode::RequiredChecks { state } => {
+                write!(f, "{}:{}", self.code(), wire_word(state))
+            }
+            ReasonCode::Unrecognised(s) => f.write_str(s),
+            _ => f.write_str(self.code()),
+        }
+    }
+}
+
+impl std::str::FromStr for ReasonCode {
+    type Err = String;
+
+    /// The reason a wire string names; an error for a code outside the vocabulary or a
+    /// payload that is not the code's.
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let bad = || format!("not a reason code: {s:?}");
+        let number = |p: &str| p.strip_prefix('#').and_then(|n| n.parse::<u64>().ok());
+        let word = |p: &str| serde_json::Value::String(p.to_string());
+        let (code, payload) = match s.split_once(':') {
+            Some((c, p)) => (c, Some(p)),
+            None => (s, None),
+        };
+        let reason = match (code, payload) {
+            ("stacked_on", Some(p)) => ReasonCode::StackedOn {
+                number: number(p).ok_or_else(bad)?,
+            },
+            ("depends_on", Some(p)) => ReasonCode::DependsOn {
+                number: number(p).ok_or_else(bad)?,
+            },
+            ("base_is", Some(p)) => ReasonCode::BaseIs { base: p.into() },
+            ("label", Some(p)) => ReasonCode::Label { name: p.into() },
+            ("relation_unknown", Some(p)) => ReasonCode::RelationUnknown { reason: p.into() },
+            ("conflicts_on", Some(p)) => ReasonCode::ConflictsOn {
+                count: p.parse().map_err(|_| bad())?,
+            },
+            ("behind_master", Some(p)) => ReasonCode::BehindMaster {
+                commits: p.parse().map_err(|_| bad())?,
+            },
+            ("review", Some(p)) => ReasonCode::Review {
+                state: serde_json::from_value(word(p)).map_err(|_| bad())?,
+            },
+            ("required_checks", Some(p)) => ReasonCode::RequiredChecks {
+                state: serde_json::from_value(word(p)).map_err(|_| bad())?,
+            },
+            ("draft", None) => ReasonCode::Draft,
+            ("head_reachable_from_master", None) => ReasonCode::HeadReachableFromMaster,
+            ("merge_changes_nothing", None) => ReasonCode::MergeChangesNothing,
+            ("only_derived_artifacts_differ", None) => ReasonCode::OnlyDerivedArtifactsDiffer,
+            ("review_policy_unread", None) => ReasonCode::ReviewPolicyUnread,
+            ("required_check_failed", None) => ReasonCode::RequiredCheckFailed,
+            ("fork_head", None) => ReasonCode::ForkHead,
+            ("no_required_checks", None) => ReasonCode::NoRequiredChecks,
+            ("required_checks_unread", None) => ReasonCode::RequiredChecksUnread,
+            ("contains_master", None) => ReasonCode::ContainsMaster,
+            ("required_checks_passed", None) => ReasonCode::RequiredChecksPassed,
+            ("required_checks_skipped", None) => ReasonCode::RequiredChecksSkipped,
+            _ => return Err(bad()),
+        };
+        Ok(reason)
+    }
+}
+
+impl Serialize for ReasonCode {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.collect_str(self)
+    }
+}
+
+/// Never fails on a string: a code outside the vocabulary is [`ReasonCode::Unrecognised`],
+/// so a trail line an older executor wrote still reads.
+impl<'de> Deserialize<'de> for ReasonCode {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(deserializer)?;
+        Ok(s.parse().unwrap_or(ReasonCode::Unrecognised(s)))
+    }
+}
+
+/// A string on the wire, its vocabulary in the description: the OpenAPI arrays of reasons
+/// stay arrays of strings.
+impl JsonSchema for ReasonCode {
+    fn inline_schema() -> bool {
+        true
+    }
+    fn schema_name() -> std::borrow::Cow<'static, str> {
+        "ReasonCode".into()
+    }
+    fn json_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        schemars::json_schema!({
+            "type": "string",
+            "description": REASON_VOCABULARY,
+        })
+    }
+}
+
+/// Whether `reason`'s wire form is `wire`, compared as it is written, without building it.
+fn wire_is(reason: &ReasonCode, wire: &str) -> bool {
+    struct Against<'a> {
+        rest: &'a str,
+        same: bool,
+    }
+    impl std::fmt::Write for Against<'_> {
+        fn write_str(&mut self, s: &str) -> std::fmt::Result {
+            match self.rest.strip_prefix(s) {
+                Some(rest) if self.same => self.rest = rest,
+                _ => self.same = false,
+            }
+            Ok(())
+        }
+    }
+    let mut against = Against {
+        rest: wire,
+        same: true,
+    };
+    let _ = std::fmt::Write::write_fmt(&mut against, format_args!("{reason}"));
+    against.same && against.rest.is_empty()
+}
+
+impl PartialEq<str> for ReasonCode {
+    fn eq(&self, other: &str) -> bool {
+        wire_is(self, other)
+    }
+}
+
+impl PartialEq<&str> for ReasonCode {
+    fn eq(&self, other: &&str) -> bool {
+        wire_is(self, other)
+    }
+}
+
+impl PartialEq<String> for ReasonCode {
+    fn eq(&self, other: &String) -> bool {
+        wire_is(self, other)
+    }
+}
+
+/// Reasons as a person reads them: their wire forms, joined by `sep`.
+pub fn reason_list(reasons: &[ReasonCode], sep: &str) -> String {
+    reasons
+        .iter()
+        .map(ToString::to_string)
+        .collect::<Vec<_>>()
+        .join(sep)
 }
 
 /// The canonical state of one open pull request: what was observed, what it is to master,
@@ -440,8 +887,12 @@ pub struct PullRequestAssessment {
     pub disposition: PullRequestDisposition,
     /// The queue it is in.
     pub lane: IntegrationLane,
-    /// Machine-readable reason codes, most decisive first.
-    pub reasons: Vec<String>,
+    /// Machine-readable reasons, one for every failing gate's every finding, in policy order:
+    /// the first is the decisive one. A ready pull request carries why it is ready.
+    pub reasons: Vec<ReasonCode>,
+    /// Every gate of the policy, in order, and whether it passed.
+    #[serde(default)]
+    pub gates: Vec<GateResult>,
     /// What a person or the executor does next, when anything.
     pub next_action: Option<String>,
     /// The required checks on the head.

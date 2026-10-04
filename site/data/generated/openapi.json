@@ -431,6 +431,7 @@
     "schema-EvidenceClaimProof": "docs/api/evidence/",
     "schema-EvidenceExecution": "docs/api/shared/",
     "schema-EvidenceFinding": "docs/api/evidence/",
+    "schema-EvidenceKind": "docs/api/integration/",
     "schema-EvidenceLedgerSummary": "docs/api/evidence/",
     "schema-EvidenceOrigin": "docs/api/shared/",
     "schema-EvidenceOutcome": "docs/api/shared/",
@@ -438,6 +439,7 @@
     "schema-EvidenceReport": "docs/api/evidence/",
     "schema-EvidenceRun": "docs/api/shared/",
     "schema-EvidenceRunner": "docs/api/shared/",
+    "schema-EvidenceSource": "docs/api/integration/",
     "schema-EvidenceSubject": "docs/api/evidence/",
     "schema-EvidenceTreeState": "docs/api/evidence/",
     "schema-Example": "docs/api/why/",
@@ -487,6 +489,7 @@
     "schema-GateModelReport": "docs/api/gates/",
     "schema-GatePlan": "docs/api/gates/",
     "schema-GatePlanMode": "docs/api/gates/",
+    "schema-GateResult": "docs/api/integration/",
     "schema-GateRun": "docs/api/gates/",
     "schema-GateStatus": "docs/api/gates/",
     "schema-GitContext": "docs/api/devcontext/",
@@ -528,6 +531,7 @@
     "schema-IntegrationEvents": "docs/api/integration/",
     "schema-IntegrationEvidence": "docs/api/integration/",
     "schema-IntegrationExplanation": "docs/api/integration/",
+    "schema-IntegrationGate": "docs/api/integration/",
     "schema-IntegrationLane": "docs/api/integration/",
     "schema-IntegrationLeaseState": "docs/api/integration/",
     "schema-IntegrationPolicy": "docs/api/integration/",
@@ -1034,7 +1038,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 169,
-    "schemas": 810,
+    "schemas": 814,
     "tags": 51
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1555,6 +1559,7 @@
     "EvidenceClaimProof": "evidence",
     "EvidenceExecution": "shared",
     "EvidenceFinding": "evidence",
+    "EvidenceKind": "integration",
     "EvidenceLedgerSummary": "evidence",
     "EvidenceOrigin": "shared",
     "EvidenceOutcome": "shared",
@@ -1562,6 +1567,7 @@
     "EvidenceReport": "evidence",
     "EvidenceRun": "shared",
     "EvidenceRunner": "shared",
+    "EvidenceSource": "integration",
     "EvidenceSubject": "evidence",
     "EvidenceTreeState": "evidence",
     "Example": "why",
@@ -1611,6 +1617,7 @@
     "GateModelReport": "gates",
     "GatePlan": "gates",
     "GatePlanMode": "gates",
+    "GateResult": "integration",
     "GateRun": "gates",
     "GateStatus": "gates",
     "GitContext": "devcontext",
@@ -1652,6 +1659,7 @@
     "IntegrationEvents": "integration",
     "IntegrationEvidence": "integration",
     "IntegrationExplanation": "integration",
+    "IntegrationGate": "integration",
     "IntegrationLane": "integration",
     "IntegrationLeaseState": "integration",
     "IntegrationPolicy": "integration",
@@ -16745,7 +16753,7 @@
       "variants": []
     },
     {
-      "description": "The revisions a decision was taken against. A decision is valid only while both still\nhold: the executor compares them with what it re-reads before it acts.",
+      "description": "The revisions a decision was taken against, and when the forge was observed. A decision is\nvalid only while both revisions still hold: the executor compares them with what it\nre-reads before it acts.",
       "home": "integration",
       "is_enum": false,
       "name": "EvaluatedAgainst",
@@ -16762,6 +16770,13 @@
           "name": "head_sha",
           "refs": [],
           "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When the forge was observed, RFC 3339; empty in a value written before it was named.",
+          "name": "observed_at",
+          "refs": [],
+          "required": false,
           "type": "string"
         }
       ],
@@ -17231,6 +17246,65 @@
       "variants": []
     },
     {
+      "description": "What kind of fact a piece of evidence is. The wire words are the ones the evidence carried\nwhile its kind was a string, so a trail written then still reads.",
+      "home": "integration",
+      "is_enum": true,
+      "name": "EvidenceKind",
+      "properties": [],
+      "type": "\"required_check\" | \"required_checks\" | \"review\" | \"relation_to_master\" | \"dependency\" | \"label\" | \"draft\" | \"base\" | \"freshness\" | \"auto_merge\" | \"supersession\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationEvidence"
+      ],
+      "values": [
+        {
+          "description": "One required check's state on the head: one entry per context the base requires.",
+          "value": "required_check"
+        },
+        {
+          "description": "The required checks together: their verdict, and each context's state.",
+          "value": "required_checks"
+        },
+        {
+          "description": "The review policy and the forge's decision, or one reviewer's latest review.",
+          "value": "review"
+        },
+        {
+          "description": "What the head is to master, as git decided it.",
+          "value": "relation_to_master"
+        },
+        {
+          "description": "One declared dependency.",
+          "value": "dependency"
+        },
+        {
+          "description": "One blocking label.",
+          "value": "label"
+        },
+        {
+          "description": "Whether it is a draft; always emitted.",
+          "value": "draft"
+        },
+        {
+          "description": "The branch it targets; always emitted.",
+          "value": "base"
+        },
+        {
+          "description": "How old the observation is. Declared so the vocabulary is settled; nothing emits it yet.",
+          "value": "freshness"
+        },
+        {
+          "description": "Whether the forge has auto-merge armed. Declared so the vocabulary is settled;\nnothing emits it yet.",
+          "value": "auto_merge"
+        },
+        {
+          "description": "A declared supersession. Declared so the vocabulary is settled; nothing emits it yet.",
+          "value": "supersession"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "What the ledger is and whether it is there at all.\n\nA report that did not say where its evidence came from would be asking to be believed.\nThis is the provenance of the whole report: the file, how much it holds, how old the\nnewest entry is, and which commits anything was ever recorded against.\n\n```\nuse majordomus_cli::evidence::{Ledger, LedgerSummary, LEDGER_PATH};\n\nlet summary: LedgerSummary = Ledger::empty().summary();\nassert_eq!(summary.path, LEDGER_PATH);\nassert!(!summary.present, \"a ledger holding nothing has recorded nothing\");\nassert_eq!(summary.executions, 0);\nassert!(summary.newest.is_none());\nassert!(summary.commits.is_empty());\n```\n#### Example\n\n```\nuse majordomus_cli::evidence::LedgerSummary;\nlet s = LedgerSummary {\n    path: \".ai/repo/evidence/ledger.json\".into(),\n    present: false,\n    executions: 0,\n    newest: None,\n    commits: vec![],\n};\nassert!(!s.present, \"a repository that recorded nothing says so\");\n```",
       "home": "evidence",
       "is_enum": false,
@@ -17541,6 +17615,68 @@
         }
       ],
       "variants": []
+    },
+    {
+      "description": "Where a piece of evidence was read.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "EvidenceSource",
+      "properties": [],
+      "type": "one of 2 variants",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationEvidence"
+      ],
+      "values": [],
+      "variants": [
+        {
+          "description": "The forge observation, at its moment.",
+          "properties": [
+            {
+              "description": "When the forge was observed, RFC 3339.",
+              "name": "observed_at",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"forge\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Git, on this pair of commits.",
+          "properties": [
+            {
+              "description": "The master commit.",
+              "name": "master_sha",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The head commit.",
+              "name": "head_sha",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"git\""
+            }
+          ],
+          "type": "object"
+        }
+      ]
     },
     {
       "description": "Whether the report could see its whole subject.\n\nA verdict over a matrix the index silently shrank is the failure this repository met\nfour times in one day: an object is excluded, every projection of the smaller index is a\nfaithful projection, and each check prints a true statement about the half it can see.\nA freshness check answers \"was this generated from this tree\" and cannot answer \"did the\ngenerator see everything in it\", so the answer has to carry its own denominator.\n\n```\nuse majordomus_cli::evidence::Subject;\nlet whole = Subject { examined: 149, complete: true, excluded: vec![] };\nassert!(whole.complete);\n\nlet partial = Subject {\n    examined: 148,\n    complete: false,\n    excluded: vec![\"docs/CLAIMS.yaml: unknown_key\".into()],\n};\nassert!(!partial.complete, \"a shrunken index must not report a clean verdict\");\n```",
@@ -20301,6 +20437,37 @@
       "variants": []
     },
     {
+      "description": "How one gate answered.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "GateResult",
+      "properties": [
+        {
+          "description": "The gate.",
+          "name": "gate",
+          "refs": [
+            "IntegrationGate"
+          ],
+          "required": true,
+          "type": "IntegrationGate"
+        },
+        {
+          "description": "Whether it passed. A gate that fails only because an earlier one did (the head is not\nfresh when its merge conflicts) fails without a reason of its own.",
+          "name": "passed",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PullRequestAssessment"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "```\nuse majordomus_cli::gates::GateRun;\n\n// what `majordomus evidence --gate` writes: a run, and the tree it was taken over\nlet run = GateRun {\n    recorded_at: \"2026-01-01T00:00:00Z\".into(),\n    head: \"9b1e2d4\".into(),\n    branch: \"master\".into(),\n    exit: 0,\n    command: \"scripts/rust-check --ci\".into(),\n    inputs_hash: \"3f0a\".into(),\n    session: \"s-1\".into(),\n};\n// the hash is what makes a run go stale rather than merely old: the same run read\n// against a different tree is evidence about a tree that no longer exists\nassert_eq!(run.exit, 0);\nassert_ne!(run.inputs_hash, \"0000\");\n```\nThe `task.gate` ledger line that last reported a gate, as the ledger holds it.",
       "home": "gates",
       "is_enum": false,
@@ -22238,7 +22405,7 @@
           "type": "string | null"
         },
         {
-          "description": "The decision's reason codes.",
+          "description": "The decision's reasons; a code an older executor wrote reads back verbatim.",
           "name": "reasons",
           "refs": [],
           "required": true,
@@ -22325,17 +22492,19 @@
       "variants": []
     },
     {
-      "description": "One piece of evidence behind a disposition: what was read, and what it said.",
+      "description": "One piece of evidence behind a disposition: what was read, where, and what it said.",
       "home": "integration",
       "is_enum": false,
       "name": "IntegrationEvidence",
       "properties": [
         {
-          "description": "What kind of fact (`required_checks`, `relation_to_master`, `review`, `label`,\n`dependency`, `draft`, `base`).",
+          "description": "What kind of fact.",
           "name": "kind",
-          "refs": [],
+          "refs": [
+            "EvidenceKind"
+          ],
           "required": true,
-          "type": "string"
+          "type": "EvidenceKind"
         },
         {
           "description": "What it said, as a word.",
@@ -22350,6 +22519,15 @@
           "refs": [],
           "required": true,
           "type": "string"
+        },
+        {
+          "description": "Where it was read. Every assessment names it; a trail line written before evidence\ncarried it has none.",
+          "name": "source",
+          "refs": [
+            "EvidenceSource"
+          ],
+          "required": false,
+          "type": "EvidenceSource | null"
         }
       ],
       "type": "object",
@@ -22418,6 +22596,57 @@
       ],
       "used_by_schemas": [],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "One question of the policy, in the order `IntegrationGate::ALL` asks them. The\ndisposition is the first that fails; every one is answered.",
+      "home": "integration",
+      "is_enum": true,
+      "name": "IntegrationGate",
+      "properties": [],
+      "type": "\"base\" | \"draft\" | \"label\" | \"relation_to_master\" | \"dependency\" | \"review\" | \"no_failing_check\" | \"freshness\" | \"required_checks\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "GateResult"
+      ],
+      "values": [
+        {
+          "description": "It targets the integration base.",
+          "value": "base"
+        },
+        {
+          "description": "It is not a draft.",
+          "value": "draft"
+        },
+        {
+          "description": "It carries no blocking label.",
+          "value": "label"
+        },
+        {
+          "description": "Its head is not on master already, and git could say that it merges cleanly.",
+          "value": "relation_to_master"
+        },
+        {
+          "description": "Every declared dependency has landed.",
+          "value": "dependency"
+        },
+        {
+          "description": "The review policy is satisfied on the head.",
+          "value": "review"
+        },
+        {
+          "description": "No required check failed on the head.",
+          "value": "no_failing_check"
+        },
+        {
+          "description": "The head contains the current master.",
+          "value": "freshness"
+        },
+        {
+          "description": "Every required check passed on the head.",
+          "value": "required_checks"
+        }
+      ],
       "variants": []
     },
     {
@@ -32889,11 +33118,20 @@
           "type": "IntegrationLane"
         },
         {
-          "description": "Machine-readable reason codes, most decisive first.",
+          "description": "Machine-readable reasons, one for every failing gate's every finding, in policy order:\nthe first is the decisive one. A ready pull request carries why it is ready.",
           "name": "reasons",
           "refs": [],
           "required": true,
           "type": "array of string"
+        },
+        {
+          "description": "Every gate of the policy, in order, and whether it passed.",
+          "name": "gates",
+          "refs": [
+            "GateResult"
+          ],
+          "required": false,
+          "type": "array of GateResult"
         },
         {
           "description": "What a person or the executor does next, when anything.",
@@ -52170,7 +52408,7 @@
           "cache_detail": "",
           "cli": "prs explain",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/pull-requests/explain?number=1\"",
-          "description": "One pull request's assessment — disposition, lane, reasons, next action, the master and head it was decided against, required checks, review, relation to master, dependencies, overlaps, risk with its factors, and every piece of evidence — with its rank in the queue. `found: false` with the reason when it is not open or nothing is observed.",
+          "description": "One pull request's assessment — disposition, lane, reasons, every gate of the policy with whether it passed, next action, the master and head it was decided against and when the forge was observed, required checks, review, relation to master, dependencies, overlaps, risk with its factors, and every piece of evidence — with its rank in the queue. `found: false` with the reason when it is not open or nothing is observed.",
           "home": "integration",
           "id": "integration.explain",
           "kind": "query",

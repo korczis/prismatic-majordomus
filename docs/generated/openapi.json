@@ -12735,7 +12735,7 @@
       "get": {
         "operationId": "integration.explain",
         "summary": "Why one pull request is where it is",
-        "description": "One pull request's assessment — disposition, lane, reasons, next action, the master and head it was decided against, required checks, review, relation to master, dependencies, overlaps, risk with its factors, and every piece of evidence — with its rank in the queue. `found: false` with the reason when it is not open or nothing is observed.",
+        "description": "One pull request's assessment — disposition, lane, reasons, every gate of the policy with whether it passed, next action, the master and head it was decided against and when the forge was observed, required checks, review, relation to master, dependencies, overlaps, risk with its factors, and every piece of evidence — with its rank in the queue. `found: false` with the reason when it is not open or nothing is observed.",
         "tags": [
           "integration"
         ],
@@ -28054,13 +28054,18 @@
           "head_sha": {
             "type": "string",
             "description": "The pull request's head commit."
+          },
+          "observed_at": {
+            "type": "string",
+            "description": "When the forge was observed, RFC 3339; empty in a value written before it was named.",
+            "default": ""
           }
         },
         "required": [
           "master_sha",
           "head_sha"
         ],
-        "description": "The revisions a decision was taken against. A decision is valid only while both still\nhold: the executor compares them with what it re-reads before it acts."
+        "description": "The revisions a decision was taken against, and when the forge was observed. A decision is\nvalid only while both revisions still hold: the executor compares them with what it\nre-reads before it acts."
       },
       "EventHistory": {
         "type": "object",
@@ -28391,6 +28396,66 @@
         ],
         "description": "A claim whose declared status the evidence does not support.\n\nOnly a `guaranteed` claim can produce one: the other statuses already say that a current\nproof is not what they are claiming. A finding says what was claimed, what the evidence\nsupports instead, and — where running something would settle it — what to run.\n\n```\nuse majordomus_cli::evidence::{Finding, ProofState};\n\nlet finding = Finding {\n    claim: \"scope-integrity\".into(),\n    status: \"guaranteed\".into(),\n    state: ProofState::NotRun,\n    reason: \"the claim guarantees a behaviour and names a test, and no run of that \\\n             test has ever been recorded\"\n        .into(),\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n};\n\n// the gap is the finding: what the matrix declares against what the ledger holds\nassert_ne!(finding.status, finding.state.label());\nassert!(finding.reproduce.unwrap().starts_with(\"bash test/run.sh\"));\n```\n# Example\n\n```\nuse majordomus_cli::evidence::{Finding, ProofState};\nlet f = Finding {\n    claim: \"some-claim\".into(),\n    status: \"guaranteed\".into(),\n    state: ProofState::NotRun,\n    reason: \"the claim names a test nobody has run\".into(),\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n};\nassert_eq!(f.state, ProofState::NotRun);\n```"
       },
+      "EvidenceKind": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "required_check",
+            "description": "One required check's state on the head: one entry per context the base requires."
+          },
+          {
+            "type": "string",
+            "const": "required_checks",
+            "description": "The required checks together: their verdict, and each context's state."
+          },
+          {
+            "type": "string",
+            "const": "review",
+            "description": "The review policy and the forge's decision, or one reviewer's latest review."
+          },
+          {
+            "type": "string",
+            "const": "relation_to_master",
+            "description": "What the head is to master, as git decided it."
+          },
+          {
+            "type": "string",
+            "const": "dependency",
+            "description": "One declared dependency."
+          },
+          {
+            "type": "string",
+            "const": "label",
+            "description": "One blocking label."
+          },
+          {
+            "type": "string",
+            "const": "draft",
+            "description": "Whether it is a draft; always emitted."
+          },
+          {
+            "type": "string",
+            "const": "base",
+            "description": "The branch it targets; always emitted."
+          },
+          {
+            "type": "string",
+            "const": "freshness",
+            "description": "How old the observation is. Declared so the vocabulary is settled; nothing emits it yet."
+          },
+          {
+            "type": "string",
+            "const": "auto_merge",
+            "description": "Whether the forge has auto-merge armed. Declared so the vocabulary is settled;\nnothing emits it yet."
+          },
+          {
+            "type": "string",
+            "const": "supersession",
+            "description": "A declared supersession. Declared so the vocabulary is settled; nothing emits it yet."
+          }
+        ],
+        "description": "What kind of fact a piece of evidence is. The wire words are the ones the evidence carried\nwhile its kind was a string, so a trail written then still reads."
+      },
       "EvidenceLedgerSummary": {
         "type": "object",
         "properties": {
@@ -28621,6 +28686,52 @@
           }
         ],
         "description": "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in `TestId::of`; a claim naming something neither runner produces is\nreported as `ProofState::Unrunnable` rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
+      },
+      "EvidenceSource": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "observed_at": {
+                "type": "string",
+                "description": "When the forge was observed, RFC 3339."
+              },
+              "kind": {
+                "type": "string",
+                "const": "forge"
+              }
+            },
+            "required": [
+              "kind",
+              "observed_at"
+            ],
+            "description": "The forge observation, at its moment."
+          },
+          {
+            "type": "object",
+            "properties": {
+              "master_sha": {
+                "type": "string",
+                "description": "The master commit."
+              },
+              "head_sha": {
+                "type": "string",
+                "description": "The head commit."
+              },
+              "kind": {
+                "type": "string",
+                "const": "git"
+              }
+            },
+            "required": [
+              "kind",
+              "master_sha",
+              "head_sha"
+            ],
+            "description": "Git, on this pair of commits."
+          }
+        ],
+        "description": "Where a piece of evidence was read."
       },
       "EvidenceSubject": {
         "type": "object",
@@ -30885,6 +30996,24 @@
         ],
         "description": "```\nuse majordomus_cli::gates::GatePlanMode;\n\n// a plan is either the gates the change selects, or everything the runners allow\nassert_eq!(GatePlanMode::Affected.as_str(), \"affected\");\nassert_eq!(GatePlanMode::Full.as_str(), \"full\");\nassert_ne!(GatePlanMode::Affected, GatePlanMode::Full);\n```\nWhy the plan selects what it selects."
       },
+      "GateResult": {
+        "type": "object",
+        "properties": {
+          "gate": {
+            "$ref": "#/components/schemas/IntegrationGate",
+            "description": "The gate."
+          },
+          "passed": {
+            "type": "boolean",
+            "description": "Whether it passed. A gate that fails only because an earlier one did (the head is not\nfresh when its merge conflicts) fails without a reason of its own."
+          }
+        },
+        "required": [
+          "gate",
+          "passed"
+        ],
+        "description": "How one gate answered."
+      },
       "GateRun": {
         "type": "object",
         "properties": {
@@ -32379,9 +32508,10 @@
           "reasons": {
             "type": "array",
             "items": {
+              "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `head_reachable_from_master`, `merge_changes_nothing`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`. A code outside this list (an older trail's) is carried verbatim.",
               "type": "string"
             },
-            "description": "The decision's reason codes."
+            "description": "The decision's reasons; a code an older executor wrote reads back verbatim."
           },
           "detail": {
             "type": "string",
@@ -32458,8 +32588,8 @@
         "type": "object",
         "properties": {
           "kind": {
-            "type": "string",
-            "description": "What kind of fact (`required_checks`, `relation_to_master`, `review`, `label`,\n`dependency`, `draft`, `base`)."
+            "$ref": "#/components/schemas/EvidenceKind",
+            "description": "What kind of fact."
           },
           "status": {
             "type": "string",
@@ -32468,6 +32598,17 @@
           "detail": {
             "type": "string",
             "description": "The detail a person reads."
+          },
+          "source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvidenceSource"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Where it was read. Every assessment names it; a trail line written before evidence\ncarried it has none."
           }
         },
         "required": [
@@ -32475,7 +32616,7 @@
           "status",
           "detail"
         ],
-        "description": "One piece of evidence behind a disposition: what was read, and what it said."
+        "description": "One piece of evidence behind a disposition: what was read, where, and what it said."
       },
       "IntegrationExplanation": {
         "type": "object",
@@ -32530,6 +32671,56 @@
           "of"
         ],
         "description": "One pull request's assessment and rank, or why it has none."
+      },
+      "IntegrationGate": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "base",
+            "description": "It targets the integration base."
+          },
+          {
+            "type": "string",
+            "const": "draft",
+            "description": "It is not a draft."
+          },
+          {
+            "type": "string",
+            "const": "label",
+            "description": "It carries no blocking label."
+          },
+          {
+            "type": "string",
+            "const": "relation_to_master",
+            "description": "Its head is not on master already, and git could say that it merges cleanly."
+          },
+          {
+            "type": "string",
+            "const": "dependency",
+            "description": "Every declared dependency has landed."
+          },
+          {
+            "type": "string",
+            "const": "review",
+            "description": "The review policy is satisfied on the head."
+          },
+          {
+            "type": "string",
+            "const": "no_failing_check",
+            "description": "No required check failed on the head."
+          },
+          {
+            "type": "string",
+            "const": "freshness",
+            "description": "The head contains the current master."
+          },
+          {
+            "type": "string",
+            "const": "required_checks",
+            "description": "Every required check passed on the head."
+          }
+        ],
+        "description": "One question of the policy, in the order `IntegrationGate::ALL` asks them. The\ndisposition is the first that fails; every one is answered."
       },
       "IntegrationLane": {
         "oneOf": [
@@ -40559,9 +40750,18 @@
           "reasons": {
             "type": "array",
             "items": {
+              "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `head_reachable_from_master`, `merge_changes_nothing`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`. A code outside this list (an older trail's) is carried verbatim.",
               "type": "string"
             },
-            "description": "Machine-readable reason codes, most decisive first."
+            "description": "Machine-readable reasons, one for every failing gate's every finding, in policy order:\nthe first is the decisive one. A ready pull request carries why it is ready."
+          },
+          "gates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GateResult"
+            },
+            "description": "Every gate of the policy, in order, and whether it passed.",
+            "default": []
           },
           "next_action": {
             "type": [
