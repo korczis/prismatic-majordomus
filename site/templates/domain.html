@@ -17,7 +17,7 @@
       <p class="mt-2 text-lg font-semibold leading-relaxed text-heading">{{ d.problem }}</p>
     </section>
 
-    <article class="format break-words max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto">{{ page.content | safe }}</article>
+    <article class="format break-words max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0">{{ page.content | safe }}</article>
 
     {#- --------------------------------------------------------------- the members -#}
     <section aria-labelledby="features" class="mt-10">
@@ -30,7 +30,7 @@
           <a href="{{ base }}{{ m.route }}" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">{{ m.label }}</a>
           <p class="text-sm leading-relaxed text-body">{{ m.headline }}</p>
           <div class="mt-auto">{% set surfaces = model.surfaces %}{% include "partials/feature-surfaces.html" %}</div>
-          {%- if m.claims > 0 %}<p class="font-mono text-xs text-body-subtle">{{ m.tested }} of {{ m.claims }} guarantees name their test{% if m.use_cases > 0 %} &middot; {{ m.use_cases }} use case{% if m.use_cases != 1 %}s{% endif %}{% endif %}</p>{% endif %}
+          {%- if m.claims > 0 %}<p class="font-mono text-xs text-body-subtle">{{ m.tested }} of {{ m.claims }} claims guaranteed with a named test{% if m.use_cases > 0 %} &middot; {{ m.use_cases }} use case{% if m.use_cases != 1 %}s{% endif %}{% endif %}</p>{% endif %}
         </li>
         {%- endfor %}
       </ul>
@@ -62,10 +62,10 @@
     {#- ------------------------------------------------------------- the evidence -#}
     {%- if d.claim_refs | length %}
     <section aria-labelledby="guaranteed" class="mt-10">
-      <h2 id="guaranteed" class="text-xl font-semibold tracking-tight text-heading">What is guaranteed</h2>
-      <p class="mt-2 text-body">Every guarantee a feature of this domain names, once, with the status the claim declares and the test that settles it. Whether a recorded run supports a claim is its own page's verdict.</p>
+      <h2 id="guaranteed" class="text-xl font-semibold tracking-tight text-heading">What is claimed</h2>
+      <p class="mt-2 text-body">Every claim a feature of this domain names, once, with the status it declares — guaranteed, advisory, planned or rejected — and the test that settles it. Whether a recorded run supports a claim is its own page's verdict.</p>
       <details class="mt-4 rounded-base border border-default bg-neutral-primary-soft">
-        <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-heading">{{ d.counts.claims }} guarantees, {{ d.counts.tested }} naming their test</summary>
+        <summary class="cursor-pointer px-4 py-3 text-sm font-medium text-heading">{{ d.counts.claims }} claims, {{ d.counts.tested }} guaranteed with a named test</summary>
         <ul class="divide-y divide-default border-t border-default">
           {%- for c in d.claim_refs %}
           <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">

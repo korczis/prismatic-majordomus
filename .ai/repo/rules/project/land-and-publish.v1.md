@@ -127,11 +127,11 @@ The live half is not simulated: a case standing up an HTTP server would be testi
 fixture, and one reaching the real site would fail whenever the network did. `--offline` is
 the seam, and the case asserts the seam announces itself rather than skipping silently.
 
-`test/cases/97_pages_fast_path.sh` holds the publication path itself, including the two
-halves of its concurrency: a push cancels the run it supersedes, a dispatch — the recovery
-deploy — cancels nothing, and the run states whether it pushed gh-pages before it ended,
-because a cancelled run is not a failure and fourteen of the seventeen cancelled runs of
-2026-09-09/10 had already published. The
+`test/cases/97_pages_fast_path.sh` holds the publication path itself, including its
+concurrency: the `pages-` group serialises the runs and nothing cancels the deploy in flight
+(`cancel-in-progress: false`; cancelling it starved publication on 2026-09-12), and the run
+states whether it pushed gh-pages before it ended, because a cancelled run is not a failure
+and fourteen of the seventeen cancelled runs of 2026-09-09/10 had already published. The
 derived-merge-driver behaviour is `test/cases/57_derived_merge_driver.sh`, and
 `test/cases/111_unblock.sh` holds `scripts/unblock` to clause 2: a conflict on an authored
 file is refused with the files named and the branch left where it was, the scratch worktree

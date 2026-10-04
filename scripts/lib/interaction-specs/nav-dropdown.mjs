@@ -1,4 +1,4 @@
-// The navigation dropdowns: Flowbite's dropdown. Each toggle opens the menu it names; pressing it again closes it.
+// The navigation dropdowns (site/nav.js). Each toggle opens the menu it names; pressing it again closes it.
 export default {
   id: 'nav-dropdown',
   title: 'each navigation dropdown opens and closes the menu it names',

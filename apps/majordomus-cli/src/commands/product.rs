@@ -37,8 +37,7 @@ pub fn run(args: ProductArgs) -> Result<u8> {
             } else {
                 json!({})
             };
-            let v = call(&app, &["product", "domains"], input)?;
-            emit(format, &v, domains_text)
+            call(&app, &["product", "domains"], input).and_then(|v| emit(format, &v, domains_text))
         }
         ProductCommand::Matrix => {
             let v = call(&app, &["product", "matrix"], json!({}))?;

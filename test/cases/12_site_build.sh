@@ -52,7 +52,7 @@ expect_grep 'id="install"' "$P/index.html"
 expect_grep 'id="map"' "$P/index.html"
 # the homepage's map is the product's domains (ADR 0104): drawn from product.json, one
 # disclosure per shown domain, each linking its page
-n_dom="$(jq '[.domains[]? | select(.status == "stable" and (.features | length) > 0)] | length' "$ROOT/site/data/registry/product.json")"
+n_dom="$(jq '[.domains[] | select(.status == "stable" and (.features | length) > 0)] | length' "$ROOT/site/data/registry/product.json")"
 [ "$(grep -o 'data-domain="[a-z-]*"' "$P/index.html" | wc -l | tr -d ' ')" = "$n_dom" ] \
   || { echo "    the homepage map does not draw the $n_dom domain(s) the product model shows"; exit 1; }
 # the routes that moved answer with a redirect rather than a 404

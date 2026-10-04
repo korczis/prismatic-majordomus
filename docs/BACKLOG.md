@@ -82,6 +82,16 @@ It replaced `scripts/land`, which merged every clean pull request onto one integ
 branch: a batch whose regressions nobody could attribute, planned from a list that the first
 merge made stale.
 
+The measurement runs on a clock: `.github/workflows/queue.yml` (model
+`.ai/repo/ci/queue.yaml`) runs `majordomus prs refresh` and `majordomus prs status` every
+thirty minutes and publishes the queue to the job summary, so its state is a measurement
+rather than something somebody remembers to ask for. It never runs `drain` or
+`cleanup --apply`, and its token cannot write: the state is automatic, the merge stays a decision.
+The read-only token cannot read the branch protection either, so the report says so (exit
+10) and calls nothing `ready`; only an unusable measurement (exit 12) fails the job.
+`test/cases/350_the_queue_measures_itself.sh` holds both halves, and fails if the workflow
+acquires an acting command or a write permission.
+
 ### `scripts/reap-orphans`
 
 A `majordomus serve` or `mcp` outlives its client whenever the client dies without closing

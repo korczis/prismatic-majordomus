@@ -278,7 +278,8 @@ pub struct RuleRef {
     pub title: String,
     /// `blocking` or `advisory`.
     pub class: String,
-    /// Whether the tool enforces it: the rule carries an `x-majordomus` block.
+    /// Whether a machine decides it: the block names a validator or tests, not only a reason
+    /// a person reviews it.
     pub enforced: bool,
     /// Repository-relative path.
     pub path: String,
@@ -470,6 +471,18 @@ pub struct ResolvedRefs {
 // ---------------------------------------------------------------- domains
 
 /// A domain as a feature points at it: enough for a breadcrumb.
+///
+/// ```
+/// use majordomus_cli::product::DomainRef;
+/// let crumb = DomainRef {
+///     id: "context".into(),
+///     title: "Context".into(),
+///     route: "/domains/context/".into(),
+/// };
+/// let v = serde_json::to_value(&crumb).unwrap();
+/// assert_eq!(v["route"], "/domains/context/");
+/// assert_eq!(serde_json::from_value::<DomainRef>(v).unwrap(), crumb);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct DomainRef {
     /// The domain id.
@@ -482,6 +495,22 @@ pub struct DomainRef {
 
 /// One product domain, as its file declares it plus where it came from and where it is
 /// published. A domain never lists its features; [`ResolvedDomain`] derives them.
+///
+/// The front matter is read as it stands; the route, the source and the body are filled in by
+/// the model, so a record read alone carries none of them.
+///
+/// ```
+/// use majordomus_cli::product::Domain;
+/// let d: Domain = serde_json::from_value(serde_json::json!({
+///     "id": "context", "title": "Context", "status": "stable", "weight": 10,
+///     "headline": "Every worker starts from what the repository knows.",
+///     "problem": "Agents forget.",
+/// }))
+/// .unwrap();
+/// assert_eq!(d.weight, 10);
+/// assert!(d.route.is_empty(), "the route is derived by the model, never read");
+/// assert!(d.tags.is_empty());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Domain {
     /// The identity, the slug and the file name.
@@ -520,6 +549,25 @@ impl crate::order::Ordered for Domain {
 }
 
 /// One stable feature of a domain, as a card shows it.
+///
+/// ```
+/// use majordomus_cli::product::{DomainMember, Surfaces};
+/// let m = DomainMember {
+///     id: "finish-contract".into(),
+///     label: "Finish contract".into(),
+///     title: "Done is a contract".into(),
+///     headline: "A worker does not define its own completion.".into(),
+///     route: "/features/finish-contract/".into(),
+///     featured: true,
+///     surfaces: Surfaces::default(),
+///     claims: 3,
+///     tested: 2,
+///     use_cases: 1,
+/// };
+/// let v = serde_json::to_value(&m).unwrap();
+/// assert_eq!(v["tested"], 2);
+/// assert_eq!(v["surfaces"]["cli"], false);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct DomainMember {
     /// The feature id.
@@ -545,6 +593,16 @@ pub struct DomainMember {
 }
 
 /// How much stands behind a domain: sums and distinct counts over its stable features.
+///
+/// ```
+/// use majordomus_cli::product::DomainCounts;
+/// let empty = DomainCounts::default();
+/// assert_eq!(empty.features, 0);
+/// let v = serde_json::to_value(&empty).unwrap();
+/// for key in ["features", "claims", "tested", "use_cases", "rules", "enforced_rules", "capabilities", "moments"] {
+///     assert_eq!(v[key], 0, "{key} is published, and zero for a domain nothing names");
+/// }
+/// ```
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct DomainCounts {
     /// Stable features filed under it.
@@ -569,6 +627,31 @@ pub struct DomainCounts {
 
 /// One domain, resolved: the record as its file declares it, and everything derived from
 /// the stable features that name it.
+///
+/// The declared record is flattened, so a reader sees one object: the domain's own fields
+/// beside its derived members and counts.
+///
+/// ```
+/// use majordomus_cli::product::{Domain, DomainCounts, FeatureEvidence, ResolvedDomain, Surfaces};
+/// let domain: Domain = serde_json::from_value(serde_json::json!({
+///     "id": "context", "title": "Context", "status": "stable",
+///     "headline": "h", "problem": "p",
+/// }))
+/// .unwrap();
+/// let resolved = ResolvedDomain {
+///     domain,
+///     features: vec![],
+///     surfaces: Surfaces::default(),
+///     moments: vec![],
+///     claim_refs: vec![],
+///     use_case_refs: vec![],
+///     counts: DomainCounts::default(),
+///     evidence: FeatureEvidence::default(),
+/// };
+/// let v = serde_json::to_value(&resolved).unwrap();
+/// assert_eq!(v["id"], "context", "the record is flattened into the resolved view");
+/// assert_eq!(v["counts"]["features"], 0);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ResolvedDomain {
     /// The record as its file declares it, plus its route and source.
@@ -758,6 +841,20 @@ fn resolve_module_areas(
         }
     }
     (areas, contested)
+}
+
+/// Whether a machine decides a rule: its enforcement block names a validator a command runs,
+/// or tests a gate runs (ADR 0048's dispatched and gated modes). A block naming only
+/// `reviewed_because` is enforced by a person and a rule with no block states a principle;
+/// neither is counted as enforced, because "enforced" on a page is read as "a machine refuses
+/// a violation".
+fn machine_enforced(meta: &Value) -> bool {
+    meta.get("x-majordomus").is_some_and(|x| {
+        x.get("validator").is_some()
+            || x.get("tests")
+                .and_then(Value::as_array)
+                .is_some_and(|t| !t.is_empty())
+    })
 }
 
 /// Levenshtein distance, for the nearest-candidate hint on an unresolved reference.
@@ -1245,11 +1342,24 @@ impl ProductModel {
     pub fn domains(&self) -> &[ResolvedDomain] {
         &self.domains
     }
-    /// One domain by id.
+    /// One domain by its id, whatever its status, or `None` when the layer declares no domain
+    /// of that id.
+    ///
+    /// ```
+    /// use majordomus_cli::product::ProductModel;
+    /// let empty = ProductModel::default();
+    /// assert!(empty.domain("context").is_none());
+    /// ```
     pub fn domain(&self, id: &str) -> Option<&ResolvedDomain> {
         self.domain_by_id.get(id).map(|i| &self.domains[*i])
     }
-    /// The stable domains, in presentation order.
+    /// The stable domains, in presentation order: the set every public surface shows, before
+    /// it drops a domain no stable feature names.
+    ///
+    /// ```
+    /// use majordomus_cli::product::ProductModel;
+    /// assert!(ProductModel::default().public_domains().is_empty());
+    /// ```
     pub fn public_domains(&self) -> Vec<&ResolvedDomain> {
         self.domains
             .iter()
@@ -1267,51 +1377,46 @@ impl ProductModel {
     /// reason. A domain no stable feature names is a warning: it renders empty, and so it
     /// is not rendered.
     fn resolve_domains(&mut self, index: &Index, why: &Catalogue) {
-        let mut domains: Vec<Domain> = Vec::new();
-        let mut seen: BTreeMap<String, String> = BTreeMap::new();
-        for o in index.objects.iter().filter(|o| o.kind == DOMAIN) {
-            let path = o.provenance.path.clone();
-            if let Some(first) = seen.insert(o.identity.clone(), path.clone()) {
-                self.findings.push(ProductFinding {
-                    severity: Severity::Error,
-                    code: "duplicate_identity".into(),
-                    path: path.clone(),
-                    id: Some(o.identity.clone()),
-                    field: Some("id".into()),
-                    message: format!(
-                        "a second domain claims the identity '{}' (first: {first})",
-                        o.identity
-                    ),
-                    did_you_mean: None,
-                });
-                continue;
-            }
-            let stem = path
-                .rsplit('/')
-                .next()
-                .and_then(|f| f.strip_suffix(".md"))
-                .unwrap_or_default();
-            if stem != o.identity {
-                self.findings.push(ProductFinding {
-                    severity: Severity::Error,
-                    code: "filename_mismatch".into(),
-                    path: path.clone(),
-                    id: Some(o.identity.clone()),
-                    field: Some("id".into()),
-                    message: format!(
-                        "the file is named '{stem}.md' and the domain's id is '{}'; the id is the file name and the route",
-                        o.identity
-                    ),
-                    did_you_mean: Some(format!("{}.md", o.identity)),
-                });
-            }
-            if let Ok(mut d) = serde_json::from_value::<Domain>(o.metadata.clone()) {
-                d.route = format!("{DOMAIN_ROUTE}{}/", d.id);
-                d.source = path;
-                d.body = o.body.clone();
-                domains.push(d);
-            }
-        }
+        // A second file claiming an identity is the index's to refuse: it drops both and
+        // reports them, and adopt_diagnostics carries that report into the findings.
+        let mut mismatched = Vec::new();
+        let mut domains: Vec<Domain> = index
+            .objects
+            .iter()
+            .filter(|o| o.kind == DOMAIN)
+            .filter_map(|o| {
+                let path = o.provenance.path.clone();
+                let stem = path
+                    .rsplit('/')
+                    .next()
+                    .and_then(|f| f.strip_suffix(".md"))
+                    .unwrap_or_default();
+                if stem != o.identity {
+                    mismatched.push(ProductFinding {
+                        severity: Severity::Error,
+                        code: "filename_mismatch".into(),
+                        path: path.clone(),
+                        id: Some(o.identity.clone()),
+                        field: Some("id".into()),
+                        message: format!(
+                            "the file is named '{stem}.md' and the domain's id is '{}'; the id is the file name and the route",
+                            o.identity
+                        ),
+                        did_you_mean: Some(format!("{}.md", o.identity)),
+                    });
+                }
+                // the schema validated the record before the index held it
+                serde_json::from_value::<Domain>(o.metadata.clone())
+                    .ok()
+                    .map(|mut d| {
+                        d.route = format!("{DOMAIN_ROUTE}{}/", d.id);
+                        d.source = path;
+                        d.body = o.body.clone();
+                        d
+                    })
+            })
+            .collect();
+        self.findings.extend(mismatched);
         crate::order::canonical(&mut domains);
 
         // every feature's reference, resolved or reported
@@ -1638,7 +1743,7 @@ fn resolve(
                 identity: o.identity.clone(),
                 title: o.title.clone().unwrap_or_else(|| id.clone()),
                 class: meta_str(o, "class").unwrap_or_default(),
-                enforced: o.metadata.get("x-majordomus").is_some(),
+                enforced: machine_enforced(&o.metadata),
                 path: o.provenance.path.clone(),
             }),
             None => unknown(
@@ -2046,6 +2151,90 @@ fn providers(index: &Index) -> Vec<ProductProvider> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// One stable member, built from the resolved view's own JSON: the members of a domain are
+    /// whatever the features say, and the derivation counts what they share once.
+    fn member(id: &str, use_cases: &[&str], claims: &[&str]) -> ResolvedRefs {
+        let counts: FeatureCounts = serde_json::from_value(serde_json::json!({
+            "capabilities": 0, "mcp_tools": 0, "mcp_resources": 0, "http_routes": 0,
+            "cli_paths": 0, "commands": 0, "objects": 0, "rules": 0, "enforced_rules": 0,
+            "docs": 0, "adrs": 0, "claims": 0, "use_cases": 0, "moments": 0
+        }))
+        .unwrap();
+        serde_json::from_value(serde_json::json!({
+            "id": id, "title": id, "headline": "h", "summary": "s", "status": "stable",
+            "domain": "alpha",
+            "surfaces": { "cli": id == "a", "api": false, "mcp": id == "b", "cockpit": false, "docs": true },
+            "module_refs": [], "command_refs": [], "kind_refs": [],
+            "rule_refs": [{ "id": "project.r", "identity": "project.r@1", "title": "r",
+                            "class": "blocking", "enforced": true, "path": "r.md" }],
+            "doc_refs": [], "adr_refs": [],
+            "claim_refs": claims.iter().map(|c| serde_json::json!({
+                "id": c, "claim": c, "status": "guaranteed", "test": "test/cases/x.sh" })).collect::<Vec<_>>(),
+            "use_case_refs": use_cases.iter().map(|u| serde_json::json!({
+                "id": u, "title": u, "category": "completion" })).collect::<Vec<_>>(),
+            "cockpit_refs": [], "web_refs": [], "moments": [], "backlinks": [],
+            "counts": counts, "evidence": { "claims": {}, "modules": {} }
+        }))
+        .unwrap()
+    }
+
+    #[test]
+    fn a_rule_is_enforced_only_when_a_machine_decides_it() {
+        let rule =
+            |block: serde_json::Value| serde_json::json!({ "id": "r", "x-majordomus": block });
+        assert!(
+            machine_enforced(&rule(serde_json::json!({ "validator": "scope" }))),
+            "dispatched"
+        );
+        assert!(
+            machine_enforced(&rule(serde_json::json!({ "tests": ["test/cases/x.sh"] }))),
+            "gated"
+        );
+        assert!(
+            !machine_enforced(&rule(
+                serde_json::json!({ "reviewed_because": "a person reads it" })
+            )),
+            "reviewed is a person's act, not enforcement"
+        );
+        assert!(
+            !machine_enforced(&rule(serde_json::json!({ "tests": [] }))),
+            "no test named"
+        );
+        assert!(
+            !machine_enforced(&serde_json::json!({ "id": "a-principle" })),
+            "no block is a principle"
+        );
+    }
+
+    #[test]
+    fn a_domain_counts_what_its_members_share_once_and_unions_their_surfaces() {
+        let d: Domain = serde_json::from_value(serde_json::json!({
+            "id": "alpha", "title": "Alpha", "headline": "h", "problem": "p", "status": "stable"
+        }))
+        .unwrap();
+        let (a, b) = (
+            member("a", &["u1", "u2"], &["c1"]),
+            member("b", &["u2"], &["c1", "c2"]),
+        );
+        let r = resolve_domain(d, &[&a, &b], &Catalogue::default());
+        assert_eq!(r.counts.features, 2);
+        assert_eq!(r.counts.use_cases, 2, "u2 is shared and counted once");
+        assert_eq!(r.counts.claims, 2, "c1 is shared and counted once");
+        assert_eq!(r.counts.tested, 2);
+        assert_eq!(r.counts.rules, 1);
+        assert_eq!(r.counts.enforced_rules, 1);
+        assert!(
+            r.surfaces.cli && r.surfaces.mcp && r.surfaces.docs,
+            "the union of the members'"
+        );
+        assert!(!r.surfaces.api);
+        assert_eq!(r.evidence.claims["guaranteed"], 2);
+        let ids: Vec<&str> = r.use_case_refs.iter().map(|u| u.id.as_str()).collect();
+        assert_eq!(ids, ["u1", "u2"]);
+        assert_eq!(r.features[0].tested, 1);
+        assert_eq!(r.features[1].use_cases, 1);
+    }
 
     /// Areas as weights: the ranking the resolution reads, and the whole of what it reads.
     /// The catalogue's own numbers, five of the nine.

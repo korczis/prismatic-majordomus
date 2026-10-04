@@ -81,6 +81,21 @@ sources:
     pathspec: ':(glob).ai/repo/skills/*.md'
     required: false
 
+  # The recorded planning analysis of an intent (ADR 0073): the gap a worker observed at one
+  # commit, and the critique of the plan that answers it. Validated against the intent and the
+  # plan by `intent validate`; neither stores a status.
+  - id: gap
+    kind: gap
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/project/gaps/*.yaml'
+    required: false
+
+  - id: critique
+    kind: critique
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/project/critiques/*.yaml'
+    required: false
+
   - id: milestone
     kind: milestone
     discovery: vcs

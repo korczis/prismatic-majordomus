@@ -1,11 +1,185 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.12.0 -->
+     Generator: majordomus-cli 0.13.0 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **0.12.0**
+Current version: **0.13.0**
+
+## v0.12.0 — 2026-10-03
+
+### Decisions
+
+- **ADR-0076** A skill is a capability only when something proves it — tested, documented, enforced and used are derived, never authored _(proposed)_
+- **ADR-0075** Which work realises an intent is a join over the records the lifecycle already keeps, and closed work does not outrank evidence _(proposed)_
+- **ADR-0073** An issue names the intent criterion it serves, and the coverage of every criterion is derived from the plan _(proposed)_
+- **ADR-0070** An intent is a typed record, and its stage and satisfaction are derived from the plan and the evidence _(proposed)_
+- **ADR-0091** Knowledge is derived at the episode boundary, from the ledger and git, and a person promotes it _(proposed)_
+- **ADR-0046** A working context is derived and a closed record is composed; neither is a document somebody must remember to write _(proposed)_
+
+### Added
+
+- **site**: the homepage is a landing page, on a dark stage, with the evidence up front (`e4a652f1d`)
+- **site**: the homepage is the landing design, composed of the kit (`fe16b7893`)
+- **site**: the eight page designs, composed of the kit from real data (`20435f1b3`)
+- **site**: /kit/ is a section, and a screen is a page composed of the kit (`13eadc43b`)
+- **site**: a component kit the product and documentation pages are composed of (`86adf6dd5`)
+- **derive**: a visitor watches the tool refuse an agent, from one recorded run (`973d885ab`)
+- **ci**: a documented command is run, or says why it cannot be (`2e2b1b808`)
+- **test**: a case can name what it covers, whatever kind of thing that is (`3d6aef2af`)
+- **ci**: advisory is not an exemption from naming proof (`16226ef12`)
+- **knowledge**: derive knowledge at the episode boundary, serve it everywhere, enforce it (`26a1dd777`)
+- **evidence**: a subject is judged at the presented revision (`f27139ecd`)
+- **evidence**: subjects are derived from what the layer declares (`405732fc3`)
+- **site**: every tile that shows a fact names the test that proves it (`c1e87622d`)
+- **skills**: a skill is a capability only when something proves it (`773cb6da5`)
+- **cockpit**: an intent's page links each criterion to its test and the work realising it (`98b5921c4`)
+- **intent**: the work realising an intent is joined across episodes, providers and handovers (`706f11593`)
+- **intent**: an issue names the criterion it serves, and the plan is held to its intent (`127919bf6`)
+- **convergence**: where the work is held is a verdict, not a thing somebody might notice (`8381c9c3c`)
+- **ci**: a release follows the verdict, and a check that could not measure refuses (`2b22edfc4`)
+- **intent**: an intent is a typed record whose stage is derived (`06cccb8ae`)
+- **product**: a claim shows the test that settles it, and the matrix counts what is proven (`dcfbd073a`)
+- **session**: every client gets an episode, and every provider capability cites its evidence (`ef103581f`)
+- **session**: a closed episode's record carries a composed body (`f07c772fb`)
+
+### Fixed
+
+- **batch-l**: the realization read carries an example, and a tag header wraps at 320 px (`4f57a9c6c`)
+- **cockpit**: the intents page asks objects.get whether it holds an object (`bb2b892a2`)
+- **site**: a component argument that is a variable is passed in braces (`230828448`)
+- **batch-k**: a proof link names the built commit, and case 409 reads find without a word split (`711d93d35`)
+- **mesh**: the multicast test binds the port it then listens on (`31e0cc358`)
+- **site**: the features screen builds without the getting-started page (`949d9a51b`)
+- **mesh**: the UDP test binds the port it then listens on (`c1443916d`)
+- **economics**: the context suite is re-recorded at batch L's tree (`6728930e0`)
+- **intent**: plans and realised work are shown in the canonical order (`8d4486c1a`)
+- **site**: a kit table scrolls by its class, and a route name breaks (`96dc16862`)
+- **docs**: the release verdict step is marked as one only GitHub can answer (`af420c7fd`)
+- **site**: two branches the coverage gate found untested, and a modulo read as a percentage (`6af537d80`)
+- **probe**: a list filter is judged once its items have settled (`c1f7879cc`)
+- **batch-j**: session context's fixture states #220's contract, and skills find their own executable (`87f8f2e08`)
+- **probe**: a wait polls on an interval, because a starved renderer delays its frames too (`d0fe5ac81`)
+- **site**: resolve the kit sheet the merge left in conflict, and the homepage's two overstatements (`630bcf661`)
+- **probe**: the kit's copy and search specs judge what happened, not what remains (`8d43722d9`)
+- **design**: text on a tone's ground is measured, and every tone ground passes it (`51093cff9`)
+- **finish**: the vacuous-verification finding is one the reproduce gate can read (`45feab9a8`)
+- **test**: a prefixed covers word names no command, and case 409 sorts in C (`ff0eeef42`)
+- **site**: every sentence on the screens is true of this repository (`e3e486a33`)
+- **site**: the kit builds without CSS and its secondary text reads on a tone (`07cbdc40c`)
+- **probe**: a revealed panel is given the frame Alpine shows it in (`274794df1`)
+- **site**: the rest of the screens scaffold, which the previous commit left out (`3cd59b334`)
+- **economics**: the context suite is re-recorded at batch J's tree (`740d8624c`)
+- **batch-l**: a plan is started by its transition, not a hand-written stamp (`511946c72`)
+- **batch-j**: the members' cases, gates and rustdoc pass on the batch's tree (`78f09f8af`)
+- **site**: the economics revision links are targets a finger can hit (`daaa96a73`)
+- **site**: the kit passes the gates CI holds it to, and 0.12.0 carries the tone kind (`6690fb53a`)
+- **economics**: the context suite is re-recorded at batch L's tree (`94e8d8c58`)
+- **server**: an episode survives a reload, and a bench counts its own executor (`a7e206554`)
+- **economics**: the context suite is re-recorded at batch I's tree (`fe1c9fefb`)
+- **batch-i**: the intent kind is declared and the campaign check sorts as it joins (`8183164ad`)
+- **usecase**: a recorded verification does not carry the recorder's tree (`537c4e7c9`)
+- **test**: the intent record tool is run over MCP and its answer checked (`eb4ac5e0d`)
+- **test**: case 409 skips through the helper, not with a bare exit 0 (`22affef5c`)
+- **test**: batch I's cases hold to the rules its members bring together (`1fce827b0`)
+- **test**: the convergence tool is run over MCP and its answer checked (`ad54d9bde`)
+- **site**: the intent, gap and critique kinds say where they are published (`b128120a8`)
+- **repair**: the context suite is re-recorded at the merged tree (`16713d31b`)
+- **ci**: the rust job runs when the plan selects the intent-realization gate (`5f158bb06`)
+- **adr**: a lock is broken only by a breaker its holder's release must wait for (`610c3fd29`)
+- **ci**: the campaigns check refuses names and entries it cannot record (`c542a6a2a`)
+- **shell**: the release verdict is a declared unit of the inventory (`19a8a130d`)
+- **ci**: the campaigns check sees every manifest, and hashes without Perl (`cc48da39b`)
+- **shell**: an installed tool finds its own executable, not one in the repository (`9a4a69a96`)
+- **ci**: the campaigns check runs under pipefail and is declared (`67e6cf587`)
+- **doctor**: a coverage name the installation cannot resolve is undecided, not broken (`39bd6ff2f`)
+- **site**: a claim's test path wraps on a phone, and case 12 escapes its dot (`73cb31501`)
+- **test**: every fixture that copies the harness or rust-check carries lib/sha256.sh (`a9a97b4a0`)
+- **site**: the challenge pins its source links and a feature owns its use case (`cef1d85b5`)
+- **ci**: the plan job exposes the intent_check output the rust job is gated on (`01a97489c`)
+- **test**: case 638's foreign-tool example is a command the liveness gate does not flag (`5ca4912fe`)
+- **test**: case 617 runs both coverage checkers and names are matched literally (`b58c13afe`)
+- **project**: issue I1962 no longer scopes the deleted surface-coverage script (`42a5715ee`)
+- **rules**: the liveness rules and the proof claim say what the gate now reads (`eae78d958`)
+- **shell**: nothing in the repository runs perl, and two scripts nothing calls are gone (`e483e16e4`)
+- **test**: the knowledge cases skip through the helper and never read as an early exit (`49eab1762`)
+- **ci**: the rust job is gated on the intent-check plan output (`c7aa59493`)
+- **release**: a tag older than the record practice is a note, not a defect (`86ba91c53`)
+- **site-data**: two payloads are read from files, because Linux caps an argument (`6ea7331f2`)
+- **convergence**: holdings are ordered once, and every public item shows what it does (`26dd52a38`)
+- **ci**: a campaign brief may name what this repository does not have (`8ecf38b24`)
+- **cockpit**: derive the areas and the route table from the dispatcher (`de8415b6e`)
+- **gates**: the evidence gate stops adding a finding to the pipefail ratchet (`ba41577fe`)
+
+### Changed
+
+- **order**: fourteen collections take the canonical order, and the baseline falls to 92 (`8221eeac7`)
+
+### Documentation
+
+- **plan**: graph.json's node cap is an issue with its measurement (`d4a4ef37a`)
+- **release**: the test names the baseline, not an unpublished history (`dc18ef273`)
+- **site**: the manifesto says what exists now that coverage and the two records do (`c3c0c7fd5`)
+- **intent**: every exported item of the intent surface carries an executable example (`b24618309`)
+- **campaigns**: the briefs that drove these campaigns are tracked, and kept as received (`afeebbb9a`)
+
+### Tests
+
+- **coverage**: gather's open-episode and peer-checkout paths and the empty-work rendering (`c53bad7c7`)
+- **coverage**: the subject judge's changed lines are exercised (`317a827a1`)
+- **intent**: cover realization, review and plan coverage; one split per serves token (`37f9de5be`)
+- **coverage**: the lines batch J changes are exercised (`de11b4b28`)
+- **design**: the inventory is read with tones and without them (`0fe4658e9`)
+- **coverage**: the intent lifecycle's changed lines are exercised (`b11ae7700`)
+- **usecase**: case 94 keeps the challenge in its pruned catalogue (`a332ed7c6`)
+- **installer**: a missing digest tool and a malformed digest both fail closed (`78da54d90`)
+- **evidence**: every new line of the subject index is covered (`17776a8a3`)
+- **evidence**: the two intent rules are proven by runs recorded against this tree (`ed5eaac2a`)
+- **site-data**: the payloads that killed the site job are held under the cap (`35a60de7e`)
+
+### Housekeeping
+
+- **ci**: the pages trigger names the documented-command gate's inputs (`274f79f94`)
+- **ci**: the ui audit is bounded by what the grown site costs (`3db3eea4a`)
+- **ci**: the suite budget and the structure bound follow batch J's measured cost (`be9f675f1`)
+- **ci**: the structure job is bounded by what a full plan costs (`d5e50774d`)
+- **derive**: the derived projections follow the header-reader fix and its tests (`2c09e90bb`)
+- **derive**: re-derive the screens over the kit branch at master 376ae59 (`a60626f91`)
+- **derive**: re-derive the kit over master at 376ae59 (`04791d266`)
+- **derive**: batch L's projections follow the plan-start fix (`48bcf921e`)
+- **release**: the surface measured a minor, so the version is 0.12.0 (`f3fc57dc6`)
+- **release**: record v0.11.0 and the metadata it publishes (`444d3c9eb`)
+- **derive**: batch I's derived artifacts are current (`46fe003a5`)
+- **derive**: the projections follow the committed merge with master (`4b4d77b68`)
+- **derive**: the changelog keeps master's release decisions after the merge (`db46dc70c`)
+- **derive**: the derived projections follow the merge of its base (`40600c9db`)
+- **derive**: the derived projections follow the merge of its base (`b5fb0201a`)
+- **derive**: regenerate the artifacts that name the digest tools (`51f7430e2`)
+- **derive**: the derived artifacts follow the corrected knowledge cases (`8679cf5c9`)
+- **release**: the version is bumped to 0.11.0, the minor the knowledge surface requires (`3588593c4`)
+- **evidence**: record the runs that prove the skills (`7b6966e8b`)
+- **derive**: the projections follow the merge with feature/intent-plan-coverage (`8d167ba90`)
+- **derive**: the projections follow the merge with feature/intent-lifecycle (`c43af2b8e`)
+- **derive**: the projections follow the merge with master (`e7dd4066e`)
+- **derive**: the projections follow the merge with master (`730416173`)
+- **derive**: the projections follow the merge with master (`25b14cace`)
+- merge master and re-derive (`5cc801c96`)
+- merge master and re-derive (`0b7a7c9ad`)
+
+### Formatting
+
+- **convergence**: rustfmt (`c5ab8fb45`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.12.0-aarch64-apple-darwin.tar.gz (`76602cb005b1`)
+- `macos-x86_64` — majordomus-v0.12.0-x86_64-apple-darwin.tar.gz (`2ee4bf28825c`)
+- `linux-x86_64-gnu` — majordomus-v0.12.0-x86_64-unknown-linux-gnu.tar.gz (`5f49782c656d`)
+- `linux-x86_64-musl` — majordomus-v0.12.0-x86_64-unknown-linux-musl.tar.gz (`da1000f3b0a1`)
+- `linux-aarch64-gnu` — majordomus-v0.12.0-aarch64-unknown-linux-gnu.tar.gz (`c611ad630bcf`)
+- `linux-aarch64-musl` — majordomus-v0.12.0-aarch64-unknown-linux-musl.tar.gz (`b9e9cd5d4d22`)
+
 
 ## v0.11.0 — 2026-10-02
 

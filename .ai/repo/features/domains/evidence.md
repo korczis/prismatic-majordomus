@@ -3,7 +3,7 @@ schema: domain/v1
 id: evidence
 kind: domain
 title: Evidence
-headline: 'A claim names the test that settles it and the run that executed it, and every record names the commit, the branch and the session that made it.'
+headline: 'A claim names the test that settles it, a recorded run is judged against the commit it ran at, and a claim with no recorded run says so.'
 problem: 'Claims outrun proof. The documentation says one thing, the runtime does another, and nobody can show which is true.'
 status: stable
 weight: 40

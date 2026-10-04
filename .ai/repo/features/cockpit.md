@@ -38,7 +38,9 @@ script and no remote origin. With JavaScript off every page still shows everythi
 
 ## What it does not do
 
-It holds no model, no catalogue and no verdict of its own, and it writes nothing: every
-capability it can reach is a read, or the one command that changes this process's memory.
+It holds no model, no catalogue and no verdict of its own. It writes nothing of its own
+either: what writes is a declared command, which the runner can reach like any other
+capability, and a command whose declared effect is `repository_mutation` carries that warning
+on its Run card before it is sent (docs/COCKPIT.md, "What writes is declared").
 It is not the published website; that is a static projection of the same registry with no
 server behind it.

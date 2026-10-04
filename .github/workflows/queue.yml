@@ -1,0 +1,64 @@
+# The queue's state, measured on a clock rather than when somebody remembers to ask.
+# The model is .ai/repo/ci/queue.yaml; test/cases/350_the_queue_measures_itself.sh holds the
+# two to each other and holds this job to observing rather than merging.
+name: queue
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: queue
+  cancel-in-progress: false
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      # the whole history: `majordomus prs refresh` fetches each pull request's head and asks
+      # git what merging it into master would do, which a shallow clone cannot answer
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # the driver GitHub cannot run is the entire reason this measurement exists; the
+      # contract is the one scripts/ci/core-check installs
+      - name: the derived merge driver
+        run: |
+          git config merge.derived.name "derived artifacts: resolve to ours, regenerate before committing"
+          git config merge.derived.driver "scripts/merge-derived %O %A %B %P"
+
+      - uses: ./.github/actions/setup-rust
+
+      - name: the executable that observes the queue
+        run: cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml
+
+      # `refresh` and `status` only: they observe and render. `drain` and `cleanup --apply`
+      # are the commands that act, and this job names neither.
+      - id: queue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mj="$PWD/apps/majordomus-cli/target/debug/majordomus"
+          rc=0
+          "$mj" prs refresh > "$RUNNER_TEMP/queue.txt" 2>&1 || rc=$?
+          if [ "$rc" = 0 ]; then
+            "$mj" prs status >> "$RUNNER_TEMP/queue.txt" 2>&1 || rc=$?
+          fi
+          sed 's/^/    /' "$RUNNER_TEMP/queue.txt"
+          {
+            printf '## The queue, measured here\n\n```\n'
+            cat "$RUNNER_TEMP/queue.txt"
+            printf '```\n'
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "rc=$rc" >> "$GITHUB_OUTPUT"
+          # 10 is a fact about the queue (a stale observation, a protection this token cannot
+          # read) and not a fault of this measurement. 12 is the measurement failing, and a
+          # report nobody can trust is worse than none, so that is the one that fails the job.
+          [ "$rc" != 12 ] || { echo "queue: the measurement could not be made" >&2; exit 12; }
+          [ "$rc" = 0 ] || [ "$rc" = 10 ] || { echo "queue: majordomus prs exited $rc" >&2; exit "$rc"; }

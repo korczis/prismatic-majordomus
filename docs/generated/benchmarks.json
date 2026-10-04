@@ -1,28 +1,28 @@
 {
   "schema": "majordomus/benchmark-matrix/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.12.0",
+  "generator": "majordomus-cli 0.13.0",
   "coverage": [
     {
       "scope": "direct",
-      "required": 167,
-      "covered": 149,
+      "required": 170,
+      "covered": 152,
       "missing": 0,
       "waived": 18,
       "inapplicable": 0
     },
     {
       "scope": "http",
-      "required": 165,
-      "covered": 149,
+      "required": 168,
+      "covered": 152,
       "missing": 0,
       "waived": 16,
       "inapplicable": 0
     },
     {
       "scope": "mcp",
-      "required": 161,
-      "covered": 145,
+      "required": 164,
+      "covered": 148,
       "missing": 0,
       "waived": 16,
       "inapplicable": 0
@@ -37,8 +37,8 @@
     },
     {
       "scope": "total",
-      "required": 506,
-      "covered": 456,
+      "required": 515,
+      "covered": 465,
       "missing": 0,
       "waived": 50,
       "inapplicable": 0
@@ -859,6 +859,43 @@
     {
       "id": "integration.queue",
       "module": "integration",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "intent_realization.explain",
+      "module": "intent_realization",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "first-intent"
+      ]
+    },
+    {
+      "id": "intent_realization.work",
+      "module": "intent_realization",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "every-intent",
+        "first-intent"
+      ]
+    },
+    {
+      "id": "intents.coverage",
+      "module": "intents",
       "kind": "query",
       "cache": "—",
       "direct": "covered",

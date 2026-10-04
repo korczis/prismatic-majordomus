@@ -120,6 +120,18 @@ answer majordomus_product_validate '{}' "$S/product.json"
 jq -e '.valid == true and .errors == 0 and .counts.features > 0 and .counts.commands > 0' "$S/product.json" >/dev/null \
   || bad "majordomus_product_validate reports this repository's product model as invalid; read the findings before changing this case:" "$S/product.json"
 
+# ---------------------------------------------------------------- 8b. product.domains
+# Every domain the layer files the product under, one per file under features/domains/, and
+# each answering with the features filed under it: with status=any nothing is filtered, and
+# the default (the stable ones) is a part of that whole, never more.
+answer majordomus_product_domains '{"status":"any"}' "$S/domains-any.json"
+want="$(find "$ROOT/.ai/repo/features/domains" -name '*.md' ! -name 'README.md' | wc -l | tr -d ' ')"
+jq -e --argjson n "$want" '.count == $n and (.domains | length) == $n and ([.domains[] | select((.features | length) == 0)] | length) == 0' "$S/domains-any.json" >/dev/null \
+  || bad "majordomus_product_domains does not answer with the $want domain(s) .ai/repo/features/domains holds, each with its features:" "$S/domains-any.json"
+answer majordomus_product_domains '{}' "$S/domains.json"
+jq -e --slurpfile all "$S/domains-any.json" '.count > 0 and .count <= $all[0].count and ([.domains[] | select(.status != "stable")] | length) == 0' "$S/domains.json" >/dev/null \
+  || bad "the default answer of majordomus_product_domains is not the stable part of every domain:" "$S/domains.json"
+
 # ---------------------------------------------------------------- 9. rules.report
 # The head it answers about is this checkout's head, the population is the rules section on
 # disk, and the class filter partitions it rather than filtering nothing.
@@ -276,7 +288,7 @@ rc=0; bash "$GATE" > "$S/real.log" 2>&1 || rc=$?
 [ "$rc" = 0 ] || { echo "    the gate does not pass on this repository, exit $rc"; cat "$S/real.log"; exit 1; }
 for tool in majordomus_artifacts majordomus_deployment majordomus_devcontext_policy \
             majordomus_execution_cancel majordomus_install_status majordomus_mesh_identity \
-            majordomus_plan_issues majordomus_product_validate majordomus_rules \
+            majordomus_plan_issues majordomus_product_domains majordomus_product_validate majordomus_rules \
             majordomus_skill_explain majordomus_web_surfaces; do
   if grep -qE "^[[:space:]]*${tool}[[:space:]]*$" "$ROOT/.ai/repo/mcp-tool-run-baseline.txt"; then
     echo "    $tool is invoked by this case and must not be in the baseline"; exit 1

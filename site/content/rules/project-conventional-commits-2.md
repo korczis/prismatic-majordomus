@@ -1,7 +1,7 @@
 +++
 title = "A commit message is a value this repository judges, not a convention it hopes for"
 description = "A commit message is a value this repository judges, not a convention it hopes for"
-weight = 77
+weight = 79
 [extra]
 kind = "rule"
 slug = "project-conventional-commits-2"
