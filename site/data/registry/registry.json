@@ -6,23 +6,23 @@
     "version": "0.13.0"
   },
   "registry": {
-    "fingerprint": "7761b52e34bf980ea05bf63329363d1a613dfa1a3e30900f8fb399b8d6a1db44",
+    "fingerprint": "78e9ef3b163dae5a1576cec9661005c058ebac92241419769ac8e8e949a0863e",
     "summary": {
-      "total": 1876,
+      "total": 1889,
       "builtin": 170,
-      "declarative": 1706,
+      "declarative": 1719,
       "by_kind": {
         "command": 22,
         "query": 148,
-        "resource": 1706
+        "resource": 1719
       },
       "by_stability": {
         "behaviorally_verified": 128,
         "experimental": 34,
-        "implemented": 1714
+        "implemented": 1727
       },
       "mcp_tools": 164,
-      "mcp_resources": 1759,
+      "mcp_resources": 1772,
       "http_routes": 168,
       "cli_commands": 89,
       "modules": 84,
@@ -65514,7 +65514,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 244,
+        "capabilities": 256,
         "capability_ids": []
       },
       {
@@ -65610,7 +65610,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 23,
+        "capabilities": 24,
         "capability_ids": []
       },
       {
@@ -66104,7 +66104,7 @@
     ]
   },
   "index": {
-    "fingerprint": "cb36977d21c73984827e17bc4c31c66785146021ceb880f8a03ef843d65bd589",
+    "fingerprint": "cde72e0da35f93664a8e7c14532ff3d9cde483b29e303700053d94dc16b5deb5",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -66143,10 +66143,10 @@
       "gap": 1,
       "implementation": 50,
       "intent": 2,
-      "issue": 244,
+      "issue": 256,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 23,
+      "milestone": 24,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -71357,7 +71357,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 73988
+        "bytes": 98650
       },
       {
         "uri": "majordomus://document/docs/PREFLIGHT.md",
@@ -77176,6 +77176,138 @@
         "bytes": 5124
       },
       {
+        "uri": "majordomus://issue/I1980",
+        "kind": "issue",
+        "identity": "I1980",
+        "title": "A layer names the tool version it was written for, and doctor tells version skew from defects",
+        "description": "Record in .ai/manifest.yaml the tool (or layer) version a layer was last migrated with. doctor then classifies findings that a newer tool raises against an older layer as version skew, naming the migration that clears them, instead of failing as defects. A layer written by a newer tool is refused by an older one with a message, not with a cascade.",
+        "path": ".ai/repo/project/issues/I1980.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2545
+      },
+      {
+        "uri": "majordomus://issue/I1981",
+        "kind": "issue",
+        "identity": "I1981",
+        "title": "A command's effect class is declared per subcommand and flag, and live scenarios judge the whole argv",
+        "description": "Declare read-only or state-mutating per subcommand and per flag in share/commands.yaml where a command has both, and make live use-case validation and runs judge the full argument vector against that declaration.",
+        "path": ".ai/repo/project/issues/I1981.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2026
+      },
+      {
+        "uri": "majordomus://issue/I1982",
+        "kind": "issue",
+        "identity": "I1982",
+        "title": "Plan stamps written before seals existed are re-sealed by a command that keeps their original times",
+        "description": "Provide a migration step (for example `plan seal --backfill`) that seals the stamps an older tool wrote, keeping each stamp's original time and recording who sealed it and when. Make the seal cutoff a per-repository value rather than one global constant.",
+        "path": ".ai/repo/project/issues/I1982.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1931
+      },
+      {
+        "uri": "majordomus://issue/I1983",
+        "kind": "issue",
+        "identity": "I1983",
+        "title": "Upgrading the vendored rules reports or applies the policy and source keys those rules depend on",
+        "description": "When `rules vendor update` brings in rules that read policy keys or knowledge source classes the adopter's layer lacks, report each missing key with its skeleton default, or apply it, and have doctor name the gap.",
+        "path": ".ai/repo/project/issues/I1983.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1606
+      },
+      {
+        "uri": "majordomus://issue/I1984",
+        "kind": "issue",
+        "identity": "I1984",
+        "title": "Knowledge candidates never leave untracked files on a trunk that only pull requests change",
+        "description": "Decide and implement where knowledge candidates are written so that deriving them at an episode boundary on the trunk never leaves the trunk's working tree dirty.",
+        "path": ".ai/repo/project/issues/I1984.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1689
+      },
+      {
+        "uri": "majordomus://issue/I1985",
+        "kind": "issue",
+        "identity": "I1985",
+        "title": "A knowledge candidate relates to its own decision and commit, not to the whole episode",
+        "description": "Derive each candidate's relates_to and derived_from from the decision or event it records, deduplicate against facts the ledger already states, and skip decisions a later decision superseded.",
+        "path": ".ai/repo/project/issues/I1985.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1424
+      },
+      {
+        "uri": "majordomus://issue/I1986",
+        "kind": "issue",
+        "identity": "I1986",
+        "title": "The vendored rule package says nothing that is only true of this repository",
+        "description": "Rewrite the baseline rules that describe Majordomus's own history as rules about any adopter. Mark their x-majordomus.tests as upstream proofs so an adopter is not pointed at test/cases it does not have, and give the package manifest a real source revision.",
+        "path": ".ai/repo/project/issues/I1986.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1521
+      },
+      {
+        "uri": "majordomus://issue/I1987",
+        "kind": "issue",
+        "identity": "I1987",
+        "title": "A knowledge record's file provenance survives the file's deletion",
+        "description": "Let derived_from name a file at a commit (`file:<path>@<commit>`), or resolve `file:` at the record's own commit, so that deleting a cited file does not break knowledge check.",
+        "path": ".ai/repo/project/issues/I1987.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1308
+      },
+      {
+        "uri": "majordomus://issue/I1988",
+        "kind": "issue",
+        "identity": "I1988",
+        "title": "A use case's setup scripts live where the adopter declares, and its scenarios may run the adopter's own commands",
+        "description": "Declare the use-case setup directory in the manifest instead of hard-coding this repository's test/fixtures/commands/setup, and allow a scenario step to run commands the adopter declares, judged by the same effect classes as I1981.",
+        "path": ".ai/repo/project/issues/I1988.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1485
+      },
+      {
+        "uri": "majordomus://issue/I1989",
+        "kind": "issue",
+        "identity": "I1989",
+        "title": "init seeds a scope for the stack it finds, not for this repository's",
+        "description": "Make the scope skeleton neutral, or detected from the adopter's files, rather than seeded with Elixir and Rust paths and a size cap that excludes committed build output.",
+        "path": ".ai/repo/project/issues/I1989.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1199
+      },
+      {
+        "uri": "majordomus://issue/I1990",
+        "kind": "issue",
+        "identity": "I1990",
+        "title": "The pre-push check judges the refs being pushed, or says why the checkout's task binds them",
+        "description": "Decide whether `finish --check` in the pre-push hook should read the refs git passes on stdin and judge only those carrying the active task's branch, and implement or document the decision.",
+        "path": ".ai/repo/project/issues/I1990.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1435
+      },
+      {
+        "uri": "majordomus://issue/I1991",
+        "kind": "issue",
+        "identity": "I1991",
+        "title": "A comment-only edit of the policy regenerates no bootstrap",
+        "description": "Derive the policy fingerprint stamped into generated bootstraps from the parsed policy rather than its bytes, so that editing a comment does not rewrite AGENTS.md, CLAUDE.md and GEMINI.md.",
+        "path": ".ai/repo/project/issues/I1991.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1159
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -77252,6 +77384,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 4617
+      },
+      {
+        "uri": "majordomus://milestone/adopter-upgrades",
+        "kind": "milestone",
+        "identity": "adopter-upgrades",
+        "title": "An adopting repository survives a Majordomus upgrade, and what the tool vendors into it is adopter-neutral",
+        "description": "An adopter can upgrade the tool, or vendor its rules, and be told exactly what to migrate before anything refuses its commits. The migration is a command, not a hand replay. What the tool writes into an adopter (rules, skeleton, scope, candidates) is neutral to this repository and keeps a PR-only trunk clean.",
+        "path": ".ai/repo/project/milestones/adopter-upgrades.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3523
       },
       {
         "uri": "majordomus://milestone/capability-graph",
@@ -84705,7 +84848,7 @@
       "identity": [
         "id"
       ],
-      "objects": 244
+      "objects": 256
     },
     {
       "name": "knowledge",
@@ -84735,7 +84878,7 @@
       "identity": [
         "id"
       ],
-      "objects": 23
+      "objects": 24
     },
     {
       "name": "moment",
