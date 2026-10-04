@@ -7306,6 +7306,7 @@ mod tests {
                 observed_at: "2026-10-01T00:00:00Z".into(),
                 required_checks: Some(vec!["ci".into()]),
                 review_policy: Some(Default::default()),
+                up_to_date_required: Some(true),
                 merge_methods: vec!["merge".into()],
                 pull_requests: vec![
                     observed_pr(1, &sha, CheckRunState::Passed),

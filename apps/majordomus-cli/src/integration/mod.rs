@@ -373,6 +373,15 @@ pub fn build_queue(
         )),
         Some(_) => {}
     }
+    if obs.up_to_date_required == Some(false) {
+        diagnostics.push(format!(
+            "{} does not require a branch to be up to date before it merges (the protection's \
+             required_status_checks.strict is off): the forge would merge a head onto a master \
+             it was never tested with, and the executor's parent check after each merge is the \
+             only guard (owner decision D8)",
+            policy.base
+        ));
+    }
     let relations: Vec<RelationToMaster> = obs.pull_requests.iter().map(relation).collect();
     let mut queue = QueueContext {
         open: obs.pull_requests.iter().map(|p| p.number).collect(),

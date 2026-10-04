@@ -6,7 +6,7 @@
     "version": "0.13.0"
   },
   "registry": {
-    "fingerprint": "4f341c292f235bdaa89c6af49e18e8006b98c55153fedfc84d7c42e74049d115",
+    "fingerprint": "460f657397e0001482c9f7a7ee1882aa91a84d8182aa21622ad9230e763390b7",
     "summary": {
       "total": 1883,
       "builtin": 171,
@@ -25632,6 +25632,11 @@
                   },
                   {
                     "type": "string",
+                    "const": "failure_acknowledged",
+                    "description": "A person looked at a merge that could not be verified and lets drains merge again\n(`prs drain --resume-after-failure`)."
+                  },
+                  {
+                    "type": "string",
                     "const": "refresh_attempted",
                     "description": "Master is about to be merged into a branch and pushed."
                   },
@@ -26569,6 +26574,11 @@
                     "type": "string",
                     "const": "verification_failed",
                     "description": "What landed could not be verified."
+                  },
+                  {
+                    "type": "string",
+                    "const": "failure_acknowledged",
+                    "description": "A person looked at a merge that could not be verified and lets drains merge again\n(`prs drain --resume-after-failure`)."
                   },
                   {
                     "type": "string",
@@ -27859,6 +27869,11 @@
                     "type": "string",
                     "const": "verification_failed",
                     "description": "What landed could not be verified."
+                  },
+                  {
+                    "type": "string",
+                    "const": "failure_acknowledged",
+                    "description": "A person looked at a merge that could not be verified and lets drains merge again\n(`prs drain --resume-after-failure`)."
                   },
                   {
                     "type": "string",
@@ -67022,7 +67037,7 @@
     ]
   },
   "index": {
-    "fingerprint": "0af904c18954a734df82862ee8a6fd3efdb30b38c293cde45a45e90335e28c3e",
+    "fingerprint": "3d12e1639bb716caa0ad84c2d76b551dd978487400028dab10915d9ad4929f32",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -68352,7 +68367,7 @@
         "path": ".ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 9373,
+        "bytes": 9943,
         "tags": [
           "integration",
           "git",
@@ -72194,7 +72209,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 18006
+        "bytes": 19713
       },
       {
         "uri": "majordomus://document/docs/KNOWLEDGE.md",
@@ -84359,7 +84374,7 @@
         "identity": "test/cases/720_integration_follows_the_current_master.sh",
         "path": "test/cases/720_integration_follows_the_current_master.sh",
         "source_class": "case",
-        "bytes": 13021
+        "bytes": 13602
       },
       {
         "uri": "majordomus://test/test/cases/721_the_suite_shards_are_the_whole_suite.sh",
@@ -98283,6 +98298,20 @@
                 "possible_values": [],
                 "defaults": [
                   "300"
+                ]
+              },
+              {
+                "name": "resume_after_failure",
+                "long": "resume-after-failure",
+                "positional": false,
+                "help": "A merge an earlier drain could not verify stops every drain until a person has looked at it: this records that someone has (`failure_acknowledged` on the trail), then drains. Never with `--dry-run`",
+                "value_name": "RESUME_AFTER_FAILURE",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
                 ]
               },
               {

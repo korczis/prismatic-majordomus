@@ -181,10 +181,14 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             refresh,
             continuous: true,
             interval,
+            resume_after_failure,
         } => {
             let base = executor_base(&root).map_err(unusable)?;
             // the lease for the whole run: a second worker is refused here, before it acts
             let lease = IntegrationLease::acquire(&root, &base).map_err(unusable)?;
+            if resume_after_failure {
+                drain::acknowledge_failure(&root, RESUMED_BY).map_err(unusable)?;
+            }
             let stop = drain::stop_on_signals();
             let mut integrator = ForgeIntegrator {
                 root: &root,
@@ -243,6 +247,7 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             max,
             dry_run,
             refresh,
+            resume_after_failure,
             ..
         } => {
             // a dry run changes nothing, and observers never contend with the executor
@@ -252,6 +257,9 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             } else {
                 Some(IntegrationLease::acquire(&root, &base).map_err(unusable)?)
             };
+            if resume_after_failure {
+                drain::acknowledge_failure(&root, RESUMED_BY).map_err(unusable)?;
+            }
             let mut integrator = ForgeIntegrator {
                 root: &root,
                 lease: lease.as_ref(),
@@ -359,11 +367,19 @@ fn executor_base(root: &std::path::Path) -> std::result::Result<String, String> 
     }
 }
 
+/// Who the trail says acknowledged a merge that could not be verified.
+const RESUMED_BY: &str = "a person, through prs drain --resume-after-failure";
+
 fn drain_exit(report: &drain::DrainReport) -> u8 {
     let stopped_on = |f: fn(&DrainStepOutcome) -> bool| report.steps.iter().any(f);
     if stopped_on(|s| matches!(s, DrainStepOutcome::TrailUnwritable { .. })) {
         UNUSABLE
-    } else if stopped_on(|s| matches!(s, DrainStepOutcome::VerificationFailed { .. })) {
+    } else if stopped_on(|s| {
+        matches!(
+            s,
+            DrainStepOutcome::VerificationFailed { .. } | DrainStepOutcome::Halted { .. }
+        )
+    }) {
         FINDING
     } else {
         0
@@ -497,6 +513,10 @@ fn describe(s: &DrainStepOutcome) -> String {
         DrainStepOutcome::VerificationFailed { pr, reason } => {
             format!("#{pr}: merged but not verified: {reason}")
         }
+        DrainStepOutcome::Halted { pr, reason } => format!(
+            "halted: {} was merged but not verified ({reason}); look, then run `prs drain --resume-after-failure`",
+            pr.map_or_else(|| "a pull request".to_string(), |n| format!("#{n}"))
+        ),
         DrainStepOutcome::WouldRefresh { pr } => format!("would bring master into #{pr}"),
         DrainStepOutcome::Refreshed {
             pr,
@@ -865,6 +885,7 @@ mod tests {
                 observed_at: "2026-10-01T00:00:00Z".into(),
                 required_checks: Some(vec!["ci".into()]),
                 review_policy: Some(Default::default()),
+                up_to_date_required: Some(true),
                 merge_methods: vec!["merge".into()],
                 pull_requests: vec![
                     pr(1, &heads[0], CheckRunState::Passed),

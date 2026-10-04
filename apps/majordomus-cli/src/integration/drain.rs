@@ -37,8 +37,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::{
-    at, events_path, local_master, queue_of, refresh, IntegrationEvidence, IntegrationQueue,
-    PullRequestAssessment, PullRequestDisposition,
+    at, events_path, local_master, queue_of, refresh, EvaluatedAgainst, IntegrationEvidence,
+    IntegrationQueue, PullRequestAssessment, PullRequestDisposition,
 };
 
 /// A lease untouched for this long belongs to a process that is gone.
@@ -394,6 +394,9 @@ pub enum IntegrationAction {
     MergeFailed,
     /// What landed could not be verified.
     VerificationFailed,
+    /// A person looked at a merge that could not be verified and lets drains merge again
+    /// (`prs drain --resume-after-failure`).
+    FailureAcknowledged,
     /// Master is about to be merged into a branch and pushed.
     RefreshAttempted,
     /// Master was brought into the branch and pushed.
@@ -428,6 +431,7 @@ impl IntegrationAction {
             IntegrationAction::MergeSucceeded => "merge_succeeded",
             IntegrationAction::MergeFailed => "merge_failed",
             IntegrationAction::VerificationFailed => "verification_failed",
+            IntegrationAction::FailureAcknowledged => "failure_acknowledged",
             IntegrationAction::RefreshAttempted => "refresh_attempted",
             IntegrationAction::Refreshed => "refreshed",
             IntegrationAction::RefreshFailed => "refresh_failed",
@@ -712,6 +716,14 @@ pub enum DrainStepOutcome {
         /// What did not hold.
         reason: String,
     },
+    /// Nothing is merged: a merge of an earlier drain could not be verified, and no drain
+    /// merges until a person has looked (`prs drain --resume-after-failure`).
+    Halted {
+        /// The pull request whose merge was not verified.
+        pr: Option<u64>,
+        /// What did not hold then.
+        reason: String,
+    },
     /// The act was not taken, because the trail could not record it first: nothing reached
     /// the forge or the branch. The drain stops — a trail that cannot be written is not a
     /// fault of one pull request.
@@ -725,6 +737,34 @@ pub enum DrainStepOutcome {
     },
 }
 
+/// What a verification proved.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Landed {
+    /// The base branch's tip after the merge, fetched.
+    pub master_after: String,
+    /// The commit that is this merge — the first-parent successor of the master the
+    /// decision was taken against. `None` for a rebase merge, which has no such commit.
+    pub merge_commit: Option<String>,
+}
+
+/// Why a merge is not verified.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum NotLanded {
+    /// The forge does not show the pull request merged: nothing landed.
+    NotMerged(String),
+    /// Something landed, or the forge or master could not be read, and what landed is not
+    /// proved to be this merge onto the master it was decided against.
+    Unproved(String),
+}
+
+impl std::fmt::Display for NotLanded {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NotLanded::NotMerged(w) | NotLanded::Unproved(w) => f.write_str(w),
+        }
+    }
+}
+
 /// A source of queues and a merger. The command line uses the forge and git; the tests use
 /// a scripted repository, which is how the re-plan-after-every-merge property is proved
 /// without a network.
@@ -733,8 +773,11 @@ pub trait Integrator {
     fn observe(&mut self) -> Result<IntegrationQueue, String>;
     /// Merge one pull request, requiring the forge's head to still be `head_sha`.
     fn merge(&mut self, pr: u64, head_sha: &str, method: &str) -> Result<(), String>;
-    /// After a merge: the pull request's state on the forge and this clone's master.
-    fn verify(&mut self, pr: u64, head_sha: &str) -> Result<String, String>;
+    /// After a merge, or after a merge whose answer was lost: whether the forge shows the
+    /// pull request merged, and that what landed is this merge — of `at.head_sha` onto
+    /// `at.master_sha` — and nothing else.
+    fn verify(&mut self, pr: u64, at: &EvaluatedAgainst, method: &str)
+        -> Result<Landed, NotLanded>;
     /// Bring master into a pull request's branch — a merge commit with the derived driver
     /// and a fresh derive, pushed as a fast-forward of the observed head. Returns the new
     /// head. Never a rewrite: the push is refused if the branch moved.
@@ -849,11 +892,24 @@ pub fn step(
             reason,
         });
     }
-    if let Err(reason) = integrator.merge(
-        candidate.number,
-        &candidate.evaluated_against.head_sha,
-        &method,
-    ) {
+    let at = candidate.evaluated_against.clone();
+    if let Err(reason) = integrator.merge(candidate.number, &at.head_sha, &method) {
+        // A merge whose answer was lost may have landed: it is asked whether it did, never
+        // asked to merge again (retry::forge never retries a merge).
+        if super::retry::transient(&reason) {
+            match integrator.verify(candidate.number, &at, &method) {
+                Ok(landed) => {
+                    return merged(
+                        root,
+                        &candidate,
+                        landed,
+                        format!("merged, although the forge's answer was lost: {reason}"),
+                    )
+                }
+                Err(NotLanded::Unproved(why)) => return unverified(root, &candidate, why),
+                Err(NotLanded::NotMerged(_)) => {}
+            }
+        }
         record(
             root,
             event(
@@ -867,37 +923,155 @@ pub fn step(
             reason,
         });
     }
-    match integrator.verify(candidate.number, &candidate.evaluated_against.head_sha) {
-        Ok(master_after) => {
-            let mut e = event(
-                IntegrationAction::MergeSucceeded,
-                Some(&candidate),
-                "merged and verified",
-            )
-            .with_evidence(&candidate);
-            e.master_after = Some(master_after.clone());
-            record(root, e)?;
-            Ok(DrainStepOutcome::Merged {
-                pr: candidate.number,
-                master_before: candidate.evaluated_against.master_sha.clone(),
-                master_after,
-            })
-        }
-        Err(reason) => {
-            record(
-                root,
-                event(
-                    IntegrationAction::VerificationFailed,
-                    Some(&candidate),
-                    reason.clone(),
-                ),
-            )?;
-            Ok(DrainStepOutcome::VerificationFailed {
-                pr: candidate.number,
-                reason,
-            })
-        }
+    match integrator.verify(candidate.number, &at, &method) {
+        Ok(landed) => merged(root, &candidate, landed, "merged and verified".into()),
+        Err(e) => unverified(root, &candidate, e.to_string()),
     }
+}
+
+/// Record a verified merge.
+fn merged(
+    root: &Path,
+    candidate: &PullRequestAssessment,
+    landed: Landed,
+    detail: String,
+) -> Result<DrainStepOutcome, String> {
+    let mut e =
+        event(IntegrationAction::MergeSucceeded, Some(candidate), detail).with_evidence(candidate);
+    e.master_after = Some(landed.master_after.clone());
+    e.merge_commit = landed.merge_commit;
+    record(root, e)?;
+    Ok(DrainStepOutcome::Merged {
+        pr: candidate.number,
+        master_before: candidate.evaluated_against.master_sha.clone(),
+        master_after: landed.master_after,
+    })
+}
+
+/// Record a merge that is not verified: the drain stops, and the next one waits for a person.
+fn unverified(
+    root: &Path,
+    candidate: &PullRequestAssessment,
+    reason: String,
+) -> Result<DrainStepOutcome, String> {
+    record(
+        root,
+        event(
+            IntegrationAction::VerificationFailed,
+            Some(candidate),
+            reason.clone(),
+        ),
+    )?;
+    Ok(DrainStepOutcome::VerificationFailed {
+        pr: candidate.number,
+        reason,
+    })
+}
+
+/// A merge the trail says was asked for, and nothing says how it ended: the executor
+/// stopped between asking and verifying. It is verified now — asked whether it landed,
+/// never asked again — and its end recorded, before anything else is decided.
+pub fn reconcile(
+    root: &Path,
+    integrator: &mut dyn Integrator,
+) -> Result<Option<DrainStepOutcome>, String> {
+    let trail = events(root);
+    let Some(i) = trail
+        .iter()
+        .rposition(|e| e.action == IntegrationAction::MergeAttempted)
+    else {
+        return Ok(None);
+    };
+    let asked = &trail[i];
+    let ended = trail[i + 1..].iter().any(|e| {
+        e.pr == asked.pr
+            && matches!(
+                e.action,
+                IntegrationAction::MergeSucceeded
+                    | IntegrationAction::MergeFailed
+                    | IntegrationAction::VerificationFailed
+            )
+    });
+    let (Some(pr), Some(master_sha), Some(head_sha)) = (
+        asked.pr,
+        asked.master_before.clone(),
+        asked.head_sha.clone(),
+    ) else {
+        return Ok(None);
+    };
+    if ended {
+        return Ok(None);
+    }
+    let at = EvaluatedAgainst {
+        master_sha,
+        head_sha,
+    };
+    let method = asked
+        .detail
+        .strip_prefix("--")
+        .unwrap_or("merge")
+        .to_string();
+    let of = |action, detail: String| IntegrationEvent {
+        pr: Some(pr),
+        master_before: Some(at.master_sha.clone()),
+        head_sha: Some(at.head_sha.clone()),
+        reasons: asked.reasons.clone(),
+        detail,
+        ..IntegrationEvent::of(action)
+    };
+    Ok(Some(match integrator.verify(pr, &at, &method) {
+        Ok(landed) => {
+            let mut e = of(
+                IntegrationAction::MergeSucceeded,
+                "reconciled: the merge the last executor asked for landed".into(),
+            );
+            e.master_after = Some(landed.master_after.clone());
+            e.merge_commit = landed.merge_commit;
+            record(root, e)?;
+            DrainStepOutcome::Merged {
+                pr,
+                master_before: at.master_sha.clone(),
+                master_after: landed.master_after,
+            }
+        }
+        Err(NotLanded::NotMerged(why)) => {
+            let reason =
+                format!("reconciled: the merge the last executor asked for never landed: {why}");
+            record(root, of(IntegrationAction::MergeFailed, reason.clone()))?;
+            DrainStepOutcome::MergeRefused { pr, reason }
+        }
+        Err(NotLanded::Unproved(why)) => {
+            record(root, of(IntegrationAction::VerificationFailed, why.clone()))?;
+            DrainStepOutcome::VerificationFailed { pr, reason: why }
+        }
+    }))
+}
+
+/// The merge that stops every drain until a person acknowledges it (owner decision D7):
+/// the last `verification_failed` of the trail, unless a `failure_acknowledged` follows it.
+pub fn halted_by(root: &Path) -> Option<(Option<u64>, String)> {
+    events(root)
+        .into_iter()
+        .rev()
+        .find(|e| {
+            matches!(
+                e.action,
+                IntegrationAction::VerificationFailed | IntegrationAction::FailureAcknowledged
+            )
+        })
+        .filter(|e| e.action == IntegrationAction::VerificationFailed)
+        .map(|e| (e.pr, e.detail))
+}
+
+/// Let drains merge again after a person looked at the merge that could not be verified.
+pub fn acknowledge_failure(root: &Path, by: &str) -> Result<IntegrationEvent, String> {
+    record(
+        root,
+        IntegrationEvent {
+            detail: by.to_string(),
+            ..IntegrationEvent::of(IntegrationAction::FailureAcknowledged)
+        },
+    )
 }
 
 /// The refresh half of a step, when nothing is ready. Pipeline depth one: while a pull
@@ -1075,6 +1249,24 @@ pub fn drain(
         merged: Vec::new(),
         stopped: String::new(),
     };
+    if !dry_run {
+        // an earlier executor's merge that was asked for and never ended is ended first
+        if let Some(outcome) = reconcile(root, integrator)? {
+            if let DrainStepOutcome::Merged { pr, .. } = &outcome {
+                report.merged.push(*pr);
+            }
+            report.steps.push(outcome);
+        }
+        if let Some((pr, reason)) = halted_by(root) {
+            report.stopped = format!(
+                "{} could not be verified after merging ({reason}); nothing merges until a \
+                 person has looked and run `prs drain --resume-after-failure`",
+                pr.map_or_else(|| "a merge".to_string(), |n| format!("#{n}"))
+            );
+            report.steps.push(DrainStepOutcome::Halted { pr, reason });
+            return Ok(report);
+        }
+    }
     let max_steps = max.saturating_mul(3).max(3);
     while report.merged.len() < max {
         if report.steps.len() >= max_steps {
@@ -1107,6 +1299,7 @@ pub fn drain(
             DrainStepOutcome::VerificationFailed { pr, reason } => {
                 Some(format!("#{pr} could not be verified after merging: {reason}"))
             }
+            DrainStepOutcome::Halted { reason, .. } => Some(reason.clone()),
             DrainStepOutcome::TrailUnwritable {
                 pr,
                 unrecorded,
@@ -1227,6 +1420,14 @@ pub fn continuous(
             );
             break;
         }
+        if report
+            .steps
+            .iter()
+            .any(|s| matches!(s, DrainStepOutcome::Halted { .. }))
+        {
+            out.stopped = report.stopped.clone();
+            break;
+        }
         if let Some(DrainStepOutcome::TrailUnwritable { reason, .. }) = report
             .steps
             .iter()
@@ -1329,6 +1530,81 @@ fn gh(root: &Path, args: &[&str]) -> Result<String, String> {
     }
 }
 
+/// What landed on `master`, proved from git alone: the decision's master is on master's
+/// first-parent line, and the commit right after it there is this merge — its first parent
+/// that master and, for a merge commit, its second parent the head that was decided on. A
+/// merge that landed after another one, onto a master nobody tested together with it, is
+/// refused by name: it is the one thing a merge-after-decision can do wrong that the forge
+/// would still call merged. The merge commit, or `None` for a rebase merge, which leaves no
+/// single commit to name.
+pub(crate) fn landing(
+    root: &Path,
+    at: &EvaluatedAgainst,
+    method: &str,
+    master: &str,
+) -> Result<Option<String>, String> {
+    let git = |args: &[&str]| -> Option<String> {
+        let out = Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .args(args)
+            .output()
+            .ok()?;
+        out.status
+            .success()
+            .then(|| String::from_utf8_lossy(&out.stdout).trim().to_string())
+    };
+    let contains = |a: &str, b: &str| {
+        Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .args(["merge-base", "--is-ancestor", a, b])
+            .status()
+            .is_ok_and(|s| s.success())
+    };
+    if !contains(&at.master_sha, master) {
+        return Err(format!(
+            "master {master} does not contain {}, the master the merge was decided against",
+            at.master_sha
+        ));
+    }
+    if method == "rebase" {
+        // a rebase leaves copies of the head's commits, not the head and not one commit
+        return Ok(None);
+    }
+    let after = git(&[
+        "rev-list",
+        "--first-parent",
+        "--reverse",
+        &format!("{}..{master}", at.master_sha),
+    ])
+    .unwrap_or_default();
+    let Some(merge) = after.lines().next().map(str::to_string) else {
+        return Err(format!(
+            "master is still {master}: nothing landed on the master the merge was decided against"
+        ));
+    };
+    if git(&["rev-parse", &format!("{merge}^1")]).as_deref() != Some(at.master_sha.as_str()) {
+        return Err(format!(
+            "{} is not on master's first-parent line: the commit after it there is {merge}",
+            at.master_sha
+        ));
+    }
+    if method == "merge" {
+        let second = git(&["rev-parse", &format!("{merge}^2")]);
+        if second.as_deref() != Some(at.head_sha.as_str()) {
+            return Err(format!(
+                "unexpected_master: the commit merged onto {} is {merge}, a merge of {}, not \
+                 of {}: another change landed between the decision and this merge",
+                at.master_sha,
+                second.as_deref().unwrap_or("nothing"),
+                at.head_sha
+            ));
+        }
+    }
+    Ok(Some(merge))
+}
+
 impl Integrator for ForgeIntegrator<'_> {
     fn observe(&mut self) -> Result<IntegrationQueue, String> {
         if let Some(l) = self.lease {
@@ -1357,7 +1633,12 @@ impl Integrator for ForgeIntegrator<'_> {
         .map(|_| ())
     }
 
-    fn verify(&mut self, pr: u64, head_sha: &str) -> Result<String, String> {
+    fn verify(
+        &mut self,
+        pr: u64,
+        at: &EvaluatedAgainst,
+        method: &str,
+    ) -> Result<Landed, NotLanded> {
         let deadline = Instant::now() + MERGE_VISIBLE_WITHIN;
         loop {
             // a read, so asked again on an outage: the merge before it is never retried,
@@ -1375,21 +1656,24 @@ impl Integrator for ForgeIntegrator<'_> {
                         ".state",
                     ],
                 )
-            })?;
+            })
+            .map_err(|e| NotLanded::Unproved(format!("the forge could not be asked: {e}")))?;
             if state.trim() == "MERGED" {
                 break;
             }
             if Instant::now() >= deadline {
-                return Err(format!(
+                return Err(NotLanded::NotMerged(format!(
                     "the forge still says {} after {:?}",
                     state.trim(),
                     MERGE_VISIBLE_WITHIN
-                ));
+                )));
             }
             std::thread::sleep(Duration::from_secs(3));
         }
-        let obs = super::load_observation(self.root)?
-            .ok_or_else(|| "no observation to verify against".to_string())?;
+        let unproved = NotLanded::Unproved;
+        let obs = super::load_observation(self.root)
+            .map_err(unproved)?
+            .ok_or_else(|| NotLanded::Unproved("no observation to verify against".into()))?;
         super::retry::forge(|| {
             let fetch = Command::new("git")
                 .arg("-C")
@@ -1411,22 +1695,15 @@ impl Integrator for ForgeIntegrator<'_> {
                     String::from_utf8_lossy(&fetch.stderr).trim()
                 ))
             }
-        })?;
+        })
+        .map_err(NotLanded::Unproved)?;
         let master = local_master(self.root, &obs.base)
-            .ok_or_else(|| "master is unreadable after the merge".to_string())?;
-        let contained = Command::new("git")
-            .arg("-C")
-            .arg(self.root)
-            .args(["merge-base", "--is-ancestor", head_sha, &master])
-            .status()
-            .map(|s| s.success())
-            .unwrap_or(false);
-        if !contained {
-            return Err(format!(
-                "the merged head {head_sha} is not an ancestor of master {master}"
-            ));
-        }
-        Ok(master)
+            .ok_or_else(|| NotLanded::Unproved("master is unreadable after the merge".into()))?;
+        let merge_commit = landing(self.root, at, method, &master).map_err(NotLanded::Unproved)?;
+        Ok(Landed {
+            master_after: master,
+            merge_commit,
+        })
     }
 
     fn close(&mut self, pr: u64, comment: &str) -> Result<(), String> {

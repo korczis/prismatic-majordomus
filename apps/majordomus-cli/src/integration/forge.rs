@@ -20,7 +20,7 @@ use super::model::{
 };
 
 /// The recorded observation's schema version.
-pub const OBSERVATION_SCHEMA: u32 = 2;
+pub const OBSERVATION_SCHEMA: u32 = 3;
 
 /// Where the pull-request heads are fetched to: a namespace of this tool's own, so no
 /// fetch ever moves a ref a person or another tool owns.
@@ -46,6 +46,13 @@ pub struct ForgeObservation {
     /// What the base requires of reviews, from its protection and rulesets together; `None`
     /// when either could not be read.
     pub review_policy: Option<ReviewPolicy>,
+    /// Whether the base requires a branch to be up to date before it merges — the
+    /// protection's `required_status_checks.strict`, or a ruleset's
+    /// `strict_required_status_checks_policy`. The forge-side half of the guard against a
+    /// merge onto a master nobody tested with the change; the executor's half is the parent
+    /// check after every merge. `None` when either could not be read.
+    #[serde(default)]
+    pub up_to_date_required: Option<bool>,
     /// The merge methods the repository allows, in the forge's words (`merge`, `squash`,
     /// `rebase`).
     pub merge_methods: Vec<String>,
@@ -333,6 +340,24 @@ pub fn rules_of(v: &Value) -> (Vec<RequiredCheck>, ReviewPolicy) {
 
 /// The required checks and review requirement from a branch-protection document. A
 /// context the protection lists under `contexts` and again under `checks` is one check,
+/// Whether a branch protection requires a branch to be up to date before it merges.
+pub fn protection_requires_up_to_date(v: &Value) -> bool {
+    v.pointer("/required_status_checks/strict")
+        .and_then(Value::as_bool)
+        .unwrap_or(false)
+}
+
+/// Whether any ruleset that applies requires a branch to be up to date before it merges.
+pub fn rules_require_up_to_date(v: &Value) -> bool {
+    v.as_array().into_iter().flatten().any(|rule| {
+        rule.get("type").and_then(Value::as_str) == Some("required_status_checks")
+            && rule
+                .pointer("/parameters/strict_required_status_checks_policy")
+                .and_then(Value::as_bool)
+                .unwrap_or(false)
+    })
+}
+
 /// bound to the app `checks` names for it.
 pub fn protection_of(v: &Value) -> (Vec<RequiredCheck>, ReviewPolicy) {
     let listed: Vec<RequiredCheck> = v
@@ -429,12 +454,13 @@ impl Forge for GhForge<'_> {
                 &format!("repos/{repository}/branches/{base}/protection"),
             ],
         )?;
-        let protection: Option<(Vec<RequiredCheck>, ReviewPolicy)> = if ok {
-            serde_json::from_str::<Value>(&out)
-                .ok()
-                .map(|v| protection_of(&v))
+        let protection: Option<(Vec<RequiredCheck>, ReviewPolicy, bool)> = if ok {
+            serde_json::from_str::<Value>(&out).ok().map(|v| {
+                let (checks, reviews) = protection_of(&v);
+                (checks, reviews, protection_requires_up_to_date(&v))
+            })
         } else if err.contains("Branch not protected") || out.contains("Branch not protected") {
-            Some((Vec::new(), ReviewPolicy::default()))
+            Some((Vec::new(), ReviewPolicy::default(), false))
         } else {
             None
         };
@@ -444,18 +470,21 @@ impl Forge for GhForge<'_> {
             root,
             &["api", &format!("repos/{repository}/rules/branches/{base}")],
         )?;
-        let rules: Option<(Vec<RequiredCheck>, ReviewPolicy)> = if ok {
-            serde_json::from_str::<Value>(&out)
-                .ok()
-                .map(|v| rules_of(&v))
+        let rules: Option<(Vec<RequiredCheck>, ReviewPolicy, bool)> = if ok {
+            serde_json::from_str::<Value>(&out).ok().map(|v| {
+                let (checks, reviews) = rules_of(&v);
+                (checks, reviews, rules_require_up_to_date(&v))
+            })
         } else {
             None
         };
-        let (required_checks, review_policy) = match (protection, rules) {
-            (Some((pc, pr)), Some((rc, rr))) => {
-                (Some(union_checks(pc, rc)), Some(union_reviews(pr, rr)))
-            }
-            _ => (None, None),
+        let (required_checks, review_policy, up_to_date_required) = match (protection, rules) {
+            (Some((pc, pr, ps)), Some((rc, rr, rs))) => (
+                Some(union_checks(pc, rc)),
+                Some(union_reviews(pr, rr)),
+                Some(ps || rs),
+            ),
+            _ => (None, None, None),
         };
         let list = gh_json(
             root,
@@ -490,6 +519,7 @@ impl Forge for GhForge<'_> {
             observed_at: crate::peers::rfc3339(std::time::SystemTime::now()),
             required_checks,
             review_policy,
+            up_to_date_required,
             merge_methods,
             pull_requests,
         })

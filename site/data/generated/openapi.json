@@ -22086,7 +22086,7 @@
       "is_enum": true,
       "name": "IntegrationAction",
       "properties": [],
-      "type": "\"lease_acquired\" | \"lease_released\" | \"continuous_started\" | \"continuous_stopped\" | \"observed\" | \"became_actionable\" | \"left_actionable\" | \"selected\" | \"refresh_selected\" | \"stale_decision\" | \"merge_attempted\" | \"merge_succeeded\" | \"merge_failed\" | \"verification_failed\" | \"refresh_attempted\" | \"refreshed\" | \"refresh_failed\" | \"close_attempted\" | \"closed_superseded\" | \"close_failed\" | \"idle\"",
+      "type": "\"lease_acquired\" | \"lease_released\" | \"continuous_started\" | \"continuous_stopped\" | \"observed\" | \"became_actionable\" | \"left_actionable\" | \"selected\" | \"refresh_selected\" | \"stale_decision\" | \"merge_attempted\" | \"merge_succeeded\" | \"merge_failed\" | \"verification_failed\" | \"failure_acknowledged\" | \"refresh_attempted\" | \"refreshed\" | \"refresh_failed\" | \"close_attempted\" | \"closed_superseded\" | \"close_failed\" | \"idle\"",
       "used_by": [],
       "used_by_schemas": [
         "IntegrationEvent",
@@ -22148,6 +22148,10 @@
         {
           "description": "What landed could not be verified.",
           "value": "verification_failed"
+        },
+        {
+          "description": "A person looked at a merge that could not be verified and lets drains merge again\n(`prs drain --resume-after-failure`).",
+          "value": "failure_acknowledged"
         },
         {
           "description": "Master is about to be merged into a branch and pushed.",
