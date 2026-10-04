@@ -586,14 +586,23 @@ install_tree() {
   done
 }
 
-# Prints the processes running from a tree and answers 0 when there are any. A process
-# table that cannot be read counts as in use: keeping a tree costs disk, removing one a
-# process still needs breaks that process.
+# Prints the processes running from a tree and answers 0 when there are any. ps where the
+# system has one; /proc otherwise, which a slim Linux image has and its procps does not.
+# A process table that cannot be read counts as in use: keeping a tree costs disk,
+# removing one a process still needs breaks that process.
 tree_holders() {
-  procs=$(ps -A -o pid= -o args= 2>/dev/null) || {
+  if procs=$(ps -A -o pid= -o args= 2>/dev/null); then
+    :
+  elif [ -r /proc/self/cmdline ]; then
+    procs=$(for d in /proc/[0-9]*; do
+      if [ -r "$d/cmdline" ]; then
+        printf '%s %s\n' "${d#/proc/}" "$(tr '\000' ' ' 2>/dev/null < "$d/cmdline")"
+      fi
+    done)
+  else
     printf '(the process table could not be read)\n'
     return 0
-  }
+  fi
   printf '%s\n' "$procs" | grep -F -- "$1/"
 }
 
