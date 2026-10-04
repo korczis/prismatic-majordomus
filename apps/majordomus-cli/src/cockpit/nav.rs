@@ -9,7 +9,7 @@
 //! counters and the validation every other caller passes through.
 //!
 //! What *is* written here is the areas: Overview, Capabilities, Commands, Executions,
-//! Objects, Directories, Graphs, Continuity, Worktrees, Integration, Health, Quality,
+//! Objects, Directories, Graphs, Continuity, Completion, Worktrees, Integration, Health, Quality,
 //! Artifacts, Design, API. Those are concepts rather than
 //! entities, they change when the Cockpit's own shape changes, and deriving them from
 //! anything would be deriving them from a list of exactly themselves.
@@ -51,6 +51,9 @@ pub enum Area {
     Executions,
     /// What this checkout's lifecycle is holding.
     Continuity,
+    /// Whether the active task may be called finished: the lifecycle stage, every question
+    /// of the completion policy and what answered it.
+    Completion,
     /// What must become true, how far reality is from it, and the work realising it.
     Intents,
     /// The branch-to-worktree topology of the repository.
@@ -160,6 +163,12 @@ pub fn areas() -> &'static [AreaInfo] {
             label: "Continuity",
             href: "/cockpit/continuity",
             area: Area::Continuity,
+        },
+        AreaInfo {
+            id: "completion",
+            label: "Completion",
+            href: "/cockpit/completion",
+            area: Area::Completion,
         },
         AreaInfo {
             id: "intents",

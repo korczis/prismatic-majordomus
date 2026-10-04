@@ -100,7 +100,7 @@ impl Page {
 /// The word a serde enum serialises to (`behaviorally_verified`, `repository`), for a
 /// page that shows a variant. `{:?}` would show the Rust spelling, which is not the
 /// vocabulary anything else in this repository uses.
-fn word<T: serde::Serialize>(value: &T) -> String {
+pub(crate) fn word<T: serde::Serialize>(value: &T) -> String {
     serde_json::to_value(value)
         .ok()
         .and_then(|v| v.as_str().map(str::to_string))

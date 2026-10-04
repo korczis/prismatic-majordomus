@@ -48,7 +48,9 @@ use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{CachePolicy, Exposure, McpExposure, McpResource, Stability};
 use crate::capability::module::ModuleDescriptor;
-use crate::deploy::targets::{self, ApplicationFact, DeploymentPlan, DeploymentIdentity, PlanFacts};
+use crate::deploy::targets::{
+    self, ApplicationFact, DeploymentIdentity, DeploymentPlan, PlanFacts,
+};
 use crate::gates::{
     self, judge, model, Completion, CompletionPolicy, HandoverStanding, IssueStanding,
     ReleaseStanding, VersionSummary,
