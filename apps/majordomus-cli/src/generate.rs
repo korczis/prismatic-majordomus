@@ -217,6 +217,13 @@ pub const ECONOMICS_SCHEMA: &str = "majordomus/economics-summary/v1";
 /// ships, as `share/providers.yaml` and the repository's policy describe it.
 pub const PROVIDERS_SCHEMA: &str = "majordomus/providers/v1";
 
+/// The schema id of `docs/generated/completion.{json,yaml}`: the one definition of done —
+/// the lifecycle stages in order and every question under them with the source that answers
+/// it — exactly as `gates.policy` answers it. The site generator has no Rust toolchain, so this
+/// file is how the policy reaches the published lifecycle page without a third reader of
+/// `share/completion.yaml` (ADR 0057).
+pub const COMPLETION_SCHEMA: &str = "majordomus/completion-policy/v1";
+
 impl ArtifactFormat {
     /// The file suffix, without the dot.
     pub fn suffix(self) -> &'static str {
@@ -1138,6 +1145,16 @@ pub fn context_artifacts(
             &providers_markdown(&value),
         ));
         out.extend(Document::new("providers", PROVIDERS_SCHEMA, source, value).artifacts(version));
+        let source = "the completion policy the distribution ships (share/completion.yaml), as gates.policy answers it";
+        out.extend(
+            Document::new(
+                "completion",
+                COMPLETION_SCHEMA,
+                source,
+                completion_document(ctx)?,
+            )
+            .artifacts(version),
+        );
     }
     if targets.contains(&Target::Economics) {
         let source = "the token-economics methodology and every benchmark run committed under .ai/repo/benchmarks/economics";
@@ -1178,6 +1195,27 @@ pub fn context_artifacts(
         ));
     }
     Ok(out)
+}
+
+/// The completion policy as a published document: `gates.policy`'s answer, with the one
+/// value that names this machine — the path the loader read the file from — replaced by the
+/// file's name in the distribution, which is the same on every clone.
+fn completion_document(ctx: &Context) -> Result<Value> {
+    let mut value = capability_answer(ctx, "gates.policy")?;
+    if let Some(source) = value.get_mut("source") {
+        *source = Value::String(format!("share/{}", crate::gates::POLICY_FILE));
+    }
+    Ok(value)
+}
+
+/// What one capability answers with no input, as the value a generated document carries:
+/// the file and the capability's every other surface are then one answer, never two
+/// derivations that happen to agree.
+fn capability_answer(ctx: &Context, id: &str) -> Result<Value> {
+    ctx.execute(id, serde_json::json!({}))
+        .map_err(|e| Error::Protocol {
+            reason: format!("{id}: {e}"),
+        })
 }
 
 /// Every provider as data: the product model's providers — the declaration decorated with

@@ -1,0 +1,139 @@
+# GENERATED FILE — DO NOT EDIT DIRECTLY
+# Source: the completion policy the distribution ships (share/completion.yaml), as gates.policy answers it; regenerate with `majordomus generate`
+# Generator: majordomus-cli 0.12.0
+schema: majordomus/completion-policy/v1
+generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the completion policy the distribution ships (share/completion.yaml), as gates.policy answers it; regenerate with `majordomus generate`"
+generator: majordomus-cli 0.12.0
+version: 1
+source: share/completion.yaml
+stages:
+  - id: context
+    title: Context and governance
+    summary: "The task exists, its scope is claimed, and the rules that apply are loaded."
+  - id: implementation
+    title: Implementation
+    summary: The promised work is present in the tree.
+  - id: validation
+    title: Tests and validation
+    summary: "The cases the change obliges ran and passed, and the change carries a test of its own."
+  - id: documentation
+    title: Documentation and generated artifacts
+    summary: The documents a reader needs are written and every derived artifact is current.
+  - id: commit
+    title: Commit and push
+    summary: "The work is in the branch's history and the branch has reached the remote."
+  - id: gates
+    title: Gates
+    summary: "Every gate the change selects has reported over this tree, and none refuses."
+  - id: version
+    title: Version impact
+    summary: The public contract was measured against the last release and the declared version is at least what it requires.
+  - id: integration
+    title: Integration
+    summary: The trunk reaches the commit.
+  - id: deployment
+    title: Deployment
+    summary: Every surface the change affects is serving the revision the task produced.
+  - id: verification
+    title: Live verification
+    summary: "The deployed result was looked at after it was deployed, and it is the expected revision."
+  - id: provenance
+    title: Provenance
+    summary: "The session, the issue and the continuation record say what happened."
+questions:
+  - id: implemented
+    stage: implementation
+    question: Is all the work this task promised present in the tree?
+    source: obligation:implementation
+    remediation: majordomus check
+  - id: tested
+    stage: validation
+    question: "Were the cases the change obliges run, and did they pass?"
+    source: obligation:tests
+    remediation: majordomus usecase impact
+  - id: regression-tested
+    stage: validation
+    question: Does the change touch a test of its own?
+    source: change:test-path
+    remediation: add a case under test/cases/ or a test beside the code
+  - id: documented
+    stage: documentation
+    question: Were the documents a reader needs updated?
+    source: obligation:docs
+    remediation: scripts/ci/reference-check
+  - id: generated
+    stage: documentation
+    question: Is every derived artifact current with its canonical source?
+    source: obligation:generated
+    remediation: majordomus generate --check
+  - id: openapi
+    stage: documentation
+    question: Are the OpenAPI document and the transport registries current?
+    source: obligation:generated
+    remediation: majordomus generate --check
+  - id: parity
+    stage: documentation
+    question: "Does every surface (command line, HTTP, MCP, Cockpit) agree with the registry?"
+    source: gate:projection-closure
+    remediation: scripts/ci/projection-check
+  - id: committed
+    stage: commit
+    question: "Are the changes in the branch's history rather than in the working tree?"
+    source: obligation:commit
+    remediation: git commit
+  - id: pushed
+    stage: commit
+    question: Has the commit reached the remote?
+    source: obligation:push
+    remediation: git push
+  - id: ci
+    stage: gates
+    question: "Has every gate the change selects reported, and did it pass?"
+    source: gates
+    remediation: majordomus evidence --run-gates
+  - id: version
+    stage: version
+    question: Has the declared version moved as far as the public surface has?
+    source: release:impact
+    remediation: majordomus release bump
+  - id: changelog
+    stage: version
+    question: "Is the release's own record current with the tree?"
+    source: gate:release-check
+    remediation: scripts/ci/release-check
+  - id: integrated
+    stage: integration
+    question: Does the trunk reach this commit?
+    source: obligation:target
+    remediation: open a pull request and land it
+  - id: published
+    stage: deployment
+    question: Does the published site serve this commit?
+    source: obligation:pages
+    remediation: scripts/pages verify --commit HEAD
+  - id: deployed
+    stage: deployment
+    question: Is the environment this change targets running it?
+    source: obligation:deploy
+    remediation: majordomus deployment verify
+  - id: deployment-verified
+    stage: verification
+    question: Was the deployed result looked at after it was deployed?
+    source: obligation:verify
+    remediation: majordomus deployment verify
+  - id: no-stale-topology
+    stage: integration
+    question: "Is a branch, worktree or pull request left behind?"
+    source: convergence
+    remediation: majordomus convergence
+  - id: handover
+    stage: provenance
+    question: "Is the session's continuation record written?"
+    source: session:handover
+    remediation: majordomus handover < note.md
+  - id: issue
+    stage: provenance
+    question: Do the issue and milestone this work belongs to say so?
+    source: task:issue
+    remediation: "majordomus start <task> --issue <id>"
+fragment: "- Implementation: implemented\n- Tests and validation: tested, regression-tested\n- Documentation and generated artifacts: documented, generated, openapi, parity\n- Commit and push: committed, pushed\n- Gates: ci\n- Version impact: version, changelog\n- Integration: integrated, no-stale-topology\n- Deployment: published, deployed\n- Live verification: deployment-verified\n- Provenance: handover, issue\n"

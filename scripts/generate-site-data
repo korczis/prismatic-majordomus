@@ -126,6 +126,7 @@ site/data/registry/product.json
 site/data/registry/product-graph.json
 docs/generated/cli.json
 docs/generated/web.json
+docs/generated/completion.json
 docs/generated/changelog.json
 docs/generated/economics.json
 apps/majordomus-cli/README.md
@@ -1639,6 +1640,21 @@ page_template = "docs-page.html"
 ' > "$CONTENT/_index.md"
 
 mj_phase_end "gen:derived_Zola_content_site_co" "$GEN_T0"
+# ---------------------------------------------------------------- completion.json (the definition of done)
+GEN_T0="$(mj_phase_begin "gen:completion.json")"
+# The lifecycle stages and every question under them, exactly as `gates.policy` answers them:
+# committed as docs/generated/completion.json by `majordomus generate`, which reads
+# share/completion.yaml through the one loader. This generator copies the answer and reads
+# nothing of the policy itself, so the published lifecycle cannot state a definition of done
+# the executable does not hold (ADR 0057).
+COMP="$ROOT/docs/generated/completion.json"
+[ -f "$COMP" ] || { echo "generate-site-data: docs/generated/completion.json is missing (run: majordomus generate)" >&2; exit 10; }
+jq -e '.schema == "majordomus/completion-policy/v1" and (.stages | length) > 0 and (.questions | length) > 0' "$COMP" >/dev/null 2>&1 \
+  || { echo "generate-site-data: docs/generated/completion.json is not a majordomus/completion-policy/v1 document with stages and questions" >&2; exit 10; }
+jq '{schema: 1, source_schema: .schema, stages: .stages, questions: .questions,
+     problems: (.problems // []), unanswered_gates: (.unanswered_gates // [])}' "$COMP" > "$OUT/completion.json"
+mj_phase_end "gen:completion.json" "$GEN_T0"
+
 # ---------------------------------------------------------------- web.json (the web surface)
 GEN_T0="$(mj_phase_begin "gen:web.json_the_web_surface")"
 # Everything this repository exposes over HTTP, resolved by the executable from the producers

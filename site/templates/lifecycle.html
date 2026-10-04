@@ -1,0 +1,68 @@
+{% extends "page.html" %}
+{% block body %}
+{#- The lifecycle, from data/generated/completion.json: the stages and questions exactly as
+    `gates.policy` answers them, committed by `majordomus generate` and copied by the site
+    generator. Nothing on this page is written here — a stage, a question, a source or a
+    remediation that is not in that dataset does not exist on this page, and no heading below
+    names one (ADR 0057). -#}
+{%- set c = load_data(path="data/generated/completion.json") -%}
+
+<article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg">
+  <p>Nothing here is a checklist a person ticks. Each question names a <em>source</em>, and its answer is taken from that source and from nowhere else: an obligation's standing, a gate's report, the change set itself, the structural version analysis, the task record. A question whose source has not spoken is queued or unknown, never passed; one the change makes irrelevant is exempt.</p>
+  <p>The stage a task stands at is derived from those answers in the order below: the first stage with an unanswered question is where it is. <code>majordomus check</code> says which, and <code>majordomus finish --outcome completed</code> is refused until every question passes or is exempt. The conditions <a href="../contract/">the finish contract</a> evaluates are one of these stages, not a second definition.</p>
+</article>
+
+<section class="mt-10">
+  <h2 id="stages" class="scroll-mt-24 text-2xl font-bold tracking-tight text-heading">The stages, in order</h2>
+  <ol class="mt-6 space-y-4">
+    {%- for s in c.stages %}
+    {%- set qs = [q for q in c.questions if q.stage == s.id] -%}
+    <li id="stage-{{ s.id }}" class="min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft">
+      <div class="border-b border-default px-5 py-4">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">{{ loop.index }} / {{ c.stages | length }}</span>
+          <h3 class="break-words text-lg font-semibold tracking-tight text-heading">{{ s.title }}</h3>
+        </div>
+        <p class="mt-1 break-words text-sm text-body">{{ s.summary }}</p>
+      </div>
+      {%- if qs | length == 0 %}
+      <p class="px-5 py-4 text-sm text-body-subtle">The policy places no question under this stage yet.</p>
+      {%- else %}
+      <ul class="divide-y divide-default">
+        {%- for q in qs %}
+        <li id="question-{{ q.id }}" class="min-w-0 scroll-mt-24 px-5 py-4">
+          <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <code class="font-mono text-xs text-body-subtle">{{ q.id }}</code>
+            <span class="break-words font-medium text-heading">{{ q.question }}</span>
+          </div>
+          <dl class="mt-2 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-[max-content_minmax(0,1fr)]">
+            <dt class="text-body-subtle">answered by</dt><dd class="min-w-0 break-words text-body">{{ q.source }}</dd>
+            <dt class="text-body-subtle">settled by</dt><dd class="min-w-0 break-all font-mono text-body">{{ q.remediation }}</dd>
+          </dl>
+        </li>
+        {%- endfor %}
+      </ul>
+      {%- endif %}
+    </li>
+    {%- endfor %}
+  </ol>
+</section>
+
+{%- if c.problems | length > 0 %}
+<section class="mt-10 rounded-base border border-warning bg-warning-soft p-5 text-sm text-body">
+  <h2 class="text-base font-semibold text-heading">What the policy names and the distribution lacks</h2>
+  <ul class="mt-2 list-disc space-y-1 pl-5">
+    {%- for p in c.problems %}<li class="break-words">{{ p }}</li>{%- endfor %}
+  </ul>
+</section>
+{%- endif %}
+{%- if c.unanswered_gates | length > 0 %}
+<section class="mt-10 rounded-base border border-default bg-neutral-primary-soft p-5 text-sm text-body">
+  <h2 class="text-base font-semibold text-heading">What this repository never asks</h2>
+  <p class="mt-1">These questions are answered by a gate this repository's CI model does not declare, so the completion report answers each one <em>exempt</em>, by name, rather than leaving it unanswered.</p>
+  <ul class="mt-2 list-disc space-y-1 pl-5">
+    {%- for g in c.unanswered_gates %}<li class="break-all font-mono">{{ g }}</li>{%- endfor %}
+  </ul>
+</section>
+{%- endif %}
+{% endblock body %}
