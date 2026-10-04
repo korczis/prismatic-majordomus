@@ -28211,6 +28211,11 @@ components:
             - "$ref": "#/components/schemas/ExecutorWait"
             - type: "null"
           description: "How long it has been the executor's to act on, and how often another was chosen\ninstead — derived from the audit trail (`super::wait`), present only while it is\nready or refreshable."
+        rank_factors:
+          anyOf:
+            - "$ref": "#/components/schemas/RankFactors"
+            - type: "null"
+          description: "Why it stands where it does in the rank: every component the order compares, in the\norder it compares them. Set by the planner; absent on an assessment never ranked."
       required:
         - number
         - title
@@ -28418,6 +28423,51 @@ components:
         - by_disposition
         - by_lane
       description: How many pull requests are in each disposition and lane.
+    RankFactors:
+      type: object
+      properties:
+        lane:
+          "$ref": "#/components/schemas/IntegrationLane"
+          description: "The lane: what kind of work the executor does with it."
+        disposition:
+          "$ref": "#/components/schemas/PullRequestDisposition"
+          description: "The disposition, within the lane."
+        risk:
+          "$ref": "#/components/schemas/IntegrationRisk"
+          description: "The planning risk: lower first."
+        contention:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many other ready or refreshable pull requests change an authored path it changes:\nfewer first, because landing it invalidates less."
+        dependents:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many open pull requests declare that they wait for this one and are not yet\nsatisfied: more first, because landing it unblocks them."
+        authored_paths:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many authored paths it changes: fewer first, a smaller change is cheaper to land\nand to undo."
+        created_at:
+          type: string
+          description: "When it was opened: older first, so easy new work cannot starve old work."
+        number:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "The number: the last tie-break, total."
+      required:
+        - lane
+        - disposition
+        - risk
+        - contention
+        - dependents
+        - authored_paths
+        - created_at
+        - number
+      description: "What the rank compares, in order: the first component that differs between two pull\nrequests decides which comes first. Each is a value of the assessment or of the queue\naround it, so the order can be explained and is the same whatever order the forge listed\nthe pull requests in."
     Readiness:
       type: object
       properties:

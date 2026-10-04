@@ -735,6 +735,7 @@
     "schema-QualityReport": "docs/api/quality/",
     "schema-QualitySeverity": "docs/api/quality/",
     "schema-QueueTallies": "docs/api/integration/",
+    "schema-RankFactors": "docs/api/integration/",
     "schema-Readiness": "docs/api/health/",
     "schema-ReadinessVerdict": "docs/api/devtask/",
     "schema-Reason": "docs/api/repository/",
@@ -1040,7 +1041,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 169,
-    "schemas": 816,
+    "schemas": 817,
     "tags": 51
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1865,6 +1866,7 @@
     "QualityReport": "quality",
     "QualitySeverity": "quality",
     "QueueTallies": "integration",
+    "RankFactors": "integration",
     "Readiness": "health",
     "ReadinessVerdict": "devtask",
     "Reason": "repository",
@@ -22690,7 +22692,8 @@
       "type": "\"ready\" | \"waiting\" | \"repair\" | \"cleanup\" | \"held\"",
       "used_by": [],
       "used_by_schemas": [
-        "PullRequestAssessment"
+        "PullRequestAssessment",
+        "RankFactors"
       ],
       "values": [
         {
@@ -22938,7 +22941,8 @@
       "type": "\"low\" | \"medium\" | \"high\"",
       "used_by": [],
       "used_by_schemas": [
-        "PullRequestAssessment"
+        "PullRequestAssessment",
+        "RankFactors"
       ],
       "values": [
         {
@@ -33330,6 +33334,15 @@
           ],
           "required": false,
           "type": "ExecutorWait | null"
+        },
+        {
+          "description": "Why it stands where it does in the rank: every component the order compares, in the\norder it compares them. Set by the planner; absent on an assessment never ranked.",
+          "name": "rank_factors",
+          "refs": [
+            "RankFactors"
+          ],
+          "required": false,
+          "type": "RankFactors | null"
         }
       ],
       "type": "object",
@@ -33388,7 +33401,8 @@
       "type": "\"ready\" | \"needs_refresh\" | \"waiting_for_checks\" | \"waiting_for_review\" | \"waiting_for_dependency\" | \"draft\" | \"needs_repair\" | \"conflicting\" | \"blocked\" | \"unsafe\" | \"redundant\" | \"superseded\" | \"possibly_redundant\" | \"other_base\" | \"unknown\"",
       "used_by": [],
       "used_by_schemas": [
-        "PullRequestAssessment"
+        "PullRequestAssessment",
+        "RankFactors"
       ],
       "values": [
         {
@@ -33669,6 +33683,83 @@
       "used_by": [],
       "used_by_schemas": [
         "IntegrationQueue"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the rank compares, in order: the first component that differs between two pull\nrequests decides which comes first. Each is a value of the assessment or of the queue\naround it, so the order can be explained and is the same whatever order the forge listed\nthe pull requests in.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "RankFactors",
+      "properties": [
+        {
+          "description": "The lane: what kind of work the executor does with it.",
+          "name": "lane",
+          "refs": [
+            "IntegrationLane"
+          ],
+          "required": true,
+          "type": "IntegrationLane"
+        },
+        {
+          "description": "The disposition, within the lane.",
+          "name": "disposition",
+          "refs": [
+            "PullRequestDisposition"
+          ],
+          "required": true,
+          "type": "PullRequestDisposition"
+        },
+        {
+          "description": "The planning risk: lower first.",
+          "name": "risk",
+          "refs": [
+            "IntegrationRisk"
+          ],
+          "required": true,
+          "type": "IntegrationRisk"
+        },
+        {
+          "description": "How many other ready or refreshable pull requests change an authored path it changes:\nfewer first, because landing it invalidates less.",
+          "name": "contention",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many open pull requests declare that they wait for this one and are not yet\nsatisfied: more first, because landing it unblocks them.",
+          "name": "dependents",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many authored paths it changes: fewer first, a smaller change is cheaper to land\nand to undo.",
+          "name": "authored_paths",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "When it was opened: older first, so easy new work cannot starve old work.",
+          "name": "created_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The number: the last tie-break, total.",
+          "name": "number",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PullRequestAssessment"
       ],
       "values": [],
       "variants": []
