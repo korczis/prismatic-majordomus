@@ -145,10 +145,10 @@ modules:
     capabilities: 3
   - id: integration
     title: Pull-request integration
-    description: "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network."
+    description: "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing."
     stability: experimental
     source: builtin
-    capabilities: 3
+    capabilities: 4
   - id: intent_realization
     title: Intent realization
     description: "Which work realises which intent: every task of this checkout's ledger with the episodes, providers and handovers that carried it, every closed session record and every claim on the peer board, joined through the plan to the intents they serve, each link marked declared, observed, derived or inferred; each intent's unmet criteria with the issues serving them; and the drift between closed work and current evidence. Derived on every read and stored nowhere, so an intent outlives every session and provider that worked on it."
@@ -18985,6 +18985,178 @@ capabilities:
       - explain
     benchmark:
       policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/integration.rs
+  - id: integration.prove_dry_run
+    module: integration
+    kind: query
+    title: Proof that a dry run moves nothing
+    description: "Runs the executor's non-mutating cycle — refresh, plan, drain --dry-run and cleanup without --apply — between two snapshots of everything it could move if it were wrong: every ref origin serves, every open pull request's number, head, state and labels, the integration audit trail, the executor's lease, and every local ref outside the two namespaces the refresh mirrors. `ok` is true exactly when the snapshots are equal and refs/remotes/origin/<base> and every refs/majordomus/prs/<n> equal what origin serves. A read that reaches the network: the refresh asks the forge through the GitHub CLI and fetches the base and the pull-request heads, and like every read it rewrites the observation, relation and summary caches. It merges, closes and pushes nothing, and takes no input that could make it."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: DryRunProof
+      schema:
+        type: object
+        properties:
+          ok:
+            type: boolean
+            description: True exactly when nothing moved and every mirror equals what origin serves.
+          base:
+            type: string
+            description: The base branch the executor works on.
+          steps:
+            type: array
+            items:
+              "$ref": "#/$defs/ProofStep"
+            description: "The cycle, step by step."
+          moved:
+            type: array
+            items:
+              "$ref": "#/$defs/Moved"
+            description: Every line that differs between the snapshots; empty when nothing moved.
+          mirrors:
+            type: array
+            items:
+              type: string
+            description: Every mirrored ref that is not what origin serves; empty when they all are.
+          before:
+            "$ref": "#/$defs/Snapshot"
+            description: The snapshot before the cycle.
+          after:
+            "$ref": "#/$defs/Snapshot"
+            description: The snapshot after it.
+          classification:
+            type: array
+            items:
+              "$ref": "#/$defs/ObservedClassification"
+            description: "Every open pull request as the cycle classified it, in rank order."
+        required:
+          - ok
+          - base
+          - steps
+          - moved
+          - mirrors
+          - before
+          - after
+          - classification
+        description: "The verdict: what was compared, what moved, and what the cycle observed."
+        title: DryRunProof
+        "$defs":
+          ProofStep:
+            type: object
+            properties:
+              step:
+                type: string
+                description: "`refresh`, `plan`, `drain --dry-run` or `cleanup`."
+              summary:
+                type: string
+                description: "What it reported, in one line."
+            required:
+              - step
+              - summary
+            description: One step of the cycle and what it said.
+          Moved:
+            type: object
+            properties:
+              section:
+                type: string
+                description: The section it belongs to.
+              change:
+                type: string
+                description: "`added` (present only after the cycle) or `removed` (present only before)."
+              line:
+                type: string
+                description: The line itself.
+            required:
+              - section
+              - change
+              - line
+            description: One line that differs between the two snapshots.
+          Snapshot:
+            type: object
+            properties:
+              sections:
+                type: array
+                items:
+                  "$ref": "#/$defs/SnapshotSection"
+                description: "The sections, always in the order `remote`, `forge`, `trail`, `lease`, `local`."
+            required:
+              - sections
+            description: "Everything the cycle could move, at one moment."
+          SnapshotSection:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "`remote`, `forge`, `trail`, `lease` or `local`."
+              lines:
+                type: array
+                items:
+                  type: string
+                description: "What the section holds, one fact per line, sorted where order carries no meaning."
+            required:
+              - name
+              - lines
+            description: "One section of a snapshot: a name and its lines, in a stable order."
+          ObservedClassification:
+            type: object
+            properties:
+              number:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: The pull request.
+              head_sha:
+                type: string
+                description: The head it was decided against.
+              disposition:
+                type: string
+                description: "Its disposition, as the queue names it."
+              next_action:
+                type:
+                  - string
+                  - "null"
+                description: "What the executor would do with it, when anything."
+            required:
+              - number
+              - head_sha
+              - disposition
+            description: One open pull request as the cycle classified it.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::integration
+    exposure:
+      mcp:
+        tool: majordomus_pull_requests_prove_dry_run
+      http:
+        method: GET
+        path: /api/v1/pull-requests/prove-dry-run
+      cli:
+        path:
+          - prs
+          - prove-dry-run
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - integration
+      - pull-requests
+      - proof
+      - live
+    benchmark:
+      policy: waived
+      reason: external_dependency
     cache:
       policy: disabled
     execution:

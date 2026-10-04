@@ -68,7 +68,7 @@ tags:
   - name: health
     description: "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own."
   - name: integration
-    description: "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network."
+    description: "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing."
   - name: intent_realization
     description: "Which work realises which intent: every task of this checkout's ledger with the episodes, providers and handovers that carried it, every closed session record and every claim on the peer board, joined through the plan to the intents they serve, each link marked declared, observed, derived or inferred; each intent's unmet criteria with the issues serving them; and the drift between closed work and current evidence. Derived on every read and stored nowhere, so an intent outlives every session and provider that worked on it."
   - name: intents
@@ -8232,6 +8232,60 @@ paths:
       x-majordomus-mcp:
         tool: majordomus_pull_request_explain
       x-majordomus-cli: prs explain
+  "/api/v1/pull-requests/prove-dry-run":
+    get:
+      operationId: integration.prove_dry_run
+      summary: Proof that a dry run moves nothing
+      description: "Runs the executor's non-mutating cycle — refresh, plan, drain --dry-run and cleanup without --apply — between two snapshots of everything it could move if it were wrong: every ref origin serves, every open pull request's number, head, state and labels, the integration audit trail, the executor's lease, and every local ref outside the two namespaces the refresh mirrors. `ok` is true exactly when the snapshots are equal and refs/remotes/origin/<base> and every refs/majordomus/prs/<n> equal what origin serves. A read that reaches the network: the refresh asks the forge through the GitHub CLI and fetches the base and the pull-request heads, and like every read it rewrites the observation, relation and summary caches. It merges, closes and pushes nothing, and takes no input that could make it."
+      tags:
+        - integration
+      parameters: []
+      responses:
+        "200":
+          description: "Proof that a dry run moves nothing: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/DryRunProof"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: integration.prove_dry_run
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::integration
+      x-majordomus-benchmark:
+        policy: waived
+        reason: external_dependency
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_pull_requests_prove_dry_run
+      x-majordomus-cli: prs prove-dry-run
   "/api/v1/quality":
     get:
       operationId: quality.report
@@ -16928,6 +16982,51 @@ components:
         - example_uri
         - detail
       description: One file of the layer that is no longer what the index read.
+    DryRunProof:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          description: True exactly when nothing moved and every mirror equals what origin serves.
+        base:
+          type: string
+          description: The base branch the executor works on.
+        steps:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ProofStep"
+          description: "The cycle, step by step."
+        moved:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Moved"
+          description: Every line that differs between the snapshots; empty when nothing moved.
+        mirrors:
+          type: array
+          items:
+            type: string
+          description: Every mirrored ref that is not what origin serves; empty when they all are.
+        before:
+          "$ref": "#/components/schemas/Snapshot"
+          description: The snapshot before the cycle.
+        after:
+          "$ref": "#/components/schemas/Snapshot"
+          description: The snapshot after it.
+        classification:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ObservedClassification"
+          description: "Every open pull request as the cycle classified it, in rank order."
+      required:
+        - ok
+        - base
+        - steps
+        - moved
+        - mirrors
+        - before
+        - after
+        - classification
+      description: "The verdict: what was compared, what moved, and what the cycle observed."
     EconomicsCheck:
       type: object
       properties:
@@ -24715,6 +24814,23 @@ components:
     Mount:
       type: string
       description: "An absolute mount path, without a trailing slash."
+    Moved:
+      type: object
+      properties:
+        section:
+          type: string
+          description: The section it belongs to.
+        change:
+          type: string
+          description: "`added` (present only after the cycle) or `removed` (present only before)."
+        line:
+          type: string
+          description: The line itself.
+      required:
+        - section
+        - change
+        - line
+      description: One line that differs between the two snapshots.
     Node:
       type: object
       properties:
@@ -25155,6 +25271,30 @@ components:
         - reason
         - at
       description: "One observation of one deployment, as recorded: what was asked, what was served, what\nwas judged and when. Everything needed to judge it again later is in the record, which\nis what lets `Observation::rejudge` answer without probing.\n\n```\nuse majordomus_cli::served::{observe, Fetch, Fetched, GitAncestry, Observation, OBSERVATION_SCHEMA};\nuse std::{path::Path, time::SystemTime};\nstruct None_;\nimpl Fetch for None_ {\n    fn fetch(&self, _: &str) -> Fetched { Fetched::Unreachable(\"no route\".into()) }\n}\nlet git = GitAncestry { root: Path::new(env!(\"CARGO_MANIFEST_DIR\")) };\nlet o: Observation = observe(\"pages\", \"https://s\", \"build.json\", &\"a\".repeat(40), &None_,\n                              &git, SystemTime::UNIX_EPOCH);\nassert_eq!(o.schema, OBSERVATION_SCHEMA);\nassert_eq!(o.url, \"https://s/build.json\");\nassert_eq!(o.at, \"1970-01-01T00:00:00Z\");\n```"
+    ObservedClassification:
+      type: object
+      properties:
+        number:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: The pull request.
+        head_sha:
+          type: string
+          description: The head it was decided against.
+        disposition:
+          type: string
+          description: "Its disposition, as the queue names it."
+        next_action:
+          type:
+            - string
+            - "null"
+          description: "What the executor would do with it, when anything."
+      required:
+        - number
+        - head_sha
+        - disposition
+      description: One open pull request as the cycle classified it.
     OpenSession:
       type: object
       properties:
@@ -27005,6 +27145,19 @@ components:
           const: no_test
           description: "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
       description: "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven < ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
+    ProofStep:
+      type: object
+      properties:
+        step:
+          type: string
+          description: "`refresh`, `plan`, `drain --dry-run` or `cleanup`."
+        summary:
+          type: string
+          description: "What it reported, in one line."
+      required:
+        - step
+        - summary
+      description: One step of the cycle and what it said.
     ProtocolReport:
       type: object
       properties:
@@ -33029,6 +33182,32 @@ components:
         - warnings
         - findings
       description: "The verdict over every skill: valid when no finding refuses.\n\n```\nuse majordomus_cli::capability::builtin::skills::SkillVerification;\nlet v = SkillVerification { valid: true, skills: 3, failures: 0, warnings: 2, findings: vec![] };\n// warnings are debts, reported; they do not make the verdict false\nassert!(v.valid);\n```"
+    Snapshot:
+      type: object
+      properties:
+        sections:
+          type: array
+          items:
+            "$ref": "#/components/schemas/SnapshotSection"
+          description: "The sections, always in the order `remote`, `forge`, `trail`, `lease`, `local`."
+      required:
+        - sections
+      description: "Everything the cycle could move, at one moment."
+    SnapshotSection:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "`remote`, `forge`, `trail`, `lease` or `local`."
+        lines:
+          type: array
+          items:
+            type: string
+          description: "What the section holds, one fact per line, sorted where order carries no meaning."
+      required:
+        - name
+        - lines
+      description: "One section of a snapshot: a name and its lines, in a stable order."
     Source:
       type: object
       properties:

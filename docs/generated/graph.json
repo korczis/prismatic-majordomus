@@ -662,6 +662,15 @@
         "status": "query"
       },
       {
+        "id": "capability:integration.prove_dry_run",
+        "kind": "capability",
+        "label": "integration.prove_dry_run",
+        "summary": "Proof that a dry run moves nothing",
+        "route": "/cockpit/capabilities/integration.prove_dry_run",
+        "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:integration.queue",
         "kind": "capability",
         "label": "integration.queue",
@@ -1733,14 +1742,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/http/events.rs",
-        "kind": "file",
-        "label": "events.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/http/events.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/http/router.rs",
         "kind": "file",
         "label": "router.rs",
@@ -1754,14 +1755,6 @@
         "label": "swagger.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/http/swagger.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/http/ws.rs",
-        "kind": "file",
-        "label": "ws.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/http/ws.rs",
         "external": true
       },
       {
@@ -38390,6 +38383,13 @@
         "source": "test/cases/84_web_surfaces.sh"
       },
       {
+        "id": "majordomus://test/test/cases/852_a_dry_run_moves_nothing.sh",
+        "kind": "test",
+        "label": "test/cases/852_a_dry_run_moves_nothing.sh",
+        "route": "/cockpit/objects/test/test-cases-852-a-dry-run-moves-nothing-sh",
+        "source": "test/cases/852_a_dry_run_moves_nothing.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/85_deployment_bind.sh",
         "kind": "test",
         "label": "test/cases/85_deployment_bind.sh",
@@ -42139,6 +42139,26 @@
         "kind": "projects"
       },
       {
+        "source": "capability:integration.prove_dry_run",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.prove_dry_run",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.prove_dry_run",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.prove_dry_run",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:integration.queue",
         "target": "projection:cli",
         "kind": "projects"
@@ -44641,16 +44661,6 @@
       {
         "source": "majordomus://adr/adr-0033",
         "target": "file:apps/majordomus-cli/src/execution/mod.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/http/events.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/http/ws.rs",
         "kind": "put_in_force"
       },
       {
@@ -60229,6 +60239,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/852_a_dry_run_moves_nothing.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/85_deployment_bind.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -62925,6 +62940,11 @@
       },
       {
         "source": "module:integration",
+        "target": "capability:integration.prove_dry_run",
+        "kind": "composes"
+      },
+      {
+        "source": "module:integration",
         "target": "capability:integration.queue",
         "kind": "composes"
       },
@@ -63441,7 +63461,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4493,
+      "edges": 4497,
       "acyclic": true,
       "truncated": true
     }

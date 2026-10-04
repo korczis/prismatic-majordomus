@@ -374,6 +374,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:integration.prove_dry_run",
+      "path": "/evidence/capabilities/integration-prove-dry-run/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:integration.queue",
       "path": "/evidence/capabilities/integration-queue/"
     },
@@ -2639,6 +2644,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:prs prove-dry-run",
+      "path": "/evidence/commands/prs-prove-dry-run/"
+    },
+    {
+      "kind": "command",
       "subject": "command:prs refresh",
       "path": "/evidence/commands/prs-refresh/"
     },
@@ -4126,6 +4136,18 @@
       "programs": [],
       "members": [
         "command:prs explain"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:integration.prove_dry_run": {
+      "kind": "capability",
+      "id": "integration.prove_dry_run",
+      "page": "/evidence/capabilities/integration-prove-dry-run/",
+      "programs": [],
+      "members": [
+        "command:prs prove-dry-run"
       ],
       "routes": [],
       "mechanisms": [],
@@ -13997,6 +14019,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:prs prove-dry-run": {
+      "kind": "command",
+      "id": "prs prove-dry-run",
+      "page": "/evidence/commands/prs-prove-dry-run/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:prs refresh": {
       "kind": "command",
       "id": "prs refresh",
@@ -18048,6 +18089,18 @@
       "programs": [],
       "members": [
         "capability:integration.queue"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_pull_requests_prove_dry_run": {
+      "kind": "mcp",
+      "id": "majordomus_pull_requests_prove_dry_run",
+      "alias_of": "capability:integration.prove_dry_run",
+      "programs": [],
+      "members": [
+        "capability:integration.prove_dry_run"
       ],
       "routes": [],
       "mechanisms": [],
@@ -23838,6 +23891,7 @@
     "suite:763_a_tag_older_than_the_record_practice_is_a_note",
     "suite:790_the_kit_is_one_vocabulary_and_its_page_renders_all_of_it",
     "suite:791_a_screen_is_composed_of_the_kit_and_of_real_data",
+    "suite:852_a_dry_run_moves_nothing",
     "suite:85_deployment_bind",
     "suite:86_deployment_projections",
     "suite:93_schema_integrity",

@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.12.0"
   },
-  "fingerprint": "a423d2e8d250cf4db4767118f66d03215a4771a025d38d2f5c16fd5c8a0496f1",
+  "fingerprint": "360cfbf5ed26aa48692a0bacb167494b55d2ae5163d991976375bc2edbccfc06",
   "route": "/features/",
   "counts": {
     "features": 26,
@@ -1521,7 +1521,7 @@
         {
           "id": "integration",
           "title": "Pull-request integration",
-          "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network.",
+          "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing.",
           "stability": "experimental",
           "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs",
           "capabilities": [
@@ -1542,6 +1542,15 @@
               "tool": "majordomus_pull_request_explain",
               "route": "GET /api/v1/pull-requests/explain",
               "cli": "majordomus prs explain"
+            },
+            {
+              "id": "integration.prove_dry_run",
+              "title": "Proof that a dry run moves nothing",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_pull_requests_prove_dry_run",
+              "route": "GET /api/v1/pull-requests/prove-dry-run",
+              "cli": "majordomus prs prove-dry-run"
             },
             {
               "id": "integration.queue",
@@ -1813,11 +1822,11 @@
         "worktrees"
       ],
       "counts": {
-        "capabilities": 10,
-        "mcp_tools": 10,
+        "capabilities": 11,
+        "mcp_tools": 11,
         "mcp_resources": 2,
-        "http_routes": 10,
-        "cli_paths": 8,
+        "http_routes": 11,
+        "cli_paths": 9,
         "commands": 3,
         "objects": 0,
         "rules": 5,
@@ -11866,17 +11875,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1863,
-    "builtin": 169,
-    "declarative": 1694,
+    "capabilities": 1865,
+    "builtin": 170,
+    "declarative": 1695,
     "modules": 51,
-    "mcp_tools": 163,
-    "mcp_resources": 1746,
-    "http_routes": 167,
-    "cli_commands": 175,
+    "mcp_tools": 164,
+    "mcp_resources": 1747,
+    "http_routes": 168,
+    "cli_commands": 176,
     "shell_commands": 30,
     "kinds": 32,
-    "objects": 1694,
+    "objects": 1695,
     "by_kind": {
       "adr": 79,
       "application": 5,
@@ -11907,7 +11916,7 @@
       "session": 22,
       "skill": 6,
       "taxonomy": 10,
-      "test": 342,
+      "test": 343,
       "use-case": 48,
       "workspace": 1
     },

@@ -45,6 +45,7 @@ pub mod classify;
 pub mod drain;
 pub mod forge;
 pub mod model;
+pub mod proof;
 pub mod relation;
 pub mod retry;
 #[cfg(test)]

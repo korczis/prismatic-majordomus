@@ -74,6 +74,43 @@ fn trunc(s: &str, n: usize) -> String {
     }
 }
 
+fn render_proof(p: &integration::proof::DryRunProof, out: &mut impl Write) -> Result<()> {
+    for s in &p.steps {
+        w(out, format!("{:<16} {}", s.step, s.summary))?;
+    }
+    if !p.moved.is_empty() {
+        w(out, "the non-mutating cycle moved something:")?;
+        for m in &p.moved {
+            let sign = if m.change == "added" { '+' } else { '-' };
+            w(out, format!("  {sign} {:<6} {}", m.section, m.line))?;
+        }
+    }
+    for m in &p.mirrors {
+        w(out, format!("mirror: {m}"))?;
+    }
+    w(out, format!("observed classification (base {}):", p.base))?;
+    for c in &p.classification {
+        w(
+            out,
+            format!(
+                "  #{}  {}  {}  {}",
+                c.number,
+                &c.head_sha[..c.head_sha.len().min(12)],
+                c.disposition,
+                c.next_action.as_deref().unwrap_or("")
+            )
+            .trim_end(),
+        )?;
+    }
+    if p.ok {
+        w(
+            out,
+            "nothing moved (remote, forge, trail, lease, local refs)",
+        )?;
+    }
+    Ok(())
+}
+
 /// Run `majordomus prs`.
 pub fn run(args: PrsArgs) -> Result<u8> {
     let root = root_of(&args)?;
@@ -281,6 +318,15 @@ pub fn run(args: PrsArgs) -> Result<u8> {
                 }
             }
             Ok(0)
+        }
+        PrsCommand::ProveDryRun => {
+            let proof = integration::proof::prove_dry_run(&root).map_err(unusable)?;
+            if format == OutputFormat::Json {
+                json(&mut out, &proof)?;
+            } else {
+                render_proof(&proof, &mut out)?;
+            }
+            Ok(if proof.ok { 0 } else { FINDING })
         }
         PrsCommand::Brief => {
             if let Some(line) = brief(&root) {

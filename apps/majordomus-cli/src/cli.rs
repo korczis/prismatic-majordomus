@@ -2888,6 +2888,8 @@ pub enum PrsCommand {
     Events,
     /// One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease, and the last merge. Offline, decides no relation, and prints nothing where the forge was never observed
     Brief,
+    /// Prove the non-mutating cycle moves nothing: snapshot origin's refs, the open pull requests, the audit trail, the lease and the local refs, run refresh, plan, drain --dry-run and cleanup (listing), snapshot again and compare; the refresh's fetched mirrors must equal what origin serves. Exit 10 naming what moved. Takes no flag: there is nothing to turn on
+    ProveDryRun,
 }
 
 #[derive(Debug, Args)]
@@ -4415,6 +4417,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             title: "A dry run starts from a fresh observation",
             description: "Even a dry run observes the forge first — a decision is never taken from the recorded observation — so where the forge cannot be reached it stops with exit 12 before deciding anything, and nothing is merged, refreshed or recorded.",
             argv: &["prs", "drain", "--dry-run"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "prs prove-dry-run",
+        examples: &[ExampleDoc {
+            id: "prs-prove-dry-run-no-forge",
+            title: "The proof needs a forge to prove anything about",
+            description: "The proof snapshots origin's refs and the forge's open pull requests around refresh, plan, drain --dry-run and cleanup, and compares them. A repository with no GitHub remote has nothing to snapshot, so it exits 12 before any step runs: a proof that could not look is not a proof that nothing moved.",
+            argv: &["prs", "prove-dry-run"],
             setup: &[],
             expect: Expect::ExitCode(12),
         }],
