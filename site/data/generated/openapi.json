@@ -22261,7 +22261,7 @@
       "is_enum": true,
       "name": "IntegrationAction",
       "properties": [],
-      "type": "\"lease_acquired\" | \"lease_released\" | \"continuous_started\" | \"continuous_stopped\" | \"observed\" | \"became_actionable\" | \"left_actionable\" | \"selected\" | \"refresh_selected\" | \"stale_decision\" | \"merge_attempted\" | \"merge_succeeded\" | \"merge_failed\" | \"verification_failed\" | \"refresh_attempted\" | \"refreshed\" | \"refresh_failed\" | \"close_attempted\" | \"closed_superseded\" | \"close_failed\" | \"idle\"",
+      "type": "\"lease_acquired\" | \"lease_released\" | \"continuous_started\" | \"continuous_stopped\" | \"observed\" | \"became_actionable\" | \"left_actionable\" | \"selected\" | \"refresh_selected\" | \"stale_decision\" | \"merge_attempted\" | \"merge_succeeded\" | \"merge_failed\" | \"verification_failed\" | \"failure_acknowledged\" | \"refresh_attempted\" | \"refreshed\" | \"refresh_failed\" | \"close_attempted\" | \"closed_superseded\" | \"close_failed\" | \"idle\"",
       "used_by": [],
       "used_by_schemas": [
         "IntegrationEvent",
@@ -22323,6 +22323,10 @@
         {
           "description": "What landed could not be verified.",
           "value": "verification_failed"
+        },
+        {
+          "description": "A person looked at a merge that could not be verified and lets drains merge again\n(`prs drain --resume-after-failure`).",
+          "value": "failure_acknowledged"
         },
         {
           "description": "Master is about to be merged into a branch and pushed.",
@@ -22791,6 +22795,13 @@
           "refs": [],
           "required": false,
           "type": "string | null"
+        },
+        {
+          "description": "Whether the base requires a branch to be up to date before it merges (the\nprotection's `required_status_checks.strict`, or a ruleset's): the forge-side half of\nthe guard against a merge onto a master nobody tested with the change. The executor's\nhalf is its parent check after every merge. `Some(false)` is the owner's to change\n(decision D8) and decides no disposition; `None` when unread.",
+          "name": "up_to_date_required",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
         }
       ],
       "type": "object",

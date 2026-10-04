@@ -9206,6 +9206,17 @@ cli:
               possible_values: []
               defaults:
                 - "300"
+            - name: resume_after_failure
+              long: resume-after-failure
+              positional: false
+              help: "A merge an earlier drain could not verify stops every drain until a person has looked at it: this records that someone has (`failure_acknowledged` on the trail), then drains. Never with `--dry-run`"
+              value_name: RESUME_AFTER_FAILURE
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
             - name: repo
               long: repo
               positional: false

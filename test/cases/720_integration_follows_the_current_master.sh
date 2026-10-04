@@ -131,6 +131,12 @@ n_list="$(sed -n '/^pr list/p' "$STATE/log" | wc -l | tr -d ' ')"
 [ "$n_list" -ge 4 ] || { echo "    the executor did not observe again before merging ($n_list observations)"; exit 1; }
 jq -e 'select(.action == "merge_succeeded" and .pr == 1 and .master_after != null)' "$ev" >/dev/null \
   || { echo "    the merge is not in the audit trail"; cat "$ev"; exit 1; }
+# proved where it landed: the trail names the merge commit, whose parents are the decided
+# master and the decided head (ADR 0101 §4)
+mc="$(jq -r 'select(.action == "merge_succeeded" and .pr == 1) | .merge_commit // empty' "$ev" | tail -n 1)"
+[ -n "$mc" ] || { echo "    merge_succeeded names no merge_commit"; exit 1; }
+[ "$(git -C "$ORIGIN" rev-parse "$mc^2")" = "$H1" ] || { echo "    the recorded merge commit $mc does not merge #1's head"; exit 1; }
+git -C "$ORIGIN" merge-base --is-ancestor "$mc" master || { echo "    the recorded merge commit is not on master"; exit 1; }
 # every act was on the trail before it was taken, and the lease that covered them with it
 order="$(jq -r '.action' "$ev" | grep -v '^observed$' | tr '\n' ' ')"
 case "$order" in *"lease_acquired "*"selected "*"merge_attempted merge_succeeded "*"lease_released "*) ;;

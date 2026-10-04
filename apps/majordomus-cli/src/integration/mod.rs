@@ -304,6 +304,7 @@ pub fn policy_of(obs: &ForgeObservation) -> IntegrationPolicy {
         skipped_permitted: Vec::new(),
         labels: LABEL_POLICY.to_vec(),
         merge_method,
+        up_to_date_required: obs.up_to_date_required,
     }
 }
 

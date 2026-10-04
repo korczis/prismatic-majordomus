@@ -6,7 +6,7 @@
     "version": "0.13.0"
   },
   "registry": {
-    "fingerprint": "ae77f571f185e3821c0910623b8029c97545fa4cc33e92f7449124cee4fb4e07",
+    "fingerprint": "aaf5d3ba9e4d9fa31a63495458f9944ab282369ee48f687cee4845d418078095",
     "summary": {
       "total": 1883,
       "builtin": 171,
@@ -25633,6 +25633,11 @@
                   },
                   {
                     "type": "string",
+                    "const": "failure_acknowledged",
+                    "description": "A person looked at a merge that could not be verified and lets drains merge again\n(`prs drain --resume-after-failure`)."
+                  },
+                  {
+                    "type": "string",
                     "const": "refresh_attempted",
                     "description": "Master is about to be merged into a branch and pushed."
                   },
@@ -26914,6 +26919,11 @@
                   },
                   {
                     "type": "string",
+                    "const": "failure_acknowledged",
+                    "description": "A person looked at a merge that could not be verified and lets drains merge again\n(`prs drain --resume-after-failure`)."
+                  },
+                  {
+                    "type": "string",
                     "const": "refresh_attempted",
                     "description": "Master is about to be merged into a branch and pushed."
                   },
@@ -27441,6 +27451,14 @@
                       "null"
                     ],
                     "description": "The merge method the executor asks the forge for: `merge` when the repository allows a\nmerge commit, and `None` when it does not. There is no other: the derived-file driver\nresolves merges, and a squash or rebase would replay commits it never saw, so with\n`None` every pull request the relation to master does not already decide is held\n(`merge_commit_not_allowed`), never merged otherwise."
+                  },
+                  "up_to_date_required": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ],
+                    "description": "Whether the base requires a branch to be up to date before it merges (the\nprotection's `required_status_checks.strict`, or a ruleset's): the forge-side half of\nthe guard against a merge onto a master nobody tested with the change. The executor's\nhalf is its parent check after every merge. `Some(false)` is the owner's to change\n(decision D8) and decides no disposition; `None` when unread.",
+                    "default": null
                   }
                 },
                 "required": [
@@ -28450,6 +28468,11 @@
                     "type": "string",
                     "const": "verification_failed",
                     "description": "What landed could not be verified."
+                  },
+                  {
+                    "type": "string",
+                    "const": "failure_acknowledged",
+                    "description": "A person looked at a merge that could not be verified and lets drains merge again\n(`prs drain --resume-after-failure`)."
                   },
                   {
                     "type": "string",
@@ -67614,7 +67637,7 @@
     ]
   },
   "index": {
-    "fingerprint": "19d766a5d51c58acc3f54e73428cba07304c2d5d4c81296bef3c472a3c7b5b17",
+    "fingerprint": "b9d899f38c502a69f3a57959ba112d959b18e9273547210fe73d5ea8ac0f5765",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -68944,7 +68967,7 @@
         "path": ".ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 13713,
+        "bytes": 14283,
         "tags": [
           "integration",
           "git",
@@ -72786,7 +72809,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 22953
+        "bytes": 24784
       },
       {
         "uri": "majordomus://document/docs/KNOWLEDGE.md",
@@ -84951,7 +84974,7 @@
         "identity": "test/cases/720_integration_follows_the_current_master.sh",
         "path": "test/cases/720_integration_follows_the_current_master.sh",
         "source_class": "case",
-        "bytes": 13021
+        "bytes": 13602
       },
       {
         "uri": "majordomus://test/test/cases/721_the_suite_shards_are_the_whole_suite.sh",
@@ -98875,6 +98898,20 @@
                 "possible_values": [],
                 "defaults": [
                   "300"
+                ]
+              },
+              {
+                "name": "resume_after_failure",
+                "long": "resume-after-failure",
+                "positional": false,
+                "help": "A merge an earlier drain could not verify stops every drain until a person has looked at it: this records that someone has (`failure_acknowledged` on the trail), then drains. Never with `--dry-run`",
+                "value_name": "RESUME_AFTER_FAILURE",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
                 ]
               },
               {
