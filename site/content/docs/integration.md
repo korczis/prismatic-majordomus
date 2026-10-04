@@ -1,6 +1,6 @@
 +++
 title = "Pull-request integration"
-description = "pull-request integration: every open pull request classified against the current master with its evidence, the thirteen dispositions, the deterministic rank, one merge at a time with a re-plan after each, refreshing a branch, the cleanup threshold, the lease and the audit trail (ADR 0101)"
+description = "pull-request integration: every open pull request classified against the current master with its evidence, the fourteen dispositions, the deterministic rank, one merge at a time with a re-plan after each, refreshing a branch, the cleanup threshold, the lease and the audit trail (ADR 0101)"
 weight = 53
 [extra]
 source = "docs/INTEGRATION.md"
@@ -53,11 +53,13 @@ answer wins. `ready` is reached only after every other question is answered in i
 | `other_base` | held | targets a branch other than the base, and no open pull request's head | — |
 | `waiting_for_dependency` | waiting | stacked on another open pull request of this repository, or declares a dependency on an open one (see below) | land that one first |
 | `draft` | held | a draft | mark it ready |
-| `blocked` | held | carries a blocking label (`do-not-merge`, `blocked`, `hold`, `on-hold`, `wip`, `manual-merge`) | remove it |
+| `blocked` | held | carries a label that holds it (see the label policy below) | remove it |
+| `unsafe` | held | the forge has auto-merge armed on it, so the forge would merge it on its own | disarm it: `gh pr merge <n> --disable-auto` |
 | `superseded` | cleanup | its head is an ancestor of master, or merging it changes no file | `prs cleanup --apply` closes it |
 | `possibly_redundant` | cleanup | merging it changes only derived artifacts | a person decides |
 | `unknown` | held | its head is not fetched, git failed, or the branch protection could not be read | `prs refresh` |
 | `conflicting` | repair | the merge conflicts on an authored path | the author resolves it |
+| `blocked` | held | the repository's settings allow no merge commit (see the merge method below) | allow merge commits |
 | `waiting_for_review` | waiting | a required review is missing or changes were requested (see below) | a reviewer |
 | `needs_repair` | repair | a required check failed on its head, or it is behind master from a fork | the author |
 | `needs_refresh` | waiting | merges cleanly but does not contain master | `prs drain --refresh` |
@@ -81,8 +83,10 @@ The order above is a list of gates, and every gate is asked whatever the others 
 |---|---|---|
 | `base` | it targets the base | `stacked_on:#N`, or `base_is:BRANCH` |
 | `draft` | it is not a draft | `draft` |
-| `label` | no blocking label | `label:NAME`, one per label |
+| `label` | no label that holds it | `label:NAME`, one per label |
+| `auto_merge` | the forge has no auto-merge armed on it | `auto_merge_armed` |
 | `relation_to_master` | its merge is clean and changes something | `head_reachable_from_master`, `merge_changes_nothing`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT` |
+| `merge_method` | the repository allows a merge commit | `merge_commit_not_allowed` |
 | `dependency` | every declared dependency landed | `depends_on:#N`, one per open dependency |
 | `review` | the review policy is satisfied on the head | `review:STATE`, or `review_policy_unread` |
 | `no_failing_check` | no required check failed | `required_check_failed` |
@@ -106,9 +110,53 @@ Each piece of evidence has a `kind`, a `status`, a `detail` and a `source`. The 
 forge observation at its moment, or git on the named master and head. Evidence for `base` and
 `draft` is always there. So is `required_checks`, with one `required_check` per context the
 base requires, and `review` and `relation_to_master`. `dependency` appears per declared
-dependency, and `label` per blocking label. `freshness`, `auto_merge` and `supersession` are
-reserved kinds. `evaluated_against` names the master, the head and the moment of the
+dependency, `label` per label that holds it, `auto_merge` whenever the forge has auto-merge
+armed, and `repository_settings` when the settings allow no merge commit. `freshness` and
+`supersession` are reserved kinds. `evaluated_against` names the master, the head and the moment of the
 observation; two decisions are the same when the master and head are.
+
+### Label policy
+
+The labels that hold a pull request are one table, `LABEL_POLICY` in
+`src/integration/classify.rs`. Each label has an effect; the policy in force copies the table
+(`policy.labels` in `prs status --json` and `integration.queue`) and the classifier reads that
+copy. No other list of labels exists. A label is compared case-insensitively.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Label | Effect |
+|---|---|
+| `do-not-merge` | hold |
+| `do not merge` | hold |
+| `blocked` | hold |
+| `hold` | hold |
+| `on-hold` | hold |
+| `wip` | hold |
+| `manual-merge` | hold |
+
+</div>
+
+
+`hold` makes the pull request `blocked`, with `label:NAME`. There is no label that opts a
+pull request out of the executor's refresh (owner decision D11), so `hold` is the only effect.
+
+### Auto-merge and the merge method
+
+A pull request on which the forge has auto-merge armed is `unsafe`. The forge would merge it
+on its own once its own conditions hold, outside the executor and against whatever master is
+then, and refreshing it would only hand the forge a head to merge. Nothing acts on it until a
+person disarms it, and the queue lists every such pull request in a diagnostic.
+
+The executor merges only with a merge commit, because the derived-file driver resolves merges
+and a squash or a rebase would replay commits it never saw. The merge method
+(`policy.merge_method`) is `merge` when the repository's settings allow a merge commit
+(`allow_merge_commit`, read with `gh api repos/OWNER/NAME`), and none otherwise. With none,
+every pull request the relation to master does not already decide is `blocked` with
+`merge_commit_not_allowed` and `repository_settings` evidence, and the queue says why. The
+executor never falls back to a squash or a rebase. The `merge_method` gate comes after
+`relation_to_master` because closing work that is already on master does not depend on the
+merge setting: a `superseded` pull request stays `superseded`, lists
+`merge_commit_not_allowed` after its own reason, and `prs cleanup --apply` still closes it.
 
 ### Review states
 
@@ -188,7 +236,8 @@ executor first sees the pull request as actionable, not when the forge was first
 3. observe again and rebuild the queue;
 4. act only if the second decision names the same master and head and still says `ready`,
    and otherwise record `stale_decision` and start again;
-5. merge with the repository's merge method and `--match-head-commit <head>`, never `--admin`;
+5. merge with a merge commit (`--merge`) and `--match-head-commit <head>`, never `--admin`,
+   a squash or a rebase;
 6. verify that the forge shows it merged and that the fetched master contains its head;
 7. record the merge with the master before and after.
 
