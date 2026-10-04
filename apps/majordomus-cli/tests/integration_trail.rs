@@ -81,6 +81,8 @@ case "$1 $2" in
   "api repos/o/r/commits/master") printf '{{"sha":"%s"}}\n' "$(git -C "{origin}" rev-parse master)" ;;
   "api repos/o/r/branches/master/protection") echo '{{"required_status_checks":{{"contexts":["ci"]}}}}' ;;
   "pr list") if [ -f "{state}/closed-2" ]; then echo '[]'; else cat "{state}/open.json"; fi ;;
+  "api repos/o/r/rules/branches/master") echo '[]' ;;
+  "pr view") if [ -f "{state}/closed-$3" ]; then echo "CLOSED {head}"; else echo "OPEN {head}"; fi ;;
   "pr close") touch "{state}/closed-$3" ;;
   *) echo UNEXPECTED >> "{state}/log"; exit 1 ;;
 esac
