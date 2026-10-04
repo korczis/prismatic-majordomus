@@ -11,6 +11,7 @@ Current version: **0.13.1**
 
 ### Decisions
 
+- **ADR-0104** The product is filed under a few domains, and a feature names its one _(proposed)_
 - **ADR-0077** Published content may be written in the reader's language; the repository's own artifacts may not _(proposed)_
 
 ### Added

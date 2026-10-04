@@ -1008,6 +1008,40 @@ fn a_crate_source_that_is_not_a_unit_test_module_is_run_by_nothing() {
     assert_eq!(p.state, RuleState::Unrunnable);
 }
 
+/// The declaration is found wherever rustfmt may put it: in the crate root (`lib.rs` for
+/// `src/tests.rs`) and with a visibility in front (`pub(crate) mod tests;`).
+#[test]
+fn a_unit_test_module_is_found_at_the_crate_root_and_with_a_visibility() {
+    let repo = crate_with_unit_test_modules();
+    let src = repo.root().join("apps/majordomus-cli/src");
+    std::fs::write(
+        src.join("lib.rs"),
+        "pub mod alpha;\n\n#[cfg(test)]\nmod tests;\n",
+    )
+    .unwrap();
+    std::fs::write(src.join("tests.rs"), "#[test]\nfn root() {}\n").unwrap();
+    let p = rule_naming(&repo, "apps/majordomus-cli/src/tests.rs");
+    assert_eq!(p.tests[0].kind, ArtifactKind::Gate);
+    assert_eq!(p.tests[0].gates, ["rust-check"]);
+    assert!(
+        p.satisfied,
+        "the crate root's test module is run by the crate gate"
+    );
+
+    let repo = crate_with_unit_test_modules();
+    let src = repo.root().join("apps/majordomus-cli/src");
+    std::fs::create_dir_all(src.join("delta")).unwrap();
+    std::fs::write(
+        src.join("delta/mod.rs"),
+        "pub fn four() -> u8 {\n    4\n}\n\n#[cfg(test)]\npub(crate) mod tests;\n",
+    )
+    .unwrap();
+    std::fs::write(src.join("delta/tests.rs"), "#[test]\nfn four() {}\n").unwrap();
+    let p = rule_naming(&repo, "apps/majordomus-cli/src/delta/tests.rs");
+    assert_eq!(p.tests[0].kind, ArtifactKind::Gate);
+    assert!(p.satisfied, "a visibility does not hide the declaration");
+}
+
 /// A unit-test module that is not in the tree is driven by nothing and still a lie: the
 /// path's shape earns it no gate.
 #[test]

@@ -17606,6 +17606,7 @@
             "The extractor version is part of the manifest, so a change to the extractor invalidates it",
             "The measured cost of a no-op sync and of a cold sync on this repository is recorded as evidence"
           ],
+          "cancelled": true,
           "created_at": "2026-09-04",
           "current_state": "Nothing is generated and nothing is cached. The site generator's --check mode is the precedent for a command that reports drift between canonical input and derived output without regenerating it.",
           "depends_on": [
@@ -17631,7 +17632,7 @@
             "test/cases/68_knowledge_manifest.sh"
           ],
           "slug": "knowledge-manifest",
-          "updated_at": "2026-09-04",
+          "updated_at": "2026-10-04",
           "validation": [
             "bash test/run.sh 68_knowledge_manifest"
           ]
@@ -17655,7 +17656,7 @@
           "created_at": "2026-09-04",
           "current_state": "`majordomus search` is a literal grep over the six operational record kinds and must keep that contract unchanged. Nothing searches the repository's canonical artifacts.",
           "depends_on": [
-            "I0810"
+            "I0809"
           ],
           "evidence_required": [
             "query_explainable",
@@ -19206,6 +19207,8 @@
         "route": "/cockpit/objects/issue/i0901",
         "source": ".ai/repo/project/issues/I0901.yaml",
         "facts": {
+          "completed_at": "2026-10-04T10:00:11Z",
+          "completed_event": "sha256:b99ecd9dd4aebe3dcdfc21578309bbe5e10827ea7b476cab602f930f2ea194d7",
           "created_at": "2026-09-06",
           "depends_on": [],
           "evidence_required": [
@@ -19230,11 +19233,15 @@
             "share/schemas"
           ],
           "slug": "deployment-kind",
-          "updated_at": "2026-09-10",
+          "started_at": "2026-10-04T09:55:21Z",
+          "started_event": "sha256:3123ebbc178cc682288eec0f9735a2ae28e4974ab4874911313c5b23c08673ea",
+          "updated_at": "2026-10-04T10:00:11Z",
           "validation": [
             "bash test/run.sh",
             "bin/majordomus doctor"
-          ]
+          ],
+          "verified_at": "2026-10-04T09:59:52Z",
+          "verified_event": "sha256:257f73020c90af8cfd27a4ce7eac9f497c0ee1c64fe49043e12865d7d4b9e2b4"
         }
       },
       {
@@ -20943,6 +20950,8 @@
             "Runtime state is an overlay over the definitions, distinguishable in the response",
             "A test exercises the operation against a running server rather than a mock"
           ],
+          "completed_at": "2026-10-04T10:11:46Z",
+          "completed_event": "sha256:af8b77f1ed46772ea458a809b1415c9e0f7852db8407bb8ebffd3b5020dc8837",
           "created_at": "2026-09-06",
           "current_state": "The Cockpit renders in-process. No capability serves the aggregate graph.",
           "depends_on": [
@@ -20967,11 +20976,15 @@
             "apps/majordomus-cli/src/capability/builtin/graph.rs"
           ],
           "slug": "runtime-graph-read",
-          "updated_at": "2026-09-06",
+          "started_at": "2026-10-04T10:11:17Z",
+          "started_event": "sha256:463264f9562133c078de77b0f39c00f92a1744fbfade547ea3b07bf7a4b02577",
+          "updated_at": "2026-10-04T10:11:46Z",
           "validation": [
             "cargo test --workspace --all-features",
             "majordomus generate --check"
           ],
+          "verified_at": "2026-10-04T10:11:35Z",
+          "verified_event": "sha256:f7748bbfa37ff77a1a89c2d8931ba91927ff8683c31fcc72a7bde1de5697c4aa",
           "why": "A route added by hand for the Cockpit would be the one endpoint missing from OpenAPI, from the reference and from the smoke suite. The registry exists precisely so that does not happen."
         }
       },
@@ -53193,7 +53206,7 @@
       },
       {
         "source": "majordomus://issue/I0811",
-        "target": "majordomus://issue/I0810",
+        "target": "majordomus://issue/I0809",
         "kind": "depends_on"
       },
       {
