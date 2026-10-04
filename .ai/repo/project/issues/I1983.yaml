@@ -1,0 +1,30 @@
+id: I1983
+milestone: adopter-upgrades
+title: "Upgrading the vendored rules reports or applies the policy and source keys those rules depend on"
+slug: rules-vendor-upgrade-carries-the-keys-its-rules-need
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "When `rules vendor update` brings in rules that read policy keys or knowledge source classes the adopter's layer lacks, report each missing key with its skeleton default, or apply it, and have doctor name the gap."
+why: "OSCILLA vendored the 0.12 rules (34f967a), including candidates-reviewed and the knowledge rules, but its .ai/repo/knowledge/sources.yaml still lacks the candidates, gap, critique, intent, domain and claim_page classes, and its policy lacks knowledge.candidates_max_files and candidate_max_age_minutes, all of which share/skeleton carries."
+current_state: "rules vendor update copies the package and its manifest only."
+desired_state: "The update names every skeleton key the new rules read and the adopter lacks, and doctor reports the same list until it is resolved."
+scope:
+  - "lib/rules.sh"
+  - "lib/doctor.sh"
+  - "share/standard/majordomus"
+  - "share/skeleton"
+  - "docs"
+  - "test/cases"
+depends_on:
+  - "I1980"
+acceptance_criteria:
+  - "Vendoring a newer package into a fixture with an older skeleton prints the missing keys with their defaults"
+  - "doctor names the same missing keys"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "vendor_update_names_missing_keys"
+created_at: 2026-10-04
+updated_at: 2026-10-04

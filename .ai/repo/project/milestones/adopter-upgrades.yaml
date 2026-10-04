@@ -1,0 +1,33 @@
+id: adopter-upgrades
+title: An adopting repository survives a Majordomus upgrade, and what the tool vendors into it is adopter-neutral
+slug: adopter-upgrades
+order: 115
+priority: p0
+problem: "A downstream repository, OSCILLA, audited on 2026-10-04 against v0.13.0 (e08aec8651), shows the tool breaking its adopters in ways no test in this repository sees, because every test here runs this repository's own layout. Installing 0.12.0 machine-wide made doctor report 433 failures in OSCILLA: unsealed plan stamps and use-case steps reclassified as state-mutating. Its pre-commit hook runs doctor, so every commit was refused until the layer was migrated by hand, and the migrated layer is then rejected by 0.10. Nothing records which tool version a layer was written for, and migrate handles only .majordomus to .ai. Live use-case scenarios refuse read-only knowledge subcommands while admitting check --checkpoint, which writes. Upgrading the vendored rules leaves the policy and source keys they depend on behind. The knowledge deriver writes untracked candidates onto a trunk that only pull requests change. The vendored rules and the init skeleton carry this repository's narrative, test paths and stack."
+outcome: "An adopter can upgrade the tool, or vendor its rules, and be told exactly what to migrate before anything refuses its commits. The migration is a command, not a hand replay. What the tool writes into an adopter (rules, skeleton, scope, candidates) is neutral to this repository and keeps a PR-only trunk clean."
+current_state: "At e08aec8651 the manifest and policy name no tool or layer version. SEALED_FROM is one global constant (lib/project.awk:45, plan.rs:122). share/commands.yaml classes each top-level command once. lib/migrate.sh moves only .majordomus/. docs/INSTALL.md says only to re-run the installer to upgrade. The knowledge deriver writes .ai/repo/knowledge/candidates/ in whichever checkout closes an episode. The rule package manifest says source_revision 0.6.0."
+desired_state: "doctor separates version-skew findings from defects and names the migration that clears them. migrate carries a layer from one version to the next, including re-sealing old plan stamps with their original times. The effect class is judged per subcommand and flag. rules vendor update reports or applies the skeleton keys the new rules need. Candidates never dirty a trunk. Vendored rules and the init skeleton say nothing that is only true of this repository."
+scope:
+  - .ai/repo/project
+  - lib
+  - share
+  - apps/majordomus-cli/src/plan.rs
+  - docs
+  - test/cases
+non_scope:
+  - "OSCILLA itself: it is the evidence, read only"
+  - "Fixes already in flight: #780-#784, fix/context-resolves-a-path-not-yet-created, #746 and 9030dc4795"
+  - "Accepting any ADR these issues propose; acceptance is the owner's act"
+acceptance_criteria:
+  - "Upgrading the tool over a layer written by the previous minor version yields a doctor report that names version skew and the migration command, not defects; proven by the case I1980 adds"
+  - "A live use-case scenario may run a read-only subcommand of a command that also writes, and may not run a writing flag of a read-only command; proven by the case I1981 adds"
+  - "Every issue of this milestone is DONE or CANCELLED with its reason"
+validation:
+  - bin/majordomus plan validate
+  - bin/majordomus usecase validate
+  - scripts/derive-check
+evidence_required:
+  - version_skew_is_named
+  - effect_class_per_subcommand
+created_at: 2026-10-04
+updated_at: 2026-10-04

@@ -1,0 +1,24 @@
+id: I1989
+milestone: adopter-upgrades
+title: "init seeds a scope for the stack it finds, not for this repository's"
+slug: init-seeds-a-scope-for-the-stack-it-finds
+priority: p3
+profile: implementation
+parallel_safe: true
+objective: "Make the scope skeleton neutral, or detected from the adopter's files, rather than seeded with Elixir and Rust paths and a size cap that excludes committed build output."
+why: "OSCILLA's scope.yaml was seeded with priv/**/*.exs, mix.exs and Cargo.toml, excludes **/dist/ and caps max_bytes at 1 MiB, while its deliverable is a committed 2.6 MB dist/index.html; scripts/** had to be added by hand (1655002, 1a4d708)."
+current_state: "share/skeleton scope is stack-specific."
+desired_state: "init writes a scope that names what the adopter's tree contains, and says what it guessed."
+scope:
+  - "share/skeleton"
+  - "lib/init.sh"
+  - "test/cases"
+acceptance_criteria:
+  - "init in a fixture JavaScript repository writes no Elixir or Rust paths into its scope"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "init_scope_detected_case"
+created_at: 2026-10-04
+updated_at: 2026-10-04
