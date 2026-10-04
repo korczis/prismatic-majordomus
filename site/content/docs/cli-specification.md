@@ -551,8 +551,9 @@ majordomus context check-sync [--base <ref>]  validate, projections up to date, 
 ```
 
 The target of `resolve`, `explain` and the bare briefing is a repository-relative
-directory (a file resolves to its own); a path that does not exist, or a symlink or `..`
-that escapes the repository, is refused (`15`, `refused-path`). Inside the `.ai/` tree
+directory (a file resolves to its own); a path that does not exist yet resolves from its
+ancestors, as a file in its parent unless written with a trailing `/`, and says so; a
+symlink or `..` that escapes the repository is refused (`15`, `refused-path`). Inside the `.ai/` tree
 the result is the ancestor chain admitted by each document's scope; outside it, the root
 chain plus every document whose `tracks` matches the target. Order is depth, then
 `order`, then path. The briefing gains a `CONTEXT DOCUMENTS` section listing the
