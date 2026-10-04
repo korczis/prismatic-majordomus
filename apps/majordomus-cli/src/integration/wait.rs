@@ -15,16 +15,16 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 
-use super::drain::{events, record, IntegrationEvent};
+use super::drain::{events, record, IntegrationAction, IntegrationEvent};
 use super::{ExecutorWait, IntegrationQueue, PassedOver, PullRequestDisposition};
 
 /// A pull request passed over this many times while actionable is called starving.
 pub const STARVING_AFTER: u32 = 3;
 
 /// The trail's word for a pull request that became actionable.
-pub const BECAME_ACTIONABLE: &str = "became_actionable";
+pub const BECAME_ACTIONABLE: IntegrationAction = IntegrationAction::BecameActionable;
 /// The trail's word for one that stopped being actionable.
-pub const LEFT_ACTIONABLE: &str = "left_actionable";
+pub const LEFT_ACTIONABLE: IntegrationAction = IntegrationAction::LeftActionable;
 
 /// Whether the executor acts on a disposition: it merges a ready one and brings master into
 /// a refreshable one.
@@ -40,7 +40,7 @@ pub fn actionable(d: PullRequestDisposition) -> bool {
 pub fn waits(trail: &[IntegrationEvent]) -> BTreeMap<u64, ExecutorWait> {
     let mut out: BTreeMap<u64, ExecutorWait> = BTreeMap::new();
     for e in trail {
-        match (e.action.as_str(), e.pr) {
+        match (e.action, e.pr) {
             (BECAME_ACTIONABLE, Some(n)) => {
                 out.insert(
                     n,
@@ -51,17 +51,22 @@ pub fn waits(trail: &[IntegrationEvent]) -> BTreeMap<u64, ExecutorWait> {
                     },
                 );
             }
-            (LEFT_ACTIONABLE | "merge_succeeded" | "closed_superseded", Some(n)) => {
+            (
+                LEFT_ACTIONABLE
+                | IntegrationAction::MergeSucceeded
+                | IntegrationAction::ClosedSuperseded,
+                Some(n),
+            ) => {
                 out.remove(&n);
             }
-            ("selected" | "refresh_selected", Some(chosen)) => {
+            (IntegrationAction::Selected | IntegrationAction::RefreshSelected, Some(chosen)) => {
                 for n in &e.passed_over {
                     if let Some(w) = out.get_mut(n) {
                         w.passed_over += 1;
                         w.last_passed_over = Some(PassedOver {
                             at: e.at.clone(),
                             for_pr: chosen,
-                            action: e.action.clone(),
+                            action: e.action,
                         });
                     }
                 }
@@ -75,8 +80,9 @@ pub fn waits(trail: &[IntegrationEvent]) -> BTreeMap<u64, ExecutorWait> {
 /// Record the transitions between what the trail says is actionable and what `queue` says
 /// is: one `became_actionable` per pull request that newly is, one `left_actionable` per
 /// pull request that no longer is, with the disposition it has now (or that it is no longer
-/// open). Nothing is recorded when nothing changed. Returns how many were recorded.
-pub fn record_transitions(root: &Path, queue: &IntegrationQueue) -> usize {
+/// open). Nothing is recorded when nothing changed. Returns how many were recorded, or why
+/// the trail could not take one.
+pub fn record_transitions(root: &Path, queue: &IntegrationQueue) -> Result<usize, String> {
     let before: BTreeSet<u64> = waits(&events(root)).into_keys().collect();
     let now: BTreeSet<u64> = queue
         .assessments
@@ -90,20 +96,16 @@ pub fn record_transitions(root: &Path, queue: &IntegrationQueue) -> usize {
         record(
             root,
             IntegrationEvent {
-                at: String::new(),
-                actor: String::new(),
-                action: BECAME_ACTIONABLE.into(),
                 pr: Some(*pr),
                 master_before: a.map(|a| a.evaluated_against.master_sha.clone()),
                 head_sha: a.map(|a| a.evaluated_against.head_sha.clone()),
-                master_after: None,
                 reasons: a.map(|a| a.reasons.clone()).unwrap_or_default(),
                 detail: a
                     .map(|a| a.disposition.as_str().to_string())
                     .unwrap_or_default(),
-                passed_over: Vec::new(),
+                ..IntegrationEvent::of(BECAME_ACTIONABLE)
             },
-        );
+        )?;
         n += 1;
     }
     for pr in before.difference(&now) {
@@ -114,21 +116,16 @@ pub fn record_transitions(root: &Path, queue: &IntegrationQueue) -> usize {
         record(
             root,
             IntegrationEvent {
-                at: String::new(),
-                actor: String::new(),
-                action: LEFT_ACTIONABLE.into(),
                 pr: Some(*pr),
                 master_before: Some(queue.master_sha.clone()),
                 head_sha: queue.get(*pr).map(|a| a.evaluated_against.head_sha.clone()),
-                master_after: None,
-                reasons: Vec::new(),
                 detail,
-                passed_over: Vec::new(),
+                ..IntegrationEvent::of(LEFT_ACTIONABLE)
             },
-        );
+        )?;
         n += 1;
     }
-    n
+    Ok(n)
 }
 
 /// Put the trail's waits on the queue: each actionable assessment gets its wait, and the

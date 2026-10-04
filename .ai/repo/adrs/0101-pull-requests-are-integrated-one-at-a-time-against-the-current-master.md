@@ -59,12 +59,21 @@ with one canonical state, one classification and one executor.
 2. **The relation to master is git's.** `git merge-tree --write-tree` with this clone's
    drivers, and `git check-attr merge` for which paths are derived, from master's own
    `.gitattributes`. A conflict on a derived path is the regeneration's, not a person's. The
-   result is cached by the pair of SHAs, which are immutable.
+   result is cached by the pair of SHAs, which are immutable. It is decided on exactly the
+   head the assessment names as evaluated: a head that is not in the clone, because it moved
+   during the refresh, is `unknown`, never the relation of whatever a fetched ref holds now.
+   An attribute read that fails is `unknown`, never "nothing is derived". Only a pair of full
+   commit ids is a cache key, and an `unknown` is never cached.
 3. **Thirteen dispositions, decided in one order.** `ready` is reached only when the pull
    request targets the base, is not a draft, carries no blocking label, contains the
    current master, has its declared dependencies landed, satisfies the review policy, and
    has every *required* check passed on its current head. A required check that is pending,
-   missing, skipped or unreadable is not passed.
+   missing, skipped or unreadable is not passed. The forge's review decision comes before the
+   protection's requirement: `REVIEW_REQUIRED` is a pending review even where the branch
+   protection requires none, because a ruleset or code owners can. A dependency is declared
+   only by a line that opens with `Depends on`, `Stacked on`, `Requires` or `Land after` and a
+   number; the same words mid-sentence are prose. A pull request is stacked only on a branch
+   of this repository, never on a fork's branch of the same name.
 4. **One merge at a time, and no plan survives it.** The executor's step takes no plan. It
    observes the forge, decides, observes again, and acts only if the second decision names
    the same master and head and still says `ready`. `drain` is a loop over that step. There
@@ -74,7 +83,12 @@ with one canonical state, one classification and one executor.
    and a fresh derive, pushed as a plain fast-forward, never a rewrite. This is what
    `project.land-and-publish` already prescribes. The pipeline is one deep: while a
    refreshed pull request waits for its checks, no other is refreshed, because merging the
-   first would put the second behind again and waste its CI run.
+   first would put the second behind again and waste its CI run. Only a run the executor
+   started holds it: the required check of the head a `refreshed` event recorded as pushed,
+   while it is pending or missing. Missing counts because an aggregate check is not created
+   until the jobs it needs finish, but it holds only for a bound after the push (four hours),
+   so a check that never reports cannot freeze every refresh. A check on a head the author
+   pushed holds nothing.
 6. **Cleanup demands more than merging.** Only a pull request whose head is an ancestor of
    master, or whose merge changes no file, is closed, and only with `--apply`. One that
    differs only in derived output is `possibly_redundant` and is left for a person. Age,
@@ -86,7 +100,11 @@ with one canonical state, one classification and one executor.
    with its age. SECURITY.md names the exception.
 9. **Every act is recorded.** Selections, stale decisions, merge attempts, merges with the
    master before and after, refusals, refreshes and closures go to an append-only trail that
-   the `integration.events` capability serves.
+   the `integration.events` capability serves. The trail is the repository's, not a
+   checkout's: one file under the common git directory,
+   `<git-common-dir>/majordomus/integration/events.jsonl`, beside the lease, so every
+   worktree writes and reads the same one. Each act is appended before it is taken, and an
+   act the trail cannot record is not taken.
 
 ## Consequences
 

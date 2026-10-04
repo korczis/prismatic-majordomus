@@ -237,11 +237,7 @@ pub fn run(args: PrsArgs) -> Result<u8> {
                 }
                 w(&mut out, format!("stopped: {}", report.stopped))?;
             }
-            let failed = report
-                .steps
-                .iter()
-                .any(|s| matches!(s, DrainStepOutcome::VerificationFailed { .. }));
-            Ok(if failed { FINDING } else { 0 })
+            Ok(drain_exit(&report))
         }
         PrsCommand::Cleanup { apply } => {
             let mut integrator = ForgeIntegrator {
@@ -313,6 +309,20 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             }
             Ok(0)
         }
+    }
+}
+
+/// The exit code of a bounded drain: 12 when an act was withheld because the trail could not
+/// record it — the repository is not usable for integration until it can — 10 when a merge
+/// could not be verified, 0 otherwise.
+fn drain_exit(report: &drain::DrainReport) -> u8 {
+    let stopped_on = |f: fn(&DrainStepOutcome) -> bool| report.steps.iter().any(f);
+    if stopped_on(|s| matches!(s, DrainStepOutcome::TrailUnwritable { .. })) {
+        UNUSABLE
+    } else if stopped_on(|s| matches!(s, DrainStepOutcome::VerificationFailed { .. })) {
+        FINDING
+    } else {
+        0
     }
 }
 
@@ -391,7 +401,7 @@ fn brief(root: &std::path::Path) -> Option<String> {
     if let Some(m) = drain::events(root)
         .iter()
         .rev()
-        .find(|e| e.action == "merge_succeeded")
+        .find(|e| e.action == drain::IntegrationAction::MergeSucceeded)
     {
         parts.push(format!(
             "last merge #{} {}",
@@ -461,6 +471,13 @@ fn describe(s: &DrainStepOutcome) -> String {
         DrainStepOutcome::RefreshFailed { pr, reason } => {
             format!("#{pr}: bringing master in failed: {reason}")
         }
+        DrainStepOutcome::TrailUnwritable {
+            pr,
+            unrecorded,
+            reason,
+        } => format!(
+            "#{pr}: nothing was done, because the trail could not record {unrecorded}: {reason}"
+        ),
     }
 }
 
@@ -701,8 +718,9 @@ mod tests {
 
     use super::*;
     use crate::integration::{
-        drain::IntegrationEvent, store_observation, wait, CheckObservation, CheckRunState,
-        ForgeObservation, PullRequestObservation, OBSERVATION_SCHEMA,
+        drain::{IntegrationAction, IntegrationEvent},
+        store_observation, wait, CheckObservation, CheckRunState, ForgeObservation,
+        PullRequestObservation, OBSERVATION_SCHEMA,
     };
 
     struct Scratch(std::path::PathBuf);
@@ -812,21 +830,18 @@ mod tests {
             },
         )
         .unwrap();
-        let event = |action: &str, pr: u64, over: Vec<u64>| IntegrationEvent {
+        let event = |action: IntegrationAction, pr: u64, over: Vec<u64>| IntegrationEvent {
             at: "2026-10-01T00:00:00Z".into(),
             actor: "test".into(),
-            action: action.into(),
             pr: Some(pr),
             master_before: Some(sha.clone()),
             head_sha: Some(sha.clone()),
-            master_after: None,
-            reasons: vec![],
-            detail: String::new(),
             passed_over: over,
+            ..IntegrationEvent::of(action)
         };
-        drain::record(&root, event(wait::BECAME_ACTIONABLE, 1, vec![]));
+        drain::record(&root, event(wait::BECAME_ACTIONABLE, 1, vec![])).unwrap();
         for _ in 0..wait::STARVING_AFTER {
-            drain::record(&root, event("selected", 9, vec![1]));
+            drain::record(&root, event(IntegrationAction::Selected, 9, vec![1])).unwrap();
         }
         let q = integration::queue_of(&root).expect("a queue");
         (Scratch(root), q)
@@ -936,6 +951,11 @@ mod tests {
                 pr: 9,
                 reason: "conflict".into(),
             },
+            DrainStepOutcome::TrailUnwritable {
+                pr: 10,
+                unrecorded: IntegrationAction::MergeAttempted,
+                reason: "read-only".into(),
+            },
         ];
         let said: std::collections::BTreeSet<String> = outcomes.iter().map(describe).collect();
         assert_eq!(
@@ -944,6 +964,32 @@ mod tests {
             "two outcomes read alike: {said:?}"
         );
         assert!(describe(&outcomes[3]).contains("aaaaaaaaaa -> bbbbbbbbbb"));
+        assert!(describe(&outcomes[10]).contains("merge_attempted"));
+    }
+
+    #[test]
+    fn a_drain_that_could_not_record_an_act_exits_unusable() {
+        let report = |steps: Vec<DrainStepOutcome>| drain::DrainReport {
+            dry_run: false,
+            steps,
+            merged: Vec::new(),
+            stopped: String::new(),
+        };
+        let unrecorded = DrainStepOutcome::TrailUnwritable {
+            pr: 1,
+            unrecorded: IntegrationAction::MergeAttempted,
+            reason: "read-only".into(),
+        };
+        let unverified = DrainStepOutcome::VerificationFailed {
+            pr: 2,
+            reason: "absent".into(),
+        };
+        assert_eq!(drain_exit(&report(vec![unrecorded])), UNUSABLE);
+        assert_eq!(drain_exit(&report(vec![unverified])), FINDING);
+        assert_eq!(
+            drain_exit(&report(vec![DrainStepOutcome::WouldMerge { pr: 3 }])),
+            0
+        );
     }
 
     #[test]

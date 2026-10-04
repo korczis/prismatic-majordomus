@@ -34,6 +34,13 @@ every pull request conflicting. The relation to master is decided by git: `git m
 --write-tree` with the drivers, and `git check-attr merge` for which paths are derived,
 according to master's own `.gitattributes`.
 
+The relation is decided on exactly the head the forge reported, the one the assessment names
+as evaluated. A head that moved during the refresh is not in the clone, and its relation is
+`unknown` until the next refresh. It is never decided on whatever a fetched ref holds now.
+When git cannot say which paths are derived, because `git check-attr` failed, the relation is
+`unknown` too, never "nothing is derived". A relation is cached only under a pair of full
+commit ids, and an `unknown` is never cached.
+
 ## Dispositions
 
 Every open pull request has exactly one. They are decided in the order below, so an earlier
@@ -44,14 +51,14 @@ answer wins. `ready` is reached only after every other question is answered in i
 | Disposition | Lane | When | Next |
 |---|---|---|---|
 | `other_base` | held | targets a branch other than the base, and no open pull request's head | — |
-| `waiting_for_dependency` | waiting | stacked on another open pull request, or declares `Depends on #N`/`Stacked on #N`/`Requires #N`/`After #N` on an open one | land that one first |
+| `waiting_for_dependency` | waiting | stacked on another open pull request of this repository, or declares a dependency on an open one (see below) | land that one first |
 | `draft` | held | a draft | mark it ready |
 | `blocked` | held | carries a blocking label (`do-not-merge`, `blocked`, `hold`, `on-hold`, `wip`, `manual-merge`) | remove it |
 | `superseded` | cleanup | its head is an ancestor of master, or merging it changes no file | `prs cleanup --apply` closes it |
 | `possibly_redundant` | cleanup | merging it changes only derived artifacts | a person decides |
 | `unknown` | held | its head is not fetched, git failed, or the branch protection could not be read | `prs refresh` |
 | `conflicting` | repair | the merge conflicts on an authored path | the author resolves it |
-| `waiting_for_review` | waiting | a required review is missing or changes were requested | a reviewer |
+| `waiting_for_review` | waiting | a required review is missing or changes were requested (see below) | a reviewer |
 | `needs_repair` | repair | a required check failed on its head, or it is behind master from a fork | the author |
 | `needs_refresh` | waiting | merges cleanly but does not contain master | `prs drain --refresh` |
 | `waiting_for_checks` | waiting | contains master; a required check is pending or missing on this head | wait |
@@ -63,6 +70,48 @@ answer wins. `ready` is reached only after every other question is answered in i
 A required check that is pending, missing, skipped or unreadable is not passed. The required
 checks are read from the base's branch protection, never listed here. A green check that is
 not required proves nothing.
+
+### Review states
+
+The forge's review decision comes first, and the branch protection's requirement second:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| The forge says | The protection requires a review | Review | Disposition, if nothing earlier decided |
+|---|---|---|---|
+| `CHANGES_REQUESTED` | any | `changes_requested` | `waiting_for_review` |
+| `APPROVED` | any | `approved` | goes on to the checks |
+| `REVIEW_REQUIRED` | any | `pending` | `waiting_for_review` |
+| nothing | yes | `pending` | `waiting_for_review` |
+| nothing | no | `not_required` | goes on to the checks |
+| nothing | unread | `unknown` | `unknown` |
+
+</div>
+
+
+`REVIEW_REQUIRED` is pending even when the branch protection requires no review. A ruleset or
+code owners can require one that the protection does not, and the forge's word is that a
+review is still owed.
+
+### Dependency markers
+
+A pull request depends on another when a line of its body opens with one of these markers,
+in any case, followed by one or more numbers:
+
+- `Depends on #N`
+- `Stacked on #N`
+- `Requires #N`
+- `Land after #N`
+
+Only a bullet (`-`, `*`, `+`, `1.`), quote marks (`>`) and emphasis (`*`, `_`) may come before
+the marker, so `- **Depends on:** #7` declares a dependency. More numbers follow with commas,
+`and` or `&`: `Stacked on #644 and #645`. The same words anywhere else in a line are prose:
+`a regression introduced after #540` and `thereafter #5` declare nothing, and neither does a
+bare `After #N`. A dependency is satisfied once that pull request is no longer open.
+
+A pull request that targets another branch is stacked on the open pull request whose head is
+that branch. Only branches of this repository count. A fork's branch says nothing about a
+branch here, whatever it is called, so a fork whose branch is named `master` stacks nothing.
 
 ## The rank
 
@@ -116,6 +165,16 @@ refreshed pull request waits for its checks, no other is refreshed, because merg
 would put the second behind again. Throughput is therefore one pull request per run of the
 required check, which is the true cost of this repository's mechanics.
 
+Only a run the executor started holds the pipeline: the required check of the head a
+`refreshed` event recorded as pushed (`head_after`), while it is *pending* or *missing*. Both
+count, because the forge creates no check run for an aggregate job such as this repository's
+`ci` until every job it needs has finished, so the executor's own head reads as `missing` for
+most of its run. A `missing` check holds the pipeline only for `REFRESHED_HEAD_REPORTS_WITHIN`
+(four hours) after that event. Past it, the check is taken never to report and the next pull
+request is refreshed, so one silent check cannot stop every refresh. A check running on a head
+the author pushed holds nothing. A `refreshed` event recorded before `head_after` existed names
+no head, so a pull request refreshed by an older executor does not hold the pipeline.
+
 ## Cleanup
 
 Closing a pull request requires more evidence than merging one. `prs cleanup` lists the
@@ -129,12 +188,47 @@ repository's own setting decides that.
 - One executor per base branch: `drain` and `cleanup --apply` hold an exclusive lease at
   `<git-common-dir>/majordomus/locks/integration-<base>.lock`, with the holder recorded. A
   lease untouched for 30 minutes is reclaimed. Observers never take it.
-- Every act is appended to `.ai/local/state/integration/events.jsonl`: `selected`,
-  `stale_decision`, `merge_attempted`, `merge_succeeded`, `merge_failed`,
-  `verification_failed`, `refresh_selected`, `refreshed`, `refresh_failed`,
-  `closed_superseded`, `idle`, and the two transitions of a wait, `became_actionable` and
-  `left_actionable`.
-- A dry run observes and decides, and changes and records nothing.
+- Every act is appended to the audit trail before it happens. The trail is one file per
+  repository, `<git-common-dir>/majordomus/integration/events.jsonl`, beside the lease, so
+  every worktree writes the same trail and `prs events`, `prs brief`, `prs status`, the
+  `integration.*` capabilities and the Cockpit read it from any of them. The last queue's
+  summary (`summary.json`) sits beside it. The observation and the relation cache stay in
+  the checkout, under `.ai/local/state/integration/`.
+- The trail is written first. A merge is asked of the forge only after `merge_attempted` is
+  on the trail, a refresh is pushed only after `refresh_attempted`, and a pull request is
+  closed only after `close_attempted`. When that line cannot be written, the act is not
+  taken: the step reports `trail_unwritable`, the drain stops, and `prs drain` exits 12. A
+  lease the trail cannot record is given back and refused. Any other write the trail
+  refuses ends the run with the error rather than continuing unrecorded.
+- The events, each a typed `action` on one JSON line:
+
+  | Event | When |
+  |---|---|
+  | `lease_acquired`, `lease_released` | the executor takes and gives back the base branch's lease |
+  | `continuous_started`, `continuous_stopped` | a continuous drain starts, and stops with its reason |
+  | `observed` | `prs refresh`, or an executor step, observed the forge |
+  | `became_actionable`, `left_actionable` | the two transitions a wait is folded from |
+  | `selected` | the first ready pull request is chosen, with those passed over |
+  | `refresh_selected` | the first refreshable one is chosen, with its evidence |
+  | `stale_decision` | master or the head moved between the decision and the act |
+  | `merge_attempted` | before the merge, with its evidence |
+  | `merge_succeeded`, `merge_failed`, `verification_failed` | after it |
+  | `refresh_attempted` | before master is merged into the branch and pushed |
+  | `refreshed` (with the head it pushed), `refresh_failed` | after it |
+  | `close_attempted` | before a superseded pull request is closed |
+  | `closed_superseded` (with its evidence), `close_failed` | after it |
+  | `idle` | nothing was ready |
+
+  An event may also carry `evidence` (the assessment's, on the four acts named above),
+  `class` (why it failed, once classified) and `merge_commit`. Each is left out when empty,
+  and a line written before they existed reads with them empty.
+- A checkout that kept its own trail under `.ai/local/state/integration/events.jsonl` has
+  it appended to the repository's trail the first time the trail is read while the
+  repository has none. The marker `events.moved-from` beside the trail keeps that from
+  happening twice. Old trails of other worktrees are left in place, because appending one
+  after another would fold their lines out of order.
+- A dry run observes and decides and changes nothing. It records only what it observed
+  (`observed`).
 - A refused merge and a stale decision are specific to the candidate: the next step
   re-plans. A verification failure stops the drain.
 - Transient failures of the forge are asked again (`crate::integration::retry`): a timeout,
@@ -154,8 +248,8 @@ repository's own setting decides that.
 | `majordomus prs` / `prs status` | no | the ranked queue; exit 10 when the observation is stale or absent |
 | `majordomus prs plan` | no | the next merge, the next refresh, and the other lanes |
 | `majordomus prs explain <n>` | no | one pull request's evidence and rank |
-| `majordomus prs events` | no | the audit trail |
-| `majordomus prs brief` | no | one line for a briefing: the last queue built here, the lease, the last merge; nothing where the forge was never observed |
+| `majordomus prs events` | no | the repository's audit trail, the same from every worktree |
+| `majordomus prs brief` | no | one line for a briefing: the last queue built in the repository, the lease, the last merge; nothing in a checkout that never observed the forge |
 | `majordomus prs refresh` | yes | observe the forge and fetch every open head |
 | `majordomus prs drain [--max N] [--dry-run] [--refresh]` | yes | integrate, one merge at a time |
 | `majordomus prs drain --continuous [--interval S] [--max N] [--refresh]` | yes | drain, wait, drain again until stopped |

@@ -33,41 +33,56 @@ pub fn has_commit(root: &Path, commit: &str) -> bool {
         .unwrap_or(false)
 }
 
-/// The subset of `paths` that master's `.gitattributes` marks `merge=derived`.
-pub fn derived_paths(root: &Path, master: &str, paths: &[String]) -> BTreeSet<String> {
+/// The subset of `paths` that master's `.gitattributes` marks `merge=derived`, or why git
+/// could not say. An unread attribute is never "not derived": that answer would call every
+/// derived path authored, and a relation decided on it would be kept forever.
+pub fn derived_paths(
+    root: &Path,
+    master: &str,
+    paths: &[String],
+) -> Result<BTreeSet<String>, String> {
     if paths.is_empty() {
-        return BTreeSet::new();
+        return Ok(BTreeSet::new());
     }
-    let mut cmd = Command::new("git");
-    cmd.arg("-C")
-        .arg(root)
+    let mut input = Vec::new();
+    for p in paths {
+        input.extend_from_slice(p.as_bytes());
+        input.push(0);
+    }
+    let out = Command::new("git")
+        .current_dir(root)
         .args(["check-attr", "--source", master, "-z", "--stdin", "merge"])
         .stdin(std::process::Stdio::piped())
         .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::null());
-    let Ok(mut child) = cmd.spawn() else {
-        return BTreeSet::new();
-    };
-    if let Some(mut stdin) = child.stdin.take() {
-        use std::io::Write;
-        let mut input = Vec::new();
-        for p in paths {
-            input.extend_from_slice(p.as_bytes());
-            input.push(0);
-        }
-        let _ = stdin.write_all(&input);
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .and_then(|mut child| {
+            use std::io::Write;
+            // written from another thread while this one reads: git answers as it reads, and
+            // with enough paths its stdout pipe fills while a write from here would still be
+            // blocked on its stdin — each waiting on the other. A write git refused shows in
+            // its exit status, which is read below; stdin closes when the writer ends.
+            let stdin = child.stdin.take();
+            let writer = std::thread::spawn(move || stdin.map(|mut s| s.write_all(&input)));
+            let out = child.wait_with_output();
+            let _ = writer.join();
+            out
+        })
+        .map_err(|e| format!("git check-attr could not run: {e}"))?;
+    if !out.status.success() {
+        return Err(format!(
+            "git check-attr --source {master} failed: {}",
+            String::from_utf8_lossy(&out.stderr).trim()
+        ));
     }
-    let Ok(out) = child.wait_with_output() else {
-        return BTreeSet::new();
-    };
     // -z output: path NUL attribute NUL value NUL, repeated
     let text = String::from_utf8_lossy(&out.stdout);
     let fields: Vec<&str> = text.split('\0').collect();
-    fields
+    Ok(fields
         .chunks(3)
         .filter(|c| c.len() == 3 && c[2] == "derived")
         .map(|c| c[0].to_string())
-        .collect()
+        .collect())
 }
 
 /// What `head` is to `master`, with the authored paths it changes.
@@ -135,7 +150,10 @@ pub fn relation_to_master(root: &Path, master: &str, head: &str) -> RelationToMa
     };
     let mut all: Vec<String> = changed.clone();
     all.extend(conflicted.iter().cloned());
-    let derived = derived_paths(root, master, &all);
+    let derived = match derived_paths(root, master, &all) {
+        Ok(d) => d,
+        Err(reason) => return RelationToMaster::Unknown { reason },
+    };
     // a conflict on a derived path is the regeneration's to resolve, not a person's
     let authored_conflicts: Vec<String> = conflicted
         .iter()
