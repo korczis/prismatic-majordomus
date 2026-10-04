@@ -567,13 +567,34 @@ install_tree() {
   write_launcher "$MJ_BINARY" "$version_dir/bin/$MJ_BINARY"
   write_launcher "$MJ_BINARY-mcp" "$version_dir/bin/$MJ_BINARY-mcp"
   [ -n "$replaced" ] && rm -rf "$replaced"
-  # Older trees are removed only once the launchers point at the new one.
+  # Older trees are removed only once the launchers point at the new one, and only when
+  # nothing runs from them: a server started before the upgrade reads its share/ (the
+  # Cockpit's assets, the kinds, the schemas) for as long as it lives, and removing the
+  # tree under it leaves it answering 404 for the files it was built to serve. A kept tree
+  # is removed by the next install that finds it unused.
   for old in "$MJ_PREFIX"/versions/*; do
     [ -d "$old" ] || continue
     [ "$old" = "$version_dir" ] && continue
+    if holders=$(tree_holders "$old"); then
+      say "kept the superseded tree $old: processes still run from it"
+      printf '%s\n' "$holders" | sed 's/^ */    /' >&2
+      say "  Stop them and the next install removes the tree."
+      continue
+    fi
     debug "removing the superseded tree $old"
     rm -rf "$old"
   done
+}
+
+# Prints the processes running from a tree and answers 0 when there are any. A process
+# table that cannot be read counts as in use: keeping a tree costs disk, removing one a
+# process still needs breaks that process.
+tree_holders() {
+  procs=$(ps -A -o pid= -o args= 2>/dev/null) || {
+    printf '(the process table could not be read)\n'
+    return 0
+  }
+  printf '%s\n' "$procs" | grep -F -- "$1/"
 }
 
 # --------------------------------------------------------------------------- path
