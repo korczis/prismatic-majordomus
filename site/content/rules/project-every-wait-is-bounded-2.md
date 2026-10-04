@@ -1,7 +1,7 @@
 +++
 title = "Every wait is bounded"
 description = "Every wait is bounded"
-weight = 95
+weight = 96
 [extra]
 kind = "rule"
 slug = "project-every-wait-is-bounded-2"

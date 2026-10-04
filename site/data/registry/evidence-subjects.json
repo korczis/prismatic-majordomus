@@ -739,6 +739,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:release.obligation",
+      "path": "/evidence/capabilities/release-obligation/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:release.version",
       "path": "/evidence/capabilities/release-version/"
     },
@@ -2704,6 +2709,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:release advance",
+      "path": "/evidence/commands/release-advance/"
+    },
+    {
+      "kind": "command",
       "subject": "command:release analyze",
       "path": "/evidence/commands/release-analyze/"
     },
@@ -2716,6 +2726,11 @@
       "kind": "command",
       "subject": "command:release changelog",
       "path": "/evidence/commands/release-changelog/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:release obligation",
+      "path": "/evidence/commands/release-obligation/"
     },
     {
       "kind": "command",
@@ -4932,6 +4947,16 @@
       "kind": "capability",
       "id": "release.changelog",
       "page": "/evidence/capabilities/release-changelog/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:release.obligation": {
+      "kind": "capability",
+      "id": "release.obligation",
+      "page": "/evidence/capabilities/release-obligation/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -12623,6 +12648,12 @@
           "category": "e2e"
         },
         {
+          "via": "behaviour",
+          "test": "suite:801_completed_work_advances_the_version",
+          "path": "test/cases/801_completed_work_advances_the_version.sh",
+          "category": "e2e"
+        },
+        {
           "via": "negative",
           "test": "suite:06_finish",
           "path": "test/cases/06_finish.sh",
@@ -12692,6 +12723,12 @@
           "via": "negative",
           "test": "suite:578_an_unknown_gate_refuses_completed",
           "path": "test/cases/578_an_unknown_gate_refuses_completed.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:801_completed_work_advances_the_version",
+          "path": "test/cases/801_completed_work_advances_the_version.sh",
           "category": "e2e"
         }
       ],
@@ -14298,6 +14335,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:release advance": {
+      "kind": "command",
+      "id": "release advance",
+      "page": "/evidence/commands/release-advance/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:release analyze": {
       "kind": "command",
       "id": "release analyze",
@@ -14340,6 +14396,25 @@
       "kind": "command",
       "id": "release changelog",
       "page": "/evidence/commands/release-changelog/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:release obligation": {
+      "kind": "command",
+      "id": "release obligation",
+      "page": "/evidence/commands/release-obligation/",
       "programs": [
         "native"
       ],
@@ -18173,6 +18248,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_release_obligation": {
+      "kind": "mcp",
+      "id": "majordomus_release_obligation",
+      "alias_of": "capability:release.obligation",
+      "programs": [],
+      "members": [
+        "capability:release.obligation"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_release_version": {
       "kind": "mcp",
       "id": "majordomus_release_version",
@@ -19780,6 +19867,27 @@
       "mechanisms": [],
       "findings": []
     },
+    "rule:majordomus.version-obligation": {
+      "kind": "rule",
+      "id": "majordomus.version-obligation",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:801_completed_work_advances_the_version",
+          "path": "test/cases/801_completed_work_advances_the_version.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/801_completed_work_advances_the_version.sh",
+            ".ai/repo/rules/vendor/majordomus/rules/version-obligation.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "rule:project.a-brief-is-kept-as-received": {
       "kind": "rule",
       "id": "project.a-brief-is-kept-as-received",
@@ -20918,6 +21026,37 @@
       "mechanisms": [
         "scripts/ci/prismatic-independence-check"
       ],
+      "findings": []
+    },
+    "rule:project.integrated-work-advances-the-version": {
+      "kind": "rule",
+      "id": "project.integrated-work-advances-the-version",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "suite:801_completed_work_advances_the_version",
+          "path": "test/cases/801_completed_work_advances_the_version.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/801_completed_work_advances_the_version.sh",
+            ".ai/repo/rules/project/integrated-work-advances-the-version.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:802_a_merge_carries_its_version_advance",
+          "path": "test/cases/802_a_merge_carries_its_version_advance.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/802_a_merge_carries_its_version_advance.sh",
+            ".ai/repo/rules/project/integrated-work-advances-the-version.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
       "findings": []
     },
     "rule:project.integration-follows-the-current-master": {
@@ -23721,6 +23860,7 @@
     "crate:properties",
     "crate:providers_projection",
     "crate:redaction",
+    "crate:release_obligation",
     "crate:repository_discovery",
     "crate:response_schema",
     "crate:rules",

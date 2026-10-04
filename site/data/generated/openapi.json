@@ -138,6 +138,7 @@
     "op-recover-orphans": "docs/api/recover/",
     "op-release-analysis": "docs/api/release/",
     "op-release-changelog": "docs/api/release/",
+    "op-release-obligation": "docs/api/release/",
     "op-release-version": "docs/api/release/",
     "op-repository-info": "docs/api/repository/",
     "op-repository-scope": "docs/api/repository/",
@@ -948,6 +949,13 @@
     "schema-VendorView": "docs/api/models/",
     "schema-Verdict": "docs/api/repository/",
     "schema-VerifyReport": "docs/api/objects/",
+    "schema-VersionCarries": "docs/api/release/",
+    "schema-VersionObligation": "docs/api/release/",
+    "schema-VersionObligationCadence": "docs/api/release/",
+    "schema-VersionObligationContract": "docs/api/release/",
+    "schema-VersionObligationPaths": "docs/api/release/",
+    "schema-VersionObligationState": "docs/api/release/",
+    "schema-VersionObligationTrunk": "docs/api/release/",
     "schema-Violation": "docs/api/quality/",
     "schema-ViolationCode": "docs/api/quality/",
     "schema-Vocabulary": "docs/api/obligations/",
@@ -1015,8 +1023,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 167,
-    "schemas": 794,
+    "operations": 168,
+    "schemas": 801,
     "tags": 51
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1240,6 +1248,7 @@
     "recover.orphans": "recover",
     "release.analysis": "release",
     "release.changelog": "release",
+    "release.obligation": "release",
     "release.version": "release",
     "repository.info": "repository",
     "repository.scope": "repository",
@@ -2054,6 +2063,13 @@
     "VendorView": "models",
     "Verdict": "repository",
     "VerifyReport": "objects",
+    "VersionCarries": "release",
+    "VersionObligation": "release",
+    "VersionObligationCadence": "release",
+    "VersionObligationContract": "release",
+    "VersionObligationPaths": "release",
+    "VersionObligationState": "release",
+    "VersionObligationTrunk": "release",
     "Violation": "quality",
     "ViolationCode": "quality",
     "Vocabulary": "obligations",
@@ -16321,6 +16337,7 @@
         "reasoning.record",
         "recover.orphans",
         "release.analysis",
+        "release.obligation",
         "release.version",
         "repository.info",
         "rules.report",
@@ -35963,7 +35980,10 @@
       "used_by_schemas": [
         "ReleaseCommitEvidence",
         "ReleaseSurfaceChange",
-        "ReleaseVersionPlan"
+        "ReleaseVersionPlan",
+        "VersionObligation",
+        "VersionObligationCadence",
+        "VersionObligationContract"
       ],
       "values": [
         {
@@ -45644,6 +45664,381 @@
         "objects.verify"
       ],
       "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a change set carries, from the classes of its paths.\n\nWork dominates: one authored path among a thousand derived ones is work. Otherwise the\nset is named by the strongest machine class it holds, so a release record that lands with\nthe projections it publishes is release evidence, not a projection refresh.\n\n```\nuse majordomus_cli::release::obligation::{Carries, PathClass};\nassert_eq!(Carries::of([PathClass::Derived, PathClass::Work]), Carries::Work);\nassert_eq!(Carries::of([PathClass::Derived, PathClass::ReleaseEvidence]), Carries::ReleaseEvidence);\nassert_eq!(Carries::of([PathClass::Derived]), Carries::GeneratedSync);\nassert_eq!(Carries::of([PathClass::VersionAdvance, PathClass::Derived]), Carries::VersionAdvance);\nassert_eq!(Carries::of([]), Carries::Nothing);\nassert!(Carries::Work.owes_cadence());\nassert!(!Carries::ReleaseEvidence.owes_cadence());\n```",
+      "home": "release",
+      "is_enum": true,
+      "name": "VersionCarries",
+      "properties": [],
+      "type": "\"work\" | \"release-evidence\" | \"version-advance\" | \"generated-sync\" | \"nothing\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "VersionObligation"
+      ],
+      "values": [
+        {
+          "description": "At least one authored path: accepted work, which owes the cadence.",
+          "value": "work"
+        },
+        {
+          "description": "A release record, with or without the projections it publishes.",
+          "value": "release-evidence"
+        },
+        {
+          "description": "A version advance and its projections, and nothing else.",
+          "value": "version-advance"
+        },
+        {
+          "description": "Only projections a generator rewrites.",
+          "value": "generated-sync"
+        },
+        {
+          "description": "No change at all against the trunk.",
+          "value": "nothing"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The version obligation of a tree against its trunk.\n\n```\nuse majordomus_cli::release::obligation::{assemble, Observation, ContractRequirement, ReleasePolicy, PathClass, VersionObligation};\nuse majordomus_cli::release::compat::Impact;\nuse majordomus_cli::release::version::Version;\nlet o: VersionObligation = assemble(\n    Observation { subject: \"feature/x\".into(), trunk: Err(\"no trunk\".into()),\n                  declared: Version::parse(\"1.0.0\"), paths: vec![(\"lib/a.sh\".into(), PathClass::Work)] },\n    ContractRequirement { baseline: None, required: Impact::None, floor: None, unmeasured: None },\n    &ReleasePolicy::default(),\n);\nassert_eq!(o.schema, \"majordomus/version-obligation/v1\");\nassert_eq!(o.state.as_str(), \"unverified\");\n```",
+      "home": "release",
+      "is_enum": false,
+      "name": "VersionObligation",
+      "properties": [
+        {
+          "description": "`OBLIGATION_SCHEMA`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The obligation's identity: the subject that owes it and the trunk version it advances\nfrom. Stable across retries — the same branch over the same trunk is the same\nobligation — and new when the trunk moves, because then the advance is a new one.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The branch, or `HEAD@<commit>` when the tree is detached.",
+          "name": "subject",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The trunk, when it could be read.",
+          "name": "trunk",
+          "refs": [
+            "VersionObligationTrunk"
+          ],
+          "required": false,
+          "type": "VersionObligationTrunk | null"
+        },
+        {
+          "description": "The version this tree declares.",
+          "name": "declared",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the change set carries.",
+          "name": "carries",
+          "refs": [
+            "VersionCarries"
+          ],
+          "required": true,
+          "type": "VersionCarries"
+        },
+        {
+          "description": "The changed paths, by class.",
+          "name": "paths",
+          "refs": [
+            "VersionObligationPaths"
+          ],
+          "required": true,
+          "type": "VersionObligationPaths"
+        },
+        {
+          "description": "The public contract's requirement.",
+          "name": "contract",
+          "refs": [
+            "VersionObligationContract"
+          ],
+          "required": true,
+          "type": "VersionObligationContract"
+        },
+        {
+          "description": "The completion cadence's requirement.",
+          "name": "cadence",
+          "refs": [
+            "VersionObligationCadence"
+          ],
+          "required": true,
+          "type": "VersionObligationCadence"
+        },
+        {
+          "description": "The smallest version this tree may declare to be integrated.",
+          "name": "minimum",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The bump from the trunk's version to the minimum.",
+          "name": "effective",
+          "refs": [
+            "ReleaseImpact"
+          ],
+          "required": true,
+          "type": "ReleaseImpact"
+        },
+        {
+          "description": "Where it stands.",
+          "name": "state",
+          "refs": [
+            "VersionObligationState"
+          ],
+          "required": true,
+          "type": "VersionObligationState"
+        },
+        {
+          "description": "Why, one sentence per input.",
+          "name": "reasons",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "What to run when it does not hold.",
+          "name": "remedy",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "release.obligation"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the completion cadence requires.\nWhat the completion cadence requires of this change set: the policy's cadence, what of it\nthis change set owes (nothing unless it carries work), and the version that is.\n\n```\nuse majordomus_cli::release::obligation::CadenceRequirement;\nuse majordomus_cli::release::compat::Impact;\nlet c = CadenceRequirement { policy: Impact::Minor, required: Impact::None, floor: \"1.4.0\".into() };\nassert_eq!(c.required, Impact::None, \"machine output owes none of the cadence\");\n```",
+      "home": "release",
+      "is_enum": false,
+      "name": "VersionObligationCadence",
+      "properties": [
+        {
+          "description": "The policy's cadence.",
+          "name": "policy",
+          "refs": [
+            "ReleaseImpact"
+          ],
+          "required": true,
+          "type": "ReleaseImpact"
+        },
+        {
+          "description": "What this change set owes of it: the policy's cadence when it carries work, `none`\notherwise.",
+          "name": "required",
+          "refs": [
+            "ReleaseImpact"
+          ],
+          "required": true,
+          "type": "ReleaseImpact"
+        },
+        {
+          "description": "The trunk's version raised by `required`.",
+          "name": "floor",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "VersionObligation"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the public contract requires, as `crate::release::compat::analyze` measured it.\n\n```\nuse majordomus_cli::release::obligation::ContractRequirement;\nuse majordomus_cli::release::compat::Impact;\nlet c = ContractRequirement { baseline: Some(\"v1.8.0\".into()), required: Impact::Major,\n                              floor: Some(\"2.0.0\".into()), unmeasured: None };\nassert_eq!(c.floor.as_deref(), Some(\"2.0.0\"));\n```",
+      "home": "release",
+      "is_enum": false,
+      "name": "VersionObligationContract",
+      "properties": [
+        {
+          "description": "The release the contract is measured from, when one could be read.",
+          "name": "baseline",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What the contract requires over that release.",
+          "name": "required",
+          "refs": [
+            "ReleaseImpact"
+          ],
+          "required": true,
+          "type": "ReleaseImpact"
+        },
+        {
+          "description": "The smallest version the contract allows: the baseline raised by `required`.",
+          "name": "floor",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Why the contract could not be measured, when it could not. The cadence still binds;\nthe version gate (`version-surface`) is where an unmeasurable contract is refused.",
+          "name": "unmeasured",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "VersionObligation"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How many changed paths fell in each class.\n\n```\nuse majordomus_cli::release::obligation::PathCounts;\nlet counts = PathCounts { work: 12, work_examples: vec![\"lib/finish.sh\".into()], ..PathCounts::default() };\nassert!(counts.work > counts.work_examples.len(), \"the examples are a sample, the count is whole\");\n```",
+      "home": "release",
+      "is_enum": false,
+      "name": "VersionObligationPaths",
+      "properties": [
+        {
+          "description": "Authored paths.",
+          "name": "work",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Paths a generator rewrites.",
+          "name": "derived",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Release records.",
+          "name": "release_evidence",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The manifest and lock, differing only by the version.",
+          "name": "version_advance",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The first few work paths, sorted: the evidence that work is carried.",
+          "name": "work_examples",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "VersionObligation"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where an obligation stands: the verdict every surface renders and every exit derives\nfrom, decided from the tree and the trunk rather than counted from events.\n\n```\nuse majordomus_cli::release::obligation::ObligationState;\nassert_eq!(ObligationState::Owed.exit_code(), 10);\nassert_eq!(ObligationState::Satisfied.exit_code(), 0);\nassert_eq!(ObligationState::Unverified.exit_code(), 12);\n```",
+      "home": "release",
+      "is_enum": true,
+      "name": "VersionObligationState",
+      "properties": [],
+      "type": "\"satisfied\" | \"not-owed\" | \"owed\" | \"behind\" | \"unverified\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "VersionObligation"
+      ],
+      "values": [
+        {
+          "description": "The declared version reaches the minimum, and the change set owed an advance.",
+          "value": "satisfied"
+        },
+        {
+          "description": "Nothing was owed: the change set carries no work and the contract is covered.",
+          "value": "not-owed"
+        },
+        {
+          "description": "The declared version is below the minimum and not below the trunk: an advance\nthrough the one writer satisfies it.",
+          "value": "owed"
+        },
+        {
+          "description": "The declared version is below the trunk's: this tree is behind the version that won.\nThe trunk is merged first; then the advance is computed from what it declares.",
+          "value": "behind"
+        },
+        {
+          "description": "The trunk or a version could not be read, so nothing was decided — never a pass.",
+          "value": "unverified"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The trunk as it was read.\n\n```\nuse majordomus_cli::release::obligation::Trunk;\nlet t = Trunk { reference: \"origin/master\".into(), commit: \"e45ce7c3e3\".into(),\n                version: \"0.12.0\".into(), contained: true };\nassert!(t.contained, \"a tree that contains its trunk is measured from it\");\n```",
+      "home": "release",
+      "is_enum": false,
+      "name": "VersionObligationTrunk",
+      "properties": [
+        {
+          "description": "The ref asked for: `origin/master`, `HEAD^1`.",
+          "name": "reference",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit it resolved to.",
+          "name": "commit",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The version the trunk's manifest declares.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether this tree already contains the trunk's commit. A tree that does not is\nmeasured from its merge base; its advance must be recomputed once the trunk is merged.",
+          "name": "contained",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "VersionObligation"
+      ],
       "values": [],
       "variants": []
     },
@@ -55994,6 +56389,68 @@
           "result_schema": "ReleaseVersionPlan",
           "stability": "implemented",
           "summary": "What the public contract did, and the smallest version it allows"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "published_history",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/release/obligation\"",
+          "description": "The version obligation of this tree against the trunk it is integrated into (ADR 0106): the larger of what the public contract requires since the last release (ADR 0051) and the completion cadence the policy declares (`release.cadence`), which a change set owes over the trunk's own version when it carries work. Every changed path is classified by what makes it machine output — a projection the trunk's .gitattributes marks derived, a release record, the manifest and lock differing only by the version — and anything else is work; a change set that carries no work owes no cadence, so the release pipeline's follow-ups never raise the version they record. The verdict is a predicate, not a count: satisfied when the declared version reaches the minimum computed against the trunk as it is now, owed when it does not, behind when the trunk already declares more, and unverified — never a pass — when the trunk cannot be read. `release advance` satisfies it through the one writer; `finish --outcome completed` asks it; the `version-obligation` gate refuses a merge that does not hold it.",
+          "home": "release",
+          "id": "release.obligation",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_release_obligation",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The ref the work is integrated into, instead of the policy's trunk: `origin/master`,\nor `HEAD^1` for the first parent of a merge.",
+              "examples": [],
+              "name": "base",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/release/obligation",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::release",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "What integrating this tree requires the version to become: the result.",
+              "schema": "VersionObligation",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "VersionObligation",
+          "stability": "implemented",
+          "summary": "What integrating this tree requires the version to become"
         },
         {
           "benchmark": "required",

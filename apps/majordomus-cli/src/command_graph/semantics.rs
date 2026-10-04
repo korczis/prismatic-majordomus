@@ -111,6 +111,13 @@ pub const SEMANTICS: &[Semantics] = &[
         interactivity: Interactivity::NonInteractive,
         requires: &[Requirement::Repository],
     },
+    // The advance is the same write as the bump, to a version the obligation decides.
+    Semantics {
+        path: &["release", "advance"],
+        effect: Effect::RepositoryMutation,
+        interactivity: Interactivity::NonInteractive,
+        requires: &[Requirement::Repository],
+    },
     // Packaging writes into the build directory.
     Semantics {
         path: &["distribution", "build"],

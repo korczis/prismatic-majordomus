@@ -61,6 +61,14 @@ events:
     public: true
     note: "Written each time finish refuses: unmet is the number of contract lines that failed, refused lists the doctrines among them, and contract carries every doctrine's verdict as task.finished does. finish --check writes nothing, because a check asks and a finish claims. This is what makes the tool's own benefit countable: a refusal that was later satisfied is a false done that was caught, and until this event existed it left no trace (the finish-refusal-leaves-no-trace row of docs/HARDCODING_LEDGER.yaml)."
 
+  - id: release.advanced
+    title: Version advanced for completed work
+    summary: Finish satisfied a version obligation through the one writer before judging the contract.
+    emitted_by: finish
+    requires: [task_id, obligation, from, to, trunk, trunk_commit]
+    public: true
+    note: "Written by finish --outcome completed when the version obligation (ADR 0106) was owed and release advance raised the version: obligation is its identity (the branch and the trunk version it advances from), from and to the declared versions, trunk and trunk_commit what it was computed against, effective the bump over the trunk. A satisfied obligation writes nothing and appends nothing, so a repeated finish leaves one line per advance, never two."
+
   - id: decision.recorded
     title: Decision recorded
     summary: A choice between real alternatives was recorded with its reason.
