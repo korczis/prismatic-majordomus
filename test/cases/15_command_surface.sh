@@ -83,7 +83,9 @@ if [ -f "$CLI_DOC" ]; then
     *"unknown command"*) echo "    $native was refused by the shell tool instead of run: $out"; exit 1 ;;
   esac
   case "$rc:$out" in
-    0:*"Usage: majordomus-cli $native"*|12:*"majordomus-cli: "*) ;;
+    # the executable names itself by its argv[0]: majordomus-cli through the launcher,
+    # majordomus when MAJORDOMUS_BIN points at the cargo build
+    0:*"Usage: majordomus-cli $native"*|0:*"Usage: majordomus $native"*|12:*"majordomus-cli: "*) ;;
     *) echo "    $native did not reach the Rust executable (exit $rc): $out"; exit 1 ;;
   esac
   # the wrong program's usage text is not dumped either
