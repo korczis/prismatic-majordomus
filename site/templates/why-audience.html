@@ -8,7 +8,7 @@
 {%- set base = config.base_url | trim_end(pat="/") -%}
 <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
-    <article class="format break-words max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto">{{ page.content | safe }}</article>
+    <article class="format break-words max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline">{{ page.content | safe }}</article>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">{{ e.count }} moment{% if e.count != 1 %}s{% endif %}</h2>
     <p class="mt-2 text-body">Every moment that names this one. Derived from the moments; this page keeps no list.</p>

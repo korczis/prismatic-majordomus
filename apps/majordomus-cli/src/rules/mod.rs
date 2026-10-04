@@ -82,6 +82,13 @@ const SUITE_RUNNER: &str = "test/run.sh";
 /// The same, for the crate's own integration tests.
 const CRATE_TESTS_DIR: &str = "apps/majordomus-cli/tests/";
 const CRATE_RUNNER: &str = "rust-check";
+/// The crate's sources. A module there may keep its `#[cfg(test)] mod tests` in a file of
+/// its own (`src/<module>/tests.rs`), which `cargo test` compiles into the library's test
+/// target — so the crate runner drives it in every mode that runs `cargo test`.
+const CRATE_SRC_DIR: &str = "apps/majordomus-cli/src/";
+/// The crate runner's modes that run no test: `--integration` builds the executable and
+/// checks the registry, `--doc` builds the documentation.
+const CRATE_RUNNER_TESTLESS_MODES: [&str; 2] = ["--integration", "--doc"];
 
 // ---------------------------------------------------------------- the canonical definition
 
@@ -360,9 +367,10 @@ pub struct ValidatorRef {
 /// The corpus names two kinds and this distinction is the difference between a verdict and
 /// a mechanism. A **case** is driven by a runner, so an execution of it can be recorded and
 /// the repository can show that it passed. A **gate** is an executable check a CI gate runs
-/// as its own command: it refuses violations on every run, and this repository records no
-/// verdict for it, so what can be shown is the mechanism and not the result. Anything else
-/// a rule names is proof only in prose.
+/// as its own command, or a unit-test module (`src/<module>/tests.rs`) the gate running the
+/// crate's `cargo test` compiles: it refuses violations on every run, and this repository
+/// records no verdict for it, so what can be shown is the mechanism and not the result.
+/// Anything else a rule names is proof only in prose.
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -378,7 +386,8 @@ pub struct ValidatorRef {
 pub enum ArtifactKind {
     /// A behavioural case a runner drives; executions of it are recorded.
     Case,
-    /// An executable check a CI gate runs as its own command.
+    /// An executable check a CI gate runs as its own command, or a unit-test module the
+    /// gate running the crate's `cargo test` compiles.
     Gate,
     /// Neither. Nothing can run it, so nothing can ever record it.
     Unknown,
@@ -1088,6 +1097,74 @@ pub(crate) fn gates_for(path: &str, commands: &[(String, String)]) -> Vec<String
     out.into_iter().collect()
 }
 
+/// Is this path a unit-test module kept in its own file: a `tests.rs` under the crate's
+/// sources, in the tree, that its parent module declares under `#[cfg(test)]`?
+///
+/// Read from the declaration rather than the file name, because `cargo test` compiles what
+/// the parent declares: a product module that merely happens to be called `tests` (the web
+/// report's is one) holds no test by that name, and calling it proof would be the same
+/// over-claim as calling a helper script a case.
+fn unit_test_module(root: &Path, path: &str) -> bool {
+    let Some(rest) = path.strip_prefix(CRATE_SRC_DIR) else {
+        return false;
+    };
+    let rel = Path::new(rest);
+    if rel.file_name().is_none_or(|n| n != "tests.rs") || !root.join(path).is_file() {
+        return false;
+    }
+    let src = root.join(CRATE_SRC_DIR);
+    let parents = match rel.parent().filter(|d| !d.as_os_str().is_empty()) {
+        Some(dir) => [
+            src.join(dir).join("mod.rs"),
+            src.join(dir.with_extension("rs")),
+        ],
+        None => [src.join("lib.rs"), src.join("main.rs")],
+    };
+    parents
+        .iter()
+        .any(|p| std::fs::read_to_string(p).is_ok_and(|text| declares_test_module(&text)))
+}
+
+/// Does this module source declare `mod tests;` with `#[cfg(test)]` as the nearest non-blank
+/// line above it, the way rustfmt writes the declaration?
+fn declares_test_module(text: &str) -> bool {
+    let mut under_cfg_test = false;
+    for line in text.lines().map(str::trim).filter(|l| !l.is_empty()) {
+        if under_cfg_test && (line == "mod tests;" || line.ends_with(" mod tests;")) {
+            return true;
+        }
+        under_cfg_test = line == "#[cfg(test)]";
+    }
+    false
+}
+
+/// The gates that run a unit-test module: every gate whose command runs the crate runner in
+/// a mode that runs `cargo test`, which compiles and runs the library's test target. A mode
+/// that runs no test (`--integration`, `--doc`) is not a binding, however the command is
+/// spelled around it.
+fn unit_test_gates(commands: &[(String, String)]) -> Vec<String> {
+    let runs_crate_tests = |runs: &str| {
+        runs.split(['&', '|', ';']).any(|command| {
+            let words: Vec<&str> = command.split_whitespace().collect();
+            words
+                .iter()
+                .position(|w| w.rsplit('/').next() == Some(CRATE_RUNNER))
+                .is_some_and(|at| {
+                    words[at + 1..]
+                        .iter()
+                        .all(|w| !CRATE_RUNNER_TESTLESS_MODES.contains(w))
+                })
+        })
+    };
+    commands
+        .iter()
+        .filter(|(_, runs)| runs_crate_tests(runs))
+        .map(|(gate, _)| gate.clone())
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect()
+}
+
 /// Where `lib/` defines `mj_validate_<name>`, if anywhere.
 ///
 /// The same scan `majordomus doctor` does, and the same one `scripts/generate-site-data`
@@ -1291,12 +1368,18 @@ pub fn report(index: &Index, ledger: &Ledger) -> RulesReport {
         for path in &def.enforcement.tests {
             let present = root.join(path).exists();
             let id = TestId::of(path);
-            let gates = gates_for(path, &gate_commands);
+            let unit_module = unit_test_module(&root, path);
+            let gates = if unit_module {
+                unit_test_gates(&gate_commands)
+            } else {
+                gates_for(path, &gate_commands)
+            };
             let kind = if id.is_some() {
                 ArtifactKind::Case
-            } else if gates
-                .iter()
-                .any(|g| gate_runs_exactly(g, path, &gate_commands))
+            } else if (unit_module && !gates.is_empty())
+                || gates
+                    .iter()
+                    .any(|g| gate_runs_exactly(g, path, &gate_commands))
             {
                 ArtifactKind::Gate
             } else {

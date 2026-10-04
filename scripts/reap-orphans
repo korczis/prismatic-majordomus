@@ -17,12 +17,22 @@
 #
 # The discipline this script exists to keep is that a process is never matched by name.
 # Sessions here are each other's instruments: `pkill -f majordomus` would kill the servers
-# that live peers are attached to. A process is reaped only when all four hold:
+# that live peers are attached to. A process is reaped only when all five hold:
 #
 #   - it is a majordomus `serve` or `mcp` process, by executable path, not by a name match
 #   - its parent is init (ppid 1) — the session that started it is gone
 #   - it has zero ESTABLISHED TCP connections — no client is attached
 #   - it is older than --min-age (default 30m) — a server still being set up is not garbage
+#   - if it listens, it answers that it does not hold its checkout's lease
+#
+# The last is there because the first three describe the shared server exactly. `serve`
+# detaches by design, so its parent is init; its clients speak HTTP a request at a time, so
+# between requests it has no connection at all; and it lives for days. On 2026-10-03 the
+# report tabled the shared server five sessions were using that minute as "would reap" — the
+# same server case 318 records from 2026-09-13. The leaseholder ends itself: it stops when
+# idle and when its executable is replaced on disk. So a listening server is asked, and only
+# one that answers `"leaseholder": false` — a server superseded by another — is a candidate.
+# One that does not answer cannot be measured, and what cannot be measured is kept.
 #
 # BUILD OUTPUT. A linked worktree's `apps/majordomus-cli/target` is 2.4GB the day it is
 # created and tens of gigabytes once a session has built debug, release and tests in it.
@@ -190,6 +200,23 @@ etime_seconds() {
 established() { lsof -nP -a -p "$1" -iTCP -sTCP:ESTABLISHED 2>/dev/null | grep -c TCP || true; }
 ports()       { lsof -nP -a -p "$1" -iTCP -sTCP:LISTEN 2>/dev/null | awk 'NR>1 { split($9, a, ":"); printf "%s ", a[2] }'; }
 
+# What a listening server says about its own lease: "holder", "superseded", or "unanswered"
+# when no port answered with a readable verdict. A process that listens nowhere is "silent",
+# and the other conditions decide it alone.
+lease_standing() {
+  p_list="$(ports "$1")"
+  [ -n "$p_list" ] || { echo silent; return; }
+  command -v curl >/dev/null 2>&1 || { echo unanswered; return; }
+  for p in $p_list; do
+    body="$(curl -fsS --max-time 3 -H 'Accept: application/json' "http://127.0.0.1:$p/" 2>/dev/null || true)"
+    case "$body" in
+      *'"leaseholder":true'*|*'"leaseholder": true'*)   echo holder; return ;;
+      *'"leaseholder":false'*|*'"leaseholder": false'*) echo superseded; return ;;
+    esac
+  done
+  echo unanswered
+}
+
 # A majordomus server, by executable path and subcommand — never by a bare name match.
 candidates() {
   ps -eo pid=,ppid=,etime=,rss=,args= | awk '
@@ -212,6 +239,15 @@ reap_servers() {
       printf '%-8s %-12s %-9s %-6s %s\n' "$pid" "$etime" "$((rss/1024))MB" "$(ports "$pid")" "keep — $est client(s) attached"
       srv_kept=$((srv_kept + 1)); continue
     fi
+    standing="$(lease_standing "$pid")"
+    case "$standing" in
+      holder)
+        printf '%-8s %-12s %-9s %-6s %s\n' "$pid" "$etime" "$((rss/1024))MB" "$(ports "$pid")" "keep — holds its checkout's lease; it stops itself when idle"
+        srv_kept=$((srv_kept + 1)); continue ;;
+      unanswered)
+        printf '%-8s %-12s %-9s %-6s %s\n' "$pid" "$etime" "$((rss/1024))MB" "$(ports "$pid")" "keep — listens but did not say whether it holds a lease"
+        srv_kept=$((srv_kept + 1)); continue ;;
+    esac
     srv_found=$((srv_found + 1))
     if [ "$KILL" -eq 0 ]; then
       printf '%-8s %-12s %-9s %-6s %s\n' "$pid" "$etime" "$((rss/1024))MB" "$(ports "$pid")" "would reap"
@@ -219,7 +255,8 @@ reap_servers() {
     fi
     # Re-check the whole predicate against the live process, not against the scan.
     now_ppid="$(ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ' || true)"
-    if [ "${now_ppid:-}" != "1" ] || [ "$(established "$pid")" -ne 0 ]; then
+    if [ "${now_ppid:-}" != "1" ] || [ "$(established "$pid")" -ne 0 ] \
+      || [ "$(lease_standing "$pid")" != "$standing" ]; then
       printf '%-8s %-12s %-9s %-6s %s\n' "$pid" "$etime" "$((rss/1024))MB" "" "skip — acquired an owner since the scan"
       srv_kept=$((srv_kept + 1)); srv_found=$((srv_found - 1)); continue
     fi

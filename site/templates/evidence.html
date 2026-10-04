@@ -4,7 +4,7 @@
 {%- set graph_id = "claims" -%}
 {%- set graph_rings = "" -%}
 {%- set graph_label = "Every claim and the evidence attached to it. Evidence nodes are shared, so a file carrying several claims appears once." -%}
-<article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg">{{ page.content | safe }}</article>
+<article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline">{{ page.content | safe }}</article>
 {#- What CI recorded, from data/evidence.json: written by `scripts/pages evidence` for the
     deployment that built this page and never committed. The status is a word before it is a
     colour, so it reads the same without either, and the transcript is the recorded run's own

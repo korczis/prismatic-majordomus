@@ -866,6 +866,29 @@ mj_validate_doctrine_wiring() {
     elif ! grep -qE 'bash test/run\.sh' "$ci"; then mj_doctrine_fail doctrine "ci" "validate.yml does not run test/run.sh" "grep -n 'test/run.sh' .github/workflows/validate.yml"; bad=1
     elif grep -E 'bash test/run\.sh' "$ci" | grep -qE '\|\|[[:space:]]*(true|:)|continue-on-error'; then
       mj_doctrine_fail doctrine "ci" "validate.yml runs test/run.sh but does not let it fail the job" "grep -n -A2 'test/run.sh' .github/workflows/validate.yml"; bad=1
+    elif ! grep -E 'bash test/run\.sh' "$ci" | grep -v -- '--runs-in' | grep -q -- '--no-skips'; then
+      # a run in which a case declined still passed: 102 skipped "no zsh" on every CI run. The
+      # whole suite's invocation is the one that must refuse, not a --runs-in step beside it.
+      mj_doctrine_fail doctrine "ci" "validate.yml runs test/run.sh without --no-skips; a case that declines would pass the job" "grep -n 'test/run.sh' .github/workflows/validate.yml"; bad=1
+    fi
+    # and every job a case's skip defers to holds that case: a skip excused because another job
+    # reads its subject is excused for nothing if no job does. The header block only, as
+    # test/run.sh reads it, so a case that writes the header into a fixture declares nothing.
+    if [ -f "$ci" ]; then
+      local cf sj sjobs=""
+      for cf in "$root"/test/cases/*.sh; do
+        sj="$(awk '/^[[:space:]]*$/ { next }
+                   /^#/ { if (match($0, /^# majordomus-skip-runs-in: *[a-z0-9-]+/)) {
+                            v = $0; sub(/^# majordomus-skip-runs-in: */, "", v); sub(/[^a-z0-9-].*$/, "", v)
+                            print v; exit } ; next }
+                   { exit }' "$cf" 2>/dev/null)"
+        [ -n "$sj" ] || continue
+        case " $sjobs " in *" $sj "*) ;; *) sjobs="$sjobs $sj" ;; esac
+      done
+      for sj in $sjobs; do
+        grep -qE "bash test/run\.sh --no-skips --runs-in $sj([^a-z0-9-]|\$)" "$ci" \
+          || { mj_doctrine_fail doctrine "ci" "a case defers its skip to the '$sj' job, and no step in validate.yml runs 'bash test/run.sh --no-skips --runs-in $sj'" "grep -rln '^# majordomus-skip-runs-in: $sj' test/cases"; bad=1; }
+      done
     fi
     # and the runner must run every case, not a list that a new case can miss
     if ! grep -qE 'cases/\*\.sh|cases/\*' "$root/test/run.sh"; then

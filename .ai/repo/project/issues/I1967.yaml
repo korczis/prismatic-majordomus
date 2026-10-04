@@ -1,0 +1,30 @@
+id: I1967
+milestone: development-runtime
+title: A reporter that sets a flag is a reporter
+slug: a-flag-setting-reporter-is-a-reporter
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Make the pipeline-count guard discover a reporter that records a failure by setting a flag, not only one that increments a counter, so a call to it inside a construct that discards the flag is refused like a lost count."
+why: "This is the open half of I1513, filed on PR #548, which was closed on 2026-10-03 when the owner decided it. scripts/lib/counting-functions.awk finds only functions whose body adds one to a variable they did not declare local. scripts/ci/pages-check's `bad() { ...; fail=1; }` records its failure as a flag and is invisible to it, so a call to `bad` inside a `... | while read` loop would set the flag in a subshell, lose it, and let the gate exit 0 while printing the failure. #548's I1513 cannot be reused: its number collides with #292's own I1513, and ADR 0053 forbids recycling a gap."
+current_state: "scripts/lib/counting-functions.awk prints the functions that increment an undeclared variable, and shell-lint refuses a call to one of them inside a pipeline-fed loop (scripts/lib/pipeline-counts.awk, checked against a known-answer fixture first). A function that assigns a constant to an undeclared variable it is not given (`fail=1`, `bad=1`) is not discovered."
+desired_state: "counting-functions.awk also prints a function whose body assigns a constant to a variable it did not declare local, and shell-lint therefore refuses a call to it inside a pipeline-fed loop, with the file and line. The known-answer fixture carries a flag-setting reporter, and the guard is refused when it does not find it."
+scope:
+  - scripts/lib/counting-functions.awk
+  - scripts/ci/shell-lint
+  - test/cases
+non_scope:
+  - "Rewriting gates that are already correct: the guard names what is lost, not what offends taste"
+  - "A check assembled from another program's output that dies silently, which I1513 named as its third face and test/cases/341 covers on its own"
+depends_on: []
+acceptance_criteria:
+  - "A function that sets a flag rather than incrementing a counter is discovered as a reporter"
+  - "A call to such a reporter inside a pipeline-fed loop is refused, with the file and line"
+  - "The known-answer fixture holds a flag-setting reporter, and the guard refuses itself when it does not find it"
+validation:
+  - bash scripts/ci/shell-lint
+evidence_required:
+  - a_flag_setting_reporter_is_discovered
+risk: "Low. The guard can only refuse shapes that already lose a verdict; a false alarm on a flag nobody reads is answered by naming the reporter it found."
+created_at: 2026-10-04
+updated_at: 2026-10-04

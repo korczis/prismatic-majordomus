@@ -7,7 +7,7 @@
 {%- set readme = load_data(path="data/generated/readme.json") -%}
 {%- set x = load_data(path="data/manifesto.toml") -%}
 {%- set base = config.base_url | trim_end(pat="/") -%}
-<article class="format max-w-3xl break-words dark:format-invert lg:format-lg" tabindex="0">{{ page.content | safe }}</article>
+<article class="format max-w-3xl break-words dark:format-invert lg:format-lg [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline" tabindex="0">{{ page.content | safe }}</article>
 {#- page.html centres its body in a container; the argument's sections are full-bleed bands,
     as they were on the homepage, so the container closes here and an empty one reopens for
     page.html to close. -#}
