@@ -175,6 +175,10 @@ pub enum ServedVerdict {
     /// The served commit is not in this clone, or git could not be asked; containment is
     /// undecided. Fetching the remote usually turns this into an answer.
     Undecided,
+    /// The served build contains the expected commit but states a version its own commit
+    /// does not declare: the site was built from derived data older than the version it
+    /// ships, so a reader is told a version that is not the one served.
+    Mismatched,
 }
 
 impl ServedVerdict {
@@ -194,6 +198,7 @@ impl ServedVerdict {
             ServedVerdict::Malformed => "malformed",
             ServedVerdict::Dirty => "dirty",
             ServedVerdict::Undecided => "undecided",
+            ServedVerdict::Mismatched => "mismatched",
         }
     }
 
@@ -223,7 +228,7 @@ impl ServedVerdict {
     pub fn exit_code(self) -> i32 {
         match self {
             ServedVerdict::Served => 0,
-            ServedVerdict::Stale | ServedVerdict::Dirty => 10,
+            ServedVerdict::Stale | ServedVerdict::Dirty | ServedVerdict::Mismatched => 10,
             ServedVerdict::Unreachable | ServedVerdict::Malformed | ServedVerdict::Undecided => 12,
         }
     }
@@ -271,6 +276,20 @@ pub trait Ancestry {
     /// assert_eq!(git.contains(head, head), Some(true));
     /// ```
     fn contains(&self, descendant: &str, ancestor: &str) -> Option<bool>;
+    /// The version `commit` declares in its authored source, `None` when it cannot be read.
+    /// An answer of `None` leaves the version unjudged rather than refused: a site older
+    /// than the identity's `source_version` field, or a clone without the commit, says
+    /// nothing about the version, and the commit's own verdict stands.
+    ///
+    /// ```
+    /// use majordomus_cli::served::{Ancestry, GitAncestry};
+    /// use std::path::Path;
+    /// let git = GitAncestry { root: Path::new(env!("CARGO_MANIFEST_DIR")) };
+    /// assert_eq!(git.version_at(&"0".repeat(40)), None);
+    /// ```
+    fn version_at(&self, _commit: &str) -> Option<String> {
+        None
+    }
 }
 
 /// The [`Ancestry`] the executable uses: this repository's own git, asked read-only.
@@ -294,6 +313,21 @@ impl Ancestry for GitAncestry<'_> {
     }
     fn contains(&self, descendant: &str, ancestor: &str) -> Option<bool> {
         crate::git::is_ancestor(self.root, ancestor, descendant)
+    }
+    fn version_at(&self, commit: &str) -> Option<String> {
+        // the authored source, never the projection: a projection that disagrees with it is
+        // exactly the staleness this answer exists to expose
+        let out = crate::git::read_only(self.root)
+            .args([
+                "show",
+                &format!("{commit}:{}", crate::release::version::MANIFEST),
+            ])
+            .output()
+            .ok()?;
+        out.status
+            .success()
+            .then(|| crate::release::version::declared_in(&String::from_utf8_lossy(&out.stdout)))
+            .flatten()
     }
 }
 
@@ -365,6 +399,75 @@ pub enum Fetched {
 /// assert_eq!(judge(&id(&b, true), &b, &Linear).verdict, ServedVerdict::Dirty);
 /// ```
 pub fn judge(
+    served: &Result<BuildIdentity, Fetched>,
+    expected: &str,
+    git: &dyn Ancestry,
+) -> Judgement {
+    let j = judge_commit(served, expected, git);
+    match (j.verdict, served) {
+        (ServedVerdict::Served, Ok(id)) => judge_version(j, id, git),
+        _ => j,
+    }
+}
+
+/// The version half of a passing judgement: a build that contains the expected commit and
+/// states a version is held to the version its own commit declares. A build stating none,
+/// or a commit whose declaration cannot be read, keeps the commit's verdict and says the
+/// version was not judged.
+///
+/// ```
+/// use majordomus_cli::served::{judge, Ancestry, BuildIdentity, ServedVerdict};
+/// struct At(&'static str);
+/// impl Ancestry for At {
+///     fn has(&self, _: &str) -> Option<bool> { Some(true) }
+///     fn contains(&self, _: &str, _: &str) -> Option<bool> { Some(true) }
+///     fn version_at(&self, _: &str) -> Option<String> { Some(self.0.into()) }
+/// }
+/// let a = "a".repeat(40);
+/// let id = |v: &str| Ok(BuildIdentity {
+///     commit: a.clone(), dirty: false, source_version: Some(v.into()), source_hash: None });
+/// assert_eq!(judge(&id("0.13.0"), &a, &At("0.13.0")).verdict, ServedVerdict::Served);
+/// // the site says 0.12.0 while the commit it was built from declares 0.13.0
+/// assert_eq!(judge(&id("0.12.0"), &a, &At("0.13.0")).verdict, ServedVerdict::Mismatched);
+/// ```
+fn judge_version(j: Judgement, id: &BuildIdentity, git: &dyn Ancestry) -> Judgement {
+    let Some(stated) = id.source_version.as_deref() else {
+        return Judgement {
+            reason: format!(
+                "{}; the build states no version, so none was judged",
+                j.reason
+            ),
+            ..j
+        };
+    };
+    match git.version_at(&id.commit) {
+        Some(declared) if declared == stated => Judgement {
+            reason: format!("{} at version {stated}", j.reason),
+            ..j
+        },
+        Some(declared) => Judgement {
+            verdict: ServedVerdict::Mismatched,
+            reason: format!(
+                "the deployment serves {} stating version {stated}, but that commit declares \
+                 {declared}: the site was built from derived data older than its version; \
+                 run scripts/derive on the trunk and deploy again",
+                short(&id.commit)
+            ),
+        },
+        None => Judgement {
+            reason: format!(
+                "{}; the version {stated} it states was not judged, because the version {} \
+                 declares could not be read",
+                j.reason,
+                short(&id.commit)
+            ),
+            ..j
+        },
+    }
+}
+
+/// The commit half of [`judge`]: containment of the expected commit, and nothing else.
+fn judge_commit(
     served: &Result<BuildIdentity, Fetched>,
     expected: &str,
     git: &dyn Ancestry,
@@ -1184,5 +1287,77 @@ mod tests {
                 prop_assert_eq!(v.passes(), contained);
             }
         }
+    }
+
+    /// One commit declaring one version, for the version half of the judgement.
+    struct Declares(Option<&'static str>);
+    impl Ancestry for Declares {
+        fn has(&self, c: &str) -> Option<bool> {
+            Some(c == A || c == B)
+        }
+        fn contains(&self, d: &str, a: &str) -> Option<bool> {
+            Some(d == a || (d == B && a == A))
+        }
+        fn version_at(&self, _: &str) -> Option<String> {
+            self.0.map(str::to_string)
+        }
+    }
+
+    fn stating(commit: &str, version: Option<&str>) -> Result<BuildIdentity, Fetched> {
+        Ok(BuildIdentity {
+            commit: commit.into(),
+            dirty: false,
+            source_version: version.map(str::to_string),
+            source_hash: None,
+        })
+    }
+
+    #[test]
+    fn a_served_build_is_held_to_the_version_its_commit_declares() {
+        let agree = judge(&stating(B, Some("0.13.0")), A, &Declares(Some("0.13.0")));
+        assert_eq!(agree.verdict, ServedVerdict::Served);
+        assert!(
+            agree.reason.ends_with("at version 0.13.0"),
+            "{}",
+            agree.reason
+        );
+
+        let stale_data = judge(&stating(B, Some("0.12.0")), A, &Declares(Some("0.13.0")));
+        assert_eq!(stale_data.verdict, ServedVerdict::Mismatched);
+        assert!(!stale_data.verdict.passes());
+        assert_eq!(stale_data.verdict.exit_code(), 10, "a measured no");
+        assert!(
+            stale_data.reason.contains("stating version 0.12.0"),
+            "{}",
+            stale_data.reason
+        );
+        assert!(
+            stale_data.reason.contains("declares 0.13.0"),
+            "{}",
+            stale_data.reason
+        );
+    }
+
+    #[test]
+    fn a_version_that_cannot_be_judged_leaves_the_commit_verdict_standing() {
+        let unstated = judge(&stating(A, None), A, &Declares(Some("0.13.0")));
+        assert_eq!(unstated.verdict, ServedVerdict::Served);
+        assert!(
+            unstated.reason.contains("states no version"),
+            "{}",
+            unstated.reason
+        );
+
+        let unreadable = judge(&stating(A, Some("0.13.0")), A, &Declares(None));
+        assert_eq!(unreadable.verdict, ServedVerdict::Served);
+        assert!(
+            unreadable.reason.contains("was not judged"),
+            "{}",
+            unreadable.reason
+        );
+
+        // the version is asked only of a build that already proved its commit
+        let behind = judge(&stating(A, Some("0.1.0")), B, &Declares(Some("0.13.0")));
+        assert_eq!(behind.verdict, ServedVerdict::Stale);
     }
 }

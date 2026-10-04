@@ -40596,7 +40596,7 @@
       "is_enum": true,
       "name": "ServedVerdict",
       "properties": [],
-      "type": "\"served\" | \"stale\" | \"unreachable\" | \"malformed\" | \"dirty\" | \"undecided\"",
+      "type": "\"served\" | \"stale\" | \"unreachable\" | \"malformed\" | \"dirty\" | \"undecided\" | \"mismatched\"",
       "used_by": [],
       "used_by_schemas": [
         "Judgement",
@@ -40626,6 +40626,10 @@
         {
           "description": "The served commit is not in this clone, or git could not be asked; containment is\nundecided. Fetching the remote usually turns this into an answer.",
           "value": "undecided"
+        },
+        {
+          "description": "The served build contains the expected commit but states a version its own commit\ndoes not declare: the site was built from derived data older than the version it\nships, so a reader is told a version that is not the one served.",
+          "value": "mismatched"
         }
       ],
       "variants": []

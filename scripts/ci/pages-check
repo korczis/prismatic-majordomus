@@ -191,6 +191,31 @@ else
   fi
 fi
 
+# ------------------------------------------------------- 2a. the version the site states
+#
+# A site can serve the right commit and still tell its reader the wrong version: /build.json
+# and every footer state the version the build's derived data carried, and derived data
+# older than the version it was built with is exactly what a deploy of an un-derived tree
+# publishes. Whether the stated version is the one the served commit declares is judged by
+# `majordomus served` (src/served.rs, verdict `mismatched`) — the one judge of a deployment,
+# asked here rather than restated. It is asked only of an executable that already exists:
+# this gate runs in a job without the crate, and a build here would cost more than the
+# job's whole bound. Without one the version is reported as not judged, never as fine.
+if [ -n "$URL" ] && [ -n "${served:-}" ] && [ "$fail" = 0 ]; then
+  vrc=0
+  vout="$(MAJORDOMUS_NO_BUILD=1 MAJORDOMUS_LOG=off bin/majordomus-cli served observe \
+            --commit "$source_sha" --url "$URL" --identity "$identity" --dry-run --format json \
+            2>/dev/null)" || vrc=$?
+  verdict="$(printf '%s' "$vout" | jq -r '.observation.verdict // empty' 2>/dev/null || true)"
+  vreason="$(printf '%s' "$vout" | jq -r '.observation.reason // empty' 2>/dev/null || true)"
+  case "$verdict" in
+    served)     ok "the version the site states is the one its commit declares ($vreason)" ;;
+    mismatched) bad "$vreason" ;;
+    "")         note "the version the site states was not judged: no built executable answered (exit $vrc)" ;;
+    *)          note "the version the site states was not judged: served answered $verdict ($vreason)" ;;
+  esac
+fi
+
 # ------------------------------------------------------- 2b. the crate's reference, as served
 #
 # Since ADR 0086 the published site carries a second surface beside its own pages: the crate's

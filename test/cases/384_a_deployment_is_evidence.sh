@@ -11,6 +11,8 @@
 #   garbage          -> malformed (12), nothing -> unreachable (12),
 #   a commit this clone lacks -> undecided (12)
 # and a record of B, read back after C, is stale without anyone re-observing.
+# Then the version: a commit D that declares 1.2.0 is served stating 1.2.0 (served) and
+# stating 1.1.0 (mismatched, exit 10) — the right commit telling its reader the wrong version.
 . "$ROOT/test/lib.sh"
 RB="$(rust_bin)" || rust_bin_exit $?
 # The fixture repository carries no share of its own, and CI clears any ambient one, so the
@@ -97,4 +99,23 @@ jq -e '.deployments[0].observation.verdict == "served" and .deployments[0].now.v
   || { echo "    expected seven recorded observations: every probe but the dry run and the refusals"; wc -l "$repo/.ai/local/state/served/observations.jsonl"; exit 1; }
 [ -z "$(g status --porcelain --untracked-files=no)" ] || { echo "    observing changed a tracked file"; exit 1; }
 
-echo "    served: contains=0 stale/dirty=10 unanswered=12; records re-judged by containment"
+# 7. the version the build states is held to the one its commit declares
+mkdir -p "$repo/apps/majordomus-cli"
+printf '[package]\nname = "majordomus-cli"\nversion = "1.2.0"\n' > "$repo/apps/majordomus-cli/Cargo.toml"
+g add -A apps && g commit -q -m d
+D="$(g rev-parse HEAD)"
+printf '{"schema":1,"commit":"%s","dirty":false,"source_version":"1.2.0"}\n' "$D" > "$site/versioned.json"
+printf '{"schema":1,"commit":"%s","dirty":false,"source_version":"1.1.0"}\n' "$D" > "$site/misversioned.json"
+observe 0 served --commit "$D" --identity versioned.json --dry-run
+jq -e '.observation.reason | endswith("at version 1.2.0")' out.json >/dev/null \
+  || { echo "    an agreeing version is not named in the reason"; cat out.json; exit 1; }
+observe 10 mismatched --commit "$D" --identity misversioned.json --dry-run
+jq -e '.observation.reason | contains("stating version 1.1.0") and contains("declares 1.2.0")' out.json >/dev/null \
+  || { echo "    the mismatch does not name both versions"; cat out.json; exit 1; }
+# the version is asked only of a build that proved its commit: B states 0.0.0 and declares
+# nothing, so its version is reported as not judged and the commit's verdict stands
+observe 0 served --commit "$B" --dry-run
+jq -e '.observation.reason | contains("not judged")' out.json >/dev/null \
+  || { echo "    an undeclared version was judged"; cat out.json; exit 1; }
+
+echo "    served: contains=0 stale/dirty/mismatched=10 unanswered=12; records re-judged by containment"

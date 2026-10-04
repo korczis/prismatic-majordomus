@@ -40464,6 +40464,9 @@ capabilities:
               - type: string
                 const: undecided
                 description: "The served commit is not in this clone, or git could not be asked; containment is\nundecided. Fetching the remote usually turns this into an answer."
+              - type: string
+                const: mismatched
+                description: "The served build contains the expected commit but states a version its own commit\ndoes not declare: the site was built from derived data older than the version it\nships, so a reader is told a version that is not the one served."
             description: "What an observation says about the expected commit. Only `ServedVerdict::Served` is a\nproof; the other five are each a different reason the question was not answered yes.\n\n```\nuse majordomus_cli::served::ServedVerdict;\n// a measured no and an unanswered question are never spelled the same\nassert!(ServedVerdict::Served.passes());\nassert_eq!(ServedVerdict::Stale.exit_code(), 10);\nassert_eq!(ServedVerdict::Unreachable.exit_code(), 12);\n```"
     provenance:
       source: builtin
@@ -40640,6 +40643,9 @@ capabilities:
               - type: string
                 const: undecided
                 description: "The served commit is not in this clone, or git could not be asked; containment is\nundecided. Fetching the remote usually turns this into an answer."
+              - type: string
+                const: mismatched
+                description: "The served build contains the expected commit but states a version its own commit\ndoes not declare: the site was built from derived data older than the version it\nships, so a reader is told a version that is not the one served."
             description: "What an observation says about the expected commit. Only `ServedVerdict::Served` is a\nproof; the other five are each a different reason the question was not answered yes.\n\n```\nuse majordomus_cli::served::ServedVerdict;\n// a measured no and an unanswered question are never spelled the same\nassert!(ServedVerdict::Served.passes());\nassert_eq!(ServedVerdict::Stale.exit_code(), 10);\nassert_eq!(ServedVerdict::Unreachable.exit_code(), 12);\n```"
           Judgement:
             type: object
