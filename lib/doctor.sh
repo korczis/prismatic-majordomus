@@ -132,7 +132,10 @@ mj_validate_wiring() {
       kind="${wired%%:*}"; target="${wired#*:}"
       case "$kind" in
         git-hook)
-          hookdir="$(mj_git config core.hooksPath 2>/dev/null || true)"; [ -z "$hookdir" ] && hookdir=".git/hooks"
+          # Git says where its hooks are: core.hooksPath when set, else the common
+          # directory's hooks/. A linked worktree's .git is a file naming that directory,
+          # so "$MJ_ROOT/.git/hooks" does not exist there and every hook read as missing.
+          hookdir="$(mj_git rev-parse --git-path hooks 2>/dev/null || true)"; [ -z "$hookdir" ] && hookdir=".git/hooks"
           case "$hookdir" in /*) hookfile="$hookdir/$target" ;; *) hookfile="$MJ_ROOT/$hookdir/$target" ;; esac
           # A hook is commonly a dispatcher that runs every executable in <hook>.d/; the
           # invocation then lives in one of those files, not in the hook git calls.
