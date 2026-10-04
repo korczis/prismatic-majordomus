@@ -1655,14 +1655,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/cli/local.rs",
-        "kind": "file",
-        "label": "local.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/cli/local.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/cockpit/mod.rs",
         "kind": "file",
         "label": "mod.rs",
@@ -1716,14 +1708,6 @@
         "label": "mod.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/quality/mod.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/quality/parity.rs",
-        "kind": "file",
-        "label": "parity.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/quality/parity.rs",
         "external": true
       },
       {
@@ -33526,6 +33510,27 @@
         }
       },
       {
+        "id": "majordomus://rule/project.prose-states-no-version@1",
+        "kind": "rule",
+        "label": "project.prose-states-no-version@1",
+        "summary": "Prose describes the tool as it stands, without a version label",
+        "route": "/cockpit/objects/rule/project-prose-states-no-version-1",
+        "source": ".ai/repo/rules/project/prose-states-no-version.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.release-is-a-projection@2"
+          ],
+          "tags": [
+            "release",
+            "version",
+            "documentation",
+            "claims"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.provider-support-is-declared@1",
         "kind": "rule",
         "label": "project.provider-support-is-declared@1",
@@ -38599,6 +38604,13 @@
         "label": "test/cases/88_rust_command_tested.sh",
         "route": "/cockpit/objects/test/test-cases-88-rust-command-tested-sh",
         "source": "test/cases/88_rust_command_tested.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/890_prose_states_no_version.sh",
+        "kind": "test",
+        "label": "test/cases/890_prose_states_no_version.sh",
+        "route": "/cockpit/objects/test/test-cases-890-prose-states-no-version-sh",
+        "source": "test/cases/890_prose_states_no_version.sh"
       },
       {
         "id": "majordomus://test/test/cases/89_web_surface.sh",
@@ -44625,17 +44637,7 @@
       },
       {
         "source": "majordomus://adr/adr-0028",
-        "target": "file:apps/majordomus-cli/src/cli/local.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0028",
         "target": "file:apps/majordomus-cli/src/quality/mod.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0028",
-        "target": "file:apps/majordomus-cli/src/quality/parity.rs",
         "kind": "put_in_force"
       },
       {
@@ -58234,6 +58236,16 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.prose-states-no-version@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.prose-states-no-version@1",
+        "target": "majordomus://rule/project.release-is-a-projection@2",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.provider-support-is-declared@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -60455,6 +60467,11 @@
       },
       {
         "source": "majordomus://test/test/cases/88_rust_command_tested.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/890_prose_states_no_version.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -63636,7 +63653,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4501,
+      "edges": 4502,
       "acyclic": true,
       "truncated": true
     }

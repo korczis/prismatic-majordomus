@@ -26,7 +26,7 @@ majordomus update && sha256sum CLAUDE.md   # identical hash; output says "unchan
 
 ## What it does not cover
 
-v0.1 projects a deliberately narrow subset of the policy — the budget, the profile table, state locations, the finish contract, the identity-fields rule — and lists what is not projected. It does not merge an existing hand-written instruction file; you decide what moves into the body on first use.
+`majordomus update` projects a deliberately narrow subset of the policy — the budget, the profile table, state locations, the finish contract, the identity-fields rule — and lists what is not projected. It does not merge an existing hand-written instruction file; you decide what moves into the body on first use.
 
 ## Why it exists
 

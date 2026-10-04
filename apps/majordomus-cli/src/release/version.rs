@@ -73,6 +73,37 @@ pub const PROJECTION_STALE: &str = "projection-stale";
 /// no derivation produces, so somebody wrote it.
 pub const WRITERS_DISAGREE: &str = "writers-disagree";
 
+/// The diagnostic id of a version label — `v0.1`, a major and a minor with no patch —
+/// typed into hand-written prose, where it states which version the text describes.
+pub const LABEL_IN_PROSE: &str = "version-label-in-prose";
+/// The diagnostic id of a [`LABEL_HISTORY`] entry that cannot be honoured: no reason, a
+/// path that is not tracked prose, or a document that no longer carries a label.
+pub const LABEL_HISTORY_INVALID: &str = "version-label-history-invalid";
+
+/// The documents that describe a past version and are allowed to name it by label, one
+/// `<path> <reason>` per line. A record of the design phase says "v0.1" because it is about
+/// v0.1; a page describing the tool as it stands says it because nobody changed it.
+pub const LABEL_HISTORY: &str = ".ai/repo/version-label-history.txt";
+
+/// Where hand-written prose lives, as `git ls-files` pathspecs. [`prose_files`] narrows
+/// these: git's `*` crosses directories, and `site/content/` is mostly generated.
+const PROSE_ROOTS: &[&str] = &[
+    "README.md",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "docs",
+    "site/content-src",
+    "site/content",
+    "site/data",
+    "site/templates",
+    ".ai/repo",
+    "share/providers",
+];
+
+/// Dated records under `.ai/repo/`: a decision or a session names the version it was taken
+/// in, and stays true about that moment.
+const PROSE_RECORDS: &[&str] = &[".ai/repo/adrs/", ".ai/repo/sessions/"];
+
 /// The generated-artifact manifest: every path in it is written by `majordomus generate`,
 /// so a version stamped into one is a projection and never a statement by hand.
 const GENERATED_MANIFEST: &str = "docs/generated/artifacts.json";
@@ -649,7 +680,7 @@ fn leads_with_version(text: &str) -> bool {
 /// assert_eq!((found[0].path.as_str(), found[0].line), ("lib/x.sh", 1));
 /// ```
 pub fn carriers(root: &Path) -> Vec<Carrier> {
-    let files = committable(root).unwrap_or_else(|| walk(root));
+    let files = committable(root).unwrap_or_else(|| walk(root, CARRIER_ROOTS));
     let generated = generated_paths(root);
     let mut out = Vec::new();
     for path in files {
@@ -708,9 +739,9 @@ fn committable(root: &Path) -> Option<Vec<String>> {
     Some(files)
 }
 
-/// Every file under [`CARRIER_ROOTS`], repository-relative, in a stable order: the answer
-/// when git cannot list them.
-fn walk(root: &Path) -> Vec<String> {
+/// Every file under `roots` — directories walked, files taken as they are —
+/// repository-relative, in a stable order: the answer when git cannot list them.
+fn walk(root: &Path, roots: &[&str]) -> Vec<String> {
     fn visit(dir: &Path, root: &Path, out: &mut Vec<String>) {
         let Ok(entries) = std::fs::read_dir(dir) else {
             return;
@@ -729,8 +760,13 @@ fn walk(root: &Path) -> Vec<String> {
         }
     }
     let mut out = Vec::new();
-    for dir in CARRIER_ROOTS {
-        visit(&root.join(dir), root, &mut out);
+    for dir in roots {
+        let full = root.join(dir);
+        if full.is_file() {
+            out.push((*dir).to_string());
+        } else {
+            visit(&full, root, &mut out);
+        }
     }
     crate::order::canonical_strings(&mut out);
     out
@@ -746,6 +782,231 @@ fn generated_paths(root: &Path) -> BTreeSet<String> {
         .iter()
         .filter_map(|a| a.get("path").and_then(|p| p.as_str()).map(str::to_string))
         .collect()
+}
+
+/// Every version label on a line: `v`, a major and a minor, and no patch — `v0.1`, `v1.2`.
+///
+/// A release is always three numbers (`v0.3.1`), so a label of two names no release: it
+/// names the version a text was written about, and it stays where it was typed while the
+/// version moves on. A label joined to a word, a path or a URL is not one, and neither is a
+/// three-part version or a schema's `version: 1`.
+///
+/// ```
+/// use majordomus_cli::release::version::version_labels;
+/// assert_eq!(version_labels("What v0.1 does not do"), ["v0.1"]);
+/// assert_eq!(version_labels("(v1.12), and v2.0."), ["v1.12", "v2.0"]);
+/// assert!(version_labels("Release `v0.3.1` was published").is_empty());
+/// assert!(version_labels("see /releases/v0.1.json and api-v0.1").is_empty());
+/// assert!(version_labels("rule v2, schema version: 1, dev0.1").is_empty());
+/// assert!(version_labels("v0.1.0 and v0.1x").is_empty());
+/// ```
+pub fn version_labels(line: &str) -> Vec<String> {
+    let bytes = line.as_bytes();
+    let joined = |b: u8| b.is_ascii_alphanumeric() || b"./_-".contains(&b);
+    let digits = |mut at: usize| {
+        while at < bytes.len() && bytes[at].is_ascii_digit() {
+            at += 1;
+        }
+        at
+    };
+    let mut out = Vec::new();
+    for (at, _) in line.match_indices('v') {
+        if at > 0 && joined(bytes[at - 1]) {
+            continue;
+        }
+        let major = digits(at + 1);
+        if major == at + 1 || bytes.get(major) != Some(&b'.') {
+            continue;
+        }
+        let minor = digits(major + 1);
+        if minor == major + 1 {
+            continue;
+        }
+        let patch =
+            bytes.get(minor) == Some(&b'.') && bytes.get(minor + 1).is_some_and(u8::is_ascii_digit);
+        let glued = bytes
+            .get(minor)
+            .is_some_and(|b| b.is_ascii_alphanumeric() || b"_-".contains(b));
+        if !patch && !glued {
+            out.push(line[at..minor].to_string());
+        }
+    }
+    out
+}
+
+/// The tracked hand-written prose: documents, the site's authored pages and data, its
+/// templates, the layer's own documents and the provider templates.
+///
+/// Generated files are not prose anybody wrote — a label in one comes from its source, and
+/// the source is where it is found — so a path the generated-artifact manifest names, a
+/// file stamped by its generator, and a page under `site/content/` that the site generator
+/// projects from `site/content-src/` or writes into a subdirectory are all left out. The
+/// layer's dated records ([`PROSE_RECORDS`]) are left out too. Where git cannot list the
+/// tree — not a checkout — every file under the roots is read instead, as [`carriers`]
+/// does, so a tree nobody committed is still read rather than passed.
+fn prose_files(root: &Path) -> Vec<String> {
+    let listed =
+        crate::git::ls_files_any(root, PROSE_ROOTS).unwrap_or_else(|_| walk(root, PROSE_ROOTS));
+    let generated = generated_paths(root);
+    let prose = |p: &str| match p {
+        "README.md" | "AGENTS.md" | "CLAUDE.md" => true,
+        _ if PROSE_RECORDS.iter().any(|r| p.starts_with(r)) => false,
+        _ if p.starts_with("site/content/") => {
+            let name = &p["site/content/".len()..];
+            p.ends_with(".md")
+                && !name.contains('/')
+                && !root.join("site/content-src").join(name).exists()
+        }
+        _ if p.starts_with("site/data/") => {
+            p.ends_with(".toml") && !p["site/data/".len()..].contains('/')
+        }
+        _ if p.starts_with("share/providers/") || p.starts_with(".ai/repo/providers/") => {
+            p.ends_with(".tmpl")
+        }
+        _ if p.starts_with("site/templates/") => true,
+        _ => p.ends_with(".md"),
+    };
+    listed
+        .into_iter()
+        .filter(|p| prose(p) && !generated.contains(p))
+        .collect()
+}
+
+/// A file's text when it is hand-written and small enough to be prose; `None` for one that
+/// is missing, binary, oversized or stamped by its generator on its first line.
+fn authored_text(root: &Path, path: &str) -> Option<String> {
+    const STAMPS: &[&str] = &[
+        "<!-- generated by",
+        "<!-- GENERATED FILE",
+        "# GENERATED FILE",
+        "// GENERATED FILE",
+    ];
+    let full = root.join(path);
+    let small =
+        std::fs::symlink_metadata(&full).is_ok_and(|m| m.is_file() && m.len() <= LARGEST_READ);
+    let text = std::fs::read_to_string(&full).ok().filter(|_| small)?;
+    let first = text
+        .lines()
+        .next()
+        .unwrap_or("")
+        .trim_start_matches('\u{feff}');
+    (!STAMPS.iter().any(|s| first.trim_start().starts_with(s))).then_some(text)
+}
+
+/// The entries of [`LABEL_HISTORY`] as `(line, path, reason)`; an absent file declares none.
+fn label_history(root: &Path) -> Vec<(usize, String, String)> {
+    let text = std::fs::read_to_string(root.join(LABEL_HISTORY)).unwrap_or_default();
+    text.lines()
+        .enumerate()
+        .filter(|(_, l)| !l.trim().is_empty() && !l.trim_start().starts_with('#'))
+        .map(|(i, l)| {
+            let l = l.trim();
+            let (path, reason) = l.split_once(char::is_whitespace).unwrap_or((l, ""));
+            (i + 1, path.to_string(), reason.trim().to_string())
+        })
+        .collect()
+}
+
+/// Every version label typed into hand-written prose outside a declared history, and every
+/// history entry that cannot be honoured.
+///
+/// The label is the finding, not the version: `v0.1` on a page that describes the tool as
+/// it stands was true the day it was typed and is wrong the day after the next release,
+/// while nothing that derives the version can reach it. A document that is *about* a past
+/// version names it in [`LABEL_HISTORY`] with a reason. That list is held from both sides:
+/// an entry with no reason, one naming a path that is not tracked prose, and one whose
+/// document no longer carries a label are each refused, so the list cannot outlive what it
+/// exempts.
+///
+/// ```
+/// use majordomus_cli::release::version::{label_diagnostics, LABEL_HISTORY};
+/// use std::process::Command;
+/// let dir = tempfile::tempdir().unwrap();
+/// let root = dir.path();
+/// std::fs::create_dir_all(root.join("docs")).unwrap();
+/// std::fs::create_dir_all(root.join(".ai/repo")).unwrap();
+/// std::fs::write(root.join("README.md"), "What v0.1 does not do.\nRelease v0.3.1 shipped.\n").unwrap();
+/// std::fs::write(root.join("docs/DESIGN.md"), "The v0.1 specification.\n").unwrap();
+/// std::fs::write(root.join(LABEL_HISTORY), "docs/DESIGN.md the design phase, dated\n").unwrap();
+/// let git = |a: &[&str]| {
+///     Command::new("git")
+///         .env_remove("GIT_DIR").env_remove("GIT_WORK_TREE").env_remove("GIT_INDEX_FILE")
+///         .arg("-C").arg(root).args(a).output().unwrap()
+/// };
+/// git(&["init", "-q"]);
+/// git(&["add", "-A"]);
+/// let found = label_diagnostics(root);
+/// assert_eq!(found.len(), 1, "{found:?}");
+/// assert!(found[0].message.starts_with("README.md:1 "), "{}", found[0].message);
+///
+/// std::fs::write(root.join("docs/DESIGN.md"), "The founding specification.\n").unwrap();
+/// let found = label_diagnostics(root);
+/// assert_eq!(found[1].id, "version-label-history-invalid", "an exemption outliving its label");
+/// ```
+pub fn label_diagnostics(root: &Path) -> Vec<Diagnostic> {
+    let error = |id: &str, message: String| Diagnostic {
+        id: id.into(),
+        severity: Severity::Error,
+        message,
+    };
+    let files = prose_files(root);
+    let history = label_history(root);
+    let exempt: BTreeSet<&str> = history
+        .iter()
+        .filter(|(_, _, reason)| !reason.is_empty())
+        .map(|(_, path, _)| path.as_str())
+        .collect();
+    let mut out = Vec::new();
+    let mut labelled = BTreeSet::new();
+    for path in &files {
+        let Some(text) = authored_text(root, path) else {
+            continue;
+        };
+        for (i, line) in text.lines().enumerate() {
+            let labels = version_labels(line);
+            if labels.is_empty() {
+                continue;
+            }
+            labelled.insert(path.as_str());
+            if exempt.contains(path.as_str()) {
+                continue;
+            }
+            for label in labels {
+                out.push(error(
+                    LABEL_IN_PROSE,
+                    format!(
+                        "{path}:{} names the version it describes as `{label}`: the label \
+                         stays while the version moves. Say what is true of the tool as it \
+                         stands, without a version; a document about a past version is \
+                         declared in {LABEL_HISTORY} with its reason",
+                        i + 1
+                    ),
+                ));
+            }
+        }
+    }
+    for (line, path, reason) in &history {
+        let at = format!("{LABEL_HISTORY}:{line}");
+        if reason.is_empty() {
+            out.push(error(
+                LABEL_HISTORY_INVALID,
+                format!("{at} exempts {path} and says nothing about why: an exemption states its reason"),
+            ));
+        } else if !files.iter().any(|f| f == path) {
+            out.push(error(
+                LABEL_HISTORY_INVALID,
+                format!("{at} exempts {path}, which is not tracked hand-written prose: remove the entry"),
+            ));
+        } else if !labelled.contains(path.as_str()) {
+            out.push(error(
+                LABEL_HISTORY_INVALID,
+                format!(
+                    "{at} exempts {path}, which names no version label any more: remove the entry"
+                ),
+            ));
+        }
+    }
+    out
 }
 
 /// Everything wrong with where the version is stated: the projection against the
@@ -820,6 +1081,7 @@ pub fn diagnose(root: &Path) -> Vec<Diagnostic> {
                 ),
             });
         }
+        out.extend(label_diagnostics(root));
     }
     out
 }

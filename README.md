@@ -410,16 +410,25 @@ Unknown keys anywhere are errors, so a typo fails loudly.
 
 ## Limitations
 
-- Majordomus is invoked by a person, a git hook, or a worker following its
-  instructions. It does not hook the worker's runtime.
-- It measures no tokens and no cost. [`docs/ECONOMICS.md`](docs/ECONOMICS.md) says what
-  it would take.
-- Scope overlap is reported, never blocked, and only across worktrees of one repository
-  on one machine.
-- The regression-test check in `finish` is a path heuristic (`test/`, `spec/`, `_test.`)
-  and says so in its message.
+- Majordomus is invoked by a person, a git hook, a worker following its instructions, or
+  the worker's own session hooks. Those hooks run only at session and prompt boundaries,
+  to record the session and hand it its briefing, and always let the worker continue:
+  nothing inspects or refuses a tool call. Only Claude Code's hooks are wired; Codex and
+  Gemini have hooks this tool has no adapter for yet.
+- It measures tokens only in matched runs with and without it, and states a saving only
+  once its publication rule is met. It measures no money: cost is the harness's own
+  projection, not a bill. [`docs/ECONOMICS.md`](docs/ECONOMICS.md) says what else is not
+  measured.
+- Scope overlap between worktrees is reported, never blocked. Where a repository opts
+  into the mesh, an exclusive claim refuses an overlapping one on every linked machine;
+  that is a lease, not a lock, and during a network split both sides can claim.
+- Where a profile requires a regression test, `finish` checks only whether a test-shaped
+  path was touched (a `test` or `spec` directory, a `_test.` or `.spec.` file name), not
+  what the test proves.
 - The YAML subset is deliberately small: maps, lists, lists of maps, inline lists,
-  quotes, comments. Anchors, multi-line scalars, and flow maps are rejected.
+  quotes, comments. Tabs and odd indentation are refused; the Rust reader also refuses
+  anchors, aliases and block scalars, which the shell reader takes as text. A flow map is
+  not parsed as a map.
 
 ## Roadmap
 
