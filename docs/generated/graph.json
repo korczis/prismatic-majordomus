@@ -239,6 +239,15 @@
         "status": "query"
       },
       {
+        "id": "capability:deploy.verify",
+        "kind": "capability",
+        "label": "deploy.verify",
+        "summary": "What the deployed surfaces are serving",
+        "route": "/cockpit/capabilities/deploy.verify",
+        "source": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:design.contrast",
         "kind": "capability",
         "label": "design.contrast",
@@ -1715,14 +1724,6 @@
         "label": "engine.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/execution/engine.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/execution/event.rs",
-        "kind": "file",
-        "label": "event.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/execution/event.rs",
         "external": true
       },
       {
@@ -41315,6 +41316,21 @@
         "kind": "projects"
       },
       {
+        "source": "capability:deploy.verify",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:deploy.verify",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:deploy.verify",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:design.contrast",
         "target": "projection:cockpit",
         "kind": "projects"
@@ -44647,11 +44663,6 @@
       {
         "source": "majordomus://adr/adr-0033",
         "target": "file:apps/majordomus-cli/src/execution/engine.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/execution/event.rs",
         "kind": "put_in_force"
       },
       {
@@ -62700,6 +62711,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:deploy",
+        "target": "capability:deploy.verify",
+        "kind": "composes"
+      },
+      {
         "source": "module:design",
         "target": "capability:design.contrast",
         "kind": "composes"
@@ -63457,7 +63473,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4496,
+      "edges": 4499,
       "acyclic": true,
       "truncated": true
     }

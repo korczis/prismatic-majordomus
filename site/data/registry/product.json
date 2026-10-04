@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.12.0"
   },
-  "fingerprint": "3f153d2dde928280d2d8c7738e9c7f0d8660f66304ba453f77591b458b6d80c1",
+  "fingerprint": "c9dc7567695ac92e63ca66fbe1e828b96561c009dce5fde91678a0f5e3daf439",
   "route": "/features/",
   "counts": {
     "features": 26,
@@ -9306,6 +9306,14 @@
               "tool": "majordomus_deployments",
               "resource": "majordomus://deployments",
               "route": "GET /api/v1/deployments"
+            },
+            {
+              "id": "deploy.verify",
+              "title": "What the deployed surfaces are serving",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_deploy_verify",
+              "route": "GET /api/v1/deployments/verify"
             }
           ]
         },
@@ -9382,10 +9390,10 @@
       "moments": [],
       "backlinks": [],
       "counts": {
-        "capabilities": 5,
-        "mcp_tools": 5,
+        "capabilities": 6,
+        "mcp_tools": 6,
         "mcp_resources": 2,
-        "http_routes": 5,
+        "http_routes": 6,
         "cli_paths": 2,
         "commands": 0,
         "objects": 1,
@@ -11875,13 +11883,13 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1865,
-    "builtin": 170,
+    "capabilities": 1866,
+    "builtin": 171,
     "declarative": 1695,
     "modules": 51,
-    "mcp_tools": 164,
+    "mcp_tools": 165,
     "mcp_resources": 1748,
-    "http_routes": 168,
+    "http_routes": 169,
     "cli_commands": 175,
     "shell_commands": 30,
     "kinds": 32,

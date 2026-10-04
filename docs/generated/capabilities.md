@@ -17,7 +17,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `convergence` | Convergence | behaviorally_verified | 1 | [`modules/convergence.md`](modules/convergence.md) |
 | `dashboard` | Dashboards | behaviorally_verified | 1 | [`modules/dashboard.md`](modules/dashboard.md) |
 | `delivery` | Delivery | experimental | 2 | [`modules/delivery.md`](modules/delivery.md) |
-| `deploy` | Deployment | behaviorally_verified | 3 | [`modules/deploy.md`](modules/deploy.md) |
+| `deploy` | Deployment | behaviorally_verified | 4 | [`modules/deploy.md`](modules/deploy.md) |
 | `design` | Design system | behaviorally_verified | 4 | [`modules/design.md`](modules/design.md) |
 | `devcontext` | Development context | behaviorally_verified | 3 | [`modules/devcontext.md`](modules/devcontext.md) |
 | `devtask` | Executable development scopes | behaviorally_verified | 2 | [`modules/devtask.md`](modules/devtask.md) |
@@ -84,6 +84,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `deploy.check` | `deploy` | query | behaviorally_verified | `majordomus_deploy_check` | — | `GET /api/v1/deployments/check` | — | process, 2 entries, 5s | required |
 | `deploy.get` | `deploy` | query | behaviorally_verified | `majordomus_deployment` | — | `GET /api/v1/deployment` | — | — | required |
 | `deploy.list` | `deploy` | query | behaviorally_verified | `majordomus_deployments` | `majordomus://deployments` | `GET /api/v1/deployments` | — | — | required |
+| `deploy.verify` | `deploy` | query | behaviorally_verified | `majordomus_deploy_verify` | — | `GET /api/v1/deployments/verify` | — | — | waived (external_dependency) |
 | `design.contrast` | `design` | query | behaviorally_verified | `majordomus_design_contrast` | — | `GET /api/v1/design/contrast` | — | — | required |
 | `design.explain` | `design` | query | behaviorally_verified | `majordomus_design_explain` | — | `GET /api/v1/design/explain` | — | — | required |
 | `design.system` | `design` | query | behaviorally_verified | `majordomus_design` | `majordomus://design` | `GET /api/v1/design` | — | — | required |

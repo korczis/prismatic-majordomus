@@ -19,6 +19,7 @@
     "op-deploy-check": "docs/api/deploy/",
     "op-deploy-get": "docs/api/deploy/",
     "op-deploy-list": "docs/api/deploy/",
+    "op-deploy-verify": "docs/api/deploy/",
     "op-design-contrast": "docs/api/design/",
     "op-design-explain": "docs/api/design/",
     "op-design-system": "docs/api/design/",
@@ -332,12 +333,13 @@
     "schema-DemonstrateReport": "docs/api/executions/",
     "schema-DependencyCertainty": "docs/api/integration/",
     "schema-DeploymentCheck": "docs/api/deploy/",
-    "schema-DeploymentIdentity": "docs/api/gates/",
+    "schema-DeploymentIdentity": "docs/api/shared/",
     "schema-DeploymentList": "docs/api/deploy/",
-    "schema-DeploymentPlan": "docs/api/gates/",
+    "schema-DeploymentPlan": "docs/api/shared/",
     "schema-DeploymentStanding": "docs/api/served/",
     "schema-DeploymentStatus": "docs/api/deploy/",
-    "schema-DeploymentTarget": "docs/api/gates/",
+    "schema-DeploymentTarget": "docs/api/shared/",
+    "schema-DeploymentVerification": "docs/api/deploy/",
     "schema-DeploymentView": "docs/api/deploy/",
     "schema-DesignReport": "docs/api/design/",
     "schema-Desired": "docs/api/server/",
@@ -924,7 +926,7 @@
     "schema-Surfaces": "docs/api/product/",
     "schema-Tallies": "docs/api/mesh/",
     "schema-Tally": "docs/api/repository/",
-    "schema-TargetKind": "docs/api/gates/",
+    "schema-TargetKind": "docs/api/shared/",
     "schema-TargetStatus": "docs/api/distribution/",
     "schema-TargetView": "docs/api/distribution/",
     "schema-TaskReadiness": "docs/api/devtask/",
@@ -958,6 +960,8 @@
     "schema-VcsState": "docs/api/environment/",
     "schema-VendorView": "docs/api/models/",
     "schema-Verdict": "docs/api/repository/",
+    "schema-Verification": "docs/api/deploy/",
+    "schema-VerificationStatus": "docs/api/deploy/",
     "schema-VerifyReport": "docs/api/objects/",
     "schema-VersionSummary": "docs/api/gates/",
     "schema-Violation": "docs/api/quality/",
@@ -1027,8 +1031,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 168,
-    "schemas": 805,
+    "operations": 169,
+    "schemas": 808,
     "tags": 51
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1133,6 +1137,7 @@
     "deploy.check": "deploy",
     "deploy.get": "deploy",
     "deploy.list": "deploy",
+    "deploy.verify": "deploy",
     "design.contrast": "design",
     "design.explain": "design",
     "design.system": "design",
@@ -1450,12 +1455,13 @@
     "DemonstrateReport": "executions",
     "DependencyCertainty": "integration",
     "DeploymentCheck": "deploy",
-    "DeploymentIdentity": "gates",
+    "DeploymentIdentity": "shared",
     "DeploymentList": "deploy",
-    "DeploymentPlan": "gates",
+    "DeploymentPlan": "shared",
     "DeploymentStanding": "served",
     "DeploymentStatus": "deploy",
-    "DeploymentTarget": "gates",
+    "DeploymentTarget": "shared",
+    "DeploymentVerification": "deploy",
     "DeploymentView": "deploy",
     "DesignReport": "design",
     "Desired": "server",
@@ -2042,7 +2048,7 @@
     "Surfaces": "product",
     "Tallies": "mesh",
     "Tally": "repository",
-    "TargetKind": "gates",
+    "TargetKind": "shared",
     "TargetStatus": "distribution",
     "TargetView": "distribution",
     "TaskReadiness": "devtask",
@@ -2076,6 +2082,8 @@
     "VcsState": "environment",
     "VendorView": "models",
     "Verdict": "repository",
+    "Verification": "deploy",
+    "VerificationStatus": "deploy",
     "VerifyReport": "objects",
     "VersionSummary": "gates",
     "Violation": "quality",
@@ -11036,7 +11044,7 @@
     },
     {
       "description": "What a live surface is expected to be serving, or what it states it serves: the same\nshape on both sides of a comparison. Every field is optional because no surface states\nall three, and a field that is absent is not written when the identity is serialised.\n\n```\nuse majordomus_cli::deploy::targets::DeploymentIdentity;\n\nlet expected = DeploymentIdentity {\n    commit: Some(\"abc123\".into()),\n    version: Some(\"0.6.0\".into()),\n    tag: None,\n};\nassert!(!expected.is_empty());\nlet json = serde_json::to_string(&expected).unwrap();\nassert!(!json.contains(\"tag\"), \"an absent field is not written: {json}\");\n```",
-      "home": "gates",
+      "home": "shared",
       "is_enum": false,
       "name": "DeploymentIdentity",
       "properties": [
@@ -11065,7 +11073,8 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
-        "DeploymentTarget"
+        "DeploymentTarget",
+        "Verification"
       ],
       "values": [],
       "variants": []
@@ -11112,7 +11121,7 @@
     },
     {
       "description": "Every target, applicable or not, with what could not be derived alongside. The plan\nis what a deployment command shows before it acts and what a verifier is handed\nafterwards: the applicable targets are asked, and the rest are reported with the reason\nthe plan gave, never silently dropped.\n\n```\nuse majordomus_cli::deploy::targets::{plan, DeploymentPlan, PlanFacts};\n\nlet facts = PlanFacts {\n    site_base_url: Some(\"https://example.test\".into()),\n    site_inputs: vec![\"docs/**\".into()],\n    ..Default::default()\n};\nlet deployment: DeploymentPlan = plan(&facts, &[\"README.md\".into()], false);\nassert_eq!(deployment.targets.len(), 1, \"the site is a target even when not reached\");\nassert_eq!(deployment.applicable().count(), 0);\nassert!(\n    deployment.findings.iter().any(|f| f.contains(\"no release record\")),\n    \"{:?}\",\n    deployment.findings\n);\n```",
-      "home": "gates",
+      "home": "shared",
       "is_enum": false,
       "name": "DeploymentPlan",
       "properties": [
@@ -11136,7 +11145,8 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
-        "Completion"
+        "Completion",
+        "DeploymentVerification"
       ],
       "values": [],
       "variants": []
@@ -11210,7 +11220,7 @@
     },
     {
       "description": "One surface the change may reach, applicable or not, with the reason either way. A\ntarget is normally derived by `plan`; the fields are public so that a test, or a\ncaller that already knows its surfaces, can write one down, and the empty lists are\nleft out of the serialised form.\n\n```\nuse majordomus_cli::deploy::targets::{DeploymentTarget, DeploymentIdentity, TargetKind};\n\nlet target = DeploymentTarget {\n    id: \"pages\".into(),\n    kind: TargetKind::Pages,\n    url: Some(\"https://example.test\".into()),\n    identity_url: Some(\"https://example.test/build.json\".into()),\n    applicable: false,\n    reason: \"the change touches nothing the site is built from\".into(),\n    expected: DeploymentIdentity::default(),\n    inputs: vec![\"docs/**\".into()],\n    because: vec![],\n};\nlet json = serde_json::to_value(&target).unwrap();\nassert_eq!(json[\"kind\"], \"pages\");\nassert_eq!(json[\"inputs\"], serde_json::json!([\"docs/**\"]));\nassert!(json.get(\"because\").is_none(), \"an empty list is not written\");\n```",
-      "home": "gates",
+      "home": "shared",
       "is_enum": false,
       "name": "DeploymentTarget",
       "properties": [
@@ -11287,6 +11297,74 @@
       "used_by_schemas": [
         "DeploymentPlan"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The plan and the live answers, as one document: what would be asked, what was, and\nwhat each surface stated.",
+      "home": "deploy",
+      "is_enum": false,
+      "name": "DeploymentVerification",
+      "properties": [
+        {
+          "description": "The commit the targets were expected to serve, when one was known.",
+          "name": "expected_commit",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Which targets exist and which apply.",
+          "name": "plan",
+          "refs": [
+            "DeploymentPlan"
+          ],
+          "required": true,
+          "type": "DeploymentPlan"
+        },
+        {
+          "description": "True when every applicable target is verified and none refuses.",
+          "name": "ok",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "How many targets were asked.",
+          "name": "asked",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The applicable targets whose status refuses.",
+          "name": "refusing",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Each target, in the plan's order.",
+          "name": "verifications",
+          "refs": [
+            "Verification"
+          ],
+          "required": true,
+          "type": "array of Verification"
+        },
+        {
+          "description": "What could not be derived, from the plan.",
+          "name": "findings",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "deploy.verify"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -16514,6 +16592,7 @@
         "deploy.get",
         "deploy.list",
         "deploy.check",
+        "deploy.verify",
         "design.system",
         "design.contrast",
         "design.explain",
@@ -44434,14 +44513,15 @@
     },
     {
       "description": "The three kinds of surface a deployment target can be. The order is the plan's order:\npages, then the release, then each application, so a report reads the same way every\ntime, and the serialised word is the lowercase name.\n\n```\nuse majordomus_cli::deploy::targets::TargetKind;\n\nassert!(TargetKind::Pages < TargetKind::Release);\nassert!(TargetKind::Release < TargetKind::Application);\nlet json = serde_json::to_string(&TargetKind::Application).unwrap();\nassert_eq!(json, \"\\\"application\\\"\");\n```",
-      "home": "gates",
+      "home": "shared",
       "is_enum": true,
       "name": "TargetKind",
       "properties": [],
       "type": "\"pages\" | \"release\" | \"application\"",
       "used_by": [],
       "used_by_schemas": [
-        "DeploymentTarget"
+        "DeploymentTarget",
+        "Verification"
       ],
       "values": [
         {
@@ -46149,6 +46229,124 @@
         {
           "description": "Never read; the reason says why.",
           "value": "out"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One target, asked, and what came of it. The evidence is the address that was asked,\nthe identity expected, the identity stated and one sentence of detail; a header, a\ntoken or a body field outside the comparison is never carried, so the record can be\nwritten into a session without a second look.\n\n```\nuse majordomus_cli::deploy::targets::{DeploymentTarget, DeploymentIdentity, TargetKind};\nuse majordomus_cli::deploy::verify::{verify_target, StaticFetcher, Verification};\nuse majordomus_cli::deploy::verify::VerificationStatus;\n\nlet target = DeploymentTarget {\n    id: \"release\".into(),\n    kind: TargetKind::Release,\n    url: Some(\"https://site.test/releases/\".into()),\n    identity_url: Some(\"https://site.test/releases/latest.json\".into()),\n    applicable: true,\n    reason: \"every published surface is asked after a deployment\".into(),\n    expected: DeploymentIdentity { tag: Some(\"v0.5.0\".into()), ..Default::default() },\n    inputs: vec![],\n    because: vec![],\n};\nlet fetcher = StaticFetcher::default().answers(\n    \"https://site.test/releases/latest.json\",\n    r#\"{\"tag\":\"v0.5.0\",\"version\":\"0.5.0\",\"token\":\"ghp_secret\"}\"#,\n);\nlet v: Verification = verify_target(&target, &fetcher, \"2026-09-12T10:00:00Z\");\nassert_eq!(v.status, VerificationStatus::Verified);\nassert_eq!(v.asked.as_deref(), Some(\"https://site.test/releases/latest.json\"));\nassert_eq!(v.observed.version.as_deref(), Some(\"0.5.0\"));\nassert_eq!(v.detail, \"states tag v0.5.0, version 0.5.0\");\nassert!(!serde_json::to_string(&v).unwrap().contains(\"ghp_secret\"));\n```",
+      "home": "deploy",
+      "is_enum": false,
+      "name": "Verification",
+      "properties": [
+        {
+          "description": "The target's identity.",
+          "name": "target",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Which kind of surface it is.",
+          "name": "kind",
+          "refs": [
+            "TargetKind"
+          ],
+          "required": true,
+          "type": "TargetKind"
+        },
+        {
+          "description": "Where it stands.",
+          "name": "status",
+          "refs": [
+            "VerificationStatus"
+          ],
+          "required": true,
+          "type": "VerificationStatus"
+        },
+        {
+          "description": "The address that was asked, when one was.",
+          "name": "asked",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What was expected.",
+          "name": "expected",
+          "refs": [
+            "DeploymentIdentity"
+          ],
+          "required": false,
+          "type": "DeploymentIdentity"
+        },
+        {
+          "description": "What the surface stated.",
+          "name": "observed",
+          "refs": [
+            "DeploymentIdentity"
+          ],
+          "required": false,
+          "type": "DeploymentIdentity"
+        },
+        {
+          "description": "What was read, in one sentence: never a restatement of the status.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When it was asked.",
+          "name": "checked_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DeploymentVerification"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where one target stands after being asked. Three of the six states refuse completion,\nand a report is ok only when none of its targets is in one of them; the other three\nrecord that nothing was asked, or that nothing could be compared, without pretending\neither is a pass.\n\n```\nuse majordomus_cli::deploy::verify::VerificationStatus;\n\nassert!(VerificationStatus::Stale.refuses());\nassert!(!VerificationStatus::NotApplicable.refuses());\nlet json = serde_json::to_string(&VerificationStatus::Unreachable).unwrap();\nassert_eq!(json, \"\\\"unreachable\\\"\");\n```",
+      "home": "deploy",
+      "is_enum": true,
+      "name": "VerificationStatus",
+      "properties": [],
+      "type": "\"verified\" | \"stale\" | \"unreachable\" | \"unreadable\" | \"not_applicable\" | \"unverifiable\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Verification"
+      ],
+      "values": [
+        {
+          "description": "The surface states the expected identity.",
+          "value": "verified"
+        },
+        {
+          "description": "The surface answered, and states a different identity: the deployment did not\nland, or an older one is still live.",
+          "value": "stale"
+        },
+        {
+          "description": "The surface did not answer.",
+          "value": "unreachable"
+        },
+        {
+          "description": "The surface answered with something this executable cannot read as an identity.",
+          "value": "unreadable"
+        },
+        {
+          "description": "The target does not apply to this change; nothing was asked.",
+          "value": "not_applicable"
+        },
+        {
+          "description": "Nothing is expected of the target, so nothing could be compared; it was reached.",
+          "value": "unverifiable"
         }
       ],
       "variants": []
@@ -48383,6 +48581,97 @@
           "result_schema": "DeploymentCheck",
           "stability": "behaviorally_verified",
           "summary": "Would these deployments work"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "external_dependency",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/deployments/verify?expected_commit=0123456789abcdef0123456789abcdef01234567&targets=%5B%22pages%22%5D&changed=%5B%22site%2Fcontent%2F_index.md%22%5D\"",
+          "description": "Live verification: every surface the change reaches — the published site, the published release metadata, each active deployment — is asked for the identity it states (the commit, version or tag at its own address) and compared with what this checkout expects. A surface stating an older identity is stale, one that does not answer is unreachable, and neither is a pass: a deploy command that exited 0 with the old revision still live is exactly what this refuses. The request carries no header and the evidence carries no body beyond the fields compared. The one capability of this executable that reaches the network, and it reaches only addresses the repository itself declares.",
+          "home": "deploy",
+          "id": "deploy.verify",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_deploy_verify",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The commit every target is expected to serve. Absent means this checkout's HEAD.",
+              "examples": [
+                {
+                  "case": "one-target-against-a-commit",
+                  "value": "\"0123456789abcdef0123456789abcdef01234567\""
+                }
+              ],
+              "name": "expected_commit",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "The targets to ask, by id (`pages`, `release`, a deployment's id). Absent means\nevery target that applies.",
+              "examples": [
+                {
+                  "case": "one-target-against-a-commit",
+                  "value": "[\"pages\"]"
+                }
+              ],
+              "name": "targets",
+              "required": false,
+              "type": "array of string"
+            },
+            {
+              "description": "The changed paths to derive applicability from. Absent means every target that\nexists is asked, which is the question after a deployment.",
+              "examples": [
+                {
+                  "case": "one-target-against-a-commit",
+                  "value": "[\"site/content/_index.md\"]"
+                }
+              ],
+              "name": "changed",
+              "required": false,
+              "type": "array of string"
+            }
+          ],
+          "path": "/api/v1/deployments/verify",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::deploy",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "What the deployed surfaces are serving: the result.",
+              "schema": "DeploymentVerification",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "DeploymentVerification",
+          "stability": "behaviorally_verified",
+          "summary": "What the deployed surfaces are serving"
         }
       ],
       "slug": "deploy"

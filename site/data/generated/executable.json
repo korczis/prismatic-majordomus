@@ -324,6 +324,23 @@
       "tool": "majordomus_deployments"
     },
     {
+      "api_anchor": "/docs/api/deploy/#op-deploy-verify",
+      "claims": [],
+      "cli": null,
+      "id": "deploy.verify",
+      "kind": "query",
+      "module": "deploy",
+      "module_route": "/registry/modules/deploy/",
+      "resource": null,
+      "route": "/registry/capabilities/deploy-verify/",
+      "slug": "deploy-verify",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/deploy.rs",
+      "tests": [],
+      "title": "What the deployed surfaces are serving",
+      "tool": "majordomus_deploy_verify"
+    },
+    {
       "api_anchor": "/docs/api/design/#op-design-contrast",
       "claims": [],
       "cli": null,
@@ -3568,7 +3585,7 @@
     ]
   },
   "counts": {
-    "capabilities": 170,
+    "capabilities": 171,
     "claims": 76,
     "modules": 51
   },
@@ -3758,6 +3775,11 @@
           "id": "deploy.list",
           "route": "/registry/capabilities/deploy-list/",
           "slug": "deploy-list"
+        },
+        {
+          "id": "deploy.verify",
+          "route": "/registry/capabilities/deploy-verify/",
+          "slug": "deploy-verify"
         }
       ],
       "claims": [],

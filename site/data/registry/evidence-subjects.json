@@ -139,6 +139,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:deploy.verify",
+      "path": "/evidence/capabilities/deploy-verify/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:design.contrast",
       "path": "/evidence/capabilities/design-contrast/"
     },
@@ -3600,6 +3605,16 @@
       "kind": "capability",
       "id": "deploy.list",
       "page": "/evidence/capabilities/deploy-list/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:deploy.verify": {
+      "kind": "capability",
+      "id": "deploy.verify",
+      "page": "/evidence/capabilities/deploy-verify/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -16941,6 +16956,18 @@
       "programs": [],
       "members": [
         "capability:deploy.check"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_deploy_verify": {
+      "kind": "mcp",
+      "id": "majordomus_deploy_verify",
+      "alias_of": "capability:deploy.verify",
+      "programs": [],
+      "members": [
+        "capability:deploy.verify"
       ],
       "routes": [],
       "mechanisms": [],
