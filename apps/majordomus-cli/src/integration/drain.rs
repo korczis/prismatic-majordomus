@@ -37,7 +37,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::{
-    at, events_path, local_master, queue_of, refresh, EvaluatedAgainst, IntegrationEvidence,
+    at, events_path, local_master, refresh, EvaluatedAgainst, IntegrationEvidence,
     IntegrationQueue, PullRequestAssessment, PullRequestDisposition,
 };
 
@@ -1779,7 +1779,8 @@ impl Integrator for ForgeIntegrator<'_> {
             l.renew()?;
         }
         refresh(self.root)?;
-        queue_of(self.root)
+        // the executor just observed: what it learnt is kept for the readers after it
+        super::queue_and_record(self.root)
     }
 
     fn merge(&mut self, pr: u64, head_sha: &str, method: &str) -> Result<(), String> {

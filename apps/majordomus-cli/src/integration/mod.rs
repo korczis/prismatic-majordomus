@@ -539,6 +539,39 @@ pub fn executor_feedback(queue: &mut IntegrationQueue, trail: &[drain::Integrati
 /// by git against this clone's fetched master. Offline: it reads the network's last answer
 /// and never asks it again.
 pub fn queue_of(root: &Path) -> Result<IntegrationQueue, String> {
+    computed(root, std::time::SystemTime::now()).map(|(queue, _)| queue)
+}
+
+/// [`queue_of`], and what it learnt kept for the next reader: the relations decided (the
+/// cache, by commit pair) and the summary a briefing reads without deciding one. Only the
+/// paths that just observed the forge write — `prs refresh` and the executor — so every
+/// read, from the command line, the capability or the Cockpit, leaves the checkout as it was.
+pub fn queue_and_record(root: &Path) -> Result<IntegrationQueue, String> {
+    let (queue, cache) = computed(root, std::time::SystemTime::now())?;
+    if let Ok(text) = serde_json::to_string(&cache) {
+        let _ = write_atomic(&state_path(root, RELATIONS_FILE), &text);
+    }
+    // the summary a briefing reads without deciding a single relation (QueueSummary), the
+    // repository's like the trail it sits beside
+    if let (Ok(path), Ok(text)) = (
+        common_state_path(root, SUMMARY_FILE),
+        serde_json::to_string_pretty(&QueueSummary::of(&queue)),
+    ) {
+        let _ = write_atomic(&path, &(text + "\n"));
+    }
+    Ok(queue)
+}
+
+/// An observation older than this describes a forge that has moved on: the queue built from
+/// it is said to be stale, and nothing reading it may take it for the present.
+pub const OBSERVATION_STALE_AFTER: std::time::Duration = std::time::Duration::from_secs(3600);
+
+/// The queue of the recorded observation, and the relation cache as it stands after deciding
+/// it. Writes nothing.
+fn computed(
+    root: &Path,
+    now: std::time::SystemTime,
+) -> Result<(IntegrationQueue, RelationCache), String> {
     let obs = load_observation(root)?.ok_or_else(|| {
         "no forge observation is recorded in this checkout; majordomus prs refresh".to_string()
     })?;
@@ -574,21 +607,23 @@ pub fn queue_of(root: &Path) -> Result<IntegrationQueue, String> {
         }
         relation_cached(root, &mut cache, &master, &p.head_sha)
     });
-    if let Ok(text) = serde_json::to_string(&cache) {
-        let _ = write_atomic(&cache_path, &text);
+    let now_secs = now
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |d| i64::try_from(d.as_secs()).unwrap_or(i64::MAX));
+    if let Some(age) = crate::peers::epoch_seconds(&obs.observed_at)
+        .map(|then| now_secs.saturating_sub(then))
+        .filter(|age| *age > i64::try_from(OBSERVATION_STALE_AFTER.as_secs()).unwrap_or(i64::MAX))
+    {
+        queue.diagnostics.push(format!(
+            "the observation is {} min old (observed {}): the forge has moved on since; majordomus prs refresh",
+            age / 60,
+            obs.observed_at
+        ));
     }
     let trail = drain::events(root);
     executor_feedback(&mut queue, &trail);
     wait::annotate(&mut queue, &trail);
-    // the summary a briefing reads without deciding a single relation (QueueSummary), the
-    // repository's like the trail it sits beside
-    if let (Ok(path), Ok(text)) = (
-        common_state_path(root, SUMMARY_FILE),
-        serde_json::to_string_pretty(&QueueSummary::of(&queue)),
-    ) {
-        let _ = write_atomic(&path, &(text + "\n"));
-    }
-    Ok(queue)
+    Ok((queue, cache))
 }
 
 /// The last queue built in the repository, summarised.

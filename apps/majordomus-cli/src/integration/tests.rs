@@ -1686,10 +1686,10 @@ fn observed_pr(number: u64, head_sha: &str) -> PullRequestObservation {
     p
 }
 
-/// The keys of the relation cache `queue_of` left in `dir`.
+/// The keys of the relation cache `queue_and_record` left in `dir`.
 fn cached_keys(dir: &std::path::Path) -> Vec<String> {
     let path = crate::integration::state_path(dir, crate::integration::RELATIONS_FILE);
-    // queue_of writes the cache on every build, an empty one included
+    // queue_and_record writes the cache on every build, an empty one included
     let text = std::fs::read_to_string(path).unwrap();
     let cache: serde_json::Value = serde_json::from_str(&text).unwrap();
     cache["entries"]
@@ -1724,7 +1724,7 @@ fn the_relation_is_decided_on_the_observed_head_alone() {
             observed_pr(3, &heads["authored"]),
         ],
     );
-    let q = crate::integration::queue_of(&dir).unwrap();
+    let q = crate::integration::queue_and_record(&dir).unwrap();
     let relation = |n: u64| q.get(n).unwrap().relation.clone();
     assert!(
         matches!(relation(1), RelationToMaster::Unknown { ref reason } if reason.contains(moved)),
@@ -1766,7 +1766,7 @@ fn a_ref_keyed_relation_written_earlier_is_dropped_while_master_stands_still() {
         format!("{{\"entries\":{{\"{stale}\":{{\"kind\":\"up_to_date\",\"authored\":[]}}}}}}"),
     )
     .unwrap();
-    crate::integration::queue_of(&dir).unwrap();
+    crate::integration::queue_and_record(&dir).unwrap();
     let keys = cached_keys(&dir);
     assert!(!keys.contains(&stale), "{keys:?}");
     assert!(keys.iter().all(|k| commit_ids(k) && !k.contains("refs/")));
@@ -1818,7 +1818,7 @@ fn an_attribute_read_that_fails_is_unknown_and_never_cached() {
         "{r:?}"
     );
     observed(&dir, &master, vec![observed_pr(1, &head)]);
-    let q = crate::integration::queue_of(&dir).unwrap();
+    let q = crate::integration::queue_and_record(&dir).unwrap();
     assert_eq!(disposition(&q, 1), PullRequestDisposition::Unknown);
     assert!(cached_keys(&dir).is_empty(), "{:?}", cached_keys(&dir));
 }
@@ -4599,4 +4599,30 @@ fn failure_classes_say_whether_the_next_candidate_may_be_tried() {
     }
     assert!(!C::VerificationFailed.recoverable());
     assert!(!C::Unreadable.recoverable());
+}
+
+// ---------------------------------------------------------------- reads write nothing (WP17)
+
+/// A read of the queue — status, plan, explain, the capability, the Cockpit — leaves the
+/// checkout as it was: neither the relation cache nor the summary is written. Only the path
+/// that just observed the forge keeps what it learnt.
+#[test]
+fn a_read_of_the_queue_writes_nothing() {
+    let dir = unique_temp("mj-integration-pure-read");
+    git(&dir, &["init", "-q", "-b", "master"]);
+    git(&dir, &["commit", "-q", "--allow-empty", "-m", "base"]);
+    let master = git(&dir, &["rev-parse", "HEAD"]);
+    git(&dir, &["update-ref", "refs/remotes/origin/master", &master]);
+    observed(&dir, &master, vec![]);
+    let cache = dir.join(".ai/local/state/integration/relations.json");
+    let summary = dir.join(".git/majordomus/integration/summary.json");
+    let _ = std::fs::remove_file(&cache);
+    crate::integration::queue_of(&dir).unwrap();
+    assert!(!cache.exists() && !summary.exists(), "a read wrote state");
+    crate::integration::queue_and_record(&dir).unwrap();
+    assert!(
+        cache.exists() && summary.exists(),
+        "the recording path keeps nothing"
+    );
+    let _ = std::fs::remove_dir_all(&dir);
 }
