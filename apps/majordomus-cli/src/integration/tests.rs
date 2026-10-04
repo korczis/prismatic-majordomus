@@ -47,6 +47,8 @@ struct Sim {
     ci_pending: bool,
     /// Its required check never reported on the head.
     ci_unreported: bool,
+    /// The forge has auto-merge armed on it.
+    auto_merge: bool,
 }
 
 fn sim(number: u64) -> Sim {
@@ -68,6 +70,7 @@ fn sim(number: u64) -> Sim {
         paths: vec![format!("docs/{number}.md")],
         ci_pending: false,
         ci_unreported: false,
+        auto_merge: false,
     }
 }
 
@@ -82,6 +85,8 @@ enum Meanwhile {
     Labelled(u64, &'static str),
     /// The forge's review decision becomes this.
     Reviewed(u64, &'static str),
+    /// Somebody arms auto-merge on it.
+    AutoMergeArmed(u64),
 }
 
 #[derive(Debug)]
@@ -115,6 +120,8 @@ struct World {
     close_calls: usize,
     /// Bringing master into a branch fails.
     refresh_fails: bool,
+    /// The merge methods the repository's settings allow, in the forge's words.
+    merge_methods: Vec<&'static str>,
 }
 
 impl Default for World {
@@ -136,6 +143,7 @@ impl Default for World {
             close_refuses: BTreeSet::new(),
             close_calls: 0,
             refresh_fails: false,
+            merge_methods: vec!["merge"],
         }
     }
 }
@@ -157,7 +165,7 @@ impl World {
                 approvals: u64::from(r),
                 ..Default::default()
             }),
-            merge_methods: vec!["merge".into()],
+            merge_methods: self.merge_methods.iter().map(|m| m.to_string()).collect(),
             pull_requests: self.open.iter().map(observe_pr).collect(),
         }
     }
@@ -203,6 +211,10 @@ impl World {
                 let s = self.open.iter_mut().find(|s| s.number == *n).expect("open");
                 s.review = decision;
             }
+            Meanwhile::AutoMergeArmed(n) => {
+                let s = self.open.iter_mut().find(|s| s.number == *n).expect("open");
+                s.auto_merge = true;
+            }
         }
     }
 }
@@ -239,7 +251,7 @@ fn observe_pr(s: &Sim) -> PullRequestObservation {
             }]
         },
         review_decision: s.review.into(),
-        auto_merge: false,
+        auto_merge: s.auto_merge,
         cross_repository: s.cross_repository,
         // an approval the forge reports is one given on this head
         latest_reviews: if s.review == "APPROVED" {
@@ -1255,6 +1267,7 @@ fn arb_sim() -> impl Strategy<Value = Sim> {
                     0 => vec!["hold".into()],
                     _ => Vec::new(),
                 };
+                s.auto_merge = label == 1;
                 s.created = CREATED[created].into();
                 s.paths.extend(shared.into_iter().map(String::from));
                 s.review = REVIEWS[review];
@@ -1317,6 +1330,7 @@ proptest! {
             let s = w.open.iter().find(|s| s.number == a.number).unwrap();
             prop_assert!(!s.draft);
             prop_assert!(s.labels.is_empty());
+            prop_assert!(!s.auto_merge);
             prop_assert!(!s.failing);
             prop_assert_eq!(s.contains, w.master);
             prop_assert_eq!(a.required_checks, RequiredCheckState::Passed);
@@ -1820,6 +1834,11 @@ fn every_disposition_has_one_word_and_one_lane() {
     assert_eq!(
         PullRequestDisposition::Ready.lane(),
         crate::integration::IntegrationLane::Ready
+    );
+    assert_eq!(PullRequestDisposition::Unsafe.as_str(), "unsafe");
+    assert_eq!(
+        PullRequestDisposition::Unsafe.lane(),
+        crate::integration::IntegrationLane::Held
     );
 }
 
@@ -3210,6 +3229,8 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         | R::BaseIs { .. }
         | R::Draft
         | R::Label { .. }
+        | R::AutoMergeArmed
+        | R::MergeCommitNotAllowed
         | R::HeadReachableFromMaster
         | R::MergeChangesNothing
         | R::OnlyDerivedArtifactsDiffer
@@ -3242,6 +3263,8 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         R::Label {
             name: "scope:ci".into(),
         },
+        R::AutoMergeArmed,
+        R::MergeCommitNotAllowed,
         R::HeadReachableFromMaster,
         R::MergeChangesNothing,
         R::OnlyDerivedArtifactsDiffer,
@@ -3543,6 +3566,8 @@ proptest! {
                     G::Base => &["stacked_on", "base_is"],
                     G::Draft => &["draft"],
                     G::Label => &["label"],
+                    G::AutoMerge => &["auto_merge_armed"],
+                    G::MergeMethod => &["merge_commit_not_allowed"],
                     G::RelationToMaster => &[
                         "head_reachable_from_master",
                         "merge_changes_nothing",
@@ -3564,4 +3589,357 @@ proptest! {
             }
         }
     }
+}
+
+// ---------------------------------------------------------------- WP12: Unsafe, merge method, label policy
+//
+// Auto-merge armed is `unsafe`: the forge would merge it on its own, outside the executor. A
+// repository that allows no merge commit holds every pull request, and nothing is ever merged
+// otherwise. The labels that hold are one table.
+
+#[test]
+fn auto_merge_armed_is_unsafe_and_every_later_failing_gate_is_still_said() {
+    use crate::integration::{IntegrationGate as G, IntegrationLane, ReasonCode as R};
+    // #1: armed, its check failed, behind master; #2: armed and only behind, which would
+    // otherwise be refreshed; #3: armed and held by a label, which comes first
+    let mut failing = sim(1);
+    failing.auto_merge = true;
+    failing.failing = true;
+    let mut behind = sim(2);
+    behind.auto_merge = true;
+    let mut labelled = sim(3);
+    labelled.auto_merge = true;
+    labelled.labels = vec!["wip".into()];
+    labelled.contains = 1;
+    let w = World {
+        open: vec![failing, behind, labelled],
+        master: 1,
+        ..Default::default()
+    };
+    let q = w.queue();
+    let a = q.get(1).unwrap();
+    assert_eq!(a.disposition, PullRequestDisposition::Unsafe);
+    assert_eq!(a.lane, IntegrationLane::Held);
+    assert_eq!(
+        a.reasons,
+        vec![
+            R::AutoMergeArmed,
+            R::RequiredCheckFailed,
+            R::BehindMaster { commits: 1 }
+        ]
+    );
+    assert_eq!(
+        serde_json::to_value(&a.reasons).unwrap(),
+        serde_json::json!([
+            "auto_merge_armed",
+            "required_check_failed",
+            "behind_master:1"
+        ])
+    );
+    let failed: Vec<G> = a
+        .gates
+        .iter()
+        .filter(|g| !g.passed)
+        .map(|g| g.gate)
+        .collect();
+    assert_eq!(
+        failed,
+        [
+            G::AutoMerge,
+            G::NoFailingCheck,
+            G::Freshness,
+            G::RequiredChecks
+        ]
+    );
+    let armed = a
+        .evidence
+        .iter()
+        .find(|e| e.kind == crate::integration::EvidenceKind::AutoMerge)
+        .expect("auto-merge evidence");
+    assert_eq!(armed.status, "armed");
+    assert_eq!(armed.kind.as_str(), "auto_merge");
+    assert_eq!(
+        armed.source,
+        Some(crate::integration::EvidenceSource::Forge {
+            observed_at: "t0".into()
+        })
+    );
+    assert!(a
+        .next_action
+        .as_deref()
+        .is_some_and(|n| n.contains("--disable-auto")));
+
+    // an armed one is never refreshed: a refreshed head would be merged by the forge
+    assert_eq!(disposition(&q, 2), PullRequestDisposition::Unsafe);
+    assert!(q.next_refresh.is_empty(), "{:?}", q.next_refresh);
+    assert_eq!(q.next_merge, None);
+
+    // the label gate comes first, and the armed auto-merge is said after it
+    let held = q.get(3).unwrap();
+    assert_eq!(held.disposition, PullRequestDisposition::Blocked);
+    assert_eq!(held.reasons, ["label:wip", "auto_merge_armed"]);
+
+    // the queue names every armed pull request
+    let diagnostic = q
+        .diagnostics
+        .iter()
+        .find(|d| d.contains("auto-merge is armed"))
+        .expect("an auto-merge diagnostic");
+    assert!(diagnostic.contains("#1 #2 #3"), "{diagnostic}");
+    // a pull request without it carries no auto-merge evidence
+    let quiet = World {
+        open: vec![sim(4)],
+        ..Default::default()
+    }
+    .queue();
+    assert!(quiet
+        .get(4)
+        .unwrap()
+        .evidence
+        .iter()
+        .all(|e| e.kind != "auto_merge"));
+    assert!(quiet.diagnostics.iter().all(|d| !d.contains("auto-merge")));
+}
+
+#[test]
+fn auto_merge_armed_between_the_decision_and_the_act_merges_nothing() {
+    let mut w = World {
+        open: vec![sim(1)],
+        ..Default::default()
+    };
+    let (out, actions) = step_with_second_observation(&mut w, Meanwhile::AutoMergeArmed(1), false);
+    assert!(stale_with(&out, 1, "it is unsafe now"), "{out:?}");
+    assert!(w.merged.is_empty());
+    assert_eq!(w.merge_calls, 0);
+    assert!(
+        !actions.iter().any(|a| a == "merge_attempted"),
+        "{actions:?}"
+    );
+}
+
+#[test]
+fn a_repository_without_merge_commits_holds_every_candidate_and_merges_nothing() {
+    use crate::integration::ReasonCode as R;
+    for allowed in [
+        vec!["squash"],
+        vec!["squash", "rebase"],
+        vec!["rebase"],
+        vec![],
+    ] {
+        let mut behind = sim(2);
+        behind.contains = 0;
+        let mut ready = sim(1);
+        ready.contains = 1;
+        let mut w = World {
+            open: vec![ready, behind],
+            master: 1,
+            merge_methods: allowed.clone(),
+            ..Default::default()
+        };
+        let q = w.queue();
+        assert_eq!(q.policy.merge_method, None, "{allowed:?}");
+        for a in &q.assessments {
+            assert_eq!(
+                a.disposition,
+                PullRequestDisposition::Blocked,
+                "#{} with {allowed:?}",
+                a.number
+            );
+            assert_eq!(a.reasons[0], R::MergeCommitNotAllowed, "{:?}", a.reasons);
+            let settings = a
+                .evidence
+                .iter()
+                .find(|e| e.kind == crate::integration::EvidenceKind::RepositorySettings)
+                .expect("settings evidence");
+            assert_eq!(settings.kind.as_str(), "repository_settings");
+            assert_eq!(settings.status, "merge_commit_not_allowed");
+            let gate = a
+                .gates
+                .iter()
+                .find(|g| g.gate == crate::integration::IntegrationGate::MergeMethod)
+                .unwrap();
+            assert!(!gate.passed);
+        }
+        // #2 is still said to be behind, after the decisive reason
+        assert_eq!(
+            q.get(2).unwrap().reasons,
+            vec![R::MergeCommitNotAllowed, R::BehindMaster { commits: 1 }]
+        );
+        assert_eq!(q.next_merge, None);
+        assert!(q.next_refresh.is_empty());
+        assert!(
+            q.diagnostics
+                .iter()
+                .any(|d| d.contains("allows no merge commit")),
+            "{:?}",
+            q.diagnostics
+        );
+        // and the executor neither merges nor refreshes anything
+        let root = scratch();
+        let out = drain::step(&root, &mut w, false, true).unwrap();
+        assert!(matches!(out, DrainStepOutcome::Idle { .. }), "{out:?}");
+        assert_eq!((w.merge_calls, w.refresh_calls), (0, 0), "{allowed:?}");
+    }
+}
+
+#[test]
+fn the_merge_method_is_a_merge_commit_and_never_another() {
+    for allowed in [
+        vec!["merge"],
+        vec!["squash", "merge"],
+        vec!["rebase", "squash", "merge"],
+    ] {
+        let w = World {
+            open: vec![sim(1)],
+            merge_methods: allowed.clone(),
+            ..Default::default()
+        };
+        let q = w.queue();
+        assert_eq!(
+            q.policy.merge_method.as_deref(),
+            Some("merge"),
+            "{allowed:?}"
+        );
+        assert_eq!(disposition(&q, 1), PullRequestDisposition::Ready);
+        assert!(q
+            .get(1)
+            .unwrap()
+            .evidence
+            .iter()
+            .all(|e| e.kind != "repository_settings"));
+    }
+    // the executor asks the forge for exactly that
+    let mut w = World {
+        open: vec![sim(1)],
+        merge_methods: vec!["squash", "merge", "rebase"],
+        ..Default::default()
+    };
+    let root = scratch();
+    let out = drain::step(&root, &mut w, false, false).unwrap();
+    assert!(
+        matches!(out, DrainStepOutcome::Merged { pr: 1, .. }),
+        "{out:?}"
+    );
+    let attempted = drain::events(&root)
+        .into_iter()
+        .find(|e| e.action.as_str() == "merge_attempted")
+        .expect("merge_attempted");
+    assert_eq!(attempted.detail, "--merge");
+}
+
+#[test]
+fn every_disposition_is_listed_at_runtime_unsafe_among_them() {
+    use crate::integration::IntegrationLane;
+    // `ALL` is a runtime value, not a test fixture: this function would compile without
+    // `cfg(test)` too
+    fn held() -> Vec<&'static str> {
+        PullRequestDisposition::ALL
+            .iter()
+            .filter(|d| d.lane() == IntegrationLane::Held)
+            .map(|d| d.as_str())
+            .collect()
+    }
+    assert!(PullRequestDisposition::ALL.contains(&PullRequestDisposition::Unsafe));
+    assert_eq!(
+        held(),
+        ["draft", "blocked", "unsafe", "other_base", "unknown"]
+    );
+    // every word reads back as its disposition
+    for d in PullRequestDisposition::ALL {
+        let back: PullRequestDisposition =
+            serde_json::from_value(serde_json::Value::String(d.as_str().into())).unwrap();
+        assert_eq!(back, d);
+    }
+}
+
+#[test]
+fn the_label_policy_is_one_table_and_every_effect_holds() {
+    use crate::integration::{LabelEffect, LABEL_POLICY};
+    let w = World {
+        open: vec![sim(1)],
+        ..Default::default()
+    };
+    let q = w.queue();
+    // the policy carries the table, as it is
+    assert_eq!(q.policy.labels, LABEL_POLICY.to_vec());
+    assert!(LABEL_POLICY.iter().all(|l| l.effect == LabelEffect::Hold));
+    let names: Vec<&str> = LABEL_POLICY.iter().map(|l| l.name.as_ref()).collect();
+    assert_eq!(
+        names,
+        [
+            "do-not-merge",
+            "do not merge",
+            "blocked",
+            "hold",
+            "on-hold",
+            "wip",
+            "manual-merge"
+        ]
+    );
+    // every label of the table holds, whatever its case; a label outside it does not
+    for label in names.iter().map(|n| n.to_ascii_uppercase()) {
+        let mut s = sim(1);
+        s.labels = vec![label.clone()];
+        let q = World {
+            open: vec![s],
+            ..Default::default()
+        }
+        .queue();
+        let a = q.get(1).unwrap();
+        assert_eq!(a.disposition, PullRequestDisposition::Blocked, "{label}");
+        assert_eq!(a.reasons[0].to_string(), format!("label:{label}"));
+    }
+    let mut s = sim(1);
+    s.labels = vec!["no-refresh".into(), "documentation".into()];
+    let q = World {
+        open: vec![s],
+        ..Default::default()
+    }
+    .queue();
+    assert_eq!(disposition(&q, 1), PullRequestDisposition::Ready);
+    // on the wire the table is a list of names with their effect
+    assert_eq!(
+        serde_json::to_value(&LABEL_POLICY[0]).unwrap(),
+        serde_json::json!({"name": "do-not-merge", "effect": "hold"})
+    );
+}
+
+#[test]
+fn work_already_on_master_stays_superseded_without_merge_commits_and_is_still_closed() {
+    use crate::integration::{IntegrationGate as G, ReasonCode as R};
+    // #1's head is contained in master; #2's merge changes nothing
+    let mut redundant = sim(2);
+    redundant.redundant_after = Some(99);
+    let mut w = World {
+        open: vec![sim(1), redundant],
+        merged: vec![99],
+        merge_methods: vec!["squash"],
+        ..Default::default()
+    };
+    let obs = w.observation();
+    let q = build_queue(&obs, "m0", |p| match p.number {
+        1 => RelationToMaster::Contained,
+        _ => w.relation(p.number),
+    });
+    assert_eq!(q.policy.merge_method, None);
+    for (n, why) in [(1, R::HeadReachableFromMaster), (2, R::MergeChangesNothing)] {
+        let a = q.get(n).unwrap();
+        assert_eq!(a.disposition, PullRequestDisposition::Superseded, "#{n}");
+        // the relation decides; the setting is still said, after it
+        assert_eq!(a.reasons, vec![why, R::MergeCommitNotAllowed], "#{n}");
+        let failed: Vec<G> = a
+            .gates
+            .iter()
+            .filter(|g| !g.passed)
+            .map(|g| g.gate)
+            .collect();
+        assert_eq!(failed[..2], [G::RelationToMaster, G::MergeMethod], "#{n}");
+        assert!(a.evidence.iter().any(|e| e.kind == "repository_settings"));
+    }
+    // and cleanup still closes redundant work: closing does not depend on the merge setting
+    let root = scratch();
+    let items = drain::cleanup(&root, &mut w, true).unwrap();
+    let closed: Vec<(u64, &str)> = items.iter().map(|i| (i.pr, i.action.as_str())).collect();
+    assert_eq!(closed, [(2, "closed")]);
+    assert_eq!((w.close_calls, w.merge_calls), (1, 0));
 }

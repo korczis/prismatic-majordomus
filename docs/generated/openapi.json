@@ -120,7 +120,7 @@
     },
     {
       "name": "integration",
-      "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing."
+      "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing."
     },
     {
       "name": "intent_realization",
@@ -12573,7 +12573,7 @@
       "get": {
         "operationId": "integration.queue",
         "summary": "The integration queue",
-        "description": "The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection's required checks and reviews, the blocking labels, the merge method), every open pull request's assessment in rank order — an actionable one with how long it has waited for the executor and how often another was chosen instead — the next merge, the pull requests that need master brought in, the starving ones, the tallies by disposition and lane, and the diagnostics, a stale observation first; beside it, who holds the base branch's integration lease and the last merge the executor recorded. `observed: false` with the reason when this checkout has recorded no observation.",
+        "description": "The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection's required checks and reviews, the label policy, the merge method: a merge commit, or none when the repository allows none), every open pull request's assessment in rank order — an actionable one with how long it has waited for the executor and how often another was chosen instead — the next merge, the pull requests that need master brought in, the starving ones, the tallies by disposition and lane, and the diagnostics, a stale observation first; beside it, who holds the base branch's integration lease and the last merge the executor recorded. `observed: false` with the reason when this checkout has recorded no observation.",
         "tags": [
           "integration"
         ],
@@ -28426,7 +28426,7 @@
           {
             "type": "string",
             "const": "label",
-            "description": "One blocking label."
+            "description": "One label whose policy is to hold."
           },
           {
             "type": "string",
@@ -28446,12 +28446,17 @@
           {
             "type": "string",
             "const": "auto_merge",
-            "description": "Whether the forge has auto-merge armed. Declared so the vocabulary is settled;\nnothing emits it yet."
+            "description": "The forge has auto-merge armed; emitted whenever it is."
           },
           {
             "type": "string",
             "const": "supersession",
             "description": "A declared supersession. Declared so the vocabulary is settled; nothing emits it yet."
+          },
+          {
+            "type": "string",
+            "const": "repository_settings",
+            "description": "What the repository's settings allow the executor; emitted when they allow no merge\ncommit."
           }
         ],
         "description": "What kind of fact a piece of evidence is. The wire words are the ones the evidence carried\nwhile its kind was a string, so a trail written then still reads."
@@ -32508,7 +32513,7 @@
           "reasons": {
             "type": "array",
             "items": {
-              "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `head_reachable_from_master`, `merge_changes_nothing`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`. A code outside this list (an older trail's) is carried verbatim.",
+              "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `head_reachable_from_master`, `merge_changes_nothing`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`. A code outside this list (an older trail's) is carried verbatim.",
               "type": "string"
             },
             "description": "The decision's reasons; a code an older executor wrote reads back verbatim."
@@ -32687,12 +32692,22 @@
           {
             "type": "string",
             "const": "label",
-            "description": "It carries no blocking label."
+            "description": "It carries no label whose policy is to hold."
+          },
+          {
+            "type": "string",
+            "const": "auto_merge",
+            "description": "The forge has no auto-merge armed on it."
           },
           {
             "type": "string",
             "const": "relation_to_master",
             "description": "Its head is not on master already, and git could say that it merges cleanly."
+          },
+          {
+            "type": "string",
+            "const": "merge_method",
+            "description": "The repository allows a merge commit, the only way the executor merges. Asked after\nthe relation, so work already on master is still `superseded` and may be closed."
           },
           {
             "type": "string",
@@ -32747,7 +32762,7 @@
           {
             "type": "string",
             "const": "held",
-            "description": "Not asking to be merged, or undecidable."
+            "description": "Not asking to be merged, held by a label or a setting, unsafe for the executor, or\nundecidable."
           }
         ],
         "description": "The queues the Cockpit and the status table group pull requests into."
@@ -32819,22 +32834,24 @@
             "description": "Contexts whose skip counts as a pass. Empty unless a repository says otherwise: a\nskipped required check is otherwise `missing`.",
             "default": []
           },
-          "blocking_labels": {
+          "labels": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/LabelPolicy"
             },
-            "description": "Labels that hold a pull request whatever else is true."
+            "description": "The labels that have an effect, each with its effect: `LABEL_POLICY`, copied."
           },
           "merge_method": {
-            "type": "string",
-            "description": "The merge method the executor asks the forge for."
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The merge method the executor asks the forge for: `merge` when the repository allows a\nmerge commit, and `None` when it does not. There is no other: the derived-file driver\nresolves merges, and a squash or rebase would replay commits it never saw, so with\n`None` every pull request the relation to master does not already decide is held\n(`merge_commit_not_allowed`), never merged otherwise."
           }
         },
         "required": [
           "base",
-          "blocking_labels",
-          "merge_method"
+          "labels"
         ],
         "description": "What the repository requires before a merge, as observed from the forge and the\nrepository — never a list kept here beside it."
       },
@@ -34722,6 +34739,34 @@
           "knowledge_on_compact"
         ],
         "description": "Whether the deriver is still writing, and what it last wrote.\n\nThe judgement is ADR 0052's, applied to this writer: while episodes keep closing, a\nderivation follows every close. It compares episode ids, never line order or timestamps\nbetween the two events, because the close derives before it appends `session.closed`.\nIt is the freshness half of the judgement only; whether the close path and the\ncompaction adapter still call the deriver is read from the source by the shell\nvalidator, which is where the source is.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeStatus;\nlet fresh: KnowledgeStatus = serde_json::from_str(r#\"{\n  \"present\": false, \"branch\": \"master\", \"closed_without_derivation\": 0, \"candidates\": 0,\n  \"on_this_branch\": 0, \"freshness\": \"unknown\", \"freshness_reason\": \"no episode has closed here\",\n  \"judged\": false, \"stopped_writer\": false, \"knowledge_on_end\": true, \"knowledge_on_compact\": true\n}\"#).unwrap();\nassert!(!fresh.present, \"a fresh clone has no ledger, and that is not a fault\");\nassert!(!fresh.stopped_writer);\n```"
+      },
+      "LabelEffect": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "hold",
+            "description": "It holds the pull request whatever else is true: `blocked`, with `label:NAME`."
+          }
+        ],
+        "description": "What a label does to a pull request that carries it."
+      },
+      "LabelPolicy": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The label, lower-case."
+          },
+          "effect": {
+            "$ref": "#/components/schemas/LabelEffect",
+            "description": "What it does."
+          }
+        },
+        "required": [
+          "name",
+          "effect"
+        ],
+        "description": "One label with an effect. The forge's label names are compared with `name`\ncase-insensitively."
       },
       "LayerSummary": {
         "type": "object",
@@ -40750,7 +40795,7 @@
           "reasons": {
             "type": "array",
             "items": {
-              "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `head_reachable_from_master`, `merge_changes_nothing`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`. A code outside this list (an older trail's) is carried verbatim.",
+              "description": "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `head_reachable_from_master`, `merge_changes_nothing`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`. A code outside this list (an older trail's) is carried verbatim.",
               "type": "string"
             },
             "description": "Machine-readable reasons, one for every failing gate's every finding, in policy order:\nthe first is the decisive one. A ready pull request carries why it is ready."
@@ -40930,7 +40975,12 @@
           {
             "type": "string",
             "const": "blocked",
-            "description": "A blocking label holds it."
+            "description": "A label whose policy is to hold holds it, or the repository allows no merge commit,\nwhich is the only way the executor merges."
+          },
+          {
+            "type": "string",
+            "const": "unsafe",
+            "description": "The forge has auto-merge armed on it: the forge would merge it on its own, outside the\nexecutor and against whatever master is then. Held until a person disarms it."
           },
           {
             "type": "string",

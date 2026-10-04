@@ -5204,7 +5204,10 @@ pub fn integration(ctx: &Context) -> Page {
                             )
                         })
                         .unwrap_or_else(|| "unread".into()),
-                    q.policy.merge_method
+                    q.policy
+                        .merge_method
+                        .as_deref()
+                        .unwrap_or("none — merge commits are not allowed, nothing can be ready")
                 ))),
             ),
         ]),
@@ -5228,6 +5231,19 @@ pub fn integration(ctx: &Context) -> Page {
         )
     };
 
+    // the held lane's dispositions, from the one list of them rather than a copy here
+    let held: Vec<&str> = crate::integration::PullRequestDisposition::ALL
+        .iter()
+        .filter(|d| d.lane() == IntegrationLane::Held)
+        .map(|d| d.as_str())
+        .collect();
+    let held_note = match held.split_last() {
+        Some((last, rest)) if !rest.is_empty() => format!(
+            "Nothing is held: no pull request is {} or {last}.",
+            rest.join(", ")
+        ),
+        _ => format!("Nothing is held: no pull request is {}.", held.join("")),
+    };
     // one card per lane, in the lanes' own order; an empty lane says so rather than vanishing
     let lanes = [
         (
@@ -5250,11 +5266,7 @@ pub fn integration(ctx: &Context) -> Page {
             "Cleanup",
             "No open pull request's work is on master already.",
         ),
-        (
-            IntegrationLane::Held,
-            "Held",
-            "Nothing is held: no draft, blocking label, other base or unknown.",
-        ),
+        (IntegrationLane::Held, "Held", held_note.as_str()),
     ];
     let mut lane_cards = Vec::new();
     for (lane, title, empty_note) in lanes {

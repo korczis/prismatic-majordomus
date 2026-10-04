@@ -577,6 +577,8 @@
     "schema-KnowledgeCandidates": "docs/api/knowledge-base/",
     "schema-KnowledgeRecord": "docs/api/knowledge-base/",
     "schema-KnowledgeStatus": "docs/api/knowledge-base/",
+    "schema-LabelEffect": "docs/api/integration/",
+    "schema-LabelPolicy": "docs/api/integration/",
     "schema-LayerSummary": "docs/api/environment/",
     "schema-LeaseHolder": "docs/api/integration/",
     "schema-LeaseView": "docs/api/server/",
@@ -1038,7 +1040,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 169,
-    "schemas": 814,
+    "schemas": 816,
     "tags": 51
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1705,6 +1707,8 @@
     "KnowledgeCandidates": "knowledge-base",
     "KnowledgeRecord": "knowledge-base",
     "KnowledgeStatus": "knowledge-base",
+    "LabelEffect": "integration",
+    "LabelPolicy": "integration",
     "LayerSummary": "environment",
     "LeaseHolder": "integration",
     "LeaseView": "server",
@@ -17251,7 +17255,7 @@
       "is_enum": true,
       "name": "EvidenceKind",
       "properties": [],
-      "type": "\"required_check\" | \"required_checks\" | \"review\" | \"relation_to_master\" | \"dependency\" | \"label\" | \"draft\" | \"base\" | \"freshness\" | \"auto_merge\" | \"supersession\"",
+      "type": "\"required_check\" | \"required_checks\" | \"review\" | \"relation_to_master\" | \"dependency\" | \"label\" | \"draft\" | \"base\" | \"freshness\" | \"auto_merge\" | \"supersession\" | \"repository_settings\"",
       "used_by": [],
       "used_by_schemas": [
         "IntegrationEvidence"
@@ -17278,7 +17282,7 @@
           "value": "dependency"
         },
         {
-          "description": "One blocking label.",
+          "description": "One label whose policy is to hold.",
           "value": "label"
         },
         {
@@ -17294,12 +17298,16 @@
           "value": "freshness"
         },
         {
-          "description": "Whether the forge has auto-merge armed. Declared so the vocabulary is settled;\nnothing emits it yet.",
+          "description": "The forge has auto-merge armed; emitted whenever it is.",
           "value": "auto_merge"
         },
         {
           "description": "A declared supersession. Declared so the vocabulary is settled; nothing emits it yet.",
           "value": "supersession"
+        },
+        {
+          "description": "What the repository's settings allow the executor; emitted when they allow no merge\ncommit.",
+          "value": "repository_settings"
         }
       ],
       "variants": []
@@ -22604,7 +22612,7 @@
       "is_enum": true,
       "name": "IntegrationGate",
       "properties": [],
-      "type": "\"base\" | \"draft\" | \"label\" | \"relation_to_master\" | \"dependency\" | \"review\" | \"no_failing_check\" | \"freshness\" | \"required_checks\"",
+      "type": "\"base\" | \"draft\" | \"label\" | \"auto_merge\" | \"relation_to_master\" | \"merge_method\" | \"dependency\" | \"review\" | \"no_failing_check\" | \"freshness\" | \"required_checks\"",
       "used_by": [],
       "used_by_schemas": [
         "GateResult"
@@ -22619,12 +22627,20 @@
           "value": "draft"
         },
         {
-          "description": "It carries no blocking label.",
+          "description": "It carries no label whose policy is to hold.",
           "value": "label"
+        },
+        {
+          "description": "The forge has no auto-merge armed on it.",
+          "value": "auto_merge"
         },
         {
           "description": "Its head is not on master already, and git could say that it merges cleanly.",
           "value": "relation_to_master"
+        },
+        {
+          "description": "The repository allows a merge commit, the only way the executor merges. Asked after\nthe relation, so work already on master is still `superseded` and may be closed.",
+          "value": "merge_method"
         },
         {
           "description": "Every declared dependency has landed.",
@@ -22678,7 +22694,7 @@
           "value": "cleanup"
         },
         {
-          "description": "Not asking to be merged, or undecidable.",
+          "description": "Not asking to be merged, held by a label or a setting, unsafe for the executor, or\nundecidable.",
           "value": "held"
         }
       ],
@@ -22761,18 +22777,20 @@
           "type": "array of string"
         },
         {
-          "description": "Labels that hold a pull request whatever else is true.",
-          "name": "blocking_labels",
-          "refs": [],
+          "description": "The labels that have an effect, each with its effect: `LABEL_POLICY`, copied.",
+          "name": "labels",
+          "refs": [
+            "LabelPolicy"
+          ],
           "required": true,
-          "type": "array of string"
+          "type": "array of LabelPolicy"
         },
         {
-          "description": "The merge method the executor asks the forge for.",
+          "description": "The merge method the executor asks the forge for: `merge` when the repository allows a\nmerge commit, and `None` when it does not. There is no other: the derived-file driver\nresolves merges, and a squash or rebase would replay commits it never saw, so with\n`None` every pull request the relation to master does not already decide is held\n(`merge_commit_not_allowed`), never merged otherwise.",
           "name": "merge_method",
           "refs": [],
-          "required": true,
-          "type": "string"
+          "required": false,
+          "type": "string | null"
         }
       ],
       "type": "object",
@@ -25225,6 +25243,56 @@
         "knowledge_base.status"
       ],
       "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a label does to a pull request that carries it.",
+      "home": "integration",
+      "is_enum": true,
+      "name": "LabelEffect",
+      "properties": [],
+      "type": "\"hold\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "LabelPolicy"
+      ],
+      "values": [
+        {
+          "description": "It holds the pull request whatever else is true: `blocked`, with `label:NAME`.",
+          "value": "hold"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One label with an effect. The forge's label names are compared with `name`\ncase-insensitively.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "LabelPolicy",
+      "properties": [
+        {
+          "description": "The label, lower-case.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it does.",
+          "name": "effect",
+          "refs": [
+            "LabelEffect"
+          ],
+          "required": true,
+          "type": "LabelEffect"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationPolicy"
+      ],
       "values": [],
       "variants": []
     },
@@ -33287,7 +33355,7 @@
       "is_enum": true,
       "name": "PullRequestDisposition",
       "properties": [],
-      "type": "\"ready\" | \"needs_refresh\" | \"waiting_for_checks\" | \"waiting_for_review\" | \"waiting_for_dependency\" | \"draft\" | \"needs_repair\" | \"conflicting\" | \"blocked\" | \"superseded\" | \"possibly_redundant\" | \"other_base\" | \"unknown\"",
+      "type": "\"ready\" | \"needs_refresh\" | \"waiting_for_checks\" | \"waiting_for_review\" | \"waiting_for_dependency\" | \"draft\" | \"needs_repair\" | \"conflicting\" | \"blocked\" | \"unsafe\" | \"superseded\" | \"possibly_redundant\" | \"other_base\" | \"unknown\"",
       "used_by": [],
       "used_by_schemas": [
         "PullRequestAssessment"
@@ -33326,8 +33394,12 @@
           "value": "conflicting"
         },
         {
-          "description": "A blocking label holds it.",
+          "description": "A label whose policy is to hold holds it, or the repository allows no merge commit,\nwhich is the only way the executor merges.",
           "value": "blocked"
+        },
+        {
+          "description": "The forge has auto-merge armed on it: the forge would merge it on its own, outside the\nexecutor and against whatever master is then. Held until a person disarms it.",
+          "value": "unsafe"
         },
         {
           "description": "Its head already landed, or its patch is already fully on master: strong evidence,\neligible for closure under policy.",
@@ -52288,7 +52360,7 @@
       "slug": "health"
     },
     {
-      "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing.",
+      "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing.",
       "name": "integration",
       "operations": [
         {
@@ -52300,7 +52372,7 @@
           "cache_detail": "",
           "cli": "prs status",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/pull-requests\"",
-          "description": "The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection's required checks and reviews, the blocking labels, the merge method), every open pull request's assessment in rank order — an actionable one with how long it has waited for the executor and how often another was chosen instead — the next merge, the pull requests that need master brought in, the starving ones, the tallies by disposition and lane, and the diagnostics, a stale observation first; beside it, who holds the base branch's integration lease and the last merge the executor recorded. `observed: false` with the reason when this checkout has recorded no observation.",
+          "description": "The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection's required checks and reviews, the label policy, the merge method: a merge commit, or none when the repository allows none), every open pull request's assessment in rank order — an actionable one with how long it has waited for the executor and how often another was chosen instead — the next merge, the pull requests that need master brought in, the starving ones, the tallies by disposition and lane, and the diagnostics, a stale observation first; beside it, who holds the base branch's integration lease and the last merge the executor recorded. `observed: false` with the reason when this checkout has recorded no observation.",
           "home": "integration",
           "id": "integration.queue",
           "kind": "query",

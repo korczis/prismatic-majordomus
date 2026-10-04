@@ -62,7 +62,9 @@ use serde::{Deserialize, Serialize};
 
 #[cfg(test)]
 pub(crate) use classify::declared_dependencies;
-pub use classify::{classify, IntegrationPolicy, QueueContext, BLOCKING_LABELS};
+#[cfg(test)]
+pub(crate) use classify::LabelEffect;
+pub use classify::{classify, IntegrationPolicy, QueueContext, LABEL_POLICY};
 pub use forge::{ForgeObservation, OBSERVATION_SCHEMA};
 pub use model::*;
 #[cfg(test)]
@@ -283,21 +285,24 @@ impl IntegrationQueue {
 }
 
 /// The policy of an observation: required checks and reviews as the forge reported them,
-/// the blocking labels declared once in [`BLOCKING_LABELS`], and the merge method the
-/// repository allows — a merge commit when it allows one, because the derived-file driver
-/// resolves merges and a squash or rebase would replay commits it never saw.
+/// the label policy declared once in [`LABEL_POLICY`], and the merge method — a merge commit
+/// when the repository's settings allow one (`allow_merge_commit`, which the observation
+/// carries as `merge`), and none otherwise. Never a squash or a rebase: the derived-file
+/// driver resolves merges, and either would replay commits it never saw. With none, every
+/// pull request not already on master is held (`merge_commit_not_allowed`); one that is stays
+/// `superseded`, since closing it needs no merge.
 pub fn policy_of(obs: &ForgeObservation) -> IntegrationPolicy {
-    let merge_method = ["merge", "squash", "rebase"]
+    let merge_method = obs
+        .merge_methods
         .iter()
-        .find(|m| obs.merge_methods.iter().any(|x| x == *m))
-        .unwrap_or(&"merge")
-        .to_string();
+        .any(|m| m == "merge")
+        .then(|| "merge".to_string());
     IntegrationPolicy {
         base: obs.base.clone(),
         required_checks: obs.required_checks.clone(),
         review_policy: obs.review_policy,
         skipped_permitted: Vec::new(),
-        blocking_labels: BLOCKING_LABELS.iter().map(|s| s.to_string()).collect(),
+        labels: LABEL_POLICY.to_vec(),
         merge_method,
     }
 }
@@ -372,6 +377,36 @@ pub fn build_queue(
             policy.base
         )),
         Some(_) => {}
+    }
+    if policy.merge_method.is_none() {
+        diagnostics.push(format!(
+            "{} allows no merge commit (it allows: {}): the executor never squashes or rebases, \
+             so no pull request can be ready",
+            obs.repository,
+            if obs.merge_methods.is_empty() {
+                "nothing".to_string()
+            } else {
+                obs.merge_methods.join(", ")
+            }
+        ));
+    }
+    // in number order, whatever order the forge listed them in
+    let armed: BTreeSet<u64> = obs
+        .pull_requests
+        .iter()
+        .filter(|p| p.auto_merge)
+        .map(|p| p.number)
+        .collect();
+    if !armed.is_empty() {
+        diagnostics.push(format!(
+            "auto-merge is armed on {}: the forge would merge them on its own, outside the \
+             executor, so they are unsafe until it is disarmed (gh pr merge <n> --disable-auto)",
+            armed
+                .iter()
+                .map(|n| format!("#{n}"))
+                .collect::<Vec<_>>()
+                .join(" ")
+        ));
     }
     let relations: Vec<RelationToMaster> = obs.pull_requests.iter().map(relation).collect();
     let mut queue = QueueContext {
