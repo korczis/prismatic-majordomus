@@ -57,6 +57,40 @@ A required check that is pending, missing, skipped or unreadable is not passed. 
 checks are read from the base's branch protection, never listed here. A green check that is
 not required proves nothing.
 
+### Gates, reasons and evidence
+
+The order above is a list of gates, and every gate is asked whatever the others answer:
+
+| Gate | Passes when | A failure's reasons |
+|---|---|---|
+| `base` | it targets the base | `stacked_on:#N`, or `base_is:BRANCH` |
+| `draft` | it is not a draft | `draft` |
+| `label` | no blocking label | `label:NAME`, one per label |
+| `relation_to_master` | its merge is clean and changes something | `head_reachable_from_master`, `merge_changes_nothing`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT` |
+| `dependency` | every declared dependency landed | `depends_on:#N`, one per open dependency |
+| `review` | the review policy is satisfied on the head | `review:STATE`, or `review_policy_unread` |
+| `no_failing_check` | no required check failed | `required_check_failed` |
+| `freshness` | the head contains master | `behind_master:COMMITS`, with `fork_head` for a fork |
+| `required_checks` | every required check passed | `required_checks:STATE`, `no_required_checks`, `required_checks_unread` |
+
+The assessment's `gates` lists every gate with whether it passed. Its `reasons` hold every
+failing gate's reasons in this order, and the first is the decisive one: the disposition is
+the first failing gate's. A draft that also conflicts and fails its check is `draft`, with
+`draft`, `conflicts_on:1` and `required_check_failed`. A gate that fails only because an
+earlier one did, such as `freshness` when the merge conflicts, adds no reason of its own. A
+ready pull request has `contains_master` with `required_checks_passed` or
+`required_checks_skipped`. The reasons are typed (`ReasonCode`), but on the wire they are the
+same strings as before. A code that an older trail line carries and this list does not name
+is kept verbatim.
+
+Each piece of evidence has a `kind`, a `status`, a `detail` and a `source`. The source is the
+forge observation at its moment, or git on the named master and head. Evidence for `base` and
+`draft` is always there. So is `required_checks`, with one `required_check` per context the
+base requires, and `review` and `relation_to_master`. `dependency` appears per declared
+dependency, and `label` per blocking label. `freshness`, `auto_merge` and `supersession` are
+reserved kinds. `evaluated_against` names the master, the head and the moment of the
+observation; two decisions are the same when the master and head are.
+
 ### Review states
 
 The forge's review decision comes first, and the branch protection's requirement second:
@@ -233,7 +267,7 @@ repository's own setting decides that.
 |---|---|---|
 | `majordomus prs` / `prs status` | no | the ranked queue; exit 10 when the observation is stale or absent |
 | `majordomus prs plan` | no | the next merge, the next refresh, and the other lanes |
-| `majordomus prs explain <n>` | no | one pull request's evidence and rank |
+| `majordomus prs explain <n>` | no | one pull request's gates, reasons, evidence and rank |
 | `majordomus prs events` | no | the repository's audit trail, the same from every worktree |
 | `majordomus prs brief` | no | one line for a briefing: the last queue built in the repository, the lease, the last merge; nothing in a checkout that never observed the forge |
 | `majordomus prs refresh` | yes | observe the forge and fetch every open head |

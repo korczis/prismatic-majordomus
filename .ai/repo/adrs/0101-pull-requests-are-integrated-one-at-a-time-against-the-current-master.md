@@ -54,8 +54,22 @@ with one canonical state, one classification and one executor.
 
 1. **One canonical state.** A `PullRequestAssessment` per open pull request: what the forge
    observed, what its head is to master, its disposition, its reasons, its evidence, its
-   risk, its overlaps, and the master and head it was decided against. The command line, the
-   HTTP route, the MCP tool and the Cockpit render that value and nothing else.
+   risk, its overlaps, and the master and head it was decided against, with the moment the
+   forge was observed. The command line, the HTTP route, the MCP tool and the Cockpit render
+   that value and nothing else. Its vocabulary is typed, so no client parses prose. A
+   reason is a `ReasonCode` whose wire form is the `code` or `code:payload` string it always
+   was: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`,
+   `head_reachable_from_master`, `merge_changes_nothing`, `only_derived_artifacts_differ`,
+   `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`,
+   `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`,
+   `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, and, on a ready
+   one, `contains_master` with `required_checks_passed` or `required_checks_skipped`. The
+   trail, the OpenAPI string arrays and the Cockpit read the same strings as before, and a
+   code an older trail carries that this list does not name is kept verbatim. Evidence has a
+   typed kind, with the wire words it had (`required_checks`, `review`,
+   `relation_to_master`, `dependency`, `label`, `draft`, `base`, plus `required_check`, one
+   per required context; `freshness`, `auto_merge` and `supersession` are reserved), and a
+   source: the forge observation at its moment, or git on a named master and head.
 2. **The relation to master is git's.** `git merge-tree --write-tree` with this clone's
    drivers, and `git check-attr merge` for which paths are derived, from master's own
    `.gitattributes`. A conflict on a derived path is the regeneration's, not a person's. The
@@ -67,7 +81,16 @@ with one canonical state, one classification and one executor.
 3. **Thirteen dispositions, decided in one order.** `ready` is reached only when the pull
    request targets the base, is not a draft, carries no blocking label, contains the
    current master, has its declared dependencies landed, satisfies the review policy, and
-   has every *required* check passed on its current head. The required checks are the
+   has every *required* check passed on its current head. These are gates, asked in this
+   order: `base`, `draft`, `label`, `relation_to_master`, `dependency`, `review`,
+   `no_failing_check`, `freshness`, `required_checks`. Every gate is asked whatever the
+   others answered. The assessment's `gates` lists each with whether it passed, and its
+   `reasons` hold every failing gate's findings in the same order. The disposition is the
+   first failing gate's, so a draft that also conflicts and fails its check is `draft` and
+   says all three. A failed required check is asked before freshness and a pending one after
+   it: a head behind master needs a refresh, which runs its checks again, unless a check
+   already failed. A gate that fails only because an earlier one did, such as freshness
+   when the merge conflicts, fails without a reason of its own. The required checks are the
    base's branch protection and the rulesets that apply to it, together; if either cannot be
    read, nothing is ready. A check bound to an app (`app_id` in the protection,
    `integration_id` in a ruleset) is only that app's check run: a commit status of the same

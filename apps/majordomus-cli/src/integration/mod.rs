@@ -400,7 +400,7 @@ pub fn build_queue(
         .pull_requests
         .iter()
         .zip(&relations)
-        .map(|(p, r)| classify(p, r, master_sha, &policy, &queue))
+        .map(|(p, r)| classify(p, r, master_sha, &obs.observed_at, &policy, &queue))
         .collect();
     let assessments = rank(assessments);
     let mut tallies = QueueTallies {

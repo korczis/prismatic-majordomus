@@ -5291,7 +5291,7 @@ pub fn integration(ctx: &Context) -> Page {
                         a.disposition.as_str(),
                     )),
                     text_cell(word(&a.risk)),
-                    text_cell(a.reasons.join(", ")),
+                    text_cell(crate::integration::reason_list(&a.reasons, ", ")),
                     text_cell(a.next_action.clone().unwrap_or_default()),
                     text_cell(waited.unwrap_or_default()),
                     text_cell(a.title.clone()),

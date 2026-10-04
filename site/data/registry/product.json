@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.13.0"
   },
-  "fingerprint": "1b57d62464b3cde52b1dd93e03ce2301a2d11512968780a2e29b837f899d68a7",
+  "fingerprint": "a7c9416c9d967386a93a412f16c8e8da7752ed17853455ef64e778d242f27d3e",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1120,7 +1120,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 60,
+        "capabilities": 61,
         "moments": 17
       },
       "evidence": {
@@ -4613,7 +4613,7 @@
         {
           "id": "integration",
           "title": "Pull-request integration",
-          "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network.",
+          "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing.",
           "stability": "experimental",
           "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs",
           "capabilities": [
@@ -4634,6 +4634,15 @@
               "tool": "majordomus_pull_request_explain",
               "route": "GET /api/v1/pull-requests/explain",
               "cli": "majordomus prs explain"
+            },
+            {
+              "id": "integration.prove_dry_run",
+              "title": "Proof that a dry run moves nothing",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_pull_requests_prove_dry_run",
+              "route": "GET /api/v1/pull-requests/prove-dry-run",
+              "cli": "majordomus prs prove-dry-run"
             },
             {
               "id": "integration.queue",
@@ -4905,11 +4914,11 @@
         "worktrees"
       ],
       "counts": {
-        "capabilities": 10,
-        "mcp_tools": 10,
+        "capabilities": 11,
+        "mcp_tools": 11,
         "mcp_resources": 2,
-        "http_routes": 10,
-        "cli_paths": 8,
+        "http_routes": 11,
+        "cli_paths": 9,
         "commands": 3,
         "objects": 0,
         "rules": 5,
@@ -15114,17 +15123,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1881,
-    "builtin": 170,
-    "declarative": 1711,
+    "capabilities": 1883,
+    "builtin": 171,
+    "declarative": 1712,
     "modules": 51,
-    "mcp_tools": 164,
-    "mcp_resources": 1764,
-    "http_routes": 168,
-    "cli_commands": 176,
+    "mcp_tools": 165,
+    "mcp_resources": 1765,
+    "http_routes": 169,
+    "cli_commands": 177,
     "shell_commands": 30,
     "kinds": 33,
-    "objects": 1711,
+    "objects": 1712,
     "by_kind": {
       "adr": 80,
       "application": 5,
@@ -15156,7 +15165,7 @@
       "session": 22,
       "skill": 6,
       "taxonomy": 10,
-      "test": 348,
+      "test": 349,
       "use-case": 48,
       "workspace": 1
     },

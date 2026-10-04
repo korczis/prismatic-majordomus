@@ -1,10 +1,10 @@
 //! The one path that decides a disposition. Pure: observations in, an [`PullRequestAssessment`] out.
 //!
-//! The order of the questions is the policy. A pull request that is a draft is a draft
-//! whatever its checks say; one whose patch is already on master is superseded whatever
-//! its conflicts say; and `Ready` is reached only by the last branch, after every other
-//! question was answered in its favour. Nothing upstream of this file decides eligibility
-//! and nothing downstream re-decides it.
+//! The order of the questions is the policy ([`IntegrationGate::ALL`]). Every question is
+//! asked and every answer is reported, but the first that fails decides: a pull request that
+//! is a draft is a draft whatever its checks say, and says what its checks say too; and
+//! `Ready` is reached only when every gate passed. Nothing upstream of this file decides
+//! eligibility and nothing downstream re-decides it.
 
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -12,10 +12,11 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::model::{
-    CheckKind, CheckRunState, DependencyCertainty, EvaluatedAgainst, IntegrationEvidence,
-    IntegrationRisk, PathOverlap, PullRequestAssessment, PullRequestDependency,
-    PullRequestDisposition, PullRequestObservation, PullRequestReview, RelationToMaster,
-    RequiredCheck, RequiredCheckState, ReviewPolicy,
+    CheckKind, CheckRunState, DependencyCertainty, EvaluatedAgainst, EvidenceKind, EvidenceSource,
+    GateResult, IntegrationEvidence, IntegrationGate, IntegrationRisk, PathOverlap,
+    PullRequestAssessment, PullRequestDependency, PullRequestDisposition, PullRequestObservation,
+    PullRequestReview, ReasonCode, RelationToMaster, RequiredCheck, RequiredCheckState,
+    ReviewPolicy,
 };
 
 /// What the repository requires before a merge, as observed from the forge and the
@@ -397,19 +398,58 @@ pub struct QueueContext {
     pub authored: BTreeMap<u64, Vec<String>>,
 }
 
-fn ev(kind: &str, status: impl Into<String>, detail: impl Into<String>) -> IntegrationEvidence {
+fn ev(
+    kind: EvidenceKind,
+    status: impl Into<String>,
+    detail: impl Into<String>,
+    source: &EvidenceSource,
+) -> IntegrationEvidence {
     IntegrationEvidence {
-        kind: kind.into(),
+        kind,
         status: status.into(),
         detail: detail.into(),
+        source: Some(source.clone()),
     }
 }
 
-/// The disposition of one pull request against one master commit.
+/// What a failing gate says: its reasons, and the disposition and next action it decides
+/// when it is the first to fail. `decides` is `None` for a gate that fails only because an
+/// earlier one did — such a gate is never the first.
+struct Failure {
+    reasons: Vec<ReasonCode>,
+    decides: Option<(PullRequestDisposition, Option<String>)>,
+}
+
+fn fails(
+    disposition: PullRequestDisposition,
+    reasons: Vec<ReasonCode>,
+    next: Option<String>,
+) -> Option<Failure> {
+    Some(Failure {
+        reasons,
+        decides: Some((disposition, next)),
+    })
+}
+
+/// A gate that fails without a finding of its own: an earlier gate's answer is the reason.
+fn fails_as_above() -> Option<Failure> {
+    Some(Failure {
+        reasons: Vec::new(),
+        decides: None,
+    })
+}
+
+/// The disposition of one pull request against one master commit, observed at `observed_at`.
+///
+/// Every gate of [`IntegrationGate::ALL`] is asked, in that order, and each answers whatever
+/// the others said: `gates` holds every answer, `reasons` every failing gate's findings in
+/// the same order, and the disposition is the first failing gate's. A draft that also
+/// conflicts and fails its check is a draft, and says all three.
 pub fn classify(
     pr: &PullRequestObservation,
     relation: &RelationToMaster,
     master_sha: &str,
+    observed_at: &str,
     policy: &IntegrationPolicy,
     queue: &QueueContext,
 ) -> PullRequestAssessment {
@@ -451,31 +491,103 @@ pub fn classify(
             });
         }
     }
-
-    let mut evidence = vec![match &policy.required_checks {
-        Some(r) if r.is_empty() => ev(
-            "required_checks",
-            "none_required",
-            "the base requires no check: a head can prove nothing to it, so nothing merges (D5)",
-        ),
-        Some(r) => ev(
-            "required_checks",
-            word(&checks),
-            required_check_states(&pr.checks, r, &policy.skipped_permitted)
+    let blocking: Vec<&String> = pr
+        .labels
+        .iter()
+        .filter(|l| {
+            policy
+                .blocking_labels
                 .iter()
-                .zip(r)
-                .map(|((_, s), req)| format!("{req}: {}", word(s)))
-                .collect::<Vec<_>>()
-                .join(", "),
-        ),
-        None => ev(
-            "required_checks",
-            word(&checks),
-            "the branch protection or rulesets could not be read",
-        ),
-    }];
+                .any(|b| b.eq_ignore_ascii_case(l))
+        })
+        .collect();
+
+    let forge = EvidenceSource::Forge {
+        observed_at: observed_at.to_string(),
+    };
+    let git = EvidenceSource::Git {
+        master_sha: master_sha.to_string(),
+        head_sha: pr.head_sha.clone(),
+    };
+    let check_states = policy
+        .required_checks
+        .as_deref()
+        .map(|r| required_check_states(&pr.checks, r, &policy.skipped_permitted))
+        .unwrap_or_default();
+
+    let mut evidence = vec![
+        match stacked_on {
+            _ if pr.base_ref == policy.base => ev(
+                EvidenceKind::Base,
+                "integration_base",
+                format!("targets {}", pr.base_ref),
+                &forge,
+            ),
+            Some(n) => ev(
+                EvidenceKind::Base,
+                "stacked",
+                format!("targets {}, the head of #{n}", pr.base_ref),
+                &forge,
+            ),
+            None => ev(
+                EvidenceKind::Base,
+                "other_base",
+                format!(
+                    "targets {}, which is not {} and no open pull request's head",
+                    pr.base_ref, policy.base
+                ),
+                &forge,
+            ),
+        },
+        if pr.draft {
+            ev(EvidenceKind::Draft, "draft", "a draft", &forge)
+        } else {
+            ev(
+                EvidenceKind::Draft,
+                "ready_for_review",
+                "not a draft",
+                &forge,
+            )
+        },
+        match &policy.required_checks {
+            Some(r) if r.is_empty() => ev(
+                EvidenceKind::RequiredChecks,
+                "none_required",
+                "the base requires no check: a head can prove nothing to it, so nothing merges (D5)",
+                &forge,
+            ),
+            Some(r) => ev(
+                EvidenceKind::RequiredChecks,
+                word(&checks),
+                check_states
+                    .iter()
+                    .zip(r)
+                    .map(|((_, s), req)| format!("{req}: {}", word(s)))
+                    .collect::<Vec<_>>()
+                    .join(", "),
+                &forge,
+            ),
+            None => ev(
+                EvidenceKind::RequiredChecks,
+                word(&checks),
+                "the branch protection or rulesets could not be read",
+                &forge,
+            ),
+        },
+    ];
+    for ((_, state), req) in check_states
+        .iter()
+        .zip(policy.required_checks.iter().flatten())
+    {
+        evidence.push(ev(
+            EvidenceKind::RequiredCheck,
+            word(state),
+            req.to_string(),
+            &forge,
+        ));
+    }
     evidence.push(ev(
-        "review",
+        EvidenceKind::Review,
         word(&review),
         match policy.review_policy {
             Some(p) => format!(
@@ -499,10 +611,11 @@ pub fn classify(
             ),
             None => "the review policy could not be read".into(),
         },
+        &forge,
     ));
     for r in &pr.latest_reviews {
         evidence.push(ev(
-            "review",
+            EvidenceKind::Review,
             r.state.to_ascii_lowercase(),
             format!(
                 "{} on {}",
@@ -515,196 +628,255 @@ pub fn classify(
                     format!("another commit ({})", short(&r.commit))
                 }
             ),
+            &forge,
         ));
     }
-    evidence.extend([ev(
-        "relation_to_master",
+    evidence.push(ev(
+        EvidenceKind::RelationToMaster,
         relation_word(relation),
         relation_detail(relation),
-    )]);
+        &git,
+    ));
     for d in &dependencies {
         evidence.push(ev(
-            "dependency",
+            EvidenceKind::Dependency,
             if d.satisfied { "satisfied" } else { "open" },
             format!("#{} ({})", d.number, word(&d.certainty)),
+            &forge,
         ));
     }
-    let blocking: Vec<&String> = pr
-        .labels
-        .iter()
-        .filter(|l| {
-            policy
-                .blocking_labels
-                .iter()
-                .any(|b| b.eq_ignore_ascii_case(l))
-        })
-        .collect();
+    for l in &blocking {
+        evidence.push(ev(EvidenceKind::Label, "blocking", (*l).clone(), &forge));
+    }
 
-    let (disposition, reasons, next): (PullRequestDisposition, Vec<String>, Option<String>) = if pr
-        .base_ref
-        != policy.base
-    {
-        match stacked_on {
-            Some(n) => (
-                PullRequestDisposition::WaitingForDependency,
-                vec![format!("stacked_on:#{n}")],
-                Some(format!(
-                    "land #{n}; its merge retargets this onto {}",
-                    policy.base
-                )),
-            ),
-            None => (
-                PullRequestDisposition::OtherBase,
-                vec![format!("base_is:{}", pr.base_ref)],
-                None,
-            ),
-        }
-    } else if pr.draft {
+    // every gate, in policy order; each answers whatever the others said
+    let answers: [(IntegrationGate, Option<Failure>); 9] = [
         (
-            PullRequestDisposition::Draft,
-            vec!["draft".into()],
-            Some("mark it ready for review".into()),
-        )
-    } else if !blocking.is_empty() {
+            IntegrationGate::Base,
+            match stacked_on {
+                _ if pr.base_ref == policy.base => None,
+                Some(n) => fails(
+                    PullRequestDisposition::WaitingForDependency,
+                    vec![ReasonCode::StackedOn { number: n }],
+                    Some(format!(
+                        "land #{n}; its merge retargets this onto {}",
+                        policy.base
+                    )),
+                ),
+                None => fails(
+                    PullRequestDisposition::OtherBase,
+                    vec![ReasonCode::BaseIs {
+                        base: pr.base_ref.clone(),
+                    }],
+                    None,
+                ),
+            },
+        ),
         (
-            PullRequestDisposition::Blocked,
-            blocking.iter().map(|l| format!("label:{l}")).collect(),
-            Some("remove the label when it may land".into()),
-        )
-    } else {
-        match relation {
-            RelationToMaster::Contained => (
-                PullRequestDisposition::Superseded,
-                vec!["head_reachable_from_master".into()],
-                Some("close it: every commit is on master".into()),
-            ),
-            RelationToMaster::Superseded => (
-                PullRequestDisposition::Superseded,
-                vec!["merge_changes_nothing".into()],
-                Some("close it: merging it into master changes no file".into()),
-            ),
-            RelationToMaster::DerivedOnly { .. } => (
-                PullRequestDisposition::PossiblyRedundant,
-                vec!["only_derived_artifacts_differ".into()],
-                Some("a person confirms the authored change is on master, then closes it".into()),
-            ),
-            RelationToMaster::Unknown { reason } => (
-                PullRequestDisposition::Unknown,
-                vec![format!("relation_unknown:{reason}")],
-                Some("majordomus prs refresh".into()),
-            ),
-            RelationToMaster::Conflicting { paths } => (
-                PullRequestDisposition::Conflicting,
-                vec![format!("conflicts_on:{}", paths.len())],
-                Some(format!(
-                    "the author merges {} and resolves {}",
-                    policy.base,
-                    paths.join(", ")
-                )),
-            ),
-            RelationToMaster::UpToDate { .. } | RelationToMaster::Behind { .. } => {
-                if let Some(d) = dependencies
-                    .iter()
-                    .find(|d| d.certainty == DependencyCertainty::Confirmed && !d.satisfied)
+            IntegrationGate::Draft,
+            if pr.draft {
+                fails(
+                    PullRequestDisposition::Draft,
+                    vec![ReasonCode::Draft],
+                    Some("mark it ready for review".into()),
+                )
+            } else {
+                None
+            },
+        ),
+        (
+            IntegrationGate::Label,
+            if blocking.is_empty() {
+                None
+            } else {
+                fails(
+                    PullRequestDisposition::Blocked,
+                    blocking
+                        .iter()
+                        .map(|l| ReasonCode::Label { name: (*l).clone() })
+                        .collect(),
+                    Some("remove the label when it may land".into()),
+                )
+            },
+        ),
+        (
+            IntegrationGate::RelationToMaster,
+            match relation {
+                RelationToMaster::Contained => fails(
+                    PullRequestDisposition::Superseded,
+                    vec![ReasonCode::HeadReachableFromMaster],
+                    Some("close it: every commit is on master".into()),
+                ),
+                RelationToMaster::Superseded => fails(
+                    PullRequestDisposition::Superseded,
+                    vec![ReasonCode::MergeChangesNothing],
+                    Some("close it: merging it into master changes no file".into()),
+                ),
+                RelationToMaster::DerivedOnly { .. } => fails(
+                    PullRequestDisposition::PossiblyRedundant,
+                    vec![ReasonCode::OnlyDerivedArtifactsDiffer],
+                    Some(
+                        "a person confirms the authored change is on master, then closes it".into(),
+                    ),
+                ),
+                RelationToMaster::Unknown { reason } => fails(
+                    PullRequestDisposition::Unknown,
+                    vec![ReasonCode::RelationUnknown {
+                        reason: reason.clone(),
+                    }],
+                    Some("majordomus prs refresh".into()),
+                ),
+                RelationToMaster::Conflicting { paths } => fails(
+                    PullRequestDisposition::Conflicting,
+                    vec![ReasonCode::ConflictsOn { count: paths.len() }],
+                    Some(format!(
+                        "the author merges {} and resolves {}",
+                        policy.base,
+                        paths.join(", ")
+                    )),
+                ),
+                RelationToMaster::UpToDate { .. } | RelationToMaster::Behind { .. } => None,
+            },
+        ),
+        (IntegrationGate::Dependency, {
+            // a stacked pull request's base is said by the base gate, not again here
+            let open: Vec<u64> = dependencies
+                .iter()
+                .filter(|d| d.certainty == DependencyCertainty::Confirmed && !d.satisfied)
+                .filter(|d| Some(d.number) != stacked_on)
+                .map(|d| d.number)
+                .collect();
+            match open.first() {
+                None => None,
+                Some(first) => fails(
+                    PullRequestDisposition::WaitingForDependency,
+                    open.iter()
+                        .map(|n| ReasonCode::DependsOn { number: *n })
+                        .collect(),
+                    Some(format!("land #{first} first")),
+                ),
+            }
+        }),
+        (
+            IntegrationGate::Review,
+            match review {
+                PullRequestReview::ChangesRequested
+                | PullRequestReview::Pending
+                | PullRequestReview::Stale
+                | PullRequestReview::CodeOwnersPending => fails(
+                    PullRequestDisposition::WaitingForReview,
+                    vec![ReasonCode::Review { state: review }],
+                    Some("a reviewer approves it".into()),
+                ),
+                PullRequestReview::Unknown => fails(
+                    PullRequestDisposition::Unknown,
+                    vec![ReasonCode::ReviewPolicyUnread],
+                    Some("majordomus prs refresh".into()),
+                ),
+                PullRequestReview::NotRequired | PullRequestReview::Approved => None,
+            },
+        ),
+        (
+            IntegrationGate::NoFailingCheck,
+            if checks == RequiredCheckState::Failed {
+                fails(
+                    PullRequestDisposition::NeedsRepair,
+                    vec![ReasonCode::RequiredCheckFailed],
+                    Some("the author fixes the failing required check".into()),
+                )
+            } else {
+                None
+            },
+        ),
+        (
+            IntegrationGate::Freshness,
+            match relation {
+                RelationToMaster::UpToDate { .. } => None,
+                RelationToMaster::Behind { behind, .. } if pr.cross_repository => fails(
+                    PullRequestDisposition::NeedsRepair,
+                    vec![
+                        ReasonCode::BehindMaster { commits: *behind },
+                        ReasonCode::ForkHead,
+                    ],
+                    Some(format!(
+                        "the author merges {} into the fork's branch",
+                        policy.base
+                    )),
+                ),
+                RelationToMaster::Behind { behind, .. } => fails(
+                    PullRequestDisposition::NeedsRefresh,
+                    vec![ReasonCode::BehindMaster { commits: *behind }],
+                    Some(format!(
+                        "bring {} in with the derived merge driver, derive, push; CI runs again",
+                        policy.base
+                    )),
+                ),
+                // the relation gate refused it, and that is the reason
+                _ => fails_as_above(),
+            },
+        ),
+        (
+            IntegrationGate::RequiredChecks,
+            match checks {
+                RequiredCheckState::Passed | RequiredCheckState::Skipped => None,
+                RequiredCheckState::Pending | RequiredCheckState::Missing => fails(
+                    PullRequestDisposition::WaitingForChecks,
+                    vec![ReasonCode::RequiredChecks { state: checks }],
+                    Some("wait for the required checks on this head".into()),
+                ),
+                RequiredCheckState::Unknown
+                    if policy.required_checks.as_ref().is_some_and(Vec::is_empty) =>
                 {
-                    (
-                        PullRequestDisposition::WaitingForDependency,
-                        vec![format!("depends_on:#{}", d.number)],
-                        Some(format!("land #{} first", d.number)),
-                    )
-                } else if matches!(
-                    review,
-                    PullRequestReview::ChangesRequested
-                        | PullRequestReview::Pending
-                        | PullRequestReview::Stale
-                        | PullRequestReview::CodeOwnersPending
-                ) {
-                    (
-                        PullRequestDisposition::WaitingForReview,
-                        vec![format!("review:{}", word(&review))],
-                        Some("a reviewer approves it".into()),
-                    )
-                } else if review == PullRequestReview::Unknown {
-                    (
+                    fails(
                         PullRequestDisposition::Unknown,
-                        vec!["review_policy_unread".into()],
-                        Some("majordomus prs refresh".into()),
-                    )
-                } else if checks == RequiredCheckState::Failed {
-                    let mut reasons = vec!["required_check_failed".to_string()];
-                    if let RelationToMaster::Behind { behind, .. } = relation {
-                        reasons.push(format!("behind_master:{behind}"));
-                    }
-                    (
-                        PullRequestDisposition::NeedsRepair,
-                        reasons,
-                        Some("the author fixes the failing required check".into()),
-                    )
-                } else if let (RelationToMaster::Behind { behind, .. }, true) =
-                    (relation, pr.cross_repository)
-                {
-                    (
-                        PullRequestDisposition::NeedsRepair,
-                        vec![format!("behind_master:{behind}"), "fork_head".into()],
+                        vec![ReasonCode::NoRequiredChecks],
                         Some(format!(
-                            "the author merges {} into the fork's branch",
+                            "require a check on {} in its protection or a ruleset",
                             policy.base
                         )),
                     )
-                } else if let RelationToMaster::Behind { behind, .. } = relation {
-                    (
-                            PullRequestDisposition::NeedsRefresh,
-                            vec![format!("behind_master:{behind}")],
-                            Some(format!(
-                                "bring {} in with the derived merge driver, derive, push; CI runs again",
-                                policy.base
-                            )),
-                        )
-                } else {
-                    match checks {
-                        RequiredCheckState::Passed | RequiredCheckState::Skipped => (
-                            PullRequestDisposition::Ready,
-                            vec![
-                                "contains_master".into(),
-                                format!("required_checks_{}", word(&checks)),
-                            ],
-                            Some("merge it".into()),
-                        ),
-                        RequiredCheckState::Pending | RequiredCheckState::Missing => (
-                            PullRequestDisposition::WaitingForChecks,
-                            vec![format!("required_checks:{}", word(&checks))],
-                            Some("wait for the required checks on this head".into()),
-                        ),
-                        RequiredCheckState::Unknown
-                            if policy.required_checks.as_ref().is_some_and(Vec::is_empty) =>
-                        {
-                            (
-                                PullRequestDisposition::Unknown,
-                                vec!["no_required_checks".into()],
-                                Some(format!(
-                                    "require a check on {} in its protection or a ruleset",
-                                    policy.base
-                                )),
-                            )
-                        }
-                        RequiredCheckState::Unknown => (
-                            PullRequestDisposition::Unknown,
-                            vec!["required_checks_unread".into()],
-                            Some("majordomus prs refresh".into()),
-                        ),
-                        RequiredCheckState::Failed => unreachable!("handled above"),
-                    }
                 }
+                RequiredCheckState::Unknown => fails(
+                    PullRequestDisposition::Unknown,
+                    vec![ReasonCode::RequiredChecksUnread],
+                    Some("majordomus prs refresh".into()),
+                ),
+                // the no-failing-check gate said so
+                RequiredCheckState::Failed => fails_as_above(),
+            },
+        ),
+    ];
+
+    debug_assert!(
+        answers.iter().map(|(g, _)| *g).eq(IntegrationGate::ALL),
+        "the gates are answered in policy order"
+    );
+    let mut gates = Vec::with_capacity(answers.len());
+    let mut reasons = Vec::new();
+    let mut decided: Option<(PullRequestDisposition, Option<String>)> = None;
+    for (gate, failure) in answers {
+        gates.push(GateResult {
+            gate,
+            passed: failure.is_none(),
+        });
+        if let Some(f) = failure {
+            reasons.extend(f.reasons);
+            if decided.is_none() {
+                decided = f.decides;
             }
         }
-    };
-    if disposition == PullRequestDisposition::Draft
-        || disposition == PullRequestDisposition::Blocked
-    {
-        for l in &blocking {
-            evidence.push(ev("label", "blocking", (*l).clone()));
-        }
     }
+    let (disposition, next) = decided.unwrap_or_else(|| {
+        reasons = vec![
+            ReasonCode::ContainsMaster,
+            if checks == RequiredCheckState::Skipped {
+                ReasonCode::RequiredChecksSkipped
+            } else {
+                ReasonCode::RequiredChecksPassed
+            },
+        ];
+        (PullRequestDisposition::Ready, Some("merge it".into()))
+    });
 
     PullRequestAssessment {
         number: pr.number,
@@ -715,10 +887,12 @@ pub fn classify(
         evaluated_against: EvaluatedAgainst {
             master_sha: master_sha.to_string(),
             head_sha: pr.head_sha.clone(),
+            observed_at: observed_at.to_string(),
         },
         lane: disposition.lane(),
         disposition,
         reasons,
+        gates,
         next_action: next,
         required_checks: checks,
         review,

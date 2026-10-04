@@ -3,9 +3,9 @@
      Generator: majordomus-cli 0.13.0 -->
 # Module `integration` — Pull-request integration
 
-Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network.
+Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing.
 
-Stability: experimental. Capabilities: 3.
+Stability: experimental. Capabilities: 4.
 
 ## `integration.events` — The integration audit trail
 
@@ -29,7 +29,7 @@ Output: `IntegrationEvents`.
 
 ## `integration.explain` — Why one pull request is where it is
 
-One pull request's assessment — disposition, lane, reasons, next action, the master and head it was decided against, required checks, review, relation to master, dependencies, overlaps, risk with its factors, and every piece of evidence — with its rank in the queue. `found: false` with the reason when it is not open or nothing is observed.
+One pull request's assessment — disposition, lane, reasons, every gate of the policy with whether it passed, next action, the master and head it was decided against and when the forge was observed, required checks, review, relation to master, dependencies, overlaps, risk with its factors, and every piece of evidence — with its rank in the queue. `found: false` with the reason when it is not open or nothing is observed.
 
 | | |
 |---|---|
@@ -48,6 +48,26 @@ One pull request's assessment — disposition, lane, reasons, next action, the m
 | `number` | integer | yes | The pull request number. |
 
 Output: `IntegrationExplanation`.
+
+## `integration.prove_dry_run` — Proof that a dry run moves nothing
+
+Runs the executor's non-mutating cycle — refresh, plan, drain --dry-run and cleanup without --apply — between two snapshots of everything it could move if it were wrong: every ref origin serves, every open pull request's number, head, state and labels, the integration audit trail, the executor's lease, and every local ref outside the two namespaces the refresh mirrors. `ok` is true exactly when the snapshots are equal and refs/remotes/origin/<base> and every refs/majordomus/prs/<n> equal what origin serves. A read that reaches the network: the refresh asks the forge through the GitHub CLI and fetches the base and the pull-request heads, and like every read it rewrites the observation, relation and summary caches. It merges, closes and pushes nothing, and takes no input that could make it.
+
+| | |
+|---|---|
+| kind | query |
+| stability | experimental |
+| MCP tool | `majordomus_pull_requests_prove_dry_run` |
+| HTTP | `GET /api/v1/pull-requests/prove-dry-run` |
+| CLI | `majordomus prs prove-dry-run` |
+| cache | — |
+| benchmark | waived (external_dependency) |
+| provenance | builtin majordomus_cli::capability::builtin::integration |
+| tags | integration, pull-requests, proof, live |
+
+Input: none.
+
+Output: `DryRunProof`.
 
 ## `integration.queue` — The integration queue
 

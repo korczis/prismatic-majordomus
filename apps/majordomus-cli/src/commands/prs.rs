@@ -308,7 +308,7 @@ pub fn run(args: PrsArgs) -> Result<u8> {
                             i.pr,
                             i.disposition.as_str(),
                             i.action,
-                            i.reasons.join(", ")
+                            integration::reason_list(&i.reasons, ", ")
                         ),
                     )?;
                 }
@@ -572,7 +572,7 @@ fn status(q: &IntegrationQueue, format: OutputFormat, out: &mut impl Write) -> R
                 a.number,
                 a.disposition.as_str(),
                 integration::classify::word(&a.risk),
-                trunc(&a.reasons.join(","), 34),
+                trunc(&integration::reason_list(&a.reasons, ","), 34),
                 trunc(&a.title, 60)
             ),
         )?;
@@ -679,7 +679,26 @@ fn explain(
             integration::classify::word(&a.lane)
         ),
     )?;
-    w(out, format!("  reasons:      {}", a.reasons.join(", ")))?;
+    w(
+        out,
+        format!(
+            "  reasons:      {}",
+            integration::reason_list(&a.reasons, ", ")
+        ),
+    )?;
+    // every gate in policy order: the first failed one decided the disposition
+    let gates: Vec<String> = a
+        .gates
+        .iter()
+        .map(|g| {
+            format!(
+                "{} {}",
+                g.gate.as_str(),
+                if g.passed { "passed" } else { "failed" }
+            )
+        })
+        .collect();
+    w(out, format!("  gates:        {}", gates.join(", ")))?;
     if let Some(n) = &a.next_action {
         w(out, format!("  next:         {n}"))?;
     }

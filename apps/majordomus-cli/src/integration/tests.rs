@@ -3103,3 +3103,374 @@ fn an_unread_review_policy_passes_nothing_unsupported() {
         )
     );
 }
+
+// ---------------------------------------------------------------- WP11: typed reasons, evidence and gates
+//
+// Every gate is answered and every failing one is reported; the first decides. The reasons
+// are typed, and their wire form is the `code:payload` string they always had.
+
+/// One of every reason the vocabulary names, with payloads that test the parser: a `:` inside
+/// a free-text payload, every review state, every required-check state.
+fn every_reason() -> Vec<crate::integration::ReasonCode> {
+    use crate::integration::ReasonCode as R;
+    // a new variant must be added below before this compiles: no wildcard
+    let _covered = |r: &R| match r {
+        R::StackedOn { .. }
+        | R::BaseIs { .. }
+        | R::Draft
+        | R::Label { .. }
+        | R::HeadReachableFromMaster
+        | R::MergeChangesNothing
+        | R::OnlyDerivedArtifactsDiffer
+        | R::RelationUnknown { .. }
+        | R::ConflictsOn { .. }
+        | R::DependsOn { .. }
+        | R::Review { .. }
+        | R::ReviewPolicyUnread
+        | R::RequiredCheckFailed
+        | R::BehindMaster { .. }
+        | R::ForkHead
+        | R::RequiredChecks { .. }
+        | R::NoRequiredChecks
+        | R::RequiredChecksUnread
+        | R::ContainsMaster
+        | R::RequiredChecksPassed
+        | R::RequiredChecksSkipped
+        | R::Unrecognised(_) => (),
+    };
+    let mut all = vec![
+        R::StackedOn { number: 601 },
+        R::BaseIs {
+            base: "release/1".into(),
+        },
+        R::BaseIs { base: "".into() },
+        R::Draft,
+        R::Label {
+            name: "Do-Not-Merge".into(),
+        },
+        R::Label {
+            name: "scope:ci".into(),
+        },
+        R::HeadReachableFromMaster,
+        R::MergeChangesNothing,
+        R::OnlyDerivedArtifactsDiffer,
+        R::RelationUnknown {
+            reason: "git merge-tree: exit 128: bad object".into(),
+        },
+        R::ConflictsOn { count: 3 },
+        R::DependsOn { number: 7 },
+        R::ReviewPolicyUnread,
+        R::RequiredCheckFailed,
+        R::BehindMaster { commits: 12 },
+        R::ForkHead,
+        R::NoRequiredChecks,
+        R::RequiredChecksUnread,
+        R::ContainsMaster,
+        R::RequiredChecksPassed,
+        R::RequiredChecksSkipped,
+    ];
+    for state in [
+        PullRequestReview::NotRequired,
+        PullRequestReview::Approved,
+        PullRequestReview::ChangesRequested,
+        PullRequestReview::Pending,
+        PullRequestReview::Stale,
+        PullRequestReview::CodeOwnersPending,
+        PullRequestReview::Unknown,
+    ] {
+        all.push(R::Review { state });
+    }
+    for state in [
+        RequiredCheckState::Passed,
+        RequiredCheckState::Skipped,
+        RequiredCheckState::Pending,
+        RequiredCheckState::Failed,
+        RequiredCheckState::Missing,
+        RequiredCheckState::Unknown,
+    ] {
+        all.push(R::RequiredChecks { state });
+    }
+    all
+}
+
+#[test]
+fn a_draft_that_conflicts_and_fails_its_check_says_all_three_and_stays_a_draft() {
+    use crate::integration::{IntegrationGate as G, ReasonCode as R};
+    let mut s = sim(1);
+    s.draft = true;
+    s.failing = true;
+    s.conflicts_after = Some(99);
+    let w = World {
+        open: vec![s],
+        merged: vec![99],
+        ..Default::default()
+    };
+    let q = w.queue();
+    let a = q.get(1).unwrap();
+    assert_eq!(a.disposition, PullRequestDisposition::Draft);
+    assert_eq!(
+        a.reasons,
+        vec![
+            R::Draft,
+            R::ConflictsOn { count: 1 },
+            R::RequiredCheckFailed
+        ]
+    );
+    // the wire form is the strings the reasons always were
+    assert_eq!(
+        serde_json::to_value(&a.reasons).unwrap(),
+        serde_json::json!(["draft", "conflicts_on:1", "required_check_failed"])
+    );
+    // every gate answered, in policy order
+    let order: Vec<G> = a.gates.iter().map(|g| g.gate).collect();
+    assert_eq!(order, G::ALL);
+    let failed: Vec<G> = a
+        .gates
+        .iter()
+        .filter(|g| !g.passed)
+        .map(|g| g.gate)
+        .collect();
+    assert_eq!(
+        failed,
+        [
+            G::Draft,
+            G::RelationToMaster,
+            G::NoFailingCheck,
+            G::Freshness,
+            G::RequiredChecks
+        ]
+    );
+    // draft and base evidence are always there, and the conflict is git's
+    let kinds: Vec<&str> = a.evidence.iter().map(|e| e.kind.as_str()).collect();
+    for kind in [
+        "base",
+        "draft",
+        "required_checks",
+        "required_check",
+        "relation_to_master",
+    ] {
+        assert!(kinds.contains(&kind), "{kind} missing from {kinds:?}");
+    }
+    let relation = a
+        .evidence
+        .iter()
+        .find(|e| e.kind == "relation_to_master")
+        .unwrap();
+    assert_eq!(
+        relation.source,
+        Some(crate::integration::EvidenceSource::Git {
+            master_sha: "m0".into(),
+            head_sha: a.evaluated_against.head_sha.clone(),
+        })
+    );
+}
+
+#[test]
+fn a_ready_pull_request_passed_every_gate_and_says_why_as_it_always_did() {
+    let w = World {
+        open: vec![sim(1)],
+        ..Default::default()
+    };
+    let q = w.queue();
+    let a = q.get(1).unwrap();
+    assert_eq!(a.disposition, PullRequestDisposition::Ready);
+    assert!(a.gates.iter().all(|g| g.passed), "{:?}", a.gates);
+    assert_eq!(a.reasons, ["contains_master", "required_checks_passed"]);
+    // the observation's moment is named, and a draft/base answer is evidence too
+    assert_eq!(a.evaluated_against.observed_at, "t0");
+    assert!(a
+        .evidence
+        .iter()
+        .any(|e| e.kind == "draft" && e.status == "ready_for_review"));
+    assert!(a
+        .evidence
+        .iter()
+        .any(|e| e.kind == "base" && e.status == "integration_base"));
+    for e in &a.evidence {
+        assert!(e.source.is_some(), "{e:?} names no source");
+    }
+}
+
+#[test]
+fn each_required_context_is_its_own_evidence_and_a_blocking_label_always_is() {
+    let mut s = sim(1);
+    s.labels = vec!["wip".into()];
+    let w = World {
+        open: vec![s],
+        ..Default::default()
+    };
+    let mut obs = w.observation();
+    obs.required_checks = Some(vec!["ci".into(), "lint".into()]);
+    let q = build_queue(&obs, "m0", |p| w.relation(p.number));
+    let a = q.get(1).unwrap();
+    assert_eq!(a.disposition, PullRequestDisposition::Blocked);
+    // `ci` passed, `lint` never reported: the label decides, the missing check is said too
+    assert_eq!(
+        a.reasons,
+        ["label:wip", "required_checks:missing"],
+        "{:?}",
+        a.reasons
+    );
+    let per_context: Vec<(String, String)> = a
+        .evidence
+        .iter()
+        .filter(|e| e.kind == "required_check")
+        .map(|e| (e.detail.clone(), e.status.clone()))
+        .collect();
+    assert_eq!(
+        per_context,
+        [
+            ("ci".to_string(), "passed".to_string()),
+            ("lint".to_string(), "missing".to_string())
+        ]
+    );
+    assert!(a
+        .evidence
+        .iter()
+        .any(|e| e.kind == "label" && e.detail == "wip"));
+    assert_eq!(
+        a.evidence
+            .iter()
+            .find(|e| e.kind == "label")
+            .and_then(|e| e.source.clone()),
+        Some(crate::integration::EvidenceSource::Forge {
+            observed_at: "t0".into()
+        })
+    );
+}
+
+#[test]
+fn every_reason_code_survives_its_wire_string() {
+    use crate::integration::ReasonCode;
+    for r in every_reason() {
+        let wire = r.to_string();
+        assert_eq!(wire.parse::<ReasonCode>().as_ref(), Ok(&r), "{wire}");
+        assert!(
+            wire.starts_with(r.code()),
+            "{wire} does not open with {}",
+            r.code()
+        );
+        // and through serde, as a plain JSON string
+        let json = serde_json::to_value(&r).unwrap();
+        assert_eq!(json, serde_json::Value::String(wire.clone()));
+        assert_eq!(serde_json::from_value::<ReasonCode>(json).unwrap(), r);
+    }
+    // a code outside the vocabulary is refused by the parser and carried verbatim by serde
+    assert!("ready".parse::<ReasonCode>().is_err());
+    assert!("draft:yes".parse::<ReasonCode>().is_err());
+    assert!(
+        "depends_on:7".parse::<ReasonCode>().is_err(),
+        "the number is #N"
+    );
+    assert!("review:sleepy".parse::<ReasonCode>().is_err());
+    let odd: ReasonCode = serde_json::from_value(serde_json::json!("ready")).unwrap();
+    assert_eq!(odd, ReasonCode::Unrecognised("ready".into()));
+    assert_eq!(
+        serde_json::to_value(&odd).unwrap(),
+        serde_json::json!("ready")
+    );
+}
+
+/// A trail line exactly as the executor wrote it while reasons and evidence kinds were
+/// strings and evidence named no source.
+const OLD_TRAIL_LINE: &str = r#"{"at":"2026-10-02T09:00:00Z","actor":"t (pid 1 on h)","action":"merge_attempted","pr":4,"master_before":"m1","head_sha":"h4","master_after":null,"reasons":["contains_master","required_checks_passed","behind_master:3","fork_head","review:changes_requested","ready"],"detail":"d","evidence":[{"kind":"required_checks","status":"passed","detail":"ci: passed"},{"kind":"relation_to_master","status":"up_to_date","detail":"contains master; 1 authored path(s)"},{"kind":"label","status":"blocking","detail":"wip"}]}"#;
+
+#[test]
+fn old_trail_lines_still_parse_and_write_back_unchanged() {
+    use crate::integration::{EvidenceKind, ReasonCode as R};
+    let e: drain::IntegrationEvent = serde_json::from_str(OLD_TRAIL_LINE).unwrap();
+    assert_eq!(
+        e.reasons,
+        vec![
+            R::ContainsMaster,
+            R::RequiredChecksPassed,
+            R::BehindMaster { commits: 3 },
+            R::ForkHead,
+            R::Review {
+                state: PullRequestReview::ChangesRequested
+            },
+            R::Unrecognised("ready".into()),
+        ]
+    );
+    let kinds: Vec<EvidenceKind> = e.evidence.iter().map(|x| x.kind).collect();
+    assert_eq!(
+        kinds,
+        [
+            EvidenceKind::RequiredChecks,
+            EvidenceKind::RelationToMaster,
+            EvidenceKind::Label
+        ]
+    );
+    assert!(e.evidence.iter().all(|x| x.source.is_none()));
+    // written back, the line says exactly what it said
+    let original: serde_json::Value = serde_json::from_str(OLD_TRAIL_LINE).unwrap();
+    assert_eq!(serde_json::to_value(&e).unwrap(), original);
+    // and the line the older suite keeps for typed actions reads too
+    let older: drain::IntegrationEvent = serde_json::from_str(&old_line("selected")).unwrap();
+    assert_eq!(older.reasons, ["ready"]);
+}
+
+#[test]
+fn the_same_revisions_observed_later_are_the_same_decision() {
+    let at = |observed_at: &str| crate::integration::EvaluatedAgainst {
+        master_sha: "m1".into(),
+        head_sha: "h1".into(),
+        observed_at: observed_at.into(),
+    };
+    assert_eq!(at("t1"), at("t2"));
+    let moved = crate::integration::EvaluatedAgainst {
+        head_sha: "h2".into(),
+        ..at("t1")
+    };
+    assert_ne!(at("t1"), moved);
+}
+
+proptest! {
+    /// Over any world: every gate is answered in policy order, the disposition is `ready`
+    /// exactly when every gate passed, every failing gate but a derivative one contributes a
+    /// reason, the first reason is the decisive gate's, and nothing the classifier says falls
+    /// outside the vocabulary.
+    #[test]
+    fn the_first_failing_gate_decides_and_every_reason_is_in_the_vocabulary(w in arb_world()) {
+        use crate::integration::{IntegrationGate as G, ReasonCode};
+        let q = w.queue();
+        for a in &q.assessments {
+            let order: Vec<G> = a.gates.iter().map(|g| g.gate).collect();
+            prop_assert_eq!(&order[..], &G::ALL[..]);
+            let ready = a.disposition == PullRequestDisposition::Ready;
+            prop_assert_eq!(ready, a.gates.iter().all(|g| g.passed), "#{}", a.number);
+            prop_assert!(!a.reasons.is_empty());
+            for r in &a.reasons {
+                prop_assert!(!matches!(r, ReasonCode::Unrecognised(_)), "{}", r);
+                let parsed = r.to_string().parse::<ReasonCode>();
+                prop_assert_eq!(parsed.as_ref(), Ok(r));
+            }
+            if let Some(first) = a.gates.iter().find(|g| !g.passed) {
+                // the first reason belongs to the first failing gate
+                let code = a.reasons[0].code();
+                let of_gate: &[&str] = match first.gate {
+                    G::Base => &["stacked_on", "base_is"],
+                    G::Draft => &["draft"],
+                    G::Label => &["label"],
+                    G::RelationToMaster => &[
+                        "head_reachable_from_master",
+                        "merge_changes_nothing",
+                        "only_derived_artifacts_differ",
+                        "relation_unknown",
+                        "conflicts_on",
+                    ],
+                    G::Dependency => &["depends_on"],
+                    G::Review => &["review", "review_policy_unread"],
+                    G::NoFailingCheck => &["required_check_failed"],
+                    G::Freshness => &["behind_master"],
+                    G::RequiredChecks => &[
+                        "required_checks",
+                        "no_required_checks",
+                        "required_checks_unread",
+                    ],
+                };
+                prop_assert!(of_gate.contains(&code), "#{}: {} after {:?}", a.number, code, first.gate);
+            }
+        }
+    }
+}

@@ -6,22 +6,22 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.13.0
 coverage:
   - scope: direct
-    required: 170
+    required: 171
     covered: 152
     missing: 0
-    waived: 18
+    waived: 19
     inapplicable: 0
   - scope: http
-    required: 168
+    required: 169
     covered: 152
     missing: 0
-    waived: 16
+    waived: 17
     inapplicable: 0
   - scope: mcp
-    required: 164
+    required: 165
     covered: 148
     missing: 0
-    waived: 16
+    waived: 17
     inapplicable: 0
   - scope: system
     required: 13
@@ -30,10 +30,10 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 515
+    required: 518
     covered: 465
     missing: 0
-    waived: 50
+    waived: 53
     inapplicable: 0
 capabilities:
   - id: artifacts.list
@@ -655,6 +655,14 @@ capabilities:
     http: covered
     cases:
       - a-number
+  - id: integration.prove_dry_run
+    module: integration
+    kind: query
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
   - id: integration.queue
     module: integration
     kind: query
