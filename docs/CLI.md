@@ -888,8 +888,10 @@ computed. `--why` is required: a decision with no recorded reason cannot be revi
 only re-argued. `--rejected` and `--evidence` are optional and default to `-`.
 
 An entry is never edited or deleted. `--supersedes "<text>"` records that a later decision
-replaced an earlier one and refuses text that matches no recorded decision, so a
-supersession always points at something real.
+replaced an earlier one. The text is matched against the titles of the recorded decisions
+only, must identify exactly one of them, and that title is what is recorded; text matching
+no title, or more than one, is refused, so a supersession always points at one real
+decision. `decision list` marks a replaced entry with `Superseded by: <title>`.
 
 `decision list [--task <id>] [--limit <n>]` prints entries newest first; `decision show
 "<text>"` prints the first entry whose title contains that text, or exits `12`.
