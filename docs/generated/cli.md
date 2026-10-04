@@ -185,7 +185,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus intent show`](#majordomus-intent-show) | `/docs/cli/intent/show/` | One intent in full: each milestone's derived status and each criterion's evidence state |
 | [`majordomus intent validate`](#majordomus-intent-validate) | `/docs/cli/intent/validate/` | Every finding over the intents; exit 10 when any is a failure |
 | [`majordomus intent coverage`](#majordomus-intent-coverage) | `/docs/cli/intent/coverage/` | Which work carries which criterion, and the reason every issue exists |
-| [`majordomus intent preflight`](#majordomus-intent-preflight) | `/docs/cli/intent/preflight/` | Which intent the work on an issue, or on some paths, serves; exit 10 when it serves none |
+| [`majordomus intent preflight`](#majordomus-intent-preflight) | `/docs/cli/intent/preflight/` | Which intent the work on an issue, or on some paths, serves, whether it is maintenance, or why it may not proceed; exit 10 when refused |
 | [`majordomus intent realization`](#majordomus-intent-realization) | `/docs/cli/intent/realization/` | Which work realises which intent — tasks, episodes, providers, handovers, peer claims — each link with its provenance, and each intent's unmet criteria and drift; exit 10 when an intent whose milestones are all DONE is contradicted by its evidence |
 | [`majordomus intent explain`](#majordomus-intent-explain) | `/docs/cli/intent/explain/` | Why an intent stands where it stands: its stage, each criterion, the work realising it |
 | [`majordomus delivery`](#majordomus-delivery) | `/docs/cli/delivery/` | Whether each product feature exists: on master, deployed, publicly verified, tested, its evidence published and linked — every dimension computed, unknown never a pass |
@@ -5237,7 +5237,7 @@ Examples:
 <a id="majordomus-intent-preflight"></a>
 ## `majordomus intent preflight`
 
-Which intent the work on an issue, or on some paths, serves; exit 10 when it serves none
+Which intent the work on an issue, or on some paths, serves, whether it is maintenance, or why it may not proceed; exit 10 when refused
 
 ```text
 majordomus intent preflight [OPTIONS]
@@ -5255,13 +5255,13 @@ majordomus intent preflight [OPTIONS]
 
 Examples:
 
-- **Which intent the work on an issue serves** — Issue to milestone to intent, each link named, with the governance the intent loads. A missing link is a refusal naming it, and exit 10.
+- **Which intent the work on an issue serves, or why it may not proceed** — The issue followed through the criteria it declares it serves to the intent each belongs to, with what that intent asks of the worker: its statement, the served criteria and their evidence, invariants, non-goals, governance, critique and gap. A broken link, or an intent whose plan was never critiqued or has a blocking finding open, is a refusal naming its cause, and exit 10; the example fixture's intent has no critique, so this is that refusal. Work under milestones no intent names is maintenance, and exits 0.
 
   ```console
   $ majordomus intent preflight --issue I0001
   ```
 
-  Verified: exits 0; prints serves, fixture-intent.
+  Verified: exits 10.
 
 <a id="majordomus-intent-realization"></a>
 ## `majordomus intent realization`

@@ -294,6 +294,7 @@
     "schema-Completion": "docs/api/gates/",
     "schema-ConclusionView": "docs/api/reasoning/",
     "schema-Concurrency": "docs/api/deploy/",
+    "schema-ConditionState": "docs/api/intents/",
     "schema-Confidence": "docs/api/environment/",
     "schema-Conflict": "docs/api/devcontext/",
     "schema-ConnectionEpisode": "docs/api/episodes/",
@@ -317,6 +318,8 @@
     "schema-CpuKind": "docs/api/deploy/",
     "schema-CriterionCoverage": "docs/api/shared/",
     "schema-CriticalBlocker": "docs/api/devtask/",
+    "schema-CritiqueClass": "docs/api/intents/",
+    "schema-CritiqueFinding": "docs/api/intents/",
     "schema-DashboardCard": "docs/api/dashboard/",
     "schema-DashboardMeasure": "docs/api/dashboard/",
     "schema-DashboardOverview": "docs/api/dashboard/",
@@ -476,6 +479,7 @@
     "schema-Fly": "docs/api/deploy/",
     "schema-Fonts": "docs/api/design/",
     "schema-Freshness": "docs/api/shared/",
+    "schema-GapCondition": "docs/api/intents/",
     "schema-Gate": "docs/api/gates/",
     "schema-GateClass": "docs/api/gates/",
     "schema-GateClassMatch": "docs/api/gates/",
@@ -542,7 +546,14 @@
     "schema-IntentList": "docs/api/intents/",
     "schema-IntentMilestone": "docs/api/shared/",
     "schema-IntentPreflight": "docs/api/intents/",
+    "schema-IntentPreflightCause": "docs/api/intents/",
+    "schema-IntentPreflightCritique": "docs/api/intents/",
+    "schema-IntentPreflightGap": "docs/api/intents/",
+    "schema-IntentPreflightIntent": "docs/api/intents/",
+    "schema-IntentPreflightIssue": "docs/api/intents/",
     "schema-IntentPreflightMatch": "docs/api/intents/",
+    "schema-IntentPreflightRefusal": "docs/api/intents/",
+    "schema-IntentPreflightVerdict": "docs/api/intents/",
     "schema-IntentRealization": "docs/api/intent-realization/",
     "schema-IntentRealizationView": "docs/api/intent-realization/",
     "schema-IntentRealizedWork": "docs/api/intent-realization/",
@@ -794,6 +805,7 @@
     "schema-RepositoryView": "docs/api/worktree/",
     "schema-RequiredCheckState": "docs/api/integration/",
     "schema-Resolution": "docs/api/environment/",
+    "schema-ResolutionState": "docs/api/intents/",
     "schema-Resolved": "docs/api/design/",
     "schema-ResolvedDomain": "docs/api/product/",
     "schema-ResolvedReference": "docs/api/knowledge-base/",
@@ -1022,7 +1034,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 168,
-    "schemas": 799,
+    "schemas": 811,
     "tags": 51
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1406,6 +1418,7 @@
     "Completion": "gates",
     "ConclusionView": "reasoning",
     "Concurrency": "deploy",
+    "ConditionState": "intents",
     "Confidence": "environment",
     "Conflict": "devcontext",
     "ConnectionEpisode": "episodes",
@@ -1429,6 +1442,8 @@
     "CpuKind": "deploy",
     "CriterionCoverage": "shared",
     "CriticalBlocker": "devtask",
+    "CritiqueClass": "intents",
+    "CritiqueFinding": "intents",
     "DashboardCard": "dashboard",
     "DashboardMeasure": "dashboard",
     "DashboardOverview": "dashboard",
@@ -1588,6 +1603,7 @@
     "Fly": "deploy",
     "Fonts": "design",
     "Freshness": "shared",
+    "GapCondition": "intents",
     "Gate": "gates",
     "GateClass": "gates",
     "GateClassMatch": "gates",
@@ -1654,7 +1670,14 @@
     "IntentList": "intents",
     "IntentMilestone": "shared",
     "IntentPreflight": "intents",
+    "IntentPreflightCause": "intents",
+    "IntentPreflightCritique": "intents",
+    "IntentPreflightGap": "intents",
+    "IntentPreflightIntent": "intents",
+    "IntentPreflightIssue": "intents",
     "IntentPreflightMatch": "intents",
+    "IntentPreflightRefusal": "intents",
+    "IntentPreflightVerdict": "intents",
     "IntentRealization": "intent-realization",
     "IntentRealizationView": "intent-realization",
     "IntentRealizedWork": "intent-realization",
@@ -1906,6 +1929,7 @@
     "RepositoryView": "worktree",
     "RequiredCheckState": "integration",
     "Resolution": "environment",
+    "ResolutionState": "intents",
     "Resolved": "design",
     "ResolvedDomain": "product",
     "ResolvedReference": "knowledge-base",
@@ -8734,6 +8758,37 @@
       "variants": []
     },
     {
+      "description": "The state of one criterion as the gap observed it. Four values, because \"not determined\"\nhas to be writable: an omitted criterion is refused, and `Unknown` is never a pass.\n\n```\nuse majordomus_cli::intent_review::ConditionState;\nassert_eq!(serde_json::to_string(&ConditionState::Conflicting).unwrap(), \"\\\"conflicting\\\"\");\nassert_ne!(ConditionState::Unknown, ConditionState::Satisfied);\n```",
+      "home": "intents",
+      "is_enum": true,
+      "name": "ConditionState",
+      "properties": [],
+      "type": "\"satisfied\" | \"missing\" | \"conflicting\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "GapCondition"
+      ],
+      "values": [
+        {
+          "description": "Already true at the observed commit.",
+          "value": "satisfied"
+        },
+        {
+          "description": "Not true; work is needed.",
+          "value": "missing"
+        },
+        {
+          "description": "Something in the repository contradicts it.",
+          "value": "conflicting"
+        },
+        {
+          "description": "Not determined. Never read as satisfied.",
+          "value": "unknown"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "How far a resolved value can be trusted.",
       "home": "environment",
       "is_enum": true,
@@ -10295,6 +10350,138 @@
       "used_by": [],
       "used_by_schemas": [
         "MilestoneGraph"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The class of a critique finding: the question the adversarial pass asked. Closed, so that a\nreview's findings can be counted by question rather than read as prose.\n\n```\nuse majordomus_cli::intent_review::CritiqueClass;\nassert_eq!(\n    serde_json::to_string(&CritiqueClass::DeliveryVerification).unwrap(),\n    \"\\\"delivery_verification\\\"\"\n);\n```",
+      "home": "intents",
+      "is_enum": true,
+      "name": "CritiqueClass",
+      "properties": [],
+      "type": "\"missed_requirement\" | \"unproven_assumption\" | \"insufficient_work\" | \"unnecessary_work\" | \"regression_risk\" | \"surface_missing\" | \"delivery_verification\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "CritiqueFinding"
+      ],
+      "values": [
+        {
+          "description": "Does the plan miss something the intent requires?",
+          "value": "missed_requirement"
+        },
+        {
+          "description": "Which assumption is unproven?",
+          "value": "unproven_assumption"
+        },
+        {
+          "description": "Which criterion lacks sufficient work?",
+          "value": "insufficient_work"
+        },
+        {
+          "description": "Which work item is unnecessary?",
+          "value": "unnecessary_work"
+        },
+        {
+          "description": "What could regress?",
+          "value": "regression_risk"
+        },
+        {
+          "description": "Which related surface must also change?",
+          "value": "surface_missing"
+        },
+        {
+          "description": "Which deployment or runtime verification is required?",
+          "value": "delivery_verification"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One critique finding: what the review found, what it is about, whether it blocks execution,\nand how it was resolved. `class` and `resolution` are `None` when the record spells one this\nmodule does not know, and the `_text` fields keep what was written.\n\n```\nuse majordomus_cli::intent_review::{CritiqueFinding, CritiqueRecord, ResolutionState};\nlet c = CritiqueRecord::from_metadata(\"c.yaml\", &serde_json::json!({\n    \"intent\": \"x\",\n    \"findings\": [{\"id\": \"f1\", \"class\": \"regression_risk\", \"subject\": \"x#a\",\n                  \"blocking\": true, \"resolution\": {\"state\": \"planned\", \"issue\": \"I1\"}}],\n}));\nlet finding: &CritiqueFinding = &c.findings[0];\nassert!(finding.blocking);\nassert_eq!(finding.resolution, Some(ResolutionState::Planned));\nassert_eq!(finding.issue, \"I1\");\n```",
+      "home": "intents",
+      "is_enum": false,
+      "name": "CritiqueFinding",
+      "properties": [
+        {
+          "description": "Unique within the critique.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The class, or `None` for a class this module does not know.",
+          "name": "class",
+          "refs": [
+            "CritiqueClass"
+          ],
+          "required": false,
+          "type": "CritiqueClass | null"
+        },
+        {
+          "description": "As written.",
+          "name": "class_text",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`<intent>#<criterion>`, an issue id or a milestone id.",
+          "name": "subject",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The finding.",
+          "name": "finding",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether execution may not start while it is open.",
+          "name": "blocking",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The resolution, or `None` for a state this module does not know.",
+          "name": "resolution",
+          "refs": [
+            "ResolutionState"
+          ],
+          "required": false,
+          "type": "ResolutionState | null"
+        },
+        {
+          "description": "As written.",
+          "name": "resolution_text",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The issue that carries it, when planned.",
+          "name": "issue",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why, when rejected.",
+          "name": "because",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntentPreflightCritique"
       ],
       "values": [],
       "variants": []
@@ -19720,6 +19907,58 @@
       "variants": []
     },
     {
+      "description": "One criterion's state against the observations, as the record spells it. `state` is `None`\nwhen the file names a state this module does not know, and `state_text` keeps what was\nwritten so the finding can quote it.\n\n```\nuse majordomus_cli::intent_review::{ConditionState, GapCondition};\nlet c = GapCondition {\n    criterion: \"criteria-are-covered\".into(),\n    state: Some(ConditionState::Missing),\n    state_text: \"missing\".into(),\n    because: \"nothing relates a criterion to an issue\".into(),\n    observations: vec![\"no-serves-field\".into()],\n};\nassert_eq!(c.state, Some(ConditionState::Missing));\nassert!(!c.observations.is_empty());\n```",
+      "home": "intents",
+      "is_enum": false,
+      "name": "GapCondition",
+      "properties": [
+        {
+          "description": "The criterion id of the intent.",
+          "name": "criterion",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The state, or `None` when the record spells one this module does not know.",
+          "name": "state",
+          "refs": [
+            "ConditionState"
+          ],
+          "required": false,
+          "type": "ConditionState | null"
+        },
+        {
+          "description": "As written, so a finding can quote an unknown state.",
+          "name": "state_text",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Why.",
+          "name": "because",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The observation ids it rests on.",
+          "name": "observations",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntentPreflightGap"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "```\nuse majordomus_cli::gates::{Gate, GateStatus};\n\nlet gate = Gate {\n    id: \"rust-check\".into(),\n    title: \"the crate builds, is formatted and passes its tests\".into(),\n    scope: \"apps/majordomus-cli\".into(),\n    required: true,\n    status: GateStatus::Queued,\n    reason: \"the plan selects it and no run has ever reported\".into(),\n    remediation: \"majordomus evidence --gate rust-check --exit 0\".into(),\n    source: \"the plan\".into(),\n    evidence: None,\n    inputs: vec![\"apps/majordomus-cli/**\".into()],\n    inputs_hash: \"3f0a\".into(),\n    evaluated_at: \"2026-01-01T00:00:00Z\".into(),\n};\n// silence does not refuse and is not a pass either: it is a debt, reported as one\nassert!(!gate.status.refuses());\nassert!(gate.status.unverified());\nassert!(gate.evidence.is_none());\n```\nOne completion gate: what it is, whether it applies, what it said, and what to do.",
       "home": "gates",
       "is_enum": false,
@@ -22546,6 +22785,7 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
+        "IntentPreflightIntent",
         "IntentView"
       ],
       "values": [],
@@ -22946,27 +23186,31 @@
       "variants": []
     },
     {
-      "description": "Which intent a piece of work serves, or why it serves none: the issues it resolved to, every\nintent reached with its link, the governance those intents load, and — when nothing is\nreached — the first link that is missing.\n\n```\nuse majordomus_cli::intent::IntentPreflight;\nlet refused = IntentPreflight {\n    verdict: \"refused\".into(),\n    issues: vec![],\n    matches: vec![],\n    governance: vec![],\n    refusal: Some(\"no open issue's scope covers README.md\".into()),\n};\nassert_eq!(refused.verdict, \"refused\");\nassert!(refused.refusal.is_some());\n```",
+      "description": "Which intent a piece of work serves, whether it is maintenance, or why it may not proceed:\nthe issues it resolved to with a verdict each, every intent reached with its link, what\nthose intents require of the worker, and every refusal with its cause.\n\n```\nuse majordomus_cli::intent::{\n    IntentPreflight, IntentPreflightCause, IntentPreflightRefusal, IntentPreflightVerdict,\n};\nlet refused = IntentPreflight {\n    verdict: IntentPreflightVerdict::Refused,\n    issues: vec![],\n    matches: vec![],\n    intents: vec![],\n    governance: vec![],\n    refusals: vec![IntentPreflightRefusal::new(\n        None,\n        IntentPreflightCause::NoIssueCoversPaths,\n        \"no open issue's scope covers README.md\".into(),\n    )],\n    refusal: Some(\"no open issue's scope covers README.md\".into()),\n};\nassert_eq!(refused.verdict, IntentPreflightVerdict::Refused);\nassert_eq!(refused.refusals[0].cause, IntentPreflightCause::NoIssueCoversPaths);\n```",
       "home": "intents",
       "is_enum": false,
       "name": "IntentPreflight",
       "properties": [
         {
-          "description": "`serves` or `refused`.",
+          "description": "`serves`, `maintenance` or `refused`: refused when any issue is, else serves when any\nissue serves an intent, else maintenance.",
           "name": "verdict",
-          "refs": [],
+          "refs": [
+            "IntentPreflightVerdict"
+          ],
           "required": true,
-          "type": "string"
+          "type": "IntentPreflightVerdict"
         },
         {
-          "description": "The issues the work was resolved to: the one named, or the open issues whose scope\ncovers a path.",
+          "description": "The issues the work was resolved to — the one named, or the open issues whose scope\ncovers a path — each with its own verdict.",
           "name": "issues",
-          "refs": [],
+          "refs": [
+            "IntentPreflightIssue"
+          ],
           "required": true,
-          "type": "array of string"
+          "type": "array of IntentPreflightIssue"
         },
         {
-          "description": "Every intent reached, with the link.",
+          "description": "Every intent an issue serves, with the link.",
           "name": "matches",
           "refs": [
             "IntentPreflightMatch"
@@ -22975,14 +23219,32 @@
           "type": "array of IntentPreflightMatch"
         },
         {
-          "description": "The governance of every intent reached, each entry once, in first-seen order.",
+          "description": "The intents the work serves, and no other, each with what it asks of the worker.",
+          "name": "intents",
+          "refs": [
+            "IntentPreflightIntent"
+          ],
+          "required": true,
+          "type": "array of IntentPreflightIntent"
+        },
+        {
+          "description": "The governance of those intents, each entry once, in first-seen order.",
           "name": "governance",
           "refs": [],
           "required": true,
           "type": "array of string"
         },
         {
-          "description": "When refused: the link that is missing.",
+          "description": "Every reason the preflight refused, in issue order; empty unless the verdict is\n`refused`.",
+          "name": "refusals",
+          "refs": [
+            "IntentPreflightRefusal"
+          ],
+          "required": true,
+          "type": "array of IntentPreflightRefusal"
+        },
+        {
+          "description": "When refused: every refusal's sentence, joined, for a reader who wants one line.",
           "name": "refusal",
           "refs": [],
           "required": false,
@@ -22998,7 +23260,285 @@
       "variants": []
     },
     {
-      "description": "One intent a piece of work serves, and the link that says so: issue to milestone to intent,\neach step named rather than asserted.\n\n```\nuse majordomus_cli::intent::{IntentPreflightMatch, IntentStage};\nlet m = IntentPreflightMatch {\n    intent: \"intent-lifecycle\".into(),\n    title: \"Work is traceable to the intent it serves\".into(),\n    stage: IntentStage::Executing,\n    milestone: \"intent-lifecycle\".into(),\n    issue: \"I1900\".into(),\n};\nassert_eq!(m.issue, \"I1900\");\n```",
+      "description": "Why a preflight refused, as a word a reader greps for.\n\n```\nuse majordomus_cli::intent::IntentPreflightCause;\nassert_eq!(\n    serde_json::to_string(&IntentPreflightCause::OpenBlockingFinding).unwrap(),\n    \"\\\"open_blocking_finding\\\"\"\n);\nassert_ne!(\n    IntentPreflightCause::IntentNotCritiqued,\n    IntentPreflightCause::IssueServesNothing\n);\n```",
+      "home": "intents",
+      "is_enum": true,
+      "name": "IntentPreflightCause",
+      "properties": [],
+      "type": "\"unknown_issue\" | \"no_issue_covers_paths\" | \"issue_serves_nothing\" | \"serves_another_intent\" | \"serves_unknown_criterion\" | \"intent_not_critiqued\" | \"open_blocking_finding\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntentPreflightRefusal"
+      ],
+      "values": [
+        {
+          "description": "The issue named is not an issue of the plan.",
+          "value": "unknown_issue"
+        },
+        {
+          "description": "No open issue's scope covers any of the paths.",
+          "value": "no_issue_covers_paths"
+        },
+        {
+          "description": "The issue's milestone realises a live intent and the issue serves none of its criteria.",
+          "value": "issue_serves_nothing"
+        },
+        {
+          "description": "The issue serves a criterion of an intent whose milestones do not include its own.",
+          "value": "serves_another_intent"
+        },
+        {
+          "description": "The issue serves an intent or a criterion that does not exist, or a token that is not\n`<intent>#<criterion>`.",
+          "value": "serves_unknown_criterion"
+        },
+        {
+          "description": "An intent the issue serves has no critique: its plan was never reviewed.",
+          "value": "intent_not_critiqued"
+        },
+        {
+          "description": "The critique of an intent the issue serves has a blocking finding still open.",
+          "value": "open_blocking_finding"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The critique of an intent as a preflight reads it: where it is, when and by whom the plan\nwas reviewed, and the blocking findings still open.\n\n```\nuse majordomus_cli::intent::IntentPreflightCritique;\nlet c = IntentPreflightCritique {\n    source: \".ai/repo/project/critiques/x.yaml\".into(),\n    reviewed_at: \"c3f20da\".into(),\n    reviewed_by: \"another session\".into(),\n    open_blocking: vec![],\n};\nassert!(c.open_blocking.is_empty());\n```",
+      "home": "intents",
+      "is_enum": false,
+      "name": "IntentPreflightCritique",
+      "properties": [
+        {
+          "description": "Repository-relative path of the record.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit the plan was reviewed at.",
+          "name": "reviewed_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Who or what reviewed it.",
+          "name": "reviewed_by",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Every blocking finding whose resolution is `open`; work may not start while one is.",
+          "name": "open_blocking",
+          "refs": [
+            "CritiqueFinding"
+          ],
+          "required": true,
+          "type": "array of CritiqueFinding"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntentPreflightIntent"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The recorded gap of an intent as a preflight reads it, bounded to the criteria the work\nserves: what was observed of each, at which commit, and the risks.\n\n```\nuse majordomus_cli::intent::IntentPreflightGap;\nlet g = IntentPreflightGap {\n    source: \".ai/repo/project/gaps/x.yaml\".into(),\n    observed_at: \"c3f20da\".into(),\n    conditions: vec![],\n    risks: vec![\"the schema may refuse old records\".into()],\n};\nassert_eq!(g.risks.len(), 1);\n```",
+      "home": "intents",
+      "is_enum": false,
+      "name": "IntentPreflightGap",
+      "properties": [
+        {
+          "description": "Repository-relative path of the record.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit the observations were made on.",
+          "name": "observed_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The gap's answer for each criterion the work serves, in the gap's order.",
+          "name": "conditions",
+          "refs": [
+            "GapCondition"
+          ],
+          "required": true,
+          "type": "array of GapCondition"
+        },
+        {
+          "description": "The risks it recorded.",
+          "name": "risks",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntentPreflightIntent"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One intent the work is held to, with what a worker needs before touching it: the statement,\nthe criteria the work serves with the live state of their evidence, the invariants and\nnon-goals, the governance, the critique and the gap. Only the intents the work reaches are\ncarried, never every intent.\n\n```\nuse majordomus_cli::intent::{IntentPreflightIntent, IntentStage};\nlet i = IntentPreflightIntent {\n    id: \"x\".into(),\n    title: \"X\".into(),\n    stage: IntentStage::Planned,\n    statement: \"It becomes true.\".into(),\n    criteria: vec![],\n    invariants: vec![],\n    non_goals: vec![],\n    governance: vec![],\n    critique: None,\n    gap: None,\n};\n// no critique recorded is carried as an absence, never as an empty review\nassert!(i.critique.is_none());\n```",
+      "home": "intents",
+      "is_enum": false,
+      "name": "IntentPreflightIntent",
+      "properties": [
+        {
+          "description": "The identity.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "One line.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its derived stage.",
+          "name": "stage",
+          "refs": [
+            "IntentStage"
+          ],
+          "required": true,
+          "type": "IntentStage"
+        },
+        {
+          "description": "What must become true.",
+          "name": "statement",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The criteria the work serves, each with the state of its evidence now, in the intent's\norder.",
+          "name": "criteria",
+          "refs": [
+            "IntentCriterion"
+          ],
+          "required": true,
+          "type": "array of IntentCriterion"
+        },
+        {
+          "description": "What must stay true.",
+          "name": "invariants",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "What is deliberately not required.",
+          "name": "non_goals",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The governance a worker on this intent loads.",
+          "name": "governance",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The critique of its plan; absent when none was ever recorded.",
+          "name": "critique",
+          "refs": [
+            "IntentPreflightCritique"
+          ],
+          "required": false,
+          "type": "IntentPreflightCritique | null"
+        },
+        {
+          "description": "Its recorded gap, bounded to the criteria above; absent when none was recorded.",
+          "name": "gap",
+          "refs": [
+            "IntentPreflightGap"
+          ],
+          "required": false,
+          "type": "IntentPreflightGap | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntentPreflight"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One issue the work resolved to, and what the preflight concluded about it.\n\n```\nuse majordomus_cli::intent::{IntentPreflightIssue, IntentPreflightVerdict};\nlet i = IntentPreflightIssue {\n    issue: \"I0007\".into(),\n    milestone: \"ops\".into(),\n    verdict: IntentPreflightVerdict::Maintenance,\n    serves: vec![],\n    intents: vec![],\n};\n// a milestone no intent names carries maintenance, which is not a refusal\nassert_eq!(i.verdict, IntentPreflightVerdict::Maintenance);\n```",
+      "home": "intents",
+      "is_enum": false,
+      "name": "IntentPreflightIssue",
+      "properties": [
+        {
+          "description": "The issue id.",
+          "name": "issue",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its milestone.",
+          "name": "milestone",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the preflight concluded about this issue.",
+          "name": "verdict",
+          "refs": [
+            "IntentPreflightVerdict"
+          ],
+          "required": true,
+          "type": "IntentPreflightVerdict"
+        },
+        {
+          "description": "The `<intent>#<criterion>` references it declares, as declared.",
+          "name": "serves",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The live intents whose milestones include its milestone, sorted.",
+          "name": "intents",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntentPreflight"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One intent a piece of work serves, and the link that says so: issue to the criteria it\ndeclares in `serves`, each criterion's intent naming the issue's milestone.\n\n```\nuse majordomus_cli::intent::{IntentPreflightMatch, IntentStage};\nlet m = IntentPreflightMatch {\n    intent: \"intent-lifecycle\".into(),\n    title: \"Work is traceable to the intent it serves\".into(),\n    stage: IntentStage::Executing,\n    milestone: \"intent-lifecycle\".into(),\n    issue: \"I1900\".into(),\n    criteria: vec![\"stage-is-derived\".into()],\n};\nassert_eq!(m.issue, \"I1900\");\n```",
       "home": "intents",
       "is_enum": false,
       "name": "IntentPreflightMatch",
@@ -23039,6 +23579,13 @@
           "refs": [],
           "required": true,
           "type": "string"
+        },
+        {
+          "description": "The criteria of the intent the issue declares it serves, in the intent's order.",
+          "name": "criteria",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
         }
       ],
       "type": "object",
@@ -23047,6 +23594,72 @@
         "IntentPreflight"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "One reason a preflight refused: which issue, the cause, and one sentence of what is wrong.\n\n```\nuse majordomus_cli::intent::{IntentPreflightCause, IntentPreflightRefusal};\nlet r = IntentPreflightRefusal::new(\n    Some(\"I1900\"),\n    IntentPreflightCause::IntentNotCritiqued,\n    \"intent x has no critique\".into(),\n);\nassert_eq!(r.cause, IntentPreflightCause::IntentNotCritiqued);\nassert_eq!(r.issue.as_deref(), Some(\"I1900\"));\n```",
+      "home": "intents",
+      "is_enum": false,
+      "name": "IntentPreflightRefusal",
+      "properties": [
+        {
+          "description": "The issue it is about; absent when no issue was resolved at all.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The cause.",
+          "name": "cause",
+          "refs": [
+            "IntentPreflightCause"
+          ],
+          "required": true,
+          "type": "IntentPreflightCause"
+        },
+        {
+          "description": "What is wrong, in one sentence.",
+          "name": "message",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntentPreflight"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a preflight concluded, about one issue or about the whole piece of work.\n\n```\nuse majordomus_cli::intent::IntentPreflightVerdict;\n// the words every surface answers with\nassert_eq!(\n    serde_json::to_string(&IntentPreflightVerdict::Maintenance).unwrap(),\n    \"\\\"maintenance\\\"\"\n);\nassert_ne!(IntentPreflightVerdict::Serves, IntentPreflightVerdict::Refused);\n```",
+      "home": "intents",
+      "is_enum": true,
+      "name": "IntentPreflightVerdict",
+      "properties": [],
+      "type": "\"serves\" | \"maintenance\" | \"refused\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntentPreflight",
+        "IntentPreflightIssue"
+      ],
+      "values": [
+        {
+          "description": "The work serves at least one criterion of a live intent, every link holds, and the\nplan of every intent it serves was critiqued with no blocking finding left open.",
+          "value": "serves"
+        },
+        {
+          "description": "The work sits under milestones no live intent names, and names no criterion: operational\nwork, allowed exactly where `majordomus intent validate` allows it.",
+          "value": "maintenance"
+        },
+        {
+          "description": "A link is missing or points at nothing, or an intent it serves may not be executed yet.",
+          "value": "refused"
+        }
+      ],
       "variants": []
     },
     {
@@ -23236,6 +23849,7 @@
       "used_by": [],
       "used_by_schemas": [
         "IntentLink",
+        "IntentPreflightIntent",
         "IntentPreflightMatch",
         "IntentRealizationView",
         "IntentView"
@@ -37671,6 +38285,33 @@
       "variants": []
     },
     {
+      "description": "How a critique finding was resolved: not yet, by planning work that serves the intent, or\nby rejecting it with a reason. A blocking finding left `Open` refuses execution.\n\n```\nuse majordomus_cli::intent_review::ResolutionState;\nassert_eq!(serde_json::to_string(&ResolutionState::Planned).unwrap(), \"\\\"planned\\\"\");\nassert_ne!(ResolutionState::Open, ResolutionState::Rejected);\n```",
+      "home": "intents",
+      "is_enum": true,
+      "name": "ResolutionState",
+      "properties": [],
+      "type": "\"open\" | \"planned\" | \"rejected\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "CritiqueFinding"
+      ],
+      "values": [
+        {
+          "description": "Not yet resolved.",
+          "value": "open"
+        },
+        {
+          "description": "Carried by an issue.",
+          "value": "planned"
+        },
+        {
+          "description": "Judged not to apply, with a reason.",
+          "value": "rejected"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "What a colour reference resolved to.",
       "home": "design",
       "is_enum": false,
@@ -51863,7 +52504,7 @@
           "cache_detail": "",
           "cli": "intent preflight",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/intents/preflight?issue=I0001&paths=\"",
-          "description": "Given the issue a piece of work executes, or the paths it will touch, the intents it serves — issue to milestone to intent, each link named — and the governance those intents load; or a refusal naming the first link that is missing: an issue that does not exist, paths no open issue covers, a milestone no intent names.",
+          "description": "Given the issue a piece of work executes, or the paths it will touch, one verdict: `serves` when every issue serves a criterion of a live intent through a link that holds and the plan of each such intent was critiqued with no blocking finding open; `maintenance` when the issues sit under milestones no live intent names and serve nothing, as `intent validate` allows; `refused` otherwise, each refusal with its issue, a cause — unknown_issue, no_issue_covers_paths, issue_serves_nothing, serves_another_intent, serves_unknown_criterion, intent_not_critiqued, open_blocking_finding — in path mode every issue judged and the worst verdict answered. The answer carries, for the intents reached and no others, the statement, the served criteria with the live state of their evidence, the invariants, non-goals and governance, the critique with its open blocking findings, and the recorded gap bounded to those criteria.",
           "home": "intents",
           "id": "intents.preflight",
           "kind": "query",
@@ -51904,7 +52545,7 @@
           },
           "responses": [
             {
-              "description": "Which intent a piece of work serves: the result.",
+              "description": "Which intent a piece of work serves, or why it may not proceed: the result.",
               "schema": "IntentPreflight",
               "status": "200"
             },
@@ -51931,7 +52572,7 @@
           ],
           "result_schema": "IntentPreflight",
           "stability": "behaviorally_verified",
-          "summary": "Which intent a piece of work serves"
+          "summary": "Which intent a piece of work serves, or why it may not proceed"
         },
         {
           "benchmark": "required",

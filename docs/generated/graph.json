@@ -711,7 +711,7 @@
         "id": "capability:intents.preflight",
         "kind": "capability",
         "label": "intents.preflight",
-        "summary": "Which intent a piece of work serves",
+        "summary": "Which intent a piece of work serves, or why it may not proceed",
         "route": "/cockpit/capabilities/intents.preflight",
         "source": "apps/majordomus-cli/src/capability/builtin/intents.rs",
         "status": "query"
@@ -1700,14 +1700,6 @@
         "label": "product.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/product.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/quality/mod.rs",
-        "kind": "file",
-        "label": "mod.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/quality/mod.rs",
         "external": true
       },
       {
@@ -38642,6 +38634,13 @@
         "source": "test/cases/88_rust_command_tested.sh"
       },
       {
+        "id": "majordomus://test/test/cases/893_preflight_follows_what_an_issue_serves.sh",
+        "kind": "test",
+        "label": "test/cases/893_preflight_follows_what_an_issue_serves.sh",
+        "route": "/cockpit/objects/test/test-cases-893-preflight-follows-what-an-issue-serves-sh",
+        "source": "test/cases/893_preflight_follows_what_an_issue_serves.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/89_web_surface.sh",
         "kind": "test",
         "label": "test/cases/89_web_surface.sh",
@@ -44663,11 +44662,6 @@
         "source": "majordomus://adr/adr-0027",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0028",
-        "target": "file:apps/majordomus-cli/src/quality/mod.rs",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0028",
@@ -60501,6 +60495,11 @@
       },
       {
         "source": "majordomus://test/test/cases/88_rust_command_tested.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/893_preflight_follows_what_an_issue_serves.sh",
         "target": "kind:test",
         "kind": "is_a"
       },

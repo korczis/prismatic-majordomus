@@ -26923,7 +26923,7 @@
           "route": "/docs/cli/intent/coverage/"
         },
         {
-          "about": "Which intent the work on an issue, or on some paths, serves; exit 10 when it serves none",
+          "about": "Which intent the work on an issue, or on some paths, serves, whether it is maintenance, or why it may not proceed; exit 10 when refused",
           "command": "majordomus intent preflight",
           "name": "preflight",
           "route": "/docs/cli/intent/preflight/"
@@ -27512,7 +27512,7 @@
       "usage": "majordomus intent coverage [OPTIONS]"
     },
     {
-      "about": "Which intent the work on an issue, or on some paths, serves; exit 10 when it serves none",
+      "about": "Which intent the work on an issue, or on some paths, serves, whether it is maintenance, or why it may not proceed; exit 10 when refused",
       "ancestors": [
         {
           "command": "majordomus",
@@ -27647,11 +27647,11 @@
             "I0001"
           ],
           "command": "majordomus intent preflight --issue I0001",
-          "description": "Issue to milestone to intent, each link named, with the governance the intent loads. A missing link is a refusal naming it, and exit 10.",
-          "expectation": "exits 0; prints serves, fixture-intent",
+          "description": "The issue followed through the criteria it declares it serves to the intent each belongs to, with what that intent asks of the worker: its statement, the served criteria and their evidence, invariants, non-goals, governance, critique and gap. A broken link, or an intent whose plan was never critiqued or has a blocking finding open, is a refusal naming its cause, and exit 10; the example fixture's intent has no critique, so this is that refusal. Work under milestones no intent names is maintenance, and exits 0.",
+          "expectation": "exits 10",
           "id": "intent-preflight",
           "setup": [],
-          "title": "Which intent the work on an issue serves"
+          "title": "Which intent the work on an issue serves, or why it may not proceed"
         }
       ],
       "executable": true,
