@@ -134,7 +134,10 @@ impl World {
             base_sha: master_sha(self.master),
             observed_at: format!("t{}", self.observations),
             required_checks: Some(vec!["ci".into()]),
-            reviews_required: self.reviews_required,
+            review_policy: self.reviews_required.map(|r| super::ReviewPolicy {
+                approvals: u64::from(r),
+                ..Default::default()
+            }),
             merge_methods: vec!["merge".into()],
             pull_requests: self.open.iter().map(observe_pr).collect(),
         }
@@ -213,11 +216,23 @@ fn observe_pr(s: &Sim) -> PullRequestObservation {
                 } else {
                     CheckRunState::Passed
                 },
+                ..Default::default()
             }]
         },
         review_decision: s.review.into(),
         auto_merge: false,
         cross_repository: s.cross_repository,
+        // an approval the forge reports is one given on this head
+        latest_reviews: if s.review == "APPROVED" {
+            vec![super::ReviewObservation {
+                author: "reviewer".into(),
+                state: "APPROVED".into(),
+                commit: s.head.clone(),
+            }]
+        } else {
+            Vec::new()
+        },
+        review_requests: Vec::new(),
     }
 }
 
@@ -403,6 +418,7 @@ fn a_required_check_is_passed_only_when_it_passed() {
                 vec![CheckObservation {
                     name: "ci".into(),
                     state: s,
+                    ..Default::default()
                 }]
             })
             .unwrap_or_default();
@@ -410,6 +426,7 @@ fn a_required_check_is_passed_only_when_it_passed() {
         obs.pull_requests[0].checks.push(CheckObservation {
             name: "suite".into(),
             state: CheckRunState::Passed,
+            ..Default::default()
         });
         let q = build_queue(&obs, "m0", |p| w.relation(p.number));
         assert_eq!(disposition(&q, 1), want, "{state:?}");
@@ -1494,7 +1511,7 @@ fn observed(dir: &std::path::Path, master: &str, prs: Vec<PullRequestObservation
         base_sha: master.into(),
         observed_at: "t0".into(),
         required_checks: Some(vec!["ci".into()]),
-        reviews_required: Some(false),
+        review_policy: Some(Default::default()),
         merge_methods: vec!["merge".into()],
         pull_requests: prs,
     };
@@ -1951,4 +1968,270 @@ fn a_repository_that_cannot_be_read_ends_a_continuous_drain() {
     );
     assert_eq!(report.cycles, 0);
     assert_eq!(report.failure.as_deref(), Some("HTTP 401: Bad credentials"));
+}
+
+// ---------------------------------------------------------------- required-check authority
+
+fn run(name: &str, state: CheckRunState, completed_at: &str) -> CheckObservation {
+    CheckObservation {
+        name: name.into(),
+        state,
+        completed_at: completed_at.into(),
+        ..Default::default()
+    }
+}
+
+/// The newest report of a context is its verdict: a failure that a re-run fixed has passed,
+/// and a pass that a re-run broke has failed.
+#[test]
+fn a_failed_run_followed_by_a_passing_rerun_has_passed() {
+    use crate::integration::classify::required_checks;
+    let req: Vec<super::RequiredCheck> = vec!["ci".into()];
+    let fixed = vec![
+        run("ci", CheckRunState::Failed, "2026-09-01T00:01:00Z"),
+        run("ci", CheckRunState::Passed, "2026-09-01T00:09:00Z"),
+    ];
+    assert_eq!(
+        required_checks(&fixed, Some(&req), &[]),
+        RequiredCheckState::Passed
+    );
+    let broken = vec![
+        run("ci", CheckRunState::Passed, "2026-09-01T00:01:00Z"),
+        run("ci", CheckRunState::Failed, "2026-09-01T00:09:00Z"),
+    ];
+    assert_eq!(
+        required_checks(&broken, Some(&req), &[]),
+        RequiredCheckState::Failed
+    );
+    // a re-run still running makes the check pending, whatever finished before it
+    let rerunning = vec![
+        run("ci", CheckRunState::Passed, "2026-09-01T00:01:00Z"),
+        run("ci", CheckRunState::Pending, ""),
+    ];
+    assert_eq!(
+        required_checks(&rerunning, Some(&req), &[]),
+        RequiredCheckState::Pending
+    );
+}
+
+/// A check the base binds to an app is that app's check run: a status context of the same
+/// name, or another app's run, is not it, so the check has not reported.
+#[test]
+fn a_status_context_from_the_wrong_writer_is_missing() {
+    use crate::integration::classify::required_checks;
+    use crate::integration::CheckKind;
+    let bound = vec![super::RequiredCheck {
+        context: "ci".into(),
+        app_id: Some(15368),
+    }];
+    let status = vec![CheckObservation {
+        name: "ci".into(),
+        state: CheckRunState::Passed,
+        kind: CheckKind::StatusContext,
+        ..Default::default()
+    }];
+    assert_eq!(
+        required_checks(&status, Some(&bound), &[]),
+        RequiredCheckState::Missing
+    );
+    let other_app = vec![CheckObservation {
+        name: "ci".into(),
+        state: CheckRunState::Passed,
+        app_id: Some(1),
+        ..Default::default()
+    }];
+    assert_eq!(
+        required_checks(&other_app, Some(&bound), &[]),
+        RequiredCheckState::Missing
+    );
+    let its_app = vec![CheckObservation {
+        name: "ci".into(),
+        state: CheckRunState::Passed,
+        app_id: Some(15368),
+        ..Default::default()
+    }];
+    assert_eq!(
+        required_checks(&its_app, Some(&bound), &[]),
+        RequiredCheckState::Passed
+    );
+    // unbound, a status context of the name is the check
+    let unbound: Vec<super::RequiredCheck> = vec!["ci".into()];
+    assert_eq!(
+        required_checks(&status, Some(&unbound), &[]),
+        RequiredCheckState::Passed
+    );
+}
+
+/// A skipped required check has not passed, unless the policy permits that context's skip.
+#[test]
+fn a_skip_is_missing_unless_permitted() {
+    use crate::integration::classify::required_checks;
+    let req: Vec<super::RequiredCheck> = vec!["ci".into(), "lint".into()];
+    let checks = vec![
+        run("ci", CheckRunState::Passed, "2026-09-01T00:01:00Z"),
+        run("lint", CheckRunState::Skipped, "2026-09-01T00:02:00Z"),
+    ];
+    assert_eq!(
+        required_checks(&checks, Some(&req), &[]),
+        RequiredCheckState::Missing
+    );
+    assert_eq!(
+        required_checks(&checks, Some(&req), &["ci".into()]),
+        RequiredCheckState::Missing,
+        "permitting another context's skip permits nothing here"
+    );
+    assert_eq!(
+        required_checks(&checks, Some(&req), &["lint".into()]),
+        RequiredCheckState::Skipped
+    );
+}
+
+/// Owner decision D5: a base that requires no check proves nothing about a head, so nothing
+/// is ready onto it. The queue says why, the evidence says none were required, and the
+/// diagnostics say how to fix it.
+#[test]
+fn an_empty_required_set_is_unknown_and_says_so() {
+    let w = World {
+        open: vec![sim(1)],
+        ..Default::default()
+    };
+    let mut obs = w.observation();
+    obs.required_checks = Some(Vec::new());
+    let q = build_queue(&obs, "m0", |p| w.relation(p.number));
+    let a = q.get(1).unwrap();
+    assert_eq!(a.disposition, PullRequestDisposition::Unknown);
+    assert_eq!(a.reasons, ["no_required_checks"]);
+    assert!(a
+        .evidence
+        .iter()
+        .any(|e| e.kind == "required_checks" && e.status == "none_required"));
+    assert!(q.next_merge.is_none());
+    assert!(
+        q.diagnostics
+            .iter()
+            .any(|d| d.contains("requires no check")),
+        "{:?}",
+        q.diagnostics
+    );
+}
+
+// ---------------------------------------------------------------- review authority
+
+fn reviewed(
+    decision: &str,
+    reviews: &[(&str, &str)],
+    policy: Option<super::ReviewPolicy>,
+) -> PullRequestReview {
+    use crate::integration::classify::review_state;
+    let mut pr = observe_pr(&sim(1));
+    pr.review_decision = decision.into();
+    pr.latest_reviews = reviews
+        .iter()
+        .map(|(state, commit)| super::ReviewObservation {
+            author: "r".into(),
+            state: (*state).into(),
+            commit: (*commit).into(),
+        })
+        .collect();
+    review_state(&pr, policy.as_ref())
+}
+
+/// An approval is of the commit it was given on. With the head moved since, the approval is
+/// stale, not approved, even when the forge still says APPROVED because dismissal is off.
+#[test]
+fn a_stale_approval_is_not_approved() {
+    let one = Some(super::ReviewPolicy {
+        approvals: 1,
+        ..Default::default()
+    });
+    let head = sim(1).head;
+    assert_eq!(
+        reviewed("APPROVED", &[("APPROVED", &head)], one),
+        PullRequestReview::Approved
+    );
+    assert_eq!(
+        reviewed("APPROVED", &[("APPROVED", "old")], one),
+        PullRequestReview::Stale
+    );
+    assert_eq!(
+        reviewed("APPROVED", &[], one),
+        PullRequestReview::Pending,
+        "an approval nobody gave"
+    );
+    assert_eq!(
+        reviewed("", &[("COMMENTED", &head)], one),
+        PullRequestReview::Pending
+    );
+    let two = Some(super::ReviewPolicy {
+        approvals: 2,
+        ..Default::default()
+    });
+    assert_eq!(
+        reviewed("APPROVED", &[("APPROVED", &head), ("APPROVED", "old")], two),
+        PullRequestReview::Stale,
+        "one of the two approvals is of another commit"
+    );
+}
+
+/// The forge's REVIEW_REQUIRED with the approvals counted on the head is a code owner's
+/// review still owed, when the base requires one.
+#[test]
+fn approvals_without_a_code_owners_are_code_owners_pending() {
+    let owners = Some(super::ReviewPolicy {
+        approvals: 1,
+        code_owners: true,
+        ..Default::default()
+    });
+    let head = sim(1).head;
+    assert_eq!(
+        reviewed("REVIEW_REQUIRED", &[("APPROVED", &head)], owners),
+        PullRequestReview::CodeOwnersPending
+    );
+    assert_eq!(
+        reviewed("APPROVED", &[("APPROVED", &head)], owners),
+        PullRequestReview::Approved
+    );
+}
+
+/// Unread policy is never a pass: the forge's APPROVED is believed only where an approval
+/// on the head stands behind it, and a request for changes holds whatever the policy.
+#[test]
+fn an_unread_review_policy_passes_nothing_unsupported() {
+    let head = sim(1).head;
+    assert_eq!(
+        reviewed("APPROVED", &[("APPROVED", &head)], None),
+        PullRequestReview::Approved
+    );
+    assert_eq!(
+        reviewed("APPROVED", &[("APPROVED", "old")], None),
+        PullRequestReview::Stale
+    );
+    assert_eq!(reviewed("APPROVED", &[], None), PullRequestReview::Unknown);
+    assert_eq!(reviewed("", &[], None), PullRequestReview::Unknown);
+    assert_eq!(
+        reviewed("CHANGES_REQUESTED", &[("APPROVED", &head)], None),
+        PullRequestReview::ChangesRequested
+    );
+    // and each of the new states keeps the pull request waiting for review
+    let w = World {
+        open: vec![sim(1)],
+        reviews_required: Some(true),
+        ..Default::default()
+    };
+    let mut obs = w.observation();
+    obs.pull_requests[0].review_decision = "APPROVED".into();
+    obs.pull_requests[0].latest_reviews = vec![super::ReviewObservation {
+        author: "r".into(),
+        state: "APPROVED".into(),
+        commit: "old".into(),
+    }];
+    let q = build_queue(&obs, "m0", |p| w.relation(p.number));
+    let a = q.get(1).unwrap();
+    assert_eq!(
+        (a.review, a.disposition),
+        (
+            PullRequestReview::Stale,
+            PullRequestDisposition::WaitingForReview
+        )
+    );
 }

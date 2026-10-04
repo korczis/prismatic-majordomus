@@ -234,7 +234,8 @@ pub fn policy_of(obs: &ForgeObservation) -> IntegrationPolicy {
     IntegrationPolicy {
         base: obs.base.clone(),
         required_checks: obs.required_checks.clone(),
-        reviews_required: obs.reviews_required,
+        review_policy: obs.review_policy,
+        skipped_permitted: Vec::new(),
         blocking_labels: BLOCKING_LABELS.iter().map(|s| s.to_string()).collect(),
         merge_method,
     }
@@ -299,9 +300,17 @@ pub fn build_queue(
             short(master_sha)
         ));
     }
-    if policy.required_checks.is_none() {
-        diagnostics
-            .push("the branch protection could not be read: no pull request can be ready".into());
+    match &policy.required_checks {
+        None => diagnostics.push(
+            "the branch protection or rulesets could not be read: no pull request can be ready"
+                .into(),
+        ),
+        Some(r) if r.is_empty() => diagnostics.push(format!(
+            "{} requires no check, in its protection or any ruleset: a head can prove nothing \
+             to it, so no pull request can be ready (owner decision D5)",
+            policy.base
+        )),
+        Some(_) => {}
     }
     let relations: Vec<RelationToMaster> = obs.pull_requests.iter().map(relation).collect();
     let mut queue = QueueContext {

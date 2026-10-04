@@ -21777,13 +21777,19 @@ components:
             - array
             - "null"
           items:
+            "$ref": "#/components/schemas/RequiredCheck"
+          description: "The checks the base requires, from its branch protection and rulesets, each with the\napp bound to it. `None` when they could not be read: every required-check verdict is\nthen `unknown`, never `passed`. An empty set is unknown too (owner decision D5): a\nbase that requires nothing proves nothing about a head, so nothing merges onto it."
+        review_policy:
+          anyOf:
+            - "$ref": "#/components/schemas/ReviewPolicy"
+            - type: "null"
+          description: "What the base requires of reviews; `None` when unread."
+        skipped_permitted:
+          type: array
+          items:
             type: string
-          description: "The status contexts the branch protection requires, as read from the forge.\n`None` when the protection could not be read: every required-check verdict is then\n`unknown`, never `passed`."
-        reviews_required:
-          type:
-            - boolean
-            - "null"
-          description: "Whether the branch protection requires an approving review; `None` when unread."
+          description: "Contexts whose skip counts as a pass. Empty unless a repository says otherwise: a\nskipped required check is otherwise `missing`."
+          default: []
         blocking_labels:
           type: array
           items:
@@ -27563,6 +27569,12 @@ components:
           const: pending
           description: A required review has not been given.
         - type: string
+          const: stale
+          description: "The approvals were given on another commit than the head: an approval is of one\ncommit, and these are not of this one."
+        - type: string
+          const: code_owners_pending
+          description: "The approvals are there, but a code owner's is still required."
+        - type: string
           const: unknown
           description: The protection could not be read.
       description: "Where the forge's review policy stands."
@@ -30341,11 +30353,30 @@ components:
         - git_common_dir
         - name
       description: "The repository's identity, as the topology reports it."
+    RequiredCheck:
+      type: object
+      properties:
+        context:
+          type: string
+          description: "The status context, or the check run's name."
+        app_id:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "The app bound to it, when the protection names one."
+      required:
+        - context
+      description: "One check the base requires: a status context, and the app that must write it when the\nprotection binds it to one. A check of that name from any other writer is not this one."
     RequiredCheckState:
       oneOf:
         - type: string
           const: passed
           description: Every required check passed on this head.
+        - type: string
+          const: skipped
+          description: "Every required check passed, at least one of them by a skip the policy permits for\nthat context. A skip the policy does not permit is not a pass: it is `missing`."
         - type: string
           const: pending
           description: A required check is queued or running.
@@ -30795,6 +30826,25 @@ components:
         - excluded
         - available
       description: "The plan: the decision with its reasons attached. It carries what it answered (mode,\nmateriality, confidence, capabilities), the budget, the outcome with one sentence of\nwhy, every advisor selected or excluded, and the local review when one is due.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, ReviewPlan, LOCAL_REVIEW};\n\nlet mode = ModeResolution { mode: ReasoningMode::Offline, source: \"MAJORDOMUS_REASONING_MODE\".into() };\nlet request = PlanRequest { materiality: Materiality::Material, ..Default::default() };\nlet p: ReviewPlan = plan(&request, &mode, &[]);\nassert_eq!(p.mode_source, \"MAJORDOMUS_REASONING_MODE\");\nassert_eq!(p.capabilities, [\"independent_reasoning\"]);\nassert_eq!((p.budget, p.available), (1, 0));\nassert_eq!(p.local_review.len(), LOCAL_REVIEW.len());\nassert!(p.reason.starts_with(\"no available advisor offers\"));\n```"
+    ReviewPolicy:
+      type: object
+      properties:
+        approvals:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: How many approving reviews a merge needs; 0 when none.
+        code_owners:
+          type: boolean
+          description: "Whether a code owner's approval is required."
+        dismiss_stale:
+          type: boolean
+          description: Whether the forge dismisses an approval when the head moves.
+      required:
+        - approvals
+        - code_owners
+        - dismiss_stale
+      description: "What the base requires of reviews, read from its protection and rulesets together."
     ReviewRequestInput:
       type: object
       additionalProperties: false

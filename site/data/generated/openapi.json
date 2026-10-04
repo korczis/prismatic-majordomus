@@ -787,6 +787,7 @@
     "schema-RepositoryReport": "docs/api/repository/",
     "schema-RepositoryTopology": "docs/api/worktree/",
     "schema-RepositoryView": "docs/api/worktree/",
+    "schema-RequiredCheck": "docs/api/integration/",
     "schema-RequiredCheckState": "docs/api/integration/",
     "schema-Resolution": "docs/api/environment/",
     "schema-Resolved": "docs/api/design/",
@@ -798,6 +799,7 @@
     "schema-ReviewAnswer": "docs/api/mesh/",
     "schema-ReviewAnswerInput": "docs/api/mesh/",
     "schema-ReviewPlan": "docs/api/reasoning/",
+    "schema-ReviewPolicy": "docs/api/integration/",
     "schema-ReviewRequestInput": "docs/api/mesh/",
     "schema-ReviewState": "docs/api/mesh/",
     "schema-ReviewView": "docs/api/mesh/",
@@ -1016,7 +1018,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 167,
-    "schemas": 794,
+    "schemas": 796,
     "tags": 51
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1893,6 +1895,7 @@
     "RepositoryReport": "repository",
     "RepositoryTopology": "worktree",
     "RepositoryView": "worktree",
+    "RequiredCheck": "integration",
     "RequiredCheckState": "integration",
     "Resolution": "environment",
     "Resolved": "design",
@@ -1904,6 +1907,7 @@
     "ReviewAnswer": "mesh",
     "ReviewAnswerInput": "mesh",
     "ReviewPlan": "reasoning",
+    "ReviewPolicy": "integration",
     "ReviewRequestInput": "mesh",
     "ReviewState": "mesh",
     "ReviewView": "mesh",
@@ -21965,18 +21969,29 @@
           "type": "string"
         },
         {
-          "description": "The status contexts the branch protection requires, as read from the forge.\n`None` when the protection could not be read: every required-check verdict is then\n`unknown`, never `passed`.",
+          "description": "The checks the base requires, from its branch protection and rulesets, each with the\napp bound to it. `None` when they could not be read: every required-check verdict is\nthen `unknown`, never `passed`. An empty set is unknown too (owner decision D5): a\nbase that requires nothing proves nothing about a head, so nothing merges onto it.",
           "name": "required_checks",
-          "refs": [],
+          "refs": [
+            "RequiredCheck"
+          ],
           "required": false,
           "type": "array | null"
         },
         {
-          "description": "Whether the branch protection requires an approving review; `None` when unread.",
-          "name": "reviews_required",
+          "description": "What the base requires of reviews; `None` when unread.",
+          "name": "review_policy",
+          "refs": [
+            "ReviewPolicy"
+          ],
+          "required": false,
+          "type": "ReviewPolicy | null"
+        },
+        {
+          "description": "Contexts whose skip counts as a pass. Empty unless a repository says otherwise: a\nskipped required check is otherwise `missing`.",
+          "name": "skipped_permitted",
           "refs": [],
           "required": false,
-          "type": "boolean | null"
+          "type": "array of string"
         },
         {
           "description": "Labels that hold a pull request whatever else is true.",
@@ -32358,7 +32373,7 @@
       "is_enum": true,
       "name": "PullRequestReview",
       "properties": [],
-      "type": "\"not_required\" | \"approved\" | \"changes_requested\" | \"pending\" | \"unknown\"",
+      "type": "\"not_required\" | \"approved\" | \"changes_requested\" | \"pending\" | \"stale\" | \"code_owners_pending\" | \"unknown\"",
       "used_by": [],
       "used_by_schemas": [
         "PullRequestAssessment"
@@ -32379,6 +32394,14 @@
         {
           "description": "A required review has not been given.",
           "value": "pending"
+        },
+        {
+          "description": "The approvals were given on another commit than the head: an approval is of one\ncommit, and these are not of this one.",
+          "value": "stale"
+        },
+        {
+          "description": "The approvals are there, but a code owner's is still required.",
+          "value": "code_owners_pending"
         },
         {
           "description": "The protection could not be read.",
@@ -37356,12 +37379,41 @@
       "variants": []
     },
     {
+      "description": "One check the base requires: a status context, and the app that must write it when the\nprotection binds it to one. A check of that name from any other writer is not this one.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "RequiredCheck",
+      "properties": [
+        {
+          "description": "The status context, or the check run's name.",
+          "name": "context",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The app bound to it, when the protection names one.",
+          "name": "app_id",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationPolicy"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The state of the repository's *required* checks on one head, which is the only check\nstate a merge decision reads. A visible green check that is not required proves nothing,\nand a required check that is absent is not a pass.",
       "home": "integration",
       "is_enum": true,
       "name": "RequiredCheckState",
       "properties": [],
-      "type": "\"passed\" | \"pending\" | \"failed\" | \"missing\" | \"unknown\"",
+      "type": "\"passed\" | \"skipped\" | \"pending\" | \"failed\" | \"missing\" | \"unknown\"",
       "used_by": [],
       "used_by_schemas": [
         "PullRequestAssessment"
@@ -37370,6 +37422,10 @@
         {
           "description": "Every required check passed on this head.",
           "value": "passed"
+        },
+        {
+          "description": "Every required check passed, at least one of them by a skip the policy permits for\nthat context. A skip the policy does not permit is not a pass: it is `missing`.",
+          "value": "skipped"
         },
         {
           "description": "A required check is queued or running.",
@@ -38142,6 +38198,42 @@
       ],
       "used_by_schemas": [
         "StoredPlan"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the base requires of reviews, read from its protection and rulesets together.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "ReviewPolicy",
+      "properties": [
+        {
+          "description": "How many approving reviews a merge needs; 0 when none.",
+          "name": "approvals",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Whether a code owner's approval is required.",
+          "name": "code_owners",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether the forge dismisses an approval when the head moves.",
+          "name": "dismiss_stale",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationPolicy"
       ],
       "values": [],
       "variants": []
