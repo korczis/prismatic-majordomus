@@ -329,8 +329,32 @@ Before 0.13 (owner decision D2) the word `superseded` meant what `redundant` mea
 closure was recorded as `closed_superseded`. The strong case is `redundant` now, closed as
 `closed_redundant`; `superseded` and `closed_superseded` mean only a declared successor that
 landed. Older trail lines still read: a `closed_superseded` line written before carries
-`head_reachable_from_master` or `merge_changes_nothing`, never `superseded_by:#N`. Branches
-are not deleted. The repository's own setting decides that.
+`head_reachable_from_master` or `merge_changes_nothing`, never `superseded_by:#N`.
+
+### Branches merged pull requests leave behind
+
+Branches are never deleted here: the forge's `delete_branch_on_merge` decides that (owner
+decision D4), so the executor holds no write that removes a branch. What the forge left
+behind is reported instead. `prs refresh` reads the setting, origin's branches
+(`git ls-remote --heads`) and the newest 1000 merged pull requests, and keeps every branch of
+this repository that origin still serves at the exact head that merged. A branch whose tip
+moved after its merge carries newer work and is never listed; neither is a fork's branch,
+whatever it is called, or the base. The queue carries the list as `merged_branches` (with
+`delete_branch_on_merge`), so `prs status --format json`, the HTTP API and the Cockpit read
+the same answer, and `prs cleanup` prints it after the pull requests:
+
+```text
+merged branches left on origin (2); the forge decides deletion, so none is deleted here:
+  fix/left                                         #1     3f2a9c1d0b7e  left_for_a_person
+  fix/here                                         #3     9c0d4e5f6a7b  kept: checked out at /…/here-wt
+  next: the forge keeps merged branches: enable delete_branch_on_merge, and delete this one with git push origin --delete fix/left
+```
+
+A branch checked out in a worktree of this repository is listed as `kept`, with its path:
+somebody may still be standing on it. A read that fails leaves the list unread
+(`merged branches: unread`), never empty, and the observation stands, since what the forge
+left behind decides no merge. `prs cleanup --format json` stays the list of pull requests to
+close.
 
 ## Safety
 

@@ -212,6 +212,8 @@ impl World {
             merge_methods: self.merge_methods.iter().map(|m| m.to_string()).collect(),
             pull_requests: self.open.iter().map(observe_pr).collect(),
             resolved: self.resolved(),
+            delete_branch_on_merge: None,
+            merged_branches: None,
         }
     }
 
@@ -1755,6 +1757,8 @@ fn observed(dir: &std::path::Path, master: &str, prs: Vec<PullRequestObservation
         merge_methods: vec!["merge".into()],
         pull_requests: prs,
         resolved: Default::default(),
+        delete_branch_on_merge: None,
+        merged_branches: None,
     };
     crate::integration::store_observation(dir, &obs).unwrap();
 }

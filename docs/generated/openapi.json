@@ -32955,6 +32955,25 @@
             },
             "description": "The actionable pull requests the executor has passed over at least\n`wait::STARVING_AFTER` times in their current wait, in rank order. Visible, never\npromoted: see `wait`.",
             "default": []
+          },
+          "delete_branch_on_merge": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether the forge deletes a head branch when its pull request merges; `None` when\nunread. The forge decides deletion, never the executor (owner decision D4).",
+            "default": null
+          },
+          "merged_branches": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/MergedBranch"
+            },
+            "description": "The branches merged pull requests left on origin at the head that merged, for cleanup\nto report; `None` when unread. They decide no disposition and no merge.",
+            "default": null
           }
         },
         "required": [
@@ -35536,6 +35555,36 @@
           "seen"
         ],
         "description": "One measured pair: a foreground on a ground, in one theme."
+      },
+      "MergedBranch": {
+        "type": "object",
+        "properties": {
+          "branch": {
+            "type": "string",
+            "description": "The branch name on origin."
+          },
+          "tip": {
+            "type": "string",
+            "description": "Its tip, which is the merged head."
+          },
+          "pr": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The pull request that merged it."
+          },
+          "merged_at": {
+            "type": "string",
+            "description": "When it merged, as the forge reported it."
+          }
+        },
+        "required": [
+          "branch",
+          "tip",
+          "pr",
+          "merged_at"
+        ],
+        "description": "A branch of this repository that a merged pull request came from, still on origin at the\nhead that merged. A branch whose tip moved after its merge carries newer work and is not\none: only the exact merged head is left behind."
       },
       "MeshDoctorReport": {
         "type": "object",

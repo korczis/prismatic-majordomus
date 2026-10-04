@@ -7345,6 +7345,8 @@ mod tests {
                     observed_pr(3, &sha, CheckRunState::Pending),
                 ],
                 resolved: Default::default(),
+                delete_branch_on_merge: None,
+                merged_branches: None,
             },
         )
         .expect("an observation");

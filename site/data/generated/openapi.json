@@ -601,6 +601,7 @@
     "schema-McpExposure": "docs/api/capabilities/",
     "schema-McpResource": "docs/api/capabilities/",
     "schema-Measured": "docs/api/design/",
+    "schema-MergedBranch": "docs/api/integration/",
     "schema-MeshDoctorReport": "docs/api/mesh/",
     "schema-MeshEvent": "docs/api/mesh/",
     "schema-MeshIdentityReport": "docs/api/mesh/",
@@ -1040,7 +1041,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 169,
-    "schemas": 816,
+    "schemas": 817,
     "tags": 51
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1731,6 +1732,7 @@
     "McpExposure": "capabilities",
     "McpResource": "capabilities",
     "Measured": "design",
+    "MergedBranch": "integration",
     "MeshDoctorReport": "mesh",
     "MeshEvent": "mesh",
     "MeshIdentityReport": "mesh",
@@ -22919,6 +22921,22 @@
           "refs": [],
           "required": false,
           "type": "array of integer (uint64)"
+        },
+        {
+          "description": "Whether the forge deletes a head branch when its pull request merges; `None` when\nunread. The forge decides deletion, never the executor (owner decision D4).",
+          "name": "delete_branch_on_merge",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        },
+        {
+          "description": "The branches merged pull requests left on origin at the head that merged, for cleanup\nto report; `None` when unread. They decide no disposition and no merge.",
+          "name": "merged_branches",
+          "refs": [
+            "MergedBranch"
+          ],
+          "required": false,
+          "type": "array | null"
         }
       ],
       "type": "object",
@@ -26310,6 +26328,49 @@
       "used_by": [],
       "used_by_schemas": [
         "ContrastReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A branch of this repository that a merged pull request came from, still on origin at the\nhead that merged. A branch whose tip moved after its merge carries newer work and is not\none: only the exact merged head is left behind.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "MergedBranch",
+      "properties": [
+        {
+          "description": "The branch name on origin.",
+          "name": "branch",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its tip, which is the merged head.",
+          "name": "tip",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The pull request that merged it.",
+          "name": "pr",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "When it merged, as the forge reported it.",
+          "name": "merged_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationQueue"
       ],
       "values": [],
       "variants": []

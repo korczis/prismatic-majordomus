@@ -74,6 +74,45 @@ fn trunc(s: &str, n: usize) -> String {
     }
 }
 
+/// The merged branches the forge left on origin, one line each, or why there is no list.
+fn left_branches(left: &Option<Vec<drain::LeftBranch>>, out: &mut impl Write) -> Result<()> {
+    match left {
+        None => w(
+            out,
+            "merged branches: unread (majordomus prs refresh reads them from the forge)",
+        ),
+        Some(l) if l.is_empty() => w(
+            out,
+            "merged branches: none left on origin at the head that merged",
+        ),
+        Some(l) => {
+            w(
+                out,
+                format!(
+                    "merged branches left on origin ({}); the forge decides deletion, so none is deleted here:",
+                    l.len()
+                ),
+            )?;
+            for b in l {
+                w(
+                    out,
+                    format!(
+                        "  {:<48} #{:<5} {}  {}",
+                        b.branch,
+                        b.pr,
+                        &b.tip[..b.tip.len().min(12)],
+                        b.action
+                    ),
+                )?;
+            }
+            if let Some(first) = l.first() {
+                w(out, format!("  next: {}", first.next_step))?;
+            }
+            Ok(())
+        }
+    }
+}
+
 fn render_proof(p: &integration::proof::DryRunProof, out: &mut impl Write) -> Result<()> {
     for s in &p.steps {
         w(out, format!("{:<16} {}", s.step, s.summary))?;
@@ -293,7 +332,9 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             let items = drain::cleanup(&root, &mut integrator, apply).map_err(unusable)?;
             if format == OutputFormat::Json {
                 json(&mut out, &items)?;
-            } else if items.is_empty() {
+                return Ok(0);
+            }
+            if items.is_empty() {
                 w(
                     &mut out,
                     "nothing to clean up: no open pull request's work is on master already, and \
@@ -313,6 +354,10 @@ pub fn run(args: PrsArgs) -> Result<u8> {
                     )?;
                 }
             }
+            // what merged pull requests left on origin: reported, never deleted (owner
+            // decision D4); read from the recorded observation, so it asks the forge nothing
+            let queue = integration::queue_of(&root).map_err(unusable)?;
+            left_branches(&drain::left_branches_here(&root, &queue), &mut out)?;
             Ok(0)
         }
         PrsCommand::ProveDryRun => {
@@ -922,6 +967,8 @@ mod tests {
                     dependent,
                 ],
                 resolved: Default::default(),
+                delete_branch_on_merge: None,
+                merged_branches: None,
             },
         )
         .unwrap();

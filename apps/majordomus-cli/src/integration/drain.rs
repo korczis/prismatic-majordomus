@@ -2172,3 +2172,168 @@ fn close_superseded(
         }
     }
 }
+
+/// A branch a merged pull request left on origin, as cleanup reports it. Reported, never
+/// deleted: the forge's `delete_branch_on_merge` decides deletion (owner decision D4), so the
+/// executor holds no branch-deleting write at all.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct LeftBranch {
+    /// The branch on origin.
+    pub branch: String,
+    /// Its tip: the head that merged.
+    pub tip: String,
+    /// The pull request that merged it.
+    pub pr: u64,
+    /// When that pull request merged.
+    pub merged_at: String,
+    /// `left_for_a_person`, or `kept: checked out at <path>` when a worktree of this
+    /// repository has the branch checked out: somebody may still be standing on it.
+    pub action: String,
+    /// What would clear it, in the setting's own terms.
+    pub next_step: String,
+}
+
+/// The branches merged pull requests left behind, each with what would clear it.
+///
+/// Only the queue's [`IntegrationQueue::merged_branches`] are candidates — same-repository
+/// heads origin still serves at the exact head that merged, never the base — so a branch
+/// whose tip moved after its merge is never listed. One checked out in a worktree is listed
+/// as kept, with the path. `None` when the observation could not read them: unread is not
+/// "nothing left behind".
+pub fn left_branches(
+    queue: &IntegrationQueue,
+    checked_out: &BTreeMap<String, PathBuf>,
+) -> Option<Vec<LeftBranch>> {
+    let merged = queue.merged_branches.as_ref()?;
+    let next_step = |branch: &str| match queue.delete_branch_on_merge {
+        Some(true) => format!(
+            "the forge deletes merged branches, and this one outlived its merge (merged before \
+             the setting, or restored): git push origin --delete {branch}"
+        ),
+        Some(false) => format!(
+            "the forge keeps merged branches: enable delete_branch_on_merge, and delete this one \
+             with git push origin --delete {branch}"
+        ),
+        None => format!(
+            "the forge's delete_branch_on_merge was not read: majordomus prs refresh, or delete \
+             it with git push origin --delete {branch}"
+        ),
+    };
+    Some(
+        merged
+            .iter()
+            .filter(|m| m.branch != queue.base)
+            .map(|m| LeftBranch {
+                branch: m.branch.clone(),
+                tip: m.tip.clone(),
+                pr: m.pr,
+                merged_at: m.merged_at.clone(),
+                action: match checked_out.get(&m.branch) {
+                    Some(path) => format!("kept: checked out at {}", path.display()),
+                    None => "left_for_a_person".into(),
+                },
+                next_step: next_step(&m.branch),
+            })
+            .collect(),
+    )
+}
+
+/// [`left_branches`] against the worktrees this repository has registered. A worktree list
+/// git cannot give marks nothing as kept; the report is advice a person acts on, and nothing
+/// here deletes a branch either way.
+pub fn left_branches_here(root: &Path, queue: &IntegrationQueue) -> Option<Vec<LeftBranch>> {
+    let checked_out: BTreeMap<String, PathBuf> = crate::worktree::topology::read(root)
+        .unwrap_or_default()
+        .into_iter()
+        .filter_map(|w| w.branch.map(|b| (b, w.path)))
+        .collect();
+    left_branches(queue, &checked_out)
+}
+
+#[cfg(test)]
+mod left_branch_tests {
+    //! The report of what merged pull requests left on origin (owner decision D4: reported,
+    //! never deleted).
+
+    use super::*;
+    use crate::integration::forge::MergedBranch;
+
+    fn queue(delete: Option<bool>, merged: Option<Vec<MergedBranch>>) -> IntegrationQueue {
+        let obs = crate::integration::ForgeObservation {
+            schema: crate::integration::OBSERVATION_SCHEMA,
+            repository: "o/r".into(),
+            base: "master".into(),
+            base_sha: "m".into(),
+            observed_at: "t".into(),
+            required_checks: None,
+            review_policy: None,
+            up_to_date_required: None,
+            merge_methods: vec!["merge".into()],
+            pull_requests: Vec::new(),
+            resolved: Default::default(),
+            delete_branch_on_merge: delete,
+            merged_branches: merged,
+        };
+        crate::integration::build_queue(&obs, "m", |_| unreachable!("no pull request is open"))
+    }
+
+    fn branch(name: &str, pr: u64) -> MergedBranch {
+        MergedBranch {
+            branch: name.into(),
+            tip: format!("{pr:040}"),
+            pr,
+            merged_at: "t".into(),
+        }
+    }
+
+    #[test]
+    fn unread_is_not_nothing_left() {
+        assert_eq!(
+            left_branches(&queue(Some(false), None), &BTreeMap::new()),
+            None
+        );
+        assert_eq!(
+            left_branches(&queue(Some(false), Some(Vec::new())), &BTreeMap::new()),
+            Some(Vec::new())
+        );
+    }
+
+    #[test]
+    fn a_branch_checked_out_here_is_kept_and_the_setting_names_the_next_step() {
+        let merged = vec![
+            branch("fix/a", 1),
+            branch("fix/here", 2),
+            branch("master", 3),
+        ];
+        let here = BTreeMap::from([("fix/here".to_string(), PathBuf::from("/w/here"))]);
+        for (setting, words) in [
+            (Some(true), "outlived its merge"),
+            (Some(false), "enable delete_branch_on_merge"),
+            (None, "was not read"),
+        ] {
+            let left = left_branches(&queue(setting, Some(merged.clone())), &here).unwrap();
+            let got: Vec<(&str, &str)> = left
+                .iter()
+                .map(|b| (b.branch.as_str(), b.action.as_str()))
+                .collect();
+            assert_eq!(
+                got,
+                [
+                    ("fix/a", "left_for_a_person"),
+                    ("fix/here", "kept: checked out at /w/here")
+                ],
+                "the base is never a branch left behind"
+            );
+            assert!(left[0].next_step.contains(words), "{}", left[0].next_step);
+            assert!(left[0].next_step.contains("git push origin --delete fix/a"));
+        }
+    }
+
+    #[test]
+    fn the_worktrees_of_this_repository_decide_what_is_kept() {
+        let dir = tempfile::tempdir().unwrap();
+        // not a repository: git lists no worktree, so nothing is kept and nothing fails
+        let left = left_branches_here(dir.path(), &queue(None, Some(vec![branch("fix/a", 1)])));
+        assert_eq!(left.unwrap()[0].action, "left_for_a_person");
+    }
+}
