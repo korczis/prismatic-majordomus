@@ -1621,14 +1621,6 @@
         "external": true
       },
       {
-        "id": "file:.github/workflows/pages.yml",
-        "kind": "file",
-        "label": "pages.yml",
-        "summary": "named by the layer; not an object of this index",
-        "source": ".github/workflows/pages.yml",
-        "external": true
-      },
-      {
         "id": "file:.github/workflows/validate.yml",
         "kind": "file",
         "label": "validate.yml",
@@ -38398,6 +38390,13 @@
         "source": "test/cases/86_installer_platform.sh"
       },
       {
+        "id": "majordomus://test/test/cases/870_a_flag_setting_reporter_is_a_reporter.sh",
+        "kind": "test",
+        "label": "test/cases/870_a_flag_setting_reporter_is_a_reporter.sh",
+        "route": "/cockpit/objects/test/test-cases-870-a-flag-setting-reporter-is-a-reporter-sh",
+        "source": "test/cases/870_a_flag_setting_reporter_is_a_reporter.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/87_release_pipeline.sh",
         "kind": "test",
         "label": "test/cases/87_release_pipeline.sh",
@@ -44768,11 +44767,6 @@
       },
       {
         "source": "majordomus://adr/adr-0037",
-        "target": "file:.github/workflows/pages.yml",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0037",
         "target": "file:.github/workflows/validate.yml",
         "kind": "put_in_force"
       },
@@ -49375,11 +49369,6 @@
         "source": "majordomus://claim/site-deploy-one-path",
         "target": "majordomus://test/test/cases/96_site_deploy.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/site-deploys-from-verified-run",
-        "target": "file:.github/workflows/pages.yml",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/site-deploys-from-verified-run",
@@ -60242,6 +60231,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/870_a_flag_setting_reporter_is_a_reporter.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/87_release_pipeline.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -63429,7 +63423,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4496,
+      "edges": 4495,
       "acyclic": true,
       "truncated": true
     }
