@@ -89,6 +89,7 @@ case "\$1 \$2" in
   "api repos/o/r") echo '{"allow_merge_commit":true,"allow_squash_merge":true,"allow_rebase_merge":false}' ;;
   "api repos/o/r/commits/master") printf '{"sha":"%s"}\n' "\$(git -C "$ORIGIN" rev-parse master)" ;;
   "api repos/o/r/branches/master/protection") echo '{"required_status_checks":{"contexts":["ci"]}}' ;;
+  "api repos/o/r/rules/branches/master") echo '[]' ;;
   "pr list")
     # each open pull request, its head the branch's tip now, and refs/pull/<n>/head following it
     printf '['; sep=''
@@ -124,7 +125,8 @@ export PATH="$BIN:$PATH"
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 prs() { "$RB" prs --repo "$W" "$@"; }
 : > "$STATE/log"
-ev="$W/.ai/local/state/integration/events.jsonl"
+# the trail is the repository's, under the common git directory (ADR 0101 §9)
+ev="$(git -C "$W" rev-parse --path-format=absolute --git-common-dir)/majordomus/integration/events.jsonl"
 disp() { printf '%s' "$q" | jq -r --argjson n "$1" '.assessments[] | select(.number == $n) | .disposition'; }
 expect_disp() {   # <number> <disposition> <when>
   [ "$(disp "$1")" = "$2" ] || { echo "    $3: #$1 is $(disp "$1"), not $2"; printf '%s' "$q" | jq -c --argjson n "$1" '.assessments[] | select(.number == $n) | {disposition, reasons}'; exit 1; }
