@@ -649,7 +649,7 @@ mod tests {
     #[test]
     fn many_releases_on_one_day_are_ordered_by_their_version_as_numbers() {
         let day = "2026-10-04T10:00:00Z";
-        let mut records = vec![
+        let mut records = [
             record("0.10.0", day),
             record("0.11.0", day),
             record("0.9.0", day),

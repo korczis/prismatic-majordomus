@@ -159,7 +159,6 @@ pub enum PathClass {
 }
 
 impl PathClass {
-    /// The word every surface prints.
     /// The word every surface prints for this class: the command line, the JSON a machine
     /// surface answers with and the gate's refusal all use it and no wording of their own.
     ///
@@ -243,7 +242,6 @@ impl Carries {
         self == Carries::Work
     }
 
-    /// The word every surface prints.
     /// The word every surface prints for this carriage, the same on the command line, in
     /// the JSON of every machine surface and in the gate's refusal.
     ///
@@ -319,7 +317,6 @@ impl ObligationState {
         self.exit_code() == 0
     }
 
-    /// The word every surface prints.
     /// The word every surface prints for this verdict, and the value the JSON carries, so a
     /// reader of either never translates between two vocabularies.
     ///
@@ -628,16 +625,15 @@ pub struct Observation {
 }
 
 fn git(root: &Path, args: &[&str]) -> Option<String> {
-    let out = Command::new("git")
+    Command::new("git")
         .arg("-C")
         .arg(root)
         .args(args)
         .stderr(std::process::Stdio::null())
         .output()
-        .ok()?;
-    out.status
-        .success()
-        .then(|| String::from_utf8_lossy(&out.stdout).into_owned())
+        .ok()
+        .filter(|out| out.status.success())
+        .map(|out| String::from_utf8_lossy(&out.stdout).into_owned())
 }
 
 fn nul_list(text: Option<String>) -> Vec<String> {
@@ -662,11 +658,13 @@ fn nul_list(text: Option<String>) -> Vec<String> {
 pub fn observe(root: &Path, trunk_ref: &str) -> Observation {
     let subject = match git(root, &["symbolic-ref", "--quiet", "--short", "HEAD"]) {
         Some(b) => b.trim().to_string(),
+        // detached: named by its commit. A tree with no commit at all is on a branch (unborn),
+        // so symbolic-ref answered above and this arm always has a commit to name.
         None => format!(
             "HEAD@{}",
             git(root, &["rev-parse", "--short=12", "HEAD"])
-                .map(|s| s.trim().to_string())
-                .unwrap_or_else(|| "unborn".into())
+                .unwrap_or_default()
+                .trim()
         ),
     };
     let declared = version::declared(root).and_then(|v| Version::parse(&v));
@@ -710,14 +708,14 @@ pub fn observe(root: &Path, trunk_ref: &str) -> Observation {
     // itself rather than against the branch's older merge base.
     let merging_trunk = git(root, &["rev-parse", "--verify", "--quiet", "MERGE_HEAD"])
         .is_some_and(|m| m.trim() == commit);
-    let base = if merging_trunk {
-        commit.clone()
-    } else {
-        git(root, &["merge-base", &commit, "HEAD"])
-            .map(|s| s.trim().to_string())
-            .unwrap_or_else(|| commit.clone())
+    // A tree with no history in common with the trunk has no merge base; it is measured from
+    // the trunk itself, and it does not contain it.
+    let merge_base = git(root, &["merge-base", &commit, "HEAD"]).map(|s| s.trim().to_string());
+    let contained = merging_trunk || merge_base.as_deref() == Some(commit.as_str());
+    let base = match merge_base {
+        Some(b) if !merging_trunk => b,
+        _ => commit.clone(),
     };
-    let contained = base == commit;
 
     let mut changed: BTreeSet<String> = nul_list(git(
         root,
@@ -770,7 +768,21 @@ pub fn contract_requirement(
     registry: &CapabilityRegistry,
     objects: &[Object],
 ) -> ContractRequirement {
-    match super::compat::analyze(root, registry, objects, None) {
+    contract_of(super::compat::analyze(root, registry, objects, None).map_err(|e| e.to_string()))
+}
+
+/// The contract's requirement from the analysis' answer: the floor when the plan is sound, the
+/// errors that made it unsound when it is not, and why no plan could be made when none was.
+///
+/// ```
+/// use majordomus_cli::release::obligation::contract_of;
+/// // no published baseline: unmeasured, and the reason is carried
+/// let c = contract_of(Err("this repository has published nothing".into()));
+/// assert_eq!((c.baseline, c.floor), (None, None));
+/// assert!(c.unmeasured.unwrap().contains("published nothing"));
+/// ```
+pub fn contract_of(analysis: Result<super::compat::VersionPlan, String>) -> ContractRequirement {
+    match analysis {
         Ok(plan) if !plan.has_errors() => {
             let floor = Version::parse(&plan.baseline.version).map(|b| b.raised_to(plan.required));
             ContractRequirement {
@@ -786,11 +798,11 @@ pub fn contract_requirement(
             floor: None,
             unmeasured: plan.measured_version().err(),
         },
-        Err(e) => ContractRequirement {
+        Err(why) => ContractRequirement {
             baseline: None,
             required: Impact::None,
             floor: None,
-            unmeasured: Some(e.to_string()),
+            unmeasured: Some(why),
         },
     }
 }
@@ -1333,5 +1345,232 @@ mod tests {
         assert!(o.reasons[2].contains("does not contain"));
         assert!(o.remedy.unwrap().contains("release advance"));
         assert_eq!((o.paths.work, o.paths.derived), (1, 1));
+    }
+
+    fn plan(
+        baseline: &str,
+        required: Impact,
+        diagnostics: Vec<crate::release::compat::Diagnostic>,
+    ) -> crate::release::compat::VersionPlan {
+        use crate::release::compat::*;
+        VersionPlan {
+            policy: Policy::for_version(v(baseline)),
+            baseline: Baseline {
+                version: baseline.into(),
+                reference: format!("v{baseline}"),
+                read_at: "c".into(),
+                commit: "c".into(),
+                recorded: true,
+                atoms: 1,
+                fingerprint: "sha256:a".into(),
+            },
+            declared_version: baseline.into(),
+            tool_version: baseline.into(),
+            writers_agree: true,
+            atoms: 1,
+            fingerprint: "sha256:b".into(),
+            implied: required,
+            required,
+            declared: Impact::None,
+            required_version: v(baseline).raised_to(required).to_string(),
+            status: Status::Ok,
+            breaking: false,
+            changes: Vec::new(),
+            commits: CommitEvidence {
+                commits: 0,
+                implied: Impact::None,
+                breaking: Vec::new(),
+            },
+            understated: false,
+            diagnostics,
+        }
+    }
+
+    /// The contract half from each answer the analysis can give: a sound plan is a floor, an
+    /// unsound one carries its errors and no floor, and no plan carries why.
+    #[test]
+    fn the_contract_requirement_follows_the_analysis_answer() {
+        let sound = contract_of(Ok(plan("1.8.0", Impact::Major, Vec::new())));
+        assert_eq!(sound.baseline.as_deref(), Some("v1.8.0"));
+        assert_eq!(
+            (sound.required, sound.floor.as_deref()),
+            (Impact::Major, Some("2.0.0"))
+        );
+        assert!(sound.unmeasured.is_none());
+
+        let error = crate::release::compat::Diagnostic {
+            id: "tag-commit-mismatch".into(),
+            severity: crate::release::compat::Severity::Error,
+            message: "the tag moved".into(),
+        };
+        let unsound = contract_of(Ok(plan("1.8.0", Impact::Minor, vec![error])));
+        assert_eq!(unsound.baseline.as_deref(), Some("v1.8.0"));
+        assert!(
+            unsound.floor.is_none(),
+            "an unsound plan authorises no floor"
+        );
+        assert_eq!(unsound.unmeasured.as_deref(), Some("the tag moved"));
+
+        let none = contract_of(Err("nothing published".into()));
+        assert_eq!(none.unmeasured.as_deref(), Some("nothing published"));
+        assert_eq!(none.required, Impact::None);
+    }
+
+    #[test]
+    fn every_class_carriage_and_state_has_its_one_word() {
+        let classes = [
+            (PathClass::Derived, "derived"),
+            (PathClass::ReleaseEvidence, "release-evidence"),
+            (PathClass::VersionAdvance, "version-advance"),
+            (PathClass::Work, "work"),
+        ];
+        for (c, w) in classes {
+            assert_eq!(c.as_str(), w);
+            assert_eq!(
+                serde_json::to_value(c).unwrap(),
+                w,
+                "the JSON word is the printed one"
+            );
+        }
+        let carriages = [
+            (Carries::Work, "work"),
+            (Carries::ReleaseEvidence, "release-evidence"),
+            (Carries::VersionAdvance, "version-advance"),
+            (Carries::GeneratedSync, "generated-sync"),
+            (Carries::Nothing, "nothing"),
+        ];
+        for (c, w) in carriages {
+            assert_eq!(c.as_str(), w);
+            assert_eq!(serde_json::to_value(c).unwrap(), w);
+        }
+        let states = [
+            (ObligationState::Satisfied, "satisfied", true),
+            (ObligationState::NotOwed, "not-owed", true),
+            (ObligationState::Owed, "owed", false),
+            (ObligationState::Behind, "behind", false),
+            (ObligationState::Unverified, "unverified", false),
+        ];
+        for (s, w, holds) in states {
+            assert_eq!((s.as_str(), s.holds()), (w, holds));
+            assert_eq!(serde_json::to_value(s).unwrap(), w);
+        }
+    }
+
+    fn trunk(version: &str) -> Trunk {
+        Trunk {
+            reference: "origin/master".into(),
+            commit: "0123456789abcdef".into(),
+            version: version.into(),
+            contained: true,
+        }
+    }
+
+    fn quiet_contract() -> ContractRequirement {
+        ContractRequirement {
+            baseline: None,
+            required: Impact::None,
+            floor: None,
+            unmeasured: None,
+        }
+    }
+
+    /// A trunk whose version is not three numbers, or a tree that declares none, decides
+    /// nothing: unverified, with the trunk it read carried for the reader.
+    #[test]
+    fn a_version_that_is_not_three_numbers_is_unverified() {
+        let policy = ReleasePolicy {
+            cadence: Impact::Minor,
+            trunk: None,
+        };
+        let o = assemble(
+            Observation {
+                subject: "feature/x".into(),
+                trunk: Ok(trunk("next")),
+                declared: Some(v("1.0.0")),
+                paths: Vec::new(),
+            },
+            quiet_contract(),
+            &policy,
+        );
+        assert_eq!(o.state, ObligationState::Unverified);
+        assert!(o.reasons[0].contains("the trunk declares 'next'"));
+        assert_eq!(o.id, "feature/x@next");
+
+        let o = assemble(
+            Observation {
+                subject: "feature/x".into(),
+                trunk: Ok(trunk("1.0.0")),
+                declared: None,
+                paths: Vec::new(),
+            },
+            quiet_contract(),
+            &policy,
+        );
+        assert_eq!(o.state, ObligationState::Unverified);
+        assert!(o.reasons[0].contains("declares no version of three numbers"));
+        assert_eq!(o.declared, "unknown");
+    }
+
+    /// With neither a measurement nor a reason, the contract adds no line, and a change set of
+    /// projections owes nothing over a trunk this tree contains.
+    #[test]
+    fn a_quiet_contract_says_nothing_and_projections_owe_nothing() {
+        let o = assemble(
+            Observation {
+                subject: "chore/derive".into(),
+                trunk: Ok(trunk("1.0.0")),
+                declared: Some(v("1.0.0")),
+                paths: vec![("docs/generated/x.json".into(), PathClass::Derived)],
+            },
+            quiet_contract(),
+            &ReleasePolicy {
+                cadence: Impact::Minor,
+                trunk: None,
+            },
+        );
+        assert_eq!(o.reasons.len(), 1, "{:?}", o.reasons);
+        assert!(o.reasons[0].contains("carries generated-sync and no work"));
+        assert_eq!((o.state, o.remedy), (ObligationState::NotOwed, None));
+    }
+
+    #[test]
+    fn a_manifest_this_tree_lacks_or_cannot_read_is_work() {
+        let derived = BTreeSet::new();
+        let base_text = "[package]\nversion = \"0.5.0\"\n".to_string();
+        let base = |_: &str| Some(base_text.clone());
+        let none = |_: &str| None;
+        assert_eq!(
+            classify(version::MANIFEST, &derived, &base, &none),
+            PathClass::Work,
+            "deleted here"
+        );
+        let unreadable = |_: &str| Some("[package]\nname = \"x\"\n".to_string());
+        assert_eq!(
+            classify(version::LOCK, &derived, &base, &unreadable),
+            PathClass::Work,
+            "no version to compare"
+        );
+    }
+
+    #[test]
+    fn the_work_sample_is_capped_and_the_count_is_whole() {
+        let paths: Vec<(String, PathClass)> = (0..WORK_EXAMPLES + 3)
+            .map(|i| (format!("lib/{i:02}.sh"), PathClass::Work))
+            .collect();
+        let o = assemble(
+            Observation {
+                subject: "feature/x".into(),
+                trunk: Ok(trunk("1.0.0")),
+                declared: Some(v("1.0.0")),
+                paths,
+            },
+            quiet_contract(),
+            &ReleasePolicy {
+                cadence: Impact::Minor,
+                trunk: None,
+            },
+        );
+        assert_eq!(o.paths.work, WORK_EXAMPLES + 3);
+        assert_eq!(o.paths.work_examples.len(), WORK_EXAMPLES);
     }
 }
