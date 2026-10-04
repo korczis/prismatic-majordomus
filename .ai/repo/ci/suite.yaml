@@ -151,10 +151,22 @@ case_bound_seconds: 3600
 #
 # 44000 is about a tenth above the worst total measured, 39722. The slowest case, 2784 s,
 # is still under its 3100, so that budget stands.
+#
+# Re-measured on 2026-10-04, when batch int/batch-n2 (#749) refused the 3100 twice with every
+# shard green. 95_executable_reference finished uncut each time, moving with runner load as
+# 95_skills does (about 1.1 times it on one runner); master shows the same spread:
+#
+#   run 37207794591   95_executable_reference 3168 s (95_skills 2231 s, another shard)  int/batch-n2
+#   run 37201436281   95_executable_reference 3115 s (95_skills 2747 s)                int/batch-n2
+#   run 37178734193   95_executable_reference 2895 s (95_skills 2658 s)                master f075170530
+#   run 37196381837   95_executable_reference 2069 s (95_skills 1841 s)                master e08aec8651
+#
+# 3450 is about a tenth above the worst uncensored cost, 3168, and stays under
+# case_bound_seconds (3600) as case 417 requires.
 budget:
   # every case, summed; run 37073033410 (39722 s) and the ones above
   cases_seconds: 44000
   # the single slowest case; one case that runs away is invisible in the total until it is
   # most of it, and it is also what decides whether the parallel phase can still be packed.
-  # Re-derived from the uncensored 2817 s of run 36480899795: see above.
-  slowest_case_seconds: 3100
+  # Re-derived from the uncensored 3168 s of run 37207794591: see above.
+  slowest_case_seconds: 3450
