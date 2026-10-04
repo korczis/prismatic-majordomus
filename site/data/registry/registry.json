@@ -6,7 +6,7 @@
     "version": "0.12.0"
   },
   "registry": {
-    "fingerprint": "ba9516374e25603cdb91e7befc121b83deb189cc47c639cf8ee6584062557a25",
+    "fingerprint": "a8adc52282f7b9f146a889e28139bc8cbe1bf6e2272ac25d62700d025d5945d7",
     "summary": {
       "total": 1863,
       "builtin": 169,
@@ -26388,10 +26388,15 @@
                 ],
                 "description": "The last merge the executor recorded, from the audit trail.",
                 "default": null
+              },
+              "throughput": {
+                "$ref": "#/$defs/IntegrationThroughput",
+                "description": "How fast the executor has turned work into master over the last\n`THROUGHPUT_WINDOW_DAYS` days, folded from the same trail."
               }
             },
             "required": [
-              "observed"
+              "observed",
+              "throughput"
             ],
             "description": "The queue, or why there is none.",
             "title": "IntegrationStatus",
@@ -27327,6 +27332,89 @@
                   "detail"
                 ],
                 "description": "One entry of the audit trail."
+              },
+              "IntegrationThroughput": {
+                "type": "object",
+                "properties": {
+                  "window_days": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The window, in days, ending at the time the fold was asked for."
+                  },
+                  "merges": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Pull requests merged in the window."
+                  },
+                  "merges_per_day": {
+                    "type": "number",
+                    "format": "double",
+                    "description": "`merges / window_days`."
+                  },
+                  "median_actionable_to_merged_secs": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Median seconds from becoming actionable to being merged; `None` when no merge in the\nwindow had a recorded `became_actionable` before it."
+                  },
+                  "ci_rounds_per_merge": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Median `refreshed` events between one merge and the next; `None` without a merge."
+                  },
+                  "median_cycle_secs": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Median seconds from a selection to its outcome; `None` when no selection in the window\nreached one."
+                  },
+                  "stale_decisions": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Decisions refused because master or the head moved after they were taken."
+                  },
+                  "merge_failures": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Merge attempts that failed."
+                  },
+                  "verification_failures": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Merges whose resulting master failed verification."
+                  },
+                  "unreadable_events": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "Events in the trail whose time could not be read; they count toward nothing."
+                  }
+                },
+                "required": [
+                  "window_days",
+                  "merges",
+                  "merges_per_day",
+                  "stale_decisions",
+                  "merge_failures",
+                  "verification_failures",
+                  "unreadable_events"
+                ],
+                "description": "The integrator's throughput over a window of the trail."
               }
             }
           }
@@ -65563,7 +65651,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ebee5cc520a6e9c3004693fab3095435d1927e800cd1e84f0812ff8627a64399",
+    "fingerprint": "314bfbaddc992e64179bd5b6d371abbde7fb6609a6e2f31d9b835840e8d13ad2",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -82834,7 +82922,7 @@
         "identity": "test/cases/740_integration_is_visible_where_a_person_looks.sh",
         "path": "test/cases/740_integration_is_visible_where_a_person_looks.sh",
         "source_class": "case",
-        "bytes": 8559
+        "bytes": 9170
       },
       {
         "uri": "majordomus://test/test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",

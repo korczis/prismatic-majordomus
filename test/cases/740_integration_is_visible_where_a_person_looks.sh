@@ -121,6 +121,13 @@ grep -q 'href="/cockpit/integration"' "$STATE/page.html" || { echo "    the navi
 api="$(curl -s -m 60 "$U/api/v1/pull-requests")"
 [ "$(printf '%s' "$api" | jq -r '.lease')" = null ] || { echo "    the capability says the lease is held"; exit 1; }
 [ "$(printf '%s' "$api" | jq -r '.last_merge.pr')" = 1 ] || { echo "    the capability's last merge is not #1"; exit 1; }
+# throughput is folded from the same trail: a 7-day window, the merge above counted in it, and
+# every count an integer rather than a number someone typed
+printf '%s' "$api" | jq -e '.throughput.window_days == 7 and .throughput.merges >= 1
+  and ([.throughput.merges, .throughput.stale_decisions, .throughput.merge_failures,
+        .throughput.verification_failures, .throughput.unreadable_events]
+       | all(type == "number" and . == floor))' >/dev/null \
+  || { echo "    the capability's throughput is missing, or does not count the merge it reports:"; printf '%s' "$api" | jq -c '.throughput'; exit 1; }
 serve_down
 # nothing observed: the page says so and still renders
 cd "$E" || exit 1

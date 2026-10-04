@@ -20,6 +20,7 @@ use crate::capability::model::{CachePolicy, CliExposure, Exposure, Stability};
 use crate::capability::module::ModuleDescriptor;
 use crate::integration::{
     drain::{IntegrationEvent, IntegrationLease, IntegrationLeaseState},
+    metrics::{self, IntegrationThroughput},
     IntegrationQueue, PullRequestAssessment,
 };
 use crate::{capability, module};
@@ -42,7 +43,13 @@ pub struct IntegrationStatus {
     /// The last merge the executor recorded, from the audit trail.
     #[serde(default)]
     pub last_merge: Option<IntegrationEvent>,
+    /// How fast the executor has turned work into master over the last
+    /// [`THROUGHPUT_WINDOW_DAYS`] days, folded from the same trail.
+    pub throughput: IntegrationThroughput,
 }
+
+/// The window [`IntegrationStatus::throughput`] is folded over.
+pub const THROUGHPUT_WINDOW_DAYS: u64 = 7;
 
 /// One pull request to explain.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -91,10 +98,17 @@ fn root(ctx: &Context) -> &Path {
 
 fn integration_queue(ctx: &Context, _: Empty) -> Result<IntegrationStatus, CapabilityError> {
     let root = root(ctx);
-    let last_merge = crate::integration::drain::events(root)
-        .into_iter()
+    let trail = crate::integration::drain::events(root);
+    let last_merge = trail
+        .iter()
         .rev()
-        .find(|e| e.action == "merge_succeeded");
+        .find(|e| e.action == "merge_succeeded")
+        .cloned();
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    let throughput = metrics::throughput(&trail, now, THROUGHPUT_WINDOW_DAYS);
     Ok(match crate::integration::queue_of(root) {
         Ok(q) => IntegrationStatus {
             observed: true,
@@ -102,6 +116,7 @@ fn integration_queue(ctx: &Context, _: Empty) -> Result<IntegrationStatus, Capab
             lease: IntegrationLease::read(root, &q.base).ok().flatten(),
             queue: Some(q),
             last_merge,
+            throughput,
         },
         Err(reason) => IntegrationStatus {
             observed: false,
@@ -109,6 +124,7 @@ fn integration_queue(ctx: &Context, _: Empty) -> Result<IntegrationStatus, Capab
             queue: None,
             lease: None,
             last_merge,
+            throughput,
         },
     })
 }

@@ -32163,12 +32163,100 @@
             ],
             "description": "The last merge the executor recorded, from the audit trail.",
             "default": null
+          },
+          "throughput": {
+            "$ref": "#/components/schemas/IntegrationThroughput",
+            "description": "How fast the executor has turned work into master over the last\n`THROUGHPUT_WINDOW_DAYS` days, folded from the same trail."
           }
         },
         "required": [
-          "observed"
+          "observed",
+          "throughput"
         ],
         "description": "The queue, or why there is none."
+      },
+      "IntegrationThroughput": {
+        "type": "object",
+        "properties": {
+          "window_days": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The window, in days, ending at the time the fold was asked for."
+          },
+          "merges": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Pull requests merged in the window."
+          },
+          "merges_per_day": {
+            "type": "number",
+            "format": "double",
+            "description": "`merges / window_days`."
+          },
+          "median_actionable_to_merged_secs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Median seconds from becoming actionable to being merged; `None` when no merge in the\nwindow had a recorded `became_actionable` before it."
+          },
+          "ci_rounds_per_merge": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Median `refreshed` events between one merge and the next; `None` without a merge."
+          },
+          "median_cycle_secs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Median seconds from a selection to its outcome; `None` when no selection in the window\nreached one."
+          },
+          "stale_decisions": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Decisions refused because master or the head moved after they were taken."
+          },
+          "merge_failures": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Merge attempts that failed."
+          },
+          "verification_failures": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Merges whose resulting master failed verification."
+          },
+          "unreadable_events": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Events in the trail whose time could not be read; they count toward nothing."
+          }
+        },
+        "required": [
+          "window_days",
+          "merges",
+          "merges_per_day",
+          "stale_decisions",
+          "merge_failures",
+          "verification_failures",
+          "unreadable_events"
+        ],
+        "description": "The integrator's throughput over a window of the trail."
       },
       "IntentCoverage": {
         "type": "object",
