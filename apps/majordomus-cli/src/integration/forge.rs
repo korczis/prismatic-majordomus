@@ -7,6 +7,7 @@
 //! page load can never reach the network. The observation is plain data, so every test
 //! builds one by hand and no test needs the forge.
 
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 use std::process::Command;
 
@@ -58,6 +59,95 @@ pub struct ForgeObservation {
     pub merge_methods: Vec<String>,
     /// Every open pull request.
     pub pull_requests: Vec<PullRequestObservation>,
+    /// Pull requests that are no longer open and that a supersession names, by number: a
+    /// closed one whose body says it supersedes an open one, and every successor an open
+    /// one's body names that is not open. What decides whether a declared successor landed.
+    /// Empty in an observation recorded before it was read.
+    #[serde(default)]
+    pub resolved: BTreeMap<u64, ResolvedPullRequest>,
+}
+
+/// A pull request that is no longer open, as the forge reported it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct ResolvedPullRequest {
+    /// Whether the forge says it was merged, rather than closed unmerged. Evidence only: a
+    /// successor landed when git finds its head in master, whatever the forge calls it.
+    pub merged: bool,
+    /// The commit its branch pointed at when it was merged or closed.
+    pub head_sha: String,
+    /// The body, for the supersessions it declares; never rendered.
+    #[serde(default)]
+    pub body: String,
+}
+
+/// How many closed pull requests declaring a supersession are read, newest first.
+pub const RESOLVED_LIMIT: usize = 200;
+
+/// One pull request that is no longer open, from `gh pr list --state closed --json` or
+/// `gh pr view --json` output: `None` for an open one, or one without a head.
+pub fn resolved_of(v: &Value) -> Option<(u64, ResolvedPullRequest)> {
+    let number = v.get("number")?.as_u64()?;
+    let merged = match v.get("state")?.as_str()? {
+        "MERGED" => true,
+        "CLOSED" => false,
+        _ => return None,
+    };
+    let head_sha = v.get("headRefOid")?.as_str()?.to_string();
+    if head_sha.is_empty() {
+        return None;
+    }
+    let body = v
+        .get("body")
+        .and_then(Value::as_str)
+        .unwrap_or("")
+        .to_string();
+    Some((
+        number,
+        ResolvedPullRequest {
+            merged,
+            head_sha,
+            body,
+        },
+    ))
+}
+
+/// The pull requests no longer open that a supersession involving an open one names: closed
+/// ones whose body says they supersede an open one (`closed`, the forge's answer to a search),
+/// and the successors open bodies name that are not open, each read with `view`. A successor
+/// `view` cannot read is left out, and the classifier says it is unread.
+pub fn resolved_for(
+    open: &[PullRequestObservation],
+    closed: &Value,
+    mut view: impl FnMut(u64) -> Option<Value>,
+) -> BTreeMap<u64, ResolvedPullRequest> {
+    use super::classify::declared_supersessions;
+    let numbers: BTreeSet<u64> = open.iter().map(|p| p.number).collect();
+    let mut resolved: BTreeMap<u64, ResolvedPullRequest> = closed
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(resolved_of)
+        .filter(|(n, r)| {
+            !numbers.contains(n)
+                && declared_supersessions(&r.body)
+                    .supersedes
+                    .iter()
+                    .any(|t| t != n && numbers.contains(t))
+        })
+        .collect();
+    let named: BTreeSet<u64> = open
+        .iter()
+        .flat_map(|p| declared_supersessions(&p.body).superseded_by)
+        .filter(|m| !numbers.contains(m) && !resolved.contains_key(m))
+        .collect();
+    for m in named {
+        if let Some((n, r)) = view(m).as_ref().and_then(resolved_of) {
+            if n == m {
+                resolved.insert(n, r);
+            }
+        }
+    }
+    resolved
 }
 
 /// Why the forge could not be observed.
@@ -511,6 +601,49 @@ impl Forge for GhForge<'_> {
                     .collect()
             })
             .unwrap_or_default();
+        // a successor that landed is no longer listed among the open ones: closed pull requests
+        // whose body declares a supersession are read with their heads, so the one they
+        // replace is still known to be replaced once they are gone
+        let closed = gh_json(
+            root,
+            &[
+                "pr",
+                "list",
+                "--state",
+                "closed",
+                "--search",
+                "supersedes in:body sort:updated-desc",
+                "--limit",
+                &RESOLVED_LIMIT.to_string(),
+                "--json",
+                "number,state,headRefOid,body",
+            ],
+        )?;
+        let mut unreadable = None;
+        let resolved = resolved_for(&pull_requests, &closed, |m| {
+            match gh_retrying(
+                root,
+                &[
+                    "pr",
+                    "view",
+                    &m.to_string(),
+                    "--json",
+                    "number,state,headRefOid,body",
+                ],
+            ) {
+                Ok((true, out, _)) => serde_json::from_str(&out).ok(),
+                // not a pull request, or refused: the successor is unread, never landed
+                Ok(_) => None,
+                Err(e) => {
+                    unreadable.get_or_insert(e);
+                    None
+                }
+            }
+        });
+        // an outage that outlasted the retries is a failed observation, as for the open list
+        if let Some(e) = unreadable {
+            return Err(e);
+        }
         Ok(ForgeObservation {
             schema: OBSERVATION_SCHEMA,
             repository,
@@ -522,6 +655,7 @@ impl Forge for GhForge<'_> {
             up_to_date_required,
             merge_methods,
             pull_requests,
+            resolved,
         })
     }
 }
@@ -541,6 +675,11 @@ pub fn fetch(root: &Path, obs: &ForgeObservation) -> Result<(), ForgeError> {
     ];
     for p in &obs.pull_requests {
         args.push(format!("+refs/pull/{0}/head:{PR_REF_PREFIX}{0}", p.number));
+    }
+    // a successor no longer open is fetched too, so git can say whether its head landed; the
+    // forge keeps refs/pull/<n>/head for a closed pull request, and only one it read is here
+    for n in obs.resolved.keys() {
+        args.push(format!("+refs/pull/{n}/head:{PR_REF_PREFIX}{n}"));
     }
     // a fetch is a read: a dropped connection is asked again, a refusal is not
     super::retry::forge(|| {

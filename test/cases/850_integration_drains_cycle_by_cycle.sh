@@ -12,7 +12,7 @@
 #   #2  depends on #1 and is stacked on it        -> waits for #1, then behind: refreshed,
 #                                                    checked, merged in the fifth drain
 #   #4  its required check fails                  -> needs_repair throughout, never merged
-#   #5  makes the change #1 makes                 -> ready, then behind, superseded once #1 lands
+#   #5  makes the change #1 makes                 -> ready, then behind, redundant once #1 lands
 #
 # A merge lands as a merge commit, as GitHub's merge method makes it, so after any merge every
 # other open pull request is behind master and needs master brought in before it may merge
@@ -33,7 +33,7 @@
 #      behind the master #3 produced, #2 still waits for #1
 #   3. drain --refresh brings master into #1 (ranked before #5: older), pushes, and stops; with
 #      its checks unreported it waits, with them passed it is ready, and the next drain merges
-#      it; #5 is superseded then, and #2 behind
+#      it; #5 is redundant then, and #2 behind
 #   4. the same cycle for #2, after which nothing is ready and nothing is left but #4 and #5
 #   5. every merge was selected against the master the merge before it produced, with the forge
 #      observed twice in between: no merge acted on a plan taken before the previous merge
@@ -187,7 +187,7 @@ grep -q "^pr merge 1 --merge --match-head-commit $H1b\$" "$STATE/log" || { echo 
 q="$(prs status --format json)"
 expect_disp 2 needs_refresh "after #1 landed"
 expect_disp 4 needs_repair "after #1 landed"
-expect_disp 5 superseded "after #1 landed: its change is on master"
+expect_disp 5 redundant "after #1 landed: its change is on master"
 
 # ---------------------------------------------------------------- 4. #2: refreshed, checked, merged
 H2b="$(refresh 2)" || exit 1

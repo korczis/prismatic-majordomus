@@ -403,9 +403,12 @@ pub enum IntegrationAction {
     Refreshed,
     /// Bringing master in failed.
     RefreshFailed,
-    /// A superseded pull request is about to be closed.
+    /// A redundant or superseded pull request is about to be closed.
     CloseAttempted,
-    /// It was closed.
+    /// A redundant one was closed.
+    ClosedRedundant,
+    /// A superseded one was closed (before 0.13, a line with this word recorded what is now
+    /// `closed_redundant`).
     ClosedSuperseded,
     /// Closing it failed.
     CloseFailed,
@@ -439,6 +442,7 @@ impl IntegrationAction {
             IntegrationAction::Refreshed => "refreshed",
             IntegrationAction::RefreshFailed => "refresh_failed",
             IntegrationAction::CloseAttempted => "close_attempted",
+            IntegrationAction::ClosedRedundant => "closed_redundant",
             IntegrationAction::ClosedSuperseded => "closed_superseded",
             IntegrationAction::CloseFailed => "close_failed",
             IntegrationAction::Idle => "idle",
@@ -563,7 +567,7 @@ pub struct IntegrationEvent {
     /// the checks of a head named here.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub head_after: Option<String>,
-    /// On `merge_attempted`, `merge_succeeded`, `refresh_selected` and `closed_superseded`:
+    /// On `merge_attempted`, `merge_succeeded`, `refresh_selected` and the closures:
     /// the assessment's evidence the act was decided on.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub evidence: Vec<IntegrationEvidence>,
@@ -2030,6 +2034,15 @@ impl Integrator for ForgeIntegrator<'_> {
     }
 }
 
+/// The trail's word for closing a pull request of this disposition.
+fn closed(d: PullRequestDisposition) -> IntegrationAction {
+    if d == PullRequestDisposition::Superseded {
+        IntegrationAction::ClosedSuperseded
+    } else {
+        IntegrationAction::ClosedRedundant
+    }
+}
+
 /// What cleanup would do, or did, for one pull request.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct CleanupItem {
@@ -2045,8 +2058,10 @@ pub struct CleanupItem {
 
 /// Close pull requests whose work is provably on master already, and nothing else.
 ///
-/// Only [`PullRequestDisposition::Superseded`] qualifies — the head is an ancestor of master, or
-/// merging it changes no file. A pull request whose merge would change only derived
+/// Only [`PullRequestDisposition::Redundant`] — the head is an ancestor of master, merging it
+/// changes no file, or every commit is on master as an equal patch — and
+/// [`PullRequestDisposition::Superseded`] — a declared successor landed, and the comment names
+/// it — qualify. A pull request whose merge would change only derived
 /// artifacts ([`PullRequestDisposition::PossiblyRedundant`]) is listed for a person and never closed:
 /// "the generated output differs" is not proof that the authored change landed. Age,
 /// shared paths and similar titles are not evidence of anything here. The queue is
@@ -2060,8 +2075,12 @@ pub fn cleanup(
     let mut items = Vec::new();
     for a in &queue.assessments {
         let action = match a.disposition {
-            PullRequestDisposition::Superseded if apply => close_superseded(root, integrator, a)?,
-            PullRequestDisposition::Superseded => "would_close".into(),
+            PullRequestDisposition::Redundant | PullRequestDisposition::Superseded if apply => {
+                close_superseded(root, integrator, a)?
+            }
+            PullRequestDisposition::Redundant | PullRequestDisposition::Superseded => {
+                "would_close".into()
+            }
             PullRequestDisposition::PossiblyRedundant => "left_for_a_person".into(),
             _ => continue,
         };
@@ -2095,10 +2114,11 @@ fn close_superseded(
             b.evaluated_against.master_sha,
             b.evaluated_against.head_sha
         )),
-        Some(b) if b.disposition != PullRequestDisposition::Superseded => Some(format!(
-            "#{} is {} now, not superseded",
+        Some(b) if b.disposition != a.disposition => Some(format!(
+            "#{} is {} now, not {}",
             a.number,
-            b.disposition.as_str()
+            b.disposition.as_str(),
+            a.disposition.as_str()
         )),
         Some(_) => None,
     };
@@ -2118,6 +2138,11 @@ fn close_superseded(
         "Closed by `majordomus prs cleanup`: its work is already on `{}`.\n\nEvidence: {deciding} (master {}, head {}).",
         second.base, a.evaluated_against.master_sha, a.evaluated_against.head_sha
     );
+    // a declared successor that landed is named first: the reader learns where the work went
+    let body = match a.superseded_by {
+        Some(by) => format!("Superseded by #{by}, which landed.\n\n{body}"),
+        None => body,
+    };
     // on the trail before the forge hears of it: a closure the trail cannot name is not made,
     // and nothing after it is attempted
     record(
@@ -2134,7 +2159,7 @@ fn close_superseded(
         Ok(()) => {
             record(
                 root,
-                event(IntegrationAction::ClosedSuperseded, Some(a), body).with_evidence(a),
+                event(closed(a.disposition), Some(a), body).with_evidence(a),
             )?;
             Ok("closed".to_string())
         }

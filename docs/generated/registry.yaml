@@ -145,7 +145,7 @@ modules:
     capabilities: 3
   - id: integration
     title: Pull-request integration
-    description: "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing."
+    description: "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), redundant (its work is on master already), superseded (by a declared successor that landed, named in superseded_by), possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing."
     stability: experimental
     source: builtin
     capabilities: 4
@@ -18429,7 +18429,7 @@ capabilities:
               reasons:
                 type: array
                 items:
-                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `head_reachable_from_master`, `merge_changes_nothing`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`. A code outside this list (an older trail's) is carried verbatim."
+                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`. A code outside this list (an older trail's) is carried verbatim."
                   type: string
                 description: "The decision's reasons; a code an older executor wrote reads back verbatim."
               detail:
@@ -18451,7 +18451,7 @@ capabilities:
                 type: array
                 items:
                   "$ref": "#/$defs/IntegrationEvidence"
-                description: "On `merge_attempted`, `merge_succeeded`, `refresh_selected` and `closed_superseded`:\nthe assessment's evidence the act was decided on."
+                description: "On `merge_attempted`, `merge_succeeded`, `refresh_selected` and the closures:\nthe assessment's evidence the act was decided on."
               class:
                 anyOf:
                   - "$ref": "#/$defs/FailureClass"
@@ -18527,10 +18527,13 @@ capabilities:
                 description: Bringing master in failed.
               - type: string
                 const: close_attempted
-                description: A superseded pull request is about to be closed.
+                description: A redundant or superseded pull request is about to be closed.
+              - type: string
+                const: closed_redundant
+                description: A redundant one was closed.
               - type: string
                 const: closed_superseded
-                description: It was closed.
+                description: "A superseded one was closed (before 0.13, a line with this word recorded what is now\n`closed_redundant`)."
               - type: string
                 const: close_failed
                 description: Closing it failed.
@@ -18597,7 +18600,7 @@ capabilities:
                 description: The forge has auto-merge armed; emitted whenever it is.
               - type: string
                 const: supersession
-                description: A declared supersession. Declared so the vocabulary is settled; nothing emits it yet.
+                description: "One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per successor declared."
               - type: string
                 const: repository_settings
                 description: "What the repository's settings allow the executor; emitted when they allow no merge\ncommit."
@@ -18776,13 +18779,20 @@ capabilities:
               disposition:
                 "$ref": "#/$defs/PullRequestDisposition"
                 description: The classification.
+              superseded_by:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "The successor that landed and replaces it, exactly when the disposition is\n`superseded`: the disposition stays one word on the wire, and this is its `by`.\nAbsent otherwise; a successor still open, or closed without landing, is in the\n`supersession` evidence and the reasons instead."
               lane:
                 "$ref": "#/$defs/IntegrationLane"
                 description: The queue it is in.
               reasons:
                 type: array
                 items:
-                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `head_reachable_from_master`, `merge_changes_nothing`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`. A code outside this list (an older trail's) is carried verbatim."
+                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`. A code outside this list (an older trail's) is carried verbatim."
                   type: string
                 description: "Machine-readable reasons, one for every failing gate's every finding, in policy order:\nthe first is the decisive one. A ready pull request carries why it is ready."
               gates:
@@ -18912,11 +18922,14 @@ capabilities:
                 const: unsafe
                 description: "The forge has auto-merge armed on it: the forge would merge it on its own, outside the\nexecutor and against whatever master is then. Held until a person disarms it."
               - type: string
+                const: redundant
+                description: "Its head already landed, its merge changes nothing, or every one of its commits is on\nmaster as an equal patch: strong evidence from git, eligible for closure under policy.\n(Before 0.13 this was the word `superseded`.)"
+              - type: string
                 const: superseded
-                description: "Its head already landed, or its patch is already fully on master: strong evidence,\neligible for closure under policy."
+                description: "Its body, or the body of another pull request, declares that a successor replaces it,\nand that successor landed: no longer open, its head contained in master. The successor\nis `PullRequestAssessment::superseded_by`. Eligible for closure under policy."
               - type: string
                 const: possibly_redundant
-                description: "Only derived artifacts would change: the authored change appears to be on master\nalready. Surfaced for a person; never closed automatically."
+                description: "Weak evidence: only derived artifacts would change, or its declared successor was closed\nwithout its head landing. Surfaced for a person; never closed automatically."
               - type: string
                 const: other_base
                 description: Targets a branch other than the integration base.
@@ -18937,7 +18950,7 @@ capabilities:
                 description: A person must change the branch.
               - type: string
                 const: cleanup
-                description: Its work is on master already.
+                description: "Its work is on master already, or a successor that landed replaced it."
               - type: string
                 const: held
                 description: "Not asking to be merged, held by a label or a setting, unsafe for the executor, or\nundecidable."
@@ -18970,11 +18983,14 @@ capabilities:
                 const: auto_merge
                 description: The forge has no auto-merge armed on it.
               - type: string
+                const: supersession
+                description: "No successor is declared to replace it. Asked before the relation to master, because\na pull request whose successor landed usually conflicts with what the successor\nbrought, and is superseded rather than conflicting."
+              - type: string
                 const: relation_to_master
                 description: "Its head is not on master already, and git could say that it merges cleanly."
               - type: string
                 const: merge_method
-                description: "The repository allows a merge commit, the only way the executor merges. Asked after\nthe relation, so work already on master is still `superseded` and may be closed."
+                description: "The repository allows a merge commit, the only way the executor merges. Asked after\nthe relation, so work already on master is still `redundant` and may be closed."
               - type: string
                 const: dependency
                 description: Every declared dependency has landed.
@@ -19054,6 +19070,20 @@ capabilities:
                 required:
                   - kind
                 description: "Merging the head into master changes nothing: its patch is already fully there."
+              - type: object
+                properties:
+                  commits:
+                    type: integer
+                    format: uint64
+                    minimum: 0
+                    description: "How many commits, every one of them already on master."
+                  kind:
+                    type: string
+                    const: patch_ids_upstream
+                required:
+                  - kind
+                  - commits
+                description: "The merge would conflict or change only derived output, but every commit the head has\nand master lacks is on master already as an equal patch (`git cherry` marks each `-`):\nthe change landed, and master moved on past it. Never a partial match, and never a\nhead that carries a merge commit of its own, whose resolution has no patch to compare."
               - type: object
                 properties:
                   paths:
@@ -19242,7 +19272,7 @@ capabilities:
                 description: The forge has auto-merge armed; emitted whenever it is.
               - type: string
                 const: supersession
-                description: A declared supersession. Declared so the vocabulary is settled; nothing emits it yet.
+                description: "One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per successor declared."
               - type: string
                 const: repository_settings
                 description: "What the repository's settings allow the executor; emitted when they allow no merge\ncommit."
@@ -19375,10 +19405,13 @@ capabilities:
                 description: Bringing master in failed.
               - type: string
                 const: close_attempted
-                description: A superseded pull request is about to be closed.
+                description: A redundant or superseded pull request is about to be closed.
+              - type: string
+                const: closed_redundant
+                description: A redundant one was closed.
               - type: string
                 const: closed_superseded
-                description: It was closed.
+                description: "A superseded one was closed (before 0.13, a line with this word recorded what is now\n`closed_redundant`)."
               - type: string
                 const: close_failed
                 description: Closing it failed.
@@ -19833,13 +19866,20 @@ capabilities:
               disposition:
                 "$ref": "#/$defs/PullRequestDisposition"
                 description: The classification.
+              superseded_by:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "The successor that landed and replaces it, exactly when the disposition is\n`superseded`: the disposition stays one word on the wire, and this is its `by`.\nAbsent otherwise; a successor still open, or closed without landing, is in the\n`supersession` evidence and the reasons instead."
               lane:
                 "$ref": "#/$defs/IntegrationLane"
                 description: The queue it is in.
               reasons:
                 type: array
                 items:
-                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `head_reachable_from_master`, `merge_changes_nothing`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`. A code outside this list (an older trail's) is carried verbatim."
+                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`. A code outside this list (an older trail's) is carried verbatim."
                   type: string
                 description: "Machine-readable reasons, one for every failing gate's every finding, in policy order:\nthe first is the decisive one. A ready pull request carries why it is ready."
               gates:
@@ -19969,11 +20009,14 @@ capabilities:
                 const: unsafe
                 description: "The forge has auto-merge armed on it: the forge would merge it on its own, outside the\nexecutor and against whatever master is then. Held until a person disarms it."
               - type: string
+                const: redundant
+                description: "Its head already landed, its merge changes nothing, or every one of its commits is on\nmaster as an equal patch: strong evidence from git, eligible for closure under policy.\n(Before 0.13 this was the word `superseded`.)"
+              - type: string
                 const: superseded
-                description: "Its head already landed, or its patch is already fully on master: strong evidence,\neligible for closure under policy."
+                description: "Its body, or the body of another pull request, declares that a successor replaces it,\nand that successor landed: no longer open, its head contained in master. The successor\nis `PullRequestAssessment::superseded_by`. Eligible for closure under policy."
               - type: string
                 const: possibly_redundant
-                description: "Only derived artifacts would change: the authored change appears to be on master\nalready. Surfaced for a person; never closed automatically."
+                description: "Weak evidence: only derived artifacts would change, or its declared successor was closed\nwithout its head landing. Surfaced for a person; never closed automatically."
               - type: string
                 const: other_base
                 description: Targets a branch other than the integration base.
@@ -19994,7 +20037,7 @@ capabilities:
                 description: A person must change the branch.
               - type: string
                 const: cleanup
-                description: Its work is on master already.
+                description: "Its work is on master already, or a successor that landed replaced it."
               - type: string
                 const: held
                 description: "Not asking to be merged, held by a label or a setting, unsafe for the executor, or\nundecidable."
@@ -20027,11 +20070,14 @@ capabilities:
                 const: auto_merge
                 description: The forge has no auto-merge armed on it.
               - type: string
+                const: supersession
+                description: "No successor is declared to replace it. Asked before the relation to master, because\na pull request whose successor landed usually conflicts with what the successor\nbrought, and is superseded rather than conflicting."
+              - type: string
                 const: relation_to_master
                 description: "Its head is not on master already, and git could say that it merges cleanly."
               - type: string
                 const: merge_method
-                description: "The repository allows a merge commit, the only way the executor merges. Asked after\nthe relation, so work already on master is still `superseded` and may be closed."
+                description: "The repository allows a merge commit, the only way the executor merges. Asked after\nthe relation, so work already on master is still `redundant` and may be closed."
               - type: string
                 const: dependency
                 description: Every declared dependency has landed.
@@ -20111,6 +20157,20 @@ capabilities:
                 required:
                   - kind
                 description: "Merging the head into master changes nothing: its patch is already fully there."
+              - type: object
+                properties:
+                  commits:
+                    type: integer
+                    format: uint64
+                    minimum: 0
+                    description: "How many commits, every one of them already on master."
+                  kind:
+                    type: string
+                    const: patch_ids_upstream
+                required:
+                  - kind
+                  - commits
+                description: "The merge would conflict or change only derived output, but every commit the head has\nand master lacks is on master already as an equal patch (`git cherry` marks each `-`):\nthe change landed, and master moved on past it. Never a partial match, and never a\nhead that carries a merge commit of its own, whose resolution has no patch to compare."
               - type: object
                 properties:
                   paths:
@@ -20299,7 +20359,7 @@ capabilities:
                 description: The forge has auto-merge armed; emitted whenever it is.
               - type: string
                 const: supersession
-                description: A declared supersession. Declared so the vocabulary is settled; nothing emits it yet.
+                description: "One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per successor declared."
               - type: string
                 const: repository_settings
                 description: "What the repository's settings allow the executor; emitted when they allow no merge\ncommit."
@@ -20432,10 +20492,13 @@ capabilities:
                 description: Bringing master in failed.
               - type: string
                 const: close_attempted
-                description: A superseded pull request is about to be closed.
+                description: A redundant or superseded pull request is about to be closed.
+              - type: string
+                const: closed_redundant
+                description: A redundant one was closed.
               - type: string
                 const: closed_superseded
-                description: It was closed.
+                description: "A superseded one was closed (before 0.13, a line with this word recorded what is now\n`closed_redundant`)."
               - type: string
                 const: close_failed
                 description: Closing it failed.
@@ -20555,7 +20618,7 @@ capabilities:
               reasons:
                 type: array
                 items:
-                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `head_reachable_from_master`, `merge_changes_nothing`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`. A code outside this list (an older trail's) is carried verbatim."
+                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`. A code outside this list (an older trail's) is carried verbatim."
                   type: string
                 description: "The decision's reasons; a code an older executor wrote reads back verbatim."
               detail:
@@ -20577,7 +20640,7 @@ capabilities:
                 type: array
                 items:
                   "$ref": "#/$defs/IntegrationEvidence"
-                description: "On `merge_attempted`, `merge_succeeded`, `refresh_selected` and `closed_superseded`:\nthe assessment's evidence the act was decided on."
+                description: "On `merge_attempted`, `merge_succeeded`, `refresh_selected` and the closures:\nthe assessment's evidence the act was decided on."
               class:
                 anyOf:
                   - "$ref": "#/$defs/FailureClass"

@@ -49,6 +49,19 @@ struct Sim {
     ci_unreported: bool,
     /// The forge has auto-merge armed on it.
     auto_merge: bool,
+    /// More lines of its body, after any dependency line: supersession declarations.
+    body: String,
+}
+
+/// How a pull request stopped being open.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Gone {
+    /// Merged with a merge commit: master contains its head.
+    Merged,
+    /// Merged by a squash: the forge says merged, and master does not contain its head.
+    Squashed,
+    /// Closed unmerged.
+    Closed,
 }
 
 fn sim(number: u64) -> Sim {
@@ -71,6 +84,7 @@ fn sim(number: u64) -> Sim {
         ci_pending: false,
         ci_unreported: false,
         auto_merge: false,
+        body: String::new(),
     }
 }
 
@@ -122,6 +136,9 @@ struct World {
     refresh_fails: bool,
     /// The merge methods the repository's settings allow, in the forge's words.
     merge_methods: Vec<&'static str>,
+    /// Pull requests no longer open, and how they went: what the forge reports of those a
+    /// supersession names.
+    gone: Vec<(Sim, Gone)>,
     /// Where each merge landed: the master it was made on and the head it merged.
     merged_onto: BTreeMap<u64, (String, String)>,
     /// Somebody else's merge lands on master just before the forge merges these.
@@ -161,6 +178,7 @@ impl Default for World {
             close_calls: 0,
             refresh_fails: false,
             merge_methods: vec!["merge"],
+            gone: Vec::new(),
             merged_onto: BTreeMap::new(),
             foreign_merge_before: BTreeSet::new(),
             answer_lost_after_landing: BTreeSet::new(),
@@ -193,10 +211,46 @@ impl World {
             up_to_date_required: Some(true),
             merge_methods: self.merge_methods.iter().map(|m| m.to_string()).collect(),
             pull_requests: self.open.iter().map(observe_pr).collect(),
+            resolved: self.resolved(),
         }
     }
 
+    /// What the forge reports of the pull requests no longer open, through the adapter's own
+    /// selection: the closed ones a search for "supersedes" finds, and each one viewed.
+    fn resolved(&self) -> BTreeMap<u64, super::forge::ResolvedPullRequest> {
+        let json = |(s, how): &(Sim, Gone)| {
+            serde_json::json!({
+                "number": s.number,
+                "state": if *how == Gone::Closed { "CLOSED" } else { "MERGED" },
+                "headRefOid": s.head,
+                "body": observe_pr(s).body,
+            })
+        };
+        let closed: Vec<serde_json::Value> = self
+            .gone
+            .iter()
+            .filter(|(s, _)| s.body.to_ascii_lowercase().contains("supersedes"))
+            .map(json)
+            .collect();
+        let open: Vec<PullRequestObservation> = self.open.iter().map(observe_pr).collect();
+        super::forge::resolved_for(&open, &serde_json::Value::Array(closed), |m| {
+            self.gone.iter().find(|(s, _)| s.number == m).map(json)
+        })
+    }
+
     fn relation(&self, n: u64) -> RelationToMaster {
+        if let Some((_, how)) = self.gone.iter().find(|(s, _)| s.number == n) {
+            // a pull request no longer open: its head is on master exactly when it was merged
+            // with a merge commit
+            return if *how == Gone::Merged {
+                RelationToMaster::Contained
+            } else {
+                RelationToMaster::Behind {
+                    behind: 1,
+                    authored: Vec::new(),
+                }
+            };
+        }
         let s = self.open.iter().find(|s| s.number == n).expect("open");
         if s.redundant_after.is_some_and(|r| self.merged.contains(&r)) {
             return RelationToMaster::Superseded;
@@ -222,13 +276,21 @@ impl World {
         build_queue(&obs, &master_sha(self.master), |p| self.relation(p.number))
     }
 
+    /// `n` stops being open, as `how` says.
+    fn gone_as(&mut self, n: u64, how: Gone) {
+        if let Some(i) = self.open.iter().position(|s| s.number == n) {
+            let s = self.open.remove(i);
+            self.gone.push((s, how));
+        }
+    }
+
     fn happen(&mut self, what: &Meanwhile) {
         match what {
             Meanwhile::HeadMoves(n) => {
                 let s = self.open.iter_mut().find(|s| s.number == *n).expect("open");
                 s.head = format!("{}+", s.head);
             }
-            Meanwhile::Closes(n) => self.open.retain(|s| s.number != *n),
+            Meanwhile::Closes(n) => self.gone_as(*n, Gone::Closed),
             Meanwhile::Labelled(n, label) => {
                 let s = self.open.iter_mut().find(|s| s.number == *n).expect("open");
                 s.labels.push((*label).to_string());
@@ -260,7 +322,10 @@ fn observe_pr(s: &Sim) -> PullRequestObservation {
         body: s
             .depends_on
             .map(|d| format!("Depends on #{d}."))
-            .unwrap_or_default(),
+            .into_iter()
+            .chain((!s.body.is_empty()).then(|| s.body.clone()))
+            .collect::<Vec<_>>()
+            .join("\n"),
         checks: if s.ci_unreported {
             Vec::new()
         } else {
@@ -363,9 +428,9 @@ impl Integrator for World {
             // another change lands first; the forge then merges this one on top of it
             self.master += 1;
         }
-        let s = self.open.remove(i);
-        self.merged_onto
-            .insert(pr, (master_sha(self.master), s.head.clone()));
+        let head = self.open[i].head.clone();
+        self.merged_onto.insert(pr, (master_sha(self.master), head));
+        self.gone_as(pr, Gone::Merged);
         self.merged.push(pr);
         self.master += 1;
         self.merged_after_observation.push(self.observations);
@@ -441,7 +506,7 @@ impl Integrator for World {
         if s.head != head_sha {
             return Err(format!("#{pr}'s head moved to {}", s.head));
         }
-        self.open.retain(|s| s.number != pr);
+        self.gone_as(pr, Gone::Closed);
         Ok(())
     }
 }
@@ -536,7 +601,7 @@ fn each_disposition_is_reached_by_its_own_evidence() {
         disposition(&q, 5),
         PullRequestDisposition::WaitingForDependency
     );
-    assert_eq!(disposition(&q, 6), PullRequestDisposition::Superseded);
+    assert_eq!(disposition(&q, 6), PullRequestDisposition::Redundant);
     assert_eq!(disposition(&q, 7), PullRequestDisposition::Conflicting);
     assert_eq!(disposition(&q, 8), PullRequestDisposition::NeedsRefresh);
     assert_eq!(q.next_merge, Some(1));
@@ -598,7 +663,7 @@ fn a_required_check_is_passed_only_when_it_passed() {
 }
 
 #[test]
-fn only_derived_differences_are_never_called_superseded() {
+fn only_derived_differences_are_never_called_redundant() {
     let w = World {
         open: vec![sim(1)],
         ..Default::default()
@@ -1033,7 +1098,7 @@ fn the_queue_is_rediscovered_after_every_merge() {
     // re-planned from the new master: #5's patch is on master, #2 and #3 need master
     let q1 = w.queue();
     assert_eq!(q1.master_sha, "m1");
-    assert_eq!(disposition(&q1, 5), PullRequestDisposition::Superseded);
+    assert_eq!(disposition(&q1, 5), PullRequestDisposition::Redundant);
     assert_eq!(disposition(&q1, 2), PullRequestDisposition::NeedsRefresh);
     assert_eq!(disposition(&q1, 3), PullRequestDisposition::NeedsRefresh);
     assert_eq!(disposition(&q1, 4), PullRequestDisposition::NeedsRepair);
@@ -1631,7 +1696,7 @@ fn the_relation_to_master_is_decided_by_git_with_the_derived_attribute() {
         "{:?}",
         relation_to_master(&dir, &master, &derived_conflict)
     );
-    // only derived output differs: never superseded, only possibly redundant
+    // only derived output differs: never redundant, only possibly redundant
     assert!(
         matches!(
             relation_to_master(&dir, &master, &derived_only),
@@ -1689,6 +1754,7 @@ fn observed(dir: &std::path::Path, master: &str, prs: Vec<PullRequestObservation
         up_to_date_required: Some(true),
         merge_methods: vec!["merge".into()],
         pull_requests: prs,
+        resolved: Default::default(),
     };
     crate::integration::store_observation(dir, &obs).unwrap();
 }
@@ -2246,6 +2312,7 @@ fn trail_lines_written_with_a_string_action_still_parse() {
         "refreshed",
         "refresh_failed",
         "closed_superseded",
+        "closed_redundant",
         "idle",
         "became_actionable",
         "left_actionable",
@@ -2339,7 +2406,7 @@ fn a_continuous_drain_is_recorded_when_it_starts_and_stops() {
 }
 
 /// Every action, in the order an executor's run meets them.
-const ALL_ACTIONS: [drain::IntegrationAction; 23] = [
+const ALL_ACTIONS: [drain::IntegrationAction; 24] = [
     drain::IntegrationAction::LeaseAcquired,
     drain::IntegrationAction::LeaseReleased,
     drain::IntegrationAction::ContinuousStarted,
@@ -2358,6 +2425,7 @@ const ALL_ACTIONS: [drain::IntegrationAction; 23] = [
     drain::IntegrationAction::Refreshed,
     drain::IntegrationAction::RefreshFailed,
     drain::IntegrationAction::CloseAttempted,
+    drain::IntegrationAction::ClosedRedundant,
     drain::IntegrationAction::ClosedSuperseded,
     drain::IntegrationAction::CloseFailed,
     drain::IntegrationAction::Idle,
@@ -2389,6 +2457,7 @@ fn every_action_is_listed(a: drain::IntegrationAction) {
         | A::RefreshFailed
         | A::CloseAttempted
         | A::ClosedSuperseded
+        | A::ClosedRedundant
         | A::CloseFailed
         | A::Idle
         | A::FailureAcknowledged
@@ -2488,7 +2557,7 @@ fn a_closure_is_recorded_before_and_after_it_reaches_the_forge() {
         said,
         [
             ("close_attempted", Some(1)),
-            ("closed_superseded", Some(1)),
+            ("closed_redundant", Some(1)),
             ("close_attempted", Some(2)),
             ("close_failed", Some(2)),
         ]
@@ -3357,8 +3426,13 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         | R::Label { .. }
         | R::AutoMergeArmed
         | R::MergeCommitNotAllowed
+        | R::SupersededBy { .. }
+        | R::SuccessorOpen { .. }
+        | R::SuccessorNotLanded { .. }
+        | R::SuccessorUnread { .. }
         | R::HeadReachableFromMaster
         | R::MergeChangesNothing
+        | R::PatchIdsUpstream
         | R::OnlyDerivedArtifactsDiffer
         | R::RelationUnknown { .. }
         | R::ConflictsOn { .. }
@@ -3393,8 +3467,13 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         },
         R::AutoMergeArmed,
         R::MergeCommitNotAllowed,
+        R::SupersededBy { number: 12 },
+        R::SuccessorOpen { number: 13 },
+        R::SuccessorNotLanded { number: 14 },
+        R::SuccessorUnread { number: 15 },
         R::HeadReachableFromMaster,
         R::MergeChangesNothing,
+        R::PatchIdsUpstream,
         R::OnlyDerivedArtifactsDiffer,
         R::RelationUnknown {
             reason: "git merge-tree: exit 128: bad object".into(),
@@ -3701,10 +3780,17 @@ proptest! {
                     G::Draft => &["draft"],
                     G::Label => &["label"],
                     G::AutoMerge => &["auto_merge_armed"],
+                    G::Supersession => &[
+                        "superseded_by",
+                        "successor_open",
+                        "successor_not_landed",
+                        "successor_unread",
+                    ],
                     G::MergeMethod => &["merge_commit_not_allowed"],
                     G::RelationToMaster => &[
                         "head_reachable_from_master",
                         "merge_changes_nothing",
+                        "patch_ids_upstream",
                         "only_derived_artifacts_differ",
                         "relation_unknown",
                         "conflicts_on",
@@ -4039,7 +4125,7 @@ fn the_label_policy_is_one_table_and_every_effect_holds() {
 }
 
 #[test]
-fn work_already_on_master_stays_superseded_without_merge_commits_and_is_still_closed() {
+fn work_already_on_master_stays_redundant_without_merge_commits_and_is_still_closed() {
     use crate::integration::{IntegrationGate as G, ReasonCode as R};
     // #1's head is contained in master; #2's merge changes nothing
     let mut redundant = sim(2);
@@ -4058,7 +4144,7 @@ fn work_already_on_master_stays_superseded_without_merge_commits_and_is_still_cl
     assert_eq!(q.policy.merge_method, None);
     for (n, why) in [(1, R::HeadReachableFromMaster), (2, R::MergeChangesNothing)] {
         let a = q.get(n).unwrap();
-        assert_eq!(a.disposition, PullRequestDisposition::Superseded, "#{n}");
+        assert_eq!(a.disposition, PullRequestDisposition::Redundant, "#{n}");
         // the relation decides; the setting is still said, after it
         assert_eq!(a.reasons, vec![why, R::MergeCommitNotAllowed], "#{n}");
         let failed: Vec<G> = a
@@ -4076,6 +4162,496 @@ fn work_already_on_master_stays_superseded_without_merge_commits_and_is_still_cl
     let closed: Vec<(u64, &str)> = items.iter().map(|i| (i.pr, i.action.as_str())).collect();
     assert_eq!(closed, [(2, "closed")]);
     assert_eq!((w.close_calls, w.merge_calls), (1, 0));
+}
+
+// ---------------------------------------------------------------- WP13: Redundant and Superseded{by}
+//
+// `redundant` is git's strong evidence that the work is on master (before 0.13 it was the word
+// `superseded`). `superseded` is a declared successor that landed, named in `superseded_by`. A
+// successor still open makes it wait; one that did not land leaves it to a person; weak
+// evidence is never closed.
+
+fn superseded_by_body(n: u64) -> String {
+    format!("Superseded by #{n}.")
+}
+
+#[test]
+fn a_successor_that_landed_supersedes_it_and_cleanup_closes_it_naming_the_successor() {
+    use crate::integration::{EvidenceKind, EvidenceSource, IntegrationGate as G, ReasonCode as R};
+    // #1 says #2 replaces it; #2 was merged with a merge commit, and #1 now conflicts with what
+    // #2 brought — superseded, not conflicting
+    let mut replaced = sim(1);
+    replaced.body = superseded_by_body(2);
+    replaced.conflicts_after = Some(2);
+    let mut w = World {
+        open: vec![replaced],
+        merged: vec![2],
+        gone: vec![(sim(2), Gone::Merged)],
+        ..Default::default()
+    };
+    let q = w.queue();
+    let a = q.get(1).unwrap();
+    assert_eq!(a.disposition, PullRequestDisposition::Superseded);
+    assert_eq!(a.superseded_by, Some(2));
+    assert_eq!(a.lane, crate::integration::IntegrationLane::Cleanup);
+    assert_eq!(a.reasons[0], R::SupersededBy { number: 2 });
+    assert_eq!(a.reasons[0].to_string(), "superseded_by:#2");
+    assert!(
+        a.reasons.contains(&R::ConflictsOn { count: 1 }),
+        "{:?}",
+        a.reasons
+    );
+    let first_failed = a.gates.iter().find(|g| !g.passed).unwrap().gate;
+    assert_eq!(first_failed, G::Supersession);
+    let s = a
+        .evidence
+        .iter()
+        .find(|e| e.kind == EvidenceKind::Supersession)
+        .expect("supersession evidence");
+    assert_eq!(s.status, "landed");
+    assert!(s.detail.contains("superseded by #2"), "{}", s.detail);
+    // that it landed is git's: master and the successor's head
+    assert_eq!(
+        s.source,
+        Some(EvidenceSource::Git {
+            master_sha: "m0".into(),
+            head_sha: "h2.0".into()
+        })
+    );
+    // on the wire the disposition is one word, and its successor a field beside it
+    let wire = serde_json::to_value(a).unwrap();
+    assert_eq!(wire["disposition"], "superseded");
+    assert_eq!(wire["superseded_by"], 2);
+
+    // cleanup closes it, records the closure as `closed_superseded`, and names the successor
+    let root = scratch();
+    let items = drain::cleanup(&root, &mut w, true).unwrap();
+    assert_eq!(items.len(), 1);
+    assert_eq!(
+        (items[0].pr, items[0].disposition, items[0].action.as_str()),
+        (1, PullRequestDisposition::Superseded, "closed")
+    );
+    assert_eq!((w.close_calls, w.merge_calls), (1, 0));
+    let trail = drain::events(&root);
+    let said: Vec<&str> = trail.iter().map(|e| e.action.as_str()).collect();
+    assert_eq!(said, ["close_attempted", "closed_superseded"]);
+    for e in &trail {
+        assert!(
+            e.detail.starts_with("Superseded by #2, which landed."),
+            "{}",
+            e.detail
+        );
+    }
+    assert!(trail[1]
+        .evidence
+        .iter()
+        .any(|e| e.kind == EvidenceKind::Supersession));
+}
+
+#[test]
+fn an_open_successor_holds_it_until_the_successor_lands_and_then_it_is_closed() {
+    use crate::integration::ReasonCode as R;
+    let root = scratch();
+    // #1 would be ready on its own; #2, its declared successor, is open and ready too
+    let mut replaced = sim(1);
+    replaced.body = superseded_by_body(2);
+    let mut w = World {
+        open: vec![replaced, sim(2)],
+        ..Default::default()
+    };
+    let q = w.queue();
+    let a = q.get(1).unwrap();
+    assert_eq!(a.disposition, PullRequestDisposition::WaitingForDependency);
+    assert_eq!(a.reasons[0], R::SuccessorOpen { number: 2 });
+    assert_eq!(a.superseded_by, None);
+    assert!(serde_json::to_value(a)
+        .unwrap()
+        .get("superseded_by")
+        .is_none());
+    // the executor merges the successor, never the one it replaces
+    assert_eq!(q.next_merge, Some(2));
+    // and nothing closes it while its successor is open
+    let items = drain::cleanup(&root, &mut w, true).unwrap();
+    assert!(items.iter().all(|i| i.pr != 1), "{items:?}");
+    assert_eq!(w.close_calls, 0);
+
+    let report = drain::drain(&root, &mut w, 3, false, false).unwrap();
+    assert_eq!(report.merged, vec![2]);
+    assert!(w.open.iter().any(|s| s.number == 1), "#1 was not merged");
+    // #2 landed: #1 is superseded by it now, and cleanup closes it
+    assert_eq!(w.queue().get(1).unwrap().superseded_by, Some(2));
+    let items = drain::cleanup(&root, &mut w, true).unwrap();
+    let closed: Vec<(u64, &str)> = items.iter().map(|i| (i.pr, i.action.as_str())).collect();
+    assert_eq!(closed, [(1, "closed")]);
+    assert_eq!(w.merge_calls, 1);
+}
+
+#[test]
+fn supersedes_in_the_successors_body_works_from_the_other_side() {
+    use crate::integration::ReasonCode as R;
+    let root = scratch();
+    // only #2's body says anything: it supersedes #1
+    let mut successor = sim(2);
+    successor.body = "- **Supersedes:** #1".into();
+    let mut w = World {
+        open: vec![sim(1), successor],
+        ..Default::default()
+    };
+    let q = w.queue();
+    let a = q.get(1).unwrap();
+    assert_eq!(a.disposition, PullRequestDisposition::WaitingForDependency);
+    assert_eq!(a.reasons[0], R::SuccessorOpen { number: 2 });
+    let s = a
+        .evidence
+        .iter()
+        .find(|e| e.kind == "supersession")
+        .unwrap();
+    assert!(
+        s.detail.contains("#2 says it supersedes #1"),
+        "{}",
+        s.detail
+    );
+    // the successor itself is not held by what it supersedes
+    assert_eq!(disposition(&q, 2), PullRequestDisposition::Ready);
+
+    // once #2 merged it is no longer open, and the forge's closed pull requests still say it
+    let report = drain::drain(&root, &mut w, 3, false, false).unwrap();
+    assert_eq!(report.merged, vec![2]);
+    let obs = w.observation();
+    assert!(obs.resolved.contains_key(&2), "{:?}", obs.resolved);
+    let q = w.queue();
+    let a = q.get(1).unwrap();
+    assert_eq!(a.disposition, PullRequestDisposition::Superseded);
+    assert_eq!(a.superseded_by, Some(2));
+    let items = drain::cleanup(&root, &mut w, true).unwrap();
+    assert_eq!(items[0].action, "closed");
+    assert_eq!(w.close_calls, 1);
+}
+
+#[test]
+fn a_successor_that_did_not_land_leaves_it_to_a_person_and_nothing_closes_it() {
+    use crate::integration::ReasonCode as R;
+    let root = scratch();
+    // #1's successor #2 was closed unmerged; #3's successor #4 was squashed (merged, but its
+    // head is not on master); #5's successor #9 is not open and the forge does not know it
+    let mut one = sim(1);
+    one.body = superseded_by_body(2);
+    let mut three = sim(3);
+    three.body = superseded_by_body(4);
+    let mut five = sim(5);
+    five.body = superseded_by_body(9);
+    let mut w = World {
+        open: vec![one, three, five],
+        gone: vec![(sim(2), Gone::Closed), (sim(4), Gone::Squashed)],
+        ..Default::default()
+    };
+    let q = w.queue();
+    for (n, why, word) in [
+        (1, R::SuccessorNotLanded { number: 2 }, "closed unmerged"),
+        (3, R::SuccessorNotLanded { number: 4 }, "squash"),
+    ] {
+        let a = q.get(n).unwrap();
+        assert_eq!(
+            a.disposition,
+            PullRequestDisposition::PossiblyRedundant,
+            "#{n}"
+        );
+        assert_eq!(a.reasons[0], why, "#{n}");
+        assert_eq!(a.superseded_by, None);
+        let s = a
+            .evidence
+            .iter()
+            .find(|e| e.kind == "supersession")
+            .unwrap();
+        assert_eq!(s.status, "not_landed");
+        assert!(s.detail.contains(word), "{}", s.detail);
+    }
+    let a = q.get(5).unwrap();
+    assert_eq!(a.disposition, PullRequestDisposition::Unknown);
+    assert_eq!(a.reasons[0].to_string(), "successor_unread:#9");
+    // weak evidence and an unread successor: nothing is closed, the weak ones are listed
+    let items = drain::cleanup(&root, &mut w, true).unwrap();
+    let by: BTreeMap<u64, &str> = items.iter().map(|i| (i.pr, i.action.as_str())).collect();
+    assert_eq!(
+        by,
+        BTreeMap::from([(1, "left_for_a_person"), (3, "left_for_a_person")])
+    );
+    assert_eq!(w.close_calls, 0);
+    assert!(drain::events(&root).is_empty());
+}
+
+#[test]
+fn a_successor_that_landed_outranks_one_still_open_and_a_self_reference_is_nothing() {
+    use crate::integration::ReasonCode as R;
+    let mut replaced = sim(1);
+    replaced.body = "Superseded by #2\nSuperseded by #3".into();
+    let mut itself = sim(4);
+    itself.body = superseded_by_body(4);
+    let w = World {
+        open: vec![replaced, sim(2), itself],
+        merged: vec![3],
+        gone: vec![(sim(3), Gone::Merged)],
+        ..Default::default()
+    };
+    let q = w.queue();
+    let a = q.get(1).unwrap();
+    assert_eq!(a.disposition, PullRequestDisposition::Superseded);
+    assert_eq!(a.superseded_by, Some(3));
+    assert_eq!(
+        a.reasons[..2],
+        [
+            R::SupersededBy { number: 3 },
+            R::SuccessorOpen { number: 2 }
+        ]
+    );
+    assert_eq!(
+        a.evidence
+            .iter()
+            .filter(|e| e.kind == "supersession")
+            .count(),
+        2
+    );
+    assert_eq!(disposition(&q, 4), PullRequestDisposition::Ready);
+    // a draft whose successor landed is a draft: the earlier gate decides, and `superseded_by`
+    // comes only with the disposition it belongs to
+    let mut draft = sim(1);
+    draft.body = superseded_by_body(3);
+    draft.draft = true;
+    let q = World {
+        open: vec![draft],
+        merged: vec![3],
+        gone: vec![(sim(3), Gone::Merged)],
+        ..Default::default()
+    }
+    .queue();
+    let a = q.get(1).unwrap();
+    assert_eq!(a.disposition, PullRequestDisposition::Draft);
+    assert_eq!(a.superseded_by, None);
+    assert!(a.reasons.contains(&R::SupersededBy { number: 3 }));
+}
+
+#[test]
+fn a_supersession_is_a_line_anchored_declaration() {
+    use crate::integration::classify::declared_supersessions;
+    let s = declared_supersessions("Supersedes #12 and #14.\n> superseded by #20");
+    assert_eq!(s.supersedes, vec![12, 14]);
+    assert_eq!(s.superseded_by, vec![20]);
+    for prose in [
+        "this supersedes #3",
+        "it was superseded by #5 in spirit, not in fact",
+        "Supersedes #x",
+        "Supersedesx #3",
+        "Superseded #3",
+    ] {
+        assert_eq!(
+            declared_supersessions(prose),
+            Default::default(),
+            "{prose:?}"
+        );
+    }
+    let s = declared_supersessions("1. **Superseded by:** #7, #8 & #9");
+    assert_eq!(s.superseded_by, vec![7, 8, 9]);
+    // and a dependency marker is not a supersession, nor the other way round
+    assert_eq!(declared_supersessions("Depends on #4"), Default::default());
+    assert!(crate::integration::declared_dependencies("Supersedes #4").is_empty());
+}
+
+#[test]
+fn the_forge_reads_only_what_a_supersession_of_an_open_pull_request_names() {
+    use super::forge::resolved_for;
+    use serde_json::json;
+    let mut one = observe_pr(&sim(1));
+    one.body = "Superseded by #7".into();
+    let open = vec![one, observe_pr(&sim(2))];
+    let closed = json!([
+        // supersedes an open one: read
+        {"number": 5, "state": "MERGED", "headRefOid": "h5", "body": "Supersedes #2"},
+        // supersedes only what is not open: not needed
+        {"number": 6, "state": "MERGED", "headRefOid": "h6", "body": "Supersedes #40"},
+        // mentions the word in prose: no declaration
+        {"number": 8, "state": "CLOSED", "headRefOid": "h8", "body": "this supersedes #1"},
+        // what an answer without a state says: not a closed pull request
+        {"number": 1, "headRefOid": "h1", "body": "Supersedes #2"}
+    ]);
+    let mut viewed = Vec::new();
+    let resolved = resolved_for(&open, &closed, |m| {
+        viewed.push(m);
+        Some(json!({"number": m, "state": "CLOSED", "headRefOid": format!("h{m}"), "body": ""}))
+    });
+    assert_eq!(
+        viewed,
+        [7],
+        "only the named successor that is not open is viewed"
+    );
+    assert_eq!(resolved.keys().copied().collect::<Vec<_>>(), [5, 7]);
+    assert!(resolved[&5].merged);
+    assert!(!resolved[&7].merged);
+    assert_eq!(resolved[&5].head_sha, "h5");
+    // a successor the forge cannot show is left out: unread, never landed
+    let none = resolved_for(&open, &json!([]), |_| None);
+    assert!(none.is_empty());
+}
+
+/// A scratch repository whose first commit holds `files`, with `master` on it.
+fn repository_with(files: &[(&str, &str)]) -> (std::path::PathBuf, String) {
+    let dir = scratch();
+    git(&dir, &["init", "-q", "-b", "master"]);
+    for (p, c) in files {
+        std::fs::write(dir.join(p), c).unwrap();
+    }
+    git(&dir, &["add", "-A"]);
+    git(&dir, &["commit", "-q", "-m", "base"]);
+    let base = git(&dir, &["rev-parse", "HEAD"]);
+    git(&dir, &["checkout", "-q", "-B", "master", &base]);
+    (dir, base)
+}
+
+/// A repository for patch identity: `base` commits `f.txt`, `master` cherry-picks a branch's
+/// change of it and then changes it again. Returns the directory, master and the heads.
+fn patch_fixture() -> (std::path::PathBuf, String, BTreeMap<&'static str, String>) {
+    let (dir, base) = repository_with(&[("f.txt", "a\n"), ("g.txt", "g\n")]);
+    let mut heads = BTreeMap::new();
+    // every commit cherry-picked onto master, which then moved past it: the merge conflicts
+    let picked = commit_on(&dir, "picked", &base, &[("f.txt", "b\n")]);
+    heads.insert("picked", picked.clone());
+    // the same change, and one more that master never got
+    commit_on(&dir, "partial", &base, &[("f.txt", "b\n")]);
+    let partial = commit_on(&dir, "partial", "partial", &[("h.txt", "h\n")]);
+    heads.insert("partial", partial);
+    // the same change, and a merge of a side branch: a merge has no patch to compare
+    commit_on(&dir, "side", &base, &[("s.txt", "s\n")]);
+    commit_on(&dir, "merged", &base, &[("f.txt", "b\n")]);
+    git(
+        &dir,
+        &["merge", "-q", "--no-ff", "-m", "merge side", "side"],
+    );
+    heads.insert("merged", git(&dir, &["rev-parse", "HEAD"]));
+    git(&dir, &["checkout", "-q", "master"]);
+    // -x: a commit of its own, never the same object when the clock has not moved
+    git(&dir, &["cherry-pick", "-x", &picked]);
+    let master = commit_on(&dir, "master", "master", &[("f.txt", "c\n")]);
+    (dir, master, heads)
+}
+
+#[test]
+fn every_patch_on_master_is_redundant_and_a_partial_match_never_is() {
+    use crate::integration::{relation_to_master, ReasonCode as R};
+    let (dir, master, heads) = patch_fixture();
+    assert_eq!(
+        relation_to_master(&dir, &master, &heads["picked"]),
+        RelationToMaster::PatchIdsUpstream { commits: 1 }
+    );
+    // one commit master lacks is enough to refuse it, and so is a merge commit
+    for partial in ["partial", "merged"] {
+        let r = relation_to_master(&dir, &master, &heads[partial]);
+        assert!(
+            matches!(r, RelationToMaster::Conflicting { .. }),
+            "{partial}: {r:?}"
+        );
+    }
+    // classified: strong evidence, redundant, closable
+    let obs = World {
+        open: vec![sim(1)],
+        ..Default::default()
+    }
+    .observation();
+    let q = build_queue(&obs, "m0", |_| RelationToMaster::PatchIdsUpstream {
+        commits: 1,
+    });
+    let a = q.get(1).unwrap();
+    assert_eq!(a.disposition, PullRequestDisposition::Redundant);
+    assert_eq!(a.reasons[0], R::PatchIdsUpstream);
+    assert_eq!(a.reasons[0].to_string(), "patch_ids_upstream");
+    let rel = a
+        .evidence
+        .iter()
+        .find(|e| e.kind == "relation_to_master")
+        .unwrap();
+    assert_eq!(rel.status, "patch_ids_upstream");
+    assert_eq!(
+        serde_json::to_value(&a.relation).unwrap(),
+        serde_json::json!({"kind": "patch_ids_upstream", "commits": 1})
+    );
+}
+
+#[test]
+fn equal_patches_never_override_a_clean_merge_that_changes_authored_paths() {
+    use crate::integration::relation_to_master;
+    // master took the change and reverted it since: equal patches, and master lacks the change
+    let (dir, base) = repository_with(&[("f.txt", "a\n")]);
+    let head = commit_on(&dir, "change", &base, &[("f.txt", "b\n")]);
+    git(&dir, &["checkout", "-q", "master"]);
+    git(&dir, &["cherry-pick", "-x", &head]);
+    let master = commit_on(&dir, "master", "master", &[("f.txt", "a\n")]);
+    assert_eq!(
+        crate::integration::relation::patches_upstream(&dir, &master, &head),
+        Some(1),
+        "git cherry calls every patch upstream"
+    );
+    let r = relation_to_master(&dir, &master, &head);
+    assert!(matches!(r, RelationToMaster::Behind { .. }), "{r:?}");
+}
+
+#[test]
+fn the_words_written_before_the_rename_still_read() {
+    use crate::integration::{EvidenceKind, ReasonCode as R};
+    // a closure an executor recorded before 0.13: `closed_superseded`, for what is now
+    // `closed_redundant`, with the strong relation's reason
+    let line = r#"{"at":"2026-10-02T09:00:00Z","actor":"t (pid 1 on h)","action":"closed_superseded","pr":2,"master_before":"m1","head_sha":"h2","master_after":null,"reasons":["head_reachable_from_master"],"detail":"Closed by `majordomus prs cleanup`: its work is already on `master`.","evidence":[{"kind":"relation_to_master","status":"contained","detail":"the head is an ancestor of master"}]}"#;
+    let e: drain::IntegrationEvent = serde_json::from_str(line).unwrap();
+    assert_eq!(e.action, drain::IntegrationAction::ClosedSuperseded);
+    assert_eq!(e.reasons, vec![R::HeadReachableFromMaster]);
+    assert_eq!(e.evidence[0].kind, EvidenceKind::RelationToMaster);
+    let original: serde_json::Value = serde_json::from_str(line).unwrap();
+    assert_eq!(serde_json::to_value(&e).unwrap(), original);
+    // and the trail folds both closures the same way: a closed pull request waits no more
+    for action in ["closed_superseded", "closed_redundant"] {
+        let became = old_line("became_actionable");
+        let closed = old_line(action);
+        let trail: Vec<drain::IntegrationEvent> = [became, closed]
+            .iter()
+            .map(|l| serde_json::from_str(l).unwrap())
+            .collect();
+        assert!(super::wait::waits(&trail).is_empty(), "{action}");
+    }
+    // the disposition words read, the old one among them, and the relation's word is unchanged
+    for word in ["superseded", "redundant", "possibly_redundant"] {
+        let d: PullRequestDisposition = serde_json::from_value(serde_json::json!(word)).unwrap();
+        assert_eq!(d.as_str(), word);
+    }
+    assert_eq!(
+        serde_json::from_value::<RelationToMaster>(serde_json::json!({"kind": "superseded"}))
+            .unwrap(),
+        RelationToMaster::Superseded
+    );
+    // a cleanup item and an observation written before: no successor, nothing resolved
+    let item: drain::CleanupItem = serde_json::from_value(serde_json::json!({
+        "pr": 2, "disposition": "superseded", "reasons": ["merge_changes_nothing"],
+        "action": "closed"
+    }))
+    .unwrap();
+    assert_eq!(item.disposition, PullRequestDisposition::Superseded);
+    let mut obs = serde_json::to_value(World::default().observation()).unwrap();
+    obs.as_object_mut().unwrap().remove("resolved");
+    let obs: ForgeObservation = serde_json::from_value(obs).unwrap();
+    assert!(obs.resolved.is_empty());
+}
+
+#[test]
+fn redundant_and_superseded_are_two_words_of_the_cleanup_lane() {
+    use crate::integration::{IntegrationGate as G, IntegrationLane as L};
+    assert_eq!(PullRequestDisposition::Redundant.as_str(), "redundant");
+    assert_eq!(PullRequestDisposition::Superseded.as_str(), "superseded");
+    let cleanup: Vec<&str> = PullRequestDisposition::ALL
+        .iter()
+        .filter(|d| d.lane() == L::Cleanup)
+        .map(|d| d.as_str())
+        .collect();
+    assert_eq!(cleanup, ["redundant", "superseded", "possibly_redundant"]);
+    // the supersession gate is asked before the relation to master
+    let at = |g: G| G::ALL.iter().position(|x| *x == g).unwrap();
+    assert_eq!(at(G::Supersession) + 1, at(G::RelationToMaster));
+    assert_eq!(G::Supersession.as_str(), "supersession");
 }
 
 // ---------------------------------------------------------------- a merge proved where it landed (WP6)

@@ -54,6 +54,7 @@ pub fn waits(trail: &[IntegrationEvent]) -> BTreeMap<u64, ExecutorWait> {
             (
                 LEFT_ACTIONABLE
                 | IntegrationAction::MergeSucceeded
+                | IntegrationAction::ClosedRedundant
                 | IntegrationAction::ClosedSuperseded,
                 Some(n),
             ) => {
