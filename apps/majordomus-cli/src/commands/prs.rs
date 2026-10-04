@@ -264,8 +264,11 @@ pub fn run(args: PrsArgs) -> Result<u8> {
                 root: &root,
                 lease: lease.as_ref(),
             };
+            // a signal lets the step in progress finish and starts no other, as in continuous mode
+            let stop = drain::stop_on_signals();
             let report =
-                drain::drain(&root, &mut integrator, max, dry_run, refresh).map_err(unusable)?;
+                drain::drain_until(&root, &mut integrator, max, dry_run, refresh, Some(stop))
+                    .map_err(unusable)?;
             if format == OutputFormat::Json {
                 json(&mut out, &report)?;
             } else {
@@ -507,8 +510,8 @@ fn describe(s: &DrainStepOutcome) -> String {
                 short(master_after)
             )
         }
-        DrainStepOutcome::MergeRefused { pr, reason } => {
-            format!("#{pr}: the forge refused the merge: {reason}")
+        DrainStepOutcome::MergeRefused { pr, reason, class } => {
+            format!("#{pr}: the forge refused the merge ({class}): {reason}")
         }
         DrainStepOutcome::VerificationFailed { pr, reason } => {
             format!("#{pr}: merged but not verified: {reason}")
@@ -532,8 +535,8 @@ fn describe(s: &DrainStepOutcome) -> String {
         DrainStepOutcome::AwaitingChecks { pr } => {
             format!("#{pr} contains master; waiting for its required checks")
         }
-        DrainStepOutcome::RefreshFailed { pr, reason } => {
-            format!("#{pr}: bringing master in failed: {reason}")
+        DrainStepOutcome::RefreshFailed { pr, reason, class } => {
+            format!("#{pr}: bringing master in failed ({class}): {reason}")
         }
         DrainStepOutcome::TrailUnwritable {
             pr,
@@ -1022,6 +1025,7 @@ mod tests {
             DrainStepOutcome::MergeRefused {
                 pr: 4,
                 reason: "protected".into(),
+                class: drain::FailureClass::PolicyViolation,
             },
             DrainStepOutcome::VerificationFailed {
                 pr: 5,
@@ -1037,6 +1041,7 @@ mod tests {
             DrainStepOutcome::RefreshFailed {
                 pr: 9,
                 reason: "conflict".into(),
+                class: drain::FailureClass::Conflict,
             },
             DrainStepOutcome::TrailUnwritable {
                 pr: 10,

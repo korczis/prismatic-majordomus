@@ -290,6 +290,7 @@ repository's own setting decides that.
   | `close_attempted` | before a superseded pull request is closed |
   | `closed_superseded` (with its evidence), `close_failed` | after it |
   | `idle` | nothing was ready |
+  | `observe_failed` | a continuous drain's cycle met an outage short enough to wait out |
 
   An event may also carry `evidence` (the assessment's, on the four acts named above),
   `class` (why it failed, once classified) and `merge_commit`. Each is left out when empty,
@@ -303,6 +304,17 @@ repository's own setting decides that.
   (`observed`).
 - A refused merge and a stale decision are specific to the candidate: the next step
   re-plans. A verification failure stops the drain.
+- Every failed act on the trail carries its `class`: `stale`, `conflict`,
+  `new_failing_check`, `review_revoked`, `transient` or `policy_violation` are one
+  candidate's, and the drain goes on with the next; `verification_failed` and `unreadable`
+  stop it. A pull request the forge refused to merge, or whose refresh failed, is shown as
+  `needs_repair` with `executor_merge_refused:<head>` or `executor_refresh_failed:<master>`
+  for as long as its head and master are the ones that were refused, so the next ready
+  change merges instead of the same refusal repeating. A push to the branch or a new master
+  clears it; a transient failure never holds a change back.
+- A signal stops a one-shot drain as it stops a continuous one: the step in progress
+  finishes, and no other starts. A continuous drain waits out a short outage of the forge
+  (`observe_failed`, at most three consecutive cycles) before it ends.
 - A merge is verified where it landed, not where the forge says it is. The base is fetched,
   and the commit right after the decision's master on master's first-parent line must be
   this merge: its first parent the master the decision was taken against and, for a merge

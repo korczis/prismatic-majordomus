@@ -177,6 +177,17 @@ with one canonical state, one classification and one executor.
    `<git-common-dir>/majordomus/integration/events.jsonl`, beside the lease, so every
    worktree writes and reads the same one. Each act is appended before it is taken, and an
    act the trail cannot record is not taken.
+10. **Failure classes and retry.** Every failed act is recorded with its class: `stale`,
+   `conflict`, `new_failing_check`, `review_revoked`, `transient`, `policy_violation`,
+   `verification_failed` or `unreadable`. The first six belong to one candidate, and the
+   drain goes on with the next; the last two belong to the repository or the executor, and
+   the drain stops. A candidate the forge refused to merge, or whose refresh failed, is
+   held back as `needs_repair` (`executor_merge_refused`, `executor_refresh_failed`) while
+   its head and master are the ones refused — folded from the trail, never from a plan — so
+   one refused change does not block the queue. A transient failure holds nothing back. The
+   forge is asked again only on an outage (`crate::integration::retry`, case 742), a merge
+   never; a continuous drain waits out up to `CONTINUOUS_TRANSIENT_LIMIT` consecutive
+   outages, each recorded as `observe_failed`, before it ends.
 
 ## Consequences
 

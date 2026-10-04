@@ -8,8 +8,8 @@
 #   3. a merge that failed with a 502 is not retried — a merge that timed out may have
 #      landed, and the verification after it is what finds out — so every merge request
 #      that reaches the forge is a decision of its own, recorded and taken from a fresh
-#      observation, and the drain says the forge refused it (the drain may decide again,
-#      within its step bound: that is a new decision, not the old request asked twice)
+#      observation, and the drain says the forge refused it. An outage ends the drain: the
+#      next one, or the next cycle, decides again (ADR 0101 §10)
 #   4. an outage that does not end is given up on after four attempts, and says so
 . "$ROOT/test/lib.sh"
 RB="$(rust_bin)" || rust_bin_exit $?
@@ -87,7 +87,7 @@ decisions="$(grep -c '"action":"merge_attempted"' "$EV" 2>/dev/null || true)"
 [ "$requests" -ge 1 ] || { echo "    no merge was requested"; exit 1; }
 [ "$requests" = "$decisions" ] \
   || { echo "    $requests merge request(s) for $decisions decision(s): a failed merge was asked again"; exit 1; }
-[ "$requests" -le 3 ] || { echo "    the drain went past its step bound: $requests merges"; exit 1; }
+[ "$requests" = 1 ] || { echo "    the drain asked the forge to merge $requests times during an outage, not once"; exit 1; }
 # each decision was taken from its own two observations, not from a retry loop
 [ "$(asked 'pr list')" -ge $((2 * requests)) ] || { echo "    a merge was requested without a fresh observation"; exit 1; }
 case "$out" in *"the forge refused the merge"*) ;; *) echo "    the drain does not report the refusal: $out"; exit 1 ;; esac

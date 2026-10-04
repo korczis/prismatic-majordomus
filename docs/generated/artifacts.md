@@ -240,13 +240,13 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/modules/web.md` | `modules/web` | markdown | 1463 | `3bf4d17d26121c89` |
 | `docs/generated/modules/why.md` | `modules/why` | markdown | 6122 | `ee8911d2321bb6cd` |
 | `docs/generated/modules/worktree.md` | `modules/worktree` | markdown | 4893 | `2027278cb0f54bc4` |
-| `docs/generated/openapi.json` | `openapi` | json | 2097061 | `059661ee7f3296ac` |
-| `docs/generated/openapi.yaml` | `openapi` | yaml | 1697243 | `78f48264ffdba6b0` |
+| `docs/generated/openapi.json` | `openapi` | json | 2097525 | `5ec27c59ab579423` |
+| `docs/generated/openapi.yaml` | `openapi` | yaml | 1697664 | `62b038182cf55507` |
 | `docs/generated/providers.json` | `providers` | json | 6954 | `48e97f576996ec7a` |
 | `docs/generated/providers.md` | `providers` | markdown | 2302 | `e7bb3c9d706cac72` |
 | `docs/generated/providers.yaml` | `providers` | yaml | 6472 | `5707ddd06bbff14c` |
-| `docs/generated/registry.json` | `registry` | json | 3000267 | `a95b86a1078c3741` |
-| `docs/generated/registry.yaml` | `registry` | yaml | 2420640 | `e70d059d9f1d5924` |
+| `docs/generated/registry.json` | `registry` | json | 3001541 | `d3ca6a001f5d6868` |
+| `docs/generated/registry.yaml` | `registry` | yaml | 2421749 | `e1d080ef8823ac9a` |
 | `docs/generated/web.json` | `web` | json | 5177 | `0d9d5467edd20f29` |
 | `docs/generated/web.yaml` | `web` | yaml | 3951 | `3116259db9aa88f1` |
 | `fly.toml` | `deployment` | text | 919 | `5a88e46d6a0cf98e` |
@@ -306,7 +306,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 667883 | `1ddc8a284445701a` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 92055 | `262ad4fb024cc984` |
 | `site/data/registry/product.json` | `site-product` | json | 616884 | `24e16689bc846179` |
-| `site/data/registry/registry.json` | `site-registry` | json | 5529680 | `2bb8fab27a478e15` |
+| `site/data/registry/registry.json` | `site-registry` | json | 5530984 | `b3dadc944e6aa044` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `03f6876c7795cd30` |
 | `site/data/registry/why.json` | `site-why` | json | 349952 | `d2ba0ef06a73f361` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `d249681abaa525f7` |

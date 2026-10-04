@@ -411,6 +411,9 @@ pub enum IntegrationAction {
     CloseFailed,
     /// Nothing was ready.
     Idle,
+    /// A continuous drain's cycle could not observe the forge, and the outage was short
+    /// enough to wait out ([`CONTINUOUS_TRANSIENT_LIMIT`]).
+    ObserveFailed,
 }
 
 impl IntegrationAction {
@@ -439,6 +442,7 @@ impl IntegrationAction {
             IntegrationAction::ClosedSuperseded => "closed_superseded",
             IntegrationAction::CloseFailed => "close_failed",
             IntegrationAction::Idle => "idle",
+            IntegrationAction::ObserveFailed => "observe_failed",
         }
     }
 }
@@ -449,8 +453,9 @@ impl std::fmt::Display for IntegrationAction {
     }
 }
 
-/// Why an act failed, as one class a person and a retry policy can act on. Declared so that
-/// the trail's shape is settled before anything classifies: no event carries one yet.
+/// Why an act failed, as one class a person and a retry policy can act on. Every failed act
+/// on the trail carries one (`class`), and the drain decides from it whether the next
+/// candidate may be tried ([`FailureClass::recoverable`]) or the drain must stop.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum FailureClass {
@@ -470,6 +475,63 @@ pub enum FailureClass {
     VerificationFailed,
     /// The forge or git could not be read.
     Unreadable,
+}
+
+impl std::fmt::Display for FailureClass {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // the wire word, as the trail writes it
+        match serde_json::to_value(self) {
+            Ok(serde_json::Value::String(w)) => f.write_str(&w),
+            _ => write!(f, "{self:?}"),
+        }
+    }
+}
+
+impl FailureClass {
+    /// Whether the failure is this candidate's, so the drain may go on with the next one;
+    /// otherwise it is the repository's or the executor's, and the drain stops.
+    pub fn recoverable(self) -> bool {
+        !matches!(
+            self,
+            FailureClass::VerificationFailed | FailureClass::Unreadable
+        )
+    }
+
+    /// The class of a merge the forge refused, from its own words.
+    pub fn of_merge_refusal(reason: &str) -> FailureClass {
+        let r = reason.to_ascii_lowercase();
+        if super::retry::transient(reason) {
+            FailureClass::Transient
+        } else if r.contains("conflict") {
+            FailureClass::Conflict
+        } else if r.contains("head branch was modified") || r.contains("head sha") {
+            FailureClass::Stale
+        } else if r.contains("review") {
+            FailureClass::ReviewRevoked
+        } else if r.contains("check") && (r.contains("fail") || r.contains("expected")) {
+            FailureClass::NewFailingCheck
+        } else {
+            // a protection rule, a missing permission, a setting: the forge's policy said no
+            FailureClass::PolicyViolation
+        }
+    }
+
+    /// The class of a refresh that failed, from its words.
+    pub fn of_refresh_failure(reason: &str) -> FailureClass {
+        let r = reason.to_ascii_lowercase();
+        if super::retry::transient(reason) {
+            FailureClass::Transient
+        } else if r.contains("conflict") {
+            FailureClass::Conflict
+        } else if r.contains("rejected")
+            || r.contains("fetch first")
+            || r.contains("non-fast-forward")
+        {
+            FailureClass::Stale
+        } else {
+            FailureClass::PolicyViolation
+        }
+    }
 }
 
 /// One entry of the audit trail.
@@ -560,6 +622,19 @@ pub fn record(root: &Path, mut event: IntegrationEvent) -> Result<IntegrationEve
     }
     if event.actor.is_empty() {
         event.actor = actor();
+    }
+    if event.class.is_none() {
+        // every failed act names its class, decided once, here, from what it says
+        event.class = match event.action {
+            IntegrationAction::StaleDecision => Some(FailureClass::Stale),
+            IntegrationAction::MergeFailed => Some(FailureClass::of_merge_refusal(&event.detail)),
+            IntegrationAction::RefreshFailed => {
+                Some(FailureClass::of_refresh_failure(&event.detail))
+            }
+            IntegrationAction::VerificationFailed => Some(FailureClass::VerificationFailed),
+            IntegrationAction::ObserveFailed => Some(FailureClass::Transient),
+            _ => None,
+        };
     }
     if let Some(why) = injected_failure() {
         return Err(why);
@@ -679,12 +754,15 @@ pub enum DrainStepOutcome {
         /// The pull request whose checks are running.
         pr: u64,
     },
-    /// Bringing master in failed; the candidate is reclassified on the next step.
+    /// Bringing master in failed. Recoverable classes let the drain go on: the queue holds
+    /// this candidate back (`executor_refresh_failed`) until its head or master moves.
     RefreshFailed {
         /// The pull request.
         pr: u64,
         /// Why.
         reason: String,
+        /// Why, as a class.
+        class: FailureClass,
     },
     /// The decision went stale between planning and acting; nothing was merged.
     StaleDecision {
@@ -702,12 +780,15 @@ pub enum DrainStepOutcome {
         /// Master after.
         master_after: String,
     },
-    /// The forge refused the merge; the candidate is reclassified on the next step.
+    /// The forge refused the merge. Recoverable classes let the drain go on: the queue holds
+    /// this candidate back (`executor_merge_refused`) until its head or master moves.
     MergeRefused {
         /// The pull request.
         pr: u64,
         /// The forge's words.
         reason: String,
+        /// The forge's words, as a class.
+        class: FailureClass,
     },
     /// Merged, but what landed could not be verified: the drain stops.
     VerificationFailed {
@@ -933,9 +1014,11 @@ pub fn step(
                 reason.clone(),
             ),
         )?;
+        let class = FailureClass::of_merge_refusal(&reason);
         return Ok(DrainStepOutcome::MergeRefused {
             pr: candidate.number,
             reason,
+            class,
         });
     }
     match integrator.verify(candidate.number, &at, &method) {
@@ -1054,8 +1137,15 @@ pub fn reconcile(
         Err(NotLanded::NotMerged(why)) => {
             let reason =
                 format!("reconciled: the merge the last executor asked for never landed: {why}");
-            record(root, of(IntegrationAction::MergeFailed, reason.clone()))?;
-            DrainStepOutcome::MergeRefused { pr, reason }
+            // nothing the forge refused: the change is decided afresh, never held back for it
+            let mut e = of(IntegrationAction::MergeFailed, reason.clone());
+            e.class = Some(FailureClass::Transient);
+            record(root, e)?;
+            DrainStepOutcome::MergeRefused {
+                pr,
+                reason,
+                class: FailureClass::Transient,
+            }
         }
         Err(NotLanded::Unproved(why)) => {
             record(root, of(IntegrationAction::VerificationFailed, why.clone()))?;
@@ -1229,9 +1319,11 @@ fn refresh_step(
                     reason.clone(),
                 ),
             )?;
+            let class = FailureClass::of_refresh_failure(&reason);
             Ok(Some(DrainStepOutcome::RefreshFailed {
                 pr: candidate.number,
                 reason,
+                class,
             }))
         }
     }
@@ -1260,6 +1352,19 @@ pub fn drain(
     dry_run: bool,
     allow_refresh: bool,
 ) -> Result<DrainReport, String> {
+    drain_until(root, integrator, max, dry_run, allow_refresh, None)
+}
+
+/// [`drain`], asked before every step whether to stop: a signal lets the step in progress
+/// finish and starts no other.
+pub fn drain_until(
+    root: &Path,
+    integrator: &mut dyn Integrator,
+    max: usize,
+    dry_run: bool,
+    allow_refresh: bool,
+    stop: Option<&std::sync::atomic::AtomicBool>,
+) -> Result<DrainReport, String> {
     let mut report = DrainReport {
         dry_run,
         steps: Vec::new(),
@@ -1286,6 +1391,10 @@ pub fn drain(
     }
     let max_steps = max.saturating_mul(3).max(3);
     while report.merged.len() < max {
+        if stop.is_some_and(|s| s.load(std::sync::atomic::Ordering::SeqCst)) {
+            report.stopped = "asked to stop; the step in progress finished first".into();
+            break;
+        }
         if report.steps.len() >= max_steps {
             report.stopped = format!("{max_steps} steps without reaching {max} merge(s)");
             break;
@@ -1300,7 +1409,15 @@ pub fn drain(
                 report.merged.push(*pr);
                 None
             }
-            DrainStepOutcome::StaleDecision { .. } | DrainStepOutcome::MergeRefused { .. } => None,
+            DrainStepOutcome::StaleDecision { .. } => None,
+            // the candidate's own failure: the queue holds it back and the next is tried. An
+            // outage is not the candidate's: asking the forge to merge again at once would
+            // only hammer it, so the drain ends and a later one (or the next cycle) asks
+            DrainStepOutcome::MergeRefused { pr, reason, class } => {
+                (*class == FailureClass::Transient || !class.recoverable()).then(|| {
+                    format!("the forge refused #{pr} ({reason}); nothing further is attempted")
+                })
+            }
             DrainStepOutcome::WouldRefresh { pr } => Some(format!(
                 "dry run: master would be brought into #{pr}; its checks must then pass before it can merge"
             )),
@@ -1310,9 +1427,8 @@ pub fn drain(
             DrainStepOutcome::AwaitingChecks { pr } => Some(format!(
                 "#{pr} contains master and its checks are running; nothing else is refreshed meanwhile"
             )),
-            DrainStepOutcome::RefreshFailed { pr, reason } => {
-                Some(format!("bringing master into #{pr} failed: {reason}"))
-            }
+            DrainStepOutcome::RefreshFailed { pr, reason, class } => (!class.recoverable())
+                .then(|| format!("bringing master into #{pr} failed: {reason}")),
             DrainStepOutcome::VerificationFailed { pr, reason } => {
                 Some(format!("#{pr} could not be verified after merging: {reason}"))
             }
@@ -1374,6 +1490,25 @@ pub struct ContinuousOptions {
 /// every action is preceded by a fresh observation and no plan outlives a merge; the wait
 /// is taken in one-second slices so a stop is honoured within a second of the step in
 /// progress finishing. `sleep` takes the waits (a test records them); `on_cycle` hears each
+/// How many consecutive cycles a continuous drain waits out a transient failure to observe
+/// the forge — a timeout, a 5xx, a rate limit — before it ends: long enough for a blip,
+/// short enough that an outage is not hidden for hours.
+pub const CONTINUOUS_TRANSIENT_LIMIT: usize = 3;
+
+/// Wait one interval, a second at a time, until it passes or a stop is asked for.
+fn wait_interval(
+    interval: Duration,
+    stop: &std::sync::atomic::AtomicBool,
+    sleep: &mut dyn FnMut(Duration),
+) {
+    let mut left = interval;
+    while !left.is_zero() && !stop.load(std::sync::atomic::Ordering::SeqCst) {
+        let slice = left.min(Duration::from_secs(1));
+        sleep(slice);
+        left = left.saturating_sub(slice);
+    }
+}
+
 /// cycle's report as it ends. The caller holds the lease for the whole run.
 pub fn continuous(
     root: &Path,
@@ -1404,19 +1539,40 @@ pub fn continuous(
         out.failure = Some(e);
         return out;
     }
+    let mut outages = 0usize;
     loop {
         if stop.load(Ordering::SeqCst) {
             out.stopped = "asked to stop; the step in progress finished first".into();
             break;
         }
-        let report = match drain(
+        let report = match drain_until(
             root,
             integrator,
             opts.max_per_cycle,
             false,
             opts.allow_refresh,
+            Some(stop),
         ) {
-            Ok(r) => r,
+            Ok(r) => {
+                outages = 0;
+                r
+            }
+            // a short outage of the forge is waited out, a few cycles at most, and said on the
+            // trail; anything else, or an outage that outlasts them, ends the run
+            Err(e) if super::retry::transient(&e) && outages < CONTINUOUS_TRANSIENT_LIMIT => {
+                outages += 1;
+                let _ = record(
+                    root,
+                    IntegrationEvent {
+                        detail: format!(
+                            "outage {outages} of at most {CONTINUOUS_TRANSIENT_LIMIT}: {e}"
+                        ),
+                        ..IntegrationEvent::of(IntegrationAction::ObserveFailed)
+                    },
+                );
+                wait_interval(opts.interval, stop, sleep);
+                continue;
+            }
             Err(e) => {
                 out.stopped =
                     "the repository could not be read; nothing further is attempted".into();
@@ -1458,12 +1614,7 @@ pub fn continuous(
             out.stopped = format!("{} cycle(s), the bound asked for", out.cycles);
             break;
         }
-        let mut left = opts.interval;
-        while !left.is_zero() && !stop.load(Ordering::SeqCst) {
-            let slice = left.min(Duration::from_secs(1));
-            sleep(slice);
-            left = left.saturating_sub(slice);
-        }
+        wait_interval(opts.interval, stop, sleep);
     }
     let stopped = IntegrationEvent {
         detail: out.stopped.clone(),

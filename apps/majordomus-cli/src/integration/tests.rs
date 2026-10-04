@@ -132,6 +132,11 @@ struct World {
     answer_lost_before_landing: BTreeSet<u64>,
     /// How many times a verification was asked for.
     verify_calls: usize,
+    /// The repository whose trail the executor's refusals are folded from, as `queue_of`
+    /// does: set it to see the queue the command line would see.
+    trail_root: Option<std::path::PathBuf>,
+    /// The next observations fail with these words, once each.
+    outages: Vec<String>,
 }
 
 impl Default for World {
@@ -159,6 +164,8 @@ impl Default for World {
             answer_lost_after_landing: BTreeSet::new(),
             answer_lost_before_landing: BTreeSet::new(),
             verify_calls: 0,
+            trail_root: None,
+            outages: Vec::new(),
         }
     }
 }
@@ -306,7 +313,14 @@ impl Integrator for World {
         {
             unwritable(trail);
         }
-        Ok(self.queue())
+        if !self.outages.is_empty() {
+            return Err(self.outages.remove(0));
+        }
+        let mut q = self.queue();
+        if let Some(root) = &self.trail_root {
+            super::executor_feedback(&mut q, &drain::events(root));
+        }
+        Ok(q)
     }
 
     fn merge(&mut self, pr: u64, head_sha: &str, method: &str) -> Result<(), String> {
@@ -743,7 +757,7 @@ fn a_refused_merge_is_recorded_and_the_next_step_plans_again() {
     };
     let out = drain::step(&root, &mut w, false, false).unwrap();
     assert!(
-        matches!(&out, DrainStepOutcome::MergeRefused { pr: 1, reason } if reason.contains("not mergeable")),
+        matches!(&out, DrainStepOutcome::MergeRefused { pr: 1, reason, .. } if reason.contains("not mergeable")),
         "{out:?}"
     );
     assert!(w.merged.is_empty());
@@ -2312,7 +2326,7 @@ fn a_continuous_drain_is_recorded_when_it_starts_and_stops() {
 }
 
 /// Every action, in the order an executor's run meets them.
-const ALL_ACTIONS: [drain::IntegrationAction; 21] = [
+const ALL_ACTIONS: [drain::IntegrationAction; 23] = [
     drain::IntegrationAction::LeaseAcquired,
     drain::IntegrationAction::LeaseReleased,
     drain::IntegrationAction::ContinuousStarted,
@@ -2334,7 +2348,40 @@ const ALL_ACTIONS: [drain::IntegrationAction; 21] = [
     drain::IntegrationAction::ClosedSuperseded,
     drain::IntegrationAction::CloseFailed,
     drain::IntegrationAction::Idle,
+    drain::IntegrationAction::FailureAcknowledged,
+    drain::IntegrationAction::ObserveFailed,
 ];
+
+/// A new action must be added to [`ALL_ACTIONS`] before this compiles: no wildcard.
+#[allow(dead_code)]
+fn every_action_is_listed(a: drain::IntegrationAction) {
+    use drain::IntegrationAction as A;
+    match a {
+        A::LeaseAcquired
+        | A::LeaseReleased
+        | A::ContinuousStarted
+        | A::ContinuousStopped
+        | A::Observed
+        | A::BecameActionable
+        | A::LeftActionable
+        | A::Selected
+        | A::RefreshSelected
+        | A::StaleDecision
+        | A::MergeAttempted
+        | A::MergeSucceeded
+        | A::MergeFailed
+        | A::VerificationFailed
+        | A::RefreshAttempted
+        | A::Refreshed
+        | A::RefreshFailed
+        | A::CloseAttempted
+        | A::ClosedSuperseded
+        | A::CloseFailed
+        | A::Idle
+        | A::FailureAcknowledged
+        | A::ObserveFailed => (),
+    }
+}
 
 #[test]
 fn every_action_has_one_word_and_it_is_the_wire_word() {
@@ -3314,6 +3361,8 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         | R::ContainsMaster
         | R::RequiredChecksPassed
         | R::RequiredChecksSkipped
+        | R::ExecutorMergeRefused { .. }
+        | R::ExecutorRefreshFailed { .. }
         | R::Unrecognised(_) => (),
     };
     let mut all = vec![
@@ -3348,6 +3397,12 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         R::ContainsMaster,
         R::RequiredChecksPassed,
         R::RequiredChecksSkipped,
+        R::ExecutorMergeRefused {
+            head: "a".repeat(40),
+        },
+        R::ExecutorRefreshFailed {
+            master: "b".repeat(40),
+        },
     ];
     for state in [
         PullRequestReview::NotRequired,
@@ -4308,4 +4363,240 @@ fn a_landing_is_proved_from_the_merge_commit_parents() {
     // nothing landed on a master that has not moved
     assert!(drain::landing(&d, &at_of(&master, &ours), "merge", &master).is_err());
     let _ = std::fs::remove_dir_all(&d);
+}
+
+// ---------------------------------------------------------------- a refused candidate does not block the queue (WP7)
+
+#[test]
+fn a_refused_merge_lets_the_next_pull_request_merge() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1), sim(2)],
+        merge_refuses: [1].into(),
+        trail_root: Some(root.clone()),
+        ..Default::default()
+    };
+    let report = drain::drain(&root, &mut w, 1, false, false).unwrap();
+    assert_eq!(report.merged, vec![2], "{report:?}");
+    match report.steps.first() {
+        Some(DrainStepOutcome::MergeRefused { pr: 1, class, .. }) => {
+            assert_eq!(*class, drain::FailureClass::PolicyViolation);
+            assert!(class.recoverable());
+        }
+        other => panic!("expected #1 refused, got {other:?}"),
+    }
+    // #1 was asked once: the queue held it back, it was not tried again
+    assert_eq!(w.merge_calls, 2);
+    let failed = drain::events(&root)
+        .into_iter()
+        .find(|e| e.action.as_str() == "merge_failed")
+        .unwrap();
+    assert_eq!(failed.class, Some(drain::FailureClass::PolicyViolation));
+}
+
+#[test]
+fn a_refused_candidate_is_held_until_its_head_or_master_moves() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1)],
+        merge_refuses: [1].into(),
+        trail_root: Some(root.clone()),
+        ..Default::default()
+    };
+    drain::drain(&root, &mut w, 1, false, false).unwrap();
+    let q = w.observe().unwrap();
+    let a = q.get(1).unwrap();
+    assert_eq!(a.disposition, PullRequestDisposition::NeedsRepair);
+    assert!(
+        a.reasons
+            .iter()
+            .any(|r| matches!(r, crate::integration::ReasonCode::ExecutorMergeRefused { head } if head == "h1.0")),
+        "{:?}",
+        a.reasons
+    );
+    assert_eq!(q.next_merge, None);
+    // the author pushes: a new head clears the hold, and the forge now accepts it
+    w.merge_refuses.clear();
+    w.open[0].head = "h1.1".into();
+    let report = drain::drain(&root, &mut w, 1, false, false).unwrap();
+    assert_eq!(report.merged, vec![1]);
+}
+
+#[test]
+fn a_transient_refusal_holds_nothing_back() {
+    let root = scratch();
+    let mut q_world = World {
+        open: vec![sim(1)],
+        trail_root: Some(root.clone()),
+        ..Default::default()
+    };
+    // what a timed-out merge that never landed leaves
+    drain::record(
+        &root,
+        drain::IntegrationEvent {
+            pr: Some(1),
+            head_sha: Some("h1.0".into()),
+            master_before: Some("m0".into()),
+            detail: "Post https://api.github.com/graphql: timed out".into(),
+            ..drain::IntegrationEvent::of(drain::IntegrationAction::MergeFailed)
+        },
+    )
+    .unwrap();
+    let q = q_world.observe().unwrap();
+    assert_eq!(q.get(1).unwrap().disposition, PullRequestDisposition::Ready);
+    assert_eq!(
+        drain::events(&root)[0].class,
+        Some(drain::FailureClass::Transient)
+    );
+}
+
+#[test]
+fn a_failing_refresh_does_not_block_the_next_refresh() {
+    let root = scratch();
+    let mut w = World {
+        // both behind master: each needs it brought in
+        master: 1,
+        open: vec![sim(1), sim(2)],
+        refresh_fails: true,
+        trail_root: Some(root.clone()),
+        ..Default::default()
+    };
+    let first = drain::drain(&root, &mut w, 1, false, true).unwrap();
+    assert!(
+        matches!(
+            first.steps.first(),
+            Some(DrainStepOutcome::RefreshFailed { pr: 1, .. })
+        ),
+        "{first:?}"
+    );
+    // the failure is #1's: the drain went on and tried #2 rather than stopping
+    assert!(
+        first
+            .steps
+            .iter()
+            .any(|s| matches!(s, DrainStepOutcome::RefreshFailed { pr: 2, .. })),
+        "{first:?}"
+    );
+    w.refresh_fails = false;
+    let q = w.observe().unwrap();
+    assert_eq!(
+        q.get(1).unwrap().disposition,
+        PullRequestDisposition::NeedsRepair
+    );
+    assert_eq!(
+        q.get(2).unwrap().disposition,
+        PullRequestDisposition::NeedsRepair
+    );
+    // master moves on: both may be tried again
+    w.master = 2;
+    let q = w.observe().unwrap();
+    assert_eq!(q.next_refresh, vec![1, 2]);
+}
+
+#[test]
+fn stop_is_honoured_inside_a_multi_merge_drain() {
+    let root = scratch();
+    let stop = std::sync::atomic::AtomicBool::new(true);
+    let mut w = World {
+        open: vec![sim(1), sim(2)],
+        ..Default::default()
+    };
+    let report = drain::drain_until(&root, &mut w, 3, false, false, Some(&stop)).unwrap();
+    assert!(report.merged.is_empty());
+    assert_eq!(w.merge_calls, 0);
+    assert!(
+        report.stopped.starts_with("asked to stop"),
+        "{}",
+        report.stopped
+    );
+}
+
+#[test]
+fn a_short_outage_does_not_end_continuous_mode() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1)],
+        outages: vec!["HTTP 502: Bad Gateway".into(); drain::CONTINUOUS_TRANSIENT_LIMIT],
+        ..Default::default()
+    };
+    let stop = std::sync::atomic::AtomicBool::new(false);
+    let report = drain::continuous(
+        &root,
+        &mut w,
+        continuous_opts(Some(1)),
+        &stop,
+        &mut |_| {},
+        &mut |_, _| {},
+    );
+    assert!(report.failure.is_none(), "{report:?}");
+    assert_eq!(report.merged, vec![1]);
+    let outages = trail_actions(&root)
+        .iter()
+        .filter(|a| *a == "observe_failed")
+        .count();
+    assert_eq!(outages, drain::CONTINUOUS_TRANSIENT_LIMIT);
+}
+
+#[test]
+fn an_outage_longer_than_the_limit_ends_continuous_mode() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1)],
+        outages: vec!["HTTP 502: Bad Gateway".into(); drain::CONTINUOUS_TRANSIENT_LIMIT + 1],
+        ..Default::default()
+    };
+    let stop = std::sync::atomic::AtomicBool::new(false);
+    let report = drain::continuous(
+        &root,
+        &mut w,
+        continuous_opts(None),
+        &stop,
+        &mut |_| {},
+        &mut |_, _| {},
+    );
+    assert_eq!(report.failure.as_deref(), Some("HTTP 502: Bad Gateway"));
+    assert!(report.merged.is_empty());
+}
+
+#[test]
+fn failure_classes_say_whether_the_next_candidate_may_be_tried() {
+    use drain::FailureClass as C;
+    assert_eq!(
+        C::of_merge_refusal(
+            "Pull request is not mergeable: the base branch policy prohibits the merge"
+        ),
+        C::PolicyViolation
+    );
+    assert_eq!(
+        C::of_merge_refusal("merge conflict between base and head"),
+        C::Conflict
+    );
+    assert_eq!(
+        C::of_merge_refusal("Head branch was modified. Review and try the merge again."),
+        C::Stale
+    );
+    assert_eq!(
+        C::of_merge_refusal("HTTP 503: Service Unavailable"),
+        C::Transient
+    );
+    assert_eq!(
+        C::of_refresh_failure("the merge of master conflicts after all"),
+        C::Conflict
+    );
+    assert_eq!(
+        C::of_refresh_failure("! [rejected] (fetch first)"),
+        C::Stale
+    );
+    for c in [
+        C::Stale,
+        C::Conflict,
+        C::NewFailingCheck,
+        C::ReviewRevoked,
+        C::Transient,
+        C::PolicyViolation,
+    ] {
+        assert!(c.recoverable(), "{c}");
+    }
+    assert!(!C::VerificationFailed.recoverable());
+    assert!(!C::Unreadable.recoverable());
 }

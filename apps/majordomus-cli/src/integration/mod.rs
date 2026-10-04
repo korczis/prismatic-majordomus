@@ -438,38 +438,100 @@ pub fn build_queue(
         .zip(&relations)
         .map(|(p, r)| classify(p, r, master_sha, &obs.observed_at, &policy, &queue))
         .collect();
-    let assessments = rank(assessments);
+    let mut queue = IntegrationQueue {
+        repository: obs.repository.clone(),
+        base: obs.base.clone(),
+        master_sha: master_sha.to_string(),
+        observed_at: obs.observed_at.clone(),
+        observed_base_sha: obs.base_sha.clone(),
+        next_merge: None,
+        next_refresh: Vec::new(),
+        policy,
+        assessments: rank(assessments),
+        tallies: QueueTallies::default(),
+        diagnostics,
+        starving: Vec::new(),
+    };
+    derive_heads(&mut queue);
+    queue
+}
+
+/// What the queue's ranked assessments imply: the next merge, the refresh candidates and the
+/// counts. Derived again whenever a disposition changes after the queue was built.
+fn derive_heads(queue: &mut IntegrationQueue) {
     let mut tallies = QueueTallies {
-        open: assessments.len(),
+        open: queue.assessments.len(),
         ..Default::default()
     };
-    for a in &assessments {
+    for a in &queue.assessments {
         *tallies
             .by_disposition
             .entry(a.disposition.as_str().to_string())
             .or_default() += 1;
         *tallies.by_lane.entry(classify::word(&a.lane)).or_default() += 1;
     }
-    IntegrationQueue {
-        repository: obs.repository.clone(),
-        base: obs.base.clone(),
-        master_sha: master_sha.to_string(),
-        observed_at: obs.observed_at.clone(),
-        observed_base_sha: obs.base_sha.clone(),
-        next_merge: assessments
+    queue.tallies = tallies;
+    queue.next_merge = queue
+        .assessments
+        .iter()
+        .find(|a| a.disposition == PullRequestDisposition::Ready)
+        .map(|a| a.number);
+    queue.next_refresh = queue
+        .assessments
+        .iter()
+        .filter(|a| a.disposition == PullRequestDisposition::NeedsRefresh)
+        .map(|a| a.number)
+        .collect();
+}
+
+/// The executor's own refusals, folded from the trail: a candidate the forge refused to
+/// merge, or whose refresh failed, at the head and master it still has, is held back as
+/// `needs_repair` instead of being chosen again, so one refused change does not block the
+/// queue. A new head or a new master clears it, because the key no longer matches; a
+/// transient failure never holds anything back, because it says nothing about the change.
+/// No plan survives: the trail is the only memory, and every queue is folded from it again.
+pub fn executor_feedback(queue: &mut IntegrationQueue, trail: &[drain::IntegrationEvent]) {
+    use drain::{FailureClass, IntegrationAction};
+    let refused = |action: IntegrationAction| -> BTreeSet<(u64, String, String)> {
+        trail
             .iter()
-            .find(|a| a.disposition == PullRequestDisposition::Ready)
-            .map(|a| a.number),
-        next_refresh: assessments
-            .iter()
-            .filter(|a| a.disposition == PullRequestDisposition::NeedsRefresh)
-            .map(|a| a.number)
-            .collect(),
-        policy,
-        assessments,
-        tallies,
-        diagnostics,
-        starving: Vec::new(),
+            .filter(|e| e.action == action && e.class != Some(FailureClass::Transient))
+            .filter_map(|e| Some((e.pr?, e.head_sha.clone()?, e.master_before.clone()?)))
+            .collect()
+    };
+    let merges = refused(IntegrationAction::MergeFailed);
+    let refreshes = refused(IntegrationAction::RefreshFailed);
+    let master = queue.master_sha.clone();
+    let mut changed = false;
+    for a in &mut queue.assessments {
+        let key = (
+            a.number,
+            a.evaluated_against.head_sha.clone(),
+            master.clone(),
+        );
+        let held = match a.disposition {
+            PullRequestDisposition::Ready if merges.contains(&key) => {
+                Some(ReasonCode::ExecutorMergeRefused {
+                    head: key.1.clone(),
+                })
+            }
+            PullRequestDisposition::NeedsRefresh if refreshes.contains(&key) => {
+                Some(ReasonCode::ExecutorRefreshFailed {
+                    master: master.clone(),
+                })
+            }
+            _ => None,
+        };
+        if let Some(reason) = held {
+            a.disposition = PullRequestDisposition::NeedsRepair;
+            a.lane = a.disposition.lane();
+            a.reasons.insert(0, reason);
+            changed = true;
+        }
+    }
+    if changed {
+        queue.assessments = rank(std::mem::take(&mut queue.assessments));
+        derive_heads(queue);
     }
 }
 
@@ -515,7 +577,9 @@ pub fn queue_of(root: &Path) -> Result<IntegrationQueue, String> {
     if let Ok(text) = serde_json::to_string(&cache) {
         let _ = write_atomic(&cache_path, &text);
     }
-    wait::annotate(&mut queue, &drain::events(root));
+    let trail = drain::events(root);
+    executor_feedback(&mut queue, &trail);
+    wait::annotate(&mut queue, &trail);
     // the summary a briefing reads without deciding a single relation (QueueSummary), the
     // repository's like the trail it sits beside
     if let (Ok(path), Ok(text)) = (

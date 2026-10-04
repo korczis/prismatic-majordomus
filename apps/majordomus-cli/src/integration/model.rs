@@ -611,7 +611,8 @@ const REASON_VOCABULARY: &str = "A reason code, `code` or `code:payload`, one of
 `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, \
 `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, \
 `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, \
-`required_checks_skipped`. A code outside this list (an older trail's) is carried verbatim.";
+`required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`. \
+A code outside this list (an older trail's) is carried verbatim.";
 
 /// One machine-readable reason, typed. Its wire form is the `code` or `code:payload` string
 /// the reasons always had ([`std::fmt::Display`] and [`std::str::FromStr`]), so the trail,
@@ -693,6 +694,18 @@ pub enum ReasonCode {
     RequiredChecksPassed,
     /// `required_checks_skipped`: ready, a permitted skip among its checks.
     RequiredChecksSkipped,
+    /// `executor_merge_refused:HEAD`: the forge refused the executor's merge of this head,
+    /// against this master; a new head or a new master clears it.
+    ExecutorMergeRefused {
+        /// The head whose merge was refused.
+        head: String,
+    },
+    /// `executor_refresh_failed:MASTER`: bringing this master into the branch failed; a new
+    /// head or a new master clears it.
+    ExecutorRefreshFailed {
+        /// The master that could not be brought in.
+        master: String,
+    },
     /// A code this vocabulary does not name, verbatim: what an older trail line may carry.
     /// Nothing here produces one, and [`std::str::FromStr`] refuses it.
     Unrecognised(String),
@@ -725,6 +738,8 @@ impl ReasonCode {
             ReasonCode::ContainsMaster => "contains_master",
             ReasonCode::RequiredChecksPassed => "required_checks_passed",
             ReasonCode::RequiredChecksSkipped => "required_checks_skipped",
+            ReasonCode::ExecutorMergeRefused { .. } => "executor_merge_refused",
+            ReasonCode::ExecutorRefreshFailed { .. } => "executor_refresh_failed",
             ReasonCode::Unrecognised(s) => s.split_once(':').map_or(s.as_str(), |(c, _)| c),
         }
     }
@@ -746,7 +761,9 @@ impl std::fmt::Display for ReasonCode {
             }
             ReasonCode::BaseIs { base: s }
             | ReasonCode::Label { name: s }
-            | ReasonCode::RelationUnknown { reason: s } => write!(f, "{}:{s}", self.code()),
+            | ReasonCode::RelationUnknown { reason: s }
+            | ReasonCode::ExecutorMergeRefused { head: s }
+            | ReasonCode::ExecutorRefreshFailed { master: s } => write!(f, "{}:{s}", self.code()),
             ReasonCode::ConflictsOn { count } => write!(f, "{}:{count}", self.code()),
             ReasonCode::BehindMaster { commits } => write!(f, "{}:{commits}", self.code()),
             ReasonCode::Review { state } => write!(f, "{}:{}", self.code(), wire_word(state)),
@@ -808,6 +825,12 @@ impl std::str::FromStr for ReasonCode {
             ("contains_master", None) => ReasonCode::ContainsMaster,
             ("required_checks_passed", None) => ReasonCode::RequiredChecksPassed,
             ("required_checks_skipped", None) => ReasonCode::RequiredChecksSkipped,
+            ("executor_merge_refused", Some(p)) => {
+                ReasonCode::ExecutorMergeRefused { head: p.into() }
+            }
+            ("executor_refresh_failed", Some(p)) => {
+                ReasonCode::ExecutorRefreshFailed { master: p.into() }
+            }
             _ => return Err(bad()),
         };
         Ok(reason)
