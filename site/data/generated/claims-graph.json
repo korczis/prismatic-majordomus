@@ -1482,6 +1482,15 @@
       "note": "Removing the file removes it from all of them, which is what a hidden registry would fail. The kind, its schema and its source class are declarations, so discovery, validation, identity, the index and the MCP resource needed no code of their own."
     },
     {
+      "id": "claim:product-domains-derived",
+      "kind": "claim",
+      "label": "The product is filed under a few domains declared once as files of the layer; a feature names exactly one, and every domain's members, interfaces, guarantees and use cases are derived from the features that name it, so a stable feature cannot be left out of the product map without the model refusing it",
+      "status": "guaranteed",
+      "route": "/guarantees/product-domains-derived/",
+      "external": false,
+      "note": "A domain lists no feature. A stable feature that names no domain while one is declared, or names one that does not exist, fails product validate; removing a domain file removes it from every answer (ADR 0104)."
+    },
+    {
       "id": "claim:product-surfaces-derived",
       "kind": "claim",
       "label": "Which interfaces a feature is exposed through, what stands behind it and what it answers are derived from the registries that own those facts, never authored, and a source file that writes one down is refused by its schema",
@@ -3915,6 +3924,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/77_rust_evidence.sh"
     },
     {
+      "id": "test:test/cases/800_product_domains.sh",
+      "kind": "test",
+      "label": "test/cases/800_product_domains.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/800_product_domains.sh"
+    },
+    {
       "id": "test:test/cases/84_deployment_contract.sh",
       "kind": "test",
       "label": "test/cases/84_deployment_contract.sh",
@@ -4882,6 +4898,11 @@
     },
     {
       "source": "claim:product-features-discovered",
+      "target": "source:docs/PRODUCT.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:product-domains-derived",
       "target": "source:docs/PRODUCT.md",
       "kind": "specified_by"
     },
@@ -5941,6 +5962,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:product-domains-derived",
+      "target": "impl:apps/majordomus-cli/src/product.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:product-surfaces-derived",
       "target": "impl:apps/majordomus-cli/src/product.rs",
       "kind": "implemented_by"
@@ -6993,6 +7019,11 @@
     {
       "source": "claim:product-features-discovered",
       "target": "test:test/cases/97_product_features.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:product-domains-derived",
+      "target": "test:test/cases/800_product_domains.sh",
       "kind": "proved_by"
     },
     {

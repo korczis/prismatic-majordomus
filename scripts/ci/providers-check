@@ -91,7 +91,7 @@ EOF
   printf '%s' "$n"
 }
 scan="$(git ls-files -- 'README.md' 'CONTRIBUTING.md' 'docs/*.md' 'docs/**/*.md' 'apps/majordomus-cli/README.md' \
-  '.ai/repo/features/*.md' '.ai/repo/use-cases/*.md' '.ai/repo/applications/*.md' '.ai/repo/why/**/*.md' \
+  '.ai/repo/features/*.md' '.ai/repo/features/domains/*.md' '.ai/repo/use-cases/*.md' '.ai/repo/applications/*.md' '.ai/repo/why/**/*.md' \
   '.ai/repo/rules/project/*.md' '.ai/repo/workflows/*.md' '.ai/repo/knowledge/**/*.md' 'share/skeleton/**/*.md' \
   | grep -vE '^docs/(generated|claims)/|^docs/CLAIMS|CHANGELOG' || true)"
 enumerations=0

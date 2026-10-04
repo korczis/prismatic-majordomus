@@ -961,6 +961,7 @@ pub const PUBLIC_FEATURE_FIELDS: &[&str] = &[
     "status",
     "weight",
     "featured",
+    "domain",
     "areas",
     "audiences",
     "modules",
@@ -990,6 +991,29 @@ pub const PUBLIC_FEATURE_FIELDS: &[&str] = &[
     "web_refs",
     "moments",
     "backlinks",
+    "counts",
+    "evidence",
+    "domain_ref",
+];
+
+/// The fields of one domain the public dataset carries: an allow-list, for the reason
+/// [`PUBLIC_FEATURE_FIELDS`] is one. The body stays in the file the record names in
+/// `source`, as a feature's does.
+pub const PUBLIC_DOMAIN_FIELDS: &[&str] = &[
+    "id",
+    "title",
+    "headline",
+    "problem",
+    "status",
+    "weight",
+    "tags",
+    "route",
+    "source",
+    "features",
+    "surfaces",
+    "moments",
+    "claim_refs",
+    "use_case_refs",
     "counts",
     "evidence",
 ];
@@ -1076,6 +1100,27 @@ pub fn claim_evidence(report: &serde_json::Value) -> serde_json::Value {
     })
 }
 
+/// The fields of `v` an allow-list names, and nothing else: what reaches the published site is
+/// what was named, not what was not excluded.
+///
+/// ```
+/// use majordomus_cli::site::allowed;
+/// let v = serde_json::json!({"id": "context", "body": "prose", "route": "/domains/context/"});
+/// let public = allowed(&v, &["id", "route"]);
+/// assert_eq!(public, serde_json::json!({"id": "context", "route": "/domains/context/"}));
+/// assert_eq!(allowed(&serde_json::json!("not an object"), &["id"]), serde_json::json!({}));
+/// ```
+pub fn allowed(v: &serde_json::Value, fields: &[&str]) -> serde_json::Value {
+    serde_json::Value::Object(
+        v.as_object()
+            .into_iter()
+            .flatten()
+            .filter(|(k, _)| fields.contains(&k.as_str()))
+            .map(|(k, v)| (k.clone(), v.clone()))
+            .collect(),
+    )
+}
+
 /// The product model as the site's templates read it: `site/data/registry/product.json`.
 ///
 /// A projection of [`crate::product::ProductModel`] through the `product.*` capabilities, so the
@@ -1125,6 +1170,19 @@ pub fn product_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>
         }
         features.push(serde_json::Value::Object(public));
     }
+    // The domains of every status, read from the model `product.domains` answers from — the
+    // same value, not a second derivation — and copied through their own allow-list.
+    let domains: Vec<serde_json::Value> = ctx
+        .product
+        .domains()
+        .iter()
+        .map(|d| {
+            allowed(
+                &serde_json::to_value(d).expect("a resolved domain serialises"),
+                PUBLIC_DOMAIN_FIELDS,
+            )
+        })
+        .collect();
     let matrix = run(&["product", "matrix"], serde_json::json!({}))?;
     let providers = run(&["product", "providers"], serde_json::json!({}))?;
     let validation = run(&["product", "validate"], serde_json::json!({}))?;
@@ -1163,6 +1221,8 @@ pub fn product_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>
         "by_kind": by_kind,
         "providers": list["counts"]["providers"],
         "features": list["counts"]["features"],
+        // the domains a reader is shown: stable, and named by a stable feature
+        "domains": ctx.product.public_domains().iter().filter(|d| !d.features.is_empty()).count(),
         "web_surfaces": ctx.web.surfaces.len(),
     });
 
@@ -1199,8 +1259,10 @@ pub fn product_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>
         "generator": { "id": "majordomus-cli", "version": crate::VERSION },
         "fingerprint": list["fingerprint"],
         "route": crate::product::ROUTE,
+        "domain_route": crate::product::DOMAIN_ROUTE,
         "counts": list["counts"],
         "surfaces": list["surfaces"],
+        "domains": domains,
         "features": features,
         "matrix": { "rows": matrix["rows"], "modules": matrix["modules"], "commands": matrix["commands"], "kinds": matrix["kinds"] },
         "providers": providers["providers"],

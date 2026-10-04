@@ -8,6 +8,7 @@ headline: Every externally callable operation is timed directly, over MCP and ov
 summary: The benchmark targets are derived from the registry, so a capability nothing times cannot be merged; runs are compared with a tracked baseline per platform under a regression policy; the shell tool reports where every command's time went; and derived state is computed once per state version rather than per call.
 status: stable
 weight: 180
+domain: evidence
 featured: false
 areas: [verification, cost]
 modules: [perf]
