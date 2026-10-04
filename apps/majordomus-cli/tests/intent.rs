@@ -124,6 +124,137 @@ fn a_criterion_is_met_only_by_a_recorded_passing_run_of_the_test_that_is_there()
     assert_eq!(criterion(&f)["state"], "failing");
 }
 
+/// A test criterion and a claim criterion over the same case, judged at every step through
+/// the built executable: both read what the evidence module calls current, and nothing else.
+#[test]
+fn a_criterion_is_met_only_by_evidence_current_at_the_working_tree_and_follows_it_both_ways() {
+    let f = Fixture::new();
+    let intent = ".ai/repo/project/intents/fixture-intent.yaml";
+    f.write(
+        intent,
+        &common::INTENT.replace(
+            "    ref: test/cases/00_x.sh\n",
+            "    ref: test/cases/00_x.sh
+  - id: the-claim-holds
+    criterion: The claim the case proves holds
+    evidence: claim
+    ref: policy-parse
+",
+        ),
+    );
+    f.commit("a claim criterion beside the test criterion");
+    let declared = std::fs::read(f.path(intent)).unwrap();
+
+    // (state, met) of both criteria, which must always agree: one judgement, two routes
+    let judged = |f: &Fixture| -> (String, bool) {
+        let (code, v) = cli_json(f, &["intent", "show", "fixture-intent"]);
+        assert_eq!(code, 0, "{v:#}");
+        let of = |id: &str| {
+            let c = v["satisfaction"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|c| c["id"] == id)
+                .unwrap()
+                .clone();
+            (c["state"].as_str().unwrap().to_string(), c["met"] == true)
+        };
+        let (test, claim) = (of("the-case-passes"), of("the-claim-holds"));
+        assert_eq!(test, claim, "the test and the claim route disagree");
+        test
+    };
+    let current = || ("current".to_string(), true);
+    let not_met = |state: &str| (state.to_string(), false);
+
+    let id = TestId::of("test/cases/00_x.sh").unwrap();
+    // a run of the case as it is in the tree now, at HEAD, on a tree the recorder saw as `tree`
+    let run = |outcome: Outcome, tree: &str| Execution {
+        test: id.as_string(),
+        runner: Runner::Suite,
+        source: id.source(),
+        outcome,
+        seconds: 1,
+        commit: f.git(&["rev-parse", "HEAD"]).trim().to_string(),
+        working_tree: tree.into(),
+        digest: digest_of(&std::fs::read(f.path(&id.source())).unwrap()),
+        at: "2026-10-04T00:00:00Z".into(),
+        origin: Origin::Local,
+        command: id.reproduce(),
+        run: None,
+    };
+    let record = |e: Execution| {
+        let mut ledger = Ledger::empty();
+        ledger.merge([e]);
+        ledger.save(&f.root()).unwrap();
+        f.commit("record a run");
+    };
+
+    assert_eq!(judged(&f), not_met("not_run"));
+
+    // a clean pass at HEAD meets both
+    record(run(Outcome::Pass, "clean"));
+    assert_eq!(judged(&f), current());
+
+    // a change the criterion does not name leaves it met: currency is the inputs, not HEAD
+    f.write("README.md", "# Fixture\n\nRead AGENTS.md, then this.\n");
+    f.commit("an unrelated change");
+    assert_eq!(judged(&f), current());
+
+    // the code under test changes in the working tree: the pass is of something else now,
+    // though the test file hashes exactly as it did
+    f.write(
+        "lib/a.sh",
+        "#!/usr/bin/env bash\n# the one library file\necho b\n",
+    );
+    assert_eq!(
+        judged(&f),
+        not_met("stale"),
+        "an uncommitted change to the code"
+    );
+    f.commit("the code under test changes");
+    assert_eq!(
+        judged(&f),
+        not_met("stale"),
+        "a committed change to the code"
+    );
+
+    // a pass recorded on a dirty tree, whose test digest matches and whose named inputs did
+    // not move, is still not current: its commit does not describe what ran
+    f.write(
+        "docs/notes.md",
+        "pending, not committed when the case ran\n",
+    );
+    record(run(Outcome::Pass, "dirty"));
+    assert_eq!(judged(&f), not_met("stale"), "a dirty-tree run");
+
+    // repaired: a clean pass of the code as it is now meets it again
+    record(run(Outcome::Pass, "clean"));
+    assert_eq!(judged(&f), current(), "repaired");
+
+    // regression: the latest run fails, and the criterion is unmet again
+    record(run(Outcome::Fail, "clean"));
+    assert_eq!(judged(&f), not_met("failing"), "regressed");
+
+    // the case itself changes: the last pass no longer measured it
+    record(run(Outcome::Pass, "clean"));
+    assert_eq!(judged(&f), current());
+    f.write(
+        "test/cases/00_x.sh",
+        "# majordomus-covers: none\n. \"$ROOT/test/lib.sh\"\ntrue\ntrue\n",
+    );
+    f.commit("the case changes");
+    assert_eq!(judged(&f), not_met("stale"), "a changed case");
+    record(run(Outcome::Pass, "clean"));
+    assert_eq!(judged(&f), current(), "the changed case, run");
+
+    // every state above was derived: the intent was never written
+    assert_eq!(
+        std::fs::read(f.path(intent)).unwrap(),
+        declared,
+        "the intent record changed"
+    );
+}
+
 #[test]
 fn an_intent_whose_links_do_not_resolve_is_refused_naming_each_finding() {
     let f = Fixture::new();

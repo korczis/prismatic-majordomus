@@ -314,6 +314,21 @@ What `inputs_unchanged` does not catch, stated plainly:
 Each of those is a real hole. The answer to all of them is the same and is not a cleverer
 dependency graph: record a run against HEAD, and the state becomes `proven`.
 
+### Current evidence, for a reader that counts a route as met
+
+A reader that turns a verdict into *met or not* — an intent's satisfaction criterion is the
+first — does not draw its own line. `evidence::current` draws it once, over a verdict of the
+truth table: `proven` is current, and `inputs_unchanged` is current only when the run
+measured a clean tree and the presented revision is its own (the working tree, whose changes
+are already in the comparison). Rows 11, 12 and 13 all say `inputs_unchanged`, and only row
+13 on two clean trees is current: a run recorded on a dirty tree is not, because its commit
+does not describe what ran and no later tree can be matched against it. Currency is a
+property of the inputs the route names and of the recorded digest, never of commit equality
+with HEAD, so committing the ledger after a run, or a change the route does not name, leaves
+current evidence current; everything weaker is not current. An intent criterion naming a
+test judges it with the test's source and the source and implementation of every claim that
+test proves as its inputs (`docs/PLANNING.md`).
+
 ## The ledger
 
 `.ai/repo/evidence/ledger.json`, tracked, one entry per test: the latest execution.

@@ -3,7 +3,7 @@
 //! An intent names the milestones that realise it and the criteria that settle it; an issue
 //! names, in `serves`, the `<intent>#<criterion>` it exists to make true. Neither side stores
 //! the join. This module derives it on every read and refuses the shapes that mean the plan
-//! does not carry the intent (ADR 0072):
+//! does not carry the intent (ADR 0073):
 //!
 //! - a criterion no live issue serves is **uncovered** — nothing will make it true;
 //! - an issue under an intent's milestone that serves nothing has **no purpose** under it;

@@ -149,8 +149,8 @@ pub mod record;
 pub mod subject;
 
 pub use freshness::{
-    aggregate, changed_between, compare, freshness, ledger_at, presented_commit, uncommitted,
-    weakened_by, Comparison, Judgement, Presented, Recorded, Supplementary, TreeState,
+    aggregate, changed_between, compare, current, freshness, ledger_at, presented_commit,
+    uncommitted, weakened_by, Comparison, Judgement, Presented, Recorded, Supplementary, TreeState,
     UNCOMMITTED_RUN,
 };
 pub use ledger::{Ledger, LEDGER_PATH};

@@ -28011,22 +28011,22 @@
                 {
                   "type": "string",
                   "const": "current",
-                  "description": "A passing run of the test that is in the tree now, or a claim proven or with its\ninputs unchanged since its passing run. The only state that meets a criterion."
+                  "description": "A passing run that is current evidence at the working tree: its commit is in this\nhistory, it measured a tree that was its commit, the test still hashes to what ran,\nand nothing the criterion names has changed since — for a test, its source and the\nsource and implementation of every claim that test proves; for a claim, what the\nclaim names. A change the criterion does not name, the evidence ledger's own included,\nleaves it current. The only state that meets a criterion."
                 },
                 {
                   "type": "string",
                   "const": "stale",
-                  "description": "A passing run of a test whose source has changed since, or a claim whose inputs\nhave."
+                  "description": "A pass that is not current evidence: something the criterion names has changed since\nit, the test no longer hashes to what ran, the run's commit is not in this history (or\ngit could not compare it), or the run measured a tree that was not its commit — a run\non a dirty tree, which no later tree can be matched against."
                 },
                 {
                   "type": "string",
                   "const": "failing",
-                  "description": "The latest recorded run did not pass."
+                  "description": "The latest recorded run failed, timed out or errored."
                 },
                 {
                   "type": "string",
                   "const": "not_run",
-                  "description": "The reference resolves and nothing has been recorded for it."
+                  "description": "The reference resolves and no run counts for it: none was recorded, the latest run\ndeclined to run (a skip), or the claim names no test a runner drives."
                 },
                 {
                   "type": "string",
@@ -28039,7 +28039,7 @@
                   "description": "The reference is empty or names nothing this repository holds."
                 }
               ],
-              "description": "What the evidence behind one criterion says, as a word. Only `Current` meets a criterion:\na stale, failing, unrecorded or underivable reference never does, and neither does one that\nresolves to nothing.\n\n```\nuse majordomus_cli::intent::IntentEvidenceState;\nassert_eq!(serde_json::to_string(&IntentEvidenceState::NotRun).unwrap(), \"\\\"not_run\\\"\");\nassert_ne!(IntentEvidenceState::Stale, IntentEvidenceState::Current);\n```"
+              "description": "What the evidence behind one criterion says, as a word. Only `Current` meets a criterion:\na stale, failing, unrecorded or underivable reference never does, and neither does one that\nresolves to nothing.\n\nWhether a recorded run is current is not decided here. A `test` or `claim` criterion is\njudged by the evidence module's one truth table (`evidence::freshness()`) at the working\ntree and read through `evidence::current`, the same judgement the claim report and the\nsubject pages make; `IntentEvidenceState::judged` is the whole of the translation. So\nthe state follows the evidence both ways: a criterion met today reads stale or failing\nthe moment the ledger or the tree says so, and met again once a current pass is recorded.\n\n```\nuse majordomus_cli::intent::IntentEvidenceState;\nassert_eq!(serde_json::to_string(&IntentEvidenceState::NotRun).unwrap(), \"\\\"not_run\\\"\");\nassert_ne!(IntentEvidenceState::Stale, IntentEvidenceState::Current);\n```"
             },
             "CriterionCoverage": {
               "type": "object",
@@ -28814,22 +28814,22 @@
                 {
                   "type": "string",
                   "const": "current",
-                  "description": "A passing run of the test that is in the tree now, or a claim proven or with its\ninputs unchanged since its passing run. The only state that meets a criterion."
+                  "description": "A passing run that is current evidence at the working tree: its commit is in this\nhistory, it measured a tree that was its commit, the test still hashes to what ran,\nand nothing the criterion names has changed since — for a test, its source and the\nsource and implementation of every claim that test proves; for a claim, what the\nclaim names. A change the criterion does not name, the evidence ledger's own included,\nleaves it current. The only state that meets a criterion."
                 },
                 {
                   "type": "string",
                   "const": "stale",
-                  "description": "A passing run of a test whose source has changed since, or a claim whose inputs\nhave."
+                  "description": "A pass that is not current evidence: something the criterion names has changed since\nit, the test no longer hashes to what ran, the run's commit is not in this history (or\ngit could not compare it), or the run measured a tree that was not its commit — a run\non a dirty tree, which no later tree can be matched against."
                 },
                 {
                   "type": "string",
                   "const": "failing",
-                  "description": "The latest recorded run did not pass."
+                  "description": "The latest recorded run failed, timed out or errored."
                 },
                 {
                   "type": "string",
                   "const": "not_run",
-                  "description": "The reference resolves and nothing has been recorded for it."
+                  "description": "The reference resolves and no run counts for it: none was recorded, the latest run\ndeclined to run (a skip), or the claim names no test a runner drives."
                 },
                 {
                   "type": "string",
@@ -28842,7 +28842,7 @@
                   "description": "The reference is empty or names nothing this repository holds."
                 }
               ],
-              "description": "What the evidence behind one criterion says, as a word. Only `Current` meets a criterion:\na stale, failing, unrecorded or underivable reference never does, and neither does one that\nresolves to nothing.\n\n```\nuse majordomus_cli::intent::IntentEvidenceState;\nassert_eq!(serde_json::to_string(&IntentEvidenceState::NotRun).unwrap(), \"\\\"not_run\\\"\");\nassert_ne!(IntentEvidenceState::Stale, IntentEvidenceState::Current);\n```"
+              "description": "What the evidence behind one criterion says, as a word. Only `Current` meets a criterion:\na stale, failing, unrecorded or underivable reference never does, and neither does one that\nresolves to nothing.\n\nWhether a recorded run is current is not decided here. A `test` or `claim` criterion is\njudged by the evidence module's one truth table (`evidence::freshness()`) at the working\ntree and read through `evidence::current`, the same judgement the claim report and the\nsubject pages make; `IntentEvidenceState::judged` is the whole of the translation. So\nthe state follows the evidence both ways: a criterion met today reads stale or failing\nthe moment the ledger or the tree says so, and met again once a current pass is recorded.\n\n```\nuse majordomus_cli::intent::IntentEvidenceState;\nassert_eq!(serde_json::to_string(&IntentEvidenceState::NotRun).unwrap(), \"\\\"not_run\\\"\");\nassert_ne!(IntentEvidenceState::Stale, IntentEvidenceState::Current);\n```"
             },
             "IntentWorkRef": {
               "type": "object",
@@ -29723,22 +29723,22 @@
                 {
                   "type": "string",
                   "const": "current",
-                  "description": "A passing run of the test that is in the tree now, or a claim proven or with its\ninputs unchanged since its passing run. The only state that meets a criterion."
+                  "description": "A passing run that is current evidence at the working tree: its commit is in this\nhistory, it measured a tree that was its commit, the test still hashes to what ran,\nand nothing the criterion names has changed since — for a test, its source and the\nsource and implementation of every claim that test proves; for a claim, what the\nclaim names. A change the criterion does not name, the evidence ledger's own included,\nleaves it current. The only state that meets a criterion."
                 },
                 {
                   "type": "string",
                   "const": "stale",
-                  "description": "A passing run of a test whose source has changed since, or a claim whose inputs\nhave."
+                  "description": "A pass that is not current evidence: something the criterion names has changed since\nit, the test no longer hashes to what ran, the run's commit is not in this history (or\ngit could not compare it), or the run measured a tree that was not its commit — a run\non a dirty tree, which no later tree can be matched against."
                 },
                 {
                   "type": "string",
                   "const": "failing",
-                  "description": "The latest recorded run did not pass."
+                  "description": "The latest recorded run failed, timed out or errored."
                 },
                 {
                   "type": "string",
                   "const": "not_run",
-                  "description": "The reference resolves and nothing has been recorded for it."
+                  "description": "The reference resolves and no run counts for it: none was recorded, the latest run\ndeclined to run (a skip), or the claim names no test a runner drives."
                 },
                 {
                   "type": "string",
@@ -29751,7 +29751,7 @@
                   "description": "The reference is empty or names nothing this repository holds."
                 }
               ],
-              "description": "What the evidence behind one criterion says, as a word. Only `Current` meets a criterion:\na stale, failing, unrecorded or underivable reference never does, and neither does one that\nresolves to nothing.\n\n```\nuse majordomus_cli::intent::IntentEvidenceState;\nassert_eq!(serde_json::to_string(&IntentEvidenceState::NotRun).unwrap(), \"\\\"not_run\\\"\");\nassert_ne!(IntentEvidenceState::Stale, IntentEvidenceState::Current);\n```"
+              "description": "What the evidence behind one criterion says, as a word. Only `Current` meets a criterion:\na stale, failing, unrecorded or underivable reference never does, and neither does one that\nresolves to nothing.\n\nWhether a recorded run is current is not decided here. A `test` or `claim` criterion is\njudged by the evidence module's one truth table (`evidence::freshness()`) at the working\ntree and read through `evidence::current`, the same judgement the claim report and the\nsubject pages make; `IntentEvidenceState::judged` is the whole of the translation. So\nthe state follows the evidence both ways: a criterion met today reads stale or failing\nthe moment the ledger or the tree says so, and met again once a current pass is recorded.\n\n```\nuse majordomus_cli::intent::IntentEvidenceState;\nassert_eq!(serde_json::to_string(&IntentEvidenceState::NotRun).unwrap(), \"\\\"not_run\\\"\");\nassert_ne!(IntentEvidenceState::Stale, IntentEvidenceState::Current);\n```"
             }
           }
         }
@@ -30220,22 +30220,22 @@
                 {
                   "type": "string",
                   "const": "current",
-                  "description": "A passing run of the test that is in the tree now, or a claim proven or with its\ninputs unchanged since its passing run. The only state that meets a criterion."
+                  "description": "A passing run that is current evidence at the working tree: its commit is in this\nhistory, it measured a tree that was its commit, the test still hashes to what ran,\nand nothing the criterion names has changed since — for a test, its source and the\nsource and implementation of every claim that test proves; for a claim, what the\nclaim names. A change the criterion does not name, the evidence ledger's own included,\nleaves it current. The only state that meets a criterion."
                 },
                 {
                   "type": "string",
                   "const": "stale",
-                  "description": "A passing run of a test whose source has changed since, or a claim whose inputs\nhave."
+                  "description": "A pass that is not current evidence: something the criterion names has changed since\nit, the test no longer hashes to what ran, the run's commit is not in this history (or\ngit could not compare it), or the run measured a tree that was not its commit — a run\non a dirty tree, which no later tree can be matched against."
                 },
                 {
                   "type": "string",
                   "const": "failing",
-                  "description": "The latest recorded run did not pass."
+                  "description": "The latest recorded run failed, timed out or errored."
                 },
                 {
                   "type": "string",
                   "const": "not_run",
-                  "description": "The reference resolves and nothing has been recorded for it."
+                  "description": "The reference resolves and no run counts for it: none was recorded, the latest run\ndeclined to run (a skip), or the claim names no test a runner drives."
                 },
                 {
                   "type": "string",
@@ -30248,7 +30248,7 @@
                   "description": "The reference is empty or names nothing this repository holds."
                 }
               ],
-              "description": "What the evidence behind one criterion says, as a word. Only `Current` meets a criterion:\na stale, failing, unrecorded or underivable reference never does, and neither does one that\nresolves to nothing.\n\n```\nuse majordomus_cli::intent::IntentEvidenceState;\nassert_eq!(serde_json::to_string(&IntentEvidenceState::NotRun).unwrap(), \"\\\"not_run\\\"\");\nassert_ne!(IntentEvidenceState::Stale, IntentEvidenceState::Current);\n```"
+              "description": "What the evidence behind one criterion says, as a word. Only `Current` meets a criterion:\na stale, failing, unrecorded or underivable reference never does, and neither does one that\nresolves to nothing.\n\nWhether a recorded run is current is not decided here. A `test` or `claim` criterion is\njudged by the evidence module's one truth table (`evidence::freshness()`) at the working\ntree and read through `evidence::current`, the same judgement the claim report and the\nsubject pages make; `IntentEvidenceState::judged` is the whole of the translation. So\nthe state follows the evidence both ways: a criterion met today reads stale or failing\nthe moment the ledger or the tree says so, and met again once a current pass is recorded.\n\n```\nuse majordomus_cli::intent::IntentEvidenceState;\nassert_eq!(serde_json::to_string(&IntentEvidenceState::NotRun).unwrap(), \"\\\"not_run\\\"\");\nassert_ne!(IntentEvidenceState::Stale, IntentEvidenceState::Current);\n```"
             }
           }
         }
