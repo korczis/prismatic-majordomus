@@ -144,6 +144,34 @@ fn names_file(path: &Path, file: &fs::File) -> bool {
     }
 }
 
+/// How often a kept-alive lease renews its record: well inside [`LEASE_STALE_AFTER`].
+pub const KEEP_ALIVE_EVERY: Duration = Duration::from_secs(60);
+/// How promptly a keep-alive notices it was asked to stop.
+const KEEP_ALIVE_POLL: Duration = Duration::from_millis(200);
+
+/// Replace the holder record through the locked file, never the path: a path written to
+/// after something removed it would be a new, unlocked file a second executor could take.
+fn write_record(file: &fs::File, token: &str) -> std::io::Result<()> {
+    use std::os::unix::fs::FileExt;
+    file.set_len(0)?;
+    file.write_all_at(token.as_bytes(), 0)
+}
+
+/// A lease's record kept fresh by a thread, until this is dropped.
+pub struct LeaseKeepAlive {
+    stop: std::sync::Arc<std::sync::atomic::AtomicBool>,
+    thread: Option<std::thread::JoinHandle<()>>,
+}
+
+impl Drop for LeaseKeepAlive {
+    fn drop(&mut self) {
+        self.stop.store(true, std::sync::atomic::Ordering::SeqCst);
+        if let Some(t) = self.thread.take() {
+            let _ = t.join();
+        }
+    }
+}
+
 impl IntegrationLease {
     /// The lease file of a base branch.
     pub fn path_for(common: &Path, base: &str) -> PathBuf {
@@ -215,15 +243,64 @@ impl IntegrationLease {
         Err(format!("{}: could not be taken", path.display()))
     }
 
-    /// Mark the lease alive: a long drain renews it between steps.
-    pub fn renew(&self) {
-        // through the locked file, never the path: a path written to after something
-        // removed it would be a new, unlocked file that a second executor could take
-        use std::os::unix::fs::FileExt;
-        let _ = self
-            .file
-            .set_len(0)
-            .and_then(|()| self.file.write_all_at(self.token.as_bytes(), 0));
+    /// Mark the lease alive: a long drain renews it between steps. Refused when the lease is
+    /// no longer this executor's — the path names another file, or the record another
+    /// holder — and the drain stops on that, as on any systemic failure: an executor that
+    /// lost its lease must not act as if it held one.
+    pub fn renew(&self) -> Result<(), String> {
+        if !names_file(&self.path, &self.file) {
+            return Err(format!(
+                "the integration lease was lost: {} no longer names the file this executor locked",
+                self.path.display()
+            ));
+        }
+        let held = fs::read_to_string(&self.path).unwrap_or_default();
+        if held.trim() != self.token {
+            return Err(format!(
+                "the integration lease was lost: {} names another holder: {}",
+                self.path.display(),
+                held.trim()
+            ));
+        }
+        write_record(&self.file, &self.token).map_err(|e| format!("{}: {e}", self.path.display()))
+    }
+
+    /// Keep the record fresh while one long act runs — a refresh's derive can outlast what an
+    /// observer calls stale — until the returned guard is dropped. It renews only while the
+    /// lease is still this executor's, and never acts on anything.
+    pub fn keep_alive(&self) -> LeaseKeepAlive {
+        self.keep_alive_every(KEEP_ALIVE_EVERY)
+    }
+
+    /// [`keep_alive`](Self::keep_alive) at a chosen interval.
+    pub(crate) fn keep_alive_every(&self, every: Duration) -> LeaseKeepAlive {
+        let poll = KEEP_ALIVE_POLL.min(every);
+        let stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let thread = self.file.try_clone().ok().and_then(|file| {
+            let (path, token, stop) = (self.path.clone(), self.token.clone(), stop.clone());
+            std::thread::Builder::new()
+                .name("majordomus-integration-keep-alive".into())
+                .spawn(move || {
+                    use std::sync::atomic::Ordering;
+                    let mut waited = Duration::ZERO;
+                    while !stop.load(Ordering::SeqCst) {
+                        std::thread::sleep(poll);
+                        waited += poll;
+                        if waited < every {
+                            continue;
+                        }
+                        waited = Duration::ZERO;
+                        let mine = names_file(&path, &file)
+                            && fs::read_to_string(&path).is_ok_and(|c| c.trim() == token);
+                        if !mine {
+                            return;
+                        }
+                        let _ = write_record(&file, &token);
+                    }
+                })
+                .ok()
+        });
+        LeaseKeepAlive { stop, thread }
     }
 
     /// Who holds the lease of `base` now, read without taking it: what an observer shows.
@@ -260,8 +337,12 @@ pub struct IntegrationLeaseState {
 
 impl Drop for IntegrationLease {
     fn drop(&mut self) {
-        // unlinked while the lock is held, closed after: see `acquire`
-        if fs::read_to_string(&self.path).is_ok_and(|c| c.trim() == self.token) {
+        // unlinked while the lock is held, closed after: see `acquire`. Only while the path
+        // still names the file this lease locked: two holders' records can read the same
+        // (one process, one second), so the record alone cannot say whose file it is.
+        if names_file(&self.path, &self.file)
+            && fs::read_to_string(&self.path).is_ok_and(|c| c.trim() == self.token)
+        {
             let _ = fs::remove_file(&self.path);
             let released = IntegrationEvent {
                 detail: self.token.clone(),
@@ -1251,7 +1332,7 @@ fn gh(root: &Path, args: &[&str]) -> Result<String, String> {
 impl Integrator for ForgeIntegrator<'_> {
     fn observe(&mut self) -> Result<IntegrationQueue, String> {
         if let Some(l) = self.lease {
-            l.renew();
+            l.renew()?;
         }
         refresh(self.root)?;
         queue_of(self.root)
@@ -1357,6 +1438,9 @@ impl Integrator for ForgeIntegrator<'_> {
     }
 
     fn refresh_branch(&mut self, a: &PullRequestAssessment, base: &str) -> Result<String, String> {
+        // a refresh runs the repository's derive, which can outlast what an observer calls a
+        // stale lease: the record is kept fresh for as long as it runs
+        let _alive = self.lease.map(IntegrationLease::keep_alive);
         let root = self.root;
         let common = common_dir(root)?;
         let dir = common

@@ -6,28 +6,28 @@
     "version": "0.13.0"
   },
   "registry": {
-    "fingerprint": "6650c8b39c078a1902482aa6c9be36c859a439fe686be1d165c8aa01f9692535",
+    "fingerprint": "4f341c292f235bdaa89c6af49e18e8006b98c55153fedfc84d7c42e74049d115",
     "summary": {
-      "total": 1881,
-      "builtin": 170,
-      "declarative": 1711,
+      "total": 1883,
+      "builtin": 171,
+      "declarative": 1712,
       "by_kind": {
         "command": 22,
-        "query": 148,
-        "resource": 1711
+        "query": 149,
+        "resource": 1712
       },
       "by_stability": {
         "behaviorally_verified": 128,
-        "experimental": 34,
-        "implemented": 1719
+        "experimental": 35,
+        "implemented": 1720
       },
-      "mcp_tools": 164,
-      "mcp_resources": 1764,
-      "http_routes": 168,
-      "cli_commands": 89,
+      "mcp_tools": 165,
+      "mcp_resources": 1765,
+      "http_routes": 169,
+      "cli_commands": 90,
       "modules": 84,
       "benchmark_required": 152,
-      "benchmark_waived": 18,
+      "benchmark_waived": 19,
       "cached": 41
     },
     "builtin": [
@@ -26640,6 +26640,239 @@
         ],
         "benchmark": {
           "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs"
+      },
+      {
+        "id": "integration.prove_dry_run",
+        "module": "integration",
+        "kind": "query",
+        "title": "Proof that a dry run moves nothing",
+        "description": "Runs the executor's non-mutating cycle — refresh, plan, drain --dry-run and cleanup without --apply — between two snapshots of everything it could move if it were wrong: every ref origin serves, every open pull request's number, head, state and labels, the integration audit trail, the executor's lease, and every local ref outside the two namespaces the refresh mirrors. `ok` is true exactly when the snapshots are equal and refs/remotes/origin/<base> and every refs/majordomus/prs/<n> equal what origin serves. A read that reaches the network: the refresh asks the forge through the GitHub CLI and fetches the base and the pull-request heads, and like every read it rewrites the observation, relation and summary caches. It merges, closes and pushes nothing, and takes no input that could make it.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "DryRunProof",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "ok": {
+                "type": "boolean",
+                "description": "True exactly when nothing moved and every mirror equals what origin serves."
+              },
+              "base": {
+                "type": "string",
+                "description": "The base branch the executor works on."
+              },
+              "steps": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ProofStep"
+                },
+                "description": "The cycle, step by step."
+              },
+              "moved": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Moved"
+                },
+                "description": "Every line that differs between the snapshots; empty when nothing moved."
+              },
+              "mirrors": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Every mirrored ref that is not what origin serves; empty when they all are."
+              },
+              "before": {
+                "$ref": "#/$defs/Snapshot",
+                "description": "The snapshot before the cycle."
+              },
+              "after": {
+                "$ref": "#/$defs/Snapshot",
+                "description": "The snapshot after it."
+              },
+              "classification": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ObservedClassification"
+                },
+                "description": "Every open pull request as the cycle classified it, in rank order."
+              }
+            },
+            "required": [
+              "ok",
+              "base",
+              "steps",
+              "moved",
+              "mirrors",
+              "before",
+              "after",
+              "classification"
+            ],
+            "description": "The verdict: what was compared, what moved, and what the cycle observed.",
+            "title": "DryRunProof",
+            "$defs": {
+              "ProofStep": {
+                "type": "object",
+                "properties": {
+                  "step": {
+                    "type": "string",
+                    "description": "`refresh`, `plan`, `drain --dry-run` or `cleanup`."
+                  },
+                  "summary": {
+                    "type": "string",
+                    "description": "What it reported, in one line."
+                  }
+                },
+                "required": [
+                  "step",
+                  "summary"
+                ],
+                "description": "One step of the cycle and what it said."
+              },
+              "Moved": {
+                "type": "object",
+                "properties": {
+                  "section": {
+                    "type": "string",
+                    "description": "The section it belongs to."
+                  },
+                  "change": {
+                    "type": "string",
+                    "description": "`added` (present only after the cycle) or `removed` (present only before)."
+                  },
+                  "line": {
+                    "type": "string",
+                    "description": "The line itself."
+                  }
+                },
+                "required": [
+                  "section",
+                  "change",
+                  "line"
+                ],
+                "description": "One line that differs between the two snapshots."
+              },
+              "Snapshot": {
+                "type": "object",
+                "properties": {
+                  "sections": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/SnapshotSection"
+                    },
+                    "description": "The sections, always in the order `remote`, `forge`, `trail`, `lease`, `local`."
+                  }
+                },
+                "required": [
+                  "sections"
+                ],
+                "description": "Everything the cycle could move, at one moment."
+              },
+              "SnapshotSection": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "`remote`, `forge`, `trail`, `lease` or `local`."
+                  },
+                  "lines": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "What the section holds, one fact per line, sorted where order carries no meaning."
+                  }
+                },
+                "required": [
+                  "name",
+                  "lines"
+                ],
+                "description": "One section of a snapshot: a name and its lines, in a stable order."
+              },
+              "ObservedClassification": {
+                "type": "object",
+                "properties": {
+                  "number": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0,
+                    "description": "The pull request."
+                  },
+                  "head_sha": {
+                    "type": "string",
+                    "description": "The head it was decided against."
+                  },
+                  "disposition": {
+                    "type": "string",
+                    "description": "Its disposition, as the queue names it."
+                  },
+                  "next_action": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "What the executor would do with it, when anything."
+                  }
+                },
+                "required": [
+                  "number",
+                  "head_sha",
+                  "disposition"
+                ],
+                "description": "One open pull request as the cycle classified it."
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::integration"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_pull_requests_prove_dry_run"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/pull-requests/prove-dry-run"
+          },
+          "cli": {
+            "path": [
+              "prs",
+              "prove-dry-run"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "experimental",
+        "tags": [
+          "integration",
+          "pull-requests",
+          "proof",
+          "live"
+        ],
+        "benchmark": {
+          "policy": "waived",
+          "reason": "external_dependency"
         },
         "cache": {
           "policy": "disabled"
@@ -66135,13 +66368,14 @@
       {
         "id": "integration",
         "title": "Pull-request integration",
-        "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network.",
+        "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing.",
         "stability": "experimental",
         "source": "builtin",
-        "capabilities": 3,
+        "capabilities": 4,
         "capability_ids": [
           "integration.events",
           "integration.explain",
+          "integration.prove_dry_run",
           "integration.queue"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs"
@@ -66698,7 +66932,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 348,
+        "capabilities": 349,
         "capability_ids": []
       },
       {
@@ -66788,7 +67022,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7d0f958e1d1098ff6c1ff27d7ef3167ff3c439cd5fc0718953d27c848635a488",
+    "fingerprint": "0af904c18954a734df82862ee8a6fd3efdb30b38c293cde45a45e90335e28c3e",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -66841,7 +67075,7 @@
       "session": 22,
       "skill": 6,
       "taxonomy": 10,
-      "test": 348,
+      "test": 349,
       "use-case": 48,
       "workspace": 1
     },
@@ -71960,7 +72194,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 17530
+        "bytes": 18006
       },
       {
         "uri": "majordomus://document/docs/KNOWLEDGE.md",
@@ -82357,7 +82591,7 @@
         "identity": "test/cases/131_backlog_hygiene.sh",
         "path": "test/cases/131_backlog_hygiene.sh",
         "source_class": "case",
-        "bytes": 6951
+        "bytes": 7874
       },
       {
         "uri": "majordomus://test/test/cases/131_completion_gates.sh",
@@ -84221,7 +84455,7 @@
         "identity": "test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
         "path": "test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
         "source_class": "case",
-        "bytes": 5743
+        "bytes": 6926
       },
       {
         "uri": "majordomus://test/test/cases/742_only_an_outage_is_asked_again.sh",
@@ -84398,6 +84632,14 @@
         "path": "test/cases/850_integration_drains_cycle_by_cycle.sh",
         "source_class": "case",
         "bytes": 14572
+      },
+      {
+        "uri": "majordomus://test/test/cases/852_a_dry_run_moves_nothing.sh",
+        "kind": "test",
+        "identity": "test/cases/852_a_dry_run_moves_nothing.sh",
+        "path": "test/cases/852_a_dry_run_moves_nothing.sh",
+        "source_class": "case",
+        "bytes": 7434
       },
       {
         "uri": "majordomus://test/test/cases/855_racing_executors_merge_once.sh",
@@ -85581,7 +85823,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 348
+      "objects": 349
     },
     {
       "name": "use-case",
@@ -98491,6 +98733,118 @@
                 "command": "majordomus prs brief",
                 "setup": [],
                 "expectation": "exits 0"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "prs",
+              "prove-dry-run"
+            ],
+            "route": "/docs/cli/prs/prove-dry-run/",
+            "executable": true,
+            "usage": "majordomus prs prove-dry-run [OPTIONS]",
+            "about": "Prove the non-mutating cycle moves nothing: snapshot origin's refs, the open pull requests, the audit trail, the lease and the local refs, run refresh, plan, drain --dry-run and cleanup (listing), snapshot again and compare; the refresh's fetched mirrors must equal what origin serves. Exit 10 naming what moved. Takes no flag: there is nothing to turn on",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "prs-prove-dry-run-no-forge",
+                "title": "The proof needs a forge to prove anything about",
+                "description": "The proof snapshots origin's refs and the forge's open pull requests around refresh, plan, drain --dry-run and cleanup, and compares them. A repository with no GitHub remote has nothing to snapshot, so it exits 12 before any step runs: a proof that could not look is not a proof that nothing moved.",
+                "argv": [
+                  "prs",
+                  "prove-dry-run"
+                ],
+                "command": "majordomus prs prove-dry-run",
+                "setup": [],
+                "expectation": "exits 12"
               }
             ],
             "subcommands": []
@@ -113379,6 +113733,16 @@
         "output": "IntegrationExplanation"
       },
       {
+        "name": "majordomus_pull_requests_prove_dry_run",
+        "id": "integration.prove_dry_run",
+        "title": "Proof that a dry run moves nothing",
+        "description": "Runs the executor's non-mutating cycle — refresh, plan, drain --dry-run and cleanup without --apply — between two snapshots of everything it could move if it were wrong: every ref origin serves, every open pull request's number, head, state and labels, the integration audit trail, the executor's lease, and every local ref outside the two namespaces the refresh mirrors. `ok` is true exactly when the snapshots are equal and refs/remotes/origin/<base> and every refs/majordomus/prs/<n> equal what origin serves. A read that reaches the network: the refresh asks the forge through the GitHub CLI and fetches the base and the pull-request heads, and like every read it rewrites the observation, relation and summary caches. It merges, closes and pushes nothing, and takes no input that could make it.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "DryRunProof"
+      },
+      {
         "name": "majordomus_pull_requests",
         "id": "integration.queue",
         "title": "The integration queue",
@@ -115154,6 +115518,12 @@
         "method": "GET",
         "path": "/api/v1/pull-requests/explain",
         "id": "integration.explain",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/pull-requests/prove-dry-run",
+        "id": "integration.prove_dry_run",
         "kind": "query"
       },
       {
@@ -123459,6 +123829,30 @@
           "cases": 1
         },
         {
+          "subject": "integration.prove_dry_run",
+          "module": "integration",
+          "transport": "direct",
+          "state": "waived",
+          "cases": 0,
+          "reason": "external_dependency"
+        },
+        {
+          "subject": "integration.prove_dry_run",
+          "module": "integration",
+          "transport": "mcp",
+          "state": "waived",
+          "cases": 0,
+          "reason": "external_dependency"
+        },
+        {
+          "subject": "integration.prove_dry_run",
+          "module": "integration",
+          "transport": "http",
+          "state": "waived",
+          "cases": 0,
+          "reason": "external_dependency"
+        },
+        {
           "subject": "integration.queue",
           "module": "integration",
           "transport": "direct",
@@ -125742,24 +126136,24 @@
       ],
       "tallies": {
         "direct": {
-          "required": 170,
+          "required": 171,
           "covered": 152,
           "missing": 0,
-          "waived": 18,
+          "waived": 19,
           "inapplicable": 0
         },
         "http": {
-          "required": 168,
+          "required": 169,
           "covered": 152,
           "missing": 0,
-          "waived": 16,
+          "waived": 17,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 164,
+          "required": 165,
           "covered": 148,
           "missing": 0,
-          "waived": 16,
+          "waived": 17,
           "inapplicable": 0
         },
         "system": {
@@ -125770,10 +126164,10 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 515,
+          "required": 518,
           "covered": 465,
           "missing": 0,
-          "waived": 50,
+          "waived": 53,
           "inapplicable": 0
         }
       }

@@ -663,6 +663,15 @@
         "status": "query"
       },
       {
+        "id": "capability:integration.prove_dry_run",
+        "kind": "capability",
+        "label": "integration.prove_dry_run",
+        "summary": "Proof that a dry run moves nothing",
+        "route": "/cockpit/capabilities/integration.prove_dry_run",
+        "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:integration.queue",
         "kind": "capability",
         "label": "integration.queue",
@@ -1615,14 +1624,6 @@
         "external": true
       },
       {
-        "id": "file:.ai/repo/order-baseline.txt",
-        "kind": "file",
-        "label": "order-baseline.txt",
-        "summary": "named by the layer; not an object of this index",
-        "source": ".ai/repo/order-baseline.txt",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/capability/builtin/graph.rs",
         "kind": "file",
         "label": "graph.rs",
@@ -1660,14 +1661,6 @@
         "label": "mod.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/cockpit/mod.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/cockpit/nav.rs",
-        "kind": "file",
-        "label": "nav.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/cockpit/nav.rs",
         "external": true
       },
       {
@@ -38512,6 +38505,13 @@
         "source": "test/cases/850_integration_drains_cycle_by_cycle.sh"
       },
       {
+        "id": "majordomus://test/test/cases/852_a_dry_run_moves_nothing.sh",
+        "kind": "test",
+        "label": "test/cases/852_a_dry_run_moves_nothing.sh",
+        "route": "/cockpit/objects/test/test-cases-852-a-dry-run-moves-nothing-sh",
+        "source": "test/cases/852_a_dry_run_moves_nothing.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/855_racing_executors_merge_once.sh",
         "kind": "test",
         "label": "test/cases/855_racing_executors_merge_once.sh",
@@ -42289,6 +42289,26 @@
         "kind": "projects"
       },
       {
+        "source": "capability:integration.prove_dry_run",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.prove_dry_run",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.prove_dry_run",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.prove_dry_run",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:integration.queue",
         "target": "projection:cli",
         "kind": "projects"
@@ -44540,11 +44560,6 @@
       },
       {
         "source": "majordomus://adr/adr-0025",
-        "target": "file:.ai/repo/order-baseline.txt",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0025",
         "target": "file:apps/majordomus-cli/src/order.rs",
         "kind": "put_in_force"
       },
@@ -44575,11 +44590,6 @@
       },
       {
         "source": "majordomus://adr/adr-0026",
-        "target": "file:apps/majordomus-cli/src/cockpit/nav.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0026",
         "target": "file:apps/majordomus-cli/src/product.rs",
         "kind": "put_in_force"
       },
@@ -44587,16 +44597,6 @@
         "source": "majordomus://adr/adr-0026",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0026",
-        "target": "majordomus://context/ai.repo.features",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0026",
-        "target": "majordomus://context/ai.repo.why",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0026",
@@ -60394,6 +60394,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/852_a_dry_run_moves_nothing.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/855_racing_executors_merge_once.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -63110,6 +63115,11 @@
       },
       {
         "source": "module:integration",
+        "target": "capability:integration.prove_dry_run",
+        "kind": "composes"
+      },
+      {
+        "source": "module:integration",
         "target": "capability:integration.queue",
         "kind": "composes"
       },
@@ -63631,7 +63641,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4501,
+      "edges": 4503,
       "acyclic": true,
       "truncated": true
     }

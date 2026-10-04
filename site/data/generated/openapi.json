@@ -65,6 +65,7 @@
     "op-health-report": "docs/api/health/",
     "op-integration-events": "docs/api/integration/",
     "op-integration-explain": "docs/api/integration/",
+    "op-integration-prove_dry_run": "docs/api/integration/",
     "op-integration-queue": "docs/api/integration/",
     "op-intent_realization-explain": "docs/api/intent-realization/",
     "op-intent_realization-work": "docs/api/intent-realization/",
@@ -372,6 +373,7 @@
     "schema-DomainRef": "docs/api/product/",
     "schema-DoneQuestion": "docs/api/gates/",
     "schema-DriftedObject": "docs/api/objects/",
+    "schema-DryRunProof": "docs/api/integration/",
     "schema-EconomicsCheck": "docs/api/economics/",
     "schema-EconomicsCheckReport": "docs/api/economics/",
     "schema-EconomicsClass": "docs/api/economics/",
@@ -622,6 +624,7 @@
     "schema-MomentRef": "docs/api/product/",
     "schema-MomentSummary": "docs/api/why/",
     "schema-Mount": "docs/api/web/",
+    "schema-Moved": "docs/api/integration/",
     "schema-Node": "docs/api/graph/",
     "schema-NodeId": "docs/api/mesh/",
     "schema-NodeList": "docs/api/mesh/",
@@ -635,6 +638,7 @@
     "schema-ObligationClosure": "docs/api/obligations/",
     "schema-ObligationState": "docs/api/obligations/",
     "schema-Observation": "docs/api/served/",
+    "schema-ObservedClassification": "docs/api/integration/",
     "schema-OpenSession": "docs/api/continuity/",
     "schema-OperationParity": "docs/api/quality/",
     "schema-Origin": "docs/api/repository/",
@@ -702,6 +706,7 @@
     "schema-ProjectionView": "docs/api/design/",
     "schema-PromptSource": "docs/api/product/",
     "schema-ProofState": "docs/api/shared/",
+    "schema-ProofStep": "docs/api/integration/",
     "schema-ProtocolReport": "docs/api/executions/",
     "schema-Provenance": "docs/api/web/",
     "schema-Provider": "docs/api/deploy/",
@@ -890,6 +895,8 @@
     "schema-SkillTested": "docs/api/skills/",
     "schema-SkillUsed": "docs/api/skills/",
     "schema-SkillVerification": "docs/api/skills/",
+    "schema-Snapshot": "docs/api/integration/",
+    "schema-SnapshotSection": "docs/api/integration/",
     "schema-Source": "docs/api/design/",
     "schema-Spelling": "docs/api/session-domain/",
     "schema-Stability": "docs/api/shared/",
@@ -1026,8 +1033,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 168,
-    "schemas": 804,
+    "operations": 169,
+    "schemas": 810,
     "tags": 51
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1178,6 +1185,7 @@
     "health.report": "health",
     "integration.events": "integration",
     "integration.explain": "integration",
+    "integration.prove_dry_run": "integration",
     "integration.queue": "integration",
     "intent_realization.explain": "intent-realization",
     "intent_realization.work": "intent-realization",
@@ -1489,6 +1497,7 @@
     "DomainRef": "product",
     "DoneQuestion": "gates",
     "DriftedObject": "objects",
+    "DryRunProof": "integration",
     "EconomicsCheck": "economics",
     "EconomicsCheckReport": "economics",
     "EconomicsClass": "economics",
@@ -1739,6 +1748,7 @@
     "MomentRef": "product",
     "MomentSummary": "why",
     "Mount": "web",
+    "Moved": "integration",
     "Node": "graph",
     "NodeId": "mesh",
     "NodeList": "mesh",
@@ -1752,6 +1762,7 @@
     "ObligationClosure": "obligations",
     "ObligationState": "obligations",
     "Observation": "served",
+    "ObservedClassification": "integration",
     "OpenSession": "continuity",
     "OperationParity": "quality",
     "Origin": "repository",
@@ -1819,6 +1830,7 @@
     "ProjectionView": "design",
     "PromptSource": "product",
     "ProofState": "shared",
+    "ProofStep": "integration",
     "ProtocolReport": "executions",
     "Provenance": "web",
     "Provider": "deploy",
@@ -2007,6 +2019,8 @@
     "SkillTested": "skills",
     "SkillUsed": "skills",
     "SkillVerification": "skills",
+    "Snapshot": "integration",
+    "SnapshotSection": "integration",
     "Source": "design",
     "Spelling": "session-domain",
     "Stability": "shared",
@@ -13480,6 +13494,87 @@
       "variants": []
     },
     {
+      "description": "The verdict: what was compared, what moved, and what the cycle observed.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "DryRunProof",
+      "properties": [
+        {
+          "description": "True exactly when nothing moved and every mirror equals what origin serves.",
+          "name": "ok",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The base branch the executor works on.",
+          "name": "base",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The cycle, step by step.",
+          "name": "steps",
+          "refs": [
+            "ProofStep"
+          ],
+          "required": true,
+          "type": "array of ProofStep"
+        },
+        {
+          "description": "Every line that differs between the snapshots; empty when nothing moved.",
+          "name": "moved",
+          "refs": [
+            "Moved"
+          ],
+          "required": true,
+          "type": "array of Moved"
+        },
+        {
+          "description": "Every mirrored ref that is not what origin serves; empty when they all are.",
+          "name": "mirrors",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The snapshot before the cycle.",
+          "name": "before",
+          "refs": [
+            "Snapshot"
+          ],
+          "required": true,
+          "type": "Snapshot"
+        },
+        {
+          "description": "The snapshot after it.",
+          "name": "after",
+          "refs": [
+            "Snapshot"
+          ],
+          "required": true,
+          "type": "Snapshot"
+        },
+        {
+          "description": "Every open pull request as the cycle classified it, in rank order.",
+          "name": "classification",
+          "refs": [
+            "ObservedClassification"
+          ],
+          "required": true,
+          "type": "array of ObservedClassification"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "integration.prove_dry_run"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One success gate's verdict on a run.\n\n```\nuse majordomus_cli::economics::model::EconomicsCheck;\nlet c = EconomicsCheck { id: \"tests_kept\".into(), passed: true, detail: \"0 deleted\".into() };\nlet back: EconomicsCheck = serde_json::from_value(serde_json::to_value(&c).unwrap()).unwrap();\nassert_eq!(back, c);\n```",
       "home": "economics",
       "is_enum": false,
@@ -16573,6 +16668,7 @@
         "integration.queue",
         "integration.events",
         "integration.explain",
+        "integration.prove_dry_run",
         "quality.report",
         "quality.rustdoc",
         "health.ready",
@@ -27750,6 +27846,42 @@
       "variants": []
     },
     {
+      "description": "One line that differs between the two snapshots.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "Moved",
+      "properties": [
+        {
+          "description": "The section it belongs to.",
+          "name": "section",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`added` (present only after the cycle) or `removed` (present only before).",
+          "name": "change",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The line itself.",
+          "name": "line",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DryRunProof"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One node. `id` is unique within the graph; `kind` is what the graph's `node_kinds`\ndeclares it to be; `route` is where the Cockpit shows the thing itself, when it shows\nit anywhere.",
       "home": "graph",
       "is_enum": false,
@@ -28562,6 +28694,49 @@
       "used_by": [],
       "used_by_schemas": [
         "DeploymentStanding"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One open pull request as the cycle classified it.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "ObservedClassification",
+      "properties": [
+        {
+          "description": "The pull request.",
+          "name": "number",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The head it was decided against.",
+          "name": "head_sha",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its disposition, as the queue names it.",
+          "name": "disposition",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the executor would do with it, when anything.",
+          "name": "next_action",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DryRunProof"
       ],
       "values": [],
       "variants": []
@@ -31905,6 +32080,35 @@
           "value": "no_test"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "One step of the cycle and what it said.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "ProofStep",
+      "properties": [
+        {
+          "description": "`refresh`, `plan`, `drain --dry-run` or `cleanup`.",
+          "name": "step",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it reported, in one line.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DryRunProof"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -43079,6 +43283,59 @@
       "variants": []
     },
     {
+      "description": "Everything the cycle could move, at one moment.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "Snapshot",
+      "properties": [
+        {
+          "description": "The sections, always in the order `remote`, `forge`, `trail`, `lease`, `local`.",
+          "name": "sections",
+          "refs": [
+            "SnapshotSection"
+          ],
+          "required": true,
+          "type": "array of SnapshotSection"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DryRunProof"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One section of a snapshot: a name and its lines, in a stable order.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "SnapshotSection",
+      "properties": [
+        {
+          "description": "`remote`, `forge`, `trail`, `lease` or `local`.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the section holds, one fact per line, sorted where order carries no meaning.",
+          "name": "lines",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Snapshot"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One stylesheet the pair set was derived from.",
       "home": "design",
       "is_enum": false,
@@ -51793,7 +52050,7 @@
       "slug": "health"
     },
     {
-      "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network.",
+      "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing.",
       "name": "integration",
       "operations": [
         {
@@ -51970,6 +52227,60 @@
           "result_schema": "IntegrationExplanation",
           "stability": "experimental",
           "summary": "Why one pull request is where it is"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "external_dependency",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "prs prove-dry-run",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/pull-requests/prove-dry-run\"",
+          "description": "Runs the executor's non-mutating cycle — refresh, plan, drain --dry-run and cleanup without --apply — between two snapshots of everything it could move if it were wrong: every ref origin serves, every open pull request's number, head, state and labels, the integration audit trail, the executor's lease, and every local ref outside the two namespaces the refresh mirrors. `ok` is true exactly when the snapshots are equal and refs/remotes/origin/<base> and every refs/majordomus/prs/<n> equal what origin serves. A read that reaches the network: the refresh asks the forge through the GitHub CLI and fetches the base and the pull-request heads, and like every read it rewrites the observation, relation and summary caches. It merges, closes and pushes nothing, and takes no input that could make it.",
+          "home": "integration",
+          "id": "integration.prove_dry_run",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_pull_requests_prove_dry_run",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/pull-requests/prove-dry-run",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::integration",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Proof that a dry run moves nothing: the result.",
+              "schema": "DryRunProof",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "DryRunProof",
+          "stability": "experimental",
+          "summary": "Proof that a dry run moves nothing"
         }
       ],
       "slug": "integration"

@@ -4,7 +4,7 @@ description = "What must become true above the milestones: every intent with its
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 167
+weight = 168
 [extra]
 route = "/docs/cli/intent/"
 command = "majordomus intent"

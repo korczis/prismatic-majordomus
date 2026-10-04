@@ -1,7 +1,7 @@
 +++
 title = "majordomus reasoning advisors"
 description = "Every advisor with its status and why, the mode in force, and who can provide each advisory capability now; no advisor at all is an ordinary answer"
-weight = 149
+weight = 150
 [extra]
 route = "/docs/cli/reasoning/advisors/"
 command = "majordomus reasoning advisors"
