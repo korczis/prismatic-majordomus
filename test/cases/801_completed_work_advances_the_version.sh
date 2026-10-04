@@ -1,5 +1,6 @@
 # majordomus-covers: finish
 # majordomus-negative: finish
+# Proves the claim accepted-work-advances-the-version (docs/CLAIMS.yaml).
 # Completed work does not leave the trunk on its version (ADR 0106).
 #
 # The policy declares a minor cadence, so a change set that carries work owes, over the

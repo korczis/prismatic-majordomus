@@ -240,6 +240,33 @@
       "note": "The mode of every entry is taken from the git index, written into the archive manifest and proved through the container before the command returns."
     },
     {
+      "id": "claim:accepted-work-advances-the-version",
+      "kind": "claim",
+      "label": "Completed work advances the version by at least the cadence over the trunk, a larger contract requirement wins, a refused completion advances nothing and a retry advances nothing again",
+      "status": "guaranteed",
+      "route": "/guarantees/accepted-work-advances-the-version/",
+      "external": false,
+      "note": "The obligation is max(trunk version, the contract's floor, the trunk raised by the cadence) for a change set that carries work, measured against the trunk the work is integrated into (ADR 0106). finish judges its whole contract first and only then advances through the one writer, so a refused completion leaves the version and the ledger as they were; a satisfied obligation writes nothing, which is what makes a second finish, a rerun workflow and a redeploy idempotent. A release record and a projection refresh carry no work and owe nothing, so the pipeline's own follow-up commits end after one advance."
+    },
+    {
+      "id": "claim:concurrent-branches-never-share-a-version",
+      "kind": "claim",
+      "label": "Two branches advanced from one trunk never land on one version, and a dependency edit beside the version line still merges",
+      "status": "guaranteed",
+      "route": "/guarantees/concurrent-branches-never-share-a-version/",
+      "external": false,
+      "note": "The manifest and the lock are merge=version; the driver takes the version line out of the merge by rewriting the base and both sides to the greater declared version, and the landing (prs drain --refresh, scripts/unblock) then advances against the trunk it now contains. The case is shown to fail without the driver: a branch advanced once against a trunk that advanced twice conflicts on the version line."
+    },
+    {
+      "id": "claim:the-served-version-is-the-declared-one",
+      "kind": "claim",
+      "label": "A deployment that serves the expected commit while stating a version its commit does not declare is refused, never reported as served",
+      "status": "guaranteed",
+      "route": "/guarantees/the-served-version-is-the-declared-one/",
+      "external": false,
+      "note": "served observe holds the build identity's source_version to the version the served commit declares in its authored manifest and answers mismatched (exit 10) when they differ, which is what a deploy of stale derived data publishes; scripts/ci/pages-check, the at-finish publication gate, asks it. A build stating no version keeps its commit's verdict and says the version was not judged."
+    },
+    {
       "id": "claim:context-budget",
       "kind": "claim",
       "label": "The always-loaded instruction file has a line budget with a failing check",
@@ -2333,6 +2360,20 @@
       "external": false
     },
     {
+      "id": "impl:apps/majordomus-cli/src/release/obligation.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/release/obligation.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/release/reconcile.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/release/reconcile.rs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:apps/majordomus-cli/src/rules/mod.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/rules/mod.rs",
@@ -2343,6 +2384,13 @@
       "id": "impl:apps/majordomus-cli/src/scope.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/scope.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/served.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/served.rs",
       "route": null,
       "external": false
     },
@@ -3089,6 +3137,13 @@
       "external": false
     },
     {
+      "id": "source:docs/RELEASE.md",
+      "kind": "source",
+      "label": "docs/RELEASE.md",
+      "route": "/docs/release/",
+      "external": false
+    },
+    {
       "id": "source:docs/ROADMAP.md",
       "kind": "source",
       "label": "docs/ROADMAP.md",
@@ -3565,6 +3620,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/359_live_scenarios.sh"
     },
     {
+      "id": "test:test/cases/384_a_deployment_is_evidence.sh",
+      "kind": "test",
+      "label": "test/cases/384_a_deployment_is_evidence.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/384_a_deployment_is_evidence.sh"
+    },
+    {
       "id": "test:test/cases/400_derivation_is_one_graph.sh",
       "kind": "test",
       "label": "test/cases/400_derivation_is_one_graph.sh",
@@ -3915,6 +3977,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/77_rust_evidence.sh"
     },
     {
+      "id": "test:test/cases/801_completed_work_advances_the_version.sh",
+      "kind": "test",
+      "label": "test/cases/801_completed_work_advances_the_version.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/801_completed_work_advances_the_version.sh"
+    },
+    {
       "id": "test:test/cases/84_deployment_contract.sh",
       "kind": "test",
       "label": "test/cases/84_deployment_contract.sh",
@@ -3934,6 +4003,13 @@
       "label": "test/cases/85_installer.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/85_installer.sh"
+    },
+    {
+      "id": "test:test/cases/873_concurrent_branches_never_share_a_version.sh",
+      "kind": "test",
+      "label": "test/cases/873_concurrent_branches_never_share_a_version.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/873_concurrent_branches_never_share_a_version.sh"
     },
     {
       "id": "test:test/cases/87_release_pipeline.sh",
@@ -4193,6 +4269,21 @@
     {
       "source": "claim:archive-fidelity",
       "target": "source:docs/ARCHIVE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:accepted-work-advances-the-version",
+      "target": "source:docs/RELEASE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:concurrent-branches-never-share-a-version",
+      "target": "source:docs/RELEASE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:the-served-version-is-the-declared-one",
+      "target": "source:docs/RELEASE.md",
       "kind": "specified_by"
     },
     {
@@ -5301,6 +5392,21 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:accepted-work-advances-the-version",
+      "target": "impl:apps/majordomus-cli/src/release/obligation.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:concurrent-branches-never-share-a-version",
+      "target": "impl:apps/majordomus-cli/src/release/reconcile.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:the-served-version-is-the-declared-one",
+      "target": "impl:apps/majordomus-cli/src/served.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:context-budget",
       "target": "impl:lib/update.sh",
       "kind": "implemented_by"
@@ -6353,6 +6459,21 @@
     {
       "source": "claim:archive-fidelity",
       "target": "test:test/cases/130_archive.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:accepted-work-advances-the-version",
+      "target": "test:test/cases/801_completed_work_advances_the_version.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:concurrent-branches-never-share-a-version",
+      "target": "test:test/cases/873_concurrent_branches_never_share_a_version.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:the-served-version-is-the-declared-one",
+      "target": "test:test/cases/384_a_deployment_is_evidence.sh",
       "kind": "proved_by"
     },
     {

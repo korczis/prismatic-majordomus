@@ -1,3 +1,4 @@
+# Proves the claim the-served-version-is-the-declared-one (docs/CLAIMS.yaml).
 # A deployment is evidence: `majordomus served observe` reads the build identity a site
 # serves and judges it against a commit by containment, and `served show` re-judges what was
 # recorded. Driven end to end through the real executable, a real git history and a real HTTP

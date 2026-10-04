@@ -1,7 +1,7 @@
 +++
 title = "The crate's rustdoc is a web surface at /rustdoc declared by discovery from the crate, present in the topology, its committed projection and the home page whether or not its producer has run, and a running server answers /rustdoc/ from the tree its producer wrote"
 description = "The reference rustdoc renders from the crate is one of the surfaces this repository serves, with"
-weight = 169
+weight = 172
 [extra]
 claim_id = "rustdoc-discoverable"
 status = "guaranteed"

@@ -839,7 +839,15 @@ mod tests {
             }
             serde_json::from_str::<Value>(spec.input)
                 .unwrap_or_else(|e| panic!("{}: input does not parse: {e}", spec.id));
-            for refused in ["delivery.", "release.analysis", "evidence."] {
+            // release.obligation measures the public contract as release.analysis does
+            // (measured 2026-10-04: 5.4 s against release.version's 1.0 s); the Cockpit
+            // renders it on its own capability page, never on every Overview load
+            for refused in [
+                "delivery.",
+                "release.analysis",
+                "release.obligation",
+                "evidence.",
+            ] {
                 assert!(
                     !spec.capability.starts_with(refused),
                     "{} reads {}, which the Overview must not ask",

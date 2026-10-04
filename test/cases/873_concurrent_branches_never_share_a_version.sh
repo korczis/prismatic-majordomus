@@ -1,5 +1,6 @@
 # majordomus-covers: capability:release.obligation
 # majordomus-negative: capability:release.obligation
+# Proves the claim concurrent-branches-never-share-a-version (docs/CLAIMS.yaml).
 # Two branches that advance from one trunk never land claiming one version (ADR 0106 §8b).
 #
 # Both start from 1.10.0 and both advance to 1.11.0. A lands. B is then brought up to date the

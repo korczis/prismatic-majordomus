@@ -1,7 +1,7 @@
 +++
 title = "What the context compiler selects, out of what it judged relevant, is counted in tokens of a named tokenizer and recorded, never estimated"
 description = "For every issue of the repository's plan, majordomus economics measure asks the context compiler (majordomus devcontext) for the context of that work and counts, in tokens of a named and pinned tokenizer, what it judged relevant and what it selected. The result is recorded under .ai/repo/benchmarks/economics/runs/context/ with the revision, the tokenizer and a digest of the inputs it depends on."
-weight = 95
+weight = 98
 [extra]
 claim_id = "context-selection-counted"
 status = "guaranteed"
