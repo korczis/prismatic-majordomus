@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.12.0"
+    "version": "0.13.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -379,6 +379,21 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:intent_realization.explain",
+      "path": "/evidence/capabilities/intent-realization-explain/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:intent_realization.work",
+      "path": "/evidence/capabilities/intent-realization-work/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:intents.coverage",
+      "path": "/evidence/capabilities/intents-coverage/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:intents.list",
       "path": "/evidence/capabilities/intents-list/"
     },
@@ -641,6 +656,11 @@
       "kind": "capability",
       "subject": "capability:plan.waves",
       "path": "/evidence/capabilities/plan-waves/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:product.domains",
+      "path": "/evidence/capabilities/product-domains/"
     },
     {
       "kind": "capability",
@@ -1579,6 +1599,11 @@
     },
     {
       "kind": "claim",
+      "subject": "claim:product-domains-derived",
+      "path": "/evidence/claims/product-domains-derived/"
+    },
+    {
+      "kind": "claim",
       "subject": "claim:product-features-discovered",
       "path": "/evidence/claims/product-features-discovered/"
     },
@@ -1656,6 +1681,11 @@
       "kind": "claim",
       "subject": "claim:provider-projections-one-renderer",
       "path": "/evidence/claims/provider-projections-one-renderer/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:published-translation-is-declared",
+      "path": "/evidence/claims/published-translation-is-declared/"
     },
     {
       "kind": "claim",
@@ -2389,6 +2419,16 @@
     },
     {
       "kind": "command",
+      "subject": "command:intent coverage",
+      "path": "/evidence/commands/intent-coverage/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:intent explain",
+      "path": "/evidence/commands/intent-explain/"
+    },
+    {
+      "kind": "command",
       "subject": "command:intent list",
       "path": "/evidence/commands/intent-list/"
     },
@@ -2396,6 +2436,11 @@
       "kind": "command",
       "subject": "command:intent preflight",
       "path": "/evidence/commands/intent-preflight/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:intent realization",
+      "path": "/evidence/commands/intent-realization/"
     },
     {
       "kind": "command",
@@ -2536,6 +2581,11 @@
       "kind": "command",
       "subject": "command:plan",
       "path": "/evidence/commands/plan/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:product domains",
+      "path": "/evidence/commands/product-domains/"
     },
     {
       "kind": "command",
@@ -4108,6 +4158,42 @@
       "mechanisms": [],
       "findings": []
     },
+    "capability:intent_realization.explain": {
+      "kind": "capability",
+      "id": "intent_realization.explain",
+      "page": "/evidence/capabilities/intent-realization-explain/",
+      "programs": [],
+      "members": [
+        "command:intent explain"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:intent_realization.work": {
+      "kind": "capability",
+      "id": "intent_realization.work",
+      "page": "/evidence/capabilities/intent-realization-work/",
+      "programs": [],
+      "members": [
+        "command:intent realization"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:intents.coverage": {
+      "kind": "capability",
+      "id": "intents.coverage",
+      "page": "/evidence/capabilities/intents-coverage/",
+      "programs": [],
+      "members": [
+        "command:intent coverage"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "capability:intents.list": {
       "kind": "capability",
       "id": "intents.list",
@@ -4677,6 +4763,18 @@
       "page": "/evidence/capabilities/plan-waves/",
       "programs": [],
       "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:product.domains": {
+      "kind": "capability",
+      "id": "product.domains",
+      "page": "/evidence/capabilities/product-domains/",
+      "programs": [],
+      "members": [
+        "command:product domains"
+      ],
       "routes": [],
       "mechanisms": [],
       "findings": []
@@ -8442,6 +8540,29 @@
       "mechanisms": [],
       "findings": []
     },
+    "claim:product-domains-derived": {
+      "kind": "claim",
+      "id": "product-domains-derived",
+      "status": "guaranteed",
+      "page": "/evidence/claims/product-domains-derived/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:800_product_domains",
+          "path": "test/cases/800_product_domains.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/PRODUCT.md",
+            "apps/majordomus-cli/src/product.rs",
+            "test/cases/800_product_domains.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "claim:product-features-discovered": {
       "kind": "claim",
       "id": "product-features-discovered",
@@ -8804,6 +8925,29 @@
             "docs/CAPABILITIES.md",
             "apps/majordomus-cli/src/providers.rs",
             "test/cases/93_rust_provider_projections.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "claim:published-translation-is-declared": {
+      "kind": "claim",
+      "id": "published-translation-is-declared",
+      "status": "guaranteed",
+      "page": "/evidence/claims/published-translation-is-declared/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:403_published_translation",
+          "path": "test/cases/403_published_translation.sh",
+          "category": "e2e",
+          "inputs": [
+            ".ai/repo/rules/project/english-only.v2.md",
+            "scripts/ci/english-only-check",
+            "test/cases/403_published_translation.sh"
           ]
         }
       ],
@@ -12806,6 +12950,44 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:intent coverage": {
+      "kind": "command",
+      "id": "intent coverage",
+      "page": "/evidence/commands/intent-coverage/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:intent explain": {
+      "kind": "command",
+      "id": "intent explain",
+      "page": "/evidence/commands/intent-explain/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:intent list": {
       "kind": "command",
       "id": "intent list",
@@ -12829,6 +13011,25 @@
       "kind": "command",
       "id": "intent preflight",
       "page": "/evidence/commands/intent-preflight/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:intent realization": {
+      "kind": "command",
+      "id": "intent realization",
+      "page": "/evidence/commands/intent-realization/",
       "programs": [
         "native"
       ],
@@ -13587,6 +13788,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:product domains": {
+      "kind": "command",
+      "id": "product domains",
+      "page": "/evidence/commands/product-domains/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:product list": {
       "kind": "command",
       "id": "product list",
@@ -14272,6 +14492,12 @@
           "via": "negative",
           "test": "suite:138_governance_gates",
           "path": "test/cases/138_governance_gates.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:403_published_translation",
+          "path": "test/cases/403_published_translation.sh",
           "category": "e2e"
         },
         {
@@ -17200,6 +17426,30 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_intent_coverage": {
+      "kind": "mcp",
+      "id": "majordomus_intent_coverage",
+      "alias_of": "capability:intents.coverage",
+      "programs": [],
+      "members": [
+        "capability:intents.coverage"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_intent_explain": {
+      "kind": "mcp",
+      "id": "majordomus_intent_explain",
+      "alias_of": "capability:intent_realization.explain",
+      "programs": [],
+      "members": [
+        "capability:intent_realization.explain"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_intent_preflight": {
       "kind": "mcp",
       "id": "majordomus_intent_preflight",
@@ -17207,6 +17457,18 @@
       "programs": [],
       "members": [
         "capability:intents.preflight"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_intent_realization": {
+      "kind": "mcp",
+      "id": "majordomus_intent_realization",
+      "alias_of": "capability:intent_realization.work",
+      "programs": [],
+      "members": [
+        "capability:intent_realization.work"
       ],
       "routes": [],
       "mechanisms": [],
@@ -17783,6 +18045,18 @@
       "programs": [],
       "members": [
         "capability:environment.preflight"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_product_domains": {
+      "kind": "mcp",
+      "id": "majordomus_product_domains",
+      "alias_of": "capability:product.domains",
+      "programs": [],
+      "members": [
+        "capability:product.domains"
       ],
       "routes": [],
       "mechanisms": [],
@@ -19654,6 +19928,37 @@
       "mechanisms": [],
       "findings": []
     },
+    "rule:project.a-plan-carries-the-intent-it-serves": {
+      "kind": "rule",
+      "id": "project.a-plan-carries-the-intent-it-serves",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "crate:intent_plan",
+          "path": "apps/majordomus-cli/tests/intent_plan.rs",
+          "category": "integration",
+          "inputs": [
+            "apps/majordomus-cli/tests/intent_plan.rs",
+            ".ai/repo/rules/project/a-plan-carries-the-intent-it-serves.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:386_a_plan_is_held_to_its_intent",
+          "path": "test/cases/386_a_plan_is_held_to_its_intent.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/386_a_plan_is_held_to_its_intent.sh",
+            ".ai/repo/rules/project/a-plan-carries-the-intent-it-serves.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "rule:project.a-provider-capability-cites-its-evidence": {
       "kind": "rule",
       "id": "project.a-provider-capability-cites-its-evidence",
@@ -19816,6 +20121,37 @@
           "inputs": [
             "test/cases/735_a_new_advisor_needs_no_consumer_edit.sh",
             ".ai/repo/rules/project/advisors-are-optional.v1.md"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "rule:project.an-intent-outlives-its-sessions": {
+      "kind": "rule",
+      "id": "project.an-intent-outlives-its-sessions",
+      "status": "active",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "rule",
+          "test": "crate:intent_realization",
+          "path": "apps/majordomus-cli/tests/intent_realization.rs",
+          "category": "integration",
+          "inputs": [
+            "apps/majordomus-cli/tests/intent_realization.rs",
+            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:388_an_intent_is_realised_across_providers_and_held_to_reality",
+          "path": "test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh",
+            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v1.md"
           ]
         }
       ],
@@ -23457,6 +23793,7 @@
     "crate:hot_path",
     "crate:index_behavior",
     "crate:lease_busy",
+    "crate:lease_declared",
     "crate:mcp_stdio",
     "crate:mesh_compaction",
     "crate:metadata_contract",
@@ -23464,6 +23801,7 @@
     "crate:peer_claims",
     "crate:properties",
     "crate:providers_projection",
+    "crate:reasoning_mesh",
     "crate:redaction",
     "crate:repository_discovery",
     "crate:response_schema",
@@ -23514,8 +23852,10 @@
     "suite:343_the_cockpit_shows_who_else_is_here",
     "suite:349_a_step_reports_its_own_time",
     "suite:34_command_fixtures",
+    "suite:350_the_queue_measures_itself",
     "suite:352_the_version_the_site_shows_is_one_you_can_get",
     "suite:353_the_version_bump_has_an_actor",
+    "suite:354_a_lease_contest_is_judged_by_a_declaration",
     "suite:35_future_command",
     "suite:360_the_crate_boundary_is_measured",
     "suite:362_a_release_follows_the_ci_verdict",
@@ -23553,6 +23893,7 @@
     "suite:546_a_statistic_names_the_capability_it_asked",
     "suite:552_coverage_is_recorded_for_the_preflight",
     "suite:575_nothing_runs_perl",
+    "suite:593_generation_states_its_subject",
     "suite:599_a_silent_check_is_not_a_pass",
     "suite:59_reference_integrity",
     "suite:611_the_reclaim_refuses_what_it_cannot_prove",
@@ -23580,8 +23921,10 @@
     "suite:790_the_kit_is_one_vocabulary_and_its_page_renders_all_of_it",
     "suite:791_a_screen_is_composed_of_the_kit_and_of_real_data",
     "suite:805_a_status_speaks_the_vocabulary_of_its_kind",
+    "suite:810_a_feature_is_explored_under_its_domain",
     "suite:85_deployment_bind",
     "suite:86_deployment_projections",
+    "suite:884_a_declared_kind_is_a_kind_the_graph_knows",
     "suite:93_schema_integrity",
     "suite:93_workspace_kind",
     "suite:97_development_semantics_gate",
