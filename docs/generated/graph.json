@@ -1733,14 +1733,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/http/events.rs",
-        "kind": "file",
-        "label": "events.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/http/events.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/http/router.rs",
         "kind": "file",
         "label": "router.rs",
@@ -1754,14 +1746,6 @@
         "label": "swagger.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/http/swagger.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/http/ws.rs",
-        "kind": "file",
-        "label": "ws.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/http/ws.rs",
         "external": true
       },
       {
@@ -38390,6 +38374,20 @@
         "source": "test/cases/84_web_surfaces.sh"
       },
       {
+        "id": "majordomus://test/test/cases/857_required_checks_are_authoritative.sh",
+        "kind": "test",
+        "label": "test/cases/857_required_checks_are_authoritative.sh",
+        "route": "/cockpit/objects/test/test-cases-857-required-checks-are-authoritative-sh",
+        "source": "test/cases/857_required_checks_are_authoritative.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/858_reviews_are_authoritative.sh",
+        "kind": "test",
+        "label": "test/cases/858_reviews_are_authoritative.sh",
+        "route": "/cockpit/objects/test/test-cases-858-reviews-are-authoritative-sh",
+        "source": "test/cases/858_reviews_are_authoritative.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/85_deployment_bind.sh",
         "kind": "test",
         "label": "test/cases/85_deployment_bind.sh",
@@ -44641,16 +44639,6 @@
       {
         "source": "majordomus://adr/adr-0033",
         "target": "file:apps/majordomus-cli/src/execution/mod.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/http/events.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/http/ws.rs",
         "kind": "put_in_force"
       },
       {
@@ -60225,6 +60213,16 @@
       },
       {
         "source": "majordomus://test/test/cases/84_web_surfaces.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/857_required_checks_are_authoritative.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/858_reviews_are_authoritative.sh",
         "target": "kind:test",
         "kind": "is_a"
       },

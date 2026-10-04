@@ -67,10 +67,22 @@ with one canonical state, one classification and one executor.
 3. **Thirteen dispositions, decided in one order.** `ready` is reached only when the pull
    request targets the base, is not a draft, carries no blocking label, contains the
    current master, has its declared dependencies landed, satisfies the review policy, and
-   has every *required* check passed on its current head. A required check that is pending,
-   missing, skipped or unreadable is not passed. The forge's review decision comes before the
-   protection's requirement: `REVIEW_REQUIRED` is a pending review even where the branch
-   protection requires none, because a ruleset or code owners can. A dependency is declared
+   has every *required* check passed on its current head. The required checks are the
+   base's branch protection and the rulesets that apply to it, together; if either cannot be
+   read, nothing is ready. A check bound to an app (`app_id` in the protection,
+   `integration_id` in a ruleset) is only that app's check run: a commit status of the same
+   name is not it. Of a context's reports, one still running makes it pending, and
+   otherwise the newest completed report is its verdict, so a failure a re-run fixed has
+   passed. A required check that is pending, missing or unreadable is not passed, and
+   neither is a skip, unless the policy permits that context's skip. A base that requires
+   no check proves nothing about a head: an empty set after a successful read is `unknown`
+   (`no_required_checks`), never ready (owner decision D5). The review policy is read from
+   the protection and rulesets the same way (approvals, code owners, stale dismissal), and
+   an approval counts only on the commit it was given on: approvals of an earlier head are
+   `stale`, and enough of them on the head with a code owner's still owed is
+   `code_owners_pending`. The forge's review decision comes before the policy:
+   `REVIEW_REQUIRED` is a pending review even where the policy requires none, because a rule
+   this policy does not list can. A dependency is declared
    only by a line that opens with `Depends on`, `Stacked on`, `Requires` or `Land after` and a
    number; the same words mid-sentence are prose. A pull request is stacked only on a branch
    of this repository, never on a fork's branch of the same name.
