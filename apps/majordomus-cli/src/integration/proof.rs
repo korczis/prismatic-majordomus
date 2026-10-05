@@ -187,6 +187,30 @@ fn forge_lines(json: &str) -> Result<Vec<String>, String> {
         .collect())
 }
 
+/// The trail as the proof compares it: its acts — every line but an `observed` one — counted
+/// and hashed. A read records what it observed, and the cycle reads, so `observed` lines are
+/// expected to grow; any other line the cycle adds is an act, and the proof must see it.
+fn trail_acts(bytes: &[u8]) -> Vec<String> {
+    let text = String::from_utf8_lossy(bytes);
+    let acts: Vec<&str> = text
+        .lines()
+        .filter(|l| {
+            serde_json::from_str::<serde_json::Value>(l)
+                .ok()
+                .and_then(|v| v.get("action").and_then(|a| a.as_str()).map(str::to_string))
+                .as_deref()
+                != Some("observed")
+        })
+        .collect();
+    vec![
+        format!("acts {}", acts.len()),
+        format!(
+            "sha256 {}",
+            crate::policy::sha256_bytes_hex(acts.join("\n").as_bytes())
+        ),
+    ]
+}
+
 /// Take a snapshot of everything the cycle could move.
 pub fn snapshot(root: &Path, base: &str) -> Result<Snapshot, String> {
     let remote: Vec<String> = ref_lines(&git(root, &["ls-remote", "origin"])?)
@@ -207,13 +231,13 @@ pub fn snapshot(root: &Path, base: &str) -> Result<Snapshot, String> {
             "number,headRefOid,state,labels",
         ],
     )?)?;
-    let trail_path = super::state_path(root, super::EVENTS_FILE);
+    // the repository's trail, where every worktree writes it — read where it is, never
+    // through events_path, which would move an old checkout's trail and be a write itself
+    let trail_path = super::common_state_path(root, super::EVENTS_FILE)?;
     let trail = match std::fs::read(&trail_path) {
-        Ok(bytes) => vec![
-            format!("lines {}", bytes.iter().filter(|b| **b == b'\n').count()),
-            format!("sha256 {}", crate::policy::sha256_bytes_hex(&bytes)),
-        ],
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => vec!["absent".into()],
+        Ok(bytes) => trail_acts(&bytes),
+        // no trail is a trail of no acts: a cycle that only observes may create one
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => trail_acts(b""),
         Err(e) => return Err(format!("{}: {e}", trail_path.display())),
     };
     let lock = IntegrationLease::path_for(&common_dir(root)?, base);
@@ -547,5 +571,50 @@ mod tests {
             ["#1 aa - []", "#2 bb OPEN [a,z]"]
         );
         assert!(forge_lines("{}").is_err(), "an object is not a list");
+    }
+}
+
+#[cfg(test)]
+mod trail_and_helper_tests {
+    use super::*;
+
+    #[test]
+    fn the_trail_compares_acts_and_lets_observations_grow() {
+        let one = b"{\"action\":\"observed\"}\n{\"action\":\"lease_acquired\"}\n";
+        let more = b"{\"action\":\"observed\"}\n{\"action\":\"lease_acquired\"}\n{\"action\":\"observed\"}\n";
+        assert_eq!(
+            trail_acts(one),
+            trail_acts(more),
+            "a read records what it observed"
+        );
+        let act = b"{\"action\":\"observed\"}\n{\"action\":\"lease_acquired\"}\n{\"action\":\"merge_attempted\"}\n";
+        assert_ne!(trail_acts(one), trail_acts(act), "an act is seen");
+        assert_eq!(trail_acts(act)[0], "acts 2");
+        // a line that is not an event is not an observation either: it counts
+        assert_eq!(trail_acts(b"not json\n")[0], "acts 1");
+    }
+
+    #[test]
+    fn the_helpers_refuse_what_they_cannot_read() {
+        assert_eq!(
+            ref_lines("aa refs/heads/x\nlonely\n\nbb refs/heads/a\n"),
+            [
+                ("bb".to_string(), "refs/heads/a".to_string()),
+                ("aa".to_string(), "refs/heads/x".to_string())
+            ]
+        );
+        let dir = tempfile::tempdir().unwrap();
+        let none = run(dir.path(), "majordomus-no-such-program", &[]).unwrap_err();
+        assert!(none.contains("could not run"), "{none}");
+        assert!(common_dir(dir.path()).is_err(), "not a repository");
+        // origin serving no base leaves the base's mirror unjudged, not mismatched
+        let observed = std::collections::BTreeSet::new();
+        assert!(mirror_mismatches(
+            "aa\trefs/heads/other\n",
+            "bb refs/remotes/origin/master\n",
+            "master",
+            &observed
+        )
+        .is_empty());
     }
 }
