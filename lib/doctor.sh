@@ -248,22 +248,50 @@ mj_validate_projection() {
 # exists in one provider's file and nowhere else is the two-rulebooks failure this tool was
 # distilled from, so a generated target that holds a rule corpus fails here.
 mj_validate_bootstrap() {
-  local j=0 tgt bad=0
+  local j=0 tgt mode bad=0
   if [ -f "$MJ_ROOT/README.md" ]; then
     if grep -q 'AGENTS\.md' "$MJ_ROOT/README.md"; then mj_doctrine_ok bootstrap "README.md" "names AGENTS.md"
     else mj_doctrine_fail bootstrap "README.md" "does not name AGENTS.md; a reader cannot find the agent bootstrap" "grep -n AGENTS.md README.md"; bad=1; fi
   fi
   while [ -n "$(mj_pol "projections.$j.target")" ]; do
-    tgt="$(mj_pol "projections.$j.target")"; j=$((j+1))
+    tgt="$(mj_pol "projections.$j.target")"; mode="$(mj_projection_mode "$j")"; j=$((j+1))
     [ -f "$MJ_ROOT/$tgt" ] || continue   # projection_integrity reports absence
     if ! grep -q '\.ai/README\.md' "$MJ_ROOT/$tgt"; then
       mj_doctrine_fail bootstrap "$tgt" "does not point at .ai/README.md; a worker reading it never reaches the layer" "grep -n '.ai/README.md' $tgt"; bad=1
     elif grep -qE '^\| *`?(profile|routine|implementation)`? *\||^- \*\*[A-Za-z].*\*\*|^### (Rules|Ten rules|Lifecycle|Finish contract)' "$MJ_ROOT/$tgt"; then
       mj_doctrine_fail bootstrap "$tgt" "carries a rule corpus of its own (a profile table, rule bullets or a rules section); rules live under .ai/repo/rules/" "grep -nE '^- \*\*|^### ' $tgt"; bad=1
     fi
+    mj_bootstrap_rule_refs "$tgt" "$mode" || bad=1
   done
-  [ "$bad" = 0 ] && [ "$j" -gt 0 ] && mj_doctrine_ok bootstrap "$j projection(s)" "each points at .ai/README.md and carries no rule of its own"
+  [ "$bad" = 0 ] && [ "$j" -gt 0 ] && mj_doctrine_ok bootstrap "$j projection(s)" "each points at .ai/README.md, carries no rule of its own and names only rules in force"
   return 0
+}
+
+# A generated file that names a rule the repository does not have fails for the reason one
+# that carries a rule of its own does: the rule exists in that file and nowhere else, and a
+# worker who reads it goes looking for a rule that is not there. So every rule id the
+# generated content names resolves in the effective set, as `majordomus rules list` lists it.
+# The links check beside the budget is the same guard for paths; this one is for rule ids,
+# which are not links and which it therefore never saw.
+#
+# The generated content only — the whole file in file mode, the region in region mode. That
+# is the text update writes from the provider template, so every finding is fixed by a
+# template or a rule and never by editing the file; the host document around a region is the
+# repository's own prose, which no generator promised anything about (the budget doctrine
+# judges the same span for the same reason). A malformed region is the projection doctrine's
+# finding and is not read here. Line numbers are the file's, so a reader can go to them.
+#
+# mj_bootstrap_rule_refs TARGET MODE -> 0 when every reference resolves, 1 after reporting each
+mj_bootstrap_rule_refs() {
+  local tgt="$1" mode="$2" line ref bad=0
+  [ "$mode" = region ] && { mj_region_extract "$MJ_ROOT/$tgt" >/dev/null 2>&1 || return 0; }
+  while IFS="$MJ_TAB" read -r line ref; do
+    mj_doctrine_fail rule-refs "$tgt" \
+      "$tgt line $line names rule $ref, which is not in the effective rule set (add the rule under .ai/repo/rules/project/, or drop it from the provider template and run majordomus update)" \
+      "sed -n '${line}p' $tgt; majordomus rules show ${ref%@*}"
+    bad=1
+  done < <(mj_rule_refs_unresolved "$MJ_ROOT/$tgt" "$mode")
+  return "$bad"
 }
 
 mj_validate_budget() {

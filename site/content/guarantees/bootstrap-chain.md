@@ -15,7 +15,7 @@ source = "docs/claims/bootstrap-chain.md"
 
 ## How it works
 
-`lib/update.sh` renders each target from an adapter under the distribution's `share/providers/` (or the repository's own override under its providers section), stamps it with the policy hash and its content hash, and writes it atomically. The `majordomus.bootstrap-integrity` doctrine, dispatched from `doctor` and `watch`, proves the chain on every run: `README.md` names `AGENTS.md`, every projection names `.ai/README.md`, and a generated file that has grown a rule corpus of its own fails. The always-loaded projection also stays within the policy's line budget, which is what keeps a bootstrap a bootstrap.
+`lib/update.sh` renders each target from an adapter under the distribution's `share/providers/` (or the repository's own override under its providers section), stamps it with the policy hash and its content hash, and writes it atomically. The `majordomus.bootstrap-integrity` doctrine, dispatched from `doctor` and `watch`, proves the chain on every run: `README.md` names `AGENTS.md`, every projection names `.ai/README.md`, and a generated file that has grown a rule corpus of its own fails. So does one that names a rule the repository does not have: every rule id the generated content names (`<namespace>.<slug>`, optionally `@<version>`, outside a fenced block) must resolve in the effective set `majordomus rules list` lists, and each that does not is a `FAIL rule-refs` naming the file, the line and the id (`test/cases/899_a_bootstrap_names_only_rules_in_force.sh`). The always-loaded projection also stays within the policy's line budget, which is what keeps a bootstrap a bootstrap.
 
 ## How to see it
 

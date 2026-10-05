@@ -1671,14 +1671,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/worktree/path.rs",
-        "kind": "file",
-        "label": "path.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/worktree/path.rs",
-        "external": true
-      },
-      {
         "id": "file:scripts/cockpit-probe",
         "kind": "file",
         "label": "cockpit-probe",
@@ -4773,7 +4765,6 @@
         "facts": {
           "claim": "Provider instruction files are thin bootstraps that point at the AI layer and carry no rule of their own",
           "implementation": "lib/update.sh",
-          "note": "Every projection names .ai/README.md, README.md names AGENTS.md, and doctor fails on a projection that grew a rules section of its own. A person and a worker reach the same layer by the same two hops.",
           "responsibility": "projection",
           "source": "docs/DESIGN.md",
           "test": "test/cases/03_update.sh"
@@ -39048,6 +39039,13 @@
         "source": "test/cases/88_rust_command_tested.sh"
       },
       {
+        "id": "majordomus://test/test/cases/899_a_bootstrap_names_only_rules_in_force.sh",
+        "kind": "test",
+        "label": "test/cases/899_a_bootstrap_names_only_rules_in_force.sh",
+        "route": "/cockpit/objects/test/test-cases-899-a-bootstrap-names-only-rules-in-force-sh",
+        "source": "test/cases/899_a_bootstrap_names_only_rules_in_force.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/89_web_surface.sh",
         "kind": "test",
         "label": "test/cases/89_web_surface.sh",
@@ -44827,11 +44825,6 @@
       },
       {
         "source": "majordomus://adr/adr-0021",
-        "target": "file:apps/majordomus-cli/src/worktree/path.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0021",
         "target": "kind:adr",
         "kind": "is_a"
       },
@@ -50154,11 +50147,6 @@
         "source": "majordomus://claim/worktree-ownership",
         "target": "majordomus://test/test/cases/27_foreign_task.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/worktree-topology-derived",
-        "target": "file:apps/majordomus-cli/src/worktree/path.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/worktree-topology-derived",
@@ -60896,6 +60884,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/899_a_bootstrap_names_only_rules_in_force.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/89_web_surface.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -64073,7 +64066,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4499,
+      "edges": 4498,
       "acyclic": true,
       "truncated": true
     }
