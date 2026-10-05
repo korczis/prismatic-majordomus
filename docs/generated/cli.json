@@ -12400,7 +12400,7 @@
                 "name": "continuous",
                 "long": "continuous",
                 "positional": false,
-                "help": "Drain, wait `--interval` seconds, and drain again until stopped, holding the lease throughout; each cycle is bounded by `--max` and observes before every step. Ctrl-C or SIGTERM lets the step in progress finish, then releases the lease; a second signal ends it at once. Never with `--dry-run`",
+                "help": "Drain, wait `--interval` seconds, and drain again until stopped, holding the lease throughout; each cycle is bounded by `--max` and observes before every step. Ctrl-C or SIGTERM lets the step in progress finish, then releases the lease; a second signal ends it at once. Never with `--dry-run`, and refused (exit 10) until the audit trail holds five verified merges since the last one that could not be verified: the last stage of the rollout (ADR 0101 §13)",
                 "value_name": "CONTINUOUS",
                 "takes_value": false,
                 "required": false,

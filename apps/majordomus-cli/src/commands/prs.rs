@@ -185,6 +185,14 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             interval,
             resume_after_failure,
         } => {
+            // the last stage of the rollout (ADR 0101 §13), unlocked by the trail's record of
+            // verified merges and by nothing else: asked before the lease, the base or the forge
+            if let Some(reason) = drain::continuous_refused(&drain::events(&root)) {
+                return Err(Error::Refused {
+                    code: FINDING,
+                    reason,
+                });
+            }
             let base = executor_base(&root).map_err(unusable)?;
             // the lease for the whole run: a second worker is refused here, before it acts
             let lease = IntegrationLease::acquire(&root, &base).map_err(unusable)?;

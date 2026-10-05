@@ -487,7 +487,8 @@ which a lease is called stale. Every cycle is an ordinary bounded drain: `--max`
 from a fresh observation, and nothing is carried between cycles. Ctrl-C or SIGTERM lets the
 step in progress finish, then the drain stops and releases the lease. A second signal ends
 it at once. A verification failure stops it for a person, and so does a forge or git that
-cannot be read after its retries. It never runs with `--dry-run`.
+cannot be read after its retries. It never runs with `--dry-run`, and it does not start before
+the rollout's record allows it (see below).
 
 ## Rollout
 
@@ -495,7 +496,10 @@ cannot be read after its retries. It never runs with `--dry-run`.
    repository. The classification was checked on 2026-09-30 against 70 open pull requests.
 2. **One merge.** `prs drain --max 1` once a pull request is `ready`.
 3. **Bounded.** `prs drain --refresh --max 3`.
-4. **Continuous.** `prs drain --continuous` exists and is gated by its own explicit flag;
-   it is to be run only after the audit trail shows several verified bounded cycles. It
-   has not been run against this repository yet.
+4. **Continuous.** `prs drain --continuous` is refused, with exit 10 and before the lease,
+   the base or the forge is touched, until the audit trail holds five verified merges
+   (`ROLLOUT_MERGES_BEFORE_CONTINUOUS`) since the last merge that could not be verified. A
+   merge that could not be verified starts the count again, even after
+   `--resume-after-failure`, because the record it ends was the evidence. The gate reads
+   the trail and nothing else: stages 2 and 3 are what fill it (ADR 0101 §13).
 {% endraw %}

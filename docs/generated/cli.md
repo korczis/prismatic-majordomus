@@ -2854,7 +2854,7 @@ majordomus prs drain [OPTIONS]
 | `--max` | `<MAX>` | `1` | At most this many merges |
 | `--dry-run` | flag | — | Observe and decide, change nothing |
 | `--refresh` | flag | — | When nothing is ready, bring master into the first pull request that needs it (a merge commit with the derived driver and a fresh derive, pushed as a fast-forward), so that its checks run against the current master |
-| `--continuous` | flag | — | Drain, wait `--interval` seconds, and drain again until stopped, holding the lease throughout; each cycle is bounded by `--max` and observes before every step. Ctrl-C or SIGTERM lets the step in progress finish, then releases the lease; a second signal ends it at once. Never with `--dry-run` |
+| `--continuous` | flag | — | Drain, wait `--interval` seconds, and drain again until stopped, holding the lease throughout; each cycle is bounded by `--max` and observes before every step. Ctrl-C or SIGTERM lets the step in progress finish, then releases the lease; a second signal ends it at once. Never with `--dry-run`, and refused (exit 10) until the audit trail holds five verified merges since the last one that could not be verified: the last stage of the rollout (ADR 0101 §13) |
 | `--interval` | `<INTERVAL>` | `300` | With `--continuous`: seconds between cycles, 30 to 900 |
 | `--resume-after-failure` | flag | — | A merge an earlier drain could not verify stops every drain until a person has looked at it: this records that someone has (`failure_acknowledged` on the trail), then drains. Never with `--dry-run` |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |

@@ -2,7 +2,9 @@
 # majordomus-timeout: 600
 # `prs drain --continuous` runs alone, refreshes before every action, and stops cleanly:
 #
-#   1. it refuses a dry run and an interval outside 30–900 s before anything happens
+#   1. it refuses a dry run and an interval outside 30–900 s before anything happens, and
+#      without a record of verified merges on the trail it is refused too (ADR 0101 §13):
+#      continuous mode is the last stage of the rollout, unlocked by bounded merges
 #   2. running, it merges the ready pull request in its first cycle and then waits
 #   3. while it runs, a second executor is refused by the base branch's lease — and an
 #      observer is not: `prs status` still answers
@@ -59,7 +61,16 @@ LOCK="$(git rev-parse --path-format=absolute --git-common-dir)/majordomus/locks/
 # ---------------------------------------------------------------- 1. refused before acting
 expect_exit 2 "$RB" prs --repo "$W" drain --continuous --dry-run
 expect_exit 2 "$RB" prs --repo "$W" drain --continuous --interval 5
+expect_exit 10 "$RB" prs --repo "$W" drain --continuous --interval 30
 grep -q '^pr merge' "$STATE/log" && { echo "    a refused invocation merged"; exit 1; }
+[ -e "$LOCK" ] && { echo "    the rollout refusal took the lease"; exit 1; }
+# the record that unlocks it: five merges earlier bounded drains made and proved, in the words
+# the executor writes to the repository's one trail
+TRAIL="$(git rev-parse --path-format=absolute --git-common-dir)/majordomus/integration/events.jsonl"
+mkdir -p "$(dirname "$TRAIL")"
+for _ in 1 2 3 4 5; do
+  printf '%s\n' '{"at":"2026-10-05T00:00:00Z","actor":"seed","action":"merge_succeeded","pr":null,"reasons":[],"detail":"an earlier bounded merge"}' >> "$TRAIL"
+done
 
 # ---------------------------------------------------------------- 2. running
 # the executable itself in the background, not the `prs` function: `$!` of a function is the

@@ -21063,18 +21063,136 @@
       "routes": [
         {
           "via": "rule",
+          "test": "crate:integration_rollout",
+          "path": "apps/majordomus-cli/tests/integration_rollout.rs",
+          "category": "integration",
+          "inputs": [
+            "apps/majordomus-cli/tests/integration_rollout.rs",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "crate:integration_trail",
+          "path": "apps/majordomus-cli/tests/integration_trail.rs",
+          "category": "integration",
+          "inputs": [
+            "apps/majordomus-cli/tests/integration_trail.rs",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
           "test": "suite:720_integration_follows_the_current_master",
           "path": "test/cases/720_integration_follows_the_current_master.sh",
           "category": "e2e",
           "inputs": [
             "test/cases/720_integration_follows_the_current_master.sh",
-            ".ai/repo/rules/project/integration-follows-the-current-master.v1.md"
+            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:740_integration_is_visible_where_a_person_looks",
+          "path": "test/cases/740_integration_is_visible_where_a_person_looks.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/740_integration_is_visible_where_a_person_looks.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:741_a_continuous_drain_stops_cleanly_and_alone",
+          "path": "test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:742_only_an_outage_is_asked_again",
+          "path": "test/cases/742_only_an_outage_is_asked_again.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/742_only_an_outage_is_asked_again.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:850_integration_drains_cycle_by_cycle",
+          "path": "test/cases/850_integration_drains_cycle_by_cycle.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/850_integration_drains_cycle_by_cycle.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:852_a_dry_run_moves_nothing",
+          "path": "test/cases/852_a_dry_run_moves_nothing.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/852_a_dry_run_moves_nothing.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:855_racing_executors_merge_once",
+          "path": "test/cases/855_racing_executors_merge_once.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/855_racing_executors_merge_once.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:856_racing_worktrees_share_one_lease",
+          "path": "test/cases/856_racing_worktrees_share_one_lease.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/856_racing_worktrees_share_one_lease.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:857_required_checks_are_authoritative",
+          "path": "test/cases/857_required_checks_are_authoritative.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/857_required_checks_are_authoritative.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:858_reviews_are_authoritative",
+          "path": "test/cases/858_reviews_are_authoritative.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/858_reviews_are_authoritative.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:861_a_successor_that_landed_supersedes",
+          "path": "test/cases/861_a_successor_that_landed_supersedes.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/861_a_successor_that_landed_supersedes.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
           ]
         }
       ],
-      "mechanisms": [
-        "apps/majordomus-cli/src/integration/tests.rs"
-      ],
+      "mechanisms": [],
       "findings": []
     },
     "rule:project.interfaces-are-projections": {
@@ -23845,7 +23963,6 @@
     "crate:health_server",
     "crate:hot_path",
     "crate:index_behavior",
-    "crate:integration_trail",
     "crate:lease_busy",
     "crate:lease_declared",
     "crate:mcp_stdio",
@@ -23963,9 +24080,6 @@
     "suite:71_context_sync",
     "suite:721_the_suite_shards_are_the_whole_suite",
     "suite:73_knowledge_nodes",
-    "suite:740_integration_is_visible_where_a_person_looks",
-    "suite:741_a_continuous_drain_stops_cleanly_and_alone",
-    "suite:742_only_an_outage_is_asked_again",
     "suite:743_release_version_answers_with_the_contract",
     "suite:744_an_installed_tool_finds_its_own_executable",
     "suite:74_knowledge_edges",
@@ -23974,14 +24088,7 @@
     "suite:763_a_tag_older_than_the_record_practice_is_a_note",
     "suite:790_the_kit_is_one_vocabulary_and_its_page_renders_all_of_it",
     "suite:791_a_screen_is_composed_of_the_kit_and_of_real_data",
-    "suite:850_integration_drains_cycle_by_cycle",
-    "suite:852_a_dry_run_moves_nothing",
-    "suite:855_racing_executors_merge_once",
-    "suite:856_racing_worktrees_share_one_lease",
-    "suite:857_required_checks_are_authoritative",
-    "suite:858_reviews_are_authoritative",
     "suite:85_deployment_bind",
-    "suite:861_a_successor_that_landed_supersedes",
     "suite:86_deployment_projections",
     "suite:93_schema_integrity",
     "suite:93_workspace_kind",
