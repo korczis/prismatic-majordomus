@@ -91,9 +91,10 @@ pub struct MergedBranch {
 /// before the newest this many is not reported; the report says how many were read.
 pub const MERGED_LIMIT: usize = 1000;
 
-/// Origin's branches from `git ls-remote --heads` output: name → tip.
+/// Origin's branches from `git ls-remote --heads` output: name → tip. The module is private,
+/// so the examples here are text; the unit tests run the same assertions.
 ///
-/// ```
+/// ```text
 /// use majordomus_cli::integration::forge::remote_heads_of;
 /// let heads = remote_heads_of("a1\trefs/heads/master\nb2\trefs/heads/feature/x\nc3\trefs/tags/v1\n");
 /// assert_eq!(heads.get("feature/x").map(String::as_str), Some("b2"));
@@ -119,7 +120,7 @@ pub fn remote_heads_of(ls_remote: &str) -> BTreeMap<String, String> {
 /// when several merged pull requests left the same branch at the same head, the newest
 /// number names it. In branch order.
 ///
-/// ```
+/// ```text
 /// use majordomus_cli::integration::forge::{merged_branches_of, remote_heads_of};
 /// let heads = remote_heads_of("aa\trefs/heads/fix/a\nbb\trefs/heads/fix/b\ncc\trefs/heads/master\n");
 /// let merged = serde_json::json!([
@@ -780,7 +781,7 @@ pub fn merged_branches(root: &Path, base: &str) -> Option<Vec<MergedBranch>> {
 /// left nothing behind and the merged pull requests are never asked for; otherwise `list`
 /// answers them, and `None` from it is unread.
 ///
-/// ```
+/// ```text
 /// use majordomus_cli::integration::forge::{merged_branches_given, remote_heads_of};
 /// let only_base = remote_heads_of("cc\trefs/heads/master\n");
 /// assert_eq!(merged_branches_given(&only_base, "master", || unreachable!()), Some(vec![]));
