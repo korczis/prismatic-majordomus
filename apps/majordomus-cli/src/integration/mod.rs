@@ -681,17 +681,17 @@ pub fn queue_of(root: &Path) -> Result<IntegrationQueue, String> {
 /// read, from the command line, the capability or the Cockpit, leaves the checkout as it was.
 pub fn queue_and_record(root: &Path) -> Result<IntegrationQueue, String> {
     let (queue, cache) = computed(root, std::time::SystemTime::now())?;
-    if let Ok(text) = serde_json::to_string(&cache) {
-        let _ = write_atomic(&state_path(root, RELATIONS_FILE), &text);
-    }
+    // both are caches a later read rebuilds: a write that fails costs that rebuild, never this
+    // answer, so neither failure is the caller's
+    let _ = serde_json::to_string(&cache)
+        .ok()
+        .map(|text| write_atomic(&state_path(root, RELATIONS_FILE), &text));
     // the summary a briefing reads without deciding a single relation (QueueSummary), the
     // repository's like the trail it sits beside
-    if let (Ok(path), Ok(text)) = (
-        common_state_path(root, SUMMARY_FILE),
-        serde_json::to_string_pretty(&QueueSummary::of(&queue)),
-    ) {
-        let _ = write_atomic(&path, &(text + "\n"));
-    }
+    let _ = common_state_path(root, SUMMARY_FILE)
+        .ok()
+        .zip(serde_json::to_string_pretty(&QueueSummary::of(&queue)).ok())
+        .map(|(path, text)| write_atomic(&path, &(text + "\n")));
     Ok(queue)
 }
 
@@ -835,4 +835,90 @@ pub fn refresh(root: &Path) -> Result<ForgeObservation, String> {
 
 fn short(sha: &str) -> &str {
     &sha[..sha.len().min(12)]
+}
+
+#[cfg(test)]
+mod queue_branches {
+    //! The queue's less common inputs: trail events that name too little, a successor nobody
+    //! could read, and a recording read with nothing observed.
+
+    use super::*;
+
+    fn observation(
+        body: &str,
+        resolved: BTreeMap<u64, forge::ResolvedPullRequest>,
+    ) -> ForgeObservation {
+        let pr = forge::pull_request_of(&serde_json::json!({
+            "number": 1, "title": "t", "author": {"login": "a"}, "headRefName": "fix/1",
+            "headRefOid": "h1", "baseRefName": "master", "isDraft": false, "labels": [],
+            "createdAt": "2026-10-01T00:00:00Z", "updatedAt": "2026-10-01T00:00:00Z",
+            "body": body, "statusCheckRollup": [], "reviewDecision": "",
+            "autoMergeRequest": null, "isCrossRepository": false
+        }))
+        .unwrap();
+        ForgeObservation {
+            schema: OBSERVATION_SCHEMA,
+            repository: "o/r".into(),
+            base: "master".into(),
+            base_sha: "m".into(),
+            observed_at: "t".into(),
+            required_checks: None,
+            review_policy: None,
+            up_to_date_required: None,
+            merge_methods: vec!["merge".into()],
+            pull_requests: vec![pr],
+            resolved,
+        }
+    }
+
+    fn unknown(_: &PullRequestObservation) -> RelationToMaster {
+        RelationToMaster::Unknown {
+            reason: "not fetched".into(),
+        }
+    }
+
+    #[test]
+    fn a_failure_that_names_too_little_holds_nothing_back() {
+        let mut q = build_queue(&observation("", BTreeMap::new()), "m", unknown);
+        let before = q.clone();
+        let event =
+            |pr: Option<u64>, head: Option<&str>, master: Option<&str>| drain::IntegrationEvent {
+                pr,
+                head_sha: head.map(str::to_string),
+                master_before: master.map(str::to_string),
+                ..drain::IntegrationEvent::of(drain::IntegrationAction::MergeFailed)
+            };
+        let trail = vec![
+            event(None, Some("h1"), Some("m")),
+            event(Some(1), None, Some("m")),
+            event(Some(1), Some("h1"), None),
+        ];
+        executor_feedback(&mut q, &trail);
+        assert_eq!(q, before);
+    }
+
+    #[test]
+    fn a_successor_whose_head_could_not_be_read_is_unread() {
+        let resolved = BTreeMap::from([(
+            2,
+            forge::ResolvedPullRequest {
+                merged: true,
+                head_sha: "h2".into(),
+                body: String::new(),
+            },
+        )]);
+        let q = build_queue(&observation("Superseded by #2", resolved), "m", unknown);
+        let a = q.get(1).unwrap();
+        assert!(
+            a.reasons.iter().any(|r| *r == "successor_unread:#2"),
+            "{:?}",
+            a.reasons
+        );
+    }
+
+    #[test]
+    fn a_recording_read_with_nothing_observed_refuses() {
+        let dir = tempfile::tempdir().unwrap();
+        assert!(queue_and_record(dir.path()).is_err());
+    }
 }

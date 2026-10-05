@@ -1259,3 +1259,179 @@ fn relation_detail(r: &RelationToMaster) -> String {
 fn short(sha: &str) -> &str {
     sha.get(..10).unwrap_or(sha)
 }
+
+#[cfg(test)]
+mod decision_branches {
+    //! The decisions the queue-level tests do not reach, each through `classify` or
+    //! `review_state` with the inputs that make it.
+
+    use super::*;
+    use crate::integration::forge;
+    use crate::integration::model::{
+        PullRequestDisposition, ReasonCode, RelationToMaster, RequiredCheck,
+    };
+
+    /// One pull request, #1, from forge JSON with `extra` fields over a plain open one.
+    fn pr(extra: serde_json::Value) -> PullRequestObservation {
+        let mut v = serde_json::json!({
+            "number": 1, "title": "t", "author": {"login": "a"}, "headRefName": "fix/1",
+            "headRefOid": "h1", "baseRefName": "master", "isDraft": false, "labels": [],
+            "createdAt": "2026-10-01T00:00:00Z", "updatedAt": "2026-10-01T00:00:00Z",
+            "body": "", "statusCheckRollup": [], "reviewDecision": "",
+            "autoMergeRequest": null, "isCrossRepository": false
+        });
+        for (k, val) in extra.as_object().unwrap() {
+            v[k] = val.clone();
+        }
+        forge::pull_request_of(&v).unwrap()
+    }
+
+    fn policy(review: Option<ReviewPolicy>, skipped: &[&str]) -> IntegrationPolicy {
+        IntegrationPolicy {
+            base: "master".into(),
+            required_checks: Some(vec![RequiredCheck::from("ci")]),
+            review_policy: review,
+            skipped_permitted: skipped.iter().map(|s| s.to_string()).collect(),
+            labels: LABEL_POLICY.to_vec(),
+            merge_method: Some("merge".into()),
+            up_to_date_required: None,
+        }
+    }
+
+    fn context() -> QueueContext {
+        QueueContext {
+            open: [1].into(),
+            ..Default::default()
+        }
+    }
+
+    fn up_to_date() -> RelationToMaster {
+        RelationToMaster::UpToDate {
+            authored: vec!["a.txt".into()],
+        }
+    }
+
+    #[test]
+    fn the_label_constructor_and_the_check_ranking_run() {
+        assert_eq!(LabelPolicy::hold("wip").effect, LabelEffect::Hold);
+        assert_eq!(
+            worse(RequiredCheckState::Passed, RequiredCheckState::Unknown),
+            RequiredCheckState::Unknown
+        );
+        assert_eq!(
+            worse(RequiredCheckState::Unknown, RequiredCheckState::Missing),
+            RequiredCheckState::Unknown
+        );
+    }
+
+    #[test]
+    fn enough_approvals_still_pending_a_review_the_forge_requires() {
+        let p = pr(serde_json::json!({
+            "reviewDecision": "REVIEW_REQUIRED",
+            "latestReviews": [{"author": {"login": "r"}, "state": "APPROVED", "commit": {"oid": "h1"}}]
+        }));
+        let required = ReviewPolicy {
+            approvals: 1,
+            code_owners: false,
+            dismiss_stale: false,
+        };
+        assert_eq!(
+            review_state(&p, Some(&required)),
+            PullRequestReview::Pending
+        );
+    }
+
+    #[test]
+    fn the_review_evidence_names_code_owners_stale_dismissal_and_an_unreported_commit() {
+        let p = pr(serde_json::json!({
+            "statusCheckRollup": [{"__typename": "CheckRun", "name": "ci", "status": "COMPLETED", "conclusion": "SUCCESS"}],
+            "latestReviews": [{"author": {"login": "r"}, "state": "APPROVED"}]
+        }));
+        let strict = ReviewPolicy {
+            approvals: 1,
+            code_owners: true,
+            dismiss_stale: true,
+        };
+        let a = classify(
+            &p,
+            &up_to_date(),
+            "m",
+            "t",
+            &policy(Some(strict), &[]),
+            &context(),
+        );
+        let details: Vec<&str> = a.evidence.iter().map(|e| e.detail.as_str()).collect();
+        assert!(
+            details
+                .iter()
+                .any(|d| d.contains(", a code owner's among them")
+                    && d.contains(", stale approvals dismissed")),
+            "{details:?}"
+        );
+        assert!(
+            details
+                .iter()
+                .any(|d| d.contains("r on an unreported commit")),
+            "{details:?}"
+        );
+    }
+
+    #[test]
+    fn a_successor_closed_without_a_merge_whose_head_landed_is_said_closed() {
+        let p = pr(serde_json::json!({}));
+        let mut ctx = context();
+        ctx.superseded_by.insert(
+            1,
+            vec![Successor {
+                number: 2,
+                declared_in: 1,
+                state: SuccessorState::Landed {
+                    head_sha: "h2".into(),
+                    merged: false,
+                },
+            }],
+        );
+        let a = classify(&p, &up_to_date(), "m", "t", &policy(None, &[]), &ctx);
+        assert_eq!(a.disposition, PullRequestDisposition::Superseded);
+        assert!(
+            a.evidence.iter().any(|e| e
+                .detail
+                .contains("#2 (its body says superseded by #2) is closed")),
+            "{:?}",
+            a.evidence
+        );
+    }
+
+    #[test]
+    fn a_permitted_skip_is_ready_and_says_so() {
+        let p = pr(serde_json::json!({
+            "statusCheckRollup": [{"__typename": "CheckRun", "name": "ci", "status": "COMPLETED", "conclusion": "SKIPPED"}]
+        }));
+        let a = classify(
+            &p,
+            &up_to_date(),
+            "m",
+            "t",
+            &policy(
+                Some(ReviewPolicy {
+                    approvals: 0,
+                    code_owners: false,
+                    dismiss_stale: false,
+                }),
+                &["ci"],
+            ),
+            &context(),
+        );
+        assert_eq!(
+            a.disposition,
+            PullRequestDisposition::Ready,
+            "{:?}",
+            a.reasons
+        );
+        assert!(
+            a.reasons.contains(&ReasonCode::RequiredChecksSkipped),
+            "{:?}",
+            a.reasons
+        );
+    }
+}

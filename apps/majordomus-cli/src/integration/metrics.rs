@@ -312,3 +312,37 @@ mod tests {
         );
     }
 }
+
+#[cfg(test)]
+mod window_branches {
+    //! Outcomes outside the window, outcomes without a pull request, and a window of no days.
+
+    use super::*;
+    use crate::integration::drain::{IntegrationAction, IntegrationEvent};
+
+    fn at(action: IntegrationAction, pr: Option<u64>, when: &str) -> IntegrationEvent {
+        IntegrationEvent {
+            at: when.into(),
+            pr,
+            ..IntegrationEvent::of(action)
+        }
+    }
+
+    #[test]
+    fn a_cycle_closed_before_the_window_counts_nothing_and_no_days_divide_nothing() {
+        let trail = vec![
+            at(IntegrationAction::Selected, Some(1), "2026-01-01T00:00:00Z"),
+            at(
+                IntegrationAction::MergeFailed,
+                Some(1),
+                "2026-01-01T00:01:00Z",
+            ),
+            at(IntegrationAction::MergeFailed, None, "2026-01-01T00:02:00Z"),
+        ];
+        let now = parse_rfc3339("2026-10-01T00:00:00Z").unwrap();
+        let t = throughput(&trail, now, 7);
+        assert_eq!(t.merge_failures, 0, "outside the window");
+        let t = throughput(&trail, now, 0);
+        assert_eq!(t.merges_per_day, 0.0);
+    }
+}
