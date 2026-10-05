@@ -521,7 +521,9 @@ fn waited(wait: &integration::ExecutorWait) -> String {
     s
 }
 
-fn describe(s: &DrainStepOutcome) -> String {
+/// One sentence per drain outcome, every outcome named: what the command line prints and the
+/// dry-run proof records.
+pub(crate) fn describe(s: &DrainStepOutcome) -> String {
     match s {
         DrainStepOutcome::Idle { why } => format!("idle: {why}"),
         DrainStepOutcome::WouldMerge { pr } => format!("would merge #{pr}"),
