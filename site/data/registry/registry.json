@@ -6,23 +6,23 @@
     "version": "0.13.1"
   },
   "registry": {
-    "fingerprint": "7692997c18a66c44923d58f442aab9e6f7f9e154900aaba559b222e9deb12116",
+    "fingerprint": "5ff49b1cee9c4ea41a5e83dbfbf595bae0aee56531bfb55c75e5487557e22b89",
     "summary": {
-      "total": 1881,
+      "total": 1884,
       "builtin": 170,
-      "declarative": 1711,
+      "declarative": 1714,
       "by_kind": {
         "command": 22,
         "query": 148,
-        "resource": 1711
+        "resource": 1714
       },
       "by_stability": {
         "behaviorally_verified": 128,
         "experimental": 34,
-        "implemented": 1719
+        "implemented": 1722
       },
       "mcp_tools": 164,
-      "mcp_resources": 1764,
+      "mcp_resources": 1767,
       "http_routes": 168,
       "cli_commands": 89,
       "modules": 84,
@@ -64951,7 +64951,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 80,
+        "capabilities": 81,
         "capability_ids": []
       },
       {
@@ -65871,7 +65871,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 159,
+        "capabilities": 160,
         "capability_ids": []
       },
       {
@@ -66014,7 +66014,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 346,
+        "capabilities": 347,
         "capability_ids": []
       },
       {
@@ -66104,7 +66104,7 @@
     ]
   },
   "index": {
-    "fingerprint": "f5f0676d3b29f8c46fe319e42b1cf4d49fdc9217427d0ab4655f4b7ee13ca1ca",
+    "fingerprint": "810cbd95f8ac48ff24fd1aa80e308c471c1ff39c7b8b6a602712879cd9cc0767",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -66127,7 +66127,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 80,
+      "adr": 81,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -66152,12 +66152,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 11,
-      "rule": 159,
+      "rule": 160,
       "scope": 1,
       "session": 22,
       "skill": 6,
       "taxonomy": 10,
-      "test": 346,
+      "test": 347,
       "use-case": 48,
       "workspace": 1
     },
@@ -67162,7 +67162,7 @@
         "path": ".ai/repo/adrs/0070-intent-is-a-typed-record-and-satisfaction-is-derived-from-evidence.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 5128,
+        "bytes": 5251,
         "tags": [
           "intent",
           "project",
@@ -67476,6 +67476,23 @@
           "taxonomy",
           "projections",
           "product"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0107",
+        "kind": "adr",
+        "identity": "adr-0107",
+        "title": "Completion discharges obligations and never decides whether an intent is satisfied",
+        "description": "Completion discharges obligations and never decides whether an intent is satisfied",
+        "path": ".ai/repo/adrs/0107-completion-discharges-obligations-and-never-decides-whether-an-intent-is-satisfied.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 5677,
+        "tags": [
+          "intent",
+          "completion",
+          "evidence",
+          "governance"
         ]
       },
       {
@@ -77361,7 +77378,7 @@
         "path": ".ai/repo/project/milestones/intent-lifecycle.yaml",
         "section": "project",
         "source_class": "milestone",
-        "bytes": 3874
+        "bytes": 3980
       },
       {
         "uri": "majordomus://milestone/intent-planning",
@@ -79492,6 +79509,23 @@
           "shell",
           "process",
           "agents"
+        ]
+      },
+      {
+        "uri": "majordomus://rule/project.completion-never-decides-satisfaction@1",
+        "kind": "rule",
+        "identity": "project.completion-never-decides-satisfaction@1",
+        "title": "Completion discharges obligations and never decides whether an intent is satisfied",
+        "description": "Whether a task is finished and whether an intent is satisfied are separate questions with separate authorities; a finished task, a closed milestone or a completion policy never writes, stores or decides an intent's satisfaction, which only the intent engine derives from evidence.",
+        "path": ".ai/repo/rules/project/completion-never-decides-satisfaction.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3090,
+        "tags": [
+          "intent",
+          "completion",
+          "evidence",
+          "governance"
         ]
       },
       {
@@ -83817,6 +83851,14 @@
         "bytes": 8081
       },
       {
+        "uri": "majordomus://test/test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh",
+        "kind": "test",
+        "identity": "test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh",
+        "path": "test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh",
+        "source_class": "case",
+        "bytes": 4669
+      },
+      {
         "uri": "majordomus://test/test/cases/89_web_surface.sh",
         "kind": "test",
         "identity": "test/cases/89_web_surface.sh",
@@ -84597,7 +84639,7 @@
       "identity": [
         "id"
       ],
-      "objects": 80
+      "objects": 81
     },
     {
       "name": "application",
@@ -84847,7 +84889,7 @@
         "id",
         "version"
       ],
-      "objects": 159
+      "objects": 160
     },
     {
       "name": "scope",
@@ -84902,7 +84944,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 346
+      "objects": 347
     },
     {
       "name": "use-case",

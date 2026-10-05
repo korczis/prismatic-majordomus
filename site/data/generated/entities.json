@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 80,
+      "count": 81,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 159,
+      "count": 160,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 80
+      "count": 81
     },
     {
       "kind": "application",
@@ -237,7 +237,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 159
+      "count": 160
     },
     {
       "kind": "scope",
@@ -277,7 +277,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 346
+      "count": 347
     },
     {
       "kind": "use-case",
@@ -1347,21 +1347,7 @@
       "references": [
         {
           "edge": "put_in_force",
-          "label": ".ai/repo/order-baseline.txt",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
           "label": "apps/majordomus-cli/src/order.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "scripts/ci/order-check",
           "kind": "file",
           "route": null,
           "external": true
@@ -1408,31 +1394,10 @@
       "references": [
         {
           "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/cockpit/nav.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
           "label": "apps/majordomus-cli/src/product.rs",
           "kind": "file",
           "route": null,
           "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "ai.repo.features",
-          "kind": "context",
-          "route": "/context/",
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "ai.repo.why",
-          "kind": "context",
-          "route": "/context/",
-          "external": false
         },
         {
           "edge": "put_in_force",
@@ -3156,6 +3121,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0075/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0107",
+          "kind": "adr",
+          "route": "/adrs/adr-0107/",
+          "external": false
         }
       ]
     },
@@ -4207,6 +4179,53 @@
           "label": "project.product-surface-derived@1",
           "kind": "rule",
           "route": "/rules/project-product-surface-derived-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0107",
+      "identity": "adr-0107",
+      "slug": "adr-0107",
+      "cockpit": "/cockpit/objects/adr/adr-0107",
+      "title": "Completion discharges obligations and never decides whether an intent is satisfied",
+      "status": "proposed",
+      "tags": [
+        "intent",
+        "completion",
+        "evidence",
+        "governance"
+      ],
+      "source": ".ai/repo/adrs/0107-completion-discharges-obligations-and-never-decides-whether-an-intent-is-satisfied.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0070",
+          "kind": "adr",
+          "route": "/adrs/adr-0070/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.completion-never-decides-satisfaction@1",
+          "kind": "rule",
+          "route": "/rules/project-completion-never-decides-satisfaction-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.derived-once@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-once-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.work-serves-a-declared-intent@1",
+          "kind": "rule",
+          "route": "/rules/project-work-serves-a-declared-intent-1/",
           "external": false
         }
       ],
@@ -7663,6 +7682,47 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.completion-never-decides-satisfaction@1",
+      "identity": "project.completion-never-decides-satisfaction@1",
+      "slug": "project-completion-never-decides-satisfaction-1",
+      "cockpit": "/cockpit/objects/rule/project-completion-never-decides-satisfaction-1",
+      "title": "Completion discharges obligations and never decides whether an intent is satisfied",
+      "status": "active",
+      "tags": [
+        "intent",
+        "completion",
+        "evidence",
+        "governance"
+      ],
+      "source": ".ai/repo/rules/project/completion-never-decides-satisfaction.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.derived-once@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-once-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.work-serves-a-declared-intent@1",
+          "kind": "rule",
+          "route": "/rules/project-work-serves-a-declared-intent-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0107",
+          "kind": "adr",
+          "route": "/adrs/adr-0107/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.context-locality@1",
       "identity": "project.context-locality@1",
       "slug": "project-context-locality-1",
@@ -7890,6 +7950,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0107",
+          "kind": "adr",
+          "route": "/adrs/adr-0107/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.a-diagram-is-drawn-not-typed@1",
           "kind": "rule",
@@ -7915,6 +7982,13 @@
           "label": "project.cache-is-invisible@1",
           "kind": "rule",
           "route": "/rules/project-cache-is-invisible-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.completion-never-decides-satisfaction@1",
+          "kind": "rule",
+          "route": "/rules/project-completion-never-decides-satisfaction-1/",
           "external": false
         },
         {
@@ -11879,6 +11953,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0107",
+          "kind": "adr",
+          "route": "/adrs/adr-0107/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.a-plan-carries-the-intent-it-serves@1",
           "kind": "rule",
@@ -11890,6 +11971,13 @@
           "label": "project.an-intent-outlives-its-sessions@1",
           "kind": "rule",
           "route": "/rules/project-an-intent-outlives-its-sessions-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.completion-never-decides-satisfaction@1",
+          "kind": "rule",
+          "route": "/rules/project-completion-never-decides-satisfaction-1/",
           "external": false
         }
       ]

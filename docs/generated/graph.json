@@ -1615,14 +1615,6 @@
         "external": true
       },
       {
-        "id": "file:.ai/repo/order-baseline.txt",
-        "kind": "file",
-        "label": "order-baseline.txt",
-        "summary": "named by the layer; not an object of this index",
-        "source": ".ai/repo/order-baseline.txt",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/capability/builtin/graph.rs",
         "kind": "file",
         "label": "graph.rs",
@@ -1660,14 +1652,6 @@
         "label": "mod.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/cockpit/mod.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/cockpit/nav.rs",
-        "kind": "file",
-        "label": "nav.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/cockpit/nav.rs",
         "external": true
       },
       {
@@ -1748,14 +1732,6 @@
         "label": "path.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/worktree/path.rs",
-        "external": true
-      },
-      {
-        "id": "file:scripts/ci/order-check",
-        "kind": "file",
-        "label": "order-check",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/ci/order-check",
         "external": true
       },
       {
@@ -4079,6 +4055,33 @@
             "taxonomy",
             "projections",
             "product"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0107",
+        "kind": "adr",
+        "label": "adr-0107",
+        "summary": "Completion discharges obligations and never decides whether an intent is satisfied",
+        "route": "/cockpit/objects/adr/adr-0107",
+        "source": ".ai/repo/adrs/0107-completion-discharges-obligations-and-never-decides-whether-an-intent-is-satisfied.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-05",
+          "related": [
+            "file:.ai/repo/adrs/0070-intent-is-a-typed-record-and-satisfaction-is-derived-from-evidence.md",
+            "rule:project.completion-never-decides-satisfaction",
+            "rule:project.work-serves-a-declared-intent",
+            "rule:project.derived-once",
+            "file:apps/majordomus-cli/src/intent.rs",
+            "file:.ai/repo/project/milestones/intent-lifecycle.yaml",
+            "test:test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh"
+          ],
+          "tags": [
+            "intent",
+            "completion",
+            "evidence",
+            "governance"
           ]
         }
       },
@@ -27337,10 +27340,6 @@
           ],
           "order": 96,
           "priority": "p1",
-          "risks": [
-            "An intent model that grows a status or a transition becomes a second lifecycle beside the plan, and the two would disagree the first time an issue is re-planned.",
-            "Satisfaction criteria backed by commands or deployments are not derivable from the ledger yet, so an intent resting only on them can never read satisfied; that is deliberate until slice 2."
-          ],
           "scope": [
             ".ai/repo/project",
             ".ai/repo/ci/gates.yaml",
@@ -27354,7 +27353,7 @@
             "test/cases"
           ],
           "slug": "intent-lifecycle",
-          "updated_at": "2026-09-15",
+          "updated_at": "2026-10-05",
           "validation": [
             "majordomus intent validate",
             "cargo test --test intent",
@@ -32550,6 +32549,28 @@
             "shell",
             "process",
             "agents"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.completion-never-decides-satisfaction@1",
+        "kind": "rule",
+        "label": "project.completion-never-decides-satisfaction@1",
+        "summary": "Completion discharges obligations and never decides whether an intent is satisfied",
+        "route": "/cockpit/objects/rule/project-completion-never-decides-satisfaction-1",
+        "source": ".ai/repo/rules/project/completion-never-decides-satisfaction.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.work-serves-a-declared-intent@1",
+            "project.derived-once@1"
+          ],
+          "tags": [
+            "intent",
+            "completion",
+            "evidence",
+            "governance"
           ]
         }
       },
@@ -38657,6 +38678,13 @@
         "source": "test/cases/88_rust_command_tested.sh"
       },
       {
+        "id": "majordomus://test/test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh",
+        "kind": "test",
+        "label": "test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh",
+        "route": "/cockpit/objects/test/test-cases-895-a-finished-task-does-not-satisfy-an-intent-sh",
+        "source": "test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/89_web_surface.sh",
         "kind": "test",
         "label": "test/cases/89_web_surface.sh",
@@ -44601,17 +44629,7 @@
       },
       {
         "source": "majordomus://adr/adr-0025",
-        "target": "file:.ai/repo/order-baseline.txt",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0025",
         "target": "file:apps/majordomus-cli/src/order.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0025",
-        "target": "file:scripts/ci/order-check",
         "kind": "put_in_force"
       },
       {
@@ -44636,11 +44654,6 @@
       },
       {
         "source": "majordomus://adr/adr-0026",
-        "target": "file:apps/majordomus-cli/src/cockpit/nav.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0026",
         "target": "file:apps/majordomus-cli/src/product.rs",
         "kind": "put_in_force"
       },
@@ -44648,16 +44661,6 @@
         "source": "majordomus://adr/adr-0026",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0026",
-        "target": "majordomus://context/ai.repo.features",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0026",
-        "target": "majordomus://context/ai.repo.why",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0026",
@@ -46097,6 +46100,31 @@
       {
         "source": "majordomus://adr/adr-0104",
         "target": "majordomus://rule/project.product-surface-derived@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0107",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0107",
+        "target": "majordomus://adr/adr-0070",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0107",
+        "target": "majordomus://rule/project.completion-never-decides-satisfaction@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0107",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0107",
+        "target": "majordomus://rule/project.work-serves-a-declared-intent@1",
         "kind": "put_in_force"
       },
       {
@@ -57690,6 +57718,21 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.completion-never-decides-satisfaction@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.completion-never-decides-satisfaction@1",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.completion-never-decides-satisfaction@1",
+        "target": "majordomus://rule/project.work-serves-a-declared-intent@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.context-locality@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -60516,6 +60559,11 @@
       },
       {
         "source": "majordomus://test/test/cases/88_rust_command_tested.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -63697,7 +63745,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4502,
+      "edges": 4506,
       "acyclic": true,
       "truncated": true
     }

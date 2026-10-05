@@ -1233,7 +1233,7 @@
       ],
       "acceptance_criteria": [
         "Slice 1 — typed record and gate: the intent kind, its schema in the distribution and the skeleton, the read-only capabilities intents.list, intents.record, intents.validate and intents.preflight on every surface, and the intent-check gate refusing an invalid intent model",
-        "Slice 2 — satisfaction as a completion-policy question: once completion policy (PR 292, ADR 0057) lands, whether an intent is satisfied is answered by that policy over the evidence rather than by the intent engine alone",
+        "Slice 2 — satisfaction is decided by evidence alone (ADR 0107): completion discharges obligations and never decides whether an intent is satisfied; the intent engine is the one authority for a criterion's verdict, and a derived `verdict` answers satisfaction separately from the plan-derived stage",
         "Slice 3 — preflight join: devcontext and the session start name the intent the task serves, from intents.preflight, and load its governance",
         "Slice 4 — Cockpit Intent view, with the Cockpit's JavaScript coverage measured and enforced by a gate",
         "Slice 5 — GitHub reconciliation: milestones projected with the intent they serve, and a closure gate that refuses to close a milestone whose intents are unsatisfied"
@@ -1246,7 +1246,7 @@
       "evidence_required": [],
       "risks": [
         "An intent model that grows a status or a transition becomes a second lifecycle beside the plan, and the two would disagree the first time an issue is re-planned.",
-        "Satisfaction criteria backed by commands or deployments are not derivable from the ledger yet, so an intent resting only on them can never read satisfied; that is deliberate until slice 2."
+        "Satisfaction criteria backed by commands or deployments are not derivable from the ledger yet, so an intent resting only on them can never read satisfied; its verdict reads unknown until those kinds become derivable."
       ],
       "evidence": [],
       "issues": [
