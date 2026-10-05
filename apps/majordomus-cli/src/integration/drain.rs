@@ -37,7 +37,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::{
-    at, events_path, local_master, queue_of, refresh, EvaluatedAgainst, IntegrationEvidence,
+    at, events_path, local_master, refresh, EvaluatedAgainst, IntegrationEvidence,
     IntegrationQueue, PullRequestAssessment, PullRequestDisposition,
 };
 
@@ -1698,7 +1698,17 @@ fn gh(root: &Path, args: &[&str]) -> Result<String, String> {
     if out.status.success() {
         Ok(String::from_utf8_lossy(&out.stdout).into_owned())
     } else {
-        Err(String::from_utf8_lossy(&out.stderr).trim().to_string())
+        let said = String::from_utf8_lossy(&out.stderr).trim().to_string();
+        // a refusal that says nothing is still named: which question, and how it ended
+        Err(if said.is_empty() {
+            format!(
+                "gh {} failed ({}) and said nothing",
+                args.iter().take(3).copied().collect::<Vec<_>>().join(" "),
+                out.status
+            )
+        } else {
+            said
+        })
     }
 }
 
@@ -1783,7 +1793,8 @@ impl Integrator for ForgeIntegrator<'_> {
             l.renew()?;
         }
         refresh(self.root)?;
-        queue_of(self.root)
+        // the executor just observed: what it learnt is kept for the readers after it
+        super::queue_and_record(self.root)
     }
 
     fn merge(&mut self, pr: u64, head_sha: &str, method: &str) -> Result<(), String> {

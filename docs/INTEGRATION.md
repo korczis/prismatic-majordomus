@@ -347,6 +347,12 @@ json` stays the list of pull requests to close.
   `integration.*` capabilities and the Cockpit read it from any of them. The last queue's
   summary (`summary.json`) sits beside it. The observation and the relation cache stay in
   the checkout, under `.ai/local/state/integration/`.
+- A read writes nothing. `prs status`, `plan`, `explain`, the `integration.*` capabilities
+  and the Cockpit build the queue from the recorded observation and leave the checkout as
+  they found it; only `prs refresh` and the executor, which have just observed the forge,
+  keep the relations they decided and the summary a briefing reads. An observation older
+  than an hour is said in the queue's diagnostics, and every reading of a queue with a
+  diagnostic — `status`, `plan` and `explain` alike — exits 10.
 - The trail is written first. A merge is asked of the forge only after `merge_attempted` is
   on the trail, a refresh is pushed only after `refresh_attempted`, and a pull request is
   closed only after `close_attempted`. When that line cannot be written, the act is not

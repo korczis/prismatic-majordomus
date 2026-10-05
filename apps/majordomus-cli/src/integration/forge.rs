@@ -858,6 +858,40 @@ fn listed((ok, out, _): (bool, String, String)) -> Option<Value> {
 
 /// Fetch the base and every observed head into this clone, the heads under
 /// [`PR_REF_PREFIX`]. One `git fetch`; a head that cannot be fetched stays unknown to the
+/// Remove the mirrors of pull requests this observation no longer names: merged, closed or
+/// gone. Each one held the head the pull request had when it was last open, and a mirror
+/// that is never refreshed again is only a stale answer waiting to be read. Best effort: a
+/// mirror that cannot be removed is left, and nothing reads it.
+fn prune_mirrors(root: &Path, obs: &ForgeObservation) {
+    let keep: std::collections::BTreeSet<u64> = obs
+        .pull_requests
+        .iter()
+        .map(|p| p.number)
+        .chain(obs.resolved.keys().copied())
+        .collect();
+    let Ok(out) = Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(["for-each-ref", "--format=%(refname)", PR_REF_PREFIX])
+        .output()
+    else {
+        return;
+    };
+    for r in String::from_utf8_lossy(&out.stdout).lines() {
+        let stale = r
+            .strip_prefix(PR_REF_PREFIX)
+            .and_then(|n| n.parse::<u64>().ok())
+            .is_some_and(|n| !keep.contains(&n));
+        if stale {
+            let _ = Command::new("git")
+                .arg("-C")
+                .arg(root)
+                .args(["update-ref", "-d", r])
+                .status();
+        }
+    }
+}
+
 /// relation, which then says so.
 pub fn fetch(root: &Path, obs: &ForgeObservation) -> Result<(), ForgeError> {
     let mut args: Vec<String> = vec![
@@ -877,6 +911,7 @@ pub fn fetch(root: &Path, obs: &ForgeObservation) -> Result<(), ForgeError> {
     for n in obs.resolved.keys() {
         args.push(format!("+refs/pull/{n}/head:{PR_REF_PREFIX}{n}"));
     }
+    prune_mirrors(root, obs);
     // a fetch is a read: a dropped connection is asked again, a refusal is not
     super::retry::forge(|| {
         let out = Command::new("git")

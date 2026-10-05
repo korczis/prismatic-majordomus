@@ -176,7 +176,7 @@ pub fn run(args: PrsArgs) -> Result<u8> {
                 reason: e,
             })?;
             plan(&q, format, &mut out)?;
-            Ok(0)
+            diagnosed(&q, format)
         }
         PrsCommand::Explain { number } => {
             let q = integration::queue_of(&root).map_err(|e| Error::Refused {
@@ -198,10 +198,12 @@ pub fn run(args: PrsArgs) -> Result<u8> {
                 .position(|x| x.number == number)
                 .map(|i| i + 1);
             explain(&q, a, rank.unwrap_or(0), format, &mut out)?;
-            Ok(0)
+            diagnosed(&q, format)
         }
         PrsCommand::Refresh => {
             let obs = integration::refresh(&root).map_err(unusable)?;
+            // observed just now: what the queue learns from it is kept for the readers
+            integration::queue_and_record(&root).map_err(unusable)?;
             if format == OutputFormat::Json {
                 json(&mut out, &obs)?;
             } else {
@@ -418,6 +420,19 @@ fn executor_base(root: &std::path::Path) -> std::result::Result<String, String> 
         Some(o) => Ok(o.base),
         None => integration::refresh(root).map(|o| o.base),
     }
+}
+
+/// What makes a queue less than a full answer, said the way `status` says it: on standard
+/// error beside a person's text (the JSON carries them already), and as exit 10 for every
+/// reading of the queue, so a plan or an explanation over a stale or partial queue is never
+/// taken for a sound one.
+fn diagnosed(q: &integration::IntegrationQueue, format: OutputFormat) -> Result<u8> {
+    if format != OutputFormat::Json {
+        for d in &q.diagnostics {
+            eprintln!("! {d}");
+        }
+    }
+    Ok(if q.diagnostics.is_empty() { 0 } else { FINDING })
 }
 
 /// Who the trail says acknowledged a merge that could not be verified.
@@ -988,7 +1003,7 @@ mod tests {
         for _ in 0..wait::STARVING_AFTER {
             drain::record(&root, event(IntegrationAction::Selected, 9, vec![1])).unwrap();
         }
-        let q = integration::queue_of(&root).expect("a queue");
+        let q = integration::queue_and_record(&root).expect("a queue");
         (Scratch(root), q)
     }
 
