@@ -50,13 +50,17 @@ rather than argued:
    derive once, then commit — a derive before the last source fix is a derive done twice. A
    derived file is never resolved by hand: it is regenerated, because a hand-resolved
    derived file passes the merge and fails `derive-check` one commit later. The server's
-   view does not change until the local merge is pushed. `scripts/unblock <branch>` (`just
-   unblock`, and it takes a pull request number) is that whole gesture as one command, in a
-   detached scratch worktree that never touches the branch's own: it merges the trunk in
-   where the driver exists, refuses and names any conflict outside the `merge=derived` set
-   rather than deciding it, derives, commits and pushes the branch. It exists because a
-   ten-minute manual gesture performed several times a day is one that gets skipped under
-   pressure, and a branch nobody unblocks is a branch somebody merges without reading.
+   view does not change until the local merge is pushed. `majordomus prs repair <n>` (it
+   also takes the branch name) is that whole gesture as one command of the integrator, in a
+   scratch worktree that never touches the branch's own. It is eligible only when the
+   integrator's classification says the pull request lacks master and its merge conflicts
+   on no path outside the `merge=derived` set; it refuses and names any authored conflict
+   rather than deciding it. Without `--apply` it only says what it would do. With it, it
+   holds the integration lease, records the act on the trail first, merges the trunk in where
+   the driver exists, derives, commits and pushes the branch leased on the head it observed,
+   so a branch somebody pushed to meanwhile is refused. It exists because a ten-minute manual
+   gesture performed several times a day is one that gets skipped under pressure, and a
+   branch nobody brings master into is a branch somebody merges without reading.
 3. **A mechanical union is wrong across generations.** Taking both sides is right for a list
    that gained entries and wrong when one side is an older generation of the same code:
    folding one branch that way reintroduced a second match arm built against a previous
@@ -130,9 +134,14 @@ concurrency: the `pages-` group serialises the runs and nothing cancels the depl
 states whether it pushed gh-pages before it ended, because a cancelled run is not a failure
 and fourteen of the seventeen cancelled runs of 2026-09-09/10 had already published. The
 derived-merge-driver behaviour is `test/cases/57_derived_merge_driver.sh`, and
-`test/cases/111_unblock.sh` holds `scripts/unblock` to clause 2: a conflict on an authored
-file is refused with the files named and the branch left where it was, the scratch worktree
-is gone on every path including the refusals, a dry run pushes nothing, and the branch is
-never checked out. It was proved non-vacuous by making the script classify every conflicted
-path as derived and watching the authored refusal disappear.
+`test/cases/911_repair_decides_and_moves_nothing.sh` and
+`test/cases/912_repair_acts_under_the_lease_and_the_trail.sh` hold `majordomus prs repair` to
+clause 2, against a scripted forge and a local bare origin. A pull request conflicting only
+on derived files is eligible and one conflicting on an authored file is refused with the
+files named; the default dry run reaches no forge, writes no trail and moves no ref; an
+applied repair records its attempt before it pushes, holds the lease while it works, pushes
+a merge of the trunk leased on the observed head and never touches master; and a branch that
+moved meanwhile is refused and left as its author pushed it. The Rust tests of
+`integration::repair` hold the same decisions and the order of the trail without a
+repository.
 {% endraw %}

@@ -12,7 +12,8 @@
 //!
 //! It never passes `--admin`, never merges a pull request whose required checks are not
 //! all passed on its current head, never merges one that does not contain the current
-//! master, never force-pushes, and never closes a pull request — closure is
+//! master, never rewrites a branch — the one push it makes is a fast-forward of the head it
+//! observed, leased on that head — and never closes a pull request — closure is
 //! [`super::drain::cleanup`]'s, which demands stronger evidence and an explicit `--apply`.
 //! Only one executor per base branch runs at a time ([`IntegrationLease`]).
 //!
@@ -414,6 +415,17 @@ pub enum IntegrationAction {
     ClosedSuperseded,
     /// Closing it failed.
     CloseFailed,
+    /// A person named a pull request to repair (`prs repair --apply`) and its classification
+    /// makes it eligible: master is what it lacks, and nothing authored conflicts.
+    RepairSelected,
+    /// Master is about to be merged into the named branch and pushed.
+    RepairAttempted,
+    /// Master was brought into the named branch and pushed.
+    Repaired,
+    /// The repair was refused — by the classification (an authored conflict, a fork, armed
+    /// auto-merge, another base, an undecidable relation) or by the act (a merge, derive,
+    /// commit or push that failed) — and nothing reached the branch; `class` says why.
+    RepairRefused,
     /// Nothing was ready.
     Idle,
     /// A continuous drain's cycle could not observe the forge, and the outage was short
@@ -447,6 +459,10 @@ impl IntegrationAction {
             IntegrationAction::ClosedRedundant => "closed_redundant",
             IntegrationAction::ClosedSuperseded => "closed_superseded",
             IntegrationAction::CloseFailed => "close_failed",
+            IntegrationAction::RepairSelected => "repair_selected",
+            IntegrationAction::RepairAttempted => "repair_attempted",
+            IntegrationAction::Repaired => "repaired",
+            IntegrationAction::RepairRefused => "repair_refused",
             IntegrationAction::Idle => "idle",
             IntegrationAction::ObserveFailed => "observe_failed",
         }
@@ -600,7 +616,7 @@ impl IntegrationEvent {
     }
 
     /// The same event, carrying the evidence `a` was decided on.
-    fn with_evidence(mut self, a: &PullRequestAssessment) -> Self {
+    pub(crate) fn with_evidence(mut self, a: &PullRequestAssessment) -> Self {
         self.evidence = a.evidence.clone();
         self
     }
@@ -631,7 +647,7 @@ pub fn record(root: &Path, mut event: IntegrationEvent) -> Result<IntegrationEve
         event.class = match event.action {
             IntegrationAction::StaleDecision => Some(FailureClass::Stale),
             IntegrationAction::MergeFailed => Some(FailureClass::of_merge_refusal(&event.detail)),
-            IntegrationAction::RefreshFailed => {
+            IntegrationAction::RefreshFailed | IntegrationAction::RepairRefused => {
                 Some(FailureClass::of_refresh_failure(&event.detail))
             }
             IntegrationAction::VerificationFailed => Some(FailureClass::VerificationFailed),
@@ -697,7 +713,7 @@ pub fn events(root: &Path) -> Vec<IntegrationEvent> {
         .collect()
 }
 
-fn event(
+pub(crate) fn event(
     action: IntegrationAction,
     pr: Option<&PullRequestAssessment>,
     detail: impl Into<String>,
@@ -863,8 +879,10 @@ pub trait Integrator {
     fn verify(&mut self, pr: u64, at: &EvaluatedAgainst, method: &str)
         -> Result<Landed, NotLanded>;
     /// Bring master into a pull request's branch — a merge commit with the derived driver
-    /// and a fresh derive, pushed as a fast-forward of the observed head. Returns the new
-    /// head. Never a rewrite: the push is refused if the branch moved.
+    /// and a fresh derive, pushed as a fast-forward of the observed head, leased on it.
+    /// Returns the new head. Never a rewrite: the push is refused if the branch moved. The
+    /// executor's refresh (`prs drain --refresh`) and a person's repair (`prs repair`) are
+    /// this one act.
     fn refresh_branch(&mut self, a: &PullRequestAssessment, base: &str) -> Result<String, String>;
     /// Close a pull request with a comment saying why.
     fn close(&mut self, pr: u64, head_sha: &str, comment: &str) -> Result<(), String>;
@@ -1188,8 +1206,8 @@ pub fn acknowledge_failure(root: &Path, by: &str) -> Result<IntegrationEvent, St
 /// request the executor refreshed waits for its checks, no other is refreshed — merging the
 /// first would put the second behind again and waste its CI run.
 ///
-/// Only a head the executor pushed holds the pipeline — one a `refreshed` event of the trail
-/// names as `head_after` — and only while its required check is *pending*, or *missing* for
+/// Only a head the executor pushed holds the pipeline — one a `refreshed` event, or the
+/// `repaired` event of `prs repair`, names as `head_after` — and only while its required check is *pending*, or *missing* for
 /// less than [`REFRESHED_HEAD_REPORTS_WITHIN`] since that event: an aggregate check is not
 /// created until the jobs it needs finish, and a check that never reports must not hold every
 /// refresh forever. A check running on a head the author pushed is not the executor's run to
@@ -1205,7 +1223,14 @@ fn refresh_step(
     let mut pushed: BTreeMap<(u64, String), Option<i64>> = BTreeMap::new();
     for e in events(root)
         .into_iter()
-        .filter(|e| e.action == IntegrationAction::Refreshed)
+        // `prs repair` pushes master into a branch the same way a refresh does, so its head
+        // holds the pipeline too: another refresh now would waste that run as well
+        .filter(|e| {
+            matches!(
+                e.action,
+                IntegrationAction::Refreshed | IntegrationAction::Repaired
+            )
+        })
     {
         if let Some(key) = e.pr.zip(e.head_after) {
             let at = crate::peers::epoch_seconds(&e.at);
@@ -1791,6 +1816,51 @@ pub(crate) fn landing(
     Ok(Some(merge))
 }
 
+/// Why the merge of `master` in the scratch worktree `dir` stopped, from the paths it left
+/// unmerged, each named as authored or derived by master's own `.gitattributes`
+/// ([`super::relation::derived_paths`]); `None` when git names none, or cannot say which is
+/// which. An authored conflict is the owner's to settle; a derived one means this clone has no
+/// `merge.derived` driver.
+fn unmerged_paths(root: &Path, dir: &Path, master: &str) -> Option<String> {
+    let listed = Command::new("git")
+        .arg("-C")
+        .arg(dir)
+        .args(["diff", "--name-only", "-z", "--diff-filter=U"])
+        .output()
+        .map(|o| o.stdout)
+        .unwrap_or_default();
+    let paths: Vec<String> = String::from_utf8_lossy(&listed)
+        .split('\0')
+        .filter(|p| !p.is_empty())
+        .map(str::to_string)
+        .collect();
+    Some(paths)
+        .filter(|paths| !paths.is_empty())
+        .and_then(|paths| {
+            super::relation::derived_paths(root, master, &paths)
+                .ok()
+                .map(|derived| (paths, derived))
+        })
+        .map(|(paths, derived)| {
+            let named: Vec<String> = paths
+                .iter()
+                .map(|p| {
+                    format!(
+                        "{p} ({})",
+                        ["authored", "derived"][usize::from(derived.contains(p))]
+                    )
+                })
+                .collect();
+            format!(
+                "the merge of master conflicts on {} path(s): {}; an authored path is the \
+                 owner's to settle, a derived one needs this clone's merge.derived driver \
+                 (just derive-merge-driver)",
+                named.len(),
+                named.join(", ")
+            )
+        })
+}
+
 impl Integrator for ForgeIntegrator<'_> {
     fn observe(&mut self) -> Result<IntegrationQueue, String> {
         if let Some(l) = self.lease {
@@ -1939,13 +2009,15 @@ impl Integrator for ForgeIntegrator<'_> {
             .join(format!("pr-{}", a.number));
         let head = a.evaluated_against.head_sha.clone();
         let master = a.evaluated_against.master_sha.clone();
-        // a scratch worktree of our own: the person's checkouts are never touched
+        // a scratch worktree of our own: the person's checkouts are never touched. One left
+        // by an interrupted act is removed first; git's complaint that there is none is not
+        // the person's to read, so it is captured rather than inherited
         let _ = Command::new("git")
             .arg("-C")
             .arg(root)
             .args(["worktree", "remove", "--force"])
             .arg(&dir)
-            .status();
+            .output();
         let git_in = |args: &[&str]| -> Result<String, String> {
             let out = Command::new("git")
                 .arg("-C")
@@ -1978,9 +2050,21 @@ impl Integrator for ForgeIntegrator<'_> {
             ));
         }
         let result = (|| -> Result<String, String> {
-            if let Err(e) = git_in(&["merge", "--no-commit", "--no-ff", &master]) {
+            // rerere off: a resolution recorded during some other merge is a memory of what
+            // one person decided about two other commits, and replaying it here would resolve
+            // paths nobody decided on
+            if let Err(e) = git_in(&[
+                "-c",
+                "rerere.enabled=false",
+                "merge",
+                "--no-commit",
+                "--no-ff",
+                &master,
+            ]) {
+                let why = unmerged_paths(root, &dir, &master)
+                    .unwrap_or(format!("the merge of master conflicts after all: {e}"));
                 let _ = git_in(&["merge", "--abort"]);
-                return Err(format!("the merge of master conflicts after all: {e}"));
+                return Err(why);
             }
             // the derived artifacts of the merge result, regenerated rather than resolved
             let target = root.join("apps/majordomus-cli/target");
@@ -2003,7 +2087,7 @@ impl Integrator for ForgeIntegrator<'_> {
                 ));
             }
             git_in(&["add", "-A"])?;
-            let message = format!("Merge {base} into {} with its derived artifacts regenerated\n\nBrought in by majordomus prs drain so that the required checks run against master {master}.", a.head_ref);
+            let message = format!("Merge {base} into {} with its derived artifacts regenerated\n\nBrought in by the integrator (majordomus prs) so that the required checks run against master {master}.", a.head_ref);
             let commit = Command::new("git")
                 .arg("-C")
                 .arg(&dir)
@@ -2024,12 +2108,26 @@ impl Integrator for ForgeIntegrator<'_> {
                 ));
             }
             let new_head = git_in(&["rev-parse", "HEAD"])?;
-            // a plain push: git refuses anything but a fast-forward of the branch, so a branch
-            // that moved since it was observed is refused, never overwritten
+            // a fast-forward of the observed head, and leased on it: the remote branch must
+            // still be the head that was decided on when the update lands, so a branch that
+            // moved since — forward, backward or sideways — is refused, never overwritten.
+            // The lease is a compare-and-swap, not a licence: what it swaps in descends from
+            // what it expects, so it is never a rewrite.
+            if git_in(&["merge-base", "--is-ancestor", &head, &new_head]).is_err() {
+                return Err(format!(
+                    "the merge {new_head} does not descend from the observed head {head}; nothing was pushed"
+                ));
+            }
+            let lease = format!("--force-with-lease=refs/heads/{}:{head}", a.head_ref);
             let push = Command::new("git")
                 .arg("-C")
                 .arg(&dir)
-                .args(["push", "origin", &format!("HEAD:refs/heads/{}", a.head_ref)])
+                .args([
+                    "push",
+                    &lease,
+                    "origin",
+                    &format!("{new_head}:refs/heads/{}", a.head_ref),
+                ])
                 .env_remove("MAJORDOMUS_SHARE")
                 .output()
                 .map_err(|e| e.to_string())?;
@@ -2046,7 +2144,7 @@ impl Integrator for ForgeIntegrator<'_> {
             .arg(root)
             .args(["worktree", "remove", "--force"])
             .arg(&dir)
-            .status();
+            .output();
         result
     }
 }

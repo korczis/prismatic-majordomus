@@ -64,7 +64,7 @@ answer wins. `ready` is reached only after every other question is answered in i
 | `blocked` | held | the repository's settings allow no merge commit (see the merge method below) | allow merge commits |
 | `waiting_for_review` | waiting | a required review is missing or changes were requested (see below) | a reviewer |
 | `needs_repair` | repair | a required check failed on its head, or it is behind master from a fork | the author |
-| `needs_refresh` | waiting | merges cleanly but does not contain master | `prs drain --refresh` |
+| `needs_refresh` | waiting | merges cleanly but does not contain master | `prs drain --refresh`, or `prs repair <n> --apply` for one |
 | `waiting_for_checks` | waiting | contains master; a required check is pending or missing on this head | wait |
 | `ready` | ready | contains master, and every required check passed on this head | `prs drain` |
 
@@ -285,9 +285,13 @@ new observation.
 
 When nothing is ready, `prs drain --refresh` brings master into the first `needs_refresh`
 pull request. It uses a scratch worktree under the common git directory, runs `git merge
---no-commit` with the derived driver, runs `scripts/derive`, commits with the hooks running,
-and pushes a plain fast-forward to the pull request's branch. That is a merge commit and never
-a rewrite, as `project.land-and-publish` prescribes. The pipeline is one deep: while a
+--no-commit` with the derived driver (rerere off, so no remembered resolution decides a path
+nobody looked at), runs `scripts/derive`, commits with the hooks running, and pushes a
+fast-forward to the pull request's branch, leased on the head it observed
+(`--force-with-lease=refs/heads/<branch>:<head>`, after checking that what it pushes descends
+from that head). A branch whose author pushed, or rewound it, meanwhile is refused and never
+overwritten. That is a merge commit and never a rewrite, as `project.land-and-publish`
+prescribes. The pipeline is one deep: while a
 refreshed pull request waits for its checks, no other is refreshed, because merging the first
 would put the second behind again. Throughput is therefore one pull request per run of the
 required check, which is the true cost of this repository's mechanics.
@@ -301,6 +305,49 @@ most of its run. A `missing` check holds the pipeline only for `REFRESHED_HEAD_R
 request is refreshed, so one silent check cannot stop every refresh. A check running on a head
 the author pushed holds nothing. A `refreshed` event recorded before `head_after` existed names
 no head, so a pull request refreshed by an older executor does not hold the pipeline.
+
+## Repair
+
+The `repair` lane is a person's. Most pull requests here go `CONFLICTING` on the forge within
+minutes of any merge to master, and nearly always over `merge=derived` files the forge cannot
+resolve, because the derived driver is per-clone configuration. `prs repair <n>` (or the head
+branch's name) brings master into one named pull request, whatever lane it waits in, by the
+same act as `prs drain --refresh`. It replaces `scripts/unblock`, which did this outside the
+integrator, without the lease or the trail.
+
+It decides nothing of its own. It reads the named pull request's assessment and acts only
+when the classification says the head lacks master and git's merge with the derived
+attribute conflicts on no authored path, the relation `behind`. Every conflict the forge
+reports is then on a `merge=derived` path, which the regeneration settles.
+
+| The assessment says | `prs repair` |
+|---|---|
+| relation `behind` | eligible: master is merged in, derived, committed and pushed |
+| relation `conflicting` | refused with exit 10, naming every authored file that conflicts: they are the owner's to settle |
+| relation `up_to_date` | nothing to repair: the head already contains master |
+| `redundant`, `superseded`, relation `contained`, `superseded`, `patch_ids_upstream` or `derived_only` | nothing to repair: cleanup's lane, or a person's |
+| relation `unknown`, a fork's head, armed auto-merge, another base, not open | refused with exit 10 |
+
+Without `--apply`, which is the default and is also spelled `--dry-run`, it is a read. It
+decides on the queue of the last recorded observation, as `prs status` and `prs explain` do.
+It reaches no network, takes no lease, writes nothing to the trail, and exits 10 when nothing
+was ever observed. `prs refresh` observes again. With `--apply` it follows the drain's rules:
+
+1. it takes the base branch's integration lease and holds it until the act is over, so a
+   drain cannot race it, and a second executor started meanwhile is refused (exit 12);
+2. it observes the forge again, exactly as a drain step does, and decides again on that;
+3. it records `repair_selected` and then `repair_attempted` before anything reaches the
+   remote, and does nothing when either line cannot be written;
+4. in a scratch worktree under the common git directory, never the branch's own, it merges
+   the master it decided on, runs `scripts/derive`, and commits with the hooks running;
+5. it pushes a fast-forward leased on the head it observed, then records `repaired` with the
+   head it pushed, or `repair_refused` with the failure's class.
+
+A merge, derive, commit or push that fails leaves nothing on the branch and is
+`repair_refused`. A branch that moved is classed `stale`. It never merges into master, never
+asks the forge to merge, and never touches a person's checkout. A refusal decided from the
+classification is recorded too when `--apply` was given, so the trail says why a requested
+repair did not happen.
 
 ## Cleanup
 
@@ -351,21 +398,21 @@ json` stays the list of pull requests to close.
 
 ## Safety
 
-- One executor per base branch: `drain` and `cleanup --apply` hold an exclusive lease at
-  `<git-common-dir>/majordomus/locks/integration-<base>.lock`, with the holder recorded.
-  Holding it is holding an exclusive `flock` on that file for the executor's life, so the
-  kernel decides who holds it: of executors started at the same instant, in one checkout
-  or in several worktrees of the repository, exactly one holds it and no pull request is
-  merged twice. The integration unit tests race eight executors per round, and cases 855
-  and 856 race separate processes through the command line. A holder that ends, even by a
-  crash, releases the lease at once; a live holder is never taken over. A record untouched
-  for 30 minutes is reported stale to observers (`prs brief`, `prs status`), which never
-  take the lease. The executor renews its record before every observation, and a refresh
-  keeps it fresh while the branch's derive runs. When the path no longer names the file
-  the executor locked, or the record names another holder, the lease is lost: the drain
-  stops as on any systemic failure (`prs drain` exits 12) and acts on nothing. The lease
-  is taken for the base the forge was last observed to name, observed first when this
-  checkout never asked, never for a guessed `master`.
+- One executor per base branch: `drain`, `cleanup --apply` and `repair --apply` hold an
+  exclusive lease at `<git-common-dir>/majordomus/locks/integration-<base>.lock`, with the
+  holder recorded. Holding it is holding an exclusive `flock` on that file for the
+  executor's life, so the kernel decides who holds it: of executors started at the same
+  instant, in one checkout or in several worktrees of the repository, exactly one holds it
+  and no pull request is merged twice. The integration unit tests race eight executors per
+  round, and cases 855 and 856 race separate processes through the command line. A holder
+  that ends, even by a crash, releases the lease at once; a live holder is never taken over.
+  A record untouched for 30 minutes is reported stale to observers (`prs brief`,
+  `prs status`), which never take the lease. The executor renews its record before every
+  observation, and a refresh keeps it fresh while the branch's derive runs. When the path no
+  longer names the file the executor locked, or the record names another holder, the lease
+  is lost: the drain stops as on any systemic failure (`prs drain` exits 12) and acts on
+  nothing. The lease is taken for the base the forge was last observed to name, observed
+  first when this checkout never asked, never for a guessed `master`.
 - Every act is appended to the audit trail before it happens. The trail is one file per
   repository, `<git-common-dir>/majordomus/integration/events.jsonl`, beside the lease, so
   every worktree writes the same trail and `prs events`, `prs brief`, `prs status`, the
@@ -379,11 +426,12 @@ json` stays the list of pull requests to close.
   than an hour is said in the queue's diagnostics, and every reading of a queue with a
   diagnostic — `status`, `plan` and `explain` alike — exits 10.
 - The trail is written first. A merge is asked of the forge only after `merge_attempted` is
-  on the trail, a refresh is pushed only after `refresh_attempted`, and a pull request is
-  closed only after `close_attempted`. When that line cannot be written, the act is not
-  taken: the step reports `trail_unwritable`, the drain stops, and `prs drain` exits 12. A
-  lease the trail cannot record is given back and refused. Any other write the trail
-  refuses ends the run with the error rather than continuing unrecorded.
+  on the trail, a refresh is pushed only after `refresh_attempted`, a repair only after
+  `repair_attempted`, and a pull request is closed only after `close_attempted`. When that
+  line cannot be written, the act is not taken: the step reports `trail_unwritable`, the
+  drain stops, and `prs drain` exits 12 (`prs repair --apply` exits 12 too). A lease the
+  trail cannot record is given back and refused. Any other write the trail refuses ends the
+  run with the error rather than continuing unrecorded.
 - The events, each a typed `action` on one JSON line:
 
   | Event | When |
@@ -400,6 +448,8 @@ json` stays the list of pull requests to close.
   | `failure_acknowledged` | a person looked at a merge that could not be verified (`prs drain --resume-after-failure`) |
   | `refresh_attempted` | before master is merged into the branch and pushed |
   | `refreshed` (with the head it pushed), `refresh_failed` | after it |
+  | `repair_selected`, `repair_attempted` | `prs repair --apply` chose the named pull request, and is about to merge master into it and push |
+  | `repaired` (with the head it pushed), `repair_refused` (with its class) | after it, or when the classification refused it |
   | `close_attempted` | before a redundant or superseded pull request is closed |
   | `closed_redundant`, `closed_superseded` (with its evidence), `close_failed` | after it |
   | `idle` | nothing was ready |
@@ -471,6 +521,8 @@ json` stays the list of pull requests to close.
 | `majordomus prs drain --resume-after-failure` | yes | record that a person looked at an unverified merge, then drain |
 | `majordomus prs drain --continuous [--interval S] [--max N] [--refresh]` | yes | drain, wait, drain again until stopped |
 | `majordomus prs cleanup [--apply]` | yes | close what is provably on master, or superseded by a successor that landed; list what is a person's (possibly redundant, obsolete) and the branches merged pull requests left on origin |
+| `majordomus prs repair <n\|branch>` | no | whether master may be brought into that pull request, from the last observation (a dry run) |
+| `majordomus prs repair <n\|branch> --apply` | yes | bring master into it, under the lease, as `drain --refresh` does |
 
 The same queue is `GET /api/v1/pull-requests` (MCP `majordomus_pull_requests`), with the
 lease and the last merge beside it. One pull request is

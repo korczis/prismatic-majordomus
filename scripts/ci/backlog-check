@@ -19,8 +19,10 @@
 #     relation; checking only one side is how this class of defect survives)
 #   - the rule exists and names the forge constraint, so the reason is written down once
 #   - no document instructs a reader to merge a pull request on GitHub
-#   - no script, recipe, workflow or library merges around the integrator: no `gh pr merge`,
-#     no REST merge call, no `--admin`, no force push to the trunk (ADR 0101)
+#   - no script, recipe, workflow, library or shared asset merges around the integrator: no
+#     `gh pr merge` (`--auto` included), no REST merge call, no GraphQL merge or auto-merge
+#     mutation, no auto-merge action, no `--admin`, no force push to the trunk, and no
+#     `scripts/unblock`, whose gesture is `majordomus prs repair` now (ADR 0101)
 #   - the behavioural case exists
 #
 #   scripts/ci/backlog-check             the structural findings
@@ -188,21 +190,38 @@ fi
 # A pull request reaches master through `majordomus prs` and nothing else: it refreshes
 # master and the head immediately before acting, merges one, verifies the result and plans
 # again (ADR 0101). Every other route skips some of that — a `gh pr merge` in a script trusts
-# whatever the caller last looked at, a REST merge call does the same with more typing,
-# `--admin` steps over the required checks, and a force push to the trunk rewrites what
-# every other branch was measured against. The integrator itself is Rust and is not read
-# here. A comment may name the forbidden forms; a line that runs one may not. A force push
-# of anything but the trunk (a release branch the publish job rebuilds) is not this gate's
-# business.
-bypass="$(grep -rnE 'gh[[:space:]]+pr[[:space:]]+merge|pulls/[^[:space:]]*/merge|--admin([[:space:]]|$)|push[[:space:]].*(-f|--force|--force-with-lease)([[:space:]]|=|$).*(master|main)([[:space:]"'"'"']|$)|push[[:space:]].*\+(refs/heads/)?(master|main)' \
-  scripts .just justfile .github lib bin 2>/dev/null \
+# whatever the caller last looked at, `--auto` hands the merge to the forge for whatever
+# master is then, a REST or GraphQL merge call does the same with more typing, an auto-merge
+# action is the same thing run by a workflow, `--admin` steps over the required checks, and a
+# force push to the trunk rewrites what every other branch was measured against. Bringing
+# master into a branch is the integrator's too (`majordomus prs repair`), so the shell
+# script that once did it outside the lease and the trail may not come back. The integrator
+# itself is Rust, under apps/, and is not read here. A comment may name the forbidden forms;
+# a line that runs one may not. A force push of anything but the trunk (a release branch the
+# publish job rebuilds) is not this gate's business. This is the one guard: case 910 plants
+# each form and watches it refused.
+BYPASS_FORMS='gh[[:space:]]+pr[[:space:]]+merge'
+BYPASS_FORMS="$BYPASS_FORMS|pulls/[^[:space:]]*/merge"
+BYPASS_FORMS="$BYPASS_FORMS|enablePullRequestAutoMerge|mergePullRequest"
+# any workflow step whose action is an auto-merge, whatever it is called, and Octokit's merge
+BYPASS_FORMS="$BYPASS_FORMS|uses:[^#]*[Aa][Uu][Tt][Oo][-_]?[Mm][Ee][Rr][Gg][Ee]"
+BYPASS_FORMS="$BYPASS_FORMS|pulls\\.merge[[:space:]]*\\("
+BYPASS_FORMS="$BYPASS_FORMS|--admin([[:space:]]|$)"
+BYPASS_FORMS="$BYPASS_FORMS"'|push[[:space:]].*(-f|--force|--force-with-lease)([[:space:]]|=|$).*(master|main)([[:space:]"'"'"']|$)'
+BYPASS_FORMS="$BYPASS_FORMS"'|push[[:space:]].*\+(refs/heads/)?(master|main)'
+BYPASS_FORMS="$BYPASS_FORMS|scripts/unblock"
+BYPASS_DIRS="scripts .just justfile .github .githooks deploy lib bin share"
+# shellcheck disable=SC2086 # the directories are words, split on purpose
+bypass="$(grep -rnE "$BYPASS_FORMS" $BYPASS_DIRS 2>/dev/null \
   | grep -vE '^[^:]*:[0-9]+:[[:space:]]*#' \
   | grep -v '^scripts/ci/backlog-check:' || true)"
+[ ! -e scripts/unblock ] || bypass="scripts/unblock: the script itself is back; its gesture is majordomus prs repair
+$bypass"
 if [ -n "$bypass" ]; then
-  fail "a script merges around the integrator (majordomus prs, ADR 0101); land pull requests with majordomus prs drain:"
+  fail "a script merges around the integrator (majordomus prs, ADR 0101); land pull requests with majordomus prs drain, bring master into one with majordomus prs repair:"
   echo "$bypass" | head -5 | sed 's/^/       /'
 else
-  ok "nothing merges around the integrator: no gh pr merge, REST merge, --admin or force push to the trunk"
+  ok "nothing merges around the integrator: no gh pr merge, REST or GraphQL merge, auto-merge action, --admin, force push to the trunk or scripts/unblock"
 fi
 
 # 5b. the suite's own servers have a bounded life.

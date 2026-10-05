@@ -22319,7 +22319,7 @@
       "is_enum": true,
       "name": "IntegrationAction",
       "properties": [],
-      "type": "\"lease_acquired\" | \"lease_released\" | \"continuous_started\" | \"continuous_stopped\" | \"observed\" | \"became_actionable\" | \"left_actionable\" | \"selected\" | \"refresh_selected\" | \"stale_decision\" | \"merge_attempted\" | \"merge_succeeded\" | \"merge_failed\" | \"verification_failed\" | \"failure_acknowledged\" | \"refresh_attempted\" | \"refreshed\" | \"refresh_failed\" | \"close_attempted\" | \"closed_redundant\" | \"closed_superseded\" | \"close_failed\" | \"idle\" | \"observe_failed\"",
+      "type": "\"lease_acquired\" | \"lease_released\" | \"continuous_started\" | \"continuous_stopped\" | \"observed\" | \"became_actionable\" | \"left_actionable\" | \"selected\" | \"refresh_selected\" | \"stale_decision\" | \"merge_attempted\" | \"merge_succeeded\" | \"merge_failed\" | \"verification_failed\" | \"failure_acknowledged\" | \"refresh_attempted\" | \"refreshed\" | \"refresh_failed\" | \"close_attempted\" | \"closed_redundant\" | \"closed_superseded\" | \"close_failed\" | \"repair_selected\" | \"repair_attempted\" | \"repaired\" | \"repair_refused\" | \"idle\" | \"observe_failed\"",
       "used_by": [],
       "used_by_schemas": [
         "IntegrationEvent",
@@ -22413,6 +22413,22 @@
         {
           "description": "Closing it failed.",
           "value": "close_failed"
+        },
+        {
+          "description": "A person named a pull request to repair (`prs repair --apply`) and its classification\nmakes it eligible: master is what it lacks, and nothing authored conflicts.",
+          "value": "repair_selected"
+        },
+        {
+          "description": "Master is about to be merged into the named branch and pushed.",
+          "value": "repair_attempted"
+        },
+        {
+          "description": "Master was brought into the named branch and pushed.",
+          "value": "repaired"
+        },
+        {
+          "description": "The repair was refused — by the classification (an authored conflict, a fork, armed\nauto-merge, another base, an undecidable relation) or by the act (a merge, derive,\ncommit or push that failed) — and nothing reached the branch; `class` says why.",
+          "value": "repair_refused"
         },
         {
           "description": "Nothing was ready.",

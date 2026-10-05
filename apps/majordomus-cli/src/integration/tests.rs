@@ -2437,7 +2437,7 @@ fn a_continuous_drain_is_recorded_when_it_starts_and_stops() {
 }
 
 /// Every action, in the order an executor's run meets them.
-const ALL_ACTIONS: [drain::IntegrationAction; 24] = [
+const ALL_ACTIONS: [drain::IntegrationAction; 28] = [
     drain::IntegrationAction::LeaseAcquired,
     drain::IntegrationAction::LeaseReleased,
     drain::IntegrationAction::ContinuousStarted,
@@ -2459,6 +2459,10 @@ const ALL_ACTIONS: [drain::IntegrationAction; 24] = [
     drain::IntegrationAction::ClosedRedundant,
     drain::IntegrationAction::ClosedSuperseded,
     drain::IntegrationAction::CloseFailed,
+    drain::IntegrationAction::RepairSelected,
+    drain::IntegrationAction::RepairAttempted,
+    drain::IntegrationAction::Repaired,
+    drain::IntegrationAction::RepairRefused,
     drain::IntegrationAction::Idle,
     drain::IntegrationAction::FailureAcknowledged,
     drain::IntegrationAction::ObserveFailed,
@@ -2490,6 +2494,10 @@ fn every_action_is_listed(a: drain::IntegrationAction) {
         | A::ClosedSuperseded
         | A::ClosedRedundant
         | A::CloseFailed
+        | A::RepairSelected
+        | A::RepairAttempted
+        | A::Repaired
+        | A::RepairRefused
         | A::Idle
         | A::FailureAcknowledged
         | A::ObserveFailed => (),
@@ -5426,6 +5434,276 @@ fn a_read_of_the_queue_writes_nothing() {
     let _ = std::fs::remove_dir_all(&dir);
 }
 
+// ---------------------------------------------------------------- repair: one named pull request
+
+use crate::integration::repair::{self, RepairOutcome, RepairRefusal, RepairTarget};
+
+/// #1 behind master and clean but for derived files; #2 conflicting on an authored path;
+/// #3 up to date; #4 behind, from a fork; #5 behind, auto-merge armed; #6 behind, another base.
+fn repair_world() -> World {
+    let mut conflicting = sim(2);
+    conflicting.conflicts_after = Some(90);
+    let mut up_to_date = sim(3);
+    up_to_date.contains = 1;
+    let mut fork = sim(4);
+    fork.cross_repository = true;
+    let mut armed = sim(5);
+    armed.auto_merge = true;
+    let mut elsewhere = sim(6);
+    elsewhere.base = "release";
+    World {
+        open: vec![sim(1), conflicting, up_to_date, fork, armed, elsewhere],
+        merged: vec![90],
+        master: 1,
+        ..Default::default()
+    }
+}
+
+fn outcome(r: &repair::RepairReport) -> String {
+    match &r.outcome {
+        RepairOutcome::NothingToRepair { .. } => "nothing".into(),
+        RepairOutcome::WouldRepair => "would_repair".into(),
+        RepairOutcome::Repaired { .. } => "repaired".into(),
+        RepairOutcome::Refused { refusal } => format!(
+            "refused:{}",
+            serde_json::to_value(refusal).unwrap()["kind"]
+                .as_str()
+                .unwrap()
+        ),
+    }
+}
+
+#[test]
+fn a_repair_is_eligible_only_when_behind_with_no_authored_conflict() {
+    let w = repair_world();
+    let q = w.queue();
+    let say = |t: &str| outcome(&repair::dry_run(&q, &RepairTarget::parse(t)));
+    assert_eq!(say("1"), "would_repair");
+    // by its head branch, as `scripts/unblock` took it
+    assert_eq!(say("feature/1"), "would_repair");
+    assert_eq!(say("2"), "refused:authored_conflict");
+    assert_eq!(say("3"), "nothing");
+    assert_eq!(say("4"), "refused:fork_head");
+    assert_eq!(say("5"), "refused:auto_merge_armed");
+    assert_eq!(say("6"), "refused:other_base");
+    assert_eq!(say("99"), "refused:not_open");
+    assert_eq!(say("feature/nowhere"), "refused:not_open");
+    // the authored conflict names its files, which the classification found
+    let RepairOutcome::Refused {
+        refusal: RepairRefusal::AuthoredConflict { paths },
+    } = repair::dry_run(&q, &RepairTarget::Number(2)).outcome
+    else {
+        panic!("#2 is not refused as an authored conflict");
+    };
+    assert_eq!(paths, ["src/2.rs"]);
+}
+
+#[test]
+fn a_repair_leaves_what_is_on_master_already_to_cleanup() {
+    let mut w = repair_world();
+    w.open[0].redundant_after = Some(90);
+    let q = w.queue();
+    let r = repair::dry_run(&q, &RepairTarget::Number(1));
+    assert_eq!(outcome(&r), "nothing", "{r:?}");
+    let RepairOutcome::NothingToRepair { why } = r.outcome else {
+        unreachable!()
+    };
+    assert!(why.contains("cleanup"), "{why}");
+}
+
+#[test]
+fn an_applied_repair_records_its_selection_and_attempt_before_the_push_and_its_outcome_after() {
+    // the integrator, wrapped: it reads the trail at the moment the push is asked for
+    struct Watching<'r> {
+        world: World,
+        root: &'r std::path::Path,
+        trail_at_push: Option<Vec<String>>,
+    }
+    impl Integrator for Watching<'_> {
+        fn observe(&mut self) -> Result<IntegrationQueue, String> {
+            self.world.observe()
+        }
+        fn merge(&mut self, pr: u64, head: &str, method: &str) -> Result<(), String> {
+            self.world.merge(pr, head, method)
+        }
+        fn verify(
+            &mut self,
+            pr: u64,
+            at: &crate::integration::EvaluatedAgainst,
+            method: &str,
+        ) -> Result<drain::Landed, drain::NotLanded> {
+            self.world.verify(pr, at, method)
+        }
+        fn refresh_branch(
+            &mut self,
+            a: &PullRequestAssessment,
+            base: &str,
+        ) -> Result<String, String> {
+            self.trail_at_push = Some(trail_actions(self.root));
+            self.world.refresh_branch(a, base)
+        }
+        fn close(&mut self, pr: u64, head: &str, comment: &str) -> Result<(), String> {
+            self.world.close(pr, head, comment)
+        }
+    }
+    let root = scratch();
+    let mut w = Watching {
+        world: repair_world(),
+        root: &root,
+        trail_at_push: None,
+    };
+    let r = repair::apply(&root, &mut w, &RepairTarget::Number(1)).unwrap();
+    assert_eq!(outcome(&r), "repaired", "{r:?}");
+    assert!(!r.dry_run);
+    assert_eq!(
+        w.trail_at_push.as_deref(),
+        Some(
+            &[
+                "repair_selected".to_string(),
+                "repair_attempted".to_string()
+            ][..]
+        ),
+        "the push was asked for before the trail named it"
+    );
+    assert_eq!(
+        trail_actions(&root),
+        ["repair_selected", "repair_attempted", "repaired"]
+    );
+    let repaired = drain::events(&root).pop().unwrap();
+    assert_eq!(repaired.head_after.as_deref(), Some("h1.1"));
+    assert_eq!(repaired.master_after.as_deref(), Some("m1"));
+    // never a merge into master: the forge's merge was not asked for, and master stands
+    assert_eq!((w.world.merge_calls, w.world.master), (0, 1));
+    assert_eq!(w.world.refresh_calls, 1);
+    assert_eq!(
+        w.world.observations, 1,
+        "the act is decided on a fresh observation"
+    );
+}
+
+#[test]
+fn an_applied_repair_whose_attempt_cannot_be_recorded_pushes_nothing() {
+    let root = scratch();
+    let mut w = repair_world();
+    // the second write — repair_attempted — is refused
+    drain::FAIL_WRITE.with(|n| n.set(2));
+    let r = repair::apply(&root, &mut w, &RepairTarget::Number(1)).unwrap();
+    drain::FAIL_WRITE.with(|n| n.set(0));
+    assert_eq!(outcome(&r), "refused:trail_unwritable", "{r:?}");
+    assert_eq!(w.refresh_calls, 0, "a push reached the remote unrecorded");
+    assert_eq!(trail_actions(&root), ["repair_selected"]);
+}
+
+#[test]
+fn an_applied_repair_that_is_refused_says_so_on_the_trail_and_pushes_nothing() {
+    let root = scratch();
+    let mut w = repair_world();
+    let r = repair::apply(&root, &mut w, &RepairTarget::Number(2)).unwrap();
+    assert_eq!(outcome(&r), "refused:authored_conflict");
+    assert_eq!(w.refresh_calls, 0);
+    let refused = drain::events(&root);
+    assert_eq!(refused.len(), 1, "{refused:?}");
+    assert_eq!(refused[0].action.as_str(), "repair_refused");
+    assert_eq!(refused[0].class, Some(drain::FailureClass::Conflict));
+    assert!(
+        refused[0].detail.contains("src/2.rs"),
+        "{}",
+        refused[0].detail
+    );
+    // a pull request with nothing to bring in records nothing and pushes nothing
+    let root = scratch();
+    let r = repair::apply(&root, &mut w, &RepairTarget::Number(3)).unwrap();
+    assert_eq!(outcome(&r), "nothing");
+    assert!(trail_actions(&root).is_empty());
+    assert_eq!(w.refresh_calls, 0);
+}
+
+#[test]
+fn an_applied_repair_whose_push_is_refused_records_the_class_and_reports_it() {
+    struct Moved(World);
+    impl Integrator for Moved {
+        fn observe(&mut self) -> Result<IntegrationQueue, String> {
+            self.0.observe()
+        }
+        fn merge(&mut self, pr: u64, head: &str, method: &str) -> Result<(), String> {
+            self.0.merge(pr, head, method)
+        }
+        fn verify(
+            &mut self,
+            pr: u64,
+            at: &crate::integration::EvaluatedAgainst,
+            method: &str,
+        ) -> Result<drain::Landed, drain::NotLanded> {
+            self.0.verify(pr, at, method)
+        }
+        fn refresh_branch(&mut self, _: &PullRequestAssessment, _: &str) -> Result<String, String> {
+            Err("the push was refused: ! [rejected] feature/1 (stale info)".into())
+        }
+        fn close(&mut self, pr: u64, head: &str, comment: &str) -> Result<(), String> {
+            self.0.close(pr, head, comment)
+        }
+    }
+    let root = scratch();
+    let mut w = Moved(repair_world());
+    let r = repair::apply(&root, &mut w, &RepairTarget::Number(1)).unwrap();
+    let RepairOutcome::Refused {
+        refusal: RepairRefusal::ActFailed { class, .. },
+    } = r.outcome
+    else {
+        panic!("{r:?}");
+    };
+    assert_eq!(class, drain::FailureClass::Stale);
+    assert_eq!(
+        trail_actions(&root),
+        ["repair_selected", "repair_attempted", "repair_refused"]
+    );
+    assert_eq!(
+        drain::events(&root)[2].class,
+        Some(drain::FailureClass::Stale)
+    );
+}
+
+#[test]
+fn a_repair_dry_run_reads_the_recorded_observation_and_writes_nothing() {
+    let dir = unique_temp("mj-integration-repair-plan");
+    // nothing observed: no classification to decide from, said as status says it
+    git(&dir, &["init", "-q", "-b", "master"]);
+    let err = repair::plan(&dir, &RepairTarget::Number(1)).unwrap_err();
+    assert!(err.contains("prs refresh"), "{err}");
+    git(&dir, &["commit", "-q", "--allow-empty", "-m", "base"]);
+    let base = git(&dir, &["rev-parse", "HEAD"]);
+    git(&dir, &["checkout", "-q", "-b", "feature/1"]);
+    std::fs::write(dir.join("one.txt"), "one\n").unwrap();
+    git(&dir, &["add", "one.txt"]);
+    git(&dir, &["commit", "-q", "-m", "one"]);
+    let head = git(&dir, &["rev-parse", "HEAD"]);
+    git(&dir, &["checkout", "-q", "master"]);
+    git(
+        &dir,
+        &["commit", "-q", "--allow-empty", "-m", "master moves"],
+    );
+    let master = git(&dir, &["rev-parse", "HEAD"]);
+    assert_ne!(master, base);
+    observed(&dir, &master, vec![observed_pr(1, &head)]);
+    let r = repair::plan(&dir, &RepairTarget::parse("feature/1")).unwrap();
+    assert_eq!(outcome(&r), "would_repair", "{r:?}");
+    assert_eq!(
+        (
+            r.dry_run,
+            r.pr,
+            r.master_sha.as_str(),
+            r.observed_at.as_str()
+        ),
+        (true, Some(1), master.as_str(), "t0")
+    );
+    // a read: no trail line, no cache, no summary
+    assert!(trail_actions(&dir).is_empty());
+    assert!(!dir
+        .join(".git/majordomus/integration/summary.json")
+        .exists());
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
 // ---------------------------------------------------------------- a rank names its factors (WP15)
 
 #[test]
@@ -6002,4 +6280,197 @@ fn a_required_check_without_a_context_requires_nothing() {
     assert_eq!(checks.len(), 1, "{checks:?}");
     assert_eq!(checks[0].context, "ci");
     assert_eq!(checks[0].app_id, Some(2));
+}
+
+/// A head `prs repair` pushed holds the refresh pipeline exactly as one a drain refreshed:
+/// master was brought in and its required check now runs, so refreshing another pull request
+/// now would put this one behind again the moment either merged and waste the run.
+#[test]
+fn a_repaired_pull_request_waiting_for_checks_holds_the_pipeline() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1), sim(2)],
+        master: 1,
+        ..Default::default()
+    };
+    // #1 is brought up to date by `prs repair`, not by a drain's refresh
+    let r = repair::apply(&root, &mut w, &RepairTarget::Number(1)).unwrap();
+    assert!(matches!(r.outcome, RepairOutcome::Repaired { .. }), "{r:?}");
+    w.open[0].ci_pending = true;
+    assert_eq!(
+        disposition(&w.queue(), 1),
+        PullRequestDisposition::WaitingForChecks
+    );
+    let report = drain::drain(&root, &mut w, 1, false, true).unwrap();
+    assert_eq!(
+        report.steps,
+        vec![DrainStepOutcome::AwaitingChecks { pr: 1 }]
+    );
+    assert_eq!(
+        w.open[1].contains, 0,
+        "#2 was refreshed while #1's repaired head waits for its checks"
+    );
+}
+
+/// Every way a repair is refused has the class the trail records it with and a sentence that
+/// says what a person does about it.
+#[test]
+fn every_repair_refusal_has_its_class_and_its_sentence() {
+    use drain::FailureClass as C;
+    let cases = [
+        (
+            RepairRefusal::NotOpen {
+                target: "#9".into(),
+            },
+            C::PolicyViolation,
+            "#9 is not an open pull request",
+        ),
+        (
+            RepairRefusal::OtherBase {
+                base: "release".into(),
+            },
+            C::PolicyViolation,
+            "it targets release, not the integration base",
+        ),
+        (
+            RepairRefusal::ForkHead,
+            C::PolicyViolation,
+            "lives in a fork",
+        ),
+        (
+            RepairRefusal::AutoMergeArmed,
+            C::PolicyViolation,
+            "a person disarms it first",
+        ),
+        (
+            RepairRefusal::AuthoredConflict {
+                paths: vec!["src/a.rs".into()],
+            },
+            C::Conflict,
+            "conflicts on 1 authored file(s), which are the owner's to settle: src/a.rs",
+        ),
+        (
+            RepairRefusal::Undecidable {
+                reason: "git merge-tree failed".into(),
+            },
+            C::Unreadable,
+            "could not decide its relation to master: git merge-tree failed",
+        ),
+        (
+            RepairRefusal::ActFailed {
+                reason: "scripts/derive failed".into(),
+                class: C::PolicyViolation,
+            },
+            C::PolicyViolation,
+            "nothing reached the branch: scripts/derive failed",
+        ),
+        (
+            RepairRefusal::TrailUnwritable {
+                reason: "disk full".into(),
+            },
+            C::Unreadable,
+            "the act was not taken: the trail could not record it first: disk full",
+        ),
+    ];
+    for (refusal, class, said) in cases {
+        assert_eq!(refusal.class(), class, "{refusal:?}");
+        assert!(refusal.to_string().contains(said), "{refusal}");
+    }
+}
+
+/// The decision reads the relation git gave and the disposition the classifier gave, and
+/// nothing else: each relation a head can have to master maps onto one answer.
+#[test]
+fn a_repair_decides_on_each_relation_and_disposition_the_queue_holds() {
+    let q = repair_world().queue();
+    let say = |relation: RelationToMaster,
+               disposition: Option<(PullRequestDisposition, Option<u64>)>| {
+        let mut q = q.clone();
+        let a = q
+            .assessments
+            .iter_mut()
+            .find(|a| a.number == 1)
+            .expect("#1 is open");
+        a.relation = relation;
+        if let Some((d, by)) = disposition {
+            a.disposition = d;
+            a.superseded_by = by;
+        }
+        let r = repair::dry_run(&q, &RepairTarget::Number(1));
+        let why = match &r.outcome {
+            RepairOutcome::NothingToRepair { why } => why.clone(),
+            _ => String::new(),
+        };
+        (outcome(&r), why)
+    };
+    let behind = || RelationToMaster::Behind {
+        behind: 1,
+        authored: vec![],
+    };
+    let (o, why) = say(
+        behind(),
+        Some((PullRequestDisposition::Superseded, Some(9))),
+    );
+    assert_eq!(o, "nothing");
+    assert!(why.contains("a successor, #9, landed"), "{why}");
+    let (o, why) = say(behind(), Some((PullRequestDisposition::Superseded, None)));
+    assert_eq!(o, "nothing");
+    assert!(why.contains("a successor landed"), "{why}");
+    let (o, _) = say(
+        RelationToMaster::Unknown {
+            reason: "git merge-tree failed".into(),
+        },
+        None,
+    );
+    assert_eq!(o, "refused:undecidable");
+    for on_master in [
+        RelationToMaster::Contained,
+        RelationToMaster::Superseded,
+        RelationToMaster::PatchIdsUpstream { commits: 2 },
+    ] {
+        let (o, why) = say(on_master.clone(), None);
+        assert_eq!(o, "nothing", "{on_master:?}");
+        assert!(why.contains("cleanup is the lane"), "{on_master:?}: {why}");
+    }
+    let (o, why) = say(
+        RelationToMaster::DerivedOnly {
+            paths: vec!["docs/generated/x.json".into()],
+        },
+        None,
+    );
+    assert_eq!(o, "nothing");
+    assert!(why.contains("possibly_redundant"), "{why}");
+}
+
+/// Every write the act makes can fail, and the forge's observation can: each is said, and a
+/// push the trail did not announce first is never made.
+#[test]
+fn an_applied_repair_says_each_write_it_could_not_make() {
+    let apply = |w: &mut dyn Integrator, n: u64, failing_write: usize| {
+        let root = scratch();
+        drain::FAIL_WRITE.with(|k| k.set(failing_write));
+        let r = repair::apply(&root, w, &RepairTarget::Number(n));
+        drain::FAIL_WRITE.with(|k| k.set(0));
+        r
+    };
+    // the forge could not be observed: nothing is decided, nothing is written
+    let mut w = repair_world();
+    w.outages = vec!["HTTP 502: Bad Gateway".into()];
+    assert_eq!(apply(&mut w, 1, 0).unwrap_err(), "HTTP 502: Bad Gateway");
+    // a refusal the trail cannot record is an error, not a silent refusal
+    let mut w = repair_world();
+    assert!(apply(&mut w, 2, 1).unwrap_err().contains("trail refused"));
+    // the selection cannot be recorded: the act is not taken
+    let mut w = repair_world();
+    let r = apply(&mut w, 1, 1).unwrap();
+    assert_eq!(outcome(&r), "refused:trail_unwritable", "{r:?}");
+    assert_eq!(w.refresh_calls, 0, "a push reached the remote unrecorded");
+    // the push was made and its outcome cannot be recorded: said as an error, after the act
+    let mut w = repair_world();
+    assert!(apply(&mut w, 1, 3).unwrap_err().contains("trail refused"));
+    assert_eq!(w.refresh_calls, 1);
+    // the act failed and its refusal cannot be recorded
+    let mut w = repair_world();
+    w.refresh_fails = true;
+    assert!(apply(&mut w, 1, 3).unwrap_err().contains("trail refused"));
 }

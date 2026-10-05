@@ -3,8 +3,9 @@
 //! Nothing is decided here. `status`, `plan`, `explain`, `events` and `brief` render the
 //! queue the integration module builds from the last recorded observation — the same value
 //! the HTTP route, the MCP tool and the Cockpit page (`/cockpit/integration`) render — and
-//! never reach the network. `refresh`, `drain` and `cleanup` are the three that do, and each
-//! says so in its help.
+//! never reach the network; neither does `repair` without `--apply`, which decides on the same
+//! queue. `refresh`, `drain`, `repair --apply` and `cleanup` are the ones that do, and each says
+//! so in its help.
 //!
 //! Exit codes: 0 when the answer is complete; 10 when it is a finding (a stale or absent
 //! observation, a drain that stopped on a verification failure, a pull request that is not
@@ -20,7 +21,7 @@ use crate::error::{Error, Result};
 use crate::integration::{
     self,
     drain::{self, DrainStepOutcome, ForgeIntegrator, IntegrationLease},
-    IntegrationQueue, PullRequestAssessment, RelationToMaster,
+    repair, IntegrationQueue, PullRequestAssessment, RelationToMaster,
 };
 
 const FINDING: u8 = 10;
@@ -125,6 +126,106 @@ fn left_branches(left: &Option<Vec<drain::LeftBranch>>, out: &mut impl Write) ->
             // the arm holds a list with at least one branch
             w(out, format!("  next: {}", l[0].next_step))
         }
+    }
+}
+
+fn render_repair(r: &repair::RepairReport, out: &mut impl Write) -> Result<()> {
+    let who = match (r.pr, &r.branch) {
+        (Some(n), Some(b)) => format!("#{n} ({b})"),
+        _ => r.target.clone(),
+    };
+    // the lines first, then one write: a report is printed whole or not at all
+    let mut lines: Vec<String> = r
+        .head_sha
+        .iter()
+        .map(|head| {
+            format!(
+                "{who}: head {} against {} {}{}",
+                short(head),
+                r.base,
+                short(&r.master_sha),
+                r.relation
+                    .as_ref()
+                    .map(|rel| format!(", {}", integration::classify::relation_word(rel)))
+                    .unwrap_or_default()
+            )
+        })
+        .collect();
+    lines.extend(r.dry_run.then(|| {
+        format!(
+            "decided on the forge as observed at {}; prs refresh observes it again",
+            r.observed_at
+        )
+    }));
+    match &r.outcome {
+        repair::RepairOutcome::NothingToRepair { why } => {
+            lines.push(format!("nothing to repair: {why}"));
+        }
+        repair::RepairOutcome::WouldRepair => lines.push(format!(
+            "dry run: would merge {} {} into {who}, derive, commit, and push it leased on {}; --apply does",
+            r.base,
+            short(&r.master_sha),
+            r.head_sha.as_deref().map(short).unwrap_or("its head")
+        )),
+        repair::RepairOutcome::Repaired { head_after } => lines.push(format!(
+            "repaired {who}: it carries {} {} and is at {}",
+            r.base,
+            short(&r.master_sha),
+            short(head_after)
+        )),
+        repair::RepairOutcome::Refused { refusal } => {
+            lines.push(format!("REFUSE {who}: {refusal}"));
+            if let repair::RepairRefusal::AuthoredConflict { paths } = refusal {
+                lines.extend(paths.iter().map(|p| format!("       {p}")));
+                lines.push(format!(
+                    "       merge {} in the branch's own worktree, decide what those files mean, then run this again",
+                    r.base
+                ));
+            }
+        }
+    }
+    w(out, lines.join("\n"))
+}
+
+/// The exit status of a repair: 12 when the trail could not record the act, 10 for any other
+/// refusal and for a dry run over an observation nobody can vouch for, 0 otherwise.
+fn repair_exit(r: &repair::RepairReport) -> u8 {
+    match &r.outcome {
+        repair::RepairOutcome::Refused {
+            refusal: repair::RepairRefusal::TrailUnwritable { .. },
+        } => UNUSABLE,
+        repair::RepairOutcome::Refused { .. } => FINDING,
+        // a dry run over a diagnosed observation is a reading of a queue nobody can vouch
+        // for: it says what it would do and exits 10, as status and plan do
+        _ if r.dry_run && !r.diagnostics.is_empty() => FINDING,
+        _ => 0,
+    }
+}
+
+/// The act of `prs repair --apply`: a push to the forge's remote, under the base branch's
+/// lease for the whole of it, so a drain never races it. Every way it cannot be taken is
+/// unusable (12).
+fn repair_applied(
+    root: &std::path::Path,
+    target: &repair::RepairTarget,
+) -> Result<repair::RepairReport> {
+    executor_base(root)
+        .and_then(|base| IntegrationLease::acquire(root, &base))
+        .and_then(|lease| {
+            let mut integrator = ForgeIntegrator {
+                root,
+                lease: Some(&lease),
+            };
+            repair::apply(root, &mut integrator, target)
+        })
+        .map_err(unusable)
+}
+
+/// The finding of a dry run that has no observation to decide from.
+fn unobserved(reason: String) -> Error {
+    Error::Refused {
+        code: FINDING,
+        reason,
     }
 }
 
@@ -371,6 +472,23 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             // decision D4). Read here, on demand, and recorded for the offline surfaces;
             // never by refresh, which the executor runs before every decision.
             cleanup_branches(&root, &mut out).map(|()| 0)
+        }
+        PrsCommand::Repair { target, apply, .. } => {
+            let target = repair::RepairTarget::parse(&target);
+            // the default is the read `status` makes, from the last recorded observation — no
+            // network, no lease, nothing written to the trail; `--apply` is the act
+            let report = if apply {
+                repair_applied(&root, &target)
+            } else {
+                repair::plan(&root, &target).map_err(unobserved)
+            }?;
+            let printed = if format == OutputFormat::Json {
+                json(&mut out, &report)
+            } else {
+                report.diagnostics.iter().for_each(|d| eprintln!("! {d}"));
+                render_repair(&report, &mut out)
+            };
+            printed.map(|()| repair_exit(&report))
         }
         PrsCommand::ProveDryRun => {
             let proof = integration::proof::prove_dry_run(&root).map_err(unusable)?;
@@ -1284,6 +1402,151 @@ mod tests {
             ago(&at(3 * 86_400)).ends_with(" d ago"),
             "{}",
             ago(&at(3 * 86_400))
+        );
+    }
+
+    #[test]
+    fn every_repair_outcome_has_its_own_sentence_and_a_refusal_names_the_files() {
+        let report = |dry_run: bool, outcome: repair::RepairOutcome| repair::RepairReport {
+            dry_run,
+            target: "#7".into(),
+            pr: Some(7),
+            branch: Some("feature/7".into()),
+            base: "master".into(),
+            master_sha: "m".repeat(40),
+            head_sha: Some("h".repeat(40)),
+            observed_at: "2026-10-01T00:00:00Z".into(),
+            relation: Some(RelationToMaster::Behind {
+                behind: 1,
+                authored: vec!["src/a.rs".into()],
+            }),
+            outcome,
+            diagnostics: vec![],
+        };
+        let say = |r: repair::RepairReport| text(|o| render_repair(&r, o));
+        let would = say(report(true, repair::RepairOutcome::WouldRepair));
+        assert!(
+            would.contains("#7 (feature/7): head hhhhhhhhhh against master mmmmmmmmmm, behind"),
+            "{would}"
+        );
+        assert!(
+            would.contains("observed at 2026-10-01T00:00:00Z"),
+            "{would}"
+        );
+        assert!(
+            would.contains("dry run: would merge master mmmmmmmmmm into #7 (feature/7)"),
+            "{would}"
+        );
+        assert!(
+            would.contains("leased on hhhhhhhhhh; --apply does"),
+            "{would}"
+        );
+        let done = say(report(
+            false,
+            repair::RepairOutcome::Repaired {
+                head_after: "n".repeat(40),
+            },
+        ));
+        assert!(
+            done.contains(
+                "repaired #7 (feature/7): it carries master mmmmmmmmmm and is at nnnnnnnnnn"
+            ),
+            "{done}"
+        );
+        assert!(
+            !done.contains("observed at"),
+            "an act is not a dry run: {done}"
+        );
+        let nothing = say(report(
+            true,
+            repair::RepairOutcome::NothingToRepair {
+                why: "its head already contains master".into(),
+            },
+        ));
+        assert!(
+            nothing.contains("nothing to repair: its head already contains master"),
+            "{nothing}"
+        );
+        let refused = say(report(
+            true,
+            repair::RepairOutcome::Refused {
+                refusal: repair::RepairRefusal::AuthoredConflict {
+                    paths: vec!["src/a.rs".into(), "src/b.rs".into()],
+                },
+            },
+        ));
+        assert!(
+            refused
+                .contains("REFUSE #7 (feature/7): merging master conflicts on 2 authored file(s)"),
+            "{refused}"
+        );
+        assert!(
+            refused.contains("\n       src/a.rs\n       src/b.rs\n"),
+            "{refused}"
+        );
+        assert!(
+            refused.contains("merge master in the branch's own worktree"),
+            "{refused}"
+        );
+        // what is not open is named as it was given
+        let mut absent = report(
+            true,
+            repair::RepairOutcome::Refused {
+                refusal: repair::RepairRefusal::NotOpen {
+                    target: "#7".into(),
+                },
+            },
+        );
+        absent.pr = None;
+        absent.branch = None;
+        absent.head_sha = None;
+        let absent = say(absent);
+        assert!(absent.starts_with("decided on the forge"), "{absent}");
+        assert!(
+            absent.contains("REFUSE #7: #7 is not an open pull request"),
+            "{absent}"
+        );
+    }
+
+    #[test]
+    fn a_repair_exits_by_what_it_could_vouch_for() {
+        let report = |dry_run: bool, outcome: repair::RepairOutcome, diagnostics: &[&str]| {
+            repair::RepairReport {
+                dry_run,
+                target: "#7".into(),
+                pr: Some(7),
+                branch: Some("feature/7".into()),
+                base: "master".into(),
+                master_sha: "m".repeat(40),
+                head_sha: Some("h".repeat(40)),
+                observed_at: "2026-10-01T00:00:00Z".into(),
+                relation: None,
+                outcome,
+                diagnostics: diagnostics.iter().map(|d| d.to_string()).collect(),
+            }
+        };
+        let refused = |refusal| repair::RepairOutcome::Refused { refusal };
+        let unwritable = refused(repair::RepairRefusal::TrailUnwritable {
+            reason: "disk full".into(),
+        });
+        // an act the trail could not announce was not taken: the tool is unusable here
+        assert_eq!(repair_exit(&report(false, unwritable, &[])), UNUSABLE);
+        let forked = refused(repair::RepairRefusal::ForkHead);
+        assert_eq!(repair_exit(&report(false, forked, &[])), FINDING);
+        let would = || repair::RepairOutcome::WouldRepair;
+        assert_eq!(repair_exit(&report(true, would(), &[])), 0);
+        assert_eq!(
+            repair_exit(&report(true, would(), &["stale observation"])),
+            FINDING,
+            "a dry run over a diagnosed observation vouches for nothing"
+        );
+        let repaired = repair::RepairOutcome::Repaired {
+            head_after: "n".repeat(40),
+        };
+        assert_eq!(
+            repair_exit(&report(false, repaired, &["stale observation"])),
+            0,
+            "an act decides on its own fresh observation"
         );
     }
 }

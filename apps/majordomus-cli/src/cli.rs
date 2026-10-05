@@ -2848,6 +2848,11 @@ pub struct PrsArgs {
 /// assert!(matches!(args.command, Some(PrsCommand::Drain { continuous: true, interval: 60, .. })));
 /// assert!(Cli::try_parse_from(["majordomus", "prs", "drain", "--continuous", "--dry-run"]).is_err());
 /// assert!(Cli::try_parse_from(["majordomus", "prs", "drain", "--continuous", "--interval", "5"]).is_err());
+/// // a repair is a dry run unless it is applied, and never both
+/// let cli = Cli::try_parse_from(["majordomus", "prs", "repair", "137"]).unwrap();
+/// let Command::Prs(args) = cli.command else { panic!() };
+/// assert!(matches!(args.command, Some(PrsCommand::Repair { apply: false, .. })));
+/// assert!(Cli::try_parse_from(["majordomus", "prs", "repair", "137", "--apply", "--dry-run"]).is_err());
 /// // with no subcommand it is `status`
 /// let cli = Cli::try_parse_from(["majordomus", "prs"]).unwrap();
 /// let Command::Prs(args) = cli.command else { panic!() };
@@ -2892,6 +2897,17 @@ pub enum PrsCommand {
         #[arg(long)]
         apply: bool,
         /// List them and close nothing: the default, spelled out.
+        #[arg(long, conflicts_with = "apply")]
+        dry_run: bool,
+    },
+    /// Bring master into one named pull request whose only conflict with it is over derived (`merge=derived`) files. Eligible only when the classification says it is behind master and its merge conflicts on no authored path; an authored conflict is refused, naming the files. A dry run by default, decided offline on the last recorded observation, like `status`. With `--apply` it takes the integration lease, observes the forge again, records the act on the trail first, and merges master in a scratch worktree, derives, commits and pushes a fast-forward leased on the observed head; it never merges into master. Exit 10 on a refusal or an absent observation, 12 when it could not act
+    Repair {
+        /// The pull request: its number, or its head branch.
+        target: String,
+        /// Act: take the lease, observe the forge again, record the act, merge, derive, commit and push. Without it nothing is changed, fetched or recorded.
+        #[arg(long)]
+        apply: bool,
+        /// Decide and change nothing: the default, spelled out.
         #[arg(long, conflicts_with = "apply")]
         dry_run: bool,
     },
@@ -4463,6 +4479,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["prs", "brief"],
             setup: &[],
             expect: Expect::ExitCode(0),
+        }],
+    },
+    CommandExamples {
+        command: "prs repair",
+        examples: &[ExampleDoc {
+            id: "prs-repair-unobserved",
+            title: "A repair is decided on the recorded observation, or not at all",
+            description: "The dry run, which is the default, is a read: it decides whether the named pull request may have master brought in from the queue the last recorded observation built, as `prs status` does, and reaches no network. Where nothing was ever observed there is no classification to decide from, so it exits 10 and names `prs refresh`; nothing is merged, pushed or recorded.",
+            argv: &["prs", "repair", "1"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
         }],
     },
     CommandExamples {

@@ -1254,7 +1254,8 @@ pub fn word<T: Serialize>(value: &T) -> String {
     }
 }
 
-fn relation_word(r: &RelationToMaster) -> &'static str {
+/// The relation's word, as evidence and every surface say it.
+pub fn relation_word(r: &RelationToMaster) -> &'static str {
     match r {
         RelationToMaster::Contained => "contained",
         RelationToMaster::Superseded => "superseded",

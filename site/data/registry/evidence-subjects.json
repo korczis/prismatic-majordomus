@@ -2674,6 +2674,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:prs repair",
+      "path": "/evidence/commands/prs-repair/"
+    },
+    {
+      "kind": "command",
       "subject": "command:prs status",
       "path": "/evidence/commands/prs-status/"
     },
@@ -14141,6 +14146,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:prs repair": {
+      "kind": "command",
+      "id": "prs repair",
+      "page": "/evidence/commands/prs-repair/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:prs status": {
       "kind": "command",
       "id": "prs status",
@@ -21157,21 +21181,31 @@
         },
         {
           "via": "rule",
-          "test": "suite:111_unblock",
-          "path": "test/cases/111_unblock.sh",
-          "category": "e2e",
-          "inputs": [
-            "test/cases/111_unblock.sh",
-            ".ai/repo/rules/project/land-and-publish.v1.md"
-          ]
-        },
-        {
-          "via": "rule",
           "test": "suite:57_derived_merge_driver",
           "path": "test/cases/57_derived_merge_driver.sh",
           "category": "e2e",
           "inputs": [
             "test/cases/57_derived_merge_driver.sh",
+            ".ai/repo/rules/project/land-and-publish.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:911_repair_decides_and_moves_nothing",
+          "path": "test/cases/911_repair_decides_and_moves_nothing.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/911_repair_decides_and_moves_nothing.sh",
+            ".ai/repo/rules/project/land-and-publish.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:912_repair_acts_under_the_lease_and_the_trail",
+          "path": "test/cases/912_repair_acts_under_the_lease_and_the_trail.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/912_repair_acts_under_the_lease_and_the_trail.sh",
             ".ai/repo/rules/project/land-and-publish.v1.md"
           ]
         },
@@ -23877,6 +23911,7 @@
     "crate:integration_executor",
     "crate:integration_merged_branches",
     "crate:integration_refresh_trail",
+    "crate:integration_repair",
     "crate:integration_trail",
     "crate:lease_busy",
     "crate:lease_declared",
@@ -24015,6 +24050,7 @@
     "suite:85_deployment_bind",
     "suite:861_a_successor_that_landed_supersedes",
     "suite:86_deployment_projections",
+    "suite:910_nothing_merges_around_the_integrator",
     "suite:93_schema_integrity",
     "suite:93_workspace_kind",
     "suite:97_development_semantics_gate",

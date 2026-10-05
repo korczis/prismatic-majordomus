@@ -75,7 +75,8 @@ fn kind_of(e: &IntegrationEvent) -> Kind {
     match e.action {
         A::BecameActionable => Kind::BecameActionable,
         A::Selected | A::RefreshSelected => Kind::Selected,
-        A::Refreshed => Kind::Refreshed,
+        // a repaired head is a CI round exactly like a refreshed one
+        A::Refreshed | A::Repaired => Kind::Refreshed,
         A::MergeSucceeded => Kind::MergeSucceeded,
         A::MergeFailed => Kind::MergeFailed,
         A::VerificationFailed => Kind::VerificationFailed,
@@ -228,6 +229,18 @@ mod tests {
         assert_eq!(t.median_actionable_to_merged_secs, Some(900));
         assert_eq!(t.median_cycle_secs, Some(300));
         assert_eq!(t.ci_rounds_per_merge, Some(0));
+    }
+
+    #[test]
+    fn a_repaired_head_is_a_ci_round_like_a_refreshed_one() {
+        let trail = [
+            ev(T0, "repaired", Some(1)),
+            ev(T0 + 10, "refreshed", Some(1)),
+            ev(T0 + 20, "merge_succeeded", Some(1)),
+        ];
+        let t = throughput(&trail, T0 + DAY, 7);
+        assert_eq!(t.merges, 1);
+        assert_eq!(t.ci_rounds_per_merge, Some(2));
     }
 
     #[test]

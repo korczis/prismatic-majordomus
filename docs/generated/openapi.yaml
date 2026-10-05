@@ -22188,6 +22188,18 @@ components:
           const: close_failed
           description: Closing it failed.
         - type: string
+          const: repair_selected
+          description: "A person named a pull request to repair (`prs repair --apply`) and its classification\nmakes it eligible: master is what it lacks, and nothing authored conflicts."
+        - type: string
+          const: repair_attempted
+          description: Master is about to be merged into the named branch and pushed.
+        - type: string
+          const: repaired
+          description: Master was brought into the named branch and pushed.
+        - type: string
+          const: repair_refused
+          description: "The repair was refused — by the classification (an authored conflict, a fork, armed\nauto-merge, another base, an undecidable relation) or by the act (a merge, derive,\ncommit or push that failed) — and nothing reached the branch; `class` says why."
+        - type: string
           const: idle
           description: Nothing was ready.
         - type: string

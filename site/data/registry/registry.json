@@ -6,23 +6,23 @@
     "version": "0.13.0"
   },
   "registry": {
-    "fingerprint": "ea445590d9e5801222863985aeab6dcf165a19a3c1945e5e59f72d2cab3e5bb3",
+    "fingerprint": "3a5f5389a25428fad3af13a06061db4993ba831f6653ccef42024e2672aa297d",
     "summary": {
-      "total": 1885,
+      "total": 1887,
       "builtin": 172,
-      "declarative": 1713,
+      "declarative": 1715,
       "by_kind": {
         "command": 22,
         "query": 150,
-        "resource": 1713
+        "resource": 1715
       },
       "by_stability": {
         "behaviorally_verified": 128,
         "experimental": 36,
-        "implemented": 1721
+        "implemented": 1723
       },
       "mcp_tools": 166,
-      "mcp_resources": 1766,
+      "mcp_resources": 1768,
       "http_routes": 170,
       "cli_commands": 90,
       "modules": 84,
@@ -25982,6 +25982,26 @@
                   },
                   {
                     "type": "string",
+                    "const": "repair_selected",
+                    "description": "A person named a pull request to repair (`prs repair --apply`) and its classification\nmakes it eligible: master is what it lacks, and nothing authored conflicts."
+                  },
+                  {
+                    "type": "string",
+                    "const": "repair_attempted",
+                    "description": "Master is about to be merged into the named branch and pushed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "repaired",
+                    "description": "Master was brought into the named branch and pushed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "repair_refused",
+                    "description": "The repair was refused — by the classification (an authored conflict, a fork, armed\nauto-merge, another base, an undecidable relation) or by the act (a merge, derive,\ncommit or push that failed) — and nothing reached the branch; `class` says why."
+                  },
+                  {
+                    "type": "string",
                     "const": "idle",
                     "description": "Nothing was ready."
                   },
@@ -27344,6 +27364,26 @@
                     "type": "string",
                     "const": "close_failed",
                     "description": "Closing it failed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "repair_selected",
+                    "description": "A person named a pull request to repair (`prs repair --apply`) and its classification\nmakes it eligible: master is what it lacks, and nothing authored conflicts."
+                  },
+                  {
+                    "type": "string",
+                    "const": "repair_attempted",
+                    "description": "Master is about to be merged into the named branch and pushed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "repaired",
+                    "description": "Master was brought into the named branch and pushed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "repair_refused",
+                    "description": "The repair was refused — by the classification (an authored conflict, a fork, armed\nauto-merge, another base, an undecidable relation) or by the act (a merge, derive,\ncommit or push that failed) — and nothing reached the branch; `class` says why."
                   },
                   {
                     "type": "string",
@@ -29036,6 +29076,26 @@
                     "type": "string",
                     "const": "close_failed",
                     "description": "Closing it failed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "repair_selected",
+                    "description": "A person named a pull request to repair (`prs repair --apply`) and its classification\nmakes it eligible: master is what it lacks, and nothing authored conflicts."
+                  },
+                  {
+                    "type": "string",
+                    "const": "repair_attempted",
+                    "description": "Master is about to be merged into the named branch and pushed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "repaired",
+                    "description": "Master was brought into the named branch and pushed."
+                  },
+                  {
+                    "type": "string",
+                    "const": "repair_refused",
+                    "description": "The repair was refused — by the classification (an authored conflict, a fork, armed\nauto-merge, another base, an undecidable relation) or by the act (a merge, derive,\ncommit or push that failed) — and nothing reached the branch; `class` says why."
                   },
                   {
                     "type": "string",
@@ -68142,7 +68202,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 350,
+        "capabilities": 352,
         "capability_ids": []
       },
       {
@@ -68232,7 +68292,7 @@
     ]
   },
   "index": {
-    "fingerprint": "4db7e59646dc6b8f412b655e753f539703b79716c70aa6900fd11f1bf88070cd",
+    "fingerprint": "663c0df6bffd794c7a5f8698b9e8a5bc248d123032a19cbf6af49565a99b36df",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -68285,7 +68345,7 @@
       "session": 22,
       "skill": 6,
       "taxonomy": 10,
-      "test": 350,
+      "test": 352,
       "use-case": 48,
       "workspace": 1
     },
@@ -69562,7 +69622,7 @@
         "path": ".ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 18996,
+        "bytes": 19226,
         "tags": [
           "integration",
           "git",
@@ -73071,7 +73131,7 @@
         "title": "Security",
         "path": "SECURITY.md",
         "source_class": "readme",
-        "bytes": 7462
+        "bytes": 8023
       },
       {
         "uri": "majordomus://document/docs/ADOPTION.md",
@@ -73404,7 +73464,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 34848
+        "bytes": 38778
       },
       {
         "uri": "majordomus://document/docs/KNOWLEDGE.md",
@@ -82080,7 +82140,7 @@
         "path": ".ai/repo/rules/project/land-and-publish.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 10139,
+        "bytes": 10936,
         "tags": [
           "process",
           "integration",
@@ -83602,14 +83662,6 @@
         "path": "test/cases/111_session_per_provider.sh",
         "source_class": "case",
         "bytes": 9254
-      },
-      {
-        "uri": "majordomus://test/test/cases/111_unblock.sh",
-        "kind": "test",
-        "identity": "test/cases/111_unblock.sh",
-        "path": "test/cases/111_unblock.sh",
-        "source_class": "case",
-        "bytes": 7721
       },
       {
         "uri": "majordomus://test/test/cases/112_version_matches_surface.sh",
@@ -85972,6 +86024,30 @@
         "bytes": 11474
       },
       {
+        "uri": "majordomus://test/test/cases/910_nothing_merges_around_the_integrator.sh",
+        "kind": "test",
+        "identity": "test/cases/910_nothing_merges_around_the_integrator.sh",
+        "path": "test/cases/910_nothing_merges_around_the_integrator.sh",
+        "source_class": "case",
+        "bytes": 5503
+      },
+      {
+        "uri": "majordomus://test/test/cases/911_repair_decides_and_moves_nothing.sh",
+        "kind": "test",
+        "identity": "test/cases/911_repair_decides_and_moves_nothing.sh",
+        "path": "test/cases/911_repair_decides_and_moves_nothing.sh",
+        "source_class": "case",
+        "bytes": 8796
+      },
+      {
+        "uri": "majordomus://test/test/cases/912_repair_acts_under_the_lease_and_the_trail.sh",
+        "kind": "test",
+        "identity": "test/cases/912_repair_acts_under_the_lease_and_the_trail.sh",
+        "path": "test/cases/912_repair_acts_under_the_lease_and_the_trail.sh",
+        "source_class": "case",
+        "bytes": 11435
+      },
+      {
         "uri": "majordomus://test/test/cases/91_canonical_architecture.sh",
         "kind": "test",
         "identity": "test/cases/91_canonical_architecture.sh",
@@ -87041,7 +87117,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 350
+      "objects": 352
     },
     {
       "name": "use-case",
@@ -99755,6 +99831,158 @@
                 "command": "majordomus prs cleanup",
                 "setup": [],
                 "expectation": "exits 12"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "prs",
+              "repair"
+            ],
+            "route": "/docs/cli/prs/repair/",
+            "executable": true,
+            "usage": "majordomus prs repair [OPTIONS] <TARGET>",
+            "about": "Bring master into one named pull request whose only conflict with it is over derived (`merge=derived`) files. Eligible only when the classification says it is behind master and its merge conflicts on no authored path; an authored conflict is refused, naming the files. A dry run by default, decided offline on the last recorded observation, like `status`. With `--apply` it takes the integration lease, observes the forge again, records the act on the trail first, and merges master in a scratch worktree, derives, commits and pushes a fast-forward leased on the observed head; it never merges into master. Exit 10 on a refusal or an absent observation, 12 when it could not act",
+            "args": [
+              {
+                "name": "target",
+                "positional": true,
+                "help": "The pull request: its number, or its head branch",
+                "value_name": "TARGET",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "apply",
+                "long": "apply",
+                "positional": false,
+                "help": "Act: take the lease, observe the forge again, record the act, merge, derive, commit and push. Without it nothing is changed, fetched or recorded",
+                "value_name": "APPLY",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "dry_run",
+                "long": "dry-run",
+                "positional": false,
+                "help": "Decide and change nothing: the default, spelled out",
+                "value_name": "DRY_RUN",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "prs-repair-unobserved",
+                "title": "A repair is decided on the recorded observation, or not at all",
+                "description": "The dry run, which is the default, is a read: it decides whether the named pull request may have master brought in from the queue the last recorded observation built, as `prs status` does, and reaches no network. Where nothing was ever observed there is no classification to decide from, so it exits 10 and names `prs refresh`; nothing is merged, pushed or recorded.",
+                "argv": [
+                  "prs",
+                  "repair",
+                  "1"
+                ],
+                "command": "majordomus prs repair 1",
+                "setup": [],
+                "expectation": "exits 10"
               }
             ],
             "subcommands": []
