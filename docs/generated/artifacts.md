@@ -303,10 +303,10 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/version.txt` | `version` | text | 231 | `62b3ac01f51e64af` |
 | `site/data/registry/design.json` | `site-design` | json | 11587 | `ce5bba81316b1cd6` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3005 | `5b1bf1b0f4d187a8` |
-| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 667935 | `62bbc37ace7a7687` |
+| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 667969 | `58a2fcbedb6c9f3b` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 92055 | `262ad4fb024cc984` |
 | `site/data/registry/product.json` | `site-product` | json | 616989 | `e840e48bc3ccbb0a` |
-| `site/data/registry/registry.json` | `site-registry` | json | 5545173 | `47ce11eb39a59cc4` |
+| `site/data/registry/registry.json` | `site-registry` | json | 5545174 | `60d13d65c61c09a8` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `03f6876c7795cd30` |
 | `site/data/registry/why.json` | `site-why` | json | 349952 | `d2ba0ef06a73f361` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `d249681abaa525f7` |
