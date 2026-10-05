@@ -24,6 +24,5 @@ implementing, run `majordomus worktree` to see which branch and worktree you are
 whether that is where the branch belongs; start new work with `majordomus worktree create
 <branch>` and continue in the path it prints; bring a misplaced worktree home with
 `majordomus worktree migrate` rather than continuing where you are. `majordomus worktree
-guard` answers whether a commit may proceed from here; a repository that wires it into its
-pre-commit hook declares that in the policy's `enforcement`, and `majordomus doctor` proves
-the hook runs it.
+guard` refuses a feature branch committed elsewhere wherever the pre-commit hook asks it;
+the policy's `enforcement` says whether it does, and `majordomus doctor` proves the wiring.
