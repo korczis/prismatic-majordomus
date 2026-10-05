@@ -10,8 +10,9 @@
 #   gh pr merge, with any flags, --auto among them   the forge merging on whatever master is then
 #   REST pulls/<n>/merge                             the same, by hand
 #   GraphQL mergePullRequest, enablePullRequestAutoMerge
-#   an auto-merge action in a workflow               pascalgn/automerge-action,
-#                                                    peter-evans/enable-pull-request-automerge
+#   an auto-merge action in a workflow               any `uses:` whose action is an auto-merge,
+#                                                    whatever its name; Octokit's pulls.merge(
+#   ... in scripts/, lib/, bin/, share/, .github/, .githooks/, deploy/ and the justfiles
 #   scripts/unblock, the file or a call of it        retired: majordomus prs repair is the gesture
 #
 # Case 131 holds the forms the gate had before (--admin, a force push to the trunk); the two
@@ -63,6 +64,13 @@ refused bin/land 'gh api graphql -f query="mutation { mergePullRequest(input: {p
 refused share/land.graphql 'mutation($id: ID!) { enablePullRequestAutoMerge(input: {pullRequestId: $id, mergeMethod: MERGE}) { clientMutationId } }'
 refused .github/workflows/automerge.yml '      - uses: pascalgn/automerge-action@v0.16.4'
 refused .github/workflows/automerge.yml '      - uses: peter-evans/enable-pull-request-automerge@v3'
+# an auto-merge action by a name the guard has never listed, in any case, and Octokit's merge
+refused .github/workflows/land.yml '      - uses: some-org/Auto-Merge@v2'
+refused .github/workflows/land.yml '          script: await github.rest.pulls.merge({ owner, repo, pull_number })'
+# the hooks and the deploy scripts are read too, not only scripts/ and .github/
+mkdir -p "$W/.githooks" "$W/deploy"
+refused .githooks/post-merge 'gh pr merge "$1" --squash'
+refused deploy/land.sh 'gh pr merge --auto --merge "$PR"'
 refused justfile 'unblock *args: scripts/unblock {{args}}'
 
 # the retired script itself, whatever it holds

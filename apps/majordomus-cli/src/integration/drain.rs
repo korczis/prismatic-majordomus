@@ -1207,8 +1207,8 @@ pub fn acknowledge_failure(root: &Path, by: &str) -> Result<IntegrationEvent, St
 /// request the executor refreshed waits for its checks, no other is refreshed — merging the
 /// first would put the second behind again and waste its CI run.
 ///
-/// Only a head the executor pushed holds the pipeline — one a `refreshed` event of the trail
-/// names as `head_after` — and only while its required check is *pending*, or *missing* for
+/// Only a head the executor pushed holds the pipeline — one a `refreshed` event, or the
+/// `repaired` event of `prs repair`, names as `head_after` — and only while its required check is *pending*, or *missing* for
 /// less than [`REFRESHED_HEAD_REPORTS_WITHIN`] since that event: an aggregate check is not
 /// created until the jobs it needs finish, and a check that never reports must not hold every
 /// refresh forever. A check running on a head the author pushed is not the executor's run to
@@ -1224,7 +1224,14 @@ fn refresh_step(
     let mut pushed: BTreeMap<(u64, String), Option<i64>> = BTreeMap::new();
     for e in events(root)
         .into_iter()
-        .filter(|e| e.action == IntegrationAction::Refreshed)
+        // `prs repair` pushes master into a branch the same way a refresh does, so its head
+        // holds the pipeline too: another refresh now would waste that run as well
+        .filter(|e| {
+            matches!(
+                e.action,
+                IntegrationAction::Refreshed | IntegrationAction::Repaired
+            )
+        })
     {
         if let Some(key) = e.pr.zip(e.head_after) {
             let at = crate::peers::epoch_seconds(&e.at);

@@ -252,6 +252,11 @@ pub struct RepairReport {
     pub relation: Option<RelationToMaster>,
     /// What happened.
     pub outcome: RepairOutcome,
+    /// What the observation the decision rests on cannot vouch for — the queue's own
+    /// diagnostics, such as an observation older than an hour. A dry run with any exits 10, as
+    /// every other reading of a diagnosed queue does.
+    #[serde(default)]
+    pub diagnostics: Vec<String>,
 }
 
 /// What the classification says about repairing one pull request.
@@ -358,6 +363,7 @@ fn report_of(
         head_sha: a.map(|a| a.evaluated_against.head_sha.clone()),
         observed_at: queue.observed_at.clone(),
         relation: a.map(|a| a.relation.clone()),
+        diagnostics: queue.diagnostics.clone(),
         outcome: match decision {
             RepairDecision::Eligible(_) => RepairOutcome::WouldRepair,
             RepairDecision::Nothing(_, why) => RepairOutcome::NothingToRepair { why: why.clone() },

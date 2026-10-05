@@ -203,12 +203,14 @@ fi
 BYPASS_FORMS='gh[[:space:]]+pr[[:space:]]+merge'
 BYPASS_FORMS="$BYPASS_FORMS|pulls/[^[:space:]]*/merge"
 BYPASS_FORMS="$BYPASS_FORMS|enablePullRequestAutoMerge|mergePullRequest"
-BYPASS_FORMS="$BYPASS_FORMS|automerge-action|enable-pull-request-automerge|auto-merge-action"
+# any workflow step whose action is an auto-merge, whatever it is called, and Octokit's merge
+BYPASS_FORMS="$BYPASS_FORMS|uses:[^#]*[Aa][Uu][Tt][Oo][-_]?[Mm][Ee][Rr][Gg][Ee]"
+BYPASS_FORMS="$BYPASS_FORMS|pulls\\.merge[[:space:]]*\\("
 BYPASS_FORMS="$BYPASS_FORMS|--admin([[:space:]]|$)"
 BYPASS_FORMS="$BYPASS_FORMS"'|push[[:space:]].*(-f|--force|--force-with-lease)([[:space:]]|=|$).*(master|main)([[:space:]"'"'"']|$)'
 BYPASS_FORMS="$BYPASS_FORMS"'|push[[:space:]].*\+(refs/heads/)?(master|main)'
 BYPASS_FORMS="$BYPASS_FORMS|scripts/unblock"
-BYPASS_DIRS="scripts .just justfile .github lib bin share"
+BYPASS_DIRS="scripts .just justfile .github .githooks deploy lib bin share"
 # shellcheck disable=SC2086 # the directories are words, split on purpose
 bypass="$(grep -rnE "$BYPASS_FORMS" $BYPASS_DIRS 2>/dev/null \
   | grep -vE '^[^:]*:[0-9]+:[[:space:]]*#' \

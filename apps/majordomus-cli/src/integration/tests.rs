@@ -5692,3 +5692,33 @@ fn every_ranked_assessment_carries_the_factors_it_was_ranked_by() {
     }
     assert_eq!(factors[0].number, q.assessments[0].number);
 }
+
+/// A head `prs repair` pushed holds the refresh pipeline exactly as one a drain refreshed:
+/// master was brought in and its required check now runs, so refreshing another pull request
+/// now would put this one behind again the moment either merged and waste the run.
+#[test]
+fn a_repaired_pull_request_waiting_for_checks_holds_the_pipeline() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1), sim(2)],
+        master: 1,
+        ..Default::default()
+    };
+    // #1 is brought up to date by `prs repair`, not by a drain's refresh
+    let r = repair::apply(&root, &mut w, &RepairTarget::Number(1)).unwrap();
+    assert!(matches!(r.outcome, RepairOutcome::Repaired { .. }), "{r:?}");
+    w.open[0].ci_pending = true;
+    assert_eq!(
+        disposition(&w.queue(), 1),
+        PullRequestDisposition::WaitingForChecks
+    );
+    let report = drain::drain(&root, &mut w, 1, false, true).unwrap();
+    assert_eq!(
+        report.steps,
+        vec![DrainStepOutcome::AwaitingChecks { pr: 1 }]
+    );
+    assert_eq!(
+        w.open[1].contains, 0,
+        "#2 was refreshed while #1's repaired head waits for its checks"
+    );
+}

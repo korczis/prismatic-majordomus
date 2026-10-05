@@ -148,3 +148,14 @@ fi
 if [ -s "$STATE/log" ]; then
   echo "    a dry run asked the forge:"; sed 's/^/      /' "$STATE/log"; exit 1
 fi
+
+# a dry run over an observation the clone has moved past is a reading nobody can vouch for:
+# it still says what it would do, names the diagnostic, and exits 10 as status and plan do
+m="$(git -C "$W" rev-parse refs/remotes/origin/master)"
+later="$(git -C "$W" commit-tree -p "$m" -m "master moved on since the observation" "$m^{tree}")"
+git -C "$W" update-ref refs/remotes/origin/master "$later"
+expect_exit 10 prs repair 1
+expect_grep 'stale observation'
+expect_exit 10 prs repair 1 --format json
+[ "$(printf '%s' "$LAST_OUT" | jq -r '.diagnostics | length')" -ge 1 ] \
+  || { echo "    the json answer carries no diagnostic: $LAST_OUT"; exit 1; }

@@ -414,12 +414,18 @@ pub fn run(args: PrsArgs) -> Result<u8> {
                 json(&mut out, &report)?;
             } else {
                 render_repair(&report, &mut out)?;
+                for d in &report.diagnostics {
+                    eprintln!("! {d}");
+                }
             }
             Ok(match &report.outcome {
                 repair::RepairOutcome::Refused {
                     refusal: repair::RepairRefusal::TrailUnwritable { .. },
                 } => UNUSABLE,
                 repair::RepairOutcome::Refused { .. } => FINDING,
+                // a dry run over a diagnosed observation is a reading of a queue nobody can
+                // vouch for: it says what it would do and exits 10, as status and plan do
+                _ if report.dry_run && !report.diagnostics.is_empty() => FINDING,
                 _ => 0,
             })
         }
@@ -1264,6 +1270,7 @@ mod tests {
                 authored: vec!["src/a.rs".into()],
             }),
             outcome,
+            diagnostics: vec![],
         };
         let say = |r: repair::RepairReport| text(|o| render_repair(&r, o));
         let would = say(report(true, repair::RepairOutcome::WouldRepair));
