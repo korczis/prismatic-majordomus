@@ -1022,11 +1022,14 @@ mod tests {
         let mut a = q.assessments[0].clone();
         a.superseded_by = Some(9);
         a.next_action = None;
-        a.dependencies = vec![PullRequestDependency {
-            number: 5,
-            certainty: DependencyCertainty::Confirmed,
-            satisfied: false,
-        }];
+        a.dependencies = [(5, false), (4, true)]
+            .into_iter()
+            .map(|(number, satisfied)| PullRequestDependency {
+                number,
+                certainty: DependencyCertainty::Confirmed,
+                satisfied,
+            })
+            .collect();
         a.overlaps = vec![PathOverlap {
             number: 3,
             paths: vec!["src/a.rs".into()],
@@ -1035,6 +1038,7 @@ mod tests {
         assert!(t.contains("superseded:   by #9, which landed"), "{t}");
         assert!(!t.contains("  next:"), "{t}");
         assert!(t.contains("depends on:   #5 (confirmed, open)"), "{t}");
+        assert!(t.contains("depends on:   #4 (confirmed, landed)"), "{t}");
         assert!(t.contains("overlaps:     #3 (1)"), "{t}");
     }
 
