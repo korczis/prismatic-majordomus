@@ -1522,6 +1522,7 @@ proptest! {
 
     #[test]
     fn ties_are_broken_by_created_then_number(w in arb_world()) {
+        // (the components before age now include declared dependents and the change's size)
         let q = w.queue();
         let contenders: BTreeSet<u64> = q
             .assessments
@@ -1532,9 +1533,27 @@ proptest! {
             ))
             .map(|a| a.number)
             .collect();
+        // every component before age, read independently of the planner: the factors the
+        // planner recorded must agree with what is recomputed here
+        let mut dependents: BTreeMap<u64, usize> = BTreeMap::new();
+        for a in &q.assessments {
+            for d in &a.dependencies {
+                if d.certainty == crate::integration::DependencyCertainty::Confirmed && !d.satisfied {
+                    *dependents.entry(d.number).or_default() += 1;
+                }
+            }
+        }
         let before_age = |a: &PullRequestAssessment| {
             let contention = a.overlaps.iter().filter(|o| contenders.contains(&o.number)).count();
-            (a.lane as u8, a.disposition as u8, a.risk as u8, contention)
+            let waiting_on_it = dependents.get(&a.number).copied().unwrap_or(0);
+            (
+                a.lane as u8,
+                a.disposition as u8,
+                a.risk as u8,
+                contention,
+                std::cmp::Reverse(waiting_on_it),
+                a.authored_paths.len(),
+            )
         };
         for pair in q.assessments.windows(2) {
             let (a, b) = (&pair[0], &pair[1]);
@@ -5312,4 +5331,88 @@ fn a_read_of_the_queue_writes_nothing() {
         "the recording path keeps nothing"
     );
     let _ = std::fs::remove_dir_all(&dir);
+}
+
+// ---------------------------------------------------------------- a rank names its factors (WP15)
+
+#[test]
+fn a_pull_request_others_wait_for_ranks_first() {
+    // #1 and #2 are equal in everything but #3, which declares it waits for #2
+    let mut dependent = sim(3);
+    dependent.depends_on = Some(2);
+    let w = World {
+        open: vec![sim(1), sim(2), dependent],
+        ..Default::default()
+    };
+    let q = w.queue();
+    assert_eq!(
+        q.next_merge,
+        Some(2),
+        "{:?}",
+        q.assessments.iter().map(|a| a.number).collect::<Vec<_>>()
+    );
+    let f = q.get(2).unwrap().rank_factors.as_ref().unwrap();
+    assert_eq!(f.dependents, 1);
+    assert_eq!(
+        q.get(1).unwrap().rank_factors.as_ref().unwrap().dependents,
+        0
+    );
+}
+
+#[test]
+fn a_smaller_change_ranks_before_a_larger_one_of_the_same_age() {
+    let mut big = sim(1);
+    big.paths = vec!["a.rs".into(), "b.rs".into(), "c.rs".into()];
+    big.created = "2026-09-01T00:00:00Z".into();
+    let mut small = sim(2);
+    small.paths = vec!["d.rs".into()];
+    small.created = "2026-09-01T00:00:00Z".into();
+    let w = World {
+        open: vec![big, small],
+        ..Default::default()
+    };
+    let q = w.queue();
+    assert_eq!(q.next_merge, Some(2));
+    assert_eq!(
+        q.get(1)
+            .unwrap()
+            .rank_factors
+            .as_ref()
+            .unwrap()
+            .authored_paths,
+        3
+    );
+}
+
+#[test]
+fn every_ranked_assessment_carries_the_factors_it_was_ranked_by() {
+    let w = World {
+        open: vec![sim(1), sim(2), sim(3)],
+        ..Default::default()
+    };
+    let q = w.queue();
+    let factors: Vec<&crate::integration::RankFactors> = q
+        .assessments
+        .iter()
+        .map(|a| a.rank_factors.as_ref().expect("ranked"))
+        .collect();
+    // the factors are what ordered them: each pair is in the order its factors say
+    for pair in factors.windows(2) {
+        let (a, b) = (pair[0], pair[1]);
+        assert!(
+            (
+                a.lane as u8,
+                a.disposition as u8,
+                a.risk as u8,
+                a.contention
+            ) <= (
+                b.lane as u8,
+                b.disposition as u8,
+                b.risk as u8,
+                b.contention
+            ),
+            "{a:?} before {b:?}"
+        );
+    }
+    assert_eq!(factors[0].number, q.assessments[0].number);
 }

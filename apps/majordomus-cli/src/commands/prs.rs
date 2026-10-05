@@ -804,6 +804,22 @@ fn explain(
         out,
         format!("  rank:         {rank} of {}", q.assessments.len()),
     )?;
+    if let Some(f) = &a.rank_factors {
+        // the components the order compares, in its order: the first that differs decides
+        w(
+            out,
+            format!(
+                "  rank factors: lane {}, {}, risk {}, contention {}, dependents {}, paths {}, opened {}",
+                integration::classify::word(&f.lane),
+                f.disposition.as_str(),
+                integration::classify::word(&f.risk),
+                f.contention,
+                f.dependents,
+                f.authored_paths,
+                f.created_at
+            ),
+        )?;
+    }
     if let Some(wait) = &a.wait {
         w(out, format!("  waiting:      {}", waited(wait)))?;
     }

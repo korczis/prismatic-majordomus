@@ -1052,6 +1052,37 @@ pub struct PullRequestAssessment {
     /// ready or refreshable.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub wait: Option<ExecutorWait>,
+    /// Why it stands where it does in the rank: every component the order compares, in the
+    /// order it compares them. Set by the planner; absent on an assessment never ranked.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rank_factors: Option<RankFactors>,
+}
+
+/// What the rank compares, in order: the first component that differs between two pull
+/// requests decides which comes first. Each is a value of the assessment or of the queue
+/// around it, so the order can be explained and is the same whatever order the forge listed
+/// the pull requests in.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct RankFactors {
+    /// The lane: what kind of work the executor does with it.
+    pub lane: IntegrationLane,
+    /// The disposition, within the lane.
+    pub disposition: PullRequestDisposition,
+    /// The planning risk: lower first.
+    pub risk: IntegrationRisk,
+    /// How many other ready or refreshable pull requests change an authored path it changes:
+    /// fewer first, because landing it invalidates less.
+    pub contention: usize,
+    /// How many open pull requests declare that they wait for this one and are not yet
+    /// satisfied: more first, because landing it unblocks them.
+    pub dependents: usize,
+    /// How many authored paths it changes: fewer first, a smaller change is cheaper to land
+    /// and to undo.
+    pub authored_paths: usize,
+    /// When it was opened: older first, so easy new work cannot starve old work.
+    pub created_at: String,
+    /// The number: the last tie-break, total.
+    pub number: u64,
 }
 
 /// How long a pull request has waited for the executor, from the audit trail. Starvation is
