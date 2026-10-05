@@ -1126,6 +1126,8 @@ pub fn classify(
         lane: disposition.lane(),
         // `superseded` and its `by` together, never one without the other
         superseded_by: landed.filter(|_| disposition == PullRequestDisposition::Superseded),
+        issue: None,
+        milestone: None,
         disposition,
         reasons,
         gates,

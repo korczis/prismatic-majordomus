@@ -74,6 +74,16 @@ fn trunc(s: &str, n: usize) -> String {
     }
 }
 
+/// The issue and milestone an assessment is part of, as one phrase; `None` when its branch
+/// names no issue.
+fn issue_line(a: &integration::PullRequestAssessment) -> Option<String> {
+    let issue = a.issue.as_ref()?;
+    Some(match &a.milestone {
+        Some(m) => format!("{issue} · milestone {m}"),
+        None => issue.clone(),
+    })
+}
+
 fn render_proof(p: &integration::proof::DryRunProof, out: &mut impl Write) -> Result<()> {
     for s in &p.steps {
         w(out, format!("{:<16} {}", s.step, s.summary))?;
@@ -742,6 +752,9 @@ fn explain(
     if let Some(n) = &a.next_action {
         w(out, format!("  next:         {n}"))?;
     }
+    if let Some(line) = issue_line(a) {
+        w(out, format!("  issue:        {line}"))?;
+    }
     w(
         out,
         format!(
@@ -1124,5 +1137,65 @@ mod tests {
             "{}",
             ago(&at(3 * 86_400))
         );
+    }
+}
+
+#[cfg(test)]
+mod issue_line_tests {
+    use super::*;
+
+    #[test]
+    fn the_issue_line_names_the_milestone_when_there_is_one() {
+        let q = crate::integration::issue_test_queue(&["feature/I0810-x"]);
+        let mut a = q.assessments[0].clone();
+        assert_eq!(issue_line(&a), None);
+        a.issue = Some("I0810".into());
+        assert_eq!(issue_line(&a).as_deref(), Some("I0810"));
+        a.milestone = Some("M003".into());
+        assert_eq!(issue_line(&a).as_deref(), Some("I0810 · milestone M003"));
+    }
+
+    #[test]
+    fn explain_says_the_issue_and_milestone() {
+        let mut q = crate::integration::issue_test_queue(&["feature/I0810-x"]);
+        q.assessments[0].issue = Some("I0810".into());
+        q.assessments[0].milestone = Some("M003".into());
+        let a = q.assessments[0].clone();
+        let mut out = Vec::new();
+        explain(&q, &a, 1, OutputFormat::Text, &mut out).unwrap();
+        let text = String::from_utf8(out).unwrap();
+        assert!(
+            text.contains("issue:        I0810 · milestone M003"),
+            "{text}"
+        );
+    }
+}
+
+#[cfg(test)]
+mod issue_write_tests {
+    use super::*;
+
+    /// A writer that refuses the write carrying `needle`.
+    struct RefuseOn(&'static str);
+
+    impl Write for RefuseOn {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            if String::from_utf8_lossy(buf).contains(self.0) {
+                Err(std::io::Error::other("refused"))
+            } else {
+                Ok(buf.len())
+            }
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn a_refused_issue_line_is_an_error() {
+        let mut q = crate::integration::issue_test_queue(&["feature/I0810-x"]);
+        q.assessments[0].issue = Some("I0810".into());
+        let a = q.assessments[0].clone();
+        assert!(explain(&q, &a, 1, OutputFormat::Text, &mut RefuseOn("issue:")).is_err());
     }
 }

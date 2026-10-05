@@ -1017,6 +1017,15 @@ pub struct PullRequestAssessment {
     /// `supersession` evidence and the reasons instead.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub superseded_by: Option<u64>,
+    /// The issue of `.ai/repo/project/issues/` its head branch names — a path component equal
+    /// to the id, or the id followed by `-`, the form `majordomus worktree create --issue`
+    /// gives — when it names one. Derived, never declared here: the issue record and the
+    /// branch name are the two sources, and nothing else.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub issue: Option<String>,
+    /// The milestone that issue's record declares, when it declares one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub milestone: Option<String>,
     /// The queue it is in.
     pub lane: IntegrationLane,
     /// Machine-readable reasons, one for every failing gate's every finding, in policy order:

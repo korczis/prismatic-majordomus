@@ -18786,6 +18786,16 @@ capabilities:
                 format: uint64
                 minimum: 0
                 description: "The successor that landed and replaces it, exactly when the disposition is\n`superseded`: the disposition stays one word on the wire, and this is its `by`.\nAbsent otherwise; a successor still open, or closed without landing, is in the\n`supersession` evidence and the reasons instead."
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: "The issue of `.ai/repo/project/issues/` its head branch names — a path component equal\nto the id, or the id followed by `-`, the form `majordomus worktree create --issue`\ngives — when it names one. Derived, never declared here: the issue record and the\nbranch name are the two sources, and nothing else."
+              milestone:
+                type:
+                  - string
+                  - "null"
+                description: "The milestone that issue's record declares, when it declares one."
               lane:
                 "$ref": "#/$defs/IntegrationLane"
                 description: The queue it is in.
@@ -19873,6 +19883,16 @@ capabilities:
                 format: uint64
                 minimum: 0
                 description: "The successor that landed and replaces it, exactly when the disposition is\n`superseded`: the disposition stays one word on the wire, and this is its `by`.\nAbsent otherwise; a successor still open, or closed without landing, is in the\n`supersession` evidence and the reasons instead."
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: "The issue of `.ai/repo/project/issues/` its head branch names — a path component equal\nto the id, or the id followed by `-`, the form `majordomus worktree create --issue`\ngives — when it names one. Derived, never declared here: the issue record and the\nbranch name are the two sources, and nothing else."
+              milestone:
+                type:
+                  - string
+                  - "null"
+                description: "The milestone that issue's record declares, when it declares one."
               lane:
                 "$ref": "#/$defs/IntegrationLane"
                 description: The queue it is in.

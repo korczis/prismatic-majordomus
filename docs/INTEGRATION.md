@@ -214,6 +214,19 @@ A pull request that targets another branch is stacked on the open pull request w
 that branch. Only branches of this repository count. A fork's branch says nothing about a
 branch here, whatever it is called, so a fork whose branch is named `master` stacks nothing.
 
+### Issue and milestone
+
+Each assessment names the issue its head branch names, when it names one, and that issue's
+milestone: `issue` and `milestone`, absent otherwise. The branch is the link, in the form
+`majordomus worktree create --issue <id>` gives it (`feature/<id>-<slug>`): a path component
+equal to an issue id of `.ai/repo/project/issues/`, or the id followed by `-`, and nothing
+else counts — a branch `feature/I10030` does not name `I1003`. The milestone is the one the
+issue's record declares. Both are derived on every read of the queue from the recorded
+observation and this checkout's project model, never stored beside them; neither decides a
+disposition or a rank. `prs explain` prints them (`issue:        I0810 · milestone M003`),
+the Cockpit shows them beside the title, and `prs status --format json`, the HTTP API and MCP
+carry them on each assessment.
+
 ## The rank
 
 The queue is ordered by lane, disposition, risk (low, medium, high, from the paths touched),

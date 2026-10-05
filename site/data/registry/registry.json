@@ -6,7 +6,7 @@
     "version": "0.13.0"
   },
   "registry": {
-    "fingerprint": "9b5974f6044c0913a9d2a9d355f4cb5e3166f0b9dbd2446c281d866cf7bfe2e4",
+    "fingerprint": "e11c147dee6c9d34c63649a48a6613c2ba1788a0525773f0454beeb0480095f2",
     "summary": {
       "total": 1884,
       "builtin": 171,
@@ -26042,6 +26042,20 @@
                     "minimum": 0,
                     "description": "The successor that landed and replaces it, exactly when the disposition is\n`superseded`: the disposition stays one word on the wire, and this is its `by`.\nAbsent otherwise; a successor still open, or closed without landing, is in the\n`supersession` evidence and the reasons instead."
                   },
+                  "issue": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The issue of `.ai/repo/project/issues/` its head branch names — a path component equal\nto the id, or the id followed by `-`, the form `majordomus worktree create --issue`\ngives — when it names one. Derived, never declared here: the issue record and the\nbranch name are the two sources, and nothing else."
+                  },
+                  "milestone": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The milestone that issue's record declares, when it declares one."
+                  },
                   "lane": {
                     "$ref": "#/$defs/IntegrationLane",
                     "description": "The queue it is in."
@@ -27642,6 +27656,20 @@
                     "format": "uint64",
                     "minimum": 0,
                     "description": "The successor that landed and replaces it, exactly when the disposition is\n`superseded`: the disposition stays one word on the wire, and this is its `by`.\nAbsent otherwise; a successor still open, or closed without landing, is in the\n`supersession` evidence and the reasons instead."
+                  },
+                  "issue": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The issue of `.ai/repo/project/issues/` its head branch names — a path component equal\nto the id, or the id followed by `-`, the form `majordomus worktree create --issue`\ngives — when it names one. Derived, never declared here: the issue record and the\nbranch name are the two sources, and nothing else."
+                  },
+                  "milestone": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The milestone that issue's record declares, when it declares one."
                   },
                   "lane": {
                     "$ref": "#/$defs/IntegrationLane",
@@ -67745,7 +67773,7 @@
     ]
   },
   "index": {
-    "fingerprint": "ea1c8af9d8b06426e3ef9212089d476418e4958af3c20deb5fd6e61c5ae42628",
+    "fingerprint": "e71d6a6b541d3404786210fce404a1bb93d3ff370894210acb261b3f154bbf45",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -72917,7 +72945,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 30738
+        "bytes": 31618
       },
       {
         "uri": "majordomus://document/docs/KNOWLEDGE.md",

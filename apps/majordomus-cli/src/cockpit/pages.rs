@@ -5054,6 +5054,15 @@ fn disposition_status(d: crate::integration::PullRequestDisposition) -> &'static
     }
 }
 
+/// The title, with the issue and milestone the branch names when it names one.
+fn titled(a: &crate::integration::PullRequestAssessment) -> String {
+    match (&a.issue, &a.milestone) {
+        (Some(i), Some(m)) => format!("{} · {i} ({m})", a.title),
+        (Some(i), None) => format!("{} · {i}", a.title),
+        _ => a.title.clone(),
+    }
+}
+
 /// The disposition as a badge says it: `superseded` names its successor.
 fn disposition_label(a: &crate::integration::PullRequestAssessment) -> String {
     match a.superseded_by {
@@ -5325,7 +5334,7 @@ pub fn integration(ctx: &Context) -> Page {
                     text_cell(crate::integration::reason_list(&a.reasons, ", ")),
                     text_cell(a.next_action.clone().unwrap_or_default()),
                     text_cell(waited.unwrap_or_default()),
-                    text_cell(a.title.clone()),
+                    text_cell(titled(a)),
                 ])
             })
             .collect();
@@ -7604,5 +7613,21 @@ mod tests {
             !html.contains("Workers"),
             "a failure rendered a board: {html}"
         );
+    }
+}
+
+#[cfg(test)]
+mod titled_tests {
+    use super::*;
+
+    #[test]
+    fn the_title_carries_the_issue_and_milestone_the_branch_names() {
+        let q = crate::integration::issue_test_queue(&["feature/I0810-x"]);
+        let mut a = q.assessments[0].clone();
+        assert_eq!(titled(&a), "change 1");
+        a.issue = Some("I0810".into());
+        assert_eq!(titled(&a), "change 1 · I0810");
+        a.milestone = Some("M003".into());
+        assert_eq!(titled(&a), "change 1 · I0810 (M003)");
     }
 }
