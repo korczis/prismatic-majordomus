@@ -7,6 +7,49 @@ Every entry below is derived: a section per release the layer records, its decis
 
 Current version: **0.13.1**
 
+## v0.13.1 — 2026-10-04
+
+### Fixed
+
+- **site**: the domain page's prose reads its headings as headings (`8294cc6d3`)
+- **rules**: a unit-test module in its own file is proof the crate gate runs (`185a30977`)
+- **release**: the installer reads /proc where the system has no ps (`4122d3192`)
+- **install**: an upgrade keeps a superseded tree a running process uses (`fa305ca91`)
+- **live**: a write this process made is a move, on every path that can make one (`7dfba01a8`)
+- **pages**: a rebuild is chosen only for the trunk's own tree (`901a146c2`)
+- **test**: CI fails on a skip, and a skip is excused only where another job holds it (`f04717040`)
+- **reap**: a server that holds its checkout's lease is not abandoned (`849d314b0`)
+- **site**: a prose heading reads as a heading, not as a link (`d5ba8abeb`)
+
+### Documentation
+
+- **how-it-works**: every claim the independent audit refuted or overstated is corrected (`456e42fe6`)
+- **how-it-works**: the architecture as the code ships it, mapped and audited (`3facc7974`)
+
+### Tests
+
+- **batch-n2**: cover the batch's changed lines, refreshed against master (`d33d51e1c`)
+- **rules**: a unit-test module in its own file is run by the crate gate (`104593bdf`)
+- **site**: a prose heading reads as a heading, held by case 820 (`46e26b295`)
+
+### Housekeeping
+
+- **ci**: the suite's total budget follows its measured cost under load (`99d7196d6`)
+- **ci**: the slowest case's budget follows its measured cost under load (`8bf38314f`)
+- **ci**: the coverage job's bound leaves room for contended runners (`dc8c42ecc`)
+- **plan**: close what master already holds, retire the manifest nobody can sync (`02706daea`)
+- **release**: record v0.13.0 and the metadata it publishes (`a14e24542`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.13.1-aarch64-apple-darwin.tar.gz (`d74c537a9aeb`)
+- `macos-x86_64` — majordomus-v0.13.1-x86_64-apple-darwin.tar.gz (`cbb7e7988cbd`)
+- `linux-x86_64-gnu` — majordomus-v0.13.1-x86_64-unknown-linux-gnu.tar.gz (`37adf8949714`)
+- `linux-x86_64-musl` — majordomus-v0.13.1-x86_64-unknown-linux-musl.tar.gz (`1ff8628b3944`)
+- `linux-aarch64-gnu` — majordomus-v0.13.1-aarch64-unknown-linux-gnu.tar.gz (`cba95ca7d885`)
+- `linux-aarch64-musl` — majordomus-v0.13.1-aarch64-unknown-linux-musl.tar.gz (`0815c41b152a`)
+
+
 ## v0.13.0 — 2026-10-04
 
 ### Decisions
