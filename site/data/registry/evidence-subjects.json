@@ -20141,7 +20141,17 @@
           "category": "integration",
           "inputs": [
             "apps/majordomus-cli/tests/intent_realization.rs",
-            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v1.md"
+            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:367_an_intent_is_satisfied_only_by_evidence",
+          "path": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
+            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v2.md"
           ]
         },
         {
@@ -20151,7 +20161,17 @@
           "category": "e2e",
           "inputs": [
             "test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh",
-            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v1.md"
+            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:895_a_finished_task_does_not_satisfy_an_intent",
+          "path": "test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh",
+            ".ai/repo/rules/project/an-intent-outlives-its-sessions.v2.md"
           ]
         }
       ],
@@ -20316,12 +20336,22 @@
       "routes": [
         {
           "via": "rule",
+          "test": "crate:intent",
+          "path": "apps/majordomus-cli/tests/intent.rs",
+          "category": "integration",
+          "inputs": [
+            "apps/majordomus-cli/tests/intent.rs",
+            ".ai/repo/rules/project/completion-never-decides-satisfaction.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
           "test": "suite:895_a_finished_task_does_not_satisfy_an_intent",
           "path": "test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh",
           "category": "e2e",
           "inputs": [
             "test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh",
-            ".ai/repo/rules/project/completion-never-decides-satisfaction.v1.md"
+            ".ai/repo/rules/project/completion-never-decides-satisfaction.v2.md"
           ]
         }
       ],
