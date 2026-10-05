@@ -301,13 +301,16 @@ landed. Older trail lines still read: a `closed_superseded` line written before 
 
 Branches are never deleted here: the forge's `delete_branch_on_merge` decides that (owner
 decision D4), so the executor holds no write that removes a branch. What the forge left
-behind is reported instead. `prs refresh` reads the setting, origin's branches
-(`git ls-remote --heads`) and the newest 1000 merged pull requests, and keeps every branch of
-this repository that origin still serves at the exact head that merged. A branch whose tip
-moved after its merge carries newer work and is never listed; neither is a fork's branch,
-whatever it is called, or the base. The queue carries the list as `merged_branches` (with
-`delete_branch_on_merge`), so `prs status --format json`, the HTTP API and the Cockpit read
-the same answer, and `prs cleanup` prints it after the pull requests:
+behind is reported instead, by `prs cleanup` alone: it reads origin's branches
+(`git ls-remote --heads`) and the newest 1000 merged pull requests on demand, and keeps every
+branch of this repository that origin still serves at the exact head that merged. `prs
+refresh` never asks — the executor runs it before every decision, and a report-only fact
+that decides no merge stays off that path; it reads only the setting, from the repository
+settings it already asks for. A branch whose tip moved after its merge carries newer work and
+is never listed; neither is a fork's branch, whatever it is called, or the base. Cleanup
+prints the list after the pull requests and records it as `left-branches.json` beside the
+observation, with when it was read, so the surfaces that never reach the network render the
+last report with its age:
 
 ```text
 merged branches left on origin (2); the forge decides deletion, so none is deleted here:
@@ -318,9 +321,8 @@ merged branches left on origin (2); the forge decides deletion, so none is delet
 
 A branch checked out in a worktree of this repository is listed as `kept`, with its path:
 somebody may still be standing on it. A read that fails leaves the list unread
-(`merged branches: unread`), never empty, and the observation stands, since what the forge
-left behind decides no merge. `prs cleanup --format json` stays the list of pull requests to
-close.
+(`merged branches: unread`), recorded as unread and never as empty. `prs cleanup --format
+json` stays the list of pull requests to close.
 
 ## Safety
 

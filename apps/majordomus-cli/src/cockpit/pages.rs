@@ -7346,7 +7346,6 @@ mod tests {
                 ],
                 resolved: Default::default(),
                 delete_branch_on_merge: None,
-                merged_branches: None,
             },
         )
         .expect("an observation");

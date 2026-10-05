@@ -275,14 +275,6 @@ pub struct IntegrationQueue {
     /// promoted: see [`wait`].
     #[serde(default)]
     pub starving: Vec<u64>,
-    /// Whether the forge deletes a head branch when its pull request merges; `None` when
-    /// unread. The forge decides deletion, never the executor (owner decision D4).
-    #[serde(default)]
-    pub delete_branch_on_merge: Option<bool>,
-    /// The branches merged pull requests left on origin at the head that merged, for cleanup
-    /// to report; `None` when unread. They decide no disposition and no merge.
-    #[serde(default)]
-    pub merged_branches: Option<Vec<forge::MergedBranch>>,
 }
 
 impl IntegrationQueue {
@@ -464,8 +456,6 @@ pub fn build_queue(
         tallies: QueueTallies::default(),
         diagnostics,
         starving: Vec::new(),
-        delete_branch_on_merge: obs.delete_branch_on_merge,
-        merged_branches: obs.merged_branches.clone(),
     };
     derive_heads(&mut queue);
     queue

@@ -2193,19 +2193,40 @@ pub struct LeftBranch {
     pub next_step: String,
 }
 
+/// The last report of the branches merged pull requests left on origin, as `prs cleanup`
+/// read it. Written by `prs cleanup` alone — the one place that asks the forge for them —
+/// and rendered offline, with its age, by every surface that cannot reach the network.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct LeftBranchReport {
+    /// When cleanup read origin and the merged pull requests.
+    pub read_at: String,
+    /// The base the report excludes.
+    pub base: String,
+    /// The forge's `delete_branch_on_merge`, from the observation; `None` when unread.
+    pub delete_branch_on_merge: Option<bool>,
+    /// The branches, or `None` when origin or the merged pull requests could not be read:
+    /// unread is not "nothing left behind".
+    pub branches: Option<Vec<LeftBranch>>,
+    /// The command that reads it afresh.
+    pub refreshed_by: String,
+}
+
+/// Where [`LeftBranchReport`] is kept, beside the observation.
+pub const LEFT_BRANCHES_FILE: &str = "left-branches.json";
+
 /// The branches merged pull requests left behind, each with what would clear it.
 ///
-/// Only the queue's [`IntegrationQueue::merged_branches`] are candidates — same-repository
-/// heads origin still serves at the exact head that merged, never the base — so a branch
-/// whose tip moved after its merge is never listed. One checked out in a worktree is listed
-/// as kept, with the path. `None` when the observation could not read them: unread is not
-/// "nothing left behind".
+/// `merged` are same-repository heads origin serves at the exact head that merged
+/// ([`super::forge::merged_branches_of`]), so a branch whose tip moved after its merge is
+/// never among them; the base is excluded here too. One checked out in a worktree is listed
+/// as kept, with the path. `None` when they could not be read.
 pub fn left_branches(
-    queue: &IntegrationQueue,
+    merged: Option<&[super::forge::MergedBranch]>,
+    base: &str,
+    delete_branch_on_merge: Option<bool>,
     checked_out: &BTreeMap<String, PathBuf>,
 ) -> Option<Vec<LeftBranch>> {
-    let merged = queue.merged_branches.as_ref()?;
-    let next_step = |branch: &str| match queue.delete_branch_on_merge {
+    let next_step = |branch: &str| match delete_branch_on_merge {
         Some(true) => format!(
             "the forge deletes merged branches, and this one outlived its merge (merged before \
              the setting, or restored): git push origin --delete {branch}"
@@ -2220,9 +2241,9 @@ pub fn left_branches(
         ),
     };
     Some(
-        merged
+        merged?
             .iter()
-            .filter(|m| m.branch != queue.base)
+            .filter(|m| m.branch != base)
             .map(|m| LeftBranch {
                 branch: m.branch.clone(),
                 tip: m.tip.clone(),
@@ -2238,16 +2259,37 @@ pub fn left_branches(
     )
 }
 
-/// [`left_branches`] against the worktrees this repository has registered. A worktree list
-/// git cannot give marks nothing as kept; the report is advice a person acts on, and nothing
-/// here deletes a branch either way.
-pub fn left_branches_here(root: &Path, queue: &IntegrationQueue) -> Option<Vec<LeftBranch>> {
+/// Read origin and the merged pull requests now ([`super::forge::merged_branches`]), against
+/// the recorded observation's base and setting and the worktrees this repository has
+/// registered, and record the report beside the observation. `None` when nothing was ever
+/// observed here. Network and a write: only `prs cleanup` calls it, after observing. A
+/// worktree list git cannot give marks nothing as kept; nothing here deletes a branch.
+pub fn report_left_branches(root: &Path) -> Result<Option<LeftBranchReport>, String> {
+    let Some(obs) = super::load_observation(root)? else {
+        return Ok(None);
+    };
     let checked_out: BTreeMap<String, PathBuf> = crate::worktree::topology::read(root)
         .unwrap_or_default()
         .into_iter()
         .filter_map(|w| w.branch.map(|b| (b, w.path)))
         .collect();
-    left_branches(queue, &checked_out)
+    let merged = super::forge::merged_branches(root, &obs.base);
+    let report = LeftBranchReport {
+        read_at: crate::peers::rfc3339(SystemTime::now()),
+        base: obs.base.clone(),
+        delete_branch_on_merge: obs.delete_branch_on_merge,
+        branches: left_branches(
+            merged.as_deref(),
+            &obs.base,
+            obs.delete_branch_on_merge,
+            &checked_out,
+        ),
+        refreshed_by: "majordomus prs cleanup".into(),
+    };
+    // a record of strings, numbers and options: serializing it cannot fail
+    let text = serde_json::to_string_pretty(&report).expect("a branch report serializes");
+    super::write_atomic(&super::state_path(root, LEFT_BRANCHES_FILE), &(text + "\n"))?;
+    Ok(Some(report))
 }
 
 #[cfg(test)]
@@ -2257,25 +2299,6 @@ mod left_branch_tests {
 
     use super::*;
     use crate::integration::forge::MergedBranch;
-
-    fn queue(delete: Option<bool>, merged: Option<Vec<MergedBranch>>) -> IntegrationQueue {
-        let obs = crate::integration::ForgeObservation {
-            schema: crate::integration::OBSERVATION_SCHEMA,
-            repository: "o/r".into(),
-            base: "master".into(),
-            base_sha: "m".into(),
-            observed_at: "t".into(),
-            required_checks: None,
-            review_policy: None,
-            up_to_date_required: None,
-            merge_methods: vec!["merge".into()],
-            pull_requests: Vec::new(),
-            resolved: Default::default(),
-            delete_branch_on_merge: delete,
-            merged_branches: merged,
-        };
-        crate::integration::build_queue(&obs, "m", |_| unreachable!("no pull request is open"))
-    }
 
     fn branch(name: &str, pr: u64) -> MergedBranch {
         MergedBranch {
@@ -2289,11 +2312,11 @@ mod left_branch_tests {
     #[test]
     fn unread_is_not_nothing_left() {
         assert_eq!(
-            left_branches(&queue(Some(false), None), &BTreeMap::new()),
+            left_branches(None, "master", Some(false), &BTreeMap::new()),
             None
         );
         assert_eq!(
-            left_branches(&queue(Some(false), Some(Vec::new())), &BTreeMap::new()),
+            left_branches(Some(&[]), "master", Some(false), &BTreeMap::new()),
             Some(Vec::new())
         );
     }
@@ -2311,7 +2334,7 @@ mod left_branch_tests {
             (Some(false), "enable delete_branch_on_merge"),
             (None, "was not read"),
         ] {
-            let left = left_branches(&queue(setting, Some(merged.clone())), &here).unwrap();
+            let left = left_branches(Some(&merged), "master", setting, &here).unwrap();
             let got: Vec<(&str, &str)> = left
                 .iter()
                 .map(|b| (b.branch.as_str(), b.action.as_str()))
@@ -2330,10 +2353,82 @@ mod left_branch_tests {
     }
 
     #[test]
-    fn the_worktrees_of_this_repository_decide_what_is_kept() {
+    fn a_report_reads_the_observation_and_the_worktrees_and_is_recorded() {
+        let git = |dir: &Path, args: &[&str]| {
+            let out = Command::new("git")
+                .env_remove("GIT_DIR")
+                .env_remove("GIT_WORK_TREE")
+                .env_remove("GIT_INDEX_FILE")
+                .arg("-C")
+                .arg(dir)
+                .args(["-c", "user.email=t@example.com", "-c", "user.name=t"])
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}: {out:?}");
+        };
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path().join("work");
+        git(tmp.path(), &["init", "-q", "-b", "master", "work"]);
+        git(&root, &["commit", "-q", "--allow-empty", "-m", "base"]);
+        let wt = tmp.path().join("here");
+        git(
+            &root,
+            &[
+                "worktree",
+                "add",
+                "-q",
+                "-b",
+                "fix/here",
+                wt.to_str().unwrap(),
+            ],
+        );
+        let obs = crate::integration::ForgeObservation {
+            schema: crate::integration::OBSERVATION_SCHEMA,
+            repository: "o/r".into(),
+            base: "master".into(),
+            base_sha: "m".into(),
+            observed_at: "t".into(),
+            required_checks: None,
+            review_policy: None,
+            up_to_date_required: None,
+            merge_methods: vec!["merge".into()],
+            pull_requests: Vec::new(),
+            resolved: Default::default(),
+            delete_branch_on_merge: Some(true),
+        };
+        let path = crate::integration::state_path(&root, crate::integration::OBSERVATION_FILE);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(&path, serde_json::to_string(&obs).unwrap()).unwrap();
+        // no origin: the branches are unread, and the report says so and is recorded
+        let report = report_left_branches(&root).unwrap().unwrap();
+        assert_eq!(report.branches, None);
+        assert_eq!(report.delete_branch_on_merge, Some(true));
+        let recorded =
+            std::fs::read_to_string(crate::integration::state_path(&root, LEFT_BRANCHES_FILE))
+                .unwrap();
+        assert!(
+            recorded.contains("\"refreshed_by\": \"majordomus prs cleanup\""),
+            "{recorded}"
+        );
+        // a record that cannot be written fails the report rather than passing unrecorded
+        let record = crate::integration::state_path(&root, LEFT_BRANCHES_FILE);
+        std::fs::remove_file(&record).unwrap();
+        std::fs::create_dir_all(record.join("in-the-way")).unwrap();
+        assert!(report_left_branches(&root).is_err());
+    }
+
+    #[test]
+    fn nothing_observed_is_no_report_and_an_unreadable_observation_is_an_error() {
         let dir = tempfile::tempdir().unwrap();
-        // not a repository: git lists no worktree, so nothing is kept and nothing fails
-        let left = left_branches_here(dir.path(), &queue(None, Some(vec![branch("fix/a", 1)])));
-        assert_eq!(left.unwrap()[0].action, "left_for_a_person");
+        assert_eq!(
+            report_left_branches(dir.path()),
+            Ok(None),
+            "nothing observed here"
+        );
+        let path = crate::integration::state_path(dir.path(), crate::integration::OBSERVATION_FILE);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(&path, "not an observation").unwrap();
+        assert!(report_left_branches(dir.path()).is_err());
     }
 }

@@ -213,7 +213,6 @@ impl World {
             pull_requests: self.open.iter().map(observe_pr).collect(),
             resolved: self.resolved(),
             delete_branch_on_merge: None,
-            merged_branches: None,
         }
     }
 
@@ -1758,7 +1757,6 @@ fn observed(dir: &std::path::Path, master: &str, prs: Vec<PullRequestObservation
         pull_requests: prs,
         resolved: Default::default(),
         delete_branch_on_merge: None,
-        merged_branches: None,
     };
     crate::integration::store_observation(dir, &obs).unwrap();
 }

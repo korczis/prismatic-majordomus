@@ -2,11 +2,13 @@
 //! D4): the forge's `delete_branch_on_merge` decides deletion, so `prs cleanup` reports the
 //! branches the forge left behind and deletes none of them.
 //!
-//! The forge is a `gh` on the child's PATH that answers from this test's files and logs every
-//! call; origin is a bare repository beside the clone, so `git ls-remote` is real. Three
-//! merged pull requests came from three branches: one still sits at the head that merged
-//! (left behind), one moved after its merge (newer work, never reported), and one is checked
-//! out in a worktree of the clone (reported as kept, with its path).
+//! The read is cleanup's alone: `prs refresh`, which the executor runs before every decision,
+//! never lists merged pull requests. The forge is a `gh` on the child's PATH that answers from
+//! this test's files and logs every call; origin is a bare repository beside the clone, so
+//! `git ls-remote` is real. Three merged pull requests came from three branches: one still
+//! sits at the head that merged (left behind), one moved after its merge (newer work, never
+//! reported), and one is checked out in a worktree of the clone (reported as kept, with its
+//! path).
 
 mod common;
 
@@ -156,6 +158,19 @@ fn refreshed(f: &Forge) {
     assert_eq!(code, 0, "refresh: {out}{err}");
 }
 
+fn log(f: &Forge) -> String {
+    std::fs::read_to_string(f.state.join("log")).unwrap_or_default()
+}
+
+/// What cleanup recorded for the surfaces that never reach the network.
+fn record(f: &Forge) -> Value {
+    let path = f
+        .work
+        .join(".ai/local/state/integration/left-branches.json");
+    serde_json::from_str(&std::fs::read_to_string(path).expect("cleanup recorded its report"))
+        .unwrap()
+}
+
 #[test]
 fn cleanup_reports_the_branches_the_forge_left_and_deletes_none() {
     let f = forge(false);
@@ -193,19 +208,11 @@ fn cleanup_reports_the_branches_the_forge_left_and_deletes_none() {
     );
 
     refreshed(&f);
-    let (_, status, err) = prs(&f, &["status", "--format", "json"]);
-    let q: Value = serde_json::from_str(&status).unwrap_or_else(|e| panic!("{e}: {status}{err}"));
-    assert_eq!(q["delete_branch_on_merge"], Value::Bool(false));
-    let names: Vec<&str> = q["merged_branches"]
-        .as_array()
-        .expect("read")
-        .iter()
-        .map(|m| m["branch"].as_str().unwrap())
-        .collect();
-    assert_eq!(
-        names,
-        ["fix/here", "fix/left"],
-        "fix/moved moved after its merge"
+    // refresh is the executor's hot path: it never asks what merged pull requests left
+    assert!(
+        !log(&f).contains("--state merged"),
+        "refresh listed merged pull requests:\n{}",
+        log(&f)
     );
 
     let (code, out, err) = prs(&f, &["cleanup"]);
@@ -229,6 +236,21 @@ fn cleanup_reports_the_branches_the_forge_left_and_deletes_none() {
     assert!(line("fix/moved").is_none(), "{out}");
     assert!(out.contains("enable delete_branch_on_merge"), "{out}");
 
+    let r = record(&f);
+    assert_eq!(r["delete_branch_on_merge"], Value::Bool(false));
+    assert_eq!(r["refreshed_by"], "majordomus prs cleanup");
+    let names: Vec<&str> = r["branches"]
+        .as_array()
+        .expect("read")
+        .iter()
+        .map(|m| m["branch"].as_str().unwrap())
+        .collect();
+    assert_eq!(
+        names,
+        ["fix/here", "fix/left"],
+        "fix/moved moved after its merge"
+    );
+
     // the JSON stays the list of pull requests to close: nothing is open here
     let (_, json, _) = prs(&f, &["cleanup", "--format", "json"]);
     assert_eq!(
@@ -242,7 +264,7 @@ fn cleanup_reports_the_branches_the_forge_left_and_deletes_none() {
         &["for-each-ref", "--format=%(refname) %(objectname)"],
     );
     assert_eq!(before, after, "cleanup moved a ref on origin");
-    let log = std::fs::read_to_string(f.state.join("log")).unwrap();
+    let log = log(&f);
     assert!(
         !log.contains("UNEXPECTED"),
         "the forge was asked something unscripted:\n{log}"
@@ -274,10 +296,10 @@ fn only_master_on_origin_is_nothing_left_and_asks_nothing_more() {
         out.contains("merged branches: none left on origin"),
         "{out}"
     );
-    let log = std::fs::read_to_string(f.state.join("log")).unwrap();
     assert!(
-        !log.contains("--state merged"),
-        "a branchless origin still listed merged pull requests:\n{log}"
+        !log(&f).contains("--state merged"),
+        "a branchless origin still listed merged pull requests:\n{}",
+        log(&f)
     );
 }
 
@@ -285,11 +307,13 @@ fn only_master_on_origin_is_nothing_left_and_asks_nothing_more() {
 fn a_refused_read_is_unread_never_nothing_left() {
     let f = forge(false);
     commit_on(&f, "fix/left", "left.txt");
-    // no merged.json: the forge refuses the merged list, and the observation still stands
+    // no merged.json: the forge refuses the merged list
     refreshed(&f);
-    let (_, status, _) = prs(&f, &["status", "--format", "json"]);
-    let q: Value = serde_json::from_str(&status).unwrap();
-    assert_eq!(q["merged_branches"], Value::Null);
     let (_, out, _) = prs(&f, &["cleanup"]);
     assert!(out.contains("merged branches: unread"), "{out}");
+    assert_eq!(
+        record(&f)["branches"],
+        Value::Null,
+        "unread is recorded as unread, never empty"
+    );
 }

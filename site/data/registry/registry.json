@@ -6,7 +6,7 @@
     "version": "0.13.0"
   },
   "registry": {
-    "fingerprint": "08084984ce79cf87b9109372bd632d4b7ddaa5f988364376ec1283005e11a2f3",
+    "fingerprint": "9231cffd4158a7b6fdaaa603704dd11c08a1cddd6ccae2db7e95114fbeee665b",
     "summary": {
       "total": 1884,
       "builtin": 171,
@@ -27445,25 +27445,6 @@
                     },
                     "description": "The actionable pull requests the executor has passed over at least\n`wait::STARVING_AFTER` times in their current wait, in rank order. Visible, never\npromoted: see `wait`.",
                     "default": []
-                  },
-                  "delete_branch_on_merge": {
-                    "type": [
-                      "boolean",
-                      "null"
-                    ],
-                    "description": "Whether the forge deletes a head branch when its pull request merges; `None` when\nunread. The forge decides deletion, never the executor (owner decision D4).",
-                    "default": null
-                  },
-                  "merged_branches": {
-                    "type": [
-                      "array",
-                      "null"
-                    ],
-                    "items": {
-                      "$ref": "#/$defs/MergedBranch"
-                    },
-                    "description": "The branches merged pull requests left on origin at the head that merged, for cleanup\nto report; `None` when unread. They decide no disposition and no merge.",
-                    "default": null
                   }
                 },
                 "required": [
@@ -28673,36 +28654,6 @@
                   "by_lane"
                 ],
                 "description": "How many pull requests are in each disposition and lane."
-              },
-              "MergedBranch": {
-                "type": "object",
-                "properties": {
-                  "branch": {
-                    "type": "string",
-                    "description": "The branch name on origin."
-                  },
-                  "tip": {
-                    "type": "string",
-                    "description": "Its tip, which is the merged head."
-                  },
-                  "pr": {
-                    "type": "integer",
-                    "format": "uint64",
-                    "minimum": 0,
-                    "description": "The pull request that merged it."
-                  },
-                  "merged_at": {
-                    "type": "string",
-                    "description": "When it merged, as the forge reported it."
-                  }
-                },
-                "required": [
-                  "branch",
-                  "tip",
-                  "pr",
-                  "merged_at"
-                ],
-                "description": "A branch of this repository that a merged pull request came from, still on origin at the\nhead that merged. A branch whose tip moved after its merge carries newer work and is not\none: only the exact merged head is left behind."
               },
               "IntegrationLeaseState": {
                 "type": "object",
@@ -67794,7 +67745,7 @@
     ]
   },
   "index": {
-    "fingerprint": "e5099f01844e5ce16522b4ea34aa22ebbcb94f8a4c9df3e44745c4aa4ae1aab7",
+    "fingerprint": "e326a66cb2b125b997d7f8ed89bd1a1cdfa67c9e15665bc16254f5c042c2733c",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -72966,7 +72917,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 31777
+        "bytes": 31950
       },
       {
         "uri": "majordomus://document/docs/KNOWLEDGE.md",

@@ -70,12 +70,6 @@ pub struct ForgeObservation {
     /// (owner decision D4); `None` when unread, and in an observation recorded before it was.
     #[serde(default)]
     pub delete_branch_on_merge: Option<bool>,
-    /// The branches of this repository that a merged pull request came from and that origin
-    /// still serves at the very head that merged: what the forge left behind. `None` when the
-    /// merged pull requests or origin's branches could not be read, and in an observation
-    /// recorded before they were: unread is not "nothing left behind".
-    #[serde(default)]
-    pub merged_branches: Option<Vec<MergedBranch>>,
 }
 
 /// A branch of this repository that a merged pull request came from, still on origin at the
@@ -755,7 +749,6 @@ impl Forge for GhForge<'_> {
         if let Some(e) = unreadable {
             return Err(e);
         }
-        let merged_branches = merged_branches(root, &base);
         Ok(ForgeObservation {
             schema: OBSERVATION_SCHEMA,
             repository,
@@ -769,37 +762,75 @@ impl Forge for GhForge<'_> {
             pull_requests,
             resolved,
             delete_branch_on_merge,
-            merged_branches,
         })
     }
 }
 
-/// The merged branches origin still serves ([`merged_branches_of`]), or `None` when origin's
-/// branches or the merged pull requests could not be read. Either read failing leaves the
-/// report unread and the observation standing: what the forge left behind decides no merge.
-fn merged_branches(root: &Path, base: &str) -> Option<Vec<MergedBranch>> {
-    let heads = super::retry::forge(|| {
-        let out = Command::new("git")
+/// The merged branches origin still serves ([`merged_branches_of`]), read now, or `None` when
+/// origin's branches or the merged pull requests could not be read: unread is not "nothing
+/// left behind". Asked only by `prs cleanup`, on demand — never by `prs refresh`, which the
+/// executor runs before every decision: what the forge left behind decides no merge, so its
+/// two reads stay off the hot path.
+pub fn merged_branches(root: &Path, base: &str) -> Option<Vec<MergedBranch>> {
+    let heads = origin_heads(root)?;
+    merged_branches_given(&heads, base, || merged_list(root))
+}
+
+/// [`merged_branches`] once origin's branches are known: an origin serving only the base has
+/// left nothing behind and the merged pull requests are never asked for; otherwise `list`
+/// answers them, and `None` from it is unread.
+///
+/// ```
+/// use majordomus_cli::integration::forge::{merged_branches_given, remote_heads_of};
+/// let only_base = remote_heads_of("cc\trefs/heads/master\n");
+/// assert_eq!(merged_branches_given(&only_base, "master", || unreachable!()), Some(vec![]));
+/// let heads = remote_heads_of("aa\trefs/heads/fix/a\ncc\trefs/heads/master\n");
+/// assert_eq!(merged_branches_given(&heads, "master", || None), None, "unread");
+/// ```
+pub fn merged_branches_given(
+    heads: &BTreeMap<String, String>,
+    base: &str,
+    list: impl FnOnce() -> Option<Value>,
+) -> Option<Vec<MergedBranch>> {
+    if heads.keys().all(|b| b == base) {
+        return Some(Vec::new());
+    }
+    Some(merged_branches_of(&list()?, heads, base))
+}
+
+/// Origin's branches, from `git ls-remote --heads origin`; `None` when git cannot answer.
+fn origin_heads(root: &Path) -> Option<BTreeMap<String, String>> {
+    super::retry::forge(|| {
+        Command::new("git")
             .arg("-C")
             .arg(root)
             .args(["ls-remote", "--heads", "origin"])
             .output()
-            .map_err(|e| format!("git ls-remote could not run: {e}"))?;
-        if out.status.success() {
-            Ok(remote_heads_of(&String::from_utf8_lossy(&out.stdout)))
-        } else {
-            Err(format!(
-                "git ls-remote failed: {}",
-                String::from_utf8_lossy(&out.stderr).trim()
-            ))
-        }
+            .map_err(ls_remote_could_not_run)
+            .and_then(heads_of_output)
     })
-    .ok()?;
-    // nothing but the base on origin: no merged pull request can have left a branch behind
-    if heads.keys().all(|b| b == base) {
-        return Some(Vec::new());
+    .ok()
+}
+
+fn ls_remote_could_not_run(e: std::io::Error) -> String {
+    format!("git ls-remote could not run: {e}")
+}
+
+/// The branches an `ls-remote --heads` answer names, or what it refused with.
+fn heads_of_output(out: std::process::Output) -> Result<BTreeMap<String, String>, String> {
+    if out.status.success() {
+        Ok(remote_heads_of(&String::from_utf8_lossy(&out.stdout)))
+    } else {
+        Err(format!(
+            "git ls-remote failed: {}",
+            String::from_utf8_lossy(&out.stderr).trim()
+        ))
     }
-    let (ok, out, _) = gh_retrying(
+}
+
+/// The merged pull requests, newest [`MERGED_LIMIT`], as the forge listed them.
+fn merged_list(root: &Path) -> Option<Value> {
+    gh_retrying(
         root,
         &[
             "pr",
@@ -812,9 +843,17 @@ fn merged_branches(root: &Path, base: &str) -> Option<Vec<MergedBranch>> {
             "number,state,headRefName,headRefOid,isCrossRepository,mergedAt",
         ],
     )
-    .ok()?;
-    let merged: Value = serde_json::from_str(&out).ok().filter(|_| ok)?;
-    Some(merged_branches_of(&merged, &heads, base))
+    .ok()
+    .and_then(listed)
+}
+
+/// A `gh` answer read as JSON, only when `gh` said it succeeded.
+fn listed((ok, out, _): (bool, String, String)) -> Option<Value> {
+    if ok {
+        serde_json::from_str(&out).ok()
+    } else {
+        None
+    }
 }
 
 /// Fetch the base and every observed head into this clone, the heads under
@@ -1123,7 +1162,7 @@ mod tests {
     #[test]
     fn only_a_same_repository_branch_at_its_merged_head_is_left_behind() {
         let heads = remote_heads_of(
-            "aa\trefs/heads/fix/a\nbb\trefs/heads/fix/b\ncc\trefs/heads/master\n\
+            "aa\trefs/heads/fix/a\nbb\trefs/heads/fix/b\ncc\trefs/heads/master\nff\trefs/tags/v1\n\
              dd\trefs/heads/fix/fork\nee\trefs/heads/fix/dup\nbad line\n\trefs/heads/x\n",
         );
         assert_eq!(heads.len(), 5, "{heads:?}");
@@ -1156,5 +1195,71 @@ mod tests {
         ]);
         assert_eq!(merged_branches_of(&reversed, &heads, "master")[0].pr, 10);
         assert!(merged_branches_of(&json!({}), &heads, "master").is_empty());
+    }
+
+    /// The read's two answers that need no forge: origin unreadable is unread, and an origin
+    /// serving only the base has left nothing behind, without asking for merged pull requests.
+    #[test]
+    fn origin_decides_before_the_forge_is_asked() {
+        let git = |dir: &Path, args: &[&str]| {
+            let out = Command::new("git")
+                .env_remove("GIT_DIR")
+                .env_remove("GIT_WORK_TREE")
+                .env_remove("GIT_INDEX_FILE")
+                .arg("-C")
+                .arg(dir)
+                .args(["-c", "user.email=t@example.com", "-c", "user.name=t"])
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}: {out:?}");
+        };
+        let tmp = tempfile::tempdir().unwrap();
+        let base = tmp.path();
+        git(base, &["init", "-q", "work"]);
+        let work = base.join("work");
+        assert_eq!(merged_branches(&work, "master"), None, "no origin: unread");
+        git(
+            base,
+            &["init", "-q", "--bare", "-b", "master", "origin.git"],
+        );
+        git(
+            &work,
+            &[
+                "remote",
+                "add",
+                "origin",
+                base.join("origin.git").to_str().unwrap(),
+            ],
+        );
+        git(&work, &["commit", "-q", "--allow-empty", "-m", "base"]);
+        git(&work, &["push", "-q", "origin", "HEAD:refs/heads/master"]);
+        assert_eq!(merged_branches(&work, "master"), Some(Vec::new()));
+        // a branch besides the base: the merged pull requests are asked for, and a forge that
+        // cannot list them here (no GitHub remote, or no gh at all) leaves the report unread
+        git(&work, &["push", "-q", "origin", "HEAD:refs/heads/fix/a"]);
+        let asked = merged_branches(&work, "master");
+        assert!(
+            asked.as_ref().is_none_or(|v| v.is_empty()),
+            "no merged pull request of this origin can name fix/a: {asked:?}"
+        );
+    }
+
+    #[test]
+    fn the_helpers_name_what_refused() {
+        assert!(ls_remote_could_not_run(std::io::Error::other("gone")).contains("could not run"));
+        assert_eq!(
+            listed((true, "[1]".into(), String::new())),
+            Some(json!([1]))
+        );
+        assert_eq!(listed((true, "not json".into(), String::new())), None);
+        assert_eq!(listed((false, "[1]".into(), "refused".into())), None);
+        let heads = remote_heads_of("aa\trefs/heads/fix/a\ncc\trefs/heads/master\n");
+        let merged = json!([{"number": 1, "state": "MERGED", "headRefName": "fix/a",
+            "headRefOid": "aa", "isCrossRepository": false, "mergedAt": "t"}]);
+        assert_eq!(
+            merged_branches_given(&heads, "master", || Some(merged)).map(|v| v.len()),
+            Some(1)
+        );
     }
 }
