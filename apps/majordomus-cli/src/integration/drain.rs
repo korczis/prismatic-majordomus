@@ -2091,25 +2091,57 @@ pub fn cleanup(
     let queue = integrator.observe()?;
     let mut items = Vec::new();
     for a in &queue.assessments {
-        let action = match a.disposition {
-            PullRequestDisposition::Redundant | PullRequestDisposition::Superseded if apply => {
-                close_superseded(root, integrator, a)?
-            }
-            PullRequestDisposition::Redundant | PullRequestDisposition::Superseded => {
-                "would_close".into()
-            }
-            PullRequestDisposition::PossiblyRedundant => "left_for_a_person".into(),
-            _ => continue,
+        let Some(planned) = cleanup_action(a.disposition) else {
+            continue;
         };
-        items.push(CleanupItem {
-            pr: a.number,
-            disposition: a.disposition,
-            reasons: a.reasons.clone(),
-            action,
-        });
+        let action = if apply && planned == WOULD_CLOSE {
+            close_superseded(root, integrator, a)?
+        } else {
+            planned.to_string()
+        };
+        items.push(cleanup_item(a, action));
     }
     Ok(items)
 }
+
+/// What cleanup does with a pull request of this disposition: [`WOULD_CLOSE`] for what is
+/// provably on master already or superseded by a successor that landed,
+/// [`LEFT_FOR_A_PERSON`] for weak evidence and for what a person marked obsolete (owner
+/// decision D3), and nothing for every other disposition. The one table both the act and
+/// the plan read.
+pub fn cleanup_action(disposition: PullRequestDisposition) -> Option<&'static str> {
+    match disposition {
+        PullRequestDisposition::Redundant | PullRequestDisposition::Superseded => Some(WOULD_CLOSE),
+        PullRequestDisposition::PossiblyRedundant | PullRequestDisposition::Obsolete => {
+            Some(LEFT_FOR_A_PERSON)
+        }
+        _ => None,
+    }
+}
+
+fn cleanup_item(a: &PullRequestAssessment, action: String) -> CleanupItem {
+    CleanupItem {
+        pr: a.number,
+        disposition: a.disposition,
+        reasons: a.reasons.clone(),
+        action,
+    }
+}
+
+/// What a dry cleanup decides, offline, from one queue ([`cleanup_action`]), in rank order:
+/// the plan [`cleanup`] acts on, and what the read capability renders. Closes nothing.
+pub fn cleanup_plan(queue: &IntegrationQueue) -> Vec<CleanupItem> {
+    queue
+        .assessments
+        .iter()
+        .filter_map(|a| cleanup_action(a.disposition).map(|act| cleanup_item(a, act.into())))
+        .collect()
+}
+
+/// A cleanup item cleanup would close, given `--apply`.
+pub const WOULD_CLOSE: &str = "would_close";
+/// A cleanup item that is a person's to decide; never closed here.
+pub const LEFT_FOR_A_PERSON: &str = "left_for_a_person";
 
 /// Close one superseded pull request, as a merge is taken: observed again first, closed only
 /// if the second decision still says superseded against the same master and head, recorded
@@ -2186,5 +2218,436 @@ fn close_superseded(
             )?;
             Ok(format!("close_failed: {e}"))
         }
+    }
+}
+
+/// A branch a merged pull request left on origin, as cleanup reports it. Reported, never
+/// deleted: the forge's `delete_branch_on_merge` decides deletion (owner decision D4), so the
+/// executor holds no branch-deleting write at all.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct LeftBranch {
+    /// The branch on origin.
+    pub branch: String,
+    /// Its tip: the head that merged.
+    pub tip: String,
+    /// The pull request that merged it.
+    pub pr: u64,
+    /// When that pull request merged.
+    pub merged_at: String,
+    /// `left_for_a_person`, or `kept: checked out at <path>` when a worktree of this
+    /// repository has the branch checked out: somebody may still be standing on it.
+    pub action: String,
+    /// What would clear it, in the setting's own terms.
+    pub next_step: String,
+}
+
+/// The last report of the branches merged pull requests left on origin, as `prs cleanup`
+/// read it. Written by `prs cleanup` alone — the one place that asks the forge for them —
+/// and rendered offline, with its age, by every surface that cannot reach the network.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct LeftBranchReport {
+    /// When cleanup read origin and the merged pull requests.
+    pub read_at: String,
+    /// The base the report excludes.
+    pub base: String,
+    /// The forge's `delete_branch_on_merge`, from the observation; `None` when unread.
+    pub delete_branch_on_merge: Option<bool>,
+    /// The branches, or `None` when origin or the merged pull requests could not be read:
+    /// unread is not "nothing left behind".
+    pub branches: Option<Vec<LeftBranch>>,
+    /// The command that reads it afresh.
+    pub refreshed_by: String,
+}
+
+/// Where [`LeftBranchReport`] is kept, beside the observation.
+pub const LEFT_BRANCHES_FILE: &str = "left-branches.json";
+
+/// The branches merged pull requests left behind, each with what would clear it.
+///
+/// `merged` are same-repository heads origin serves at the exact head that merged
+/// ([`super::forge::merged_branches_of`]), so a branch whose tip moved after its merge is
+/// never among them; the base is excluded here too. One checked out in a worktree is listed
+/// as kept, with the path. `None` when they could not be read.
+pub fn left_branches(
+    merged: Option<&[super::forge::MergedBranch]>,
+    base: &str,
+    delete_branch_on_merge: Option<bool>,
+    checked_out: &BTreeMap<String, PathBuf>,
+) -> Option<Vec<LeftBranch>> {
+    let next_step = |branch: &str| match delete_branch_on_merge {
+        Some(true) => format!(
+            "the forge deletes merged branches, and this one outlived its merge (merged before \
+             the setting, or restored): git push origin --delete {branch}"
+        ),
+        Some(false) => format!(
+            "the forge keeps merged branches: enable delete_branch_on_merge, and delete this one \
+             with git push origin --delete {branch}"
+        ),
+        None => format!(
+            "the forge's delete_branch_on_merge was not read: majordomus prs refresh, or delete \
+             it with git push origin --delete {branch}"
+        ),
+    };
+    Some(
+        merged?
+            .iter()
+            .filter(|m| m.branch != base)
+            .map(|m| LeftBranch {
+                branch: m.branch.clone(),
+                tip: m.tip.clone(),
+                pr: m.pr,
+                merged_at: m.merged_at.clone(),
+                action: match checked_out.get(&m.branch) {
+                    Some(path) => format!("kept: checked out at {}", path.display()),
+                    None => "left_for_a_person".into(),
+                },
+                next_step: next_step(&m.branch),
+            })
+            .collect(),
+    )
+}
+
+/// Read origin and the merged pull requests now ([`super::forge::merged_branches`]), against
+/// the recorded observation's base and setting and the worktrees this repository has
+/// registered, and record the report beside the observation. `None` when nothing was ever
+/// observed here. Network and a write: only `prs cleanup` calls it, after observing. A
+/// worktree list git cannot give marks nothing as kept; nothing here deletes a branch.
+pub fn report_left_branches(root: &Path) -> Result<Option<LeftBranchReport>, String> {
+    let Some(obs) = super::load_observation(root)? else {
+        return Ok(None);
+    };
+    let checked_out: BTreeMap<String, PathBuf> = crate::worktree::topology::read(root)
+        .unwrap_or_default()
+        .into_iter()
+        .filter_map(|w| w.branch.map(|b| (b, w.path)))
+        .collect();
+    let merged = super::forge::merged_branches(root, &obs.base);
+    let report = LeftBranchReport {
+        read_at: crate::peers::rfc3339(SystemTime::now()),
+        base: obs.base.clone(),
+        delete_branch_on_merge: obs.delete_branch_on_merge,
+        branches: left_branches(
+            merged.as_deref(),
+            &obs.base,
+            obs.delete_branch_on_merge,
+            &checked_out,
+        ),
+        refreshed_by: "majordomus prs cleanup".into(),
+    };
+    // a record of strings, numbers and options: serializing it cannot fail
+    let text = serde_json::to_string_pretty(&report).expect("a branch report serializes");
+    super::write_atomic(&super::state_path(root, LEFT_BRANCHES_FILE), &(text + "\n"))?;
+    Ok(Some(report))
+}
+
+/// The last recorded [`LeftBranchReport`], read offline; `None` when `prs cleanup` never
+/// recorded one here or the record does not parse.
+pub fn recorded_left_branches(root: &Path) -> Option<LeftBranchReport> {
+    let text = fs::read_to_string(super::state_path(root, LEFT_BRANCHES_FILE)).ok()?;
+    serde_json::from_str(&text).ok()
+}
+
+#[cfg(test)]
+mod left_branch_tests {
+    //! The report of what merged pull requests left on origin (owner decision D4: reported,
+    //! never deleted).
+
+    use super::*;
+    use crate::integration::forge::MergedBranch;
+
+    fn branch(name: &str, pr: u64) -> MergedBranch {
+        MergedBranch {
+            branch: name.into(),
+            tip: format!("{pr:040}"),
+            pr,
+            merged_at: "t".into(),
+        }
+    }
+
+    #[test]
+    fn unread_is_not_nothing_left() {
+        assert_eq!(
+            left_branches(None, "master", Some(false), &BTreeMap::new()),
+            None
+        );
+        assert_eq!(
+            left_branches(Some(&[]), "master", Some(false), &BTreeMap::new()),
+            Some(Vec::new())
+        );
+    }
+
+    #[test]
+    fn a_branch_checked_out_here_is_kept_and_the_setting_names_the_next_step() {
+        let merged = vec![
+            branch("fix/a", 1),
+            branch("fix/here", 2),
+            branch("master", 3),
+        ];
+        let here = BTreeMap::from([("fix/here".to_string(), PathBuf::from("/w/here"))]);
+        for (setting, words) in [
+            (Some(true), "outlived its merge"),
+            (Some(false), "enable delete_branch_on_merge"),
+            (None, "was not read"),
+        ] {
+            let left = left_branches(Some(&merged), "master", setting, &here).unwrap();
+            let got: Vec<(&str, &str)> = left
+                .iter()
+                .map(|b| (b.branch.as_str(), b.action.as_str()))
+                .collect();
+            assert_eq!(
+                got,
+                [
+                    ("fix/a", "left_for_a_person"),
+                    ("fix/here", "kept: checked out at /w/here")
+                ],
+                "the base is never a branch left behind"
+            );
+            assert!(left[0].next_step.contains(words), "{}", left[0].next_step);
+            assert!(left[0].next_step.contains("git push origin --delete fix/a"));
+        }
+    }
+
+    #[test]
+    fn a_report_reads_the_observation_and_the_worktrees_and_is_recorded() {
+        let git = |dir: &Path, args: &[&str]| {
+            let out = Command::new("git")
+                .env_remove("GIT_DIR")
+                .env_remove("GIT_WORK_TREE")
+                .env_remove("GIT_INDEX_FILE")
+                .arg("-C")
+                .arg(dir)
+                .args(["-c", "user.email=t@example.com", "-c", "user.name=t"])
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}: {out:?}");
+        };
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path().join("work");
+        git(tmp.path(), &["init", "-q", "-b", "master", "work"]);
+        git(&root, &["commit", "-q", "--allow-empty", "-m", "base"]);
+        let wt = tmp.path().join("here");
+        git(
+            &root,
+            &[
+                "worktree",
+                "add",
+                "-q",
+                "-b",
+                "fix/here",
+                wt.to_str().unwrap(),
+            ],
+        );
+        let obs = crate::integration::ForgeObservation {
+            schema: crate::integration::OBSERVATION_SCHEMA,
+            repository: "o/r".into(),
+            base: "master".into(),
+            base_sha: "m".into(),
+            observed_at: "t".into(),
+            required_checks: None,
+            review_policy: None,
+            up_to_date_required: None,
+            merge_methods: vec!["merge".into()],
+            pull_requests: Vec::new(),
+            resolved: Default::default(),
+            delete_branch_on_merge: Some(true),
+        };
+        let path = crate::integration::state_path(&root, crate::integration::OBSERVATION_FILE);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(&path, serde_json::to_string(&obs).unwrap()).unwrap();
+        // no origin: the branches are unread, and the report says so and is recorded
+        let report = report_left_branches(&root).unwrap().unwrap();
+        assert_eq!(report.branches, None);
+        assert_eq!(report.delete_branch_on_merge, Some(true));
+        let recorded =
+            std::fs::read_to_string(crate::integration::state_path(&root, LEFT_BRANCHES_FILE))
+                .unwrap();
+        assert!(
+            recorded.contains("\"refreshed_by\": \"majordomus prs cleanup\""),
+            "{recorded}"
+        );
+        // a record that cannot be written fails the report rather than passing unrecorded
+        let record = crate::integration::state_path(&root, LEFT_BRANCHES_FILE);
+        std::fs::remove_file(&record).unwrap();
+        std::fs::create_dir_all(record.join("in-the-way")).unwrap();
+        assert!(report_left_branches(&root).is_err());
+    }
+
+    #[test]
+    fn nothing_observed_is_no_report_and_an_unreadable_observation_is_an_error() {
+        let dir = tempfile::tempdir().unwrap();
+        assert_eq!(
+            report_left_branches(dir.path()),
+            Ok(None),
+            "nothing observed here"
+        );
+        let path = crate::integration::state_path(dir.path(), crate::integration::OBSERVATION_FILE);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(&path, "not an observation").unwrap();
+        assert!(report_left_branches(dir.path()).is_err());
+    }
+}
+
+#[cfg(test)]
+mod obsolete_and_plan_tests {
+    //! Obsolete comes only from a label a person put there (owner decision D3), is listed for
+    //! a person and never closed; the cleanup plan is decided offline from one queue.
+
+    use super::*;
+    use crate::integration::{
+        build_queue, forge, ForgeObservation, ReasonCode, RelationToMaster, OBSERVATION_SCHEMA,
+    };
+
+    /// A queue of one open pull request per `(labels, draft)`, numbered from 1.
+    fn queue(prs: &[(&[&str], bool)]) -> IntegrationQueue {
+        let pull_requests = prs
+            .iter()
+            .enumerate()
+            .filter_map(|(i, (labels, draft))| {
+                forge::pull_request_of(&serde_json::json!({
+                    "number": i + 1, "title": "t", "author": {"login": "a"},
+                    "headRefName": format!("fix/{}", i + 1), "headRefOid": format!("{:040}", i + 1),
+                    "baseRefName": "master", "isDraft": draft,
+                    "labels": labels.iter().map(|l| serde_json::json!({"name": l})).collect::<Vec<_>>(),
+                    "createdAt": "2026-10-01T00:00:00Z", "updatedAt": "2026-10-01T00:00:00Z",
+                    "body": "", "statusCheckRollup": [], "reviewDecision": "",
+                    "autoMergeRequest": null, "isCrossRepository": false
+                }))
+            })
+            .collect();
+        let obs = ForgeObservation {
+            schema: OBSERVATION_SCHEMA,
+            repository: "o/r".into(),
+            base: "master".into(),
+            base_sha: "m".into(),
+            observed_at: "t".into(),
+            required_checks: None,
+            review_policy: None,
+            up_to_date_required: None,
+            merge_methods: vec!["merge".into()],
+            pull_requests,
+            resolved: Default::default(),
+            delete_branch_on_merge: None,
+        };
+        build_queue(&obs, "m", |_| RelationToMaster::Unknown {
+            reason: "not asked".into(),
+        })
+    }
+
+    #[test]
+    fn only_an_obsolete_label_makes_obsolete_and_it_wins_over_hold_but_not_draft() {
+        let q = queue(&[
+            (&["Obsolete"], false),
+            (&["obsolete", "wip"], false),
+            (&["obsolete"], true),
+            (&["wip"], false),
+            (&[], false),
+        ]);
+        let d = |n: u64| q.get(n).unwrap().disposition;
+        assert_eq!(d(1), PullRequestDisposition::Obsolete);
+        assert_eq!(
+            d(2),
+            PullRequestDisposition::Obsolete,
+            "obsolete before hold"
+        );
+        assert_eq!(
+            d(3),
+            PullRequestDisposition::Draft,
+            "the draft gate comes first"
+        );
+        assert_eq!(d(4), PullRequestDisposition::Blocked);
+        assert_ne!(
+            d(5),
+            PullRequestDisposition::Obsolete,
+            "no label, no obsolete"
+        );
+        let one = q.get(1).unwrap();
+        assert_eq!(
+            one.reasons[0],
+            ReasonCode::LabelObsolete {
+                name: "Obsolete".into()
+            },
+            "the deciding reason first, in the forge's spelling"
+        );
+        assert_eq!(
+            one.next_action.as_deref(),
+            Some("a person closes it, or removes the label")
+        );
+        assert_eq!(one.lane, crate::integration::IntegrationLane::Cleanup);
+        assert_eq!(PullRequestDisposition::Obsolete.as_str(), "obsolete");
+        assert!(PullRequestDisposition::ALL.contains(&PullRequestDisposition::Obsolete));
+    }
+
+    #[test]
+    fn the_obsolete_reason_reads_back_from_its_wire_form() {
+        let r: ReasonCode = "label_obsolete:Obsolete".parse().unwrap();
+        assert_eq!(
+            r,
+            ReasonCode::LabelObsolete {
+                name: "Obsolete".into()
+            }
+        );
+        assert_eq!(r.to_string(), "label_obsolete:Obsolete");
+        assert_eq!(r.code(), "label_obsolete");
+    }
+
+    #[test]
+    fn the_plan_closes_only_strong_evidence_and_leaves_obsolete_for_a_person() {
+        for (d, want) in [
+            (PullRequestDisposition::Redundant, Some(WOULD_CLOSE)),
+            (PullRequestDisposition::Superseded, Some(WOULD_CLOSE)),
+            (
+                PullRequestDisposition::PossiblyRedundant,
+                Some(LEFT_FOR_A_PERSON),
+            ),
+            (PullRequestDisposition::Obsolete, Some(LEFT_FOR_A_PERSON)),
+            (PullRequestDisposition::Ready, None),
+            (PullRequestDisposition::Blocked, None),
+        ] {
+            assert_eq!(cleanup_action(d), want, "{d:?}");
+        }
+        let q = queue(&[(&["obsolete"], false), (&[], false)]);
+        let plan = cleanup_plan(&q);
+        assert_eq!(plan.len(), 1);
+        assert_eq!(
+            (plan[0].pr, plan[0].action.as_str()),
+            (1, LEFT_FOR_A_PERSON)
+        );
+    }
+
+    /// An executor that observes one fixed queue and refuses every act: cleanup with
+    /// `--apply` must leave an obsolete pull request alone, so nothing may reach it.
+    struct Fixed(IntegrationQueue);
+
+    impl Integrator for Fixed {
+        fn observe(&mut self) -> Result<IntegrationQueue, String> {
+            Ok(self.0.clone())
+        }
+        fn merge(&mut self, pr: u64, _: &str, _: &str) -> Result<(), String> {
+            panic!("cleanup merged #{pr}")
+        }
+        fn verify(
+            &mut self,
+            pr: u64,
+            _: &EvaluatedAgainst,
+            _: &str,
+        ) -> Result<super::super::drain::Landed, super::super::drain::NotLanded> {
+            panic!("cleanup verified #{pr}")
+        }
+        fn refresh_branch(&mut self, a: &PullRequestAssessment, _: &str) -> Result<String, String> {
+            panic!("cleanup refreshed #{}", a.number)
+        }
+        fn close(&mut self, pr: u64, _: &str, _: &str) -> Result<(), String> {
+            panic!("cleanup closed #{pr}")
+        }
+    }
+
+    #[test]
+    fn apply_never_closes_what_a_person_marked_obsolete() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut w = Fixed(queue(&[(&["obsolete"], false), (&["wip"], false)]));
+        let items = cleanup(dir.path(), &mut w, true).unwrap();
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].action, LEFT_FOR_A_PERSON);
     }
 }

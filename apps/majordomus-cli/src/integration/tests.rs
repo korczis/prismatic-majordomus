@@ -218,6 +218,7 @@ impl World {
             merge_methods: self.merge_methods.iter().map(|m| m.to_string()).collect(),
             pull_requests: self.open.iter().map(observe_pr).collect(),
             resolved: self.resolved(),
+            delete_branch_on_merge: None,
         }
     }
 
@@ -1784,6 +1785,7 @@ fn observed(dir: &std::path::Path, master: &str, prs: Vec<PullRequestObservation
         merge_methods: vec!["merge".into()],
         pull_requests: prs,
         resolved: Default::default(),
+        delete_branch_on_merge: None,
     };
     crate::integration::store_observation(dir, &obs).unwrap();
 }
@@ -3537,6 +3539,7 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         | R::RequiredChecksSkipped
         | R::ExecutorMergeRefused { .. }
         | R::ExecutorRefreshFailed { .. }
+        | R::LabelObsolete { .. }
         | R::Unrecognised(_) => (),
     };
     let mut all = vec![
@@ -3581,6 +3584,9 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         },
         R::ExecutorRefreshFailed {
             master: "b".repeat(40),
+        },
+        R::LabelObsolete {
+            name: "Obsolete: superseded by the redesign".into(),
         },
     ];
     for state in [
@@ -4169,7 +4175,19 @@ fn the_label_policy_is_one_table_and_every_effect_holds() {
     let q = w.queue();
     // the policy carries the table, as it is
     assert_eq!(q.policy.labels, LABEL_POLICY.to_vec());
-    assert!(LABEL_POLICY.iter().all(|l| l.effect == LabelEffect::Hold));
+    // a label holds a pull request (D11: none opts out of the executor's refresh), or marks
+    // it obsolete (D3), and nothing else; exactly one label means obsolete
+    assert!(LABEL_POLICY
+        .iter()
+        .all(|l| matches!(l.effect, LabelEffect::Hold | LabelEffect::Obsolete)));
+    assert_eq!(
+        LABEL_POLICY
+            .iter()
+            .filter(|l| l.effect == LabelEffect::Obsolete)
+            .map(|l| l.name.as_ref())
+            .collect::<Vec<_>>(),
+        ["obsolete"]
+    );
     let names: Vec<&str> = LABEL_POLICY.iter().map(|l| l.name.as_ref()).collect();
     assert_eq!(
         names,
@@ -4180,11 +4198,17 @@ fn the_label_policy_is_one_table_and_every_effect_holds() {
             "hold",
             "on-hold",
             "wip",
-            "manual-merge"
+            "manual-merge",
+            "obsolete"
         ]
     );
-    // every label of the table holds, whatever its case; a label outside it does not
-    for label in names.iter().map(|n| n.to_ascii_uppercase()) {
+    // every hold label of the table holds, whatever its case; a label outside it does not
+    let holds: Vec<&str> = LABEL_POLICY
+        .iter()
+        .filter(|l| l.effect == LabelEffect::Hold)
+        .map(|l| l.name.as_ref())
+        .collect();
+    for label in holds.iter().map(|n| n.to_ascii_uppercase()) {
         let mut s = sim(1);
         s.labels = vec![label.clone()];
         let q = World {
@@ -4734,7 +4758,10 @@ fn redundant_and_superseded_are_two_words_of_the_cleanup_lane() {
         .filter(|d| d.lane() == L::Cleanup)
         .map(|d| d.as_str())
         .collect();
-    assert_eq!(cleanup, ["redundant", "superseded", "possibly_redundant"]);
+    assert_eq!(
+        cleanup,
+        ["redundant", "superseded", "possibly_redundant", "obsolete"]
+    );
     // the supersession gate is asked before the relation to master
     let at = |g: G| G::ALL.iter().position(|x| *x == g).unwrap();
     assert_eq!(at(G::Supersession) + 1, at(G::RelationToMaster));

@@ -701,6 +701,44 @@ pub const OBSERVATION_STALE_AFTER: std::time::Duration = std::time::Duration::fr
 
 /// The queue of the recorded observation, and the relation cache as it stands after deciding
 /// it. Writes nothing.
+/// Name each assessment's issue and milestone: the issue its head branch names among
+/// `issues` (id → the milestone its record declares), by
+/// [`crate::worktree::state::issue_of`]. Neither decides a disposition or a rank: they say
+/// what the change is part of.
+pub fn link_issues(queue: &mut IntegrationQueue, issues: &BTreeMap<String, Option<String>>) {
+    let ids: Vec<String> = issues.keys().cloned().collect();
+    for a in &mut queue.assessments {
+        a.issue = crate::worktree::state::issue_of(&a.head_ref, &ids);
+        a.milestone = a
+            .issue
+            .as_ref()
+            .and_then(|i| issues.get(i).cloned().flatten());
+    }
+}
+
+/// The issues this checkout's project model declares, each with the milestone its record
+/// names: [`crate::worktree::state::issue_ids`], each record read with the layer's own YAML
+/// reader. A record that does not parse names no milestone; the issue still links.
+pub fn issue_milestones(root: &Path) -> BTreeMap<String, Option<String>> {
+    crate::worktree::state::issue_ids(root)
+        .into_iter()
+        .map(|id| {
+            let milestone = std::fs::read_to_string(
+                root.join(".ai/repo/project/issues")
+                    .join(format!("{id}.yaml")),
+            )
+            .ok()
+            .and_then(|t| crate::metadata::yaml::parse_mapping(&t).ok())
+            .and_then(|m| {
+                m.get("milestone")
+                    .and_then(crate::metadata::yaml::scalar_string)
+            })
+            .filter(|m| !m.is_empty());
+            (id, milestone)
+        })
+        .collect()
+}
+
 fn computed(
     root: &Path,
     now: std::time::SystemTime,
@@ -740,6 +778,7 @@ fn computed(
         }
         relation_cached(root, &mut cache, &master, &p.head_sha)
     });
+    link_issues(&mut queue, &issue_milestones(root));
     let now_secs = now
         .duration_since(std::time::UNIX_EPOCH)
         .map_or(0, |d| i64::try_from(d.as_secs()).unwrap_or(i64::MAX));
@@ -868,6 +907,7 @@ mod queue_branches {
             merge_methods: vec!["merge".into()],
             pull_requests: vec![pr],
             resolved,
+            delete_branch_on_merge: None,
         }
     }
 
@@ -920,5 +960,108 @@ mod queue_branches {
     fn a_recording_read_with_nothing_observed_refuses() {
         let dir = tempfile::tempdir().unwrap();
         assert!(queue_and_record(dir.path()).is_err());
+    }
+}
+
+/// Tests only: a queue with one open pull request per head branch, for the surfaces that
+/// render an assessment.
+#[cfg(test)]
+pub(crate) fn issue_test_queue(branches: &[&str]) -> IntegrationQueue {
+    issue_tests::queue_with(branches)
+}
+
+#[cfg(test)]
+mod issue_tests {
+    //! Each assessment names the issue its branch names and that issue's milestone (WP24).
+
+    use super::*;
+
+    /// The queue of one observation with an open pull request per head branch.
+    pub(crate) fn queue_with(branches: &[&str]) -> IntegrationQueue {
+        let pull_requests = branches
+            .iter()
+            .enumerate()
+            .filter_map(|(i, b)| {
+                forge::pull_request_of(&serde_json::json!({
+                    "number": i + 1, "title": format!("change {}", i + 1),
+                    "author": {"login": "someone"}, "headRefName": b,
+                    "headRefOid": format!("{:040}", i + 1), "baseRefName": "master",
+                    "isDraft": false, "labels": [], "createdAt": "2026-10-01T00:00:00Z",
+                    "updatedAt": "2026-10-01T00:00:00Z", "body": "",
+                    "statusCheckRollup": [], "reviewDecision": "", "autoMergeRequest": null,
+                    "isCrossRepository": false
+                }))
+            })
+            .collect();
+        let obs = ForgeObservation {
+            schema: OBSERVATION_SCHEMA,
+            repository: "o/r".into(),
+            base: "master".into(),
+            base_sha: "m".into(),
+            observed_at: "t".into(),
+            required_checks: None,
+            review_policy: None,
+            up_to_date_required: None,
+            merge_methods: vec!["merge".into()],
+            pull_requests,
+            resolved: Default::default(),
+            delete_branch_on_merge: None,
+        };
+        build_queue(&obs, "m", |_| RelationToMaster::Unknown {
+            reason: "not asked".into(),
+        })
+    }
+
+    #[test]
+    fn the_branch_names_the_issue_and_its_record_the_milestone() {
+        let mut q = queue_with(&["feature/I0810-manifest", "fix/I0901", "fix/plain", "I0700x"]);
+        let issues = BTreeMap::from([
+            ("I0810".to_string(), Some("M003".to_string())),
+            ("I0901".to_string(), None),
+            ("I0700".to_string(), Some("M001".to_string())),
+        ]);
+        link_issues(&mut q, &issues);
+        let got: Vec<(u64, Option<&str>, Option<&str>)> = {
+            let mut v: Vec<_> = q
+                .assessments
+                .iter()
+                .map(|a| (a.number, a.issue.as_deref(), a.milestone.as_deref()))
+                .collect();
+            v.sort();
+            v
+        };
+        assert_eq!(
+            got,
+            [
+                (1, Some("I0810"), Some("M003")),
+                (2, Some("I0901"), None),
+                (3, None, None),
+                (4, None, None),
+            ],
+            "a component only begins with an id when the id is followed by '-'"
+        );
+    }
+
+    #[test]
+    fn the_milestone_is_read_from_the_record_and_a_broken_record_names_none() {
+        let dir = tempfile::tempdir().unwrap();
+        assert!(issue_milestones(dir.path()).is_empty(), "no project model");
+        let issues = dir.path().join(".ai/repo/project/issues");
+        std::fs::create_dir_all(&issues).unwrap();
+        std::fs::write(issues.join("I0001.yaml"), "id: I0001\nmilestone: M001\n").unwrap();
+        std::fs::write(issues.join("I0002.yaml"), "id: I0002\n").unwrap();
+        std::fs::write(issues.join("I0003.yaml"), "id: [unclosed\n").unwrap();
+        std::fs::write(issues.join("I0004.yaml"), "id: I0004\nmilestone: \"\"\n").unwrap();
+        std::fs::write(issues.join("README.md"), "not an issue\n").unwrap();
+        let got = issue_milestones(dir.path());
+        assert_eq!(
+            got,
+            BTreeMap::from([
+                ("I0001".to_string(), Some("M001".to_string())),
+                ("I0002".to_string(), None),
+                ("I0003".to_string(), None),
+                ("I0004".to_string(), None),
+            ])
+        );
     }
 }
