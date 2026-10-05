@@ -7457,6 +7457,13 @@ mod tests {
         let html = observe(None, None, None);
         assert!(html.contains("review required: unread"), "{html}");
         assert!(html.contains("branches up to date: unread"), "{html}");
+        let one = ReviewPolicy {
+            approvals: 1,
+            code_owners: false,
+            dismiss_stale: false,
+        };
+        let html = observe(None, Some(one), Some(true));
+        assert!(html.contains("review required: 1 approval(s);"), "{html}");
     }
 
     /// One `peers.list` answer, from the JSON the capability serves: the page renders what

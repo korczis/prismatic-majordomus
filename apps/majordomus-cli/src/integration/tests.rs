@@ -5554,6 +5554,15 @@ fn a_merge_asked_for_and_never_ended_is_ended_first_by_what_landed() {
     ] {
         let root = scratch();
         attempted(&root, 1);
+        // what an observer recorded of #1 meanwhile ends nothing
+        drain::record(
+            &root,
+            drain::IntegrationEvent {
+                pr: Some(1),
+                ..drain::IntegrationEvent::of(drain::IntegrationAction::LeftActionable)
+            },
+        )
+        .unwrap();
         let mut w = asked_before(how);
         let out = drain::reconcile(&root, &mut w).unwrap();
         match how {
@@ -5595,6 +5604,19 @@ fn a_merge_asked_for_and_never_ended_is_ended_first_by_what_landed() {
         drain::FAIL_WRITE.with(|n| n.set(0));
         assert!(err.is_err(), "{how}: {err:?}");
     }
+}
+
+#[test]
+fn an_attempt_the_trail_cannot_key_is_not_reconciled() {
+    let root = scratch();
+    drain::record(
+        &root,
+        drain::IntegrationEvent::of(drain::IntegrationAction::MergeAttempted),
+    )
+    .unwrap();
+    let mut w = asked_before("reconcile_landed");
+    assert!(drain::reconcile(&root, &mut w).unwrap().is_none());
+    assert_eq!(w.verify_calls, 0);
 }
 
 #[test]
@@ -5868,6 +5890,12 @@ fn what_landed_is_proved_from_masters_first_parent_line() {
     let merged = git(&dir, &["rev-parse", "HEAD"]);
     let err = drain::landing(&dir, &at(&decided), "merge", &merged).unwrap_err();
     assert!(err.contains("not on master's first-parent line"), "{err}");
+    // a squash names its one commit, whose only parent is the decision's master
+    let squashed = commit_on(&dir, "squashed", &decided, &[("s.txt", "s\n")]);
+    assert_eq!(
+        drain::landing(&dir, &at(&decided), "squash", &squashed),
+        Ok(Some(squashed.clone()))
+    );
 }
 
 #[test]
@@ -5940,7 +5968,9 @@ fn a_required_check_without_a_context_requires_nothing() {
     }]));
     assert_eq!(checks, vec![super::RequiredCheck::from("ci")]);
     let (checks, _) = protection_of(&json!({
-        "required_status_checks": {"checks": [{"app_id": 1}, {"context": "ci", "app_id": 2}]}
+        "required_status_checks": {
+            "checks": [{"app_id": 1}, {"context": 5}, {"context": "ci", "app_id": 2}]
+        }
     }));
     assert_eq!(checks.len(), 1, "{checks:?}");
     assert_eq!(checks[0].context, "ci");

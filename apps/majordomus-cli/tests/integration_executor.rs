@@ -37,7 +37,8 @@ fn git(dir: &Path, args: &[&str]) -> String {
 /// `protection.json` holding `FAIL` or `TRANSIENT` refuses the protection read, `closed-fails`
 /// the list of closed pull requests, `view-fails` every `pr view`, `view-transient` the view
 /// of a successor; `view-<n>.json` is the successor `n` as the forge shows it; `forget` and
-/// `unfetchable` lose the observation or the origin as a merge is looked at.
+/// `unfetchable` lose the observation or the origin as a merge is looked at; `act` pushes a
+/// branch to origin, as somebody else would, while the closed pull requests are listed.
 const GH: &str = r#"#!/bin/sh
 S="@STATE@"; O="@ORIGIN@"; W="@WORK@"
 echo "$*" >> "$S/log"
@@ -52,12 +53,14 @@ case "$1 $2" in
     elif [ -f "$S/protection.json" ]; then cat "$S/protection.json"
     else echo 'gh: Branch not protected (HTTP 404)' >&2; exit 1; fi ;;
   "api repos/o/r/rules/branches/master")
+    if grep -q TRANSIENT "$S/rules.json" 2>/dev/null; then echo 'gh: HTTP 503: Service Unavailable' >&2; exit 1; fi
     if grep -q FAIL "$S/rules.json" 2>/dev/null; then echo 'gh: Resource not accessible by integration (HTTP 403)' >&2; exit 1; fi
     cat "$S/rules.json" 2>/dev/null || echo '[]' ;;
   "pr list")
     case " $* " in
       *" --state closed "*)
         if [ -f "$S/closed-fails" ]; then echo 'gh: Resource not accessible by integration (HTTP 403)' >&2; exit 1; fi
+        if [ -f "$S/act" ]; then git -C "$O" update-ref refs/heads/intruder refs/heads/master; fi
         echo '[]' ;;
       *) jq -c --slurpfile gone "$S/gone.json" '[.[] | select(.number as $n | ($gone[0] | index($n)) | not)]' "$S/prs.json" ;;
     esac ;;
@@ -446,6 +449,11 @@ fn what_the_base_requires_is_read_from_protection_and_rulesets() {
     let (code, _, err) = f.prs(&["plan"]);
     assert_eq!(code, 10);
     assert!(err.contains("! "), "{err}");
+    // and a program reading it finds them in the JSON, not on standard error
+    let (code, out, err) = f.prs(&["plan", "--format", "json"]);
+    assert_eq!(code, 10);
+    assert!(!err.contains("! "), "{err}");
+    assert!(out.contains("diagnostics"), "{out}");
 
     // a ruleset read the forge refuses leaves the requirement unread
     f.set(
@@ -658,8 +666,15 @@ fn a_base_whose_requirements_cannot_be_read_is_unread_or_unobserved() {
     let (code, out, err) = f.prs(&["refresh"]);
     assert_eq!(code, 12, "{out}{err}");
     std::fs::remove_file(f.state.join("closed-fails")).unwrap();
-    // a protection read the forge keeps failing fails the observation
+    // a protection or a ruleset read the forge keeps failing fails the observation
     f.set("protection.json", "TRANSIENT");
+    let (code, out, err) = f.prs(&["refresh"]);
+    assert_eq!(code, 12, "{out}{err}");
+    f.set(
+        "protection.json",
+        r#"{"required_status_checks":{"contexts":["ci"]}}"#,
+    );
+    f.set("rules.json", "TRANSIENT");
     let (code, out, err) = f.prs(&["refresh"]);
     assert_eq!(code, 12, "{out}{err}");
 }
@@ -702,4 +717,9 @@ fn the_dry_run_proof_says_what_it_compared() {
     let (_, out, _) = f.prs(&["prove-dry-run", "--format", "json"]);
     let proof: Value = serde_json::from_str(&out).expect("the proof as JSON");
     assert_eq!(proof["base"], "master");
+    // somebody pushes during the cycle: the proof names it and fails
+    f.set("act", "");
+    let (code, out, err) = f.prs(&["prove-dry-run"]);
+    assert_eq!(code, 10, "{out}{err}");
+    assert!(out.contains("moved something"), "{out}");
 }

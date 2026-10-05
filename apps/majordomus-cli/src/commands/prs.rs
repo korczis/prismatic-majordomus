@@ -315,12 +315,12 @@ pub fn run(args: PrsArgs) -> Result<u8> {
         }
         PrsCommand::ProveDryRun => {
             let proof = integration::proof::prove_dry_run(&root).map_err(unusable)?;
-            if format == OutputFormat::Json {
-                json(&mut out, &proof)?;
+            let written = if format == OutputFormat::Json {
+                json(&mut out, &proof)
             } else {
-                render_proof(&proof, &mut out)?;
-            }
-            Ok(if proof.ok { 0 } else { FINDING })
+                render_proof(&proof, &mut out)
+            };
+            written.map(|()| if proof.ok { 0 } else { FINDING })
         }
         PrsCommand::Brief => {
             if let Some(line) = brief(&root) {
@@ -1018,10 +1018,24 @@ mod tests {
     #[test]
     fn explain_names_the_successor_that_landed() {
         let (_s, q) = world();
+        use crate::integration::{DependencyCertainty, PathOverlap, PullRequestDependency};
         let mut a = q.assessments[0].clone();
         a.superseded_by = Some(9);
+        a.next_action = None;
+        a.dependencies = vec![PullRequestDependency {
+            number: 5,
+            certainty: DependencyCertainty::Confirmed,
+            satisfied: false,
+        }];
+        a.overlaps = vec![PathOverlap {
+            number: 3,
+            paths: vec!["src/a.rs".into()],
+        }];
         let t = text(|o| explain(&q, &a, 1, OutputFormat::Text, o));
         assert!(t.contains("superseded:   by #9, which landed"), "{t}");
+        assert!(!t.contains("  next:"), "{t}");
+        assert!(t.contains("depends on:   #5 (confirmed, open)"), "{t}");
+        assert!(t.contains("overlaps:     #3 (1)"), "{t}");
     }
 
     #[test]
