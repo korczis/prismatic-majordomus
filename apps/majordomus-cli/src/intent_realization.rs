@@ -42,7 +42,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::capability::builtin::continuity::{document, read_task};
 use crate::index::Index;
-use crate::intent::{IntentEvidenceState, IntentFinding, IntentStage, IntentView, Intents, WARN};
+use crate::intent::{
+    IntentEvidenceState, IntentFinding, IntentStage, IntentVerdictState, IntentView, Intents, WARN,
+};
 use crate::intent_plan::{CoverageStrength, CriterionCoverage, IntentCoverage};
 use crate::ledger::Entry;
 use crate::order::{canonical, OrderKey, Ordered};
@@ -658,8 +660,19 @@ fn state_words(state: IntentEvidenceState) -> &'static str {
 /// * `criterion_closed_unmet` — every issue declaring it serves a criterion is DONE, and the
 ///   criterion is not met, while the intent is still being executed.
 ///
+/// And the stage against the verdict, once per intent (ADR 0107):
+///
+/// * `evidence_ahead_of_plan` ([`EVIDENCE_AHEAD_OF_PLAN`]) — the verdict is `satisfied` while
+///   the stage is `planned` or `executing`: the evidence settles the intent before the plan
+///   closes it.
+/// * `closed_work_not_satisfied` ([`CLOSED_WORK_NOT_SATISFIED`]) — every milestone is DONE (the
+///   stage is `verifying`) and the verdict is `unsatisfied` or `unknown`, naming the criteria
+///   that hold it back.
+///
 /// ```
-/// use majordomus_cli::intent::{IntentCriterion, IntentEvidenceState, IntentStage, IntentView};
+/// use majordomus_cli::intent::{
+///     verdict, IntentCriterion, IntentEvidenceState, IntentStage, IntentView,
+/// };
 /// use majordomus_cli::intent_realization::drift;
 /// # let plan: majordomus_cli::plan::Plan = serde_json::from_value(serde_json::json!({
 /// #     "project": {"name": "p", "repository": "o/p", "default_branch": "master",
@@ -667,17 +680,19 @@ fn state_words(state: IntentEvidenceState) -> &'static str {
 /// #     "statuses": {"issue": [], "milestone": []},
 /// #     "milestones": [], "issues": [], "waves": [], "edges": [],
 /// #     "milestone_edges": [], "findings": []})).unwrap();
+/// let satisfaction = vec![IntentCriterion {
+///     id: "c".into(), criterion: "c".into(), evidence: "test".into(),
+///     reference: "t".into(), state: IntentEvidenceState::Failing, met: false,
+///     reproduce: None }];
 /// let view = IntentView {
 ///     id: "x".into(), title: "X".into(), statement: String::new(), invariants: vec![],
 ///     stage: IntentStage::Verifying, milestones: vec![], met: 0,
-///     satisfaction: vec![IntentCriterion {
-///         id: "c".into(), criterion: "c".into(), evidence: "test".into(),
-///         reference: "t".into(), state: IntentEvidenceState::Failing, met: false,
-///         reproduce: None }],
+///     verdict: verdict(&satisfaction), satisfaction,
 ///     governance: vec![], non_goals: vec![], superseded_by: None, source: String::new(),
 /// };
 /// let found = drift(&view, &plan);
 /// assert_eq!(found[0].code, "closed_work_contradicted");
+/// assert_eq!(found[1].code, "closed_work_not_satisfied");
 /// ```
 pub fn drift(view: &IntentView, plan: &Plan) -> Vec<IntentFinding> {
     let mut out = Vec::new();
@@ -737,7 +752,67 @@ pub fn drift(view: &IntentView, plan: &Plan) -> Vec<IntentFinding> {
             _ => {}
         }
     }
+    verdict_drift(view, &mut out);
     out
+}
+
+/// The drift code of an intent whose verdict is `satisfied` while its stage is `planned` or
+/// `executing`: the evidence settles it before the plan closes it.
+pub const EVIDENCE_AHEAD_OF_PLAN: &str = "evidence_ahead_of_plan";
+
+/// The drift code of an intent whose milestones are all DONE (stage `verifying`) and whose
+/// verdict is not `satisfied`.
+pub const CLOSED_WORK_NOT_SATISFIED: &str = "closed_work_not_satisfied";
+
+/// Where the stage and the verdict disagree in a way ADR 0107 names, one finding per intent.
+fn verdict_drift(view: &IntentView, out: &mut Vec<IntentFinding>) {
+    match (view.stage, view.verdict.state) {
+        (IntentStage::Planned | IntentStage::Executing, IntentVerdictState::Satisfied) => {
+            let open: Vec<String> = view
+                .milestones
+                .iter()
+                .filter_map(|m| {
+                    let s = m.status.as_deref()?;
+                    (!matches!(s, "DONE" | "CANCELLED" | "SUPERSEDED"))
+                        .then(|| format!("{} is {s}", m.id))
+                })
+                .collect();
+            warn(
+                out,
+                EVIDENCE_AHEAD_OF_PLAN,
+                &view.id,
+                format!(
+                    "the verdict is satisfied — every criterion has current evidence — and the \
+                     stage is {} ({}): the evidence settles the intent before the plan closes it",
+                    view.stage.as_str(),
+                    open.join(", ")
+                ),
+            );
+        }
+        (IntentStage::Verifying, state) if state != IntentVerdictState::Satisfied => {
+            let held = if view.verdict.reasons.is_empty() {
+                "no criterion is declared, so no evidence can settle it".to_string()
+            } else {
+                let named: Vec<String> = view
+                    .verdict
+                    .reasons
+                    .iter()
+                    .map(|r| format!("`{}` ({} {})", r.criterion, r.evidence, r.state.as_str()))
+                    .collect();
+                format!("held back by {}", named.join(", "))
+            };
+            warn(
+                out,
+                CLOSED_WORK_NOT_SATISFIED,
+                &view.id,
+                format!(
+                    "every milestone is DONE and the verdict is {}: {held}",
+                    state.as_str()
+                ),
+            );
+        }
+        _ => {}
+    }
 }
 
 /// Every intent, realised, and every unit of work, joined: what `majordomus intent realization`
@@ -912,7 +987,7 @@ fn strength_words(s: CoverageStrength) -> &'static str {
 /// Explain one intent out of the derivations already made.
 ///
 /// ```
-/// use majordomus_cli::intent::{IntentStage, IntentView, Intents};
+/// use majordomus_cli::intent::{verdict, IntentStage, IntentView, Intents};
 /// use majordomus_cli::intent_plan::IntentCoverage;
 /// use majordomus_cli::intent_realization::{explain, realize};
 /// # let plan: majordomus_cli::plan::Plan = serde_json::from_value(serde_json::json!({
@@ -924,6 +999,7 @@ fn strength_words(s: CoverageStrength) -> &'static str {
 /// let view = IntentView {
 ///     id: "x".into(), title: "X".into(), statement: String::new(), invariants: vec![],
 ///     stage: IntentStage::Declared, milestones: vec![], met: 0, satisfaction: vec![],
+///     verdict: verdict(&[]),
 ///     governance: vec![], non_goals: vec![], superseded_by: None, source: String::new(),
 /// };
 /// let intents = Intents { intents: vec![view.clone()], findings: vec![] };
@@ -1329,7 +1405,7 @@ pub fn gather(root: &Path, index: &Index, peers: &[Peer]) -> (Vec<IntentWorkUnit
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::intent::{IntentCriterion, IntentMilestone};
+    use crate::intent::{verdict, IntentCriterion, IntentMilestone};
     use crate::intent_plan::CoveringIssue;
     use crate::plan::{PlanIssue, PlanProject, PlanVocabulary};
     use serde_json::json;
@@ -1415,6 +1491,7 @@ mod tests {
                 .collect(),
             satisfaction: vec![],
             met: 0,
+            verdict: crate::intent::verdict(&[]),
             governance: vec![],
             non_goals: vec![],
             superseded_by: None,
@@ -1597,18 +1674,24 @@ mod tests {
             criterion("c", IntentEvidenceState::NotRun),
             criterion("d", IntentEvidenceState::Current),
         ];
+        v.verdict = verdict(&v.satisfaction);
         let found = drift(&v, &p);
         assert_eq!(
             codes(&found),
             [
                 "closed_work_contradicted",
                 "closed_work_contradicted",
-                "closed_work_unproven"
+                "closed_work_unproven",
+                "closed_work_not_satisfied"
             ]
         );
         assert!(found[0].message.contains("a source that has changed"));
         assert!(found[1].message.contains("did not pass"));
         assert!(found[2].message.contains("no recorded run"));
+        assert!(found[3].message.contains(
+            "the verdict is unsatisfied: held back by `a` (test stale), `b` (test failing), \
+             `c` (test not_run)"
+        ));
         assert!(found
             .iter()
             .all(|f| f.level == WARN && f.reproduce == REPRODUCE));
@@ -1628,6 +1711,73 @@ mod tests {
         // a declared intent has no closure to drift from
         v.stage = IntentStage::Declared;
         assert!(drift(&v, &p).is_empty());
+    }
+
+    #[test]
+    fn drift_names_where_the_stage_and_the_verdict_disagree() {
+        let p = plan(vec![]);
+        let all_current = vec![
+            criterion("a", IntentEvidenceState::Current),
+            criterion("b", IntentEvidenceState::Current),
+        ];
+        // the evidence settles the intent while the plan has not closed it
+        for (stage, status) in [
+            (IntentStage::Executing, "ACTIVE"),
+            (IntentStage::Planned, "READY"),
+        ] {
+            let mut v = view("x", stage, &[("m1", Some("DONE")), ("m2", Some(status))]);
+            v.satisfaction = all_current.clone();
+            v.met = 2;
+            v.verdict = verdict(&v.satisfaction);
+            let found = drift(&v, &p);
+            assert_eq!(codes(&found), [EVIDENCE_AHEAD_OF_PLAN], "{stage:?}");
+            assert!(
+                found[0]
+                    .message
+                    .contains(&format!("stage is {} (m2 is {status})", stage.as_str())),
+                "{}",
+                found[0].message
+            );
+            assert_eq!(found[0].level, WARN);
+            assert_eq!(found[0].reproduce, REPRODUCE);
+        }
+
+        // closed work the ledger cannot settle: unknown, named with each criterion's own state
+        let mut v = view("x", IntentStage::Verifying, &[("m1", Some("DONE"))]);
+        let mut cmd = criterion("ships", IntentEvidenceState::NotDerivable);
+        cmd.evidence = "command".into();
+        v.satisfaction = vec![criterion("a", IntentEvidenceState::Current), cmd];
+        v.met = 1;
+        v.verdict = verdict(&v.satisfaction);
+        let found = drift(&v, &p);
+        assert_eq!(
+            codes(&found),
+            ["closed_work_unproven", CLOSED_WORK_NOT_SATISFIED]
+        );
+        assert!(found[1]
+            .message
+            .ends_with("the verdict is unknown: held back by `ships` (command not_derivable)"));
+
+        // where the two agree there is nothing to report
+        for stage in [
+            IntentStage::Satisfied,
+            IntentStage::Declared,
+            IntentStage::Cancelled,
+            IntentStage::Superseded,
+        ] {
+            let mut v = view("x", stage, &[("m1", Some("DONE"))]);
+            v.satisfaction = all_current.clone();
+            v.met = 2;
+            v.verdict = verdict(&v.satisfaction);
+            assert!(drift(&v, &p).is_empty(), "{stage:?}");
+        }
+        let mut v = view("x", IntentStage::Executing, &[("m1", Some("ACTIVE"))]);
+        v.satisfaction = vec![criterion("a", IntentEvidenceState::NotRun)];
+        v.verdict = verdict(&v.satisfaction);
+        assert!(
+            drift(&v, &p).is_empty(),
+            "an unsatisfied verdict on open work is no drift"
+        );
     }
 
     #[test]
@@ -1662,6 +1812,7 @@ mod tests {
         a.reproduce = Some("test/run.sh a".into());
         v.satisfaction = vec![a, criterion("b", IntentEvidenceState::Current)];
         v.met = 1;
+        v.verdict = verdict(&v.satisfaction);
         let i = intents(vec![v]);
 
         let mut t = IntentWorkUnit::new(IntentWorkKind::Task, "t-1");
@@ -1819,6 +1970,7 @@ mod tests {
         met.reproduce = Some("never printed for a met criterion".into());
         v.satisfaction = vec![met, b, c];
         v.met = 1;
+        v.verdict = verdict(&v.satisfaction);
         let mut t = IntentWorkUnit::new(IntentWorkKind::Task, "t-1");
         t.moved_issues = vec!["I0001".into()];
         t.handovers = vec!["h.md".into()];
@@ -1885,6 +2037,7 @@ mod tests {
         );
         assert!(e.because[5].starts_with("closed_work_contradicted: "));
         assert!(e.because[6].starts_with("closed_work_unproven: "));
+        assert!(e.because[7].starts_with("closed_work_not_satisfied: "));
         assert_eq!(e.coverage.len(), 2);
         let ids: Vec<&str> = e.work.iter().map(|w| w.work.id.as_str()).collect();
         assert_eq!(ids, ["t-1", "t-2"]);
@@ -1892,6 +2045,7 @@ mod tests {
         // work without a provider names none
         let mut v2 = v.clone();
         v2.satisfaction.clear();
+        v2.verdict = verdict(&v2.satisfaction);
         let r2 = realize(
             &intents(vec![v2.clone()]),
             &p,
@@ -1903,8 +2057,14 @@ mod tests {
         );
         let e2 = explain(&v2, &coverage, &r2);
         assert_eq!(
-            e2.because.last().unwrap(),
+            e2.because[1],
             "1 unit(s) of work realise it across 0 handover(s)"
+        );
+        // closed work over an intent declaring no criterion: nothing can settle it
+        assert_eq!(
+            e2.because.last().unwrap(),
+            "closed_work_not_satisfied: every milestone is DONE and the verdict is unknown: no \
+             criterion is declared, so no evidence can settle it"
         );
     }
 

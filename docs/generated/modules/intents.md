@@ -3,7 +3,7 @@
      Generator: majordomus-cli 0.13.1 -->
 # Module `intents` — Intent
 
-What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, and each criterion's state derived from the evidence ledger. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere.
+What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, each criterion's state derived from the evidence ledger, and its verdict derived from those criteria alone. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere.
 
 Stability: behaviorally_verified. Capabilities: 5.
 
@@ -27,9 +27,9 @@ Input: none.
 
 Output: `IntentCoverage`.
 
-## `intents.list` — Every intent, with its derived stage
+## `intents.list` — Every intent, with its derived stage and verdict
 
-Every intent the project model declares, each with the status the plan derives for its milestones, the state of the evidence behind each satisfaction criterion, and the stage those two derive: declared, planned, executing, verifying or satisfied — or cancelled or superseded, when the record says so.
+Every intent the project model declares, each with the status the plan derives for its milestones, the state of the evidence behind each satisfaction criterion, the stage those two derive — declared, planned, executing, verifying or satisfied, or cancelled or superseded when the record says so — and the verdict the criteria alone derive (ADR 0107): satisfied when every criterion is met, unsatisfied when a test or claim criterion is not, unknown when only command or deployment criteria are unmet or none is declared, with the criteria holding it back.
 
 | | |
 |---|---|
@@ -73,7 +73,7 @@ Output: `IntentPreflight`.
 
 ## `intents.record` — One intent, with everything derived about it
 
-One intent in full: its statement and invariants as authored, each milestone with the status the plan derives, each satisfaction criterion with the state of its evidence and the command that reproduces it, and the stage. The record's own file stays at `majordomus://intent/<id>`.
+One intent in full: its statement and invariants as authored, each milestone with the status the plan derives, each satisfaction criterion with the state of its evidence and the command that reproduces it, the stage, and the verdict the criteria alone derive with the criteria holding it back. The record's own file stays at `majordomus://intent/<id>`.
 
 | | |
 |---|---|

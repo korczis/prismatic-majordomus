@@ -8,7 +8,9 @@
 # recorded run. The finish must succeed and change nothing about the intent: the stage stays
 # `verifying`, the criterion stays `not_run`, and no file under the intents directory moves.
 # Then a passing run is recorded, and that alone satisfies the intent — so the fixture can be
-# satisfied, and the finish is not failing to satisfy it for a reason of its own.
+# satisfied, and the finish is not failing to satisfy it for a reason of its own. The verdict,
+# which the criteria alone derive (ADR 0107), moves with the evidence and never with the finish:
+# `unsatisfied` before and after it, `satisfied` once the run is recorded.
 #
 # It never skips: an executable is required, so a machine without one fails here instead of
 # reporting a pass it never measured.
@@ -60,6 +62,7 @@ git add -A >/dev/null && git commit -qm install
 
 stage() { "$RB" intent show probe --format json | jq -r '.stage'; }
 state() { "$RB" intent show probe --format json | jq -r '.satisfaction[0].state'; }
+verdict() { "$RB" intent show probe --format json | jq -r '.verdict.state'; }
 same() { [ "$2" = "$3" ] || { printf '    %s: expected %s, got %s\n' "$1" "$2" "$3"; exit 1; }; }
 D="$(mktemp -d "${TMPDIR:-/tmp}/mj-895.XXXXXX")"; trap 'rm -rf "$D"' EXIT
 intents_digest() { # every intent file, names and contents, as one digest
@@ -71,6 +74,7 @@ intents_digest() { # every intent file, names and contents, as one digest
 expect_exit 0 "$RB" intent validate
 same "a DONE milestone and no recorded run" "verifying" "$(stage)"
 same "no recorded run" "not_run" "$(state)"
+same "the verdict with no recorded run" "unsatisfied" "$(verdict)"
 before="$(intents_digest)"
 
 # --- a task is started, does its work and is finished as completed
@@ -84,6 +88,10 @@ expect_grep '^outcome: completed$' .ai/local/state/current.yaml
 # --- and the intent is exactly as the plan and the evidence derive it: not satisfied
 same "after a completed finish, the stage" "verifying" "$(stage)"
 same "after a completed finish, the criterion" "not_run" "$(state)"
+same "after a completed finish, the verdict" "unsatisfied" "$(verdict)"
+# closed work and an unsatisfied verdict disagree, and the realization names the criterion
+expect_exit 0 "$RB" intent realization --intent probe
+expect_grep 'WARN closed_work_not_satisfied  probe: .*verdict is unsatisfied: held back by `probe-passes` \(test not_run\)'
 same "the intents directory after the finish" "$before" "$(intents_digest)"
 [ -z "$(git status --porcelain -- .ai/repo/project/intents)" ] \
   || { echo "    the finish left a change under .ai/repo/project/intents:"
@@ -101,3 +109,4 @@ jq -n --arg d "$digest" --arg c "$commit" '{version: 1, executions: [{
 git add -A >/dev/null && git commit -qm "record the probe's run"
 same "a recorded passing run" "current" "$(state)"
 same "a DONE milestone and current evidence" "satisfied" "$(stage)"
+same "the verdict once the passing run is recorded" "satisfied" "$(verdict)"

@@ -11,7 +11,7 @@ use serde_json::json;
 
 use crate::capability::Context;
 use crate::http::router::percent_encode;
-use crate::intent::{IntentEvidenceState, IntentStage};
+use crate::intent::{IntentEvidenceState, IntentStage, IntentVerdictState};
 use crate::intent_realization::{
     IntentExplanation, IntentLinkProvenance, IntentRealization, IntentRealizedWork,
 };
@@ -33,6 +33,16 @@ fn stage_badge(stage: IntentStage) -> El {
         IntentStage::Declared | IntentStage::Planned => "neutral",
     };
     badge(status, stage.as_str())
+}
+
+/// The status colour a verdict is read in, the verdict itself being the label.
+fn verdict_badge(verdict: IntentVerdictState) -> El {
+    let status = match verdict {
+        IntentVerdictState::Satisfied => "ok",
+        IntentVerdictState::Unsatisfied => "bad",
+        IntentVerdictState::Unknown => "neutral",
+    };
+    badge(status, verdict.as_str())
 }
 
 fn evidence_badge(state: IntentEvidenceState) -> El {
@@ -256,6 +266,7 @@ pub fn intent(ctx: &Context, id: &str) -> Page {
             .child(criteria_bar(i.met, total))
             .child(facts(vec![
                 ("Stage", Node::Element(stage_badge(i.stage))),
+                ("Verdict", Node::Element(verdict_badge(i.verdict.state))),
                 (
                     "Record",
                     Node::Element(object_link(ctx, "intent", &i.id, &i.source)),
@@ -401,6 +412,18 @@ mod tests {
         ] {
             let html = stage_badge(stage).render();
             assert_eq!(html, badge(status, stage.as_str()).render(), "{stage:?}");
+        }
+        for (verdict, status) in [
+            (IntentVerdictState::Satisfied, "ok"),
+            (IntentVerdictState::Unsatisfied, "bad"),
+            (IntentVerdictState::Unknown, "neutral"),
+        ] {
+            let html = verdict_badge(verdict).render();
+            assert_eq!(
+                html,
+                badge(status, verdict.as_str()).render(),
+                "{verdict:?}"
+            );
         }
         for (state, status, label) in [
             (IntentEvidenceState::Current, "ok", "current"),

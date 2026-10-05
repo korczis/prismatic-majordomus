@@ -72,7 +72,7 @@ tags:
   - name: intent_realization
     description: "Which work realises which intent: every task of this checkout's ledger with the episodes, providers and handovers that carried it, every closed session record and every claim on the peer board, joined through the plan to the intents they serve, each link marked declared, observed, derived or inferred; each intent's unmet criteria with the issues serving them; and the drift between closed work and current evidence. Derived on every read and stored nowhere, so an intent outlives every session and provider that worked on it."
   - name: intents
-    description: "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, and each criterion's state derived from the evidence ledger. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere."
+    description: "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, each criterion's state derived from the evidence ledger, and its verdict derived from those criteria alone. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere."
   - name: knowledge_base
     description: "What the knowledge deriver left for review and whether it is still writing: the candidate records awaiting promotion with the branch of the episode each came from, one record by id with every reference it names resolved against the index, the ledger and git, and the derivation status of this checkout judged against the policy's freshness thresholds. Read from the index and the ledger; written by nothing here — the deriver is the shell tool's, and a person promotes."
   - name: lifecycle
@@ -4254,14 +4254,14 @@ paths:
   "/api/v1/intents":
     get:
       operationId: intents.list
-      summary: "Every intent, with its derived stage"
-      description: "Every intent the project model declares, each with the status the plan derives for its milestones, the state of the evidence behind each satisfaction criterion, and the stage those two derive: declared, planned, executing, verifying or satisfied — or cancelled or superseded, when the record says so."
+      summary: "Every intent, with its derived stage and verdict"
+      description: "Every intent the project model declares, each with the status the plan derives for its milestones, the state of the evidence behind each satisfaction criterion, the stage those two derive — declared, planned, executing, verifying or satisfied, or cancelled or superseded when the record says so — and the verdict the criteria alone derive (ADR 0107): satisfied when every criterion is met, unsatisfied when a test or claim criterion is not, unknown when only command or deployment criteria are unmet or none is declared, with the criteria holding it back."
       tags:
         - intents
       parameters: []
       responses:
         "200":
-          description: "Every intent, with its derived stage: the result."
+          description: "Every intent, with its derived stage and verdict: the result."
           content:
             "application/json":
               schema:
@@ -4498,7 +4498,7 @@ paths:
     get:
       operationId: intent_realization.work
       summary: "Which work realises which intent, and what each still lacks"
-      description: "Every unit of work this checkout can see — ledger tasks with their episodes, providers and handovers, closed session records, peer claims — with every intent it realises through issue, milestone and criterion, each link's provenance (declared: the work cites the issue; observed: its episode moved the issue; derived: its branch names the issue; inferred: only an open issue's scope overlaps) or the first missing link; every intent with its unmet criteria and the issues serving each, the work and providers realising it, and its drift: closed_work_contradicted when every milestone is DONE and a criterion's evidence is stale or failing, closed_work_unproven when it never existed, criterion_closed_unmet when every serving issue is DONE and the criterion is not met. Live work serving no intent is a warning."
+      description: "Every unit of work this checkout can see — ledger tasks with their episodes, providers and handovers, closed session records, peer claims — with every intent it realises through issue, milestone and criterion, each link's provenance (declared: the work cites the issue; observed: its episode moved the issue; derived: its branch names the issue; inferred: only an open issue's scope overlaps) or the first missing link; every intent with its unmet criteria and the issues serving each, the work and providers realising it, and its drift: closed_work_contradicted when every milestone is DONE and a criterion's evidence is stale or failing, closed_work_unproven when it never existed, criterion_closed_unmet when every serving issue is DONE and the criterion is not met; and where the stage and the verdict disagree (ADR 0107), evidence_ahead_of_plan when the verdict is satisfied while the stage is planned or executing, closed_work_not_satisfied when every milestone is DONE and the verdict is unsatisfied or unknown. Live work serving no intent is a warning."
       tags:
         - intent_realization
       parameters:
@@ -4560,7 +4560,7 @@ paths:
     get:
       operationId: intents.record
       summary: "One intent, with everything derived about it"
-      description: "One intent in full: its statement and invariants as authored, each milestone with the status the plan derives, each satisfaction criterion with the state of its evidence and the command that reproduces it, and the stage. The record's own file stays at `majordomus://intent/<id>`."
+      description: "One intent in full: its statement and invariants as authored, each milestone with the status the plan derives, each satisfaction criterion with the state of its evidence and the command that reproduces it, the stage, and the verdict the criteria alone derive with the criteria holding it back. The record's own file stays at `majordomus://intent/<id>`."
       tags:
         - intents
       parameters:
@@ -22355,6 +22355,13 @@ components:
             format: uint
             minimum: 0
           description: "How many in each stage, keyed by the stage word."
+        verdicts:
+          type: object
+          additionalProperties:
+            type: integer
+            format: uint
+            minimum: 0
+          description: "How many with each verdict, keyed by the verdict word."
         intents:
           type: array
           items:
@@ -22363,8 +22370,9 @@ components:
       required:
         - count
         - stages
+        - verdicts
         - intents
-      description: "Every intent, with its derived stage, and how many there are in each stage: what\n`majordomus intent list`, `GET /api/v1/intents` and the `majordomus_intents` tool all answer\nwith, out of one derivation.\n\n```\nuse majordomus_cli::capability::builtin::intents::IntentList;\nlet empty = IntentList {\n    count: 0,\n    stages: std::collections::BTreeMap::new(),\n    intents: vec![],\n};\n// a repository that declares no intent answers the route, with nothing in it\nassert_eq!(empty.count, 0);\n```"
+      description: "Every intent, with its derived stage and verdict, and how many there are in each: what\n`majordomus intent list`, `GET /api/v1/intents` and the `majordomus_intents` tool all answer\nwith, out of one derivation.\n\n```\nuse majordomus_cli::capability::builtin::intents::IntentList;\nlet empty = IntentList {\n    count: 0,\n    stages: std::collections::BTreeMap::new(),\n    verdicts: std::collections::BTreeMap::new(),\n    intents: vec![],\n};\n// a repository that declares no intent answers the route, with nothing in it\nassert_eq!(empty.count, 0);\n```"
     IntentMilestone:
       type: object
       properties:
@@ -22630,6 +22638,50 @@ components:
         - warnings
         - findings
       description: "What the intent model refuses: whether it is valid, how many intents were examined, and\nevery finding with its level. Warnings are reported and do not make it invalid.\n\n```\nuse majordomus_cli::capability::builtin::intents::IntentValidation;\nlet v = IntentValidation {\n    valid: true,\n    intents: 2,\n    failures: 0,\n    warnings: 20,\n    findings: vec![],\n};\n// twenty warnings and no failure is a valid model\nassert!(v.valid);\n```"
+    IntentVerdict:
+      type: object
+      properties:
+        state:
+          "$ref": "#/components/schemas/IntentVerdictState"
+          description: "Derived: what the evidence says."
+        reasons:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IntentVerdictReason"
+          description: "Every criterion that is not met, with the state of its evidence."
+      required:
+        - state
+        - reasons
+      description: "Whether the evidence alone settles an intent, and which criteria hold it back: every\nunmet criterion, in the order the record declares them. Empty when the verdict is\n`satisfied`, and when it is `unknown` because the intent declares no criterion.\n\n```\nuse majordomus_cli::intent::{verdict, IntentVerdict, IntentVerdictState};\n// an intent that declares no criterion cannot be settled by evidence\nlet v: IntentVerdict = verdict(&[]);\nassert_eq!(v.state, IntentVerdictState::Unknown);\nassert!(v.reasons.is_empty());\n```"
+    IntentVerdictReason:
+      type: object
+      properties:
+        criterion:
+          type: string
+          description: "The criterion's id."
+        evidence:
+          type: string
+          description: "Its kind of evidence: `test`, `claim`, `command` or `deployment`."
+        state:
+          "$ref": "#/components/schemas/IntentEvidenceState"
+          description: "The state of that evidence, as the criterion reports it."
+      required:
+        - criterion
+        - evidence
+        - state
+      description: "One criterion that holds a verdict back from `satisfied`: which one, the kind of evidence\nit names, and the state that evidence is in — the criterion's own words, not new ones.\n\n```\nuse majordomus_cli::intent::{IntentEvidenceState, IntentVerdictReason};\nlet r = IntentVerdictReason {\n    criterion: \"probe-passes\".into(),\n    evidence: \"test\".into(),\n    state: IntentEvidenceState::NotRun,\n};\nassert_eq!(r.state, IntentEvidenceState::NotRun);\n```"
+    IntentVerdictState:
+      oneOf:
+        - type: string
+          const: satisfied
+          description: Every criterion has current evidence.
+        - type: string
+          const: unsatisfied
+          description: "A criterion the ledger or the claim join can settle (`test`, `claim`) is not met."
+        - type: string
+          const: unknown
+          description: "Every unmet criterion is of a kind the ledger cannot yet settle (`command`,\n`deployment`), or the intent declares no criterion: the evidence cannot answer."
+      description: "What the evidence alone says about an intent, as a word: derived from its criteria and\nnever from the plan, so it can read `satisfied` while a milestone is still open (ADR 0107).\n\n```\nuse majordomus_cli::intent::IntentVerdictState;\nlet word = serde_json::to_string(&IntentVerdictState::Unsatisfied).unwrap();\nassert_eq!(word, \"\\\"unsatisfied\\\"\");\nassert_eq!(IntentVerdictState::Satisfied.as_str(), \"satisfied\");\n```"
     IntentView:
       type: object
       properties:
@@ -22665,6 +22717,9 @@ components:
           format: uint
           minimum: 0
           description: "Derived: how many criteria are met."
+        verdict:
+          "$ref": "#/components/schemas/IntentVerdict"
+          description: "Derived from the criteria alone, never from the plan: whether the evidence settles the\nintent, and which criteria hold it back."
         governance:
           type: array
           items:
@@ -22692,10 +22747,11 @@ components:
         - milestones
         - satisfaction
         - met
+        - verdict
         - governance
         - non_goals
         - source
-      description: "One intent, as its record declares it and as the plan and the ledger derive it: the\nstatement and invariants as authored, each milestone with its derived status, each criterion\nwith the state of its evidence, and the stage that follows from both.\n\n```\nuse majordomus_cli::intent::{IntentStage, IntentView};\nlet view = IntentView {\n    id: \"intent-lifecycle\".into(),\n    title: \"Work is traceable to the intent it serves\".into(),\n    statement: \"A reader can ask what work is for.\".into(),\n    invariants: vec![\"no intent status is stored\".into()],\n    stage: IntentStage::Declared,\n    milestones: vec![],\n    satisfaction: vec![],\n    met: 0,\n    governance: vec![\"adr:adr-0070\".into()],\n    non_goals: vec![],\n    superseded_by: None,\n    source: \".ai/repo/project/intents/intent-lifecycle.yaml\".into(),\n};\n// a record naming no milestone that resolves has not been planned\nassert_eq!(view.stage, IntentStage::Declared);\n```"
+      description: "One intent, as its record declares it and as the plan and the ledger derive it: the\nstatement and invariants as authored, each milestone with its derived status, each criterion\nwith the state of its evidence, the stage that follows from both, and the verdict that\nfollows from the evidence alone.\n\n```\nuse majordomus_cli::intent::{verdict, IntentStage, IntentVerdictState, IntentView};\nlet view = IntentView {\n    id: \"intent-lifecycle\".into(),\n    title: \"Work is traceable to the intent it serves\".into(),\n    statement: \"A reader can ask what work is for.\".into(),\n    invariants: vec![\"no intent status is stored\".into()],\n    stage: IntentStage::Declared,\n    milestones: vec![],\n    satisfaction: vec![],\n    met: 0,\n    verdict: verdict(&[]),\n    governance: vec![\"adr:adr-0070\".into()],\n    non_goals: vec![],\n    superseded_by: None,\n    source: \".ai/repo/project/intents/intent-lifecycle.yaml\".into(),\n};\n// a record naming no milestone that resolves has not been planned\nassert_eq!(view.stage, IntentStage::Declared);\n// and one declaring no criterion cannot be settled by evidence\nassert_eq!(view.verdict.state, IntentVerdictState::Unknown);\n```"
     IntentWorkKind:
       oneOf:
         - type: string

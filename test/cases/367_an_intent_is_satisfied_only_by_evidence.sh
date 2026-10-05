@@ -10,6 +10,10 @@
 # satisfaction away again, with no file about the intent touched. Then it breaks a link and
 # asserts the refusal names it.
 #
+# Beside the stage it reads the verdict, which the criteria alone derive (ADR 0107): the
+# recorded run makes it `satisfied` while the stage still reads `planned`, and the realization
+# reports that disagreement as `evidence_ahead_of_plan` drift without changing the stage.
+#
 # It never skips: an executable is required, so a machine without one fails here instead of
 # reporting a pass it never measured.
 . "$ROOT/test/lib.sh"
@@ -63,12 +67,16 @@ git add -A >/dev/null && git commit -qm install
 
 stage() { "$RB" intent show probe --format json | jq -r '.stage'; }
 state() { "$RB" intent show probe --format json | jq -r '.satisfaction[0].state'; }
+verdict() { "$RB" intent show probe --format json | jq -r '.verdict.state'; }
 same() { [ "$2" = "$3" ] || { printf '    %s: expected %s, got %s\n' "$1" "$2" "$3"; exit 1; }; }
 
 expect_exit 0 "$RB" intent validate
 expect_grep '1 intent\(s\), 0 failure'
 same "nothing recorded" "not_run" "$(state)"
 same "an open milestone and no evidence" "planned" "$(stage)"
+same "the verdict of a test with no recorded run" "unsatisfied" "$(verdict)"
+same "the criterion holding the verdict back" "probe-passes not_run" \
+  "$("$RB" intent show probe --format json | jq -r '.verdict.reasons[] | "\(.criterion) \(.state)"')"
 
 # --- a passing run of the case that is in the tree, recorded
 record() { # <outcome>
@@ -86,6 +94,10 @@ record() { # <outcome>
 record pass
 same "a recorded passing run" "current" "$(state)"
 same "evidence while the milestone is open" "planned" "$(stage)"
+same "the verdict while the milestone is open" "satisfied" "$(verdict)"
+# the disagreement is drift, reported as a warning: the realization still exits 0
+expect_exit 0 "$RB" intent realization --intent probe
+expect_grep 'WARN evidence_ahead_of_plan  probe: .*stage is planned \(probe is '
 
 # --- the milestone's own evidence closes it; now, and only now, the intent is satisfied
 milestone 'evidence:
@@ -94,6 +106,9 @@ milestone 'evidence:
     command: "true"'
 git add -A >/dev/null && git commit -qm "close the milestone"
 same "a closed milestone and current evidence" "satisfied" "$(stage)"
+same "the verdict once the milestone closes" "satisfied" "$(verdict)"
+expect_exit 0 "$RB" intent realization --intent probe
+expect_no_grep 'evidence_ahead_of_plan|closed_work_not_satisfied'
 
 # --- the MCP tool answers the same record the command shows
 # intents.record is projected as the MCP tool majordomus_intent_record, and a tool nothing
@@ -117,7 +132,7 @@ jq -e '.result.isError != true and (.result.structuredContent | type) == "object
   head -c 600 "$M/mcp.json" | sed 's/^/      /'; echo
   sed 's/^/      | /' "$M/mcp.err" | head -5; exit 1; }
 "$RB" intent show probe --format json > "$M/cli.json"
-view='{id, stage, criteria: [.satisfaction[] | {id, state}]}'
+view='{id, stage, verdict, criteria: [.satisfaction[] | {id, state}]}'
 jq -e --slurpfile cli "$M/cli.json" \
   "(.result.structuredContent | $view) == (\$cli[0] | $view) and .result.structuredContent.stage == \"satisfied\"" \
   "$M/mcp.json" >/dev/null || {
@@ -135,6 +150,7 @@ printf '. "$ROOT/test/lib.sh"\nfalse\n' > test/cases/01_probe.sh
 git add -A >/dev/null && git commit -qm "change the probe"
 same "a run of a test that has since changed" "stale" "$(state)"
 same "stale evidence" "verifying" "$(stage)"
+same "the verdict over stale evidence" "unsatisfied" "$(verdict)"
 
 # --- a failing run is not evidence either
 record fail

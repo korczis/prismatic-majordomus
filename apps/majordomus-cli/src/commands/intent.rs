@@ -224,15 +224,16 @@ fn list_text(v: &Value) -> String {
         .unwrap_or(2)
         .max(2);
     let mut out = vec![format!(
-        "{:<width$}  {:<10}  {:<7}  TITLE",
-        "ID", "STAGE", "MET"
+        "{:<width$}  {:<10}  {:<11}  {:<7}  TITLE",
+        "ID", "STAGE", "VERDICT", "MET"
     )];
     for i in &intents {
         let total = i["satisfaction"].as_array().map_or(0, Vec::len);
         out.push(format!(
-            "{:<width$}  {:<10}  {:<7}  {}",
+            "{:<width$}  {:<10}  {:<11}  {:<7}  {}",
             s(i, "id"),
             s(i, "stage"),
+            s(&i["verdict"], "state"),
             format!("{}/{total}", i["met"]),
             s(i, "title"),
         ));
@@ -289,7 +290,12 @@ fn show_text(v: &Value) -> String {
         String::new(),
         format!("  {}", s(v, "statement")),
         String::new(),
-        format!("  stage {}   source {}", s(v, "stage"), s(v, "source")),
+        format!(
+            "  stage {}   verdict {}   source {}",
+            s(v, "stage"),
+            s(&v["verdict"], "state"),
+            s(v, "source")
+        ),
     ];
     for inv in v["invariants"].as_array().into_iter().flatten() {
         out.push(format!("  invariant   {}", inv.as_str().unwrap_or("")));
@@ -312,6 +318,14 @@ fn show_text(v: &Value) -> String {
                 .as_str()
                 .map(|r| format!("  [reproduce: {r}]"))
                 .unwrap_or_default()
+        ));
+    }
+    for r in v["verdict"]["reasons"].as_array().into_iter().flatten() {
+        out.push(format!(
+            "  held back   {}  {} {}",
+            s(r, "criterion"),
+            s(r, "evidence"),
+            s(r, "state"),
         ));
     }
     for g in v["governance"].as_array().into_iter().flatten() {
@@ -422,6 +436,35 @@ mod tests {
             }
             other => panic!("a preflight of nothing answered: {other:?}"),
         }
+    }
+
+    #[test]
+    fn list_and_show_print_the_verdict_beside_the_stage() {
+        let intent = json!({
+            "id": "probe", "title": "Probe", "statement": "True.", "stage": "executing",
+            "source": "s.yaml", "met": 1,
+            "satisfaction": [{"id": "a"}, {"id": "b"}],
+            "verdict": {"state": "unknown",
+                        "reasons": [{"criterion": "b", "evidence": "command",
+                                     "state": "not_derivable"}]},
+        });
+        let list = list_text(&json!({ "count": 1, "intents": [intent] }));
+        assert_eq!(
+            list.lines().take(2).collect::<Vec<_>>(),
+            [
+                "ID     STAGE       VERDICT      MET      TITLE",
+                "probe  executing   unknown      1/2      Probe",
+            ]
+        );
+        let show = show_text(&intent);
+        assert!(
+            show.contains("  stage executing   verdict unknown   source s.yaml"),
+            "{show}"
+        );
+        assert!(
+            show.contains("  held back   b  command not_derivable"),
+            "{show}"
+        );
     }
 
     #[test]

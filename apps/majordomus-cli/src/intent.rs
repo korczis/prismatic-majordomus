@@ -25,10 +25,19 @@
 //! `cancelled` and `superseded` are what the record says happened to it, as for a
 //! milestone. Nothing else is.
 //!
+//! Beside the stage stands the **verdict** (ADR 0107): the evidence question alone, derived
+//! from the criteria and never from the plan. It is `satisfied` when every criterion is met,
+//! `unsatisfied` when a criterion the ledger or the claim join can settle (`test`, `claim`) is
+//! not, and `unknown` when every unmet criterion is of a kind the ledger cannot yet settle
+//! (`command`, `deployment`) or the intent declares none. DONE neither implies it nor is
+//! required for it, so an intent whose criteria all hold while a milestone is open reads a
+//! `satisfied` verdict at stage `executing` — a disagreement the realization reports as drift.
+//!
 //! ```
-//! use majordomus_cli::intent::IntentStage;
+//! use majordomus_cli::intent::{IntentStage, IntentVerdictState};
 //! assert_eq!(IntentStage::Satisfied.as_str(), "satisfied");
 //! assert!(IntentStage::Verifying < IntentStage::Satisfied);
+//! assert_eq!(IntentVerdictState::Unknown.as_str(), "unknown");
 //! ```
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -134,6 +143,151 @@ pub enum IntentEvidenceState {
     NotDerivable,
     /// The reference is empty or names nothing this repository holds.
     Unresolved,
+}
+
+impl IntentEvidenceState {
+    /// The word every surface prints for this state, the same one serde writes.
+    ///
+    /// ```
+    /// use majordomus_cli::intent::IntentEvidenceState;
+    /// assert_eq!(IntentEvidenceState::NotDerivable.as_str(), "not_derivable");
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            IntentEvidenceState::Current => "current",
+            IntentEvidenceState::Stale => "stale",
+            IntentEvidenceState::Failing => "failing",
+            IntentEvidenceState::NotRun => "not_run",
+            IntentEvidenceState::NotDerivable => "not_derivable",
+            IntentEvidenceState::Unresolved => "unresolved",
+        }
+    }
+}
+
+/// What the evidence alone says about an intent, as a word: derived from its criteria and
+/// never from the plan, so it can read `satisfied` while a milestone is still open (ADR 0107).
+///
+/// ```
+/// use majordomus_cli::intent::IntentVerdictState;
+/// let word = serde_json::to_string(&IntentVerdictState::Unsatisfied).unwrap();
+/// assert_eq!(word, "\"unsatisfied\"");
+/// assert_eq!(IntentVerdictState::Satisfied.as_str(), "satisfied");
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum IntentVerdictState {
+    /// Every criterion has current evidence.
+    Satisfied,
+    /// A criterion the ledger or the claim join can settle (`test`, `claim`) is not met.
+    Unsatisfied,
+    /// Every unmet criterion is of a kind the ledger cannot yet settle (`command`,
+    /// `deployment`), or the intent declares no criterion: the evidence cannot answer.
+    Unknown,
+}
+
+impl IntentVerdictState {
+    /// The word every surface prints for this verdict, the same one serde writes.
+    ///
+    /// ```
+    /// use majordomus_cli::intent::IntentVerdictState;
+    /// assert_eq!(IntentVerdictState::Unsatisfied.as_str(), "unsatisfied");
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            IntentVerdictState::Satisfied => "satisfied",
+            IntentVerdictState::Unsatisfied => "unsatisfied",
+            IntentVerdictState::Unknown => "unknown",
+        }
+    }
+}
+
+/// One criterion that holds a verdict back from `satisfied`: which one, the kind of evidence
+/// it names, and the state that evidence is in — the criterion's own words, not new ones.
+///
+/// ```
+/// use majordomus_cli::intent::{IntentEvidenceState, IntentVerdictReason};
+/// let r = IntentVerdictReason {
+///     criterion: "probe-passes".into(),
+///     evidence: "test".into(),
+///     state: IntentEvidenceState::NotRun,
+/// };
+/// assert_eq!(r.state, IntentEvidenceState::NotRun);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct IntentVerdictReason {
+    /// The criterion's id.
+    pub criterion: String,
+    /// Its kind of evidence: `test`, `claim`, `command` or `deployment`.
+    pub evidence: String,
+    /// The state of that evidence, as the criterion reports it.
+    pub state: IntentEvidenceState,
+}
+
+/// Whether the evidence alone settles an intent, and which criteria hold it back: every
+/// unmet criterion, in the order the record declares them. Empty when the verdict is
+/// `satisfied`, and when it is `unknown` because the intent declares no criterion.
+///
+/// ```
+/// use majordomus_cli::intent::{verdict, IntentVerdict, IntentVerdictState};
+/// // an intent that declares no criterion cannot be settled by evidence
+/// let v: IntentVerdict = verdict(&[]);
+/// assert_eq!(v.state, IntentVerdictState::Unknown);
+/// assert!(v.reasons.is_empty());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct IntentVerdict {
+    /// Derived: what the evidence says.
+    pub state: IntentVerdictState,
+    /// Every criterion that is not met, with the state of its evidence.
+    pub reasons: Vec<IntentVerdictReason>,
+}
+
+/// Whether the ledger or the claim join can settle a criterion of this evidence kind.
+fn ledger_settles(evidence: &str) -> bool {
+    matches!(evidence, "test" | "claim")
+}
+
+/// The verdict of an intent from its criteria alone. Pure: no plan, no index, no ledger — the
+/// criteria already carry what the evidence said.
+///
+/// ```
+/// use majordomus_cli::intent::{verdict, IntentCriterion, IntentEvidenceState, IntentVerdictState};
+/// let c = |evidence: &str, state: IntentEvidenceState| IntentCriterion {
+///     id: evidence.into(), criterion: "c".into(), evidence: evidence.into(),
+///     reference: "r".into(), met: state == IntentEvidenceState::Current, state,
+///     reproduce: None,
+/// };
+/// let met = c("test", IntentEvidenceState::Current);
+/// assert_eq!(verdict(&[met.clone()]).state, IntentVerdictState::Satisfied);
+/// // a command the ledger cannot run leaves the evidence unable to answer
+/// let cmd = c("command", IntentEvidenceState::NotDerivable);
+/// assert_eq!(verdict(&[met.clone(), cmd.clone()]).state, IntentVerdictState::Unknown);
+/// // a test the ledger can settle, and has not, says no
+/// let unmet = c("test", IntentEvidenceState::NotRun);
+/// let v = verdict(&[met, cmd, unmet]);
+/// assert_eq!(v.state, IntentVerdictState::Unsatisfied);
+/// assert_eq!(v.reasons.len(), 2);
+/// ```
+pub fn verdict(criteria: &[IntentCriterion]) -> IntentVerdict {
+    let reasons: Vec<IntentVerdictReason> = criteria
+        .iter()
+        .filter(|c| !c.met)
+        .map(|c| IntentVerdictReason {
+            criterion: c.id.clone(),
+            evidence: c.evidence.clone(),
+            state: c.state,
+        })
+        .collect();
+    let state = if criteria.is_empty() {
+        IntentVerdictState::Unknown
+    } else if reasons.is_empty() {
+        IntentVerdictState::Satisfied
+    } else if reasons.iter().any(|r| ledger_settles(&r.evidence)) {
+        IntentVerdictState::Unsatisfied
+    } else {
+        IntentVerdictState::Unknown
+    };
+    IntentVerdict { state, reasons }
 }
 
 // ---------------------------------------------------------------- the record as authored
@@ -548,10 +702,11 @@ pub struct IntentCriterion {
 
 /// One intent, as its record declares it and as the plan and the ledger derive it: the
 /// statement and invariants as authored, each milestone with its derived status, each criterion
-/// with the state of its evidence, and the stage that follows from both.
+/// with the state of its evidence, the stage that follows from both, and the verdict that
+/// follows from the evidence alone.
 ///
 /// ```
-/// use majordomus_cli::intent::{IntentStage, IntentView};
+/// use majordomus_cli::intent::{verdict, IntentStage, IntentVerdictState, IntentView};
 /// let view = IntentView {
 ///     id: "intent-lifecycle".into(),
 ///     title: "Work is traceable to the intent it serves".into(),
@@ -561,6 +716,7 @@ pub struct IntentCriterion {
 ///     milestones: vec![],
 ///     satisfaction: vec![],
 ///     met: 0,
+///     verdict: verdict(&[]),
 ///     governance: vec!["adr:adr-0070".into()],
 ///     non_goals: vec![],
 ///     superseded_by: None,
@@ -568,6 +724,8 @@ pub struct IntentCriterion {
 /// };
 /// // a record naming no milestone that resolves has not been planned
 /// assert_eq!(view.stage, IntentStage::Declared);
+/// // and one declaring no criterion cannot be settled by evidence
+/// assert_eq!(view.verdict.state, IntentVerdictState::Unknown);
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IntentView {
@@ -587,6 +745,9 @@ pub struct IntentView {
     pub satisfaction: Vec<IntentCriterion>,
     /// Derived: how many criteria are met.
     pub met: usize,
+    /// Derived from the criteria alone, never from the plan: whether the evidence settles the
+    /// intent, and which criteria hold it back.
+    pub verdict: IntentVerdict,
     /// The governance a worker on this intent loads.
     pub governance: Vec<String>,
     /// What is deliberately not required.
@@ -1048,6 +1209,7 @@ impl Intents {
                 invariants: r.invariants.clone(),
                 stage: stage(r.cancelled, !r.superseded_by.is_empty(), &statuses, all_met),
                 milestones,
+                verdict: verdict(&satisfaction),
                 satisfaction,
                 met,
                 governance: r.governance.clone(),
@@ -1516,6 +1678,10 @@ mod tests {
         }
     }
 
+    /// The stage still waits for the plan, and since ADR 0107 the evidence's own answer is no
+    /// longer hidden behind it: with every criterion current and the milestone ACTIVE, the
+    /// stage reads `executing` and the verdict reads `satisfied`. The stage expectation is
+    /// unchanged; the verdict is what this test now adds.
     #[test]
     fn evidence_satisfies_nothing_while_a_milestone_is_open() {
         let p = plan(vec![milestone("m", "ACTIVE")], vec![]);
@@ -1523,6 +1689,121 @@ mod tests {
         let i = Intents::derive(vec![record("x", &["m"], &[CASE])], &p, &ev);
         assert_eq!(i.intents[0].met, 1, "the criterion itself is met");
         assert_eq!(i.intents[0].stage, IntentStage::Executing);
+        assert_eq!(i.intents[0].verdict.state, IntentVerdictState::Satisfied);
+        assert!(i.intents[0].verdict.reasons.is_empty());
+    }
+
+    #[test]
+    fn the_verdict_is_unknown_when_only_a_kind_the_ledger_cannot_settle_is_unmet() {
+        let p = plan(vec![milestone("m", "ACTIVE")], vec![]);
+        let ev = Table::new().with_test("suite:1_x", IntentEvidenceState::Current);
+        let i = Intents::derive(
+            vec![record(
+                "x",
+                &["m"],
+                &[
+                    CASE,
+                    ("ships", "command", "just verify"),
+                    ("live", "deployment", "fly"),
+                ],
+            )],
+            &p,
+            &ev,
+        );
+        let v = &i.intents[0].verdict;
+        assert_eq!(v.state, IntentVerdictState::Unknown);
+        let held: Vec<(&str, &str, IntentEvidenceState)> = v
+            .reasons
+            .iter()
+            .map(|r| (r.criterion.as_str(), r.evidence.as_str(), r.state))
+            .collect();
+        assert_eq!(
+            held,
+            [
+                ("ships", "command", IntentEvidenceState::NotDerivable),
+                ("live", "deployment", IntentEvidenceState::NotDerivable),
+            ]
+        );
+        assert_eq!(
+            i.intents[0].stage,
+            IntentStage::Executing,
+            "the stage is the plan's"
+        );
+    }
+
+    #[test]
+    fn the_verdict_is_unsatisfied_when_a_test_the_ledger_can_settle_is_unmet() {
+        // a DONE milestone neither implies the verdict nor is required for it
+        for status in ["ACTIVE", "DONE"] {
+            let p = plan(vec![milestone("m", status)], vec![]);
+            for state in [
+                IntentEvidenceState::NotRun,
+                IntentEvidenceState::Stale,
+                IntentEvidenceState::Failing,
+            ] {
+                let ev = Table::new().with_test("suite:1_x", state);
+                let i = Intents::derive(
+                    vec![record(
+                        "x",
+                        &["m"],
+                        &[CASE, ("ships", "command", "just verify")],
+                    )],
+                    &p,
+                    &ev,
+                );
+                let v = &i.intents[0].verdict;
+                assert_eq!(
+                    v.state,
+                    IntentVerdictState::Unsatisfied,
+                    "{status} {state:?}"
+                );
+                assert_eq!(v.reasons[0].criterion, "case");
+                assert_eq!(v.reasons[0].state, state);
+                assert_eq!(v.reasons.len(), 2, "every unmet criterion is named");
+            }
+        }
+        // an unproven claim says no the same way
+        let p = plan(vec![milestone("m", "DONE")], vec![]);
+        let ev = Table::new().with_claim("c", ProofState::Stale);
+        let i = Intents::derive(vec![record("x", &["m"], &[("k", "claim", "c")])], &p, &ev);
+        assert_eq!(i.intents[0].verdict.state, IntentVerdictState::Unsatisfied);
+        assert_eq!(i.intents[0].stage, IntentStage::Verifying);
+    }
+
+    #[test]
+    fn the_verdict_of_an_intent_declaring_no_criterion_is_unknown() {
+        let p = plan(vec![milestone("m", "DONE")], vec![]);
+        let i = Intents::derive(vec![record("x", &["m"], &[])], &p, &Table::new());
+        assert_eq!(i.intents[0].verdict.state, IntentVerdictState::Unknown);
+        assert!(i.intents[0].verdict.reasons.is_empty());
+        assert!(codes(&i).contains(&"intent_without_criterion"));
+    }
+
+    #[test]
+    fn every_verdict_and_evidence_state_is_printed_as_the_word_it_serialises_to() {
+        for v in [
+            IntentVerdictState::Satisfied,
+            IntentVerdictState::Unsatisfied,
+            IntentVerdictState::Unknown,
+        ] {
+            assert_eq!(
+                serde_json::to_value(v).unwrap(),
+                serde_json::Value::from(v.as_str())
+            );
+        }
+        for s in [
+            IntentEvidenceState::Current,
+            IntentEvidenceState::Stale,
+            IntentEvidenceState::Failing,
+            IntentEvidenceState::NotRun,
+            IntentEvidenceState::NotDerivable,
+            IntentEvidenceState::Unresolved,
+        ] {
+            assert_eq!(
+                serde_json::to_value(s).unwrap(),
+                serde_json::Value::from(s.as_str())
+            );
+        }
     }
 
     #[test]
