@@ -187,7 +187,7 @@ pub fn run(args: PrsArgs) -> Result<u8> {
         } => {
             let base = executor_base(&root).map_err(unusable)?;
             // the lease for the whole run: a second worker is refused here, before it acts
-            let lease = IntegrationLease::acquire(&root, &base).map_err(unusable)?;
+            let lease = integration::exclusive::acquire(&root, &base).map_err(unusable)?;
             if resume_after_failure {
                 drain::acknowledge_failure(&root, RESUMED_BY).map_err(unusable)?;
             }
@@ -257,7 +257,7 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             let lease = if dry_run {
                 None
             } else {
-                Some(IntegrationLease::acquire(&root, &base).map_err(unusable)?)
+                Some(integration::exclusive::acquire(&root, &base).map_err(unusable)?)
             };
             if resume_after_failure {
                 drain::acknowledge_failure(&root, RESUMED_BY).map_err(unusable)?;
@@ -284,7 +284,7 @@ pub fn run(args: PrsArgs) -> Result<u8> {
         PrsCommand::Cleanup { apply, .. } => {
             let lease = if apply {
                 let base = executor_base(&root).map_err(unusable)?;
-                Some(IntegrationLease::acquire(&root, &base).map_err(unusable)?)
+                Some(integration::exclusive::acquire(&root, &base).map_err(unusable)?)
             } else {
                 None
             };
@@ -471,13 +471,22 @@ fn brief(root: &std::path::Path) -> Option<String> {
                 "lease stale (renewed {} s ago; the next executor takes it over)",
                 l.renewed_seconds_ago
             ),
-            (Some(h), false) => format!("lease held by pid {} on {}", h.pid, h.host),
+            (Some(h), false) => format!(
+                "lease held by pid {} on {}, {}",
+                h.pid,
+                h.host,
+                match &h.mesh_claim {
+                    Some(key) => format!("across machines by mesh claim {key}"),
+                    None => "per-clone guard only".to_string(),
+                }
+            ),
             (None, false) => "lease held (holder unreadable)".into(),
         },
         Ok(None) => "lease free".into(),
         Err(_) => "lease unknown".into(),
     });
-    if let Some(m) = drain::events(root)
+    let trail = drain::events(root);
+    if let Some(m) = trail
         .iter()
         .rev()
         .find(|e| e.action == drain::IntegrationAction::MergeSucceeded)
@@ -488,7 +497,28 @@ fn brief(root: &std::path::Path) -> Option<String> {
             ago(&m.at)
         ));
     }
+    if let Some(e) = last_outcome(&trail) {
+        parts.push(format!(
+            "last {}{} {}",
+            e.action.as_str(),
+            e.pr.map(|n| format!(" #{n}")).unwrap_or_default(),
+            ago(&e.at)
+        ));
+    }
     Some(parts.join("; "))
+}
+
+/// The last event that says how the executor's work last went — a refresh it pushed, a merge
+/// that failed or could not be verified, a decision that went stale — for a person resuming
+/// it. A successful merge is said beside it already; the rest of the trail is detail.
+fn last_outcome(trail: &[drain::IntegrationEvent]) -> Option<&drain::IntegrationEvent> {
+    use drain::IntegrationAction as A;
+    trail.iter().rev().find(|e| {
+        matches!(
+            e.action,
+            A::Refreshed | A::VerificationFailed | A::MergeFailed | A::StaleDecision
+        )
+    })
 }
 
 /// "since 2026-10-01T10:00:00Z (3 h ago), passed over 2× (last for #12)" for an actionable
@@ -1033,6 +1063,41 @@ mod tests {
         assert!(b.contains("master at "), "{b}");
         assert!(b.contains("next merge #1"), "{b}");
         assert!(b.contains("starving #1"), "{b}");
+        assert!(!b.contains("last merge") && !b.contains("; last "), "{b}");
+
+        // the trail's last merge, and the last step that says how the work went: the newest of
+        // a refresh, a failed or unverified merge, a stale decision — a merge is said already
+        let event = |action, pr: Option<u64>| drain::IntegrationEvent {
+            at: "2026-10-01T00:00:00Z".into(),
+            pr,
+            ..drain::IntegrationEvent::of(action)
+        };
+        use drain::IntegrationAction as A;
+        for e in [
+            event(A::MergeFailed, Some(4)),
+            event(A::MergeSucceeded, Some(5)),
+            event(A::StaleDecision, Some(6)),
+            event(A::LeaseReleased, None),
+        ] {
+            drain::record(&s.0, e).expect("recorded");
+        }
+        let lease = IntegrationLease::acquire(&s.0, "master").expect("the lease");
+        let b = brief(&s.0).expect("a brief");
+        assert!(b.contains("last merge #5"), "{b}");
+        assert!(b.contains("last stale_decision #6"), "{b}");
+        assert!(
+            !b.contains("merge_failed"),
+            "only the newest outcome is said: {b}"
+        );
+        assert!(b.contains("per-clone guard only"), "{b}");
+        drop(lease);
+        drain::record(&s.0, event(A::Refreshed, None)).expect("recorded");
+        let b = brief(&s.0).expect("a brief");
+        assert!(
+            b.contains("last refreshed "),
+            "an outcome without a pull request: {b}"
+        );
+
         let empty = std::env::temp_dir().join(format!("mj-prs-empty-{}", std::process::id()));
         std::fs::create_dir_all(&empty).unwrap();
         assert!(

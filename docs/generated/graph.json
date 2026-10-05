@@ -1680,14 +1680,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/order.rs",
-        "kind": "file",
-        "label": "order.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/order.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/product.rs",
         "kind": "file",
         "label": "product.rs",
@@ -3994,6 +3986,7 @@
             "file:apps/majordomus-cli/src/integration/mod.rs",
             "file:apps/majordomus-cli/src/integration/classify.rs",
             "file:apps/majordomus-cli/src/integration/drain.rs",
+            "file:apps/majordomus-cli/src/integration/exclusive.rs",
             "file:apps/majordomus-cli/src/capability/builtin/integration.rs",
             "file:apps/majordomus-cli/src/integration/tests.rs",
             "file:docs/INTEGRATION.md",
@@ -38617,6 +38610,13 @@
         "source": "test/cases/91_canonical_architecture.sh"
       },
       {
+        "id": "majordomus://test/test/cases/924_one_executor_across_machines.sh",
+        "kind": "test",
+        "label": "test/cases/924_one_executor_across_machines.sh",
+        "route": "/cockpit/objects/test/test-cases-924-one-executor-across-machines-sh",
+        "source": "test/cases/924_one_executor_across_machines.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/92_openapi_reference.sh",
         "kind": "test",
         "label": "test/cases/92_openapi_reference.sh",
@@ -44557,11 +44557,6 @@
         "source": "majordomus://adr/adr-0024",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0025",
-        "target": "file:apps/majordomus-cli/src/order.rs",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0025",
@@ -60470,6 +60465,11 @@
       },
       {
         "source": "majordomus://test/test/cases/91_canonical_architecture.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/924_one_executor_across_machines.sh",
         "target": "kind:test",
         "kind": "is_a"
       },

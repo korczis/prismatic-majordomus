@@ -71,6 +71,9 @@ pub struct IntegrationLease {
     root: PathBuf,
     /// The open lock file: closing it gives the `flock` back.
     file: fs::File,
+    /// The repository-wide claim taken with it, released after the lease
+    /// ([`super::exclusive`]); `None` where only this clone is guarded.
+    mesh: Option<super::exclusive::MeshClaim>,
 }
 
 /// Who holds the lease.
@@ -84,6 +87,10 @@ pub struct LeaseHolder {
     pub base: String,
     /// When it was taken, seconds since the epoch.
     pub since: u64,
+    /// The mesh claim that makes it exclusive across machines, `<stream>/<claim>`; absent
+    /// when the lease guards this clone alone ([`super::exclusive`]).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mesh_claim: Option<String>,
 }
 
 /// The common git directory of the repository at `root`: the one every worktree shares.
@@ -100,7 +107,7 @@ pub(super) fn common_dir(root: &Path) -> Result<PathBuf, String> {
     Ok(PathBuf::from(String::from_utf8_lossy(&out.stdout).trim()))
 }
 
-fn host() -> String {
+pub(crate) fn host() -> String {
     std::env::var("HOSTNAME")
         .ok()
         .or_else(|| {
@@ -185,6 +192,17 @@ impl IntegrationLease {
     /// stopped without releasing — is taken over at once. Taking it is recorded
     /// (`lease_acquired`); a lease the trail cannot record is given back at once and refused.
     pub fn acquire(root: &Path, base: &str) -> Result<Self, String> {
+        Self::acquire_holding(root, base, None)
+    }
+
+    /// [`acquire`](Self::acquire), holding `mesh` — the claim taken for it across machines —
+    /// which its record names and which is released after the lease. A lease refused here
+    /// drops the claim, which releases it.
+    pub(crate) fn acquire_holding(
+        root: &Path,
+        base: &str,
+        mesh: Option<super::exclusive::MeshClaim>,
+    ) -> Result<Self, String> {
         let path = Self::path_for(&common_dir(root)?, base);
         if let Some(dir) = path.parent() {
             fs::create_dir_all(dir).map_err(|e| format!("{}: {e}", dir.display()))?;
@@ -194,6 +212,7 @@ impl IntegrationLease {
             host: host(),
             base: base.to_string(),
             since: now_secs(),
+            mesh_claim: mesh.as_ref().map(|m| m.key().to_string()),
         };
         let token = serde_json::to_string(&holder).map_err(|e| e.to_string())?;
         // A holder that releases unlinks the file before it closes it, so an executor that
@@ -238,6 +257,7 @@ impl IntegrationLease {
                 token,
                 root: root.to_path_buf(),
                 file,
+                mesh,
             });
         }
         Err(format!("{}: could not be taken", path.display()))
@@ -301,6 +321,11 @@ impl IntegrationLease {
                 .ok()
         });
         LeaseKeepAlive { stop, thread }
+    }
+
+    /// The repository-wide claim this lease holds, when it holds one.
+    pub fn mesh_claim(&self) -> Option<&super::exclusive::MeshClaim> {
+        self.mesh.as_ref()
     }
 
     /// Who holds the lease of `base` now, read without taking it: what an observer shows.

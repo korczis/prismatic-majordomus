@@ -6,23 +6,23 @@
     "version": "0.13.0"
   },
   "registry": {
-    "fingerprint": "7c89b1bcb6a73844298f2aee66933e7072ec66635617c90614c7902430980a1d",
+    "fingerprint": "e407e205814b54b4a9ab1e40c5cad4ce0b7dd391a21022a07768dd443833ea2b",
     "summary": {
-      "total": 1884,
+      "total": 1885,
       "builtin": 171,
-      "declarative": 1713,
+      "declarative": 1714,
       "by_kind": {
         "command": 22,
         "query": 149,
-        "resource": 1713
+        "resource": 1714
       },
       "by_stability": {
         "behaviorally_verified": 128,
         "experimental": 35,
-        "implemented": 1721
+        "implemented": 1722
       },
       "mcp_tools": 165,
-      "mcp_resources": 1766,
+      "mcp_resources": 1767,
       "http_routes": 169,
       "cli_commands": 90,
       "modules": 84,
@@ -28842,6 +28842,13 @@
                     "format": "uint64",
                     "minimum": 0,
                     "description": "When it was taken, seconds since the epoch."
+                  },
+                  "mesh_claim": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The mesh claim that makes it exclusive across machines, `<stream>/<claim>`; absent\nwhen the lease guards this clone alone (`super::exclusive`)."
                   }
                 },
                 "required": [
@@ -67789,7 +67796,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 350,
+        "capabilities": 351,
         "capability_ids": []
       },
       {
@@ -67879,7 +67886,7 @@
     ]
   },
   "index": {
-    "fingerprint": "174c8f96519103638d95238a214e1abceb4ad88c5fc5175f8ceaf89ec27b3249",
+    "fingerprint": "4003a3d9d2cf40bcc1351f2c0f32192e60c1926ffa00f72ac12f162c0bff7051",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -67932,7 +67939,7 @@
       "session": 22,
       "skill": 6,
       "taxonomy": 10,
-      "test": 350,
+      "test": 351,
       "use-case": 48,
       "workspace": 1
     },
@@ -69209,7 +69216,7 @@
         "path": ".ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 18996,
+        "bytes": 20122,
         "tags": [
           "integration",
           "git",
@@ -73051,7 +73058,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 31146
+        "bytes": 32695
       },
       {
         "uri": "majordomus://document/docs/KNOWLEDGE.md",
@@ -75954,7 +75961,7 @@
         "identity": "lib/context.sh",
         "path": "lib/context.sh",
         "source_class": "library",
-        "bytes": 45732
+        "bytes": 45532
       },
       {
         "uri": "majordomus://implementation/lib/context_docs.sh",
@@ -75986,7 +75993,7 @@
         "identity": "lib/derive.sh",
         "path": "lib/derive.sh",
         "source_class": "library",
-        "bytes": 32869
+        "bytes": 33228
       },
       {
         "uri": "majordomus://implementation/lib/doctor.sh",
@@ -76170,7 +76177,7 @@
         "identity": "lib/rust_bin.sh",
         "path": "lib/rust_bin.sh",
         "source_class": "library",
-        "bytes": 20696
+        "bytes": 21598
       },
       {
         "uri": "majordomus://implementation/lib/search.sh",
@@ -85304,7 +85311,7 @@
         "identity": "test/cases/740_integration_is_visible_where_a_person_looks.sh",
         "path": "test/cases/740_integration_is_visible_where_a_person_looks.sh",
         "source_class": "case",
-        "bytes": 10909
+        "bytes": 11438
       },
       {
         "uri": "majordomus://test/test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
@@ -85625,6 +85632,14 @@
         "path": "test/cases/91_canonical_architecture.sh",
         "source_class": "case",
         "bytes": 9207
+      },
+      {
+        "uri": "majordomus://test/test/cases/924_one_executor_across_machines.sh",
+        "kind": "test",
+        "identity": "test/cases/924_one_executor_across_machines.sh",
+        "path": "test/cases/924_one_executor_across_machines.sh",
+        "source_class": "case",
+        "bytes": 5838
       },
       {
         "uri": "majordomus://test/test/cases/92_openapi_reference.sh",
@@ -86688,7 +86703,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 350
+      "objects": 351
     },
     {
       "name": "use-case",
@@ -99527,7 +99542,7 @@
             "route": "/docs/cli/prs/brief/",
             "executable": true,
             "usage": "majordomus prs brief [OPTIONS]",
-            "about": "One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease, and the last merge. Offline, decides no relation, and prints nothing where the forge was never observed",
+            "about": "One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease and whether it reaches across machines, the last merge, and the last refresh, failure or stale decision. Offline, decides no relation, and prints nothing where the forge was never observed",
             "args": [
               {
                 "name": "repo",

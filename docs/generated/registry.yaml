@@ -20675,6 +20675,11 @@ capabilities:
                 format: uint64
                 minimum: 0
                 description: "When it was taken, seconds since the epoch."
+              mesh_claim:
+                type:
+                  - string
+                  - "null"
+                description: "The mesh claim that makes it exclusive across machines, `<stream>/<claim>`; absent\nwhen the lease guards this clone alone (`super::exclusive`)."
             required:
               - pid
               - host

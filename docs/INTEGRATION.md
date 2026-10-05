@@ -319,6 +319,18 @@ are not deleted. The repository's own setting decides that.
   stops as on any systemic failure (`prs drain` exits 12) and acts on nothing. The lease
   is taken for the base the forge was last observed to name, observed first when this
   checkout never asked, never for a guessed `master`.
+- One executor per repository, across machines: the lease guards one clone, since every
+  worktree shares its common git directory and another clone has its own. When this
+  checkout's shared server runs the repository's mesh (ADR 0067), the executor first takes
+  an exclusive mesh claim on `integration/<repository>/<base>` as its checkout's session, and
+  every linked runtime admits against it: a second machine's `prs drain` exits 12 naming the
+  holding session and what it said it was for, before it takes its own lease. The claim's key
+  is in the lease record; it is released after the lease. Where no mesh runs, the lease alone
+  guards, and `prs brief` and the Cockpit say "per-clone guard only". An executor killed
+  outright leaves its claim held — its session belongs to its checkout, which the mesh never
+  refuses to itself — and the next executor of that checkout releases the leftover, so a
+  crash costs other machines a wait, never a claim nobody can give back
+  (`integration::exclusive`, `tests/integration_across_machines.rs`, case 924).
 - Every act is appended to the audit trail before it happens. The trail is one file per
   repository, `<git-common-dir>/majordomus/integration/events.jsonl`, beside the lease, so
   every worktree writes the same trail and `prs events`, `prs brief`, `prs status`, the
@@ -418,7 +430,7 @@ are not deleted. The repository's own setting decides that.
 | `majordomus prs plan` | no | the next merge, the next refresh, and the other lanes |
 | `majordomus prs explain <n>` | no | one pull request's gates, reasons, evidence and rank |
 | `majordomus prs events` | no | the repository's audit trail, the same from every worktree |
-| `majordomus prs brief` | no | one line for a briefing: the last queue built in the repository, the lease, the last merge; nothing in a checkout that never observed the forge |
+| `majordomus prs brief` | no | one line for a briefing: the last queue built in the repository, the lease and how far it reaches, the last merge, the last refresh, failure or stale decision; nothing in a checkout that never observed the forge |
 | `majordomus prs refresh` | yes | observe the forge and fetch every open head |
 | `majordomus prs drain [--max N] [--dry-run] [--refresh]` | yes | integrate, one merge at a time |
 | `majordomus prs drain --resume-after-failure` | yes | record that a person looked at an unverified merge, then drain |
@@ -432,12 +444,16 @@ trail is `GET /api/v1/pull-requests/events` (`majordomus_integration_events`). A
 declared once in `capability/builtin/integration.rs`.
 
 The Cockpit renders those two answers at `/cockpit/integration`. It shows the counts by lane,
-the master every decision was taken against, the next merge, who holds the lease, the last
-merge, a table per lane with each pull request's reasons, next action and wait, and the
+the executor's throughput over the last seven days (merges, merges per day, the median wait
+from actionable to merged, CI rounds per merge, the median cycle, stale decisions, failed and
+unverified merges — a median nothing measured is said, not shown as zero), the master every
+decision was taken against, the next merge, who holds the lease and how far it reaches, the
+last merge, a table per lane with each pull request's reasons, next action and wait, and the
 executor's recent actions. With nothing observed, it says so and names `prs refresh`.
-`majordomus context` carries `prs brief` under `INTEGRATION`, so a session that continues
-drain work starts knowing what was merged, what remains, and whether an executor is
-running.
+`majordomus context` carries `prs brief` under `INTEGRATION`, and a handover derived with
+`majordomus handover --derive` carries the same line under `# Current State`, so a session
+that continues drain work starts knowing what was merged, what remains, how the last step
+went, and whether an executor is running.
 
 ## Continuous mode
 
