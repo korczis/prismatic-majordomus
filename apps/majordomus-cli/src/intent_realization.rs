@@ -768,14 +768,14 @@ pub const CLOSED_WORK_NOT_SATISFIED: &str = "closed_work_not_satisfied";
 fn verdict_drift(view: &IntentView, out: &mut Vec<IntentFinding>) {
     match (view.stage, view.verdict.state) {
         (IntentStage::Planned | IntentStage::Executing, IntentVerdictState::Satisfied) => {
+            // planned or executing means every milestone resolved (one that does not holds the
+            // stage at declared), so each carries a status and none is skipped here
             let open: Vec<String> = view
                 .milestones
                 .iter()
-                .filter_map(|m| {
-                    let s = m.status.as_deref()?;
-                    (!matches!(s, "DONE" | "CANCELLED" | "SUPERSEDED"))
-                        .then(|| format!("{} is {s}", m.id))
-                })
+                .filter_map(|m| m.status.as_deref().map(|s| (m.id.as_str(), s)))
+                .filter(|(_, s)| !matches!(*s, "DONE" | "CANCELLED" | "SUPERSEDED"))
+                .map(|(id, s)| format!("{id} is {s}"))
                 .collect();
             warn(
                 out,
