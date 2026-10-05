@@ -11,12 +11,11 @@ export default {
   async exercise({ controls, page, fail }) {
     let n = 0;
     for (const c of controls) {
-      const expected = await c.locator.evaluate((b) => {
-        const scope = b.closest('[x-data]');
-        const src = scope && scope.querySelector('[x-ref="src"]');
-        return src ? src.innerText : null;
+      // a button in a collapsed disclosure (the recorded runs behind a step) is reached the way a reader reaches
+      // it: by opening every details around it first, outermost included, as the other specs do
+      await c.locator.evaluate((b) => {
+        for (let d = b.closest('details'); d; d = d.parentElement && d.parentElement.closest('details')) d.open = true;
       });
-      if (expected === null) { fail('a copy button has no x-ref="src" snippet in its component'); n++; continue; }
       // a button in a tab panel that is not selected (a recorded run's command, one tab of
       // several) is reached the way a reader reaches it: by selecting its tab first
       const tab = await c.locator.evaluate((b) => {
@@ -25,6 +24,13 @@ export default {
       });
       if (tab) await page.locator(`[id="${tab}"]`).click();
       await c.locator.scrollIntoViewIfNeeded();
+      // the snippet is read once it is rendered: the text of a collapsed or hidden one reads as nothing
+      const expected = await c.locator.evaluate((b) => {
+        const scope = b.closest('[x-data]');
+        const src = scope && scope.querySelector('[x-ref="src"]');
+        return src ? src.innerText : null;
+      });
+      if (expected === null) { fail('a copy button has no x-ref="src" snippet in its component'); n++; continue; }
       // "Copied" lasts 1600 ms before the button says Copy again, and a stalled driver can read past it: an observer
       // set before the click records the label when it changes, so the check judges what the button said, not what
       // it says when the driver gets round to reading it
