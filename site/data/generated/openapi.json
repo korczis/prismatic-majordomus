@@ -331,6 +331,7 @@
     "schema-DeliveryVerdict": "docs/api/delivery/",
     "schema-DemonstrateReport": "docs/api/executions/",
     "schema-DependencyCertainty": "docs/api/integration/",
+    "schema-DependencyState": "docs/api/integration/",
     "schema-DeploymentCheck": "docs/api/deploy/",
     "schema-DeploymentList": "docs/api/deploy/",
     "schema-DeploymentStanding": "docs/api/served/",
@@ -1041,7 +1042,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 169,
-    "schemas": 817,
+    "schemas": 818,
     "tags": 51
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1462,6 +1463,7 @@
     "DeliveryVerdict": "delivery",
     "DemonstrateReport": "executions",
     "DependencyCertainty": "integration",
+    "DependencyState": "integration",
     "DeploymentCheck": "deploy",
     "DeploymentList": "deploy",
     "DeploymentStanding": "served",
@@ -10896,6 +10898,37 @@
         {
           "description": "Inferred: the head contains the other's head commit. Evidence, never a block.",
           "value": "inferred"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "What became of a pull request another one depends on.",
+      "home": "integration",
+      "is_enum": true,
+      "name": "DependencyState",
+      "properties": [],
+      "type": "\"open\" | \"merged\" | \"closed_unmerged\" | \"unread\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "PullRequestDependency"
+      ],
+      "values": [
+        {
+          "description": "Still open.",
+          "value": "open"
+        },
+        {
+          "description": "Merged: the only state that satisfies it.",
+          "value": "merged"
+        },
+        {
+          "description": "Closed without a merge: its work never landed, so a person decides.",
+          "value": "closed_unmerged"
+        },
+        {
+          "description": "Not open, and the forge could not say what became of it — refused, or not a pull\nrequest at all: unknown, never satisfied.",
+          "value": "unread"
         }
       ],
       "variants": []
@@ -33377,11 +33410,20 @@
           "type": "DependencyCertainty"
         },
         {
-          "description": "Whether it is satisfied: that pull request has landed (or is not open any more).",
+          "description": "Whether it is satisfied: that pull request merged. Closed without a merge, or not\nread, it is not — a dependency that never landed is no less a dependency.",
           "name": "satisfied",
           "refs": [],
           "required": true,
           "type": "boolean"
+        },
+        {
+          "description": "What the forge says became of it. `open` in a record written before it was read.",
+          "name": "state",
+          "refs": [
+            "DependencyState"
+          ],
+          "required": false,
+          "type": "DependencyState"
         }
       ],
       "type": "object",

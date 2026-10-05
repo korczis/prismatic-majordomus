@@ -180,7 +180,27 @@ Only a bullet (`-`, `*`, `+`, `1.`), quote marks (`>`) and emphasis (`*`, `_`) m
 the marker, so `- **Depends on:** #7` declares a dependency. More numbers follow with commas,
 `and` or `&`: `Stacked on #644 and #645`. The same words anywhere else in a line are prose:
 `a regression introduced after #540` and `thereafter #5` declare nothing, and neither does a
-bare `After #N`. A dependency is satisfied once that pull request is no longer open.
+bare `After #N`.
+
+A dependency is satisfied only when that pull request **merged**. The refresh reads every
+declared dependency that is not open (`gh pr view`, with the successors), so the queue knows
+what became of it:
+
+| The dependency | The pull request | Reason |
+|---|---|---|
+| open | `waiting_for_dependency` | `depends_on:#N` |
+| merged | not held by it | — |
+| closed without a merge | `blocked`: its work never landed, so a person reopens it or removes the declaration | `dependency_closed_unmerged:#N` |
+| not open, and the forge could not say — refused, or not a pull request at all | `unknown`, never satisfied | `dependency_unread:#N` |
+| part of a cycle of declared dependencies between open pull requests | `blocked`: none of them can land first | `dependency_cycle:#N`, one per other member |
+
+A cycle is said before anything else about the dependencies, then a closed one, then an
+unread one, then an open one. Git also implies dependencies: a pull request whose observed
+head contains another's observed head carries its commits, so landing it lands both. Each
+such pair is an `inferred` dependency with `inferred` evidence — never a block, never a
+change of disposition or rank; only a declaration holds a pull request back. The refresh lists
+at most 500 open pull requests; a forge with as many says so in the queue's diagnostics,
+because a dependency on one beyond them would read as unread.
 
 ### Supersession markers
 

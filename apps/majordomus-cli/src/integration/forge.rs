@@ -80,6 +80,10 @@ pub struct ResolvedPullRequest {
     pub body: String,
 }
 
+/// How many open pull requests one observation lists. A forge with as many open as this may
+/// have more, and the queue says so.
+pub const OPEN_LIMIT: usize = 500;
+
 /// How many closed pull requests declaring a supersession are read, newest first.
 pub const RESOLVED_LIMIT: usize = 200;
 
@@ -111,10 +115,10 @@ pub fn resolved_of(v: &Value) -> Option<(u64, ResolvedPullRequest)> {
     ))
 }
 
-/// The pull requests no longer open that a supersession involving an open one names: closed
-/// ones whose body says they supersede an open one (`closed`, the forge's answer to a search),
-/// and the successors open bodies name that are not open, each read with `view`. A successor
-/// `view` cannot read is left out, and the classifier says it is unread.
+/// The pull requests no longer open that a supersession or a dependency involving an open one
+/// names: closed ones whose body says they supersede an open one (`closed`, the forge's answer
+/// to a search), and the successors and dependencies open bodies name that are not open, each
+/// read with `view`. One `view` cannot read is left out, and the classifier says it is unread.
 pub fn resolved_for(
     open: &[PullRequestObservation],
     closed: &Value,
@@ -137,7 +141,12 @@ pub fn resolved_for(
         .collect();
     let named: BTreeSet<u64> = open
         .iter()
-        .flat_map(|p| declared_supersessions(&p.body).superseded_by)
+        .flat_map(|p| {
+            declared_supersessions(&p.body)
+                .superseded_by
+                .into_iter()
+                .chain(super::classify::declared_dependencies(&p.body))
+        })
         .filter(|m| !numbers.contains(m) && !resolved.contains_key(m))
         .collect();
     for m in named {
@@ -584,7 +593,7 @@ impl Forge for GhForge<'_> {
                 "--state",
                 "open",
                 "--limit",
-                "500",
+                &OPEN_LIMIT.to_string(),
                 "--json",
                 "number,title,author,headRefName,headRefOid,baseRefName,isDraft,labels,createdAt,updatedAt,body,statusCheckRollup,reviewDecision,latestReviews,reviewRequests,autoMergeRequest,isCrossRepository",
             ],
@@ -995,5 +1004,32 @@ mod tests {
             "a review without a commit says so"
         );
         assert_eq!(p.review_requests, ["dee", "core"]);
+    }
+
+    #[test]
+    fn a_dependency_that_is_not_open_is_read_like_a_successor() {
+        let open: Vec<PullRequestObservation> = [json!({
+            "number": 1, "title": "t", "author": {"login": "a"}, "headRefName": "f",
+            "headRefOid": "h1", "baseRefName": "master", "isDraft": false, "labels": [],
+            "createdAt": "t", "updatedAt": "t", "body": "Depends on #4\nDepends on #5",
+            "statusCheckRollup": [], "reviewDecision": "", "autoMergeRequest": null,
+            "isCrossRepository": false
+        })]
+        .iter()
+        .filter_map(pull_request_of)
+        .collect();
+        let mut viewed = Vec::new();
+        let resolved = resolved_for(&open, &json!([]), |n| {
+            viewed.push(n);
+            (n == 4)
+                .then(|| json!({"number": 4, "state": "CLOSED", "headRefOid": "h4", "body": ""}))
+        });
+        assert_eq!(viewed, [4, 5]);
+        assert_eq!(
+            resolved.keys().copied().collect::<Vec<_>>(),
+            [4],
+            "#5 unread"
+        );
+        assert!(!resolved[&4].merged);
     }
 }

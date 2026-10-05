@@ -28,6 +28,38 @@ fn git(root: &Path, args: &[&str]) -> Result<(bool, String), String> {
     ))
 }
 
+/// The pull requests whose mirrored head (`refs/majordomus/prs/<n>`) contains `head`, each
+/// with the commit its mirror names. Empty when git cannot say: an inferred dependency is
+/// evidence, and its absence decides nothing.
+pub fn containing(root: &Path, head: &str) -> Vec<(u64, String)> {
+    git(
+        root,
+        &[
+            "for-each-ref",
+            "--contains",
+            head,
+            "--format=%(objectname) %(refname)",
+            super::forge::PR_REF_PREFIX,
+        ],
+    )
+    .ok()
+    .filter(|(ok, _)| *ok)
+    .map(|(_, out)| {
+        out.lines()
+            .filter_map(|l| {
+                // git prints `<sha> <ref>` for refs under the prefix it was given; a name that
+                // is not a number after it is no mirror of a pull request
+                l.split_once(' ').and_then(|(sha, name)| {
+                    name.strip_prefix(super::forge::PR_REF_PREFIX)
+                        .and_then(|n| n.parse().ok())
+                        .map(|n| (n, sha.to_string()))
+                })
+            })
+            .collect()
+    })
+    .unwrap_or_default()
+}
+
 /// Whether `commit` names a commit this clone has.
 pub fn has_commit(root: &Path, commit: &str) -> bool {
     git(root, &["cat-file", "-e", &format!("{commit}^{{commit}}")])
@@ -323,5 +355,42 @@ mod patch_tests {
             None,
             "a merge of its own"
         );
+    }
+}
+
+#[cfg(test)]
+mod containing_tests {
+    use super::*;
+
+    #[test]
+    fn the_mirrors_whose_head_contains_a_commit_are_named_with_their_tips() {
+        let dir = tempfile::tempdir().unwrap();
+        let r = dir.path();
+        let g = |args: &[&str]| {
+            let out = Command::new("git")
+                .env_remove("GIT_DIR")
+                .env_remove("GIT_WORK_TREE")
+                .env_remove("GIT_INDEX_FILE")
+                .arg("-C")
+                .arg(r)
+                .args(["-c", "user.email=t@example.com", "-c", "user.name=t"])
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}: {out:?}");
+            String::from_utf8_lossy(&out.stdout).trim().to_string()
+        };
+        g(&["init", "-q", "-b", "master"]);
+        g(&["commit", "-q", "--allow-empty", "-m", "one"]);
+        let one = g(&["rev-parse", "HEAD"]);
+        g(&["update-ref", "refs/majordomus/prs/1", &one]);
+        g(&["commit", "-q", "--allow-empty", "-m", "two"]);
+        let two = g(&["rev-parse", "HEAD"]);
+        g(&["update-ref", "refs/majordomus/prs/2", &two]);
+        g(&["update-ref", "refs/majordomus/prs/not-a-number", &two]);
+        let found = containing(r, &one);
+        assert_eq!(found, [(1, one.clone()), (2, two.clone())]);
+        assert_eq!(containing(r, &two), [(2, two)]);
+        assert!(containing(r, "no-such-commit").is_empty(), "git refuses");
     }
 }

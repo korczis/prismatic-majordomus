@@ -3469,6 +3469,9 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         | R::RequiredChecksSkipped
         | R::ExecutorMergeRefused { .. }
         | R::ExecutorRefreshFailed { .. }
+        | R::DependencyCycle { .. }
+        | R::DependencyClosedUnmerged { .. }
+        | R::DependencyUnread { .. }
         | R::Unrecognised(_) => (),
     };
     let mut all = vec![
@@ -3514,6 +3517,9 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         R::ExecutorRefreshFailed {
             master: "b".repeat(40),
         },
+        R::DependencyCycle { number: 611 },
+        R::DependencyClosedUnmerged { number: 612 },
+        R::DependencyUnread { number: 613 },
     ];
     for state in [
         PullRequestReview::NotRequired,
@@ -3814,7 +3820,12 @@ proptest! {
                         "relation_unknown",
                         "conflicts_on",
                     ],
-                    G::Dependency => &["depends_on"],
+                    G::Dependency => &[
+                        "depends_on",
+                        "dependency_cycle",
+                        "dependency_closed_unmerged",
+                        "dependency_unread",
+                    ],
                     G::Review => &["review", "review_policy_unread"],
                     G::NoFailingCheck => &["required_check_failed"],
                     G::Freshness => &["behind_master"],

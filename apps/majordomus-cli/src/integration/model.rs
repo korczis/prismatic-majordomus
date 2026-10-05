@@ -254,8 +254,28 @@ pub struct PullRequestDependency {
     pub number: u64,
     /// How it is known.
     pub certainty: DependencyCertainty,
-    /// Whether it is satisfied: that pull request has landed (or is not open any more).
+    /// Whether it is satisfied: that pull request merged. Closed without a merge, or not
+    /// read, it is not — a dependency that never landed is no less a dependency.
     pub satisfied: bool,
+    /// What the forge says became of it. `open` in a record written before it was read.
+    #[serde(default)]
+    pub state: DependencyState,
+}
+
+/// What became of a pull request another one depends on.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum DependencyState {
+    /// Still open.
+    #[default]
+    Open,
+    /// Merged: the only state that satisfies it.
+    Merged,
+    /// Closed without a merge: its work never landed, so a person decides.
+    ClosedUnmerged,
+    /// Not open, and the forge could not say what became of it — refused, or not a pull
+    /// request at all: unknown, never satisfied.
+    Unread,
 }
 
 /// How a dependency is known. Only a declared one blocks.
@@ -635,7 +655,8 @@ const REASON_VOCABULARY: &str = "A reason code, `code` or `code:payload`, one of
 `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, \
 `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, \
 `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, \
-`required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`. \
+`required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, \
+`dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. \
 A code outside this list (an older trail's) is carried verbatim.";
 
 /// One machine-readable reason, typed. Its wire form is the `code` or `code:payload` string
@@ -757,6 +778,23 @@ pub enum ReasonCode {
         /// The master that could not be brought in.
         master: String,
     },
+    /// `dependency_cycle:#N`: it and N depend on each other through declared edges, so
+    /// neither can ever land first.
+    DependencyCycle {
+        /// Another pull request of the cycle.
+        number: u64,
+    },
+    /// `dependency_closed_unmerged:#N`: a declared dependency was closed without a merge.
+    DependencyClosedUnmerged {
+        /// The dependency.
+        number: u64,
+    },
+    /// `dependency_unread:#N`: a declared dependency is not open and the forge could not say
+    /// what became of it.
+    DependencyUnread {
+        /// The dependency.
+        number: u64,
+    },
     /// A code this vocabulary does not name, verbatim: what an older trail line may carry.
     /// Nothing here produces one, and [`std::str::FromStr`] refuses it.
     Unrecognised(String),
@@ -796,6 +834,9 @@ impl ReasonCode {
             ReasonCode::RequiredChecksSkipped => "required_checks_skipped",
             ReasonCode::ExecutorMergeRefused { .. } => "executor_merge_refused",
             ReasonCode::ExecutorRefreshFailed { .. } => "executor_refresh_failed",
+            ReasonCode::DependencyCycle { .. } => "dependency_cycle",
+            ReasonCode::DependencyClosedUnmerged { .. } => "dependency_closed_unmerged",
+            ReasonCode::DependencyUnread { .. } => "dependency_unread",
             ReasonCode::Unrecognised(s) => s.split_once(':').map_or(s.as_str(), |(c, _)| c),
         }
     }
@@ -817,7 +858,10 @@ impl std::fmt::Display for ReasonCode {
             | ReasonCode::SupersededBy { number }
             | ReasonCode::SuccessorOpen { number }
             | ReasonCode::SuccessorNotLanded { number }
-            | ReasonCode::SuccessorUnread { number } => {
+            | ReasonCode::SuccessorUnread { number }
+            | ReasonCode::DependencyCycle { number }
+            | ReasonCode::DependencyClosedUnmerged { number }
+            | ReasonCode::DependencyUnread { number } => {
                 write!(f, "{}:#{number}", self.code())
             }
             ReasonCode::BaseIs { base: s }
@@ -867,6 +911,15 @@ impl std::str::FromStr for ReasonCode {
                 number: number(p).ok_or_else(bad)?,
             },
             ("successor_unread", Some(p)) => ReasonCode::SuccessorUnread {
+                number: number(p).ok_or_else(bad)?,
+            },
+            ("dependency_cycle", Some(p)) => ReasonCode::DependencyCycle {
+                number: number(p).ok_or_else(bad)?,
+            },
+            ("dependency_closed_unmerged", Some(p)) => ReasonCode::DependencyClosedUnmerged {
+                number: number(p).ok_or_else(bad)?,
+            },
+            ("dependency_unread", Some(p)) => ReasonCode::DependencyUnread {
                 number: number(p).ok_or_else(bad)?,
             },
             ("base_is", Some(p)) => ReasonCode::BaseIs { base: p.into() },
@@ -1161,6 +1214,9 @@ mod vocabulary_branches {
             "behind_master:-1",
             "review:maybe",
             "required_checks:green",
+            "dependency_cycle:x",
+            "dependency_closed_unmerged:#",
+            "dependency_unread:7",
         ] {
             assert!(wire.parse::<ReasonCode>().is_err(), "{wire} parsed");
         }

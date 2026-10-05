@@ -66,7 +66,8 @@ with one canonical state, one classification and one executor.
    `relation_unknown:WHY`, `conflicts_on:COUNT`,
    `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`,
    `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`,
-   `required_checks_unread`, and, on a ready one, `contains_master` with
+   `required_checks_unread`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`,
+   `dependency_unread:#N`, and, on a ready one, `contains_master` with
    `required_checks_passed` or `required_checks_skipped`. The trail, the OpenAPI string
    arrays and the Cockpit read the same strings as before, and a code an older trail carries
    that this list does not name is kept verbatim. Evidence has a typed kind, with the wire
@@ -143,7 +144,11 @@ with one canonical state, one classification and one executor.
    `REVIEW_REQUIRED` is a pending review even where the policy requires none, because a rule
    this policy does not list can. A dependency is declared only by a line that opens with
    `Depends on`, `Stacked on`, `Requires` or `Land after` and a number; the same words
-   mid-sentence are prose. A pull request is stacked only on a branch of this repository,
+   mid-sentence are prose. It is satisfied by a merge alone: one closed without a merge holds
+   the pull request `blocked` (`dependency_closed_unmerged:#N`), one the forge cannot account
+   for is `unknown` (`dependency_unread:#N`), and declared dependencies that form a cycle
+   among open pull requests block every member (`dependency_cycle:#N`). A head that contains
+   another open one's head is an inferred dependency: evidence, never a block. A pull request is stacked only on a branch of this repository,
    never on a fork's branch of the same name. A successor is declared the same way, by the
    same parser: a line of a pull request's body that opens with `Superseded by #N` names N
    as its successor, and a line of N's body that opens with `Supersedes #M` names N as M's,
