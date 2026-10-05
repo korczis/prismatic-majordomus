@@ -99,16 +99,18 @@ pub fn derived_paths(
 /// do not make that redundant.
 pub fn patches_upstream(root: &Path, master: &str, head: &str) -> Option<u64> {
     let range = format!("{master}..{head}");
-    let (ok, merges) = git(root, &["rev-list", "--count", "--min-parents=2", &range]).ok()?;
-    if !ok || merges.trim() != "0" {
-        return None;
-    }
-    let (ok, out) = git(root, &["cherry", master, head]).ok()?;
-    if !ok {
-        return None;
-    }
-    let marks: Vec<&str> = out.lines().filter(|l| !l.trim().is_empty()).collect();
-    (!marks.is_empty() && marks.iter().all(|l| l.starts_with("- "))).then_some(marks.len() as u64)
+    // one chain, one failure: a range git cannot count, a merge of the head's own in it, and
+    // a cherry git cannot answer all prove nothing
+    git(root, &["rev-list", "--count", "--min-parents=2", &range])
+        .ok()
+        .filter(|(ok, merges)| *ok && merges.trim() == "0")
+        .and_then(|_| git(root, &["cherry", master, head]).ok())
+        .filter(|(ok, _)| *ok)
+        .and_then(|(_, out)| {
+            let marks: Vec<&str> = out.lines().filter(|l| !l.trim().is_empty()).collect();
+            (!marks.is_empty() && marks.iter().all(|l| l.starts_with("- ")))
+                .then_some(marks.len() as u64)
+        })
 }
 
 /// What `head` is to `master`, with the authored paths it changes.
@@ -223,5 +225,103 @@ pub fn relation_to_master(root: &Path, master: &str, head: &str) -> RelationToMa
             RelationToMaster::Behind { behind, authored }
         }
         Err(reason) => RelationToMaster::Unknown { reason },
+    }
+}
+
+#[cfg(test)]
+mod patch_tests {
+    //! Equal patches on master, against real repositories.
+
+    use super::*;
+
+    fn g(dir: &Path, args: &[&str]) -> String {
+        let out = Command::new("git")
+            .env_remove("GIT_DIR")
+            .env_remove("GIT_WORK_TREE")
+            .env_remove("GIT_INDEX_FILE")
+            .arg("-C")
+            .arg(dir)
+            .args(["-c", "user.email=t@example.com", "-c", "user.name=t"])
+            .args(args)
+            .output()
+            .unwrap();
+        assert!(out.status.success(), "git {args:?}: {out:?}");
+        String::from_utf8_lossy(&out.stdout).trim().to_string()
+    }
+
+    fn write(dir: &Path, file: &str, text: &str) {
+        std::fs::write(dir.join(file), text).unwrap();
+    }
+
+    /// master: base, P (a.txt and the derived gen.json), D (gen.json regenerated); the head
+    /// branches from base and carries P cherry-picked, so every one of its commits is on
+    /// master as an equal patch while its merge still conflicts on the derived file alone.
+    fn repo() -> (tempfile::TempDir, String) {
+        let dir = tempfile::tempdir().unwrap();
+        let r = dir.path();
+        g(r, &["init", "-q", "-b", "master"]);
+        write(r, ".gitattributes", "gen.json merge=derived\n");
+        write(r, "a.txt", "a\n");
+        write(r, "gen.json", "v0\n");
+        g(r, &["add", "-A"]);
+        g(r, &["commit", "-q", "-m", "base"]);
+        let base = g(r, &["rev-parse", "HEAD"]);
+        write(r, "a.txt", "a2\n");
+        write(r, "gen.json", "v1\n");
+        g(r, &["commit", "-q", "-am", "P"]);
+        let p = g(r, &["rev-parse", "HEAD"]);
+        write(r, "gen.json", "v2\n");
+        g(r, &["commit", "-q", "-am", "D"]);
+        g(r, &["checkout", "-q", "-b", "topic", &base]);
+        // -x: a commit of its own with an equal patch, never the same commit recreated
+        g(r, &["cherry-pick", "-x", &p]);
+        g(r, &["checkout", "-q", "master"]);
+        (dir, base)
+    }
+
+    #[test]
+    fn a_head_whose_patches_landed_and_whose_merge_touches_only_derived_output_landed() {
+        let (dir, _) = repo();
+        assert_eq!(patches_upstream(dir.path(), "master", "topic"), Some(1));
+        assert_eq!(
+            relation_to_master(dir.path(), "master", "topic"),
+            RelationToMaster::PatchIdsUpstream { commits: 1 }
+        );
+    }
+
+    #[test]
+    fn a_patch_master_lacks_a_merge_of_its_own_or_an_unknown_range_prove_nothing() {
+        let (dir, base) = repo();
+        let r = dir.path();
+        assert_eq!(
+            patches_upstream(r, "master", "no-such-ref"),
+            None,
+            "git refuses"
+        );
+        assert_eq!(
+            patches_upstream(r, "master", "master"),
+            None,
+            "no commit at all"
+        );
+        g(r, &["checkout", "-q", "topic"]);
+        write(r, "b.txt", "b\n");
+        g(r, &["add", "b.txt"]);
+        g(r, &["commit", "-q", "-m", "new"]);
+        assert_eq!(
+            patches_upstream(r, "master", "topic"),
+            None,
+            "a patch master lacks"
+        );
+        g(r, &["checkout", "-q", "-b", "side", &base]);
+        write(r, "c.txt", "c\n");
+        g(r, &["add", "c.txt"]);
+        g(r, &["commit", "-q", "-m", "side"]);
+        g(r, &["checkout", "-q", "topic"]);
+        g(r, &["merge", "-q", "--no-ff", "side", "-m", "merge side"]);
+        assert_eq!(
+            patches_upstream(r, "master", "topic"),
+            None,
+            "a merge of its own"
+        );
     }
 }

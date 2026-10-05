@@ -1120,3 +1120,61 @@ pub struct PathOverlap {
     /// The paths both change.
     pub paths: Vec<String>,
 }
+
+#[cfg(test)]
+mod vocabulary_branches {
+    //! The wire vocabulary's refusals and less common forms, each asked directly.
+
+    use super::*;
+
+    #[test]
+    fn a_check_bound_to_an_app_names_it() {
+        let c = RequiredCheck {
+            context: "ci".into(),
+            app_id: Some(15368),
+        };
+        assert_eq!(c.to_string(), "ci (app 15368)");
+        assert_eq!(RequiredCheck::from("ci").to_string(), "ci");
+        assert_eq!(EvidenceKind::Freshness.as_str(), "freshness");
+    }
+
+    #[test]
+    fn an_unrecognised_reason_keeps_its_code_and_a_unit_without_a_word_is_unknown() {
+        assert_eq!(
+            ReasonCode::Unrecognised("old_code:x".into()).code(),
+            "old_code"
+        );
+        assert_eq!(ReasonCode::Unrecognised("bare".into()).code(), "bare");
+        assert_eq!(wire_word(&5u8), "unknown");
+    }
+
+    #[test]
+    fn every_payload_that_is_not_its_codes_is_refused() {
+        for wire in [
+            "stacked_on:x",
+            "depends_on:#x",
+            "superseded_by:7",
+            "successor_open:#",
+            "successor_not_landed:x",
+            "successor_unread:x",
+            "conflicts_on:many",
+            "behind_master:-1",
+            "review:maybe",
+            "required_checks:green",
+        ] {
+            assert!(wire.parse::<ReasonCode>().is_err(), "{wire} parsed");
+        }
+    }
+
+    #[test]
+    fn a_reason_reads_from_a_string_only_and_compares_by_its_wire_form() {
+        assert!(
+            serde_json::from_str::<ReasonCode>("5").is_err(),
+            "not a string"
+        );
+        let r: ReasonCode = serde_json::from_str("\"draft\"").unwrap();
+        assert!(PartialEq::<str>::eq(&r, "draft"));
+        assert!(!PartialEq::<str>::eq(&r, "label:x"), "a different prefix");
+        assert!(!PartialEq::<str>::eq(&r, "draftx"), "a longer wire");
+    }
+}
