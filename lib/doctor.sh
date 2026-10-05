@@ -132,7 +132,10 @@ mj_validate_wiring() {
       kind="${wired%%:*}"; target="${wired#*:}"
       case "$kind" in
         git-hook)
-          hookdir="$(mj_git config core.hooksPath 2>/dev/null || true)"; [ -z "$hookdir" ] && hookdir=".git/hooks"
+          # Git says where its hooks are: core.hooksPath when set, else the common
+          # directory's hooks/. A linked worktree's .git is a file naming that directory,
+          # so "$MJ_ROOT/.git/hooks" does not exist there and every hook read as missing.
+          hookdir="$(mj_git rev-parse --git-path hooks 2>/dev/null || true)"; [ -z "$hookdir" ] && hookdir=".git/hooks"
           case "$hookdir" in /*) hookfile="$hookdir/$target" ;; *) hookfile="$MJ_ROOT/$hookdir/$target" ;; esac
           # A hook is commonly a dispatcher that runs every executable in <hook>.d/; the
           # invocation then lives in one of those files, not in the hook git calls.
@@ -606,7 +609,13 @@ mj_validate_lifecycle() {
 
   # Is anything happening? Episodes opening is the cheapest evidence of a live lifecycle,
   # and it is the evidence that was present throughout the outage.
-  local opens; opens="$(grep -c '"event":"session.started"' "$ledger" 2>/dev/null || true)"
+  #
+  # Counted on this branch only, because the records below are resolved for this worktree
+  # and branch. Counting every episode the checkout ever opened made a branch created a
+  # minute ago owe a checkpoint and a handover on its first commit: the episodes were the
+  # trunk's, the absence was the new branch's, and the pre-commit hook refused the commit.
+  local branch opens; branch="$(mj_git_branch)"
+  opens="$(grep -F '"event":"session.started"' "$ledger" 2>/dev/null | grep -cF "\"branch\":\"$branch\"" || true)"
   : "${opens:=0}"
   if [ "$opens" -lt 2 ]; then
     mj_doctrine_ok lifecycle "activity" "$opens episode(s) opened here; too few to judge whether the writers stopped"
@@ -619,7 +628,7 @@ mj_validate_lifecycle() {
   for d in checkpoints handovers; do
     if ! mj_resolve_latest "$MJ_STATE_DIR/$d" ""; then
       mj_doctrine_fail lifecycle "$d" \
-        "$opens episode(s) have opened here and no $d record exists for this worktree and branch" \
+        "$opens episode(s) have opened on $branch here and no $d record exists for this worktree and branch" \
         "majordomus ${d%s} --list"
       continue
     fi

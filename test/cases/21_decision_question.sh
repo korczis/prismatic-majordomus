@@ -55,8 +55,22 @@ expect_exit 2 "$MJ" decision add "replacement" --why w --supersedes "a decision 
 expect_grep 'matches no recorded decision'
 expect_exit 0 "$MJ" decision add "Compare the raw callback URI after all" --why "normalising hid a real mismatch" \
   --supersedes "Normalise the callback URI before comparing state"
-expect_grep '^Supersedes: Normalise the callback URI' .ai/local/state/decisions.md
+expect_grep '^Supersedes: Normalise the callback URI before comparing state$' .ai/local/state/decisions.md
 [ "$(grep -c '^## 20' .ai/local/state/decisions.md)" = 3 ]   # nothing was rewritten
+# a supersession names a decision by its title: a field label or a word of a rationale is not
+# one, and text that two titles share names neither
+expect_exit 2 "$MJ" decision add "another" --why w --supersedes "Why"
+expect_grep "matches no recorded decision's title"
+expect_exit 2 "$MJ" decision add "another" --why w --supersedes "the mismatch"
+expect_grep "matches no recorded decision's title"
+expect_exit 2 "$MJ" decision add "another" --why w --supersedes "callback URI"
+expect_grep 'matches 2 recorded decisions; quote more of one title: '
+expect_grep 'Normalise the callback URI before comparing state'
+[ "$(grep -c '^## 20' .ai/local/state/decisions.md)" = 3 ]   # a refusal writes nothing
+# and list says which decision a later one replaced; the replacement itself stands
+expect_exit 0 "$MJ" decision list
+expect_grep '^Superseded by: Compare the raw callback URI after all$'
+[ "$(printf '%s\n' "$LAST_OUT" | grep -c '^Superseded by: ')" = 1 ]
 
 # a malformed entry is reported by check as a warning: nothing will ever find it
 printf '\n## 2026-01-01 — hand written, no fields\n' >> .ai/local/state/decisions.md

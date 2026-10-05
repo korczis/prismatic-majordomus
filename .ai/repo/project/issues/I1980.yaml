@@ -1,0 +1,34 @@
+id: I1980
+milestone: adopter-upgrades
+title: "A layer names the tool version it was written for, and doctor tells version skew from defects"
+slug: a-layer-names-the-tool-version-it-was-written-for
+priority: p0
+profile: deep-work
+parallel_safe: true
+objective: "Record in .ai/manifest.yaml the tool (or layer) version a layer was last migrated with. doctor then classifies findings that a newer tool raises against an older layer as version skew, naming the migration that clears them, instead of failing as defects. A layer written by a newer tool is refused by an older one with a message, not with a cascade."
+why: "OSCILLA 34f967a (#64): installing 0.12.0 machine-wide turned doctor red with 433 failures: 497 unsealed plan stamps in 181 issues, and 135 use-case steps reclassified as state-mutating. Its pre-commit hook runs doctor, so every commit in that repository, including peers', was refused until the layer was migrated by hand. The migrated layer was then rejected by 0.10, so the launcher had to flip first. Neither doctor nor the docs could say that the cause was the upgrade."
+current_state: "At e08aec8651 neither .ai/manifest.yaml (schema ai-repository/v1) nor policy.yaml records a tool version. lib/migrate.sh handles only .majordomus/ to .ai/. docs/INSTALL.md 'Upgrading and reinstalling' says to run the installer again."
+desired_state: "A manifest key (for example `tool: 0.12`) written by init and by migrate. doctor compares it with its own version: older means findings the new version introduced read as skew with `majordomus migrate --layer`; newer means one clear refusal. INSTALL.md says to migrate on a branch before switching the launcher."
+scope:
+  - "share/schemas"
+  - "share/skeleton"
+  - ".ai/manifest.yaml"
+  - "lib/doctor.sh"
+  - "lib/migrate.sh"
+  - "lib/init.sh"
+  - "docs/INSTALL.md"
+  - "share/install"
+  - "test/cases"
+acceptance_criteria:
+  - "A fixture layer written for the previous minor version upgraded in place yields doctor output that names version skew and the migrate command, and exits with the skew status the issue defines, not 10 for every finding"
+  - "A layer whose manifest names a newer tool is refused by the older tool with one message naming both versions"
+  - "init writes the version key and migrate advances it"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "version_skew_case"
+  - "newer_layer_refused_case"
+  - "install_docs_upgrade_step"
+created_at: 2026-10-04
+updated_at: 2026-10-04

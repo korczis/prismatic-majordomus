@@ -17,7 +17,10 @@ mkdir -p "$T/tool"
 fixture_repo "$T/tool" docs
 MJ="$T/tool/bin/majordomus"
 
-"$MJ" init >/dev/null
+# every setup step says why it stopped: a step that fails silently under `set -e` leaves an empty
+# log, which is what three CI runs of this case showed and no machine of ours reproduces
+step() { local out="$1"; shift; "$@" > "$out" 2>&1 || { rc=$?; echo "    $* exited $rc:"; tail -40 "$out"; exit 1; }; }
+step "$T/init.log" "$MJ" init
 
 mkdir -p .ai/repo/features/domains docs
 cat > docs/CLAIMS.yaml <<'EOF'
@@ -55,10 +58,11 @@ docs: [docs/SPEC.md]
 
 # One thing the product does
 EOF
-git add -A >/dev/null && git commit -q -m install
+step "$T/add.log" git add -A
+step "$T/commit.log" git commit -q -m install
 
-"$MJ" knowledge nodes > n.txt 2>&1
-"$MJ" knowledge edges > e.txt 2>&1
+step n.txt "$MJ" knowledge nodes
+step e.txt "$MJ" knowledge edges
 
 echo "    the feature is a typed node with its declared identity and title"
 expect_grep '^feature +shared +[0-9a-f]{12} +feature:a-feature +One thing the product does' n.txt

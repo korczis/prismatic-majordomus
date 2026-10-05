@@ -336,11 +336,68 @@ mj_git_label() {
 # touched every file master did, and the scope doctrine refused the push for exactly the
 # merge the trunk asks for. The cost is that a conflict resolved inside a merge commit is
 # not counted; the working tree and the commits around it are.
+#
+# A fast-forward or a rebase onto the trunk brings other people's work in without a merge
+# commit: `git pull --ff-only` after `start`, or `git pull --rebase` on a branch, puts the
+# trunk's commits on this line's first parent, and the walk above counted every file they
+# changed as the task's. The push was refused "outside claimed scope" for work the trunk
+# had already integrated, and the only way out was to close the task and start another.
+# So a commit is left out when both of these hold: the trunk's remote-tracking branch
+# already contains it, and this checkout did not make it. "Made here" is git's own record,
+# the HEAD reflog's commit, cherry-pick, revert, am and rebase-pick entries; a commit that
+# arrived by a fast-forward, or that a rebase used as its base, has no such entry. A commit
+# the task made and pushed to the trunk is therefore still the task's. Without a trunk
+# (no remote, or no refs/remotes/<remote>/HEAD) nothing is left out, as before.
 mj_git_touched() {
-  local base="$1"
+  local base="$1" trunk all foreign own keep
   { mj_git status --porcelain=v1 2>/dev/null | cut -c4- | sed 's/^.* -> //'
-    [ -n "$base" ] && [ "$base" != "NONE" ] && mj_git log --first-parent --no-merges --name-only --format= "$base..HEAD" 2>/dev/null
+    if [ -n "$base" ] && [ "$base" != "NONE" ]; then
+      trunk="$(mj_git_trunk_ref)"
+      foreign=""
+      if [ -n "$trunk" ]; then
+        all="$(mj_git rev-list --first-parent --no-merges "$base..HEAD" 2>/dev/null | LC_ALL=C sort)"
+        keep="$(mj_git rev-list --first-parent --no-merges "$base..HEAD" --not "$trunk" 2>/dev/null | LC_ALL=C sort)"
+        # on the trunk already, and not made in this checkout
+        foreign="$(LC_ALL=C comm -23 <(printf '%s\n' "$all" | sed '/^$/d') <(printf '%s\n' "$keep" | sed '/^$/d'))"
+        if [ -n "$foreign" ]; then
+          own="$(mj_git_made_here)"
+          foreign="$(LC_ALL=C comm -23 <(printf '%s\n' "$foreign") <(printf '%s\n' "$own" | sed '/^$/d'))"
+        fi
+      fi
+      if [ -z "$foreign" ]; then
+        mj_git log --first-parent --no-merges --name-only --format= "$base..HEAD" 2>/dev/null
+      else
+        LC_ALL=C comm -23 <(printf '%s\n' "$all" | sed '/^$/d') <(printf '%s\n' "$foreign") \
+          | sed '/^$/d' | mj_git log --no-walk --stdin --name-only --format= 2>/dev/null
+      fi
+    fi
   } | LC_ALL=C sort -u | sed '/^$/d'
+}
+
+# The trunk's remote-tracking branch, as a full ref, or nothing. The default branch is
+# git's own record of it — refs/remotes/<remote>/HEAD, written by clone and by
+# `git remote set-head` — on the remote this branch tracks, else the first remote.
+mj_git_trunk_ref() {
+  local remote def
+  remote="$(mj_git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true)"
+  remote="${remote%%/*}"
+  [ -n "$remote" ] || remote="$(mj_git remote 2>/dev/null | head -n 1)"
+  [ -n "$remote" ] || return 0
+  def="$(mj_git symbolic-ref -q "refs/remotes/$remote/HEAD" 2>/dev/null || true)"
+  [ -n "$def" ] && mj_git rev-parse -q --verify "$def^{commit}" >/dev/null 2>&1 && printf '%s' "$def"
+  return 0
+}
+
+# Every commit this checkout made, sorted: the HEAD reflog's entries that created one.
+# A linked worktree has a HEAD reflog of its own, so this is this checkout's, not the
+# repository's. `pull --rebase (pick)` and `rebase -i (pick)` carry the action in
+# parentheses; a fast-forward (`pull: Fast-forward`, `merge x: Fast-forward`), a reset
+# and a rebase's start and finish move HEAD to a commit somebody else made.
+mj_git_made_here() {
+  mj_git reflog show --format='%H %gs' HEAD 2>/dev/null \
+    | awk '{ h = $1; $1 = ""; s = substr($0, 2)
+             if (s ~ /^(commit|cherry-pick|revert|am)([ :(]|$)/ || s ~ /\((pick|reword|edit|squash|fixup)\):/) print h }' \
+    | LC_ALL=C sort -u
 }
 
 # ---------------------------------------------------------------- misc

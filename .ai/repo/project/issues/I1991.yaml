@@ -1,0 +1,24 @@
+id: I1991
+milestone: adopter-upgrades
+title: "A comment-only edit of the policy regenerates no bootstrap"
+slug: a-comment-in-the-policy-moves-no-bootstrap
+priority: p3
+profile: implementation
+parallel_safe: true
+objective: "Derive the policy fingerprint stamped into generated bootstraps from the parsed policy rather than its bytes, so that editing a comment does not rewrite AGENTS.md, CLAUDE.md and GEMINI.md."
+why: "OSCILLA db62a1f: a comment-only edit of policy.yaml moved the policy hash (ca779e02f878 to 9535da72e6a6) and rewrote all three bootstraps."
+current_state: "The stamp hashes the file's bytes (lib/update.sh, apps/majordomus-cli/src/providers.rs)."
+desired_state: "Both renderers hash the same canonical form; a comment edit is a no-op for update."
+scope:
+  - "lib/update.sh"
+  - "apps/majordomus-cli/src/providers.rs"
+  - "test/cases"
+acceptance_criteria:
+  - "Adding a comment to policy.yaml leaves `majordomus update --check` clean"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "comment_edit_noop_case"
+created_at: 2026-10-04
+updated_at: 2026-10-04
