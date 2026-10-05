@@ -41,7 +41,7 @@ it is described as real.
   itself still sends no request (ADR 0059; `test/cases/494_the_mesh_is_declared_and_held.sh`).
 - **Pull-request integration reaches the forge only when asked to.** The Rust executable's
   second declared exception (ADR 0101): `majordomus prs refresh`, `prs drain` and
-  `prs cleanup` run the GitHub CLI (`gh`) and `git fetch` against this repository's own
+  `prs cleanup` run the GitHub CLI (`gh`), `git fetch` and `git ls-remote` against this repository's own
   `origin`, with the person's own `gh` credentials. Nothing else does. `prs status`, `plan`,
   `explain`, `events`, the HTTP routes under `/api/v1/pull-requests`, the MCP tools and the
   Cockpit render the observation last recorded under `.ai/local/state/integration/`, with its

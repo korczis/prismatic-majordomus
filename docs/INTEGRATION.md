@@ -50,6 +50,7 @@ answer wins. `ready` is reached only after every other question is answered in i
 | `other_base` | held | targets a branch other than the base, and no open pull request's head | — |
 | `waiting_for_dependency` | waiting | stacked on another open pull request of this repository, or declares a dependency on an open one (see below) | land that one first |
 | `draft` | held | a draft | mark it ready |
+| `obsolete` | cleanup | carries a label that marks it obsolete (owner decision D3; see the label policy below); checked before the hold labels, after `draft` | a person closes it, or removes the label |
 | `blocked` | held | carries a label that holds it (see the label policy below) | remove it |
 | `unsafe` | held | the forge has auto-merge armed on it, so the forge would merge it on its own | disarm it: `gh pr merge <n> --disable-auto` |
 | `superseded` | cleanup | a declared successor landed: it is not open, and master contains its head (see supersession markers below); `superseded_by` names it | `prs cleanup --apply` closes it |
@@ -112,7 +113,7 @@ observation; two decisions are the same when the master and head are.
 
 ### Label policy
 
-The labels that hold a pull request are one table, `LABEL_POLICY` in
+The labels that have an effect are one table, `LABEL_POLICY` in
 `src/integration/classify.rs`. Each label has an effect; the policy in force copies the table
 (`policy.labels` in `prs status --json` and `integration.queue`) and the classifier reads that
 copy. No other list of labels exists. A label is compared case-insensitively.
@@ -126,9 +127,16 @@ copy. No other list of labels exists. A label is compared case-insensitively.
 | `on-hold` | hold |
 | `wip` | hold |
 | `manual-merge` | hold |
+| `obsolete` | obsolete |
 
-`hold` makes the pull request `blocked`, with `label:NAME`. There is no label that opts a
-pull request out of the executor's refresh (owner decision D11), so `hold` is the only effect.
+`hold` makes the pull request `blocked`, with `label:NAME`. `obsolete` makes it `obsolete`,
+with `label_obsolete:NAME` in the forge's spelling (owner decision D3): a person's mark is the
+only evidence that reaches the word — age, shared paths and a similar title never do — and it
+is never closed automatically. A pull request carrying both is `obsolete`, since a person acts
+on it either way; a draft carrying it stays `draft`, because the draft gate is asked first.
+There is no label that opts a pull request out of the executor's refresh (owner decision D11).
+
+
 
 ### Auto-merge and the merge method
 
@@ -231,10 +239,14 @@ carry them on each assessment.
 
 The queue is ordered by lane, disposition, risk (low, medium, high, from the paths touched),
 how many other ready or refreshable pull requests share an authored path (fewer first,
-because landing it invalidates less), age (older first, so new easy work cannot starve old
-work) and number. Every key is a value of the assessment, so the order is total and does
-not depend on the order the forge listed them. `src/integration/tests.rs` proves this as a
-property.
+because landing it invalidates less), how many open pull requests declare that they wait for
+it and are not yet satisfied (more first, because landing it unblocks them), how many
+authored paths it changes (fewer first: a smaller change is cheaper to land and to undo), age
+(older first, so new easy work cannot starve old work) and number. Every key is a value of
+the assessment or of the queue around it, so the order is total and does not depend on the
+order the forge listed them; `src/integration/tests.rs` proves this as a property. Each
+assessment carries the factors it was ranked by (`rank_factors`), and `prs explain` prints
+them, so a rank is never a number without its reasons.
 
 ## Waiting and starvation
 
@@ -308,8 +320,34 @@ Before 0.13 (owner decision D2) the word `superseded` meant what `redundant` mea
 closure was recorded as `closed_superseded`. The strong case is `redundant` now, closed as
 `closed_redundant`; `superseded` and `closed_superseded` mean only a declared successor that
 landed. Older trail lines still read: a `closed_superseded` line written before carries
-`head_reachable_from_master` or `merge_changes_nothing`, never `superseded_by:#N`. Branches
-are not deleted. The repository's own setting decides that.
+`head_reachable_from_master` or `merge_changes_nothing`, never `superseded_by:#N`.
+
+### Branches merged pull requests leave behind
+
+Branches are never deleted here: the forge's `delete_branch_on_merge` decides that (owner
+decision D4), so the executor holds no write that removes a branch. What the forge left
+behind is reported instead, by `prs cleanup` alone: it reads origin's branches
+(`git ls-remote --heads`) and the newest 1000 merged pull requests on demand, and keeps every
+branch of this repository that origin still serves at the exact head that merged. `prs
+refresh` never asks — the executor runs it before every decision, and a report-only fact
+that decides no merge stays off that path; it reads only the setting, from the repository
+settings it already asks for. A branch whose tip moved after its merge carries newer work and
+is never listed; neither is a fork's branch, whatever it is called, or the base. Cleanup
+prints the list after the pull requests and records it as `left-branches.json` beside the
+observation, with when it was read, so the surfaces that never reach the network render the
+last report with its age:
+
+```text
+merged branches left on origin (2); the forge decides deletion, so none is deleted here:
+  fix/left                                         #1     3f2a9c1d0b7e  left_for_a_person
+  fix/here                                         #3     9c0d4e5f6a7b  kept: checked out at /…/here-wt
+  next: the forge keeps merged branches: enable delete_branch_on_merge, and delete this one with git push origin --delete fix/left
+```
+
+A branch checked out in a worktree of this repository is listed as `kept`, with its path:
+somebody may still be standing on it. A read that fails leaves the list unread
+(`merged branches: unread`), recorded as unread and never as empty. `prs cleanup --format
+json` stays the list of pull requests to close.
 
 ## Safety
 
@@ -432,12 +470,16 @@ are not deleted. The repository's own setting decides that.
 | `majordomus prs drain [--max N] [--dry-run] [--refresh]` | yes | integrate, one merge at a time |
 | `majordomus prs drain --resume-after-failure` | yes | record that a person looked at an unverified merge, then drain |
 | `majordomus prs drain --continuous [--interval S] [--max N] [--refresh]` | yes | drain, wait, drain again until stopped |
-| `majordomus prs cleanup [--apply]` | yes | close what is provably on master, or superseded by a successor that landed |
+| `majordomus prs cleanup [--apply]` | yes | close what is provably on master, or superseded by a successor that landed; list what is a person's (possibly redundant, obsolete) and the branches merged pull requests left on origin |
 
 The same queue is `GET /api/v1/pull-requests` (MCP `majordomus_pull_requests`), with the
 lease and the last merge beside it. One pull request is
 `GET /api/v1/pull-requests/explain?number=` (`majordomus_pull_request_explain`), and the
-trail is `GET /api/v1/pull-requests/events` (`majordomus_integration_events`). All three are
+trail is `GET /api/v1/pull-requests/events` (`majordomus_integration_events`). What cleanup
+would do is `GET /api/v1/pull-requests/cleanup` (`majordomus_pull_requests_cleanup`): the plan
+decided offline from the recorded observation — `would_close` or `left_for_a_person` for each
+pull request, the same table `prs cleanup` acts on — beside the branch report `prs cleanup`
+last recorded, with its age. It closes, deletes and asks the forge for nothing. All four are
 declared once in `capability/builtin/integration.rs`.
 
 The Cockpit renders those two answers at `/cockpit/integration`. It shows the counts by lane,

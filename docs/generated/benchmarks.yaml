@@ -6,20 +6,20 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.13.0
 coverage:
   - scope: direct
-    required: 171
-    covered: 152
+    required: 172
+    covered: 153
     missing: 0
     waived: 19
     inapplicable: 0
   - scope: http
-    required: 169
-    covered: 152
+    required: 170
+    covered: 153
     missing: 0
     waived: 17
     inapplicable: 0
   - scope: mcp
-    required: 165
-    covered: 148
+    required: 166
+    covered: 149
     missing: 0
     waived: 17
     inapplicable: 0
@@ -30,8 +30,8 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 518
-    covered: 465
+    required: 521
+    covered: 468
     missing: 0
     waived: 53
     inapplicable: 0
@@ -632,6 +632,15 @@ capabilities:
     module: health
     kind: query
     cache: "process, 4 entries, 5s"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: integration.cleanup
+    module: integration
+    kind: query
+    cache: "—"
     direct: covered
     mcp: covered
     http: covered

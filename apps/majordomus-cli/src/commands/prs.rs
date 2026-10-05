@@ -84,6 +84,50 @@ fn issue_line(a: &integration::PullRequestAssessment) -> Option<String> {
     })
 }
 
+/// Cleanup's second part: what merged pull requests left on origin, read now and recorded
+/// ([`drain::report_left_branches`]), then printed.
+fn cleanup_branches(root: &std::path::Path, out: &mut impl Write) -> Result<()> {
+    let report = drain::report_left_branches(root).map_err(unusable)?;
+    left_branches(&report.and_then(|r| r.branches), out)
+}
+
+/// The merged branches the forge left on origin, one line each, or why there is no list.
+fn left_branches(left: &Option<Vec<drain::LeftBranch>>, out: &mut impl Write) -> Result<()> {
+    match left {
+        None => w(
+            out,
+            "merged branches: unread (origin or the merged pull requests could not be read)",
+        ),
+        Some(l) if l.is_empty() => w(
+            out,
+            "merged branches: none left on origin at the head that merged",
+        ),
+        Some(l) => {
+            w(
+                out,
+                format!(
+                    "merged branches left on origin ({}); the forge decides deletion, so none is deleted here:",
+                    l.len()
+                ),
+            )?;
+            for b in l {
+                w(
+                    out,
+                    format!(
+                        "  {:<48} #{:<5} {}  {}",
+                        b.branch,
+                        b.pr,
+                        &b.tip[..b.tip.len().min(12)],
+                        b.action
+                    ),
+                )?;
+            }
+            // the arm holds a list with at least one branch
+            w(out, format!("  next: {}", l[0].next_step))
+        }
+    }
+}
+
 fn render_proof(p: &integration::proof::DryRunProof, out: &mut impl Write) -> Result<()> {
     for s in &p.steps {
         w(out, format!("{:<16} {}", s.step, s.summary))?;
@@ -305,7 +349,9 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             let items = drain::cleanup(&root, &mut integrator, apply).map_err(unusable)?;
             if format == OutputFormat::Json {
                 json(&mut out, &items)?;
-            } else if items.is_empty() {
+                return Ok(0);
+            }
+            if items.is_empty() {
                 w(
                     &mut out,
                     "nothing to clean up: no open pull request's work is on master already, and \
@@ -325,7 +371,10 @@ pub fn run(args: PrsArgs) -> Result<u8> {
                     )?;
                 }
             }
-            Ok(0)
+            // what merged pull requests left on origin: reported, never deleted (owner
+            // decision D4). Read here, on demand, and recorded for the offline surfaces;
+            // never by refresh, which the executor runs before every decision.
+            cleanup_branches(&root, &mut out).map(|()| 0)
         }
         PrsCommand::ProveDryRun => {
             let proof = integration::proof::prove_dry_run(&root).map_err(unusable)?;
@@ -768,6 +817,22 @@ fn explain(
         out,
         format!("  rank:         {rank} of {}", q.assessments.len()),
     )?;
+    if let Some(f) = &a.rank_factors {
+        // the components the order compares, in its order: the first that differs decides
+        w(
+            out,
+            format!(
+                "  rank factors: lane {}, {}, risk {}, contention {}, dependents {}, paths {}, opened {}",
+                integration::classify::word(&f.lane),
+                f.disposition.as_str(),
+                integration::classify::word(&f.risk),
+                f.contention,
+                f.dependents,
+                f.authored_paths,
+                f.created_at
+            ),
+        )?;
+    }
     if let Some(wait) = &a.wait {
         w(out, format!("  waiting:      {}", waited(wait)))?;
     }
@@ -950,6 +1015,7 @@ mod tests {
                     dependent,
                 ],
                 resolved: Default::default(),
+                delete_branch_on_merge: None,
             },
         )
         .unwrap();
@@ -1197,5 +1263,90 @@ mod issue_write_tests {
         q.assessments[0].issue = Some("I0810".into());
         let a = q.assessments[0].clone();
         assert!(explain(&q, &a, 1, OutputFormat::Text, &mut RefuseOn("issue:")).is_err());
+    }
+}
+
+#[cfg(test)]
+mod left_branch_render_tests {
+    use super::*;
+
+    fn rendered(left: &Option<Vec<drain::LeftBranch>>) -> String {
+        let mut out = Vec::new();
+        left_branches(left, &mut out).unwrap();
+        String::from_utf8(out).unwrap()
+    }
+
+    #[test]
+    fn every_answer_of_the_report_is_said() {
+        assert!(rendered(&None).contains("merged branches: unread"));
+        assert!(rendered(&Some(Vec::new())).contains("none left on origin"));
+        let b = drain::LeftBranch {
+            branch: "fix/a".into(),
+            tip: "0123456789abcdef".into(),
+            pr: 7,
+            merged_at: "t".into(),
+            action: "left_for_a_person".into(),
+            next_step: "delete it".into(),
+        };
+        let text = rendered(&Some(vec![b]));
+        assert!(text.contains("left on origin (1)"), "{text}");
+        assert!(
+            text.contains("fix/a") && text.contains("#7") && text.contains("0123456789ab"),
+            "{text}"
+        );
+        assert!(text.contains("next: delete it"), "{text}");
+    }
+
+    /// A writer that refuses the write carrying `needle`, so each line's refusal is reached.
+    struct RefuseOn(&'static str);
+
+    impl Write for RefuseOn {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            if String::from_utf8_lossy(buf).contains(self.0) {
+                Err(std::io::Error::other("refused"))
+            } else {
+                Ok(buf.len())
+            }
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn a_refused_write_is_an_error_on_every_line() {
+        let b = drain::LeftBranch {
+            branch: "fix/a".into(),
+            tip: "0123456789abcdef".into(),
+            pr: 7,
+            merged_at: "t".into(),
+            action: "left_for_a_person".into(),
+            next_step: "delete it".into(),
+        };
+        for needle in ["left on origin", "fix/a", "next:"] {
+            assert!(
+                left_branches(&Some(vec![b.clone()]), &mut RefuseOn(needle)).is_err(),
+                "{needle}"
+            );
+        }
+    }
+
+    #[test]
+    fn an_unreadable_observation_fails_the_branch_report() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = crate::integration::state_path(dir.path(), crate::integration::OBSERVATION_FILE);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(&path, "not an observation").unwrap();
+        assert!(cleanup_branches(dir.path(), &mut Vec::new()).is_err());
+    }
+
+    #[test]
+    fn cleanup_with_nothing_observed_reports_unread() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut out = Vec::new();
+        cleanup_branches(dir.path(), &mut out).unwrap();
+        assert!(String::from_utf8(out)
+            .unwrap()
+            .contains("merged branches: unread"));
     }
 }

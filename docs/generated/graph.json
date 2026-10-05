@@ -645,6 +645,15 @@
         "status": "query"
       },
       {
+        "id": "capability:integration.cleanup",
+        "kind": "capability",
+        "label": "integration.cleanup",
+        "summary": "What cleanup would do",
+        "route": "/cockpit/capabilities/integration.cleanup",
+        "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:integration.events",
         "kind": "capability",
         "label": "integration.events",
@@ -1677,14 +1686,6 @@
         "label": "router.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/http/router.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/order.rs",
-        "kind": "file",
-        "label": "order.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/order.rs",
         "external": true
       },
       {
@@ -42249,6 +42250,21 @@
         "kind": "projects"
       },
       {
+        "source": "capability:integration.cleanup",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.cleanup",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.cleanup",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:integration.events",
         "target": "projection:cli",
         "kind": "projects"
@@ -44557,11 +44573,6 @@
         "source": "majordomus://adr/adr-0024",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0025",
-        "target": "file:apps/majordomus-cli/src/order.rs",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0025",
@@ -63105,6 +63116,11 @@
       },
       {
         "source": "module:integration",
+        "target": "capability:integration.cleanup",
+        "kind": "composes"
+      },
+      {
+        "source": "module:integration",
         "target": "capability:integration.events",
         "kind": "composes"
       },
@@ -63641,7 +63657,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4503,
+      "edges": 4506,
       "acyclic": true,
       "truncated": true
     }

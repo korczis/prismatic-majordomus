@@ -212,6 +212,7 @@ impl World {
             merge_methods: self.merge_methods.iter().map(|m| m.to_string()).collect(),
             pull_requests: self.open.iter().map(observe_pr).collect(),
             resolved: self.resolved(),
+            delete_branch_on_merge: None,
         }
     }
 
@@ -1521,6 +1522,7 @@ proptest! {
 
     #[test]
     fn ties_are_broken_by_created_then_number(w in arb_world()) {
+        // (the components before age now include declared dependents and the change's size)
         let q = w.queue();
         let contenders: BTreeSet<u64> = q
             .assessments
@@ -1531,9 +1533,27 @@ proptest! {
             ))
             .map(|a| a.number)
             .collect();
+        // every component before age, read independently of the planner: the factors the
+        // planner recorded must agree with what is recomputed here
+        let mut dependents: BTreeMap<u64, usize> = BTreeMap::new();
+        for a in &q.assessments {
+            for d in &a.dependencies {
+                if d.certainty == crate::integration::DependencyCertainty::Confirmed && !d.satisfied {
+                    *dependents.entry(d.number).or_default() += 1;
+                }
+            }
+        }
         let before_age = |a: &PullRequestAssessment| {
             let contention = a.overlaps.iter().filter(|o| contenders.contains(&o.number)).count();
-            (a.lane as u8, a.disposition as u8, a.risk as u8, contention)
+            let waiting_on_it = dependents.get(&a.number).copied().unwrap_or(0);
+            (
+                a.lane as u8,
+                a.disposition as u8,
+                a.risk as u8,
+                contention,
+                std::cmp::Reverse(waiting_on_it),
+                a.authored_paths.len(),
+            )
         };
         for pair in q.assessments.windows(2) {
             let (a, b) = (&pair[0], &pair[1]);
@@ -1755,6 +1775,7 @@ fn observed(dir: &std::path::Path, master: &str, prs: Vec<PullRequestObservation
         merge_methods: vec!["merge".into()],
         pull_requests: prs,
         resolved: Default::default(),
+        delete_branch_on_merge: None,
     };
     crate::integration::store_observation(dir, &obs).unwrap();
 }
@@ -3450,6 +3471,7 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         | R::RequiredChecksSkipped
         | R::ExecutorMergeRefused { .. }
         | R::ExecutorRefreshFailed { .. }
+        | R::LabelObsolete { .. }
         | R::Unrecognised(_) => (),
     };
     let mut all = vec![
@@ -3494,6 +3516,9 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         },
         R::ExecutorRefreshFailed {
             master: "b".repeat(40),
+        },
+        R::LabelObsolete {
+            name: "Obsolete: superseded by the redesign".into(),
         },
     ];
     for state in [
@@ -4082,7 +4107,19 @@ fn the_label_policy_is_one_table_and_every_effect_holds() {
     let q = w.queue();
     // the policy carries the table, as it is
     assert_eq!(q.policy.labels, LABEL_POLICY.to_vec());
-    assert!(LABEL_POLICY.iter().all(|l| l.effect == LabelEffect::Hold));
+    // a label holds a pull request (D11: none opts out of the executor's refresh), or marks
+    // it obsolete (D3), and nothing else; exactly one label means obsolete
+    assert!(LABEL_POLICY
+        .iter()
+        .all(|l| matches!(l.effect, LabelEffect::Hold | LabelEffect::Obsolete)));
+    assert_eq!(
+        LABEL_POLICY
+            .iter()
+            .filter(|l| l.effect == LabelEffect::Obsolete)
+            .map(|l| l.name.as_ref())
+            .collect::<Vec<_>>(),
+        ["obsolete"]
+    );
     let names: Vec<&str> = LABEL_POLICY.iter().map(|l| l.name.as_ref()).collect();
     assert_eq!(
         names,
@@ -4093,11 +4130,17 @@ fn the_label_policy_is_one_table_and_every_effect_holds() {
             "hold",
             "on-hold",
             "wip",
-            "manual-merge"
+            "manual-merge",
+            "obsolete"
         ]
     );
-    // every label of the table holds, whatever its case; a label outside it does not
-    for label in names.iter().map(|n| n.to_ascii_uppercase()) {
+    // every hold label of the table holds, whatever its case; a label outside it does not
+    let holds: Vec<&str> = LABEL_POLICY
+        .iter()
+        .filter(|l| l.effect == LabelEffect::Hold)
+        .map(|l| l.name.as_ref())
+        .collect();
+    for label in holds.iter().map(|n| n.to_ascii_uppercase()) {
         let mut s = sim(1);
         s.labels = vec![label.clone()];
         let q = World {
@@ -4647,7 +4690,10 @@ fn redundant_and_superseded_are_two_words_of_the_cleanup_lane() {
         .filter(|d| d.lane() == L::Cleanup)
         .map(|d| d.as_str())
         .collect();
-    assert_eq!(cleanup, ["redundant", "superseded", "possibly_redundant"]);
+    assert_eq!(
+        cleanup,
+        ["redundant", "superseded", "possibly_redundant", "obsolete"]
+    );
     // the supersession gate is asked before the relation to master
     let at = |g: G| G::ALL.iter().position(|x| *x == g).unwrap();
     assert_eq!(at(G::Supersession) + 1, at(G::RelationToMaster));
@@ -5310,4 +5356,88 @@ fn a_read_of_the_queue_writes_nothing() {
         "the recording path keeps nothing"
     );
     let _ = std::fs::remove_dir_all(&dir);
+}
+
+// ---------------------------------------------------------------- a rank names its factors (WP15)
+
+#[test]
+fn a_pull_request_others_wait_for_ranks_first() {
+    // #1 and #2 are equal in everything but #3, which declares it waits for #2
+    let mut dependent = sim(3);
+    dependent.depends_on = Some(2);
+    let w = World {
+        open: vec![sim(1), sim(2), dependent],
+        ..Default::default()
+    };
+    let q = w.queue();
+    assert_eq!(
+        q.next_merge,
+        Some(2),
+        "{:?}",
+        q.assessments.iter().map(|a| a.number).collect::<Vec<_>>()
+    );
+    let f = q.get(2).unwrap().rank_factors.as_ref().unwrap();
+    assert_eq!(f.dependents, 1);
+    assert_eq!(
+        q.get(1).unwrap().rank_factors.as_ref().unwrap().dependents,
+        0
+    );
+}
+
+#[test]
+fn a_smaller_change_ranks_before_a_larger_one_of_the_same_age() {
+    let mut big = sim(1);
+    big.paths = vec!["a.rs".into(), "b.rs".into(), "c.rs".into()];
+    big.created = "2026-09-01T00:00:00Z".into();
+    let mut small = sim(2);
+    small.paths = vec!["d.rs".into()];
+    small.created = "2026-09-01T00:00:00Z".into();
+    let w = World {
+        open: vec![big, small],
+        ..Default::default()
+    };
+    let q = w.queue();
+    assert_eq!(q.next_merge, Some(2));
+    assert_eq!(
+        q.get(1)
+            .unwrap()
+            .rank_factors
+            .as_ref()
+            .unwrap()
+            .authored_paths,
+        3
+    );
+}
+
+#[test]
+fn every_ranked_assessment_carries_the_factors_it_was_ranked_by() {
+    let w = World {
+        open: vec![sim(1), sim(2), sim(3)],
+        ..Default::default()
+    };
+    let q = w.queue();
+    let factors: Vec<&crate::integration::RankFactors> = q
+        .assessments
+        .iter()
+        .map(|a| a.rank_factors.as_ref().expect("ranked"))
+        .collect();
+    // the factors are what ordered them: each pair is in the order its factors say
+    for pair in factors.windows(2) {
+        let (a, b) = (pair[0], pair[1]);
+        assert!(
+            (
+                a.lane as u8,
+                a.disposition as u8,
+                a.risk as u8,
+                a.contention
+            ) <= (
+                b.lane as u8,
+                b.disposition as u8,
+                b.risk as u8,
+                b.contention
+            ),
+            "{a:?} before {b:?}"
+        );
+    }
+    assert_eq!(factors[0].number, q.assessments[0].number);
 }

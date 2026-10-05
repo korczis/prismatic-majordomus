@@ -1,6 +1,6 @@
 //! The `integration` module: the pull-request integration queue, projected (ADR 0101).
 //!
-//! Three questions, all read-only and all offline. Each renders the queue
+//! Four questions, all read-only and all offline but the dry-run proof. Each renders the queue
 //! [`crate::integration::queue_of`] builds from the last recorded forge observation and
 //! this clone's fetched master — the value `majordomus prs status` prints — so the HTTP
 //! route, the MCP tool, the Cockpit and the command line cannot disagree. None reaches the
@@ -21,7 +21,9 @@ use crate::capability::model::{
 };
 use crate::capability::module::ModuleDescriptor;
 use crate::integration::{
-    drain::{IntegrationEvent, IntegrationLease, IntegrationLeaseState},
+    drain::{
+        CleanupItem, IntegrationEvent, IntegrationLease, IntegrationLeaseState, LeftBranchReport,
+    },
     metrics::{self, IntegrationThroughput},
     IntegrationQueue, PullRequestAssessment,
 };
@@ -48,6 +50,57 @@ pub struct IntegrationStatus {
     /// How fast the executor has turned work into master over the last
     /// [`THROUGHPUT_WINDOW_DAYS`] days, folded from the same trail.
     pub throughput: IntegrationThroughput,
+}
+
+/// What cleanup would do, decided offline: the pull requests it would close or leave for a
+/// person, from the recorded observation, and the last branch report `prs cleanup` recorded.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct IntegrationCleanup {
+    /// Whether a forge observation is recorded in this checkout.
+    pub observed: bool,
+    /// Why there is no plan, when there is none.
+    pub reason: Option<String>,
+    /// When the forge was observed, when it was.
+    pub observed_at: Option<String>,
+    /// The plan, in rank order: `would_close` for what is provably on master or superseded by
+    /// a successor that landed, `left_for_a_person` for weak evidence and for what a person
+    /// marked obsolete. Nothing here closes anything.
+    pub items: Vec<CleanupItem>,
+    /// The branches merged pull requests left on origin, as `prs cleanup` last read them;
+    /// `None` when it never ran in this checkout. Never read from the network here.
+    pub branches: Option<LeftBranchReport>,
+    /// How old that report is, in seconds, when its time reads.
+    pub branches_age_seconds: Option<u64>,
+}
+
+/// [`IntegrationCleanup`] for the checkout at `root`, at `now` (seconds since the epoch):
+/// [`crate::integration::drain::cleanup_plan`] over [`crate::integration::queue_of`], which
+/// writes nothing, and the recorded branch report with its age. No network, no write.
+pub fn cleanup_status(root: &Path, now: u64) -> IntegrationCleanup {
+    let branches = crate::integration::drain::recorded_left_branches(root);
+    let branches_age_seconds = branches
+        .as_ref()
+        .and_then(|b| crate::peers::epoch_seconds(&b.read_at))
+        .and_then(|at| u64::try_from(at).ok())
+        .map(|at| now.saturating_sub(at));
+    match crate::integration::queue_of(root) {
+        Ok(q) => IntegrationCleanup {
+            observed: true,
+            reason: None,
+            observed_at: Some(q.observed_at.clone()),
+            items: crate::integration::drain::cleanup_plan(&q),
+            branches,
+            branches_age_seconds,
+        },
+        Err(reason) => IntegrationCleanup {
+            observed: false,
+            reason: Some(reason),
+            observed_at: None,
+            items: Vec::new(),
+            branches,
+            branches_age_seconds,
+        },
+    }
 }
 
 /// The window [`IntegrationStatus::throughput`] is folded over.
@@ -174,6 +227,14 @@ fn integration_events(ctx: &Context, _: Empty) -> Result<IntegrationEvents, Capa
     })
 }
 
+fn integration_cleanup(ctx: &Context, _: Empty) -> Result<IntegrationCleanup, CapabilityError> {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    Ok(cleanup_status(root(ctx), now))
+}
+
 fn integration_prove_dry_run(
     ctx: &Context,
     _: Empty,
@@ -238,6 +299,22 @@ pub fn module() -> ModuleDescriptor {
                 handler: integration_events,
             },
             capability! {
+                id: "integration.cleanup",
+                title: "What cleanup would do",
+                description: "The cleanup plan, decided offline from the recorded observation: every open pull request cleanup would close — redundant (its work is on master already) or superseded (by a declared successor that landed) — and every one it leaves for a person — possibly redundant (weak evidence) or obsolete (a person marked it, owner decision D3) — each with its disposition and the reasons that decided it, in rank order; beside it, the branches merged pull requests left on origin as `majordomus prs cleanup` last read them, with when and how long ago. A read: it closes, deletes and asks the forge for nothing — `majordomus prs cleanup` reads the forge and `--apply` closes. `observed: false` with the reason when this checkout has recorded no observation.",
+                input: Empty,
+                output: IntegrationCleanup,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_pull_requests_cleanup"),
+                    http: get("/api/v1/pull-requests/cleanup"),
+                    cli: None,
+                },
+                tags: ["integration", "pull-requests", "cleanup"],
+                cache: CachePolicy::Disabled,
+                handler: integration_cleanup,
+            },
+            capability! {
                 id: "integration.prove_dry_run",
                 title: "Proof that a dry run moves nothing",
                 description: "Runs the executor's non-mutating cycle — refresh, plan, drain --dry-run and cleanup without --apply — between two snapshots of everything it could move if it were wrong: every ref origin serves, every open pull request's number, head, state and labels, the integration audit trail, the executor's lease, and every local ref outside the two namespaces the refresh mirrors. `ok` is true exactly when the snapshots are equal and refs/remotes/origin/<base> and every refs/majordomus/prs/<n> equal what origin serves. A read that reaches the network: the refresh asks the forge through the GitHub CLI and fetches the base and the pull-request heads, and like every read it rewrites the observation, relation and summary caches. It merges, closes and pushes nothing, and takes no input that could make it.",
@@ -276,6 +353,7 @@ mod tests {
                 "integration.queue",
                 "integration.explain",
                 "integration.events",
+                "integration.cleanup",
                 "integration.prove_dry_run"
             ]
         );

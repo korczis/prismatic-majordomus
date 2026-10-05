@@ -310,32 +310,58 @@ pub fn policy_of(obs: &ForgeObservation) -> IntegrationPolicy {
 
 /// The rank key: lane, then disposition, then risk, then how many other *ready or
 /// refreshable* pull requests share an authored path (fewer first: landing it invalidates
-/// less), then age (older first, so easy new work cannot starve old work), then number.
-/// Every component is a value of the assessment; the order is total and input-order free.
-fn rank_key(
+/// less), then how many declared dependents wait on it (more first: landing it unblocks
+/// them), then how many authored paths it changes (fewer first), then age (older first, so
+/// easy new work cannot starve old work), then number. Every component is a value of the
+/// assessment or of the queue around it; the order is total and input-order free.
+fn rank_factors(
     a: &PullRequestAssessment,
     contenders: &BTreeSet<u64>,
-) -> (u8, u8, u8, usize, String, u64) {
-    let lane = a.lane as u8;
-    let disposition = a.disposition as u8;
-    let risk = a.risk as u8;
-    let contention = a
-        .overlaps
-        .iter()
-        .filter(|o| contenders.contains(&o.number))
-        .count();
+    dependents: &BTreeMap<u64, usize>,
+) -> RankFactors {
+    RankFactors {
+        lane: a.lane,
+        disposition: a.disposition,
+        risk: a.risk,
+        contention: a
+            .overlaps
+            .iter()
+            .filter(|o| contenders.contains(&o.number))
+            .count(),
+        dependents: dependents.get(&a.number).copied().unwrap_or(0),
+        authored_paths: a.authored_paths.len(),
+        created_at: a.created_at.clone(),
+        number: a.number,
+    }
+}
+
+fn rank_key(
+    f: &RankFactors,
+) -> (
+    u8,
+    u8,
+    u8,
+    usize,
+    std::cmp::Reverse<usize>,
+    usize,
+    String,
+    u64,
+) {
     (
-        lane,
-        disposition,
-        risk,
-        contention,
-        a.created_at.clone(),
-        a.number,
+        f.lane as u8,
+        f.disposition as u8,
+        f.risk as u8,
+        f.contention,
+        std::cmp::Reverse(f.dependents),
+        f.authored_paths,
+        f.created_at.clone(),
+        f.number,
     )
 }
 
-/// Rank assessments. Deterministic whatever order they arrive in.
-pub fn rank(mut assessments: Vec<PullRequestAssessment>) -> Vec<PullRequestAssessment> {
+/// Rank assessments. Deterministic whatever order they arrive in; each carries the factors
+/// it was ranked by.
+pub fn rank(assessments: Vec<PullRequestAssessment>) -> Vec<PullRequestAssessment> {
     let contenders: BTreeSet<u64> = assessments
         .iter()
         .filter(|a| {
@@ -346,8 +372,24 @@ pub fn rank(mut assessments: Vec<PullRequestAssessment>) -> Vec<PullRequestAsses
         })
         .map(|a| a.number)
         .collect();
-    assessments.sort_by_cached_key(|a| rank_key(a, &contenders));
-    assessments
+    // declared, unsatisfied edges into each pull request: what landing it would unblock
+    let mut dependents: BTreeMap<u64, usize> = BTreeMap::new();
+    for a in &assessments {
+        for d in &a.dependencies {
+            if d.certainty == DependencyCertainty::Confirmed && !d.satisfied {
+                *dependents.entry(d.number).or_default() += 1;
+            }
+        }
+    }
+    let mut ranked: Vec<PullRequestAssessment> = assessments
+        .into_iter()
+        .map(|mut a| {
+            a.rank_factors = Some(rank_factors(&a, &contenders, &dependents));
+            a
+        })
+        .collect();
+    ranked.sort_by_cached_key(|a| rank_key(a.rank_factors.as_ref().expect("set above")));
+    ranked
 }
 
 /// Build the queue from an observation, against `master_sha`. `relation` answers what a
@@ -876,6 +918,7 @@ mod issue_tests {
             merge_methods: vec!["merge".into()],
             pull_requests,
             resolved: Default::default(),
+            delete_branch_on_merge: None,
         };
         build_queue(&obs, "m", |_| RelationToMaster::Unknown {
             reason: "not asked".into(),

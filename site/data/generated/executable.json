@@ -1129,6 +1129,23 @@
       "tool": "majordomus_health"
     },
     {
+      "api_anchor": "/docs/api/integration/#op-integration-cleanup",
+      "claims": [],
+      "cli": null,
+      "id": "integration.cleanup",
+      "kind": "query",
+      "module": "integration",
+      "module_route": "/registry/modules/integration/",
+      "resource": null,
+      "route": "/registry/capabilities/integration-cleanup/",
+      "slug": "integration-cleanup",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "tests": [],
+      "title": "What cleanup would do",
+      "tool": "majordomus_pull_requests_cleanup"
+    },
+    {
       "api_anchor": "/docs/api/integration/#op-integration-events",
       "claims": [],
       "cli": "majordomus prs events",
@@ -3592,7 +3609,7 @@
     ]
   },
   "counts": {
-    "capabilities": 171,
+    "capabilities": 172,
     "claims": 77,
     "modules": 51
   },
@@ -4181,6 +4198,11 @@
     },
     {
       "capabilities": [
+        {
+          "id": "integration.cleanup",
+          "route": "/registry/capabilities/integration-cleanup/",
+          "slug": "integration-cleanup"
+        },
         {
           "id": "integration.events",
           "route": "/registry/capabilities/integration-events/",
