@@ -211,9 +211,21 @@ fn trail_acts(bytes: &[u8]) -> Vec<String> {
     ]
 }
 
-/// Take a snapshot of everything the cycle could move.
-pub fn snapshot(root: &Path, base: &str) -> Result<Snapshot, String> {
-    let remote: Vec<String> = ref_lines(&git(root, &["ls-remote", "origin"])?)
+/// What origin serves and what this clone holds, read together: `git ls-remote origin` and
+/// `git for-each-ref`. One read with one failure, so a caller that cannot reach origin is
+/// refused, and nothing that reads them can be half-informed.
+fn refs(root: &Path) -> Result<(String, String), String> {
+    git(root, &["ls-remote", "origin"]).and_then(|remote| {
+        git(root, &["for-each-ref", "--format=%(objectname) %(refname)"])
+            .map(|local| (remote, local))
+    })
+}
+
+/// Take a snapshot of everything the cycle could move. `common` is the repository's common
+/// git directory, where its trail and its lease live.
+pub fn snapshot(root: &Path, common: &Path, base: &str) -> Result<Snapshot, String> {
+    let (remote, local) = refs(root)?;
+    let remote: Vec<String> = ref_lines(&remote)
         .into_iter()
         .map(|(sha, r)| format!("{sha} {r}"))
         .collect();
@@ -233,14 +245,16 @@ pub fn snapshot(root: &Path, base: &str) -> Result<Snapshot, String> {
     )?)?;
     // the repository's trail, where every worktree writes it — read where it is, never
     // through events_path, which would move an old checkout's trail and be a write itself
-    let trail_path = super::common_state_path(root, super::EVENTS_FILE)?;
+    let trail_path = common
+        .join(super::COMMON_STATE_DIR)
+        .join(super::EVENTS_FILE);
     let trail = match std::fs::read(&trail_path) {
         Ok(bytes) => trail_acts(&bytes),
         // no trail is a trail of no acts: a cycle that only observes may create one
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => trail_acts(b""),
         Err(e) => return Err(format!("{}: {e}", trail_path.display())),
     };
-    let lock = IntegrationLease::path_for(&common_dir(root)?, base);
+    let lock = IntegrationLease::path_for(common, base);
     let lock_dir = lock.parent().map(Path::to_path_buf).unwrap_or_default();
     let mut lease: Vec<String> = match std::fs::read_dir(&lock_dir) {
         Ok(entries) => entries
@@ -259,14 +273,11 @@ pub fn snapshot(root: &Path, base: &str) -> Result<Snapshot, String> {
     if lease.is_empty() {
         lease.push("absent".into());
     }
-    let local: Vec<String> = ref_lines(&git(
-        root,
-        &["for-each-ref", "--format=%(objectname) %(refname)"],
-    )?)
-    .into_iter()
-    .filter(|(_, r)| !mirrored(r, base))
-    .map(|(sha, r)| format!("{sha} {r}"))
-    .collect();
+    let local: Vec<String> = ref_lines(&local)
+        .into_iter()
+        .filter(|(_, r)| !mirrored(r, base))
+        .map(|(sha, r)| format!("{sha} {r}"))
+        .collect();
     let section = |name: &str, lines: Vec<String>| SnapshotSection {
         name: name.into(),
         lines,
@@ -364,6 +375,8 @@ pub fn mirror_mismatches(
 
 /// Run the cycle between two snapshots and judge it.
 pub fn prove_dry_run(root: &Path) -> Result<DryRunProof, String> {
+    // the repository's common git directory, where its trail and lease are: asked once
+    let common = common_dir(root)?;
     // the base is the executor's: from the observation when there is one, else the forge's
     let base = match super::load_observation(root).ok().flatten() {
         Some(o) => o.base,
@@ -386,10 +399,13 @@ pub fn prove_dry_run(root: &Path) -> Result<DryRunProof, String> {
             v.default_branch.name
         }
     };
-    let before = snapshot(root, &base)?;
+    let before = snapshot(root, &common, &base)?;
 
     let mut steps = Vec::new();
-    let obs = super::refresh(root)?;
+    // the observation and the plan built from it are one read: the plan reads what the
+    // refresh recorded, so a refresh that succeeded and a plan that cannot follow are one failure
+    let (obs, queue) =
+        super::refresh(root).and_then(|obs| super::queue_of(root).map(|q| (obs, q)))?;
     steps.push(ProofStep {
         step: "refresh".into(),
         summary: format!(
@@ -399,7 +415,6 @@ pub fn prove_dry_run(root: &Path) -> Result<DryRunProof, String> {
             obs.base_sha
         ),
     });
-    let queue = super::queue_of(root)?;
     steps.push(ProofStep {
         step: "plan".into(),
         summary: match queue.next_merge {
@@ -414,11 +429,8 @@ pub fn prove_dry_run(root: &Path) -> Result<DryRunProof, String> {
         summary: report
             .steps
             .iter()
-            .map(|o| match o {
-                drain::DrainStepOutcome::WouldMerge { pr } => format!("would merge #{pr}"),
-                drain::DrainStepOutcome::Idle { why } => format!("idle: {why}"),
-                other => serde_json::to_string(other).unwrap_or_default(),
-            })
+            // the command line's one sentence per outcome, every outcome named
+            .map(crate::commands::prs::describe)
             .chain(std::iter::once(report.stopped.clone()).filter(|s| !s.is_empty()))
             .collect::<Vec<_>>()
             .join("; "),
@@ -437,7 +449,7 @@ pub fn prove_dry_run(root: &Path) -> Result<DryRunProof, String> {
         },
     });
 
-    let after = snapshot(root, &base)?;
+    let after = snapshot(root, &common, &base)?;
     let moved = diff(&before, &after);
     let observed: std::collections::BTreeSet<u64> = obs
         .pull_requests
@@ -445,13 +457,10 @@ pub fn prove_dry_run(root: &Path) -> Result<DryRunProof, String> {
         .map(|p| p.number)
         .chain(obs.resolved.keys().copied())
         .collect();
-    let mirrors = mirror_mismatches(
-        &git(root, &["ls-remote", "origin"])?,
-        &git(root, &["for-each-ref", "--format=%(objectname) %(refname)"])?,
-        &base,
-        &observed,
-    );
-    let queue = super::queue_of(root)?;
+    // what origin serves now and the queue the cycle left, read together
+    let ((remote, local), queue) =
+        refs(root).and_then(|r| super::queue_of(root).map(|q| (r, q)))?;
+    let mirrors = mirror_mismatches(&remote, &local, &base, &observed);
     let classification = queue
         .assessments
         .iter()
@@ -607,6 +616,8 @@ mod trail_and_helper_tests {
         let none = run(dir.path(), "majordomus-no-such-program", &[]).unwrap_err();
         assert!(none.contains("could not run"), "{none}");
         assert!(common_dir(dir.path()).is_err(), "not a repository");
+        // and a proof asked of no repository refuses before it reads anything else
+        assert!(prove_dry_run(dir.path()).is_err());
         // origin serving no base leaves the base's mirror unjudged, not mismatched
         let observed = std::collections::BTreeSet::new();
         assert!(mirror_mismatches(
