@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "a187e48d7aa9f38e26f6f098272bc5d588967b9b",
+  "commit": "b557ab1c8c847a6c996d4da3a0ede25f27574d26",
   "source_version": "0.13.1",
-  "registry_fingerprint": "7692997c18a66c44923d58f442aab9e6f7f9e154900aaba559b222e9deb12116"
+  "registry_fingerprint": "2a85399fb05009cc1fb9530f6a390d68e63c6dfd8672cdfbf9b63321f8b8e201"
  },
  "counts": {
-  "pages": 1832,
-  "capabilities": 1881,
+  "pages": 1845,
+  "capabilities": 1898,
   "cli_commands": 89,
   "http_routes": 168,
   "mcp_tools": 164,
-  "mcp_resources": 1764,
+  "mcp_resources": 1781,
   "modules": 84
  },
  "kinds": [
@@ -150,7 +150,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 245
+   "count": 257
   },
   {
    "kind": "knowledge",
@@ -174,7 +174,7 @@
    "route": "/plan/",
    "title": null,
    "reason": null,
-   "count": 23
+   "count": 24
   },
   {
    "kind": "moment",
@@ -262,7 +262,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 346
+   "count": 350
   },
   {
    "kind": "use-case",
@@ -4388,6 +4388,11 @@
    "description": "Milestones as executable outcome specifications, issues as execution contracts, and the dependency graph that decides what may be executed next. Every figure is derived from .ai/repo/project."
   },
   {
+   "route": "/plan/adopter-upgrades/",
+   "title": "adopter-upgrades — An adopting repository survives a Majordomus upgrade, and what the tool vendors into it is adopter-neutral",
+   "description": "An adopter can upgrade the tool, or vendor its rules, and be told exactly what to migrate before anything refuses its commits. The migration is a command, not a hand replay. What the tool writes into an adopter (rules, skeleton, scope, candidates) is neutral to this repository and keeps a PR-only trunk clean."
+  },
+  {
    "route": "/plan/capability-graph/",
    "title": "capability-graph — One capability graph, two projections, and no second inventory of what this repository can do",
    "description": "One typed, deterministic capability graph composes the registries that already own their facts — it does not replace them — and adds typed relations between them that are inferred where a stable convention exists and declared where it does not. Both the running server and the published site render from that one graph: the static projection is the snapshot, the runtime projection is the snapshot plus live state. Navigation, overview, detail, search, the relation view and the coverage matrix are all derived, a dangling relation fails generation rather than rendering as a missing section, and a capability that exists with no documentation, no test or no enforcement is visible as such rather than indistinguishable from one that has them."
@@ -5656,6 +5661,66 @@
    "route": "/plan/i1967/",
    "title": "I1967 — A reporter that sets a flag is a reporter",
    "description": "Make the pipeline-count guard discover a reporter that records a failure by setting a flag, not only one that increments a counter, so a call to it inside a construct that discards the flag is refused like a lost count."
+  },
+  {
+   "route": "/plan/i1980/",
+   "title": "I1980 — A layer names the tool version it was written for, and doctor tells version skew from defects",
+   "description": "Record in .ai/manifest.yaml the tool (or layer) version a layer was last migrated with. doctor then classifies findings that a newer tool raises against an older layer as version skew, naming the migration that clears them, instead of failing as defects. A layer written by a newer tool is refused by an older one with a message, not with a cascade."
+  },
+  {
+   "route": "/plan/i1981/",
+   "title": "I1981 — A command's effect class is declared per subcommand and flag, and live scenarios judge the whole argv",
+   "description": "Declare read-only or state-mutating per subcommand and per flag in share/commands.yaml where a command has both, and make live use-case validation and runs judge the full argument vector against that declaration."
+  },
+  {
+   "route": "/plan/i1982/",
+   "title": "I1982 — Plan stamps written before seals existed are re-sealed by a command that keeps their original times",
+   "description": "Provide a migration step (for example `plan seal --backfill`) that seals the stamps an older tool wrote, keeping each stamp's original time and recording who sealed it and when. Make the seal cutoff a per-repository value rather than one global constant."
+  },
+  {
+   "route": "/plan/i1983/",
+   "title": "I1983 — Upgrading the vendored rules reports or applies the policy and source keys those rules depend on",
+   "description": "When `rules vendor update` brings in rules that read policy keys or knowledge source classes the adopter's layer lacks, report each missing key with its skeleton default, or apply it, and have doctor name the gap."
+  },
+  {
+   "route": "/plan/i1984/",
+   "title": "I1984 — Knowledge candidates never leave untracked files on a trunk that only pull requests change",
+   "description": "Decide and implement where knowledge candidates are written so that deriving them at an episode boundary on the trunk never leaves the trunk's working tree dirty."
+  },
+  {
+   "route": "/plan/i1985/",
+   "title": "I1985 — A knowledge candidate relates to its own decision and commit, not to the whole episode",
+   "description": "Derive each candidate's relates_to and derived_from from the decision or event it records, deduplicate against facts the ledger already states, and skip decisions a later decision superseded."
+  },
+  {
+   "route": "/plan/i1986/",
+   "title": "I1986 — The vendored rule package says nothing that is only true of this repository",
+   "description": "Rewrite the baseline rules that describe Majordomus's own history as rules about any adopter. Mark their x-majordomus.tests as upstream proofs so an adopter is not pointed at test/cases it does not have, and give the package manifest a real source revision."
+  },
+  {
+   "route": "/plan/i1987/",
+   "title": "I1987 — A knowledge record's file provenance survives the file's deletion",
+   "description": "Let derived_from name a file at a commit (`file:<path>@<commit>`), or resolve `file:` at the record's own commit, so that deleting a cited file does not break knowledge check."
+  },
+  {
+   "route": "/plan/i1988/",
+   "title": "I1988 — A use case's setup scripts live where the adopter declares, and its scenarios may run the adopter's own commands",
+   "description": "Declare the use-case setup directory in the manifest instead of hard-coding this repository's test/fixtures/commands/setup, and allow a scenario step to run commands the adopter declares, judged by the same effect classes as I1981."
+  },
+  {
+   "route": "/plan/i1989/",
+   "title": "I1989 — init seeds a scope for the stack it finds, not for this repository's",
+   "description": "Make the scope skeleton neutral, or detected from the adopter's files, rather than seeded with Elixir and Rust paths and a size cap that excludes committed build output."
+  },
+  {
+   "route": "/plan/i1990/",
+   "title": "I1990 — The pre-push check judges the refs being pushed, or says why the checkout's task binds them",
+   "description": "Decide whether `finish --check` in the pre-push hook should read the refs git passes on stdin and judge only those carrying the active task's branch, and implement or document the decision."
+  },
+  {
+   "route": "/plan/i1991/",
+   "title": "I1991 — A comment-only edit of the policy regenerates no bootstrap",
+   "description": "Derive the policy fingerprint stamped into generated bootstraps from the parsed policy rather than its bytes, so that editing a comment does not rewrite AGENTS.md, CLAUDE.md and GEMINI.md."
   },
   {
    "route": "/plan/intent-lifecycle/",
@@ -8202,7 +8267,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 0.13.1 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.13.1, built from commit a187e48d7aa9f38e26f6f098272bc5d588967b9b: the public items of the library and of the executable, and the source they were built from."
+   "description": "The rustdoc reference of majordomus-cli 0.13.1, built from commit b557ab1c8c847a6c996d4da3a0ede25f27574d26: the public items of the library and of the executable, and the source they were built from."
   },
   {
    "route": "/rustdoc/majordomus/",
