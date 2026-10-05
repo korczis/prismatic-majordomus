@@ -32,30 +32,42 @@ fn git(dir: &Path, args: &[&str]) -> String {
     String::from_utf8_lossy(&out.stdout).trim().to_string()
 }
 
-/// The scripted forge. `@STATE@` and `@ORIGIN@` are replaced with the test's paths.
+/// The scripted forge. `@STATE@`, `@ORIGIN@` and `@WORK@` are replaced with the test's paths.
+/// A file under the state directory changes an answer: `down` refuses every call,
+/// `protection.json` holding `FAIL` or `TRANSIENT` refuses the protection read, `closed-fails`
+/// the list of closed pull requests, `view-fails` every `pr view`, `view-transient` the view
+/// of a successor; `view-<n>.json` is the successor `n` as the forge shows it; `forget` and
+/// `unfetchable` lose the observation or the origin as a merge is looked at.
 const GH: &str = r#"#!/bin/sh
-S="@STATE@"; O="@ORIGIN@"
+S="@STATE@"; O="@ORIGIN@"; W="@WORK@"
 echo "$*" >> "$S/log"
+if [ -f "$S/down" ]; then echo 'HTTP 401: Bad credentials' >&2; exit 1; fi
 case "$1 $2" in
   "repo view") echo '{"nameWithOwner":"o/r","defaultBranchRef":{"name":"master"}}' ;;
   "api repos/o/r") echo '{"allow_merge_commit":true,"allow_squash_merge":true,"allow_rebase_merge":false}' ;;
   "api repos/o/r/commits/master") printf '{"sha":"%s"}\n' "$(git -C "$O" rev-parse master)" ;;
   "api repos/o/r/branches/master/protection")
-    if [ -f "$S/protection.json" ]; then cat "$S/protection.json"
+    if grep -q TRANSIENT "$S/protection.json" 2>/dev/null; then echo 'gh: HTTP 503: Service Unavailable' >&2; exit 1
+    elif grep -q FAIL "$S/protection.json" 2>/dev/null; then echo 'gh: Resource not accessible by integration (HTTP 403)' >&2; exit 1
+    elif [ -f "$S/protection.json" ]; then cat "$S/protection.json"
     else echo 'gh: Branch not protected (HTTP 404)' >&2; exit 1; fi ;;
   "api repos/o/r/rules/branches/master")
     if grep -q FAIL "$S/rules.json" 2>/dev/null; then echo 'gh: Resource not accessible by integration (HTTP 403)' >&2; exit 1; fi
     cat "$S/rules.json" 2>/dev/null || echo '[]' ;;
   "pr list")
     case " $* " in
-      *" --state closed "*) echo '[]' ;;
+      *" --state closed "*)
+        if [ -f "$S/closed-fails" ]; then echo 'gh: Resource not accessible by integration (HTTP 403)' >&2; exit 1; fi
+        echo '[]' ;;
       *) jq -c --slurpfile gone "$S/gone.json" '[.[] | select(.number as $n | ($gone[0] | index($n)) | not)]' "$S/prs.json" ;;
     esac ;;
   "pr merge")
     n="$3"; mode="$(cat "$S/merge-mode" 2>/dev/null || echo ok)"
+    if [ "$mode" = silent ]; then exit 1; fi
+    if [ "$mode" = noop ]; then exit 0; fi
     if [ "$mode" = foreign ]; then
       t="$(mktemp -d)"; git clone -q "$O" "$t/f" 2>/dev/null
-      (cd "$t/f" && echo foreign > foreign.txt && git -c user.email=f@example.com -c user.name=f add foreign.txt \
+      (cd "$t/f" && echo "foreign before $n" >> foreign.txt && git -c user.email=f@example.com -c user.name=f add foreign.txt \
         && git -c user.email=f@example.com -c user.name=f commit -qm foreign && git push -q origin HEAD:master)
     fi
     t="$(mktemp -d)"
@@ -66,12 +78,19 @@ case "$1 $2" in
     touch "$S/merged-$n"
     if [ "$mode" = lost ]; then echo 'Post "https://api.github.com/graphql": net/http: request canceled (Client.Timeout exceeded) timed out' >&2; exit 1; fi ;;
   "pr view")
+    if [ -f "$S/view-fails" ]; then echo 'HTTP 403: Resource not accessible by integration' >&2; exit 1; fi
     case " $* " in
+      *" --json number,state,headRefOid,body "*)
+        if [ -f "$S/view-transient" ]; then echo 'HTTP 502: Bad Gateway' >&2; exit 1
+        elif [ -f "$S/view-$3.json" ]; then cat "$S/view-$3.json"
+        else echo "no pull requests found for #$3" >&2; exit 1; fi ;;
       *" --json state,headRefOid "*)
         if [ -f "$S/closed-$3" ]; then echo "CLOSED x"
         elif [ -f "$S/moved-$3" ]; then echo "OPEN $(cat "$S/moved-$3")"
         else jq -r --argjson n "$3" '.[] | select(.number == $n) | "OPEN " + .headRefOid' "$S/prs.json"; fi ;;
-      *) if [ -f "$S/merged-$3" ]; then echo MERGED; else echo OPEN; fi ;;
+      *) if [ -f "$S/forget" ]; then rm -f "$W/.ai/local/state/integration/observation.json"; fi
+         if [ -f "$S/unfetchable" ] && [ -d "$O" ]; then mv "$O" "$O.away"; fi
+         if [ -f "$S/merged-$3" ]; then echo MERGED; else echo OPEN; fi ;;
     esac ;;
   "pr close") touch "$S/closed-$3"
     jq -c --argjson n "$3" '. + [$n]' "$S/gone.json" > "$S/gone.tmp" && mv "$S/gone.tmp" "$S/gone.json" ;;
@@ -109,7 +128,8 @@ impl Forge {
         git(&work, &["push", "-q", "origin", "HEAD:master"]);
         let script = GH
             .replace("@STATE@", &state.display().to_string())
-            .replace("@ORIGIN@", &origin.display().to_string());
+            .replace("@ORIGIN@", &origin.display().to_string())
+            .replace("@WORK@", &work.display().to_string());
         let gh = bin.join("gh");
         std::fs::write(&gh, script).unwrap();
         #[cfg(unix)]
@@ -191,6 +211,40 @@ impl Forge {
 
     fn set(&self, file: &str, text: &str) {
         std::fs::write(self.state.join(file), text).unwrap();
+    }
+
+    /// Pull request `n`'s body, as the forge lists it.
+    fn body(&self, n: u64, text: &str) {
+        let path = self.state.join("prs.json");
+        let mut list: Vec<Value> =
+            serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+        for p in list.iter_mut().filter(|p| p["number"] == n) {
+            p["body"] = Value::from(text);
+        }
+        std::fs::write(&path, serde_json::to_string(&list).unwrap()).unwrap();
+    }
+
+    /// Master moves on: a commit of somebody else's lands on origin.
+    fn advance(&self) {
+        git(&self.work, &["fetch", "-q", "origin"]);
+        git(&self.work, &["checkout", "-q", "--detach", "origin/master"]);
+        std::fs::write(self.work.join("later.txt"), "later\n").unwrap();
+        git(&self.work, &["add", "later.txt"]);
+        git(&self.work, &["commit", "-q", "-m", "later"]);
+        git(&self.work, &["push", "-q", "origin", "HEAD:master"]);
+        git(&self.work, &["checkout", "-q", "--detach", "origin/master"]);
+    }
+
+    /// One merge, asked of a forge that answers `as`; the trail's last word on it.
+    fn merge_once(&self, how: &str) -> (i32, Value) {
+        let head = self.branch(1);
+        self.open(&[(1, &head)]);
+        self.set(how, "");
+        let (code, out, err) = self.prs(&["drain", "--max", "1"]);
+        let failed = self
+            .last("verification_failed")
+            .unwrap_or_else(|| panic!("{how}: nothing failed: {out}{err}"));
+        (code, failed)
     }
 
     fn log(&self) -> String {
@@ -388,6 +442,10 @@ fn what_the_base_requires_is_read_from_protection_and_rulesets() {
     let q: Value = serde_json::from_str(&out).unwrap();
     assert_eq!(q["next_merge"], Value::Null);
     assert!(out.contains("no_required_checks"), "{out}");
+    // a person reading the plan is told why it is not a full answer
+    let (code, _, err) = f.prs(&["plan"]);
+    assert_eq!(code, 10);
+    assert!(err.contains("! "), "{err}");
 
     // a ruleset read the forge refuses leaves the requirement unread
     f.set(
@@ -400,4 +458,248 @@ fn what_the_base_requires_is_read_from_protection_and_rulesets() {
     assert_eq!(code, 10, "{out}");
     assert!(out.contains("unread"), "{out}");
     assert!(!f.log().contains("UNEXPECTED"), "{}", f.log());
+}
+
+#[test]
+fn a_forge_that_cannot_be_read_leaves_every_executor_command_unusable() {
+    let f = Forge::new();
+    f.set("down", "");
+    for args in [
+        &["refresh"][..],
+        &["drain", "--max", "1"],
+        &["drain", "--continuous"],
+        &["cleanup", "--apply"],
+        &["prove-dry-run"],
+    ] {
+        let (code, out, err) = f.prs(args);
+        assert_eq!(code, 12, "{args:?}: {out}{err}");
+        assert!(err.contains("Bad credentials"), "{args:?}: {err}");
+    }
+    // observed once: a drain that cannot observe again is unusable too
+    std::fs::remove_file(f.state.join("down")).unwrap();
+    let (code, _, err) = f.prs(&["refresh"]);
+    assert_eq!(code, 0, "{err}");
+    f.set("down", "");
+    let (code, out, err) = f.prs(&["drain", "--max", "1"]);
+    assert_eq!(code, 12, "{out}{err}");
+    // and an observation that cannot be read names no base to take the lease of
+    std::fs::remove_file(f.state.join("down")).unwrap();
+    std::fs::write(
+        f.work.join(".ai/local/state/integration/observation.json"),
+        "{",
+    )
+    .unwrap();
+    let (code, out, err) = f.prs(&["drain", "--max", "1"]);
+    assert_eq!(code, 12, "{out}{err}");
+    assert!(err.contains("observation.json"), "{err}");
+}
+
+#[test]
+fn a_second_executor_is_refused_the_lease() {
+    let f = Forge::new();
+    let (code, _, err) = f.prs(&["refresh"]);
+    assert_eq!(code, 0, "{err}");
+    let dir = f.work.join(".git/majordomus/locks");
+    std::fs::create_dir_all(&dir).unwrap();
+    let held = std::fs::OpenOptions::new()
+        .create(true)
+        .truncate(false)
+        .write(true)
+        .open(dir.join("integration-master.lock"))
+        .unwrap();
+    held.try_lock().expect("the test holds the lease");
+    let (code, out, err) = f.prs(&["drain", "--max", "1"]);
+    assert_eq!(code, 12, "{out}{err}");
+    assert!(err.contains("another integration executor"), "{err}");
+    drop(held);
+}
+
+#[test]
+fn a_continuous_drain_stops_on_a_merge_it_cannot_prove_and_resumes_when_told() {
+    let f = Forge::new();
+    let head = f.branch(1);
+    f.open(&[(1, &head)]);
+    f.set("merge-mode", "foreign");
+    let (code, out, err) = f.prs(&["drain", "--continuous"]);
+    assert_eq!(code, 10, "{out}{err}");
+    assert!(out.contains("cycle 1:"), "{out}");
+    assert!(out.contains("could not be verified"), "{out}");
+    // resumed: the failure is acknowledged under the lease, and the next one is merged —
+    // onto a master that moves again, so this run ends the same way
+    let head = f.branch(2);
+    f.open(&[(2, &head)]);
+    let (code, out, err) = f.prs(&["drain", "--continuous", "--resume-after-failure"]);
+    assert_eq!(code, 10, "{out}{err}");
+    assert!(f.last("failure_acknowledged").is_some());
+    assert!(f.log().contains("pr merge 2 "), "{}", f.log());
+}
+
+#[test]
+fn a_merge_refused_without_a_word_is_still_named() {
+    let f = Forge::new();
+    let head = f.branch(1);
+    f.open(&[(1, &head)]);
+    f.set("merge-mode", "silent");
+    let (code, out, err) = f.prs(&["drain", "--max", "1"]);
+    assert_eq!(code, 0, "{out}{err}");
+    let failed = f.last("merge_failed").expect("merge_failed on the trail");
+    assert!(
+        failed["detail"].as_str().unwrap().contains("said nothing"),
+        "{failed}"
+    );
+}
+
+#[test]
+fn a_merge_that_cannot_be_looked_at_is_not_proved() {
+    for (how, said) in [
+        ("view-fails", "the forge could not be asked"),
+        ("forget", "no observation to verify against"),
+        ("unfetchable", "git fetch of the base failed"),
+    ] {
+        let f = Forge::new();
+        let (code, failed) = f.merge_once(how);
+        assert_eq!(code, 10, "{how}");
+        assert!(
+            failed["detail"].as_str().unwrap().contains(said),
+            "{how}: {failed}"
+        );
+    }
+}
+
+#[test]
+fn a_merge_the_forge_never_shows_is_not_merged() {
+    let f = Forge::new();
+    f.set("merge-mode", "noop");
+    let head = f.branch(1);
+    f.open(&[(1, &head)]);
+    let (code, out, err) = f.prs(&["drain", "--max", "1"]);
+    assert_eq!(code, 10, "{out}{err}");
+    let failed = f.last("verification_failed").expect("verification_failed");
+    assert!(
+        failed["detail"]
+            .as_str()
+            .unwrap()
+            .contains("still says OPEN"),
+        "{failed}"
+    );
+}
+
+#[test]
+fn a_closure_the_forge_cannot_confirm_is_not_made() {
+    for (how, said) in [
+        ("closed-3", "is CLOSED on the forge, not open"),
+        ("view-fails", "HTTP 403"),
+    ] {
+        let f = Forge::new();
+        let master = git(&f.origin, &["rev-parse", "master"]);
+        git(&f.work, &["push", "-q", "origin", "HEAD:refs/pull/3/head"]);
+        f.open(&[(3, &master)]);
+        f.set(how, "");
+        let (code, out, err) = f.prs(&["cleanup", "--apply"]);
+        assert_eq!(code, 0, "{how}: {out}{err}");
+        let failed = f.last("close_failed").expect("close_failed on the trail");
+        assert!(
+            failed["detail"].as_str().unwrap().contains(said),
+            "{how}: {failed}"
+        );
+        assert!(!f.log().contains("pr close 3"), "{how}: closed anyway");
+    }
+}
+
+#[test]
+fn a_successor_an_open_body_names_is_read_and_one_the_forge_cannot_show_is_unread() {
+    let f = Forge::new();
+    let head = f.branch(1);
+    let successor = f.branch(7);
+    f.open(&[(1, &head)]);
+    f.body(1, "Superseded by #7");
+    f.set(
+        "view-7.json",
+        &serde_json::json!({"number": 7, "state": "CLOSED", "headRefOid": successor, "body": ""})
+            .to_string(),
+    );
+    let (code, out, err) = f.prs(&["refresh"]);
+    assert_eq!(code, 0, "{out}{err}");
+    assert_eq!(
+        git(&f.work, &["rev-parse", "refs/majordomus/prs/7"]),
+        successor,
+        "the successor's head was not fetched"
+    );
+    // a successor the forge says nothing of is unread, and the observation stands
+    f.body(1, "Superseded by #8");
+    let (code, out, err) = f.prs(&["refresh"]);
+    assert_eq!(code, 0, "{out}{err}");
+    let (_, out, _) = f.prs(&["status", "--format", "json"]);
+    assert!(out.contains("successor_unread:#8"), "{out}");
+    // an outage that outlasts the retries fails the observation
+    f.set("view-transient", "");
+    let (code, out, err) = f.prs(&["refresh"]);
+    assert_eq!(code, 12, "{out}{err}");
+}
+
+#[test]
+fn a_base_whose_requirements_cannot_be_read_is_unread_or_unobserved() {
+    let f = Forge::new();
+    let head = f.branch(1);
+    f.open(&[(1, &head)]);
+    // a protection the forge refuses to show leaves the requirement unread
+    f.set("protection.json", "FAIL");
+    let (code, out, err) = f.prs(&["refresh"]);
+    assert_eq!(code, 0, "{out}{err}");
+    let (_, out, _) = f.prs(&["status", "--format", "json"]);
+    let q: Value = serde_json::from_str(&out).unwrap();
+    assert_eq!(q["policy"]["required_checks"], Value::Null, "{out}");
+    // the closed pull requests that declare a supersession cannot be listed
+    f.set(
+        "protection.json",
+        r#"{"required_status_checks":{"contexts":["ci"]}}"#,
+    );
+    f.set("closed-fails", "");
+    let (code, out, err) = f.prs(&["refresh"]);
+    assert_eq!(code, 12, "{out}{err}");
+    std::fs::remove_file(f.state.join("closed-fails")).unwrap();
+    // a protection read the forge keeps failing fails the observation
+    f.set("protection.json", "TRANSIENT");
+    let (code, out, err) = f.prs(&["refresh"]);
+    assert_eq!(code, 12, "{out}{err}");
+}
+
+#[test]
+fn bringing_master_into_a_branch_that_cannot_derive_is_a_refresh_failure() {
+    let f = Forge::new();
+    let head = f.branch(1);
+    f.advance();
+    f.open(&[(1, &head)]);
+    let (code, out, err) = f.prs(&["drain", "--max", "1", "--refresh"]);
+    assert_eq!(code, 0, "{out}{err}");
+    let failed = f
+        .last("refresh_failed")
+        .expect("refresh_failed on the trail");
+    assert!(
+        failed["detail"]
+            .as_str()
+            .unwrap()
+            .contains("scripts/derive"),
+        "{failed}"
+    );
+    assert!(
+        !f.log().contains("pr merge"),
+        "a branch behind master merged"
+    );
+}
+
+#[test]
+fn the_dry_run_proof_says_what_it_compared() {
+    let f = Forge::new();
+    let head = f.branch(1);
+    f.open(&[(1, &head)]);
+    let (code, out, err) = f.prs(&["prove-dry-run"]);
+    assert!(code == 0 || code == 10, "{out}{err}");
+    assert!(
+        out.contains("observed classification (base master):"),
+        "{out}"
+    );
+    let (_, out, _) = f.prs(&["prove-dry-run", "--format", "json"]);
+    let proof: Value = serde_json::from_str(&out).expect("the proof as JSON");
+    assert_eq!(proof["base"], "master");
 }

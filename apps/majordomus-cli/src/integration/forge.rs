@@ -428,8 +428,6 @@ pub fn rules_of(v: &Value) -> (Vec<RequiredCheck>, ReviewPolicy) {
     (union_checks(checks, Vec::new()), reviews)
 }
 
-/// The required checks and review requirement from a branch-protection document. A
-/// context the protection lists under `contexts` and again under `checks` is one check,
 /// Whether a branch protection requires a branch to be up to date before it merges.
 pub fn protection_requires_up_to_date(v: &Value) -> bool {
     v.pointer("/required_status_checks/strict")
@@ -448,6 +446,8 @@ pub fn rules_require_up_to_date(v: &Value) -> bool {
     })
 }
 
+/// The required checks and review requirement from a branch-protection document. A
+/// context the protection lists under `contexts` and again under `checks` is one check,
 /// bound to the app `checks` names for it.
 pub fn protection_of(v: &Value) -> (Vec<RequiredCheck>, ReviewPolicy) {
     let listed: Vec<RequiredCheck> = v
@@ -660,8 +660,6 @@ impl Forge for GhForge<'_> {
     }
 }
 
-/// Fetch the base and every observed head into this clone, the heads under
-/// [`PR_REF_PREFIX`]. One `git fetch`; a head that cannot be fetched stays unknown to the
 /// Remove the mirrors of pull requests this observation no longer names: merged, closed or
 /// gone. Each one held the head the pull request had when it was last open, and a mirror
 /// that is never refreshed again is only a stale answer waiting to be read. Best effort: a
@@ -673,15 +671,15 @@ fn prune_mirrors(root: &Path, obs: &ForgeObservation) {
         .map(|p| p.number)
         .chain(obs.resolved.keys().copied())
         .collect();
-    let Ok(out) = Command::new("git")
+    // git that cannot run lists nothing, and nothing is removed
+    let out = Command::new("git")
         .arg("-C")
         .arg(root)
         .args(["for-each-ref", "--format=%(refname)", PR_REF_PREFIX])
         .output()
-    else {
-        return;
-    };
-    for r in String::from_utf8_lossy(&out.stdout).lines() {
+        .map(|o| o.stdout)
+        .unwrap_or_default();
+    for r in String::from_utf8_lossy(&out).lines() {
         let stale = r
             .strip_prefix(PR_REF_PREFIX)
             .and_then(|n| n.parse::<u64>().ok())
@@ -696,6 +694,8 @@ fn prune_mirrors(root: &Path, obs: &ForgeObservation) {
     }
 }
 
+/// Fetch the base and every observed head into this clone, the heads under
+/// [`PR_REF_PREFIX`]. One `git fetch`; a head that cannot be fetched stays unknown to the
 /// relation, which then says so.
 pub fn fetch(root: &Path, obs: &ForgeObservation) -> Result<(), ForgeError> {
     let mut args: Vec<String> = vec![
