@@ -80,9 +80,11 @@ fn render_repair(r: &repair::RepairReport, out: &mut impl Write) -> Result<()> {
         (Some(n), Some(b)) => format!("#{n} ({b})"),
         _ => r.target.clone(),
     };
-    if let Some(head) = &r.head_sha {
-        w(
-            out,
+    // the lines first, then one write: a report is printed whole or not at all
+    let mut lines: Vec<String> = r
+        .head_sha
+        .iter()
+        .map(|head| {
             format!(
                 "{who}: head {} against {} {}{}",
                 short(head),
@@ -92,56 +94,84 @@ fn render_repair(r: &repair::RepairReport, out: &mut impl Write) -> Result<()> {
                     .as_ref()
                     .map(|rel| format!(", {}", integration::classify::relation_word(rel)))
                     .unwrap_or_default()
-            ),
-        )?;
-    }
-    if r.dry_run {
-        w(
-            out,
-            format!(
-                "decided on the forge as observed at {}; prs refresh observes it again",
-                r.observed_at
-            ),
-        )?;
-    }
+            )
+        })
+        .collect();
+    lines.extend(r.dry_run.then(|| {
+        format!(
+            "decided on the forge as observed at {}; prs refresh observes it again",
+            r.observed_at
+        )
+    }));
     match &r.outcome {
         repair::RepairOutcome::NothingToRepair { why } => {
-            w(out, format!("nothing to repair: {why}"))
+            lines.push(format!("nothing to repair: {why}"));
         }
-        repair::RepairOutcome::WouldRepair => w(
-            out,
-            format!(
-                "dry run: would merge {} {} into {who}, derive, commit, and push it leased on {}; --apply does",
-                r.base,
-                short(&r.master_sha),
-                r.head_sha.as_deref().map(short).unwrap_or("its head")
-            ),
-        ),
-        repair::RepairOutcome::Repaired { head_after } => w(
-            out,
-            format!(
-                "repaired {who}: it carries {} {} and is at {}",
-                r.base,
-                short(&r.master_sha),
-                short(head_after)
-            ),
-        ),
+        repair::RepairOutcome::WouldRepair => lines.push(format!(
+            "dry run: would merge {} {} into {who}, derive, commit, and push it leased on {}; --apply does",
+            r.base,
+            short(&r.master_sha),
+            r.head_sha.as_deref().map(short).unwrap_or("its head")
+        )),
+        repair::RepairOutcome::Repaired { head_after } => lines.push(format!(
+            "repaired {who}: it carries {} {} and is at {}",
+            r.base,
+            short(&r.master_sha),
+            short(head_after)
+        )),
         repair::RepairOutcome::Refused { refusal } => {
-            w(out, format!("REFUSE {who}: {refusal}"))?;
+            lines.push(format!("REFUSE {who}: {refusal}"));
             if let repair::RepairRefusal::AuthoredConflict { paths } = refusal {
-                for p in paths {
-                    w(out, format!("       {p}"))?;
-                }
-                w(
-                    out,
-                    format!(
-                        "       merge {} in the branch's own worktree, decide what those files mean, then run this again",
-                        r.base
-                    ),
-                )?;
+                lines.extend(paths.iter().map(|p| format!("       {p}")));
+                lines.push(format!(
+                    "       merge {} in the branch's own worktree, decide what those files mean, then run this again",
+                    r.base
+                ));
             }
-            Ok(())
         }
+    }
+    w(out, lines.join("\n"))
+}
+
+/// The exit status of a repair: 12 when the trail could not record the act, 10 for any other
+/// refusal and for a dry run over an observation nobody can vouch for, 0 otherwise.
+fn repair_exit(r: &repair::RepairReport) -> u8 {
+    match &r.outcome {
+        repair::RepairOutcome::Refused {
+            refusal: repair::RepairRefusal::TrailUnwritable { .. },
+        } => UNUSABLE,
+        repair::RepairOutcome::Refused { .. } => FINDING,
+        // a dry run over a diagnosed observation is a reading of a queue nobody can vouch
+        // for: it says what it would do and exits 10, as status and plan do
+        _ if r.dry_run && !r.diagnostics.is_empty() => FINDING,
+        _ => 0,
+    }
+}
+
+/// The act of `prs repair --apply`: a push to the forge's remote, under the base branch's
+/// lease for the whole of it, so a drain never races it. Every way it cannot be taken is
+/// unusable (12).
+fn repair_applied(
+    root: &std::path::Path,
+    target: &repair::RepairTarget,
+) -> Result<repair::RepairReport> {
+    executor_base(root)
+        .and_then(|base| IntegrationLease::acquire(root, &base))
+        .and_then(|lease| {
+            let mut integrator = ForgeIntegrator {
+                root,
+                lease: Some(&lease),
+            };
+            repair::apply(root, &mut integrator, target)
+        })
+        .map_err(unusable)
+}
+
+/// The finding of a dry run that has no observation to decide from.
+fn unobserved(reason: String) -> Error {
+    Error::Refused {
+        code: FINDING,
+        reason,
     }
 }
 
@@ -390,44 +420,20 @@ pub fn run(args: PrsArgs) -> Result<u8> {
         }
         PrsCommand::Repair { target, apply, .. } => {
             let target = repair::RepairTarget::parse(&target);
+            // the default is the read `status` makes, from the last recorded observation — no
+            // network, no lease, nothing written to the trail; `--apply` is the act
             let report = if apply {
-                // the act: a push to the forge's remote, under the base branch's lease for
-                // the whole of it, so a drain never races it
-                let base = executor_base(&root).map_err(unusable)?;
-                let lease = IntegrationLease::acquire(&root, &base).map_err(unusable)?;
-                let mut integrator = ForgeIntegrator {
-                    root: &root,
-                    lease: Some(&lease),
-                };
-                let report = repair::apply(&root, &mut integrator, &target).map_err(unusable);
-                drop(lease);
-                report?
+                repair_applied(&root, &target)
             } else {
-                // the default: the read `status` makes, from the last recorded observation —
-                // no network, no lease, nothing written to the trail
-                repair::plan(&root, &target).map_err(|e| Error::Refused {
-                    code: FINDING,
-                    reason: e,
-                })?
+                repair::plan(&root, &target).map_err(unobserved)
+            }?;
+            let printed = if format == OutputFormat::Json {
+                json(&mut out, &report)
+            } else {
+                report.diagnostics.iter().for_each(|d| eprintln!("! {d}"));
+                render_repair(&report, &mut out)
             };
-            if format == OutputFormat::Json {
-                json(&mut out, &report)?;
-            } else {
-                render_repair(&report, &mut out)?;
-                for d in &report.diagnostics {
-                    eprintln!("! {d}");
-                }
-            }
-            Ok(match &report.outcome {
-                repair::RepairOutcome::Refused {
-                    refusal: repair::RepairRefusal::TrailUnwritable { .. },
-                } => UNUSABLE,
-                repair::RepairOutcome::Refused { .. } => FINDING,
-                // a dry run over a diagnosed observation is a reading of a queue nobody can
-                // vouch for: it says what it would do and exits 10, as status and plan do
-                _ if report.dry_run && !report.diagnostics.is_empty() => FINDING,
-                _ => 0,
-            })
+            printed.map(|()| repair_exit(&report))
         }
         PrsCommand::ProveDryRun => {
             let proof = integration::proof::prove_dry_run(&root).map_err(unusable)?;
@@ -1354,6 +1360,48 @@ mod tests {
         assert!(
             absent.contains("REFUSE #7: #7 is not an open pull request"),
             "{absent}"
+        );
+    }
+
+    #[test]
+    fn a_repair_exits_by_what_it_could_vouch_for() {
+        let report = |dry_run: bool, outcome: repair::RepairOutcome, diagnostics: &[&str]| {
+            repair::RepairReport {
+                dry_run,
+                target: "#7".into(),
+                pr: Some(7),
+                branch: Some("feature/7".into()),
+                base: "master".into(),
+                master_sha: "m".repeat(40),
+                head_sha: Some("h".repeat(40)),
+                observed_at: "2026-10-01T00:00:00Z".into(),
+                relation: None,
+                outcome,
+                diagnostics: diagnostics.iter().map(|d| d.to_string()).collect(),
+            }
+        };
+        let refused = |refusal| repair::RepairOutcome::Refused { refusal };
+        let unwritable = refused(repair::RepairRefusal::TrailUnwritable {
+            reason: "disk full".into(),
+        });
+        // an act the trail could not announce was not taken: the tool is unusable here
+        assert_eq!(repair_exit(&report(false, unwritable, &[])), UNUSABLE);
+        let forked = refused(repair::RepairRefusal::ForkHead);
+        assert_eq!(repair_exit(&report(false, forked, &[])), FINDING);
+        let would = || repair::RepairOutcome::WouldRepair;
+        assert_eq!(repair_exit(&report(true, would(), &[])), 0);
+        assert_eq!(
+            repair_exit(&report(true, would(), &["stale observation"])),
+            FINDING,
+            "a dry run over a diagnosed observation vouches for nothing"
+        );
+        let repaired = repair::RepairOutcome::Repaired {
+            head_after: "n".repeat(40),
+        };
+        assert_eq!(
+            repair_exit(&report(false, repaired, &["stale observation"])),
+            0,
+            "an act decides on its own fresh observation"
         );
     }
 }

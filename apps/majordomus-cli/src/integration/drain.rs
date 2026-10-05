@@ -1814,40 +1814,47 @@ pub(crate) fn landing(
 
 /// Why the merge of `master` in the scratch worktree `dir` stopped, from the paths it left
 /// unmerged, each named as authored or derived by master's own `.gitattributes`
-/// ([`super::relation::derived_paths`]); `None` when git names none. An authored conflict is
-/// the owner's to settle; a derived one means this clone has no `merge.derived` driver.
+/// ([`super::relation::derived_paths`]); `None` when git names none, or cannot say which is
+/// which. An authored conflict is the owner's to settle; a derived one means this clone has no
+/// `merge.derived` driver.
 fn unmerged_paths(root: &Path, dir: &Path, master: &str) -> Option<String> {
-    let out = Command::new("git")
+    let listed = Command::new("git")
         .arg("-C")
         .arg(dir)
         .args(["diff", "--name-only", "-z", "--diff-filter=U"])
         .output()
-        .ok()?;
-    let paths: Vec<String> = String::from_utf8_lossy(&out.stdout)
+        .map(|o| o.stdout)
+        .unwrap_or_default();
+    let paths: Vec<String> = String::from_utf8_lossy(&listed)
         .split('\0')
         .filter(|p| !p.is_empty())
         .map(str::to_string)
         .collect();
-    if paths.is_empty() {
-        return None;
-    }
-    let derived = super::relation::derived_paths(root, master, &paths).ok()?;
-    let (generated, authored): (Vec<String>, Vec<String>) =
-        paths.into_iter().partition(|p| derived.contains(p));
-    Some(if authored.is_empty() {
-        format!(
-            "the merge of master conflicts on {} derived path(s) ({}): this clone declares no \
-             merge.derived driver to resolve them (just derive-merge-driver)",
-            generated.len(),
-            generated.join(", ")
-        )
-    } else {
-        format!(
-            "the merge of master conflicts on {} authored path(s), the owner's to settle: {}",
-            authored.len(),
-            authored.join(", ")
-        )
-    })
+    Some(paths)
+        .filter(|paths| !paths.is_empty())
+        .and_then(|paths| {
+            super::relation::derived_paths(root, master, &paths)
+                .ok()
+                .map(|derived| (paths, derived))
+        })
+        .map(|(paths, derived)| {
+            let named: Vec<String> = paths
+                .iter()
+                .map(|p| {
+                    format!(
+                        "{p} ({})",
+                        ["authored", "derived"][usize::from(derived.contains(p))]
+                    )
+                })
+                .collect();
+            format!(
+                "the merge of master conflicts on {} path(s): {}; an authored path is the \
+                 owner's to settle, a derived one needs this clone's merge.derived driver \
+                 (just derive-merge-driver)",
+                named.len(),
+                named.join(", ")
+            )
+        })
 }
 
 impl Integrator for ForgeIntegrator<'_> {
@@ -2048,11 +2055,10 @@ impl Integrator for ForgeIntegrator<'_> {
                 "--no-ff",
                 &master,
             ]) {
-                let why = unmerged_paths(root, &dir, &master);
+                let why = unmerged_paths(root, &dir, &master)
+                    .unwrap_or(format!("the merge of master conflicts after all: {e}"));
                 let _ = git_in(&["merge", "--abort"]);
-                return Err(
-                    why.unwrap_or_else(|| format!("the merge of master conflicts after all: {e}"))
-                );
+                return Err(why);
             }
             // the derived artifacts of the merge result, regenerated rather than resolved
             let target = root.join("apps/majordomus-cli/target");

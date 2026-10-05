@@ -5722,3 +5722,166 @@ fn a_repaired_pull_request_waiting_for_checks_holds_the_pipeline() {
         "#2 was refreshed while #1's repaired head waits for its checks"
     );
 }
+
+/// Every way a repair is refused has the class the trail records it with and a sentence that
+/// says what a person does about it.
+#[test]
+fn every_repair_refusal_has_its_class_and_its_sentence() {
+    use drain::FailureClass as C;
+    let cases = [
+        (
+            RepairRefusal::NotOpen {
+                target: "#9".into(),
+            },
+            C::PolicyViolation,
+            "#9 is not an open pull request",
+        ),
+        (
+            RepairRefusal::OtherBase {
+                base: "release".into(),
+            },
+            C::PolicyViolation,
+            "it targets release, not the integration base",
+        ),
+        (
+            RepairRefusal::ForkHead,
+            C::PolicyViolation,
+            "lives in a fork",
+        ),
+        (
+            RepairRefusal::AutoMergeArmed,
+            C::PolicyViolation,
+            "a person disarms it first",
+        ),
+        (
+            RepairRefusal::AuthoredConflict {
+                paths: vec!["src/a.rs".into()],
+            },
+            C::Conflict,
+            "conflicts on 1 authored file(s), which are the owner's to settle: src/a.rs",
+        ),
+        (
+            RepairRefusal::Undecidable {
+                reason: "git merge-tree failed".into(),
+            },
+            C::Unreadable,
+            "could not decide its relation to master: git merge-tree failed",
+        ),
+        (
+            RepairRefusal::ActFailed {
+                reason: "scripts/derive failed".into(),
+                class: C::PolicyViolation,
+            },
+            C::PolicyViolation,
+            "nothing reached the branch: scripts/derive failed",
+        ),
+        (
+            RepairRefusal::TrailUnwritable {
+                reason: "disk full".into(),
+            },
+            C::Unreadable,
+            "the act was not taken: the trail could not record it first: disk full",
+        ),
+    ];
+    for (refusal, class, said) in cases {
+        assert_eq!(refusal.class(), class, "{refusal:?}");
+        assert!(refusal.to_string().contains(said), "{refusal}");
+    }
+}
+
+/// The decision reads the relation git gave and the disposition the classifier gave, and
+/// nothing else: each relation a head can have to master maps onto one answer.
+#[test]
+fn a_repair_decides_on_each_relation_and_disposition_the_queue_holds() {
+    let q = repair_world().queue();
+    let say = |relation: RelationToMaster,
+               disposition: Option<(PullRequestDisposition, Option<u64>)>| {
+        let mut q = q.clone();
+        let a = q
+            .assessments
+            .iter_mut()
+            .find(|a| a.number == 1)
+            .expect("#1 is open");
+        a.relation = relation;
+        if let Some((d, by)) = disposition {
+            a.disposition = d;
+            a.superseded_by = by;
+        }
+        let r = repair::dry_run(&q, &RepairTarget::Number(1));
+        let why = match &r.outcome {
+            RepairOutcome::NothingToRepair { why } => why.clone(),
+            _ => String::new(),
+        };
+        (outcome(&r), why)
+    };
+    let behind = || RelationToMaster::Behind {
+        behind: 1,
+        authored: vec![],
+    };
+    let (o, why) = say(
+        behind(),
+        Some((PullRequestDisposition::Superseded, Some(9))),
+    );
+    assert_eq!(o, "nothing");
+    assert!(why.contains("a successor, #9, landed"), "{why}");
+    let (o, why) = say(behind(), Some((PullRequestDisposition::Superseded, None)));
+    assert_eq!(o, "nothing");
+    assert!(why.contains("a successor landed"), "{why}");
+    let (o, _) = say(
+        RelationToMaster::Unknown {
+            reason: "git merge-tree failed".into(),
+        },
+        None,
+    );
+    assert_eq!(o, "refused:undecidable");
+    for on_master in [
+        RelationToMaster::Contained,
+        RelationToMaster::Superseded,
+        RelationToMaster::PatchIdsUpstream { commits: 2 },
+    ] {
+        let (o, why) = say(on_master.clone(), None);
+        assert_eq!(o, "nothing", "{on_master:?}");
+        assert!(why.contains("cleanup is the lane"), "{on_master:?}: {why}");
+    }
+    let (o, why) = say(
+        RelationToMaster::DerivedOnly {
+            paths: vec!["docs/generated/x.json".into()],
+        },
+        None,
+    );
+    assert_eq!(o, "nothing");
+    assert!(why.contains("possibly_redundant"), "{why}");
+}
+
+/// Every write the act makes can fail, and the forge's observation can: each is said, and a
+/// push the trail did not announce first is never made.
+#[test]
+fn an_applied_repair_says_each_write_it_could_not_make() {
+    let apply = |w: &mut dyn Integrator, n: u64, failing_write: usize| {
+        let root = scratch();
+        drain::FAIL_WRITE.with(|k| k.set(failing_write));
+        let r = repair::apply(&root, w, &RepairTarget::Number(n));
+        drain::FAIL_WRITE.with(|k| k.set(0));
+        r
+    };
+    // the forge could not be observed: nothing is decided, nothing is written
+    let mut w = repair_world();
+    w.outages = vec!["HTTP 502: Bad Gateway".into()];
+    assert_eq!(apply(&mut w, 1, 0).unwrap_err(), "HTTP 502: Bad Gateway");
+    // a refusal the trail cannot record is an error, not a silent refusal
+    let mut w = repair_world();
+    assert!(apply(&mut w, 2, 1).unwrap_err().contains("trail refused"));
+    // the selection cannot be recorded: the act is not taken
+    let mut w = repair_world();
+    let r = apply(&mut w, 1, 1).unwrap();
+    assert_eq!(outcome(&r), "refused:trail_unwritable", "{r:?}");
+    assert_eq!(w.refresh_calls, 0, "a push reached the remote unrecorded");
+    // the push was made and its outcome cannot be recorded: said as an error, after the act
+    let mut w = repair_world();
+    assert!(apply(&mut w, 1, 3).unwrap_err().contains("trail refused"));
+    assert_eq!(w.refresh_calls, 1);
+    // the act failed and its refusal cannot be recorded
+    let mut w = repair_world();
+    w.refresh_fails = true;
+    assert!(apply(&mut w, 1, 3).unwrap_err().contains("trail refused"));
+}
