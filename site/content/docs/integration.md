@@ -252,10 +252,14 @@ branch here, whatever it is called, so a fork whose branch is named `master` sta
 
 The queue is ordered by lane, disposition, risk (low, medium, high, from the paths touched),
 how many other ready or refreshable pull requests share an authored path (fewer first,
-because landing it invalidates less), age (older first, so new easy work cannot starve old
-work) and number. Every key is a value of the assessment, so the order is total and does
-not depend on the order the forge listed them. `src/integration/tests.rs` proves this as a
-property.
+because landing it invalidates less), how many open pull requests declare that they wait for
+it and are not yet satisfied (more first, because landing it unblocks them), how many
+authored paths it changes (fewer first: a smaller change is cheaper to land and to undo), age
+(older first, so new easy work cannot starve old work) and number. Every key is a value of
+the assessment or of the queue around it, so the order is total and does not depend on the
+order the forge listed them; `src/integration/tests.rs` proves this as a property. Each
+assessment carries the factors it was ranked by (`rank_factors`), and `prs explain` prints
+them, so a rank is never a number without its reasons.
 
 ## Waiting and starvation
 

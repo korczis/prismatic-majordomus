@@ -18863,6 +18863,11 @@ capabilities:
                   - "$ref": "#/$defs/ExecutorWait"
                   - type: "null"
                 description: "How long it has been the executor's to act on, and how often another was chosen\ninstead — derived from the audit trail (`super::wait`), present only while it is\nready or refreshable."
+              rank_factors:
+                anyOf:
+                  - "$ref": "#/$defs/RankFactors"
+                  - type: "null"
+                description: "Why it stands where it does in the rank: every component the order compares, in the\norder it compares them. Set by the planner; absent on an assessment never ranked."
             required:
               - number
               - title
@@ -19446,6 +19451,51 @@ capabilities:
                 const: observe_failed
                 description: "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
             description: "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
+          RankFactors:
+            type: object
+            properties:
+              lane:
+                "$ref": "#/$defs/IntegrationLane"
+                description: "The lane: what kind of work the executor does with it."
+              disposition:
+                "$ref": "#/$defs/PullRequestDisposition"
+                description: "The disposition, within the lane."
+              risk:
+                "$ref": "#/$defs/IntegrationRisk"
+                description: "The planning risk: lower first."
+              contention:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "How many other ready or refreshable pull requests change an authored path it changes:\nfewer first, because landing it invalidates less."
+              dependents:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "How many open pull requests declare that they wait for this one and are not yet\nsatisfied: more first, because landing it unblocks them."
+              authored_paths:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "How many authored paths it changes: fewer first, a smaller change is cheaper to land\nand to undo."
+              created_at:
+                type: string
+                description: "When it was opened: older first, so easy new work cannot starve old work."
+              number:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "The number: the last tie-break, total."
+            required:
+              - lane
+              - disposition
+              - risk
+              - contention
+              - dependents
+              - authored_paths
+              - created_at
+              - number
+            description: "What the rank compares, in order: the first component that differs between two pull\nrequests decides which comes first. Each is a value of the assessment or of the queue\naround it, so the order can be explained and is the same whatever order the forge listed\nthe pull requests in."
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::integration
@@ -19962,6 +20012,11 @@ capabilities:
                   - "$ref": "#/$defs/ExecutorWait"
                   - type: "null"
                 description: "How long it has been the executor's to act on, and how often another was chosen\ninstead — derived from the audit trail (`super::wait`), present only while it is\nready or refreshable."
+              rank_factors:
+                anyOf:
+                  - "$ref": "#/$defs/RankFactors"
+                  - type: "null"
+                description: "Why it stands where it does in the rank: every component the order compares, in the\norder it compares them. Set by the planner; absent on an assessment never ranked."
             required:
               - number
               - title
@@ -20545,6 +20600,51 @@ capabilities:
                 const: observe_failed
                 description: "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
             description: "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
+          RankFactors:
+            type: object
+            properties:
+              lane:
+                "$ref": "#/$defs/IntegrationLane"
+                description: "The lane: what kind of work the executor does with it."
+              disposition:
+                "$ref": "#/$defs/PullRequestDisposition"
+                description: "The disposition, within the lane."
+              risk:
+                "$ref": "#/$defs/IntegrationRisk"
+                description: "The planning risk: lower first."
+              contention:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "How many other ready or refreshable pull requests change an authored path it changes:\nfewer first, because landing it invalidates less."
+              dependents:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "How many open pull requests declare that they wait for this one and are not yet\nsatisfied: more first, because landing it unblocks them."
+              authored_paths:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "How many authored paths it changes: fewer first, a smaller change is cheaper to land\nand to undo."
+              created_at:
+                type: string
+                description: "When it was opened: older first, so easy new work cannot starve old work."
+              number:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "The number: the last tie-break, total."
+            required:
+              - lane
+              - disposition
+              - risk
+              - contention
+              - dependents
+              - authored_paths
+              - created_at
+              - number
+            description: "What the rank compares, in order: the first component that differs between two pull\nrequests decides which comes first. Each is a value of the assessment or of the queue\naround it, so the order can be explained and is the same whatever order the forge listed\nthe pull requests in."
           QueueTallies:
             type: object
             properties:
