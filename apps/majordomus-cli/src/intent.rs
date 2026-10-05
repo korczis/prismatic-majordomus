@@ -38,7 +38,10 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::evidence::{self, Ledger, ProofState, TestId};
+use crate::evidence::{
+    self, compare, freshness, Comparison, EvidenceReport, Ledger, Presented, ProofState, Recorded,
+    TestId, TreeState,
+};
 use crate::index::Index;
 use crate::intent_plan::{coverage, IntentCoverage, IntentOutline};
 use crate::intent_review::{observed_satisfied, review, CritiqueRecord, GapRecord};
@@ -111,6 +114,13 @@ impl IntentStage {
 /// a stale, failing, unrecorded or underivable reference never does, and neither does one that
 /// resolves to nothing.
 ///
+/// Whether a recorded run is current is not decided here. A `test` or `claim` criterion is
+/// judged by the evidence module's one truth table ([`evidence::freshness()`]) at the working
+/// tree and read through [`evidence::current`], the same judgement the claim report and the
+/// subject pages make; [`IntentEvidenceState::judged`] is the whole of the translation. So
+/// the state follows the evidence both ways: a criterion met today reads stale or failing
+/// the moment the ledger or the tree says so, and met again once a current pass is recorded.
+///
 /// ```
 /// use majordomus_cli::intent::IntentEvidenceState;
 /// assert_eq!(serde_json::to_string(&IntentEvidenceState::NotRun).unwrap(), "\"not_run\"");
@@ -119,21 +129,66 @@ impl IntentStage {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum IntentEvidenceState {
-    /// A passing run of the test that is in the tree now, or a claim proven or with its
-    /// inputs unchanged since its passing run. The only state that meets a criterion.
+    /// A passing run that is current evidence at the working tree: its commit is in this
+    /// history, it measured a tree that was its commit, the test still hashes to what ran,
+    /// and nothing the criterion names has changed since — for a test, its source and the
+    /// source and implementation of every claim that test proves; for a claim, what the
+    /// claim names. A change the criterion does not name, the evidence ledger's own included,
+    /// leaves it current. A test that proves no claim naming an implementation names no code
+    /// under test, so for it nothing but the ledger may have changed since the run. The only
+    /// state that meets a criterion; the criterion's `proof` says whether it rests on
+    /// `proven` or on `inputs_unchanged`.
     Current,
-    /// A passing run of a test whose source has changed since, or a claim whose inputs
-    /// have.
+    /// A pass that is not current evidence: something the criterion names has changed since
+    /// it, it names no code under test and anything but the ledger and the plan's own records
+    /// has changed since, the
+    /// test no longer hashes to what ran, the run's commit is not in this history (or git
+    /// could not compare it), or the run measured a tree that was not its commit — a run on a
+    /// dirty tree, which no later tree can be matched against.
     Stale,
-    /// The latest recorded run did not pass.
+    /// The latest recorded run failed, timed out or errored.
     Failing,
-    /// The reference resolves and nothing has been recorded for it.
+    /// The reference resolves and no run counts for it: none was recorded, the latest run
+    /// declined to run (a skip), or the claim names no test a runner drives.
     NotRun,
     /// The reference resolves, and this kind of evidence (`command`, `deployment`) is not
     /// derivable from the ledger, so it never meets a criterion by itself.
     NotDerivable,
     /// The reference is empty or names nothing this repository holds.
     Unresolved,
+}
+
+impl IntentEvidenceState {
+    /// A verdict of the evidence module's truth table, in this vocabulary: current only when
+    /// [`evidence::current`] says so, of a run on the tree `recorded` (the execution's own
+    /// `working_tree`; [`TreeState::Unknown`] when there is none). A pass that is not current
+    /// is stale — including a run on a dirty tree whose inputs read unchanged — a skip and an
+    /// absence are not run, and a failure is failing.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::{ProofState, TreeState};
+    /// use majordomus_cli::intent::IntentEvidenceState;
+    ///
+    /// let judged = IntentEvidenceState::judged;
+    /// assert_eq!(judged(ProofState::InputsUnchanged, TreeState::Clean), IntentEvidenceState::Current);
+    /// // a run on a tree that was not its commit proves nothing about a later one
+    /// assert_eq!(judged(ProofState::InputsUnchanged, TreeState::Dirty), IntentEvidenceState::Stale);
+    /// assert_eq!(judged(ProofState::Failing, TreeState::Clean), IntentEvidenceState::Failing);
+    /// ```
+    pub fn judged(state: ProofState, recorded: TreeState) -> IntentEvidenceState {
+        if evidence::current(state, recorded, Presented::WorkingTree.tree()) {
+            return IntentEvidenceState::Current;
+        }
+        match state {
+            ProofState::Proven | ProofState::InputsUnchanged | ProofState::Stale => {
+                IntentEvidenceState::Stale
+            }
+            ProofState::Failing => IntentEvidenceState::Failing,
+            ProofState::NotRun | ProofState::Unrunnable | ProofState::NoTest => {
+                IntentEvidenceState::NotRun
+            }
+        }
+    }
 }
 
 // ---------------------------------------------------------------- the record as authored
@@ -304,7 +359,11 @@ impl IntentRecord {
 ///
 /// ```
 /// use majordomus_cli::intent::{IntentEvidenceState, TestStanding};
-/// let standing = TestStanding { present: false, state: IntentEvidenceState::Unresolved };
+/// let standing = TestStanding {
+///     present: false,
+///     state: IntentEvidenceState::Unresolved,
+///     proof: None,
+/// };
 /// assert!(!standing.present);
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -313,42 +372,69 @@ pub struct TestStanding {
     pub present: bool,
     /// The state of its latest recorded run.
     pub state: IntentEvidenceState,
+    /// The evidence module's own verdict behind `state`, when the run was judged by it.
+    pub proof: Option<ProofState>,
+}
+
+/// What a declared claim's evidence says: the criterion's state, and the claim report's own
+/// verdict behind it — `proven` and `inputs_unchanged` both meet a criterion, and stay two
+/// answers.
+///
+/// ```
+/// use majordomus_cli::evidence::ProofState;
+/// use majordomus_cli::intent::{ClaimStanding, IntentEvidenceState};
+/// let standing = ClaimStanding {
+///     state: IntentEvidenceState::Current,
+///     proof: ProofState::InputsUnchanged,
+/// };
+/// assert_ne!(standing.proof, ProofState::Proven);
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ClaimStanding {
+    /// What the claim's evidence means for a criterion.
+    pub state: IntentEvidenceState,
+    /// The claim report's verdict.
+    pub proof: ProofState,
 }
 
 /// The facts the derivation reads beyond the plan. The repository answers them from the
 /// ledger, the claim matrix and the tree; a test answers them from a table.
 ///
 /// ```
-/// use majordomus_cli::evidence::{ProofState, TestId};
-/// use majordomus_cli::intent::{EvidenceLookup, IntentEvidenceState, TestStanding};
+/// use majordomus_cli::evidence::TestId;
+/// use majordomus_cli::intent::{ClaimStanding, EvidenceLookup, IntentEvidenceState, TestStanding};
 /// struct NothingRecorded;
 /// impl EvidenceLookup for NothingRecorded {
-///     fn test(&self, _: &TestId) -> TestStanding {
-///         TestStanding { present: true, state: IntentEvidenceState::NotRun }
+///     fn test(&self, _: &TestId, _: &[String]) -> TestStanding {
+///         TestStanding { present: true, state: IntentEvidenceState::NotRun, proof: None }
 ///     }
-///     fn claim(&self, _: &str) -> Option<ProofState> { None }
+///     fn claim(&self, _: &str) -> Option<ClaimStanding> { None }
 ///     fn deployment(&self, _: &str) -> bool { false }
 ///     fn object(&self, _: &str, _: &str) -> bool { false }
 ///     fn file(&self, _: &str) -> bool { false }
 /// }
 /// let id = TestId::of("test/cases/00_x.sh").unwrap();
-/// assert_eq!(NothingRecorded.test(&id).state, IntentEvidenceState::NotRun);
+/// assert_eq!(NothingRecorded.test(&id, &[]).state, IntentEvidenceState::NotRun);
 /// ```
 pub trait EvidenceLookup {
     /// What the ledger holds for one test, by its identity: whether its source is in the tree
-    /// and what its latest run came to.
+    /// and what its latest run came to. `scope` is the code the plan declares for the
+    /// criterion — the `scope` of every issue that `serves` it — which the judgement counts
+    /// among the test's inputs beside what the claims that test proves name.
     ///
     /// ```
     /// use majordomus_cli::evidence::TestId;
     /// use majordomus_cli::intent::{EvidenceLookup, TestStanding};
     /// # fn demo(ev: &dyn EvidenceLookup) {
-    /// let standing: TestStanding = ev.test(&TestId::of("test/cases/00_x.sh").unwrap());
+    /// let id = TestId::of("test/cases/00_x.sh").unwrap();
+    /// let standing: TestStanding = ev.test(&id, &["lib/a".to_string()]);
     /// assert!(standing.present || !standing.present);
     /// # }
     /// ```
-    fn test(&self, id: &TestId) -> TestStanding;
-    /// A claim's proof state, `None` when no such claim is declared — which is a refusal, not
-    /// an unproven claim.
+    fn test(&self, id: &TestId, scope: &[String]) -> TestStanding;
+    /// What a claim's evidence says, judged as [`IntentEvidenceState::judged`] judges it,
+    /// with the claim report's verdict behind it; `None` when no such claim is declared —
+    /// which is a refusal, not an unproven claim.
     ///
     /// ```
     /// use majordomus_cli::intent::EvidenceLookup;
@@ -356,7 +442,7 @@ pub trait EvidenceLookup {
     /// assert!(ev.claim("no-such-claim-exists").is_none());
     /// # }
     /// ```
-    fn claim(&self, id: &str) -> Option<ProofState>;
+    fn claim(&self, id: &str) -> Option<ClaimStanding>;
     /// Whether a deployment object with this id exists. A `deployment` criterion resolves
     /// through this and is still never counted as met.
     ///
@@ -390,8 +476,11 @@ pub trait EvidenceLookup {
 }
 
 /// The evidence of a real repository: its ledger, its claim matrix joined to that ledger,
-/// its index and its tree. The claim join runs git, so it is computed only when a
-/// criterion or a governance entry asks for a claim.
+/// its index and its tree, judged at the working tree by the evidence module's own
+/// derivation — [`evidence::report`] for a claim, [`evidence::freshness()`] over the same
+/// [`evidence::compare`] for a test — so a criterion is current exactly when the rest of
+/// Majordomus would call its evidence current. The claim join and the comparisons run git,
+/// so each is computed once, and only when a criterion or a governance entry asks.
 ///
 /// ```
 /// use majordomus_cli::index::Index;
@@ -406,7 +495,8 @@ pub struct RepositoryEvidence<'a> {
     index: &'a Index,
     root: PathBuf,
     ledger: Ledger,
-    claims: std::cell::OnceCell<BTreeMap<String, ProofState>>,
+    claims: std::cell::OnceCell<EvidenceReport>,
+    comparisons: std::cell::RefCell<BTreeMap<String, Comparison>>,
 }
 
 impl<'a> RepositoryEvidence<'a> {
@@ -431,39 +521,125 @@ impl<'a> RepositoryEvidence<'a> {
             root,
             ledger,
             claims: std::cell::OnceCell::new(),
+            comparisons: std::cell::RefCell::new(BTreeMap::new()),
         })
     }
 
     fn root(&self) -> &Path {
         &self.root
     }
-}
 
-impl EvidenceLookup for RepositoryEvidence<'_> {
-    fn test(&self, id: &TestId) -> TestStanding {
-        let present = self.root().join(id.source()).is_file();
-        let state = match self.ledger.latest(&id.as_string()) {
-            None => IntentEvidenceState::NotRun,
-            Some(e) if !e.outcome.proves() => IntentEvidenceState::Failing,
-            Some(e) => match e.digest_matches(self.root()) {
-                Some(true) => IntentEvidenceState::Current,
-                _ => IntentEvidenceState::Stale,
-            },
-        };
-        TestStanding { present, state }
+    /// The claim join at the working tree, computed once.
+    fn claims(&self) -> &EvidenceReport {
+        self.claims
+            .get_or_init(|| evidence::report(self.index, &self.ledger))
     }
 
-    fn claim(&self, id: &str) -> Option<ProofState> {
-        self.claims
-            .get_or_init(|| {
-                evidence::report(self.index, &self.ledger)
-                    .claims
+    /// The comparison of one evidence commit with the working tree, computed once per commit.
+    fn comparison(&self, commit: &str) -> Comparison {
+        self.comparisons
+            .borrow_mut()
+            .entry(commit.to_string())
+            .or_insert_with(|| compare(self.root(), commit, &Presented::WorkingTree))
+            .clone()
+    }
+
+    /// What a test criterion names: the test's own source; the source and implementation of
+    /// every claim that same test proves; and every path, among those `changed` since the run,
+    /// under the `scope` of an issue serving the criterion — the code under test, as the
+    /// repository declares it. A criterion names nothing else, so a change elsewhere, the
+    /// plan's own records included, does not move it.
+    ///
+    /// `None` when no claim that test proves names an implementation and no issue serving the
+    /// criterion declares a scope: the repository then declares nothing about the code under
+    /// test, and the test's own file is not that code. The truth table reads `None` as a route
+    /// that names no inputs (its row 14), so any change since the run, the code under test
+    /// included, leaves the pass stale rather than current; a run at the checkout's own commit
+    /// is still `proven`.
+    fn inputs(
+        &self,
+        id: &TestId,
+        scope: &[String],
+        changed: Option<&BTreeSet<String>>,
+    ) -> Option<Vec<String>> {
+        let test = id.as_string();
+        let mut inputs = vec![id.source()];
+        let mut declared = !scope.is_empty();
+        let mut push = |p: &String| {
+            if !inputs.contains(p) {
+                inputs.push(p.clone());
+            }
+        };
+        for c in &self.claims().claims {
+            if c.test.as_deref() == Some(test.as_str()) {
+                declared |= c.implementation.is_some();
+                [&c.source, &c.implementation]
                     .into_iter()
-                    .map(|c| (c.id, c.state))
-                    .collect()
-            })
-            .get(id)
-            .copied()
+                    .flatten()
+                    .for_each(&mut push);
+            }
+        }
+        changed
+            .into_iter()
+            .flatten()
+            .filter(|p| scope.iter().any(|s| within(p, s)))
+            .for_each(&mut push);
+        declared.then_some(inputs)
+    }
+}
+
+/// Where the plan keeps its records: a change there is a change to the plan, never to the code a
+/// criterion's test exercises.
+const PLAN_RECORDS: &str = ".ai/repo/project";
+
+impl EvidenceLookup for RepositoryEvidence<'_> {
+    fn test(&self, id: &TestId, scope: &[String]) -> TestStanding {
+        let source = id.source();
+        let present = self.root().join(&source).is_file();
+        let execution = self.ledger.latest(&id.as_string());
+        let Some(e) = execution else {
+            return TestStanding {
+                present,
+                state: IntentEvidenceState::NotRun,
+                proof: Some(ProofState::NotRun),
+            };
+        };
+        // the claim report's own reading of a run: a test that no longer hashes to what ran
+        // did not run in the form it is in now, whatever the diff says
+        let moved = e.outcome.proves() && e.digest_matches(self.root()) == Some(false);
+        // the plan's own records are not the code under test: closing the work a criterion is
+        // served by is a change to `.ai/repo/project/`, and it must not stale the pass that
+        // proves the criterion, whether or not the repository declares the code under test
+        let mut comparison = self.comparison(&e.commit);
+        if let Some(changed) = comparison.changed.as_mut() {
+            changed.retain(|p| !within(p, PLAN_RECORDS));
+        }
+        let inputs = self.inputs(id, scope, comparison.changed.as_ref());
+        let judgement = freshness(
+            Recorded::Ran(e),
+            inputs.as_deref(),
+            &source,
+            moved,
+            Some(&comparison),
+            Presented::WorkingTree.tree(),
+        );
+        TestStanding {
+            present,
+            state: IntentEvidenceState::judged(judgement.state, TreeState::parse(&e.working_tree)),
+            proof: Some(judgement.state),
+        }
+    }
+
+    fn claim(&self, id: &str) -> Option<ClaimStanding> {
+        let c = self.claims().claims.iter().find(|c| c.id == id)?;
+        let recorded = c
+            .execution
+            .as_ref()
+            .map_or(TreeState::Unknown, |e| TreeState::parse(&e.working_tree));
+        Some(ClaimStanding {
+            state: IntentEvidenceState::judged(c.state, recorded),
+            proof: c.state,
+        })
     }
 
     fn deployment(&self, id: &str) -> bool {
@@ -513,6 +689,7 @@ pub struct IntentMilestone {
 /// about it, whether that meets it, and the command that would produce the evidence again.
 ///
 /// ```
+/// use majordomus_cli::evidence::ProofState;
 /// use majordomus_cli::intent::{IntentCriterion, IntentEvidenceState};
 /// let c = IntentCriterion {
 ///     id: "stage-is-derived".into(),
@@ -521,6 +698,7 @@ pub struct IntentMilestone {
 ///     reference: "apps/majordomus-cli/tests/intent.rs".into(),
 ///     state: IntentEvidenceState::NotRun,
 ///     met: false,
+///     proof: Some(ProofState::NotRun),
 ///     reproduce: None,
 /// };
 /// // nothing recorded is not a pass
@@ -541,6 +719,13 @@ pub struct IntentCriterion {
     pub state: IntentEvidenceState,
     /// Derived: the state is `current`.
     pub met: bool,
+    /// Derived: the evidence module's own verdict behind `state`, for a `test` or `claim`
+    /// criterion whose reference resolves. A met criterion rests on `proven` (a pass at this
+    /// revision) or `inputs_unchanged` (a pass whose named inputs have not moved since, which
+    /// is not proof at this revision), and every surface shows which, so `met` is never the
+    /// one tick for both.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub proof: Option<ProofState>,
     /// The command that produces the evidence again, when one is known.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reproduce: Option<String>,
@@ -710,11 +895,13 @@ pub fn stage(
 fn criterion_of(
     intent: &str,
     c: &CriterionRecord,
+    scope: &[String],
     ev: &dyn EvidenceLookup,
     findings: &mut Vec<IntentFinding>,
 ) -> IntentCriterion {
     let r = c.reference.trim();
     let mut reproduce = None;
+    let mut proof = None;
     let unresolved = |findings: &mut Vec<IntentFinding>, why: String| {
         finding(
             findings,
@@ -748,9 +935,10 @@ fn criterion_of(
                     ),
                 ),
                 Some(id) => {
-                    let standing = ev.test(&id);
+                    let standing = ev.test(&id, scope);
                     if standing.present {
                         reproduce = Some(id.reproduce());
+                        proof = standing.proof;
                         standing.state
                     } else {
                         unresolved(
@@ -765,12 +953,10 @@ fn criterion_of(
                     findings,
                     format!("`{r}` is not a claim of docs/CLAIMS.yaml"),
                 ),
-                Some(ProofState::Proven | ProofState::InputsUnchanged) => {
-                    IntentEvidenceState::Current
+                Some(standing) => {
+                    proof = Some(standing.proof);
+                    standing.state
                 }
-                Some(ProofState::Stale) => IntentEvidenceState::Stale,
-                Some(ProofState::Failing) => IntentEvidenceState::Failing,
-                Some(_) => IntentEvidenceState::NotRun,
             },
             "deployment" => {
                 if ev.deployment(r) {
@@ -796,8 +982,38 @@ fn criterion_of(
         reference: c.reference.clone(),
         met: state == IntentEvidenceState::Current,
         state,
+        proof,
         reproduce,
     }
+}
+
+/// The code the plan declares for one criterion: the `scope` of every issue that `serves`
+/// `<intent>#<criterion>`, in plan order, each path once.
+fn serving_scope(plan: &Plan, intent: &str, criterion: &str) -> Vec<String> {
+    let link = format!("{intent}#{criterion}");
+    let mut scope: Vec<String> = Vec::new();
+    for i in plan
+        .issues
+        .iter()
+        .filter(|i| i.serves.iter().any(|s| s.trim() == link))
+    {
+        for p in &i.scope {
+            let p = p.trim().trim_end_matches('/').to_string();
+            if !p.is_empty() && !scope.contains(&p) {
+                scope.push(p);
+            }
+        }
+    }
+    scope
+}
+
+/// Whether a repository path is a declared scope entry or lies under it; `.` is the whole tree.
+fn within(path: &str, scope: &str) -> bool {
+    scope == "."
+        || path == scope
+        || path
+            .strip_prefix(scope)
+            .is_some_and(|rest| rest.starts_with('/'))
 }
 
 fn test_id(r: &str) -> Option<TestId> {
@@ -908,17 +1124,18 @@ impl Intents {
     /// and what a test calls with records it wrote.
     ///
     /// ```
-    /// use majordomus_cli::evidence::{ProofState, TestId};
+    /// use majordomus_cli::evidence::TestId;
     /// use majordomus_cli::intent::{
-    ///     EvidenceLookup, IntentEvidenceState, IntentRecord, Intents, TestStanding,
+    ///     ClaimStanding, EvidenceLookup, IntentEvidenceState, IntentRecord, Intents,
+    ///     TestStanding,
     /// };
     /// use majordomus_cli::plan::Plan;
     /// struct NothingRecorded;
     /// impl EvidenceLookup for NothingRecorded {
-    ///     fn test(&self, _: &TestId) -> TestStanding {
-    ///         TestStanding { present: true, state: IntentEvidenceState::NotRun }
+    ///     fn test(&self, _: &TestId, _: &[String]) -> TestStanding {
+    ///         TestStanding { present: true, state: IntentEvidenceState::NotRun, proof: None }
     ///     }
-    ///     fn claim(&self, _: &str) -> Option<ProofState> { None }
+    ///     fn claim(&self, _: &str) -> Option<ClaimStanding> { None }
     ///     fn deployment(&self, _: &str) -> bool { false }
     ///     fn object(&self, _: &str, _: &str) -> bool { false }
     ///     fn file(&self, _: &str) -> bool { false }
@@ -1013,7 +1230,10 @@ impl Intents {
             let satisfaction: Vec<IntentCriterion> = r
                 .satisfaction
                 .iter()
-                .map(|c| criterion_of(&r.id, c, ev, &mut findings))
+                .map(|c| {
+                    let scope = serving_scope(plan, &r.id, &c.id);
+                    criterion_of(&r.id, c, &scope, ev, &mut findings)
+                })
                 .collect();
 
             for g in &r.governance {
@@ -1298,7 +1518,7 @@ mod tests {
 
     struct Table {
         tests: BTreeMap<String, TestStanding>,
-        claims: BTreeMap<String, ProofState>,
+        claims: BTreeMap<String, ClaimStanding>,
     }
 
     impl Table {
@@ -1314,27 +1534,36 @@ mod tests {
                 TestStanding {
                     present: true,
                     state,
+                    proof: None,
                 },
             );
             self
         }
-        fn with_claim(mut self, id: &str, state: ProofState) -> Self {
-            self.claims.insert(id.into(), state);
+        fn with_claim(mut self, id: &str, state: IntentEvidenceState) -> Self {
+            let proof = match state {
+                IntentEvidenceState::Current => ProofState::Proven,
+                IntentEvidenceState::Stale => ProofState::Stale,
+                IntentEvidenceState::Failing => ProofState::Failing,
+                _ => ProofState::NotRun,
+            };
+            self.claims
+                .insert(id.into(), ClaimStanding { state, proof });
             self
         }
     }
 
     impl EvidenceLookup for Table {
-        fn test(&self, id: &TestId) -> TestStanding {
+        fn test(&self, id: &TestId, _: &[String]) -> TestStanding {
             self.tests
                 .get(&id.as_string())
                 .cloned()
                 .unwrap_or(TestStanding {
                     present: false,
                     state: IntentEvidenceState::NotRun,
+                    proof: None,
                 })
         }
-        fn claim(&self, id: &str) -> Option<ProofState> {
+        fn claim(&self, id: &str) -> Option<ClaimStanding> {
             self.claims.get(id).copied()
         }
         fn deployment(&self, id: &str) -> bool {
@@ -1526,18 +1755,48 @@ mod tests {
     }
 
     #[test]
-    fn a_claim_is_current_only_when_proven_or_its_inputs_are_unchanged() {
+    fn evidence_is_current_only_when_the_evidence_module_calls_it_current() {
+        use IntentEvidenceState::{Current, Failing, NotRun, Stale};
+        use TreeState::{Clean, Dirty, Unknown};
+        for (state, tree, want) in [
+            (ProofState::Proven, Clean, Current),
+            (ProofState::InputsUnchanged, Clean, Current),
+            // a pass on a tree that was not its commit: nothing later can be matched to it
+            (ProofState::InputsUnchanged, Dirty, Stale),
+            (ProofState::InputsUnchanged, Unknown, Stale),
+            (ProofState::Stale, Clean, Stale),
+            (ProofState::Failing, Clean, Failing),
+            (ProofState::NotRun, Unknown, NotRun),
+            (ProofState::Unrunnable, Unknown, NotRun),
+            (ProofState::NoTest, Unknown, NotRun),
+        ] {
+            assert_eq!(
+                IntentEvidenceState::judged(state, tree),
+                want,
+                "{state:?} on a {tree:?} tree"
+            );
+            assert_eq!(
+                want == Current,
+                evidence::current(state, tree, TreeState::Clean),
+                "{state:?} on a {tree:?} tree: one answer to whether it is current"
+            );
+        }
+    }
+
+    #[test]
+    fn a_claim_criterion_is_met_only_by_current_evidence() {
         let p = plan(vec![milestone("m", "DONE")], vec![]);
-        for (state, want) in [
-            (ProofState::Proven, IntentEvidenceState::Current),
-            (ProofState::InputsUnchanged, IntentEvidenceState::Current),
-            (ProofState::Stale, IntentEvidenceState::Stale),
-            (ProofState::Failing, IntentEvidenceState::Failing),
-            (ProofState::NotRun, IntentEvidenceState::NotRun),
+        for state in [
+            IntentEvidenceState::Current,
+            IntentEvidenceState::Stale,
+            IntentEvidenceState::Failing,
+            IntentEvidenceState::NotRun,
         ] {
             let ev = Table::new().with_claim("c", state);
             let i = Intents::derive(vec![record("x", &["m"], &[("k", "claim", "c")])], &p, &ev);
-            assert_eq!(i.intents[0].satisfaction[0].state, want, "{state:?}");
+            let c = &i.intents[0].satisfaction[0];
+            assert_eq!(c.state, state);
+            assert_eq!(c.met, state == IntentEvidenceState::Current, "{state:?}");
         }
     }
 
@@ -1772,7 +2031,7 @@ mod tests {
     #[test]
     fn governance_resolves_only_a_known_kind_naming_what_the_repository_holds() {
         let ev = Table::new()
-            .with_claim("known", ProofState::Proven)
+            .with_claim("known", IntentEvidenceState::Current)
             .with_test("suite:1_x", IntentEvidenceState::Current);
         for (entry, resolves) in [
             ("rule:project.alpha", true),

@@ -639,7 +639,11 @@ fn warn(out: &mut Vec<IntentFinding>, code: &str, subject: &str, message: String
 fn state_words(state: IntentEvidenceState) -> &'static str {
     match state {
         IntentEvidenceState::Current => "current evidence",
-        IntentEvidenceState::Stale => "evidence recorded against a source that has changed since",
+        IntentEvidenceState::Stale => {
+            "a pass that is no longer current evidence: something it names changed since, it \
+             names no code under test and something changed since, or it ran on a tree that was \
+             not its commit"
+        }
         IntentEvidenceState::Failing => "a latest recorded run that did not pass",
         IntentEvidenceState::NotRun => "no recorded run",
         IntentEvidenceState::NotDerivable => {
@@ -652,8 +656,8 @@ fn state_words(state: IntentEvidenceState) -> &'static str {
 /// The drift of one intent: the plan's closure against the evidence's verdict.
 ///
 /// * `closed_work_contradicted` — every milestone is DONE and a criterion's recorded evidence
-///   says no: stale against a source that has changed, or failing. A satisfied intent whose
-///   reality regresses lands here.
+///   says no: stale (a pass that is no longer current evidence at the checkout), or failing.
+///   A satisfied intent whose reality regresses lands here.
 /// * `closed_work_unproven` — every milestone is DONE and a criterion has never had evidence.
 /// * `criterion_closed_unmet` — every issue declaring it serves a criterion is DONE, and the
 ///   criterion is not met, while the intent is still being executed.
@@ -673,7 +677,7 @@ fn state_words(state: IntentEvidenceState) -> &'static str {
 ///     satisfaction: vec![IntentCriterion {
 ///         id: "c".into(), criterion: "c".into(), evidence: "test".into(),
 ///         reference: "t".into(), state: IntentEvidenceState::Failing, met: false,
-///         reproduce: None }],
+///         proof: None, reproduce: None }],
 ///     governance: vec![], non_goals: vec![], superseded_by: None, source: String::new(),
 /// };
 /// let found = drift(&view, &plan);
@@ -1394,6 +1398,7 @@ mod tests {
             reference: format!("suite:{id}"),
             state,
             met: state == IntentEvidenceState::Current,
+            proof: None,
             reproduce: None,
         }
     }
@@ -1606,7 +1611,7 @@ mod tests {
                 "closed_work_unproven"
             ]
         );
-        assert!(found[0].message.contains("a source that has changed"));
+        assert!(found[0].message.contains("no longer current evidence"));
         assert!(found[1].message.contains("did not pass"));
         assert!(found[2].message.contains("no recorded run"));
         assert!(found

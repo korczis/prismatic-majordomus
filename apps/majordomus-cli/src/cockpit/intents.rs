@@ -10,6 +10,7 @@
 use serde_json::json;
 
 use crate::capability::Context;
+use crate::evidence::ProofState;
 use crate::http::router::percent_encode;
 use crate::intent::{IntentEvidenceState, IntentStage};
 use crate::intent_realization::{
@@ -35,9 +36,15 @@ fn stage_badge(stage: IntentStage) -> El {
     badge(status, stage.as_str())
 }
 
-fn evidence_badge(state: IntentEvidenceState) -> El {
+/// A criterion's state, and for a met one the verdict it rests on: a proof at this revision
+/// and a pass whose named inputs are unchanged both meet it, and never wear the same badge.
+fn evidence_badge(state: IntentEvidenceState, proof: Option<ProofState>) -> El {
     let (status, label) = match state {
-        IntentEvidenceState::Current => ("ok", "current"),
+        IntentEvidenceState::Current => match proof {
+            Some(ProofState::Proven) => ("ok", "current · proven"),
+            Some(ProofState::InputsUnchanged) => ("info", "current · inputs unchanged"),
+            _ => ("ok", "current"),
+        },
         IntentEvidenceState::Stale => ("warn", "stale"),
         IntentEvidenceState::Failing => ("bad", "failing"),
         IntentEvidenceState::NotRun => ("neutral", "not run"),
@@ -292,7 +299,7 @@ pub fn intent(ctx: &Context, id: &str) -> Page {
             row(vec![
                 text_cell(c.id.clone()),
                 text_cell(c.criterion.clone()),
-                cell(evidence_badge(c.state)),
+                cell(evidence_badge(c.state, c.proof)),
                 cell(evidence),
                 cell(served),
                 cell(match &c.reproduce {
@@ -415,11 +422,23 @@ mod tests {
             (IntentEvidenceState::Unresolved, "bad", "unresolved"),
         ] {
             assert_eq!(
-                evidence_badge(state).render(),
+                evidence_badge(state, None).render(),
                 badge(status, label).render(),
                 "{state:?}"
             );
         }
+        // a met criterion says which verdict it rests on, and the two never render alike
+        let proven = evidence_badge(IntentEvidenceState::Current, Some(ProofState::Proven));
+        let unchanged = evidence_badge(
+            IntentEvidenceState::Current,
+            Some(ProofState::InputsUnchanged),
+        );
+        assert_eq!(proven.render(), badge("ok", "current · proven").render());
+        assert_eq!(
+            unchanged.render(),
+            badge("info", "current · inputs unchanged").render()
+        );
+        assert_ne!(proven.render(), unchanged.render());
         for (p, status) in [
             (IntentLinkProvenance::Declared, "ok"),
             (IntentLinkProvenance::Observed, "info"),
