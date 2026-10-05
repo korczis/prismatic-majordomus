@@ -273,11 +273,35 @@ A pull request that targets another branch is stacked on the open pull request w
 that branch. Only branches of this repository count. A fork's branch says nothing about a
 branch here, whatever it is called, so a fork whose branch is named `master` stacks nothing.
 
+## What a change touches
+
+Beside each head's relation, from the same pair of commits and cached under the same key in
+`relations.json`, the queue reads what its merge changes by kind (`change_shape` on the
+assessment): its authored paths, its derived paths, and `version_bump`, the version it
+declares in `apps/majordomus-cli/Cargo.toml` when that is not the one its merge base declares.
+The authored paths are the whole change, a conflicting head's included, and they decide:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| What two open pull requests share | `overlaps[].kind` | Risk factor |
+| --- | --- | --- |
+| both raise the crate's version | `version_bump` | `overlapping_version_bump:#N` |
+| both change a record under `.ai/repo/releases/` | `release` | `overlapping_release:#N` |
+| an authored path | `authored` | none |
+
+</div>
+
+
+Risk is low, medium or high from the paths touched. A head that raises the version
+(`version_bump:V`), a shared version bump or release, and a relation git could not decide
+(`paths_unknown`) are high: whichever of two version bumps lands second has to be
+re-derived on the first, and a change nobody could read is never "documentation only".
+
 ## The rank
 
-The queue is ordered by lane, disposition, risk (low, medium, high, from the paths touched),
-how many other ready or refreshable pull requests share an authored path (fewer first,
-because landing it invalidates less), how many open pull requests declare that they wait for
+The queue is ordered by lane, disposition, risk (low, medium, high, as above), how many
+other ready or refreshable pull requests it overlaps (fewer first, because landing it
+invalidates less), how many open pull requests declare that they wait for
 it and are not yet satisfied (more first, because landing it unblocks them), how many
 authored paths it changes (fewer first: a smaller change is cheaper to land and to undo), age
 (older first, so new easy work cannot starve old work) and number. Every key is a value of

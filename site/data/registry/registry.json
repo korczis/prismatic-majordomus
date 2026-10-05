@@ -6,7 +6,7 @@
     "version": "0.13.0"
   },
   "registry": {
-    "fingerprint": "29424ab03bd1263cc13648a900ff9bf1bb834d4783be5bdb5719286f0f0c151e",
+    "fingerprint": "c95f61a838c1c1282f51f8cf71f82dafddbd1b464aea60fc637c38016874e419",
     "summary": {
       "total": 1884,
       "builtin": 171,
@@ -26145,6 +26145,17 @@
                       }
                     ],
                     "description": "Why it stands where it does in the rank: every component the order compares, in the\norder it compares them. Set by the planner; absent on an assessment never ranked."
+                  },
+                  "change_shape": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/ChangeShape"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "What its merge into master changes, by kind (`ChangeShape`): read beside the\nrelation, from the same pair of commits. Absent when it could not be read."
                   }
                 },
                 "required": [
@@ -26706,6 +26717,11 @@
                       "type": "string"
                     },
                     "description": "The paths both change."
+                  },
+                  "kind": {
+                    "$ref": "#/$defs/OverlapKind",
+                    "description": "What the two share. `authored` in a record written before it was said.",
+                    "default": "authored"
                   }
                 },
                 "required": [
@@ -26713,6 +26729,26 @@
                   "paths"
                 ],
                 "description": "Shared authored paths with one other open pull request."
+              },
+              "OverlapKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "authored",
+                    "description": "Authored paths both change."
+                  },
+                  {
+                    "type": "string",
+                    "const": "version_bump",
+                    "description": "Both raise the crate's version: whichever lands second must be re-derived on the first."
+                  },
+                  {
+                    "type": "string",
+                    "const": "release",
+                    "description": "Both change the release records under `.ai/repo/releases/`."
+                  }
+                ],
+                "description": "What two open pull requests have in common that makes landing one change the other."
               },
               "IntegrationRisk": {
                 "oneOf": [
@@ -27079,7 +27115,7 @@
                     "type": "integer",
                     "format": "uint",
                     "minimum": 0,
-                    "description": "How many other ready or refreshable pull requests change an authored path it changes:\nfewer first, because landing it invalidates less."
+                    "description": "How many other ready or refreshable pull requests it overlaps (`PathOverlap`): an\nauthored path, a version bump or a release in common. Fewer first, because landing it\ninvalidates less."
                   },
                   "dependents": {
                     "type": "integer",
@@ -27115,6 +27151,37 @@
                   "number"
                 ],
                 "description": "What the rank compares, in order: the first component that differs between two pull\nrequests decides which comes first. Each is a value of the assessment or of the queue\naround it, so the order can be explained and is the same whatever order the forge listed\nthe pull requests in."
+              },
+              "ChangeShape": {
+                "type": "object",
+                "properties": {
+                  "authored": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Authored (non-derived) paths the merge changes or conflicts on, in path order."
+                  },
+                  "derived": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Derived paths the merge changes or conflicts on, in path order."
+                  },
+                  "version_bump": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The version the head declares in the crate manifest, when it is not the one its merge\nbase declares: the head raises the version."
+                  }
+                },
+                "required": [
+                  "authored",
+                  "derived"
+                ],
+                "description": "What a head's merge into master changes, by kind: the authored paths a person wrote, the\nderived paths a generator writes (by the repository's `merge=derived` attributes on master),\nand the version the head declares when it raises the crate's. Decided from the same pair\nof commits as the relation to master, and cached under the same key beside it, so a change\nof either commit — a `.gitattributes` change on master is one — makes both stale together."
               }
             }
           }
@@ -27843,6 +27910,17 @@
                       }
                     ],
                     "description": "Why it stands where it does in the rank: every component the order compares, in the\norder it compares them. Set by the planner; absent on an assessment never ranked."
+                  },
+                  "change_shape": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/ChangeShape"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "What its merge into master changes, by kind (`ChangeShape`): read beside the\nrelation, from the same pair of commits. Absent when it could not be read."
                   }
                 },
                 "required": [
@@ -28404,6 +28482,11 @@
                       "type": "string"
                     },
                     "description": "The paths both change."
+                  },
+                  "kind": {
+                    "$ref": "#/$defs/OverlapKind",
+                    "description": "What the two share. `authored` in a record written before it was said.",
+                    "default": "authored"
                   }
                 },
                 "required": [
@@ -28411,6 +28494,26 @@
                   "paths"
                 ],
                 "description": "Shared authored paths with one other open pull request."
+              },
+              "OverlapKind": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "authored",
+                    "description": "Authored paths both change."
+                  },
+                  {
+                    "type": "string",
+                    "const": "version_bump",
+                    "description": "Both raise the crate's version: whichever lands second must be re-derived on the first."
+                  },
+                  {
+                    "type": "string",
+                    "const": "release",
+                    "description": "Both change the release records under `.ai/repo/releases/`."
+                  }
+                ],
+                "description": "What two open pull requests have in common that makes landing one change the other."
               },
               "IntegrationRisk": {
                 "oneOf": [
@@ -28777,7 +28880,7 @@
                     "type": "integer",
                     "format": "uint",
                     "minimum": 0,
-                    "description": "How many other ready or refreshable pull requests change an authored path it changes:\nfewer first, because landing it invalidates less."
+                    "description": "How many other ready or refreshable pull requests it overlaps (`PathOverlap`): an\nauthored path, a version bump or a release in common. Fewer first, because landing it\ninvalidates less."
                   },
                   "dependents": {
                     "type": "integer",
@@ -28813,6 +28916,37 @@
                   "number"
                 ],
                 "description": "What the rank compares, in order: the first component that differs between two pull\nrequests decides which comes first. Each is a value of the assessment or of the queue\naround it, so the order can be explained and is the same whatever order the forge listed\nthe pull requests in."
+              },
+              "ChangeShape": {
+                "type": "object",
+                "properties": {
+                  "authored": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Authored (non-derived) paths the merge changes or conflicts on, in path order."
+                  },
+                  "derived": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Derived paths the merge changes or conflicts on, in path order."
+                  },
+                  "version_bump": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The version the head declares in the crate manifest, when it is not the one its merge\nbase declares: the head raises the version."
+                  }
+                },
+                "required": [
+                  "authored",
+                  "derived"
+                ],
+                "description": "What a head's merge into master changes, by kind: the authored paths a person wrote, the\nderived paths a generator writes (by the repository's `merge=derived` attributes on master),\nand the version the head declares when it raises the crate's. Decided from the same pair\nof commits as the relation to master, and cached under the same key beside it, so a change\nof either commit — a `.gitattributes` change on master is one — makes both stale together."
               },
               "QueueTallies": {
                 "type": "object",
@@ -67939,7 +68073,7 @@
     ]
   },
   "index": {
-    "fingerprint": "be26960addc489ecedca16706580ce3294c15deafe51075603e75271395ae7a6",
+    "fingerprint": "141da4c1b02f745eeb6949b85857415b162e25f0b7c70682a932081110f2ef10",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -69269,7 +69403,7 @@
         "path": ".ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 19502,
+        "bytes": 20560,
         "tags": [
           "integration",
           "git",
@@ -73111,7 +73245,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 32481
+        "bytes": 33586
       },
       {
         "uri": "majordomus://document/docs/KNOWLEDGE.md",

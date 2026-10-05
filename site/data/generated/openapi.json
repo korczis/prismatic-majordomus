@@ -235,6 +235,7 @@
     "schema-Carries": "docs/api/design/",
     "schema-CatalogueView": "docs/api/why/",
     "schema-Category": "docs/api/repository/",
+    "schema-ChangeShape": "docs/api/integration/",
     "schema-ChangeStage": "docs/api/commit/",
     "schema-Channel": "docs/api/distribution/",
     "schema-CheckState": "docs/api/distribution/",
@@ -654,6 +655,7 @@
     "schema-Out": "docs/api/repository/",
     "schema-OutFile": "docs/api/repository/",
     "schema-Overlap": "docs/api/peers/",
+    "schema-OverlapKind": "docs/api/integration/",
     "schema-OverlapPath": "docs/api/peers/",
     "schema-ParallelSet": "docs/api/devtask/",
     "schema-ParameterView": "docs/api/executions/",
@@ -1042,7 +1044,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 169,
-    "schemas": 818,
+    "schemas": 820,
     "tags": 51
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1367,6 +1369,7 @@
     "Carries": "design",
     "CatalogueView": "why",
     "Category": "repository",
+    "ChangeShape": "integration",
     "ChangeStage": "commit",
     "Channel": "distribution",
     "CheckState": "distribution",
@@ -1786,6 +1789,7 @@
     "Out": "repository",
     "OutFile": "repository",
     "Overlap": "peers",
+    "OverlapKind": "integration",
     "OverlapPath": "peers",
     "ParallelSet": "devtask",
     "ParameterView": "executions",
@@ -5543,6 +5547,42 @@
       "used_by": [],
       "used_by_schemas": [
         "Out"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a head's merge into master changes, by kind: the authored paths a person wrote, the\nderived paths a generator writes (by the repository's `merge=derived` attributes on master),\nand the version the head declares when it raises the crate's. Decided from the same pair\nof commits as the relation to master, and cached under the same key beside it, so a change\nof either commit — a `.gitattributes` change on master is one — makes both stale together.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "ChangeShape",
+      "properties": [
+        {
+          "description": "Authored (non-derived) paths the merge changes or conflicts on, in path order.",
+          "name": "authored",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Derived paths the merge changes or conflicts on, in path order.",
+          "name": "derived",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The version the head declares in the crate manifest, when it is not the one its merge\nbase declares: the head raises the version.",
+          "name": "version_bump",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PullRequestAssessment"
       ],
       "values": [],
       "variants": []
@@ -29531,6 +29571,33 @@
       "variants": []
     },
     {
+      "description": "What two open pull requests have in common that makes landing one change the other.",
+      "home": "integration",
+      "is_enum": true,
+      "name": "OverlapKind",
+      "properties": [],
+      "type": "\"authored\" | \"version_bump\" | \"release\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "PathOverlap"
+      ],
+      "values": [
+        {
+          "description": "Authored paths both change.",
+          "value": "authored"
+        },
+        {
+          "description": "Both raise the crate's version: whichever lands second must be re-derived on the first.",
+          "value": "version_bump"
+        },
+        {
+          "description": "Both change the release records under `.ai/repo/releases/`.",
+          "value": "release"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "One pair of claims that contain one another.",
       "home": "peers",
       "is_enum": false,
@@ -29735,6 +29802,15 @@
           "refs": [],
           "required": true,
           "type": "array of string"
+        },
+        {
+          "description": "What the two share. `authored` in a record written before it was said.",
+          "name": "kind",
+          "refs": [
+            "OverlapKind"
+          ],
+          "required": false,
+          "type": "OverlapKind"
         }
       ],
       "type": "object",
@@ -33376,6 +33452,15 @@
           ],
           "required": false,
           "type": "RankFactors | null"
+        },
+        {
+          "description": "What its merge into master changes, by kind (`ChangeShape`): read beside the\nrelation, from the same pair of commits. Absent when it could not be read.",
+          "name": "change_shape",
+          "refs": [
+            "ChangeShape"
+          ],
+          "required": false,
+          "type": "ChangeShape | null"
         }
       ],
       "type": "object",
@@ -33763,7 +33848,7 @@
           "type": "IntegrationRisk"
         },
         {
-          "description": "How many other ready or refreshable pull requests change an authored path it changes:\nfewer first, because landing it invalidates less.",
+          "description": "How many other ready or refreshable pull requests it overlaps (`PathOverlap`): an\nauthored path, a version bump or a release in common. Fewer first, because landing it\ninvalidates less.",
           "name": "contention",
           "refs": [],
           "required": true,

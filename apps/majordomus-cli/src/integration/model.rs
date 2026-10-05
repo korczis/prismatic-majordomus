@@ -1109,6 +1109,27 @@ pub struct PullRequestAssessment {
     /// order it compares them. Set by the planner; absent on an assessment never ranked.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub rank_factors: Option<RankFactors>,
+    /// What its merge into master changes, by kind ([`ChangeShape`]): read beside the
+    /// relation, from the same pair of commits. Absent when it could not be read.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub change_shape: Option<ChangeShape>,
+}
+
+/// What a head's merge into master changes, by kind: the authored paths a person wrote, the
+/// derived paths a generator writes (by the repository's `merge=derived` attributes on master),
+/// and the version the head declares when it raises the crate's. Decided from the same pair
+/// of commits as the relation to master, and cached under the same key beside it, so a change
+/// of either commit — a `.gitattributes` change on master is one — makes both stale together.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct ChangeShape {
+    /// Authored (non-derived) paths the merge changes or conflicts on, in path order.
+    pub authored: Vec<String>,
+    /// Derived paths the merge changes or conflicts on, in path order.
+    pub derived: Vec<String>,
+    /// The version the head declares in the crate manifest, when it is not the one its merge
+    /// base declares: the head raises the version.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub version_bump: Option<String>,
 }
 
 /// What the rank compares, in order: the first component that differs between two pull
@@ -1123,8 +1144,9 @@ pub struct RankFactors {
     pub disposition: PullRequestDisposition,
     /// The planning risk: lower first.
     pub risk: IntegrationRisk,
-    /// How many other ready or refreshable pull requests change an authored path it changes:
-    /// fewer first, because landing it invalidates less.
+    /// How many other ready or refreshable pull requests it overlaps ([`PathOverlap`]): an
+    /// authored path, a version bump or a release in common. Fewer first, because landing it
+    /// invalidates less.
     pub contention: usize,
     /// How many open pull requests declare that they wait for this one and are not yet
     /// satisfied: more first, because landing it unblocks them.
@@ -1172,6 +1194,22 @@ pub struct PathOverlap {
     pub number: u64,
     /// The paths both change.
     pub paths: Vec<String>,
+    /// What the two share. `authored` in a record written before it was said.
+    #[serde(default)]
+    pub kind: OverlapKind,
+}
+
+/// What two open pull requests have in common that makes landing one change the other.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum OverlapKind {
+    /// Authored paths both change.
+    #[default]
+    Authored,
+    /// Both raise the crate's version: whichever lands second must be re-derived on the first.
+    VersionBump,
+    /// Both change the release records under `.ai/repo/releases/`.
+    Release,
 }
 
 #[cfg(test)]

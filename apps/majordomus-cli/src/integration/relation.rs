@@ -13,7 +13,7 @@ use std::collections::BTreeSet;
 use std::path::Path;
 use std::process::Command;
 
-use super::model::RelationToMaster;
+use super::model::{ChangeShape, RelationToMaster};
 
 fn git(root: &Path, args: &[&str]) -> Result<(bool, String), String> {
     let out = Command::new("git")
@@ -260,6 +260,84 @@ pub fn relation_to_master(root: &Path, master: &str, head: &str) -> RelationToMa
     }
 }
 
+/// What `head`'s merge into `master` changes, by kind ([`ChangeShape`]): every path the
+/// merge changes or conflicts on, split by master's `merge=derived` attributes, and the
+/// version the head declares when it raises the one its merge base declares. Unlike
+/// [`relation_to_master`], which names only the authored conflicts of a conflicting head,
+/// this lists all its authored paths, so that two conflicting heads' overlap is their whole
+/// change. A head that master contains changes nothing; `None` when git cannot say — the head
+/// is not in this clone, or the merge or an attribute could not be read.
+pub fn change_shape(root: &Path, master: &str, head: &str) -> Option<ChangeShape> {
+    if !has_commit(root, head) {
+        return None;
+    }
+    if git(root, &["merge-base", "--is-ancestor", head, master]).is_ok_and(|(ok, _)| ok) {
+        return Some(ChangeShape::default());
+    }
+    // one chain, one failure: a merge git cannot perform prints no tree, and nothing after it
+    // is asked
+    git(
+        root,
+        &[
+            "merge-tree",
+            "--write-tree",
+            "--name-only",
+            "--no-messages",
+            master,
+            head,
+        ],
+    )
+    .ok()
+    .and_then(|(_, out)| {
+        let mut lines = out.lines();
+        let tree = lines.next().map(str::trim).filter(|t| !t.is_empty())?;
+        // after the tree, a conflicted merge lists its conflicted paths up to a blank line
+        let conflicted: Vec<String> = lines
+            .take_while(|l| !l.is_empty())
+            .map(str::to_string)
+            .collect();
+        git(root, &["diff", "--name-only", "-z", master, tree])
+            .ok()
+            .filter(|(ok, _)| *ok)
+            .map(|(_, s)| {
+                s.split('\0')
+                    .filter(|p| !p.is_empty())
+                    .map(str::to_string)
+                    .chain(conflicted)
+                    .collect::<BTreeSet<String>>()
+                    .into_iter()
+                    .collect::<Vec<String>>()
+            })
+    })
+    .and_then(|all| derived_paths(root, master, &all).ok().map(|d| (all, d)))
+    .map(|(all, derived)| {
+        let (derived, authored) = all.into_iter().partition(|p| derived.contains(p));
+        ChangeShape {
+            authored,
+            derived,
+            version_bump: version_bump(root, master, head),
+        }
+    })
+}
+
+/// The version `head` declares in the crate manifest when its merge base with `master`
+/// declares another, or none: the head raises the version.
+fn version_bump(root: &Path, master: &str, head: &str) -> Option<String> {
+    use crate::release::version::{declared_in, MANIFEST};
+    let declared = |rev: &str| {
+        git(root, &["show", &format!("{rev}:{MANIFEST}")])
+            .ok()
+            .filter(|(ok, _)| *ok)
+            .and_then(|(_, text)| declared_in(&text))
+    };
+    // an empty revision would make `:path` the index's copy, which is no commit's
+    let base = git(root, &["merge-base", master, head])
+        .ok()
+        .map(|(_, s)| s.trim().to_string())
+        .filter(|s| !s.is_empty());
+    declared(head).filter(|v| base.as_deref().and_then(declared).as_ref() != Some(v))
+}
+
 #[cfg(test)]
 mod patch_tests {
     //! Equal patches on master, against real repositories.
@@ -392,5 +470,142 @@ mod containing_tests {
         assert_eq!(found, [(1, one.clone()), (2, two.clone())]);
         assert_eq!(containing(r, &two), [(2, two)]);
         assert!(containing(r, "no-such-commit").is_empty(), "git refuses");
+    }
+}
+
+#[cfg(test)]
+mod shape_tests {
+    //! What a merge changes, by kind, against real repositories.
+
+    use super::*;
+
+    fn g(dir: &Path, args: &[&str]) {
+        let out = Command::new("git")
+            .env_remove("GIT_DIR")
+            .env_remove("GIT_WORK_TREE")
+            .env_remove("GIT_INDEX_FILE")
+            .arg("-C")
+            .arg(dir)
+            .args(["-c", "user.email=t@example.com", "-c", "user.name=t"])
+            .args(args)
+            .output()
+            .unwrap();
+        assert!(out.status.success(), "git {args:?}: {out:?}");
+    }
+
+    fn write(dir: &Path, file: &str, text: &str) {
+        let path = dir.join(file);
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        std::fs::write(path, text).unwrap();
+    }
+
+    fn manifest(version: &str, edition: &str) -> String {
+        format!("[package]\nname = \"m\"\nversion = \"{version}\"\nedition = \"{edition}\"\n")
+    }
+
+    /// master: base (the manifest at 0.1.0, a.txt, the derived gen.json), then a.txt and
+    /// gen.json rewritten. Branches from base: `bump` and `bump2` raise the version, `deps`
+    /// edits the manifest without raising it, `conflict` changes a.txt, b.txt and gen.json.
+    fn repo() -> tempfile::TempDir {
+        let dir = tempfile::tempdir().unwrap();
+        let r = dir.path();
+        g(r, &["init", "-q", "-b", "master"]);
+        write(r, ".gitattributes", "gen.json merge=derived\n");
+        write(
+            r,
+            crate::release::version::MANIFEST,
+            &manifest("0.1.0", "2021"),
+        );
+        write(r, "a.txt", "a\n");
+        write(r, "gen.json", "v0\n");
+        g(r, &["add", "-A"]);
+        g(r, &["commit", "-q", "-m", "base"]);
+        g(r, &["branch", "base"]);
+        for (branch, version, edition) in [
+            ("bump", "0.2.0", "2021"),
+            ("bump2", "0.3.0", "2021"),
+            ("deps", "0.1.0", "2024"),
+        ] {
+            g(r, &["checkout", "-q", "-b", branch, "base"]);
+            write(
+                r,
+                crate::release::version::MANIFEST,
+                &manifest(version, edition),
+            );
+            g(r, &["commit", "-q", "-am", branch]);
+        }
+        g(r, &["checkout", "-q", "-b", "conflict", "base"]);
+        write(r, "a.txt", "theirs\n");
+        write(r, "b.txt", "b\n");
+        write(r, "gen.json", "v9\n");
+        g(r, &["add", "-A"]);
+        g(r, &["commit", "-q", "-m", "conflict"]);
+        g(r, &["checkout", "-q", "master"]);
+        write(r, "a.txt", "ours\n");
+        write(r, "gen.json", "v1\n");
+        g(r, &["commit", "-q", "-am", "master moves"]);
+        dir
+    }
+
+    #[test]
+    fn two_heads_that_raise_the_version_each_say_so() {
+        let dir = repo();
+        let r = dir.path();
+        let manifest = crate::release::version::MANIFEST.to_string();
+        for (head, version) in [("bump", "0.2.0"), ("bump2", "0.3.0")] {
+            assert_eq!(
+                change_shape(r, "master", head),
+                Some(ChangeShape {
+                    authored: vec![manifest.clone()],
+                    derived: vec![],
+                    version_bump: Some(version.into()),
+                }),
+                "{head}"
+            );
+        }
+        let deps = change_shape(r, "master", "deps").unwrap();
+        assert_eq!(deps.authored, vec![manifest]);
+        assert_eq!(
+            deps.version_bump, None,
+            "the manifest changed, its version did not"
+        );
+    }
+
+    #[test]
+    fn a_conflicting_head_lists_its_whole_change_by_kind() {
+        let dir = repo();
+        let r = dir.path();
+        assert!(matches!(
+            relation_to_master(r, "master", "conflict"),
+            RelationToMaster::Conflicting { ref paths } if paths == &["a.txt".to_string()]
+        ));
+        assert_eq!(
+            change_shape(r, "master", "conflict"),
+            Some(ChangeShape {
+                authored: vec!["a.txt".into(), "b.txt".into()],
+                derived: vec!["gen.json".into()],
+                version_bump: None,
+            })
+        );
+    }
+
+    #[test]
+    fn a_contained_head_changes_nothing_and_an_unreadable_one_is_not_answered() {
+        let dir = repo();
+        let r = dir.path();
+        assert_eq!(
+            change_shape(r, "master", "base"),
+            Some(ChangeShape::default())
+        );
+        assert_eq!(
+            change_shape(r, "master", "no-such-head"),
+            None,
+            "not in this clone"
+        );
+        assert_eq!(
+            change_shape(r, "no-such-master", "bump"),
+            None,
+            "no merge to perform"
+        );
     }
 }

@@ -12,11 +12,11 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::model::{
-    CheckKind, CheckRunState, DependencyCertainty, DependencyState, EvaluatedAgainst, EvidenceKind,
-    EvidenceSource, GateResult, IntegrationEvidence, IntegrationGate, IntegrationRisk, PathOverlap,
-    PullRequestAssessment, PullRequestDependency, PullRequestDisposition, PullRequestObservation,
-    PullRequestReview, ReasonCode, RelationToMaster, RequiredCheck, RequiredCheckState,
-    ReviewPolicy,
+    ChangeShape, CheckKind, CheckRunState, DependencyCertainty, DependencyState, EvaluatedAgainst,
+    EvidenceKind, EvidenceSource, GateResult, IntegrationEvidence, IntegrationGate,
+    IntegrationRisk, OverlapKind, PathOverlap, PullRequestAssessment, PullRequestDependency,
+    PullRequestDisposition, PullRequestObservation, PullRequestReview, ReasonCode,
+    RelationToMaster, RequiredCheck, RequiredCheckState, ReviewPolicy,
 };
 
 /// What the repository requires before a merge, as observed from the forge and the
@@ -111,12 +111,16 @@ const HIGH_RISK: &[&str] = &[
     ".ai/repo/ci/",
     ".ai/manifest.yaml",
     "share/schemas/",
-    "share/version.txt",
+    RELEASES,
     "apps/majordomus-cli/Cargo.toml",
     "Cargo.lock",
     "apps/majordomus-cli/Cargo.lock",
     "SECURITY.md",
 ];
+
+/// Where the release records live: a pull request changing one changes a release, and two
+/// that do are a release overlap whatever files they name.
+pub const RELEASES: &str = ".ai/repo/releases/";
 
 /// Path prefixes of executable code: medium risk.
 const CODE: &[&str] = &["apps/", "bin/", "lib/", "scripts/"];
@@ -408,10 +412,24 @@ fn numbers(mut t: &str) -> Vec<u64> {
     out
 }
 
-/// The planning risk of a change, with its factors.
-pub fn risk_of(authored: &[String]) -> (IntegrationRisk, Vec<String>) {
+/// The planning risk of a change, with its factors. `known` is false when git could not
+/// say what the head is to master: its paths are unknown, and a change nobody has read is
+/// high-risk (`paths_unknown`), never "documentation only". A head that raises the crate's
+/// version (`version_bump:V`) and one that shares a version bump or a release with another
+/// open pull request (`overlapping_version_bump:#N`, `overlapping_release:#N`) are high-risk
+/// too: whichever lands second must be re-derived on the first.
+pub fn risk_of(
+    authored: &[String],
+    known: bool,
+    version_bump: Option<&str>,
+    overlaps: &[PathOverlap],
+) -> (IntegrationRisk, Vec<String>) {
     let mut factors = Vec::new();
     let mut risk = IntegrationRisk::Low;
+    if !known {
+        risk = IntegrationRisk::High;
+        factors.push("paths_unknown".into());
+    }
     let high: BTreeSet<&str> = authored
         .iter()
         .filter_map(|p| HIGH_RISK.iter().find(|h| p.starts_with(**h)).copied())
@@ -427,6 +445,19 @@ pub fn risk_of(authored: &[String]) -> (IntegrationRisk, Vec<String>) {
             authored.len()
         ));
     }
+    let shared: Vec<String> = version_bump
+        .map(|v| format!("version_bump:{v}"))
+        .into_iter()
+        .chain(overlaps.iter().filter_map(|o| match o.kind {
+            OverlapKind::VersionBump => Some(format!("overlapping_version_bump:#{}", o.number)),
+            OverlapKind::Release => Some(format!("overlapping_release:#{}", o.number)),
+            OverlapKind::Authored => None,
+        }))
+        .collect();
+    if !shared.is_empty() {
+        risk = IntegrationRisk::High;
+        factors.extend(shared);
+    }
     if risk == IntegrationRisk::Low
         && authored
             .iter()
@@ -441,24 +472,55 @@ pub fn risk_of(authored: &[String]) -> (IntegrationRisk, Vec<String>) {
     (risk, factors)
 }
 
-/// Authored paths shared with other open pull requests.
-pub fn overlaps(number: u64, authored: &BTreeMap<u64, Vec<String>>) -> Vec<PathOverlap> {
+/// What `number` has in common with each other open pull request, one entry per other: a
+/// version bump when both raise the crate's version (by their [`ChangeShape`]s), else a
+/// release when both change a record under [`RELEASES`], else the authored paths both
+/// change. The paths are those both change, with — for a version or release overlap — the
+/// paths that make it one: the manifest, or either's release records.
+pub fn overlaps(
+    number: u64,
+    authored: &BTreeMap<u64, Vec<String>>,
+    shapes: &BTreeMap<u64, ChangeShape>,
+) -> Vec<PathOverlap> {
     let Some(mine) = authored.get(&number) else {
         return Vec::new();
     };
+    let bumps = |n: &u64| shapes.get(n).is_some_and(|s| s.version_bump.is_some());
+    let releases = |paths: &[String]| -> BTreeSet<String> {
+        paths
+            .iter()
+            .filter(|p| p.starts_with(RELEASES))
+            .cloned()
+            .collect()
+    };
+    let my_releases = releases(mine);
     let mine: BTreeSet<&String> = mine.iter().collect();
     authored
         .iter()
         .filter(|(n, _)| **n != number)
         .filter_map(|(n, theirs)| {
-            let shared: Vec<String> = theirs
+            let their_releases = releases(theirs);
+            let (kind, evidence) = if bumps(&number) && bumps(n) {
+                let manifest = crate::release::version::MANIFEST.to_string();
+                (OverlapKind::VersionBump, BTreeSet::from([manifest]))
+            } else if !my_releases.is_empty() && !their_releases.is_empty() {
+                let both = my_releases.union(&their_releases).cloned().collect();
+                (OverlapKind::Release, both)
+            } else {
+                (OverlapKind::Authored, BTreeSet::new())
+            };
+            let paths: Vec<String> = theirs
                 .iter()
                 .filter(|p| mine.contains(p))
                 .cloned()
+                .chain(evidence)
+                .collect::<BTreeSet<String>>()
+                .into_iter()
                 .collect();
-            (!shared.is_empty()).then_some(PathOverlap {
+            (!paths.is_empty()).then_some(PathOverlap {
                 number: *n,
-                paths: shared,
+                paths,
+                kind,
             })
         })
         .collect()
@@ -474,6 +536,8 @@ pub struct QueueContext {
     pub heads: BTreeMap<String, u64>,
     /// Authored paths of every open pull request, by number.
     pub authored: BTreeMap<u64, Vec<String>>,
+    /// What each open pull request's merge changes, by kind, where git could say.
+    pub shapes: BTreeMap<u64, ChangeShape>,
     /// The declared successors of each open pull request, by its number, in successor order:
     /// from its own body (`Superseded by #N`) and from any other's, open or not
     /// (`Supersedes #N`).
@@ -602,14 +666,25 @@ pub fn classify(
         &policy.skipped_permitted,
     );
     let review = review_state(pr, policy.review_policy.as_ref());
-    let authored: Vec<String> = match relation {
-        RelationToMaster::UpToDate { authored } | RelationToMaster::Behind { authored, .. } => {
-            authored.clone()
-        }
-        RelationToMaster::Conflicting { paths } => paths.clone(),
+    let shape = queue.shapes.get(&pr.number);
+    // the merge's whole authored change where it was read: a conflicting head's relation names
+    // only the paths it conflicts on
+    let authored: Vec<String> = match (shape, relation) {
+        (Some(s), _) => s.authored.clone(),
+        (
+            None,
+            RelationToMaster::UpToDate { authored } | RelationToMaster::Behind { authored, .. },
+        ) => authored.clone(),
+        (None, RelationToMaster::Conflicting { paths }) => paths.clone(),
         _ => queue.authored.get(&pr.number).cloned().unwrap_or_default(),
     };
-    let (risk, risk_factors) = risk_of(&authored);
+    let overlaps = overlaps(pr.number, &queue.authored, &queue.shapes);
+    let (risk, risk_factors) = risk_of(
+        &authored,
+        !matches!(relation, RelationToMaster::Unknown { .. }),
+        shape.and_then(|s| s.version_bump.as_deref()),
+        &overlaps,
+    );
 
     let (declared, stacked_on) = confirmed_dependencies(pr, &policy.base, &queue.heads);
     // satisfied only by a merge: closed without one, or not read, it never landed
@@ -1209,7 +1284,7 @@ pub fn classify(
         review,
         relation: relation.clone(),
         dependencies,
-        overlaps: overlaps(pr.number, &queue.authored),
+        overlaps,
         authored_paths: authored,
         risk,
         risk_factors,
@@ -1218,6 +1293,7 @@ pub fn classify(
         // the audit trail's to say, not the observation's: queue_of adds it
         wait: None,
         rank_factors: None,
+        change_shape: shape.cloned(),
     }
 }
 
@@ -1384,6 +1460,24 @@ mod decision_branches {
         RelationToMaster::UpToDate {
             authored: vec!["a.txt".into()],
         }
+    }
+
+    #[test]
+    fn a_change_nobody_could_read_is_high_risk_and_never_documentation() {
+        assert_eq!(
+            risk_of(&[], false, None, &[]),
+            (IntegrationRisk::High, vec!["paths_unknown".to_string()])
+        );
+        assert_eq!(
+            risk_of(&[], true, None, &[]),
+            (
+                IntegrationRisk::Low,
+                vec!["documentation, tests or content only".to_string()]
+            )
+        );
+        let (risk, factors) = risk_of(&[".ai/repo/releases/v1.yaml".into()], true, None, &[]);
+        assert_eq!(risk, IntegrationRisk::High);
+        assert_eq!(factors, vec!["touches .ai/repo/releases/".to_string()]);
     }
 
     #[test]

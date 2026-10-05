@@ -90,6 +90,18 @@ with one canonical state, one classification and one executor.
    gives it, nor a head with a merge commit of its own in that range (a merge's resolution has
    no patch to compare), nor a clean merge that changes authored paths, where master lacks
    something the head carries, such as a landed change master reverted since.
+   Beside the relation, from the same pair of commits and cached under the same key, is what
+   the merge changes by kind (`ChangeShape`): every authored path it changes or conflicts on,
+   the derived ones, and the version the head declares in the crate manifest when it raises
+   the one its merge base declares. The relation's variants stay as they are; the shape is
+   what overlaps and risk read, so a conflicting head overlaps others over its whole change
+   and not only over the paths it conflicts on. An overlap names its kind: `version_bump`
+   when both raise the version, `release` when both change a record under
+   `.ai/repo/releases/`, and `authored` for shared authored paths. Risk is `high` with
+   `paths_unknown` when the relation is `unknown`, never "documentation only"; a version bump
+   (`version_bump:V`), a shared one (`overlapping_version_bump:#N`) and a shared release
+   (`overlapping_release:#N`) are `high` factors; and `.ai/repo/releases/` replaces the
+   derived `share/version.txt`, which the authored paths never contained.
 3. **Fifteen dispositions, decided in one order.** They are `ready` (lane ready);
    `needs_refresh`, `waiting_for_checks`, `waiting_for_review` and `waiting_for_dependency`
    (waiting); `needs_repair` and `conflicting` (repair); `redundant`, `superseded` and

@@ -178,11 +178,16 @@ pub fn store_observation(root: &Path, obs: &ForgeObservation) -> Result<(), Stri
     write_atomic(&state_path(root, OBSERVATION_FILE), &(text + "\n"))
 }
 
-/// The relation cache: `master..head` → relation. Both SHAs are immutable, so an entry is
-/// true forever; the file is bounded by dropping entries whose master is not the current.
+/// The relation cache: `master..head` → relation, and beside it under the same key what the
+/// merge changes by kind ([`ChangeShape`]). Both SHAs are immutable, and both answers read
+/// derived attributes from master's own `.gitattributes`, so an entry is true forever and a
+/// change of either commit stales both together; the file is bounded by dropping entries
+/// whose master is not the current.
 #[derive(Debug, Default, Serialize, Deserialize)]
 struct RelationCache {
     entries: BTreeMap<String, RelationToMaster>,
+    #[serde(default)]
+    shapes: BTreeMap<String, ChangeShape>,
 }
 
 fn relation_cached(
@@ -208,6 +213,25 @@ fn relation_cached(
         cache.entries.insert(key, r.clone());
     }
     r
+}
+
+/// [`relation::change_shape`] through the cache, under exactly the relation's key: only a pair
+/// of full commit ids is decided, and an unanswered shape is not cached.
+fn shape_cached(
+    root: &Path,
+    cache: &mut RelationCache,
+    master: &str,
+    head: &str,
+) -> Option<ChangeShape> {
+    let key = format!("{master}..{head}");
+    (is_object_id(master) && is_object_id(head))
+        .then(|| {
+            cache.shapes.get(&key).cloned().or_else(|| {
+                relation::change_shape(root, master, head)
+                    .inspect(|s| drop(cache.shapes.insert(key.clone(), s.clone())))
+            })
+        })
+        .flatten()
 }
 
 /// Whether `s` is a full commit id, SHA-1 or SHA-256, as git prints one.
@@ -309,8 +333,7 @@ pub fn policy_of(obs: &ForgeObservation) -> IntegrationPolicy {
 }
 
 /// The rank key: lane, then disposition, then risk, then how many other *ready or
-/// refreshable* pull requests share an authored path (fewer first: landing it invalidates
-/// less), then how many declared dependents wait on it (more first: landing it unblocks
+/// refreshable* pull requests it overlaps (fewer first: landing it invalidates less), then how many declared dependents wait on it (more first: landing it unblocks
 /// them), then how many authored paths it changes (fewer first), then age (older first, so
 /// easy new work cannot starve old work), then number. Every component is a value of the
 /// assessment or of the queue around it; the order is total and input-order free.
@@ -392,15 +415,29 @@ pub fn rank(assessments: Vec<PullRequestAssessment>) -> Vec<PullRequestAssessmen
     ranked
 }
 
+/// [`build_queue_shaped`] with no shape answered: what a test with a table of relations builds.
+#[cfg(test)]
+pub fn build_queue(
+    obs: &ForgeObservation,
+    master_sha: &str,
+    relation: impl FnMut(&PullRequestObservation) -> RelationToMaster,
+) -> IntegrationQueue {
+    build_queue_shaped(obs, master_sha, relation, |_| None)
+}
+
 /// Build the queue from an observation, against `master_sha`. `relation` answers what a
 /// head is to master; the command line passes git, a test passes a table. It is asked about
 /// every open pull request, and about every declared successor that is no longer open (a
 /// pull request built from what the forge reported of it): such a successor landed exactly
-/// when its head is `contained`.
-pub fn build_queue(
+/// when its head is `contained`. `shape` answers what each open pull request's merge changes
+/// by kind ([`ChangeShape`]): its authored paths decide overlaps and risk, and two that raise
+/// the version or change a release overlap as such. A pull request it does not answer is
+/// assessed on its relation's paths alone.
+pub fn build_queue_shaped(
     obs: &ForgeObservation,
     master_sha: &str,
     mut relation: impl FnMut(&PullRequestObservation) -> RelationToMaster,
+    shape: impl FnMut(&PullRequestObservation) -> Option<ChangeShape>,
 ) -> IntegrationQueue {
     let policy = policy_of(obs);
     let mut diagnostics = Vec::new();
@@ -466,6 +503,13 @@ pub fn build_queue(
             .map(|p| (p.head_ref.clone(), p.number))
             .collect(),
         authored: BTreeMap::new(),
+        shapes: obs
+            .pull_requests
+            .iter()
+            .map(shape)
+            .zip(&obs.pull_requests)
+            .filter_map(|(s, p)| s.map(|s| (p.number, s)))
+            .collect(),
         superseded_by: BTreeMap::new(),
         dependency_states: obs
             .resolved
@@ -490,11 +534,13 @@ pub fn build_queue(
     }
     queue.superseded_by = successors(obs, &queue.open, &mut relation);
     for (p, r) in obs.pull_requests.iter().zip(&relations) {
-        let authored = match r {
-            RelationToMaster::UpToDate { authored } | RelationToMaster::Behind { authored, .. } => {
-                authored.clone()
-            }
-            RelationToMaster::Conflicting { paths } => paths.clone(),
+        let authored = match (queue.shapes.get(&p.number), r) {
+            (Some(s), _) => s.authored.clone(),
+            (
+                None,
+                RelationToMaster::UpToDate { authored } | RelationToMaster::Behind { authored, .. },
+            ) => authored.clone(),
+            (None, RelationToMaster::Conflicting { paths }) => paths.clone(),
             _ => Vec::new(),
         };
         queue.authored.insert(p.number, authored);
@@ -857,24 +903,34 @@ fn computed(
     // bounded: only the current master's entries are worth keeping, and only a pair of
     // commit ids is a fact — a key written before refs were refused names a ref, which may
     // hold another commit tomorrow, and is dropped even while master stands still
-    cache.entries.retain(|k, _| {
+    let current = |k: &String| {
         k.split_once("..")
             .is_some_and(|(m, h)| m == master && is_object_id(m) && is_object_id(h))
-    });
-    let mut queue = build_queue(&obs, &master, |p| {
-        // decided on exactly the head the forge reported, which the assessment names as
-        // evaluated: a head that moved during the refresh is not in this clone, and what
-        // the fetched ref holds now is another head nobody observed
-        if !relation::has_commit(root, &p.head_sha) {
-            return RelationToMaster::Unknown {
+    };
+    cache.entries.retain(|k, _| current(k));
+    cache.shapes.retain(|k, _| current(k));
+    // the relation and the shape share the cache, and each is asked from its own closure
+    let cell = std::cell::RefCell::new(cache);
+    let mut queue = build_queue_shaped(
+        &obs,
+        &master,
+        |p| {
+            // decided on exactly the head the forge reported, which the assessment names as
+            // evaluated: a head that moved during the refresh is not in this clone, and what
+            // the fetched ref holds now is another head nobody observed
+            if !relation::has_commit(root, &p.head_sha) {
+                return RelationToMaster::Unknown {
                 reason: format!(
                     "the observed head {} is not fetched; the pull request moved during the refresh — majordomus prs refresh",
                     p.head_sha
                 ),
             };
-        }
-        relation_cached(root, &mut cache, &master, &p.head_sha)
-    });
+            }
+            relation_cached(root, &mut cell.borrow_mut(), &master, &p.head_sha)
+        },
+        |p| shape_cached(root, &mut cell.borrow_mut(), &master, &p.head_sha),
+    );
+    let cache = cell.into_inner();
     infer_dependencies(&mut queue, |head| relation::containing(root, head));
     let now_secs = now
         .duration_since(std::time::UNIX_EPOCH)
