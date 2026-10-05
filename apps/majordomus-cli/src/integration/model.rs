@@ -330,11 +330,15 @@ pub enum PullRequestDisposition {
     OtherBase,
     /// Something needed to decide could not be observed.
     Unknown,
+    /// A person marked it obsolete with a label the label policy declares (owner decision
+    /// D3): the only evidence that reaches this word. Listed for a person by cleanup and
+    /// never closed automatically; age, shared paths or a similar title never make one.
+    Obsolete,
 }
 
 impl PullRequestDisposition {
     /// Every disposition, in declaration order.
-    pub const ALL: [PullRequestDisposition; 15] = [
+    pub const ALL: [PullRequestDisposition; 16] = [
         PullRequestDisposition::Ready,
         PullRequestDisposition::NeedsRefresh,
         PullRequestDisposition::WaitingForChecks,
@@ -350,6 +354,7 @@ impl PullRequestDisposition {
         PullRequestDisposition::PossiblyRedundant,
         PullRequestDisposition::OtherBase,
         PullRequestDisposition::Unknown,
+        PullRequestDisposition::Obsolete,
     ];
 
     /// The word as serialised.
@@ -375,6 +380,7 @@ impl PullRequestDisposition {
             PullRequestDisposition::PossiblyRedundant => "possibly_redundant",
             PullRequestDisposition::OtherBase => "other_base",
             PullRequestDisposition::Unknown => "unknown",
+            PullRequestDisposition::Obsolete => "obsolete",
         }
     }
 
@@ -391,7 +397,8 @@ impl PullRequestDisposition {
             }
             PullRequestDisposition::Redundant
             | PullRequestDisposition::Superseded
-            | PullRequestDisposition::PossiblyRedundant => IntegrationLane::Cleanup,
+            | PullRequestDisposition::PossiblyRedundant
+            | PullRequestDisposition::Obsolete => IntegrationLane::Cleanup,
             PullRequestDisposition::Draft
             | PullRequestDisposition::Blocked
             | PullRequestDisposition::Unsafe
@@ -635,7 +642,8 @@ const REASON_VOCABULARY: &str = "A reason code, `code` or `code:payload`, one of
 `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, \
 `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, \
 `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, \
-`required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`. \
+`required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, \
+`label_obsolete:NAME`. \
 A code outside this list (an older trail's) is carried verbatim.";
 
 /// One machine-readable reason, typed. Its wire form is the `code` or `code:payload` string
@@ -757,6 +765,12 @@ pub enum ReasonCode {
         /// The master that could not be brought in.
         master: String,
     },
+    /// `label_obsolete:NAME`: a label the policy declares obsolete (owner decision D3), with
+    /// the forge's own spelling of it.
+    LabelObsolete {
+        /// The label, as the forge spells it.
+        name: String,
+    },
     /// A code this vocabulary does not name, verbatim: what an older trail line may carry.
     /// Nothing here produces one, and [`std::str::FromStr`] refuses it.
     Unrecognised(String),
@@ -796,6 +810,7 @@ impl ReasonCode {
             ReasonCode::RequiredChecksSkipped => "required_checks_skipped",
             ReasonCode::ExecutorMergeRefused { .. } => "executor_merge_refused",
             ReasonCode::ExecutorRefreshFailed { .. } => "executor_refresh_failed",
+            ReasonCode::LabelObsolete { .. } => "label_obsolete",
             ReasonCode::Unrecognised(s) => s.split_once(':').map_or(s.as_str(), |(c, _)| c),
         }
     }
@@ -822,6 +837,7 @@ impl std::fmt::Display for ReasonCode {
             }
             ReasonCode::BaseIs { base: s }
             | ReasonCode::Label { name: s }
+            | ReasonCode::LabelObsolete { name: s }
             | ReasonCode::RelationUnknown { reason: s }
             | ReasonCode::ExecutorMergeRefused { head: s }
             | ReasonCode::ExecutorRefreshFailed { master: s } => write!(f, "{}:{s}", self.code()),
@@ -871,6 +887,7 @@ impl std::str::FromStr for ReasonCode {
             },
             ("base_is", Some(p)) => ReasonCode::BaseIs { base: p.into() },
             ("label", Some(p)) => ReasonCode::Label { name: p.into() },
+            ("label_obsolete", Some(p)) => ReasonCode::LabelObsolete { name: p.into() },
             ("relation_unknown", Some(p)) => ReasonCode::RelationUnknown { reason: p.into() },
             ("conflicts_on", Some(p)) => ReasonCode::ConflictsOn {
                 count: p.parse().map_err(|_| bad())?,

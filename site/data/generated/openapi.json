@@ -63,6 +63,7 @@
     "op-health-live": "docs/api/health/",
     "op-health-ready": "docs/api/health/",
     "op-health-report": "docs/api/health/",
+    "op-integration-cleanup": "docs/api/integration/",
     "op-integration-events": "docs/api/integration/",
     "op-integration-explain": "docs/api/integration/",
     "op-integration-prove_dry_run": "docs/api/integration/",
@@ -248,6 +249,7 @@
     "schema-ClaimView": "docs/api/mesh/",
     "schema-ClaimedArtifact": "docs/api/entity/",
     "schema-Classification": "docs/api/repository/",
+    "schema-CleanupItem": "docs/api/integration/",
     "schema-CliExposure": "docs/api/capabilities/",
     "schema-ClientInfo": "docs/api/peers/",
     "schema-ClosedSession": "docs/api/lifecycle/",
@@ -527,6 +529,7 @@
     "schema-InstanceId": "docs/api/mesh/",
     "schema-Integration": "docs/api/trace/",
     "schema-IntegrationAction": "docs/api/integration/",
+    "schema-IntegrationCleanup": "docs/api/integration/",
     "schema-IntegrationEvent": "docs/api/integration/",
     "schema-IntegrationEvents": "docs/api/integration/",
     "schema-IntegrationEvidence": "docs/api/integration/",
@@ -583,6 +586,8 @@
     "schema-LeaseHolder": "docs/api/integration/",
     "schema-LeaseView": "docs/api/server/",
     "schema-LedgerMark": "docs/api/knowledge-base/",
+    "schema-LeftBranch": "docs/api/integration/",
+    "schema-LeftBranchReport": "docs/api/integration/",
     "schema-Libc": "docs/api/distribution/",
     "schema-LimitsView": "docs/api/executions/",
     "schema-LinkRefusal": "docs/api/mesh/",
@@ -1040,8 +1045,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 169,
-    "schemas": 817,
+    "operations": 170,
+    "schemas": 821,
     "tags": 51
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1190,6 +1195,7 @@
     "health.live": "health",
     "health.ready": "health",
     "health.report": "health",
+    "integration.cleanup": "integration",
     "integration.events": "integration",
     "integration.explain": "integration",
     "integration.prove_dry_run": "integration",
@@ -1379,6 +1385,7 @@
     "ClaimView": "mesh",
     "ClaimedArtifact": "entity",
     "Classification": "repository",
+    "CleanupItem": "integration",
     "CliExposure": "capabilities",
     "ClientInfo": "peers",
     "ClosedSession": "lifecycle",
@@ -1658,6 +1665,7 @@
     "InstanceId": "mesh",
     "Integration": "trace",
     "IntegrationAction": "integration",
+    "IntegrationCleanup": "integration",
     "IntegrationEvent": "integration",
     "IntegrationEvents": "integration",
     "IntegrationEvidence": "integration",
@@ -1714,6 +1722,8 @@
     "LeaseHolder": "integration",
     "LeaseView": "server",
     "LedgerMark": "knowledge-base",
+    "LeftBranch": "integration",
+    "LeftBranchReport": "integration",
     "Libc": "distribution",
     "LimitsView": "executions",
     "LinkRefusal": "mesh",
@@ -6223,6 +6233,51 @@
         "repository.scope_classify"
       ],
       "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What cleanup would do, or did, for one pull request.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "CleanupItem",
+      "properties": [
+        {
+          "description": "The pull request.",
+          "name": "pr",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Its disposition when decided.",
+          "name": "disposition",
+          "refs": [
+            "PullRequestDisposition"
+          ],
+          "required": true,
+          "type": "PullRequestDisposition"
+        },
+        {
+          "description": "The evidence, as reason codes.",
+          "name": "reasons",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "`would_close`, `closed`, `left_for_a_person`, or `close_failed: <why>`.",
+          "name": "action",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationCleanup"
+      ],
       "values": [],
       "variants": []
     },
@@ -16680,6 +16735,7 @@
         "product.providers",
         "product.validate",
         "integration.queue",
+        "integration.cleanup",
         "integration.events",
         "integration.explain",
         "integration.prove_dry_run",
@@ -22370,6 +22426,67 @@
       "variants": []
     },
     {
+      "description": "What cleanup would do, decided offline: the pull requests it would close or leave for a\nperson, from the recorded observation, and the last branch report `prs cleanup` recorded.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "IntegrationCleanup",
+      "properties": [
+        {
+          "description": "Whether a forge observation is recorded in this checkout.",
+          "name": "observed",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why there is no plan, when there is none.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When the forge was observed, when it was.",
+          "name": "observed_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The plan, in rank order: `would_close` for what is provably on master or superseded by\na successor that landed, `left_for_a_person` for weak evidence and for what a person\nmarked obsolete. Nothing here closes anything.",
+          "name": "items",
+          "refs": [
+            "CleanupItem"
+          ],
+          "required": true,
+          "type": "array of CleanupItem"
+        },
+        {
+          "description": "The branches merged pull requests left on origin, as `prs cleanup` last read them;\n`None` when it never ran in this checkout. Never read from the network here.",
+          "name": "branches",
+          "refs": [
+            "LeftBranchReport"
+          ],
+          "required": false,
+          "type": "LeftBranchReport | null"
+        },
+        {
+          "description": "How old that report is, in seconds, when its time reads.",
+          "name": "branches_age_seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "integration.cleanup"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One entry of the audit trail.",
       "home": "integration",
       "is_enum": false,
@@ -25279,7 +25396,7 @@
       "is_enum": true,
       "name": "LabelEffect",
       "properties": [],
-      "type": "\"hold\"",
+      "type": "\"hold\" | \"obsolete\"",
       "used_by": [],
       "used_by_schemas": [
         "LabelPolicy"
@@ -25288,6 +25405,10 @@
         {
           "description": "It holds the pull request whatever else is true: `blocked`, with `label:NAME`.",
           "value": "hold"
+        },
+        {
+          "description": "A person marked the work obsolete (owner decision D3): `obsolete`, with\n`label_obsolete:NAME`, listed by cleanup for a person and never closed automatically.",
+          "value": "obsolete"
         }
       ],
       "variants": []
@@ -25514,6 +25635,115 @@
       "used_by": [],
       "used_by_schemas": [
         "KnowledgeStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A branch a merged pull request left on origin, as cleanup reports it. Reported, never\ndeleted: the forge's `delete_branch_on_merge` decides deletion (owner decision D4), so the\nexecutor holds no branch-deleting write at all.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "LeftBranch",
+      "properties": [
+        {
+          "description": "The branch on origin.",
+          "name": "branch",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its tip: the head that merged.",
+          "name": "tip",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The pull request that merged it.",
+          "name": "pr",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "When that pull request merged.",
+          "name": "merged_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`left_for_a_person`, or `kept: checked out at <path>` when a worktree of this\nrepository has the branch checked out: somebody may still be standing on it.",
+          "name": "action",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What would clear it, in the setting's own terms.",
+          "name": "next_step",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "LeftBranchReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The last report of the branches merged pull requests left on origin, as `prs cleanup`\nread it. Written by `prs cleanup` alone — the one place that asks the forge for them —\nand rendered offline, with its age, by every surface that cannot reach the network.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "LeftBranchReport",
+      "properties": [
+        {
+          "description": "When cleanup read origin and the merged pull requests.",
+          "name": "read_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The base the report excludes.",
+          "name": "base",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The forge's `delete_branch_on_merge`, from the observation; `None` when unread.",
+          "name": "delete_branch_on_merge",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        },
+        {
+          "description": "The branches, or `None` when origin or the merged pull requests could not be read:\nunread is not \"nothing left behind\".",
+          "name": "branches",
+          "refs": [
+            "LeftBranch"
+          ],
+          "required": false,
+          "type": "array | null"
+        },
+        {
+          "description": "The command that reads it afresh.",
+          "name": "refreshed_by",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationCleanup"
       ],
       "values": [],
       "variants": []
@@ -33398,9 +33628,10 @@
       "is_enum": true,
       "name": "PullRequestDisposition",
       "properties": [],
-      "type": "\"ready\" | \"needs_refresh\" | \"waiting_for_checks\" | \"waiting_for_review\" | \"waiting_for_dependency\" | \"draft\" | \"needs_repair\" | \"conflicting\" | \"blocked\" | \"unsafe\" | \"redundant\" | \"superseded\" | \"possibly_redundant\" | \"other_base\" | \"unknown\"",
+      "type": "\"ready\" | \"needs_refresh\" | \"waiting_for_checks\" | \"waiting_for_review\" | \"waiting_for_dependency\" | \"draft\" | \"needs_repair\" | \"conflicting\" | \"blocked\" | \"unsafe\" | \"redundant\" | \"superseded\" | \"possibly_redundant\" | \"other_base\" | \"unknown\" | \"obsolete\"",
       "used_by": [],
       "used_by_schemas": [
+        "CleanupItem",
         "PullRequestAssessment",
         "RankFactors"
       ],
@@ -33464,6 +33695,10 @@
         {
           "description": "Something needed to decide could not be observed.",
           "value": "unknown"
+        },
+        {
+          "description": "A person marked it obsolete with a label the label policy declares (owner decision\nD3): the only evidence that reaches this word. Listed for a person by cleanup and\nnever closed automatically; age, shared paths or a similar title never make one.",
+          "value": "obsolete"
         }
       ],
       "variants": []
@@ -52561,6 +52796,60 @@
           "result_schema": "IntegrationStatus",
           "stability": "experimental",
           "summary": "The integration queue"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/pull-requests/cleanup\"",
+          "description": "The cleanup plan, decided offline from the recorded observation: every open pull request cleanup would close — redundant (its work is on master already) or superseded (by a declared successor that landed) — and every one it leaves for a person — possibly redundant (weak evidence) or obsolete (a person marked it, owner decision D3) — each with its disposition and the reasons that decided it, in rank order; beside it, the branches merged pull requests left on origin as `majordomus prs cleanup` last read them, with when and how long ago. A read: it closes, deletes and asks the forge for nothing — `majordomus prs cleanup` reads the forge and `--apply` closes. `observed: false` with the reason when this checkout has recorded no observation.",
+          "home": "integration",
+          "id": "integration.cleanup",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_pull_requests_cleanup",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/pull-requests/cleanup",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::integration",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "What cleanup would do: the result.",
+              "schema": "IntegrationCleanup",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "IntegrationCleanup",
+          "stability": "experimental",
+          "summary": "What cleanup would do"
         },
         {
           "benchmark": "required",

@@ -5,7 +5,26 @@
 
 Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), redundant (its work is on master already), superseded (by a declared successor that landed, named in superseded_by), possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing.
 
-Stability: experimental. Capabilities: 4.
+Stability: experimental. Capabilities: 5.
+
+## `integration.cleanup` — What cleanup would do
+
+The cleanup plan, decided offline from the recorded observation: every open pull request cleanup would close — redundant (its work is on master already) or superseded (by a declared successor that landed) — and every one it leaves for a person — possibly redundant (weak evidence) or obsolete (a person marked it, owner decision D3) — each with its disposition and the reasons that decided it, in rank order; beside it, the branches merged pull requests left on origin as `majordomus prs cleanup` last read them, with when and how long ago. A read: it closes, deletes and asks the forge for nothing — `majordomus prs cleanup` reads the forge and `--apply` closes. `observed: false` with the reason when this checkout has recorded no observation.
+
+| | |
+|---|---|
+| kind | query |
+| stability | experimental |
+| MCP tool | `majordomus_pull_requests_cleanup` |
+| HTTP | `GET /api/v1/pull-requests/cleanup` |
+| cache | — |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::integration |
+| tags | integration, pull-requests, cleanup |
+
+Input: none.
+
+Output: `IntegrationCleanup`.
 
 ## `integration.events` — The integration audit trail
 

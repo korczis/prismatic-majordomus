@@ -50,6 +50,7 @@ answer wins. `ready` is reached only after every other question is answered in i
 | `other_base` | held | targets a branch other than the base, and no open pull request's head | — |
 | `waiting_for_dependency` | waiting | stacked on another open pull request of this repository, or declares a dependency on an open one (see below) | land that one first |
 | `draft` | held | a draft | mark it ready |
+| `obsolete` | cleanup | carries a label that marks it obsolete (owner decision D3; see the label policy below); checked before the hold labels, after `draft` | a person closes it, or removes the label |
 | `blocked` | held | carries a label that holds it (see the label policy below) | remove it |
 | `unsafe` | held | the forge has auto-merge armed on it, so the forge would merge it on its own | disarm it: `gh pr merge <n> --disable-auto` |
 | `superseded` | cleanup | a declared successor landed: it is not open, and master contains its head (see supersession markers below); `superseded_by` names it | `prs cleanup --apply` closes it |
@@ -112,7 +113,7 @@ observation; two decisions are the same when the master and head are.
 
 ### Label policy
 
-The labels that hold a pull request are one table, `LABEL_POLICY` in
+The labels that have an effect are one table, `LABEL_POLICY` in
 `src/integration/classify.rs`. Each label has an effect; the policy in force copies the table
 (`policy.labels` in `prs status --json` and `integration.queue`) and the classifier reads that
 copy. No other list of labels exists. A label is compared case-insensitively.
@@ -126,9 +127,16 @@ copy. No other list of labels exists. A label is compared case-insensitively.
 | `on-hold` | hold |
 | `wip` | hold |
 | `manual-merge` | hold |
+| `obsolete` | obsolete |
 
-`hold` makes the pull request `blocked`, with `label:NAME`. There is no label that opts a
-pull request out of the executor's refresh (owner decision D11), so `hold` is the only effect.
+`hold` makes the pull request `blocked`, with `label:NAME`. `obsolete` makes it `obsolete`,
+with `label_obsolete:NAME` in the forge's spelling (owner decision D3): a person's mark is the
+only evidence that reaches the word — age, shared paths and a similar title never do — and it
+is never closed automatically. A pull request carrying both is `obsolete`, since a person acts
+on it either way; a draft carrying it stays `draft`, because the draft gate is asked first.
+There is no label that opts a pull request out of the executor's refresh (owner decision D11).
+
+
 
 ### Auto-merge and the merge method
 
@@ -449,12 +457,16 @@ json` stays the list of pull requests to close.
 | `majordomus prs drain [--max N] [--dry-run] [--refresh]` | yes | integrate, one merge at a time |
 | `majordomus prs drain --resume-after-failure` | yes | record that a person looked at an unverified merge, then drain |
 | `majordomus prs drain --continuous [--interval S] [--max N] [--refresh]` | yes | drain, wait, drain again until stopped |
-| `majordomus prs cleanup [--apply]` | yes | close what is provably on master, or superseded by a successor that landed |
+| `majordomus prs cleanup [--apply]` | yes | close what is provably on master, or superseded by a successor that landed; list what is a person's (possibly redundant, obsolete) and the branches merged pull requests left on origin |
 
 The same queue is `GET /api/v1/pull-requests` (MCP `majordomus_pull_requests`), with the
 lease and the last merge beside it. One pull request is
 `GET /api/v1/pull-requests/explain?number=` (`majordomus_pull_request_explain`), and the
-trail is `GET /api/v1/pull-requests/events` (`majordomus_integration_events`). All three are
+trail is `GET /api/v1/pull-requests/events` (`majordomus_integration_events`). What cleanup
+would do is `GET /api/v1/pull-requests/cleanup` (`majordomus_pull_requests_cleanup`): the plan
+decided offline from the recorded observation — `would_close` or `left_for_a_person` for each
+pull request, the same table `prs cleanup` acts on — beside the branch report `prs cleanup`
+last recorded, with its age. It closes, deletes and asks the forge for nothing. All four are
 declared once in `capability/builtin/integration.rs`.
 
 The Cockpit renders those two answers at `/cockpit/integration`. It shows the counts by lane,

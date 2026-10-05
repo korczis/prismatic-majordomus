@@ -2085,25 +2085,57 @@ pub fn cleanup(
     let queue = integrator.observe()?;
     let mut items = Vec::new();
     for a in &queue.assessments {
-        let action = match a.disposition {
-            PullRequestDisposition::Redundant | PullRequestDisposition::Superseded if apply => {
-                close_superseded(root, integrator, a)?
-            }
-            PullRequestDisposition::Redundant | PullRequestDisposition::Superseded => {
-                "would_close".into()
-            }
-            PullRequestDisposition::PossiblyRedundant => "left_for_a_person".into(),
-            _ => continue,
+        let Some(planned) = cleanup_action(a.disposition) else {
+            continue;
         };
-        items.push(CleanupItem {
-            pr: a.number,
-            disposition: a.disposition,
-            reasons: a.reasons.clone(),
-            action,
-        });
+        let action = if apply && planned == WOULD_CLOSE {
+            close_superseded(root, integrator, a)?
+        } else {
+            planned.to_string()
+        };
+        items.push(cleanup_item(a, action));
     }
     Ok(items)
 }
+
+/// What cleanup does with a pull request of this disposition: [`WOULD_CLOSE`] for what is
+/// provably on master already or superseded by a successor that landed,
+/// [`LEFT_FOR_A_PERSON`] for weak evidence and for what a person marked obsolete (owner
+/// decision D3), and nothing for every other disposition. The one table both the act and
+/// the plan read.
+pub fn cleanup_action(disposition: PullRequestDisposition) -> Option<&'static str> {
+    match disposition {
+        PullRequestDisposition::Redundant | PullRequestDisposition::Superseded => Some(WOULD_CLOSE),
+        PullRequestDisposition::PossiblyRedundant | PullRequestDisposition::Obsolete => {
+            Some(LEFT_FOR_A_PERSON)
+        }
+        _ => None,
+    }
+}
+
+fn cleanup_item(a: &PullRequestAssessment, action: String) -> CleanupItem {
+    CleanupItem {
+        pr: a.number,
+        disposition: a.disposition,
+        reasons: a.reasons.clone(),
+        action,
+    }
+}
+
+/// What a dry cleanup decides, offline, from one queue ([`cleanup_action`]), in rank order:
+/// the plan [`cleanup`] acts on, and what the read capability renders. Closes nothing.
+pub fn cleanup_plan(queue: &IntegrationQueue) -> Vec<CleanupItem> {
+    queue
+        .assessments
+        .iter()
+        .filter_map(|a| cleanup_action(a.disposition).map(|act| cleanup_item(a, act.into())))
+        .collect()
+}
+
+/// A cleanup item cleanup would close, given `--apply`.
+pub const WOULD_CLOSE: &str = "would_close";
+/// A cleanup item that is a person's to decide; never closed here.
+pub const LEFT_FOR_A_PERSON: &str = "left_for_a_person";
 
 /// Close one superseded pull request, as a merge is taken: observed again first, closed only
 /// if the second decision still says superseded against the same master and head, recorded
@@ -2303,6 +2335,13 @@ pub fn report_left_branches(root: &Path) -> Result<Option<LeftBranchReport>, Str
     Ok(Some(report))
 }
 
+/// The last recorded [`LeftBranchReport`], read offline; `None` when `prs cleanup` never
+/// recorded one here or the record does not parse.
+pub fn recorded_left_branches(root: &Path) -> Option<LeftBranchReport> {
+    let text = fs::read_to_string(super::state_path(root, LEFT_BRANCHES_FILE)).ok()?;
+    serde_json::from_str(&text).ok()
+}
+
 #[cfg(test)]
 mod left_branch_tests {
     //! The report of what merged pull requests left on origin (owner decision D4: reported,
@@ -2441,5 +2480,169 @@ mod left_branch_tests {
         std::fs::create_dir_all(path.parent().unwrap()).unwrap();
         std::fs::write(&path, "not an observation").unwrap();
         assert!(report_left_branches(dir.path()).is_err());
+    }
+}
+
+#[cfg(test)]
+mod obsolete_and_plan_tests {
+    //! Obsolete comes only from a label a person put there (owner decision D3), is listed for
+    //! a person and never closed; the cleanup plan is decided offline from one queue.
+
+    use super::*;
+    use crate::integration::{
+        build_queue, forge, ForgeObservation, ReasonCode, RelationToMaster, OBSERVATION_SCHEMA,
+    };
+
+    /// A queue of one open pull request per `(labels, draft)`, numbered from 1.
+    fn queue(prs: &[(&[&str], bool)]) -> IntegrationQueue {
+        let pull_requests = prs
+            .iter()
+            .enumerate()
+            .filter_map(|(i, (labels, draft))| {
+                forge::pull_request_of(&serde_json::json!({
+                    "number": i + 1, "title": "t", "author": {"login": "a"},
+                    "headRefName": format!("fix/{}", i + 1), "headRefOid": format!("{:040}", i + 1),
+                    "baseRefName": "master", "isDraft": draft,
+                    "labels": labels.iter().map(|l| serde_json::json!({"name": l})).collect::<Vec<_>>(),
+                    "createdAt": "2026-10-01T00:00:00Z", "updatedAt": "2026-10-01T00:00:00Z",
+                    "body": "", "statusCheckRollup": [], "reviewDecision": "",
+                    "autoMergeRequest": null, "isCrossRepository": false
+                }))
+            })
+            .collect();
+        let obs = ForgeObservation {
+            schema: OBSERVATION_SCHEMA,
+            repository: "o/r".into(),
+            base: "master".into(),
+            base_sha: "m".into(),
+            observed_at: "t".into(),
+            required_checks: None,
+            review_policy: None,
+            up_to_date_required: None,
+            merge_methods: vec!["merge".into()],
+            pull_requests,
+            resolved: Default::default(),
+            delete_branch_on_merge: None,
+        };
+        build_queue(&obs, "m", |_| RelationToMaster::Unknown {
+            reason: "not asked".into(),
+        })
+    }
+
+    #[test]
+    fn only_an_obsolete_label_makes_obsolete_and_it_wins_over_hold_but_not_draft() {
+        let q = queue(&[
+            (&["Obsolete"], false),
+            (&["obsolete", "wip"], false),
+            (&["obsolete"], true),
+            (&["wip"], false),
+            (&[], false),
+        ]);
+        let d = |n: u64| q.get(n).unwrap().disposition;
+        assert_eq!(d(1), PullRequestDisposition::Obsolete);
+        assert_eq!(
+            d(2),
+            PullRequestDisposition::Obsolete,
+            "obsolete before hold"
+        );
+        assert_eq!(
+            d(3),
+            PullRequestDisposition::Draft,
+            "the draft gate comes first"
+        );
+        assert_eq!(d(4), PullRequestDisposition::Blocked);
+        assert_ne!(
+            d(5),
+            PullRequestDisposition::Obsolete,
+            "no label, no obsolete"
+        );
+        let one = q.get(1).unwrap();
+        assert_eq!(
+            one.reasons[0],
+            ReasonCode::LabelObsolete {
+                name: "Obsolete".into()
+            },
+            "the deciding reason first, in the forge's spelling"
+        );
+        assert_eq!(
+            one.next_action.as_deref(),
+            Some("a person closes it, or removes the label")
+        );
+        assert_eq!(one.lane, crate::integration::IntegrationLane::Cleanup);
+        assert_eq!(PullRequestDisposition::Obsolete.as_str(), "obsolete");
+        assert!(PullRequestDisposition::ALL.contains(&PullRequestDisposition::Obsolete));
+    }
+
+    #[test]
+    fn the_obsolete_reason_reads_back_from_its_wire_form() {
+        let r: ReasonCode = "label_obsolete:Obsolete".parse().unwrap();
+        assert_eq!(
+            r,
+            ReasonCode::LabelObsolete {
+                name: "Obsolete".into()
+            }
+        );
+        assert_eq!(r.to_string(), "label_obsolete:Obsolete");
+        assert_eq!(r.code(), "label_obsolete");
+    }
+
+    #[test]
+    fn the_plan_closes_only_strong_evidence_and_leaves_obsolete_for_a_person() {
+        for (d, want) in [
+            (PullRequestDisposition::Redundant, Some(WOULD_CLOSE)),
+            (PullRequestDisposition::Superseded, Some(WOULD_CLOSE)),
+            (
+                PullRequestDisposition::PossiblyRedundant,
+                Some(LEFT_FOR_A_PERSON),
+            ),
+            (PullRequestDisposition::Obsolete, Some(LEFT_FOR_A_PERSON)),
+            (PullRequestDisposition::Ready, None),
+            (PullRequestDisposition::Blocked, None),
+        ] {
+            assert_eq!(cleanup_action(d), want, "{d:?}");
+        }
+        let q = queue(&[(&["obsolete"], false), (&[], false)]);
+        let plan = cleanup_plan(&q);
+        assert_eq!(plan.len(), 1);
+        assert_eq!(
+            (plan[0].pr, plan[0].action.as_str()),
+            (1, LEFT_FOR_A_PERSON)
+        );
+    }
+
+    /// An executor that observes one fixed queue and refuses every act: cleanup with
+    /// `--apply` must leave an obsolete pull request alone, so nothing may reach it.
+    struct Fixed(IntegrationQueue);
+
+    impl Integrator for Fixed {
+        fn observe(&mut self) -> Result<IntegrationQueue, String> {
+            Ok(self.0.clone())
+        }
+        fn merge(&mut self, pr: u64, _: &str, _: &str) -> Result<(), String> {
+            panic!("cleanup merged #{pr}")
+        }
+        fn verify(
+            &mut self,
+            pr: u64,
+            _: &EvaluatedAgainst,
+            _: &str,
+        ) -> Result<super::super::drain::Landed, super::super::drain::NotLanded> {
+            panic!("cleanup verified #{pr}")
+        }
+        fn refresh_branch(&mut self, a: &PullRequestAssessment, _: &str) -> Result<String, String> {
+            panic!("cleanup refreshed #{}", a.number)
+        }
+        fn close(&mut self, pr: u64, _: &str, _: &str) -> Result<(), String> {
+            panic!("cleanup closed #{pr}")
+        }
+    }
+
+    #[test]
+    fn apply_never_closes_what_a_person_marked_obsolete() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut w = Fixed(queue(&[(&["obsolete"], false), (&["wip"], false)]));
+        let items = cleanup(dir.path(), &mut w, true).unwrap();
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].action, LEFT_FOR_A_PERSON);
     }
 }

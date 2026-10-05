@@ -8190,6 +8190,58 @@ paths:
       x-majordomus-mcp:
         tool: majordomus_pull_requests
       x-majordomus-cli: prs status
+  "/api/v1/pull-requests/cleanup":
+    get:
+      operationId: integration.cleanup
+      summary: What cleanup would do
+      description: "The cleanup plan, decided offline from the recorded observation: every open pull request cleanup would close — redundant (its work is on master already) or superseded (by a declared successor that landed) — and every one it leaves for a person — possibly redundant (weak evidence) or obsolete (a person marked it, owner decision D3) — each with its disposition and the reasons that decided it, in rank order; beside it, the branches merged pull requests left on origin as `majordomus prs cleanup` last read them, with when and how long ago. A read: it closes, deletes and asks the forge for nothing — `majordomus prs cleanup` reads the forge and `--apply` closes. `observed: false` with the reason when this checkout has recorded no observation."
+      tags:
+        - integration
+      parameters: []
+      responses:
+        "200":
+          description: "What cleanup would do: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/IntegrationCleanup"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: integration.cleanup
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::integration
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_pull_requests_cleanup
   "/api/v1/pull-requests/events":
     get:
       operationId: integration.events
@@ -13204,6 +13256,32 @@ components:
         - exists
         - directory
       description: "One path, judged."
+    CleanupItem:
+      type: object
+      properties:
+        pr:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: The pull request.
+        disposition:
+          "$ref": "#/components/schemas/PullRequestDisposition"
+          description: Its disposition when decided.
+        reasons:
+          type: array
+          items:
+            description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`. A code outside this list (an older trail's) is carried verbatim."
+            type: string
+          description: "The evidence, as reason codes."
+        action:
+          type: string
+          description: "`would_close`, `closed`, `left_for_a_person`, or `close_failed: <why>`."
+      required:
+        - pr
+        - disposition
+        - reasons
+        - action
+      description: "What cleanup would do, or did, for one pull request."
     CliExposure:
       type: object
       properties:
@@ -22116,6 +22194,43 @@ components:
           const: observe_failed
           description: "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
       description: "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
+    IntegrationCleanup:
+      type: object
+      properties:
+        observed:
+          type: boolean
+          description: Whether a forge observation is recorded in this checkout.
+        reason:
+          type:
+            - string
+            - "null"
+          description: "Why there is no plan, when there is none."
+        observed_at:
+          type:
+            - string
+            - "null"
+          description: "When the forge was observed, when it was."
+        items:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CleanupItem"
+          description: "The plan, in rank order: `would_close` for what is provably on master or superseded by\na successor that landed, `left_for_a_person` for weak evidence and for what a person\nmarked obsolete. Nothing here closes anything."
+        branches:
+          anyOf:
+            - "$ref": "#/components/schemas/LeftBranchReport"
+            - type: "null"
+          description: "The branches merged pull requests left on origin, as `prs cleanup` last read them;\n`None` when it never ran in this checkout. Never read from the network here."
+        branches_age_seconds:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "How old that report is, in seconds, when its time reads."
+      required:
+        - observed
+        - items
+      description: "What cleanup would do, decided offline: the pull requests it would close or leave for a\nperson, from the recorded observation, and the last branch report `prs cleanup` recorded."
     IntegrationEvent:
       type: object
       properties:
@@ -22153,7 +22268,7 @@ components:
         reasons:
           type: array
           items:
-            description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`. A code outside this list (an older trail's) is carried verbatim."
+            description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`. A code outside this list (an older trail's) is carried verbatim."
             type: string
           description: "The decision's reasons; a code an older executor wrote reads back verbatim."
         detail:
@@ -23767,6 +23882,9 @@ components:
         - type: string
           const: hold
           description: "It holds the pull request whatever else is true: `blocked`, with `label:NAME`."
+        - type: string
+          const: obsolete
+          description: "A person marked the work obsolete (owner decision D3): `obsolete`, with\n`label_obsolete:NAME`, listed by cleanup for a person and never closed automatically."
       description: What a label does to a pull request that carries it.
     LabelPolicy:
       type: object
@@ -23893,6 +24011,66 @@ components:
       required:
         - ts
       description: "One ledger line that matters to the judgement: when, and which episode.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::LedgerMark;\nlet m: LedgerMark = serde_json::from_str(r#\"{\"ts\":\"2026-09-12T10:00:00Z\",\"episode\":\"e1\"}\"#).unwrap();\nassert_eq!(m.episode, \"e1\");\n```"
+    LeftBranch:
+      type: object
+      properties:
+        branch:
+          type: string
+          description: The branch on origin.
+        tip:
+          type: string
+          description: "Its tip: the head that merged."
+        pr:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: The pull request that merged it.
+        merged_at:
+          type: string
+          description: When that pull request merged.
+        action:
+          type: string
+          description: "`left_for_a_person`, or `kept: checked out at <path>` when a worktree of this\nrepository has the branch checked out: somebody may still be standing on it."
+        next_step:
+          type: string
+          description: "What would clear it, in the setting's own terms."
+      required:
+        - branch
+        - tip
+        - pr
+        - merged_at
+        - action
+        - next_step
+      description: "A branch a merged pull request left on origin, as cleanup reports it. Reported, never\ndeleted: the forge's `delete_branch_on_merge` decides deletion (owner decision D4), so the\nexecutor holds no branch-deleting write at all."
+    LeftBranchReport:
+      type: object
+      properties:
+        read_at:
+          type: string
+          description: When cleanup read origin and the merged pull requests.
+        base:
+          type: string
+          description: The base the report excludes.
+        delete_branch_on_merge:
+          type:
+            - boolean
+            - "null"
+          description: "The forge's `delete_branch_on_merge`, from the observation; `None` when unread."
+        branches:
+          type:
+            - array
+            - "null"
+          items:
+            "$ref": "#/components/schemas/LeftBranch"
+          description: "The branches, or `None` when origin or the merged pull requests could not be read:\nunread is not \"nothing left behind\"."
+        refreshed_by:
+          type: string
+          description: The command that reads it afresh.
+      required:
+        - read_at
+        - base
+        - refreshed_by
+      description: "The last report of the branches merged pull requests left on origin, as `prs cleanup`\nread it. Written by `prs cleanup` alone — the one place that asks the forge for them —\nand rendered offline, with its age, by every surface that cannot reach the network."
     Libc:
       oneOf:
         - type: string
@@ -28152,7 +28330,7 @@ components:
         reasons:
           type: array
           items:
-            description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`. A code outside this list (an older trail's) is carried verbatim."
+            description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`. A code outside this list (an older trail's) is carried verbatim."
             type: string
           description: "Machine-readable reasons, one for every failing gate's every finding, in policy order:\nthe first is the decisive one. A ready pull request carries why it is ready."
         gates:
@@ -28303,6 +28481,9 @@ components:
         - type: string
           const: unknown
           description: Something needed to decide could not be observed.
+        - type: string
+          const: obsolete
+          description: "A person marked it obsolete with a label the label policy declares (owner decision\nD3): the only evidence that reaches this word. Listed for a person by cleanup and\nnever closed automatically; age, shared paths or a similar title never make one."
       description: "The one classification of an open pull request. Every value carries a machine-readable\nreason in `PullRequestAssessment::reasons`; there is no `mergeable: bool`."
     PullRequestReview:
       oneOf:

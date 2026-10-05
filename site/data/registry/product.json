@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.13.0"
   },
-  "fingerprint": "a7c9416c9d967386a93a412f16c8e8da7752ed17853455ef64e778d242f27d3e",
+  "fingerprint": "1f267219ad001f6d1410c47cc891d5ae61f60727055b2c24668d6a36f3af0592",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1120,7 +1120,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 61,
+        "capabilities": 62,
         "moments": 17
       },
       "evidence": {
@@ -4618,6 +4618,14 @@
           "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs",
           "capabilities": [
             {
+              "id": "integration.cleanup",
+              "title": "What cleanup would do",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_pull_requests_cleanup",
+              "route": "GET /api/v1/pull-requests/cleanup"
+            },
+            {
               "id": "integration.events",
               "title": "The integration audit trail",
               "kind": "query",
@@ -4914,10 +4922,10 @@
         "worktrees"
       ],
       "counts": {
-        "capabilities": 11,
-        "mcp_tools": 11,
+        "capabilities": 12,
+        "mcp_tools": 12,
         "mcp_resources": 2,
-        "http_routes": 11,
+        "http_routes": 12,
         "cli_paths": 9,
         "commands": 3,
         "objects": 0,
@@ -15123,13 +15131,13 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1884,
-    "builtin": 171,
+    "capabilities": 1885,
+    "builtin": 172,
     "declarative": 1713,
     "modules": 51,
-    "mcp_tools": 165,
+    "mcp_tools": 166,
     "mcp_resources": 1766,
-    "http_routes": 169,
+    "http_routes": 170,
     "cli_commands": 177,
     "shell_commands": 30,
     "kinds": 33,

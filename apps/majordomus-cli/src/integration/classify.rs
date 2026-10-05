@@ -59,6 +59,9 @@ pub struct IntegrationPolicy {
 pub enum LabelEffect {
     /// It holds the pull request whatever else is true: `blocked`, with `label:NAME`.
     Hold,
+    /// A person marked the work obsolete (owner decision D3): `obsolete`, with
+    /// `label_obsolete:NAME`, listed by cleanup for a person and never closed automatically.
+    Obsolete,
 }
 
 /// One label with an effect. The forge's label names are compared with `name`
@@ -79,6 +82,13 @@ impl LabelPolicy {
         }
     }
 
+    const fn obsolete(name: &'static str) -> Self {
+        LabelPolicy {
+            name: std::borrow::Cow::Borrowed(name),
+            effect: LabelEffect::Obsolete,
+        }
+    }
+
     /// Whether `label`, as the forge spells it, is this one.
     pub fn names(&self, label: &str) -> bool {
         self.name.eq_ignore_ascii_case(label)
@@ -88,7 +98,8 @@ impl LabelPolicy {
 /// The label policy: every label that has an effect, and the effect. The one table — the
 /// policy ([`IntegrationPolicy::labels`]) copies it and the classifier reads that copy; no
 /// other list of labels exists. There is no label that opts out of the executor's refresh
-/// (owner decision D11), so every effect is `hold`.
+/// (owner decision D11): a label holds a pull request, or marks it obsolete (D3), and
+/// nothing else.
 pub const LABEL_POLICY: &[LabelPolicy] = &[
     LabelPolicy::hold("do-not-merge"),
     LabelPolicy::hold("do not merge"),
@@ -97,6 +108,7 @@ pub const LABEL_POLICY: &[LabelPolicy] = &[
     LabelPolicy::hold("on-hold"),
     LabelPolicy::hold("wip"),
     LabelPolicy::hold("manual-merge"),
+    LabelPolicy::obsolete("obsolete"),
 ];
 
 /// Path prefixes whose change makes a pull request high-risk to integrate.
@@ -617,6 +629,16 @@ pub fn classify(
                 .any(|p| p.effect == LabelEffect::Hold && p.names(l))
         })
         .collect();
+    let obsolete: Vec<&String> = pr
+        .labels
+        .iter()
+        .filter(|l| {
+            policy
+                .labels
+                .iter()
+                .any(|p| p.effect == LabelEffect::Obsolete && p.names(l))
+        })
+        .collect();
 
     let forge = EvidenceSource::Forge {
         observed_at: observed_at.to_string(),
@@ -880,7 +902,17 @@ pub fn classify(
         ),
         (
             IntegrationGate::Label,
-            if blocking.is_empty() {
+            // obsolete before hold: a person acts on it either way, and the closer word wins
+            if !obsolete.is_empty() {
+                fails(
+                    PullRequestDisposition::Obsolete,
+                    obsolete
+                        .iter()
+                        .map(|l| ReasonCode::LabelObsolete { name: (*l).clone() })
+                        .collect(),
+                    Some("a person closes it, or removes the label".into()),
+                )
+            } else if blocking.is_empty() {
                 None
             } else {
                 fails(
@@ -1258,4 +1290,18 @@ fn relation_detail(r: &RelationToMaster) -> String {
 /// A commit, abbreviated for a person.
 fn short(sha: &str) -> &str {
     sha.get(..10).unwrap_or(sha)
+}
+
+#[cfg(test)]
+mod label_policy_tests {
+    use super::*;
+
+    /// The constructors run where the table is built, at compile time; run once here too.
+    #[test]
+    fn the_constructors_say_their_effect() {
+        let o = LabelPolicy::obsolete("obsolete");
+        assert_eq!(o.effect, LabelEffect::Obsolete);
+        assert!(o.names("OBSOLETE"));
+        assert_eq!(LabelPolicy::hold("wip").effect, LabelEffect::Hold);
+    }
 }

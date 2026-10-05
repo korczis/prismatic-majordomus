@@ -364,6 +364,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:integration.cleanup",
+      "path": "/evidence/capabilities/integration-cleanup/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:integration.events",
       "path": "/evidence/capabilities/integration-events/"
     },
@@ -4126,6 +4131,16 @@
       "kind": "capability",
       "id": "health.report",
       "page": "/evidence/capabilities/health-report/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:integration.cleanup": {
+      "kind": "capability",
+      "id": "integration.cleanup",
+      "page": "/evidence/capabilities/integration-cleanup/",
       "programs": [],
       "members": [],
       "routes": [],
@@ -18175,6 +18190,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_pull_requests_cleanup": {
+      "kind": "mcp",
+      "id": "majordomus_pull_requests_cleanup",
+      "alias_of": "capability:integration.cleanup",
+      "programs": [],
+      "members": [
+        "capability:integration.cleanup"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_pull_requests_prove_dry_run": {
       "kind": "mcp",
       "id": "majordomus_pull_requests_prove_dry_run",
@@ -23845,6 +23872,7 @@
     "crate:health_server",
     "crate:hot_path",
     "crate:index_behavior",
+    "crate:integration_cleanup_read",
     "crate:integration_merged_branches",
     "crate:integration_trail",
     "crate:lease_busy",
