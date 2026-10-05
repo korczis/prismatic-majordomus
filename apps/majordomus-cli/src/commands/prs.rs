@@ -75,23 +75,24 @@ fn trunc(s: &str, n: usize) -> String {
 }
 
 fn render_proof(p: &integration::proof::DryRunProof, out: &mut impl Write) -> Result<()> {
+    // said whole, in one write
+    let mut lines: Vec<String> = Vec::new();
     for s in &p.steps {
-        w(out, format!("{:<16} {}", s.step, s.summary))?;
+        lines.push(format!("{:<16} {}", s.step, s.summary));
     }
     if !p.moved.is_empty() {
-        w(out, "the non-mutating cycle moved something:")?;
+        lines.push("the non-mutating cycle moved something:".into());
         for m in &p.moved {
             let sign = if m.change == "added" { '+' } else { '-' };
-            w(out, format!("  {sign} {:<6} {}", m.section, m.line))?;
+            lines.push(format!("  {sign} {:<6} {}", m.section, m.line));
         }
     }
     for m in &p.mirrors {
-        w(out, format!("mirror: {m}"))?;
+        lines.push(format!("mirror: {m}"));
     }
-    w(out, format!("observed classification (base {}):", p.base))?;
+    lines.push(format!("observed classification (base {}):", p.base));
     for c in &p.classification {
-        w(
-            out,
+        lines.push(
             format!(
                 "  #{}  {}  {}  {}",
                 c.number,
@@ -99,16 +100,14 @@ fn render_proof(p: &integration::proof::DryRunProof, out: &mut impl Write) -> Re
                 c.disposition,
                 c.next_action.as_deref().unwrap_or("")
             )
-            .trim_end(),
-        )?;
+            .trim_end()
+            .to_string(),
+        );
     }
     if p.ok {
-        w(
-            out,
-            "nothing moved (remote, forge, trail, lease, local refs)",
-        )?;
+        lines.push("nothing moved (remote, forge, trail, lease, local refs)".into());
     }
-    Ok(())
+    w(out, lines.join("\n"))
 }
 
 /// Run `majordomus prs`.
@@ -157,9 +156,10 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             diagnosed(&q, format)
         }
         PrsCommand::Refresh => {
-            let obs = integration::refresh(&root).map_err(unusable)?;
             // observed just now: what the queue learns from it is kept for the readers
-            integration::queue_and_record(&root).map_err(unusable)?;
+            let obs = integration::refresh(&root)
+                .and_then(|obs| integration::queue_and_record(&root).map(|_| obs))
+                .map_err(unusable)?;
             if format == OutputFormat::Json {
                 json(&mut out, &obs)?;
             } else {
@@ -185,12 +185,11 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             interval,
             resume_after_failure,
         } => {
-            let base = executor_base(&root).map_err(unusable)?;
-            // the lease for the whole run: a second worker is refused here, before it acts
-            let lease = IntegrationLease::acquire(&root, &base).map_err(unusable)?;
-            if resume_after_failure {
-                drain::acknowledge_failure(&root, RESUMED_BY).map_err(unusable)?;
-            }
+            // the lease for the whole run: a second worker is refused here, before it acts, and
+            // a failure is acknowledged only under it
+            let lease = executor_base(&root)
+                .and_then(|base| lease_for(&root, &base, resume_after_failure))
+                .map_err(unusable)?;
             let stop = drain::stop_on_signals();
             let mut integrator = ForgeIntegrator {
                 root: &root,
@@ -257,11 +256,8 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             let lease = if dry_run {
                 None
             } else {
-                Some(IntegrationLease::acquire(&root, &base).map_err(unusable)?)
+                Some(lease_for(&root, &base, resume_after_failure).map_err(unusable)?)
             };
-            if resume_after_failure {
-                drain::acknowledge_failure(&root, RESUMED_BY).map_err(unusable)?;
-            }
             let mut integrator = ForgeIntegrator {
                 root: &root,
                 lease: lease.as_ref(),
@@ -319,12 +315,12 @@ pub fn run(args: PrsArgs) -> Result<u8> {
         }
         PrsCommand::ProveDryRun => {
             let proof = integration::proof::prove_dry_run(&root).map_err(unusable)?;
-            if format == OutputFormat::Json {
-                json(&mut out, &proof)?;
+            let written = if format == OutputFormat::Json {
+                json(&mut out, &proof)
             } else {
-                render_proof(&proof, &mut out)?;
-            }
-            Ok(if proof.ok { 0 } else { FINDING })
+                render_proof(&proof, &mut out)
+            };
+            written.map(|()| if proof.ok { 0 } else { FINDING })
         }
         PrsCommand::Brief => {
             if let Some(line) = brief(&root) {
@@ -371,6 +367,23 @@ fn executor_base(root: &std::path::Path) -> std::result::Result<String, String> 
         Some(o) => Ok(o.base),
         None => integration::refresh(root).map(|o| o.base),
     }
+}
+
+/// The base's lease, and under it, when the person asked, the acknowledgement of the merge an
+/// earlier drain could not verify: `--resume-after-failure` never comes with `--dry-run`, so
+/// nothing is acknowledged by an executor that does not hold the lease.
+fn lease_for(
+    root: &std::path::Path,
+    base: &str,
+    resume_after_failure: bool,
+) -> std::result::Result<IntegrationLease, String> {
+    IntegrationLease::acquire(root, base).and_then(|lease| {
+        if resume_after_failure {
+            drain::acknowledge_failure(root, RESUMED_BY).map(|_| lease)
+        } else {
+            Ok(lease)
+        }
+    })
 }
 
 /// What makes a queue less than a full answer, said the way `status` says it: on standard
@@ -707,25 +720,22 @@ fn explain(
             },
         );
     }
-    w(out, format!("#{} {}", a.number, a.title))?;
-    w(
-        out,
+    // said whole, in one write
+    let mut lines: Vec<String> = vec![
+        format!("#{} {}", a.number, a.title),
         format!(
             "  disposition:  {} ({})",
             a.disposition.as_str(),
             integration::classify::word(&a.lane)
         ),
-    )?;
+    ];
     if let Some(by) = a.superseded_by {
-        w(out, format!("  superseded:   by #{by}, which landed"))?;
+        lines.push(format!("  superseded:   by #{by}, which landed"));
     }
-    w(
-        out,
-        format!(
-            "  reasons:      {}",
-            integration::reason_list(&a.reasons, ", ")
-        ),
-    )?;
+    lines.push(format!(
+        "  reasons:      {}",
+        integration::reason_list(&a.reasons, ", ")
+    ));
     // every gate in policy order: the first failed one decided the disposition
     let gates: Vec<String> = a
         .gates
@@ -738,28 +748,20 @@ fn explain(
             )
         })
         .collect();
-    w(out, format!("  gates:        {}", gates.join(", ")))?;
+    lines.push(format!("  gates:        {}", gates.join(", ")));
     if let Some(n) = &a.next_action {
-        w(out, format!("  next:         {n}"))?;
+        lines.push(format!("  next:         {n}"));
     }
-    w(
-        out,
-        format!(
-            "  against:      master {} · head {} (observed {})",
-            short(&a.evaluated_against.master_sha),
-            short(&a.evaluated_against.head_sha),
-            q.observed_at
-        ),
-    )?;
-    w(
-        out,
-        format!("  rank:         {rank} of {}", q.assessments.len()),
-    )?;
+    lines.push(format!(
+        "  against:      master {} · head {} (observed {})",
+        short(&a.evaluated_against.master_sha),
+        short(&a.evaluated_against.head_sha),
+        q.observed_at
+    ));
+    lines.push(format!("  rank:         {rank} of {}", q.assessments.len()));
     if let Some(f) = &a.rank_factors {
         // the components the order compares, in its order: the first that differs decides
-        w(
-            out,
-            format!(
+        lines.push(format!(
                 "  rank factors: lane {}, {}, risk {}, contention {}, dependents {}, paths {}, opened {}",
                 integration::classify::word(&f.lane),
                 f.disposition.as_str(),
@@ -768,47 +770,37 @@ fn explain(
                 f.dependents,
                 f.authored_paths,
                 f.created_at
-            ),
-        )?;
+            ));
     }
     if let Some(wait) = &a.wait {
-        w(out, format!("  waiting:      {}", waited(wait)))?;
+        lines.push(format!("  waiting:      {}", waited(wait)));
     }
-    w(
-        out,
-        format!(
-            "  risk:         {} — {}",
-            integration::classify::word(&a.risk),
-            a.risk_factors.join("; ")
-        ),
-    )?;
+    lines.push(format!(
+        "  risk:         {} — {}",
+        integration::classify::word(&a.risk),
+        a.risk_factors.join("; ")
+    ));
     let relation = match &a.relation {
         RelationToMaster::Behind { behind, .. } => format!("behind master by {behind}"),
         RelationToMaster::Conflicting { paths } => format!("conflicts on {}", paths.join(", ")),
         r => integration::classify::word(r),
     };
-    w(out, format!("  relation:     {relation}"))?;
-    w(
-        out,
-        format!(
-            "  checks:       {}",
-            integration::classify::word(&a.required_checks)
-        ),
-    )?;
-    w(
-        out,
-        format!("  review:       {}", integration::classify::word(&a.review)),
-    )?;
+    lines.push(format!("  relation:     {relation}"));
+    lines.push(format!(
+        "  checks:       {}",
+        integration::classify::word(&a.required_checks)
+    ));
+    lines.push(format!(
+        "  review:       {}",
+        integration::classify::word(&a.review)
+    ));
     for d in &a.dependencies {
-        w(
-            out,
-            format!(
-                "  depends on:   #{} ({}, {})",
-                d.number,
-                integration::classify::word(&d.certainty),
-                if d.satisfied { "landed" } else { "open" }
-            ),
-        )?;
+        lines.push(format!(
+            "  depends on:   #{} ({}, {})",
+            d.number,
+            integration::classify::word(&d.certainty),
+            if d.satisfied { "landed" } else { "open" }
+        ));
     }
     if !a.overlaps.is_empty() {
         let o: Vec<String> = a
@@ -816,20 +808,17 @@ fn explain(
             .iter()
             .map(|o| format!("#{} ({})", o.number, o.paths.len()))
             .collect();
-        w(out, format!("  overlaps:     {}", o.join(" ")))?;
+        lines.push(format!("  overlaps:     {}", o.join(" ")));
     }
-    w(
-        out,
-        format!("  authored:     {} path(s)", a.authored_paths.len()),
-    )?;
-    w(out, "  evidence:")?;
+    lines.push(format!(
+        "  authored:     {} path(s)",
+        a.authored_paths.len()
+    ));
+    lines.push("  evidence:".into());
     for e in &a.evidence {
-        w(
-            out,
-            format!("    {:<20} {:<14} {}", e.kind, e.status, e.detail),
-        )?;
+        lines.push(format!("    {:<20} {:<14} {}", e.kind, e.status, e.detail));
     }
-    Ok(())
+    w(out, lines.join("\n"))
 }
 
 #[cfg(test)]
@@ -1024,6 +1013,97 @@ mod tests {
             assert_eq!(j["rank"], rank + 1);
             assert_eq!(j["assessment"]["number"], a.number);
         }
+    }
+
+    #[test]
+    fn explain_names_the_successor_that_landed() {
+        let (_s, q) = world();
+        use crate::integration::{DependencyCertainty, PathOverlap, PullRequestDependency};
+        let mut a = q.assessments[0].clone();
+        a.superseded_by = Some(9);
+        a.next_action = None;
+        a.dependencies = [(5, false), (4, true)]
+            .into_iter()
+            .map(|(number, satisfied)| PullRequestDependency {
+                number,
+                certainty: DependencyCertainty::Confirmed,
+                satisfied,
+            })
+            .collect();
+        a.overlaps = vec![PathOverlap {
+            number: 3,
+            paths: vec!["src/a.rs".into()],
+        }];
+        let t = text(|o| explain(&q, &a, 1, OutputFormat::Text, o));
+        assert!(t.contains("superseded:   by #9, which landed"), "{t}");
+        assert!(!t.contains("  next:"), "{t}");
+        assert!(t.contains("depends on:   #5 (confirmed, open)"), "{t}");
+        assert!(t.contains("depends on:   #4 (confirmed, landed)"), "{t}");
+        assert!(t.contains("overlaps:     #3 (1)"), "{t}");
+    }
+
+    #[test]
+    fn a_dry_run_proof_says_each_step_and_what_moved() {
+        use crate::integration::proof::{
+            DryRunProof, Moved, ObservedClassification, ProofStep, Snapshot,
+        };
+        let empty = Snapshot {
+            sections: Vec::new(),
+        };
+        let mut proof = DryRunProof {
+            ok: true,
+            base: "master".into(),
+            steps: vec![ProofStep {
+                step: "refresh".into(),
+                summary: "observed 1".into(),
+            }],
+            moved: Vec::new(),
+            mirrors: Vec::new(),
+            before: empty.clone(),
+            after: empty,
+            classification: vec![ObservedClassification {
+                number: 1,
+                head_sha: "a".repeat(40),
+                disposition: "ready".into(),
+                next_action: None,
+            }],
+        };
+        let t = text(|o| render_proof(&proof, o));
+        assert!(t.starts_with("refresh          observed 1\n"), "{t}");
+        assert!(t.contains("  #1  aaaaaaaaaaaa  ready\n"), "{t}");
+        assert!(
+            t.ends_with("nothing moved (remote, forge, trail, lease, local refs)\n"),
+            "{t}"
+        );
+        proof.ok = false;
+        proof.moved = ["added", "removed"]
+            .into_iter()
+            .map(|change| Moved {
+                section: "trail".into(),
+                change: change.into(),
+                line: "x".into(),
+            })
+            .collect();
+        proof.mirrors = vec!["refs/x is y, origin serves z".into()];
+        let t = text(|o| render_proof(&proof, o));
+        assert!(
+            t.contains("moved something:\n  + trail  x\n  - trail  x\n"),
+            "{t}"
+        );
+        assert!(t.contains("mirror: refs/x is y"), "{t}");
+        assert!(!t.contains("nothing moved"), "{t}");
+    }
+
+    #[test]
+    fn a_halt_that_names_no_pull_request_says_a_pull_request() {
+        let said = describe(&DrainStepOutcome::Halted {
+            pr: None,
+            reason: "unproved".into(),
+        });
+        assert!(
+            said.starts_with("halted: a pull request was merged"),
+            "{said}"
+        );
     }
 
     #[test]

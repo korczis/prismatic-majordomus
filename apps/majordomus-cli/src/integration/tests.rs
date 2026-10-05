@@ -101,6 +101,8 @@ enum Meanwhile {
     Reviewed(u64, &'static str),
     /// Somebody arms auto-merge on it.
     AutoMergeArmed(u64),
+    /// The forge cannot be read, with these words: this observation fails.
+    Outage(&'static str),
 }
 
 #[derive(Debug)]
@@ -156,6 +158,9 @@ struct World {
     outages: Vec<String>,
     /// Every closure comment that reached the forge.
     close_comments: Vec<String>,
+    /// On this observation (1-based) the queue's policy names no merge method, whatever
+    /// its pull requests say: an observation that contradicts itself.
+    no_method_on: Option<usize>,
 }
 
 impl Default for World {
@@ -187,6 +192,7 @@ impl Default for World {
             trail_root: None,
             outages: Vec::new(),
             close_comments: Vec::new(),
+            no_method_on: None,
         }
     }
 }
@@ -303,6 +309,7 @@ impl World {
                 let s = self.open.iter_mut().find(|s| s.number == *n).expect("open");
                 s.auto_merge = true;
             }
+            Meanwhile::Outage(words) => self.outages.push((*words).to_string()),
         }
     }
 }
@@ -387,6 +394,9 @@ impl Integrator for World {
         let mut q = self.queue();
         if let Some(root) = &self.trail_root {
             super::executor_feedback(&mut q, &drain::events(root));
+        }
+        if self.no_method_on == Some(self.observations) {
+            q.policy.merge_method = None;
         }
         Ok(q)
     }
@@ -2750,9 +2760,60 @@ fn run_scenario(root: &std::path::Path, scenario: &str) -> World {
                 &mut |_, _| {},
             );
         }
+        "no_method" => {
+            w.no_method_on = Some(2);
+            drop(drain::step(root, &mut w, false, false));
+        }
+        "lost_landed" | "lost_unproved" => {
+            w.answer_lost_after_landing.insert(1);
+            w.verify_fails = scenario == "lost_unproved";
+            drop(drain::step(root, &mut w, false, false));
+        }
+        "reconcile_landed" | "reconcile_never" | "reconcile_unproved" => {
+            let k = drain::FAIL_WRITE.with(|n| n.replace(0));
+            attempted(root, 1);
+            drain::FAIL_WRITE.with(|n| n.set(k));
+            w = asked_before(scenario);
+            drop(drain::drain(root, &mut w, 1, false, false));
+        }
+        "cleanup_stale" => {
+            w.open[0].redundant_after = Some(99);
+            w.merged = vec![99];
+            w.meanwhile.push((2, Meanwhile::Closes(1)));
+            drop(drain::cleanup(root, &mut w, true));
+        }
         // "lease": taken and given back
         _ => drop(drain::IntegrationLease::acquire(root, "master")),
     }
+    w
+}
+
+/// The trail of an executor that asked the forge to merge `pr` onto master `m0` and stopped
+/// before it learnt how that ended.
+fn attempted(root: &std::path::Path, pr: u64) {
+    drain::record(
+        root,
+        drain::IntegrationEvent {
+            pr: Some(pr),
+            master_before: Some(master_sha(0)),
+            head_sha: Some(sim(pr).head),
+            detail: "--merge".into(),
+            ..drain::IntegrationEvent::of(drain::IntegrationAction::MergeAttempted)
+        },
+    )
+    .unwrap();
+}
+
+/// The world after the merge of #1 [`attempted`] asked for: `reconcile_landed` — it landed
+/// where it was decided; `reconcile_unproved` — it landed and nothing proves where;
+/// `reconcile_never` — it never landed.
+fn asked_before(how: &str) -> World {
+    let mut w = World::default();
+    if how != "reconcile_never" {
+        w.merged_onto.insert(1, (master_sha(0), sim(1).head));
+        w.master = 1;
+    }
+    w.verify_fails = how == "reconcile_unproved";
     w
 }
 
@@ -2771,6 +2832,13 @@ fn every_trail_write_can_fail_and_no_act_goes_unrecorded() {
         "cleanup",
         "continuous",
         "lease",
+        "no_method",
+        "lost_landed",
+        "lost_unproved",
+        "reconcile_landed",
+        "reconcile_never",
+        "reconcile_unproved",
+        "cleanup_stale",
     ] {
         // the k-th write fails, for every k until a run makes fewer than k writes
         for k in 1..64 {
@@ -5413,4 +5481,498 @@ fn every_ranked_assessment_carries_the_factors_it_was_ranked_by() {
         );
     }
     assert_eq!(factors[0].number, q.assessments[0].number);
+}
+
+#[test]
+fn only_a_closed_or_merged_pull_request_with_a_head_is_resolved() {
+    use super::forge::resolved_of;
+    use serde_json::json;
+    for v in [
+        json!({"state": "MERGED", "headRefOid": "h"}),
+        json!({"number": "7", "state": "MERGED", "headRefOid": "h"}),
+        json!({"number": 7, "headRefOid": "h"}),
+        json!({"number": 7, "state": 1, "headRefOid": "h"}),
+        json!({"number": 7, "state": "OPEN", "headRefOid": "h"}),
+        json!({"number": 7, "state": "MERGED"}),
+        json!({"number": 7, "state": "MERGED", "headRefOid": 1}),
+        json!({"number": 7, "state": "CLOSED", "headRefOid": ""}),
+    ] {
+        assert!(resolved_of(&v).is_none(), "{v}");
+    }
+    // a view that answers with another pull request is no answer about the one named
+    let mut one = observe_pr(&sim(1));
+    one.body = "Superseded by #7".into();
+    let resolved = super::forge::resolved_for(&[one], &json!([]), |_| {
+        Some(json!({"number": 9, "state": "MERGED", "headRefOid": "h9"}))
+    });
+    assert!(resolved.is_empty(), "{resolved:?}");
+    let (n, r) = resolved_of(&json!({"number": 7, "state": "CLOSED", "headRefOid": "h"})).unwrap();
+    assert_eq!(
+        (n, r.merged, r.head_sha.as_str(), r.body.as_str()),
+        (7, false, "h", "")
+    );
+}
+
+// ---------------------------------------------------------------- what every path says
+
+#[test]
+fn a_ready_pull_request_on_an_observation_that_allows_no_merge_commit_is_not_merged() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1)],
+        no_method_on: Some(2),
+        ..Default::default()
+    };
+    let out = drain::step(&root, &mut w, false, false).unwrap();
+    assert!(stale_with(&out, 1, "allows no merge commit"), "{out:?}");
+    assert_eq!(w.merge_calls, 0);
+}
+
+#[test]
+fn a_lost_answer_of_a_merge_that_landed_unproved_stops_the_drain() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1)],
+        answer_lost_after_landing: BTreeSet::from([1]),
+        verify_fails: true,
+        ..Default::default()
+    };
+    let out = drain::step(&root, &mut w, false, false).unwrap();
+    assert!(
+        matches!(&out, DrainStepOutcome::VerificationFailed { pr: 1, .. }),
+        "{out:?}"
+    );
+    assert_eq!(w.merge_calls, 1, "a lost answer is never asked again");
+}
+
+#[test]
+fn a_merge_asked_for_and_never_ended_is_ended_first_by_what_landed() {
+    for (how, ended) in [
+        ("reconcile_landed", "merge_succeeded"),
+        ("reconcile_never", "merge_failed"),
+        ("reconcile_unproved", "verification_failed"),
+    ] {
+        let root = scratch();
+        attempted(&root, 1);
+        // what an observer recorded of #1 meanwhile ends nothing
+        drain::record(
+            &root,
+            drain::IntegrationEvent {
+                pr: Some(1),
+                ..drain::IntegrationEvent::of(drain::IntegrationAction::LeftActionable)
+            },
+        )
+        .unwrap();
+        let mut w = asked_before(how);
+        let out = drain::reconcile(&root, &mut w).unwrap();
+        match how {
+            "reconcile_landed" => assert!(
+                matches!(&out, Some(DrainStepOutcome::Merged { pr: 1, .. })),
+                "{out:?}"
+            ),
+            "reconcile_never" => assert!(
+                matches!(
+                    &out,
+                    Some(DrainStepOutcome::MergeRefused {
+                        pr: 1,
+                        class: drain::FailureClass::Transient,
+                        ..
+                    })
+                ),
+                "{out:?}"
+            ),
+            _ => assert!(
+                matches!(
+                    &out,
+                    Some(DrainStepOutcome::VerificationFailed { pr: 1, .. })
+                ),
+                "{out:?}"
+            ),
+        }
+        assert_eq!(trail_actions(&root).last().map(String::as_str), Some(ended));
+        // ended: nothing is left to reconcile, and the forge is not asked again
+        let asked = w.verify_calls;
+        assert!(drain::reconcile(&root, &mut w).unwrap().is_none());
+        assert_eq!(w.verify_calls, asked);
+
+        // an end the trail cannot record is an error, never an act taken silently
+        let root = scratch();
+        attempted(&root, 1);
+        let mut w = asked_before(how);
+        drain::FAIL_WRITE.with(|n| n.set(1));
+        let err = drain::drain(&root, &mut w, 1, false, false);
+        drain::FAIL_WRITE.with(|n| n.set(0));
+        assert!(err.is_err(), "{how}: {err:?}");
+    }
+}
+
+#[test]
+fn an_attempt_the_trail_cannot_key_is_not_reconciled() {
+    let root = scratch();
+    drain::record(
+        &root,
+        drain::IntegrationEvent::of(drain::IntegrationAction::MergeAttempted),
+    )
+    .unwrap();
+    let mut w = asked_before("reconcile_landed");
+    assert!(drain::reconcile(&root, &mut w).unwrap().is_none());
+    assert_eq!(w.verify_calls, 0);
+}
+
+#[test]
+fn a_drain_after_a_merge_reconciles_nothing_and_merges_the_next() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1), sim(2)],
+        ..Default::default()
+    };
+    let first = drain::drain(&root, &mut w, 1, false, false).unwrap();
+    assert_eq!(first.merged, [1]);
+    // #2 contains the master before #1 landed; bringing it up to date is not allowed here
+    w.open[0].contains = w.master;
+    let second = drain::drain(&root, &mut w, 1, false, false).unwrap();
+    assert_eq!(second.merged, [2], "{second:?}");
+    assert_eq!(
+        w.verify_calls, 2,
+        "the first merge was verified once, not again"
+    );
+}
+
+#[test]
+fn a_stale_decision_is_not_the_end_of_a_drain_and_an_outage_on_a_merge_is() {
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1)],
+        master_moves_on: Some(2),
+        ..Default::default()
+    };
+    let r = drain::drain(&root, &mut w, 1, false, false).unwrap();
+    assert!(
+        matches!(r.steps[0], DrainStepOutcome::StaleDecision { pr: 1, .. }),
+        "{r:?}"
+    );
+    assert!(
+        r.steps.len() > 1,
+        "the drain stopped on a stale decision: {r:?}"
+    );
+
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1), sim(2)],
+        answer_lost_before_landing: BTreeSet::from([1]),
+        ..Default::default()
+    };
+    let r = drain::drain(&root, &mut w, 2, false, false).unwrap();
+    assert!(r.stopped.contains("nothing further is attempted"), "{r:?}");
+    assert_eq!(
+        w.merge_calls, 1,
+        "the forge was asked again during an outage"
+    );
+}
+
+#[test]
+fn a_verification_failure_that_names_no_pull_request_still_halts_every_drain() {
+    let root = scratch();
+    drain::record(
+        &root,
+        drain::IntegrationEvent {
+            detail: "what landed is not known".into(),
+            ..drain::IntegrationEvent::of(drain::IntegrationAction::VerificationFailed)
+        },
+    )
+    .unwrap();
+    let mut w = World {
+        open: vec![sim(1)],
+        ..Default::default()
+    };
+    let r = drain::drain(&root, &mut w, 1, false, false).unwrap();
+    assert!(
+        r.stopped.starts_with("a merge could not be verified"),
+        "{r:?}"
+    );
+    assert!(matches!(
+        r.steps[..],
+        [DrainStepOutcome::Halted { pr: None, .. }]
+    ));
+    assert_eq!(w.merge_calls, 0);
+}
+
+#[test]
+fn a_closure_decided_on_a_queue_that_changed_meanwhile_is_not_made() {
+    for (what, said) in [
+        (Meanwhile::Closes(1), "#1 is no longer open"),
+        (Meanwhile::Labelled(1, "wip"), "now, not redundant"),
+    ] {
+        let root = scratch();
+        let mut w = World {
+            open: vec![sim(1)],
+            merged: vec![99],
+            ..Default::default()
+        };
+        w.open[0].redundant_after = Some(99);
+        w.meanwhile.push((2, what));
+        let items = drain::cleanup(&root, &mut w, true).unwrap();
+        assert!(items[0].action.contains(said), "{items:?}");
+        assert_eq!(w.close_calls, 0);
+    }
+    // the second observation fails: nothing is closed, and the cleanup says why
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1)],
+        merged: vec![99],
+        ..Default::default()
+    };
+    w.open[0].redundant_after = Some(99);
+    w.meanwhile
+        .push((2, Meanwhile::Outage("HTTP 401: Bad credentials")));
+    let err = drain::cleanup(&root, &mut w, true).unwrap_err();
+    assert!(err.contains("Bad credentials"), "{err}");
+    assert_eq!(w.close_calls, 0);
+}
+
+#[test]
+fn every_failure_is_classed_from_the_forges_own_words() {
+    use drain::FailureClass as C;
+    for (said, class) in [
+        (
+            "Post https://api.github.com/graphql: timed out",
+            C::Transient,
+        ),
+        ("Pull request is not mergeable: merge conflict", C::Conflict),
+        (
+            "Head branch was modified. Review and try the merge again.",
+            C::Stale,
+        ),
+        ("At least 1 approving review is required", C::ReviewRevoked),
+        (
+            "Required status check \"ci\" is failing",
+            C::NewFailingCheck,
+        ),
+        (
+            "2 of 3 required status checks are expected",
+            C::NewFailingCheck,
+        ),
+        (
+            "the base branch policy prohibits the merge",
+            C::PolicyViolation,
+        ),
+    ] {
+        assert_eq!(C::of_merge_refusal(said), class, "{said}");
+    }
+    for (said, class) in [
+        (
+            "fatal: unable to access: Could not resolve host: github.com",
+            C::Transient,
+        ),
+        ("the merge of master conflicts after all", C::Conflict),
+        ("! [rejected] HEAD -> feature/x (fetch first)", C::Stale),
+        (
+            "Updates were rejected because the tip is behind (non-fast-forward)",
+            C::Stale,
+        ),
+        ("hint: updates were rejected", C::Stale),
+        ("scripts/derive failed: exit 1", C::PolicyViolation),
+    ] {
+        assert_eq!(C::of_refresh_failure(said), class, "{said}");
+    }
+    assert_eq!(C::Unreadable.to_string(), "unreadable");
+    assert!(!C::Unreadable.recoverable());
+}
+
+#[test]
+fn a_timestamp_with_any_field_that_is_not_a_number_is_not_read() {
+    use crate::peers::parse_rfc3339;
+    assert!(parse_rfc3339("2026-10-05T00:00:00Z").is_some());
+    for bad in [
+        "x026-10-05T00:00:00Z",
+        "2026-x0-05T00:00:00Z",
+        "2026-10-x5T00:00:00Z",
+        "2026-10-05Tx0:00:00Z",
+        "2026-10-05T00:x0:00Z",
+        "2026-10-05T00:00:x0Z",
+        // twenty bytes, but the year's end splits a character
+        "202\u{e9}10-05T00:00:00Z",
+    ] {
+        assert_eq!(bad.len(), 20, "{bad}");
+        assert_eq!(parse_rfc3339(bad), None, "{bad}");
+    }
+}
+
+// ---------------------------------------------------------------- the lease's own writes
+
+#[test]
+fn a_lease_whose_path_cannot_be_opened_is_not_taken() {
+    let root = scratch();
+    let path = drain::IntegrationLease::path_for(&root.join(".git"), "master");
+    std::fs::create_dir_all(&path).unwrap();
+    let Err(err) = drain::IntegrationLease::acquire(&root, "master") else {
+        panic!("a lease was taken on a path that is a directory");
+    };
+    assert!(err.contains(&path.display().to_string()), "{err}");
+    assert!(drain::events(&root).is_empty());
+}
+
+#[test]
+fn a_lease_whose_record_cannot_be_written_is_given_back_and_its_renewal_refused() {
+    let root = scratch();
+    let path = drain::IntegrationLease::path_for(&root.join(".git"), "master");
+    drain::FAIL_WRITE.with(|n| n.set(1));
+    let Err(err) = drain::IntegrationLease::acquire(&root, "master") else {
+        panic!("a lease was held with no holder record");
+    };
+    assert!(err.contains("holder record could not be written"), "{err}");
+    assert!(!path.exists(), "the lease was not given back");
+    assert!(drain::events(&root).is_empty());
+
+    let lease = drain::IntegrationLease::acquire(&root, "master").unwrap();
+    drain::FAIL_WRITE.with(|n| n.set(1));
+    let err = lease.renew().unwrap_err();
+    assert!(err.contains(&path.display().to_string()), "{err}");
+    lease.renew().expect("the next renewal writes");
+}
+
+#[test]
+fn a_kept_alive_lease_renews_on_its_interval_until_dropped() {
+    let root = scratch();
+    let lease = drain::IntegrationLease::acquire(&root, "master").unwrap();
+    // the default interval outlasts this test: taken and dropped, it renews nothing
+    drop(lease.keep_alive());
+    let path = drain::IntegrationLease::path_for(&root.join(".git"), "master");
+    let modified = || std::fs::metadata(&path).unwrap().modified().unwrap();
+    let before = modified();
+    let alive = lease.keep_alive_every(std::time::Duration::from_millis(400));
+    std::thread::sleep(std::time::Duration::from_millis(1100));
+    drop(alive);
+    assert!(
+        modified() > before,
+        "an interval longer than the poll renewed nothing"
+    );
+}
+
+#[test]
+fn an_executor_whose_lease_was_lost_observes_nothing() {
+    let root = scratch();
+    let lease = drain::IntegrationLease::acquire(&root, "master").unwrap();
+    let path = drain::IntegrationLease::path_for(&root.join(".git"), "master");
+    std::fs::write(&path, "another holder").unwrap();
+    let mut forge = drain::ForgeIntegrator {
+        root: &root,
+        lease: Some(&lease),
+    };
+    let Err(err) = forge.observe() else {
+        panic!("an executor without its lease observed");
+    };
+    assert!(err.contains("lease was lost"), "{err}");
+}
+
+// ---------------------------------------------------------------- what landed, from git
+
+#[test]
+fn what_landed_is_proved_from_masters_first_parent_line() {
+    let (dir, base) = repository_with(&[("a.txt", "a\n")]);
+    let decided = commit_on(&dir, "decided", &base, &[("d.txt", "d\n")]);
+    let other = commit_on(&dir, "other", &base, &[("o.txt", "o\n")]);
+    let at = |master: &str| crate::integration::EvaluatedAgainst {
+        master_sha: master.into(),
+        head_sha: "h".into(),
+        observed_at: "t".into(),
+    };
+    let err = drain::landing(&dir, &at(&decided), "merge", &other).unwrap_err();
+    assert!(err.contains("does not contain"), "{err}");
+    // a rebase leaves no single commit to name
+    assert_eq!(drain::landing(&dir, &at(&base), "rebase", &other), Ok(None));
+    // the decision's master is on master only through a second parent
+    git(&dir, &["checkout", "-q", &other]);
+    git(
+        &dir,
+        &["merge", "-q", "--no-ff", "-m", "merge decided", &decided],
+    );
+    let merged = git(&dir, &["rev-parse", "HEAD"]);
+    let err = drain::landing(&dir, &at(&decided), "merge", &merged).unwrap_err();
+    assert!(err.contains("not on master's first-parent line"), "{err}");
+    // a squash names its one commit, whose only parent is the decision's master
+    let squashed = commit_on(&dir, "squashed", &decided, &[("s.txt", "s\n")]);
+    assert_eq!(
+        drain::landing(&dir, &at(&decided), "squash", &squashed),
+        Ok(Some(squashed.clone()))
+    );
+}
+
+#[test]
+fn a_drain_ends_on_every_outcome_but_progress_and_a_candidates_own_refusal() {
+    use drain::{ends_drain, FailureClass as C, IntegrationAction};
+    use DrainStepOutcome as O;
+    let refused = |class| O::MergeRefused {
+        pr: 1,
+        reason: "said".into(),
+        class,
+    };
+    let refresh_failed = |class| O::RefreshFailed {
+        pr: 1,
+        reason: "said".into(),
+        class,
+    };
+    for goes_on in [
+        O::Merged {
+            pr: 1,
+            master_before: "a".into(),
+            master_after: "b".into(),
+        },
+        O::StaleDecision {
+            pr: 1,
+            what: "master moved".into(),
+        },
+        refused(C::PolicyViolation),
+        refresh_failed(C::Conflict),
+    ] {
+        assert_eq!(ends_drain(&goes_on), None, "{goes_on:?}");
+    }
+    for ends in [
+        O::Idle { why: "none".into() },
+        O::WouldMerge { pr: 1 },
+        refused(C::Transient),
+        refused(C::Unreadable),
+        O::WouldRefresh { pr: 1 },
+        O::Refreshed {
+            pr: 1,
+            head_before: "a".into(),
+            head_after: "b".into(),
+        },
+        O::AwaitingChecks { pr: 1 },
+        refresh_failed(C::Unreadable),
+        O::VerificationFailed {
+            pr: 1,
+            reason: "unproved".into(),
+        },
+        O::TrailUnwritable {
+            pr: 1,
+            unrecorded: IntegrationAction::MergeAttempted,
+            reason: "read-only".into(),
+        },
+        O::Halted {
+            pr: None,
+            reason: "a person looks first".into(),
+        },
+    ] {
+        assert!(ends_drain(&ends).is_some(), "{ends:?}");
+    }
+}
+
+#[test]
+fn a_required_check_without_a_context_requires_nothing() {
+    use super::forge::{protection_of, rules_of};
+    use serde_json::json;
+    let (checks, _) = rules_of(&json!([{
+        "type": "required_status_checks",
+        "parameters": {"required_status_checks": [{"integration_id": 1}, {"context": "ci"}]}
+    }]));
+    assert_eq!(checks, vec![super::RequiredCheck::from("ci")]);
+    let (checks, _) = protection_of(&json!({
+        "required_status_checks": {
+            "checks": [{"app_id": 1}, {"context": 5}, {"context": "ci", "app_id": 2}]
+        }
+    }));
+    assert_eq!(checks.len(), 1, "{checks:?}");
+    assert_eq!(checks[0].context, "ci");
+    assert_eq!(checks[0].app_id, Some(2));
 }

@@ -127,12 +127,11 @@ fn try_lock_exclusive(file: &fs::File) -> std::io::Result<bool> {
     if unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0 {
         return Ok(true);
     }
+    // held by another descriptor is an answer; anything else is an error
     let e = std::io::Error::last_os_error();
-    if e.kind() == std::io::ErrorKind::WouldBlock {
-        Ok(false)
-    } else {
-        Err(e)
-    }
+    (e.kind() == std::io::ErrorKind::WouldBlock)
+        .then_some(false)
+        .ok_or(e)
 }
 
 /// Whether `path` still names the file `file` has open.
@@ -153,8 +152,12 @@ const KEEP_ALIVE_POLL: Duration = Duration::from_millis(200);
 /// after something removed it would be a new, unlocked file a second executor could take.
 fn write_record(file: &fs::File, token: &str) -> std::io::Result<()> {
     use std::os::unix::fs::FileExt;
-    file.set_len(0)?;
-    file.write_all_at(token.as_bytes(), 0)
+    // a write like any of the trail's, and like them it can fail (tests walk each failure)
+    if let Some(why) = injected_failure() {
+        return Err(std::io::Error::other(why));
+    }
+    file.set_len(0)
+        .and_then(|()| file.write_all_at(token.as_bytes(), 0))
 }
 
 /// A lease's record kept fresh by a thread, until this is dropped.
@@ -166,9 +169,7 @@ pub struct LeaseKeepAlive {
 impl Drop for LeaseKeepAlive {
     fn drop(&mut self) {
         self.stop.store(true, std::sync::atomic::Ordering::SeqCst);
-        if let Some(t) = self.thread.take() {
-            let _ = t.join();
-        }
+        let _ = self.thread.take().map(std::thread::JoinHandle::join);
     }
 }
 
@@ -200,14 +201,15 @@ impl IntegrationLease {
         // opened the old file in between locks a file nobody can find any more: it must see
         // that the path still names the file it locked, or open the path again.
         for _ in 0..8 {
-            let mut file = fs::OpenOptions::new()
+            let (file, locked) = fs::OpenOptions::new()
                 .read(true)
                 .write(true)
                 .create(true)
                 .truncate(false)
                 .open(&path)
+                .and_then(|file| try_lock_exclusive(&file).map(|locked| (file, locked)))
                 .map_err(|e| format!("{}: {e}", path.display()))?;
-            if !try_lock_exclusive(&file).map_err(|e| format!("{}: {e}", path.display()))? {
+            if !locked {
                 let held = fs::read_to_string(&path).unwrap_or_default();
                 return Err(format!(
                     "another integration executor holds {}: {}",
@@ -215,30 +217,30 @@ impl IntegrationLease {
                     held.trim()
                 ));
             }
-            if !names_file(&path, &file) {
-                continue;
+            // a path that names another file by now is opened again
+            if names_file(&path, &file) {
+                let taken = IntegrationEvent {
+                    detail: token.clone(),
+                    ..IntegrationEvent::of(IntegrationAction::LeaseAcquired)
+                };
+                let kept = write_record(&file, &token)
+                    .map_err(|e| format!("its holder record could not be written: {e}"))
+                    .and_then(|()| {
+                        record(root, taken)
+                            .map_err(|e| format!("the trail could not record it: {e}"))
+                    });
+                if let Err(e) = kept {
+                    // unlinked while still locked, so nobody takes the record this leaves
+                    let _ = fs::remove_file(&path);
+                    return Err(format!("the integration lease was given back: {e}"));
+                }
+                return Ok(IntegrationLease {
+                    path,
+                    token,
+                    root: root.to_path_buf(),
+                    file,
+                });
             }
-            file.set_len(0)
-                .and_then(|()| file.write_all(token.as_bytes()))
-                .and_then(|()| file.flush())
-                .map_err(|e| format!("{}: {e}", path.display()))?;
-            let taken = IntegrationEvent {
-                detail: token.clone(),
-                ..IntegrationEvent::of(IntegrationAction::LeaseAcquired)
-            };
-            if let Err(e) = record(root, taken) {
-                // unlinked while still locked, so nobody takes the record this leaves
-                let _ = fs::remove_file(&path);
-                return Err(format!(
-                    "the integration lease was given back: the trail could not record it: {e}"
-                ));
-            }
-            return Ok(IntegrationLease {
-                path,
-                token,
-                root: root.to_path_buf(),
-                file,
-            });
         }
         Err(format!("{}: could not be taken", path.display()))
     }
@@ -484,10 +486,7 @@ pub enum FailureClass {
 impl std::fmt::Display for FailureClass {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // the wire word, as the trail writes it
-        match serde_json::to_value(self) {
-            Ok(serde_json::Value::String(w)) => f.write_str(&w),
-            _ => write!(f, "{self:?}"),
-        }
+        f.write_str(&super::classify::word(self))
     }
 }
 
@@ -1404,47 +1403,10 @@ pub fn drain_until(
             break;
         }
         let outcome = step(root, integrator, dry_run, allow_refresh)?;
-        let stop = match &outcome {
-            DrainStepOutcome::Idle { why } => Some(why.clone()),
-            DrainStepOutcome::WouldMerge { pr } => Some(format!(
-                "dry run: #{pr} would be merged; nothing after it is planned, because its merge would change the queue"
-            )),
-            DrainStepOutcome::Merged { pr, .. } => {
-                report.merged.push(*pr);
-                None
-            }
-            DrainStepOutcome::StaleDecision { .. } => None,
-            // the candidate's own failure: the queue holds it back and the next is tried. An
-            // outage is not the candidate's: asking the forge to merge again at once would
-            // only hammer it, so the drain ends and a later one (or the next cycle) asks
-            DrainStepOutcome::MergeRefused { pr, reason, class } => {
-                (*class == FailureClass::Transient || !class.recoverable()).then(|| {
-                    format!("the forge refused #{pr} ({reason}); nothing further is attempted")
-                })
-            }
-            DrainStepOutcome::WouldRefresh { pr } => Some(format!(
-                "dry run: master would be brought into #{pr}; its checks must then pass before it can merge"
-            )),
-            DrainStepOutcome::Refreshed { pr, .. } => Some(format!(
-                "#{pr} now contains master; its required checks run on the new head, and the next drain merges it when they pass"
-            )),
-            DrainStepOutcome::AwaitingChecks { pr } => Some(format!(
-                "#{pr} contains master and its checks are running; nothing else is refreshed meanwhile"
-            )),
-            DrainStepOutcome::RefreshFailed { pr, reason, class } => (!class.recoverable())
-                .then(|| format!("bringing master into #{pr} failed: {reason}")),
-            DrainStepOutcome::VerificationFailed { pr, reason } => {
-                Some(format!("#{pr} could not be verified after merging: {reason}"))
-            }
-            DrainStepOutcome::Halted { reason, .. } => Some(reason.clone()),
-            DrainStepOutcome::TrailUnwritable {
-                pr,
-                unrecorded,
-                reason,
-            } => Some(format!(
-                "the trail could not record {unrecorded}, so nothing was done for #{pr} ({reason}); nothing further is attempted while the trail cannot be written"
-            )),
-        };
+        if let DrainStepOutcome::Merged { pr, .. } = &outcome {
+            report.merged.push(*pr);
+        }
+        let stop = ends_drain(&outcome);
         report.steps.push(outcome);
         if let Some(why) = stop {
             report.stopped = why;
@@ -1455,6 +1417,49 @@ pub fn drain_until(
         report.stopped = format!("{max} merge(s), the bound asked for");
     }
     Ok(report)
+}
+
+/// Why a drain ends after a step that came out as `outcome`, or `None` when it goes on.
+pub(crate) fn ends_drain(outcome: &DrainStepOutcome) -> Option<String> {
+    match outcome {
+        DrainStepOutcome::Idle { why } => Some(why.clone()),
+        DrainStepOutcome::WouldMerge { pr } => Some(format!(
+            "dry run: #{pr} would be merged; nothing after it is planned, because its merge would change the queue"
+        )),
+        DrainStepOutcome::Merged { .. } => None,
+        DrainStepOutcome::StaleDecision { .. } => None,
+        // the candidate's own failure: the queue holds it back and the next is tried. An
+        // outage is not the candidate's: asking the forge to merge again at once would
+        // only hammer it, so the drain ends and a later one (or the next cycle) asks
+        DrainStepOutcome::MergeRefused { pr, reason, class } => {
+            (*class == FailureClass::Transient || !class.recoverable()).then(|| {
+                format!("the forge refused #{pr} ({reason}); nothing further is attempted")
+            })
+        }
+        DrainStepOutcome::WouldRefresh { pr } => Some(format!(
+            "dry run: master would be brought into #{pr}; its checks must then pass before it can merge"
+        )),
+        DrainStepOutcome::Refreshed { pr, .. } => Some(format!(
+            "#{pr} now contains master; its required checks run on the new head, and the next drain merges it when they pass"
+        )),
+        DrainStepOutcome::AwaitingChecks { pr } => Some(format!(
+            "#{pr} contains master and its checks are running; nothing else is refreshed meanwhile"
+        )),
+        DrainStepOutcome::RefreshFailed { pr, reason, class } => (!class.recoverable())
+            .then(|| format!("bringing master into #{pr} failed: {reason}")),
+        DrainStepOutcome::VerificationFailed { pr, reason } => {
+            Some(format!("#{pr} could not be verified after merging: {reason}"))
+        }
+        DrainStepOutcome::TrailUnwritable {
+            pr,
+            unrecorded,
+            reason,
+        } => Some(format!(
+            "the trail could not record {unrecorded}, so nothing was done for #{pr} ({reason}); nothing further is attempted while the trail cannot be written"
+        )),
+        // a halt comes from the start of a drain, before any step; said as it is
+        DrainStepOutcome::Halted { reason, .. } => Some(reason.clone()),
+    }
 }
 
 /// The polling interval a continuous drain accepts, in seconds. The floor keeps a drain from
@@ -1726,15 +1731,14 @@ pub(crate) fn landing(
     master: &str,
 ) -> Result<Option<String>, String> {
     let git = |args: &[&str]| -> Option<String> {
-        let out = Command::new("git")
+        Command::new("git")
             .arg("-C")
             .arg(root)
             .args(args)
             .output()
-            .ok()?;
-        out.status
-            .success()
-            .then(|| String::from_utf8_lossy(&out.stdout).trim().to_string())
+            .ok()
+            .filter(|out| out.status.success())
+            .map(|out| String::from_utf8_lossy(&out.stdout).trim().to_string())
     };
     let contains = |a: &str, b: &str| {
         Command::new("git")
@@ -1853,10 +1857,9 @@ impl Integrator for ForgeIntegrator<'_> {
             }
             std::thread::sleep(Duration::from_secs(3));
         }
-        let unproved = NotLanded::Unproved;
         let obs = super::load_observation(self.root)
-            .map_err(unproved)?
-            .ok_or_else(|| NotLanded::Unproved("no observation to verify against".into()))?;
+            .and_then(|obs| obs.ok_or(String::from("no observation to verify against")))
+            .map_err(NotLanded::Unproved)?;
         super::retry::forge(|| {
             let fetch = Command::new("git")
                 .arg("-C")
@@ -1879,14 +1882,17 @@ impl Integrator for ForgeIntegrator<'_> {
                 ))
             }
         })
-        .map_err(NotLanded::Unproved)?;
-        let master = local_master(self.root, &obs.base)
-            .ok_or_else(|| NotLanded::Unproved("master is unreadable after the merge".into()))?;
-        let merge_commit = landing(self.root, at, method, &master).map_err(NotLanded::Unproved)?;
-        Ok(Landed {
-            master_after: master,
-            merge_commit,
+        .and_then(|()| {
+            local_master(self.root, &obs.base)
+                .ok_or(String::from("master is unreadable after the merge"))
         })
+        .and_then(|master| {
+            Ok(Landed {
+                merge_commit: landing(self.root, at, method, &master)?,
+                master_after: master,
+            })
+        })
+        .map_err(NotLanded::Unproved)
     }
 
     fn close(&mut self, pr: u64, head_sha: &str, comment: &str) -> Result<(), String> {
@@ -2143,8 +2149,7 @@ fn close_superseded(
     let deciding = a
         .reasons
         .first()
-        .map(ToString::to_string)
-        .unwrap_or_else(|| "superseded".into());
+        .map_or(String::from("superseded"), ToString::to_string);
     let body = format!(
         "Closed by `majordomus prs cleanup`: its work is already on `{}`.\n\nEvidence: {deciding} (master {}, head {}).",
         second.base, a.evaluated_against.master_sha, a.evaluated_against.head_sha

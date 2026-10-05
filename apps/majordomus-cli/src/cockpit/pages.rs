@@ -5054,6 +5054,14 @@ fn disposition_status(d: crate::integration::PullRequestDisposition) -> &'static
     }
 }
 
+/// Words as a sentence lists alternatives: `a`, `a or b`, `a, b or c`.
+fn or_list(words: &[&str]) -> String {
+    match words.split_last() {
+        Some((last, rest)) if !rest.is_empty() => format!("{} or {last}", rest.join(", ")),
+        _ => words.join(""),
+    }
+}
+
 /// The disposition as a badge says it: `superseded` names its successor.
 fn disposition_label(a: &crate::integration::PullRequestAssessment) -> String {
     match a.superseded_by {
@@ -5255,13 +5263,7 @@ pub fn integration(ctx: &Context) -> Page {
         .filter(|d| d.lane() == IntegrationLane::Held)
         .map(|d| d.as_str())
         .collect();
-    let held_note = match held.split_last() {
-        Some((last, rest)) if !rest.is_empty() => format!(
-            "Nothing is held: no pull request is {} or {last}.",
-            rest.join(", ")
-        ),
-        _ => format!("Nothing is held: no pull request is {}.", held.join("")),
-    };
+    let held_note = format!("Nothing is held: no pull request is {}.", or_list(&held));
     // one card per lane, in the lanes' own order; an empty lane says so rather than vanishing
     let lanes = [
         (
@@ -7381,6 +7383,87 @@ mod tests {
             "an observed queue says nothing is observed"
         );
         drop(lease);
+    }
+
+    #[test]
+    fn every_disposition_has_a_badge_and_a_successor_is_named_on_it() {
+        use crate::integration::PullRequestDisposition as D;
+        for d in D::ALL {
+            let status = disposition_status(d);
+            assert!(
+                ["ok", "info", "fail", "warn", "unknown"].contains(&status),
+                "{d:?}: {status}"
+            );
+        }
+        assert_eq!(disposition_status(D::PossiblyRedundant), "unknown");
+        assert_eq!(disposition_status(D::Redundant), "warn");
+        assert_eq!(or_list(&["held"]), "held");
+        assert_eq!(or_list(&["a", "b", "c"]), "a, b or c");
+    }
+
+    /// The policy line says what the base requires in each of the forms the forge reports it.
+    #[test]
+    fn the_integration_page_says_each_policy_the_forge_reports() {
+        use crate::integration::{
+            store_observation, CheckRunState, ForgeObservation, ReviewPolicy, OBSERVATION_SCHEMA,
+        };
+        let (repo, sha) = integration_repository();
+        let root = repo.root().to_path_buf();
+        let observe = |required: Option<Vec<crate::integration::RequiredCheck>>,
+                       review: Option<ReviewPolicy>,
+                       up_to_date: Option<bool>| {
+            // #1 is superseded by #2, which landed: its head is master's
+            let mut pr = observed_pr(1, &sha, CheckRunState::Passed);
+            pr.body = "Superseded by #2".into();
+            let landed = crate::integration::forge::ResolvedPullRequest {
+                merged: true,
+                head_sha: sha.clone(),
+                body: String::new(),
+            };
+            store_observation(
+                &root,
+                &ForgeObservation {
+                    schema: OBSERVATION_SCHEMA,
+                    repository: "owner/repo".into(),
+                    base: "master".into(),
+                    base_sha: sha.clone(),
+                    observed_at: "2026-10-01T00:00:00Z".into(),
+                    required_checks: required,
+                    review_policy: review,
+                    up_to_date_required: up_to_date,
+                    merge_methods: vec!["merge".into()],
+                    pull_requests: vec![pr],
+                    resolved: [(2, landed)].into(),
+                },
+            )
+            .expect("an observation");
+            integration(&repo.context().expect("a context"))
+                .main
+                .render()
+        };
+        let html = observe(
+            Some(Vec::new()),
+            Some(ReviewPolicy {
+                approvals: 2,
+                code_owners: true,
+                dismiss_stale: false,
+            }),
+            Some(false),
+        );
+        assert!(html.contains("none — nothing can be ready"), "{html}");
+        assert!(html.contains("2 approval(s), a code owner"), "{html}");
+        assert!(html.contains("not required — only the executor"), "{html}");
+        assert!(html.contains("superseded by #2"), "{html}");
+        let html = observe(None, None, None);
+        assert!(html.contains("review required: unread"), "{html}");
+        assert!(html.contains("branches up to date: unread"), "{html}");
+        let one = ReviewPolicy {
+            approvals: 1,
+            code_owners: false,
+            dismiss_stale: false,
+        };
+        let html = observe(None, Some(one), Some(true));
+        assert!(html.contains("review required: 1 approval(s);"), "{html}");
     }
 
     /// One `peers.list` answer, from the JSON the capability serves: the page renders what
