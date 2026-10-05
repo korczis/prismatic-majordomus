@@ -1,0 +1,29 @@
+id: I1984
+milestone: adopter-upgrades
+title: "Knowledge candidates never leave untracked files on a trunk that only pull requests change"
+slug: knowledge-candidates-never-dirty-a-trunk
+priority: p1
+profile: deep-work
+parallel_safe: true
+objective: "Decide and implement where knowledge candidates are written so that deriving them at an episode boundary on the trunk never leaves the trunk's working tree dirty."
+why: "OSCILLA main carries untracked .ai/repo/knowledge/candidates/ (a README and 7 records). It can never commit them, because its main changes only through pull requests. Every checkpoint since records working_tree dirty, clean-tree release gates refuse, and the advisory rule candidates-reviewed asks for the very commit the process forbids."
+current_state: "lib/knowledge.sh (~626, 839-897) writes candidates under .ai/repo/knowledge/candidates/ in whichever checkout closes the episode; ADR 0091 intends the tracked path."
+desired_state: "Candidates derived on the trunk are staged under .ai/local, or derivation is skipped there, until a branch promotes them. The decision is recorded against ADR 0091."
+scope:
+  - "lib/knowledge.sh"
+  - "lib/capture.sh"
+  - "share/standard/majordomus/rules"
+  - "docs/KNOWLEDGE.md"
+  - ".ai/repo/adrs"
+  - "test/cases"
+acceptance_criteria:
+  - "Closing an episode on the trunk leaves `git status --porcelain` empty"
+  - "Candidates derived on a branch are still offered for review and promotion as today"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "trunk_stays_clean_case"
+  - "decision_recorded"
+created_at: 2026-10-04
+updated_at: 2026-10-04
