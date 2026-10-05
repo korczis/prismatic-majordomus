@@ -1799,14 +1799,6 @@
         "external": true
       },
       {
-        "id": "file:site/templates/index.html",
-        "kind": "file",
-        "label": "index.html",
-        "summary": "named by the layer; not an object of this index",
-        "source": "site/templates/index.html",
-        "external": true
-      },
-      {
         "id": "kind:adr",
         "kind": "kind",
         "label": "adr",
@@ -30840,6 +30832,29 @@
         }
       },
       {
+        "id": "majordomus://release-record/v0.13.1",
+        "kind": "release-record",
+        "label": "v0.13.1",
+        "summary": "v0.13.1",
+        "route": "/cockpit/objects/release-record/v0-13-1",
+        "source": ".ai/repo/releases/v0.13.1.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "2a4fe055b8b101ed2d2ac61fc0e8cb22ff5392e5",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.13.1",
+          "published_at": "2026-10-04T21:52:31Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.13.1"
+        }
+      },
+      {
         "id": "majordomus://release-record/v0.3.1",
         "kind": "release-record",
         "label": "v0.3.1",
@@ -44545,11 +44560,6 @@
       },
       {
         "source": "majordomus://adr/adr-0023",
-        "target": "file:site/templates/index.html",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0023",
         "target": "kind:adr",
         "kind": "is_a"
       },
@@ -44581,11 +44591,6 @@
       {
         "source": "majordomus://adr/adr-0023",
         "target": "majordomus://rule/project.why-catalogue-is-canonical@1",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0023",
-        "target": "majordomus://test/test/cases/97_product_features.sh",
         "kind": "put_in_force"
       },
       {
@@ -47915,11 +47920,6 @@
       },
       {
         "source": "majordomus://claim/landing-page-is-a-projection",
-        "target": "file:site/templates/index.html",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/landing-page-is-a-projection",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -50131,11 +50131,6 @@
       {
         "source": "majordomus://context/ai.repo.features",
         "target": "file:apps/majordomus-cli/src/product.rs",
-        "kind": "tracks"
-      },
-      {
-        "source": "majordomus://context/ai.repo.features",
-        "target": "file:site/templates/index.html",
         "kind": "tracks"
       },
       {
@@ -56800,6 +56795,11 @@
       },
       {
         "source": "majordomus://release-record/v0.13.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://release-record/v0.13.1",
         "target": "kind:release-record",
         "kind": "is_a"
       },
@@ -63686,7 +63686,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4501,
+      "edges": 4498,
       "acyclic": true,
       "truncated": true
     }
