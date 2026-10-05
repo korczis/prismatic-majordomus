@@ -1,5 +1,5 @@
 +++
-title = "Before work on an issue starts, the intent it serves is named with the governance that applies, and work whose issue reaches no intent is refused naming the missing link"
+title = "Asked before work on an issue, `intent preflight` names the intent the issue serves with the governance that applies, or refuses naming the missing link"
 description = "A worker about to take an issue can ask which intent the work serves. The answer follows the issue to its milestone and the milestone to the intents that name it, and returns each intent with the governance entries it declares. An issue the plan does not hold, or a milestone no intent names, is refused with exit 10 and the link that is missing."
 weight = 115
 [extra]

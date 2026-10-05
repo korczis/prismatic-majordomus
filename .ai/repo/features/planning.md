@@ -39,7 +39,8 @@ Above the milestones, an intent states what must become true and the evidence th
 it. `majordomus intent` derives its stage from the plan and each criterion from the evidence
 ledger, answers which intent the work on an issue serves when a worker asks, refuses a
 criterion no issue serves and work that started before its plan was critiqued, and joins the
-work realising it across sessions and providers; the Cockpit shows the same answers at `/cockpit/intents`.
+work realising it across sessions and providers; the Cockpit shows the same answers at
+`/cockpit/intents`.
 
 ## What it does not do
 

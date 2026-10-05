@@ -228,7 +228,16 @@ byte-identical to the shell engine).
 
 ### Intents: what the plan is for
 
-**How it works.** An intent is a record under `.ai/repo/project/intents/`: what must become true, the invariants that must stay true, the milestones that realise it and the criteria that settle it, each naming its evidence. Nothing about it is stored but that. Its stage is derived from the plan and each criterion from the evidence ledger, so finished work satisfies nothing until every criterion has a current passing run. An issue names the criterion it serves in `serves`, and coverage is derived from it. The gap a worker observed and the critique of the plan are typed records the plan is refused against. Which work realises an intent, across sessions, providers and handovers, is joined on every read, and closed work the evidence contradicts is refused. [`PLANNING.md`](PLANNING.md) has the whole model.
+**How it works.** An intent is a record under `.ai/repo/project/intents/`: what must become
+true, the invariants that must stay true, the milestones that realise it and the criteria
+that settle it, each naming its evidence. Nothing about it is stored but that. Its stage is
+derived from the plan and each criterion from the evidence ledger, so finished work
+satisfies nothing until every criterion has a current passing run. An issue names the
+criterion it serves in `serves`, and coverage is derived from it. The gap a worker observed
+and the critique of the plan are typed records the plan is refused against. Which work
+realises an intent, across sessions, providers and handovers, is joined on every read, and
+closed work the evidence contradicts is refused. [`PLANNING.md`](PLANNING.md) has the whole
+model.
 
 **Try it.**
 

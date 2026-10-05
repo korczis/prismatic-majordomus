@@ -1,4 +1,4 @@
-# Before work on an issue starts, the intent it serves is named with the governance that applies, and work whose issue reaches no intent is refused naming the missing link
+# Asked before work on an issue, `intent preflight` names the intent the issue serves with the governance that applies, or refuses naming the missing link
 
 ## What it means
 
