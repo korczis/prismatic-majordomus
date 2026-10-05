@@ -1144,8 +1144,8 @@ pub enum IntentPreflightVerdict {
     /// The work serves at least one criterion of a live intent, every link holds, and the
     /// plan of every intent it serves was critiqued with no blocking finding left open.
     Serves,
-    /// The work sits under milestones no live intent names, and names no criterion: operational
-    /// work, allowed exactly where `majordomus intent validate` allows it.
+    /// The work sits under milestones no live intent names and serves no criterion of a live
+    /// intent: operational work, allowed where `majordomus intent validate` allows it.
     Maintenance,
     /// A link is missing or points at nothing, or an intent it serves may not be executed yet.
     Refused,
@@ -1464,7 +1464,9 @@ impl Intents {
     ///
     /// An issue is followed through the criteria it declares in `serves` — never through its
     /// milestone alone — and each link is judged by the same coverage `intent validate`
-    /// reports from, so the preflight refuses exactly the links validation fails: an issue
+    /// reports from, so every link validation fails is refused here too, and the preflight
+    /// is at least as strict (it also refuses work whose only links point at retired intents):
+    /// an issue
     /// that serves nothing while its milestone realises an intent, a criterion of an intent
     /// that does not name its milestone, a criterion or an intent that does not exist. An
     /// issue under milestones no live intent names, serving nothing, is maintenance. Every
@@ -1519,8 +1521,8 @@ impl Intents {
         }
 
         // The links are judged by the coverage validation reports from, over outlines of the
-        // intents already derived, so the preflight and `intent validate` cannot disagree
-        // about which link is broken.
+        // intents already derived, so a link `intent validate` calls broken is refused here
+        // too; the preflight may refuse more, never less.
         let observed = observed_satisfied(gaps);
         let outlines: Vec<IntentOutline> = self
             .intents

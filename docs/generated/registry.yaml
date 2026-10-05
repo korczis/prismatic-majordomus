@@ -21185,7 +21185,7 @@ capabilities:
     module: intents
     kind: query
     title: "Which intent a piece of work serves, or why it may not proceed"
-    description: "Given the issue a piece of work executes, or the paths it will touch, one verdict: `serves` when every issue serves a criterion of a live intent through a link that holds and the plan of each such intent was critiqued with no blocking finding open; `maintenance` when the issues sit under milestones no live intent names and serve nothing, as `intent validate` allows; `refused` otherwise, each refusal with its issue, a cause — unknown_issue, no_issue_covers_paths, issue_serves_nothing, serves_another_intent, serves_unknown_criterion, intent_not_critiqued, open_blocking_finding — in path mode every issue judged and the worst verdict answered. The answer carries, for the intents reached and no others, the statement, the served criteria with the live state of their evidence, the invariants, non-goals and governance, the critique with its open blocking findings, and the recorded gap bounded to those criteria."
+    description: "Given the issue a piece of work executes, or the paths it will touch, one verdict: `serves` when no issue is refused and at least one serves a criterion of a live intent through a link that holds, the plan of each such intent critiqued with no blocking finding open (issues judged maintenance beside it do not change the verdict); `maintenance` when the issues sit under milestones no live intent names and serve nothing, as `intent validate` allows; `refused` otherwise, each refusal with its issue, a cause — unknown_issue, no_issue_covers_paths, issue_serves_nothing, serves_another_intent, serves_unknown_criterion, intent_not_critiqued, open_blocking_finding — in path mode every issue judged and the worst verdict answered. The answer carries, for the intents reached and no others, the statement, the served criteria with the live state of their evidence, the invariants, non-goals and governance, the critique with its open blocking findings, and the recorded gap bounded to those criteria."
     input:
       name: IntentPreflightInput
       schema:
@@ -21258,7 +21258,7 @@ capabilities:
                 description: "The work serves at least one criterion of a live intent, every link holds, and the\nplan of every intent it serves was critiqued with no blocking finding left open."
               - type: string
                 const: maintenance
-                description: "The work sits under milestones no live intent names, and names no criterion: operational\nwork, allowed exactly where `majordomus intent validate` allows it."
+                description: "The work sits under milestones no live intent names and serves no criterion of a live\nintent: operational work, allowed where `majordomus intent validate` allows it."
               - type: string
                 const: refused
                 description: "A link is missing or points at nothing, or an intent it serves may not be executed yet."

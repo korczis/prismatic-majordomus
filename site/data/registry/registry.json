@@ -6,23 +6,23 @@
     "version": "0.13.1"
   },
   "registry": {
-    "fingerprint": "153ea7e434db4e4e90e7b2487581513426a5addf9ad026cb0a3db6e9d9a4beb7",
+    "fingerprint": "e2a597e804fba9a900657bbf7fd77393284ad34902199ab261dcbc7b7fc7c6e0",
     "summary": {
-      "total": 1881,
+      "total": 1882,
       "builtin": 170,
-      "declarative": 1711,
+      "declarative": 1712,
       "by_kind": {
         "command": 22,
         "query": 148,
-        "resource": 1711
+        "resource": 1712
       },
       "by_stability": {
         "behaviorally_verified": 128,
         "experimental": 34,
-        "implemented": 1719
+        "implemented": 1720
       },
       "mcp_tools": 164,
-      "mcp_resources": 1764,
+      "mcp_resources": 1765,
       "http_routes": 168,
       "cli_commands": 89,
       "modules": 84,
@@ -29422,7 +29422,7 @@
         "module": "intents",
         "kind": "query",
         "title": "Which intent a piece of work serves, or why it may not proceed",
-        "description": "Given the issue a piece of work executes, or the paths it will touch, one verdict: `serves` when every issue serves a criterion of a live intent through a link that holds and the plan of each such intent was critiqued with no blocking finding open; `maintenance` when the issues sit under milestones no live intent names and serve nothing, as `intent validate` allows; `refused` otherwise, each refusal with its issue, a cause — unknown_issue, no_issue_covers_paths, issue_serves_nothing, serves_another_intent, serves_unknown_criterion, intent_not_critiqued, open_blocking_finding — in path mode every issue judged and the worst verdict answered. The answer carries, for the intents reached and no others, the statement, the served criteria with the live state of their evidence, the invariants, non-goals and governance, the critique with its open blocking findings, and the recorded gap bounded to those criteria.",
+        "description": "Given the issue a piece of work executes, or the paths it will touch, one verdict: `serves` when no issue is refused and at least one serves a criterion of a live intent through a link that holds, the plan of each such intent critiqued with no blocking finding open (issues judged maintenance beside it do not change the verdict); `maintenance` when the issues sit under milestones no live intent names and serve nothing, as `intent validate` allows; `refused` otherwise, each refusal with its issue, a cause — unknown_issue, no_issue_covers_paths, issue_serves_nothing, serves_another_intent, serves_unknown_criterion, intent_not_critiqued, open_blocking_finding — in path mode every issue judged and the worst verdict answered. The answer carries, for the intents reached and no others, the statement, the served criteria with the live state of their evidence, the invariants, non-goals and governance, the critique with its open blocking findings, and the recorded gap bounded to those criteria.",
         "input": {
           "name": "IntentPreflightInput",
           "schema": {
@@ -29519,7 +29519,7 @@
                   {
                     "type": "string",
                     "const": "maintenance",
-                    "description": "The work sits under milestones no live intent names, and names no criterion: operational\nwork, allowed exactly where `majordomus intent validate` allows it."
+                    "description": "The work sits under milestones no live intent names and serves no criterion of a live\nintent: operational work, allowed where `majordomus intent validate` allows it."
                   },
                   {
                     "type": "string",
@@ -66416,7 +66416,7 @@
         "title": "release-record",
         "description": "Declarative objects of kind 'release-record' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 10,
+        "capabilities": 11,
         "capability_ids": []
       },
       {
@@ -66676,7 +66676,7 @@
     ]
   },
   "index": {
-    "fingerprint": "dce53bda466aa8b042a9b22afce0137de68c13321fa5515db28d1d0818980d87",
+    "fingerprint": "09e26171666601d4e3fffb909fcd664fd9a9924b9dd5149f2ad7152204c311cb",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -66723,7 +66723,7 @@
       "policy": 1,
       "profile": 4,
       "prompt": 4,
-      "release-record": 10,
+      "release-record": 11,
       "rule": 159,
       "scope": 1,
       "session": 22,
@@ -71839,7 +71839,7 @@
         "title": "Installing Majordomus",
         "path": "docs/INSTALL.md",
         "source_class": "document",
-        "bytes": 10142
+        "bytes": 10247
       },
       {
         "uri": "majordomus://document/docs/INTEGRATION.md",
@@ -78817,6 +78817,16 @@
         "bytes": 2442
       },
       {
+        "uri": "majordomus://release-record/v0.13.1",
+        "kind": "release-record",
+        "identity": "v0.13.1",
+        "title": "v0.13.1",
+        "path": ".ai/repo/releases/v0.13.1.yaml",
+        "section": "releases",
+        "source_class": "release",
+        "bytes": 2442
+      },
+      {
         "uri": "majordomus://release-record/v0.3.1",
         "kind": "release-record",
         "identity": "v0.3.1",
@@ -85406,7 +85416,7 @@
       "identity": [
         "tag"
       ],
-      "objects": 10
+      "objects": 11
     },
     {
       "name": "rule",
@@ -113323,7 +113333,7 @@
         "name": "majordomus_intent_preflight",
         "id": "intents.preflight",
         "title": "Which intent a piece of work serves, or why it may not proceed",
-        "description": "Given the issue a piece of work executes, or the paths it will touch, one verdict: `serves` when every issue serves a criterion of a live intent through a link that holds and the plan of each such intent was critiqued with no blocking finding open; `maintenance` when the issues sit under milestones no live intent names and serve nothing, as `intent validate` allows; `refused` otherwise, each refusal with its issue, a cause — unknown_issue, no_issue_covers_paths, issue_serves_nothing, serves_another_intent, serves_unknown_criterion, intent_not_critiqued, open_blocking_finding — in path mode every issue judged and the worst verdict answered. The answer carries, for the intents reached and no others, the statement, the served criteria with the live state of their evidence, the invariants, non-goals and governance, the critique with its open blocking findings, and the recorded gap bounded to those criteria.",
+        "description": "Given the issue a piece of work executes, or the paths it will touch, one verdict: `serves` when no issue is refused and at least one serves a criterion of a live intent through a link that holds, the plan of each such intent critiqued with no blocking finding open (issues judged maintenance beside it do not change the verdict); `maintenance` when the issues sit under milestones no live intent names and serve nothing, as `intent validate` allows; `refused` otherwise, each refusal with its issue, a cause — unknown_issue, no_issue_covers_paths, issue_serves_nothing, serves_another_intent, serves_unknown_criterion, intent_not_critiqued, open_blocking_finding — in path mode every issue judged and the worst verdict answered. The answer carries, for the intents reached and no others, the statement, the served criteria with the live state of their evidence, the invariants, non-goals and governance, the critique with its open blocking findings, and the recorded gap bounded to those criteria.",
         "kind": "query",
         "read_only": true,
         "input": "IntentPreflightInput",
