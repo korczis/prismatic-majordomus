@@ -366,6 +366,209 @@ fn a_stale_lease_and_a_killed_server_are_both_recovered() {
 }
 
 #[test]
+fn a_live_owner_that_answers_late_keeps_its_lease() {
+    // The race that failed CI: a probe timing out against a live but slow owner must not
+    // hand its lease to a second server. This owner is slow for its first two requests —
+    // past one probe's timeout — and answers at once after that, the way a server under
+    // load catches up; the patience a live owner gets must outlast that.
+    let f = Fixture::new();
+    let slow = TcpListener::bind("127.0.0.1:0").unwrap();
+    let slow_url = format!("http://{}", slow.local_addr().unwrap());
+    let body = serde_json::json!({
+        "name": "majordomus",
+        "repository_id": majordomus_cli::repository::identity(&f.root()),
+    })
+    .to_string();
+    let served = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    std::thread::spawn(move || {
+        for stream in slow.incoming() {
+            let Ok(mut s) = stream else { continue };
+            let body = body.clone();
+            let nth = served.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            std::thread::spawn(move || {
+                let mut request = [0u8; 4096];
+                let _ = s.read(&mut request);
+                if nth < 2 {
+                    std::thread::sleep(Duration::from_secs(3));
+                }
+                let _ = write!(
+                    s,
+                    "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{}",
+                    body.len(),
+                    body
+                );
+            });
+        }
+    });
+    let lease = lease_path(&f);
+    std::fs::create_dir_all(lease.parent().unwrap()).unwrap();
+    std::fs::write(
+        &lease,
+        format!(
+            r#"{{"schema":"majordomus-mcp-lease/v1","pid":{},"token":"late","root":"{}","url":"{}","started_at":"2026-09-10T00:00:00Z","version":"{}"}}"#,
+            std::process::id(),
+            f.root().display(),
+            slow_url,
+            majordomus_cli::VERSION
+        ),
+    )
+    .unwrap();
+    let (code, a, err) = ensure(&f.root(), &["--idle", "120"]);
+    assert_eq!(code, 0, "{a}\n{err}");
+    assert_eq!(a["standing"], "ready", "{a}");
+    assert_eq!(
+        a["started"], false,
+        "a live owner that answers late is not replaced: {a}"
+    );
+    assert_eq!(a["url"].as_str().unwrap(), slow_url, "{a}");
+    assert!(
+        matches!(LeaseFile::read(&lease), LeaseFile::Document(d) if d.url.as_deref() == Some(slow_url.as_str())),
+        "the lease still names the slow owner: nothing took it over"
+    );
+    // never `serve stop` here: the lease names this test process, and stop signals its pid
+    std::fs::remove_file(&lease).unwrap();
+}
+
+#[test]
+fn a_live_owner_that_never_answers_is_still_taken_over() {
+    // The patience a slow owner gets is bounded: a lease naming a live process whose address
+    // accepts a connection and never answers is a ghost, and the next ensure must replace it
+    // rather than wait on it forever.
+    let f = Fixture::new();
+    let wedged = TcpListener::bind("127.0.0.1:0").unwrap();
+    let wedged_url = format!("http://{}", wedged.local_addr().unwrap());
+    let lease = lease_path(&f);
+    std::fs::create_dir_all(lease.parent().unwrap()).unwrap();
+    std::fs::write(
+        &lease,
+        format!(
+            r#"{{"schema":"majordomus-mcp-lease/v1","pid":{},"token":"wedged","root":"{}","url":"{}","started_at":"2026-09-10T00:00:00Z","version":"{}"}}"#,
+            std::process::id(),
+            f.root().display(),
+            wedged_url,
+            majordomus_cli::VERSION
+        ),
+    )
+    .unwrap();
+    let t0 = Instant::now();
+    let (code, a, err) = ensure(&f.root(), &["--idle", "120"]);
+    let took = t0.elapsed();
+    assert_eq!(code, 0, "{a}\n{err}");
+    assert_eq!(a["standing"], "ready", "{a}");
+    assert_eq!(a["started"], true, "the wedged owner was taken over: {a}");
+    assert_ne!(a["url"].as_str().unwrap(), wedged_url, "{a}");
+    assert_ne!(
+        a["pid"].as_u64().unwrap(),
+        u64::from(std::process::id()),
+        "{a}"
+    );
+    assert!(
+        took < Duration::from_secs(40),
+        "taken over within ensure's wait, not after it: {took:?}"
+    );
+    let (code, out, err) = mj(&f.root(), &["serve", "stop"]);
+    assert_eq!(code, 0, "serve stop: {out}{err}");
+    drop(wedged);
+}
+
+/// A server that answers for `f`'s checkout, and a lease naming it as started from this very
+/// executable at another mtime and size: one serving code that is no longer on disk.
+/// Answers the url it serves on.
+fn a_server_of_a_replaced_executable(f: &Fixture) -> String {
+    let old = TcpListener::bind("127.0.0.1:0").unwrap();
+    let old_url = format!("http://{}", old.local_addr().unwrap());
+    let body = serde_json::json!({
+        "name": "majordomus",
+        "repository_id": majordomus_cli::repository::identity(&f.root()),
+        "leaseholder": true,
+    })
+    .to_string();
+    std::thread::spawn(move || {
+        for stream in old.incoming() {
+            let Ok(mut s) = stream else { continue };
+            let mut request = [0u8; 4096];
+            let _ = s.read(&mut request);
+            let _ = write!(
+                s,
+                "HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{}",
+                body.len(),
+                body
+            );
+        }
+    });
+    let exe = std::fs::canonicalize(BIN).unwrap();
+    let lease = lease_path(f);
+    std::fs::create_dir_all(lease.parent().unwrap()).unwrap();
+    std::fs::write(
+        &lease,
+        serde_json::json!({
+            "schema": "majordomus-mcp-lease/v1",
+            "pid": std::process::id(),
+            "token": "replaced",
+            "root": f.root(),
+            "url": old_url,
+            "started_at": "2026-09-10T00:00:00Z",
+            "version": majordomus_cli::VERSION,
+            "executable": { "path": exe, "mtime": 1, "size": 1 },
+        })
+        .to_string(),
+    )
+    .unwrap();
+    old_url
+}
+
+#[test]
+fn a_server_of_this_executable_replaced_on_disk_is_replaced() {
+    // The lease names a server that answers for this checkout, started from this very
+    // executable — but the file at that path is not the one it loaded (another mtime and
+    // size). It is serving code that is no longer on disk: `ensure` starts a server, whose
+    // election takes the superseded lease over, and the new one is what stands there.
+    let f = Fixture::new();
+    let old_url = a_server_of_a_replaced_executable(&f);
+    let (code, a, err) = ensure(&f.root(), &["--idle", "120"]);
+    assert_eq!(code, 0, "{a}\n{err}");
+    assert_eq!(a["standing"], "ready", "{a}");
+    assert_eq!(
+        a["started"], true,
+        "the superseded server was replaced: {a}"
+    );
+    assert_ne!(a["url"].as_str().unwrap(), old_url, "{a}");
+    let (code, out, err) = mj(&f.root(), &["serve", "stop"]);
+    assert_eq!(code, 0, "serve stop: {out}{err}");
+}
+
+#[test]
+fn a_replacement_that_cannot_be_started_is_an_error_not_a_ready_server() {
+    // The same superseded server, but the replacement cannot be started: its log, beside the
+    // lease, is a directory, so the started process would have nowhere to write. `ensure`
+    // says so and fails rather than reporting the superseded server as one it converged on,
+    // and the lease it could not act on is left as it was.
+    let f = Fixture::new();
+    let old_url = a_server_of_a_replaced_executable(&f);
+    let log = lease_path(&f).with_file_name("server.log");
+    std::fs::create_dir_all(&log).unwrap();
+    let (code, out, err) = mj(
+        &f.root(),
+        &["serve", "ensure", "--format", "json", "--wait", "5"],
+    );
+    assert_ne!(
+        code, 0,
+        "a server that could not be started was reported: {out}{err}"
+    );
+    assert!(
+        err.contains("server.log"),
+        "the refusal names what could not be opened: {err}"
+    );
+    let lease: Value =
+        serde_json::from_str(&std::fs::read_to_string(lease_path(&f)).unwrap()).unwrap();
+    assert_eq!(
+        lease["url"],
+        old_url.as_str(),
+        "the lease was left as it was: {lease}"
+    );
+}
+
+#[test]
 fn an_idle_server_ends_by_itself() {
     let f = Fixture::new();
     let (code, a, err) = ensure(&f.root(), &["--idle", "1"]);

@@ -15,7 +15,7 @@ the task lifecycle is `.ai/repo/workflows/task-lifecycle.md`; the default profil
 
 Linked git worktrees of this repository live at `<repository>-wt/<branch>`, derived from
 git and never chosen. A managed bb worktree is not one of them: to the worktree topology it
-is a session's scratch checkout, reported, never moved, and the pre-commit hook refuses a
-feature-branch commit from it. Commit from the project checkout, or continue in the
-branch's canonical worktree (`majordomus worktree create <branch>`). The rule is
-`project.worktree-topology`; the mechanism is `docs/WORKTREES.md`.
+is a session's scratch checkout, reported, never moved, and `majordomus worktree guard`
+refuses a feature-branch commit from it wherever the pre-commit hook asks it. Commit from
+the project checkout, or continue in the branch's canonical worktree (`majordomus worktree
+create <branch>`).

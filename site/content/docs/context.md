@@ -50,8 +50,10 @@ it for review.
 
 The effective context for a path is computed, never assembled by hand:
 
-1. The target is a repository-relative directory; a file resolves to its directory. The
-   directory must exist, and a symlink or a `..` that escapes the repository is refused.
+1. The target is a repository-relative directory; a file resolves to its directory. A path
+   that does not exist yet resolves the same way, as a file in its parent unless written
+   with a trailing `/`, and says so: a directory that does not exist holds no document, so
+   its ancestors' apply. A symlink or a `..` that escapes the repository is refused.
 2. Inside the tree, the candidates are the documents whose directory is the target or an
    ancestor of it, each admitted by its scope: `directory` only when the directories are
    equal, `subtree` when the document's directory is the target or above it, `explicit`
@@ -101,7 +103,7 @@ Validation refuses a tree in any of these states, naming the documents:
 | `illegal-override` | a descendant supersedes a document marked `final` |
 | `unknown-provider` | `providers` names a provider the policy has no projection for |
 | `invalid-manifest` | the manifest's `context` block does not parse or names nothing |
-| `refused-path` | the target escapes the repository, or does not exist |
+| `refused-path` | the target escapes the repository |
 | `missing-contract` | a directory of the tree carries no context document and nothing exempts it |
 
 </div>

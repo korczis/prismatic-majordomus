@@ -8,6 +8,7 @@ headline: The same server that answers agents renders every capability, object, 
 summary: At /cockpit the shared server lays out what a capability answered — the registry explorer, every object of the layer, the derived graphs, the directory contracts, the continuity of this checkout, the worktree topology, one health report naming the engine behind every check — and every page is complete HTML before any script runs.
 status: stable
 weight: 100
+domain: surfaces
 featured: true
 areas: [observability]
 modules: [health, design]
@@ -37,7 +38,9 @@ script and no remote origin. With JavaScript off every page still shows everythi
 
 ## What it does not do
 
-It holds no model, no catalogue and no verdict of its own, and it writes nothing: every
-capability it can reach is a read, or the one command that changes this process's memory.
+It holds no model, no catalogue and no verdict of its own. It writes nothing of its own
+either: what writes is a declared command, which the runner can reach like any other
+capability, and a command whose declared effect is `repository_mutation` carries that warning
+on its Run card before it is sent (docs/COCKPIT.md, "What writes is declared").
 It is not the published website; that is a static projection of the same registry with no
 server behind it.

@@ -8,6 +8,7 @@ headline: What a person does with the tool is one file with a scenario the tool 
 summary: A use case names the commands, rules, claims and applications it relies on and carries a scenario as data; usecase run executes it in a disposable repository and records normalised evidence; maturity is observed from the evidence; coverage of commands, guaranteed claims and MCP tools is tallied and the policy says which gaps fail.
 status: stable
 weight: 150
+domain: evidence
 featured: false
 areas: [verification, documentation]
 commands: [usecase]

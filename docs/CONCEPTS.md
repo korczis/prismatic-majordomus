@@ -68,6 +68,7 @@ every file it writes, uses these words and no others.
 | **repository environment** | one typed snapshot of what a checkout is — project, version control, toolchains, layer, workflows, providers, services, diagnostics — with provenance for every value; the shell banner is one renderer of it | `majordomus-cli env`, `GET /api/v1/environment` |
 | **effect** | what running a capability changes: `read`, `process_state` or `repository_mutation`; the last is always a command reached by `POST`, named in the MCP instructions and in OpenAPI's `x-majordomus-effect` | `docs/generated/registry.json` |
 | **feature** | a product capability as an object of the layer, naming the modules, commands, kinds, rules, claims and use cases it is made of; the site's feature pages and the interface matrix are derived from it | `.ai/repo/features/`, `majordomus-cli product matrix` |
+| **domain** | one of the few things the product controls, as an object of the layer with its promise and the failure it answers; a feature names exactly one, and the domain's members, surfaces and evidence are derived from the features that name it | `.ai/repo/features/domains/`, `majordomus-cli product domains` |
 | **intent** | what a person wants, as a typed record whose stage is derived and whose criteria are met only by evidence — not on the default branch yet | open pull requests; not a shipped concept |
 
 ## Four kinds of state

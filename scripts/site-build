@@ -100,7 +100,6 @@ mkdir -p "$SITE/static/images" "$SITE/static/js"
 cp "$ROOT/share/design/brand/social-card.png" "$SITE/static/images/social-card.png"
 if [ "$NOCSS" = 0 ]; then
   [ -d "$ROOT/node_modules/tailwindcss" ] || { echo "site-build: node_modules absent; run: npm ci" >&2; exit 12; }
-  cp "$ROOT/node_modules/flowbite/dist/flowbite.min.js" "$SITE/static/js/flowbite.min.js"
   cp "$ROOT/node_modules/alpinejs/dist/cdn.min.js" "$SITE/static/js/alpine.min.js"
   cp "$ROOT/node_modules/mermaid/dist/mermaid.min.js" "$SITE/static/js/mermaid.min.js"
   # loaded on demand by graph.js, never by the base layout: it is the largest asset on the site
@@ -161,6 +160,8 @@ jq -c --slurpfile exe "$SITE/data/generated/executable.json" '
           mcp: (.exposure.mcp.tool // null) } ]' \
   "$SITE/data/registry/registry.json" > "$SITE/static/graphs/surfaces.json"
 cp "$SITE/api-anchors.js" "$SITE/static/js/api-anchors.js"
+# the navbar's collapse and dropdowns, which Flowbite's 134 KB bundle used to do; loaded by base.html
+cp "$SITE/nav.js" "$SITE/static/js/nav.js"
 # the kit's behaviour (copy, tabs, the table of contents), loaded by the base layout
 cp "$SITE/kit.js" "$SITE/static/js/kit.js"
 if [ "$NOCSS" = 0 ]; then

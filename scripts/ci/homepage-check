@@ -15,6 +15,9 @@
 #   substance   every declared section carries at least one link or one derived figure (<dd>);
 #               a heading with nothing under it is a section in name only
 #   honesty     no feature the product model does not call stable is linked from the homepage
+#   map         the product map draws exactly the domains the product model shows, in its order,
+#               each member linked, and every problem homepage.toml names is a shown domain the
+#               page renders (ADR 0104)
 #   install     the install section carries every command data/registry/distribution.json
 #               gives a newcomer: the install, the next step and the verification
 #   runtime     no page loads the Mermaid runtime without a diagram for it to render; it is the
@@ -157,6 +160,47 @@ if linked:
     bad("honesty", "the homepage links feature(s) the product model does not call stable: " + ", ".join(f"{r} ({not_stable[r]})" for r in linked))
 else:
     ok("honesty", f"no feature the product model does not call stable is linked from the homepage ({len(not_stable)} such feature(s) in the model)")
+
+# ---------------------------------------------------------------- map
+# The product map is the product model's, both ways (ADR 0104): it draws exactly the domains
+# the model shows — stable, and named by a stable feature — in the model's order, every member
+# of each is a link inside that domain's own entry, and every problem homepage.toml puts first is a domain the map
+# shows and the page renders. A domain typed into the template, one the model gained and the
+# page did not, or a member left out each fail.
+mp = []
+if "domains" not in product:
+    mp.append("site/data/registry/product.json carries no domains key, so the map has no model to be held to (regenerate: majordomus generate)")
+shown = [d for d in (product.get("domains") or []) if d.get("status") == "stable" and d.get("features")]
+want = [d["id"] for d in shown]
+starts = [(m.start(), m.group(1)) for m in re.finditer(r'<li\b[^>]*\bdata-domain="([^"]+)"', home)]
+drawn = [did for _, did in starts]
+problems_decl = homepage_decl.get("problems") or []
+if drawn != want:
+    mp.append(f"the map draws [{', '.join(drawn)}] and the product model shows [{', '.join(want)}]")
+# each domain's own entry: from its <li data-domain> to the next one, or to the end of the
+# list it is in — a member linked elsewhere on the page is not a member shown on the map
+entry = {}
+for i, (pos, did) in enumerate(starts):
+    nxt = starts[i + 1][0] if i + 1 < len(starts) else home.find("</ol>", pos)
+    entry[did] = home[pos:nxt if nxt != -1 else len(home)]
+for d in shown:
+    block = entry.get(d["id"], "")
+    for f in d.get("features") or []:
+        if f'{f["route"]}"' not in block:
+            mp.append(f"domain {d['id']}: member {f['id']} is not linked from its own map entry")
+    if f'{d["route"]}"' not in block:
+        mp.append(f"domain {d['id']}: its page {d['route']} is not linked from its own map entry")
+for pid in problems_decl:
+    if pid not in want:
+        mp.append(f"site/data/homepage.toml names problem {pid!r}, which is not a domain the map shows")
+    elif f'data-problem="{pid}"' not in home:
+        mp.append(f"the problem of domain {pid!r} is declared and not rendered")
+if mp:
+    bad("map", "; ".join(mp))
+elif want:
+    ok("map", f"the map draws the {len(want)} domain(s) the product model shows, in its order, each member linked; {len(problems_decl)} declared problem(s) rendered")
+else:
+    ok("map", "the product model shows no domain, and the map draws none")
 
 # ---------------------------------------------------------------- install
 inst = ""

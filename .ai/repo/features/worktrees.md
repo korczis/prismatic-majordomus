@@ -8,6 +8,7 @@ headline: A branch's worktree is where git says it is, never where somebody chos
 summary: The container is the primary checkout's sibling named with -wt, a branch's worktree is the branch name under it with its hierarchy kept, both derived from git identity and registered nowhere; a pre-commit guard refuses a feature branch committed from anywhere else, and migration moves a misplaced worktree with its uncommitted work, fingerprinted before and after.
 status: stable
 weight: 40
+domain: coordination
 featured: true
 areas: [coordination, work-tracking]
 modules: [worktree]

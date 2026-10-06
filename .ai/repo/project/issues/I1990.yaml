@@ -1,0 +1,26 @@
+id: I1990
+milestone: adopter-upgrades
+title: "The pre-push check judges the refs being pushed, or says why the checkout's task binds them"
+slug: pre-push-judges-the-pushed-refs
+priority: p3
+profile: deep-work
+parallel_safe: true
+objective: "Decide whether `finish --check` in the pre-push hook should read the refs git passes on stdin and judge only those carrying the active task's branch, and implement or document the decision."
+why: "In OSCILLA, pushing branch X from a checkout whose task is on branch Y fails with different_context, so feature branches were pushed from the main checkout as a workaround. Binding a task to its branch is coherent with one task per checkout and one branch per worktree; the hook ignoring which refs are pushed is the part nobody decided."
+current_state: "lib/finish.sh ignores the hook's stdin; mj_validate_state compares the checkout's branch with the task's."
+desired_state: "The decision recorded (decision or ADR) and the hook's behaviour matching it, with a case."
+scope:
+  - "lib/finish.sh"
+  - "share/skeleton"
+  - "docs/CLI.md"
+  - "test/cases"
+acceptance_criteria:
+  - "Pushing a ref other than the task's branch is judged by the recorded rule, proven by a case"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "prepush_refs_case"
+  - "decision_recorded"
+created_at: 2026-10-04
+updated_at: 2026-10-04

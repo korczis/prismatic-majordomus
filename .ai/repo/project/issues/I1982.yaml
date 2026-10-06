@@ -1,0 +1,30 @@
+id: I1982
+milestone: adopter-upgrades
+title: "Plan stamps written before seals existed are re-sealed by a command that keeps their original times"
+slug: old-plan-stamps-are-resealed-with-their-times
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Provide a migration step (for example `plan seal --backfill`) that seals the stamps an older tool wrote, keeping each stamp's original time and recording who sealed it and when. Make the seal cutoff a per-repository value rather than one global constant."
+why: "OSCILLA had to replay every plan transition with 0.12 to satisfy sealed stamps (34f967a), so its stamps now carry the replay time and the true times survive only in git. This repository excused its own pre-seal stamps by hand with unsealed_stamps (91080bd64f). SEALED_FROM = 2026-10-01T00:00:00Z is hard-coded in lib/project.awk:45 and apps/majordomus-cli/src/plan.rs:122, so a stamp a 0.11 tool wrote after that date can never be excused."
+current_state: "No command seals or excuses existing stamps; both engines share a fixed cutoff."
+desired_state: "One command, run by `migrate --layer` from I1980, that seals or excuses every unsealed stamp with provenance and leaves the times unchanged. Both engines read the cutoff from the repository."
+scope:
+  - "lib/plan.sh"
+  - "lib/project.awk"
+  - "apps/majordomus-cli/src/plan.rs"
+  - "docs/PLANNING.md"
+  - "test/cases"
+depends_on:
+  - "I1980"
+acceptance_criteria:
+  - "A fixture with stamps written before sealing passes plan validate after the backfill, with every stamp's time unchanged"
+  - "Both engines agree on the cutoff read from the repository; case 582_the_done_guard_holds_in_both_engines still passes"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "reseal_keeps_times_case"
+  - "cutoff_per_repository"
+created_at: 2026-10-04
+updated_at: 2026-10-04

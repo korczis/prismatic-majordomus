@@ -26,6 +26,11 @@
 #                                         GitHub's own "pages build and deployment" of that commit:
 #                                         0 built, 10 errored, 12 not determinable (no gh, no token,
 #                                         or GitHub has not built it yet)
+#   scripts/pages rebuild [--branch B] [--commit SHA]
+#                                         ask GitHub to build that commit of the branch again,
+#                                         only when its build errored and nothing is building:
+#                                         0 requested or none needed, 12 the state unreadable,
+#                                         a build in flight, or the request refused
 #   scripts/pages evidence [--commit SHA] [--from DIR] [--out FILE]
 #                                         site/data/evidence.json: the CI evidence of that commit
 #                                         or its nearest ancestor (the `evidence` artifact, or DIR),
@@ -703,7 +708,7 @@ cmd_built() {
     errored)
       [ "$porcelain" = 1 ] || {
         printf "pages built: GitHub's own build of %s ERRORED: %s\n" "${commit:0:12}" "$berror" >&2
-        printf "             the branch is right and the site is not: this is GitHub's builder, not\n             this repository. Ask for the build again with: scripts/pages rebuild\n"; }
+        printf "             the branch is right and the site is not: this is GitHub's builder, not\n             this repository. Ask for the build again with: scripts/pages rebuild\n" >&2; }
       return 10 ;;
     *)
       [ "$porcelain" = 1 ] || printf "pages built: GitHub's build of %s is %s; not a verdict\n" "${commit:0:12}" "$status" >&2

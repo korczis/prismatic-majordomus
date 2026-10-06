@@ -2819,19 +2819,35 @@ pub fn mark(verdict: Verdict, unicode: bool) -> &'static str {
 /// ```
 pub fn compact(p: &Preflight, unicode: bool) -> String {
     let bullet = if unicode { "·" } else { "-" };
-    let episode = p
-        .check("session.episode")
-        .filter(|c| c.verdict.proves())
-        .and_then(|c| c.evidence.first())
-        .and_then(|e| e.observed.strip_prefix("session_id "))
-        .map(|id| format!("episode {id}"))
-        .unwrap_or_else(|| "no episode".into());
+    let episode = compact_episode(p);
     let mut out = format!(
         "{} {} {bullet} {} {bullet} {episode}\n ",
         if unicode { "◆" } else { ">" },
         p.repository,
         p.branch.as_deref().unwrap_or("detached"),
     );
+    out.push_str(&compact_checks(p, unicode));
+    out
+}
+
+/// Entry already drew the repository and branch. Keep its episode and checks without a
+/// second repository heading; the standalone compact preflight retains its own heading.
+pub(crate) fn entry_details(p: &Preflight, unicode: bool) -> String {
+    format!("  {}\n {}", compact_episode(p), compact_checks(p, unicode))
+}
+
+fn compact_episode(p: &Preflight) -> String {
+    p.check("session.episode")
+        .filter(|c| c.verdict.proves())
+        .and_then(|c| c.evidence.first())
+        .and_then(|e| e.observed.strip_prefix("session_id "))
+        .map(|id| format!("episode {id}"))
+        .unwrap_or_else(|| "no episode".into())
+}
+
+fn compact_checks(p: &Preflight, unicode: bool) -> String {
+    let bullet = if unicode { "·" } else { "-" };
+    let mut out = String::new();
     let shown = [
         ("governance.rules", "rules"),
         ("session.context", "context"),
@@ -2947,6 +2963,41 @@ mod tests {
             changed: 0,
         });
         o
+    }
+
+    /// Entry draws the repository and the branch itself, so what it adds is the episode and
+    /// the checks — the same two the standalone compact form carries under its own heading.
+    #[test]
+    fn the_entry_details_are_the_compact_form_without_its_heading() {
+        let p = derive(&at_head());
+        let full = compact(&p, true);
+        assert!(full.starts_with("◆ demo · master · no episode"), "{full}");
+        assert!(full.ends_with(&compact_checks(&p, true)), "{full}");
+        let details = entry_details(&p, false);
+        assert!(details.starts_with("  no episode\n "), "{details}");
+        assert!(!details.contains("demo"), "a second heading: {details}");
+        assert!(details.ends_with(&compact_checks(&p, false)), "{details}");
+        assert_eq!(compact_episode(&p), "no episode");
+
+        // an episode this checkout opened is named by its id, in both forms
+        let mut o = at_head();
+        o.episode = Some(EpisodeObservation {
+            id: "s-20261004-ab12".into(),
+            this_checkout: true,
+            ..Default::default()
+        });
+        let p = derive(&o);
+        assert_eq!(compact_episode(&p), "episode s-20261004-ab12");
+        assert!(compact(&p, false).contains("- episode s-20261004-ab12"));
+        assert!(entry_details(&p, true).starts_with("  episode s-20261004-ab12\n"));
+
+        // one another checkout opened proves nothing here, so it is not named
+        o.episode = Some(EpisodeObservation {
+            id: "s-elsewhere".into(),
+            this_checkout: false,
+            ..Default::default()
+        });
+        assert_eq!(compact_episode(&derive(&o)), "no episode");
     }
 
     #[test]

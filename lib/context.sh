@@ -211,11 +211,12 @@ mj_context_sections() {
       { printf '## CONTEXT DOCUMENTS (for the scope, root first; majordomus context explain <path>)\n'
         for sp in $(mj_ylist "$MJ_CUR_FLAT" scope); do
           case " $seen " in *" $sp "*) continue ;; esac; seen="$seen $sp"
-          [ -e "$MJ_ROOT/$sp" ] || { printf '%s  (absent)\n' "$sp"; continue; }
           mj_ctxd_target "$sp"; mj_ctxd_resolve "" ""
           chain="$(while IFS="$MJ_CTXD_TAB" read -r i _; do mj_ctxd "$i" id; done < "$MJ_CTXD_CHAIN" | paste -sd, - | sed 's/,/, /g')"
           rm -f "$MJ_CTXD_CHAIN" "$MJ_CTXD_EXCLUDED"
-          printf '%s  %s\n' "$sp" "${chain:-(none)}"
+          # a scope the task will create is governed by its ancestors' documents all the same
+          if [ "$MJ_CTXD_TARGET_NEW" = 1 ]; then printf '%s  %s  (not created yet)\n' "$sp" "${chain:-(none)}"
+          else printf '%s  %s\n' "$sp" "${chain:-(none)}"; fi
         done
       } > "$MJ_CTX_TMP/35.documents"
     fi
@@ -532,14 +533,10 @@ EOF
 # repository that does not integrate pull requests here must not grow a section about it.
 # Never a build, for the reason `mj_peer_board` gives.
 mj_context_integration() {
-  local bin share line
+  local line
   # shellcheck source=rust_bin.sh
   . "$MJ_LIB_DIR/rust_bin.sh"
-  bin="$(mj_rust_bin "$MJ_HOME")"
-  [ -x "$bin" ] || return 0
-  share="$(mj_rust_share "$MJ_HOME")"
-  line="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
-             "$bin" prs brief --repo "$MJ_ROOT" ) 2>/dev/null )" || return 0
+  line="$(mj_rust_prs_brief "$MJ_ROOT" "$MJ_HOME")"
   [ -n "$line" ] || return 0
   {
     printf '## INTEGRATION\n'
@@ -766,6 +763,7 @@ mj_context_docs_resolve() {
     printf ']}\n'
   else
     printf '# effective context for %s%s%s\n' "$MJ_CTXD_TARGET_DIR" "${provider:+ — provider $provider}" "${audience:+ — audience $audience}"
+    [ "$MJ_CTXD_TARGET_NEW" = 1 ] && printf '# %s does not exist yet: the documents of its ancestors apply\n' "$MJ_CTXD_TARGET"
     if [ -s "$MJ_CTXD_CHAIN" ]; then
       while IFS="$MJ_CTXD_TAB" read -r i reason; do
         printf '%02d  %-26s %-42s %-9s %-7s %s\n' "$k" "$(mj_ctxd "$i" id)" "$(mj_ctxd "$i" path)" "$(mj_ctxd "$i" scope)" "$(mj_ctxd "$i" composition)" "$(mj_ctxd_list "$i" providers | paste -sd, -)"

@@ -1,0 +1,30 @@
+id: I1981
+milestone: adopter-upgrades
+title: "A command's effect class is declared per subcommand and flag, and live scenarios judge the whole argv"
+slug: the-effect-class-is-judged-per-subcommand
+priority: p0
+profile: implementation
+parallel_safe: true
+objective: "Declare read-only or state-mutating per subcommand and per flag in share/commands.yaml where a command has both, and make live use-case validation and runs judge the full argument vector against that declaration."
+why: "share/commands.yaml classes `knowledge` state-mutating as a whole, so live scenarios refuse its read-only edges, nodes and sources. OSCILLA cb79d27 had to copy its tracked tree into a fixture to prove a knowledge edge. It classes `check` read-only with writes [], yet `check --checkpoint` writes .ai/local/state/current.yaml, so a live step can change state while being admitted as read-only."
+current_state: "lib/usecase.sh:383-386 admits a live step when the top-level command's class is read-only (commands.sh:27). The registry has no per-subcommand or per-flag effect."
+desired_state: "The registry carries an effect per subcommand and flag where they differ. lib/usecase.sh validate and run refuse a live step whose argv reaches a writing path and admit one that only reads. doctor reconciles the declaration with the dispatch as it does today."
+scope:
+  - "share/commands.yaml"
+  - "lib/usecase.sh"
+  - "lib/commands.sh"
+  - "docs/CLI.md"
+  - "test/cases/359_live_scenarios.sh"
+  - "test/fixtures/commands"
+acceptance_criteria:
+  - "A live scenario step `knowledge edges` validates and runs"
+  - "A live scenario step `check --checkpoint` is refused at validate time, naming the flag"
+  - "The command-registry reconciliation in doctor covers the new per-subcommand declarations"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "live_scenario_reads_knowledge"
+  - "live_scenario_refuses_writing_flag"
+created_at: 2026-10-04
+updated_at: 2026-10-04

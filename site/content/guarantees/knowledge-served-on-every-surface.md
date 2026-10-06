@@ -1,7 +1,7 @@
 +++
 title = "The candidates awaiting review, one record by id with its references resolved, and the derivation status of the checkout are one declaration each and answer with the same content over the command line, HTTP and MCP"
 description = "Three capabilities of the Rust executable serve the knowledge base: knowledge_base.candidates lists the records awaiting review with their branch, freshness and the policy cap; knowledge_base.record serves one record by id with every derived_from and relations reference resolved to an object of the index, an external fact of the ledger or git, or missing; knowledge_base.status reports the last derivation, the newest close, the freshness against the policy and the stopped-writer judgement. Each is declared once and answers identically over bin/majordomus-cli knowledge candidates|record|status, GET /api/v1/knowledge/..., the MCP tools majordomus_knowledge_* and the resources majordomus://knowledge-candidates and majordomus://knowledge-status. A fresh checkout with no candidate answers absence, not an error."
-weight = 222
+weight = 224
 [extra]
 claim_id = "knowledge-served-on-every-surface"
 status = "guaranteed"

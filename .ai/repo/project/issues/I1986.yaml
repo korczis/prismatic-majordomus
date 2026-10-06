@@ -1,0 +1,26 @@
+id: I1986
+milestone: adopter-upgrades
+title: "The vendored rule package says nothing that is only true of this repository"
+slug: vendored-rules-are-adopter-neutral
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Rewrite the baseline rules that describe Majordomus's own history as rules about any adopter. Mark their x-majordomus.tests as upstream proofs so an adopter is not pointed at test/cases it does not have, and give the package manifest a real source revision."
+why: "In share/standard/majordomus/rules/{adr-integrity,lifecycle-observed,completion-gates,record-changed-files,publication-currency,schema-integrity}.v1.md, 'this repository' means Majordomus. Their tests name test/cases paths absent in OSCILLA. The vendored manifest says source_revision 0.6.0 although OSCILLA vendored it from 0.12."
+current_state: "As above at e08aec8651."
+desired_state: "Adopter-neutral rule text; tests resolvable or explicitly upstream; source_revision equals the release that produced the package."
+scope:
+  - "share/standard/majordomus"
+  - "scripts/rules-package"
+  - "test/cases"
+acceptance_criteria:
+  - "No vendored rule's text names this repository's own incidents as the adopter's"
+  - "scripts/rules-package write stamps the producing release as source_revision"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "neutral_rule_text"
+  - "source_revision_stamped"
+created_at: 2026-10-04
+updated_at: 2026-10-04

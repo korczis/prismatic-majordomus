@@ -5127,15 +5127,44 @@ fn o_path(p: &OverlapPath) -> String {
 
 // ---------------------------------------------------------------- integration
 
-/// The badge status of a disposition: what the reader should feel about it.
+/// The badge status of a disposition: what the reader should feel about it. Of the cleanup
+/// lane, what cleanup closes (`redundant`, `superseded`) warns, and what only a person may
+/// close (`possibly_redundant`) is as undecided as a held one.
 fn disposition_status(d: crate::integration::PullRequestDisposition) -> &'static str {
     use crate::integration::IntegrationLane as L;
-    match d.lane() {
-        L::Ready => "ok",
-        L::Waiting => "info",
-        L::Repair => "fail",
-        L::Cleanup => "warn",
-        L::Held => "unknown",
+    use crate::integration::PullRequestDisposition as D;
+    match (d.lane(), d) {
+        (L::Cleanup, D::PossiblyRedundant) => "unknown",
+        (L::Ready, _) => "ok",
+        (L::Waiting, _) => "info",
+        (L::Repair, _) => "fail",
+        (L::Cleanup, _) => "warn",
+        (L::Held, _) => "unknown",
+    }
+}
+
+/// Words as a sentence lists alternatives: `a`, `a or b`, `a, b or c`.
+fn or_list(words: &[&str]) -> String {
+    match words.split_last() {
+        Some((last, rest)) if !rest.is_empty() => format!("{} or {last}", rest.join(", ")),
+        _ => words.join(""),
+    }
+}
+
+/// The title, with the issue and milestone the branch names when it names one.
+fn titled(a: &crate::integration::PullRequestAssessment) -> String {
+    match (&a.issue, &a.milestone) {
+        (Some(i), Some(m)) => format!("{} · {i} ({m})", a.title),
+        (Some(i), None) => format!("{} · {i}", a.title),
+        _ => a.title.clone(),
+    }
+}
+
+/// The disposition as a badge says it: `superseded` names its successor.
+fn disposition_label(a: &crate::integration::PullRequestAssessment) -> String {
+    match a.superseded_by {
+        Some(by) => format!("{} by #{by}", a.disposition.as_str()),
+        None => a.disposition.as_str().to_string(),
     }
 }
 
@@ -5143,6 +5172,69 @@ fn disposition_status(d: crate::integration::PullRequestDisposition) -> &'static
 /// taken against, the lease, the starving, and the executor's recent actions — all of it
 /// `integration.queue` and `integration.events`, the answers the command line and MCP give.
 /// Read from the last recorded observation, so a page load never reaches the forge.
+/// How fast the executor turned work into master over the trail's recent window, as
+/// `integration.queue` folds it: a median nobody measured says so instead of reading as zero.
+fn throughput_card(t: &crate::integration::metrics::IntegrationThroughput) -> El {
+    const SOURCE: &str = "integration.queue";
+    let seconds = |v: Option<u64>| match v {
+        Some(s) if s >= 3600 => format!("{:.1} h", s as f64 / 3600.0),
+        Some(s) if s >= 60 => format!("{} min", s / 60),
+        Some(s) => format!("{s} s"),
+        None => "no merge measured".to_string(),
+    };
+    let strip = el("div")
+        .class("mj-stats")
+        .child(statistic(t.merges.to_string(), "merges", SOURCE))
+        .child(statistic(
+            format!("{:.1}", t.merges_per_day),
+            "merges per day",
+            SOURCE,
+        ))
+        .child(statistic(
+            seconds(t.median_actionable_to_merged_secs),
+            "actionable to merged (median)",
+            SOURCE,
+        ))
+        .child(statistic(
+            t.ci_rounds_per_merge
+                .map_or_else(|| "no merge measured".to_string(), |n| n.to_string()),
+            "CI rounds per merge (median)",
+            SOURCE,
+        ))
+        .child(statistic(
+            seconds(t.median_cycle_secs),
+            "selection to outcome (median)",
+            SOURCE,
+        ))
+        .child(statistic(
+            t.stale_decisions.to_string(),
+            "stale decisions",
+            SOURCE,
+        ))
+        .child(statistic(
+            t.merge_failures.to_string(),
+            "failed merges",
+            SOURCE,
+        ))
+        .child(statistic(
+            t.verification_failures.to_string(),
+            "unverified merges",
+            SOURCE,
+        ));
+    card_with(
+        format!("Throughput — last {} days", t.window_days),
+        badge(
+            if t.verification_failures > 0 {
+                "fail"
+            } else {
+                "info"
+            },
+            format!("{} merged", t.merges),
+        ),
+        strip,
+    )
+}
+
 pub fn integration(ctx: &Context) -> Page {
     use crate::capability::builtin::integration::{IntegrationEvents, IntegrationStatus};
     use crate::integration::IntegrationLane;
@@ -5203,6 +5295,8 @@ pub fn integration(ctx: &Context) -> Page {
         "integration.queue",
     );
 
+    let throughput = throughput_card(&status.throughput);
+
     let lease = match &status.lease {
         None => badge("ok", "free"),
         Some(l) if l.stale => badge(
@@ -5216,8 +5310,14 @@ pub fn integration(ctx: &Context) -> Page {
             Some(h) => badge(
                 "info",
                 format!(
-                    "held by pid {} on {}, renewed {} s ago",
-                    h.pid, h.host, l.renewed_seconds_ago
+                    "held by pid {} on {}, renewed {} s ago — {}",
+                    h.pid,
+                    h.host,
+                    l.renewed_seconds_ago,
+                    match &h.mesh_claim {
+                        Some(key) => format!("across machines by mesh claim {key}"),
+                        None => "this clone only".to_string(),
+                    }
                 ),
             ),
             None => badge("info", "held (holder unreadable)"),
@@ -5271,17 +5371,38 @@ pub fn integration(ctx: &Context) -> Page {
             (
                 "Policy",
                 Node::Element(el("span").text(format!(
-                    "required checks: {}; review required: {}; merge method: {}",
+                    "required checks: {}; review required: {}; merge method: {}; branches up to date: {}",
                     q.policy
                         .required_checks
                         .as_ref()
-                        .map(|c| if c.is_empty() { "none".to_string() } else { c.join(", ") })
+                        .map(|c| if c.is_empty() {
+                            "none — nothing can be ready".to_string()
+                        } else {
+                            c.iter().map(ToString::to_string).collect::<Vec<_>>().join(", ")
+                        })
                         .unwrap_or_else(|| "unread — nothing can be ready".into()),
                     q.policy
-                        .reviews_required
-                        .map(|r| r.to_string())
+                        .review_policy
+                        .map(|r| if r.approvals == 0 && !r.code_owners {
+                            "no".to_string()
+                        } else {
+                            format!(
+                                "{} approval(s){}",
+                                r.approvals.max(1),
+                                if r.code_owners { ", a code owner's" } else { "" }
+                            )
+                        })
                         .unwrap_or_else(|| "unread".into()),
-                    q.policy.merge_method
+                    q.policy
+                        .merge_method
+                        .as_deref()
+                        .unwrap_or("none — merge commits are not allowed, nothing can be ready"),
+                    match q.policy.up_to_date_required {
+                        Some(true) => "required",
+                        Some(false) =>
+                            "not required — only the executor's parent check guards a merge (D8)",
+                        None => "unread",
+                    }
                 ))),
             ),
         ]),
@@ -5305,6 +5426,13 @@ pub fn integration(ctx: &Context) -> Page {
         )
     };
 
+    // the held lane's dispositions, from the one list of them rather than a copy here
+    let held: Vec<&str> = crate::integration::PullRequestDisposition::ALL
+        .iter()
+        .filter(|d| d.lane() == IntegrationLane::Held)
+        .map(|d| d.as_str())
+        .collect();
+    let held_note = format!("Nothing is held: no pull request is {}.", or_list(&held));
     // one card per lane, in the lanes' own order; an empty lane says so rather than vanishing
     let lanes = [
         (
@@ -5315,7 +5443,7 @@ pub fn integration(ctx: &Context) -> Page {
         (
             IntegrationLane::Waiting,
             "Waiting",
-            "Nothing is waiting on a refresh, a check, a review or a dependency.",
+            "Nothing is waiting on a refresh, a check, a review, a dependency or a successor.",
         ),
         (
             IntegrationLane::Repair,
@@ -5325,13 +5453,10 @@ pub fn integration(ctx: &Context) -> Page {
         (
             IntegrationLane::Cleanup,
             "Cleanup",
-            "No open pull request's work is on master already.",
+            "No open pull request's work is on master already, and none was superseded by one \
+             that landed.",
         ),
-        (
-            IntegrationLane::Held,
-            "Held",
-            "Nothing is held: no draft, blocking label, other base or unknown.",
-        ),
+        (IntegrationLane::Held, "Held", held_note.as_str()),
     ];
     let mut lane_cards = Vec::new();
     for (lane, title, empty_note) in lanes {
@@ -5365,13 +5490,13 @@ pub fn integration(ctx: &Context) -> Page {
                     ),
                     cell(badge(
                         disposition_status(a.disposition),
-                        a.disposition.as_str(),
+                        disposition_label(a),
                     )),
                     text_cell(word(&a.risk)),
-                    text_cell(a.reasons.join(", ")),
+                    text_cell(crate::integration::reason_list(&a.reasons, ", ")),
                     text_cell(a.next_action.clone().unwrap_or_default()),
                     text_cell(waited.unwrap_or_default()),
-                    text_cell(a.title.clone()),
+                    text_cell(titled(a)),
                 ])
             })
             .collect();
@@ -5417,7 +5542,7 @@ pub fn integration(ctx: &Context) -> Page {
         .map(|e| {
             row(vec![
                 text_cell(e.at.clone()),
-                cell(mono(&e.action)),
+                cell(mono(e.action.as_str())),
                 text_cell(e.pr.map(|n| format!("#{n}")).unwrap_or_else(|| "-".into())),
                 text_cell(e.detail.clone()),
                 text_cell(e.actor.clone()),
@@ -5443,6 +5568,7 @@ pub fn integration(ctx: &Context) -> Page {
     let mut grid = el("div")
         .class("mj-grid")
         .child(statistics)
+        .child(throughput)
         .child(identity)
         .child(diagnostics);
     for c in lane_cards {
@@ -7348,10 +7474,13 @@ mod tests {
             checks: vec![crate::integration::CheckObservation {
                 name: "ci".into(),
                 state,
+                ..Default::default()
             }],
             review_decision: String::new(),
             auto_merge: false,
             cross_repository: false,
+            latest_reviews: Vec::new(),
+            review_requests: Vec::new(),
         }
     }
 
@@ -7379,13 +7508,16 @@ mod tests {
                 base_sha: sha.clone(),
                 observed_at: "2026-10-01T00:00:00Z".into(),
                 required_checks: Some(vec!["ci".into()]),
-                reviews_required: Some(false),
+                review_policy: Some(Default::default()),
+                up_to_date_required: Some(true),
                 merge_methods: vec!["merge".into()],
                 pull_requests: vec![
                     observed_pr(1, &sha, CheckRunState::Passed),
                     observed_pr(2, &sha, CheckRunState::Failed),
                     observed_pr(3, &sha, CheckRunState::Pending),
                 ],
+                resolved: Default::default(),
+                delete_branch_on_merge: None,
             },
         )
         .expect("an observation");
@@ -7394,16 +7526,15 @@ mod tests {
             drain::IntegrationEvent {
                 at: "2026-10-01T00:01:00Z".into(),
                 actor: "test".into(),
-                action: "merge_succeeded".into(),
                 pr: Some(9),
                 master_before: Some(sha.clone()),
                 head_sha: Some(sha.clone()),
                 master_after: Some(sha.clone()),
-                reasons: vec![],
                 detail: "merged #9".into(),
-                passed_over: vec![],
+                ..drain::IntegrationEvent::of(drain::IntegrationAction::MergeSucceeded)
             },
-        );
+        )
+        .expect("recorded");
         let lease = drain::IntegrationLease::acquire(&root, "master").expect("the lease");
 
         let ctx = repo.context().expect("a context");
@@ -7422,7 +7553,167 @@ mod tests {
             !html.contains("prs refresh records one"),
             "an observed queue says nothing is observed"
         );
+        // the throughput card counts the merge the trail recorded, inside its window
+        assert!(html.contains("Throughput — last 7 days"), "{html}");
+        // a lease without a mesh claim says it guards this clone only
+        assert!(html.contains("this clone only"), "{html}");
         drop(lease);
+
+        // a lease taken with a claim across machines names the claim
+        struct Granting;
+        impl crate::integration::exclusive::Mesh for Granting {
+            fn ask(&self, _: &str, target: &str, _: Option<Value>) -> Result<(u16, Value), String> {
+                Ok(match target {
+                    "/api/v1/mesh/claims" => (200, json!({ "key": "s1/c-page" })),
+                    _ => (200, json!({})),
+                })
+            }
+        }
+        let lease = crate::integration::exclusive::acquire_through(
+            &root,
+            "master",
+            Some(Box::new(Granting)),
+        )
+        .expect("the lease with a claim");
+        let html = integration(&repo.context().expect("a context"))
+            .main
+            .render();
+        assert!(
+            html.contains("across machines by mesh claim s1/c-page"),
+            "{html}"
+        );
+        drop(lease);
+    }
+
+    /// The throughput card renders every figure the fold measured, and a median nobody could
+    /// measure as such — never as a zero; an unverified merge turns its badge red.
+    #[test]
+    fn the_throughput_card_says_what_it_measured_and_what_it_could_not() {
+        use crate::integration::metrics::IntegrationThroughput;
+        let measured = IntegrationThroughput {
+            window_days: 7,
+            merges: 3,
+            merges_per_day: 3.0 / 7.0,
+            median_actionable_to_merged_secs: Some(7200),
+            ci_rounds_per_merge: Some(2),
+            median_cycle_secs: Some(90),
+            stale_decisions: 1,
+            merge_failures: 0,
+            verification_failures: 1,
+            unreadable_events: 0,
+        };
+        let html = throughput_card(&measured).render();
+        for said in [
+            "Throughput — last 7 days",
+            "3 merged",
+            "0.4",
+            "2.0 h",
+            "1 min",
+            "stale decisions",
+            "unverified merges",
+        ] {
+            assert!(html.contains(said), "{said}: {html}");
+        }
+        assert!(html.contains("mj-badge--fail"), "{html}");
+
+        let quiet = IntegrationThroughput {
+            merges: 0,
+            merges_per_day: 0.0,
+            median_actionable_to_merged_secs: None,
+            ci_rounds_per_merge: None,
+            median_cycle_secs: Some(42),
+            verification_failures: 0,
+            ..measured
+        };
+        let html = throughput_card(&quiet).render();
+        assert!(html.contains("no merge measured"), "{html}");
+        assert!(html.contains("42 s"), "{html}");
+        assert!(
+            html.contains("mj-badge--info") && !html.contains("mj-badge--fail"),
+            "{html}"
+        );
+    }
+
+    #[test]
+    fn every_disposition_has_a_badge_and_a_successor_is_named_on_it() {
+        use crate::integration::PullRequestDisposition as D;
+        for d in D::ALL {
+            let status = disposition_status(d);
+            assert!(
+                ["ok", "info", "fail", "warn", "unknown"].contains(&status),
+                "{d:?}: {status}"
+            );
+        }
+        assert_eq!(disposition_status(D::PossiblyRedundant), "unknown");
+        assert_eq!(disposition_status(D::Redundant), "warn");
+        assert_eq!(or_list(&["held"]), "held");
+        assert_eq!(or_list(&["a", "b", "c"]), "a, b or c");
+    }
+
+    /// The policy line says what the base requires in each of the forms the forge reports it.
+    #[test]
+    fn the_integration_page_says_each_policy_the_forge_reports() {
+        use crate::integration::{
+            store_observation, CheckRunState, ForgeObservation, ReviewPolicy, OBSERVATION_SCHEMA,
+        };
+        let (repo, sha) = integration_repository();
+        let root = repo.root().to_path_buf();
+        let observe = |required: Option<Vec<crate::integration::RequiredCheck>>,
+                       review: Option<ReviewPolicy>,
+                       up_to_date: Option<bool>| {
+            // #1 is superseded by #2, which landed: its head is master's
+            let mut pr = observed_pr(1, &sha, CheckRunState::Passed);
+            pr.body = "Superseded by #2".into();
+            let landed = crate::integration::forge::ResolvedPullRequest {
+                merged: true,
+                head_sha: sha.clone(),
+                body: String::new(),
+            };
+            store_observation(
+                &root,
+                &ForgeObservation {
+                    schema: OBSERVATION_SCHEMA,
+                    repository: "owner/repo".into(),
+                    base: "master".into(),
+                    base_sha: sha.clone(),
+                    observed_at: "2026-10-01T00:00:00Z".into(),
+                    required_checks: required,
+                    review_policy: review,
+                    up_to_date_required: up_to_date,
+                    merge_methods: vec!["merge".into()],
+                    pull_requests: vec![pr],
+                    resolved: [(2, landed)].into(),
+                    delete_branch_on_merge: None,
+                },
+            )
+            .expect("an observation");
+            integration(&repo.context().expect("a context"))
+                .main
+                .render()
+        };
+        let html = observe(
+            Some(Vec::new()),
+            Some(ReviewPolicy {
+                approvals: 2,
+                code_owners: true,
+                dismiss_stale: false,
+            }),
+            Some(false),
+        );
+        assert!(html.contains("none — nothing can be ready"), "{html}");
+        assert!(html.contains("2 approval(s), a code owner"), "{html}");
+        assert!(html.contains("not required — only the executor"), "{html}");
+        assert!(html.contains("superseded by #2"), "{html}");
+        let html = observe(None, None, None);
+        assert!(html.contains("review required: unread"), "{html}");
+        assert!(html.contains("branches up to date: unread"), "{html}");
+        let one = ReviewPolicy {
+            approvals: 1,
+            code_owners: false,
+            dismiss_stale: false,
+        };
+        let html = observe(None, Some(one), Some(true));
+        assert!(html.contains("review required: 1 approval(s);"), "{html}");
     }
 
     /// One `peers.list` answer, from the JSON the capability serves: the page renders what
@@ -7646,5 +7937,21 @@ mod tests {
             !html.contains("Workers"),
             "a failure rendered a board: {html}"
         );
+    }
+}
+
+#[cfg(test)]
+mod titled_tests {
+    use super::*;
+
+    #[test]
+    fn the_title_carries_the_issue_and_milestone_the_branch_names() {
+        let q = crate::integration::issue_test_queue(&["feature/I0810-x"]);
+        let mut a = q.assessments[0].clone();
+        assert_eq!(titled(&a), "change 1");
+        a.issue = Some("I0810".into());
+        assert_eq!(titled(&a), "change 1 · I0810");
+        a.milestone = Some("M003".into());
+        assert_eq!(titled(&a), "change 1 · I0810 (M003)");
     }
 }

@@ -1,6 +1,6 @@
 //! The `integration` module: the pull-request integration queue, projected (ADR 0101).
 //!
-//! Three questions, all read-only and all offline. Each renders the queue
+//! Four questions, all read-only and all offline but the dry-run proof. Each renders the queue
 //! [`crate::integration::queue_of`] builds from the last recorded forge observation and
 //! this clone's fetched master — the value `majordomus prs status` prints — so the HTTP
 //! route, the MCP tool, the Cockpit and the command line cannot disagree. None reaches the
@@ -16,10 +16,15 @@ use serde::{Deserialize, Serialize};
 
 use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
-use crate::capability::model::{CachePolicy, CliExposure, Exposure, Stability};
+use crate::capability::model::{
+    BenchmarkPolicy, CachePolicy, CliExposure, Exposure, Stability, WaiverReason,
+};
 use crate::capability::module::ModuleDescriptor;
 use crate::integration::{
-    drain::{IntegrationEvent, IntegrationLease, IntegrationLeaseState},
+    drain::{
+        CleanupItem, IntegrationEvent, IntegrationLease, IntegrationLeaseState, LeftBranchReport,
+    },
+    metrics::{self, IntegrationThroughput},
     IntegrationQueue, PullRequestAssessment,
 };
 use crate::{capability, module};
@@ -42,7 +47,64 @@ pub struct IntegrationStatus {
     /// The last merge the executor recorded, from the audit trail.
     #[serde(default)]
     pub last_merge: Option<IntegrationEvent>,
+    /// How fast the executor has turned work into master over the last
+    /// [`THROUGHPUT_WINDOW_DAYS`] days, folded from the same trail.
+    pub throughput: IntegrationThroughput,
 }
+
+/// What cleanup would do, decided offline: the pull requests it would close or leave for a
+/// person, from the recorded observation, and the last branch report `prs cleanup` recorded.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct IntegrationCleanup {
+    /// Whether a forge observation is recorded in this checkout.
+    pub observed: bool,
+    /// Why there is no plan, when there is none.
+    pub reason: Option<String>,
+    /// When the forge was observed, when it was.
+    pub observed_at: Option<String>,
+    /// The plan, in rank order: `would_close` for what is provably on master or superseded by
+    /// a successor that landed, `left_for_a_person` for weak evidence and for what a person
+    /// marked obsolete. Nothing here closes anything.
+    pub items: Vec<CleanupItem>,
+    /// The branches merged pull requests left on origin, as `prs cleanup` last read them;
+    /// `None` when it never ran in this checkout. Never read from the network here.
+    pub branches: Option<LeftBranchReport>,
+    /// How old that report is, in seconds, when its time reads.
+    pub branches_age_seconds: Option<u64>,
+}
+
+/// [`IntegrationCleanup`] for the checkout at `root`, at `now` (seconds since the epoch):
+/// [`crate::integration::drain::cleanup_plan`] over [`crate::integration::queue_of`], which
+/// writes nothing, and the recorded branch report with its age. No network, no write.
+pub fn cleanup_status(root: &Path, now: u64) -> IntegrationCleanup {
+    let branches = crate::integration::drain::recorded_left_branches(root);
+    let branches_age_seconds = branches
+        .as_ref()
+        .and_then(|b| crate::peers::epoch_seconds(&b.read_at))
+        .and_then(|at| u64::try_from(at).ok())
+        .map(|at| now.saturating_sub(at));
+    match crate::integration::queue_of(root) {
+        Ok(q) => IntegrationCleanup {
+            observed: true,
+            reason: None,
+            observed_at: Some(q.observed_at.clone()),
+            items: crate::integration::drain::cleanup_plan(&q),
+            branches,
+            branches_age_seconds,
+        },
+        Err(reason) => IntegrationCleanup {
+            observed: false,
+            reason: Some(reason),
+            observed_at: None,
+            items: Vec::new(),
+            branches,
+            branches_age_seconds,
+        },
+    }
+}
+
+/// The window [`IntegrationStatus::throughput`] is folded over.
+pub const THROUGHPUT_WINDOW_DAYS: u64 = 7;
 
 /// One pull request to explain.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -91,10 +153,17 @@ fn root(ctx: &Context) -> &Path {
 
 fn integration_queue(ctx: &Context, _: Empty) -> Result<IntegrationStatus, CapabilityError> {
     let root = root(ctx);
-    let last_merge = crate::integration::drain::events(root)
-        .into_iter()
+    let trail = crate::integration::drain::events(root);
+    let last_merge = trail
+        .iter()
         .rev()
-        .find(|e| e.action == "merge_succeeded");
+        .find(|e| e.action == crate::integration::drain::IntegrationAction::MergeSucceeded)
+        .cloned();
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    let throughput = metrics::throughput(&trail, now, THROUGHPUT_WINDOW_DAYS);
     Ok(match crate::integration::queue_of(root) {
         Ok(q) => IntegrationStatus {
             observed: true,
@@ -102,6 +171,7 @@ fn integration_queue(ctx: &Context, _: Empty) -> Result<IntegrationStatus, Capab
             lease: IntegrationLease::read(root, &q.base).ok().flatten(),
             queue: Some(q),
             last_merge,
+            throughput,
         },
         Err(reason) => IntegrationStatus {
             observed: false,
@@ -109,6 +179,7 @@ fn integration_queue(ctx: &Context, _: Empty) -> Result<IntegrationStatus, Capab
             queue: None,
             lease: None,
             last_merge,
+            throughput,
         },
     })
 }
@@ -156,18 +227,33 @@ fn integration_events(ctx: &Context, _: Empty) -> Result<IntegrationEvents, Capa
     })
 }
 
+fn integration_cleanup(ctx: &Context, _: Empty) -> Result<IntegrationCleanup, CapabilityError> {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0);
+    Ok(cleanup_status(root(ctx), now))
+}
+
+fn integration_prove_dry_run(
+    ctx: &Context,
+    _: Empty,
+) -> Result<crate::integration::proof::DryRunProof, CapabilityError> {
+    crate::integration::proof::prove_dry_run(root(ctx)).map_err(CapabilityError::Refused)
+}
+
 /// The `integration` module.
 pub fn module() -> ModuleDescriptor {
     module! {
         id: "integration",
         title: "Pull-request integration",
-        description: "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network.",
+        description: "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), redundant (its work is on master already), superseded (by a declared successor that landed, named in superseded_by), possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing.",
         stability: Stability::Experimental,
         capabilities: [
             capability! {
                 id: "integration.queue",
                 title: "The integration queue",
-                description: "The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection's required checks and reviews, the blocking labels, the merge method), every open pull request's assessment in rank order — an actionable one with how long it has waited for the executor and how often another was chosen instead — the next merge, the pull requests that need master brought in, the starving ones, the tallies by disposition and lane, and the diagnostics, a stale observation first; beside it, who holds the base branch's integration lease and the last merge the executor recorded. `observed: false` with the reason when this checkout has recorded no observation.",
+                description: "The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection's required checks and reviews, the label policy, the merge method: a merge commit, or none when the repository allows none), every open pull request's assessment in rank order — an actionable one with how long it has waited for the executor and how often another was chosen instead — the next merge, the pull requests that need master brought in, the starving ones, the tallies by disposition and lane, and the diagnostics, a stale observation first; beside it, who holds the base branch's integration lease and the last merge the executor recorded. `observed: false` with the reason when this checkout has recorded no observation.",
                 input: Empty,
                 output: IntegrationStatus,
                 stability: Stability::Experimental,
@@ -183,7 +269,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "integration.explain",
                 title: "Why one pull request is where it is",
-                description: "One pull request's assessment — disposition, lane, reasons, next action, the master and head it was decided against, required checks, review, relation to master, dependencies, overlaps, risk with its factors, and every piece of evidence — with its rank in the queue. `found: false` with the reason when it is not open or nothing is observed.",
+                description: "One pull request's assessment — disposition, lane, reasons, every gate of the policy with whether it passed, next action, the master and head it was decided against and when the forge was observed, required checks, review, relation to master, dependencies, overlaps, risk with its factors, and every piece of evidence — with its rank in the queue. `found: false` with the reason when it is not open or nothing is observed.",
                 input: PullRequestExplainInput,
                 output: IntegrationExplanation,
                 stability: Stability::Experimental,
@@ -199,7 +285,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "integration.events",
                 title: "The integration audit trail",
-                description: "Every action this checkout's executor recorded, oldest first: selections, stale decisions, merge attempts, merges with the master before and after, refusals, refreshes, verification failures and closures, each with its actor, the pull request, the head and the decision's reasons.",
+                description: "Every action the repository's executors recorded, from any of its worktrees, oldest first: the lease taken and given back, observations, selections, stale decisions, each act's attempt before it and its outcome after — merges with the master before and after, refusals, refreshes, verification failures and closures — each with a typed action, its actor, the pull request, the head, the decision's reasons and, on an act, the evidence it was decided on. The trail is one file under the common git directory, so every worktree reads the same one.",
                 input: Empty,
                 output: IntegrationEvents,
                 stability: Stability::Experimental,
@@ -212,6 +298,39 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Disabled,
                 handler: integration_events,
             },
+            capability! {
+                id: "integration.cleanup",
+                title: "What cleanup would do",
+                description: "The cleanup plan, decided offline from the recorded observation: every open pull request cleanup would close — redundant (its work is on master already) or superseded (by a declared successor that landed) — and every one it leaves for a person — possibly redundant (weak evidence) or obsolete (a person marked it, owner decision D3) — each with its disposition and the reasons that decided it, in rank order; beside it, the branches merged pull requests left on origin as `majordomus prs cleanup` last read them, with when and how long ago. A read: it closes, deletes and asks the forge for nothing — `majordomus prs cleanup` reads the forge and `--apply` closes. `observed: false` with the reason when this checkout has recorded no observation.",
+                input: Empty,
+                output: IntegrationCleanup,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_pull_requests_cleanup"),
+                    http: get("/api/v1/pull-requests/cleanup"),
+                    cli: None,
+                },
+                tags: ["integration", "pull-requests", "cleanup"],
+                cache: CachePolicy::Disabled,
+                handler: integration_cleanup,
+            },
+            capability! {
+                id: "integration.prove_dry_run",
+                title: "Proof that a dry run moves nothing",
+                description: "Runs the executor's non-mutating cycle — refresh, plan, drain --dry-run and cleanup without --apply — between two snapshots of everything it could move if it were wrong: every ref origin serves, every open pull request's number, head, state and labels, the integration audit trail, the executor's lease, and every local ref outside the two namespaces the refresh mirrors. `ok` is true exactly when the snapshots are equal and refs/remotes/origin/<base> and every refs/majordomus/prs/<n> equal what origin serves. A read that reaches the network: the refresh asks the forge through the GitHub CLI and fetches the base and the pull-request heads, and like every read it rewrites the observation, relation and summary caches. It merges, closes and pushes nothing, and takes no input that could make it.",
+                input: Empty,
+                output: crate::integration::proof::DryRunProof,
+                stability: Stability::Experimental,
+                exposure: Exposure {
+                    mcp: mcp("majordomus_pull_requests_prove_dry_run"),
+                    http: get("/api/v1/pull-requests/prove-dry-run"),
+                    cli: Some(CliExposure { path: vec!["prs".into(), "prove-dry-run".into()] }),
+                },
+                tags: ["integration", "pull-requests", "proof", "live"],
+                cache: CachePolicy::Disabled,
+                benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::ExternalDependency },
+                handler: integration_prove_dry_run,
+            },
         ],
     }
 }
@@ -221,7 +340,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn every_capability_is_an_offline_query() {
+    fn every_capability_is_a_query_and_none_caches() {
         let m = module();
         let ids: Vec<&str> = m
             .capabilities
@@ -233,7 +352,9 @@ mod tests {
             [
                 "integration.queue",
                 "integration.explain",
-                "integration.events"
+                "integration.events",
+                "integration.cleanup",
+                "integration.prove_dry_run"
             ]
         );
         for e in m.capabilities {

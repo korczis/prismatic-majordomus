@@ -12,7 +12,7 @@
 #
 #   <page relative to pub>  <check>  <detail>
 #
-# checks: viewport description main h1 placeholder rustdoc inlinestyle initflowbite mermaid
+# checks: viewport description main h1 placeholder rustdoc inlinestyle navjs mermaid
 #         gridcols fixedwidth nojs duplicateid
 #
 # A page with nothing wrong produces no row. The detail is what site-check prints after the
@@ -32,7 +32,7 @@ function flush() {
   if (placeholder)      print rel "\tplaceholder\t"
   if (rustdoc != "")    print rel "\trustdoc\t" rustdoc
   if (inline_style)     print rel "\tinlinestyle\t"
-  if (n_initflowbite != 1) print rel "\tinitflowbite\t" n_initflowbite
+  if (n_navjs != 1) print rel "\tnavjs\t" n_navjs
   if (has_mermaid && !has_mermaid_js) print rel "\tmermaid\t"
   if (gridcols)   print rel "\tgridcols\t"
   if (fixedwidth) print rel "\tfixedwidth\t"
@@ -52,7 +52,7 @@ FNR == 1 {
   file = FILENAME; rel = file
   sub("^" pub "/", "", rel)
   has_viewport = has_description = has_main = 0
-  n_h1 = n_initflowbite = nojs = 0
+  n_h1 = n_navjs = nojs = 0
   placeholder = inline_style = gridcols = fixedwidth = 0
   rustdoc = ""
   has_mermaid = has_mermaid_js = 0
@@ -72,7 +72,7 @@ FNR == 1 {
   if (index(line, "js/mermaid.min.js"))          has_mermaid_js = 1
   if (index(line, " style=\""))                  inline_style = 1
   n_h1 += count(line, "<h1")
-  n_initflowbite += count(line, "initFlowbite()")
+  n_navjs += count(line, "js/nav.js")
 
   # An unrendered template delimiter, outside <pre> blocks and outside code spans: what Zola
   # produced inside a <pre> or a <code> is rendered output, not a template it failed to expand.
