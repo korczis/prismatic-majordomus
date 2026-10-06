@@ -147,6 +147,14 @@ that must stay true, and the satisfaction criteria that settle it, each naming t
 that decides it. An intent names the milestones that realise it. It stores no status: its
 stage follows the plan and its satisfaction follows the evidence ledger.
 
+Beside the stage, every surface carries the intent's **verdict** (ADR 0107), which the criteria
+derive alone and the plan never touches: `satisfied` when every criterion is met, `unsatisfied`
+when a `test` or `claim` criterion — a kind the ledger or the claim join can settle — is not,
+and `unknown` when only `command` or `deployment` criteria are unmet, or none is declared. Its
+`reasons` name each unmet criterion with its evidence kind and state. The stage keeps its
+meaning, so `satisfied` still requires every milestone DONE; the verdict can read `satisfied`
+while a milestone is open, and nothing a finished task does moves it.
+
 That relates an intent to milestones and to evidence. What relates a *criterion* to the work
 meant to make it true is `serves` on the issue (ADR 0073):
 
@@ -254,7 +262,11 @@ realization reports `closed_work_contradicted` naming the criterion, and exits 1
 there: its stage falls back to `verifying`, and nothing about the intent was written for it to.
 `closed_work_unproven` (every milestone DONE, a criterion never evidenced) and
 `criterion_closed_unmet` (every issue serving a criterion DONE, the criterion unmet) are
-warnings, as is live work that serves no intent (`work_serves_no_intent`).
+warnings, as is live work that serves no intent (`work_serves_no_intent`). Where the stage and
+the verdict disagree, two more warnings name it once per intent: `evidence_ahead_of_plan` (the
+verdict is `satisfied` while the stage is `planned` or `executing`) and
+`closed_work_not_satisfied` (every milestone DONE, the verdict `unsatisfied` or `unknown`, with
+the criteria holding it back).
 
 In the Cockpit, `/cockpit/intents` lists every intent with its stage and the work realising it,
 and `/cockpit/intents/<id>` shows one: each criterion with its evidence state, linked to the test

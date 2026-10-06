@@ -75,6 +75,108 @@ fn the_command_line_http_and_mcp_answer_the_same_intents() {
     assert_eq!(status, 404);
 }
 
+/// The verdict of the fixture intent as the command line, HTTP and MCP each answer it, for both
+/// the list and the record: every one of the six must be the same value.
+fn verdict_everywhere(f: &Fixture) -> Value {
+    let (_, list) = cli_json(f, &["intent", "list"]);
+    let (_, shown) = cli_json(f, &["intent", "show", "fixture-intent"]);
+    let served = Served::start(&f.root(), &[]);
+    let (_, http_list) = served.get("/api/v1/intents");
+    let (_, http_record) = served.get("/api/v1/intents/record?id=fixture-intent");
+    let mcp_list = tool(f, "majordomus_intents", json!({}));
+    let mcp_record = tool(
+        f,
+        "majordomus_intent_record",
+        json!({ "id": "fixture-intent" }),
+    );
+    let cli = shown["verdict"].clone();
+    assert!(cli.is_object(), "intent show carries no verdict: {shown:#}");
+    for (surface, v) in [
+        ("intent list", &list["intents"][0]["verdict"]),
+        ("GET /api/v1/intents", &http_list["intents"][0]["verdict"]),
+        ("GET /api/v1/intents/record", &http_record["verdict"]),
+        ("majordomus_intents", &mcp_list["intents"][0]["verdict"]),
+        ("majordomus_intent_record", &mcp_record["verdict"]),
+    ] {
+        assert_eq!(
+            v, &cli,
+            "{surface} and `intent show` disagree on the verdict"
+        );
+    }
+    for (surface, counts) in [
+        ("intent list", &list["verdicts"]),
+        ("GET /api/v1/intents", &http_list["verdicts"]),
+        ("majordomus_intents", &mcp_list["verdicts"]),
+    ] {
+        assert_eq!(
+            counts,
+            &json!({ cli["state"].as_str().unwrap(): 1 }),
+            "{surface}"
+        );
+    }
+    assert_eq!(
+        shown["stage"], "planned",
+        "the stage is the plan's and never moves here"
+    );
+    cli
+}
+
+#[test]
+fn the_command_line_http_and_mcp_agree_on_the_verdict_the_evidence_alone_derives() {
+    let f = Fixture::new();
+    // nothing recorded: the test the ledger can settle is unmet, so the evidence says no
+    assert_eq!(
+        verdict_everywhere(&f),
+        json!({ "state": "unsatisfied", "reasons": [
+            { "criterion": "the-case-passes", "evidence": "test", "state": "not_run" }] })
+    );
+
+    // a passing run, recorded, satisfies the verdict while the milestone is still open
+    let id = TestId::of("test/cases/00_x.sh").unwrap();
+    let source = std::fs::read(f.path(&id.source())).unwrap();
+    let mut ledger = Ledger::empty();
+    ledger.merge([Execution {
+        test: id.as_string(),
+        runner: Runner::Suite,
+        source: id.source(),
+        outcome: Outcome::Pass,
+        seconds: 1,
+        commit: f.git(&["rev-parse", "HEAD"]).trim().to_string(),
+        working_tree: "clean".into(),
+        digest: digest_of(&source),
+        at: "2026-10-05T00:00:00Z".into(),
+        origin: Origin::Local,
+        command: id.reproduce(),
+        run: None,
+    }]);
+    ledger.save(&f.root()).unwrap();
+    f.commit("record a passing run");
+    assert_eq!(
+        verdict_everywhere(&f),
+        json!({ "state": "satisfied", "reasons": [] })
+    );
+
+    // a command criterion the ledger cannot settle leaves the evidence unable to answer
+    f.write(
+        ".ai/repo/project/intents/fixture-intent.yaml",
+        &common::INTENT.replace(
+            "    ref: test/cases/00_x.sh\n",
+            "    ref: test/cases/00_x.sh
+  - id: it-ships
+    criterion: The fixture ships
+    evidence: command
+    ref: just ship
+",
+        ),
+    );
+    f.commit("a command criterion");
+    assert_eq!(
+        verdict_everywhere(&f),
+        json!({ "state": "unknown", "reasons": [
+            { "criterion": "it-ships", "evidence": "command", "state": "not_derivable" }] })
+    );
+}
+
 #[test]
 fn a_criterion_is_met_only_by_a_recorded_passing_run_of_the_test_that_is_there() {
     let f = Fixture::new();
