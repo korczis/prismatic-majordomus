@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.13.0"
+    "version": "0.13.1"
   },
   "route": "/evidence/",
   "kinds": [
@@ -10861,6 +10861,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:108b_scope_after_trunk_fast_forward",
+          "path": "test/cases/108b_scope_after_trunk_fast_forward.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:131_completion_gates",
           "path": "test/cases/131_completion_gates.sh",
           "category": "e2e"
@@ -10923,6 +10929,12 @@
           "via": "negative",
           "test": "suite:108_scope_after_trunk_merge",
           "path": "test/cases/108_scope_after_trunk_merge.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:108b_scope_after_trunk_fast_forward",
+          "path": "test/cases/108b_scope_after_trunk_fast_forward.sh",
           "category": "e2e"
         },
         {
@@ -11823,8 +11835,20 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:132b_a_new_branch_owes_no_records_yet",
+          "path": "test/cases/132b_a_new_branch_owes_no_records_yet.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:14_wiring_dispatcher",
           "path": "test/cases/14_wiring_dispatcher.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:14c_wiring_from_a_linked_worktree",
+          "path": "test/cases/14c_wiring_from_a_linked_worktree.sh",
           "category": "e2e"
         },
         {
@@ -11927,6 +11951,12 @@
           "via": "negative",
           "test": "suite:132_health_sees_a_stopped_writer",
           "path": "test/cases/132_health_sees_a_stopped_writer.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:132b_a_new_branch_owes_no_records_yet",
+          "path": "test/cases/132b_a_new_branch_owes_no_records_yet.sh",
           "category": "e2e"
         },
         {
@@ -24033,6 +24063,7 @@
     "crate:integration_repair",
     "crate:lease_busy",
     "crate:lease_declared",
+    "crate:live_own_writes",
     "crate:mcp_stdio",
     "crate:mesh_compaction",
     "crate:metadata_contract",
@@ -24068,6 +24099,7 @@
     "suite:131_freshness_has_an_age",
     "suite:133_plan_transition",
     "suite:139_release_record_schema",
+    "suite:15b_an_installed_tool_runs_what_its_bootstrap_names",
     "suite:180_publication_is_observed",
     "suite:181_local_is_never_published",
     "suite:182_sessions_published_are_the_records",
@@ -24156,6 +24188,9 @@
     "suite:763_a_tag_older_than_the_record_practice_is_a_note",
     "suite:790_the_kit_is_one_vocabulary_and_its_page_renders_all_of_it",
     "suite:791_a_screen_is_composed_of_the_kit_and_of_real_data",
+    "suite:820_a_prose_heading_reads_as_a_heading",
+    "suite:828_a_server_holding_its_lease_is_not_reaped",
+    "suite:829_ci_fails_on_a_skip",
     "suite:85_deployment_bind",
     "suite:86_deployment_projections",
     "suite:910_nothing_merges_around_the_integrator",
