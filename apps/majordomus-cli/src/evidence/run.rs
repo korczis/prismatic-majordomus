@@ -699,6 +699,36 @@ mod tests {
             .starts_with("the ci run ci:x:1:1 recorded on ffffffffffff failed"));
     }
 
+    /// The newest recording is the one named, whatever order the records arrived in; two
+    /// recorded in the same second are told apart by their ids in the canonical order, so
+    /// `ci:x:1:10` is later than `ci:x:1:9` and not, as a byte comparison has it, earlier.
+    #[test]
+    fn the_newest_failing_record_is_the_one_named() {
+        let failing = |id: &str, at: &str| {
+            record_of(
+                id,
+                at,
+                R,
+                vec![exec("suite:01_a", "fail", R, "clean", "ci")],
+            )
+        };
+        let named = |records: &[EvidenceRunRecord]| {
+            let detail = weaken(ProofState::Proven, records).detail.unwrap();
+            detail.split(" recorded on ").next().unwrap().to_string()
+        };
+        let older = failing("ci:x:1:1", "2026-09-27T00:00:00Z");
+        let newer = failing("ci:x:2:1", "2026-09-28T00:00:00Z");
+        assert_eq!(
+            named(&[older.clone(), newer.clone()]),
+            "the ci run ci:x:2:1"
+        );
+        assert_eq!(named(&[newer, older]), "the ci run ci:x:2:1");
+        let nine = failing("ci:x:1:9", "2026-09-27T00:00:00Z");
+        let ten = failing("ci:x:1:10", "2026-09-27T00:00:00Z");
+        assert_eq!(named(&[ten.clone(), nine.clone()]), "the ci run ci:x:1:10");
+        assert_eq!(named(&[nine, ten]), "the ci run ci:x:1:10");
+    }
+
     #[test]
     fn inputs_unchanged_is_capped_too() {
         let r = record_of(
