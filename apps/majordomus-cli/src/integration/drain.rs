@@ -570,6 +570,7 @@ impl FailureClass {
         } else if r.contains("rejected")
             || r.contains("fetch first")
             || r.contains("non-fast-forward")
+            || r.contains("moved since it was observed")
         {
             FailureClass::Stale
         } else {

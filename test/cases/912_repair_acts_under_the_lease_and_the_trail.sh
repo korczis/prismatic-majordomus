@@ -4,8 +4,9 @@
 # (ADR 0101; rule project.land-and-publish clause 2): it holds the base branch's integration
 # lease for the whole act, writes the act to the trail before it reaches the remote, brings
 # master in as a merge commit with the derived driver and a fresh derive, and pushes a
-# fast-forward leased on the head it observed. It never merges into master, and a branch
-# somebody pushed to meanwhile is refused, never overwritten.
+# fast-forward of the head it observed with a plain push, never a forced one, only while
+# origin still serves that head. It never merges into master, and a branch somebody pushed
+# to meanwhile is refused, never overwritten.
 #
 # Against a scripted forge and a local bare origin. The repository's scripts/derive is the
 # moment between the attempt and the push, so the fixture's derive regenerates the derived
@@ -19,7 +20,8 @@
 #                                                                           author's push stands
 #   #5  the same, but its author rewinds the branch to master's ancestor while the derive runs:
 #       the repair's merge would then be a fast-forward of what the branch holds, and only the
-#       lease on the observed head refuses it          -> refused as stale, the rewind stands
+#       check that origin still serves the observed head refuses it
+#                                                      -> refused as stale, the rewind stands
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null 2>&1 || skip "jq is not installed"
 RB="$(rust_bin)" || rust_bin_exit $?
@@ -160,8 +162,8 @@ r="$LAST_OUT"
 [ "$(git -C "$W" worktree list | wc -l | tr -d ' ')" = 1 ] || { echo "    a scratch worktree was left behind:"; git -C "$W" worktree list; exit 1; }
 
 # ---------------------------------------------------------------- #5: rewound meanwhile
-# A plain push would take this: the repair's merge descends from the rewound tip. The lease on
-# the head that was observed is what refuses it.
+# A plain push would take this: the repair's merge descends from the rewound tip. The check
+# that origin still serves the head that was observed (git ls-remote) is what refuses it.
 : > "$TRAIL"
 H5="$(remote feature/5)"
 echo "feature/5 $M0" > "$STATE/move"

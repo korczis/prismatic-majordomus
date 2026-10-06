@@ -641,6 +641,7 @@ fn moved_during_the_act(push: &str, to: impl Fn(&Forge, &str) -> String) -> (For
         )),
         "{detail}"
     );
+    assert_eq!(refused["class"], "stale", "{refused}");
     assert_eq!(
         f.origin_ref("refs/heads/feature/1"),
         moved,
