@@ -7,6 +7,43 @@ Every entry below is derived: a section per release the layer records, its decis
 
 Current version: **0.13.2**
 
+## v0.13.2 — 2026-10-06
+
+### Fixed
+
+- **providers**: the worktree guard is said in as many lines as before (`65940e375`)
+- **context**: a path not created yet resolves from its ancestors (`e7e032f02`)
+- **decision**: a supersession names one recorded decision, and list marks it (`261cc27a7`)
+- **cli**: an installed majordomus runs the commands its bootstraps name (`ed11f797c`)
+- **check**: scope leaves out the commits a fast-forward or rebase brought from the trunk (`5f42631e7`)
+- **doctor**: the lifecycle doctrine counts the episodes of the branch it judges (`3f2076d13`)
+- **doctor**: a linked worktree's hooks are found where git keeps them (`e39a83664`)
+
+### Tests
+
+- **cli**: the forwarding case accepts the executable under either name (`25313dbc9`)
+- **doctor**: the linked-worktree case leaves when it cannot enter the worktree (`aa652b90a`)
+
+### Housekeeping
+
+- **release**: release 0.13.2 (`b0944db92`)
+- **derive**: the batch follows #783 at its budget-sized worktree paragraph (`515bd83c3`)
+- **derive**: the batch's projections follow master with the v0.13.1 record (`84a324cfa`)
+- **release**: record v0.13.1 and the metadata it publishes (`35535728e`)
+- **derive**: the batch's projections follow master at v0.13.1 (`3419a1c1f`)
+- **derive**: the batch's projections follow its seven members (`3abde34fb`)
+- **plan**: an adopter's upgrade is a planned outcome, I1980-I1991 (`1aaf9f86d`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.13.2-aarch64-apple-darwin.tar.gz (`5e98d56a3e2e`)
+- `macos-x86_64` — majordomus-v0.13.2-x86_64-apple-darwin.tar.gz (`02cd63725644`)
+- `linux-x86_64-gnu` — majordomus-v0.13.2-x86_64-unknown-linux-gnu.tar.gz (`60280e182b2d`)
+- `linux-x86_64-musl` — majordomus-v0.13.2-x86_64-unknown-linux-musl.tar.gz (`3a55f5dda405`)
+- `linux-aarch64-gnu` — majordomus-v0.13.2-aarch64-unknown-linux-gnu.tar.gz (`3903322ee961`)
+- `linux-aarch64-musl` — majordomus-v0.13.2-aarch64-unknown-linux-musl.tar.gz (`4e1c67dd8d30`)
+
+
 ## v0.13.1 — 2026-10-04
 
 ### Fixed
