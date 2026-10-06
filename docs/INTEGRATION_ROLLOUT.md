@@ -26,6 +26,7 @@ sh install.sh --version 0.14.0 --prefix <prefix> --install-dir <prefix>/bin
 of the tree. The forge's master was `5908234ce001f521e22c2534f837ee939b70a7c6`, the commit that
 records the 0.14.0 release.
 
+<!-- majordomus:unrun this is the transcript of one run against the real forge, which needs the network and a token; the integration tests run these commands against a scripted one -->
 ```bash
 cd <repo>
 majordomus prs refresh            # exit 0
