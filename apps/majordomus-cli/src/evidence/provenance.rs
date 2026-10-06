@@ -250,7 +250,8 @@ pub fn stamp(root: &Path, req: &StampRequest) -> Result<EvidenceProvenance> {
         }
         None => None,
     };
-    outputs.sort();
+    // the canonical order: the excluded outputs are shown, so they read as every list does
+    crate::order::canonical(&mut outputs);
     outputs.dedup();
 
     let refs: Vec<&str> = outputs.iter().map(String::as_str).collect();

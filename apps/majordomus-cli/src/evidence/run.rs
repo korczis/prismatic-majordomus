@@ -266,6 +266,15 @@ pub struct EvidenceRunRecord {
     pub executions: Vec<Execution>,
 }
 
+/// A recording is ordered by when it was recorded, and its id — unique, the [`run_id`] —
+/// makes the order total when two were recorded in the same second. RFC 3339 UTC reads in
+/// time order under the canonical comparison, its digit runs being fixed-width.
+impl crate::order::Ordered for EvidenceRunRecord {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.recorded_at, &self.id)
+    }
+}
+
 /// Counts over a run's executions: how many, of each outcome, of each runner. A zero is
 /// absent rather than 0.
 ///
@@ -419,8 +428,10 @@ pub fn weaken_by_records(
     let (Some(execution), Some(presented)) = (execution, presented_commit) else {
         return judgement;
     };
+    // newest first: the canonical order, which is oldest first, read backwards
     let mut ordered: Vec<&EvidenceRunRecord> = records.iter().collect();
-    ordered.sort_by(|a, b| (&b.recorded_at, &b.id).cmp(&(&a.recorded_at, &a.id)));
+    crate::order::canonical(&mut ordered);
+    ordered.reverse();
     let named: Vec<String> = ordered
         .iter()
         .map(|r| format!("the {} run {}", origin_word(r.origin), r.id))
