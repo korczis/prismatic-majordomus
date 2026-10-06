@@ -64,6 +64,17 @@ impl MulticastProvider {
     /// The port the provider listens and announces on: the declared port, or — when the
     /// declaration says `0` — the free one the system chose at the bind, so nothing races
     /// between finding a port and taking it. `0` before the provider has started.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::config::MulticastConfig;
+    /// use majordomus_cli::mesh::multicast::MulticastProvider;
+    ///
+    /// let provider = MulticastProvider::new(MulticastConfig {
+    ///     port: 0,
+    ///     ..MulticastConfig::default()
+    /// });
+    /// assert_eq!(provider.port(), 0, "nothing is bound before the provider starts");
+    /// ```
     pub fn port(&self) -> u16 {
         self.bound.load(Ordering::SeqCst)
     }
