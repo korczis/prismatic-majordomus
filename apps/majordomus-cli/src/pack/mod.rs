@@ -58,9 +58,9 @@ use std::process::Stdio;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 
 use crate::discovery::glob::Glob;
+use crate::order::{canonical, OrderKey, Ordered};
 
 pub use shard::{fence_for, verify, PackVerdict};
 
@@ -110,7 +110,15 @@ pub(crate) fn machine_paths(root: &Path) -> Vec<String> {
     out.into_iter().collect()
 }
 
-/// Why a tracked file is not in the pack.
+/// Why a tracked file is not in the pack. Every reason but `derived` and `excluded` is
+/// final: no `include` of a profile re-admits a link, a gitlink, an artifact or a binary.
+///
+/// ```
+/// use majordomus_cli::pack::DropReason;
+/// assert_eq!(DropReason::Binary.as_str(), "binary");
+/// let json = serde_json::to_string(&DropReason::Artifact).unwrap();
+/// assert_eq!(json, "\"artifact\"");
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -131,7 +139,13 @@ pub enum DropReason {
 }
 
 impl DropReason {
-    /// The word a report and the manifest use.
+    /// The word a report and the manifest use, the same as its serialised form.
+    ///
+    /// ```
+    /// use majordomus_cli::pack::DropReason;
+    /// assert_eq!(DropReason::Link.as_str(), "link");
+    /// assert_eq!(DropReason::Excluded.as_str(), "excluded");
+    /// ```
     pub fn as_str(self) -> &'static str {
         match self {
             DropReason::Worktree => "worktree",
@@ -149,7 +163,18 @@ impl DropReason {
     }
 }
 
-/// The shard limits of a profile: the reader's own limits on what it can index.
+/// The shard limits of a profile: the reader's own limits on what it can index, the file
+/// count of a project and the tokens one file of it may hold.
+///
+/// ```
+/// use majordomus_cli::pack::{Profiles, ShardLimits};
+/// let p = Profiles::parse(
+///     "default: a\nprofiles:\n  - id: a\n    shards:\n      max_count: 20\n      max_tokens: 900\n",
+/// )
+/// .unwrap();
+/// let want = ShardLimits { max_count: 20, max_tokens: 900 };
+/// assert_eq!(p.profile(None).unwrap().shards, Some(want));
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ShardLimits {
     /// The most files the pack may hold, the index included.
@@ -158,7 +183,16 @@ pub struct ShardLimits {
     pub max_tokens: u64,
 }
 
-/// One profile of `share/archive.yaml`, as far as the pack reads it.
+/// One profile of `share/archive.yaml`, as far as the pack reads it: what it drops, what it
+/// re-admits, what the index says first and the limits it is cut into.
+///
+/// ```
+/// use majordomus_cli::pack::{PackProfile, Profiles};
+/// let p = Profiles::parse("default: a\nprofiles:\n  - id: a\n    derived: drop\n").unwrap();
+/// let a: &PackProfile = p.profile(Some("a")).unwrap();
+/// assert_eq!(a.derived, "drop");
+/// assert!(a.shards.is_none(), "a profile without limits cannot be packed");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct PackProfile {
     /// The profile's id.
@@ -181,7 +215,19 @@ pub struct PackProfile {
     pub shards: Option<ShardLimits>,
 }
 
-/// What the distribution declares once for every profile.
+/// What the distribution declares once for every profile: the default, the binary
+/// extensions, the artifact paths, and the profiles themselves.
+///
+/// ```
+/// use majordomus_cli::pack::Profiles;
+/// let p = Profiles::parse(
+///     "default: a\nbinary_extensions: [\"PNG\"]\nprofiles:\n  - id: a\n  - id: b\n",
+/// )
+/// .unwrap();
+/// assert_eq!(p.default, "a");
+/// assert!(p.binary_extensions.contains("png"), "extensions are compared in lower case");
+/// assert_eq!(p.profiles.len(), 2);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Profiles {
     /// The profile used when none is named.
@@ -257,7 +303,25 @@ impl From<RawProfile> for PackProfile {
 }
 
 impl Profiles {
-    /// Read the profiles from the share directory, then the repository's overlay.
+    /// Read the profiles from the share directory, then the repository's overlay
+    /// (`.ai/repo/archive.yaml`), whose profiles replace the shipped ones of the same id.
+    ///
+    /// ```
+    /// use majordomus_cli::pack::Profiles;
+    /// let dir = tempfile::tempdir().unwrap();
+    /// let (share, root) = (dir.path().join("share"), dir.path().join("repo"));
+    /// std::fs::create_dir_all(&share).unwrap();
+    /// std::fs::create_dir_all(root.join(".ai/repo")).unwrap();
+    /// std::fs::write(share.join("archive.yaml"), "default: a\nprofiles:\n  - id: a\n").unwrap();
+    /// std::fs::write(
+    ///     root.join(".ai/repo/archive.yaml"),
+    ///     "profiles:\n  - id: a\n    title: ours\n",
+    /// )
+    /// .unwrap();
+    /// let p = Profiles::load(&share, &root).unwrap();
+    /// assert_eq!(p.profile(None).unwrap().title, "ours");
+    /// assert!(Profiles::load(&root, &root).is_err(), "no archive.yaml there");
+    /// ```
     pub fn load(share: &Path, root: &Path) -> Result<Profiles, String> {
         let path = share.join(PROFILES);
         let text = std::fs::read_to_string(&path)
@@ -274,14 +338,15 @@ impl Profiles {
     }
 
     /// Put a repository's profiles over the shipped ones: the same id replaces, whole.
-    pub fn overlay(&mut self, local: Vec<PackProfile>) {
+    pub(crate) fn overlay(&mut self, local: Vec<PackProfile>) {
         for p in local.into_iter().rev() {
             self.profiles.retain(|q| q.id != p.id);
             self.profiles.insert(0, p);
         }
     }
 
-    /// Parse the profiles file.
+    /// Parse the text of a profiles file, without the overlay: the `default`, the two lists
+    /// and the profiles, with extensions lowered so that `PNG` and `png` are one.
     ///
     /// ```
     /// use majordomus_cli::pack::Profiles;
@@ -304,7 +369,16 @@ impl Profiles {
         })
     }
 
-    /// The named profile, or the default one.
+    /// The named profile, or the default one when no name is given; an unknown name is
+    /// an error that lists the profiles there are.
+    ///
+    /// ```
+    /// use majordomus_cli::pack::Profiles;
+    /// let p = Profiles::parse("default: a\nprofiles:\n  - id: a\n  - id: b\n").unwrap();
+    /// assert_eq!(p.profile(Some("b")).unwrap().id, "b");
+    /// let e = p.profile(Some("c")).unwrap_err();
+    /// assert!(e.contains("a, b"), "{e}");
+    /// ```
     pub fn profile(&self, id: Option<&str>) -> Result<&PackProfile, String> {
         let id = id.unwrap_or(&self.default);
         self.profiles.iter().find(|p| p.id == id).ok_or_else(|| {
@@ -313,14 +387,35 @@ impl Profiles {
         })
     }
 
-    /// Is `path` one of the distribution's artifact paths?
+    /// Is `path` one of the distribution's artifact paths: build output, a cache or a
+    /// worktree container that was committed by accident?
+    ///
+    /// ```
+    /// use majordomus_cli::pack::Profiles;
+    /// let p = Profiles::parse(
+    ///     "default: a\nartifact_paths: [\"**/target/**\"]\nprofiles:\n  - id: a\n",
+    /// )
+    /// .unwrap();
+    /// assert!(p.is_artifact("apps/x/target/debug/y.rs"));
+    /// assert!(!p.is_artifact("apps/x/src/target.rs"));
+    /// ```
     pub fn is_artifact(&self, path: &str) -> bool {
         self.artifact_paths
             .iter()
             .any(|g| Glob::new(g).matches(path))
     }
 
-    /// Does `path` carry an extension on the binary list?
+    /// Does `path` carry an extension on the binary list? The extension is the file name's
+    /// last, compared in lower case; a dot file such as `.png` has none.
+    ///
+    /// ```
+    /// use majordomus_cli::pack::Profiles;
+    /// let p = Profiles::parse("default: a\nbinary_extensions: [png]\nprofiles:\n  - id: a\n")
+    ///     .unwrap();
+    /// assert!(p.has_binary_extension("site/logo.PNG"));
+    /// assert!(!p.has_binary_extension("dir.png/readme.md"));
+    /// assert!(!p.has_binary_extension(".png"));
+    /// ```
     pub fn has_binary_extension(&self, path: &str) -> bool {
         let name = path.rsplit('/').next().unwrap_or(path);
         match name.rsplit_once('.') {
@@ -346,7 +441,7 @@ pub fn is_text(content: &[u8]) -> bool {
 
 /// One entry of the git index.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct IndexEntry {
+pub(crate) struct IndexEntry {
     /// The mode, as git prints it (`100644`, `100755`, `120000`, `160000`).
     pub mode: String,
     /// The blob or commit id.
@@ -357,7 +452,7 @@ pub struct IndexEntry {
 
 /// A file the pack carries, with its content.
 #[derive(Debug, Clone)]
-pub struct Selected {
+pub(crate) struct Selected {
     /// The index entry.
     pub entry: IndexEntry,
     /// The content of the index's blob.
@@ -366,7 +461,33 @@ pub struct Selected {
     pub tokens: u64,
 }
 
-/// One planned shard.
+/// One planned shard: a Markdown file of the pack, the paths it carries from first to last,
+/// and what it weighs in bytes and in tokens.
+///
+/// The examples below plan a repository holding `main.rs` and a `logo.png` whose content is
+/// binary, with a distribution whose `chat` profile has limits and whose `bare` one has none.
+///
+/// ```
+/// use majordomus_cli::pack::{plan, ShardPlan};
+/// # use std::process::Command;
+/// # let dir = tempfile::tempdir().unwrap();
+/// # let (root, share) = (dir.path().join("repo"), dir.path().join("share"));
+/// # std::fs::create_dir_all(&root).unwrap();
+/// # std::fs::create_dir_all(&share).unwrap();
+/// # std::fs::write(share.join("archive.yaml"), "default: chat\nprofiles:\n  - id: chat\n    binary: drop\n    artifacts: drop\n    shards:\n      max_count: 5\n      max_tokens: 4000\n  - id: bare\n    binary: drop\n").unwrap();
+/// # let git = |a: &[&str]| assert!(Command::new("git").arg("-C").arg(&root)
+/// #     .args(["-c", "user.email=t@example.com", "-c", "user.name=t"]).args(a)
+/// #     .status().unwrap().success());
+/// # git(&["init", "-q"]);
+/// # std::fs::write(root.join("main.rs"), "fn main() {}\n").unwrap();
+/// # std::fs::write(root.join("logo.png"), b"\x89PNG\0\x01").unwrap();
+/// # git(&["add", "-A"]);
+/// # git(&["commit", "-q", "-m", "one"]);
+/// let planned = plan(&root, &share, None);
+/// let first: &ShardPlan = &planned.plan.shards[0];
+/// assert_eq!((first.files, first.first.as_str(), first.last.as_str()), (1, "main.rs", "main.rs"));
+/// assert!(first.file.ends_with(".md") && first.tokens > 0);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ShardPlan {
     /// The file name inside the pack.
@@ -385,6 +506,30 @@ pub struct ShardPlan {
 
 /// One dropped file the report names. Derived files are counted, not listed: they are a
 /// function of files that are in the pack.
+///
+/// The examples below plan a repository holding `main.rs` and a `logo.png` whose content is
+/// binary, with a distribution whose `chat` profile has limits and whose `bare` one has none.
+///
+/// ```
+/// use majordomus_cli::pack::{plan, DropReason, DroppedFile};
+/// # use std::process::Command;
+/// # let dir = tempfile::tempdir().unwrap();
+/// # let (root, share) = (dir.path().join("repo"), dir.path().join("share"));
+/// # std::fs::create_dir_all(&root).unwrap();
+/// # std::fs::create_dir_all(&share).unwrap();
+/// # std::fs::write(share.join("archive.yaml"), "default: chat\nprofiles:\n  - id: chat\n    binary: drop\n    artifacts: drop\n    shards:\n      max_count: 5\n      max_tokens: 4000\n  - id: bare\n    binary: drop\n").unwrap();
+/// # let git = |a: &[&str]| assert!(Command::new("git").arg("-C").arg(&root)
+/// #     .args(["-c", "user.email=t@example.com", "-c", "user.name=t"]).args(a)
+/// #     .status().unwrap().success());
+/// # git(&["init", "-q"]);
+/// # std::fs::write(root.join("main.rs"), "fn main() {}\n").unwrap();
+/// # std::fs::write(root.join("logo.png"), b"\x89PNG\0\x01").unwrap();
+/// # git(&["add", "-A"]);
+/// # git(&["commit", "-q", "-m", "one"]);
+/// let dropped = plan(&root, &share, None).plan.dropped_files;
+/// let want = DroppedFile { path: "logo.png".into(), reason: DropReason::Binary };
+/// assert_eq!(dropped, [want]);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct DroppedFile {
     /// The path.
@@ -393,7 +538,40 @@ pub struct DroppedFile {
     pub reason: DropReason,
 }
 
-/// A reason the pack cannot be built as planned.
+/// A dropped file is listed by its path; the path is unique in the index, so it is both the
+/// label and the identity.
+impl Ordered for DroppedFile {
+    fn order_key(&self) -> OrderKey<'_> {
+        OrderKey::plain(&self.path, &self.path)
+    }
+}
+
+/// A reason the pack cannot be built as planned, or a written pack is not what its
+/// manifest says: a stable code, the path when there is one, and the remedy.
+///
+/// The examples below plan a repository holding `main.rs` and a `logo.png` whose content is
+/// binary, with a distribution whose `chat` profile has limits and whose `bare` one has none.
+///
+/// ```
+/// use majordomus_cli::pack::{plan, PackFinding};
+/// # use std::process::Command;
+/// # let dir = tempfile::tempdir().unwrap();
+/// # let (root, share) = (dir.path().join("repo"), dir.path().join("share"));
+/// # std::fs::create_dir_all(&root).unwrap();
+/// # std::fs::create_dir_all(&share).unwrap();
+/// # std::fs::write(share.join("archive.yaml"), "default: chat\nprofiles:\n  - id: chat\n    binary: drop\n    artifacts: drop\n    shards:\n      max_count: 5\n      max_tokens: 4000\n  - id: bare\n    binary: drop\n").unwrap();
+/// # let git = |a: &[&str]| assert!(Command::new("git").arg("-C").arg(&root)
+/// #     .args(["-c", "user.email=t@example.com", "-c", "user.name=t"]).args(a)
+/// #     .status().unwrap().success());
+/// # git(&["init", "-q"]);
+/// # std::fs::write(root.join("main.rs"), "fn main() {}\n").unwrap();
+/// # std::fs::write(root.join("logo.png"), b"\x89PNG\0\x01").unwrap();
+/// # git(&["add", "-A"]);
+/// # git(&["commit", "-q", "-m", "one"]);
+/// let findings: Vec<PackFinding> = plan(&root, &share, Some("bare")).plan.findings;
+/// assert_eq!(findings[0].code, "pack.no_limits");
+/// assert!(findings[0].path.is_none() && !findings[0].remedy.is_empty());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct PackFinding {
     /// A stable code: `pack.file_too_large`, `pack.too_many_shards`, `pack.index_too_large`, `pack.leak`,
@@ -422,6 +600,34 @@ impl PackFinding {
 
 /// The plan of one pack: what it carries, what it leaves out and why, how it is cut into
 /// shards, and whether it may be built.
+///
+/// The examples below plan a repository holding `main.rs` and a `logo.png` whose content is
+/// binary, with a distribution whose `chat` profile has limits and whose `bare` one has none.
+///
+/// ```
+/// use majordomus_cli::pack::{plan, PackPlan};
+/// # use std::process::Command;
+/// # let dir = tempfile::tempdir().unwrap();
+/// # let (root, share) = (dir.path().join("repo"), dir.path().join("share"));
+/// # std::fs::create_dir_all(&root).unwrap();
+/// # std::fs::create_dir_all(&share).unwrap();
+/// # std::fs::write(share.join("archive.yaml"), "default: chat\nprofiles:\n  - id: chat\n    binary: drop\n    artifacts: drop\n    shards:\n      max_count: 5\n      max_tokens: 4000\n  - id: bare\n    binary: drop\n").unwrap();
+/// # let git = |a: &[&str]| assert!(Command::new("git").arg("-C").arg(&root)
+/// #     .args(["-c", "user.email=t@example.com", "-c", "user.name=t"]).args(a)
+/// #     .status().unwrap().success());
+/// # git(&["init", "-q"]);
+/// # std::fs::write(root.join("main.rs"), "fn main() {}\n").unwrap();
+/// # std::fs::write(root.join("logo.png"), b"\x89PNG\0\x01").unwrap();
+/// # git(&["add", "-A"]);
+/// # git(&["commit", "-q", "-m", "one"]);
+/// let p: PackPlan = plan(&root, &share, None).plan;
+/// assert!(p.measured && p.passes && p.index_matches_head);
+/// assert_eq!((p.tracked, p.selected), (2, 1));
+/// assert_eq!(p.dropped["binary"], 1);
+/// // an unknown profile is not measured, and not measured is never a pass
+/// let p: PackPlan = plan(&root, &share, Some("nope")).plan;
+/// assert!(!p.measured && !p.passes);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct PackPlan {
     /// Whether the tree could be read at all. `false` is not a pass.
@@ -483,17 +689,69 @@ impl PackPlan {
     }
 }
 
-/// A plan with the content it was made from, which is what [`build`] writes.
+/// A plan with the content it was made from, which is what [`build`] writes: the verdict, the
+/// profile it was made with, and the selected blobs in shard order.
+///
+/// The examples below plan a repository holding `main.rs` and a `logo.png` whose content is
+/// binary, with a distribution whose `chat` profile has limits and whose `bare` one has none.
+///
+/// ```
+/// use majordomus_cli::pack::{plan, Planned};
+/// # use std::process::Command;
+/// # let dir = tempfile::tempdir().unwrap();
+/// # let (root, share) = (dir.path().join("repo"), dir.path().join("share"));
+/// # std::fs::create_dir_all(&root).unwrap();
+/// # std::fs::create_dir_all(&share).unwrap();
+/// # std::fs::write(share.join("archive.yaml"), "default: chat\nprofiles:\n  - id: chat\n    binary: drop\n    artifacts: drop\n    shards:\n      max_count: 5\n      max_tokens: 4000\n  - id: bare\n    binary: drop\n").unwrap();
+/// # let git = |a: &[&str]| assert!(Command::new("git").arg("-C").arg(&root)
+/// #     .args(["-c", "user.email=t@example.com", "-c", "user.name=t"]).args(a)
+/// #     .status().unwrap().success());
+/// # git(&["init", "-q"]);
+/// # std::fs::write(root.join("main.rs"), "fn main() {}\n").unwrap();
+/// # std::fs::write(root.join("logo.png"), b"\x89PNG\0\x01").unwrap();
+/// # git(&["add", "-A"]);
+/// # git(&["commit", "-q", "-m", "one"]);
+/// let planned: Planned = plan(&root, &share, Some("chat"));
+/// assert_eq!(planned.profile.id, "chat");
+/// assert_eq!(planned.plan.profile, planned.profile.id);
+/// ```
 pub struct Planned {
     /// The verdict and the shape.
     pub plan: PackPlan,
     /// The profile it was planned with.
     pub profile: PackProfile,
     /// The selected files, in shard order, with their shard's index into `plan.shards`.
-    pub files: Vec<(usize, Selected)>,
+    pub(crate) files: Vec<(usize, Selected)>,
 }
 
-/// Plan a pack of the repository at `root` with a profile of the distribution at `share`.
+/// Plan a pack of the repository at `root` with a profile of the distribution at `share`:
+/// the index's blobs, selected by the profile, cut into shards and judged. Nothing is
+/// written; a tree or a profile that cannot be read is an unmeasured plan, never a pass.
+///
+/// The examples below plan a repository holding `main.rs` and a `logo.png` whose content is
+/// binary, with a distribution whose `chat` profile has limits and whose `bare` one has none.
+///
+/// ```
+/// use majordomus_cli::pack::plan;
+/// # use std::process::Command;
+/// # let dir = tempfile::tempdir().unwrap();
+/// # let (root, share) = (dir.path().join("repo"), dir.path().join("share"));
+/// # std::fs::create_dir_all(&root).unwrap();
+/// # std::fs::create_dir_all(&share).unwrap();
+/// # std::fs::write(share.join("archive.yaml"), "default: chat\nprofiles:\n  - id: chat\n    binary: drop\n    artifacts: drop\n    shards:\n      max_count: 5\n      max_tokens: 4000\n  - id: bare\n    binary: drop\n").unwrap();
+/// # let git = |a: &[&str]| assert!(Command::new("git").arg("-C").arg(&root)
+/// #     .args(["-c", "user.email=t@example.com", "-c", "user.name=t"]).args(a)
+/// #     .status().unwrap().success());
+/// # git(&["init", "-q"]);
+/// # std::fs::write(root.join("main.rs"), "fn main() {}\n").unwrap();
+/// # std::fs::write(root.join("logo.png"), b"\x89PNG\0\x01").unwrap();
+/// # git(&["add", "-A"]);
+/// # git(&["commit", "-q", "-m", "one"]);
+/// let planned = plan(&root, &share, None);
+/// assert!(planned.plan.passes, "{:?}", planned.plan.findings);
+/// assert_eq!(planned.plan.profile, "chat");
+/// assert_eq!(planned.plan.shards.len(), 1);
+/// ```
 pub fn plan(root: &Path, share: &Path, profile: Option<&str>) -> Planned {
     let label = profile.unwrap_or("").to_string();
     let profiles = match Profiles::load(share, root) {
@@ -528,8 +786,9 @@ fn unmeasured(profile: &str, reason: String) -> Planned {
     }
 }
 
-/// Plan with profiles already read.
-pub fn plan_with(
+/// Plan with profiles already read: the body of [`plan`], for a caller that holds the
+/// profiles and the chosen one.
+pub(crate) fn plan_with(
     root: &Path,
     profiles: &Profiles,
     profile: &PackProfile,
@@ -689,7 +948,7 @@ pub fn plan_with(
 
     let bytes = files.iter().map(|(_, s)| s.text.len() as u64).sum();
     let tokens = files.iter().map(|(_, s)| s.tokens).sum();
-    dropped_files.sort_by(|a, b| a.path.cmp(&b.path));
+    canonical(&mut dropped_files);
     let mut plan = PackPlan {
         measured: true,
         reason: None,
@@ -900,7 +1159,7 @@ fn index_matches_head(root: &Path) -> bool {
 /// ignored `tmp/`, named for the repository, the profile and the commit. The repository's
 /// name is its primary checkout's, which a linked worktree shares: a worktree's directory
 /// is named for its branch.
-pub fn default_out(root: &Path, plan: &PackPlan) -> PathBuf {
+pub(crate) fn default_out(root: &Path, plan: &PackPlan) -> PathBuf {
     let common = crate::git::read_only(root)
         .args(["rev-parse", "--path-format=absolute", "--git-common-dir"])
         .output()
@@ -930,6 +1189,35 @@ pub fn default_out(root: &Path, plan: &PackPlan) -> PathBuf {
 
 /// Write a planned pack into `out`, which must be absent, empty, or a pack this command
 /// wrote (it holds a manifest); then verify what was written.
+///
+/// The examples below plan a repository holding `main.rs` and a `logo.png` whose content is
+/// binary, with a distribution whose `chat` profile has limits and whose `bare` one has none.
+///
+/// ```
+/// use majordomus_cli::pack::{build, plan, Profiles, INDEX, MANIFEST};
+/// # use std::process::Command;
+/// # let dir = tempfile::tempdir().unwrap();
+/// # let (root, share) = (dir.path().join("repo"), dir.path().join("share"));
+/// # std::fs::create_dir_all(&root).unwrap();
+/// # std::fs::create_dir_all(&share).unwrap();
+/// # std::fs::write(share.join("archive.yaml"), "default: chat\nprofiles:\n  - id: chat\n    binary: drop\n    artifacts: drop\n    shards:\n      max_count: 5\n      max_tokens: 4000\n  - id: bare\n    binary: drop\n").unwrap();
+/// # let git = |a: &[&str]| assert!(Command::new("git").arg("-C").arg(&root)
+/// #     .args(["-c", "user.email=t@example.com", "-c", "user.name=t"]).args(a)
+/// #     .status().unwrap().success());
+/// # git(&["init", "-q"]);
+/// # std::fs::write(root.join("main.rs"), "fn main() {}\n").unwrap();
+/// # std::fs::write(root.join("logo.png"), b"\x89PNG\0\x01").unwrap();
+/// # git(&["add", "-A"]);
+/// # git(&["commit", "-q", "-m", "one"]);
+/// let profiles = Profiles::load(&share, &root).unwrap();
+/// let out = dir.path().join("pack");
+/// let verdict = build(&plan(&root, &share, None), &profiles, &root, &out).unwrap();
+/// assert!(verdict.passes, "{:?}", verdict.findings);
+/// assert!(out.join(INDEX).is_file() && out.join(MANIFEST).is_file());
+/// // a plan with a finding is never written
+/// let refused = build(&plan(&root, &share, Some("bare")), &profiles, &root, &out);
+/// assert!(refused.is_err());
+/// ```
 pub fn build(
     planned: &Planned,
     profiles: &Profiles,
@@ -968,13 +1256,6 @@ pub fn build(
     std::fs::create_dir_all(out).map_err(|e| format!("cannot create {}: {e}", out.display()))?;
     shard::write(planned, out)?;
     Ok(verify(out, profiles, root))
-}
-
-/// Read a pack's manifest as JSON, for a caller that only needs its header.
-pub fn manifest(dir: &Path) -> Result<Value, String> {
-    let text = std::fs::read_to_string(dir.join(MANIFEST))
-        .map_err(|e| format!("cannot read {}: {e}", dir.join(MANIFEST).display()))?;
-    serde_json::from_str(&text).map_err(|e| format!("{MANIFEST}: {e}"))
 }
 
 #[cfg(test)]

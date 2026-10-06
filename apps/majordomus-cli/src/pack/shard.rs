@@ -34,7 +34,15 @@ use crate::policy::sha256_bytes_hex;
 const MARK: &str = "<!-- majordomus:file ";
 const END: &str = "<!-- majordomus:end -->";
 
-/// The fence for a content: three backticks, or one more than its longest run of them.
+/// The fence for a content: three backticks, or one more than its longest run of them, so
+/// that nothing the content holds can close the block that carries it.
+///
+/// ```
+/// use majordomus_cli::pack::fence_for;
+/// assert_eq!(fence_for("plain"), "```");
+/// assert_eq!(fence_for("a `` b"), "```");
+/// assert_eq!(fence_for("````\ninside\n````"), "`````");
+/// ```
 pub fn fence_for(content: &str) -> String {
     let mut longest = 0;
     let mut run = 0;
@@ -324,7 +332,35 @@ pub(super) fn write(planned: &Planned, out: &Path) -> Result<(), String> {
         .map_err(|e| format!("cannot write {MANIFEST}: {e}"))
 }
 
-/// The verdict on a written pack.
+/// The verdict on a written pack: whether it could be read, what its manifest names, how
+/// many files and sources it holds, and every finding against it.
+///
+/// The examples below build a pack of a repository holding `main.rs`.
+///
+/// ```
+/// use majordomus_cli::pack::{build, plan, verify, PackVerdict, Profiles};
+/// # use std::process::Command;
+/// # let dir = tempfile::tempdir().unwrap();
+/// # let (root, share) = (dir.path().join("repo"), dir.path().join("share"));
+/// # std::fs::create_dir_all(&root).unwrap();
+/// # std::fs::create_dir_all(&share).unwrap();
+/// # std::fs::write(share.join("archive.yaml"), "default: chat\nprofiles:\n  - id: chat\n    binary: drop\n    artifacts: drop\n    shards:\n      max_count: 5\n      max_tokens: 4000\n").unwrap();
+/// # let git = |a: &[&str]| assert!(Command::new("git").arg("-C").arg(&root)
+/// #     .args(["-c", "user.email=t@example.com", "-c", "user.name=t"]).args(a)
+/// #     .status().unwrap().success());
+/// # git(&["init", "-q"]);
+/// # std::fs::write(root.join("main.rs"), "fn main() {}\n").unwrap();
+/// # git(&["add", "-A"]);
+/// # git(&["commit", "-q", "-m", "one"]);
+/// let profiles = Profiles::load(&share, &root).unwrap();
+/// let out = dir.path().join("pack");
+/// let v: PackVerdict = build(&plan(&root, &share, None), &profiles, &root, &out).unwrap();
+/// assert_eq!((v.files, v.sources), (2, 1), "the index and one shard, carrying one file");
+/// assert_eq!(v.profile.as_deref(), Some("chat"));
+/// // a directory with no manifest is not measured, which is not a pass
+/// let v: PackVerdict = verify(dir.path(), &profiles, &root);
+/// assert!(!v.measured && !v.passes);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct PackVerdict {
     /// Whether the pack could be read at all. `false` is not a pass.
@@ -360,6 +396,32 @@ fn finding(code: &str, path: Option<&str>, message: String, remedy: &str) -> Pac
 /// files than the profile allows. `root` is the checkout whose path, with the account's
 /// home directory, no file may name. Rebuilding is never the remedy for a finding here: a
 /// pack that fails is not sent.
+///
+/// ```
+/// use majordomus_cli::pack::{build, plan, verify, Profiles};
+/// # use std::process::Command;
+/// # let dir = tempfile::tempdir().unwrap();
+/// # let (root, share) = (dir.path().join("repo"), dir.path().join("share"));
+/// # std::fs::create_dir_all(&root).unwrap();
+/// # std::fs::create_dir_all(&share).unwrap();
+/// # std::fs::write(share.join("archive.yaml"), "default: chat\nprofiles:\n  - id: chat\n    binary: drop\n    artifacts: drop\n    shards:\n      max_count: 5\n      max_tokens: 4000\n").unwrap();
+/// # let git = |a: &[&str]| assert!(Command::new("git").arg("-C").arg(&root)
+/// #     .args(["-c", "user.email=t@example.com", "-c", "user.name=t"]).args(a)
+/// #     .status().unwrap().success());
+/// # git(&["init", "-q"]);
+/// # std::fs::write(root.join("main.rs"), "fn main() {}\n").unwrap();
+/// # git(&["add", "-A"]);
+/// # git(&["commit", "-q", "-m", "one"]);
+/// let profiles = Profiles::load(&share, &root).unwrap();
+/// let out = dir.path().join("pack");
+/// build(&plan(&root, &share, None), &profiles, &root, &out).unwrap();
+/// assert!(verify(&out, &profiles, &root).passes);
+/// // a file dropped into the pack after it was built is a stray
+/// std::fs::write(out.join("99-extra.md"), "extra\n").unwrap();
+/// let v = verify(&out, &profiles, &root);
+/// assert!(v.measured && !v.passes);
+/// assert!(v.findings.iter().any(|f| f.code == "pack.stray"), "{:?}", v.findings);
+/// ```
 pub fn verify(dir: &Path, profiles: &Profiles, root: &Path) -> PackVerdict {
     let mut v = PackVerdict {
         measured: false,

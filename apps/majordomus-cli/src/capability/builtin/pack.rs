@@ -30,7 +30,8 @@ use crate::{capability, module};
 
 use super::{get, mcp};
 
-/// The input of `pack.plan`.
+/// The input of `pack.plan`: which profile of `share/archive.yaml` to plan, or the
+/// distribution's default one when none is named.
 ///
 /// ```
 /// use majordomus_cli::capability::builtin::pack::PackPlanInput;
@@ -59,7 +60,8 @@ impl BenchmarkCases for PackPlanInput {
     }
 }
 
-/// The input of `pack.verify`.
+/// The input of `pack.verify`: the directory of a pack that was written, which must lie
+/// inside the repository it was built from.
 ///
 /// ```
 /// use majordomus_cli::capability::builtin::pack::PackVerifyInput;
@@ -130,7 +132,20 @@ fn verify(ctx: &Context, input: PackVerifyInput) -> Result<PackVerdict, Capabili
     Ok(v)
 }
 
-/// The module.
+/// The module: `pack.plan` and `pack.verify`, each exposed over MCP, HTTP and the command
+/// line; writing a pack stays with `majordomus pack build`.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::pack::module;
+/// let m = module();
+/// assert_eq!(m.id.as_str(), "pack");
+/// let tools: Vec<_> = m
+///     .capabilities
+///     .iter()
+///     .filter_map(|c| c.capability.exposure.mcp.as_ref()?.tool.clone())
+///     .collect();
+/// assert_eq!(tools, ["majordomus_pack_plan", "majordomus_pack_verify"]);
+/// ```
 pub fn module() -> ModuleDescriptor {
     module! {
         id: "pack",

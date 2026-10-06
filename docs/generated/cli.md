@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.12.0 -->
+     Generator: majordomus-cli 0.14.0 -->
 # Command line of the Rust executable
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
@@ -103,8 +103,10 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus prs refresh`](#majordomus-prs-refresh) | `/docs/cli/prs/refresh/` | Observe the forge now (the GitHub CLI and one `git fetch`) and record the observation; the only read that reaches the network |
 | [`majordomus prs drain`](#majordomus-prs-drain) | `/docs/cli/prs/drain/` | Merge the next ready pull request, verify it landed, observe again, and repeat — at most `--max` merges; `--dry-run` decides without acting |
 | [`majordomus prs cleanup`](#majordomus-prs-cleanup) | `/docs/cli/prs/cleanup/` | Close the pull requests whose work is provably on master already; without `--apply` it only lists them |
+| [`majordomus prs repair`](#majordomus-prs-repair) | `/docs/cli/prs/repair/` | Bring master into one named pull request whose only conflict with it is over derived (`merge=derived`) files. Eligible only when the classification says it is behind master and its merge conflicts on no authored path; an authored conflict is refused, naming the files. A dry run by default, decided offline on the last recorded observation, like `status`. With `--apply` it takes the integration lease, observes the forge again, records the act on the trail first, and merges master in a scratch worktree, derives, commits and pushes a fast-forward leased on the observed head; it never merges into master. Exit 10 on a refusal or an absent observation, 12 when it could not act |
 | [`majordomus prs events`](#majordomus-prs-events) | `/docs/cli/prs/events/` | The audit trail: every selection, merge, refusal, stale decision and closure this checkout's executor recorded |
-| [`majordomus prs brief`](#majordomus-prs-brief) | `/docs/cli/prs/brief/` | One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease, and the last merge. Offline, decides no relation, and prints nothing where the forge was never observed |
+| [`majordomus prs brief`](#majordomus-prs-brief) | `/docs/cli/prs/brief/` | One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease and whether it reaches across machines, the last merge, and the last refresh, failure or stale decision. Offline, decides no relation, and prints nothing where the forge was never observed |
+| [`majordomus prs prove-dry-run`](#majordomus-prs-prove-dry-run) | `/docs/cli/prs/prove-dry-run/` | Prove the non-mutating cycle moves nothing: snapshot origin's refs, the open pull requests, the audit trail, the lease and the local refs, run refresh, plan, drain --dry-run and cleanup (listing), snapshot again and compare; the refresh's fetched mirrors must equal what origin serves. Exit 10 naming what moved. Takes no flag: there is nothing to turn on |
 | [`majordomus convergence`](#majordomus-convergence) | `/docs/cli/convergence/` | Is any of this repository's work held where it can be lost? Every holding — a work tree with uncommitted files, a branch with commits, a stash — with the disposition read from git, and one verdict over them |
 | [`majordomus commit`](#majordomus-commit) | `/docs/cli/commit/` | The commit as a value: what the working tree would commit and how it divides, the scope vocabulary this repository's history yields, and the verdict on one message against the commit policy |
 | [`majordomus commit plan`](#majordomus-commit-plan) | `/docs/cli/commit/plan/` | What the working tree would commit: branch, upstream, divergence, every staged, unstaged and untracked path, any merge or rebase in progress, and the commits the history's own scoping supports — under a fingerprint that makes the plan refusable once the tree moves |
@@ -114,6 +116,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus product`](#majordomus-product) | `/docs/cli/product/` | The product: what this repository's tool does for a person, as the features under the layer declare it, with every surface, count and moment derived; the matrix of features against interfaces; the providers; and the model's own validation |
 | [`majordomus product list`](#majordomus-product-list) | `/docs/cli/product/list/` | Every feature, narrowed by any filter, with the surfaces derived for each |
 | [`majordomus product show`](#majordomus-product-show) | `/docs/cli/product/show/` | One feature in full: what it is made of, resolved, and everything derived from that |
+| [`majordomus product domains`](#majordomus-product-domains) | `/docs/cli/product/domains/` | The domains of the product, each with the stable features that name it and what they add up to |
 | [`majordomus product matrix`](#majordomus-product-matrix) | `/docs/cli/product/matrix/` | Every feature against every interface, and every module, command and kind against the features that name it |
 | [`majordomus product providers`](#majordomus-product-providers) | `/docs/cli/product/providers/` | Every provider the tool has an adapter for, with what this repository does with it |
 | [`majordomus product validate`](#majordomus-product-validate) | `/docs/cli/product/validate/` | Every finding over the model; exit 10 when any is an error |
@@ -2709,7 +2712,7 @@ Examples:
 
 Pull-request integration: every open pull request classified against the current master with its evidence, the ranked plan, and the executor that merges the next provably safe one — one at a time, re-planning after each (ADR 0101)
 
-Subcommands: [`majordomus prs status`](#majordomus-prs-status), [`majordomus prs plan`](#majordomus-prs-plan), [`majordomus prs explain`](#majordomus-prs-explain), [`majordomus prs refresh`](#majordomus-prs-refresh), [`majordomus prs drain`](#majordomus-prs-drain), [`majordomus prs cleanup`](#majordomus-prs-cleanup), [`majordomus prs events`](#majordomus-prs-events), [`majordomus prs brief`](#majordomus-prs-brief).
+Subcommands: [`majordomus prs status`](#majordomus-prs-status), [`majordomus prs plan`](#majordomus-prs-plan), [`majordomus prs explain`](#majordomus-prs-explain), [`majordomus prs refresh`](#majordomus-prs-refresh), [`majordomus prs drain`](#majordomus-prs-drain), [`majordomus prs cleanup`](#majordomus-prs-cleanup), [`majordomus prs repair`](#majordomus-prs-repair), [`majordomus prs events`](#majordomus-prs-events), [`majordomus prs brief`](#majordomus-prs-brief), [`majordomus prs prove-dry-run`](#majordomus-prs-prove-dry-run).
 
 ```text
 majordomus prs [OPTIONS] [COMMAND]
@@ -2856,8 +2859,9 @@ majordomus prs drain [OPTIONS]
 | `--max` | `<MAX>` | `1` | At most this many merges |
 | `--dry-run` | flag | — | Observe and decide, change nothing |
 | `--refresh` | flag | — | When nothing is ready, bring master into the first pull request that needs it (a merge commit with the derived driver and a fresh derive, pushed as a fast-forward), so that its checks run against the current master |
-| `--continuous` | flag | — | Drain, wait `--interval` seconds, and drain again until stopped, holding the lease throughout; each cycle is bounded by `--max` and observes before every step. Ctrl-C or SIGTERM lets the step in progress finish, then releases the lease; a second signal ends it at once. Never with `--dry-run` |
+| `--continuous` | flag | — | Drain, wait `--interval` seconds, and drain again until stopped, holding the lease throughout; each cycle is bounded by `--max` and observes before every step. Ctrl-C or SIGTERM lets the step in progress finish, then releases the lease; a second signal ends it at once. Never with `--dry-run`, and refused (exit 10) until the audit trail holds five verified merges since the last one that could not be verified: the last stage of the rollout (ADR 0101 §13) |
 | `--interval` | `<INTERVAL>` | `300` | With `--continuous`: seconds between cycles, 30 to 900 |
+| `--resume-after-failure` | flag | — | A merge an earlier drain could not verify stops every drain until a person has looked at it: this records that someone has (`failure_acknowledged` on the trail), then drains. Never with `--dry-run` |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
@@ -2885,7 +2889,8 @@ majordomus prs cleanup [OPTIONS]
 
 | argument | value | default | description |
 |---|---|---|---|
-| `--apply` | flag | — | Close them |
+| `--apply` | flag | — | Close them: each one observed again first and closed only if it is still superseded at the head that was decided on |
+| `--dry-run` | flag | — | List them and close nothing: the default, spelled out |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
@@ -2901,6 +2906,36 @@ Examples:
   ```
 
   Verified: exits 12.
+
+<a id="majordomus-prs-repair"></a>
+## `majordomus prs repair`
+
+Bring master into one named pull request whose only conflict with it is over derived (`merge=derived`) files. Eligible only when the classification says it is behind master and its merge conflicts on no authored path; an authored conflict is refused, naming the files. A dry run by default, decided offline on the last recorded observation, like `status`. With `--apply` it takes the integration lease, observes the forge again, records the act on the trail first, and merges master in a scratch worktree, derives, commits and pushes a fast-forward leased on the observed head; it never merges into master. Exit 10 on a refusal or an absent observation, 12 when it could not act
+
+```text
+majordomus prs repair [OPTIONS] <TARGET>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `<TARGET>` | `<TARGET>` | required | The pull request: its number, or its head branch |
+| `--apply` | flag | — | Act: take the lease, observe the forge again, record the act, merge, derive, commit and push. Without it nothing is changed, fetched or recorded |
+| `--dry-run` | flag | — | Decide and change nothing: the default, spelled out |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **A repair is decided on the recorded observation, or not at all** — The dry run, which is the default, is a read: it decides whether the named pull request may have master brought in from the queue the last recorded observation built, as `prs status` does, and reaches no network. Where nothing was ever observed there is no classification to decide from, so it exits 10 and names `prs refresh`; nothing is merged, pushed or recorded.
+
+  ```console
+  $ majordomus prs repair 1
+  ```
+
+  Verified: exits 10.
 
 <a id="majordomus-prs-events"></a>
 ## `majordomus prs events`
@@ -2932,7 +2967,7 @@ Examples:
 <a id="majordomus-prs-brief"></a>
 ## `majordomus prs brief`
 
-One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease, and the last merge. Offline, decides no relation, and prints nothing where the forge was never observed
+One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease and whether it reaches across machines, the last merge, and the last refresh, failure or stale decision. Offline, decides no relation, and prints nothing where the forge was never observed
 
 ```text
 majordomus prs brief [OPTIONS]
@@ -2955,6 +2990,33 @@ Examples:
   ```
 
   Verified: exits 0.
+
+<a id="majordomus-prs-prove-dry-run"></a>
+## `majordomus prs prove-dry-run`
+
+Prove the non-mutating cycle moves nothing: snapshot origin's refs, the open pull requests, the audit trail, the lease and the local refs, run refresh, plan, drain --dry-run and cleanup (listing), snapshot again and compare; the refresh's fetched mirrors must equal what origin serves. Exit 10 naming what moved. Takes no flag: there is nothing to turn on
+
+```text
+majordomus prs prove-dry-run [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **The proof needs a forge to prove anything about** — The proof snapshots origin's refs and the forge's open pull requests around refresh, plan, drain --dry-run and cleanup, and compares them. A repository with no GitHub remote has nothing to snapshot, so it exits 12 before any step runs: a proof that could not look is not a proof that nothing moved.
+
+  ```console
+  $ majordomus prs prove-dry-run
+  ```
+
+  Verified: exits 12.
 
 <a id="majordomus-convergence"></a>
 ## `majordomus convergence`
@@ -3138,7 +3200,7 @@ Examples:
 
 The product: what this repository's tool does for a person, as the features under the layer declare it, with every surface, count and moment derived; the matrix of features against interfaces; the providers; and the model's own validation
 
-Subcommands: [`majordomus product list`](#majordomus-product-list), [`majordomus product show`](#majordomus-product-show), [`majordomus product matrix`](#majordomus-product-matrix), [`majordomus product providers`](#majordomus-product-providers), [`majordomus product validate`](#majordomus-product-validate).
+Subcommands: [`majordomus product list`](#majordomus-product-list), [`majordomus product show`](#majordomus-product-show), [`majordomus product domains`](#majordomus-product-domains), [`majordomus product matrix`](#majordomus-product-matrix), [`majordomus product providers`](#majordomus-product-providers), [`majordomus product validate`](#majordomus-product-validate).
 
 ```text
 majordomus product [OPTIONS] [COMMAND]
@@ -3154,6 +3216,7 @@ majordomus product [OPTIONS] [COMMAND]
 | `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
 | `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
 | `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
+| `--domain` | `<DOMAIN>` | — | Only features filed under this product domain (accepted by every subcommand) |
 | `--module` | `<MODULE>` | — | Only features made of this capability module (accepted by every subcommand) |
 | `--names-command` | `<NAMES_COMMAND>` | — | Only features made of this shell command (accepted by every subcommand) |
 | `--surface` | `<SURFACE>` | — | Only features exposed through this surface: cli, api, mcp, cockpit or docs (accepted by every subcommand) |
@@ -3188,6 +3251,7 @@ majordomus product list [OPTIONS]
 | `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
 | `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
 | `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
+| `--domain` | `<DOMAIN>` | — | Only features filed under this product domain (accepted by every subcommand) |
 | `--module` | `<MODULE>` | — | Only features made of this capability module (accepted by every subcommand) |
 | `--names-command` | `<NAMES_COMMAND>` | — | Only features made of this shell command (accepted by every subcommand) |
 | `--surface` | `<SURFACE>` | — | Only features exposed through this surface: cli, api, mcp, cockpit or docs (accepted by every subcommand) |
@@ -3231,6 +3295,7 @@ majordomus product show [OPTIONS] <ID>
 | `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
 | `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
 | `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
+| `--domain` | `<DOMAIN>` | — | Only features filed under this product domain (accepted by every subcommand) |
 | `--module` | `<MODULE>` | — | Only features made of this capability module (accepted by every subcommand) |
 | `--names-command` | `<NAMES_COMMAND>` | — | Only features made of this shell command (accepted by every subcommand) |
 | `--surface` | `<SURFACE>` | — | Only features exposed through this surface: cli, api, mcp, cockpit or docs (accepted by every subcommand) |
@@ -3245,6 +3310,41 @@ Examples:
   ```
 
   Verified: exits 0; prints fixture-feature, surfaces, derived.
+
+<a id="majordomus-product-domains"></a>
+## `majordomus product domains`
+
+The domains of the product, each with the stable features that name it and what they add up to
+
+```text
+majordomus product domains [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
+| `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
+| `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
+| `--domain` | `<DOMAIN>` | — | Only features filed under this product domain (accepted by every subcommand) |
+| `--module` | `<MODULE>` | — | Only features made of this capability module (accepted by every subcommand) |
+| `--names-command` | `<NAMES_COMMAND>` | — | Only features made of this shell command (accepted by every subcommand) |
+| `--surface` | `<SURFACE>` | — | Only features exposed through this surface: cli, api, mcp, cockpit or docs (accepted by every subcommand) |
+| `-q`, `--query` | `<QUERY>` | — | Case-insensitive text over identities, titles, headlines, summaries, tags and bodies (accepted by every subcommand) |
+
+Examples:
+
+- **The few things the product controls, and the features under each** — One block per domain in presentation order: its promise, the failure it answers, and the stable features that name it, with the interfaces, claims and use cases they add up to. A domain lists nothing itself; every member and count is derived from the features.
+
+  ```console
+  $ majordomus product domains
+  ```
+
+  Verified: exits 0; prints domain(s).
 
 <a id="majordomus-product-matrix"></a>
 ## `majordomus product matrix`
@@ -3265,6 +3365,7 @@ majordomus product matrix [OPTIONS]
 | `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
 | `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
 | `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
+| `--domain` | `<DOMAIN>` | — | Only features filed under this product domain (accepted by every subcommand) |
 | `--module` | `<MODULE>` | — | Only features made of this capability module (accepted by every subcommand) |
 | `--names-command` | `<NAMES_COMMAND>` | — | Only features made of this shell command (accepted by every subcommand) |
 | `--surface` | `<SURFACE>` | — | Only features exposed through this surface: cli, api, mcp, cockpit or docs (accepted by every subcommand) |
@@ -3299,6 +3400,7 @@ majordomus product providers [OPTIONS]
 | `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
 | `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
 | `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
+| `--domain` | `<DOMAIN>` | — | Only features filed under this product domain (accepted by every subcommand) |
 | `--module` | `<MODULE>` | — | Only features made of this capability module (accepted by every subcommand) |
 | `--names-command` | `<NAMES_COMMAND>` | — | Only features made of this shell command (accepted by every subcommand) |
 | `--surface` | `<SURFACE>` | — | Only features exposed through this surface: cli, api, mcp, cockpit or docs (accepted by every subcommand) |
@@ -3333,6 +3435,7 @@ majordomus product validate [OPTIONS]
 | `--featured` | flag | — | Only the features the homepage shows (accepted by every subcommand) |
 | `--all` | flag | — | Include drafts and deprecated features, not only the stable ones (accepted by every subcommand) |
 | `--area` | `<AREA>` | — | Only features serving this operational area of the why catalogue (accepted by every subcommand) |
+| `--domain` | `<DOMAIN>` | — | Only features filed under this product domain (accepted by every subcommand) |
 | `--module` | `<MODULE>` | — | Only features made of this capability module (accepted by every subcommand) |
 | `--names-command` | `<NAMES_COMMAND>` | — | Only features made of this shell command (accepted by every subcommand) |
 | `--surface` | `<SURFACE>` | — | Only features exposed through this surface: cli, api, mcp, cockpit or docs (accepted by every subcommand) |

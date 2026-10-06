@@ -63,8 +63,10 @@
     "op-health-live": "docs/api/health/",
     "op-health-ready": "docs/api/health/",
     "op-health-report": "docs/api/health/",
+    "op-integration-cleanup": "docs/api/integration/",
     "op-integration-events": "docs/api/integration/",
     "op-integration-explain": "docs/api/integration/",
+    "op-integration-prove_dry_run": "docs/api/integration/",
     "op-integration-queue": "docs/api/integration/",
     "op-intent_realization-explain": "docs/api/intent-realization/",
     "op-intent_realization-work": "docs/api/intent-realization/",
@@ -124,6 +126,7 @@
     "op-plan-transition": "docs/api/plan/",
     "op-plan-validate": "docs/api/plan/",
     "op-plan-waves": "docs/api/plan/",
+    "op-product-domains": "docs/api/product/",
     "op-product-feature": "docs/api/product/",
     "op-product-features": "docs/api/product/",
     "op-product-matrix": "docs/api/product/",
@@ -235,6 +238,7 @@
     "schema-Carries": "docs/api/design/",
     "schema-CatalogueView": "docs/api/why/",
     "schema-Category": "docs/api/repository/",
+    "schema-ChangeShape": "docs/api/integration/",
     "schema-ChangeStage": "docs/api/commit/",
     "schema-Channel": "docs/api/distribution/",
     "schema-CheckState": "docs/api/distribution/",
@@ -248,6 +252,7 @@
     "schema-ClaimView": "docs/api/mesh/",
     "schema-ClaimedArtifact": "docs/api/entity/",
     "schema-Classification": "docs/api/repository/",
+    "schema-CleanupItem": "docs/api/integration/",
     "schema-CliExposure": "docs/api/capabilities/",
     "schema-ClientInfo": "docs/api/peers/",
     "schema-ClosedSession": "docs/api/lifecycle/",
@@ -331,6 +336,7 @@
     "schema-DeliveryVerdict": "docs/api/delivery/",
     "schema-DemonstrateReport": "docs/api/executions/",
     "schema-DependencyCertainty": "docs/api/integration/",
+    "schema-DependencyState": "docs/api/integration/",
     "schema-DeploymentCheck": "docs/api/deploy/",
     "schema-DeploymentList": "docs/api/deploy/",
     "schema-DeploymentStanding": "docs/api/served/",
@@ -367,10 +373,15 @@
     "schema-DocRef": "docs/api/product/",
     "schema-DoctorCheck": "docs/api/mesh/",
     "schema-DocumentView": "docs/api/artifacts/",
+    "schema-DomainCounts": "docs/api/product/",
+    "schema-DomainList": "docs/api/product/",
+    "schema-DomainMember": "docs/api/product/",
+    "schema-DomainRef": "docs/api/product/",
     "schema-DoneQuestion": "docs/api/gates/",
     "schema-DriftedObject": "docs/api/objects/",
     "schema-DropReason": "docs/api/pack/",
     "schema-DroppedFile": "docs/api/pack/",
+    "schema-DryRunProof": "docs/api/integration/",
     "schema-EconomicsCheck": "docs/api/economics/",
     "schema-EconomicsCheckReport": "docs/api/economics/",
     "schema-EconomicsClass": "docs/api/economics/",
@@ -428,6 +439,7 @@
     "schema-EvidenceClaimProof": "docs/api/evidence/",
     "schema-EvidenceExecution": "docs/api/shared/",
     "schema-EvidenceFinding": "docs/api/evidence/",
+    "schema-EvidenceKind": "docs/api/integration/",
     "schema-EvidenceLedgerSummary": "docs/api/evidence/",
     "schema-EvidenceOrigin": "docs/api/shared/",
     "schema-EvidenceOutcome": "docs/api/shared/",
@@ -435,6 +447,7 @@
     "schema-EvidenceReport": "docs/api/evidence/",
     "schema-EvidenceRun": "docs/api/shared/",
     "schema-EvidenceRunner": "docs/api/shared/",
+    "schema-EvidenceSource": "docs/api/integration/",
     "schema-EvidenceSubject": "docs/api/evidence/",
     "schema-EvidenceTreeState": "docs/api/evidence/",
     "schema-Example": "docs/api/why/",
@@ -462,6 +475,7 @@
     "schema-FacetValue": "docs/api/why/",
     "schema-Facets": "docs/api/why/",
     "schema-Fact": "docs/api/graph/",
+    "schema-FailureClass": "docs/api/integration/",
     "schema-Feature": "docs/api/web/",
     "schema-FeatureCounts": "docs/api/product/",
     "schema-FeatureDelivery": "docs/api/delivery/",
@@ -483,6 +497,7 @@
     "schema-GateModelReport": "docs/api/gates/",
     "schema-GatePlan": "docs/api/gates/",
     "schema-GatePlanMode": "docs/api/gates/",
+    "schema-GateResult": "docs/api/integration/",
     "schema-GateRun": "docs/api/gates/",
     "schema-GateStatus": "docs/api/gates/",
     "schema-GitContext": "docs/api/devcontext/",
@@ -519,16 +534,20 @@
     "schema-InstallabilityReport": "docs/api/distribution/",
     "schema-InstanceId": "docs/api/mesh/",
     "schema-Integration": "docs/api/trace/",
+    "schema-IntegrationAction": "docs/api/integration/",
+    "schema-IntegrationCleanup": "docs/api/integration/",
     "schema-IntegrationEvent": "docs/api/integration/",
     "schema-IntegrationEvents": "docs/api/integration/",
     "schema-IntegrationEvidence": "docs/api/integration/",
     "schema-IntegrationExplanation": "docs/api/integration/",
+    "schema-IntegrationGate": "docs/api/integration/",
     "schema-IntegrationLane": "docs/api/integration/",
     "schema-IntegrationLeaseState": "docs/api/integration/",
     "schema-IntegrationPolicy": "docs/api/integration/",
     "schema-IntegrationQueue": "docs/api/integration/",
     "schema-IntegrationRisk": "docs/api/integration/",
     "schema-IntegrationStatus": "docs/api/integration/",
+    "schema-IntegrationThroughput": "docs/api/integration/",
     "schema-IntentCoverage": "docs/api/intents/",
     "schema-IntentCriterion": "docs/api/shared/",
     "schema-IntentEpisode": "docs/api/intent-realization/",
@@ -567,10 +586,14 @@
     "schema-KnowledgeCandidates": "docs/api/knowledge-base/",
     "schema-KnowledgeRecord": "docs/api/knowledge-base/",
     "schema-KnowledgeStatus": "docs/api/knowledge-base/",
+    "schema-LabelEffect": "docs/api/integration/",
+    "schema-LabelPolicy": "docs/api/integration/",
     "schema-LayerSummary": "docs/api/environment/",
     "schema-LeaseHolder": "docs/api/integration/",
     "schema-LeaseView": "docs/api/server/",
     "schema-LedgerMark": "docs/api/knowledge-base/",
+    "schema-LeftBranch": "docs/api/integration/",
+    "schema-LeftBranchReport": "docs/api/integration/",
     "schema-Libc": "docs/api/distribution/",
     "schema-LimitsView": "docs/api/executions/",
     "schema-LinkRefusal": "docs/api/mesh/",
@@ -618,6 +641,7 @@
     "schema-MomentRef": "docs/api/product/",
     "schema-MomentSummary": "docs/api/why/",
     "schema-Mount": "docs/api/web/",
+    "schema-Moved": "docs/api/integration/",
     "schema-Node": "docs/api/graph/",
     "schema-NodeId": "docs/api/mesh/",
     "schema-NodeList": "docs/api/mesh/",
@@ -631,6 +655,7 @@
     "schema-ObligationClosure": "docs/api/obligations/",
     "schema-ObligationState": "docs/api/obligations/",
     "schema-Observation": "docs/api/served/",
+    "schema-ObservedClassification": "docs/api/integration/",
     "schema-OpenSession": "docs/api/continuity/",
     "schema-OperationParity": "docs/api/quality/",
     "schema-Origin": "docs/api/repository/",
@@ -639,6 +664,7 @@
     "schema-Out": "docs/api/repository/",
     "schema-OutFile": "docs/api/repository/",
     "schema-Overlap": "docs/api/peers/",
+    "schema-OverlapKind": "docs/api/integration/",
     "schema-OverlapPath": "docs/api/peers/",
     "schema-PackFinding": "docs/api/pack/",
     "schema-PackPlan": "docs/api/pack/",
@@ -701,6 +727,7 @@
     "schema-ProjectionView": "docs/api/design/",
     "schema-PromptSource": "docs/api/product/",
     "schema-ProofState": "docs/api/shared/",
+    "schema-ProofStep": "docs/api/integration/",
     "schema-ProtocolReport": "docs/api/executions/",
     "schema-Provenance": "docs/api/web/",
     "schema-Provider": "docs/api/deploy/",
@@ -723,6 +750,7 @@
     "schema-QualityReport": "docs/api/quality/",
     "schema-QualitySeverity": "docs/api/quality/",
     "schema-QueueTallies": "docs/api/integration/",
+    "schema-RankFactors": "docs/api/integration/",
     "schema-Readiness": "docs/api/health/",
     "schema-ReadinessVerdict": "docs/api/devtask/",
     "schema-Reason": "docs/api/repository/",
@@ -794,9 +822,11 @@
     "schema-RepositoryReport": "docs/api/repository/",
     "schema-RepositoryTopology": "docs/api/worktree/",
     "schema-RepositoryView": "docs/api/worktree/",
+    "schema-RequiredCheck": "docs/api/integration/",
     "schema-RequiredCheckState": "docs/api/integration/",
     "schema-Resolution": "docs/api/environment/",
     "schema-Resolved": "docs/api/design/",
+    "schema-ResolvedDomain": "docs/api/product/",
     "schema-ResolvedReference": "docs/api/knowledge-base/",
     "schema-ResolvedRefs": "docs/api/product/",
     "schema-ResolvedRelation": "docs/api/knowledge-base/",
@@ -805,6 +835,7 @@
     "schema-ReviewAnswer": "docs/api/mesh/",
     "schema-ReviewAnswerInput": "docs/api/mesh/",
     "schema-ReviewPlan": "docs/api/reasoning/",
+    "schema-ReviewPolicy": "docs/api/integration/",
     "schema-ReviewRequestInput": "docs/api/mesh/",
     "schema-ReviewState": "docs/api/mesh/",
     "schema-ReviewView": "docs/api/mesh/",
@@ -888,6 +919,8 @@
     "schema-SkillTested": "docs/api/skills/",
     "schema-SkillUsed": "docs/api/skills/",
     "schema-SkillVerification": "docs/api/skills/",
+    "schema-Snapshot": "docs/api/integration/",
+    "schema-SnapshotSection": "docs/api/integration/",
     "schema-Source": "docs/api/design/",
     "schema-Spelling": "docs/api/session-domain/",
     "schema-Stability": "docs/api/shared/",
@@ -1025,8 +1058,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 169,
-    "schemas": 801,
+    "operations": 172,
+    "schemas": 831,
     "tags": 52
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1056,7 +1089,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 0.12.0",
+  "generated_by": "majordomus-cli 0.14.0",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -1065,7 +1098,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "0.12.0"
+    "version": "0.14.0"
   },
   "infrastructure": [
     {
@@ -1175,8 +1208,10 @@
     "health.live": "health",
     "health.ready": "health",
     "health.report": "health",
+    "integration.cleanup": "integration",
     "integration.events": "integration",
     "integration.explain": "integration",
+    "integration.prove_dry_run": "integration",
     "integration.queue": "integration",
     "intent_realization.explain": "intent-realization",
     "intent_realization.work": "intent-realization",
@@ -1236,6 +1271,7 @@
     "plan.transition": "plan",
     "plan.validate": "plan",
     "plan.waves": "plan",
+    "product.domains": "product",
     "product.feature": "product",
     "product.features": "product",
     "product.matrix": "product",
@@ -1351,6 +1387,7 @@
     "Carries": "design",
     "CatalogueView": "why",
     "Category": "repository",
+    "ChangeShape": "integration",
     "ChangeStage": "commit",
     "Channel": "distribution",
     "CheckState": "distribution",
@@ -1364,6 +1401,7 @@
     "ClaimView": "mesh",
     "ClaimedArtifact": "entity",
     "Classification": "repository",
+    "CleanupItem": "integration",
     "CliExposure": "capabilities",
     "ClientInfo": "peers",
     "ClosedSession": "lifecycle",
@@ -1447,6 +1485,7 @@
     "DeliveryVerdict": "delivery",
     "DemonstrateReport": "executions",
     "DependencyCertainty": "integration",
+    "DependencyState": "integration",
     "DeploymentCheck": "deploy",
     "DeploymentList": "deploy",
     "DeploymentStanding": "served",
@@ -1483,10 +1522,15 @@
     "DocRef": "product",
     "DoctorCheck": "mesh",
     "DocumentView": "artifacts",
+    "DomainCounts": "product",
+    "DomainList": "product",
+    "DomainMember": "product",
+    "DomainRef": "product",
     "DoneQuestion": "gates",
     "DriftedObject": "objects",
     "DropReason": "pack",
     "DroppedFile": "pack",
+    "DryRunProof": "integration",
     "EconomicsCheck": "economics",
     "EconomicsCheckReport": "economics",
     "EconomicsClass": "economics",
@@ -1544,6 +1588,7 @@
     "EvidenceClaimProof": "evidence",
     "EvidenceExecution": "shared",
     "EvidenceFinding": "evidence",
+    "EvidenceKind": "integration",
     "EvidenceLedgerSummary": "evidence",
     "EvidenceOrigin": "shared",
     "EvidenceOutcome": "shared",
@@ -1551,6 +1596,7 @@
     "EvidenceReport": "evidence",
     "EvidenceRun": "shared",
     "EvidenceRunner": "shared",
+    "EvidenceSource": "integration",
     "EvidenceSubject": "evidence",
     "EvidenceTreeState": "evidence",
     "Example": "why",
@@ -1578,6 +1624,7 @@
     "FacetValue": "why",
     "Facets": "why",
     "Fact": "graph",
+    "FailureClass": "integration",
     "Feature": "web",
     "FeatureCounts": "product",
     "FeatureDelivery": "delivery",
@@ -1599,6 +1646,7 @@
     "GateModelReport": "gates",
     "GatePlan": "gates",
     "GatePlanMode": "gates",
+    "GateResult": "integration",
     "GateRun": "gates",
     "GateStatus": "gates",
     "GitContext": "devcontext",
@@ -1635,16 +1683,20 @@
     "InstallabilityReport": "distribution",
     "InstanceId": "mesh",
     "Integration": "trace",
+    "IntegrationAction": "integration",
+    "IntegrationCleanup": "integration",
     "IntegrationEvent": "integration",
     "IntegrationEvents": "integration",
     "IntegrationEvidence": "integration",
     "IntegrationExplanation": "integration",
+    "IntegrationGate": "integration",
     "IntegrationLane": "integration",
     "IntegrationLeaseState": "integration",
     "IntegrationPolicy": "integration",
     "IntegrationQueue": "integration",
     "IntegrationRisk": "integration",
     "IntegrationStatus": "integration",
+    "IntegrationThroughput": "integration",
     "IntentCoverage": "intents",
     "IntentCriterion": "shared",
     "IntentEpisode": "intent-realization",
@@ -1683,10 +1735,14 @@
     "KnowledgeCandidates": "knowledge-base",
     "KnowledgeRecord": "knowledge-base",
     "KnowledgeStatus": "knowledge-base",
+    "LabelEffect": "integration",
+    "LabelPolicy": "integration",
     "LayerSummary": "environment",
     "LeaseHolder": "integration",
     "LeaseView": "server",
     "LedgerMark": "knowledge-base",
+    "LeftBranch": "integration",
+    "LeftBranchReport": "integration",
     "Libc": "distribution",
     "LimitsView": "executions",
     "LinkRefusal": "mesh",
@@ -1734,6 +1790,7 @@
     "MomentRef": "product",
     "MomentSummary": "why",
     "Mount": "web",
+    "Moved": "integration",
     "Node": "graph",
     "NodeId": "mesh",
     "NodeList": "mesh",
@@ -1747,6 +1804,7 @@
     "ObligationClosure": "obligations",
     "ObligationState": "obligations",
     "Observation": "served",
+    "ObservedClassification": "integration",
     "OpenSession": "continuity",
     "OperationParity": "quality",
     "Origin": "repository",
@@ -1755,6 +1813,7 @@
     "Out": "repository",
     "OutFile": "repository",
     "Overlap": "peers",
+    "OverlapKind": "integration",
     "OverlapPath": "peers",
     "PackFinding": "pack",
     "PackPlan": "pack",
@@ -1817,6 +1876,7 @@
     "ProjectionView": "design",
     "PromptSource": "product",
     "ProofState": "shared",
+    "ProofStep": "integration",
     "ProtocolReport": "executions",
     "Provenance": "web",
     "Provider": "deploy",
@@ -1839,6 +1899,7 @@
     "QualityReport": "quality",
     "QualitySeverity": "quality",
     "QueueTallies": "integration",
+    "RankFactors": "integration",
     "Readiness": "health",
     "ReadinessVerdict": "devtask",
     "Reason": "repository",
@@ -1910,9 +1971,11 @@
     "RepositoryReport": "repository",
     "RepositoryTopology": "worktree",
     "RepositoryView": "worktree",
+    "RequiredCheck": "integration",
     "RequiredCheckState": "integration",
     "Resolution": "environment",
     "Resolved": "design",
+    "ResolvedDomain": "product",
     "ResolvedReference": "knowledge-base",
     "ResolvedRefs": "product",
     "ResolvedRelation": "knowledge-base",
@@ -1921,6 +1984,7 @@
     "ReviewAnswer": "mesh",
     "ReviewAnswerInput": "mesh",
     "ReviewPlan": "reasoning",
+    "ReviewPolicy": "integration",
     "ReviewRequestInput": "mesh",
     "ReviewState": "mesh",
     "ReviewView": "mesh",
@@ -2004,6 +2068,8 @@
     "SkillTested": "skills",
     "SkillUsed": "skills",
     "SkillVerification": "skills",
+    "Snapshot": "integration",
+    "SnapshotSection": "integration",
     "Source": "design",
     "Spelling": "session-domain",
     "Stability": "shared",
@@ -5515,6 +5581,42 @@
       "variants": []
     },
     {
+      "description": "What a head's merge into master changes, by kind: the authored paths a person wrote, the\nderived paths a generator writes (by the repository's `merge=derived` attributes on master),\nand the version the head declares when it raises the crate's. Decided from the same pair\nof commits as the relation to master, and cached under the same key beside it, so a change\nof either commit — a `.gitattributes` change on master is one — makes both stale together.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "ChangeShape",
+      "properties": [
+        {
+          "description": "Authored (non-derived) paths the merge changes or conflicts on, in path order.",
+          "name": "authored",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Derived paths the merge changes or conflicts on, in path order.",
+          "name": "derived",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The version the head declares in the crate manifest, when it is not the one its merge\nbase declares: the head raises the version.",
+          "name": "version_bump",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PullRequestAssessment"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Where one path stands between the index and the working tree.\n```\nuse majordomus_cli::commit::ChangeStage;\n// ordered so that what would be in the next commit sorts first\nassert!(ChangeStage::Staged < ChangeStage::Unstaged);\nassert!(ChangeStage::Unstaged < ChangeStage::Untracked);\n```",
       "home": "commit",
       "is_enum": true,
@@ -5905,6 +6007,7 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
+        "ResolvedDomain",
         "ResolvedRefs"
       ],
       "values": [],
@@ -6191,6 +6294,51 @@
         "repository.scope_classify"
       ],
       "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What cleanup would do, or did, for one pull request.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "CleanupItem",
+      "properties": [
+        {
+          "description": "The pull request.",
+          "name": "pr",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Its disposition when decided.",
+          "name": "disposition",
+          "refs": [
+            "PullRequestDisposition"
+          ],
+          "required": true,
+          "type": "PullRequestDisposition"
+        },
+        {
+          "description": "The evidence, as reason codes.",
+          "name": "reasons",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "`would_close`, `closed`, `left_for_a_person`, or `close_failed: <why>`.",
+          "name": "action",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationCleanup"
+      ],
       "values": [],
       "variants": []
     },
@@ -10869,6 +11017,37 @@
       "variants": []
     },
     {
+      "description": "What became of a pull request another one depends on.",
+      "home": "integration",
+      "is_enum": true,
+      "name": "DependencyState",
+      "properties": [],
+      "type": "\"open\" | \"merged\" | \"closed_unmerged\" | \"unread\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "PullRequestDependency"
+      ],
+      "values": [
+        {
+          "description": "Still open.",
+          "value": "open"
+        },
+        {
+          "description": "Merged: the only state that satisfies it.",
+          "value": "merged"
+        },
+        {
+          "description": "Closed without a merge: its work never landed, so a person decides.",
+          "value": "closed_unmerged"
+        },
+        {
+          "description": "Not open, and the forge could not say what became of it — refused, or not a pull\nrequest at all: unknown, never satisfied.",
+          "value": "unread"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "Whether the deployments this repository declares would work, decided locally: against\nthe capability registry this process built and the workspace it sits in.",
       "home": "deploy",
       "is_enum": false,
@@ -13117,6 +13296,245 @@
       "variants": []
     },
     {
+      "description": "How much stands behind a domain: sums and distinct counts over its stable features.\n\n```\nuse majordomus_cli::product::DomainCounts;\nlet empty = DomainCounts::default();\nassert_eq!(empty.features, 0);\nlet v = serde_json::to_value(&empty).unwrap();\nfor key in [\"features\", \"claims\", \"tested\", \"use_cases\", \"rules\", \"enforced_rules\", \"capabilities\", \"moments\"] {\n    assert_eq!(v[key], 0, \"{key} is published, and zero for a domain nothing names\");\n}\n```",
+      "home": "product",
+      "is_enum": false,
+      "name": "DomainCounts",
+      "properties": [
+        {
+          "description": "Stable features filed under it.",
+          "name": "features",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Distinct claims its features name.",
+          "name": "claims",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Distinct claims that are guaranteed and name the test that settles them: what the\nclaims declare, not whether a recorded run supports them (that verdict is the\nevidence ledger's).",
+          "name": "tested",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Distinct use cases its features name.",
+          "name": "use_cases",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Distinct rules its features name.",
+          "name": "rules",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Distinct rules among them the tool enforces.",
+          "name": "enforced_rules",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Distinct capabilities behind its features.",
+          "name": "capabilities",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Distinct operational moments its features answer.",
+          "name": "moments",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ResolvedDomain"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Every domain of the product, each with what its features add up to.",
+      "home": "product",
+      "is_enum": false,
+      "name": "DomainList",
+      "properties": [
+        {
+          "description": "`SCHEMA`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The hash of the model's sources and derived facts.",
+          "name": "fingerprint",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many domains are listed.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The domains, in presentation order: the stable ones, or every one with status=any.",
+          "name": "domains",
+          "refs": [
+            "ResolvedDomain"
+          ],
+          "required": true,
+          "type": "array of ResolvedDomain"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "product.domains"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One stable feature of a domain, as a card shows it.\n\n```\nuse majordomus_cli::product::{DomainMember, Surfaces};\nlet m = DomainMember {\n    id: \"finish-contract\".into(),\n    label: \"Finish contract\".into(),\n    title: \"Done is a contract\".into(),\n    headline: \"A worker does not define its own completion.\".into(),\n    route: \"/features/finish-contract/\".into(),\n    featured: true,\n    surfaces: Surfaces::default(),\n    claims: 3,\n    tested: 2,\n    use_cases: 1,\n};\nlet v = serde_json::to_value(&m).unwrap();\nassert_eq!(v[\"tested\"], 2);\nassert_eq!(v[\"surfaces\"][\"cli\"], false);\n```",
+      "home": "product",
+      "is_enum": false,
+      "name": "DomainMember",
+      "properties": [
+        {
+          "description": "The feature id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The name a narrow column shows: the short title, or the title.",
+          "name": "label",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The feature as a heading.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The feature's promise.",
+          "name": "headline",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`/features/<id>/`.",
+          "name": "route",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the homepage shows it as a chapter.",
+          "name": "featured",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The interfaces it is exposed through.",
+          "name": "surfaces",
+          "refs": [
+            "Surfaces"
+          ],
+          "required": true,
+          "type": "Surfaces"
+        },
+        {
+          "description": "How many claims it names.",
+          "name": "claims",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many of them are guaranteed and name the test that settles them.",
+          "name": "tested",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many use cases show it in use.",
+          "name": "use_cases",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ResolvedDomain"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A domain as a feature points at it: enough for a breadcrumb.\n\n```\nuse majordomus_cli::product::DomainRef;\nlet crumb = DomainRef {\n    id: \"context\".into(),\n    title: \"Context\".into(),\n    route: \"/domains/context/\".into(),\n};\nlet v = serde_json::to_value(&crumb).unwrap();\nassert_eq!(v[\"route\"], \"/domains/context/\");\nassert_eq!(serde_json::from_value::<DomainRef>(v).unwrap(), crumb);\n```",
+      "home": "product",
+      "is_enum": false,
+      "name": "DomainRef",
+      "properties": [
+        {
+          "description": "The domain id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The domain as a heading.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`/domains/<id>/`.",
+          "name": "route",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ResolvedRefs"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "```\nuse majordomus_cli::gates::{DoneQuestion, GateStatus};\n\nlet q = DoneQuestion {\n    id: \"pushed\".into(),\n    question: \"Has the commit reached the remote?\".into(),\n    status: GateStatus::Queued,\n    evidence: \"the obligation is owed\".into(),\n    source: \"obligation push (obligations.closure)\".into(),\n    remediation: \"git push\".into(),\n};\n// every question names what answered it and what would settle it: a question with\n// neither is a checklist line, which is the artifact this type exists instead of\nassert!(!q.source.is_empty() && !q.remediation.is_empty());\nassert!(q.status.unverified());\n```\nOne question of the done invariant, and what answered it.",
       "home": "gates",
       "is_enum": false,
@@ -13237,7 +13655,7 @@
       "variants": []
     },
     {
-      "description": "Why a tracked file is not in the pack.",
+      "description": "Why a tracked file is not in the pack. Every reason but `derived` and `excluded` is\nfinal: no `include` of a profile re-admits a link, a gitlink, an artifact or a binary.\n\n```\nuse majordomus_cli::pack::DropReason;\nassert_eq!(DropReason::Binary.as_str(), \"binary\");\nlet json = serde_json::to_string(&DropReason::Artifact).unwrap();\nassert_eq!(json, \"\\\"artifact\\\"\");\n```",
       "home": "pack",
       "is_enum": true,
       "name": "DropReason",
@@ -13276,7 +13694,7 @@
       "variants": []
     },
     {
-      "description": "One dropped file the report names. Derived files are counted, not listed: they are a\nfunction of files that are in the pack.",
+      "description": "One dropped file the report names. Derived files are counted, not listed: they are a\nfunction of files that are in the pack.\n\nThe examples below plan a repository holding `main.rs` and a `logo.png` whose content is\nbinary, with a distribution whose `chat` profile has limits and whose `bare` one has none.\n\n```\nuse majordomus_cli::pack::{plan, DropReason, DroppedFile};\n#### use std::process::Command;\n#### let dir = tempfile::tempdir().unwrap();\n#### let (root, share) = (dir.path().join(\"repo\"), dir.path().join(\"share\"));\n#### std::fs::create_dir_all(&root).unwrap();\n#### std::fs::create_dir_all(&share).unwrap();\n#### std::fs::write(share.join(\"archive.yaml\"), \"default: chat\\nprofiles:\\n  - id: chat\\n    binary: drop\\n    artifacts: drop\\n    shards:\\n      max_count: 5\\n      max_tokens: 4000\\n  - id: bare\\n    binary: drop\\n\").unwrap();\n#### let git = |a: &[&str]| assert!(Command::new(\"git\").arg(\"-C\").arg(&root)\n####     .args([\"-c\", \"user.email=t@example.com\", \"-c\", \"user.name=t\"]).args(a)\n####     .status().unwrap().success());\n#### git(&[\"init\", \"-q\"]);\n#### std::fs::write(root.join(\"main.rs\"), \"fn main() {}\\n\").unwrap();\n#### std::fs::write(root.join(\"logo.png\"), b\"\\x89PNG\\0\\x01\").unwrap();\n#### git(&[\"add\", \"-A\"]);\n#### git(&[\"commit\", \"-q\", \"-m\", \"one\"]);\nlet dropped = plan(&root, &share, None).plan.dropped_files;\nlet want = DroppedFile { path: \"logo.png\".into(), reason: DropReason::Binary };\nassert_eq!(dropped, [want]);\n```",
       "home": "pack",
       "is_enum": false,
       "name": "DroppedFile",
@@ -13303,6 +13721,87 @@
       "used_by_schemas": [
         "PackPlan"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The verdict: what was compared, what moved, and what the cycle observed.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "DryRunProof",
+      "properties": [
+        {
+          "description": "True exactly when nothing moved and every mirror equals what origin serves.",
+          "name": "ok",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The base branch the executor works on.",
+          "name": "base",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The cycle, step by step.",
+          "name": "steps",
+          "refs": [
+            "ProofStep"
+          ],
+          "required": true,
+          "type": "array of ProofStep"
+        },
+        {
+          "description": "Every line that differs between the snapshots; empty when nothing moved.",
+          "name": "moved",
+          "refs": [
+            "Moved"
+          ],
+          "required": true,
+          "type": "array of Moved"
+        },
+        {
+          "description": "Every mirrored ref that is not what origin serves; empty when they all are.",
+          "name": "mirrors",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The snapshot before the cycle.",
+          "name": "before",
+          "refs": [
+            "Snapshot"
+          ],
+          "required": true,
+          "type": "Snapshot"
+        },
+        {
+          "description": "The snapshot after it.",
+          "name": "after",
+          "refs": [
+            "Snapshot"
+          ],
+          "required": true,
+          "type": "Snapshot"
+        },
+        {
+          "description": "Every open pull request as the cycle classified it, in rank order.",
+          "name": "classification",
+          "refs": [
+            "ObservedClassification"
+          ],
+          "required": true,
+          "type": "array of ObservedClassification"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "integration.prove_dry_run"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -16393,14 +16892,17 @@
         "plan.transition",
         "plan.validate",
         "plan.waves",
+        "product.domains",
         "product.feature",
         "product.features",
         "product.matrix",
         "product.providers",
         "product.validate",
         "integration.queue",
+        "integration.cleanup",
         "integration.events",
         "integration.explain",
+        "integration.prove_dry_run",
         "quality.report",
         "quality.rustdoc",
         "health.ready",
@@ -16477,7 +16979,7 @@
       "variants": []
     },
     {
-      "description": "The revisions a decision was taken against. A decision is valid only while both still\nhold: the executor compares them with what it re-reads before it acts.",
+      "description": "The revisions a decision was taken against, and when the forge was observed. A decision is\nvalid only while both revisions still hold: the executor compares them with what it\nre-reads before it acts.",
       "home": "integration",
       "is_enum": false,
       "name": "EvaluatedAgainst",
@@ -16494,6 +16996,13 @@
           "name": "head_sha",
           "refs": [],
           "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When the forge was observed, RFC 3339; empty in a value written before it was named.",
+          "name": "observed_at",
+          "refs": [],
+          "required": false,
           "type": "string"
         }
       ],
@@ -16963,6 +17472,69 @@
       "variants": []
     },
     {
+      "description": "What kind of fact a piece of evidence is. The wire words are the ones the evidence carried\nwhile its kind was a string, so a trail written then still reads.",
+      "home": "integration",
+      "is_enum": true,
+      "name": "EvidenceKind",
+      "properties": [],
+      "type": "\"required_check\" | \"required_checks\" | \"review\" | \"relation_to_master\" | \"dependency\" | \"label\" | \"draft\" | \"base\" | \"freshness\" | \"auto_merge\" | \"supersession\" | \"repository_settings\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationEvidence"
+      ],
+      "values": [
+        {
+          "description": "One required check's state on the head: one entry per context the base requires.",
+          "value": "required_check"
+        },
+        {
+          "description": "The required checks together: their verdict, and each context's state.",
+          "value": "required_checks"
+        },
+        {
+          "description": "The review policy and the forge's decision, or one reviewer's latest review.",
+          "value": "review"
+        },
+        {
+          "description": "What the head is to master, as git decided it.",
+          "value": "relation_to_master"
+        },
+        {
+          "description": "One declared dependency.",
+          "value": "dependency"
+        },
+        {
+          "description": "One label whose policy is to hold.",
+          "value": "label"
+        },
+        {
+          "description": "Whether it is a draft; always emitted.",
+          "value": "draft"
+        },
+        {
+          "description": "The branch it targets; always emitted.",
+          "value": "base"
+        },
+        {
+          "description": "How old the observation is. Declared so the vocabulary is settled; nothing emits it yet.",
+          "value": "freshness"
+        },
+        {
+          "description": "The forge has auto-merge armed; emitted whenever it is.",
+          "value": "auto_merge"
+        },
+        {
+          "description": "One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per successor declared.",
+          "value": "supersession"
+        },
+        {
+          "description": "What the repository's settings allow the executor; emitted when they allow no merge\ncommit.",
+          "value": "repository_settings"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "What the ledger is and whether it is there at all.\n\nA report that did not say where its evidence came from would be asking to be believed.\nThis is the provenance of the whole report: the file, how much it holds, how old the\nnewest entry is, and which commits anything was ever recorded against.\n\n```\nuse majordomus_cli::evidence::{Ledger, LedgerSummary, LEDGER_PATH};\n\nlet summary: LedgerSummary = Ledger::empty().summary();\nassert_eq!(summary.path, LEDGER_PATH);\nassert!(!summary.present, \"a ledger holding nothing has recorded nothing\");\nassert_eq!(summary.executions, 0);\nassert!(summary.newest.is_none());\nassert!(summary.commits.is_empty());\n```\n#### Example\n\n```\nuse majordomus_cli::evidence::LedgerSummary;\nlet s = LedgerSummary {\n    path: \".ai/repo/evidence/ledger.json\".into(),\n    present: false,\n    executions: 0,\n    newest: None,\n    commits: vec![],\n};\nassert!(!s.present, \"a repository that recorded nothing says so\");\n```",
       "home": "evidence",
       "is_enum": false,
@@ -17273,6 +17845,68 @@
         }
       ],
       "variants": []
+    },
+    {
+      "description": "Where a piece of evidence was read.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "EvidenceSource",
+      "properties": [],
+      "type": "one of 2 variants",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationEvidence"
+      ],
+      "values": [],
+      "variants": [
+        {
+          "description": "The forge observation, at its moment.",
+          "properties": [
+            {
+              "description": "When the forge was observed, RFC 3339.",
+              "name": "observed_at",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"forge\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Git, on this pair of commits.",
+          "properties": [
+            {
+              "description": "The master commit.",
+              "name": "master_sha",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "The head commit.",
+              "name": "head_sha",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"git\""
+            }
+          ],
+          "type": "object"
+        }
+      ]
     },
     {
       "description": "Whether the report could see its whole subject.\n\nA verdict over a matrix the index silently shrank is the failure this repository met\nfour times in one day: an object is excluded, every projection of the smaller index is a\nfaithful projection, and each check prints a true statement about the half it can see.\nA freshness check answers \"was this generated from this tree\" and cannot answer \"did the\ngenerator see everything in it\", so the answer has to carry its own denominator.\n\n```\nuse majordomus_cli::evidence::Subject;\nlet whole = Subject { examined: 149, complete: true, excluded: vec![] };\nassert!(whole.complete);\n\nlet partial = Subject {\n    examined: 148,\n    complete: false,\n    excluded: vec![\"docs/CLAIMS.yaml: unknown_key\".into()],\n};\nassert!(!partial.complete, \"a shrunken index must not report a clean verdict\");\n```",
@@ -18837,6 +19471,53 @@
       "variants": []
     },
     {
+      "description": "Why an act failed, as one class a person and a retry policy can act on. Every failed act\non the trail carries one (`class`), and the drain decides from it whether the next\ncandidate may be tried (`FailureClass::recoverable`) or the drain must stop.",
+      "home": "integration",
+      "is_enum": true,
+      "name": "FailureClass",
+      "properties": [],
+      "type": "\"stale\" | \"conflict\" | \"new_failing_check\" | \"review_revoked\" | \"transient\" | \"policy_violation\" | \"verification_failed\" | \"unreadable\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationEvent"
+      ],
+      "values": [
+        {
+          "description": "Master or the head moved since the decision.",
+          "value": "stale"
+        },
+        {
+          "description": "The merge of master conflicts.",
+          "value": "conflict"
+        },
+        {
+          "description": "A required check failed that had passed.",
+          "value": "new_failing_check"
+        },
+        {
+          "description": "An approval was withdrawn.",
+          "value": "review_revoked"
+        },
+        {
+          "description": "The forge or the network failed in a way that passes.",
+          "value": "transient"
+        },
+        {
+          "description": "The branch protection refused it.",
+          "value": "policy_violation"
+        },
+        {
+          "description": "What landed could not be verified.",
+          "value": "verification_failed"
+        },
+        {
+          "description": "The forge or git could not be read.",
+          "value": "unreadable"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "A capability of the running process a surface needs in order to exist.\n\nThe registry describes the effective process, not the maximum one: a build or an\ninvocation that answers no MCP has no MCP surface, and the home page cannot link to\none. Stating the dependency as data is what keeps that automatic.",
       "home": "web",
       "is_enum": true,
@@ -19070,6 +19751,7 @@
       "used_by": [],
       "used_by_schemas": [
         "FeatureSummary",
+        "ResolvedDomain",
         "ResolvedRefs"
       ],
       "values": [],
@@ -19192,6 +19874,13 @@
           "refs": [],
           "required": true,
           "type": "boolean"
+        },
+        {
+          "description": "The product domain it belongs to, when it names one.",
+          "name": "domain",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         },
         {
           "description": "The operational areas it serves.",
@@ -19975,6 +20664,37 @@
           "value": "full"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "How one gate answered.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "GateResult",
+      "properties": [
+        {
+          "description": "The gate.",
+          "name": "gate",
+          "refs": [
+            "IntegrationGate"
+          ],
+          "required": true,
+          "type": "IntegrationGate"
+        },
+        {
+          "description": "Whether it passed. A gate that fails only because an earlier one did (the head is not\nfresh when its merge conflicts) fails without a reason of its own.",
+          "name": "passed",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PullRequestAssessment"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -21758,6 +22478,195 @@
       "variants": []
     },
     {
+      "description": "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action.",
+      "home": "integration",
+      "is_enum": true,
+      "name": "IntegrationAction",
+      "properties": [],
+      "type": "\"lease_acquired\" | \"lease_released\" | \"continuous_started\" | \"continuous_stopped\" | \"observed\" | \"became_actionable\" | \"left_actionable\" | \"selected\" | \"refresh_selected\" | \"stale_decision\" | \"merge_attempted\" | \"merge_succeeded\" | \"merge_failed\" | \"verification_failed\" | \"failure_acknowledged\" | \"refresh_attempted\" | \"refreshed\" | \"refresh_failed\" | \"close_attempted\" | \"closed_redundant\" | \"closed_superseded\" | \"close_failed\" | \"repair_selected\" | \"repair_attempted\" | \"repaired\" | \"repair_refused\" | \"idle\" | \"observe_failed\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationEvent",
+        "PassedOver"
+      ],
+      "values": [
+        {
+          "description": "The executor took the base branch's lease.",
+          "value": "lease_acquired"
+        },
+        {
+          "description": "It gave the lease back.",
+          "value": "lease_released"
+        },
+        {
+          "description": "A continuous drain started.",
+          "value": "continuous_started"
+        },
+        {
+          "description": "A continuous drain stopped; the detail says why.",
+          "value": "continuous_stopped"
+        },
+        {
+          "description": "The forge was observed and the observation recorded.",
+          "value": "observed"
+        },
+        {
+          "description": "A pull request became actionable (ready or refreshable).",
+          "value": "became_actionable"
+        },
+        {
+          "description": "A pull request stopped being actionable.",
+          "value": "left_actionable"
+        },
+        {
+          "description": "The first ready pull request was chosen to merge.",
+          "value": "selected"
+        },
+        {
+          "description": "The first refreshable pull request was chosen to bring master into.",
+          "value": "refresh_selected"
+        },
+        {
+          "description": "The decision went stale between planning and acting; nothing was done.",
+          "value": "stale_decision"
+        },
+        {
+          "description": "A merge is about to be asked of the forge.",
+          "value": "merge_attempted"
+        },
+        {
+          "description": "The merge landed and was verified.",
+          "value": "merge_succeeded"
+        },
+        {
+          "description": "The forge refused the merge.",
+          "value": "merge_failed"
+        },
+        {
+          "description": "What landed could not be verified.",
+          "value": "verification_failed"
+        },
+        {
+          "description": "A person looked at a merge that could not be verified and lets drains merge again\n(`prs drain --resume-after-failure`).",
+          "value": "failure_acknowledged"
+        },
+        {
+          "description": "Master is about to be merged into a branch and pushed.",
+          "value": "refresh_attempted"
+        },
+        {
+          "description": "Master was brought into the branch and pushed.",
+          "value": "refreshed"
+        },
+        {
+          "description": "Bringing master in failed.",
+          "value": "refresh_failed"
+        },
+        {
+          "description": "A redundant or superseded pull request is about to be closed.",
+          "value": "close_attempted"
+        },
+        {
+          "description": "A redundant one was closed.",
+          "value": "closed_redundant"
+        },
+        {
+          "description": "A superseded one was closed (before 0.13, a line with this word recorded what is now\n`closed_redundant`).",
+          "value": "closed_superseded"
+        },
+        {
+          "description": "Closing it failed.",
+          "value": "close_failed"
+        },
+        {
+          "description": "A person named a pull request to repair (`prs repair --apply`) and its classification\nmakes it eligible: master is what it lacks, and nothing authored conflicts.",
+          "value": "repair_selected"
+        },
+        {
+          "description": "Master is about to be merged into the named branch and pushed.",
+          "value": "repair_attempted"
+        },
+        {
+          "description": "Master was brought into the named branch and pushed.",
+          "value": "repaired"
+        },
+        {
+          "description": "The repair was refused — by the classification (an authored conflict, a fork, armed\nauto-merge, another base, an undecidable relation) or by the act (a merge, derive,\ncommit or push that failed) — and nothing reached the branch; `class` says why.",
+          "value": "repair_refused"
+        },
+        {
+          "description": "Nothing was ready.",
+          "value": "idle"
+        },
+        {
+          "description": "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`).",
+          "value": "observe_failed"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "What cleanup would do, decided offline: the pull requests it would close or leave for a\nperson, from the recorded observation, and the last branch report `prs cleanup` recorded.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "IntegrationCleanup",
+      "properties": [
+        {
+          "description": "Whether a forge observation is recorded in this checkout.",
+          "name": "observed",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why there is no plan, when there is none.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When the forge was observed, when it was.",
+          "name": "observed_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The plan, in rank order: `would_close` for what is provably on master or superseded by\na successor that landed, `left_for_a_person` for weak evidence and for what a person\nmarked obsolete. Nothing here closes anything.",
+          "name": "items",
+          "refs": [
+            "CleanupItem"
+          ],
+          "required": true,
+          "type": "array of CleanupItem"
+        },
+        {
+          "description": "The branches merged pull requests left on origin, as `prs cleanup` last read them;\n`None` when it never ran in this checkout. Never read from the network here.",
+          "name": "branches",
+          "refs": [
+            "LeftBranchReport"
+          ],
+          "required": false,
+          "type": "LeftBranchReport | null"
+        },
+        {
+          "description": "How old that report is, in seconds, when its time reads.",
+          "name": "branches_age_seconds",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "integration.cleanup"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One entry of the audit trail.",
       "home": "integration",
       "is_enum": false,
@@ -21778,11 +22687,13 @@
           "type": "string"
         },
         {
-          "description": "What (`selected`, `refresh_selected`, `stale_decision`, `merge_attempted`,\n`merge_succeeded`, `merge_failed`, `verification_failed`, `refreshed`,\n`refresh_failed`, `closed_superseded`, `idle`, and the two transitions the wait is\nfolded from: `became_actionable`, `left_actionable`).",
+          "description": "What (`IntegrationAction`).",
           "name": "action",
-          "refs": [],
+          "refs": [
+            "IntegrationAction"
+          ],
           "required": true,
-          "type": "string"
+          "type": "IntegrationAction"
         },
         {
           "description": "The pull request, when one.",
@@ -21813,7 +22724,7 @@
           "type": "string | null"
         },
         {
-          "description": "The decision's reason codes.",
+          "description": "The decision's reasons; a code an older executor wrote reads back verbatim.",
           "name": "reasons",
           "refs": [],
           "required": true,
@@ -21832,6 +22743,38 @@
           "refs": [],
           "required": false,
           "type": "array of integer (uint64)"
+        },
+        {
+          "description": "On `refreshed`: the head the executor pushed. The refresh pipeline waits only for\nthe checks of a head named here.",
+          "name": "head_after",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "On `merge_attempted`, `merge_succeeded`, `refresh_selected` and the closures:\nthe assessment's evidence the act was decided on.",
+          "name": "evidence",
+          "refs": [
+            "IntegrationEvidence"
+          ],
+          "required": false,
+          "type": "array of IntegrationEvidence"
+        },
+        {
+          "description": "On a failure: its class, once one is decided.",
+          "name": "class",
+          "refs": [
+            "FailureClass"
+          ],
+          "required": false,
+          "type": "FailureClass | null"
+        },
+        {
+          "description": "On `merge_succeeded`: the merge commit, once it is read.",
+          "name": "merge_commit",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         }
       ],
       "type": "object",
@@ -21868,17 +22811,19 @@
       "variants": []
     },
     {
-      "description": "One piece of evidence behind a disposition: what was read, and what it said.",
+      "description": "One piece of evidence behind a disposition: what was read, where, and what it said.",
       "home": "integration",
       "is_enum": false,
       "name": "IntegrationEvidence",
       "properties": [
         {
-          "description": "What kind of fact (`required_checks`, `relation_to_master`, `review`, `label`,\n`dependency`, `draft`, `base`).",
+          "description": "What kind of fact.",
           "name": "kind",
-          "refs": [],
+          "refs": [
+            "EvidenceKind"
+          ],
           "required": true,
-          "type": "string"
+          "type": "EvidenceKind"
         },
         {
           "description": "What it said, as a word.",
@@ -21893,11 +22838,21 @@
           "refs": [],
           "required": true,
           "type": "string"
+        },
+        {
+          "description": "Where it was read. Every assessment names it; a trail line written before evidence\ncarried it has none.",
+          "name": "source",
+          "refs": [
+            "EvidenceSource"
+          ],
+          "required": false,
+          "type": "EvidenceSource | null"
         }
       ],
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
+        "IntegrationEvent",
         "PullRequestAssessment"
       ],
       "values": [],
@@ -21963,6 +22918,69 @@
       "variants": []
     },
     {
+      "description": "One question of the policy, in the order `IntegrationGate::ALL` asks them. The\ndisposition is the first that fails; every one is answered.",
+      "home": "integration",
+      "is_enum": true,
+      "name": "IntegrationGate",
+      "properties": [],
+      "type": "\"base\" | \"draft\" | \"label\" | \"auto_merge\" | \"supersession\" | \"relation_to_master\" | \"merge_method\" | \"dependency\" | \"review\" | \"no_failing_check\" | \"freshness\" | \"required_checks\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "GateResult"
+      ],
+      "values": [
+        {
+          "description": "It targets the integration base.",
+          "value": "base"
+        },
+        {
+          "description": "It is not a draft.",
+          "value": "draft"
+        },
+        {
+          "description": "It carries no label whose policy is to hold.",
+          "value": "label"
+        },
+        {
+          "description": "The forge has no auto-merge armed on it.",
+          "value": "auto_merge"
+        },
+        {
+          "description": "No successor is declared to replace it. Asked before the relation to master, because\na pull request whose successor landed usually conflicts with what the successor\nbrought, and is superseded rather than conflicting.",
+          "value": "supersession"
+        },
+        {
+          "description": "Its head is not on master already, and git could say that it merges cleanly.",
+          "value": "relation_to_master"
+        },
+        {
+          "description": "The repository allows a merge commit, the only way the executor merges. Asked after\nthe relation, so work already on master is still `redundant` and may be closed.",
+          "value": "merge_method"
+        },
+        {
+          "description": "Every declared dependency has landed.",
+          "value": "dependency"
+        },
+        {
+          "description": "The review policy is satisfied on the head.",
+          "value": "review"
+        },
+        {
+          "description": "No required check failed on the head.",
+          "value": "no_failing_check"
+        },
+        {
+          "description": "The head contains the current master.",
+          "value": "freshness"
+        },
+        {
+          "description": "Every required check passed on the head.",
+          "value": "required_checks"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "The queues the Cockpit and the status table group pull requests into.",
       "home": "integration",
       "is_enum": true,
@@ -21971,7 +22989,8 @@
       "type": "\"ready\" | \"waiting\" | \"repair\" | \"cleanup\" | \"held\"",
       "used_by": [],
       "used_by_schemas": [
-        "PullRequestAssessment"
+        "PullRequestAssessment",
+        "RankFactors"
       ],
       "values": [
         {
@@ -21987,11 +23006,11 @@
           "value": "repair"
         },
         {
-          "description": "Its work is on master already.",
+          "description": "Its work is on master already, or a successor that landed replaced it.",
           "value": "cleanup"
         },
         {
-          "description": "Not asking to be merged, or undecidable.",
+          "description": "Not asking to be merged, held by a label or a setting, unsafe for the executor, or\nundecidable.",
           "value": "held"
         }
       ],
@@ -22049,32 +23068,52 @@
           "type": "string"
         },
         {
-          "description": "The status contexts the branch protection requires, as read from the forge.\n`None` when the protection could not be read: every required-check verdict is then\n`unknown`, never `passed`.",
+          "description": "The checks the base requires, from its branch protection and rulesets, each with the\napp bound to it. `None` when they could not be read: every required-check verdict is\nthen `unknown`, never `passed`. An empty set is unknown too (owner decision D5): a\nbase that requires nothing proves nothing about a head, so nothing merges onto it.",
           "name": "required_checks",
-          "refs": [],
+          "refs": [
+            "RequiredCheck"
+          ],
           "required": false,
           "type": "array | null"
         },
         {
-          "description": "Whether the branch protection requires an approving review; `None` when unread.",
-          "name": "reviews_required",
-          "refs": [],
+          "description": "What the base requires of reviews; `None` when unread.",
+          "name": "review_policy",
+          "refs": [
+            "ReviewPolicy"
+          ],
           "required": false,
-          "type": "boolean | null"
+          "type": "ReviewPolicy | null"
         },
         {
-          "description": "Labels that hold a pull request whatever else is true.",
-          "name": "blocking_labels",
+          "description": "Contexts whose skip counts as a pass. Empty unless a repository says otherwise: a\nskipped required check is otherwise `missing`.",
+          "name": "skipped_permitted",
           "refs": [],
-          "required": true,
+          "required": false,
           "type": "array of string"
         },
         {
-          "description": "The merge method the executor asks the forge for.",
+          "description": "The labels that have an effect, each with its effect: `LABEL_POLICY`, copied.",
+          "name": "labels",
+          "refs": [
+            "LabelPolicy"
+          ],
+          "required": true,
+          "type": "array of LabelPolicy"
+        },
+        {
+          "description": "The merge method the executor asks the forge for: `merge` when the repository allows a\nmerge commit, and `None` when it does not. There is no other: the derived-file driver\nresolves merges, and a squash or rebase would replay commits it never saw, so with\n`None` every pull request the relation to master does not already decide is held\n(`merge_commit_not_allowed`), never merged otherwise.",
           "name": "merge_method",
           "refs": [],
-          "required": true,
-          "type": "string"
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether the base requires a branch to be up to date before it merges (the\nprotection's `required_status_checks.strict`, or a ruleset's): the forge-side half of\nthe guard against a merge onto a master nobody tested with the change. The executor's\nhalf is its parent check after every merge. `Some(false)` is the owner's to change\n(decision D8) and decides no disposition; `None` when unread.",
+          "name": "up_to_date_required",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
         }
       ],
       "type": "object",
@@ -22199,7 +23238,8 @@
       "type": "\"low\" | \"medium\" | \"high\"",
       "used_by": [],
       "used_by_schemas": [
-        "PullRequestAssessment"
+        "PullRequestAssessment",
+        "RankFactors"
       ],
       "values": [
         {
@@ -22263,6 +23303,15 @@
           ],
           "required": false,
           "type": "IntegrationEvent | null"
+        },
+        {
+          "description": "How fast the executor has turned work into master over the last\n`THROUGHPUT_WINDOW_DAYS` days, folded from the same trail.",
+          "name": "throughput",
+          "refs": [
+            "IntegrationThroughput"
+          ],
+          "required": true,
+          "type": "IntegrationThroughput"
         }
       ],
       "type": "object",
@@ -22270,6 +23319,91 @@
         "integration.queue"
       ],
       "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The integrator's throughput over a window of the trail.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "IntegrationThroughput",
+      "properties": [
+        {
+          "description": "The window, in days, ending at the time the fold was asked for.",
+          "name": "window_days",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Pull requests merged in the window.",
+          "name": "merges",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "`merges / window_days`.",
+          "name": "merges_per_day",
+          "refs": [],
+          "required": true,
+          "type": "number (double)"
+        },
+        {
+          "description": "Median seconds from becoming actionable to being merged; `None` when no merge in the\nwindow had a recorded `became_actionable` before it.",
+          "name": "median_actionable_to_merged_secs",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Median `refreshed` events between one merge and the next; `None` without a merge.",
+          "name": "ci_rounds_per_merge",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Median seconds from a selection to its outcome; `None` when no selection in the window\nreached one.",
+          "name": "median_cycle_secs",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Decisions refused because master or the head moved after they were taken.",
+          "name": "stale_decisions",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Merge attempts that failed.",
+          "name": "merge_failures",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Merges whose resulting master failed verification.",
+          "name": "verification_failures",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Events in the trail whose time could not be read; they count toward nothing.",
+          "name": "unreadable_events",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationStatus"
+      ],
       "values": [],
       "variants": []
     },
@@ -24437,6 +25571,60 @@
       "variants": []
     },
     {
+      "description": "What a label does to a pull request that carries it.",
+      "home": "integration",
+      "is_enum": true,
+      "name": "LabelEffect",
+      "properties": [],
+      "type": "\"hold\" | \"obsolete\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "LabelPolicy"
+      ],
+      "values": [
+        {
+          "description": "It holds the pull request whatever else is true: `blocked`, with `label:NAME`.",
+          "value": "hold"
+        },
+        {
+          "description": "A person marked the work obsolete (owner decision D3): `obsolete`, with\n`label_obsolete:NAME`, listed by cleanup for a person and never closed automatically.",
+          "value": "obsolete"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One label with an effect. The forge's label names are compared with `name`\ncase-insensitively.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "LabelPolicy",
+      "properties": [
+        {
+          "description": "The label, lower-case.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it does.",
+          "name": "effect",
+          "refs": [
+            "LabelEffect"
+          ],
+          "required": true,
+          "type": "LabelEffect"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationPolicy"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "What the layer holds, counted per kind, plus the registry the executable composes.\nEvery number here comes from the index — the same objects every other surface serves —\nand never from counting files that match a pattern: a file that does not parse is not\na rule, and a count that says otherwise is a lie a person acts on.",
       "home": "environment",
       "is_enum": false,
@@ -24539,6 +25727,13 @@
           "refs": [],
           "required": true,
           "type": "integer (uint64)"
+        },
+        {
+          "description": "The mesh claim that makes it exclusive across machines, `<stream>/<claim>`; absent\nwhen the lease guards this clone alone (`super::exclusive`).",
+          "name": "mesh_claim",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         }
       ],
       "type": "object",
@@ -24627,6 +25822,115 @@
       "used_by": [],
       "used_by_schemas": [
         "KnowledgeStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A branch a merged pull request left on origin, as cleanup reports it. Reported, never\ndeleted: the forge's `delete_branch_on_merge` decides deletion (owner decision D4), so the\nexecutor holds no branch-deleting write at all.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "LeftBranch",
+      "properties": [
+        {
+          "description": "The branch on origin.",
+          "name": "branch",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its tip: the head that merged.",
+          "name": "tip",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The pull request that merged it.",
+          "name": "pr",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "When that pull request merged.",
+          "name": "merged_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`left_for_a_person`, or `kept: checked out at <path>` when a worktree of this\nrepository has the branch checked out: somebody may still be standing on it.",
+          "name": "action",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What would clear it, in the setting's own terms.",
+          "name": "next_step",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "LeftBranchReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The last report of the branches merged pull requests left on origin, as `prs cleanup`\nread it. Written by `prs cleanup` alone — the one place that asks the forge for them —\nand rendered offline, with its age, by every surface that cannot reach the network.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "LeftBranchReport",
+      "properties": [
+        {
+          "description": "When cleanup read origin and the merged pull requests.",
+          "name": "read_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The base the report excludes.",
+          "name": "base",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The forge's `delete_branch_on_merge`, from the observation; `None` when unread.",
+          "name": "delete_branch_on_merge",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        },
+        {
+          "description": "The branches, or `None` when origin or the merged pull requests could not be read:\nunread is not \"nothing left behind\".",
+          "name": "branches",
+          "refs": [
+            "LeftBranch"
+          ],
+          "required": false,
+          "type": "array | null"
+        },
+        {
+          "description": "The command that reads it afresh.",
+          "name": "refreshed_by",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationCleanup"
       ],
       "values": [],
       "variants": []
@@ -27134,6 +28438,7 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
+        "ResolvedDomain",
         "ResolvedRefs"
       ],
       "values": [],
@@ -27277,6 +28582,42 @@
       "used_by": [],
       "used_by_schemas": [
         "Surface"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One line that differs between the two snapshots.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "Moved",
+      "properties": [
+        {
+          "description": "The section it belongs to.",
+          "name": "section",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`added` (present only after the cycle) or `removed` (present only before).",
+          "name": "change",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The line itself.",
+          "name": "line",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DryRunProof"
       ],
       "values": [],
       "variants": []
@@ -28099,6 +29440,49 @@
       "variants": []
     },
     {
+      "description": "One open pull request as the cycle classified it.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "ObservedClassification",
+      "properties": [
+        {
+          "description": "The pull request.",
+          "name": "number",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The head it was decided against.",
+          "name": "head_sha",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its disposition, as the queue names it.",
+          "name": "disposition",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the executor would do with it, when anything.",
+          "name": "next_action",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DryRunProof"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The open episode this checkout points at, when there is one.\n\nOne execution episode belongs to one provider session, and several can be open in one\ncheckout at once — two windows of the same provider are two workers. What is read here\nis `state/session-current.yaml`, the pointer to the episode of this checkout; a worker\nthat knows its own provider session resolves its own episode instead, which is what\n`mj_session_here_file` in `lib/common.sh` does and what stamps each ledger line.",
       "home": "continuity",
       "is_enum": false,
@@ -28531,6 +29915,33 @@
       "variants": []
     },
     {
+      "description": "What two open pull requests have in common that makes landing one change the other.",
+      "home": "integration",
+      "is_enum": true,
+      "name": "OverlapKind",
+      "properties": [],
+      "type": "\"authored\" | \"version_bump\" | \"release\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "PathOverlap"
+      ],
+      "values": [
+        {
+          "description": "Authored paths both change.",
+          "value": "authored"
+        },
+        {
+          "description": "Both raise the crate's version: whichever lands second must be re-derived on the first.",
+          "value": "version_bump"
+        },
+        {
+          "description": "Both change the release records under `.ai/repo/releases/`.",
+          "value": "release"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "One pair of claims that contain one another.",
       "home": "peers",
       "is_enum": false,
@@ -28560,7 +29971,7 @@
       "variants": []
     },
     {
-      "description": "A reason the pack cannot be built as planned.",
+      "description": "A reason the pack cannot be built as planned, or a written pack is not what its\nmanifest says: a stable code, the path when there is one, and the remedy.\n\nThe examples below plan a repository holding `main.rs` and a `logo.png` whose content is\nbinary, with a distribution whose `chat` profile has limits and whose `bare` one has none.\n\n```\nuse majordomus_cli::pack::{plan, PackFinding};\n#### use std::process::Command;\n#### let dir = tempfile::tempdir().unwrap();\n#### let (root, share) = (dir.path().join(\"repo\"), dir.path().join(\"share\"));\n#### std::fs::create_dir_all(&root).unwrap();\n#### std::fs::create_dir_all(&share).unwrap();\n#### std::fs::write(share.join(\"archive.yaml\"), \"default: chat\\nprofiles:\\n  - id: chat\\n    binary: drop\\n    artifacts: drop\\n    shards:\\n      max_count: 5\\n      max_tokens: 4000\\n  - id: bare\\n    binary: drop\\n\").unwrap();\n#### let git = |a: &[&str]| assert!(Command::new(\"git\").arg(\"-C\").arg(&root)\n####     .args([\"-c\", \"user.email=t@example.com\", \"-c\", \"user.name=t\"]).args(a)\n####     .status().unwrap().success());\n#### git(&[\"init\", \"-q\"]);\n#### std::fs::write(root.join(\"main.rs\"), \"fn main() {}\\n\").unwrap();\n#### std::fs::write(root.join(\"logo.png\"), b\"\\x89PNG\\0\\x01\").unwrap();\n#### git(&[\"add\", \"-A\"]);\n#### git(&[\"commit\", \"-q\", \"-m\", \"one\"]);\nlet findings: Vec<PackFinding> = plan(&root, &share, Some(\"bare\")).plan.findings;\nassert_eq!(findings[0].code, \"pack.no_limits\");\nassert!(findings[0].path.is_none() && !findings[0].remedy.is_empty());\n```",
       "home": "pack",
       "is_enum": false,
       "name": "PackFinding",
@@ -28604,7 +30015,7 @@
       "variants": []
     },
     {
-      "description": "The plan of one pack: what it carries, what it leaves out and why, how it is cut into\nshards, and whether it may be built.",
+      "description": "The plan of one pack: what it carries, what it leaves out and why, how it is cut into\nshards, and whether it may be built.\n\nThe examples below plan a repository holding `main.rs` and a `logo.png` whose content is\nbinary, with a distribution whose `chat` profile has limits and whose `bare` one has none.\n\n```\nuse majordomus_cli::pack::{plan, PackPlan};\n#### use std::process::Command;\n#### let dir = tempfile::tempdir().unwrap();\n#### let (root, share) = (dir.path().join(\"repo\"), dir.path().join(\"share\"));\n#### std::fs::create_dir_all(&root).unwrap();\n#### std::fs::create_dir_all(&share).unwrap();\n#### std::fs::write(share.join(\"archive.yaml\"), \"default: chat\\nprofiles:\\n  - id: chat\\n    binary: drop\\n    artifacts: drop\\n    shards:\\n      max_count: 5\\n      max_tokens: 4000\\n  - id: bare\\n    binary: drop\\n\").unwrap();\n#### let git = |a: &[&str]| assert!(Command::new(\"git\").arg(\"-C\").arg(&root)\n####     .args([\"-c\", \"user.email=t@example.com\", \"-c\", \"user.name=t\"]).args(a)\n####     .status().unwrap().success());\n#### git(&[\"init\", \"-q\"]);\n#### std::fs::write(root.join(\"main.rs\"), \"fn main() {}\\n\").unwrap();\n#### std::fs::write(root.join(\"logo.png\"), b\"\\x89PNG\\0\\x01\").unwrap();\n#### git(&[\"add\", \"-A\"]);\n#### git(&[\"commit\", \"-q\", \"-m\", \"one\"]);\nlet p: PackPlan = plan(&root, &share, None).plan;\nassert!(p.measured && p.passes && p.index_matches_head);\nassert_eq!((p.tracked, p.selected), (2, 1));\nassert_eq!(p.dropped[\"binary\"], 1);\n// an unknown profile is not measured, and not measured is never a pass\nlet p: PackPlan = plan(&root, &share, Some(\"nope\")).plan;\nassert!(!p.measured && !p.passes);\n```",
       "home": "pack",
       "is_enum": false,
       "name": "PackPlan",
@@ -28739,7 +30150,7 @@
       "variants": []
     },
     {
-      "description": "The verdict on a written pack.",
+      "description": "The verdict on a written pack: whether it could be read, what its manifest names, how\nmany files and sources it holds, and every finding against it.\n\nThe examples below build a pack of a repository holding `main.rs`.\n\n```\nuse majordomus_cli::pack::{build, plan, verify, PackVerdict, Profiles};\n#### use std::process::Command;\n#### let dir = tempfile::tempdir().unwrap();\n#### let (root, share) = (dir.path().join(\"repo\"), dir.path().join(\"share\"));\n#### std::fs::create_dir_all(&root).unwrap();\n#### std::fs::create_dir_all(&share).unwrap();\n#### std::fs::write(share.join(\"archive.yaml\"), \"default: chat\\nprofiles:\\n  - id: chat\\n    binary: drop\\n    artifacts: drop\\n    shards:\\n      max_count: 5\\n      max_tokens: 4000\\n\").unwrap();\n#### let git = |a: &[&str]| assert!(Command::new(\"git\").arg(\"-C\").arg(&root)\n####     .args([\"-c\", \"user.email=t@example.com\", \"-c\", \"user.name=t\"]).args(a)\n####     .status().unwrap().success());\n#### git(&[\"init\", \"-q\"]);\n#### std::fs::write(root.join(\"main.rs\"), \"fn main() {}\\n\").unwrap();\n#### git(&[\"add\", \"-A\"]);\n#### git(&[\"commit\", \"-q\", \"-m\", \"one\"]);\nlet profiles = Profiles::load(&share, &root).unwrap();\nlet out = dir.path().join(\"pack\");\nlet v: PackVerdict = build(&plan(&root, &share, None), &profiles, &root, &out).unwrap();\nassert_eq!((v.files, v.sources), (2, 1), \"the index and one shard, carrying one file\");\nassert_eq!(v.profile.as_deref(), Some(\"chat\"));\n// a directory with no manifest is not measured, which is not a pass\nlet v: PackVerdict = verify(dir.path(), &profiles, &root);\nassert!(!v.measured && !v.passes);\n```",
       "home": "pack",
       "is_enum": false,
       "name": "PackVerdict",
@@ -28922,9 +30333,11 @@
         {
           "description": "What it was chosen for (`selected` to merge, `refresh_selected` to bring master in).",
           "name": "action",
-          "refs": [],
+          "refs": [
+            "IntegrationAction"
+          ],
           "required": true,
-          "type": "string"
+          "type": "IntegrationAction"
         }
       ],
       "type": "object",
@@ -28999,6 +30412,15 @@
           "refs": [],
           "required": true,
           "type": "array of string"
+        },
+        {
+          "description": "What the two share. `authored` in a record written before it was said.",
+          "name": "kind",
+          "refs": [
+            "OverlapKind"
+          ],
+          "required": false,
+          "type": "OverlapKind"
         }
       ],
       "type": "object",
@@ -31704,6 +33126,35 @@
       "variants": []
     },
     {
+      "description": "One step of the cycle and what it said.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "ProofStep",
+      "properties": [
+        {
+          "description": "`refresh`, `plan`, `drain --dry-run` or `cleanup`.",
+          "name": "step",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it reported, in one line.",
+          "name": "summary",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DryRunProof"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The answer of `executions.protocol`: the live channel's whole contract, derived from\nthe types that implement it.",
       "home": "executions",
       "is_enum": false,
@@ -32472,6 +33923,27 @@
           "type": "PullRequestDisposition"
         },
         {
+          "description": "The successor that landed and replaces it, exactly when the disposition is\n`superseded`: the disposition stays one word on the wire, and this is its `by`.\nAbsent otherwise; a successor still open, or closed without landing, is in the\n`supersession` evidence and the reasons instead.",
+          "name": "superseded_by",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The issue of `.ai/repo/project/issues/` its head branch names — a path component equal\nto the id, or the id followed by `-`, the form `majordomus worktree create --issue`\ngives — when it names one. Derived, never declared here: the issue record and the\nbranch name are the two sources, and nothing else.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The milestone that issue's record declares, when it declares one.",
+          "name": "milestone",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
           "description": "The queue it is in.",
           "name": "lane",
           "refs": [
@@ -32481,11 +33953,20 @@
           "type": "IntegrationLane"
         },
         {
-          "description": "Machine-readable reason codes, most decisive first.",
+          "description": "Machine-readable reasons, one for every failing gate's every finding, in policy order:\nthe first is the decisive one. A ready pull request carries why it is ready.",
           "name": "reasons",
           "refs": [],
           "required": true,
           "type": "array of string"
+        },
+        {
+          "description": "Every gate of the policy, in order, and whether it passed.",
+          "name": "gates",
+          "refs": [
+            "GateResult"
+          ],
+          "required": false,
+          "type": "array of GateResult"
         },
         {
           "description": "What a person or the executor does next, when anything.",
@@ -32586,6 +34067,24 @@
           ],
           "required": false,
           "type": "ExecutorWait | null"
+        },
+        {
+          "description": "Why it stands where it does in the rank: every component the order compares, in the\norder it compares them. Set by the planner; absent on an assessment never ranked.",
+          "name": "rank_factors",
+          "refs": [
+            "RankFactors"
+          ],
+          "required": false,
+          "type": "RankFactors | null"
+        },
+        {
+          "description": "What its merge into master changes, by kind (`ChangeShape`): read beside the\nrelation, from the same pair of commits. Absent when it could not be read.",
+          "name": "change_shape",
+          "refs": [
+            "ChangeShape"
+          ],
+          "required": false,
+          "type": "ChangeShape | null"
         }
       ],
       "type": "object",
@@ -32620,11 +34119,20 @@
           "type": "DependencyCertainty"
         },
         {
-          "description": "Whether it is satisfied: that pull request has landed (or is not open any more).",
+          "description": "Whether it is satisfied: that pull request merged. Closed without a merge, or not\nread, it is not — a dependency that never landed is no less a dependency.",
           "name": "satisfied",
           "refs": [],
           "required": true,
           "type": "boolean"
+        },
+        {
+          "description": "What the forge says became of it. `open` in a record written before it was read.",
+          "name": "state",
+          "refs": [
+            "DependencyState"
+          ],
+          "required": false,
+          "type": "DependencyState"
         }
       ],
       "type": "object",
@@ -32641,10 +34149,12 @@
       "is_enum": true,
       "name": "PullRequestDisposition",
       "properties": [],
-      "type": "\"ready\" | \"needs_refresh\" | \"waiting_for_checks\" | \"waiting_for_review\" | \"waiting_for_dependency\" | \"draft\" | \"needs_repair\" | \"conflicting\" | \"blocked\" | \"superseded\" | \"possibly_redundant\" | \"other_base\" | \"unknown\"",
+      "type": "\"ready\" | \"needs_refresh\" | \"waiting_for_checks\" | \"waiting_for_review\" | \"waiting_for_dependency\" | \"draft\" | \"needs_repair\" | \"conflicting\" | \"blocked\" | \"unsafe\" | \"redundant\" | \"superseded\" | \"possibly_redundant\" | \"other_base\" | \"unknown\" | \"obsolete\"",
       "used_by": [],
       "used_by_schemas": [
-        "PullRequestAssessment"
+        "CleanupItem",
+        "PullRequestAssessment",
+        "RankFactors"
       ],
       "values": [
         {
@@ -32680,15 +34190,23 @@
           "value": "conflicting"
         },
         {
-          "description": "A blocking label holds it.",
+          "description": "A label whose policy is to hold holds it, or the repository allows no merge commit,\nwhich is the only way the executor merges.",
           "value": "blocked"
         },
         {
-          "description": "Its head already landed, or its patch is already fully on master: strong evidence,\neligible for closure under policy.",
+          "description": "The forge has auto-merge armed on it: the forge would merge it on its own, outside the\nexecutor and against whatever master is then. Held until a person disarms it.",
+          "value": "unsafe"
+        },
+        {
+          "description": "Its head already landed, its merge changes nothing, or every one of its commits is on\nmaster as an equal patch: strong evidence from git, eligible for closure under policy.\n(Before 0.13 this was the word `superseded`.)",
+          "value": "redundant"
+        },
+        {
+          "description": "Its body, or the body of another pull request, declares that a successor replaces it,\nand that successor landed: no longer open, its head contained in master. The successor\nis `PullRequestAssessment::superseded_by`. Eligible for closure under policy.",
           "value": "superseded"
         },
         {
-          "description": "Only derived artifacts would change: the authored change appears to be on master\nalready. Surfaced for a person; never closed automatically.",
+          "description": "Weak evidence: only derived artifacts would change, or its declared successor was closed\nwithout its head landing. Surfaced for a person; never closed automatically.",
           "value": "possibly_redundant"
         },
         {
@@ -32698,6 +34216,10 @@
         {
           "description": "Something needed to decide could not be observed.",
           "value": "unknown"
+        },
+        {
+          "description": "A person marked it obsolete with a label the label policy declares (owner decision\nD3): the only evidence that reaches this word. Listed for a person by cleanup and\nnever closed automatically; age, shared paths or a similar title never make one.",
+          "value": "obsolete"
         }
       ],
       "variants": []
@@ -32708,7 +34230,7 @@
       "is_enum": true,
       "name": "PullRequestReview",
       "properties": [],
-      "type": "\"not_required\" | \"approved\" | \"changes_requested\" | \"pending\" | \"unknown\"",
+      "type": "\"not_required\" | \"approved\" | \"changes_requested\" | \"pending\" | \"stale\" | \"code_owners_pending\" | \"unknown\"",
       "used_by": [],
       "used_by_schemas": [
         "PullRequestAssessment"
@@ -32729,6 +34251,14 @@
         {
           "description": "A required review has not been given.",
           "value": "pending"
+        },
+        {
+          "description": "The approvals were given on another commit than the head: an approval is of one\ncommit, and these are not of this one.",
+          "value": "stale"
+        },
+        {
+          "description": "The approvals are there, but a code owner's is still required.",
+          "value": "code_owners_pending"
         },
         {
           "description": "The protection could not be read.",
@@ -32909,6 +34439,83 @@
       "used_by": [],
       "used_by_schemas": [
         "IntegrationQueue"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the rank compares, in order: the first component that differs between two pull\nrequests decides which comes first. Each is a value of the assessment or of the queue\naround it, so the order can be explained and is the same whatever order the forge listed\nthe pull requests in.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "RankFactors",
+      "properties": [
+        {
+          "description": "The lane: what kind of work the executor does with it.",
+          "name": "lane",
+          "refs": [
+            "IntegrationLane"
+          ],
+          "required": true,
+          "type": "IntegrationLane"
+        },
+        {
+          "description": "The disposition, within the lane.",
+          "name": "disposition",
+          "refs": [
+            "PullRequestDisposition"
+          ],
+          "required": true,
+          "type": "PullRequestDisposition"
+        },
+        {
+          "description": "The planning risk: lower first.",
+          "name": "risk",
+          "refs": [
+            "IntegrationRisk"
+          ],
+          "required": true,
+          "type": "IntegrationRisk"
+        },
+        {
+          "description": "How many other ready or refreshable pull requests it overlaps (`PathOverlap`): an\nauthored path, a version bump or a release in common. Fewer first, because landing it\ninvalidates less.",
+          "name": "contention",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many open pull requests declare that they wait for this one and are not yet\nsatisfied: more first, because landing it unblocks them.",
+          "name": "dependents",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many authored paths it changes: fewer first, a smaller change is cheaper to land\nand to undo.",
+          "name": "authored_paths",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "When it was opened: older first, so easy new work cannot starve old work.",
+          "name": "created_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The number: the last tie-break, total.",
+          "name": "number",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PullRequestAssessment"
       ],
       "values": [],
       "variants": []
@@ -35611,7 +37218,7 @@
       "is_enum": false,
       "name": "RelationToMaster",
       "properties": [],
-      "type": "one of 7 variants",
+      "type": "one of 8 variants",
       "used_by": [],
       "used_by_schemas": [
         "PullRequestAssessment"
@@ -35640,6 +37247,26 @@
               "refs": [],
               "required": true,
               "type": "\"superseded\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The merge would conflict or change only derived output, but every commit the head has\nand master lacks is on master already as an equal patch (`git cherry` marks each `-`):\nthe change landed, and master moved on past it. Never a partial match, and never a\nhead that carries a merge commit of its own, whose resolution has no patch to compare.",
+          "properties": [
+            {
+              "description": "How many commits, every one of them already on master.",
+              "name": "commits",
+              "refs": [],
+              "required": true,
+              "type": "integer (uint64)"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"patch_ids_upstream\""
             }
           ],
           "type": "object"
@@ -37706,12 +39333,41 @@
       "variants": []
     },
     {
+      "description": "One check the base requires: a status context, and the app that must write it when the\nprotection binds it to one. A check of that name from any other writer is not this one.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "RequiredCheck",
+      "properties": [
+        {
+          "description": "The status context, or the check run's name.",
+          "name": "context",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The app bound to it, when the protection names one.",
+          "name": "app_id",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationPolicy"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The state of the repository's *required* checks on one head, which is the only check\nstate a merge decision reads. A visible green check that is not required proves nothing,\nand a required check that is absent is not a pass.",
       "home": "integration",
       "is_enum": true,
       "name": "RequiredCheckState",
       "properties": [],
-      "type": "\"passed\" | \"pending\" | \"failed\" | \"missing\" | \"unknown\"",
+      "type": "\"passed\" | \"skipped\" | \"pending\" | \"failed\" | \"missing\" | \"unknown\"",
       "used_by": [],
       "used_by_schemas": [
         "PullRequestAssessment"
@@ -37720,6 +39376,10 @@
         {
           "description": "Every required check passed on this head.",
           "value": "passed"
+        },
+        {
+          "description": "Every required check passed, at least one of them by a skip the policy permits for\nthat context. A skip the policy does not permit is not a pass: it is `missing`.",
+          "value": "skipped"
         },
         {
           "description": "A required check is queued or running.",
@@ -37797,6 +39457,154 @@
       "used_by": [],
       "used_by_schemas": [
         "ColourPart"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One domain, resolved: the record as its file declares it, and everything derived from\nthe stable features that name it.\n\nThe declared record is flattened, so a reader sees one object: the domain's own fields\nbeside its derived members and counts.\n\n```\nuse majordomus_cli::product::{Domain, DomainCounts, FeatureEvidence, ResolvedDomain, Surfaces};\nlet domain: Domain = serde_json::from_value(serde_json::json!({\n    \"id\": \"context\", \"title\": \"Context\", \"status\": \"stable\",\n    \"headline\": \"h\", \"problem\": \"p\",\n}))\n.unwrap();\nlet resolved = ResolvedDomain {\n    domain,\n    features: vec![],\n    surfaces: Surfaces::default(),\n    moments: vec![],\n    claim_refs: vec![],\n    use_case_refs: vec![],\n    counts: DomainCounts::default(),\n    evidence: FeatureEvidence::default(),\n};\nlet v = serde_json::to_value(&resolved).unwrap();\nassert_eq!(v[\"id\"], \"context\", \"the record is flattened into the resolved view\");\nassert_eq!(v[\"counts\"][\"features\"], 0);\n```",
+      "home": "product",
+      "is_enum": false,
+      "name": "ResolvedDomain",
+      "properties": [
+        {
+          "description": "The identity, the slug and the file name.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The domain as a heading: one word or two.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the product does about this domain, in one sentence.",
+          "name": "headline",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The operational failure this domain answers, in one sentence.",
+          "name": "problem",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`stable`, `draft` or `deprecated`.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Presentation order, lowest first.",
+          "name": "weight",
+          "refs": [],
+          "required": false,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "Free tags.",
+          "name": "tags",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "Derived: `/domains/<id>/`. Never authored; the schema refuses a `route` key.",
+          "name": "route",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Derived: the repository-relative file the record came from.",
+          "name": "source",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The Markdown body, without its front matter.",
+          "name": "body",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "Derived: the stable features that name it, in presentation order.",
+          "name": "features",
+          "refs": [
+            "DomainMember"
+          ],
+          "required": true,
+          "type": "array of DomainMember"
+        },
+        {
+          "description": "Derived: the interfaces any of its features is exposed through.",
+          "name": "surfaces",
+          "refs": [
+            "Surfaces"
+          ],
+          "required": true,
+          "type": "Surfaces"
+        },
+        {
+          "description": "Derived: the operational moments its features answer, in the catalogue's order.",
+          "name": "moments",
+          "refs": [
+            "MomentRef"
+          ],
+          "required": true,
+          "type": "array of MomentRef"
+        },
+        {
+          "description": "Derived: the distinct claims its features name, with their status and test.",
+          "name": "claim_refs",
+          "refs": [
+            "ClaimRef"
+          ],
+          "required": true,
+          "type": "array of ClaimRef"
+        },
+        {
+          "description": "Derived: the distinct use cases its features name.",
+          "name": "use_case_refs",
+          "refs": [
+            "UseCaseRef"
+          ],
+          "required": true,
+          "type": "array of UseCaseRef"
+        },
+        {
+          "description": "Derived: how much stands behind it.",
+          "name": "counts",
+          "refs": [
+            "DomainCounts"
+          ],
+          "required": true,
+          "type": "DomainCounts"
+        },
+        {
+          "description": "Derived: what is guaranteed, by claim status.",
+          "name": "evidence",
+          "refs": [
+            "FeatureEvidence"
+          ],
+          "required": true,
+          "type": "FeatureEvidence"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DomainList"
       ],
       "values": [],
       "variants": []
@@ -37907,6 +39715,13 @@
           "refs": [],
           "required": false,
           "type": "boolean"
+        },
+        {
+          "description": "The product domain it belongs to, by id: exactly one. Editorial; the domain's\nmembers are derived from this field and listed nowhere else.",
+          "name": "domain",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         },
         {
           "description": "The operational areas of the why catalogue it serves.",
@@ -38159,6 +39974,15 @@
           ],
           "required": true,
           "type": "FeatureEvidence"
+        },
+        {
+          "description": "Derived: the domain its `domain` names, with its title and route, when that\nresolves. Absent for a feature that names none or names one that does not exist.",
+          "name": "domain_ref",
+          "refs": [
+            "DomainRef"
+          ],
+          "required": false,
+          "type": "DomainRef | null"
         }
       ],
       "type": "object",
@@ -38492,6 +40316,42 @@
       ],
       "used_by_schemas": [
         "StoredPlan"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the base requires of reviews, read from its protection and rulesets together.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "ReviewPolicy",
+      "properties": [
+        {
+          "description": "How many approving reviews a merge needs; 0 when none.",
+          "name": "approvals",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Whether a code owner's approval is required.",
+          "name": "code_owners",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether the forge dismisses an approval when the head moves.",
+          "name": "dismiss_stale",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationPolicy"
       ],
       "values": [],
       "variants": []
@@ -38839,7 +40699,7 @@
       "variants": []
     },
     {
-      "description": "What a path a rule names actually is, decided by what drives it rather than by where it\nsits.\n\nThe corpus names two kinds and this distinction is the difference between a verdict and\na mechanism. A **case** is driven by a runner, so an execution of it can be recorded and\nthe repository can show that it passed. A **gate** is an executable check a CI gate runs\nas its own command: it refuses violations on every run, and this repository records no\nverdict for it, so what can be shown is the mechanism and not the result. Anything else\na rule names is proof only in prose.\n#### Example\n\n```\nuse majordomus_cli::rules::ArtifactKind;\nassert_eq!(ArtifactKind::Case.label(), \"case\");\nassert_eq!(ArtifactKind::Gate.label(), \"gate\");\n```",
+      "description": "What a path a rule names actually is, decided by what drives it rather than by where it\nsits.\n\nThe corpus names two kinds and this distinction is the difference between a verdict and\na mechanism. A **case** is driven by a runner, so an execution of it can be recorded and\nthe repository can show that it passed. A **gate** is an executable check a CI gate runs\nas its own command, or a unit-test module (`src/<module>/tests.rs`) the gate running the\ncrate's `cargo test` compiles: it refuses violations on every run, and this repository\nrecords no verdict for it, so what can be shown is the mechanism and not the result.\nAnything else a rule names is proof only in prose.\n#### Example\n\n```\nuse majordomus_cli::rules::ArtifactKind;\nassert_eq!(ArtifactKind::Case.label(), \"case\");\nassert_eq!(ArtifactKind::Gate.label(), \"gate\");\n```",
       "home": "rules",
       "is_enum": true,
       "name": "RuleArtifactKind",
@@ -38855,7 +40715,7 @@
           "value": "case"
         },
         {
-          "description": "An executable check a CI gate runs as its own command.",
+          "description": "An executable check a CI gate runs as its own command, or a unit-test module the\ngate running the crate's `cargo test` compiles.",
           "value": "gate"
         },
         {
@@ -39427,7 +41287,7 @@
           "type": "string"
         },
         {
-          "description": "Whether the tool enforces it: the rule carries an `x-majordomus` block.",
+          "description": "Whether a machine decides it: the block names a validator or tests, not only a reason\na person reviews it.",
           "name": "enforced",
           "refs": [],
           "required": true,
@@ -41652,7 +43512,7 @@
       "variants": []
     },
     {
-      "description": "The shard limits of a profile: the reader's own limits on what it can index.",
+      "description": "The shard limits of a profile: the reader's own limits on what it can index, the file\ncount of a project and the tokens one file of it may hold.\n\n```\nuse majordomus_cli::pack::{Profiles, ShardLimits};\nlet p = Profiles::parse(\n    \"default: a\\nprofiles:\\n  - id: a\\n    shards:\\n      max_count: 20\\n      max_tokens: 900\\n\",\n)\n.unwrap();\nlet want = ShardLimits { max_count: 20, max_tokens: 900 };\nassert_eq!(p.profile(None).unwrap().shards, Some(want));\n```",
       "home": "pack",
       "is_enum": false,
       "name": "ShardLimits",
@@ -41681,7 +43541,7 @@
       "variants": []
     },
     {
-      "description": "One planned shard.",
+      "description": "One planned shard: a Markdown file of the pack, the paths it carries from first to last,\nand what it weighs in bytes and in tokens.\n\nThe examples below plan a repository holding `main.rs` and a `logo.png` whose content is\nbinary, with a distribution whose `chat` profile has limits and whose `bare` one has none.\n\n```\nuse majordomus_cli::pack::{plan, ShardPlan};\n#### use std::process::Command;\n#### let dir = tempfile::tempdir().unwrap();\n#### let (root, share) = (dir.path().join(\"repo\"), dir.path().join(\"share\"));\n#### std::fs::create_dir_all(&root).unwrap();\n#### std::fs::create_dir_all(&share).unwrap();\n#### std::fs::write(share.join(\"archive.yaml\"), \"default: chat\\nprofiles:\\n  - id: chat\\n    binary: drop\\n    artifacts: drop\\n    shards:\\n      max_count: 5\\n      max_tokens: 4000\\n  - id: bare\\n    binary: drop\\n\").unwrap();\n#### let git = |a: &[&str]| assert!(Command::new(\"git\").arg(\"-C\").arg(&root)\n####     .args([\"-c\", \"user.email=t@example.com\", \"-c\", \"user.name=t\"]).args(a)\n####     .status().unwrap().success());\n#### git(&[\"init\", \"-q\"]);\n#### std::fs::write(root.join(\"main.rs\"), \"fn main() {}\\n\").unwrap();\n#### std::fs::write(root.join(\"logo.png\"), b\"\\x89PNG\\0\\x01\").unwrap();\n#### git(&[\"add\", \"-A\"]);\n#### git(&[\"commit\", \"-q\", \"-m\", \"one\"]);\nlet planned = plan(&root, &share, None);\nlet first: &ShardPlan = &planned.plan.shards[0];\nassert_eq!((first.files, first.first.as_str(), first.last.as_str()), (1, \"main.rs\", \"main.rs\"));\nassert!(first.file.ends_with(\".md\") && first.tokens > 0);\n```",
       "home": "pack",
       "is_enum": false,
       "name": "ShardPlan",
@@ -42716,6 +44576,59 @@
         "skills.verify"
       ],
       "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Everything the cycle could move, at one moment.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "Snapshot",
+      "properties": [
+        {
+          "description": "The sections, always in the order `remote`, `forge`, `trail`, `lease`, `local`.",
+          "name": "sections",
+          "refs": [
+            "SnapshotSection"
+          ],
+          "required": true,
+          "type": "array of SnapshotSection"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DryRunProof"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One section of a snapshot: a name and its lines, in a stable order.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "SnapshotSection",
+      "properties": [
+        {
+          "description": "`remote`, `forge`, `trail`, `lease` or `local`.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the section holds, one fact per line, sorted where order carries no meaning.",
+          "name": "lines",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Snapshot"
+      ],
       "values": [],
       "variants": []
     },
@@ -44196,8 +46109,10 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
+        "DomainMember",
         "FeatureSummary",
         "MatrixRow",
+        "ResolvedDomain",
         "ResolvedRefs"
       ],
       "values": [],
@@ -45807,6 +47722,7 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
+        "ResolvedDomain",
         "ResolvedRefs"
       ],
       "values": [],
@@ -51431,7 +53347,7 @@
       "slug": "health"
     },
     {
-      "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network.",
+      "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), redundant (its work is on master already), superseded (by a declared successor that landed, named in superseded_by), possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing.",
       "name": "integration",
       "operations": [
         {
@@ -51443,7 +53359,7 @@
           "cache_detail": "",
           "cli": "prs status",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/pull-requests\"",
-          "description": "The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection's required checks and reviews, the blocking labels, the merge method), every open pull request's assessment in rank order — an actionable one with how long it has waited for the executor and how often another was chosen instead — the next merge, the pull requests that need master brought in, the starving ones, the tallies by disposition and lane, and the diagnostics, a stale observation first; beside it, who holds the base branch's integration lease and the last merge the executor recorded. `observed: false` with the reason when this checkout has recorded no observation.",
+          "description": "The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection's required checks and reviews, the label policy, the merge method: a merge commit, or none when the repository allows none), every open pull request's assessment in rank order — an actionable one with how long it has waited for the executor and how often another was chosen instead — the next merge, the pull requests that need master brought in, the starving ones, the tallies by disposition and lane, and the diagnostics, a stale observation first; beside it, who holds the base branch's integration lease and the last merge the executor recorded. `observed: false` with the reason when this checkout has recorded no observation.",
           "home": "integration",
           "id": "integration.queue",
           "kind": "query",
@@ -51495,9 +53411,63 @@
           "body_schema": "",
           "cache": "disabled",
           "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/pull-requests/cleanup\"",
+          "description": "The cleanup plan, decided offline from the recorded observation: every open pull request cleanup would close — redundant (its work is on master already) or superseded (by a declared successor that landed) — and every one it leaves for a person — possibly redundant (weak evidence) or obsolete (a person marked it, owner decision D3) — each with its disposition and the reasons that decided it, in rank order; beside it, the branches merged pull requests left on origin as `majordomus prs cleanup` last read them, with when and how long ago. A read: it closes, deletes and asks the forge for nothing — `majordomus prs cleanup` reads the forge and `--apply` closes. `observed: false` with the reason when this checkout has recorded no observation.",
+          "home": "integration",
+          "id": "integration.cleanup",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_pull_requests_cleanup",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/pull-requests/cleanup",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::integration",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "What cleanup would do: the result.",
+              "schema": "IntegrationCleanup",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "IntegrationCleanup",
+          "stability": "experimental",
+          "summary": "What cleanup would do"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
           "cli": "prs events",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/pull-requests/events\"",
-          "description": "Every action this checkout's executor recorded, oldest first: selections, stale decisions, merge attempts, merges with the master before and after, refusals, refreshes, verification failures and closures, each with its actor, the pull request, the head and the decision's reasons.",
+          "description": "Every action the repository's executors recorded, from any of its worktrees, oldest first: the lease taken and given back, observations, selections, stale decisions, each act's attempt before it and its outcome after — merges with the master before and after, refusals, refreshes, verification failures and closures — each with a typed action, its actor, the pull request, the head, the decision's reasons and, on an act, the evidence it was decided on. The trail is one file under the common git directory, so every worktree reads the same one.",
           "home": "integration",
           "id": "integration.events",
           "kind": "query",
@@ -51551,7 +53521,7 @@
           "cache_detail": "",
           "cli": "prs explain",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/pull-requests/explain?number=1\"",
-          "description": "One pull request's assessment — disposition, lane, reasons, next action, the master and head it was decided against, required checks, review, relation to master, dependencies, overlaps, risk with its factors, and every piece of evidence — with its rank in the queue. `found: false` with the reason when it is not open or nothing is observed.",
+          "description": "One pull request's assessment — disposition, lane, reasons, every gate of the policy with whether it passed, next action, the master and head it was decided against and when the forge was observed, required checks, review, relation to master, dependencies, overlaps, risk with its factors, and every piece of evidence — with its rank in the queue. `found: false` with the reason when it is not open or nothing is observed.",
           "home": "integration",
           "id": "integration.explain",
           "kind": "query",
@@ -51608,6 +53578,60 @@
           "result_schema": "IntegrationExplanation",
           "stability": "experimental",
           "summary": "Why one pull request is where it is"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "external_dependency",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "prs prove-dry-run",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/pull-requests/prove-dry-run\"",
+          "description": "Runs the executor's non-mutating cycle — refresh, plan, drain --dry-run and cleanup without --apply — between two snapshots of everything it could move if it were wrong: every ref origin serves, every open pull request's number, head, state and labels, the integration audit trail, the executor's lease, and every local ref outside the two namespaces the refresh mirrors. `ok` is true exactly when the snapshots are equal and refs/remotes/origin/<base> and every refs/majordomus/prs/<n> equal what origin serves. A read that reaches the network: the refresh asks the forge through the GitHub CLI and fetches the base and the pull-request heads, and like every read it rewrites the observation, relation and summary caches. It merges, closes and pushes nothing, and takes no input that could make it.",
+          "home": "integration",
+          "id": "integration.prove_dry_run",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_pull_requests_prove_dry_run",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/pull-requests/prove-dry-run",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::integration",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Proof that a dry run moves nothing: the result.",
+              "schema": "DryRunProof",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "DryRunProof",
+          "stability": "experimental",
+          "summary": "Proof that a dry run moves nothing"
         }
       ],
       "slug": "integration"
@@ -55416,6 +57440,76 @@
           "body_examples": [],
           "body_schema": "",
           "cache": "process",
+          "cache_detail": "max_entries=4",
+          "cli": "product domains",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/product/domains?status=any\"",
+          "description": "The few things the product controls, each declared once under the layer's features section with its promise and the failure it answers, and each holding the stable features that name it: their interfaces, the distinct claims, use cases, rules and capabilities behind them, and the operational moments they answer, all derived. A domain lists no features; a feature names its domain. The default is the stable set; pass status=any for every domain.",
+          "home": "product",
+          "id": "product.domains",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "product-domains",
+            "uri": "majordomus://product/domains"
+          },
+          "mcp_tool": "majordomus_product_domains",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Only domains of this status. Absent means the stable ones; pass `any` for every\ndomain the model holds.",
+              "examples": [
+                {
+                  "case": "any",
+                  "value": "\"any\""
+                }
+              ],
+              "name": "status",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/product/domains",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::product",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The domains: the result.",
+              "schema": "DomainList",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "DomainList",
+          "stability": "behaviorally_verified",
+          "summary": "The domains"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "process",
           "cache_detail": "max_entries=64",
           "cli": "product show",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/product/feature?id=benchmarks\"",
@@ -55485,8 +57579,8 @@
           "cache": "process",
           "cache_detail": "max_entries=32",
           "cli": "product list",
-          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/product/features?featured=true&area=context\"",
-          "description": "Every product feature this repository declares, narrowed by any of the facets the model derives — featured, area, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too.",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/product/features?featured=true&area=context&domain=completion\"",
+          "description": "Every product feature this repository declares, narrowed by any of the facets the model derives — featured, area, domain, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too.",
           "home": "product",
           "id": "product.features",
           "kind": "query",
@@ -55525,6 +57619,18 @@
                 }
               ],
               "name": "area",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only features filed under this product domain.",
+              "examples": [
+                {
+                  "case": "by-domain",
+                  "value": "\"completion\""
+                }
+              ],
+              "name": "domain",
               "required": false,
               "type": "string"
             },

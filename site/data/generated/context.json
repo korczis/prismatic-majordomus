@@ -841,6 +841,33 @@
       ],
       "supersedes": [],
       "tracks": []
+    },
+    {
+      "id": "ai.repo.features.domains",
+      "path": ".ai/repo/features/domains/README.md",
+      "dir": ".ai/repo/features/domains",
+      "depth": 3,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 110,
+      "status": "active",
+      "title": "Product domains",
+      "description": "The few things the product controls, one domain per file; every feature names exactly one, and each domain's members, interfaces and evidence are derived from the features that name it.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": [
+        "apps/majordomus-cli/src/product.rs",
+        "site/templates/domain.html",
+        "site/templates/domains-section.html",
+        "site/templates/partials/domain-map.html"
+      ]
     }
   ],
   "directories": [
@@ -1390,7 +1417,45 @@
           "site/templates/features-section.html"
         ],
         "paths": [],
-        "sha256": "ecf33edb52212e500895e4c0f266beb388741156ec70d26907f0878f8ba9229e"
+        "sha256": "97449c03459391394c7fb4700f119c9d14b0b49b918d88c80728bff33b3e8aa5"
+      }
+    },
+    {
+      "dir": ".ai/repo/features/domains",
+      "document": "ai.repo.features.domains",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 3,
+      "name": "domains",
+      "contract": {
+        "index": 36,
+        "id": "ai.repo.features.domains",
+        "path": ".ai/repo/features/domains/README.md",
+        "dir": ".ai/repo/features/domains",
+        "depth": 3,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 110,
+        "status": "active",
+        "title": "Product domains",
+        "description": "The few things the product controls, one domain per file; every feature names exactly one, and each domain's members, interfaces and evidence are derived from the features that name it.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [
+          "apps/majordomus-cli/src/product.rs",
+          "site/templates/domain.html",
+          "site/templates/domains-section.html",
+          "site/templates/partials/domain-map.html"
+        ],
+        "paths": [],
+        "sha256": "d7df1b0921f1be811b597efbdf62cb26fefeca78301d011b397e62aed68c93a8"
       }
     },
     {
@@ -2314,8 +2379,8 @@
     }
   ],
   "counts": {
-    "directories": 62,
-    "documented": 35,
+    "directories": 63,
+    "documented": 36,
     "exempt": 27
   }
 }
