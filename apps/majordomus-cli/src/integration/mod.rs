@@ -180,11 +180,16 @@ pub fn store_observation(root: &Path, obs: &ForgeObservation) -> Result<(), Stri
     write_atomic(&state_path(root, OBSERVATION_FILE), &(text + "\n"))
 }
 
-/// The relation cache: `master..head` → relation. Both SHAs are immutable, so an entry is
-/// true forever; the file is bounded by dropping entries whose master is not the current.
+/// The relation cache: `master..head` → relation, and beside it under the same key what the
+/// merge changes by kind ([`ChangeShape`]). Both SHAs are immutable, and both answers read
+/// derived attributes from master's own `.gitattributes`, so an entry is true forever and a
+/// change of either commit stales both together; the file is bounded by dropping entries
+/// whose master is not the current.
 #[derive(Debug, Default, Serialize, Deserialize)]
 struct RelationCache {
     entries: BTreeMap<String, RelationToMaster>,
+    #[serde(default)]
+    shapes: BTreeMap<String, ChangeShape>,
 }
 
 fn relation_cached(
@@ -210,6 +215,25 @@ fn relation_cached(
         cache.entries.insert(key, r.clone());
     }
     r
+}
+
+/// [`relation::change_shape`] through the cache, under exactly the relation's key: only a pair
+/// of full commit ids is decided, and an unanswered shape is not cached.
+fn shape_cached(
+    root: &Path,
+    cache: &mut RelationCache,
+    master: &str,
+    head: &str,
+) -> Option<ChangeShape> {
+    let key = format!("{master}..{head}");
+    (is_object_id(master) && is_object_id(head))
+        .then(|| {
+            cache.shapes.get(&key).cloned().or_else(|| {
+                relation::change_shape(root, master, head)
+                    .inspect(|s| drop(cache.shapes.insert(key.clone(), s.clone())))
+            })
+        })
+        .flatten()
 }
 
 /// Whether `s` is a full commit id, SHA-1 or SHA-256, as git prints one.
@@ -311,8 +335,7 @@ pub fn policy_of(obs: &ForgeObservation) -> IntegrationPolicy {
 }
 
 /// The rank key: lane, then disposition, then risk, then how many other *ready or
-/// refreshable* pull requests share an authored path (fewer first: landing it invalidates
-/// less), then how many declared dependents wait on it (more first: landing it unblocks
+/// refreshable* pull requests it overlaps (fewer first: landing it invalidates less), then how many declared dependents wait on it (more first: landing it unblocks
 /// them), then how many authored paths it changes (fewer first), then age (older first, so
 /// easy new work cannot starve old work), then number. Every component is a value of the
 /// assessment or of the queue around it; the order is total and input-order free.
@@ -394,15 +417,29 @@ pub fn rank(assessments: Vec<PullRequestAssessment>) -> Vec<PullRequestAssessmen
     ranked
 }
 
+/// [`build_queue_shaped`] with no shape answered: what a test with a table of relations builds.
+#[cfg(test)]
+pub fn build_queue(
+    obs: &ForgeObservation,
+    master_sha: &str,
+    relation: impl FnMut(&PullRequestObservation) -> RelationToMaster,
+) -> IntegrationQueue {
+    build_queue_shaped(obs, master_sha, relation, |_| None)
+}
+
 /// Build the queue from an observation, against `master_sha`. `relation` answers what a
 /// head is to master; the command line passes git, a test passes a table. It is asked about
 /// every open pull request, and about every declared successor that is no longer open (a
 /// pull request built from what the forge reported of it): such a successor landed exactly
-/// when its head is `contained`.
-pub fn build_queue(
+/// when its head is `contained`. `shape` answers what each open pull request's merge changes
+/// by kind ([`ChangeShape`]): its authored paths decide overlaps and risk, and two that raise
+/// the version or change a release overlap as such. A pull request it does not answer is
+/// assessed on its relation's paths alone.
+pub fn build_queue_shaped(
     obs: &ForgeObservation,
     master_sha: &str,
     mut relation: impl FnMut(&PullRequestObservation) -> RelationToMaster,
+    shape: impl FnMut(&PullRequestObservation) -> Option<ChangeShape>,
 ) -> IntegrationQueue {
     let policy = policy_of(obs);
     let mut diagnostics = Vec::new();
@@ -468,15 +505,44 @@ pub fn build_queue(
             .map(|p| (p.head_ref.clone(), p.number))
             .collect(),
         authored: BTreeMap::new(),
+        shapes: obs
+            .pull_requests
+            .iter()
+            .map(shape)
+            .zip(&obs.pull_requests)
+            .filter_map(|(s, p)| s.map(|s| (p.number, s)))
+            .collect(),
         superseded_by: BTreeMap::new(),
+        dependency_states: obs
+            .resolved
+            .iter()
+            .map(|(n, r)| {
+                let state = if r.merged {
+                    DependencyState::Merged
+                } else {
+                    DependencyState::ClosedUnmerged
+                };
+                (*n, state)
+            })
+            .collect(),
+        cycles: BTreeMap::new(),
     };
+    queue.cycles = dependency_cycles(obs, &queue.heads);
+    if obs.pull_requests.len() >= forge::OPEN_LIMIT {
+        diagnostics.push(format!(
+            "the forge listed {} open pull requests, its limit: more may be open, and a dependency on one of those reads as unread",
+            obs.pull_requests.len()
+        ));
+    }
     queue.superseded_by = successors(obs, &queue.open, &mut relation);
     for (p, r) in obs.pull_requests.iter().zip(&relations) {
-        let authored = match r {
-            RelationToMaster::UpToDate { authored } | RelationToMaster::Behind { authored, .. } => {
-                authored.clone()
-            }
-            RelationToMaster::Conflicting { paths } => paths.clone(),
+        let authored = match (queue.shapes.get(&p.number), r) {
+            (Some(s), _) => s.authored.clone(),
+            (
+                None,
+                RelationToMaster::UpToDate { authored } | RelationToMaster::Behind { authored, .. },
+            ) => authored.clone(),
+            (None, RelationToMaster::Conflicting { paths }) => paths.clone(),
             _ => Vec::new(),
         };
         queue.authored.insert(p.number, authored);
@@ -503,6 +569,121 @@ pub fn build_queue(
     };
     derive_heads(&mut queue);
     queue
+}
+
+/// The open pull requests caught in a cycle of confirmed dependencies
+/// ([`classify::confirmed_dependencies`], between open pull requests only), each with the
+/// others it can reach and that reach it. A pull request on such a cycle waits for itself,
+/// so nothing about the others can let it land first. The module is private, so the
+/// example is text; `dependency_queue` runs the same assertions.
+///
+/// ```text
+/// use majordomus_cli::integration::{forge, ForgeObservation, OBSERVATION_SCHEMA};
+/// let pr = |n: u64, body: &str| forge::pull_request_of(&serde_json::json!({
+///     "number": n, "title": "t", "author": {"login": "a"}, "headRefName": format!("f/{n}"),
+///     "headRefOid": format!("{n:040}"), "baseRefName": "master", "isDraft": false,
+///     "labels": [], "createdAt": "t", "updatedAt": "t", "body": body,
+///     "statusCheckRollup": [], "reviewDecision": "", "autoMergeRequest": null,
+///     "isCrossRepository": false})).unwrap();
+/// let mut obs: ForgeObservation = serde_json::from_value(serde_json::json!({
+///     "schema": OBSERVATION_SCHEMA, "repository": "o/r", "base": "master", "base_sha": "m",
+///     "observed_at": "t", "required_checks": null, "review_policy": null,
+///     "merge_methods": ["merge"], "pull_requests": []})).unwrap();
+/// obs.pull_requests = vec![pr(1, "Depends on #2"), pr(2, "Depends on #1"), pr(3, "Depends on #1")];
+/// let cycles = majordomus_cli::integration::dependency_cycles(&obs, &Default::default());
+/// assert_eq!(cycles.get(&1), Some(&vec![2]));
+/// assert!(cycles.get(&3).is_none(), "waiting on a cycle is not being in one");
+/// ```
+pub fn dependency_cycles(
+    obs: &ForgeObservation,
+    heads: &BTreeMap<String, u64>,
+) -> BTreeMap<u64, Vec<u64>> {
+    let open: BTreeSet<u64> = obs.pull_requests.iter().map(|p| p.number).collect();
+    let edges: BTreeMap<u64, Vec<u64>> = obs
+        .pull_requests
+        .iter()
+        .map(|p| {
+            let (declared, stacked) = classify::confirmed_dependencies(p, &obs.base, heads);
+            let to: Vec<u64> = declared
+                .into_iter()
+                .chain(stacked)
+                .filter(|n| open.contains(n))
+                .collect();
+            (p.number, to)
+        })
+        .collect();
+    // everything each pull request reaches through its edges
+    let reach = |from: u64| -> BTreeSet<u64> {
+        let mut seen = BTreeSet::new();
+        let mut stack = vec![from];
+        while let Some(n) = stack.pop() {
+            for m in edges.get(&n).into_iter().flatten() {
+                if seen.insert(*m) {
+                    stack.push(*m);
+                }
+            }
+        }
+        seen
+    };
+    let reaches: BTreeMap<u64, BTreeSet<u64>> = open.iter().map(|n| (*n, reach(*n))).collect();
+    open.iter()
+        .filter(|n| reaches[n].contains(n))
+        .map(|n| {
+            let others: Vec<u64> = reaches[n]
+                .iter()
+                .filter(|m| *m != n && reaches[*m].contains(n))
+                .copied()
+                .collect();
+            (*n, others)
+        })
+        .collect()
+}
+
+/// Add the dependencies git implies: a pull request whose observed head contains another's
+/// observed head carries that one's commits, so landing it lands both. Inferred, and evidence
+/// only — a block is only ever declared ([`DependencyCertainty::Confirmed`]), never guessed,
+/// and nothing here changes a disposition or a rank. `containing` answers, for a head, the
+/// pull requests whose mirrored head contains it and the commit each mirror names; a mirror
+/// that is not the head the queue decided on implies nothing.
+pub fn infer_dependencies(
+    queue: &mut IntegrationQueue,
+    mut containing: impl FnMut(&str) -> Vec<(u64, String)>,
+) {
+    let heads: BTreeMap<u64, String> = queue
+        .assessments
+        .iter()
+        .map(|a| (a.number, a.evaluated_against.head_sha.clone()))
+        .collect();
+    let mut implied: BTreeMap<u64, BTreeSet<u64>> = BTreeMap::new();
+    for (n, head) in &heads {
+        for (m, tip) in containing(head) {
+            if m != *n && heads.get(&m) == Some(&tip) {
+                implied.entry(m).or_default().insert(*n);
+            }
+        }
+    }
+    for a in &mut queue.assessments {
+        for n in implied.get(&a.number).into_iter().flatten() {
+            if a.dependencies.iter().any(|d| d.number == *n) {
+                continue;
+            }
+            a.dependencies.push(PullRequestDependency {
+                number: *n,
+                certainty: DependencyCertainty::Inferred,
+                satisfied: false,
+                state: DependencyState::Open,
+            });
+            a.evidence.push(IntegrationEvidence {
+                kind: EvidenceKind::Dependency,
+                status: "inferred".into(),
+                detail: format!("#{n}'s head is in this head: landing it lands #{n} too"),
+                source: Some(EvidenceSource::Git {
+                    master_sha: a.evaluated_against.master_sha.clone(),
+                    head_sha: a.evaluated_against.head_sha.clone(),
+                }),
+            });
+        }
+    }
 }
 
 /// What the queue's ranked assessments imply: the next merge, the refresh candidates and the
@@ -762,24 +943,35 @@ fn computed(
     // bounded: only the current master's entries are worth keeping, and only a pair of
     // commit ids is a fact — a key written before refs were refused names a ref, which may
     // hold another commit tomorrow, and is dropped even while master stands still
-    cache.entries.retain(|k, _| {
+    let current = |k: &String| {
         k.split_once("..")
             .is_some_and(|(m, h)| m == master && is_object_id(m) && is_object_id(h))
-    });
-    let mut queue = build_queue(&obs, &master, |p| {
-        // decided on exactly the head the forge reported, which the assessment names as
-        // evaluated: a head that moved during the refresh is not in this clone, and what
-        // the fetched ref holds now is another head nobody observed
-        if !relation::has_commit(root, &p.head_sha) {
-            return RelationToMaster::Unknown {
+    };
+    cache.entries.retain(|k, _| current(k));
+    cache.shapes.retain(|k, _| current(k));
+    // the relation and the shape share the cache, and each is asked from its own closure
+    let cell = std::cell::RefCell::new(cache);
+    let mut queue = build_queue_shaped(
+        &obs,
+        &master,
+        |p| {
+            // decided on exactly the head the forge reported, which the assessment names as
+            // evaluated: a head that moved during the refresh is not in this clone, and what
+            // the fetched ref holds now is another head nobody observed
+            if !relation::has_commit(root, &p.head_sha) {
+                return RelationToMaster::Unknown {
                 reason: format!(
                     "the observed head {} is not fetched; the pull request moved during the refresh — majordomus prs refresh",
                     p.head_sha
                 ),
             };
-        }
-        relation_cached(root, &mut cache, &master, &p.head_sha)
-    });
+            }
+            relation_cached(root, &mut cell.borrow_mut(), &master, &p.head_sha)
+        },
+        |p| shape_cached(root, &mut cell.borrow_mut(), &master, &p.head_sha),
+    );
+    let cache = cell.into_inner();
+    infer_dependencies(&mut queue, |head| relation::containing(root, head));
     link_issues(&mut queue, &issue_milestones(root));
     let now_secs = now
         .duration_since(std::time::UNIX_EPOCH)
@@ -1064,6 +1256,140 @@ mod issue_tests {
                 ("I0003".to_string(), None),
                 ("I0004".to_string(), None),
             ])
+        );
+    }
+}
+
+#[cfg(test)]
+mod dependency_queue {
+    //! The queue-wide dependency facts: cycles, the forge's list limit, inferred containment.
+
+    use super::*;
+
+    fn pr(n: u64, body: &str) -> PullRequestObservation {
+        forge::pull_request_of(&serde_json::json!({
+            "number": n, "title": "t", "author": {"login": "a"}, "headRefName": format!("f/{n}"),
+            "headRefOid": format!("{n:040}"), "baseRefName": "master", "isDraft": false,
+            "labels": [], "createdAt": "2026-10-01T00:00:00Z",
+            "updatedAt": "2026-10-01T00:00:00Z", "body": body, "statusCheckRollup": [],
+            "reviewDecision": "", "autoMergeRequest": null, "isCrossRepository": false
+        }))
+        .unwrap()
+    }
+
+    fn obs(prs: Vec<PullRequestObservation>) -> ForgeObservation {
+        ForgeObservation {
+            schema: OBSERVATION_SCHEMA,
+            repository: "o/r".into(),
+            base: "master".into(),
+            base_sha: "m".into(),
+            observed_at: "t".into(),
+            required_checks: None,
+            review_policy: None,
+            up_to_date_required: None,
+            merge_methods: vec!["merge".into()],
+            pull_requests: prs,
+            resolved: Default::default(),
+            delete_branch_on_merge: None,
+        }
+    }
+
+    fn unknown(_: &PullRequestObservation) -> RelationToMaster {
+        RelationToMaster::Unknown {
+            reason: "not asked".into(),
+        }
+    }
+
+    #[test]
+    fn a_cycle_blocks_its_members_and_a_resolved_dependency_reads_its_state() {
+        let mut o = obs(vec![
+            pr(1, "Depends on #2"),
+            pr(2, "Depends on #1"),
+            pr(3, "Depends on #8\nDepends on #9"),
+        ]);
+        for (n, merged) in [(8, true), (9, false)] {
+            o.resolved.insert(
+                n,
+                forge::ResolvedPullRequest {
+                    merged,
+                    head_sha: format!("{n:040}"),
+                    body: String::new(),
+                },
+            );
+        }
+        // a relation that passes, so the dependency gate is the one that decides
+        let q = build_queue(&o, "m", |_| RelationToMaster::UpToDate {
+            authored: vec!["a.txt".into()],
+        });
+        for n in [1, 2] {
+            assert_eq!(
+                q.get(n).unwrap().disposition,
+                PullRequestDisposition::Blocked,
+                "#{n}"
+            );
+        }
+        let three = q.get(3).unwrap();
+        let states: Vec<(u64, DependencyState)> = three
+            .dependencies
+            .iter()
+            .map(|d| (d.number, d.state))
+            .collect();
+        assert_eq!(
+            states,
+            [
+                (8, DependencyState::Merged),
+                (9, DependencyState::ClosedUnmerged)
+            ]
+        );
+    }
+
+    #[test]
+    fn as_many_open_as_the_forge_lists_says_more_may_be_open() {
+        let many: Vec<PullRequestObservation> =
+            (1..=forge::OPEN_LIMIT as u64).map(|n| pr(n, "")).collect();
+        let q = build_queue(&obs(many), "m", unknown);
+        assert!(
+            q.diagnostics.iter().any(|d| d.contains("its limit")),
+            "{:?}",
+            q.diagnostics
+        );
+        let q = build_queue(&obs(vec![pr(1, "")]), "m", unknown);
+        assert!(!q.diagnostics.iter().any(|d| d.contains("its limit")));
+    }
+
+    #[test]
+    fn containment_is_evidence_and_never_a_block() {
+        let mut q = build_queue(
+            &obs(vec![pr(1, ""), pr(2, ""), pr(3, "Depends on #1")]),
+            "m",
+            unknown,
+        );
+        let before: Vec<PullRequestDisposition> =
+            q.assessments.iter().map(|a| a.disposition).collect();
+        let head = |n: u64| format!("{n:040}");
+        // #2's head contains #1's; #3's contains #1's too but #3 already declares it; a mirror
+        // of #2 at another commit than the one decided on implies nothing about #2
+        infer_dependencies(&mut q, |h| {
+            if h == head(1) {
+                vec![(2, head(2)), (3, head(3)), (1, head(1))]
+            } else if h == head(3) {
+                vec![(2, "elsewhere".into())]
+            } else {
+                Vec::new()
+            }
+        });
+        let after: Vec<PullRequestDisposition> =
+            q.assessments.iter().map(|a| a.disposition).collect();
+        assert_eq!(before, after, "inference changes no disposition");
+        let two = q.get(2).unwrap();
+        assert_eq!(two.dependencies.len(), 1);
+        assert_eq!(two.dependencies[0].number, 1);
+        assert_eq!(two.dependencies[0].certainty, DependencyCertainty::Inferred);
+        assert!(two.evidence.iter().any(|e| e.status == "inferred"));
+        assert_eq!(
+            q.get(3).unwrap().dependencies.len(),
+            1,
+            "a declared edge is not inferred again"
         );
     }
 }

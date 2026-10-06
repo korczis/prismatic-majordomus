@@ -1019,14 +1019,27 @@ fn explain(
             "  depends on:   #{} ({}, {})",
             d.number,
             integration::classify::word(&d.certainty),
-            if d.satisfied { "landed" } else { "open" }
+            match d.state {
+                integration::DependencyState::Merged => "landed",
+                integration::DependencyState::Open => "open",
+                integration::DependencyState::ClosedUnmerged => "closed without a merge",
+                integration::DependencyState::Unread => "unread",
+            }
         ));
     }
     if !a.overlaps.is_empty() {
         let o: Vec<String> = a
             .overlaps
             .iter()
-            .map(|o| format!("#{} ({})", o.number, o.paths.len()))
+            .map(|o| match o.kind {
+                integration::OverlapKind::Authored => format!("#{} ({})", o.number, o.paths.len()),
+                kind => format!(
+                    "#{} ({}, {})",
+                    o.number,
+                    o.paths.len(),
+                    integration::classify::word(&kind)
+                ),
+            })
             .collect();
         lines.push(format!("  overlaps:     {}", o.join(" ")));
     }
@@ -1239,28 +1252,52 @@ mod tests {
     #[test]
     fn explain_names_the_successor_that_landed() {
         let (_s, q) = world();
-        use crate::integration::{DependencyCertainty, PathOverlap, PullRequestDependency};
+        use crate::integration::{
+            DependencyCertainty, DependencyState, OverlapKind, PathOverlap, PullRequestDependency,
+        };
         let mut a = q.assessments[0].clone();
         a.superseded_by = Some(9);
         a.next_action = None;
-        a.dependencies = [(5, false), (4, true)]
-            .into_iter()
-            .map(|(number, satisfied)| PullRequestDependency {
-                number,
-                certainty: DependencyCertainty::Confirmed,
-                satisfied,
-            })
-            .collect();
-        a.overlaps = vec![PathOverlap {
-            number: 3,
-            paths: vec!["src/a.rs".into()],
-        }];
+        a.dependencies = [
+            (5, DependencyState::Open),
+            (4, DependencyState::Merged),
+            (6, DependencyState::ClosedUnmerged),
+            (7, DependencyState::Unread),
+        ]
+        .into_iter()
+        .map(|(number, state)| PullRequestDependency {
+            number,
+            certainty: DependencyCertainty::Confirmed,
+            satisfied: state == DependencyState::Merged,
+            state,
+        })
+        .collect();
+        a.overlaps = vec![
+            PathOverlap {
+                number: 3,
+                paths: vec!["src/a.rs".into()],
+                kind: OverlapKind::Authored,
+            },
+            PathOverlap {
+                number: 8,
+                paths: vec!["apps/majordomus-cli/Cargo.toml".into()],
+                kind: OverlapKind::VersionBump,
+            },
+        ];
         let t = text(|o| explain(&q, &a, 1, OutputFormat::Text, o));
         assert!(t.contains("superseded:   by #9, which landed"), "{t}");
         assert!(!t.contains("  next:"), "{t}");
         assert!(t.contains("depends on:   #5 (confirmed, open)"), "{t}");
         assert!(t.contains("depends on:   #4 (confirmed, landed)"), "{t}");
-        assert!(t.contains("overlaps:     #3 (1)"), "{t}");
+        assert!(
+            t.contains("depends on:   #6 (confirmed, closed without a merge)"),
+            "{t}"
+        );
+        assert!(t.contains("depends on:   #7 (confirmed, unread)"), "{t}");
+        assert!(
+            t.contains("overlaps:     #3 (1) #8 (1, version_bump)"),
+            "{t}"
+        );
     }
 
     #[test]

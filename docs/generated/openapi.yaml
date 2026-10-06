@@ -12886,6 +12886,28 @@ components:
           description: Patterns matched against the file name alone.
           default: []
       description: "One category of `out`: pathspecs and file-name patterns."
+    ChangeShape:
+      type: object
+      properties:
+        authored:
+          type: array
+          items:
+            type: string
+          description: "Authored (non-derived) paths the merge changes or conflicts on, in path order."
+        derived:
+          type: array
+          items:
+            type: string
+          description: "Derived paths the merge changes or conflicts on, in path order."
+        version_bump:
+          type:
+            - string
+            - "null"
+          description: "The version the head declares in the crate manifest, when it is not the one its merge\nbase declares: the head raises the version."
+      required:
+        - authored
+        - derived
+      description: "What a head's merge into master changes, by kind: the authored paths a person wrote, the\nderived paths a generator writes (by the repository's `merge=derived` attributes on master),\nand the version the head declares when it raises the crate's. Decided from the same pair\nof commits as the relation to master, and cached under the same key beside it, so a change\nof either commit — a `.gitattributes` change on master is one — makes both stale together."
     ChangeStage:
       oneOf:
         - type: string
@@ -13270,7 +13292,7 @@ components:
         reasons:
           type: array
           items:
-            description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`. A code outside this list (an older trail's) is carried verbatim."
+            description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. A code outside this list (an older trail's) is carried verbatim."
             type: string
           description: "The evidence, as reason codes."
         action:
@@ -15901,6 +15923,21 @@ components:
           const: inferred
           description: "Inferred: the head contains the other's head commit. Evidence, never a block."
       description: How a dependency is known. Only a declared one blocks.
+    DependencyState:
+      oneOf:
+        - type: string
+          const: open
+          description: Still open.
+        - type: string
+          const: merged
+          description: "Merged: the only state that satisfies it."
+        - type: string
+          const: closed_unmerged
+          description: "Closed without a merge: its work never landed, so a person decides."
+        - type: string
+          const: unread
+          description: "Not open, and the forge could not say what became of it — refused, or not a pull\nrequest at all: unknown, never satisfied."
+      description: What became of a pull request another one depends on.
     DeploymentCheck:
       type: object
       properties:
@@ -22280,7 +22317,7 @@ components:
         reasons:
           type: array
           items:
-            description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`. A code outside this list (an older trail's) is carried verbatim."
+            description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. A code outside this list (an older trail's) is carried verbatim."
             type: string
           description: "The decision's reasons; a code an older executor wrote reads back verbatim."
         detail:
@@ -26300,6 +26337,18 @@ components:
         - intent
         - paths
       description: "Two peers that claimed the same ground.\n\nReported when the second of them announces, so that a collision is known at the moment\nit is created rather than discovered afterwards in the history of a branch."
+    OverlapKind:
+      oneOf:
+        - type: string
+          const: authored
+          description: Authored paths both change.
+        - type: string
+          const: version_bump
+          description: "Both raise the crate's version: whichever lands second must be re-derived on the first."
+        - type: string
+          const: release
+          description: "Both change the release records under `.ai/repo/releases/`."
+      description: What two open pull requests have in common that makes landing one change the other.
     OverlapPath:
       type: object
       properties:
@@ -26405,6 +26454,10 @@ components:
           items:
             type: string
           description: The paths both change.
+        kind:
+          "$ref": "#/components/schemas/OverlapKind"
+          description: "What the two share. `authored` in a record written before it was said."
+          default: authored
       required:
         - number
         - paths
@@ -28357,7 +28410,7 @@ components:
         reasons:
           type: array
           items:
-            description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`. A code outside this list (an older trail's) is carried verbatim."
+            description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. A code outside this list (an older trail's) is carried verbatim."
             type: string
           description: "Machine-readable reasons, one for every failing gate's every finding, in policy order:\nthe first is the decisive one. A ready pull request carries why it is ready."
         gates:
@@ -28421,6 +28474,11 @@ components:
             - "$ref": "#/components/schemas/RankFactors"
             - type: "null"
           description: "Why it stands where it does in the rank: every component the order compares, in the\norder it compares them. Set by the planner; absent on an assessment never ranked."
+        change_shape:
+          anyOf:
+            - "$ref": "#/components/schemas/ChangeShape"
+            - type: "null"
+          description: "What its merge into master changes, by kind (`ChangeShape`): read beside the\nrelation, from the same pair of commits. Absent when it could not be read."
       required:
         - number
         - title
@@ -28455,7 +28513,11 @@ components:
           description: How it is known.
         satisfied:
           type: boolean
-          description: "Whether it is satisfied: that pull request has landed (or is not open any more)."
+          description: "Whether it is satisfied: that pull request merged. Closed without a merge, or not\nread, it is not — a dependency that never landed is no less a dependency."
+        state:
+          "$ref": "#/components/schemas/DependencyState"
+          description: "What the forge says became of it. `open` in a record written before it was read."
+          default: open
       required:
         - number
         - certainty
@@ -28647,7 +28709,7 @@ components:
           type: integer
           format: uint
           minimum: 0
-          description: "How many other ready or refreshable pull requests change an authored path it changes:\nfewer first, because landing it invalidates less."
+          description: "How many other ready or refreshable pull requests it overlaps (`PathOverlap`): an\nauthored path, a version bump or a release in common. Fewer first, because landing it\ninvalidates less."
         dependents:
           type: integer
           format: uint

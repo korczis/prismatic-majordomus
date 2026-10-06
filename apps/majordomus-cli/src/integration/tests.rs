@@ -1769,6 +1769,184 @@ fn relation_cache_equals_recomputation() {
     }
 }
 
+/// `project.cache-is-invisible` for the shape beside the relation (WP16): a hit and a miss
+/// answer what git answers, an unanswered shape and a name that is not a commit id are not
+/// kept, and the stored cache answers the same after its round trip.
+#[test]
+fn shape_cache_equals_recomputation() {
+    use crate::integration::relation::change_shape;
+    use crate::integration::{shape_cached, RelationCache};
+    let RelationFixture { dir, master, heads } = relation_fixture();
+    let mut cache = RelationCache::default();
+    for (name, head) in &heads {
+        let fresh = change_shape(&dir, &master, head);
+        let miss = shape_cached(&dir, &mut cache, &master, head);
+        let hit = shape_cached(&dir, &mut cache, &master, head);
+        assert_eq!(miss, fresh, "{name}: a miss differs from git");
+        assert_eq!(hit, fresh, "{name}: a hit differs from git");
+    }
+    assert_eq!(
+        cache.shapes.len(),
+        heads.len() - 1,
+        "the absent head is not kept"
+    );
+    assert_eq!(shape_cached(&dir, &mut cache, &master, "HEAD"), None);
+    assert_eq!(cache.shapes.len(), heads.len() - 1, "a ref is never a key");
+    let text = serde_json::to_string(&cache).unwrap();
+    let mut reread: RelationCache = serde_json::from_str(&text).unwrap();
+    for (name, head) in &heads {
+        assert_eq!(
+            shape_cached(&dir, &mut reread, &master, head),
+            change_shape(&dir, &master, head),
+            "{name}: the stored cache differs from git"
+        );
+    }
+}
+
+/// The queue reads each head's shape through the cache it keeps beside the relations: a
+/// conflicting head's authored paths are its whole change, the assessment carries the shape,
+/// and a shape kept for another master is dropped with that master's relations.
+#[test]
+fn the_queue_reads_and_keeps_each_heads_shape() {
+    let RelationFixture { dir, master, heads } = relation_fixture();
+    observed(
+        &dir,
+        &master,
+        vec![
+            observed_pr(1, &heads["conflicting"]),
+            observed_pr(2, &heads["derived_conflict"]),
+        ],
+    );
+    let path = crate::integration::state_path(&dir, crate::integration::RELATIONS_FILE);
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    let old = format!("{}..{}", "1".repeat(40), heads["authored"]);
+    std::fs::write(
+        &path,
+        format!("{{\"entries\":{{}},\"shapes\":{{\"{old}\":{{\"authored\":[],\"derived\":[]}}}}}}"),
+    )
+    .unwrap();
+    for _ in 0..2 {
+        let q = crate::integration::queue_and_record(&dir).unwrap();
+        let two = q.get(2).unwrap();
+        assert_eq!(two.authored_paths, vec!["c.txt".to_string()]);
+        let shape = two.change_shape.as_ref().expect("read");
+        assert_eq!(shape.derived, vec!["gen.json".to_string()]);
+        assert_eq!(q.get(1).unwrap().authored_paths, vec!["a.txt".to_string()]);
+    }
+    let kept: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+    let keys: Vec<&String> = kept["shapes"].as_object().unwrap().keys().collect();
+    assert_eq!(keys.len(), 2, "{keys:?}");
+    assert!(keys.iter().all(|k| k.starts_with(&master)), "{keys:?}");
+}
+
+/// What a merge changes by kind decides overlaps, risk and rank (WP16): two pull requests
+/// that raise the version overlap as a version bump, two that change release records overlap
+/// as a release whatever files they name, a shared path is contention, and of ready pull
+/// requests of equal risk the one that overlaps nothing ranks first.
+#[test]
+fn the_shape_of_a_change_decides_its_overlaps_risk_and_rank() {
+    use crate::integration::{
+        build_queue_shaped, ChangeShape, IntegrationRisk, OverlapKind, PathOverlap,
+    };
+    use crate::release::version::MANIFEST;
+    // #1 and #2 share a path, #3 shares none: equal risk, so #3 lands first though younger
+    let mut one = sim(1);
+    one.paths = vec!["docs/shared.md".into()];
+    let mut two = sim(2);
+    two.paths = vec!["docs/shared.md".into()];
+    let w = World {
+        open: vec![one, two, sim(3)],
+        ..Default::default()
+    };
+    let q = build_queue_shaped(&w.observation(), "m0", |p| w.relation(p.number), |_| None);
+    let order: Vec<u64> = q.assessments.iter().map(|a| a.number).collect();
+    assert_eq!(order, vec![3, 1, 2]);
+    assert!(q
+        .assessments
+        .iter()
+        .all(|a| a.disposition == PullRequestDisposition::Ready));
+
+    let shape = |authored: &[&str], bump: Option<&str>| ChangeShape {
+        authored: authored.iter().map(|s| s.to_string()).collect(),
+        derived: Vec::new(),
+        version_bump: bump.map(str::to_string),
+    };
+    let release = |v: &str| format!(".ai/repo/releases/{v}.yaml");
+    let shapes = BTreeMap::from([
+        (1, shape(&[MANIFEST, "docs/1.md"], Some("0.2.0"))),
+        (2, shape(&[MANIFEST], Some("0.3.0"))),
+        (3, shape(&[&release("v0.2.0")], None)),
+        (4, shape(&[&release("v0.3.0")], None)),
+        (6, shape(&[MANIFEST], None)),
+    ]);
+    let w = World {
+        open: (1..=6).map(sim).collect(),
+        ..Default::default()
+    };
+    let q = build_queue_shaped(
+        &w.observation(),
+        "m0",
+        |p| w.relation(p.number),
+        |p| shapes.get(&p.number).cloned(),
+    );
+    let a = |n: u64| q.get(n).unwrap();
+    assert_eq!(
+        a(1).authored_paths,
+        shapes[&1].authored,
+        "the shape's paths are the change"
+    );
+    assert_eq!(a(1).change_shape.as_ref(), Some(&shapes[&1]));
+    assert_eq!(
+        a(1).overlaps,
+        vec![
+            PathOverlap {
+                number: 2,
+                paths: vec![MANIFEST.into()],
+                kind: OverlapKind::VersionBump,
+            },
+            PathOverlap {
+                number: 6,
+                paths: vec![MANIFEST.into()],
+                kind: OverlapKind::Authored,
+            },
+        ]
+    );
+    assert_eq!(a(1).risk, IntegrationRisk::High);
+    for factor in ["version_bump:0.2.0", "overlapping_version_bump:#2"] {
+        assert!(
+            a(1).risk_factors.iter().any(|f| f == factor),
+            "{:?}",
+            a(1).risk_factors
+        );
+    }
+    assert_eq!(
+        a(3).overlaps,
+        vec![PathOverlap {
+            number: 4,
+            paths: vec![release("v0.2.0"), release("v0.3.0")],
+            kind: OverlapKind::Release,
+        }]
+    );
+    assert_eq!(a(3).risk, IntegrationRisk::High);
+    assert!(
+        a(3).risk_factors
+            .iter()
+            .any(|f| f == "overlapping_release:#4"),
+        "{:?}",
+        a(3).risk_factors
+    );
+    assert!(a(3)
+        .risk_factors
+        .iter()
+        .any(|f| f == "touches .ai/repo/releases/"));
+    // #5 has no shape: its relation's paths, nothing in common, low risk, and first
+    assert_eq!(a(5).change_shape, None);
+    assert!(a(5).overlaps.is_empty());
+    assert_eq!(a(5).risk, IntegrationRisk::Low);
+    assert_eq!(q.assessments[0].number, 5);
+}
+
 /// Record an observation of `prs` in `dir`, with `master` as this clone's fetched base, the
 /// way `prs refresh` leaves a checkout for `queue_of`.
 fn observed(dir: &std::path::Path, master: &str, prs: Vec<PullRequestObservation>) {
@@ -3548,6 +3726,9 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         | R::ExecutorMergeRefused { .. }
         | R::ExecutorRefreshFailed { .. }
         | R::LabelObsolete { .. }
+        | R::DependencyCycle { .. }
+        | R::DependencyClosedUnmerged { .. }
+        | R::DependencyUnread { .. }
         | R::Unrecognised(_) => (),
     };
     let mut all = vec![
@@ -3596,6 +3777,9 @@ fn every_reason() -> Vec<crate::integration::ReasonCode> {
         R::LabelObsolete {
             name: "Obsolete: superseded by the redesign".into(),
         },
+        R::DependencyCycle { number: 611 },
+        R::DependencyClosedUnmerged { number: 612 },
+        R::DependencyUnread { number: 613 },
     ];
     for state in [
         PullRequestReview::NotRequired,
@@ -3896,7 +4080,12 @@ proptest! {
                         "relation_unknown",
                         "conflicts_on",
                     ],
-                    G::Dependency => &["depends_on"],
+                    G::Dependency => &[
+                        "depends_on",
+                        "dependency_cycle",
+                        "dependency_closed_unmerged",
+                        "dependency_unread",
+                    ],
                     G::Review => &["review", "review_policy_unread"],
                     G::NoFailingCheck => &["required_check_failed"],
                     G::Freshness => &["behind_master"],

@@ -12,11 +12,11 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::model::{
-    CheckKind, CheckRunState, DependencyCertainty, EvaluatedAgainst, EvidenceKind, EvidenceSource,
-    GateResult, IntegrationEvidence, IntegrationGate, IntegrationRisk, PathOverlap,
-    PullRequestAssessment, PullRequestDependency, PullRequestDisposition, PullRequestObservation,
-    PullRequestReview, ReasonCode, RelationToMaster, RequiredCheck, RequiredCheckState,
-    ReviewPolicy,
+    ChangeShape, CheckKind, CheckRunState, DependencyCertainty, DependencyState, EvaluatedAgainst,
+    EvidenceKind, EvidenceSource, GateResult, IntegrationEvidence, IntegrationGate,
+    IntegrationRisk, OverlapKind, PathOverlap, PullRequestAssessment, PullRequestDependency,
+    PullRequestDisposition, PullRequestObservation, PullRequestReview, ReasonCode,
+    RelationToMaster, RequiredCheck, RequiredCheckState, ReviewPolicy,
 };
 
 /// What the repository requires before a merge, as observed from the forge and the
@@ -123,12 +123,16 @@ const HIGH_RISK: &[&str] = &[
     ".ai/repo/ci/",
     ".ai/manifest.yaml",
     "share/schemas/",
-    "share/version.txt",
+    RELEASES,
     "apps/majordomus-cli/Cargo.toml",
     "Cargo.lock",
     "apps/majordomus-cli/Cargo.lock",
     "SECURITY.md",
 ];
+
+/// Where the release records live: a pull request changing one changes a release, and two
+/// that do are a release overlap whatever files they name.
+pub const RELEASES: &str = ".ai/repo/releases/";
 
 /// Path prefixes of executable code: medium risk.
 const CODE: &[&str] = &["apps/", "bin/", "lib/", "scripts/"];
@@ -420,10 +424,24 @@ fn numbers(mut t: &str) -> Vec<u64> {
     out
 }
 
-/// The planning risk of a change, with its factors.
-pub fn risk_of(authored: &[String]) -> (IntegrationRisk, Vec<String>) {
+/// The planning risk of a change, with its factors. `known` is false when git could not
+/// say what the head is to master: its paths are unknown, and a change nobody has read is
+/// high-risk (`paths_unknown`), never "documentation only". A head that raises the crate's
+/// version (`version_bump:V`) and one that shares a version bump or a release with another
+/// open pull request (`overlapping_version_bump:#N`, `overlapping_release:#N`) are high-risk
+/// too: whichever lands second must be re-derived on the first.
+pub fn risk_of(
+    authored: &[String],
+    known: bool,
+    version_bump: Option<&str>,
+    overlaps: &[PathOverlap],
+) -> (IntegrationRisk, Vec<String>) {
     let mut factors = Vec::new();
     let mut risk = IntegrationRisk::Low;
+    if !known {
+        risk = IntegrationRisk::High;
+        factors.push("paths_unknown".into());
+    }
     let high: BTreeSet<&str> = authored
         .iter()
         .filter_map(|p| HIGH_RISK.iter().find(|h| p.starts_with(**h)).copied())
@@ -439,6 +457,19 @@ pub fn risk_of(authored: &[String]) -> (IntegrationRisk, Vec<String>) {
             authored.len()
         ));
     }
+    let shared: Vec<String> = version_bump
+        .map(|v| format!("version_bump:{v}"))
+        .into_iter()
+        .chain(overlaps.iter().filter_map(|o| match o.kind {
+            OverlapKind::VersionBump => Some(format!("overlapping_version_bump:#{}", o.number)),
+            OverlapKind::Release => Some(format!("overlapping_release:#{}", o.number)),
+            OverlapKind::Authored => None,
+        }))
+        .collect();
+    if !shared.is_empty() {
+        risk = IntegrationRisk::High;
+        factors.extend(shared);
+    }
     if risk == IntegrationRisk::Low
         && authored
             .iter()
@@ -453,24 +484,55 @@ pub fn risk_of(authored: &[String]) -> (IntegrationRisk, Vec<String>) {
     (risk, factors)
 }
 
-/// Authored paths shared with other open pull requests.
-pub fn overlaps(number: u64, authored: &BTreeMap<u64, Vec<String>>) -> Vec<PathOverlap> {
+/// What `number` has in common with each other open pull request, one entry per other: a
+/// version bump when both raise the crate's version (by their [`ChangeShape`]s), else a
+/// release when both change a record under [`RELEASES`], else the authored paths both
+/// change. The paths are those both change, with — for a version or release overlap — the
+/// paths that make it one: the manifest, or either's release records.
+pub fn overlaps(
+    number: u64,
+    authored: &BTreeMap<u64, Vec<String>>,
+    shapes: &BTreeMap<u64, ChangeShape>,
+) -> Vec<PathOverlap> {
     let Some(mine) = authored.get(&number) else {
         return Vec::new();
     };
+    let bumps = |n: &u64| shapes.get(n).is_some_and(|s| s.version_bump.is_some());
+    let releases = |paths: &[String]| -> BTreeSet<String> {
+        paths
+            .iter()
+            .filter(|p| p.starts_with(RELEASES))
+            .cloned()
+            .collect()
+    };
+    let my_releases = releases(mine);
     let mine: BTreeSet<&String> = mine.iter().collect();
     authored
         .iter()
         .filter(|(n, _)| **n != number)
         .filter_map(|(n, theirs)| {
-            let shared: Vec<String> = theirs
+            let their_releases = releases(theirs);
+            let (kind, evidence) = if bumps(&number) && bumps(n) {
+                let manifest = crate::release::version::MANIFEST.to_string();
+                (OverlapKind::VersionBump, BTreeSet::from([manifest]))
+            } else if !my_releases.is_empty() && !their_releases.is_empty() {
+                let both = my_releases.union(&their_releases).cloned().collect();
+                (OverlapKind::Release, both)
+            } else {
+                (OverlapKind::Authored, BTreeSet::new())
+            };
+            let paths: Vec<String> = theirs
                 .iter()
                 .filter(|p| mine.contains(p))
                 .cloned()
+                .chain(evidence)
+                .collect::<BTreeSet<String>>()
+                .into_iter()
                 .collect();
-            (!shared.is_empty()).then_some(PathOverlap {
+            (!paths.is_empty()).then_some(PathOverlap {
                 number: *n,
-                paths: shared,
+                paths,
+                kind,
             })
         })
         .collect()
@@ -486,10 +548,39 @@ pub struct QueueContext {
     pub heads: BTreeMap<String, u64>,
     /// Authored paths of every open pull request, by number.
     pub authored: BTreeMap<u64, Vec<String>>,
+    /// What each open pull request's merge changes, by kind, where git could say.
+    pub shapes: BTreeMap<u64, ChangeShape>,
     /// The declared successors of each open pull request, by its number, in successor order:
     /// from its own body (`Superseded by #N`) and from any other's, open or not
     /// (`Supersedes #N`).
     pub superseded_by: BTreeMap<u64, Vec<Successor>>,
+    /// What became of each declared dependency that is not open, by its number, as the
+    /// forge reported it. A dependency neither open nor here is unread.
+    pub dependency_states: BTreeMap<u64, DependencyState>,
+    /// The open pull requests caught in a cycle of confirmed dependencies, each with the
+    /// others of its cycle: none of them can ever land first.
+    pub cycles: BTreeMap<u64, Vec<u64>>,
+}
+
+/// The pull requests `pr` is confirmed to depend on: those its body declares
+/// ([`declared_dependencies`]), never itself, and the one it is stacked on — the open pull
+/// request whose head branch is its base, when its base is not the integration base. The
+/// one place the edges are decided, so the classifier and the cycle search read the same.
+pub fn confirmed_dependencies(
+    pr: &PullRequestObservation,
+    base: &str,
+    heads: &BTreeMap<String, u64>,
+) -> (Vec<u64>, Option<u64>) {
+    let declared: Vec<u64> = declared_dependencies(&pr.body)
+        .into_iter()
+        .filter(|n| *n != pr.number)
+        .collect();
+    // only a pull request that targets another branch can be stacked, and never on itself
+    let stacked_on = (pr.base_ref != base)
+        .then(|| heads.get(&pr.base_ref).copied())
+        .flatten()
+        .filter(|n| *n != pr.number);
+    (declared, stacked_on)
 }
 
 /// One pull request declared to replace another.
@@ -587,38 +678,55 @@ pub fn classify(
         &policy.skipped_permitted,
     );
     let review = review_state(pr, policy.review_policy.as_ref());
-    let authored: Vec<String> = match relation {
-        RelationToMaster::UpToDate { authored } | RelationToMaster::Behind { authored, .. } => {
-            authored.clone()
-        }
-        RelationToMaster::Conflicting { paths } => paths.clone(),
+    let shape = queue.shapes.get(&pr.number);
+    // the merge's whole authored change where it was read: a conflicting head's relation names
+    // only the paths it conflicts on
+    let authored: Vec<String> = match (shape, relation) {
+        (Some(s), _) => s.authored.clone(),
+        (
+            None,
+            RelationToMaster::UpToDate { authored } | RelationToMaster::Behind { authored, .. },
+        ) => authored.clone(),
+        (None, RelationToMaster::Conflicting { paths }) => paths.clone(),
         _ => queue.authored.get(&pr.number).cloned().unwrap_or_default(),
     };
-    let (risk, risk_factors) = risk_of(&authored);
+    let overlaps = overlaps(pr.number, &queue.authored, &queue.shapes);
+    let (risk, risk_factors) = risk_of(
+        &authored,
+        !matches!(relation, RelationToMaster::Unknown { .. }),
+        shape.and_then(|s| s.version_bump.as_deref()),
+        &overlaps,
+    );
 
-    let mut dependencies: Vec<PullRequestDependency> = declared_dependencies(&pr.body)
-        .into_iter()
-        .filter(|n| *n != pr.number)
-        .map(|n| PullRequestDependency {
-            number: n,
-            certainty: DependencyCertainty::Confirmed,
-            satisfied: !queue.open.contains(&n),
-        })
-        .collect();
-    // only a pull request that targets another branch can be stacked, and never on itself
-    let stacked_on = (pr.base_ref != policy.base)
-        .then(|| queue.heads.get(&pr.base_ref).copied())
-        .flatten()
-        .filter(|n| *n != pr.number);
-    if let Some(n) = stacked_on {
-        if !dependencies.iter().any(|d| d.number == n) {
-            dependencies.push(PullRequestDependency {
-                number: n,
-                certainty: DependencyCertainty::Confirmed,
-                satisfied: false,
-            });
+    let (declared, stacked_on) = confirmed_dependencies(pr, &policy.base, &queue.heads);
+    // satisfied only by a merge: closed without one, or not read, it never landed
+    let state_of = |n: u64| {
+        if queue.open.contains(&n) {
+            DependencyState::Open
+        } else {
+            queue
+                .dependency_states
+                .get(&n)
+                .copied()
+                .unwrap_or(DependencyState::Unread)
         }
-    }
+    };
+    let dependencies: Vec<PullRequestDependency> =
+        declared
+            .into_iter()
+            .chain(stacked_on)
+            .fold(Vec::new(), |mut deps, n| {
+                if !deps.iter().any(|d: &PullRequestDependency| d.number == n) {
+                    let state = state_of(n);
+                    deps.push(PullRequestDependency {
+                        number: n,
+                        certainty: DependencyCertainty::Confirmed,
+                        satisfied: state == DependencyState::Merged,
+                        state,
+                    });
+                }
+                deps
+            });
     let blocking: Vec<&String> = pr
         .labels
         .iter()
@@ -839,7 +947,7 @@ pub fn classify(
     for d in &dependencies {
         evidence.push(ev(
             EvidenceKind::Dependency,
-            if d.satisfied { "satisfied" } else { "open" },
+            word(&d.state),
             format!("#{} ({})", d.number, word(&d.certainty)),
             &forge,
         ));
@@ -1006,21 +1114,63 @@ pub fn classify(
         ),
         (IntegrationGate::Dependency, {
             // a stacked pull request's base is said by the base gate, not again here
-            let open: Vec<u64> = dependencies
-                .iter()
-                .filter(|d| d.certainty == DependencyCertainty::Confirmed && !d.satisfied)
-                .filter(|d| Some(d.number) != stacked_on)
-                .map(|d| d.number)
-                .collect();
-            match open.first() {
-                None => None,
-                Some(first) => fails(
+            let unmet = |state: DependencyState| -> Vec<u64> {
+                dependencies
+                    .iter()
+                    .filter(|d| d.certainty == DependencyCertainty::Confirmed)
+                    .filter(|d| d.state == state && Some(d.number) != stacked_on)
+                    .map(|d| d.number)
+                    .collect()
+            };
+            let cycle = queue.cycles.get(&pr.number).cloned().unwrap_or_default();
+            let closed = unmet(DependencyState::ClosedUnmerged);
+            let unread = unmet(DependencyState::Unread);
+            let open = unmet(DependencyState::Open);
+            // the cycle first: nothing else about the dependencies can resolve it
+            if let Some(first) = cycle.first() {
+                fails(
+                    PullRequestDisposition::Blocked,
+                    cycle
+                        .iter()
+                        .map(|n| ReasonCode::DependencyCycle { number: *n })
+                        .collect(),
+                    Some(format!(
+                        "break the cycle: remove the declaration between #{} and #{first}",
+                        pr.number
+                    )),
+                )
+            } else if let Some(first) = closed.first() {
+                fails(
+                    PullRequestDisposition::Blocked,
+                    closed
+                        .iter()
+                        .map(|n| ReasonCode::DependencyClosedUnmerged { number: *n })
+                        .collect(),
+                    Some(format!(
+                        "#{first} was closed without a merge: reopen and land it, or remove the declaration"
+                    )),
+                )
+            } else if let Some(first) = unread.first() {
+                fails(
+                    PullRequestDisposition::Unknown,
+                    unread
+                        .iter()
+                        .map(|n| ReasonCode::DependencyUnread { number: *n })
+                        .collect(),
+                    Some(format!(
+                        "majordomus prs refresh; if #{first} is not a pull request, remove the declaration"
+                    )),
+                )
+            } else if let Some(first) = open.first() {
+                fails(
                     PullRequestDisposition::WaitingForDependency,
                     open.iter()
                         .map(|n| ReasonCode::DependsOn { number: *n })
                         .collect(),
                     Some(format!("land #{first} first")),
-                ),
+                )
+            } else {
+                None
             }
         }),
         (
@@ -1168,7 +1318,7 @@ pub fn classify(
         review,
         relation: relation.clone(),
         dependencies,
-        overlaps: overlaps(pr.number, &queue.authored),
+        overlaps,
         authored_paths: authored,
         risk,
         risk_factors,
@@ -1177,6 +1327,7 @@ pub fn classify(
         // the audit trail's to say, not the observation's: queue_of adds it
         wait: None,
         rank_factors: None,
+        change_shape: shape.cloned(),
     }
 }
 
@@ -1347,6 +1498,24 @@ mod decision_branches {
     }
 
     #[test]
+    fn a_change_nobody_could_read_is_high_risk_and_never_documentation() {
+        assert_eq!(
+            risk_of(&[], false, None, &[]),
+            (IntegrationRisk::High, vec!["paths_unknown".to_string()])
+        );
+        assert_eq!(
+            risk_of(&[], true, None, &[]),
+            (
+                IntegrationRisk::Low,
+                vec!["documentation, tests or content only".to_string()]
+            )
+        );
+        let (risk, factors) = risk_of(&[".ai/repo/releases/v1.yaml".into()], true, None, &[]);
+        assert_eq!(risk, IntegrationRisk::High);
+        assert_eq!(factors, vec!["touches .ai/repo/releases/".to_string()]);
+    }
+
+    #[test]
     fn the_label_constructor_and_the_check_ranking_run() {
         assert_eq!(LabelPolicy::hold("wip").effect, LabelEffect::Hold);
         assert_eq!(
@@ -1482,5 +1651,126 @@ mod label_policy_tests {
         assert_eq!(o.effect, LabelEffect::Obsolete);
         assert!(o.names("OBSOLETE"));
         assert_eq!(LabelPolicy::hold("wip").effect, LabelEffect::Hold);
+    }
+}
+
+#[cfg(test)]
+mod dependency_resolution {
+    //! A declared dependency is satisfied by a merge only (WP14).
+
+    use super::*;
+    use crate::integration::forge;
+    use crate::integration::model::{RelationToMaster, RequiredCheck};
+
+    fn pr(body: &str) -> PullRequestObservation {
+        forge::pull_request_of(&serde_json::json!({
+            "number": 1, "title": "t", "author": {"login": "a"}, "headRefName": "fix/1",
+            "headRefOid": "h1", "baseRefName": "master", "isDraft": false, "labels": [],
+            "createdAt": "2026-10-01T00:00:00Z", "updatedAt": "2026-10-01T00:00:00Z",
+            "body": body, "statusCheckRollup": [], "reviewDecision": "",
+            "autoMergeRequest": null, "isCrossRepository": false
+        }))
+        .unwrap()
+    }
+
+    fn policy() -> IntegrationPolicy {
+        IntegrationPolicy {
+            base: "master".into(),
+            required_checks: Some(vec![RequiredCheck::from("ci")]),
+            review_policy: None,
+            skipped_permitted: Vec::new(),
+            labels: LABEL_POLICY.to_vec(),
+            merge_method: Some("merge".into()),
+            up_to_date_required: None,
+        }
+    }
+
+    fn decided(ctx: &QueueContext) -> PullRequestAssessment {
+        let relation = RelationToMaster::UpToDate {
+            authored: vec!["a.txt".into()],
+        };
+        classify(&pr("Depends on #7"), &relation, "m", "t", &policy(), ctx)
+    }
+
+    fn gate(a: &PullRequestAssessment) -> bool {
+        a.gates
+            .iter()
+            .find(|g| g.gate == IntegrationGate::Dependency)
+            .unwrap()
+            .passed
+    }
+
+    fn with(state: Option<DependencyState>) -> QueueContext {
+        let mut ctx = QueueContext {
+            open: [1].into(),
+            ..Default::default()
+        };
+        if let Some(s) = state {
+            ctx.dependency_states.insert(7, s);
+        }
+        ctx
+    }
+
+    #[test]
+    fn only_a_merge_satisfies_a_dependency() {
+        let merged = decided(&with(Some(DependencyState::Merged)));
+        assert!(gate(&merged), "{:?}", merged.reasons);
+        assert!(merged.dependencies[0].satisfied);
+        assert!(merged
+            .evidence
+            .iter()
+            .any(|e| e.kind == EvidenceKind::Dependency && e.status == "merged"));
+
+        let closed = decided(&with(Some(DependencyState::ClosedUnmerged)));
+        assert_eq!(closed.disposition, PullRequestDisposition::Blocked);
+        assert_eq!(
+            closed.reasons[0].to_string(),
+            "dependency_closed_unmerged:#7"
+        );
+        assert!(!closed.dependencies[0].satisfied);
+
+        let unread = decided(&with(None));
+        assert_eq!(unread.disposition, PullRequestDisposition::Unknown);
+        assert_eq!(unread.reasons[0].to_string(), "dependency_unread:#7");
+        assert!(unread
+            .next_action
+            .as_deref()
+            .is_some_and(|n| n.contains("not a pull request")));
+
+        let mut open = with(None);
+        open.open.insert(7);
+        let waiting = decided(&open);
+        assert_eq!(
+            waiting.disposition,
+            PullRequestDisposition::WaitingForDependency
+        );
+    }
+
+    #[test]
+    fn a_dependency_both_declared_and_stacked_on_is_one_dependency() {
+        let mut p = pr("Depends on #7");
+        p.base_ref = "fix/7".into();
+        let mut ctx = with(None);
+        ctx.open.insert(7);
+        ctx.heads.insert("fix/7".into(), 7);
+        let relation = RelationToMaster::UpToDate {
+            authored: vec!["a.txt".into()],
+        };
+        let a = classify(&p, &relation, "m", "t", &policy(), &ctx);
+        assert_eq!(a.dependencies.len(), 1, "{:?}", a.dependencies);
+        assert_eq!(a.dependencies[0].number, 7);
+    }
+
+    #[test]
+    fn a_cycle_is_blocked_before_anything_else_is_said() {
+        let mut ctx = with(Some(DependencyState::ClosedUnmerged));
+        ctx.cycles.insert(1, vec![7]);
+        let a = decided(&ctx);
+        assert_eq!(a.disposition, PullRequestDisposition::Blocked);
+        assert_eq!(a.reasons[0].to_string(), "dependency_cycle:#7");
+        assert!(a
+            .next_action
+            .as_deref()
+            .is_some_and(|n| n.contains("break the cycle")));
     }
 }
