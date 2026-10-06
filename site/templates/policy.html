@@ -1,7 +1,7 @@
 {% extends "page.html" %}
 {% block body %}
 {%- set policy = load_data(path="data/generated/policy.json") -%}
-<article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-3xl dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0">{{ page.content | safe }}</article>
+<article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-3xl dark:format-invert [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline" tabindex="0">{{ page.content | safe }}</article>
 <div class="mt-10 grid gap-4 md:grid-cols-2">
   {{ <card level="2" kicker="context" title={"Always-loaded budget: " ~ policy.context.always_loaded_budget_lines ~ " lines"} text={"Strategy <code>" ~ policy.context.strategy ~ "</code>. Transcript is state: <code>" ~ policy.context.transcript_is_state ~ "</code>. The generated instruction file marked always-loaded fails <code>doctor</code> and <code>update</code> when over budget."} /> }}
   {{ <card level="2" kicker="profiles" title={"Default profile: " ~ policy.profiles.default} text={"Checkpoint interval default <code>" ~ policy.profiles.checkpoint_interval_default ~ "</code>; each profile may override it."} /> }}

@@ -80,15 +80,15 @@ diff -u derived.txt declared.txt > paths.diff 2>&1 || {
   echo "    pages.yml's paths: differ from 'scripts/pages paths'; regenerate the block"; cat paths.diff; exit 1; }
 grep -q 'workflow_dispatch' "$W" || { echo "    pages.yml cannot be dispatched by hand"; exit 1; }
 
-# 3. a stale deployment is cancelled: the site is a projection of the newest commit, so an
-#    older run finishing after a newer push would publish the older tree. A push cancels; a
-#    dispatch does not, because a dispatch is the recovery path and the run it would cancel
-#    may be mid-push to gh-pages. Both halves are one expression, so both are asserted.
-grep -qE "^  cancel-in-progress: \\\$\{\{ github.event_name == 'push' \}\}$|^  cancel-in-progress: true$" "$W" \
-  || { echo "    pages.yml does not cancel superseded runs; an older commit could overwrite a newer one"; exit 1; }
-grep -q "cancel-in-progress: true" "$W" && {
-  echo "    pages.yml cancels a dispatched run too; the recovery deploy must not be killed by a push"; exit 1; }
+# 3. a deploy in flight is never cancelled. The group serialises the runs, so an older tree
+#    cannot land after a newer one, and GitHub already drops every pending run but the newest.
+#    Cancelling the running one starved publication on 2026-09-12: each superseding run was
+#    itself superseded, and the site stood 34 commits behind master for three hours. A push,
+#    the schedule and a dispatch (the recovery path) are all held to the same literal.
 grep -qE '^  group: pages-' "$W" || { echo "    pages.yml has no pages concurrency group of its own"; exit 1; }
+grep -q "^  cancel-in-progress: false$" "$W" || {
+  echo "    pages.yml cancels a deploy in flight; merges faster than a run then publish nothing"
+  exit 1; }
 
 # 3a. a cancelled run is not a failure, and `gh run list` cannot tell one that published from
 #     one that did not. The run must say which it was before it disappears.

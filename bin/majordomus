@@ -95,16 +95,29 @@ USAGE
 # command this tool does not know is more often the other program's than a typo, and a worker
 # who followed those instructions gets "unknown command" and nowhere to go.
 #
-# Which commands are the other program's is read, never listed here: docs/generated/cli.yaml
-# is the tracked projection of the clap declaration, and project.commands-are-projections
-# forbids a surface keeping a catalogue of its own. A release package ships bin/, lib/,
-# libexec/ and share/ and no docs/, so an installed tool finds no projection and says only
-# that the command is unknown; a checkout — which is where those instructions are read — can
-# also name the launcher that runs it. Both files are required before anything is claimed:
-# advice that names a launcher which is not there is worse than none.
+# Which commands are the other program's is read, never listed here: project.commands-are-
+# projections forbids a surface keeping a catalogue of its own. A checkout reads
+# docs/generated/cli.yaml, the tracked projection of the clap declaration, because asking the
+# executable there could mean building it to answer a typo. An installed tree ships no docs/
+# but ships the executable prebuilt as libexec/majordomus-cli, and asks it: `help <command>`
+# exits 0 for a command it has and 2 for one it has not, and builds nothing. Both a source
+# and the launcher are required before anything is claimed.
+#
+# A command that is the other program's is run, not described. The provider bootstraps every
+# adopting repository is generated from name `majordomus worktree create <branch>`; an
+# installed tool used to answer "unknown command: worktree" — with no docs/ beside it, it could
+# not even say where the command was — so an instruction the tool itself wrote could not be
+# followed. Arguments, global options included, are passed through unchanged, and the
+# executable's own usage errors and exit codes are its answer.
 mj_rust_command() {
-  local doc="$MJ_BIN_DIR/../docs/generated/cli.yaml"
-  [ -f "$doc" ] && [ -x "$MJ_BIN_DIR/majordomus-cli" ] || return 1
+  local doc="$MJ_BIN_DIR/../docs/generated/cli.yaml" shipped="$MJ_BIN_DIR/../libexec/majordomus-cli"
+  [ -x "$MJ_BIN_DIR/majordomus-cli" ] || return 1
+  case "$1" in ''|-*|help) return 1 ;; esac
+  if [ ! -f "$doc" ]; then
+    [ -x "$shipped" ] || return 1
+    "$shipped" help "$1" >/dev/null 2>&1
+    return
+  fi
   # The executable's top-level commands are the `path` of each item of the `subcommands:`
   # list directly under `cli:` — two elements, the program and the command. A nested
   # subcommand's path has three and its list is indented further, so indentation is what
@@ -149,14 +162,9 @@ case "$cmd" in
     "mj_cmd_$cmd" "${MJ_ARGS[@]+"${MJ_ARGS[@]}"}"
     ;;
   *)
+    # the other program's command: run it through the launcher, which finds the shipped
+    # executable in an installed tree and builds it in a checkout when it must
+    if mj_rust_command "$cmd"; then exec "$MJ_BIN_DIR/majordomus-cli" "$cmd" "$@"; fi
     mj_err "unknown command: $cmd"
-    if mj_rust_command "$cmd"; then
-      # The launcher, spelled the way the caller would type it: relative when it is under the
-      # directory they are standing in, which is what `bin/majordomus-cli` is from the root.
-      # It builds the executable when it must, so this is one command and not a preparation.
-      rust_cli="$MJ_BIN_DIR/majordomus-cli"
-      mj_err "$cmd is a command of the Rust executable, not of this tool; run: ${rust_cli#"$PWD/"} $cmd"
-      exit "$MJ_EX_USAGE"
-    fi
     usage >&2; exit "$MJ_EX_USAGE" ;;
 esac

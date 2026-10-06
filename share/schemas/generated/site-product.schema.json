@@ -91,6 +91,46 @@
         }
       }
     },
+    "domain_route": {
+      "description": "The section the product domains are published under: /domains/.",
+      "const": "/domains/"
+    },
+    "domains": {
+      "description": "Every product domain of the layer (ADR 0104), in presentation order and of every status: the record as its file declares it, without its body, and the stable features that name it with what they add up to. A domain lists no features; membership is each feature's `domain`.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "headline",
+          "problem",
+          "status",
+          "route",
+          "source",
+          "features",
+          "surfaces",
+          "counts"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "route": {
+            "type": "string",
+            "pattern": "^/domains/[a-z][a-z0-9-]*/$"
+          },
+          "source": {
+            "type": "string",
+            "pattern": "^\\.ai/repo/features/domains/[a-z][a-z0-9-]*\\.md$"
+          },
+          "features": {
+            "type": "array"
+          }
+        }
+      }
+    },
     "features": {
       "type": "array",
       "items": {

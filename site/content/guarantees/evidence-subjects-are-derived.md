@@ -1,7 +1,7 @@
 +++
 title = "Every claim, rule, feature, command, capability, MCP tool and use case the repository declares is an evidence subject whose members and tests are derived from declarations that already exist, and a committed subject index that differs from that derivation is refused"
 description = "A verdict is always a verdict about something. A reader asks \"is the feature evidence"
-weight = 187
+weight = 188
 [extra]
 claim_id = "evidence-subjects-are-derived"
 status = "guaranteed"

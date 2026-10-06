@@ -31,7 +31,7 @@
       {%- endif %}
     </dl>
 
-    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto">{{ page.content | safe }}</article>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline">{{ page.content | safe }}</article>
 
     {#- ------------------------------------------------------- what it is made of -#}
     {%- if f.module_refs | length %}
@@ -53,7 +53,7 @@
               <a href="{{ get_url(path='/registry/capabilities/' ~ cref[0].slug ~ '/', trailing_slash=true) }}" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">{{ c.title }}</a>
               <span class="font-mono text-xs text-body-subtle">{{ c.kind }}</span>
             </p>
-            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body">
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 wrap-anywhere font-mono text-xs text-body">
               {%- if c.cli %}<span class="text-heading">$ {{ c.cli }}</span>{% endif -%}
               {%- if c.route %}<span>{{ c.route }}</span>{% endif -%}
               {%- if c.tool %}<span>{{ c.tool }}</span>{% endif -%}

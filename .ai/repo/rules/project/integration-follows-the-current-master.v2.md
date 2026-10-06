@@ -1,6 +1,6 @@
 ---
 id: project.integration-follows-the-current-master
-version: 1
+version: 2
 kind: rule
 title: Pull requests are integrated one at a time, each decided against the current master, never around the branch protection
 description: An integration decision names the master and head it was taken against and is acted on only while a fresh observation still says the same; a merge invalidates every earlier plan; required checks, reviews and branch protection are never bypassed; closure demands stronger evidence than merging; one executor mutates a base branch at a time; and every act is recorded.
@@ -10,7 +10,7 @@ class: blocking
 depends_on: [project.land-and-publish@1, project.accumulation-is-measured@2]
 tags: [integration, git, github, safety, governance, evidence]
 x-majordomus:
-  tests: [test/cases/720_integration_follows_the_current_master.sh, apps/majordomus-cli/src/integration/tests.rs]
+  tests: [test/cases/720_integration_follows_the_current_master.sh, test/cases/740_integration_is_visible_where_a_person_looks.sh, test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh, test/cases/742_only_an_outage_is_asked_again.sh, test/cases/850_integration_drains_cycle_by_cycle.sh, test/cases/852_a_dry_run_moves_nothing.sh, test/cases/855_racing_executors_merge_once.sh, test/cases/856_racing_worktrees_share_one_lease.sh, test/cases/857_required_checks_are_authoritative.sh, test/cases/858_reviews_are_authoritative.sh, test/cases/861_a_successor_that_landed_supersedes.sh, apps/majordomus-cli/tests/integration_trail.rs, apps/majordomus-cli/tests/integration_rollout.rs]
 ---
 # Rationale
 
@@ -36,18 +36,43 @@ what keeps it from drifting back.
   derived output is left for a person.
 - Mutations hold the base branch's integration lease. Observers do not.
 - Every selection, stale decision, merge, refusal, refresh and closure is appended to the
-  audit trail.
+  audit trail before it is taken, to one trail per repository under the common git
+  directory; an act the trail cannot record is not taken.
+- The lease is an exclusive `flock` held for the executor's life and taken for the base it
+  observed. A live holder is never taken over; a holder that ends, even by a crash, releases
+  it at once. A lease that cannot be renewed ends the run rather than acting without it.
+- A merge is complete only when it is proved where it landed: master contains the decided
+  master, and the merge commit's parents are that master and the decided head on master's
+  first-parent line. A merge that cannot be proved stops every drain until a person runs
+  `prs drain --resume-after-failure`.
+- A failure is recorded with its class. A candidate's own failure (stale, conflict, a new
+  failing check, a revoked review, a policy refusal) holds that candidate back and the drain
+  goes on; an unverified merge or an unreadable forge stops it. Only an outage is asked
+  again, a bounded number of times; a merge is never retried.
+- A continuous drain runs alone, refreshes before every action, waits a bounded interval
+  between cycles and stops cleanly on a signal. It is the last stage of the rollout and is
+  refused until the trail holds `ROLLOUT_MERGES_BEFORE_CONTINUOUS` verified merges since
+  the last merge that could not be verified (ADR 0101 §13).
 
 # Failure behaviour
 
 `test/cases/720_integration_follows_the_current_master.sh` fails when the integration code
 names `--admin` or a force push, when a read-only `prs` command reaches the network or
 writes the audit trail, when the relation to master is taken from the forge's `mergeable`,
-or when the executor loses its re-observation before acting. The module's
-`src/integration/tests.rs` holds the dispositions, the stale-decision refusal, the
-re-plan after every merge and the cleanup threshold.
+or when the executor loses its re-observation before acting. Case 850 fails when a drain
+does not re-plan after a merge, 852 when a dry run moves anything, 855 and 856 when two
+executors both merge, 857 and 858 when a required check or review is taken from what is
+visible rather than what is required, 861 when a successor's landing is not seen, 742 when
+anything but an outage is asked again, and 741 when a continuous drain runs without its
+record, beside another executor, or past a signal. `tests/integration_trail.rs` fails when an
+act is taken without being recorded first, and `tests/integration_rollout.rs` when continuous
+mode is reachable without the record. The module's unit tests (`cargo test --lib
+integration`) hold the dispositions, the stale-decision refusal, the re-plan after every
+merge and the cleanup threshold.
 
 # Verification
 
-`bash test/run.sh 720_integration_follows_the_current_master` and
+`bash test/run.sh 720_integration_follows_the_current_master`, the same for each case named
+above,
+`cargo test --test integration_trail --test integration_rollout` and
 `cargo test --lib integration`.

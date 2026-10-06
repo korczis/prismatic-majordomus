@@ -8,6 +8,7 @@ headline: Context is a tree, not one file: the documents that apply to a path ar
 summary: Every README under .ai/ is a context document with an identity, a scope, the providers and audience it addresses and how it composes with its ancestors; the repository scope declares what a worker reads and what it never reads; and the briefing a worker gets is assembled from durable state within a line budget with every exclusion named.
 status: stable
 weight: 140
+domain: context
 featured: false
 areas: [context]
 modules: [directories, repository, devcontext]

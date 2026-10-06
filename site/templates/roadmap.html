@@ -12,7 +12,7 @@
 {%- set base = config.base_url | trim_end(pat="/") -%}
 {%- set versioned = [m for m in roadmap.milestones if m.version != ""] -%}
 
-<article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg">{{ page.content | safe }}</article>
+<article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline">{{ page.content | safe }}</article>
 
 <ol class="mt-8 space-y-4">
   {%- for m in versioned %}

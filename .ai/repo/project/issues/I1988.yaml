@@ -1,0 +1,29 @@
+id: I1988
+milestone: adopter-upgrades
+title: "A use case's setup scripts live where the adopter declares, and its scenarios may run the adopter's own commands"
+slug: a-use-case-setup-path-is-declared
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Declare the use-case setup directory in the manifest instead of hard-coding this repository's test/fixtures/commands/setup, and allow a scenario step to run commands the adopter declares, judged by the same effect classes as I1981."
+why: "OSCILLA's test/fixtures/commands/setup/oscilla-tree.sh exists only because 'that path is fixed by the tool' (cb79d27), and its scenarios can run only bin/majordomus, so an adopter cannot prove its own product behaviour with use cases."
+current_state: "lib/usecase.sh resolves setup scripts under a fixed path and runs only the tool."
+desired_state: "A manifest key names the setup directory; declared external commands are allowed in scenarios under the effect rules."
+scope:
+  - "lib/usecase.sh"
+  - "share/schemas"
+  - "share/skeleton"
+  - "docs"
+  - "test/cases"
+depends_on:
+  - "I1981"
+acceptance_criteria:
+  - "A fixture adopter with setup scripts under its declared path runs its scenarios"
+  - "A scenario step running an undeclared external command is refused"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "declared_setup_path_case"
+created_at: 2026-10-04
+updated_at: 2026-10-04

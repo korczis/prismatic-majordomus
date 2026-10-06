@@ -2133,6 +2133,19 @@
       "test_case": "97_product_features"
     },
     {
+      "id": "product-domains-derived",
+      "claim": "The product is filed under a few domains declared once as files of the layer; a feature names exactly one, and every domain's members, interfaces, guarantees and use cases are derived from the features that name it, so a stable feature cannot be left out of the product map without the model refusing it",
+      "source": "docs/PRODUCT.md",
+      "implementation": "apps/majordomus-cli/src/product.rs",
+      "test": "test/cases/800_product_domains.sh",
+      "status": "guaranteed",
+      "note": "A domain lists no feature. A stable feature that names no domain while one is declared, or names one that does not exist, fails product validate; removing a domain file removes it from every answer (ADR 0104).",
+      "responsibility": "layer",
+      "source_route": "/docs/product/",
+      "command": null,
+      "test_case": "800_product_domains"
+    },
+    {
       "id": "product-surfaces-derived",
       "claim": "Which interfaces a feature is exposed through, what stands behind it and what it answers are derived from the registries that own those facts, never authored, and a source file that writes one down is refused by its schema",
       "source": "docs/PRODUCT.md",
@@ -2303,7 +2316,7 @@
     },
     {
       "id": "authored-files-are-english",
-      "claim": "Every authored file in this repository is spelled in English, and a proper noun or a test fixture that is not carries its reason beside the check",
+      "claim": "Every authored file in this repository is spelled in English, and a proper noun, a test fixture or a published translation that is not carries its reason beside the check",
       "source": "docs/DOCTRINE.md",
       "implementation": "scripts/ci/english-only-check",
       "test": "test/cases/138_governance_gates.sh",
@@ -2313,6 +2326,19 @@
       "source_route": "/docs/doctrine/",
       "command": null,
       "test_case": "138_governance_gates"
+    },
+    {
+      "id": "published-translation-is-declared",
+      "claim": "A page of the published site written in a reader's language is declared with that language and a reason, and is refused unless the page declares the same language itself",
+      "source": ".ai/repo/rules/project/english-only.v2.md",
+      "implementation": "scripts/ci/english-only-check",
+      "test": "test/cases/403_published_translation.sh",
+      "status": "guaranteed",
+      "note": "project.english-only v2 (ADR 0077) keeps the repository''s own artifacts English with no exceptions and names one population apart: content published for a reader in that reader''s language. The permission costs three declarations that must agree — the path is under site/content-src/ or its projection, the allow list carries the language and a required reason, and the page itself declares the same language. The third is what stops an allow list from being a file an entry can be appended to in order to silence a finding.",
+      "responsibility": "none",
+      "source_route": null,
+      "command": null,
+      "test_case": "403_published_translation"
     },
     {
       "id": "a-finding-names-how-to-see-it-again",

@@ -448,18 +448,33 @@ mj_ctxd_cycles() {
 # ---------------------------------------------------------------- the target
 # A repository-relative directory: a file resolves to its directory; `..`, absolute paths
 # and anything whose real location leaves the repository are refused, not normalised away.
-MJ_CTXD_TARGET=""; MJ_CTXD_TARGET_DIR=""
+#
+# A path that does not exist yet resolves too. The bootstraps say to resolve a path before
+# working under it, and the work is often creating it; refusing "no such path" left a worker
+# about to write src/new/thing.rs with no answer at all. Documents apply by directory, and a
+# directory that does not exist holds none, so the chain of a path not yet created is its
+# ancestors' chain; where it leads is judged at its nearest existing ancestor, whose real
+# location must still be inside the repository. Until it exists nothing says whether it will
+# be a file or a directory, and a `scope: directory` document in its parent applies to the
+# one and not to the other: it is read as a file in its parent, as an existing file is,
+# unless it is written with a trailing slash. MJ_CTXD_TARGET_NEW says it was not there.
+MJ_CTXD_TARGET=""; MJ_CTXD_TARGET_DIR=""; MJ_CTXD_TARGET_NEW=0
 mj_ctxd_target() {
-  local p="$1" real root
+  local p="$1" real root near
   case "$p" in "$MJ_ROOT"|"$MJ_ROOT"/*) p="${p#"$MJ_ROOT"}"; p="${p#/}" ;; esac
   [ -n "$p" ] || p="."
   if [ "$p" != "." ] && ! p="$(mj_norm_path "$p")"; then mj_die "$MJ_EX_REFUSED" "context: refused-path '$1' (absolute, or leaves the repository)"; fi
-  [ -e "$MJ_ROOT/$p" ] || mj_die "$MJ_EX_MISSING" "context: no such path in $MJ_ROOT: $p"
-  real="$(cd "$MJ_ROOT/$p" 2>/dev/null && pwd -P || (cd "$(dirname "$MJ_ROOT/$p")" && pwd -P))"
+  MJ_CTXD_TARGET_NEW=0
+  near="$p"
+  while [ "$near" != "." ] && [ ! -e "$MJ_ROOT/$near" ] && [ ! -L "$MJ_ROOT/$near" ]; do
+    MJ_CTXD_TARGET_NEW=1
+    case "$near" in */*) near="${near%/*}" ;; *) near="." ;; esac
+  done
+  real="$(cd "$MJ_ROOT/$near" 2>/dev/null && pwd -P || (cd "$(dirname "$MJ_ROOT/$near")" && pwd -P))"
   root="$(cd "$MJ_ROOT" && pwd -P)"
   case "$real" in "$root"|"$root"/*) ;; *) mj_die "$MJ_EX_REFUSED" "context: refused-path '$p' resolves outside the repository ($real)" ;; esac
   MJ_CTXD_TARGET="$p"
-  if [ -d "$MJ_ROOT/$p" ]; then MJ_CTXD_TARGET_DIR="$p"
+  if [ -d "$MJ_ROOT/$p" ] || { [ "$MJ_CTXD_TARGET_NEW" = 1 ] && case "$1" in */) true ;; *) false ;; esac; }; then MJ_CTXD_TARGET_DIR="$p"
   else MJ_CTXD_TARGET_DIR="${p%/*}"; [ "$MJ_CTXD_TARGET_DIR" != "$p" ] || MJ_CTXD_TARGET_DIR="."; fi
   return 0
 }

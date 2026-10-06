@@ -8,8 +8,8 @@
 #   3. a merge that failed with a 502 is not retried — a merge that timed out may have
 #      landed, and the verification after it is what finds out — so every merge request
 #      that reaches the forge is a decision of its own, recorded and taken from a fresh
-#      observation, and the drain says the forge refused it (the drain may decide again,
-#      within its step bound: that is a new decision, not the old request asked twice)
+#      observation, and the drain says the forge refused it. An outage ends the drain: the
+#      next one, or the next cycle, decides again (ADR 0101 §10)
 #   4. an outage that does not end is given up on after four attempts, and says so
 . "$ROOT/test/lib.sh"
 RB="$(rust_bin)" || rust_bin_exit $?
@@ -48,6 +48,7 @@ case "\$1 \$2" in
   "api repos/o/r") echo '{"allow_merge_commit":true}' ;;
   "api repos/o/r/commits/master") printf '{"sha":"%s"}\n' "\$(git -C "$ORIGIN" rev-parse master)" ;;
   "api repos/o/r/branches/master/protection") echo '{"required_status_checks":{"contexts":["ci"]}}' ;;
+  "api repos/o/r/rules/branches/master") echo '[]' ;;
   "pr list") cat "$STATE/prs.json" ;;
   "pr merge") echo "HTTP 502: Bad Gateway" >&2; exit 1 ;;
   "pr view") echo OPEN ;;
@@ -79,14 +80,14 @@ case "$out" in *"attempts"*) echo "    a refusal claims to have been retried: $o
 
 # ---------------------------------------------------------------- 3. the merge is not retried
 echo mergebad > "$STATE/mode"; : > "$STATE/log"
-EV="$W/.ai/local/state/integration/events.jsonl"; rm -f "$EV"
+EV="$W/.git/majordomus/integration/events.jsonl"; rm -f "$EV"
 out="$(prs drain --max 1)" || true
 requests="$(asked 'pr merge')"
 decisions="$(grep -c '"action":"merge_attempted"' "$EV" 2>/dev/null || true)"
 [ "$requests" -ge 1 ] || { echo "    no merge was requested"; exit 1; }
 [ "$requests" = "$decisions" ] \
   || { echo "    $requests merge request(s) for $decisions decision(s): a failed merge was asked again"; exit 1; }
-[ "$requests" -le 3 ] || { echo "    the drain went past its step bound: $requests merges"; exit 1; }
+[ "$requests" = 1 ] || { echo "    the drain asked the forge to merge $requests times during an outage, not once"; exit 1; }
 # each decision was taken from its own two observations, not from a retry loop
 [ "$(asked 'pr list')" -ge $((2 * requests)) ] || { echo "    a merge was requested without a fresh observation"; exit 1; }
 case "$out" in *"the forge refused the merge"*) ;; *) echo "    the drain does not report the refusal: $out"; exit 1 ;; esac

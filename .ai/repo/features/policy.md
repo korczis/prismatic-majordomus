@@ -8,6 +8,7 @@ headline: Every provider the tool declares — an agent, an orchestrator that ru
 summary: A provider-neutral policy and four execution profiles are the one source; majordomus update renders each provider bootstrap from its template, stamps it with the policy hash and the hash of its own content, and doctor fails a bootstrap that was hand-edited, that carries a rule corpus of its own, or that exceeds the always-loaded budget.
 status: stable
 weight: 90
+domain: governance
 featured: false
 areas: [governance, context]
 commands: [init, update, doctor]

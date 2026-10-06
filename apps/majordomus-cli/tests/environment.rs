@@ -158,3 +158,36 @@ fn an_unchanged_repository_gets_the_shorter_form_on_the_way_back_in() {
         "re-entering an unchanged repository drew as much as the first entry did"
     );
 }
+
+/// `env enter` with a banner asked for draws the preflight's episode and checks after it,
+/// and not the repository heading a second time: the banner already drew it.
+#[test]
+fn entry_draws_the_episode_and_the_checks_once() {
+    let (_dir, root) = repository("demo");
+    let out = Command::new(env!("CARGO_BIN_EXE_majordomus"))
+        .args([
+            "env",
+            "enter",
+            "--shell",
+            "sh",
+            "--mode",
+            "compact",
+            "--no-bridge",
+            "--no-runtime",
+        ])
+        .current_dir(&root)
+        .env("MAJORDOMUS_LOG", "off")
+        .output()
+        .expect("the executable runs");
+    let err = String::from_utf8_lossy(&out.stderr);
+    assert!(out.status.success(), "{err}");
+    assert!(
+        err.contains("episode"),
+        "the entry names the episode: {err}"
+    );
+    assert_eq!(
+        err.matches("◆ demo").count() + err.matches("> demo").count(),
+        1,
+        "the banner draws the heading and the preflight does not draw it again: {err}"
+    );
+}

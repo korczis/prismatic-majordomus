@@ -1188,7 +1188,7 @@ pub struct ProductArgs {
     pub repo: RepoArgs,
 
     #[command(subcommand)]
-    /// `list`, `show`, `matrix`, `providers` or `validate`; none lists.
+    /// `list`, `show`, `domains`, `matrix`, `providers` or `validate`; none lists.
     pub command: Option<ProductCommand>,
 
     #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
@@ -1204,6 +1204,9 @@ pub struct ProductArgs {
     /// Only features serving this operational area of the why catalogue
     #[arg(long, global = true)]
     pub area: Option<String>,
+    /// Only features filed under this product domain
+    #[arg(long, global = true)]
+    pub domain: Option<String>,
     /// Only features made of this capability module
     #[arg(long, global = true)]
     pub module: Option<String>,
@@ -1228,6 +1231,8 @@ pub enum ProductCommand {
         /// The feature's id, which is also its slug and its route
         id: String,
     },
+    /// The domains of the product, each with the stable features that name it and what they add up to
+    Domains,
     /// Every feature against every interface, and every module, command and kind against the features that name it
     Matrix,
     /// Every provider the tool has an adapter for, with what this repository does with it
@@ -2906,6 +2911,11 @@ pub struct PrsArgs {
 /// assert!(matches!(args.command, Some(PrsCommand::Drain { continuous: true, interval: 60, .. })));
 /// assert!(Cli::try_parse_from(["majordomus", "prs", "drain", "--continuous", "--dry-run"]).is_err());
 /// assert!(Cli::try_parse_from(["majordomus", "prs", "drain", "--continuous", "--interval", "5"]).is_err());
+/// // a repair is a dry run unless it is applied, and never both
+/// let cli = Cli::try_parse_from(["majordomus", "prs", "repair", "137"]).unwrap();
+/// let Command::Prs(args) = cli.command else { panic!() };
+/// assert!(matches!(args.command, Some(PrsCommand::Repair { apply: false, .. })));
+/// assert!(Cli::try_parse_from(["majordomus", "prs", "repair", "137", "--apply", "--dry-run"]).is_err());
 /// // with no subcommand it is `status`
 /// let cli = Cli::try_parse_from(["majordomus", "prs"]).unwrap();
 /// let Command::Prs(args) = cli.command else { panic!() };
@@ -2934,23 +2944,42 @@ pub enum PrsCommand {
         /// When nothing is ready, bring master into the first pull request that needs it (a merge commit with the derived driver and a fresh derive, pushed as a fast-forward), so that its checks run against the current master
         #[arg(long)]
         refresh: bool,
-        /// Drain, wait `--interval` seconds, and drain again until stopped, holding the lease throughout; each cycle is bounded by `--max` and observes before every step. Ctrl-C or SIGTERM lets the step in progress finish, then releases the lease; a second signal ends it at once. Never with `--dry-run`
+        /// Drain, wait `--interval` seconds, and drain again until stopped, holding the lease throughout; each cycle is bounded by `--max` and observes before every step. Ctrl-C or SIGTERM lets the step in progress finish, then releases the lease; a second signal ends it at once. Never with `--dry-run`, and refused (exit 10) until the audit trail holds five verified merges since the last one that could not be verified: the last stage of the rollout (ADR 0101 §13)
         #[arg(long, conflicts_with = "dry_run")]
         continuous: bool,
         /// With `--continuous`: seconds between cycles, 30 to 900
         #[arg(long, default_value_t = 300, value_parser = clap::value_parser!(u64).range(crate::integration::drain::INTERVAL_SECONDS))]
         interval: u64,
+        /// A merge an earlier drain could not verify stops every drain until a person has looked at it: this records that someone has (`failure_acknowledged` on the trail), then drains. Never with `--dry-run`
+        #[arg(long, conflicts_with = "dry_run")]
+        resume_after_failure: bool,
     },
     /// Close the pull requests whose work is provably on master already; without `--apply` it only lists them
     Cleanup {
-        /// Close them.
+        /// Close them: each one observed again first and closed only if it is still superseded at the head that was decided on.
         #[arg(long)]
         apply: bool,
+        /// List them and close nothing: the default, spelled out.
+        #[arg(long, conflicts_with = "apply")]
+        dry_run: bool,
+    },
+    /// Bring master into one named pull request whose only conflict with it is over derived (`merge=derived`) files. Eligible only when the classification says it is behind master and its merge conflicts on no authored path; an authored conflict is refused, naming the files. A dry run by default, decided offline on the last recorded observation, like `status`. With `--apply` it takes the integration lease, observes the forge again, records the act on the trail first, and merges master in a scratch worktree, derives, commits and pushes a fast-forward leased on the observed head; it never merges into master. Exit 10 on a refusal or an absent observation, 12 when it could not act
+    Repair {
+        /// The pull request: its number, or its head branch.
+        target: String,
+        /// Act: take the lease, observe the forge again, record the act, merge, derive, commit and push. Without it nothing is changed, fetched or recorded.
+        #[arg(long)]
+        apply: bool,
+        /// Decide and change nothing: the default, spelled out.
+        #[arg(long, conflicts_with = "apply")]
+        dry_run: bool,
     },
     /// The audit trail: every selection, merge, refusal, stale decision and closure this checkout's executor recorded
     Events,
-    /// One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease, and the last merge. Offline, decides no relation, and prints nothing where the forge was never observed
+    /// One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease and whether it reaches across machines, the last merge, and the last refresh, failure or stale decision. Offline, decides no relation, and prints nothing where the forge was never observed
     Brief,
+    /// Prove the non-mutating cycle moves nothing: snapshot origin's refs, the open pull requests, the audit trail, the lease and the local refs, run refresh, plan, drain --dry-run and cleanup (listing), snapshot again and compare; the refresh's fetched mirrors must equal what origin serves. Exit 10 naming what moved. Takes no flag: there is nothing to turn on
+    ProveDryRun,
 }
 
 #[derive(Debug, Args)]
@@ -3929,6 +3958,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "product domains",
+        examples: &[ExampleDoc {
+            id: "product-domains",
+            title: "The few things the product controls, and the features under each",
+            description: "One block per domain in presentation order: its promise, the failure it answers, and the stable features that name it, with the interfaces, claims and use cases they add up to. A domain lists nothing itself; every member and count is derived from the features.",
+            argv: &["product", "domains"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["domain(s)"]),
+        }],
+    },
+    CommandExamples {
         command: "product matrix",
         examples: &[ExampleDoc {
             id: "product-matrix",
@@ -4516,6 +4556,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "prs prove-dry-run",
+        examples: &[ExampleDoc {
+            id: "prs-prove-dry-run-no-forge",
+            title: "The proof needs a forge to prove anything about",
+            description: "The proof snapshots origin's refs and the forge's open pull requests around refresh, plan, drain --dry-run and cleanup, and compares them. A repository with no GitHub remote has nothing to snapshot, so it exits 12 before any step runs: a proof that could not look is not a proof that nothing moved.",
+            argv: &["prs", "prove-dry-run"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
         command: "prs brief",
         examples: &[ExampleDoc {
             id: "prs-brief-unobserved",
@@ -4524,6 +4575,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["prs", "brief"],
             setup: &[],
             expect: Expect::ExitCode(0),
+        }],
+    },
+    CommandExamples {
+        command: "prs repair",
+        examples: &[ExampleDoc {
+            id: "prs-repair-unobserved",
+            title: "A repair is decided on the recorded observation, or not at all",
+            description: "The dry run, which is the default, is a read: it decides whether the named pull request may have master brought in from the queue the last recorded observation built, as `prs status` does, and reaches no network. Where nothing was ever observed there is no classification to decide from, so it exits 10 and names `prs refresh`; nothing is merged, pushed or recorded.",
+            argv: &["prs", "repair", "1"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
         }],
     },
     CommandExamples {

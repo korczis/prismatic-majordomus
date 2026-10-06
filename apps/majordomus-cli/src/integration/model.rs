@@ -49,26 +49,109 @@ pub struct PullRequestObservation {
     /// refreshed from here.
     #[serde(default)]
     pub cross_repository: bool,
+    /// Each reviewer's latest review, with the commit it was given on. A review is about one
+    /// commit: an approval of another commit is not an approval of the head.
+    #[serde(default)]
+    pub latest_reviews: Vec<ReviewObservation>,
+    /// Who has been asked to review and has not yet: logins, or team slugs.
+    #[serde(default)]
+    pub review_requests: Vec<String>,
+}
+
+/// One reviewer's latest review.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct ReviewObservation {
+    /// The reviewer's login.
+    pub author: String,
+    /// The forge's word for it, verbatim (`APPROVED`, `CHANGES_REQUESTED`, `COMMENTED`,
+    /// `DISMISSED`).
+    pub state: String,
+    /// The commit the review was given on; empty when the forge did not say.
+    #[serde(default)]
+    pub commit: String,
+}
+
+/// What the base requires of reviews, read from its protection and rulesets together.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct ReviewPolicy {
+    /// How many approving reviews a merge needs; 0 when none.
+    pub approvals: u64,
+    /// Whether a code owner's approval is required.
+    pub code_owners: bool,
+    /// Whether the forge dismisses an approval when the head moves.
+    pub dismiss_stale: bool,
+}
+
+/// One check the base requires: a status context, and the app that must write it when the
+/// protection binds it to one. A check of that name from any other writer is not this one.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema)]
+pub struct RequiredCheck {
+    /// The status context, or the check run's name.
+    pub context: String,
+    /// The app bound to it, when the protection names one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub app_id: Option<u64>,
+}
+
+impl From<&str> for RequiredCheck {
+    fn from(context: &str) -> Self {
+        RequiredCheck {
+            context: context.to_string(),
+            app_id: None,
+        }
+    }
+}
+
+impl std::fmt::Display for RequiredCheck {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.app_id {
+            Some(app) => write!(f, "{} (app {app})", self.context),
+            None => f.write_str(&self.context),
+        }
+    }
+}
+
+/// What reported a check: a check run (written by an app) or a commit status context.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum CheckKind {
+    /// A check run.
+    #[default]
+    CheckRun,
+    /// A commit status context.
+    StatusContext,
 }
 
 /// One check run or status context on a head commit.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct CheckObservation {
     /// The check's name or status context.
     pub name: String,
     /// Where it stands.
     pub state: CheckRunState,
+    /// What reported it.
+    #[serde(default)]
+    pub kind: CheckKind,
+    /// The app that wrote it, when the forge said.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub app_id: Option<u64>,
+    /// When it completed (or, for a status context, was set), RFC 3339; empty while it runs
+    /// or when the forge did not say. The newest report of a context is its verdict.
+    #[serde(default)]
+    pub completed_at: String,
 }
 
 /// Where one check run stands.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum CheckRunState {
     /// Completed and passed.
     Passed,
     /// Completed and failed (failure, timed out, cancelled, action required).
     Failed,
-    /// Queued or running.
+    /// Queued or running; also what a report that says nothing is taken to be, so a
+    /// default is never a pass.
+    #[default]
     Pending,
     /// Completed as skipped or neutral.
     Skipped,
@@ -82,6 +165,9 @@ pub enum CheckRunState {
 pub enum RequiredCheckState {
     /// Every required check passed on this head.
     Passed,
+    /// Every required check passed, at least one of them by a skip the policy permits for
+    /// that context. A skip the policy does not permit is not a pass: it is `missing`.
+    Skipped,
     /// A required check is queued or running.
     Pending,
     /// A required check failed.
@@ -104,6 +190,11 @@ pub enum PullRequestReview {
     ChangesRequested,
     /// A required review has not been given.
     Pending,
+    /// The approvals were given on another commit than the head: an approval is of one
+    /// commit, and these are not of this one.
+    Stale,
+    /// The approvals are there, but a code owner's is still required.
+    CodeOwnersPending,
     /// The protection could not be read.
     Unknown,
 }
@@ -118,6 +209,14 @@ pub enum RelationToMaster {
     Contained,
     /// Merging the head into master changes nothing: its patch is already fully there.
     Superseded,
+    /// The merge would conflict or change only derived output, but every commit the head has
+    /// and master lacks is on master already as an equal patch (`git cherry` marks each `-`):
+    /// the change landed, and master moved on past it. Never a partial match, and never a
+    /// head that carries a merge commit of its own, whose resolution has no patch to compare.
+    PatchIdsUpstream {
+        /// How many commits, every one of them already on master.
+        commits: u64,
+    },
     /// Merging changes only derived artifacts: the authored change is already on master,
     /// and what differs is output the generators rewrite.
     DerivedOnly {
@@ -155,8 +254,28 @@ pub struct PullRequestDependency {
     pub number: u64,
     /// How it is known.
     pub certainty: DependencyCertainty,
-    /// Whether it is satisfied: that pull request has landed (or is not open any more).
+    /// Whether it is satisfied: that pull request merged. Closed without a merge, or not
+    /// read, it is not — a dependency that never landed is no less a dependency.
     pub satisfied: bool,
+    /// What the forge says became of it. `open` in a record written before it was read.
+    #[serde(default)]
+    pub state: DependencyState,
+}
+
+/// What became of a pull request another one depends on.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum DependencyState {
+    /// Still open.
+    #[default]
+    Open,
+    /// Merged: the only state that satisfies it.
+    Merged,
+    /// Closed without a merge: its work never landed, so a person decides.
+    ClosedUnmerged,
+    /// Not open, and the forge could not say what became of it — refused, or not a pull
+    /// request at all: unknown, never satisfied.
+    Unread,
 }
 
 /// How a dependency is known. Only a declared one blocks.
@@ -210,24 +329,36 @@ pub enum PullRequestDisposition {
     NeedsRepair,
     /// Conflicts on authored paths: a person resolves them.
     Conflicting,
-    /// A blocking label holds it.
+    /// A label whose policy is to hold holds it, or the repository allows no merge commit,
+    /// which is the only way the executor merges.
     Blocked,
-    /// Its head already landed, or its patch is already fully on master: strong evidence,
-    /// eligible for closure under policy.
+    /// The forge has auto-merge armed on it: the forge would merge it on its own, outside the
+    /// executor and against whatever master is then. Held until a person disarms it.
+    Unsafe,
+    /// Its head already landed, its merge changes nothing, or every one of its commits is on
+    /// master as an equal patch: strong evidence from git, eligible for closure under policy.
+    /// (Before 0.13 this was the word `superseded`.)
+    Redundant,
+    /// Its body, or the body of another pull request, declares that a successor replaces it,
+    /// and that successor landed: no longer open, its head contained in master. The successor
+    /// is [`PullRequestAssessment::superseded_by`]. Eligible for closure under policy.
     Superseded,
-    /// Only derived artifacts would change: the authored change appears to be on master
-    /// already. Surfaced for a person; never closed automatically.
+    /// Weak evidence: only derived artifacts would change, or its declared successor was closed
+    /// without its head landing. Surfaced for a person; never closed automatically.
     PossiblyRedundant,
     /// Targets a branch other than the integration base.
     OtherBase,
     /// Something needed to decide could not be observed.
     Unknown,
+    /// A person marked it obsolete with a label the label policy declares (owner decision
+    /// D3): the only evidence that reaches this word. Listed for a person by cleanup and
+    /// never closed automatically; age, shared paths or a similar title never make one.
+    Obsolete,
 }
 
 impl PullRequestDisposition {
     /// Every disposition, in declaration order.
-    #[cfg(test)]
-    pub const ALL: [PullRequestDisposition; 13] = [
+    pub const ALL: [PullRequestDisposition; 16] = [
         PullRequestDisposition::Ready,
         PullRequestDisposition::NeedsRefresh,
         PullRequestDisposition::WaitingForChecks,
@@ -237,10 +368,13 @@ impl PullRequestDisposition {
         PullRequestDisposition::NeedsRepair,
         PullRequestDisposition::Conflicting,
         PullRequestDisposition::Blocked,
+        PullRequestDisposition::Unsafe,
+        PullRequestDisposition::Redundant,
         PullRequestDisposition::Superseded,
         PullRequestDisposition::PossiblyRedundant,
         PullRequestDisposition::OtherBase,
         PullRequestDisposition::Unknown,
+        PullRequestDisposition::Obsolete,
     ];
 
     /// The word as serialised.
@@ -260,10 +394,13 @@ impl PullRequestDisposition {
             PullRequestDisposition::NeedsRepair => "needs_repair",
             PullRequestDisposition::Conflicting => "conflicting",
             PullRequestDisposition::Blocked => "blocked",
+            PullRequestDisposition::Unsafe => "unsafe",
+            PullRequestDisposition::Redundant => "redundant",
             PullRequestDisposition::Superseded => "superseded",
             PullRequestDisposition::PossiblyRedundant => "possibly_redundant",
             PullRequestDisposition::OtherBase => "other_base",
             PullRequestDisposition::Unknown => "unknown",
+            PullRequestDisposition::Obsolete => "obsolete",
         }
     }
 
@@ -278,11 +415,13 @@ impl PullRequestDisposition {
             PullRequestDisposition::NeedsRepair | PullRequestDisposition::Conflicting => {
                 IntegrationLane::Repair
             }
-            PullRequestDisposition::Superseded | PullRequestDisposition::PossiblyRedundant => {
-                IntegrationLane::Cleanup
-            }
+            PullRequestDisposition::Redundant
+            | PullRequestDisposition::Superseded
+            | PullRequestDisposition::PossiblyRedundant
+            | PullRequestDisposition::Obsolete => IntegrationLane::Cleanup,
             PullRequestDisposition::Draft
             | PullRequestDisposition::Blocked
+            | PullRequestDisposition::Unsafe
             | PullRequestDisposition::OtherBase
             | PullRequestDisposition::Unknown => IntegrationLane::Held,
         }
@@ -301,32 +440,627 @@ pub enum IntegrationLane {
     Waiting,
     /// A person must change the branch.
     Repair,
-    /// Its work is on master already.
+    /// Its work is on master already, or a successor that landed replaced it.
     Cleanup,
-    /// Not asking to be merged, or undecidable.
+    /// Not asking to be merged, held by a label or a setting, unsafe for the executor, or
+    /// undecidable.
     Held,
 }
 
-/// One piece of evidence behind a disposition: what was read, and what it said.
+/// What kind of fact a piece of evidence is. The wire words are the ones the evidence carried
+/// while its kind was a string, so a trail written then still reads.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum EvidenceKind {
+    /// One required check's state on the head: one entry per context the base requires.
+    RequiredCheck,
+    /// The required checks together: their verdict, and each context's state.
+    RequiredChecks,
+    /// The review policy and the forge's decision, or one reviewer's latest review.
+    Review,
+    /// What the head is to master, as git decided it.
+    RelationToMaster,
+    /// One declared dependency.
+    Dependency,
+    /// One label whose policy is to hold.
+    Label,
+    /// Whether it is a draft; always emitted.
+    Draft,
+    /// The branch it targets; always emitted.
+    Base,
+    /// How old the observation is. Declared so the vocabulary is settled; nothing emits it yet.
+    Freshness,
+    /// The forge has auto-merge armed; emitted whenever it is.
+    AutoMerge,
+    /// One declared successor: which pull request replaces this one, whose body said so, and
+    /// whether it landed. One entry per successor declared.
+    Supersession,
+    /// What the repository's settings allow the executor; emitted when they allow no merge
+    /// commit.
+    RepositorySettings,
+}
+
+impl EvidenceKind {
+    /// The wire word.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            EvidenceKind::RequiredCheck => "required_check",
+            EvidenceKind::RequiredChecks => "required_checks",
+            EvidenceKind::Review => "review",
+            EvidenceKind::RelationToMaster => "relation_to_master",
+            EvidenceKind::Dependency => "dependency",
+            EvidenceKind::Label => "label",
+            EvidenceKind::Draft => "draft",
+            EvidenceKind::Base => "base",
+            EvidenceKind::Freshness => "freshness",
+            EvidenceKind::AutoMerge => "auto_merge",
+            EvidenceKind::Supersession => "supersession",
+            EvidenceKind::RepositorySettings => "repository_settings",
+        }
+    }
+}
+
+impl std::fmt::Display for EvidenceKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.pad(self.as_str())
+    }
+}
+
+impl PartialEq<&str> for EvidenceKind {
+    fn eq(&self, other: &&str) -> bool {
+        self.as_str() == *other
+    }
+}
+
+/// Where a piece of evidence was read.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case", tag = "kind")]
+pub enum EvidenceSource {
+    /// The forge observation, at its moment.
+    Forge {
+        /// When the forge was observed, RFC 3339.
+        observed_at: String,
+    },
+    /// Git, on this pair of commits.
+    Git {
+        /// The master commit.
+        master_sha: String,
+        /// The head commit.
+        head_sha: String,
+    },
+}
+
+/// One piece of evidence behind a disposition: what was read, where, and what it said.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IntegrationEvidence {
-    /// What kind of fact (`required_checks`, `relation_to_master`, `review`, `label`,
-    /// `dependency`, `draft`, `base`).
-    pub kind: String,
+    /// What kind of fact.
+    pub kind: EvidenceKind,
     /// What it said, as a word.
     pub status: String,
     /// The detail a person reads.
     pub detail: String,
+    /// Where it was read. Every assessment names it; a trail line written before evidence
+    /// carried it has none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source: Option<EvidenceSource>,
 }
 
-/// The revisions a decision was taken against. A decision is valid only while both still
-/// hold: the executor compares them with what it re-reads before it acts.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// The revisions a decision was taken against, and when the forge was observed. A decision is
+/// valid only while both revisions still hold: the executor compares them with what it
+/// re-reads before it acts.
+#[derive(Debug, Clone, Default, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct EvaluatedAgainst {
     /// The master commit.
     pub master_sha: String,
     /// The pull request's head commit.
     pub head_sha: String,
+    /// When the forge was observed, RFC 3339; empty in a value written before it was named.
+    #[serde(default)]
+    pub observed_at: String,
+}
+
+/// Two are equal when they name the same revisions. The moment is when, not what: the same
+/// master and head observed a moment later is the same decision, which is what the executor's
+/// stale-decision comparison asks.
+impl PartialEq for EvaluatedAgainst {
+    fn eq(&self, other: &Self) -> bool {
+        self.master_sha == other.master_sha && self.head_sha == other.head_sha
+    }
+}
+
+/// One question of the policy, in the order [`IntegrationGate::ALL`] asks them. The
+/// disposition is the first that fails; every one is answered.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum IntegrationGate {
+    /// It targets the integration base.
+    Base,
+    /// It is not a draft.
+    Draft,
+    /// It carries no label whose policy is to hold.
+    Label,
+    /// The forge has no auto-merge armed on it.
+    AutoMerge,
+    /// No successor is declared to replace it. Asked before the relation to master, because
+    /// a pull request whose successor landed usually conflicts with what the successor
+    /// brought, and is superseded rather than conflicting.
+    Supersession,
+    /// Its head is not on master already, and git could say that it merges cleanly.
+    RelationToMaster,
+    /// The repository allows a merge commit, the only way the executor merges. Asked after
+    /// the relation, so work already on master is still `redundant` and may be closed.
+    MergeMethod,
+    /// Every declared dependency has landed.
+    Dependency,
+    /// The review policy is satisfied on the head.
+    Review,
+    /// No required check failed on the head.
+    NoFailingCheck,
+    /// The head contains the current master.
+    Freshness,
+    /// Every required check passed on the head.
+    RequiredChecks,
+}
+
+impl IntegrationGate {
+    /// Every gate, in policy order.
+    pub const ALL: [IntegrationGate; 12] = [
+        IntegrationGate::Base,
+        IntegrationGate::Draft,
+        IntegrationGate::Label,
+        IntegrationGate::AutoMerge,
+        IntegrationGate::Supersession,
+        IntegrationGate::RelationToMaster,
+        IntegrationGate::MergeMethod,
+        IntegrationGate::Dependency,
+        IntegrationGate::Review,
+        IntegrationGate::NoFailingCheck,
+        IntegrationGate::Freshness,
+        IntegrationGate::RequiredChecks,
+    ];
+
+    /// The wire word.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            IntegrationGate::Base => "base",
+            IntegrationGate::Draft => "draft",
+            IntegrationGate::Label => "label",
+            IntegrationGate::AutoMerge => "auto_merge",
+            IntegrationGate::Supersession => "supersession",
+            IntegrationGate::MergeMethod => "merge_method",
+            IntegrationGate::RelationToMaster => "relation_to_master",
+            IntegrationGate::Dependency => "dependency",
+            IntegrationGate::Review => "review",
+            IntegrationGate::NoFailingCheck => "no_failing_check",
+            IntegrationGate::Freshness => "freshness",
+            IntegrationGate::RequiredChecks => "required_checks",
+        }
+    }
+}
+
+/// How one gate answered.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct GateResult {
+    /// The gate.
+    pub gate: IntegrationGate,
+    /// Whether it passed. A gate that fails only because an earlier one did (the head is not
+    /// fresh when its merge conflicts) fails without a reason of its own.
+    pub passed: bool,
+}
+
+/// What [`ReasonCode`]'s schema says, since its wire form is a string: the vocabulary.
+const REASON_VOCABULARY: &str = "A reason code, `code` or `code:payload`, one of: \
+`stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, \
+`merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, \
+`successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, \
+`merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, \
+`relation_unknown:WHY`, \
+`conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, \
+`required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, \
+`no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, \
+`required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, \
+`label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, \
+`dependency_unread:#N`. \
+A code outside this list (an older trail's) is carried verbatim.";
+
+/// One machine-readable reason, typed. Its wire form is the `code` or `code:payload` string
+/// the reasons always had ([`std::fmt::Display`] and [`std::str::FromStr`]), so the trail,
+/// the OpenAPI string arrays and the Cockpit read what they read before.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ReasonCode {
+    /// `stacked_on:#N`: it targets the head branch of open pull request N.
+    StackedOn {
+        /// The pull request it is stacked on.
+        number: u64,
+    },
+    /// `base_is:BRANCH`: it targets another branch than the base, and no open one's head.
+    BaseIs {
+        /// The branch it targets.
+        base: String,
+    },
+    /// `draft`.
+    Draft,
+    /// `label:NAME`: a label whose policy is to hold holds it.
+    Label {
+        /// The label, as the forge spells it.
+        name: String,
+    },
+    /// `auto_merge_armed`: the forge would merge it on its own, outside the executor.
+    AutoMergeArmed,
+    /// `merge_commit_not_allowed`: the repository's settings allow no merge commit, and the
+    /// executor never squashes or rebases.
+    MergeCommitNotAllowed,
+    /// `superseded_by:#N`: a declared successor, N, landed (no longer open, its head contained
+    /// in master).
+    SupersededBy {
+        /// The successor.
+        number: u64,
+    },
+    /// `successor_open:#N`: a declared successor, N, is still open; this one waits for it to
+    /// land and must not land itself meanwhile.
+    SuccessorOpen {
+        /// The successor.
+        number: u64,
+    },
+    /// `successor_not_landed:#N`: a declared successor, N, is no longer open, but its head is
+    /// not contained in master (closed unmerged, or merged by a squash or a rebase).
+    SuccessorNotLanded {
+        /// The successor.
+        number: u64,
+    },
+    /// `successor_unread:#N`: a declared successor, N, is not open, and the forge or git could
+    /// not say what became of it.
+    SuccessorUnread {
+        /// The successor.
+        number: u64,
+    },
+    /// `head_reachable_from_master`: every commit already landed.
+    HeadReachableFromMaster,
+    /// `merge_changes_nothing`: its patch is already fully on master.
+    MergeChangesNothing,
+    /// `patch_ids_upstream`: every commit it has and master lacks is on master as an equal
+    /// patch.
+    PatchIdsUpstream,
+    /// `only_derived_artifacts_differ`.
+    OnlyDerivedArtifactsDiffer,
+    /// `relation_unknown:WHY`: git could not say what the head is to master.
+    RelationUnknown {
+        /// Why.
+        reason: String,
+    },
+    /// `conflicts_on:COUNT`: the merge conflicts on this many authored paths (the paths are
+    /// in the relation; the wire form has always carried the count).
+    ConflictsOn {
+        /// How many authored paths conflict.
+        count: usize,
+    },
+    /// `depends_on:#N`: a declared dependency is still open.
+    DependsOn {
+        /// The pull request it waits for.
+        number: u64,
+    },
+    /// `review:STATE`: the review policy is not satisfied.
+    Review {
+        /// The review state.
+        state: PullRequestReview,
+    },
+    /// `review_policy_unread`.
+    ReviewPolicyUnread,
+    /// `required_check_failed`.
+    RequiredCheckFailed,
+    /// `behind_master:COMMITS`: the head does not contain master.
+    BehindMaster {
+        /// Commits on master the head does not have.
+        commits: u64,
+    },
+    /// `fork_head`: the head is a fork's branch, which cannot be refreshed from here.
+    ForkHead,
+    /// `required_checks:STATE`: the required checks have not all passed.
+    RequiredChecks {
+        /// Their verdict.
+        state: RequiredCheckState,
+    },
+    /// `no_required_checks`: the base requires none (owner decision D5).
+    NoRequiredChecks,
+    /// `required_checks_unread`.
+    RequiredChecksUnread,
+    /// `contains_master`: why a ready one is ready.
+    ContainsMaster,
+    /// `required_checks_passed`: why a ready one is ready.
+    RequiredChecksPassed,
+    /// `required_checks_skipped`: ready, a permitted skip among its checks.
+    RequiredChecksSkipped,
+    /// `executor_merge_refused:HEAD`: the forge refused the executor's merge of this head,
+    /// against this master; a new head or a new master clears it.
+    ExecutorMergeRefused {
+        /// The head whose merge was refused.
+        head: String,
+    },
+    /// `executor_refresh_failed:MASTER`: bringing this master into the branch failed; a new
+    /// head or a new master clears it.
+    ExecutorRefreshFailed {
+        /// The master that could not be brought in.
+        master: String,
+    },
+    /// `label_obsolete:NAME`: a label the policy declares obsolete (owner decision D3), with
+    /// the forge's own spelling of it.
+    LabelObsolete {
+        /// The label, as the forge spells it.
+        name: String,
+    },
+    /// `dependency_cycle:#N`: it and N depend on each other through declared edges, so
+    /// neither can ever land first.
+    DependencyCycle {
+        /// Another pull request of the cycle.
+        number: u64,
+    },
+    /// `dependency_closed_unmerged:#N`: a declared dependency was closed without a merge.
+    DependencyClosedUnmerged {
+        /// The dependency.
+        number: u64,
+    },
+    /// `dependency_unread:#N`: a declared dependency is not open and the forge could not say
+    /// what became of it.
+    DependencyUnread {
+        /// The dependency.
+        number: u64,
+    },
+    /// A code this vocabulary does not name, verbatim: what an older trail line may carry.
+    /// Nothing here produces one, and [`std::str::FromStr`] refuses it.
+    Unrecognised(String),
+}
+
+impl ReasonCode {
+    /// The code: the wire form before its payload.
+    pub fn code(&self) -> &str {
+        match self {
+            ReasonCode::StackedOn { .. } => "stacked_on",
+            ReasonCode::BaseIs { .. } => "base_is",
+            ReasonCode::Draft => "draft",
+            ReasonCode::Label { .. } => "label",
+            ReasonCode::AutoMergeArmed => "auto_merge_armed",
+            ReasonCode::MergeCommitNotAllowed => "merge_commit_not_allowed",
+            ReasonCode::SupersededBy { .. } => "superseded_by",
+            ReasonCode::SuccessorOpen { .. } => "successor_open",
+            ReasonCode::SuccessorNotLanded { .. } => "successor_not_landed",
+            ReasonCode::SuccessorUnread { .. } => "successor_unread",
+            ReasonCode::HeadReachableFromMaster => "head_reachable_from_master",
+            ReasonCode::MergeChangesNothing => "merge_changes_nothing",
+            ReasonCode::PatchIdsUpstream => "patch_ids_upstream",
+            ReasonCode::OnlyDerivedArtifactsDiffer => "only_derived_artifacts_differ",
+            ReasonCode::RelationUnknown { .. } => "relation_unknown",
+            ReasonCode::ConflictsOn { .. } => "conflicts_on",
+            ReasonCode::DependsOn { .. } => "depends_on",
+            ReasonCode::Review { .. } => "review",
+            ReasonCode::ReviewPolicyUnread => "review_policy_unread",
+            ReasonCode::RequiredCheckFailed => "required_check_failed",
+            ReasonCode::BehindMaster { .. } => "behind_master",
+            ReasonCode::ForkHead => "fork_head",
+            ReasonCode::RequiredChecks { .. } => "required_checks",
+            ReasonCode::NoRequiredChecks => "no_required_checks",
+            ReasonCode::RequiredChecksUnread => "required_checks_unread",
+            ReasonCode::ContainsMaster => "contains_master",
+            ReasonCode::RequiredChecksPassed => "required_checks_passed",
+            ReasonCode::RequiredChecksSkipped => "required_checks_skipped",
+            ReasonCode::ExecutorMergeRefused { .. } => "executor_merge_refused",
+            ReasonCode::ExecutorRefreshFailed { .. } => "executor_refresh_failed",
+            ReasonCode::LabelObsolete { .. } => "label_obsolete",
+            ReasonCode::DependencyCycle { .. } => "dependency_cycle",
+            ReasonCode::DependencyClosedUnmerged { .. } => "dependency_closed_unmerged",
+            ReasonCode::DependencyUnread { .. } => "dependency_unread",
+            ReasonCode::Unrecognised(s) => s.split_once(':').map_or(s.as_str(), |(c, _)| c),
+        }
+    }
+}
+
+/// The serialised word of a unit enum.
+fn wire_word<T: Serialize>(value: &T) -> String {
+    match serde_json::to_value(value) {
+        Ok(serde_json::Value::String(s)) => s,
+        _ => "unknown".into(),
+    }
+}
+
+impl std::fmt::Display for ReasonCode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ReasonCode::StackedOn { number }
+            | ReasonCode::DependsOn { number }
+            | ReasonCode::SupersededBy { number }
+            | ReasonCode::SuccessorOpen { number }
+            | ReasonCode::SuccessorNotLanded { number }
+            | ReasonCode::SuccessorUnread { number }
+            | ReasonCode::DependencyCycle { number }
+            | ReasonCode::DependencyClosedUnmerged { number }
+            | ReasonCode::DependencyUnread { number } => {
+                write!(f, "{}:#{number}", self.code())
+            }
+            ReasonCode::BaseIs { base: s }
+            | ReasonCode::Label { name: s }
+            | ReasonCode::LabelObsolete { name: s }
+            | ReasonCode::RelationUnknown { reason: s }
+            | ReasonCode::ExecutorMergeRefused { head: s }
+            | ReasonCode::ExecutorRefreshFailed { master: s } => write!(f, "{}:{s}", self.code()),
+            ReasonCode::ConflictsOn { count } => write!(f, "{}:{count}", self.code()),
+            ReasonCode::BehindMaster { commits } => write!(f, "{}:{commits}", self.code()),
+            ReasonCode::Review { state } => write!(f, "{}:{}", self.code(), wire_word(state)),
+            ReasonCode::RequiredChecks { state } => {
+                write!(f, "{}:{}", self.code(), wire_word(state))
+            }
+            ReasonCode::Unrecognised(s) => f.write_str(s),
+            _ => f.write_str(self.code()),
+        }
+    }
+}
+
+impl std::str::FromStr for ReasonCode {
+    type Err = String;
+
+    /// The reason a wire string names; an error for a code outside the vocabulary or a
+    /// payload that is not the code's.
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let bad = || format!("not a reason code: {s:?}");
+        let number = |p: &str| p.strip_prefix('#').and_then(|n| n.parse::<u64>().ok());
+        let word = |p: &str| serde_json::Value::String(p.to_string());
+        let (code, payload) = match s.split_once(':') {
+            Some((c, p)) => (c, Some(p)),
+            None => (s, None),
+        };
+        let reason = match (code, payload) {
+            ("stacked_on", Some(p)) => ReasonCode::StackedOn {
+                number: number(p).ok_or_else(bad)?,
+            },
+            ("depends_on", Some(p)) => ReasonCode::DependsOn {
+                number: number(p).ok_or_else(bad)?,
+            },
+            ("superseded_by", Some(p)) => ReasonCode::SupersededBy {
+                number: number(p).ok_or_else(bad)?,
+            },
+            ("successor_open", Some(p)) => ReasonCode::SuccessorOpen {
+                number: number(p).ok_or_else(bad)?,
+            },
+            ("successor_not_landed", Some(p)) => ReasonCode::SuccessorNotLanded {
+                number: number(p).ok_or_else(bad)?,
+            },
+            ("successor_unread", Some(p)) => ReasonCode::SuccessorUnread {
+                number: number(p).ok_or_else(bad)?,
+            },
+            ("dependency_cycle", Some(p)) => ReasonCode::DependencyCycle {
+                number: number(p).ok_or_else(bad)?,
+            },
+            ("dependency_closed_unmerged", Some(p)) => ReasonCode::DependencyClosedUnmerged {
+                number: number(p).ok_or_else(bad)?,
+            },
+            ("dependency_unread", Some(p)) => ReasonCode::DependencyUnread {
+                number: number(p).ok_or_else(bad)?,
+            },
+            ("base_is", Some(p)) => ReasonCode::BaseIs { base: p.into() },
+            ("label", Some(p)) => ReasonCode::Label { name: p.into() },
+            ("label_obsolete", Some(p)) => ReasonCode::LabelObsolete { name: p.into() },
+            ("relation_unknown", Some(p)) => ReasonCode::RelationUnknown { reason: p.into() },
+            ("conflicts_on", Some(p)) => ReasonCode::ConflictsOn {
+                count: p.parse().map_err(|_| bad())?,
+            },
+            ("behind_master", Some(p)) => ReasonCode::BehindMaster {
+                commits: p.parse().map_err(|_| bad())?,
+            },
+            ("review", Some(p)) => ReasonCode::Review {
+                state: serde_json::from_value(word(p)).map_err(|_| bad())?,
+            },
+            ("required_checks", Some(p)) => ReasonCode::RequiredChecks {
+                state: serde_json::from_value(word(p)).map_err(|_| bad())?,
+            },
+            ("draft", None) => ReasonCode::Draft,
+            ("auto_merge_armed", None) => ReasonCode::AutoMergeArmed,
+            ("merge_commit_not_allowed", None) => ReasonCode::MergeCommitNotAllowed,
+            ("head_reachable_from_master", None) => ReasonCode::HeadReachableFromMaster,
+            ("merge_changes_nothing", None) => ReasonCode::MergeChangesNothing,
+            ("patch_ids_upstream", None) => ReasonCode::PatchIdsUpstream,
+            ("only_derived_artifacts_differ", None) => ReasonCode::OnlyDerivedArtifactsDiffer,
+            ("review_policy_unread", None) => ReasonCode::ReviewPolicyUnread,
+            ("required_check_failed", None) => ReasonCode::RequiredCheckFailed,
+            ("fork_head", None) => ReasonCode::ForkHead,
+            ("no_required_checks", None) => ReasonCode::NoRequiredChecks,
+            ("required_checks_unread", None) => ReasonCode::RequiredChecksUnread,
+            ("contains_master", None) => ReasonCode::ContainsMaster,
+            ("required_checks_passed", None) => ReasonCode::RequiredChecksPassed,
+            ("required_checks_skipped", None) => ReasonCode::RequiredChecksSkipped,
+            ("executor_merge_refused", Some(p)) => {
+                ReasonCode::ExecutorMergeRefused { head: p.into() }
+            }
+            ("executor_refresh_failed", Some(p)) => {
+                ReasonCode::ExecutorRefreshFailed { master: p.into() }
+            }
+            _ => return Err(bad()),
+        };
+        Ok(reason)
+    }
+}
+
+impl Serialize for ReasonCode {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.collect_str(self)
+    }
+}
+
+/// Never fails on a string: a code outside the vocabulary is [`ReasonCode::Unrecognised`],
+/// so a trail line an older executor wrote still reads.
+impl<'de> Deserialize<'de> for ReasonCode {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(deserializer)?;
+        Ok(s.parse().unwrap_or(ReasonCode::Unrecognised(s)))
+    }
+}
+
+/// A string on the wire, its vocabulary in the description: the OpenAPI arrays of reasons
+/// stay arrays of strings.
+impl JsonSchema for ReasonCode {
+    fn inline_schema() -> bool {
+        true
+    }
+    fn schema_name() -> std::borrow::Cow<'static, str> {
+        "ReasonCode".into()
+    }
+    fn json_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
+        schemars::json_schema!({
+            "type": "string",
+            "description": REASON_VOCABULARY,
+        })
+    }
+}
+
+/// Whether `reason`'s wire form is `wire`, compared as it is written, without building it.
+fn wire_is(reason: &ReasonCode, wire: &str) -> bool {
+    struct Against<'a> {
+        rest: &'a str,
+        same: bool,
+    }
+    impl std::fmt::Write for Against<'_> {
+        fn write_str(&mut self, s: &str) -> std::fmt::Result {
+            match self.rest.strip_prefix(s) {
+                Some(rest) if self.same => self.rest = rest,
+                _ => self.same = false,
+            }
+            Ok(())
+        }
+    }
+    let mut against = Against {
+        rest: wire,
+        same: true,
+    };
+    let _ = std::fmt::Write::write_fmt(&mut against, format_args!("{reason}"));
+    against.same && against.rest.is_empty()
+}
+
+impl PartialEq<str> for ReasonCode {
+    fn eq(&self, other: &str) -> bool {
+        wire_is(self, other)
+    }
+}
+
+impl PartialEq<&str> for ReasonCode {
+    fn eq(&self, other: &&str) -> bool {
+        wire_is(self, other)
+    }
+}
+
+impl PartialEq<String> for ReasonCode {
+    fn eq(&self, other: &String) -> bool {
+        wire_is(self, other)
+    }
+}
+
+/// Reasons as a person reads them: their wire forms, joined by `sep`.
+pub fn reason_list(reasons: &[ReasonCode], sep: &str) -> String {
+    reasons
+        .iter()
+        .map(ToString::to_string)
+        .collect::<Vec<_>>()
+        .join(sep)
 }
 
 /// The canonical state of one open pull request: what was observed, what it is to master,
@@ -347,10 +1081,29 @@ pub struct PullRequestAssessment {
     pub evaluated_against: EvaluatedAgainst,
     /// The classification.
     pub disposition: PullRequestDisposition,
+    /// The successor that landed and replaces it, exactly when the disposition is
+    /// `superseded`: the disposition stays one word on the wire, and this is its `by`.
+    /// Absent otherwise; a successor still open, or closed without landing, is in the
+    /// `supersession` evidence and the reasons instead.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub superseded_by: Option<u64>,
+    /// The issue of `.ai/repo/project/issues/` its head branch names — a path component equal
+    /// to the id, or the id followed by `-`, the form `majordomus worktree create --issue`
+    /// gives — when it names one. Derived, never declared here: the issue record and the
+    /// branch name are the two sources, and nothing else.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub issue: Option<String>,
+    /// The milestone that issue's record declares, when it declares one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub milestone: Option<String>,
     /// The queue it is in.
     pub lane: IntegrationLane,
-    /// Machine-readable reason codes, most decisive first.
-    pub reasons: Vec<String>,
+    /// Machine-readable reasons, one for every failing gate's every finding, in policy order:
+    /// the first is the decisive one. A ready pull request carries why it is ready.
+    pub reasons: Vec<ReasonCode>,
+    /// Every gate of the policy, in order, and whether it passed.
+    #[serde(default)]
+    pub gates: Vec<GateResult>,
     /// What a person or the executor does next, when anything.
     pub next_action: Option<String>,
     /// The required checks on the head.
@@ -378,6 +1131,59 @@ pub struct PullRequestAssessment {
     /// ready or refreshable.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub wait: Option<ExecutorWait>,
+    /// Why it stands where it does in the rank: every component the order compares, in the
+    /// order it compares them. Set by the planner; absent on an assessment never ranked.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rank_factors: Option<RankFactors>,
+    /// What its merge into master changes, by kind ([`ChangeShape`]): read beside the
+    /// relation, from the same pair of commits. Absent when it could not be read.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub change_shape: Option<ChangeShape>,
+}
+
+/// What a head's merge into master changes, by kind: the authored paths a person wrote, the
+/// derived paths a generator writes (by the repository's `merge=derived` attributes on master),
+/// and the version the head declares when it raises the crate's. Decided from the same pair
+/// of commits as the relation to master, and cached under the same key beside it, so a change
+/// of either commit — a `.gitattributes` change on master is one — makes both stale together.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct ChangeShape {
+    /// Authored (non-derived) paths the merge changes or conflicts on, in path order.
+    pub authored: Vec<String>,
+    /// Derived paths the merge changes or conflicts on, in path order.
+    pub derived: Vec<String>,
+    /// The version the head declares in the crate manifest, when it is not the one its merge
+    /// base declares: the head raises the version.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub version_bump: Option<String>,
+}
+
+/// What the rank compares, in order: the first component that differs between two pull
+/// requests decides which comes first. Each is a value of the assessment or of the queue
+/// around it, so the order can be explained and is the same whatever order the forge listed
+/// the pull requests in.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct RankFactors {
+    /// The lane: what kind of work the executor does with it.
+    pub lane: IntegrationLane,
+    /// The disposition, within the lane.
+    pub disposition: PullRequestDisposition,
+    /// The planning risk: lower first.
+    pub risk: IntegrationRisk,
+    /// How many other ready or refreshable pull requests it overlaps ([`PathOverlap`]): an
+    /// authored path, a version bump or a release in common. Fewer first, because landing it
+    /// invalidates less.
+    pub contention: usize,
+    /// How many open pull requests declare that they wait for this one and are not yet
+    /// satisfied: more first, because landing it unblocks them.
+    pub dependents: usize,
+    /// How many authored paths it changes: fewer first, a smaller change is cheaper to land
+    /// and to undo.
+    pub authored_paths: usize,
+    /// When it was opened: older first, so easy new work cannot starve old work.
+    pub created_at: String,
+    /// The number: the last tie-break, total.
+    pub number: u64,
 }
 
 /// How long a pull request has waited for the executor, from the audit trail. Starvation is
@@ -404,7 +1210,7 @@ pub struct PassedOver {
     /// The pull request chosen instead.
     pub for_pr: u64,
     /// What it was chosen for (`selected` to merge, `refresh_selected` to bring master in).
-    pub action: String,
+    pub action: super::drain::IntegrationAction,
 }
 
 /// Shared authored paths with one other open pull request.
@@ -414,4 +1220,81 @@ pub struct PathOverlap {
     pub number: u64,
     /// The paths both change.
     pub paths: Vec<String>,
+    /// What the two share. `authored` in a record written before it was said.
+    #[serde(default)]
+    pub kind: OverlapKind,
+}
+
+/// What two open pull requests have in common that makes landing one change the other.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum OverlapKind {
+    /// Authored paths both change.
+    #[default]
+    Authored,
+    /// Both raise the crate's version: whichever lands second must be re-derived on the first.
+    VersionBump,
+    /// Both change the release records under `.ai/repo/releases/`.
+    Release,
+}
+
+#[cfg(test)]
+mod vocabulary_branches {
+    //! The wire vocabulary's refusals and less common forms, each asked directly.
+
+    use super::*;
+
+    #[test]
+    fn a_check_bound_to_an_app_names_it() {
+        let c = RequiredCheck {
+            context: "ci".into(),
+            app_id: Some(15368),
+        };
+        assert_eq!(c.to_string(), "ci (app 15368)");
+        assert_eq!(RequiredCheck::from("ci").to_string(), "ci");
+        assert_eq!(EvidenceKind::Freshness.as_str(), "freshness");
+    }
+
+    #[test]
+    fn an_unrecognised_reason_keeps_its_code_and_a_unit_without_a_word_is_unknown() {
+        assert_eq!(
+            ReasonCode::Unrecognised("old_code:x".into()).code(),
+            "old_code"
+        );
+        assert_eq!(ReasonCode::Unrecognised("bare".into()).code(), "bare");
+        assert_eq!(wire_word(&5u8), "unknown");
+    }
+
+    #[test]
+    fn every_payload_that_is_not_its_codes_is_refused() {
+        for wire in [
+            "stacked_on:x",
+            "depends_on:#x",
+            "superseded_by:7",
+            "successor_open:#",
+            "successor_not_landed:x",
+            "successor_unread:x",
+            "conflicts_on:many",
+            "behind_master:-1",
+            "review:maybe",
+            "required_checks:green",
+            "dependency_cycle:x",
+            "dependency_closed_unmerged:#",
+            "dependency_unread:7",
+        ] {
+            assert!(wire.parse::<ReasonCode>().is_err(), "{wire} parsed");
+        }
+    }
+
+    #[test]
+    fn a_reason_reads_from_a_string_only_and_compares_by_its_wire_form() {
+        assert!(
+            serde_json::from_str::<ReasonCode>("5").is_err(),
+            "not a string"
+        );
+        let r: ReasonCode = serde_json::from_str("\"draft\"").unwrap();
+        assert!(PartialEq::<str>::eq(&r, "draft"));
+        assert!(!PartialEq::<str>::eq(&r, "label:x"), "a different prefix");
+        assert!(!PartialEq::<str>::eq(&r, "draftx"), "a longer wire");
+    }
 }
