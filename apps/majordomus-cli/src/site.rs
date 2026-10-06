@@ -896,10 +896,8 @@ pub fn why_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>> {
         "valid": validation["valid"],
     });
 
-    let graph =
-        crate::graph::derive("why", &ctx.registry, &ctx.index).ok_or_else(|| Error::Protocol {
-            reason: "this executable derives no `why` graph".into(),
-        })?;
+    let graph = crate::graph::derive_whole("why", &ctx.registry, &ctx.index)
+        .map_err(|reason| Error::Protocol { reason })?;
     // the graph is a value of the domain and carries no provenance of its own; the artifact
     // does, in the members every generated document of this repository carries
     let mut graph_document = serde_json::to_value(&graph).unwrap_or_default();
@@ -1273,11 +1271,8 @@ pub fn product_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>
         "valid": validation["valid"],
     });
 
-    let graph = crate::graph::derive("product", &ctx.registry, &ctx.index).ok_or_else(|| {
-        Error::Protocol {
-            reason: "this executable derives no `product` graph".into(),
-        }
-    })?;
+    let graph = crate::graph::derive_whole("product", &ctx.registry, &ctx.index)
+        .map_err(|reason| Error::Protocol { reason })?;
     let mut graph_document = serde_json::to_value(&graph).unwrap_or_default();
     if let Some(o) = graph_document.as_object_mut() {
         o.insert(

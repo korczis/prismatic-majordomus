@@ -37,9 +37,10 @@ At least 30 valid matched pairs; at least 4 task categories with 5 valid pairs e
 
 | suite | kind | freshness | runs | valid pairs | attempted | control failed | treatment failed | both failed | other | revisions | harness | models |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| context | context | current | 7 | 0 | 0 | 0 | 0 | 0 | 0 | `1cc12af61de4` `487cedf6f5a3` `78f09f8af8e3` `8183164ade2d` `8d4486c1a9df` `94c515480804` `a588b8eb5fac` |  |  |
+| context | context | stale | 7 | 0 | 0 | 0 | 0 | 0 | 0 | `1cc12af61de4` `487cedf6f5a3` `78f09f8af8e3` `8183164ade2d` `8d4486c1a9df` `94c515480804` `a588b8eb5fac` |  |  |
 | pilot | live | no evidence | 0 | 0 | 0 | 0 | 0 | 0 | 0 |  |  |  |
 
+- `context`: 1 record(s) were measured against inputs that have changed since: .ai/repo/benchmarks/economics/methodology.yaml, .ai/repo/benchmarks/economics/suites/context.yaml, apps/majordomus-cli/src/devcontext, .ai/repo/knowledge/sources.yaml
 
 ## Metrics
 
@@ -78,8 +79,10 @@ Formulas and warnings:
   - interval: percentile bootstrap of the median, each value resampled independently with replacement; 10000 resamples, seed 20260924.
   - tokens counted with o200k_base (tiktoken-rs 0.12.0), which is not the tokenizer of every model
   - the candidates are what the compiler's own graph walk judged relevant; a worker without the compiler would not necessarily have read them, so this ratio describes the selection, not a session's saving
+  - stale: a measured mechanism changed since this record
   - dirty: this record was measured from a working tree with uncommitted changes
 - `context_cost_model_error`: counted selected tokens / the compiler's own estimate of them - 1, over all seeds.
+  - stale: a measured mechanism changed since this record
   - dirty: this record was measured from a working tree with uncommitted changes
 
 ## Pairs
