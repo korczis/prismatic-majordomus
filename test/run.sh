@@ -21,6 +21,12 @@
 #                                       weighs 300 s. Stale numbers unbalance shards, never
 #                                       drop a case
 #   MJ_TEST_LIST=1                      print the cases this invocation would run and run none
+#   bash test/run.sh --no-skips [...]   a case that declines fails the run, unless its header
+#                                       says where its subject is read instead:
+#                                       "# majordomus-skip-runs-in: <job>"; CI runs the suite so
+#   bash test/run.sh --no-skips --runs-in <job> [...]
+#                                       only the cases that declare <job>, and there no skip is
+#                                       excused: a case excused in one job is held in another
 #   bash test/run.sh --verify-report <file>
 #                                       exit 1 unless the report has exactly one row for every
 #                                       case under test/cases/ and no other: what proves that a
@@ -45,7 +51,7 @@
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MJ="$ROOT/bin/majordomus"; export MJ ROOT
-pass=0; fail=0; skipped=0; failed_names=""
+pass=0; fail=0; skipped=0; failed_names=""; skipped_names=""
 # The status a case exits with to say it declined to run; test/lib.sh's `skip` uses it.
 # Read here rather than sourced: run.sh is the runner, not a case, and the two agree on one
 # number whose only job is to be neither 0 nor a failure. The number is not the declaration
@@ -78,6 +84,18 @@ case_timeout() {
                             print v; exit } ; next }
                    { exit }' "$1" 2>/dev/null | head -n 1)"
   if [ -n "$declared" ]; then printf '%s\n' "$declared"; else printf '%s\n' "${MJ_TEST_CASE_TIMEOUT:-3600}"; fi
+}
+
+# The job a case's skip defers to: "# majordomus-skip-runs-in: <job>" in the header block, read
+# the way the bound is, or nothing. A case declares it when the subject it cannot reach here
+# is one another CI job has (409's rendered half needs the built site, which the suite runners
+# do not have when it runs), and --runs-in <job> is what makes that job read it.
+case_skip_runs_in() {
+  awk '/^[[:space:]]*$/ { next }
+       /^#/ { if (match($0, /^# majordomus-skip-runs-in: *[a-z0-9-]+/)) {
+                v = $0; sub(/^# majordomus-skip-runs-in: */, "", v); sub(/[^a-z0-9-].*$/, "", v)
+                print v; exit } ; next }
+       { exit }' "$1" 2>/dev/null | head -n 1
 }
 
 # Runs one case in a fresh repository. The case's output streams through; the status is
@@ -147,7 +165,7 @@ verdict() {   # name status seconds phase -> counts it, prints its line, records
     0) pass=$((pass+1)); echo "ok   $name" ;;
     2) fail=$((fail+1)); failed_names="$failed_names $name"; echo "FAIL $name (setup)" ;;
     3) fail=$((fail+1)); failed_names="$failed_names $name"; echo "TIMEOUT $name" ;;
-    4) skipped=$((skipped+1)); echo "skip $name" ;;
+    4) skipped=$((skipped+1)); skipped_names="$skipped_names $name"; echo "skip $name" ;;
     *) fail=$((fail+1)); failed_names="$failed_names $name"; echo "FAIL $name" ;;
   esac
   # The word the ledger reads back. A skip is written as a skip: `majordomus evidence
@@ -196,6 +214,23 @@ if [ "${1:-}" = --verify-report ]; then
   exit "$bad"
 fi
 
+# The flags come before the case names. --no-skips: a case that declines fails the run unless
+# its header defers it to another job; --runs-in <job>: run exactly the cases that defer to
+# <job>, where none is excused. Before --no-skips a run in which every case declined still
+# exited 0, and 102 skipped "no zsh" on every CI run with nothing turning red.
+no_skips=0; runs_in=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --no-skips) no_skips=1; shift ;;
+    --runs-in)
+      runs_in="${2:-}"
+      case "$runs_in" in ''|*[!a-z0-9-]*) echo "run.sh: --runs-in needs a job name, got '$runs_in'" >&2; exit 2 ;; esac
+      shift 2 ;;
+    *) break ;;
+  esac
+done
+[ -z "$runs_in" ] || [ "$no_skips" = 1 ] || { echo "run.sh: --runs-in reads cases whose skip is excused elsewhere; it means nothing without --no-skips" >&2; exit 2; }
+
 only=""
 for n in "$@"; do
   [ -f "$ROOT/test/cases/$n.sh" ] || { echo "run.sh: no case matches '$n' (test/cases/$n.sh does not exist)" >&2; exit 2; }
@@ -211,9 +246,16 @@ parallel_names=""; exclusive_names=""
 for case in "$ROOT"/test/cases/*.sh; do
   name="$(basename "$case" .sh)"
   if [ -n "$only" ]; then case "$only" in *" $name "*) ;; *) continue ;; esac; fi
+  if [ -n "$runs_in" ] && [ "$(case_skip_runs_in "$case")" != "$runs_in" ]; then continue; fi
   if grep -q '^# majordomus-exclusive:' "$case"; then exclusive_names="$exclusive_names $name"
   else parallel_names="$parallel_names $name"; fi
 done
+# a job no case defers to is a usage error, never an empty success: the CI step that names it
+# would otherwise pass while holding nothing
+if [ -n "$runs_in" ] && [ -z "$parallel_names$exclusive_names" ]; then
+  echo "run.sh: no case declares '# majordomus-skip-runs-in: $runs_in'${only:+ among$only}" >&2
+  exit 2
+fi
 
 # ---------------------------------------------------------------- one shard
 # Longest-processing-time first: cases sorted by their recorded seconds, each dealt to the
@@ -296,6 +338,24 @@ else
     fail=$((fail+1)); failed_names="$failed_names (checkout)"
     echo "FAIL run.sh: the checkout changed during the parallel phase: ${dirtied}— a case that writes into the checkout declares '# majordomus-exclusive: <reason>' and runs alone (or something else edited the checkout while the suite ran)"
   fi
+fi
+# --no-skips: a case that declined is a failure, unless it defers to another job and this run
+# is not that job. A skip is still recorded as SKIP in the report above; what changes is
+# whether the run may pass with it.
+if [ "$no_skips" = 1 ]; then
+  for name in $skipped_names; do
+    job="$(case_skip_runs_in "$ROOT/test/cases/$name.sh")"
+    if [ -n "$job" ] && [ "$job" != "$runs_in" ]; then
+      echo "skip $name is excused here: its subject is read in the $job job (--no-skips --runs-in $job)"
+    else
+      fail=$((fail+1)); failed_names="$failed_names $name"
+      if [ -n "$runs_in" ]; then
+        echo "FAIL $name declined in the $runs_in job, the one place its skip is not excused (--no-skips)"
+      else
+        echo "FAIL $name declined, and --no-skips refuses a skip; a case whose subject only another job has declares '# majordomus-skip-runs-in: <job>'"
+      fi
+    fi
+  done
 fi
 echo "tests: $pass passed, $fail failed, $skipped skipped"
 [ -n "$failed_names" ] && echo "failed:$failed_names"

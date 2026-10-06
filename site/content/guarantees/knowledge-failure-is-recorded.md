@@ -1,7 +1,7 @@
 +++
 title = "A policy switch that is off derives nothing and says so; a derivation that fails inside a provider hook is recorded as provider.event.failed and the hook still exits 0"
 description = "Two things can stop a derivation, and neither is silent. When session.knowledge_on_end or session.knowledge_on_compact is false, the adapter derives nothing and says so on stderr; the ledger shows a closed episode with no derivation and the stopped-writer check treats the switch as deliberate. When the deriver fails — the directory is unwritable, the policy does not parse — the adapter writes a provider.event.failed line naming the reason, closes the episode as it would have anyway, and returns success to the provider."
-weight = 216
+weight = 218
 [extra]
 claim_id = "knowledge-failure-is-recorded"
 status = "guaranteed"

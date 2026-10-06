@@ -132,7 +132,10 @@ mj_validate_wiring() {
       kind="${wired%%:*}"; target="${wired#*:}"
       case "$kind" in
         git-hook)
-          hookdir="$(mj_git config core.hooksPath 2>/dev/null || true)"; [ -z "$hookdir" ] && hookdir=".git/hooks"
+          # Git says where its hooks are: core.hooksPath when set, else the common
+          # directory's hooks/. A linked worktree's .git is a file naming that directory,
+          # so "$MJ_ROOT/.git/hooks" does not exist there and every hook read as missing.
+          hookdir="$(mj_git rev-parse --git-path hooks 2>/dev/null || true)"; [ -z "$hookdir" ] && hookdir=".git/hooks"
           case "$hookdir" in /*) hookfile="$hookdir/$target" ;; *) hookfile="$MJ_ROOT/$hookdir/$target" ;; esac
           # A hook is commonly a dispatcher that runs every executable in <hook>.d/; the
           # invocation then lives in one of those files, not in the hook git calls.
@@ -606,7 +609,13 @@ mj_validate_lifecycle() {
 
   # Is anything happening? Episodes opening is the cheapest evidence of a live lifecycle,
   # and it is the evidence that was present throughout the outage.
-  local opens; opens="$(grep -c '"event":"session.started"' "$ledger" 2>/dev/null || true)"
+  #
+  # Counted on this branch only, because the records below are resolved for this worktree
+  # and branch. Counting every episode the checkout ever opened made a branch created a
+  # minute ago owe a checkpoint and a handover on its first commit: the episodes were the
+  # trunk's, the absence was the new branch's, and the pre-commit hook refused the commit.
+  local branch opens; branch="$(mj_git_branch)"
+  opens="$(grep -F '"event":"session.started"' "$ledger" 2>/dev/null | grep -cF "\"branch\":\"$branch\"" || true)"
   : "${opens:=0}"
   if [ "$opens" -lt 2 ]; then
     mj_doctrine_ok lifecycle "activity" "$opens episode(s) opened here; too few to judge whether the writers stopped"
@@ -619,7 +628,7 @@ mj_validate_lifecycle() {
   for d in checkpoints handovers; do
     if ! mj_resolve_latest "$MJ_STATE_DIR/$d" ""; then
       mj_doctrine_fail lifecycle "$d" \
-        "$opens episode(s) have opened here and no $d record exists for this worktree and branch" \
+        "$opens episode(s) have opened on $branch here and no $d record exists for this worktree and branch" \
         "majordomus ${d%s} --list"
       continue
     fi
@@ -857,6 +866,29 @@ mj_validate_doctrine_wiring() {
     elif ! grep -qE 'bash test/run\.sh' "$ci"; then mj_doctrine_fail doctrine "ci" "validate.yml does not run test/run.sh" "grep -n 'test/run.sh' .github/workflows/validate.yml"; bad=1
     elif grep -E 'bash test/run\.sh' "$ci" | grep -qE '\|\|[[:space:]]*(true|:)|continue-on-error'; then
       mj_doctrine_fail doctrine "ci" "validate.yml runs test/run.sh but does not let it fail the job" "grep -n -A2 'test/run.sh' .github/workflows/validate.yml"; bad=1
+    elif ! grep -E 'bash test/run\.sh' "$ci" | grep -v -- '--runs-in' | grep -q -- '--no-skips'; then
+      # a run in which a case declined still passed: 102 skipped "no zsh" on every CI run. The
+      # whole suite's invocation is the one that must refuse, not a --runs-in step beside it.
+      mj_doctrine_fail doctrine "ci" "validate.yml runs test/run.sh without --no-skips; a case that declines would pass the job" "grep -n 'test/run.sh' .github/workflows/validate.yml"; bad=1
+    fi
+    # and every job a case's skip defers to holds that case: a skip excused because another job
+    # reads its subject is excused for nothing if no job does. The header block only, as
+    # test/run.sh reads it, so a case that writes the header into a fixture declares nothing.
+    if [ -f "$ci" ]; then
+      local cf sj sjobs=""
+      for cf in "$root"/test/cases/*.sh; do
+        sj="$(awk '/^[[:space:]]*$/ { next }
+                   /^#/ { if (match($0, /^# majordomus-skip-runs-in: *[a-z0-9-]+/)) {
+                            v = $0; sub(/^# majordomus-skip-runs-in: */, "", v); sub(/[^a-z0-9-].*$/, "", v)
+                            print v; exit } ; next }
+                   { exit }' "$cf" 2>/dev/null)"
+        [ -n "$sj" ] || continue
+        case " $sjobs " in *" $sj "*) ;; *) sjobs="$sjobs $sj" ;; esac
+      done
+      for sj in $sjobs; do
+        grep -qE "bash test/run\.sh --no-skips --runs-in $sj([^a-z0-9-]|\$)" "$ci" \
+          || { mj_doctrine_fail doctrine "ci" "a case defers its skip to the '$sj' job, and no step in validate.yml runs 'bash test/run.sh --no-skips --runs-in $sj'" "grep -rln '^# majordomus-skip-runs-in: $sj' test/cases"; bad=1; }
+      done
     fi
     # and the runner must run every case, not a list that a new case can miss
     if ! grep -qE 'cases/\*\.sh|cases/\*' "$root/test/run.sh"; then

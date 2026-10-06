@@ -1,7 +1,7 @@
 +++
 title = "An exclusive claim made on one runtime excludes an overlapping claim on every linked runtime, and concurrent claims resolve to one named winner everywhere"
 description = "A session on machine A claims apps/majordomus-cli exclusively. A session on machine B"
-weight = 203
+weight = 205
 [extra]
 claim_id = "mesh-claims-cross-runtime"
 status = "guaranteed"

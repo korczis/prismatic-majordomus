@@ -1014,4 +1014,76 @@ mod tests {
         let http = e.capability.exposure.http.expect("it is exposed over HTTP");
         assert_eq!(http.method.as_str(), "POST");
     }
+
+    /// "Nothing is ready" and "there is nothing" are different answers: a plan with no
+    /// issue says it declares none, and a plan whose every issue is taken says none is READY.
+    #[test]
+    fn nothing_ready_is_not_nothing_declared() {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let next = plan_next(&repo.context().unwrap(), PlanMilestoneFilter::default()).unwrap();
+        assert!(next.issue.is_none());
+        assert_eq!(
+            next.reason.as_deref(),
+            Some("the plan declares no issue to hand out")
+        );
+
+        // the synthetic repository declares no plan classes; this one does, as ours does
+        let sources = repo.root().join(".ai/repo/knowledge/sources.yaml");
+        let mut text = std::fs::read_to_string(&sources).unwrap();
+        for (class, pathspec) in [
+            ("project", ".ai/repo/project/project.yaml"),
+            ("milestone", ".ai/repo/project/milestones/*.yaml"),
+            ("issue", ".ai/repo/project/issues/*.yaml"),
+        ] {
+            text.push_str(&format!(
+                "  - id: {class}\n    kind: {class}\n    discovery: vcs\n    \
+                 pathspec: ':(glob){pathspec}'\n    required: false\n"
+            ));
+        }
+        std::fs::write(&sources, text).unwrap();
+        let project = repo.root().join(".ai/repo/project");
+        for dir in ["milestones", "issues"] {
+            std::fs::create_dir_all(project.join(dir)).unwrap();
+        }
+        std::fs::write(
+            project.join("project.yaml"),
+            "schema_version: 1\nname: P\nrepository: o/r\ndefault_branch: master\n",
+        )
+        .unwrap();
+        std::fs::write(
+            project.join("milestones/M000.yaml"),
+            "id: M000\ntitle: m\nslug: m\norder: 0\npriority: p1\nproblem: p\noutcome: o\n\
+             acceptance_criteria:\n  - it works\nvalidation:\n  - \"true\"\n\
+             evidence_required:\n  - proof\n",
+        )
+        .unwrap();
+        // the only issue is ACTIVE: declared, and not READY
+        let at = "2026-09-01T00:00:00Z";
+        std::fs::write(
+            project.join("issues/I0001.yaml"),
+            format!(
+                "id: I0001\nmilestone: M000\ntitle: t\nslug: t\npriority: p1\n\
+                 profile: implementation\nobjective: o\nscope:\n  - src\n\
+                 acceptance_criteria:\n  - it works\nvalidation:\n  - \"true\"\n\
+                 evidence_required:\n  - proof\nstarted_at: {at}\n\
+                 unsealed_stamps:\n  - started_at {at}\n"
+            ),
+        )
+        .unwrap();
+        let ctx = repo.context().unwrap();
+        let plan = plan_of(&ctx).unwrap();
+        assert_eq!(
+            plan.issue("I0001").map(|i| i.status.as_str()),
+            Some("ACTIVE")
+        );
+        let next = plan_next(&ctx, PlanMilestoneFilter::default()).unwrap();
+        assert!(next.issue.is_none());
+        assert_eq!(
+            next.reason.as_deref(),
+            Some(
+                "no issue is READY; every one of them waits on a dependency or on its \
+                 milestone's gate"
+            )
+        );
+    }
 }

@@ -272,7 +272,9 @@
           "130_mesh",
           "131_models",
           "132_health_sees_a_stopped_writer",
+          "132b_a_new_branch_owes_no_records_yet",
           "14_wiring_dispatcher",
+          "14c_wiring_from_a_linked_worktree",
           "15_command_surface",
           "18_doctrine_wiring",
           "19_end_to_end",
@@ -292,6 +294,7 @@
           "02_doctor_basic",
           "03_update",
           "132_health_sees_a_stopped_writer",
+          "132b_a_new_branch_owes_no_records_yet",
           "13_region_projection",
           "140_prompt_continuity",
           "14_wiring_dispatcher",
@@ -904,6 +907,7 @@
         "behaviour": [
           "04_start_check",
           "108_scope_after_trunk_merge",
+          "108b_scope_after_trunk_fast_forward",
           "131_completion_gates",
           "15_command_surface",
           "17_doctrine_enforcement",
@@ -917,6 +921,7 @@
           "04_start_check",
           "103_obligations",
           "108_scope_after_trunk_merge",
+          "108b_scope_after_trunk_fast_forward",
           "17_doctrine_enforcement",
           "19_end_to_end",
           "21_decision_question",
@@ -1402,7 +1407,7 @@
           }
         ]
       },
-      "doc_md": "\nRecord or read durable decisions. One append-only file: `state/decisions.md`.\n\n`decision add \"<what>\" --why \"<why>\"` appends an entry with the task id and git head\ncomputed. `--why` is required: a decision with no recorded reason cannot be reviewed later,\nonly re-argued. `--rejected` and `--evidence` are optional and default to `-`.\n\nAn entry is never edited or deleted. `--supersedes \"<text>\"` records that a later decision\nreplaced an earlier one and refuses text that matches no recorded decision, so a\nsupersession always points at something real.\n\n`decision list [--task <id>] [--limit <n>]` prints entries newest first; `decision show\n\"<text>\"` prints the first entry whose title contains that text, or exits `12`.\n\nThe `deep-work` profile sets `verification.decision_record_required: true`; `finish` then\nrefuses `completed` unless an entry names the task.\n\n```\n$ majordomus decision add \"Normalise the callback URI before comparing state\" \\\n    --why \"the mismatch is a trailing-slash difference, not a forged state parameter\" \\\n    --rejected \"relaxing the comparison, which would accept genuinely forged states\" \\\n    --evidence \"test/auth/callback_test.exs:41\"\nrecorded: Normalise the callback URI before comparing state\n```"
+      "doc_md": "\nRecord or read durable decisions. One append-only file: `state/decisions.md`.\n\n`decision add \"<what>\" --why \"<why>\"` appends an entry with the task id and git head\ncomputed. `--why` is required: a decision with no recorded reason cannot be reviewed later,\nonly re-argued. `--rejected` and `--evidence` are optional and default to `-`.\n\nAn entry is never edited or deleted. `--supersedes \"<text>\"` records that a later decision\nreplaced an earlier one. The text is matched against the titles of the recorded decisions\nonly, must identify exactly one of them, and that title is what is recorded; text matching\nno title, or more than one, is refused, so a supersession always points at one real\ndecision. `decision list` marks a replaced entry with `Superseded by: <title>`.\n\n`decision list [--task <id>] [--limit <n>]` prints entries newest first; `decision show\n\"<text>\"` prints the first entry whose title contains that text, or exits `12`.\n\nThe `deep-work` profile sets `verification.decision_record_required: true`; `finish` then\nrefuses `completed` unless an entry names the task.\n\n```\n$ majordomus decision add \"Normalise the callback URI before comparing state\" \\\n    --why \"the mismatch is a trailing-slash difference, not a forged state parameter\" \\\n    --rejected \"relaxing the comparison, which would accept genuinely forged states\" \\\n    --evidence \"test/auth/callback_test.exs:41\"\nrecorded: Normalise the callback URI before comparing state\n```"
     },
     {
       "name": "question",
@@ -3139,6 +3144,7 @@
           "125_rule_proof",
           "133_rule_graph",
           "138_governance_gates",
+          "403_published_translation",
           "67_rule_dag"
         ]
       },

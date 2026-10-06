@@ -233,6 +233,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "merges pull requests on the forge and pushes master into their branches, under the base branch's integration lease; a mutation of the repository and its remote.",
     },
     LocalCommand {
+        command: "prs repair",
+        reason: LocalReason::WritesRepository,
+        note: "with --apply, brings master into one named pull request's branch and pushes it under the base branch's integration lease, the act recorded on the integration trail first: a mutation of the repository and its remote. Its default dry run decides on the recorded observation and changes nothing.",
+    },
+    LocalCommand {
         command: "prs cleanup",
         reason: LocalReason::WritesRepository,
         note: "closes pull requests on the forge whose work is provably on master, only with --apply.",

@@ -482,10 +482,24 @@ pub fn converge(repo: &Repository, port: u16, idle: u64, wait: Duration) -> Resu
     let mut started = false;
     loop {
         let file = LeaseFile::read(&path);
+        // Patient only while this call has started nothing. A slow but live owner must not
+        // be judged gone, or a server is started beside it and this call reports the old
+        // one's address as one it started. Once a server was started here, one probe per
+        // round is enough: waiting out the patience again would spend `wait` twice on a
+        // wedged owner. The patience is the declared busy grace, and never more than what
+        // is left of `wait` — a `wait` of zero, the shell prompt's, stays a single probe.
+        let owner = file.document().map_or(0, |d| d.pid);
+        let patience = if started {
+            Duration::ZERO
+        } else {
+            lease::timings()
+                .busy_grace
+                .min(deadline.saturating_duration_since(Instant::now()))
+        };
         let (standing, reason) = standing_of(
             &file,
             lease::file_age(&path),
-            |url| lease::probe(url, repo.root()),
+            |url| lease::probe_patiently(url, repo.root(), owner, patience),
             crate::VERSION,
         );
         let doc = file.document().cloned();
@@ -504,9 +518,18 @@ pub fn converge(repo: &Repository, port: u16, idle: u64, wait: Duration) -> Resu
             ServerStanding::Ready => return Ok(settle(started, false)),
             ServerStanding::Starting => {}
             ServerStanding::Absent | ServerStanding::Stale if !started => {
+                // A stale verdict reached after the whole of the busy grace is a judgement the
+                // started process need not make again: it is told which lease, so that its
+                // election takes that one over at once rather than waiting on it a second
+                // time. A shorter patience (little `wait` left) hands nothing over, and the
+                // election then gives the owner its full wait.
+                let judged = (standing == ServerStanding::Stale
+                    && patience >= lease::timings().busy_grace)
+                    .then(|| doc.as_ref().map(|d| d.token.as_str()))
+                    .flatten();
                 match claim_spawn(repo)? {
                     SpawnTurn::Mine(mut claim) => {
-                        match spawn_server(repo, port, idle, &log) {
+                        match spawn_server(repo, port, idle, &log, judged) {
                             Ok(pid) => {
                                 // the pid fills the claim in: from here on another call can
                                 // tell a process that is deciding from one that is gone
@@ -534,7 +557,7 @@ pub fn converge(repo: &Repository, port: u16, idle: u64, wait: Duration) -> Resu
                             && std::env::current_exe().ok().as_deref() == Some(e.path.as_path())
                     });
                 if takes_over && !started {
-                    spawn_server(repo, port, idle, &log)?;
+                    spawn_server(repo, port, idle, &log, None)?;
                     started = true;
                 } else if !started || Instant::now() >= deadline {
                     return Ok(settle(started, false));
@@ -664,7 +687,19 @@ fn report(
 /// async-signal-safe calls are allowed and `close(2)` is one while `sysconf(3)` is not
 /// promised to be. `test/cases/190` holds it: an entry made with a descriptor open on a pipe
 /// must leave that pipe closed when it returns.
-fn spawn_server(repo: &Repository, port: u16, idle: u64, log: &Path) -> Result<u32> {
+///
+/// `judged` is the token of a lease this caller has already waited on for the whole busy
+/// grace and found not answering: the child is told ([`lease::JUDGED_STALE_ENV`]), so that
+/// its election takes that one lease over at once instead of spending the same patience on
+/// it a second time. Every other lease — a new owner, a lease that changed since — still
+/// gets the full wait.
+fn spawn_server(
+    repo: &Repository,
+    port: u16,
+    idle: u64,
+    log: &Path,
+    judged: Option<&str>,
+) -> Result<u32> {
     let exe = std::env::current_exe().map_err(|e| Error::io("the executable", e))?;
     if let Some(dir) = log.parent() {
         fs::create_dir_all(dir).map_err(|e| Error::io(dir, e))?;
@@ -688,6 +723,9 @@ fn spawn_server(repo: &Repository, port: u16, idle: u64, log: &Path) -> Result<u
         .stderr(Stdio::from(file));
     if std::env::var_os("MAJORDOMUS_LOG").is_none() {
         cmd.env("MAJORDOMUS_LOG", "info");
+    }
+    if let Some(token) = judged {
+        cmd.env(crate::lease::JUDGED_STALE_ENV, token);
     }
     #[cfg(unix)]
     {

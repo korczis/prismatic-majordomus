@@ -1,7 +1,7 @@
 +++
 title = "majordomus commit scopes"
 description = "Every scope this repository's commit history uses, how often, and the directories each one is written about"
-weight = 95
+weight = 97
 [extra]
 route = "/docs/cli/commit/scopes/"
 command = "majordomus commit scopes"
