@@ -811,24 +811,27 @@ fn graph_artifact(
     crate::graph::derive_whole(id, &ctx.registry, &ctx.index)
         .map_err(|reason| Error::Protocol { reason })
         .map(|graph| {
-            let mut document = serde_json::to_value(&graph).unwrap_or_default();
-            if let Some(o) = document.as_object_mut() {
-                o.insert(
-                    "generated".into(),
-                    serde_json::Value::String(crate::generate::json_banner(source)),
-                );
-                o.insert(
-                    "generator".into(),
-                    serde_json::json!({ "id": "majordomus-cli", "version": crate::VERSION }),
-                );
-            }
+            // a graph serializes to an object; its members and the provenance are one map
+            let mut document: serde_json::Map<String, serde_json::Value> =
+                serde_json::to_value(&graph)
+                    .ok()
+                    .and_then(|v| v.as_object().cloned())
+                    .unwrap_or_default();
+            document.insert(
+                "generated".into(),
+                serde_json::Value::String(crate::generate::json_banner(source)),
+            );
+            document.insert(
+                "generator".into(),
+                serde_json::json!({ "id": "majordomus-cli", "version": crate::VERSION }),
+            );
             crate::generate::Artifact::verbatim(
                 format!("{}/{file}", crate::generate::SITE_DATA_DIR),
                 artifact,
                 crate::generate::ArtifactFormat::Json,
                 None,
                 source,
-                render_json(&document),
+                render_json(&serde_json::Value::Object(document)),
             )
         })
 }
