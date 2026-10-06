@@ -31205,6 +31205,29 @@
         }
       },
       {
+        "id": "majordomus://release-record/v0.14.0",
+        "kind": "release-record",
+        "label": "v0.14.0",
+        "summary": "v0.14.0",
+        "route": "/cockpit/objects/release-record/v0-14-0",
+        "source": ".ai/repo/releases/v0.14.0.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "815b96b5a12be1bb255060f06f5a02a2882ad742",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.14.0",
+          "published_at": "2026-10-06T13:30:57Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.14.0"
+        }
+      },
+      {
         "id": "majordomus://release-record/v0.3.1",
         "kind": "release-record",
         "label": "v0.3.1",
@@ -41147,59 +41170,6 @@
           "summary": "Open the shared server in a browser and get the whole layer as pages: what exists, where each thing came from, what depends on what, what is failing, and a form that runs any capability.",
           "target": "guaranteed",
           "weight": 6
-        }
-      },
-      {
-        "id": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "kind": "use-case",
-        "label": "serve-the-layer-to-ai-clients",
-        "summary": "Serve the repository's AI layer to every AI client through one shared server",
-        "route": "/cockpit/objects/use-case/serve-the-layer-to-ai-clients",
-        "source": ".ai/repo/use-cases/serve-the-layer-to-ai-clients.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "operator",
-            "agent"
-          ],
-          "applications": [
-            "repository-opened-in-ai-clients",
-            "several-agents-one-repository"
-          ],
-          "category": "mcp",
-          "claims": [
-            "mcp-client-autostart",
-            "mcp-shared-server",
-            "mcp-peers",
-            "mcp-lease-resilience",
-            "mcp-stdio-surface",
-            "mcp-uri-resolution",
-            "mcp-degraded-not-silent"
-          ],
-          "commands": [
-            "init",
-            "doctor"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.ai-layout-integrity",
-            "majordomus.projection-integrity",
-            "majordomus.scope-integrity"
-          ],
-          "mcp_tools": [
-            "majordomus_repository",
-            "majordomus_list",
-            "majordomus_get",
-            "majordomus_peers",
-            "majordomus_announce"
-          ],
-          "responsibilities": [
-            "layer",
-            "scope",
-            "doctor"
-          ],
-          "target": "guaranteed",
-          "weight": 7
         }
       },
       {
@@ -57009,6 +56979,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://release-record/v0.14.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://release-record/v0.3.1",
         "target": "kind:release-record",
         "kind": "is_a"
@@ -62859,96 +62834,6 @@
         "kind": "exercises"
       },
       {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "capability:objects.get",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "capability:objects.list",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "capability:peers.announce",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "capability:peers.list",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "capability:repository.info",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://application/repository-opened-in-ai-clients",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://application/several-agents-one-repository",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-client-autostart",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-degraded-not-silent",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-lease-resilience",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-peers",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-shared-server",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-stdio-surface",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-uri-resolution",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://rule/majordomus.ai-layout-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://rule/majordomus.projection-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://rule/majordomus.scope-integrity@1",
-        "kind": "exercises"
-      },
-      {
         "source": "module:artifacts",
         "target": "capability:artifacts.list",
         "kind": "composes"
@@ -63811,7 +63696,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4465,
+      "edges": 4448,
       "acyclic": true,
       "truncated": true
     }
