@@ -796,6 +796,13 @@ pub const WHY_SOURCE: &str =
 /// Where `why-graph.json` says it came from.
 pub const GRAPH_SOURCE: &str = "the moments and what answers them, as the derived `why` graph";
 
+/// A graph the site commits as data: derived whole or refused ([`crate::graph::derive_whole`]),
+/// never a prefix of the repository. The one place both site graphs are taken.
+fn committed_graph(ctx: &Context, id: &str) -> Result<crate::graph::Graph> {
+    crate::graph::derive_whole(id, &ctx.registry, &ctx.index)
+        .map_err(|reason| Error::Protocol { reason })
+}
+
 /// The Why catalogue and its graph, as the site's templates read them:
 /// `site/data/registry/why.json` and `site/data/registry/why-graph.json`.
 ///
@@ -896,8 +903,7 @@ pub fn why_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>> {
         "valid": validation["valid"],
     });
 
-    let graph = crate::graph::derive_whole("why", &ctx.registry, &ctx.index)
-        .map_err(|reason| Error::Protocol { reason })?;
+    let graph = committed_graph(ctx, "why")?;
     // the graph is a value of the domain and carries no provenance of its own; the artifact
     // does, in the members every generated document of this repository carries
     let mut graph_document = serde_json::to_value(&graph).unwrap_or_default();
@@ -1271,8 +1277,7 @@ pub fn product_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>
         "valid": validation["valid"],
     });
 
-    let graph = crate::graph::derive_whole("product", &ctx.registry, &ctx.index)
-        .map_err(|reason| Error::Protocol { reason })?;
+    let graph = committed_graph(ctx, "product")?;
     let mut graph_document = serde_json::to_value(&graph).unwrap_or_default();
     if let Some(o) = graph_document.as_object_mut() {
         o.insert(
@@ -1310,6 +1315,20 @@ pub fn product_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_committed_graph_is_derived_whole_or_refused() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        assert!(!committed_graph(&ctx, "why").unwrap().metadata.truncated);
+        let refused = committed_graph(&ctx, "no-such-graph")
+            .unwrap_err()
+            .to_string();
+        assert!(
+            refused.contains("derives no `no-such-graph` graph"),
+            "{refused}"
+        );
+    }
 
     /// A repository holding the crate at the path this repository's crate lives, with the
     /// given sources under `src/`.
