@@ -12177,6 +12177,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:899_a_bootstrap_names_only_rules_in_force",
+          "path": "test/cases/899_a_bootstrap_names_only_rules_in_force.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:96_worktree_topology",
           "path": "test/cases/96_worktree_topology.sh",
           "category": "e2e"
@@ -12329,6 +12335,12 @@
           "via": "negative",
           "test": "suite:83_doctor_budget",
           "path": "test/cases/83_doctor_budget.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:899_a_bootstrap_names_only_rules_in_force",
+          "path": "test/cases/899_a_bootstrap_names_only_rules_in_force.sh",
           "category": "e2e"
         },
         {
@@ -14033,6 +14045,12 @@
           "via": "behaviour",
           "test": "suite:602_a_spliced_body_is_recognised_as_its_own",
           "path": "test/cases/602_a_spliced_body_is_recognised_as_its_own.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:894_github_sync_applies_only_the_trunk",
+          "path": "test/cases/894_github_sync_applies_only_the_trunk.sh",
           "category": "e2e"
         },
         {
@@ -19064,6 +19082,16 @@
           "category": "e2e",
           "inputs": [
             "test/cases/03_update.sh",
+            ".ai/repo/rules/vendor/majordomus/rules/bootstrap-integrity.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:899_a_bootstrap_names_only_rules_in_force",
+          "path": "test/cases/899_a_bootstrap_names_only_rules_in_force.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/899_a_bootstrap_names_only_rules_in_force.sh",
             ".ai/repo/rules/vendor/majordomus/rules/bootstrap-integrity.v1.md"
           ]
         }

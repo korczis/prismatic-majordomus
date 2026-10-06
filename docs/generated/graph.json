@@ -4696,7 +4696,6 @@
         "facts": {
           "claim": "Provider instruction files are thin bootstraps that point at the AI layer and carry no rule of their own",
           "implementation": "lib/update.sh",
-          "note": "Every projection names .ai/README.md, README.md names AGENTS.md, and doctor fails on a projection that grew a rules section of its own. A person and a worker reach the same layer by the same two hops.",
           "responsibility": "projection",
           "source": "docs/DESIGN.md",
           "test": "test/cases/03_update.sh"
@@ -39307,11 +39306,25 @@
         "source": "test/cases/893_preflight_follows_what_an_issue_serves.sh"
       },
       {
+        "id": "majordomus://test/test/cases/894_github_sync_applies_only_the_trunk.sh",
+        "kind": "test",
+        "label": "test/cases/894_github_sync_applies_only_the_trunk.sh",
+        "route": "/cockpit/objects/test/test-cases-894-github-sync-applies-only-the-trunk-sh",
+        "source": "test/cases/894_github_sync_applies_only_the_trunk.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh",
         "kind": "test",
         "label": "test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh",
         "route": "/cockpit/objects/test/test-cases-895-a-finished-task-does-not-satisfy-an-intent-sh",
         "source": "test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/899_a_bootstrap_names_only_rules_in_force.sh",
+        "kind": "test",
+        "label": "test/cases/899_a_bootstrap_names_only_rules_in_force.sh",
+        "route": "/cockpit/objects/test/test-cases-899-a-bootstrap-names-only-rules-in-force-sh",
+        "source": "test/cases/899_a_bootstrap_names_only_rules_in_force.sh"
       },
       {
         "id": "majordomus://test/test/cases/89_web_surface.sh",
@@ -40847,87 +40860,6 @@
           "summary": "Measure every public command and every capability of the executable against a committed baseline, and let the check fail on a regression rather than a reviewer noticing later.",
           "target": "guaranteed",
           "weight": 8
-        }
-      },
-      {
-        "id": "majordomus://use-case/prove-what-a-task-owed-before-calling-it-done",
-        "kind": "use-case",
-        "label": "prove-what-a-task-owed-before-calling-it-done",
-        "summary": "Prove what a task owed before calling it done",
-        "route": "/cockpit/objects/use-case/prove-what-a-task-owed-before-calling-it-done",
-        "source": ".ai/repo/use-cases/prove-what-a-task-owed-before-calling-it-done.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "maintainer",
-            "agent"
-          ],
-          "applications": [],
-          "category": "completion",
-          "claims": [
-            "obligation-closure"
-          ],
-          "commands": [
-            "start",
-            "evidence",
-            "check",
-            "finish"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.obligation-closure"
-          ],
-          "responsibilities": [
-            "finish"
-          ],
-          "summary": "A task declares what it owes, records evidence against each obligation, and is refused when that evidence no longer describes the tree it was taken over.",
-          "target": "guaranteed",
-          "weight": 40
-        }
-      },
-      {
-        "id": "majordomus://use-case/read-back-what-happened",
-        "kind": "use-case",
-        "label": "read-back-what-happened",
-        "summary": "Read back what happened, and keep the ledger within its cap",
-        "route": "/cockpit/objects/use-case/read-back-what-happened",
-        "source": ".ai/repo/use-cases/read-back-what-happened.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "reviewer",
-            "maintainer"
-          ],
-          "applications": [
-            "long-running-work",
-            "several-agents-one-repository"
-          ],
-          "category": "knowledge",
-          "claims": [
-            "history-ledger-read",
-            "ledger-integrity",
-            "event-vocabulary",
-            "record-search",
-            "record-retention",
-            "retention-caps"
-          ],
-          "commands": [
-            "history",
-            "search",
-            "watch"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.ledger-integrity",
-            "majordomus.retention-caps"
-          ],
-          "responsibilities": [
-            "state",
-            "watch"
-          ],
-          "summary": "Read the append-only ledger as operational history, filtered by task and event, validate every line, and rotate the oldest lines into an archive rather than deleting them.",
-          "target": "guaranteed",
-          "weight": 74
         }
       },
       {
@@ -60642,7 +60574,17 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/894_github_sync_applies_only_the_trunk.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/899_a_bootstrap_names_only_rules_in_force.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -62212,76 +62154,6 @@
         "kind": "exercises"
       },
       {
-        "source": "majordomus://use-case/prove-what-a-task-owed-before-calling-it-done",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/prove-what-a-task-owed-before-calling-it-done",
-        "target": "majordomus://claim/obligation-closure",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/prove-what-a-task-owed-before-calling-it-done",
-        "target": "majordomus://rule/majordomus.obligation-closure@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/read-back-what-happened",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/read-back-what-happened",
-        "target": "majordomus://application/long-running-work",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/read-back-what-happened",
-        "target": "majordomus://application/several-agents-one-repository",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/read-back-what-happened",
-        "target": "majordomus://claim/event-vocabulary",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/read-back-what-happened",
-        "target": "majordomus://claim/history-ledger-read",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/read-back-what-happened",
-        "target": "majordomus://claim/ledger-integrity",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/read-back-what-happened",
-        "target": "majordomus://claim/record-retention",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/read-back-what-happened",
-        "target": "majordomus://claim/record-search",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/read-back-what-happened",
-        "target": "majordomus://claim/retention-caps",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/read-back-what-happened",
-        "target": "majordomus://rule/majordomus.ledger-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/read-back-what-happened",
-        "target": "majordomus://rule/majordomus.retention-caps@1",
-        "kind": "exercises"
-      },
-      {
         "source": "module:artifacts",
         "target": "capability:artifacts.list",
         "kind": "composes"
@@ -63134,7 +63006,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4384,
+      "edges": 4372,
       "acyclic": true,
       "truncated": true
     }
