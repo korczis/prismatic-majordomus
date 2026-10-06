@@ -39286,6 +39286,13 @@
         "source": "test/cases/88_rust_command_tested.sh"
       },
       {
+        "id": "majordomus://test/test/cases/890_an_intent_criterion_is_met_only_by_current_evidence.sh",
+        "kind": "test",
+        "label": "test/cases/890_an_intent_criterion_is_met_only_by_current_evidence.sh",
+        "route": "/cockpit/objects/test/test-cases-890-an-intent-criterion-is-met-only-by-current-evidence-sh",
+        "source": "test/cases/890_an_intent_criterion_is_met_only_by_current_evidence.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/892_what_is_said_of_intents_is_what_the_claims_matrix_says.sh",
         "kind": "test",
         "label": "test/cases/892_what_is_said_of_intents_is_what_the_claims_matrix_says.sh",
@@ -40921,50 +40928,6 @@
           "summary": "Read the append-only ledger as operational history, filtered by task and event, validate every line, and rotate the oldest lines into an archive rather than deleting them.",
           "target": "guaranteed",
           "weight": 74
-        }
-      },
-      {
-        "id": "majordomus://use-case/read-only-the-context-that-fits",
-        "kind": "use-case",
-        "label": "read-only-the-context-that-fits",
-        "summary": "Read only the context that fits the budget, and know what was dropped",
-        "route": "/cockpit/objects/use-case/read-only-the-context-that-fits",
-        "source": ".ai/repo/use-cases/read-only-the-context-that-fits.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "agent"
-          ],
-          "applications": [
-            "long-running-work",
-            "repository-opened-in-ai-clients"
-          ],
-          "category": "continuity",
-          "claims": [
-            "context-assembly",
-            "context-selection-budget",
-            "context-documents",
-            "checkpoint-record",
-            "decision-record"
-          ],
-          "commands": [
-            "context",
-            "check"
-          ],
-          "difficulty": "intermediate",
-          "doctrines": [
-            "majordomus.context-integrity",
-            "majordomus.context-budget",
-            "majordomus.profile-requirements"
-          ],
-          "responsibilities": [
-            "profiles",
-            "state",
-            "layer"
-          ],
-          "summary": "Assemble the context a worker needs now in authority order, cut it to a line budget, and see every dropped section named with its reason.",
-          "target": "guaranteed",
-          "weight": 26
         }
       },
       {
@@ -60664,6 +60627,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/890_an_intent_criterion_is_met_only_by_current_evidence.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/892_what_is_said_of_intents_is_what_the_claims_matrix_says.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -62314,61 +62282,6 @@
         "kind": "exercises"
       },
       {
-        "source": "majordomus://use-case/read-only-the-context-that-fits",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/read-only-the-context-that-fits",
-        "target": "majordomus://application/long-running-work",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/read-only-the-context-that-fits",
-        "target": "majordomus://application/repository-opened-in-ai-clients",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/read-only-the-context-that-fits",
-        "target": "majordomus://claim/checkpoint-record",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/read-only-the-context-that-fits",
-        "target": "majordomus://claim/context-assembly",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/read-only-the-context-that-fits",
-        "target": "majordomus://claim/context-documents",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/read-only-the-context-that-fits",
-        "target": "majordomus://claim/context-selection-budget",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/read-only-the-context-that-fits",
-        "target": "majordomus://claim/decision-record",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/read-only-the-context-that-fits",
-        "target": "majordomus://rule/majordomus.context-budget@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/read-only-the-context-that-fits",
-        "target": "majordomus://rule/majordomus.context-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/read-only-the-context-that-fits",
-        "target": "majordomus://rule/majordomus.profile-requirements@1",
-        "kind": "exercises"
-      },
-      {
         "source": "module:artifacts",
         "target": "capability:artifacts.list",
         "kind": "composes"
@@ -63221,7 +63134,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4394,
+      "edges": 4384,
       "acyclic": true,
       "truncated": true
     }

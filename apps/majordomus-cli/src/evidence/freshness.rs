@@ -15,6 +15,8 @@
 //! * [`compare`] — the containment of the evidence commit in the presented revision, and
 //!   the paths that changed between them ([`changed_between`]);
 //! * [`freshness`] — the one truth table, pure, from a recorded run to a [`Judgement`];
+//! * [`current`] — whether a judgement is current evidence, for a reader that counts a route
+//!   as met: `proven`, or `inputs_unchanged` from a run on a tree that was its commit;
 //! * [`weakened_by`] — the monotone rule: a supplementary record may withhold `proven` and
 //!   never grant it; its first source is [`uncommitted`], the executions the working ledger
 //!   holds that the presented commit's ledger does not;
@@ -758,6 +760,48 @@ pub fn freshness(
             ProofState::Stale,
             "the route names no inputs, so a change since the run cannot be ruled out",
         ),
+    }
+}
+
+// ---------------------------------------------------------------- currency
+
+/// Whether a verdict of [`freshness`] is *current* evidence of what its route names: the one
+/// answer a reader that counts a route as met — an intent criterion, for one — asks for, so
+/// that no such reader draws its own line between a pass and a proof.
+///
+/// `proven` is current. `inputs_unchanged` is current only when both trees were the commits
+/// they sit on: the run measured its own commit (`recorded`), and the presented revision is
+/// its own (`presented`; [`TreeState::Clean`] for the working tree, whose changes are already
+/// in the comparison). That is the line [`freshness`] cannot draw by itself, because rows 11,
+/// 12 and 13 of its table all say `inputs_unchanged`: a clean run with nothing it names
+/// changed since is current, and a run on a dirty tree is not — its commit does not describe
+/// what ran ([`super::capped_by_working_tree`]), so no later tree can be matched against it.
+/// Currency is therefore a property of the inputs a route names and of the recorded digest,
+/// never of commit equality with HEAD: committing the ledger after a run, or any change the
+/// route does not name, leaves a current verdict current. Every other state — `stale`,
+/// `failing`, `not_run`, `unrunnable`, `no_test` — is not current.
+///
+/// ```
+/// use majordomus_cli::evidence::freshness::{current, TreeState::{Clean, Dirty, Unknown}};
+/// use majordomus_cli::evidence::ProofState;
+///
+/// assert!(current(ProofState::Proven, Clean, Clean));
+/// assert!(current(ProofState::InputsUnchanged, Clean, Clean));
+/// // a pass on a tree that was not its commit is not current, whatever changed since
+/// assert!(!current(ProofState::InputsUnchanged, Dirty, Clean));
+/// assert!(!current(ProofState::InputsUnchanged, Unknown, Clean));
+/// assert!(!current(ProofState::InputsUnchanged, Clean, Dirty));
+/// // and a stale pass is a pass of something else
+/// assert!(!current(ProofState::Stale, Clean, Clean));
+/// assert!(!current(ProofState::Failing, Clean, Clean));
+/// ```
+pub fn current(state: ProofState, recorded: TreeState, presented: TreeState) -> bool {
+    match state {
+        ProofState::Proven => true,
+        ProofState::InputsUnchanged => {
+            recorded == TreeState::Clean && presented == TreeState::Clean
+        }
+        _ => false,
     }
 }
 

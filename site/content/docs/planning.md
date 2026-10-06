@@ -155,6 +155,22 @@ and `unknown` when only `command` or `deployment` criteria are unmet, or none is
 meaning, so `satisfied` still requires every milestone DONE; the verdict can read `satisfied`
 while a milestone is open, and nothing a finished task does moves it.
 
+A criterion is met only by evidence that is *current*, and current is the evidence module's
+own judgement at the working tree (`evidence::freshness`, read through `evidence::current`),
+the one the claim report and the evidence pages make: a passing run whose commit is in this
+history, that measured a tree that was its commit, whose test still hashes to what ran, and
+since which nothing the criterion names has changed — for a test, its source and the source
+and implementation of every claim that test proves; for a claim, what the claim names. A
+change the criterion does not name, the evidence ledger's own included, leaves it met. A test
+that proves no claim naming an implementation names no code under test, so for it any change
+since the run but the ledger's is one nothing rules out: such a criterion is met only by a run
+at the checkout's own commit. To keep a criterion met across unrelated work, name its test in
+a claim of `docs/CLAIMS.yaml` that names the implementation. A pass recorded on a dirty tree,
+or one whose inputs moved, is `stale`; a failed run is `failing`; either un-meets a criterion
+that was met, and recording a current pass meets it again. Each criterion carries `proof`,
+the evidence module's verdict behind its state, so a met criterion still says whether it is
+`proven` at this revision or rests on `inputs_unchanged`.
+
 That relates an intent to milestones and to evidence. What relates a *criterion* to the work
 meant to make it true is `serves` on the issue (ADR 0073):
 
@@ -302,7 +318,7 @@ of work with two episodes and both providers, and the intent it serves lists bot
 `session.started` ledger line names its provider, so the lineage survives the episode's end.
 
 Closed work does not outrank evidence. When every milestone of an intent is DONE and a
-criterion's recorded run is failing, or stale against a case that has changed since, the
+criterion's latest recorded run is failing, or stale (no longer current, as above), the
 realization reports `closed_work_contradicted` naming the criterion, and exits 10; the
 `intent-realization` gate runs it. An intent that was satisfied and regresses lands exactly
 there: its stage falls back to `verifying`, and nothing about the intent was written for it to.

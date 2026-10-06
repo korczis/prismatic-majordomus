@@ -309,9 +309,15 @@ fn show_text(v: &Value) -> String {
     }
     for c in v["satisfaction"].as_array().into_iter().flatten() {
         out.push(format!(
-            "  criterion   {}  {}  {} {}{}",
+            "  criterion   {}  {}{}  {} {}{}",
             s(c, "id"),
             s(c, "state"),
+            // a met criterion names the verdict it rests on: `proven` and `inputs_unchanged`
+            // are two answers, never one tick
+            match (c["met"].as_bool(), c["proof"].as_str()) {
+                (Some(true), Some(p)) => format!(" ({p})"),
+                _ => String::new(),
+            },
             s(c, "evidence"),
             s(c, "ref"),
             c["reproduce"]
