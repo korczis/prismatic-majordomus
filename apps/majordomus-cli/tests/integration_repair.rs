@@ -612,3 +612,68 @@ fn a_derive_that_moves_the_merge_elsewhere_pushes_nothing() {
         "a refused repair pushed"
     );
 }
+
+/// `repair --apply` on #1 while its author moves the branch on origin to the commit in the
+/// state's `move-to` file: the derive is the act's window between observing and pushing, so
+/// the derive does the moving, with `push` (a fixture act on the scratch origin).
+fn moved_during_the_act(push: &str, to: impl Fn(&Forge, &str) -> String) -> (Forge, String) {
+    let f = Forge::new();
+    f.derives();
+    f.derive_script(&format!(
+        "git -C '{}' {push} origin \"$(cat '{}')\":refs/heads/feature/1",
+        f.work.display(),
+        f.state.join("move-to").display()
+    ));
+    let head = f.branch(1);
+    f.advance();
+    f.open(&[(1, &head)]);
+    let moved = to(&f, &head);
+    std::fs::write(f.state.join("move-to"), &moved).unwrap();
+    let (code, out, err) = f.prs(&["repair", "1", "--apply"]);
+    assert_eq!(code, 10, "{out}{err}");
+    let refused = f
+        .last("repair_refused")
+        .expect("repair_refused on the trail");
+    let detail = refused["detail"].as_str().unwrap_or_default();
+    assert!(
+        detail.contains(&format!(
+            "the branch moved since it was observed: {moved} is not {head}"
+        )),
+        "{detail}"
+    );
+    assert_eq!(
+        f.origin_ref("refs/heads/feature/1"),
+        moved,
+        "the repair pushed over the author's move"
+    );
+    (f, head)
+}
+
+/// The author pushed on top of the observed head meanwhile: refused, nothing pushed. Git would
+/// refuse this push by itself too, as no fast-forward of what origin now serves.
+#[test]
+fn a_branch_moved_forward_during_the_act_is_refused_and_nothing_is_pushed() {
+    moved_during_the_act("push -q", |f, head| {
+        git(
+            &f.work,
+            &[
+                "commit-tree",
+                &format!("{head}^{{tree}}"),
+                "-p",
+                head,
+                "-m",
+                "the author's next commit",
+            ],
+        )
+    });
+}
+
+/// The author rewound the branch meanwhile: only the check against origin refuses this, since
+/// a plain push of a descendant of the observed head would be a fast-forward of the rewound
+/// branch and restore what the author removed.
+#[test]
+fn a_branch_rewound_during_the_act_is_refused_and_nothing_is_pushed() {
+    moved_during_the_act("push -q -f", |f, head| {
+        git(&f.work, &["rev-parse", &format!("{head}^")])
+    });
+}

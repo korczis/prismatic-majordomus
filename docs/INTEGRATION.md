@@ -326,11 +326,15 @@ When nothing is ready, `prs drain --refresh` brings master into the first `needs
 pull request. It uses a scratch worktree under the common git directory, runs `git merge
 --no-commit` with the derived driver (rerere off, so no remembered resolution decides a path
 nobody looked at), runs `scripts/derive`, commits with the hooks running, and pushes a
-fast-forward to the pull request's branch, leased on the head it observed
-(`--force-with-lease=refs/heads/<branch>:<head>`, after checking that what it pushes descends
-from that head). A branch whose author pushed, or rewound it, meanwhile is refused and never
-overwritten. That is a merge commit and never a rewrite, as `project.land-and-publish`
-prescribes. The pipeline is one deep: while a
+fast-forward to the pull request's branch with a plain push, never a forced one. It first
+checks that what it pushes descends from the head it observed, and that origin still serves
+that head (`git ls-remote`): a branch its author moved since, forward, sideways or back, is
+refused and nothing is pushed. Between that check and the push, git itself refuses a branch
+moved forward or sideways, since the push is then no fast-forward. A rewind in that window,
+the author force-pushing the branch back to an ancestor of the observed head, is the one move
+that slips through: the push is then a fast-forward that restores the commits the author
+removed. That window is accepted; no history is ever overwritten. That is a merge commit and
+never a rewrite, as `project.land-and-publish` prescribes. The pipeline is one deep: while a
 refreshed pull request waits for its checks, no other is refreshed, because merging the first
 would put the second behind again. Throughput is therefore one pull request per run of the
 required check, which is the true cost of this repository's mechanics.
@@ -379,7 +383,8 @@ was ever observed. `prs refresh` observes again. With `--apply` it follows the d
    remote, and does nothing when either line cannot be written;
 4. in a scratch worktree under the common git directory, never the branch's own, it merges
    the master it decided on, runs `scripts/derive`, and commits with the hooks running;
-5. it pushes a fast-forward leased on the head it observed, then records `repaired` with the
+5. it pushes a fast-forward of the head it observed, with a plain push and only while origin
+   still serves that head, then records `repaired` with the
    head it pushed, or `repair_refused` with the failure's class.
 
 A merge, derive, commit or push that fails leaves nothing on the branch and is

@@ -197,8 +197,8 @@ with one canonical state, one classification and one executor.
    decision.
 5. **Refreshing is a separate, bounded act.** When nothing is ready, `drain --refresh` brings
    master into the first pull request that needs it: a merge commit with the derived driver
-   and a fresh derive, pushed as a fast-forward leased on the head that was observed, never
-   a rewrite. This is what `project.land-and-publish` already prescribes, and `prs repair
+   and a fresh derive, pushed as a plain fast-forward while origin still serves the head
+   that was observed, never forced and never a rewrite. This is what `project.land-and-publish` already prescribes, and `prs repair
    <n> --apply` is the same act for one pull request a person names, under the same lease
    and trail; its dry run decides offline on the recorded observation. The pipeline is one deep: while a
    refreshed pull request waits for its checks, no other is refreshed, because merging the

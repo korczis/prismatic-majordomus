@@ -47,8 +47,9 @@ it is described as real.
   under `/api/v1/pull-requests`, the MCP tools and the Cockpit render the observation last
   recorded under `.ai/local/state/integration/`, with its moment, and never reach the
   network. The executor never passes `--admin` and never rewrites a branch: the one push it
-  makes, bringing master into a pull request's branch, is a fast-forward of the head it
-  observed, leased on that head (`test/cases/912_repair_acts_under_the_lease_and_the_trail.sh`).
+  makes, bringing master into a pull request's branch, is a plain (never forced) push of a
+  fast-forward of the head it observed, made only while origin still serves that head
+  (`test/cases/912_repair_acts_under_the_lease_and_the_trail.sh`).
   It never closes a pull request without `--apply` and proof that its work is on master, or
   that a declared successor landed (`test/cases/720_integration_follows_the_current_master.sh`).
   Nothing outside it merges: `scripts/ci/backlog-check` refuses a `gh pr merge`, a REST or

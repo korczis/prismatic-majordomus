@@ -2169,23 +2169,34 @@ impl Integrator for ForgeIntegrator<'_> {
                 ));
             }
             let new_head = git_in(&["rev-parse", "HEAD"])?;
-            // a fast-forward of the observed head, and leased on it: the remote branch must
-            // still be the head that was decided on when the update lands, so a branch that
-            // moved since — forward, backward or sideways — is refused, never overwritten.
-            // The lease is a compare-and-swap, not a licence: what it swaps in descends from
-            // what it expects, so it is never a rewrite.
+            // what is pushed descends from the head that was decided on, or nothing is pushed
             if git_in(&["merge-base", "--is-ancestor", &head, &new_head]).is_err() {
                 return Err(format!(
                     "the merge {new_head} does not descend from the observed head {head}; nothing was pushed"
                 ));
             }
-            let lease = format!("--force-with-lease=refs/heads/{}:{head}", a.head_ref);
+            // the branch must still be the head that was decided on: one its author moved since
+            // — forward, sideways or back — is refused here. A branch git cannot list is
+            // refused the same way, as one nobody can vouch for.
+            let listed = git_in(&["ls-remote", "origin", &format!("refs/heads/{}", a.head_ref)])
+                .unwrap_or_default();
+            let remote = listed.split_whitespace().next().unwrap_or("nothing");
+            if remote != head {
+                return Err(format!(
+                    "the branch moved since it was observed: {remote} is not {head}; nothing was pushed"
+                ));
+            }
+            // A plain push, never forced: git accepts only a fast-forward, so no history is
+            // ever overwritten. Between the check above and this push the author may still act.
+            // Moving the branch forward or sideways then makes this push no fast-forward, and
+            // git refuses it. Rewinding it to an ancestor of the observed head is the one move
+            // that slips through: the push is then a fast-forward that restores the commits the
+            // author removed. That window is accepted, and it never rewrites anything.
             let push = Command::new("git")
                 .arg("-C")
                 .arg(&dir)
                 .args([
                     "push",
-                    &lease,
                     "origin",
                     &format!("{new_head}:refs/heads/{}", a.head_ref),
                 ])
