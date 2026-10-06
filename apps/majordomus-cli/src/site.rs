@@ -796,11 +796,41 @@ pub const WHY_SOURCE: &str =
 /// Where `why-graph.json` says it came from.
 pub const GRAPH_SOURCE: &str = "the moments and what answers them, as the derived `why` graph";
 
-/// A graph the site commits as data: derived whole or refused ([`crate::graph::derive_whole`]),
-/// never a prefix of the repository. The one place both site graphs are taken.
-fn committed_graph(ctx: &Context, id: &str) -> Result<crate::graph::Graph> {
+/// A graph the site commits as data, as the artifact at `file` under the site's data
+/// directory: derived whole or refused ([`crate::graph::derive_whole`]), never a prefix of
+/// the repository, and carrying the provenance members every generated document carries (the
+/// graph is a value of the domain and has none of its own). The one place both site graphs
+/// are taken.
+fn graph_artifact(
+    ctx: &Context,
+    id: &str,
+    file: &str,
+    artifact: &str,
+    source: &str,
+) -> Result<crate::generate::Artifact> {
     crate::graph::derive_whole(id, &ctx.registry, &ctx.index)
         .map_err(|reason| Error::Protocol { reason })
+        .map(|graph| {
+            let mut document = serde_json::to_value(&graph).unwrap_or_default();
+            if let Some(o) = document.as_object_mut() {
+                o.insert(
+                    "generated".into(),
+                    serde_json::Value::String(crate::generate::json_banner(source)),
+                );
+                o.insert(
+                    "generator".into(),
+                    serde_json::json!({ "id": "majordomus-cli", "version": crate::VERSION }),
+                );
+            }
+            crate::generate::Artifact::verbatim(
+                format!("{}/{file}", crate::generate::SITE_DATA_DIR),
+                artifact,
+                crate::generate::ArtifactFormat::Json,
+                None,
+                source,
+                render_json(&document),
+            )
+        })
 }
 
 /// The Why catalogue and its graph, as the site's templates read them:
@@ -903,39 +933,19 @@ pub fn why_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>> {
         "valid": validation["valid"],
     });
 
-    let graph = committed_graph(ctx, "why")?;
-    // the graph is a value of the domain and carries no provenance of its own; the artifact
-    // does, in the members every generated document of this repository carries
-    let mut graph_document = serde_json::to_value(&graph).unwrap_or_default();
-    if let Some(o) = graph_document.as_object_mut() {
-        o.insert(
-            "generated".into(),
-            serde_json::Value::String(crate::generate::json_banner(GRAPH_SOURCE)),
-        );
-        o.insert(
-            "generator".into(),
-            serde_json::json!({ "id": "majordomus-cli", "version": crate::VERSION }),
-        );
-    }
-
-    Ok(vec![
-        crate::generate::Artifact::verbatim(
-            format!("{}/why.json", crate::generate::SITE_DATA_DIR),
-            "site-why",
-            crate::generate::ArtifactFormat::Json,
-            Some(WHY_SCHEMA.to_string()),
-            WHY_SOURCE,
-            render_json(&document),
-        ),
-        crate::generate::Artifact::verbatim(
-            format!("{}/why-graph.json", crate::generate::SITE_DATA_DIR),
-            "site-why-graph",
-            crate::generate::ArtifactFormat::Json,
-            None,
-            GRAPH_SOURCE,
-            render_json(&graph_document),
-        ),
-    ])
+    graph_artifact(ctx, "why", "why-graph.json", "site-why-graph", GRAPH_SOURCE).map(|graph| {
+        vec![
+            crate::generate::Artifact::verbatim(
+                format!("{}/why.json", crate::generate::SITE_DATA_DIR),
+                "site-why",
+                crate::generate::ArtifactFormat::Json,
+                Some(WHY_SCHEMA.to_string()),
+                WHY_SOURCE,
+                render_json(&document),
+            ),
+            graph,
+        ]
+    })
 }
 
 fn render_json(v: &serde_json::Value) -> String {
@@ -1277,39 +1287,26 @@ pub fn product_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>
         "valid": validation["valid"],
     });
 
-    let graph = committed_graph(ctx, "product")?;
-    let mut graph_document = serde_json::to_value(&graph).unwrap_or_default();
-    if let Some(o) = graph_document.as_object_mut() {
-        o.insert(
-            "generated".into(),
-            serde_json::Value::String(crate::generate::json_banner(
-                "the features, what they are made of, and the interfaces that follow, as the derived `product` graph",
-            )),
-        );
-        o.insert(
-            "generator".into(),
-            serde_json::json!({ "id": "majordomus-cli", "version": crate::VERSION }),
-        );
-    }
-
-    Ok(vec![
-        crate::generate::Artifact::verbatim(
-            format!("{}/product.json", crate::generate::SITE_DATA_DIR),
-            "site-product",
-            crate::generate::ArtifactFormat::Json,
-            Some(PRODUCT_SCHEMA.to_string()),
-            PRODUCT_SOURCE,
-            render_json(&document),
-        ),
-        crate::generate::Artifact::verbatim(
-            format!("{}/product-graph.json", crate::generate::SITE_DATA_DIR),
-            "site-product-graph",
-            crate::generate::ArtifactFormat::Json,
-            None,
-            "the features, what they are made of, and the interfaces that follow, as the derived `product` graph",
-            render_json(&graph_document),
-        ),
-    ])
+    graph_artifact(
+        ctx,
+        "product",
+        "product-graph.json",
+        "site-product-graph",
+        "the features, what they are made of, and the interfaces that follow, as the derived `product` graph",
+    )
+    .map(|graph| {
+        vec![
+            crate::generate::Artifact::verbatim(
+                format!("{}/product.json", crate::generate::SITE_DATA_DIR),
+                "site-product",
+                crate::generate::ArtifactFormat::Json,
+                Some(PRODUCT_SCHEMA.to_string()),
+                PRODUCT_SOURCE,
+                render_json(&document),
+            ),
+            graph,
+        ]
+    })
 }
 
 #[cfg(test)]
@@ -1320,8 +1317,13 @@ mod tests {
     fn a_committed_graph_is_derived_whole_or_refused() {
         let repo = crate::synthetic::SyntheticRepository::small().unwrap();
         let ctx = repo.context().unwrap();
-        assert!(!committed_graph(&ctx, "why").unwrap().metadata.truncated);
-        let refused = committed_graph(&ctx, "no-such-graph")
+        let why = graph_artifact(&ctx, "why", "w.json", "w", "the why graph").unwrap();
+        assert_eq!(
+            why.path,
+            format!("{}/w.json", crate::generate::SITE_DATA_DIR)
+        );
+        let refused = graph_artifact(&ctx, "no-such-graph", "n.json", "n", "nothing")
+            .map(|_| ())
             .unwrap_err()
             .to_string();
         assert!(
