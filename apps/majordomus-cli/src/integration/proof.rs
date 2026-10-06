@@ -449,14 +449,9 @@ pub fn prove_dry_run(root: &Path) -> Result<DryRunProof, String> {
     let report = drain::drain(root, &mut integrator, 1, true, false)?;
     steps.push(ProofStep {
         step: "drain --dry-run".into(),
-        summary: report
-            .steps
-            .iter()
-            // the command line's one sentence per outcome, every outcome named
-            .map(crate::commands::prs::describe)
-            .chain(std::iter::once(report.stopped.clone()).filter(|s| !s.is_empty()))
-            .collect::<Vec<_>>()
-            .join("; "),
+        // the command line's own lines: one sentence per outcome, and the stop only where
+        // no step has said it
+        summary: crate::commands::prs::drain_lines(&report).join("; "),
     });
     let listed = drain::cleanup(root, &mut integrator, false)?;
     steps.push(ProofStep {

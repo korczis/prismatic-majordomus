@@ -216,5 +216,7 @@ fn an_observation_the_trail_cannot_record_is_refused() {
     std::fs::remove_dir(&trail).unwrap();
     let (code, out, err) = prs(&f, &f.work, &["drain", "--dry-run"]);
     assert_eq!(code, 0, "dry run: {out}{err}");
-    assert!(out.contains("stopped:"), "{out}");
+    // it says why it stopped, once: the idle step is the reason and nothing repeats it
+    assert_eq!(out.matches("nothing is ready").count(), 1, "{out}");
+    assert!(!out.contains("stopped:"), "{out}");
 }
