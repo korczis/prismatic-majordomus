@@ -459,7 +459,7 @@ pub fn whole(graph: Graph) -> Result<Graph, String> {
     Ok(graph)
 }
 
-/// [`derive`], for a graph committed as data: `Err` when no such graph exists or when it
+/// [`derive()`], for a graph committed as data: `Err` when no such graph exists or when it
 /// stopped at [`MAX_NODES`] ([`whole`]).
 ///
 /// ```
