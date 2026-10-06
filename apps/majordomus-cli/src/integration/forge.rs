@@ -1,12 +1,13 @@
 //! The forge adapter: the one place pull-request integration talks to the network.
 //!
 //! SECURITY.md declares it: `majordomus prs refresh` and `majordomus prs drain` — and
-//! nothing else — run the GitHub CLI (`gh`) and `git fetch` against this repository's own
-//! remote. The HTTP server, the MCP tools and the Cockpit never do: they render the last
+//! nothing else — run the GitHub CLI (`gh`), `git fetch` and `git ls-remote` against this
+//! repository's own remote. The HTTP server, the MCP tools and the Cockpit never do: they render the last
 //! [`ForgeObservation`] recorded under `.ai/local/state/integration/`, with its age, so a
 //! page load can never reach the network. The observation is plain data, so every test
 //! builds one by hand and no test needs the forge.
 
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
 use std::process::Command;
 
@@ -14,10 +15,13 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use super::model::{CheckObservation, CheckRunState, PullRequestObservation};
+use super::model::{
+    CheckKind, CheckObservation, CheckRunState, PullRequestObservation, RequiredCheck,
+    ReviewObservation, ReviewPolicy,
+};
 
 /// The recorded observation's schema version.
-pub const OBSERVATION_SCHEMA: u32 = 1;
+pub const OBSERVATION_SCHEMA: u32 = 3;
 
 /// Where the pull-request heads are fetched to: a namespace of this tool's own, so no
 /// fetch ever moves a ref a person or another tool owns.
@@ -36,16 +40,226 @@ pub struct ForgeObservation {
     pub base_sha: String,
     /// When, RFC 3339.
     pub observed_at: String,
-    /// The status contexts the base's protection requires; `None` when it could not be
-    /// read (every required-check verdict is then unknown).
-    pub required_checks: Option<Vec<String>>,
-    /// Whether the protection requires an approving review; `None` when unread.
-    pub reviews_required: Option<bool>,
+    /// The checks the base requires, from its branch protection and its rulesets together,
+    /// each with the app bound to it; `None` when either could not be read (every
+    /// required-check verdict is then unknown, never passed).
+    pub required_checks: Option<Vec<RequiredCheck>>,
+    /// What the base requires of reviews, from its protection and rulesets together; `None`
+    /// when either could not be read.
+    pub review_policy: Option<ReviewPolicy>,
+    /// Whether the base requires a branch to be up to date before it merges — the
+    /// protection's `required_status_checks.strict`, or a ruleset's
+    /// `strict_required_status_checks_policy`. The forge-side half of the guard against a
+    /// merge onto a master nobody tested with the change; the executor's half is the parent
+    /// check after every merge. `None` when either could not be read.
+    #[serde(default)]
+    pub up_to_date_required: Option<bool>,
     /// The merge methods the repository allows, in the forge's words (`merge`, `squash`,
     /// `rebase`).
     pub merge_methods: Vec<String>,
     /// Every open pull request.
     pub pull_requests: Vec<PullRequestObservation>,
+    /// Pull requests that are no longer open and that a supersession names, by number: a
+    /// closed one whose body says it supersedes an open one, and every successor an open
+    /// one's body names that is not open. What decides whether a declared successor landed.
+    /// Empty in an observation recorded before it was read.
+    #[serde(default)]
+    pub resolved: BTreeMap<u64, ResolvedPullRequest>,
+    /// Whether the repository deletes a pull request's head branch when it merges (the
+    /// forge's `delete_branch_on_merge`). The forge decides deletion, never the executor
+    /// (owner decision D4); `None` when unread, and in an observation recorded before it was.
+    #[serde(default)]
+    pub delete_branch_on_merge: Option<bool>,
+}
+
+/// A branch of this repository that a merged pull request came from, still on origin at the
+/// head that merged. A branch whose tip moved after its merge carries newer work and is not
+/// one: only the exact merged head is left behind.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct MergedBranch {
+    /// The branch name on origin.
+    pub branch: String,
+    /// Its tip, which is the merged head.
+    pub tip: String,
+    /// The pull request that merged it.
+    pub pr: u64,
+    /// When it merged, as the forge reported it.
+    pub merged_at: String,
+}
+
+/// How many merged pull requests are read, newest first. A branch whose pull request merged
+/// before the newest this many is not reported; the report says how many were read.
+pub const MERGED_LIMIT: usize = 1000;
+
+/// Origin's branches from `git ls-remote --heads` output: name → tip. The module is private,
+/// so the examples here are text; the unit tests run the same assertions.
+///
+/// ```text
+/// use majordomus_cli::integration::forge::remote_heads_of;
+/// let heads = remote_heads_of("a1\trefs/heads/master\nb2\trefs/heads/feature/x\nc3\trefs/tags/v1\n");
+/// assert_eq!(heads.get("feature/x").map(String::as_str), Some("b2"));
+/// assert_eq!(heads.len(), 2, "a tag is not a branch");
+/// ```
+pub fn remote_heads_of(ls_remote: &str) -> BTreeMap<String, String> {
+    ls_remote
+        .lines()
+        .filter_map(|l| {
+            let (sha, name) = l.split_once('\t')?;
+            let name = name.trim().strip_prefix("refs/heads/")?;
+            (!sha.is_empty() && !name.is_empty()).then(|| (name.to_string(), sha.to_string()))
+        })
+        .collect()
+}
+
+/// The merged pull requests whose head branch origin still serves at the head that merged,
+/// from `gh pr list --state merged --json number,state,headRefName,headRefOid,isCrossRepository,mergedAt`.
+///
+/// A pull request counts only when the forge says it `MERGED` and when: it came from this
+/// repository (a fork's branch is not a branch here, whatever it is called), its branch is not
+/// the base, and origin's tip of that branch is exactly its merged head. One branch, one entry:
+/// when several merged pull requests left the same branch at the same head, the newest
+/// number names it. In branch order.
+///
+/// ```text
+/// use majordomus_cli::integration::forge::{merged_branches_of, remote_heads_of};
+/// let heads = remote_heads_of("aa\trefs/heads/fix/a\nbb\trefs/heads/fix/b\ncc\trefs/heads/master\n");
+/// let merged = serde_json::json!([
+///   {"number": 1, "state": "MERGED", "headRefName": "fix/a", "headRefOid": "aa", "isCrossRepository": false, "mergedAt": "t1"},
+///   {"number": 2, "state": "MERGED", "headRefName": "fix/b", "headRefOid": "b0", "isCrossRepository": false, "mergedAt": "t2"},
+///   {"number": 3, "state": "OPEN",   "headRefName": "fix/a", "headRefOid": "aa", "isCrossRepository": false}
+/// ]);
+/// let left = merged_branches_of(&merged, &heads, "master");
+/// assert_eq!(left.len(), 1, "fix/b moved after its merge, and an open one is not merged");
+/// assert_eq!((left[0].branch.as_str(), left[0].pr), ("fix/a", 1));
+/// ```
+pub fn merged_branches_of(
+    merged: &Value,
+    heads: &BTreeMap<String, String>,
+    base: &str,
+) -> Vec<MergedBranch> {
+    let mut by_branch: BTreeMap<String, MergedBranch> = BTreeMap::new();
+    for p in merged.as_array().into_iter().flatten() {
+        let s = |k: &str| p.get(k).and_then(Value::as_str).unwrap_or("");
+        let (Some(pr), "MERGED") = (p.get("number").and_then(Value::as_u64), s("state")) else {
+            continue;
+        };
+        let (branch, tip, merged_at) = (s("headRefName"), s("headRefOid"), s("mergedAt"));
+        let fork = p
+            .get("isCrossRepository")
+            .and_then(Value::as_bool)
+            .unwrap_or(true);
+        if fork || branch.is_empty() || branch == base || tip.is_empty() || merged_at.is_empty() {
+            continue;
+        }
+        if heads.get(branch).map(String::as_str) != Some(tip) {
+            continue;
+        }
+        let entry = MergedBranch {
+            branch: branch.to_string(),
+            tip: tip.to_string(),
+            pr,
+            merged_at: merged_at.to_string(),
+        };
+        match by_branch.get(branch) {
+            Some(seen) if seen.pr > pr => {}
+            _ => {
+                by_branch.insert(branch.to_string(), entry);
+            }
+        }
+    }
+    by_branch.into_values().collect()
+}
+
+/// A pull request that is no longer open, as the forge reported it.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct ResolvedPullRequest {
+    /// Whether the forge says it was merged, rather than closed unmerged. Evidence only: a
+    /// successor landed when git finds its head in master, whatever the forge calls it.
+    pub merged: bool,
+    /// The commit its branch pointed at when it was merged or closed.
+    pub head_sha: String,
+    /// The body, for the supersessions it declares; never rendered.
+    #[serde(default)]
+    pub body: String,
+}
+
+/// How many open pull requests one observation lists. A forge with as many open as this may
+/// have more, and the queue says so.
+pub const OPEN_LIMIT: usize = 500;
+
+/// How many closed pull requests declaring a supersession are read, newest first.
+pub const RESOLVED_LIMIT: usize = 200;
+
+/// One pull request that is no longer open, from `gh pr list --state closed --json` or
+/// `gh pr view --json` output: `None` for an open one, or one without a head.
+pub fn resolved_of(v: &Value) -> Option<(u64, ResolvedPullRequest)> {
+    let number = v.get("number")?.as_u64()?;
+    let merged = match v.get("state")?.as_str()? {
+        "MERGED" => true,
+        "CLOSED" => false,
+        _ => return None,
+    };
+    let head_sha = v.get("headRefOid")?.as_str()?.to_string();
+    if head_sha.is_empty() {
+        return None;
+    }
+    let body = v
+        .get("body")
+        .and_then(Value::as_str)
+        .unwrap_or("")
+        .to_string();
+    Some((
+        number,
+        ResolvedPullRequest {
+            merged,
+            head_sha,
+            body,
+        },
+    ))
+}
+
+/// The pull requests no longer open that a supersession or a dependency involving an open one
+/// names: closed ones whose body says they supersede an open one (`closed`, the forge's answer
+/// to a search), and the successors and dependencies open bodies name that are not open, each
+/// read with `view`. One `view` cannot read is left out, and the classifier says it is unread.
+pub fn resolved_for(
+    open: &[PullRequestObservation],
+    closed: &Value,
+    mut view: impl FnMut(u64) -> Option<Value>,
+) -> BTreeMap<u64, ResolvedPullRequest> {
+    use super::classify::declared_supersessions;
+    let numbers: BTreeSet<u64> = open.iter().map(|p| p.number).collect();
+    let mut resolved: BTreeMap<u64, ResolvedPullRequest> = closed
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(resolved_of)
+        .filter(|(n, r)| {
+            !numbers.contains(n)
+                && declared_supersessions(&r.body)
+                    .supersedes
+                    .iter()
+                    .any(|t| t != n && numbers.contains(t))
+        })
+        .collect();
+    let named: BTreeSet<u64> = open
+        .iter()
+        .flat_map(|p| {
+            declared_supersessions(&p.body)
+                .superseded_by
+                .into_iter()
+                .chain(super::classify::declared_dependencies(&p.body))
+        })
+        .filter(|m| !numbers.contains(m) && !resolved.contains_key(m))
+        .collect();
+    for m in named {
+        if let Some((n, r)) = view(m).as_ref().and_then(resolved_of) {
+            if n == m {
+                resolved.insert(n, r);
+            }
+        }
+    }
+    resolved
 }
 
 /// Why the forge could not be observed.
@@ -168,14 +382,35 @@ pub fn pull_request_of(v: &Value) -> Option<PullRequestObservation> {
             .and_then(Value::as_array)
             .map(|a| {
                 a.iter()
-                    .map(|c| CheckObservation {
-                        name: c
-                            .get("name")
-                            .or_else(|| c.get("context"))
-                            .and_then(Value::as_str)
-                            .unwrap_or("")
-                            .to_string(),
-                        state: check_state(c),
+                    .map(|c| {
+                        let text = |k: &str| c.get(k).and_then(Value::as_str).unwrap_or("");
+                        let kind = if text("__typename") == "StatusContext" {
+                            CheckKind::StatusContext
+                        } else {
+                            CheckKind::CheckRun
+                        };
+                        CheckObservation {
+                            name: c
+                                .get("name")
+                                .or_else(|| c.get("context"))
+                                .and_then(Value::as_str)
+                                .unwrap_or("")
+                                .to_string(),
+                            state: check_state(c),
+                            kind,
+                            // the app, where the forge names it (a check run's suite's app)
+                            app_id: c
+                                .pointer("/app/databaseId")
+                                .or_else(|| c.pointer("/checkSuite/app/databaseId"))
+                                .and_then(Value::as_u64),
+                            completed_at: match text("completedAt") {
+                                // a check run's zero time means it has not completed
+                                "" | "0001-01-01T00:00:00Z" => text("startedAt")
+                                    .trim_start_matches("0001-01-01T00:00:00Z")
+                                    .to_string(),
+                                t => t.to_string(),
+                            },
+                        }
                     })
                     .collect()
             })
@@ -189,38 +424,186 @@ pub fn pull_request_of(v: &Value) -> Option<PullRequestObservation> {
             .get("isCrossRepository")
             .and_then(Value::as_bool)
             .unwrap_or(false),
+        latest_reviews: v
+            .get("latestReviews")
+            .and_then(Value::as_array)
+            .map(|a| {
+                a.iter()
+                    .map(|r| ReviewObservation {
+                        author: r
+                            .pointer("/author/login")
+                            .and_then(Value::as_str)
+                            .unwrap_or("")
+                            .to_string(),
+                        state: r
+                            .get("state")
+                            .and_then(Value::as_str)
+                            .unwrap_or("")
+                            .to_ascii_uppercase(),
+                        commit: r
+                            .pointer("/commit/oid")
+                            .and_then(Value::as_str)
+                            .unwrap_or("")
+                            .to_string(),
+                    })
+                    .collect()
+            })
+            .unwrap_or_default(),
+        review_requests: v
+            .get("reviewRequests")
+            .and_then(Value::as_array)
+            .map(|a| {
+                a.iter()
+                    .filter_map(|r| {
+                        r.get("login")
+                            .or_else(|| r.get("slug"))
+                            .or_else(|| r.get("name"))
+                            .and_then(Value::as_str)
+                            .map(str::to_string)
+                    })
+                    .collect()
+            })
+            .unwrap_or_default(),
     })
 }
 
-/// The required contexts and review requirement from a branch-protection document.
-pub fn protection_of(v: &Value) -> (Option<Vec<String>>, Option<bool>) {
-    // a set: the protection lists a context under `contexts` and again under `checks`, and
-    // the order is the set's, so no sort sits beside what renders it
-    let mut contexts: std::collections::BTreeSet<String> = v
+/// Union two readings of the required checks: a context required by either is required,
+/// once, bound to an app when either source binds it.
+fn union_checks(a: Vec<RequiredCheck>, b: Vec<RequiredCheck>) -> Vec<RequiredCheck> {
+    let mut by_context: std::collections::BTreeMap<String, Option<u64>> =
+        std::collections::BTreeMap::new();
+    for c in a.into_iter().chain(b) {
+        let slot = by_context.entry(c.context).or_insert(None);
+        if slot.is_none() {
+            *slot = c.app_id;
+        }
+    }
+    by_context
+        .into_iter()
+        .map(|(context, app_id)| RequiredCheck { context, app_id })
+        .collect()
+}
+
+/// Union two review requirements: the stricter of each.
+fn union_reviews(a: ReviewPolicy, b: ReviewPolicy) -> ReviewPolicy {
+    ReviewPolicy {
+        approvals: a.approvals.max(b.approvals),
+        code_owners: a.code_owners || b.code_owners,
+        dismiss_stale: a.dismiss_stale || b.dismiss_stale,
+    }
+}
+
+/// The required checks and review requirement the rulesets that apply to a branch add,
+/// from `repos/{r}/rules/branches/{base}`: its `required_status_checks` rules (a context and
+/// the `integration_id` bound to it) and its `pull_request` rules.
+pub fn rules_of(v: &Value) -> (Vec<RequiredCheck>, ReviewPolicy) {
+    let mut checks = Vec::new();
+    let mut reviews = ReviewPolicy::default();
+    for rule in v.as_array().into_iter().flatten() {
+        let params = rule.get("parameters");
+        match rule.get("type").and_then(Value::as_str) {
+            Some("required_status_checks") => {
+                for c in params
+                    .and_then(|p| p.get("required_status_checks"))
+                    .and_then(Value::as_array)
+                    .into_iter()
+                    .flatten()
+                {
+                    if let Some(context) = c.get("context").and_then(Value::as_str) {
+                        checks.push(RequiredCheck {
+                            context: context.to_string(),
+                            app_id: c.get("integration_id").and_then(Value::as_u64),
+                        });
+                    }
+                }
+            }
+            Some("pull_request") => {
+                let p = |k: &str| params.and_then(|p| p.get(k));
+                reviews = union_reviews(
+                    reviews,
+                    ReviewPolicy {
+                        approvals: p("required_approving_review_count")
+                            .and_then(Value::as_u64)
+                            .unwrap_or(0),
+                        code_owners: p("require_code_owner_review")
+                            .and_then(Value::as_bool)
+                            .unwrap_or(false),
+                        dismiss_stale: p("dismiss_stale_reviews_on_push")
+                            .and_then(Value::as_bool)
+                            .unwrap_or(false),
+                    },
+                );
+            }
+            _ => {}
+        }
+    }
+    (union_checks(checks, Vec::new()), reviews)
+}
+
+/// Whether a branch protection requires a branch to be up to date before it merges.
+pub fn protection_requires_up_to_date(v: &Value) -> bool {
+    v.pointer("/required_status_checks/strict")
+        .and_then(Value::as_bool)
+        .unwrap_or(false)
+}
+
+/// Whether any ruleset that applies requires a branch to be up to date before it merges.
+pub fn rules_require_up_to_date(v: &Value) -> bool {
+    v.as_array().into_iter().flatten().any(|rule| {
+        rule.get("type").and_then(Value::as_str) == Some("required_status_checks")
+            && rule
+                .pointer("/parameters/strict_required_status_checks_policy")
+                .and_then(Value::as_bool)
+                .unwrap_or(false)
+    })
+}
+
+/// The required checks and review requirement from a branch-protection document. A
+/// context the protection lists under `contexts` and again under `checks` is one check,
+/// bound to the app `checks` names for it.
+pub fn protection_of(v: &Value) -> (Vec<RequiredCheck>, ReviewPolicy) {
+    let listed: Vec<RequiredCheck> = v
         .pointer("/required_status_checks/contexts")
         .and_then(Value::as_array)
         .map(|a| {
             a.iter()
-                .filter_map(|c| c.as_str().map(str::to_string))
+                .filter_map(|c| c.as_str().map(RequiredCheck::from))
                 .collect()
         })
         .unwrap_or_default();
-    if let Some(checks) = v
+    let bound: Vec<RequiredCheck> = v
         .pointer("/required_status_checks/checks")
         .and_then(Value::as_array)
-    {
-        contexts.extend(
-            checks
-                .iter()
-                .filter_map(|c| c.get("context").and_then(Value::as_str).map(str::to_string)),
-        );
-    }
-    let reviews = v
-        .pointer("/required_pull_request_reviews/required_approving_review_count")
-        .and_then(Value::as_u64)
-        .map(|n| n > 0)
-        .or(Some(v.get("required_pull_request_reviews").is_some()));
-    (Some(contexts.into_iter().collect()), reviews)
+        .map(|a| {
+            a.iter()
+                .filter_map(|c| {
+                    Some(RequiredCheck {
+                        context: c.get("context")?.as_str()?.to_string(),
+                        app_id: c.get("app_id").and_then(Value::as_u64),
+                    })
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    let reviews = match v.get("required_pull_request_reviews") {
+        // a review section without a count still asks for one
+        Some(r) => ReviewPolicy {
+            approvals: r
+                .get("required_approving_review_count")
+                .and_then(Value::as_u64)
+                .unwrap_or(1),
+            code_owners: r
+                .get("require_code_owner_reviews")
+                .and_then(Value::as_bool)
+                .unwrap_or(false),
+            dismiss_stale: r
+                .get("dismiss_stale_reviews")
+                .and_then(Value::as_bool)
+                .unwrap_or(false),
+        },
+        None => ReviewPolicy::default(),
+    };
+    (union_checks(bound, listed), reviews)
 }
 
 impl Forge for GhForge<'_> {
@@ -241,6 +624,9 @@ impl Forge for GhForge<'_> {
             .ok_or_else(|| ForgeError("gh repo view named no default branch".into()))?
             .to_string();
         let settings = gh_json(root, &["api", &format!("repos/{repository}")])?;
+        let delete_branch_on_merge = settings
+            .get("delete_branch_on_merge")
+            .and_then(Value::as_bool);
         let mut merge_methods = Vec::new();
         for (key, word) in [
             ("allow_merge_commit", "merge"),
@@ -273,14 +659,37 @@ impl Forge for GhForge<'_> {
                 &format!("repos/{repository}/branches/{base}/protection"),
             ],
         )?;
-        let (required_checks, reviews_required) = if ok {
-            serde_json::from_str::<Value>(&out)
-                .map(|v| protection_of(&v))
-                .unwrap_or((None, None))
+        let protection: Option<(Vec<RequiredCheck>, ReviewPolicy, bool)> = if ok {
+            serde_json::from_str::<Value>(&out).ok().map(|v| {
+                let (checks, reviews) = protection_of(&v);
+                (checks, reviews, protection_requires_up_to_date(&v))
+            })
         } else if err.contains("Branch not protected") || out.contains("Branch not protected") {
-            (Some(Vec::new()), Some(false))
+            Some((Vec::new(), ReviewPolicy::default(), false))
         } else {
-            (None, None)
+            None
+        };
+        // the rulesets that apply to the base add requirements the protection does not list;
+        // a ruleset read that fails leaves the requirement unread, as an unread protection does
+        let (ok, out, _) = gh_retrying(
+            root,
+            &["api", &format!("repos/{repository}/rules/branches/{base}")],
+        )?;
+        let rules: Option<(Vec<RequiredCheck>, ReviewPolicy, bool)> = if ok {
+            serde_json::from_str::<Value>(&out).ok().map(|v| {
+                let (checks, reviews) = rules_of(&v);
+                (checks, reviews, rules_require_up_to_date(&v))
+            })
+        } else {
+            None
+        };
+        let (required_checks, review_policy, up_to_date_required) = match (protection, rules) {
+            (Some((pc, pr, ps)), Some((rc, rr, rs))) => (
+                Some(union_checks(pc, rc)),
+                Some(union_reviews(pr, rr)),
+                Some(ps || rs),
+            ),
+            _ => (None, None, None),
         };
         let list = gh_json(
             root,
@@ -290,9 +699,9 @@ impl Forge for GhForge<'_> {
                 "--state",
                 "open",
                 "--limit",
-                "500",
+                &OPEN_LIMIT.to_string(),
                 "--json",
-                "number,title,author,headRefName,headRefOid,baseRefName,isDraft,labels,createdAt,updatedAt,body,statusCheckRollup,reviewDecision,autoMergeRequest,isCrossRepository",
+                "number,title,author,headRefName,headRefOid,baseRefName,isDraft,labels,createdAt,updatedAt,body,statusCheckRollup,reviewDecision,latestReviews,reviewRequests,autoMergeRequest,isCrossRepository",
             ],
         )?;
         // keyed by number, so the observation is in number order whatever the forge listed
@@ -307,6 +716,49 @@ impl Forge for GhForge<'_> {
                     .collect()
             })
             .unwrap_or_default();
+        // a successor that landed is no longer listed among the open ones: closed pull requests
+        // whose body declares a supersession are read with their heads, so the one they
+        // replace is still known to be replaced once they are gone
+        let closed = gh_json(
+            root,
+            &[
+                "pr",
+                "list",
+                "--state",
+                "closed",
+                "--search",
+                "supersedes in:body sort:updated-desc",
+                "--limit",
+                &RESOLVED_LIMIT.to_string(),
+                "--json",
+                "number,state,headRefOid,body",
+            ],
+        )?;
+        let mut unreadable = None;
+        let resolved = resolved_for(&pull_requests, &closed, |m| {
+            match gh_retrying(
+                root,
+                &[
+                    "pr",
+                    "view",
+                    &m.to_string(),
+                    "--json",
+                    "number,state,headRefOid,body",
+                ],
+            ) {
+                Ok((true, out, _)) => serde_json::from_str(&out).ok(),
+                // not a pull request, or refused: the successor is unread, never landed
+                Ok(_) => None,
+                Err(e) => {
+                    unreadable.get_or_insert(e);
+                    None
+                }
+            }
+        });
+        // an outage that outlasted the retries is a failed observation, as for the open list
+        if let Some(e) = unreadable {
+            return Err(e);
+        }
         Ok(ForgeObservation {
             schema: OBSERVATION_SCHEMA,
             repository,
@@ -314,10 +766,137 @@ impl Forge for GhForge<'_> {
             base_sha,
             observed_at: crate::peers::rfc3339(std::time::SystemTime::now()),
             required_checks,
-            reviews_required,
+            review_policy,
+            up_to_date_required,
             merge_methods,
             pull_requests,
+            resolved,
+            delete_branch_on_merge,
         })
+    }
+}
+
+/// The merged branches origin still serves ([`merged_branches_of`]), read now, or `None` when
+/// origin's branches or the merged pull requests could not be read: unread is not "nothing
+/// left behind". Asked only by `prs cleanup`, on demand — never by `prs refresh`, which the
+/// executor runs before every decision: what the forge left behind decides no merge, so its
+/// two reads stay off the hot path.
+pub fn merged_branches(root: &Path, base: &str) -> Option<Vec<MergedBranch>> {
+    let heads = origin_heads(root)?;
+    merged_branches_given(&heads, base, || merged_list(root))
+}
+
+/// [`merged_branches`] once origin's branches are known: an origin serving only the base has
+/// left nothing behind and the merged pull requests are never asked for; otherwise `list`
+/// answers them, and `None` from it is unread.
+///
+/// ```text
+/// use majordomus_cli::integration::forge::{merged_branches_given, remote_heads_of};
+/// let only_base = remote_heads_of("cc\trefs/heads/master\n");
+/// assert_eq!(merged_branches_given(&only_base, "master", || unreachable!()), Some(vec![]));
+/// let heads = remote_heads_of("aa\trefs/heads/fix/a\ncc\trefs/heads/master\n");
+/// assert_eq!(merged_branches_given(&heads, "master", || None), None, "unread");
+/// ```
+pub fn merged_branches_given(
+    heads: &BTreeMap<String, String>,
+    base: &str,
+    list: impl FnOnce() -> Option<Value>,
+) -> Option<Vec<MergedBranch>> {
+    if heads.keys().all(|b| b == base) {
+        return Some(Vec::new());
+    }
+    Some(merged_branches_of(&list()?, heads, base))
+}
+
+/// Origin's branches, from `git ls-remote --heads origin`; `None` when git cannot answer.
+fn origin_heads(root: &Path) -> Option<BTreeMap<String, String>> {
+    super::retry::forge(|| {
+        Command::new("git")
+            .arg("-C")
+            .arg(root)
+            .args(["ls-remote", "--heads", "origin"])
+            .output()
+            .map_err(ls_remote_could_not_run)
+            .and_then(heads_of_output)
+    })
+    .ok()
+}
+
+fn ls_remote_could_not_run(e: std::io::Error) -> String {
+    format!("git ls-remote could not run: {e}")
+}
+
+/// The branches an `ls-remote --heads` answer names, or what it refused with.
+fn heads_of_output(out: std::process::Output) -> Result<BTreeMap<String, String>, String> {
+    if out.status.success() {
+        Ok(remote_heads_of(&String::from_utf8_lossy(&out.stdout)))
+    } else {
+        Err(format!(
+            "git ls-remote failed: {}",
+            String::from_utf8_lossy(&out.stderr).trim()
+        ))
+    }
+}
+
+/// The merged pull requests, newest [`MERGED_LIMIT`], as the forge listed them.
+fn merged_list(root: &Path) -> Option<Value> {
+    gh_retrying(
+        root,
+        &[
+            "pr",
+            "list",
+            "--state",
+            "merged",
+            "--limit",
+            &MERGED_LIMIT.to_string(),
+            "--json",
+            "number,state,headRefName,headRefOid,isCrossRepository,mergedAt",
+        ],
+    )
+    .ok()
+    .and_then(listed)
+}
+
+/// A `gh` answer read as JSON, only when `gh` said it succeeded.
+fn listed((ok, out, _): (bool, String, String)) -> Option<Value> {
+    if ok {
+        serde_json::from_str(&out).ok()
+    } else {
+        None
+    }
+}
+
+/// Remove the mirrors of pull requests this observation no longer names: merged, closed or
+/// gone. Each one held the head the pull request had when it was last open, and a mirror
+/// that is never refreshed again is only a stale answer waiting to be read. Best effort: a
+/// mirror that cannot be removed is left, and nothing reads it.
+fn prune_mirrors(root: &Path, obs: &ForgeObservation) {
+    let keep: std::collections::BTreeSet<u64> = obs
+        .pull_requests
+        .iter()
+        .map(|p| p.number)
+        .chain(obs.resolved.keys().copied())
+        .collect();
+    // git that cannot run lists nothing, and nothing is removed
+    let out = Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(["for-each-ref", "--format=%(refname)", PR_REF_PREFIX])
+        .output()
+        .map(|o| o.stdout)
+        .unwrap_or_default();
+    for r in String::from_utf8_lossy(&out).lines() {
+        let stale = r
+            .strip_prefix(PR_REF_PREFIX)
+            .and_then(|n| n.parse::<u64>().ok())
+            .is_some_and(|n| !keep.contains(&n));
+        if stale {
+            let _ = Command::new("git")
+                .arg("-C")
+                .arg(root)
+                .args(["update-ref", "-d", r])
+                .status();
+        }
     }
 }
 
@@ -337,6 +916,12 @@ pub fn fetch(root: &Path, obs: &ForgeObservation) -> Result<(), ForgeError> {
     for p in &obs.pull_requests {
         args.push(format!("+refs/pull/{0}/head:{PR_REF_PREFIX}{0}", p.number));
     }
+    // a successor no longer open is fetched too, so git can say whether its head landed; the
+    // forge keeps refs/pull/<n>/head for a closed pull request, and only one it read is here
+    for n in obs.resolved.keys() {
+        args.push(format!("+refs/pull/{n}/head:{PR_REF_PREFIX}{n}"));
+    }
+    prune_mirrors(root, obs);
     // a fetch is a read: a dropped connection is asked again, a refusal is not
     super::retry::forge(|| {
         let out = Command::new("git")
@@ -453,33 +1038,300 @@ mod tests {
     }
 
     #[test]
-    fn a_protection_names_its_contexts_once_and_its_review_requirement() {
+    fn a_protection_names_its_checks_once_with_their_app_and_its_review_policy() {
         let both = json!({
             "required_status_checks": {
                 "contexts": ["ci", "lint"],
-                "checks": [{"context": "ci"}, {"context": "docs"}]
+                "checks": [{"context": "ci", "app_id": 15368}, {"context": "docs"}]
             },
-            "required_pull_request_reviews": {"required_approving_review_count": 1}
+            "required_pull_request_reviews": {
+                "required_approving_review_count": 2,
+                "require_code_owner_reviews": true,
+                "dismiss_stale_reviews": true
+            }
         });
-        let (contexts, reviews) = protection_of(&both);
-        assert_eq!(contexts.unwrap(), ["ci", "docs", "lint"]);
-        assert_eq!(reviews, Some(true));
+        let (checks, reviews) = protection_of(&both);
+        assert_eq!(
+            checks,
+            vec![
+                RequiredCheck {
+                    context: "ci".into(),
+                    app_id: Some(15368)
+                },
+                RequiredCheck::from("docs"),
+                RequiredCheck::from("lint"),
+            ],
+            "a context listed twice is one check, bound to the app `checks` names"
+        );
+        assert_eq!(
+            reviews,
+            ReviewPolicy {
+                approvals: 2,
+                code_owners: true,
+                dismiss_stale: true
+            }
+        );
 
         let none_required = json!({
             "required_status_checks": {"contexts": []},
             "required_pull_request_reviews": {"required_approving_review_count": 0}
         });
-        assert_eq!(protection_of(&none_required).1, Some(false));
+        let (checks, reviews) = protection_of(&none_required);
+        assert!(checks.is_empty());
+        assert_eq!(reviews.approvals, 0);
 
         let reviews_without_count = json!({"required_pull_request_reviews": {}});
-        let (contexts, reviews) = protection_of(&reviews_without_count);
-        assert_eq!(contexts.unwrap(), Vec::<String>::new());
         assert_eq!(
-            reviews,
-            Some(true),
+            protection_of(&reviews_without_count).1.approvals,
+            1,
             "a review section without a count still asks for one"
         );
+        assert_eq!(protection_of(&json!({})).1, ReviewPolicy::default());
+    }
 
-        assert_eq!(protection_of(&json!({})).1, Some(false));
+    #[test]
+    fn the_rulesets_add_required_checks_bound_to_an_app_and_a_review_policy() {
+        let rules = json!([
+            {"type": "deletion"},
+            {"type": "required_status_checks", "parameters": {
+                "strict_required_status_checks_policy": false,
+                "required_status_checks": [
+                    {"context": "ci", "integration_id": 15368},
+                    {"context": "build"}
+                ]
+            }},
+            {"type": "pull_request", "parameters": {
+                "required_approving_review_count": 1,
+                "require_code_owner_review": true,
+                "dismiss_stale_reviews_on_push": false
+            }}
+        ]);
+        let (checks, reviews) = rules_of(&rules);
+        assert_eq!(
+            checks,
+            vec![
+                RequiredCheck::from("build"),
+                RequiredCheck {
+                    context: "ci".into(),
+                    app_id: Some(15368)
+                },
+            ]
+        );
+        assert_eq!(
+            reviews,
+            ReviewPolicy {
+                approvals: 1,
+                code_owners: true,
+                dismiss_stale: false
+            }
+        );
+        // a branch no ruleset applies to adds nothing
+        assert_eq!(rules_of(&json!([])), (Vec::new(), ReviewPolicy::default()));
+        // the two sources union: a context either requires, the stricter review rule of each
+        let (pc, pr) = protection_of(&json!({
+            "required_status_checks": {"contexts": ["ci", "lint"]},
+            "required_pull_request_reviews": {"required_approving_review_count": 2}
+        }));
+        let (rc, rr) = rules_of(&rules);
+        assert_eq!(
+            union_checks(pc, rc),
+            vec![
+                RequiredCheck::from("build"),
+                RequiredCheck {
+                    context: "ci".into(),
+                    app_id: Some(15368)
+                },
+                RequiredCheck::from("lint"),
+            ]
+        );
+        assert_eq!(
+            union_reviews(pr, rr),
+            ReviewPolicy {
+                approvals: 2,
+                code_owners: true,
+                dismiss_stale: false
+            }
+        );
+    }
+
+    #[test]
+    fn a_check_entry_records_what_wrote_it_and_when_it_completed() {
+        let p = pull_request_of(&json!({
+            "number": 3,
+            "statusCheckRollup": [
+                {"__typename": "CheckRun", "name": "ci", "status": "COMPLETED", "conclusion": "SUCCESS",
+                 "startedAt": "2026-09-01T00:00:00Z", "completedAt": "2026-09-01T00:05:00Z",
+                 "app": {"databaseId": 15368}},
+                {"__typename": "CheckRun", "name": "ci", "status": "IN_PROGRESS",
+                 "startedAt": "2026-09-01T00:06:00Z", "completedAt": "0001-01-01T00:00:00Z"},
+                {"__typename": "StatusContext", "context": "ci", "state": "SUCCESS",
+                 "startedAt": "2026-09-01T00:07:00Z"}
+            ]
+        }))
+        .unwrap();
+        assert_eq!(p.checks[0].kind, CheckKind::CheckRun);
+        assert_eq!(p.checks[0].app_id, Some(15368));
+        assert_eq!(p.checks[0].completed_at, "2026-09-01T00:05:00Z");
+        assert_eq!(
+            p.checks[1].completed_at, "2026-09-01T00:06:00Z",
+            "a run that has not completed is placed by when it started"
+        );
+        assert_eq!(p.checks[2].kind, CheckKind::StatusContext);
+        assert_eq!(p.checks[2].app_id, None);
+        assert_eq!(p.checks[2].completed_at, "2026-09-01T00:07:00Z");
+    }
+
+    #[test]
+    fn the_latest_reviews_are_read_with_the_commit_each_was_given_on() {
+        let p = pull_request_of(&json!({
+            "number": 4,
+            "latestReviews": [
+                {"author": {"login": "ana"}, "state": "APPROVED", "commit": {"oid": "c1"}},
+                {"author": {"login": "bo"}, "state": "changes_requested", "commit": {"oid": "c2"}},
+                {"author": {"login": "cy"}, "state": "COMMENTED"}
+            ],
+            "reviewRequests": [{"login": "dee"}, {"slug": "core"}, {"__typename": "Bot"}]
+        }))
+        .unwrap();
+        assert_eq!(p.latest_reviews.len(), 3);
+        assert_eq!(p.latest_reviews[0].commit, "c1");
+        assert_eq!(p.latest_reviews[1].state, "CHANGES_REQUESTED");
+        assert_eq!(
+            p.latest_reviews[2].commit, "",
+            "a review without a commit says so"
+        );
+        assert_eq!(p.review_requests, ["dee", "core"]);
+    }
+
+    /// Each way a merged pull request is not a branch left behind, and the one way it is.
+    #[test]
+    fn only_a_same_repository_branch_at_its_merged_head_is_left_behind() {
+        let heads = remote_heads_of(
+            "aa\trefs/heads/fix/a\nbb\trefs/heads/fix/b\ncc\trefs/heads/master\nff\trefs/tags/v1\n\
+             dd\trefs/heads/fix/fork\nee\trefs/heads/fix/dup\nbad line\n\trefs/heads/x\n",
+        );
+        assert_eq!(heads.len(), 5, "{heads:?}");
+        let m = |n: u64, state: &str, branch: &str, head: &str, fork: bool, at: &str| {
+            json!({"number": n, "state": state, "headRefName": branch, "headRefOid": head,
+                   "isCrossRepository": fork, "mergedAt": at})
+        };
+        let merged = json!([
+            m(1, "MERGED", "fix/a", "aa", false, "t"),
+            m(2, "MERGED", "fix/b", "b0", false, "t"),
+            m(3, "CLOSED", "fix/a", "aa", false, "t"),
+            m(4, "MERGED", "fix/fork", "dd", true, "t"),
+            m(5, "MERGED", "master", "cc", false, "t"),
+            m(6, "MERGED", "fix/a", "aa", false, ""),
+            m(7, "MERGED", "", "aa", false, "t"),
+            m(8, "MERGED", "fix/dup", "ee", false, "t"),
+            m(9, "MERGED", "fix/dup", "ee", false, "t"),
+            m(10, "MERGED", "fix/dup", "ee", false, "t"),
+            json!({"state": "MERGED", "headRefName": "fix/a", "headRefOid": "aa"}),
+            json!({"number": 11, "state": "MERGED", "headRefName": "fix/a", "headRefOid": "aa",
+                   "mergedAt": "t"}),
+        ]);
+        let left = merged_branches_of(&merged, &heads, "master");
+        let got: Vec<(&str, u64)> = left.iter().map(|b| (b.branch.as_str(), b.pr)).collect();
+        assert_eq!(got, [("fix/a", 1), ("fix/dup", 10)], "{left:?}");
+        // the newest number names a branch whatever order the forge listed them in
+        let reversed = json!([
+            m(10, "MERGED", "fix/dup", "ee", false, "t"),
+            m(8, "MERGED", "fix/dup", "ee", false, "t")
+        ]);
+        assert_eq!(merged_branches_of(&reversed, &heads, "master")[0].pr, 10);
+        assert!(merged_branches_of(&json!({}), &heads, "master").is_empty());
+    }
+
+    /// The read's two answers that need no forge: origin unreadable is unread, and an origin
+    /// serving only the base has left nothing behind, without asking for merged pull requests.
+    #[test]
+    fn origin_decides_before_the_forge_is_asked() {
+        let git = |dir: &Path, args: &[&str]| {
+            let out = Command::new("git")
+                .env_remove("GIT_DIR")
+                .env_remove("GIT_WORK_TREE")
+                .env_remove("GIT_INDEX_FILE")
+                .arg("-C")
+                .arg(dir)
+                .args(["-c", "user.email=t@example.com", "-c", "user.name=t"])
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}: {out:?}");
+        };
+        let tmp = tempfile::tempdir().unwrap();
+        let base = tmp.path();
+        git(base, &["init", "-q", "work"]);
+        let work = base.join("work");
+        assert_eq!(merged_branches(&work, "master"), None, "no origin: unread");
+        git(
+            base,
+            &["init", "-q", "--bare", "-b", "master", "origin.git"],
+        );
+        git(
+            &work,
+            &[
+                "remote",
+                "add",
+                "origin",
+                base.join("origin.git").to_str().unwrap(),
+            ],
+        );
+        git(&work, &["commit", "-q", "--allow-empty", "-m", "base"]);
+        git(&work, &["push", "-q", "origin", "HEAD:refs/heads/master"]);
+        assert_eq!(merged_branches(&work, "master"), Some(Vec::new()));
+        // a branch besides the base: the merged pull requests are asked for, and a forge that
+        // cannot list them here (no GitHub remote, or no gh at all) leaves the report unread
+        git(&work, &["push", "-q", "origin", "HEAD:refs/heads/fix/a"]);
+        let asked = merged_branches(&work, "master");
+        assert!(
+            asked.as_ref().is_none_or(|v| v.is_empty()),
+            "no merged pull request of this origin can name fix/a: {asked:?}"
+        );
+    }
+
+    #[test]
+    fn the_helpers_name_what_refused() {
+        assert!(ls_remote_could_not_run(std::io::Error::other("gone")).contains("could not run"));
+        assert_eq!(
+            listed((true, "[1]".into(), String::new())),
+            Some(json!([1]))
+        );
+        assert_eq!(listed((true, "not json".into(), String::new())), None);
+        assert_eq!(listed((false, "[1]".into(), "refused".into())), None);
+        let heads = remote_heads_of("aa\trefs/heads/fix/a\ncc\trefs/heads/master\n");
+        let merged = json!([{"number": 1, "state": "MERGED", "headRefName": "fix/a",
+            "headRefOid": "aa", "isCrossRepository": false, "mergedAt": "t"}]);
+        assert_eq!(
+            merged_branches_given(&heads, "master", || Some(merged)).map(|v| v.len()),
+            Some(1)
+        );
+    }
+
+    #[test]
+    fn a_dependency_that_is_not_open_is_read_like_a_successor() {
+        let open: Vec<PullRequestObservation> = [json!({
+            "number": 1, "title": "t", "author": {"login": "a"}, "headRefName": "f",
+            "headRefOid": "h1", "baseRefName": "master", "isDraft": false, "labels": [],
+            "createdAt": "t", "updatedAt": "t", "body": "Depends on #4\nDepends on #5",
+            "statusCheckRollup": [], "reviewDecision": "", "autoMergeRequest": null,
+            "isCrossRepository": false
+        })]
+        .iter()
+        .filter_map(pull_request_of)
+        .collect();
+        let mut viewed = Vec::new();
+        let resolved = resolved_for(&open, &json!([]), |n| {
+            viewed.push(n);
+            (n == 4)
+                .then(|| json!({"number": 4, "state": "CLOSED", "headRefOid": "h4", "body": ""}))
+        });
+        assert_eq!(viewed, [4, 5]);
+        assert_eq!(
+            resolved.keys().copied().collect::<Vec<_>>(),
+            [4],
+            "#5 unread"
+        );
+        assert!(!resolved[&4].merged);
     }
 }

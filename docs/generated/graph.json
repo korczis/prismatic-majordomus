@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.13.2",
+  "generator": "majordomus-cli 0.14.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -645,6 +645,15 @@
         "status": "query"
       },
       {
+        "id": "capability:integration.cleanup",
+        "kind": "capability",
+        "label": "integration.cleanup",
+        "summary": "What cleanup would do",
+        "route": "/cockpit/capabilities/integration.cleanup",
+        "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:integration.events",
         "kind": "capability",
         "label": "integration.events",
@@ -659,6 +668,15 @@
         "label": "integration.explain",
         "summary": "Why one pull request is where it is",
         "route": "/cockpit/capabilities/integration.explain",
+        "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:integration.prove_dry_run",
+        "kind": "capability",
+        "label": "integration.prove_dry_run",
+        "summary": "Proof that a dry run moves nothing",
+        "route": "/cockpit/capabilities/integration.prove_dry_run",
         "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
         "status": "query"
       },
@@ -3769,10 +3787,20 @@
             "file:apps/majordomus-cli/src/integration/mod.rs",
             "file:apps/majordomus-cli/src/integration/classify.rs",
             "file:apps/majordomus-cli/src/integration/drain.rs",
+            "file:apps/majordomus-cli/src/integration/exclusive.rs",
             "file:apps/majordomus-cli/src/capability/builtin/integration.rs",
             "file:apps/majordomus-cli/src/integration/tests.rs",
+            "file:apps/majordomus-cli/src/integration/retry.rs",
+            "file:apps/majordomus-cli/src/integration/wait.rs",
+            "file:apps/majordomus-cli/src/integration/relation.rs",
+            "file:apps/majordomus-cli/src/integration/forge.rs",
+            "file:apps/majordomus-cli/src/commands/prs.rs",
             "file:docs/INTEGRATION.md",
-            "test:test/cases/720_integration_follows_the_current_master.sh"
+            "test:test/cases/720_integration_follows_the_current_master.sh",
+            "test:test/cases/740_integration_is_visible_where_a_person_looks.sh",
+            "test:test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
+            "test:test/cases/742_only_an_outage_is_asked_again.sh",
+            "test:test/cases/861_a_successor_that_landed_supersedes.sh"
           ],
           "tags": [
             "integration",
@@ -31473,6 +31501,29 @@
         }
       },
       {
+        "id": "majordomus://release-record/v0.14.0",
+        "kind": "release-record",
+        "label": "v0.14.0",
+        "summary": "v0.14.0",
+        "route": "/cockpit/objects/release-record/v0-14-0",
+        "source": ".ai/repo/releases/v0.14.0.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "815b96b5a12be1bb255060f06f5a02a2882ad742",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.14.0",
+          "published_at": "2026-10-06T13:30:57Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.14.0"
+        }
+      },
+      {
         "id": "majordomus://release-record/v0.3.1",
         "kind": "release-record",
         "label": "v0.3.1",
@@ -33720,12 +33771,12 @@
         }
       },
       {
-        "id": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "id": "majordomus://rule/project.integration-follows-the-current-master@2",
         "kind": "rule",
-        "label": "project.integration-follows-the-current-master@1",
+        "label": "project.integration-follows-the-current-master@2",
         "summary": "Pull requests are integrated one at a time, each decided against the current master, never around the branch protection",
-        "route": "/cockpit/objects/rule/project-integration-follows-the-current-master-1",
-        "source": ".ai/repo/rules/project/integration-follows-the-current-master.v1.md",
+        "route": "/cockpit/objects/rule/project-integration-follows-the-current-master-2",
+        "source": ".ai/repo/rules/project/integration-follows-the-current-master.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -37234,13 +37285,6 @@
         "source": "test/cases/111_session_per_provider.sh"
       },
       {
-        "id": "majordomus://test/test/cases/111_unblock.sh",
-        "kind": "test",
-        "label": "test/cases/111_unblock.sh",
-        "route": "/cockpit/objects/test/test-cases-111-unblock-sh",
-        "source": "test/cases/111_unblock.sh"
-      },
-      {
         "id": "majordomus://test/test/cases/112_version_matches_surface.sh",
         "kind": "test",
         "label": "test/cases/112_version_matches_surface.sh",
@@ -39229,6 +39273,48 @@
         "source": "test/cases/84_web_surfaces.sh"
       },
       {
+        "id": "majordomus://test/test/cases/850_integration_drains_cycle_by_cycle.sh",
+        "kind": "test",
+        "label": "test/cases/850_integration_drains_cycle_by_cycle.sh",
+        "route": "/cockpit/objects/test/test-cases-850-integration-drains-cycle-by-cycle-sh",
+        "source": "test/cases/850_integration_drains_cycle_by_cycle.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/852_a_dry_run_moves_nothing.sh",
+        "kind": "test",
+        "label": "test/cases/852_a_dry_run_moves_nothing.sh",
+        "route": "/cockpit/objects/test/test-cases-852-a-dry-run-moves-nothing-sh",
+        "source": "test/cases/852_a_dry_run_moves_nothing.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/855_racing_executors_merge_once.sh",
+        "kind": "test",
+        "label": "test/cases/855_racing_executors_merge_once.sh",
+        "route": "/cockpit/objects/test/test-cases-855-racing-executors-merge-once-sh",
+        "source": "test/cases/855_racing_executors_merge_once.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/856_racing_worktrees_share_one_lease.sh",
+        "kind": "test",
+        "label": "test/cases/856_racing_worktrees_share_one_lease.sh",
+        "route": "/cockpit/objects/test/test-cases-856-racing-worktrees-share-one-lease-sh",
+        "source": "test/cases/856_racing_worktrees_share_one_lease.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/857_required_checks_are_authoritative.sh",
+        "kind": "test",
+        "label": "test/cases/857_required_checks_are_authoritative.sh",
+        "route": "/cockpit/objects/test/test-cases-857-required-checks-are-authoritative-sh",
+        "source": "test/cases/857_required_checks_are_authoritative.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/858_reviews_are_authoritative.sh",
+        "kind": "test",
+        "label": "test/cases/858_reviews_are_authoritative.sh",
+        "route": "/cockpit/objects/test/test-cases-858-reviews-are-authoritative-sh",
+        "source": "test/cases/858_reviews_are_authoritative.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/85_deployment_bind.sh",
         "kind": "test",
         "label": "test/cases/85_deployment_bind.sh",
@@ -39248,6 +39334,13 @@
         "label": "test/cases/85_ui_conformance.sh",
         "route": "/cockpit/objects/test/test-cases-85-ui-conformance-sh",
         "source": "test/cases/85_ui_conformance.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/861_a_successor_that_landed_supersedes.sh",
+        "kind": "test",
+        "label": "test/cases/861_a_successor_that_landed_supersedes.sh",
+        "route": "/cockpit/objects/test/test-cases-861-a-successor-that-landed-supersedes-sh",
+        "source": "test/cases/861_a_successor_that_landed_supersedes.sh"
       },
       {
         "id": "majordomus://test/test/cases/86_deployment_projections.sh",
@@ -39341,11 +39434,39 @@
         "source": "test/cases/90_mcp_shared_server.sh"
       },
       {
+        "id": "majordomus://test/test/cases/910_nothing_merges_around_the_integrator.sh",
+        "kind": "test",
+        "label": "test/cases/910_nothing_merges_around_the_integrator.sh",
+        "route": "/cockpit/objects/test/test-cases-910-nothing-merges-around-the-integrator-sh",
+        "source": "test/cases/910_nothing_merges_around_the_integrator.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/911_repair_decides_and_moves_nothing.sh",
+        "kind": "test",
+        "label": "test/cases/911_repair_decides_and_moves_nothing.sh",
+        "route": "/cockpit/objects/test/test-cases-911-repair-decides-and-moves-nothing-sh",
+        "source": "test/cases/911_repair_decides_and_moves_nothing.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/912_repair_acts_under_the_lease_and_the_trail.sh",
+        "kind": "test",
+        "label": "test/cases/912_repair_acts_under_the_lease_and_the_trail.sh",
+        "route": "/cockpit/objects/test/test-cases-912-repair-acts-under-the-lease-and-the-trail-sh",
+        "source": "test/cases/912_repair_acts_under_the_lease_and_the_trail.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/91_canonical_architecture.sh",
         "kind": "test",
         "label": "test/cases/91_canonical_architecture.sh",
         "route": "/cockpit/objects/test/test-cases-91-canonical-architecture-sh",
         "source": "test/cases/91_canonical_architecture.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/924_one_executor_across_machines.sh",
+        "kind": "test",
+        "label": "test/cases/924_one_executor_across_machines.sh",
+        "route": "/cockpit/objects/test/test-cases-924-one-executor-across-machines-sh",
+        "source": "test/cases/924_one_executor_across_machines.sh"
       },
       {
         "id": "majordomus://test/test/cases/92_openapi_reference.sh",
@@ -40336,530 +40457,6 @@
           "summary": "Stop mid-task and leave the next worker something to act on that is not a transcript.",
           "target": "guaranteed",
           "weight": 2
-        }
-      },
-      {
-        "id": "majordomus://use-case/install-the-tool-in-one-command",
-        "kind": "use-case",
-        "label": "install-the-tool-in-one-command",
-        "summary": "Install the tool in one command, on a machine with no toolchain",
-        "route": "/cockpit/objects/use-case/install-the-tool-in-one-command",
-        "source": ".ai/repo/use-cases/install-the-tool-in-one-command.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "operator",
-            "maintainer"
-          ],
-          "applications": [
-            "repository-with-authored-governance",
-            "repository-opened-in-ai-clients"
-          ],
-          "category": "adoption",
-          "claims": [
-            "distribution-canonical-model",
-            "installer-verifies-before-installing",
-            "release-is-complete-or-absent",
-            "install-command-is-derived"
-          ],
-          "commands": [
-            "version",
-            "init",
-            "doctor"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.ai-layout-integrity"
-          ],
-          "mcp_tools": [
-            "majordomus_distribution",
-            "majordomus_releases",
-            "majordomus_build",
-            "majordomus_artifact"
-          ],
-          "responsibilities": [
-            "layer",
-            "doctor"
-          ],
-          "summary": "Paste one line, get a verified binary for this machine, and run majordomus init — no git, no Rust, no Node, no Python, no root, and no way to install an archive whose digest does not match.",
-          "target": "guaranteed",
-          "weight": 2
-        }
-      },
-      {
-        "id": "majordomus://use-case/keep-decisions-out-of-the-transcript",
-        "kind": "use-case",
-        "label": "keep-decisions-out-of-the-transcript",
-        "summary": "Record a decision so the next worker can find it",
-        "route": "/cockpit/objects/use-case/keep-decisions-out-of-the-transcript",
-        "source": ".ai/repo/use-cases/keep-decisions-out-of-the-transcript.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "agent",
-            "contributor"
-          ],
-          "applications": [
-            "long-running-work",
-            "several-agents-one-repository"
-          ],
-          "category": "continuity",
-          "claims": [
-            "decision-record",
-            "record-search",
-            "history-ledger-read",
-            "event-vocabulary"
-          ],
-          "commands": [
-            "decision",
-            "search",
-            "history"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.decision-records",
-            "majordomus.ledger-integrity"
-          ],
-          "responsibilities": [
-            "state",
-            "watch"
-          ],
-          "summary": "Write down what was decided and why as state, then find it again without reading a conversation.",
-          "target": "guaranteed"
-        }
-      },
-      {
-        "id": "majordomus://use-case/keep-the-bootstrap-thin-and-within-budget",
-        "kind": "use-case",
-        "label": "keep-the-bootstrap-thin-and-within-budget",
-        "summary": "Keep every provider bootstrap thin, generated and within budget",
-        "route": "/cockpit/objects/use-case/keep-the-bootstrap-thin-and-within-budget",
-        "source": ".ai/repo/use-cases/keep-the-bootstrap-thin-and-within-budget.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "maintainer"
-          ],
-          "applications": [
-            "repository-opened-in-ai-clients",
-            "repository-with-authored-governance"
-          ],
-          "category": "drift",
-          "claims": [
-            "projection-generation",
-            "projection-fingerprint",
-            "bootstrap-chain",
-            "context-budget",
-            "pointer-integrity",
-            "no-counts-in-context",
-            "no-silent-overwrite"
-          ],
-          "commands": [
-            "update",
-            "doctor",
-            "watch"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.bootstrap-integrity",
-            "majordomus.projection-integrity",
-            "majordomus.context-budget"
-          ],
-          "responsibilities": [
-            "projection",
-            "doctor"
-          ],
-          "summary": "Regenerate AGENTS.md, CLAUDE.md and the other provider files from one policy and prove they are stamped, point at the layer, stay under the line budget and resolve every reference.",
-          "target": "guaranteed",
-          "weight": 42
-        }
-      },
-      {
-        "id": "majordomus://use-case/keep-what-an-episode-learned",
-        "kind": "use-case",
-        "label": "keep-what-an-episode-learned",
-        "summary": "Keep what an episode learned, without a model and without a conversation",
-        "route": "/cockpit/objects/use-case/keep-what-an-episode-learned",
-        "source": ".ai/repo/use-cases/keep-what-an-episode-learned.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "maintainer",
-            "agent"
-          ],
-          "applications": [
-            "repository-with-authored-governance"
-          ],
-          "category": "knowledge",
-          "claims": [
-            "knowledge-derived-at-the-boundary",
-            "knowledge-derivation-is-idempotent"
-          ],
-          "commands": [
-            "start",
-            "decision",
-            "knowledge",
-            "history"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.knowledge-observed",
-            "majordomus.knowledge-integrity"
-          ],
-          "responsibilities": [
-            "layer"
-          ],
-          "summary": "Record a decision inside an episode, derive it into a candidate knowledge record from the ledger, read the evidence that the derivation ran, and watch a second derivation change nothing.",
-          "target": "guaranteed"
-        }
-      },
-      {
-        "id": "majordomus://use-case/know-whether-this-work-is-finished",
-        "kind": "use-case",
-        "label": "know-whether-this-work-is-finished",
-        "summary": "Know whether the work in this checkout is finished",
-        "route": "/cockpit/objects/use-case/know-whether-this-work-is-finished",
-        "source": ".ai/repo/use-cases/know-whether-this-work-is-finished.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "agent",
-            "maintainer"
-          ],
-          "category": "completion",
-          "commands": [
-            "check",
-            "watch"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.obligation-closure",
-            "majordomus.scope-integrity",
-            "majordomus.state-consistency"
-          ],
-          "summary": "Ask the repository you are standing in, and be told what is still owed by name.",
-          "target": "advisory",
-          "weight": 7
-        }
-      },
-      {
-        "id": "majordomus://use-case/know-which-tool-is-running",
-        "kind": "use-case",
-        "label": "know-which-tool-is-running",
-        "summary": "Check the version before trusting a diagnosis",
-        "route": "/cockpit/objects/use-case/know-which-tool-is-running",
-        "source": ".ai/repo/use-cases/know-which-tool-is-running.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "operator",
-            "contributor"
-          ],
-          "applications": [
-            "ci-gated-project"
-          ],
-          "category": "adoption",
-          "claims": [
-            "exit-code-contract"
-          ],
-          "commands": [
-            "version"
-          ],
-          "difficulty": "basic",
-          "doctrines": [],
-          "responsibilities": [],
-          "summary": "Print the version every other surface derives from, and see the argument it refuses.",
-          "target": "advisory"
-        }
-      },
-      {
-        "id": "majordomus://use-case/let-the-provider-draw-the-episode-boundary",
-        "kind": "use-case",
-        "label": "let-the-provider-draw-the-episode-boundary",
-        "summary": "Have the session opened and closed without anybody remembering to",
-        "route": "/cockpit/objects/use-case/let-the-provider-draw-the-episode-boundary",
-        "source": ".ai/repo/use-cases/let-the-provider-draw-the-episode-boundary.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "agent",
-            "operator"
-          ],
-          "applications": [
-            "several-agents-one-repository",
-            "long-running-work"
-          ],
-          "category": "continuity",
-          "claims": [
-            "session-lifecycle",
-            "prompt-capture",
-            "session-records"
-          ],
-          "commands": [
-            "capture",
-            "session",
-            "doctor",
-            "start",
-            "checkpoint",
-            "handover"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.session-lifecycle",
-            "majordomus.prompt-capture",
-            "majordomus.session-records"
-          ],
-          "mcp_tools": [
-            "majordomus_continuity"
-          ],
-          "responsibilities": [
-            "policy",
-            "state"
-          ],
-          "target": "guaranteed"
-        }
-      },
-      {
-        "id": "majordomus://use-case/migrate-from-the-old-layout",
-        "kind": "use-case",
-        "label": "migrate-from-the-old-layout",
-        "summary": "Move a repository from the pre-.ai layout to the layer",
-        "route": "/cockpit/objects/use-case/migrate-from-the-old-layout",
-        "source": ".ai/repo/use-cases/migrate-from-the-old-layout.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "maintainer"
-          ],
-          "applications": [
-            "repository-with-authored-governance"
-          ],
-          "category": "adoption",
-          "claims": [
-            "legacy-migration",
-            "ai-layer-manifest"
-          ],
-          "commands": [
-            "migrate",
-            "doctor"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.ai-layout-integrity",
-            "majordomus.layout-integrity"
-          ],
-          "responsibilities": [
-            "layer",
-            "doctor"
-          ],
-          "summary": "See what a migration would move, move it with a backup, and prove the result is a layer the tool reads.",
-          "target": "guaranteed"
-        }
-      },
-      {
-        "id": "majordomus://use-case/open-and-close-a-session",
-        "kind": "use-case",
-        "label": "open-and-close-a-session",
-        "summary": "Record what one worker did in one sitting",
-        "route": "/cockpit/objects/use-case/open-and-close-a-session",
-        "source": ".ai/repo/use-cases/open-and-close-a-session.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "agent",
-            "operator"
-          ],
-          "applications": [
-            "several-agents-one-repository",
-            "long-running-work"
-          ],
-          "category": "continuity",
-          "claims": [
-            "ledger-integrity",
-            "event-vocabulary",
-            "history-ledger-read",
-            "session-records"
-          ],
-          "commands": [
-            "session",
-            "history",
-            "knowledge"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.ledger-integrity",
-            "majordomus.session-records"
-          ],
-          "responsibilities": [
-            "state",
-            "watch"
-          ],
-          "summary": "Open a session, do the work under whatever tasks it touches, and close it into an envelope that references what it produced and copies nothing.",
-          "target": "guaranteed"
-        }
-      },
-      {
-        "id": "majordomus://use-case/plan-a-commit-and-judge-its-message",
-        "kind": "use-case",
-        "label": "plan-a-commit-and-judge-its-message",
-        "summary": "Divide a working tree into commits, and hold every message to a policy",
-        "route": "/cockpit/objects/use-case/plan-a-commit-and-judge-its-message",
-        "source": ".ai/repo/use-cases/plan-a-commit-and-judge-its-message.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "maintainer",
-            "contributor",
-            "agent"
-          ],
-          "category": "policy",
-          "claims": [
-            "commit-message-is-judged",
-            "commit-scopes-are-learned",
-            "commit-plan-is-refusable"
-          ],
-          "commands": [
-            "doctrine"
-          ],
-          "difficulty": "intermediate",
-          "doctrines": [
-            "majordomus.enforcement-wiring"
-          ],
-          "mcp_tools": [
-            "majordomus_commit_plan",
-            "majordomus_commit_scopes",
-            "majordomus_commit_validate",
-            "majordomus_commit_history"
-          ],
-          "responsibilities": [
-            "policy"
-          ],
-          "summary": "Ask what this tree would commit and why, learn the scope vocabulary from the history rather than a table, and get a verdict on one message or on a whole range before a reviewer has to give one.",
-          "target": "advisory",
-          "weight": 45
-        }
-      },
-      {
-        "id": "majordomus://use-case/plan-the-work-as-data",
-        "kind": "use-case",
-        "label": "plan-the-work-as-data",
-        "summary": "Keep the plan as milestones and issues the tool can validate",
-        "route": "/cockpit/objects/use-case/plan-the-work-as-data",
-        "source": ".ai/repo/use-cases/plan-the-work-as-data.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "maintainer",
-            "agent"
-          ],
-          "applications": [
-            "long-running-work",
-            "ci-gated-project"
-          ],
-          "category": "knowledge",
-          "claims": [
-            "project-schema",
-            "dag-validation",
-            "project-status-derived",
-            "execution-waves"
-          ],
-          "commands": [
-            "plan"
-          ],
-          "difficulty": "intermediate",
-          "doctrines": [
-            "majordomus.project-integrity",
-            "majordomus.dag-integrity"
-          ],
-          "responsibilities": [
-            "plan"
-          ],
-          "summary": "Declare milestones as outcomes and issues as execution contracts, and let the tool say what is ready and what is blocked.",
-          "target": "guaranteed"
-        }
-      },
-      {
-        "id": "majordomus://use-case/prove-a-rule-is-enforced",
-        "kind": "use-case",
-        "label": "prove-a-rule-is-enforced",
-        "summary": "Prove a rule is actually enforced, not merely written down",
-        "route": "/cockpit/objects/use-case/prove-a-rule-is-enforced",
-        "source": ".ai/repo/use-cases/prove-a-rule-is-enforced.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "maintainer",
-            "reviewer"
-          ],
-          "applications": [
-            "repository-with-authored-governance",
-            "ci-gated-project"
-          ],
-          "category": "policy",
-          "claims": [
-            "doctrine-registry",
-            "doctrine-class-decides",
-            "wiring-reconciliation",
-            "reproduce-command"
-          ],
-          "commands": [
-            "doctrine",
-            "doctor",
-            "check"
-          ],
-          "difficulty": "intermediate",
-          "doctrines": [
-            "majordomus.doctrine-wiring-integrity",
-            "majordomus.enforcement-wiring"
-          ],
-          "responsibilities": [
-            "doctor",
-            "policy"
-          ],
-          "summary": "Answer \"is this rule real?\" with a command rather than a reading of the source.",
-          "target": "guaranteed",
-          "weight": 3
-        }
-      },
-      {
-        "id": "majordomus://use-case/prove-performance-with-benchmarks",
-        "kind": "use-case",
-        "label": "prove-performance-with-benchmarks",
-        "summary": "Prove the tool is fast, not assume it, and refuse a regression",
-        "route": "/cockpit/objects/use-case/prove-performance-with-benchmarks",
-        "source": ".ai/repo/use-cases/prove-performance-with-benchmarks.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "maintainer",
-            "reviewer"
-          ],
-          "applications": [
-            "ci-gated-project"
-          ],
-          "category": "performance",
-          "claims": [
-            "benchmark-coverage-derived",
-            "hot-path-no-rebuild",
-            "rust-hot-path-benchmarks",
-            "rust-evidence-gates"
-          ],
-          "commands": [
-            "bench",
-            "doctor"
-          ],
-          "difficulty": "intermediate",
-          "doctrines": [
-            "majordomus.verification-integrity",
-            "majordomus.enforcement-wiring",
-            "majordomus.policy-completeness"
-          ],
-          "responsibilities": [
-            "doctor"
-          ],
-          "summary": "Measure every public command and every capability of the executable against a committed baseline, and let the check fail on a regression rather than a reviewer noticing later.",
-          "target": "guaranteed",
-          "weight": 8
         }
       },
       {
@@ -42269,6 +41866,21 @@
         "kind": "projects"
       },
       {
+        "source": "capability:integration.cleanup",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.cleanup",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.cleanup",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:integration.events",
         "target": "projection:cli",
         "kind": "projects"
@@ -42305,6 +41917,26 @@
       },
       {
         "source": "capability:integration.explain",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.prove_dry_run",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.prove_dry_run",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.prove_dry_run",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.prove_dry_run",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -45740,7 +45372,7 @@
       },
       {
         "source": "majordomus://adr/adr-0101",
-        "target": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "target": "majordomus://rule/project.integration-follows-the-current-master@2",
         "kind": "put_in_force"
       },
       {
@@ -56849,6 +56481,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://release-record/v0.14.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://release-record/v0.3.1",
         "target": "kind:release-record",
         "kind": "is_a"
@@ -58084,17 +57721,17 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "source": "majordomus://rule/project.integration-follows-the-current-master@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "source": "majordomus://rule/project.integration-follows-the-current-master@2",
         "target": "majordomus://rule/project.accumulation-is-measured@2",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "source": "majordomus://rule/project.integration-follows-the-current-master@2",
         "target": "majordomus://rule/project.land-and-publish@1",
         "kind": "depends_on"
       },
@@ -59090,11 +58727,6 @@
       },
       {
         "source": "majordomus://test/test/cases/111_session_per_provider.sh",
-        "target": "kind:test",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://test/test/cases/111_unblock.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -60519,6 +60151,36 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/850_integration_drains_cycle_by_cycle.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/852_a_dry_run_moves_nothing.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/855_racing_executors_merge_once.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/856_racing_worktrees_share_one_lease.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/857_required_checks_are_authoritative.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/858_reviews_are_authoritative.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/85_deployment_bind.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -60530,6 +60192,11 @@
       },
       {
         "source": "majordomus://test/test/cases/85_ui_conformance.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/861_a_successor_that_landed_supersedes.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -60599,7 +60266,27 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/910_nothing_merges_around_the_integrator.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/911_repair_decides_and_moves_nothing.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/912_repair_acts_under_the_lease_and_the_trail.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/91_canonical_architecture.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/924_one_executor_across_machines.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -61614,546 +61301,6 @@
         "kind": "exercises"
       },
       {
-        "source": "majordomus://use-case/install-the-tool-in-one-command",
-        "target": "capability:distribution.artifact",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/install-the-tool-in-one-command",
-        "target": "capability:distribution.build",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/install-the-tool-in-one-command",
-        "target": "capability:distribution.model",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/install-the-tool-in-one-command",
-        "target": "capability:distribution.releases",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/install-the-tool-in-one-command",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/install-the-tool-in-one-command",
-        "target": "majordomus://application/repository-opened-in-ai-clients",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/install-the-tool-in-one-command",
-        "target": "majordomus://application/repository-with-authored-governance",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/install-the-tool-in-one-command",
-        "target": "majordomus://claim/distribution-canonical-model",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/install-the-tool-in-one-command",
-        "target": "majordomus://claim/install-command-is-derived",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/install-the-tool-in-one-command",
-        "target": "majordomus://claim/installer-verifies-before-installing",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/install-the-tool-in-one-command",
-        "target": "majordomus://claim/release-is-complete-or-absent",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/install-the-tool-in-one-command",
-        "target": "majordomus://rule/majordomus.ai-layout-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/keep-decisions-out-of-the-transcript",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/keep-decisions-out-of-the-transcript",
-        "target": "majordomus://application/long-running-work",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/keep-decisions-out-of-the-transcript",
-        "target": "majordomus://application/several-agents-one-repository",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/keep-decisions-out-of-the-transcript",
-        "target": "majordomus://claim/decision-record",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/keep-decisions-out-of-the-transcript",
-        "target": "majordomus://claim/event-vocabulary",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/keep-decisions-out-of-the-transcript",
-        "target": "majordomus://claim/history-ledger-read",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/keep-decisions-out-of-the-transcript",
-        "target": "majordomus://claim/record-search",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/keep-decisions-out-of-the-transcript",
-        "target": "majordomus://rule/majordomus.decision-records@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/keep-decisions-out-of-the-transcript",
-        "target": "majordomus://rule/majordomus.ledger-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/keep-the-bootstrap-thin-and-within-budget",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/keep-the-bootstrap-thin-and-within-budget",
-        "target": "majordomus://application/repository-opened-in-ai-clients",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/keep-the-bootstrap-thin-and-within-budget",
-        "target": "majordomus://application/repository-with-authored-governance",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/keep-the-bootstrap-thin-and-within-budget",
-        "target": "majordomus://claim/bootstrap-chain",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/keep-the-bootstrap-thin-and-within-budget",
-        "target": "majordomus://claim/context-budget",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/keep-the-bootstrap-thin-and-within-budget",
-        "target": "majordomus://claim/no-counts-in-context",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/keep-the-bootstrap-thin-and-within-budget",
-        "target": "majordomus://claim/no-silent-overwrite",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/keep-the-bootstrap-thin-and-within-budget",
-        "target": "majordomus://claim/pointer-integrity",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/keep-the-bootstrap-thin-and-within-budget",
-        "target": "majordomus://claim/projection-fingerprint",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/keep-the-bootstrap-thin-and-within-budget",
-        "target": "majordomus://claim/projection-generation",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/keep-the-bootstrap-thin-and-within-budget",
-        "target": "majordomus://rule/majordomus.bootstrap-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/keep-the-bootstrap-thin-and-within-budget",
-        "target": "majordomus://rule/majordomus.context-budget@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/keep-the-bootstrap-thin-and-within-budget",
-        "target": "majordomus://rule/majordomus.projection-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/keep-what-an-episode-learned",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/keep-what-an-episode-learned",
-        "target": "majordomus://application/repository-with-authored-governance",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/keep-what-an-episode-learned",
-        "target": "majordomus://claim/knowledge-derivation-is-idempotent",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/keep-what-an-episode-learned",
-        "target": "majordomus://claim/knowledge-derived-at-the-boundary",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/keep-what-an-episode-learned",
-        "target": "majordomus://rule/majordomus.knowledge-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/keep-what-an-episode-learned",
-        "target": "majordomus://rule/majordomus.knowledge-observed@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/know-whether-this-work-is-finished",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/know-whether-this-work-is-finished",
-        "target": "majordomus://rule/majordomus.obligation-closure@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/know-whether-this-work-is-finished",
-        "target": "majordomus://rule/majordomus.scope-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/know-whether-this-work-is-finished",
-        "target": "majordomus://rule/majordomus.state-consistency@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/know-which-tool-is-running",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/know-which-tool-is-running",
-        "target": "majordomus://application/ci-gated-project",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/know-which-tool-is-running",
-        "target": "majordomus://claim/exit-code-contract",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/let-the-provider-draw-the-episode-boundary",
-        "target": "capability:continuity.state",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/let-the-provider-draw-the-episode-boundary",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/let-the-provider-draw-the-episode-boundary",
-        "target": "majordomus://application/long-running-work",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/let-the-provider-draw-the-episode-boundary",
-        "target": "majordomus://application/several-agents-one-repository",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/let-the-provider-draw-the-episode-boundary",
-        "target": "majordomus://claim/prompt-capture",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/let-the-provider-draw-the-episode-boundary",
-        "target": "majordomus://claim/session-lifecycle",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/let-the-provider-draw-the-episode-boundary",
-        "target": "majordomus://claim/session-records",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/let-the-provider-draw-the-episode-boundary",
-        "target": "majordomus://rule/majordomus.prompt-capture@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/let-the-provider-draw-the-episode-boundary",
-        "target": "majordomus://rule/majordomus.session-lifecycle@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/let-the-provider-draw-the-episode-boundary",
-        "target": "majordomus://rule/majordomus.session-records@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/migrate-from-the-old-layout",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/migrate-from-the-old-layout",
-        "target": "majordomus://application/repository-with-authored-governance",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/migrate-from-the-old-layout",
-        "target": "majordomus://claim/ai-layer-manifest",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/migrate-from-the-old-layout",
-        "target": "majordomus://claim/legacy-migration",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/migrate-from-the-old-layout",
-        "target": "majordomus://rule/majordomus.ai-layout-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/migrate-from-the-old-layout",
-        "target": "majordomus://rule/majordomus.layout-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/open-and-close-a-session",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/open-and-close-a-session",
-        "target": "majordomus://application/long-running-work",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/open-and-close-a-session",
-        "target": "majordomus://application/several-agents-one-repository",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/open-and-close-a-session",
-        "target": "majordomus://claim/event-vocabulary",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/open-and-close-a-session",
-        "target": "majordomus://claim/history-ledger-read",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/open-and-close-a-session",
-        "target": "majordomus://claim/ledger-integrity",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/open-and-close-a-session",
-        "target": "majordomus://claim/session-records",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/open-and-close-a-session",
-        "target": "majordomus://rule/majordomus.ledger-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/open-and-close-a-session",
-        "target": "majordomus://rule/majordomus.session-records@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/plan-a-commit-and-judge-its-message",
-        "target": "capability:commit.history",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/plan-a-commit-and-judge-its-message",
-        "target": "capability:commit.plan",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/plan-a-commit-and-judge-its-message",
-        "target": "capability:commit.scopes",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/plan-a-commit-and-judge-its-message",
-        "target": "capability:commit.validate",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/plan-a-commit-and-judge-its-message",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/plan-a-commit-and-judge-its-message",
-        "target": "majordomus://claim/commit-message-is-judged",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/plan-a-commit-and-judge-its-message",
-        "target": "majordomus://claim/commit-plan-is-refusable",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/plan-a-commit-and-judge-its-message",
-        "target": "majordomus://claim/commit-scopes-are-learned",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/plan-a-commit-and-judge-its-message",
-        "target": "majordomus://rule/majordomus.enforcement-wiring@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/plan-the-work-as-data",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/plan-the-work-as-data",
-        "target": "majordomus://application/ci-gated-project",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/plan-the-work-as-data",
-        "target": "majordomus://application/long-running-work",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/plan-the-work-as-data",
-        "target": "majordomus://claim/dag-validation",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/plan-the-work-as-data",
-        "target": "majordomus://claim/execution-waves",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/plan-the-work-as-data",
-        "target": "majordomus://claim/project-schema",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/plan-the-work-as-data",
-        "target": "majordomus://claim/project-status-derived",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/plan-the-work-as-data",
-        "target": "majordomus://rule/majordomus.dag-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/plan-the-work-as-data",
-        "target": "majordomus://rule/majordomus.project-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/prove-a-rule-is-enforced",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/prove-a-rule-is-enforced",
-        "target": "majordomus://application/ci-gated-project",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/prove-a-rule-is-enforced",
-        "target": "majordomus://application/repository-with-authored-governance",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/prove-a-rule-is-enforced",
-        "target": "majordomus://claim/doctrine-class-decides",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/prove-a-rule-is-enforced",
-        "target": "majordomus://claim/doctrine-registry",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/prove-a-rule-is-enforced",
-        "target": "majordomus://claim/reproduce-command",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/prove-a-rule-is-enforced",
-        "target": "majordomus://claim/wiring-reconciliation",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/prove-a-rule-is-enforced",
-        "target": "majordomus://rule/majordomus.doctrine-wiring-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/prove-a-rule-is-enforced",
-        "target": "majordomus://rule/majordomus.enforcement-wiring@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/prove-performance-with-benchmarks",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/prove-performance-with-benchmarks",
-        "target": "majordomus://application/ci-gated-project",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/prove-performance-with-benchmarks",
-        "target": "majordomus://claim/benchmark-coverage-derived",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/prove-performance-with-benchmarks",
-        "target": "majordomus://claim/hot-path-no-rebuild",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/prove-performance-with-benchmarks",
-        "target": "majordomus://claim/rust-evidence-gates",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/prove-performance-with-benchmarks",
-        "target": "majordomus://claim/rust-hot-path-benchmarks",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/prove-performance-with-benchmarks",
-        "target": "majordomus://rule/majordomus.enforcement-wiring@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/prove-performance-with-benchmarks",
-        "target": "majordomus://rule/majordomus.policy-completeness@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/prove-performance-with-benchmarks",
-        "target": "majordomus://rule/majordomus.verification-integrity@1",
-        "kind": "exercises"
-      },
-      {
         "source": "module:artifacts",
         "target": "capability:artifacts.list",
         "kind": "composes"
@@ -62475,12 +61622,22 @@
       },
       {
         "source": "module:integration",
+        "target": "capability:integration.cleanup",
+        "kind": "composes"
+      },
+      {
+        "source": "module:integration",
         "target": "capability:integration.events",
         "kind": "composes"
       },
       {
         "source": "module:integration",
         "target": "capability:integration.explain",
+        "kind": "composes"
+      },
+      {
+        "source": "module:integration",
+        "target": "capability:integration.prove_dry_run",
         "kind": "composes"
       },
       {
@@ -63006,7 +62163,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4372,
+      "edges": 4284,
       "acyclic": true,
       "truncated": true
     }

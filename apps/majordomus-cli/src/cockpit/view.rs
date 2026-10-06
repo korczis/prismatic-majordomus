@@ -19,6 +19,7 @@ use std::sync::LazyLock;
 
 use crate::capability::CapabilityKind;
 use crate::design::DesignSystem;
+use crate::peers::parse_rfc3339;
 
 use super::html::{el, empty, El, Node};
 use super::nav::{Area, Count, Navigation};
@@ -556,26 +557,6 @@ fn observed_age(o: &crate::index::AnswerObservation, now: std::time::SystemTime)
         120..=7199 => format!(" ({} min ago)", secs / 60),
         _ => format!(" ({} h ago)", secs / 3600),
     }
-}
-
-/// Seconds since the epoch of `YYYY-MM-DDTHH:MM:SSZ`, the one shape [`crate::peers::rfc3339`]
-/// writes.
-fn parse_rfc3339(s: &str) -> Option<u64> {
-    let b = s.as_bytes();
-    if b.len() != 20 || b[19] != b'Z' {
-        return None;
-    }
-    let n = |r: std::ops::Range<usize>| s.get(r)?.parse::<i64>().ok();
-    let (y, mo, d) = (n(0..4)?, n(5..7)?, n(8..10)?);
-    let (h, mi, se) = (n(11..13)?, n(14..16)?, n(17..19)?);
-    // days-from-civil, Howard Hinnant's algorithm: the inverse of the one peers::rfc3339 uses
-    let y = if mo <= 2 { y - 1 } else { y };
-    let era = y.div_euclid(400);
-    let yoe = y - era * 400;
-    let doy = (153 * (if mo > 2 { mo - 3 } else { mo + 9 }) + 2) / 5 + d - 1;
-    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
-    let days = era * 146_097 + doe - 719_468;
-    u64::try_from(days * 86_400 + h * 3600 + mi * 60 + se).ok()
 }
 
 /// The word for a capability kind, as a badge.

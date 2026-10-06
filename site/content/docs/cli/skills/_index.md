@@ -4,7 +4,7 @@ description = "Every skill as a proven capability: the tests that name it and th
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 193
+weight = 195
 [extra]
 route = "/docs/cli/skills/"
 command = "majordomus skills"

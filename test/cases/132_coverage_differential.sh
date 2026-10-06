@@ -147,3 +147,45 @@ done
 grep -q 'XXX' "$LOG" && { cat "$LOG"; echo "    the export was written to a literal template name"; exit 1; }
 [ "$(sort -u "$LOG" | wc -l | tr -d ' ')" = 2 ] \
   || { cat "$LOG"; echo "    two measurements wrote to one export file"; exit 1; }
+
+# ------------------------------- 7. a unit-test module in a file of its own is test code
+#
+# `src/<dir>/tests.rs`, declared by its parent as `#[cfg(test)] mod tests;`, is compiled only
+# into the test build, as an inline `#[cfg(test)] mod tests { ... }` is, so its lines are test
+# code and owe nothing. The attribute is in the parent: a gate reading the file alone called a
+# test stub product code and demanded a test for it. Without the declaration, the same file is
+# an ordinary module and its uncovered changed line fails.
+W7="$T/repo7"; REL7="apps/majordomus-cli/src/demo/tests.rs"
+mkdir -p "$W7/$(dirname "$REL7")" "$W7/scripts/ci"
+git -C "$W7" init -q; git -C "$W7" config user.email t@example.com; git -C "$W7" config user.name t
+cp "$FX_SRC" "$W7/$REL7"
+printf 'pub fn demo() {}\n\n#[cfg(test)]\nmod tests;\n' > "$W7/apps/majordomus-cli/src/demo/mod.rs"
+cp "$ROOT/scripts/rust-coverage" "$W7/scripts/rust-coverage"; chmod +x "$W7/scripts/rust-coverage"
+cp "$ROOT/scripts/ci/coverage-differential" "$W7/scripts/ci/coverage-differential"; chmod +x "$W7/scripts/ci/coverage-differential"
+git -C "$W7" add -A >/dev/null; git -C "$W7" commit -qm base
+BASE7="$(git -C "$W7" rev-parse HEAD)"
+FX7="$T/export7.json"
+W="$W7" REL="$REL7" python3 - "$FX_EXP" "$FX7" <<'PY'
+import json, os, sys
+data = json.load(open(sys.argv[1]))
+target = os.path.join(os.environ["W"], os.environ["REL"])
+for f in data["data"][0].get("files", []):
+    if f["filename"] == "SAMPLE_ABS":
+        f["filename"] = target
+for fn in data["data"][0].get("functions", []):
+    fn["filenames"] = [target if n == "SAMPLE_ABS" else n for n in fn.get("filenames", [])]
+json.dump(data, open(sys.argv[2], "w"))
+PY
+cov7() { ( cd "$W7" && MJ_ROOT="$W7" MJ_COVERAGE_EXPORT="$FX7" scripts/ci/coverage-differential "$1" ); }
+python3 - "$W7/$REL7" <<'PY'
+import sys
+path = sys.argv[1]
+lines = open(path).read().splitlines(keepends=True)
+lines[5] = lines[5].rstrip("\n") + "  // touched by 132\n"
+open(path, "w").writelines(lines)
+PY
+expect_exit 0 cov7 "$BASE7"
+# the same file, no longer declared a test module: its uncovered changed line is owed
+printf 'pub fn demo() {}\n\nmod tests;\n' > "$W7/apps/majordomus-cli/src/demo/mod.rs"
+expect_exit 10 cov7 "$BASE7"
+expect_grep "$REL7:6"
