@@ -794,6 +794,13 @@ pub fn issue(ctx: &Context, id: &str) -> Page {
         Ok(t) => t,
         Err(e) => return failed(Area::Plan, id, e),
     };
+    issue_page(ctx, id, &task)
+}
+
+/// The issue page over what `devtask.issue` answered. Separate from [`issue`] so that an
+/// answer the page does not ask for itself — `git: false`, where `git_consulted` is false —
+/// is rendered by the same code a reader reaches.
+fn issue_page(ctx: &Context, id: &str, task: &DevTask) -> Page {
     if !task.declared {
         return undeclared("issue", id);
     }
@@ -982,5 +989,375 @@ fn count_or_unknown(value: &AttestedCount) -> El {
     match value.value {
         Some(n) => mono(n.to_string()),
         None => el("span").class("mj-note").text("unknown"),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::capability::builtin;
+    use crate::capability::CapabilityRegistry;
+    use crate::synthetic::SyntheticRepository;
+    use std::sync::Arc;
+
+    // ------------------------------------------------------------- the values
+
+    fn html(node: Node) -> String {
+        el("div").node(node).render()
+    }
+
+    /// A gate in a list of issue ids is spelled `milestone:<id>` by `plan.issues`, and it
+    /// links the milestone; an empty list is a dash, never an empty cell.
+    #[test]
+    fn a_reference_links_what_it_names_and_an_empty_list_is_a_dash() {
+        assert!(plan_ref("milestone:m-first")
+            .render()
+            .contains("href=\"/cockpit/plan/milestones/m-first\""));
+        assert!(plan_ref("I0001")
+            .render()
+            .contains("href=\"/cockpit/plan/issues/I0001\""));
+        assert!(refs(&[]).render().contains('—'));
+        assert!(milestone_refs(&[]).render().contains('—'));
+        assert!(milestone_refs(&["m-first".to_string()])
+            .render()
+            .contains("href=\"/cockpit/plan/milestones/m-first\""));
+    }
+
+    /// A value `devtask` could not answer says so and why, and a value it answered carries
+    /// where it came from; an authored empty list is "none", an unread one is unknown.
+    #[test]
+    fn an_unknown_value_is_the_word_unknown_with_its_reason() {
+        assert!(unknown(None).render().contains(">unknown<"));
+        assert!(unknown(Some("no key")).render().contains("unknown: no key"));
+
+        let text = AttestedText::explicit("Ship it", "issues/I0001.yaml#title");
+        assert!(html(attested_text(&text)).contains("explicit · issues/I0001.yaml#title"));
+        let text = AttestedText::unknown("github", "not read here");
+        assert!(html(attested_text(&text)).contains("unknown: not read here"));
+
+        let count = AttestedCount::derived(3, "plan.issues");
+        assert!(html(attested_count(&count)).contains(">3<"));
+        let count = AttestedCount::unknown("git", "git was not asked");
+        assert!(html(attested_count(&count)).contains("unknown: git was not asked"));
+        assert!(count_or_unknown(&count).render().contains(">unknown<"));
+        assert!(count_or_unknown(&AttestedCount::explicit(2, "x"))
+            .render()
+            .contains(">2<"));
+
+        let mono_of = |v: &str| mono(v.to_string());
+        let none = AttestedList::explicit(vec![], "issues/I0001.yaml#scope");
+        assert!(html(attested_list(&none, mono_of)).contains(">none<"));
+        let unread = AttestedList::unknown("git", "git was not asked");
+        assert!(html(attested_list(&unread, mono_of)).contains("unknown: git was not asked"));
+        let some = AttestedList::derived(vec!["lib".into(), "docs".into()], "scope");
+        let shown = html(attested_list(&some, mono_of));
+        assert!(
+            shown.contains(">lib<") && shown.contains(">docs<"),
+            "{shown}"
+        );
+        assert!(shown.contains("derived · scope"), "{shown}");
+
+        assert!(attested_sentences(&unread)
+            .render()
+            .contains("unknown: git was not asked"));
+        assert!(attested_sentences(&none)
+            .render()
+            .contains("The record declares none."));
+        let criteria = AttestedList::explicit(vec!["It works".into()], "acceptance");
+        assert!(attested_sentences(&criteria)
+            .render()
+            .contains("mj-checklist-item"));
+
+        let milestone = AttestedText::explicit("m-first", "issues/I0001.yaml#milestone");
+        assert!(html(attested_list_one(&milestone)).contains("/cockpit/plan/milestones/m-first"));
+        let milestone = AttestedText::unknown("issues/I0001.yaml", "no milestone key");
+        assert!(html(attested_list_one(&milestone)).contains("unknown: no milestone key"));
+    }
+
+    /// Every finding is a row with the command that reproduces it.
+    #[test]
+    fn a_finding_is_a_row_with_its_reproduction() {
+        let shown = diagnostics_card(&[DevTaskDiagnostic {
+            level: "FAIL".into(),
+            code: "issue.cycle".into(),
+            message: "I0010 depends on itself".into(),
+            reproduce: "majordomus plan validate".into(),
+        }])
+        .render();
+        for part in [
+            "FAIL",
+            "issue.cycle",
+            "I0010 depends on itself",
+            "majordomus plan validate",
+        ] {
+            assert!(shown.contains(part), "{part}: {shown}");
+        }
+        assert!(diagnostics_card(&[])
+            .render()
+            .contains("Nothing is wrong with these records."));
+    }
+
+    // ------------------------------------------------------------- the pages
+
+    const SOURCES: &str = "
+  - id: milestone
+    kind: milestone
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/project/milestones/*.yaml'
+    required: false
+  - id: issue
+    kind: issue
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/project/issues/*.yaml'
+    required: false
+";
+
+    fn milestone_record(id: &str, order: u32, depends_on: &[&str]) -> String {
+        format!(
+            "id: {id}\ntitle: The milestone {id}\nslug: {id}\norder: {order}\npriority: p1\n\
+             problem: \"A problem.\"\noutcome: \"The outcome of {id}.\"\n\
+             depends_on: [{}]\nacceptance_criteria:\n  - It is reached\n\
+             validation:\n  - \"true\"\nevidence_required:\n  - proof\n",
+            depends_on.join(", ")
+        )
+    }
+
+    fn issue_record(id: &str, milestone: &str, scope: &str, depends_on: &[&str]) -> String {
+        format!(
+            "id: {id}\nmilestone: {milestone}\ntitle: The work of {id}\nslug: work-{id}\n\
+             priority: p1\nprofile: implementation\nobjective: \"Do {id}.\"\n\
+             scope:\n  - {scope}\ndepends_on: [{}]\nacceptance_criteria:\n  - {id} is done\n\
+             validation:\n  - \"true\"\nevidence_required:\n  - proof\n",
+            depends_on.join(", ")
+        )
+    }
+
+    /// A repository with a plan: `m-first` holds a ready issue, one waiting on it and one
+    /// that shares its scope; `m-second` waits on `m-first` and holds nothing; `m-loop`
+    /// holds two issues that wait on each other.
+    fn planned() -> SyntheticRepository {
+        let repo = SyntheticRepository::small().expect("a synthetic repository");
+        // `devtask.issue` traces an issue through git, and refuses a directory that is not
+        // a git work tree; the index itself is read from the filesystem
+        assert!(std::process::Command::new("git")
+            .arg("-C")
+            .arg(repo.root())
+            .args(["init", "-q"])
+            .status()
+            .expect("git")
+            .success());
+        let write = |rel: &str, body: &str| {
+            let path = repo.root().join(rel);
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(path, body).unwrap();
+        };
+        let sources = repo.root().join(".ai/repo/knowledge/sources.yaml");
+        let mut text = std::fs::read_to_string(&sources).unwrap();
+        text.push_str(SOURCES);
+        std::fs::write(&sources, text).unwrap();
+        write(
+            ".ai/repo/project/project.yaml",
+            "schema_version: 1\nname: Synthetic\nrepository: example/synthetic\ndefault_branch: master\n",
+        );
+        for (id, order, deps) in [
+            ("m-first", 0, vec![]),
+            ("m-second", 1, vec!["m-first"]),
+            ("m-loop", 2, vec![]),
+        ] {
+            write(
+                &format!(".ai/repo/project/milestones/{id}.yaml"),
+                &milestone_record(id, order, &deps),
+            );
+        }
+        for (id, milestone, scope, deps) in [
+            ("I0001", "m-first", "lib", vec![]),
+            ("I0002", "m-first", "docs", vec!["I0001"]),
+            ("I0003", "m-first", "lib", vec![]),
+            ("I0010", "m-loop", "lib", vec!["I0011"]),
+            ("I0011", "m-loop", "lib", vec!["I0010"]),
+        ] {
+            write(
+                &format!(".ai/repo/project/issues/{id}.yaml"),
+                &issue_record(id, milestone, scope, &deps),
+            );
+        }
+        repo
+    }
+
+    /// A context over `repo` whose executable lacks the capabilities in `without`: the
+    /// shape of an executable that does not carry them, which is what each page's refusal
+    /// arm answers.
+    fn context(repo: &SyntheticRepository, without: &[&str]) -> Context {
+        let index = repo.index().expect("the synthetic repository indexes");
+        let modules = builtin::modules()
+            .into_iter()
+            .map(|mut m| {
+                m.capabilities
+                    .retain(|e| !without.contains(&e.capability.id.as_str()));
+                m
+            })
+            .collect();
+        let registry = CapabilityRegistry::builder()
+            .with_modules(modules)
+            .with_index(&index)
+            .build()
+            .expect("the registry builds");
+        Context::new(Arc::new(index), Arc::new(registry))
+    }
+
+    fn query(pairs: &[(&str, &str)]) -> Vec<(String, String)> {
+        pairs
+            .iter()
+            .map(|(k, v)| (k.to_string(), v.to_string()))
+            .collect()
+    }
+
+    /// Each capability a page reads is one it may not find, and the page then says which
+    /// one did not answer, with a 500 — never a page rendered from half an answer.
+    #[test]
+    fn a_page_whose_capability_does_not_answer_says_so() {
+        let repo = planned();
+        for missing in ["plan.roadmap", "plan.next", "plan.issues"] {
+            let page = plan(&context(&repo, &[missing]), &[]);
+            assert_eq!(page.status, 500, "without {missing}");
+            assert!(
+                page.main.render().contains("did not answer"),
+                "without {missing}: {}",
+                page.main.render()
+            );
+        }
+        let page = milestone(&context(&repo, &["devtask.milestone"]), "m-first");
+        assert_eq!(page.status, 500);
+        let page = issue(&context(&repo, &["devtask.issue"]), "I0001");
+        assert_eq!(page.status, 500);
+    }
+
+    /// The plan page over a plan: the roadmap's `now` and `next`, a milestone waiting on
+    /// another, an issue waiting on another, and a filter that narrows.
+    #[test]
+    fn the_plan_page_shows_the_roadmap_and_what_waits_on_what() {
+        let repo = planned();
+        let ctx = context(&repo, &[]);
+        let page = plan(&ctx, &[]);
+        let body = page.main.render();
+        assert_eq!(page.status, 200, "{body}");
+        assert!(body.contains(">now<"), "{body}");
+        assert!(body.contains(">next<"), "{body}");
+        assert!(body.contains("The milestone m-second"), "{body}");
+        assert!(
+            body.contains("href=\"/cockpit/plan/issues/I0001\""),
+            "{body}"
+        );
+        assert!(!body.contains("Every issue<"), "unfiltered: {body}");
+
+        let page = plan(&ctx, &query(&[("milestone", "m-first"), ("wave", "0")]));
+        let body = page.main.render();
+        assert_eq!(page.status, 200, "{body}");
+        assert!(body.contains("Every issue"), "{body}");
+    }
+
+    /// A plan with nothing in it: no milestone, no issue, and nothing to hand out.
+    #[test]
+    fn an_empty_plan_says_there_is_nothing_in_it() {
+        let repo = SyntheticRepository::small().expect("a synthetic repository");
+        let page = plan(&context(&repo, &[]), &[]);
+        let body = page.main.render();
+        assert_eq!(page.status, 200, "{body}");
+        assert!(body.contains("The plan declares no milestone."), "{body}");
+        assert!(body.contains("The plan declares no issue."), "{body}");
+        assert!(!body.contains("Every issue<"), "{body}");
+    }
+
+    /// A milestone page carries what holds the most back, what may run together and what
+    /// is serialised by scope; a milestone with no issue says so; a cycle is an alert.
+    #[test]
+    fn the_milestone_page_shows_blockers_parallel_work_and_cycles() {
+        let repo = planned();
+        let ctx = context(&repo, &[]);
+
+        let page = milestone(&ctx, "m-first");
+        let body = page.main.render();
+        assert_eq!(page.status, 200, "{body}");
+        assert!(body.contains("What holds the most back"), "{body}");
+        assert!(
+            !body.contains("No unfinished issue holds another back."),
+            "{body}"
+        );
+        assert!(body.contains("both touch lib"), "{body}");
+
+        let page = milestone(&ctx, "m-second");
+        let body = page.main.render();
+        assert_eq!(page.status, 200, "{body}");
+        assert!(body.contains("This milestone has no issue."), "{body}");
+        assert!(body.contains("Nothing here can be started now."), "{body}");
+        assert!(
+            body.contains("href=\"/cockpit/plan/milestones/m-first\""),
+            "m-second depends on m-first: {body}"
+        );
+
+        let page = milestone(&ctx, "m-loop");
+        let body = page.main.render();
+        assert!(body.contains("go round in a circle"), "{body}");
+
+        let page = milestone(&ctx, "m-none");
+        assert_eq!(page.status, 404);
+    }
+
+    /// An issue waiting on another names what is in the way; an undeclared issue is a 404.
+    #[test]
+    fn the_issue_page_names_what_is_in_the_way() {
+        let repo = planned();
+        let ctx = context(&repo, &[]);
+        let page = issue(&ctx, "I0002");
+        let body = page.main.render();
+        assert_eq!(page.status, 200, "{body}");
+        assert!(body.contains("In the way"), "{body}");
+        assert!(!body.contains("git was not asked"), "{body}");
+        assert_eq!(page.scripts, vec!["plan.js"]);
+
+        assert_eq!(issue(&ctx, "I9999").status, 404);
+    }
+
+    /// An answer given without git — `devtask.issue` asked with `git: false` — renders the
+    /// page with the note that branches, commits and sessions are not known, rather than
+    /// empty lists that would read as "nothing realised this issue".
+    #[test]
+    fn an_issue_answered_without_git_says_git_was_not_asked() {
+        let repo = planned();
+        let ctx = context(&repo, &[]);
+        let task: DevTask = ask(
+            &ctx,
+            "devtask.issue",
+            json!({ "issue": "I0001", "git": false }),
+        )
+        .expect("devtask.issue answers without git");
+        assert!(!task.execution.git_consulted);
+        let page = issue_page(&ctx, "I0001", &task);
+        let body = page.main.render();
+        assert_eq!(page.status, 200, "{body}");
+        assert!(body.contains("git was not asked"), "{body}");
+    }
+
+    /// The moves are offered only when the executable carries `plan.transition` and can
+    /// start and follow an execution over HTTP; otherwise the card says which is missing.
+    #[test]
+    fn the_moves_say_what_the_executable_lacks() {
+        let repo = planned();
+        let card = moves(&context(&repo, &["plan.transition"]), "I0001", true).render();
+        assert!(card.contains("no `plan.transition`"), "{card}");
+        assert!(!card.contains("data-mj-move"), "{card}");
+
+        for missing in ["executions.start", "executions.get"] {
+            let card = moves(&context(&repo, &[missing]), "I0001", true).render();
+            assert!(
+                card.contains("starts no execution over HTTP"),
+                "without {missing}: {card}"
+            );
+        }
+
+        let card = moves(&context(&repo, &[]), "I0001", true).render();
+        assert!(card.contains("mj-button mj-button--primary"), "{card}");
+        let card = moves(&context(&repo, &[]), "I0002", false).render();
+        assert!(!card.contains("mj-button--primary"), "{card}");
     }
 }
