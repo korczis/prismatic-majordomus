@@ -780,9 +780,11 @@ commit is `proven` at that commit, `inputs_unchanged` at a later commit that did
 inputs, and `stale` at one that did. `proven` and `inputs_unchanged` are never collapsed into one
 state, because the second is an inference about relevance and the first is not.
 
-The evidence capabilities
-(`jq -r '.capabilities[] | select(.id | startswith("evidence.")) | .id' docs/generated/registry.json`)
-are the report, one claim, one test, and `evidence.record` — the only writer, command-line only.
+The evidence capabilities are declared once in
+`apps/majordomus-cli/src/capability/builtin/evidence.rs` and listed by
+`jq -r '.capabilities[] | select(.id | startswith("evidence.")) | .id' docs/generated/registry.json`:
+the report, one claim, one test, the recording and the stamp. `evidence.record` is the only
+writer and is command-line only, and so is `evidence.stamp`, which reads a path its caller names.
 
 ## One doctrine traced: scope integrity
 

@@ -1930,7 +1930,7 @@ pub struct EvidenceArgs {
     pub repo: RepoArgs,
 
     #[command(subcommand)]
-    /// `show`, `claim`, `proves` or `record`. Required: the group runs nothing of its own,
+    /// `show`, `claim`, `proves`, `record` or `stamp`. Required: the group runs nothing of its own,
     /// so that every runnable path here is one a capability declares
     /// rather than one classified command-line-only in `cli::local`.
     pub command: EvidenceCommand,
@@ -1947,7 +1947,9 @@ pub struct EvidenceArgs {
 /// `show`, `claim` and `proves` are the command line of `evidence.report`,
 /// `evidence.claim` and `evidence.test`; `record` is the command line of
 /// `evidence.record`, which is a command line and nothing else because it writes a tracked
-/// file and this server is read-only. The capability is `evidence.test` and the command is
+/// file and this server is read-only; `stamp` is the command line of `evidence.stamp`, a
+/// read offered only here because it reads a path its caller names. The capability is
+/// `evidence.test` and the command is
 /// `proves` — `test` is a word the fish completion adapter refuses, so the command line
 /// spells the relation with the verb rather than renaming the identity.
 ///
@@ -1979,6 +1981,21 @@ pub struct EvidenceArgs {
 /// assert!(matches!(
 ///     parse(&["majordomus", "evidence", "record", "--suite", "tmp/report.tsv"]),
 ///     EvidenceCommand::Record { suite: Some(p), origin: None, .. } if p.ends_with("report.tsv")
+/// ));
+///
+/// // a run measures the checkout it left; the recording carries that measurement
+/// assert!(matches!(
+///     parse(&["majordomus", "evidence", "stamp", "--report", "suite.tsv", "--exclude", "dist"]),
+///     EvidenceCommand::Stamp { report: Some(r), exclude, .. }
+///         if r.ends_with("suite.tsv") && exclude == ["dist"]
+/// ));
+/// assert!(matches!(
+///     parse(&[
+///         "majordomus", "evidence", "record", "--suite", "s.tsv", "--provenance", "p.json",
+///         "--provenance", "crate=c.json", "--ledger", "local",
+///     ]),
+///     EvidenceCommand::Record { provenance, ledger: Some(l), .. }
+///         if provenance == ["p.json", "crate=c.json"] && l == "local"
 /// ));
 /// ```
 pub enum EvidenceCommand {
@@ -2035,6 +2052,34 @@ pub enum EvidenceCommand {
         /// Where the run happened: local (the default), ci or release
         #[arg(long)]
         origin: Option<String>,
+        /// The file `evidence stamp --out` wrote; prefix `suite=`, `crate=` or `coverage=`
+        /// when the file names no producer and several reports are given
+        #[arg(long, value_name = "[PRODUCER=]FILE")]
+        provenance: Vec<String>,
+        /// The summary `scripts/rust-coverage --summary-json` wrote
+        #[arg(long)]
+        coverage: Option<PathBuf>,
+        /// repo (the default) or local
+        #[arg(long)]
+        ledger: Option<String>,
+        /// Also write the run record to this file
+        #[arg(long)]
+        run_record: Option<PathBuf>,
+    },
+    /// Measure the checkout as a run left it, for `record --provenance`
+    Stamp {
+        /// The producer whose run this is: suite, crate or coverage
+        #[arg(long)]
+        producer: Option<String>,
+        /// The report the run wrote
+        #[arg(long)]
+        report: Option<PathBuf>,
+        /// One of the run's own untracked outputs (a file, or a directory with everything under it)
+        #[arg(long)]
+        exclude: Vec<String>,
+        /// Write the measurement to this file
+        #[arg(long)]
+        out: Option<PathBuf>,
     },
 }
 
@@ -4303,6 +4348,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["evidence", "record", "--suite", "target/no-such-run.tsv"],
             setup: &[],
             expect: Expect::ExitCode(13),
+        }],
+    },
+    CommandExamples {
+        command: "evidence stamp",
+        examples: &[ExampleDoc {
+            id: "evidence-stamp-json",
+            title: "What a run measured, as one document",
+            description: "The measurement a runner takes when its run ends: the commit, the tree with the evidence ledger ignored and the run's own untracked outputs excluded, the producer, its toolchain, the recorder's version and the host. `evidence record --provenance` carries it into the executions of that run's report.",
+            argv: &["evidence", "stamp", "--producer", "suite", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/producer", "/commit", "/working_tree", "/recorder", "/host"]),
         }],
     },
     CommandExamples {

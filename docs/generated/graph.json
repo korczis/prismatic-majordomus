@@ -510,6 +510,15 @@
         "status": "query"
       },
       {
+        "id": "capability:evidence.stamp",
+        "kind": "capability",
+        "label": "evidence.stamp",
+        "summary": "Measure the tree a run left behind",
+        "route": "/cockpit/capabilities/evidence.stamp",
+        "source": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:evidence.test",
         "kind": "capability",
         "label": "evidence.test",
@@ -5431,6 +5440,21 @@
         }
       },
       {
+        "id": "majordomus://claim/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "kind": "claim",
+        "label": "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "summary": "A crate test binary that ran no test or only a filtered subset is recorded as a skip, one with a failed test as a failure and one that printed no result as an error, whatever colour codes its output carries, and what no claim can name yet is listed as dropped",
+        "route": "/cockpit/objects/claim/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/evidence/record.rs",
+          "responsibility": "none",
+          "source": "docs/EVIDENCE.md",
+          "test": "test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/evidence-a-failure-outranks-an-absence",
         "kind": "claim",
         "label": "evidence-a-failure-outranks-an-absence",
@@ -5444,6 +5468,21 @@
           "responsibility": "none",
           "source": "docs/EVIDENCE.md",
           "test": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/evidence-a-recording-is-a-typed-run",
+        "kind": "claim",
+        "label": "evidence-a-recording-is-a-typed-run",
+        "summary": "Every recording yields a run record naming its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary joins it only bound to the commit and tree it was measured on",
+        "route": "/cockpit/objects/claim/evidence-a-recording-is-a-typed-run",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/evidence/run.rs",
+          "responsibility": "none",
+          "source": "docs/EVIDENCE.md",
+          "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
         }
       },
       {
@@ -5508,6 +5547,23 @@
           "responsibility": "none",
           "source": "docs/EVIDENCE.md",
           "test": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/evidence-local-recording-stays-local",
+        "kind": "claim",
+        "label": "evidence-local-recording-stays-local",
+        "summary": "A recording made with --ledger local writes only the ignored local ledger, changes no tracked file and moves no verdict",
+        "route": "/cockpit/objects/claim/evidence-local-recording-stays-local",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A recording made with --ledger local writes only the ignored local ledger, changes no tracked file and moves no verdict",
+          "implementation": "apps/majordomus-cli/src/evidence/ledger.rs",
+          "note": "The local ledger lives under .ai/local/evidence/, which the repository ignores; the tracked ledger stays the only authority a verdict is derived from.",
+          "responsibility": "none",
+          "source": "docs/EVIDENCE.md",
+          "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
         }
       },
       {
@@ -5602,6 +5658,21 @@
           "responsibility": "none",
           "source": "docs/EVIDENCE.md",
           "test": "test/cases/507_evidence_subjects_are_derived.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/evidence-tree-is-measured-by-the-run",
+        "kind": "claim",
+        "label": "evidence-tree-is-measured-by-the-run",
+        "summary": "A recorded execution carries the commit and the tree that its run's own measurement stated, a measurement that names the report it belongs to and never hides a tracked change; a measurement of another commit or another report is refused, a local measurement that names no report is refused, a CI report without a measurement is refused, and a report recorded without one carries an unknown tree, which never reads proven",
+        "route": "/cockpit/objects/claim/evidence-tree-is-measured-by-the-run",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/evidence/record.rs",
+          "responsibility": "none",
+          "source": "docs/EVIDENCE.md",
+          "test": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
         }
       },
       {
@@ -11204,12 +11275,28 @@
         "source": "docs/claims/event-vocabulary.md"
       },
       {
+        "id": "majordomus://document/docs/claims/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass.md",
+        "kind": "document",
+        "label": "docs/claims/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass.md",
+        "summary": "A crate test binary that ran no test or only a filtered subset is recorded as a skip, one with a failed test as a failure and one that printed no result as an error, whatever colour codes its output carries, and what no claim can name yet is listed as dropped",
+        "route": "/cockpit/objects/document/docs-claims-evidence-a-crate-binary-that-ran-nothing-is-not-a-pass-md",
+        "source": "docs/claims/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/evidence-a-failure-outranks-an-absence.md",
         "kind": "document",
         "label": "docs/claims/evidence-a-failure-outranks-an-absence.md",
         "summary": "A rule with a failing test reads failing whatever its other tests say",
         "route": "/cockpit/objects/document/docs-claims-evidence-a-failure-outranks-an-absence-md",
         "source": "docs/claims/evidence-a-failure-outranks-an-absence.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/evidence-a-recording-is-a-typed-run.md",
+        "kind": "document",
+        "label": "docs/claims/evidence-a-recording-is-a-typed-run.md",
+        "summary": "Every recording yields a run record naming its commit, the tree each report's run measured, its totals and what was absent, dropped or unknown, and a coverage summary joins it only bound to the commit and tree it was measured on",
+        "route": "/cockpit/objects/document/docs-claims-evidence-a-recording-is-a-typed-run-md",
+        "source": "docs/claims/evidence-a-recording-is-a-typed-run.md"
       },
       {
         "id": "majordomus://document/docs/claims/evidence-a-skip-is-not-run.md",
@@ -11242,6 +11329,14 @@
         "summary": "A claim reads proven only when its run is contained in the presented revision, nothing but the ledger changed since, and both trees were their commits",
         "route": "/cockpit/objects/document/docs-claims-evidence-judged-at-the-presented-revision-md",
         "source": "docs/claims/evidence-judged-at-the-presented-revision.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/evidence-local-recording-stays-local.md",
+        "kind": "document",
+        "label": "docs/claims/evidence-local-recording-stays-local.md",
+        "summary": "A recording made with --ledger local writes only the ignored local ledger, changes no tracked file and moves no verdict",
+        "route": "/cockpit/objects/document/docs-claims-evidence-local-recording-stays-local-md",
+        "source": "docs/claims/evidence-local-recording-stays-local.md"
       },
       {
         "id": "majordomus://document/docs/claims/evidence-navigates-both-ways.md",
@@ -11290,6 +11385,14 @@
         "summary": "Every claim, rule, feature, command, capability, MCP tool and use case the repository declares is an evidence subject whose members and tests are derived from declarations that already exist, and a committed subject index that differs from that derivation is refused",
         "route": "/cockpit/objects/document/docs-claims-evidence-subjects-are-derived-md",
         "source": "docs/claims/evidence-subjects-are-derived.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/evidence-tree-is-measured-by-the-run.md",
+        "kind": "document",
+        "label": "docs/claims/evidence-tree-is-measured-by-the-run.md",
+        "summary": "A recorded execution carries the commit and the tree that its run's own measurement stated, a measurement that names the report it belongs to and never hides a tracked change; a measurement of another commit or another report is refused, a local measurement that names no report is refused, a CI report without a measurement is refused, and a report recorded without one carries an unknown tree, which never reads proven",
+        "route": "/cockpit/objects/document/docs-claims-evidence-tree-is-measured-by-the-run-md",
+        "source": "docs/claims/evidence-tree-is-measured-by-the-run.md"
       },
       {
         "id": "majordomus://document/docs/claims/evidence-unsupported-guarantee-is-reported.md",
@@ -13382,7 +13485,11 @@
             "evidence-unsupported-guarantee-is-reported",
             "evidence-judged-at-the-presented-revision",
             "evidence-a-skip-is-not-run",
-            "evidence-a-failure-outranks-an-absence"
+            "evidence-a-failure-outranks-an-absence",
+            "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+            "evidence-tree-is-measured-by-the-run",
+            "evidence-a-recording-is-a-typed-run",
+            "evidence-local-recording-stays-local"
           ],
           "commands": [
             "evidence"
@@ -38241,6 +38348,20 @@
         "source": "test/cases/504_public_text_is_redacted_once.sh"
       },
       {
+        "id": "majordomus://test/test/cases/505_a_recording_carries_what_its_run_measured.sh",
+        "kind": "test",
+        "label": "test/cases/505_a_recording_carries_what_its_run_measured.sh",
+        "route": "/cockpit/objects/test/test-cases-505-a-recording-carries-what-its-run-measured-sh",
+        "source": "test/cases/505_a_recording_carries_what_its_run_measured.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+        "kind": "test",
+        "label": "test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+        "route": "/cockpit/objects/test/test-cases-506-a-crate-binary-that-ran-nothing-is-not-a-pass-sh",
+        "source": "test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/507_evidence_subjects_are_derived.sh",
         "kind": "test",
         "label": "test/cases/507_evidence_subjects_are_derived.sh",
@@ -40858,475 +40979,6 @@
         }
       },
       {
-        "id": "majordomus://use-case/resume-from-a-prompt-asset",
-        "kind": "use-case",
-        "label": "resume-from-a-prompt-asset",
-        "summary": "Start a session from a rendered framing, not a pasted transcript",
-        "route": "/cockpit/objects/use-case/resume-from-a-prompt-asset",
-        "source": ".ai/repo/use-cases/resume-from-a-prompt-asset.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "agent"
-          ],
-          "applications": [
-            "long-running-work",
-            "several-agents-one-repository"
-          ],
-          "category": "continuity",
-          "claims": [
-            "prompt-asset",
-            "prompt-assets",
-            "context-assembly",
-            "minimum-context"
-          ],
-          "commands": [
-            "prompt",
-            "context"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.prompt-integrity",
-            "majordomus.context-budget"
-          ],
-          "responsibilities": [
-            "policy",
-            "profiles"
-          ],
-          "summary": "List the prompt assets the repository ships, render one against the durable state, and read the context it embeds.",
-          "target": "guaranteed"
-        }
-      },
-      {
-        "id": "majordomus://use-case/resume-in-the-right-worktree",
-        "kind": "use-case",
-        "label": "resume-in-the-right-worktree",
-        "summary": "Resume in the right worktree, never against somebody else’s task",
-        "route": "/cockpit/objects/use-case/resume-in-the-right-worktree",
-        "source": ".ai/repo/use-cases/resume-in-the-right-worktree.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "agent"
-          ],
-          "applications": [
-            "several-agents-one-repository"
-          ],
-          "category": "continuity",
-          "claims": [
-            "record-resolution",
-            "worktree-ownership",
-            "divergence-label",
-            "local-state-ignored"
-          ],
-          "commands": [
-            "handover",
-            "check",
-            "context"
-          ],
-          "difficulty": "intermediate",
-          "doctrines": [
-            "majordomus.handover-integrity",
-            "majordomus.state-consistency",
-            "majordomus.scope-integrity"
-          ],
-          "responsibilities": [
-            "handover",
-            "state",
-            "scope"
-          ],
-          "summary": "Find the handover that belongs to this worktree and branch, and see a task record from another checkout reported as foreign rather than enforced here.",
-          "target": "guaranteed",
-          "weight": 32
-        }
-      },
-      {
-        "id": "majordomus://use-case/run-several-workers-at-once",
-        "kind": "use-case",
-        "label": "run-several-workers-at-once",
-        "summary": "Run several workers in one repository without them colliding",
-        "route": "/cockpit/objects/use-case/run-several-workers-at-once",
-        "source": ".ai/repo/use-cases/run-several-workers-at-once.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "agent",
-            "operator"
-          ],
-          "applications": [
-            "several-agents-one-repository"
-          ],
-          "category": "workers",
-          "claims": [
-            "scope-enforcement",
-            "scoped-task",
-            "overlap-report",
-            "git-identity"
-          ],
-          "commands": [
-            "start",
-            "check",
-            "finish"
-          ],
-          "difficulty": "intermediate",
-          "doctrines": [
-            "majordomus.scope-integrity",
-            "majordomus.state-consistency"
-          ],
-          "responsibilities": [
-            "scope",
-            "state"
-          ],
-          "summary": "Give each worker a declared scope, and find out immediately when two of them claim the same paths.",
-          "target": "guaranteed",
-          "weight": 4
-        }
-      },
-      {
-        "id": "majordomus://use-case/say-what-reached-the-remote-and-what-did-not",
-        "kind": "use-case",
-        "label": "say-what-reached-the-remote-and-what-did-not",
-        "summary": "Say what reached the remote and what did not",
-        "route": "/cockpit/objects/use-case/say-what-reached-the-remote-and-what-did-not",
-        "source": ".ai/repo/use-cases/say-what-reached-the-remote-and-what-did-not.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "maintainer",
-            "agent"
-          ],
-          "applications": [],
-          "category": "completion",
-          "claims": [
-            "obligation-establishment"
-          ],
-          "commands": [
-            "evidence",
-            "check",
-            "finish"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.obligation-closure"
-          ],
-          "responsibilities": [
-            "finish"
-          ],
-          "summary": "The obligations that reach past the working tree are settled by asking git and the published site, so a report cannot call uncommitted work committed or unpushed work pushed.",
-          "target": "guaranteed",
-          "weight": 41
-        }
-      },
-      {
-        "id": "majordomus://use-case/say-what-the-tool-is-for",
-        "kind": "use-case",
-        "label": "say-what-the-tool-is-for",
-        "summary": "Say what your work is for, once, and have every surface say it",
-        "route": "/cockpit/objects/use-case/say-what-the-tool-is-for",
-        "source": ".ai/repo/use-cases/say-what-the-tool-is-for.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "maintainer",
-            "contributor"
-          ],
-          "applications": [
-            "repository-with-authored-governance",
-            "repository-opened-in-ai-clients"
-          ],
-          "category": "extension",
-          "claims": [
-            "why-catalogue-discovered",
-            "why-references-resolve",
-            "why-diagnosis-explainable",
-            "context-documents",
-            "schema-driven-kinds",
-            "interfaces-are-projections",
-            "mcp-data-driven",
-            "generated-projections-checked"
-          ],
-          "commands": [
-            "init",
-            "context",
-            "knowledge",
-            "doctor"
-          ],
-          "difficulty": "intermediate",
-          "doctrines": [
-            "majordomus.context-integrity",
-            "majordomus.ai-layout-integrity",
-            "majordomus.projection-integrity"
-          ],
-          "mcp_tools": [
-            "majordomus_why",
-            "majordomus_why_moment",
-            "majordomus_why_audiences",
-            "majordomus_why_areas",
-            "majordomus_why_diagnose",
-            "majordomus_why_validate"
-          ],
-          "responsibilities": [
-            "layer",
-            "projection",
-            "doctor"
-          ],
-          "summary": "Record an operational failure mode as one file and have the command line, the API, MCP and the website answer it without registering it anywhere.",
-          "target": "guaranteed",
-          "weight": 10
-        }
-      },
-      {
-        "id": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "kind": "use-case",
-        "label": "see-what-the-repository-holds-without-reading-it",
-        "summary": "See what the repository holds, and run one of its capabilities, without reading a file",
-        "route": "/cockpit/objects/use-case/see-what-the-repository-holds-without-reading-it",
-        "source": ".ai/repo/use-cases/see-what-the-repository-holds-without-reading-it.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "operator",
-            "reviewer",
-            "maintainer"
-          ],
-          "applications": [
-            "repository-opened-in-ai-clients",
-            "repository-with-authored-governance"
-          ],
-          "category": "mcp",
-          "claims": [
-            "interfaces-are-projections",
-            "capability-registry",
-            "mcp-shared-server"
-          ],
-          "commands": [
-            "doctor",
-            "knowledge"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.projection-integrity",
-            "majordomus.ai-layout-integrity"
-          ],
-          "mcp_tools": [
-            "majordomus_health",
-            "majordomus_graph",
-            "majordomus_graphs",
-            "majordomus_perf"
-          ],
-          "responsibilities": [
-            "projection",
-            "doctor"
-          ],
-          "summary": "Open the shared server in a browser and get the whole layer as pages: what exists, where each thing came from, what depends on what, what is failing, and a form that runs any capability.",
-          "target": "guaranteed",
-          "weight": 6
-        }
-      },
-      {
-        "id": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "kind": "use-case",
-        "label": "serve-the-layer-to-ai-clients",
-        "summary": "Serve the repository's AI layer to every AI client through one shared server",
-        "route": "/cockpit/objects/use-case/serve-the-layer-to-ai-clients",
-        "source": ".ai/repo/use-cases/serve-the-layer-to-ai-clients.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "operator",
-            "agent"
-          ],
-          "applications": [
-            "repository-opened-in-ai-clients",
-            "several-agents-one-repository"
-          ],
-          "category": "mcp",
-          "claims": [
-            "mcp-client-autostart",
-            "mcp-shared-server",
-            "mcp-peers",
-            "mcp-lease-resilience",
-            "mcp-stdio-surface",
-            "mcp-uri-resolution",
-            "mcp-degraded-not-silent"
-          ],
-          "commands": [
-            "init",
-            "doctor"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.ai-layout-integrity",
-            "majordomus.projection-integrity",
-            "majordomus.scope-integrity"
-          ],
-          "mcp_tools": [
-            "majordomus_repository",
-            "majordomus_list",
-            "majordomus_get",
-            "majordomus_peers",
-            "majordomus_announce"
-          ],
-          "responsibilities": [
-            "layer",
-            "scope",
-            "doctor"
-          ],
-          "target": "guaranteed",
-          "weight": 7
-        }
-      },
-      {
-        "id": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "kind": "use-case",
-        "label": "trace-a-change-to-the-context-it-affects",
-        "summary": "Trace a change to the context documents it affects",
-        "route": "/cockpit/objects/use-case/trace-a-change-to-the-context-it-affects",
-        "source": ".ai/repo/use-cases/trace-a-change-to-the-context-it-affects.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "maintainer",
-            "reviewer"
-          ],
-          "applications": [
-            "repository-with-authored-governance",
-            "repository-opened-in-ai-clients"
-          ],
-          "category": "knowledge",
-          "claims": [
-            "context-documents",
-            "context-impact",
-            "ai-layer-manifest"
-          ],
-          "commands": [
-            "context",
-            "doctor"
-          ],
-          "difficulty": "intermediate",
-          "doctrines": [
-            "majordomus.context-integrity",
-            "majordomus.ai-layout-integrity"
-          ],
-          "responsibilities": [
-            "layer"
-          ],
-          "summary": "List the scoped context documents, resolve which apply to a path and why, and find out which documents a change set touches before it lands.",
-          "target": "guaranteed",
-          "weight": 72
-        }
-      },
-      {
-        "id": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "kind": "use-case",
-        "label": "trust-the-policy-before-reading-it",
-        "summary": "Trust the policy and the profiles only after they are validated",
-        "route": "/cockpit/objects/use-case/trust-the-policy-before-reading-it",
-        "source": ".ai/repo/use-cases/trust-the-policy-before-reading-it.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "maintainer"
-          ],
-          "applications": [
-            "repository-with-authored-governance",
-            "ci-gated-project"
-          ],
-          "category": "policy",
-          "claims": [
-            "policy-parse",
-            "profile-validate",
-            "wiring-reconciliation",
-            "exit-code-contract"
-          ],
-          "commands": [
-            "doctor",
-            "check"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.policy-integrity",
-            "majordomus.policy-completeness",
-            "majordomus.profile-requirements",
-            "majordomus.enforcement-wiring"
-          ],
-          "responsibilities": [
-            "policy",
-            "profiles",
-            "doctor"
-          ],
-          "summary": "Prove that the canonical policy parses with every key it needs declared, that every profile parses and the default exists, and that what the policy declares as enforced is what actually runs.",
-          "target": "guaranteed",
-          "weight": 41
-        }
-      },
-      {
-        "id": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "kind": "use-case",
-        "label": "work-on-a-branch-in-its-canonical-worktree",
-        "summary": "Work on a branch in the one worktree it belongs to",
-        "route": "/cockpit/objects/use-case/work-on-a-branch-in-its-canonical-worktree",
-        "source": ".ai/repo/use-cases/work-on-a-branch-in-its-canonical-worktree.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "agent",
-            "maintainer"
-          ],
-          "applications": [
-            "long-running-work",
-            "repository-opened-in-ai-clients"
-          ],
-          "category": "workers",
-          "claims": [
-            "worktree-topology-derived",
-            "worktree-migration-lossless",
-            "worktree-ownership"
-          ],
-          "commands": [
-            "doctor",
-            "context"
-          ],
-          "difficulty": "intermediate",
-          "doctrines": [
-            "majordomus.enforcement-wiring",
-            "majordomus.scope-integrity"
-          ],
-          "mcp_tools": [
-            "majordomus_worktrees",
-            "majordomus_worktree_status",
-            "majordomus_worktree_inspect",
-            "majordomus_worktree_migration_plan"
-          ],
-          "responsibilities": [
-            "doctor"
-          ],
-          "summary": "Start a branch without choosing a path, find every checkout of the repository from any of them, and bring a stray one home with its uncommitted work intact.",
-          "target": "guaranteed",
-          "weight": 7
-        }
-      },
-      {
-        "id": "majordomus://workspace/chatgpt-majordomus",
-        "kind": "workspace",
-        "label": "chatgpt-majordomus",
-        "summary": "The Majordomus project in ChatGPT",
-        "route": "/cockpit/objects/workspace/chatgpt-majordomus",
-        "source": ".ai/repo/workspaces/chatgpt-majordomus.yaml",
-        "status": "declared",
-        "facts": {
-          "capabilities": [
-            "workspace.read",
-            "conversations.read",
-            "messages.read",
-            "instructions.read",
-            "files.read"
-          ],
-          "created_at": "2026-09-09",
-          "updated_at": "2026-09-09"
-        }
-      },
-      {
         "id": "module:artifacts",
         "kind": "module",
         "label": "artifacts"
@@ -42480,6 +42132,16 @@
       {
         "source": "capability:evidence.report",
         "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:evidence.stamp",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:evidence.stamp",
+        "target": "projection:cockpit",
         "kind": "projects"
       },
       {
@@ -47543,6 +47205,21 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "target": "majordomus://test/test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/evidence-a-failure-outranks-an-absence",
         "target": "kind:claim",
         "kind": "is_a"
@@ -47555,6 +47232,21 @@
       {
         "source": "majordomus://claim/evidence-a-failure-outranks-an-absence",
         "target": "majordomus://test/test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-recording-is-a-typed-run",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-recording-is-a-typed-run",
+        "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-recording-is-a-typed-run",
+        "target": "majordomus://test/test/cases/505_a_recording_carries_what_its_run_measured.sh",
         "kind": "tested_by"
       },
       {
@@ -47620,6 +47312,21 @@
       {
         "source": "majordomus://claim/evidence-judged-at-the-presented-revision",
         "target": "majordomus://test/test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-local-recording-stays-local",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/evidence-local-recording-stays-local",
+        "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/evidence-local-recording-stays-local",
+        "target": "majordomus://test/test/cases/505_a_recording_carries_what_its_run_measured.sh",
         "kind": "tested_by"
       },
       {
@@ -47710,6 +47417,21 @@
       {
         "source": "majordomus://claim/evidence-subjects-are-derived",
         "target": "majordomus://test/test/cases/507_evidence_subjects_are_derived.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-tree-is-measured-by-the-run",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/evidence-tree-is-measured-by-the-run",
+        "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/evidence-tree-is-measured-by-the-run",
+        "target": "majordomus://test/test/cases/505_a_recording_carries_what_its_run_measured.sh",
         "kind": "tested_by"
       },
       {
@@ -51288,7 +51010,17 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/evidence-a-failure-outranks-an-absence.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/evidence-a-recording-is-a-typed-run.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -51309,6 +51041,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/evidence-judged-at-the-presented-revision.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/evidence-local-recording-stays-local.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -51339,6 +51076,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/evidence-subjects-are-derived.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/evidence-tree-is-measured-by-the-run.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -60278,6 +60020,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/505_a_recording_carries_what_its_run_measured.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/507_evidence_subjects_are_derived.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -62653,561 +62405,6 @@
         "kind": "serves"
       },
       {
-        "source": "majordomus://use-case/resume-from-a-prompt-asset",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/resume-from-a-prompt-asset",
-        "target": "majordomus://application/long-running-work",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/resume-from-a-prompt-asset",
-        "target": "majordomus://application/several-agents-one-repository",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/resume-from-a-prompt-asset",
-        "target": "majordomus://claim/context-assembly",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/resume-from-a-prompt-asset",
-        "target": "majordomus://claim/minimum-context",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/resume-from-a-prompt-asset",
-        "target": "majordomus://claim/prompt-asset",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/resume-from-a-prompt-asset",
-        "target": "majordomus://claim/prompt-assets",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/resume-from-a-prompt-asset",
-        "target": "majordomus://rule/majordomus.context-budget@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/resume-from-a-prompt-asset",
-        "target": "majordomus://rule/majordomus.prompt-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/resume-in-the-right-worktree",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/resume-in-the-right-worktree",
-        "target": "majordomus://application/several-agents-one-repository",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/resume-in-the-right-worktree",
-        "target": "majordomus://claim/divergence-label",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/resume-in-the-right-worktree",
-        "target": "majordomus://claim/local-state-ignored",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/resume-in-the-right-worktree",
-        "target": "majordomus://claim/record-resolution",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/resume-in-the-right-worktree",
-        "target": "majordomus://claim/worktree-ownership",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/resume-in-the-right-worktree",
-        "target": "majordomus://rule/majordomus.handover-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/resume-in-the-right-worktree",
-        "target": "majordomus://rule/majordomus.scope-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/resume-in-the-right-worktree",
-        "target": "majordomus://rule/majordomus.state-consistency@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/run-several-workers-at-once",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/run-several-workers-at-once",
-        "target": "majordomus://application/several-agents-one-repository",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/run-several-workers-at-once",
-        "target": "majordomus://claim/git-identity",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/run-several-workers-at-once",
-        "target": "majordomus://claim/overlap-report",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/run-several-workers-at-once",
-        "target": "majordomus://claim/scope-enforcement",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/run-several-workers-at-once",
-        "target": "majordomus://claim/scoped-task",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/run-several-workers-at-once",
-        "target": "majordomus://rule/majordomus.scope-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/run-several-workers-at-once",
-        "target": "majordomus://rule/majordomus.state-consistency@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/say-what-reached-the-remote-and-what-did-not",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/say-what-reached-the-remote-and-what-did-not",
-        "target": "majordomus://claim/obligation-establishment",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/say-what-reached-the-remote-and-what-did-not",
-        "target": "majordomus://rule/majordomus.obligation-closure@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "capability:why.areas",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "capability:why.audiences",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "capability:why.diagnose",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "capability:why.list",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "capability:why.moment",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "capability:why.validate",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "majordomus://application/repository-opened-in-ai-clients",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "majordomus://application/repository-with-authored-governance",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "majordomus://claim/context-documents",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "majordomus://claim/generated-projections-checked",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "majordomus://claim/interfaces-are-projections",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "majordomus://claim/mcp-data-driven",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "majordomus://claim/schema-driven-kinds",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "majordomus://claim/why-catalogue-discovered",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "majordomus://claim/why-diagnosis-explainable",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "majordomus://claim/why-references-resolve",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "majordomus://rule/majordomus.ai-layout-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "majordomus://rule/majordomus.context-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "majordomus://rule/majordomus.projection-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "capability:graph.get",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "capability:graph.list",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "capability:health.report",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "capability:perf.counters",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "majordomus://application/repository-opened-in-ai-clients",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "majordomus://application/repository-with-authored-governance",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "majordomus://claim/capability-registry",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "majordomus://claim/interfaces-are-projections",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "majordomus://claim/mcp-shared-server",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "majordomus://rule/majordomus.ai-layout-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "majordomus://rule/majordomus.projection-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "capability:objects.get",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "capability:objects.list",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "capability:peers.announce",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "capability:peers.list",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "capability:repository.info",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://application/repository-opened-in-ai-clients",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://application/several-agents-one-repository",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-client-autostart",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-degraded-not-silent",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-lease-resilience",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-peers",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-shared-server",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-stdio-surface",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-uri-resolution",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://rule/majordomus.ai-layout-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://rule/majordomus.projection-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://rule/majordomus.scope-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://application/repository-opened-in-ai-clients",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://application/repository-with-authored-governance",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://claim/ai-layer-manifest",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://claim/context-documents",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://claim/context-impact",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://rule/majordomus.ai-layout-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://rule/majordomus.context-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://application/ci-gated-project",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://application/repository-with-authored-governance",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://claim/exit-code-contract",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://claim/policy-parse",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://claim/profile-validate",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://claim/wiring-reconciliation",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://rule/majordomus.enforcement-wiring@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://rule/majordomus.policy-completeness@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://rule/majordomus.policy-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://rule/majordomus.profile-requirements@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "capability:worktree.inspect",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "capability:worktree.migration_plan",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "capability:worktree.status",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "capability:worktree.topology",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://application/long-running-work",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://application/repository-opened-in-ai-clients",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://claim/worktree-migration-lossless",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://claim/worktree-ownership",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://claim/worktree-topology-derived",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://rule/majordomus.enforcement-wiring@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://rule/majordomus.scope-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://workspace/chatgpt-majordomus",
-        "target": "kind:workspace",
-        "kind": "is_a"
-      },
-      {
         "source": "module:artifacts",
         "target": "capability:artifacts.list",
         "kind": "composes"
@@ -63450,6 +62647,11 @@
       {
         "source": "module:evidence",
         "target": "capability:evidence.report",
+        "kind": "composes"
+      },
+      {
+        "source": "module:evidence",
+        "target": "capability:evidence.stamp",
         "kind": "composes"
       },
       {
@@ -64070,7 +63272,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4492,
+      "edges": 4402,
       "acyclic": true,
       "truncated": true
     }

@@ -1,7 +1,7 @@
 +++
 title = "Advisors are declared once, in share/advisors.yaml, by reference to the provider table and the model catalogue; a new advisor reaches the command line, the policy, HTTP, OpenAPI, MCP and the Cockpit with no consumer edited"
 description = "There is one advisor inventory. Every surface that lists advisors — the command line,"
-weight = 235
+weight = 239
 [extra]
 claim_id = "advisors-are-declared-once"
 status = "guaranteed"

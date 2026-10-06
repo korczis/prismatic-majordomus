@@ -345,7 +345,8 @@ yet record its runs into the evidence ledger.
 $ majordomus-cli evidence show
 $ majordomus-cli evidence claim scope-enforcement
 $ MJ_TEST_REPORT=report.tsv bash test/run.sh 04_start_check
-$ majordomus-cli evidence record --suite report.tsv
+$ majordomus-cli evidence stamp --report report.tsv --out report.provenance.json
+$ majordomus-cli evidence record --suite report.tsv --provenance report.provenance.json
 ```
 
 **Proved by.** `test/cases/124_evidence.sh`, `test/cases/77_rust_evidence.sh`.
@@ -477,11 +478,13 @@ $ MJ_TEST_JOBS=4 bash test/run.sh                      # the whole suite
 $ cd apps/majordomus-cli && cargo test --test projections --test rules --test peer_claims
 ```
 
-To keep a run as evidence tied to the commit it proves:
+To keep a run as evidence tied to the commit it proves, measure the checkout as the run
+left it, then record the report with that measurement:
 
 ```console
 $ MJ_TEST_REPORT=report.tsv bash test/run.sh 04_start_check 06_finish
-$ majordomus-cli evidence record --suite report.tsv
+$ majordomus-cli evidence stamp --report report.tsv --out report.provenance.json
+$ majordomus-cli evidence record --suite report.tsv --provenance report.provenance.json
 $ majordomus-cli evidence show
 ```
 
