@@ -53,10 +53,10 @@ pub fn run(args: IntentArgs) -> Result<u8> {
             }
             let v = call(&app.context, &["intent", "preflight"], input)?;
             emit(format, &v, preflight_text)?;
-            Ok(if v["verdict"] == "serves" {
-                0
-            } else {
+            Ok(if v["verdict"] == "refused" {
                 EXIT_INVALID
+            } else {
+                0
             })
         }
         IntentCommand::Realization { intent } => {
@@ -364,31 +364,94 @@ fn validate_text(v: &Value) -> String {
     out.join("\n")
 }
 
-fn preflight_text(v: &Value) -> String {
-    let mut out = vec![format!("verdict     {}", s(v, "verdict"))];
-    let issues: Vec<&str> = v["issues"]
-        .as_array()
+fn words(v: &Value) -> Vec<&str> {
+    v.as_array()
         .into_iter()
         .flatten()
         .filter_map(Value::as_str)
-        .collect();
-    if !issues.is_empty() {
-        out.push(format!("issues      {}", issues.join(", ")));
-    }
-    for m in v["matches"].as_array().into_iter().flatten() {
+        .collect()
+}
+
+/// The verdict, each issue with its own, each intent the work is held to with what it asks
+/// of the worker, then every refusal with its cause.
+fn preflight_text(v: &Value) -> String {
+    let mut out = vec![format!("verdict     {}", s(v, "verdict"))];
+    for i in v["issues"].as_array().into_iter().flatten() {
+        let serves = words(&i["serves"]);
         out.push(format!(
-            "intent      {}  {}  via milestone {} and issue {}",
-            s(m, "intent"),
-            s(m, "stage"),
-            s(m, "milestone"),
-            s(m, "issue"),
+            "issue       {}  {}  milestone {}{}",
+            s(i, "issue"),
+            s(i, "verdict"),
+            s(i, "milestone"),
+            if serves.is_empty() {
+                String::new()
+            } else {
+                format!("  serves {}", serves.join(" "))
+            }
         ));
     }
-    for g in v["governance"].as_array().into_iter().flatten() {
-        out.push(format!("governance  {}", g.as_str().unwrap_or("")));
+    for i in v["intents"].as_array().into_iter().flatten() {
+        out.push(format!(
+            "intent      {}  {}  {}",
+            s(i, "id"),
+            s(i, "stage"),
+            s(i, "title")
+        ));
+        out.push(format!("  statement   {}", s(i, "statement")));
+        for c in i["criteria"].as_array().into_iter().flatten() {
+            out.push(format!("  criterion   {}  {}", s(c, "id"), s(c, "state")));
+        }
+        for inv in words(&i["invariants"]) {
+            out.push(format!("  invariant   {inv}"));
+        }
+        for n in words(&i["non_goals"]) {
+            out.push(format!("  non-goal    {n}"));
+        }
+        let critique = &i["critique"];
+        if critique.is_object() {
+            let open: Vec<&str> = critique["open_blocking"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .map(|f| s(f, "id"))
+                .collect();
+            out.push(format!(
+                "  critique    reviewed at {} by {}; open blocking: {}",
+                s(critique, "reviewed_at"),
+                s(critique, "reviewed_by"),
+                if open.is_empty() {
+                    "none".to_string()
+                } else {
+                    open.join(", ")
+                }
+            ));
+        } else {
+            out.push("  critique    none recorded".into());
+        }
+        let gap = &i["gap"];
+        if gap.is_object() {
+            let conditions: Vec<String> = gap["conditions"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .map(|c| format!("{} {}", s(c, "criterion"), s(c, "state_text")))
+                .collect();
+            out.push(format!(
+                "  gap         observed at {}: {}",
+                s(gap, "observed_at"),
+                conditions.join(", ")
+            ));
+        }
     }
-    if let Some(r) = v["refusal"].as_str() {
-        out.push(format!("refusal     {r}"));
+    for g in words(&v["governance"]) {
+        out.push(format!("governance  {g}"));
+    }
+    for r in v["refusals"].as_array().into_iter().flatten() {
+        out.push(format!(
+            "refusal     {}  {}",
+            s(r, "cause"),
+            s(r, "message")
+        ));
     }
     out.join("\n")
 }

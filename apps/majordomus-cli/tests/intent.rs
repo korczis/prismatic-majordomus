@@ -294,38 +294,129 @@ fn a_key_the_schema_does_not_declare_is_refused_by_the_index() {
     assert!(hit, "{:#?}", common::diagnostics(&v));
 }
 
+/// Record a critique of the fixture's intent with no finding, so work serving it may proceed.
+fn critiqued(f: &Fixture) {
+    f.write(
+        ".ai/repo/project/critiques/fixture-intent.yaml",
+        "intent: fixture-intent\nreviewed_at: HEAD\nreviewed_by: the test\nfindings: []\n",
+    );
+    f.commit("the plan is critiqued");
+}
+
 /// Which intent the work on an issue serves, or the link that is missing: the claim
 /// `intent-preflight-names-the-intent` of docs/CLAIMS.yaml.
 #[test]
-fn preflight_names_the_intent_the_work_serves_or_the_missing_link() {
+fn preflight_names_the_intent_the_work_serves_or_why_it_may_not_proceed() {
     let f = Fixture::new();
+    // the fixture's issue serves its intent, whose plan nobody has critiqued yet
     let (code, v) = cli_json(&f, &["intent", "preflight", "--issue", "I0001"]);
-    assert_eq!(code, 0);
+    assert_eq!(code, 10, "{v}");
+    assert_eq!(v["verdict"], "refused");
+    assert_eq!(v["refusals"][0]["cause"], "intent_not_critiqued");
+    assert_eq!(v["intents"][0]["id"], "fixture-intent");
+
+    critiqued(&f);
+    let (code, v) = cli_json(&f, &["intent", "preflight", "--issue", "I0001"]);
+    assert_eq!(code, 0, "{v}");
     assert_eq!(v["verdict"], "serves");
+    assert_eq!(v["issues"][0]["verdict"], "serves");
     assert_eq!(v["matches"][0]["intent"], "fixture-intent");
-    assert_eq!(v["matches"][0]["milestone"], "fixture-milestone");
+    assert_eq!(v["matches"][0]["criteria"], json!(["the-case-passes"]));
     assert_eq!(v["governance"], json!(["rule:project.alpha"]));
+    let held = &v["intents"][0];
+    assert_eq!(held["criteria"][0]["id"], "the-case-passes");
+    assert_eq!(held["criteria"][0]["state"], "not_run");
+    assert_eq!(
+        held["invariants"][0],
+        "The fixture stays a valid repository"
+    );
+    assert_eq!(held["critique"]["open_blocking"], json!([]));
     let mcp = tool(
         &f,
         "majordomus_intent_preflight",
         json!({ "issue": "I0001" }),
     );
-    assert_eq!(v, mcp);
+    assert_eq!(v, mcp, "the command line and MCP disagree");
+    let served = Served::start(&f.root(), &[]);
+    let (status, http) = served.get("/api/v1/intents/preflight?issue=I0001");
+    assert_eq!(status, 200);
+    assert_eq!(v, http, "the command line and HTTP disagree");
 
     let (code, v) = cli_json(&f, &["intent", "preflight", "--issue", "I9999"]);
     assert_eq!(code, 10);
+    assert_eq!(v["refusals"][0]["cause"], "unknown_issue");
     assert!(v["refusal"].as_str().unwrap().contains("I9999"));
 
-    // a milestone no intent names is the missing link
+    // the issue still serves the intent once it is gone: a link to nothing
     f.remove(".ai/repo/project/intents/fixture-intent.yaml");
+    f.remove(".ai/repo/project/critiques/fixture-intent.yaml");
     f.commit("no intent");
     let (code, v) = cli_json(&f, &["intent", "preflight", "--issue", "I0001"]);
     assert_eq!(code, 10);
-    assert!(v["refusal"].as_str().unwrap().contains("fixture-milestone"));
+    assert_eq!(v["refusals"][0]["cause"], "serves_unknown_criterion");
+
+    // and once it serves nothing either, it is maintenance under a milestone of no intent,
+    // which `intent validate` accepts and the preflight therefore does too
+    let issue = std::fs::read_to_string(f.path(".ai/repo/project/issues/I0001.yaml")).unwrap();
+    f.write(
+        ".ai/repo/project/issues/I0001.yaml",
+        &issue.replace("serves:\n  - fixture-intent#the-case-passes\n", ""),
+    );
+    f.commit("maintenance");
+    let (code, out, _) = run_in(&f.root(), &["intent", "validate"], "");
+    assert_eq!(code, 0, "{out}");
+    let (code, v) = cli_json(&f, &["intent", "preflight", "--issue", "I0001"]);
+    assert_eq!(code, 0, "{v}");
+    assert_eq!(v["verdict"], "maintenance");
+    assert_eq!(v["intents"], json!([]));
+    assert_eq!(v["refusals"], json!([]));
 
     let (code, _, err) = run_in(&f.root(), &["intent", "preflight"], "");
     assert_ne!(code, 0, "a preflight of nothing is refused");
     assert!(err.contains("name the issue"), "{err}");
+}
+
+#[test]
+fn preflight_refuses_work_while_a_blocking_critique_finding_is_open() {
+    let f = Fixture::new();
+    let critique = |resolution: &str| {
+        format!(
+            "intent: fixture-intent
+reviewed_at: HEAD
+reviewed_by: the test
+findings:
+  - id: thin
+    class: insufficient_work
+    subject: fixture-intent#the-case-passes
+    finding: One case may not be enough
+    blocking: true
+    resolution:
+{resolution}
+"
+        )
+    };
+    f.write(
+        ".ai/repo/project/critiques/fixture-intent.yaml",
+        &critique("      state: open"),
+    );
+    f.commit("an open blocker");
+    let (code, v) = cli_json(&f, &["intent", "preflight", "--path", "lib/a.sh"]);
+    assert_eq!(code, 10, "{v}");
+    assert_eq!(v["refusals"][0]["cause"], "open_blocking_finding");
+    assert_eq!(v["refusals"][0]["issue"], "I0001");
+    assert_eq!(
+        v["intents"][0]["critique"]["open_blocking"][0]["id"],
+        "thin"
+    );
+
+    f.write(
+        ".ai/repo/project/critiques/fixture-intent.yaml",
+        &critique("      state: planned\n      issue: I0001"),
+    );
+    f.commit("plan the blocker");
+    let (code, v) = cli_json(&f, &["intent", "preflight", "--path", "lib/a.sh"]);
+    assert_eq!(code, 0, "{v}");
+    assert_eq!(v["verdict"], "serves");
 }
 
 /// The four verbs of `majordomus intent`, each over the fixture's one intent and one issue.
@@ -370,6 +461,7 @@ fn run_into_a_closed_pipe(f: &Fixture, args: &[&str]) -> (i32, String) {
 #[test]
 fn an_answer_that_cannot_be_written_is_a_transport_failure_and_never_a_success() {
     let f = Fixture::new();
+    critiqued(&f);
     for args in VERBS {
         // each verb answers 0 over this fixture when its answer can be written
         let (code, _, err) = run_in(&f.root(), args, "");
@@ -432,22 +524,28 @@ fn outside_a_repository_no_intent_verb_answers() {
 }
 
 #[test]
-fn the_text_preflight_names_the_verdict_and_the_refusal_or_the_issues_it_followed() {
+fn the_text_preflight_names_the_verdict_each_issue_what_the_intent_asks_and_each_refusal() {
     let f = Fixture::new();
     let (code, out, _) = run_in(&f.root(), &["intent", "preflight", "--issue", "I9999"], "");
     assert_eq!(code, 10, "{out}");
     let lines: Vec<&str> = out.lines().collect();
-    assert_eq!(lines[0], "verdict     refused");
     assert_eq!(
-        lines[1],
-        "refusal     `I9999` is not an issue under .ai/repo/project/issues/"
-    );
-    assert_eq!(
-        lines.len(),
-        2,
-        "a refusal names no issue and no intent:\n{out}"
+        lines,
+        [
+            "verdict     refused",
+            "refusal     unknown_issue  `I9999` is not an issue under .ai/repo/project/issues/",
+        ],
+        "a refusal before any issue names no issue and no intent"
     );
 
+    let (code, out, _) = run_in(&f.root(), &["intent", "preflight", "--issue", "I0001"], "");
+    assert_eq!(code, 10, "{out}");
+    assert!(
+        out.contains("refusal     intent_not_critiqued  I0001 serves intent fixture-intent"),
+        "{out}"
+    );
+
+    critiqued(&f);
     let (code, out, _) = run_in(&f.root(), &["intent", "preflight", "--issue", "I0001"], "");
     assert_eq!(code, 0, "{out}");
     let lines: Vec<&str> = out.lines().collect();
@@ -455,8 +553,13 @@ fn the_text_preflight_names_the_verdict_and_the_refusal_or_the_issues_it_followe
         lines,
         [
             "verdict     serves",
-            "issues      I0001",
-            "intent      fixture-intent  planned  via milestone fixture-milestone and issue I0001",
+            "issue       I0001  serves  milestone fixture-milestone  \
+             serves fixture-intent#the-case-passes",
+            "intent      fixture-intent  planned  The fixture's outcome is true",
+            "  statement   The outcome the fixture milestone reaches is true for its users.",
+            "  criterion   the-case-passes  not_run",
+            "  invariant   The fixture stays a valid repository",
+            "  critique    reviewed at HEAD by the test; open blocking: none",
             "governance  rule:project.alpha",
         ]
     );

@@ -1808,6 +1808,47 @@ restrict `list`, `ready`, `blocked`, `waves` and `graph`; `--covers`, `--type`, 
 The same model is projected to GitHub by `scripts/github-sync` and to the website by
 `scripts/generate-site-data`. Neither re-derives a status; both read this engine.
 
+## `majordomus intent`
+
+What must become true above the milestones, and whether a piece of work may proceed toward it.
+The executable answers; each subcommand is one capability of the `intents` module, so HTTP
+and MCP answer the same value. See [`docs/PLANNING.md`](PLANNING.md) for the semantics; the
+generated reference lists every option.
+
+**Reads:** `.ai/repo/project/intents/*.yaml`, the plan, `.ai/repo/project/gaps/*.yaml`,
+`.ai/repo/project/critiques/*.yaml`, the evidence ledger. **Writes:** nothing.
+
+```
+majordomus intent list                     every intent with its derived stage
+majordomus intent show <id>                one intent in full
+majordomus intent validate                 every finding over the intents, coverage included
+majordomus intent coverage                 which work carries which criterion, and why
+majordomus intent preflight --issue <id>   may the work on an issue proceed, held to what
+majordomus intent preflight --path <p>     the same for the open issues covering a path
+majordomus intent realization              which work realises which intent, and whether reality agrees
+majordomus intent explain <id>             why an intent stands where it stands
+```
+
+**`preflight` behaviour:** the one join a session or a transition consumes before work begins.
+- An issue is followed through the `<intent>#<criterion>` references it declares in `serves`,
+  never through its milestone alone, and each link is judged by the coverage `validate`
+  reports from.
+- The verdict is `serves` (exit `0`) when every link holds and the plan of every intent served
+  was critiqued with no blocking finding `open`; `maintenance` (exit `0`) when the work sits
+  under milestones no live intent names and serves nothing, exactly where `validate` allows
+  it; `refused` (exit `10`) otherwise.
+- Every refusal names its issue and a cause: `unknown_issue`, `no_issue_covers_paths`,
+  `issue_serves_nothing` (its milestone realises an intent and it serves none of its
+  criteria), `serves_another_intent` (a criterion of an intent that does not name its
+  milestone), `serves_unknown_criterion` (an intent or a criterion that does not exist, or a
+  malformed reference), `intent_not_critiqued`, `open_blocking_finding`.
+- With `--path`, every open issue whose scope covers a path is judged and listed with its own
+  verdict, and the answer is the worst of them: one served issue never vouches for another.
+- The answer carries the intents the work serves and no other: each with its statement, the
+  served criteria with the live state of their evidence, invariants, non-goals, governance,
+  its critique with the blocking findings still open, and its gap bounded to the served
+  criteria.
+
 ## `majordomus adr`
 
 The repository's architecture decisions as objects: what was decided, why, what it cost,

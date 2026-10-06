@@ -702,7 +702,7 @@
         "id": "capability:intents.list",
         "kind": "capability",
         "label": "intents.list",
-        "summary": "Every intent, with its derived stage",
+        "summary": "Every intent, with its derived stage and verdict",
         "route": "/cockpit/capabilities/intents.list",
         "source": "apps/majordomus-cli/src/capability/builtin/intents.rs",
         "status": "query"
@@ -711,7 +711,7 @@
         "id": "capability:intents.preflight",
         "kind": "capability",
         "label": "intents.preflight",
-        "summary": "Which intent a piece of work serves",
+        "summary": "Which intent a piece of work serves, or why it may not proceed",
         "route": "/cockpit/capabilities/intents.preflight",
         "source": "apps/majordomus-cli/src/capability/builtin/intents.rs",
         "status": "query"
@@ -1597,102 +1597,6 @@
         "route": "/cockpit/capabilities/worktree.topology",
         "source": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
         "status": "query"
-      },
-      {
-        "id": "file:.ai/repo/ci/pages.yaml",
-        "kind": "file",
-        "label": "pages.yaml",
-        "summary": "named by the layer; not an object of this index",
-        "source": ".ai/repo/ci/pages.yaml",
-        "external": true
-      },
-      {
-        "id": "file:.ai/repo/knowledge/sources.yaml",
-        "kind": "file",
-        "label": "sources.yaml",
-        "summary": "named by the layer; not an object of this index",
-        "source": ".ai/repo/knowledge/sources.yaml",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/capability/builtin/graph.rs",
-        "kind": "file",
-        "label": "graph.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/capability/builtin/graph.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/capability/builtin/health.rs",
-        "kind": "file",
-        "label": "health.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/capability/builtin/health.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/cockpit/mod.rs",
-        "kind": "file",
-        "label": "mod.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/cockpit/mod.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/graph.rs",
-        "kind": "file",
-        "label": "graph.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/graph.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/http/router.rs",
-        "kind": "file",
-        "label": "router.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/http/router.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/why.rs",
-        "kind": "file",
-        "label": "why.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/why.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/worktree/mod.rs",
-        "kind": "file",
-        "label": "mod.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/worktree/mod.rs",
-        "external": true
-      },
-      {
-        "id": "file:scripts/cockpit-probe",
-        "kind": "file",
-        "label": "cockpit-probe",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/cockpit-probe",
-        "external": true
-      },
-      {
-        "id": "file:share/cockpit/src/cockpit.css",
-        "kind": "file",
-        "label": "cockpit.css",
-        "summary": "named by the layer; not an object of this index",
-        "source": "share/cockpit/src/cockpit.css",
-        "external": true
-      },
-      {
-        "id": "file:share/kinds.yaml",
-        "kind": "file",
-        "label": "kinds.yaml",
-        "summary": "named by the layer; not an object of this index",
-        "source": "share/kinds.yaml",
-        "external": true
       },
       {
         "id": "kind:adr",
@@ -3939,6 +3843,33 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0107",
+        "kind": "adr",
+        "label": "adr-0107",
+        "summary": "Completion discharges obligations and never decides whether an intent is satisfied",
+        "route": "/cockpit/objects/adr/adr-0107",
+        "source": ".ai/repo/adrs/0107-completion-discharges-obligations-and-never-decides-whether-an-intent-is-satisfied.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-05",
+          "related": [
+            "file:.ai/repo/adrs/0070-intent-is-a-typed-record-and-satisfaction-is-derived-from-evidence.md",
+            "rule:project.completion-never-decides-satisfaction",
+            "rule:project.work-serves-a-declared-intent",
+            "rule:project.derived-once",
+            "file:apps/majordomus-cli/src/intent.rs",
+            "file:.ai/repo/project/milestones/intent-lifecycle.yaml",
+            "test:test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh"
+          ],
+          "tags": [
+            "intent",
+            "completion",
+            "evidence",
+            "governance"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -5962,6 +5893,185 @@
           "responsibility": "doctor",
           "source": "docs/INSTALL.md",
           "test": "test/cases/85_installer.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-closes-github-milestones",
+        "kind": "claim",
+        "label": "intent-closes-github-milestones",
+        "summary": "A milestone will be closed on GitHub only once the intents it realises are satisfied",
+        "route": "/cockpit/objects/claim/intent-closes-github-milestones",
+        "source": "docs/CLAIMS.yaml",
+        "status": "planned",
+        "facts": {
+          "claim": "A milestone will be closed on GitHub only once the intents it realises are satisfied",
+          "implementation": "-",
+          "note": "The GitHub projection closes a milestone from its derived plan status alone and reads no intent. Closed work the evidence contradicts is refused by the intent-realization gate, not by the tracker.",
+          "responsibility": "none",
+          "source": "docs/PLANNING.md",
+          "test": "-"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-cockpit-pages",
+        "kind": "claim",
+        "label": "intent-cockpit-pages",
+        "summary": "The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>",
+        "route": "/cockpit/objects/claim/intent-cockpit-pages",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>",
+          "implementation": "apps/majordomus-cli/src/cockpit/intents.rs",
+          "responsibility": "plan",
+          "source": "docs/COCKPIT.md",
+          "test": "apps/majordomus-cli/tests/intent_realization.rs"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-command-deployment-evidence",
+        "kind": "claim",
+        "label": "intent-command-deployment-evidence",
+        "summary": "A criterion settled by a command or by a deployment will be met by recorded evidence",
+        "route": "/cockpit/objects/claim/intent-command-deployment-evidence",
+        "source": "docs/CLAIMS.yaml",
+        "status": "planned",
+        "facts": {
+          "claim": "A criterion settled by a command or by a deployment will be met by recorded evidence",
+          "implementation": "-",
+          "responsibility": "none",
+          "source": "docs/PLANNING.md",
+          "test": "-"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-criteria-covered",
+        "kind": "claim",
+        "label": "intent-criteria-covered",
+        "summary": "Once work exists under an intent, a criterion no issue serves, an issue under its milestones that serves nothing and a link to a criterion that does not exist are each refused by name",
+        "route": "/cockpit/objects/claim/intent-criteria-covered",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "Once work exists under an intent, a criterion no issue serves, an issue under its milestones that serves nothing and a link to a criterion that does not exist are each refused by name",
+          "implementation": "apps/majordomus-cli/src/intent_plan.rs",
+          "responsibility": "plan",
+          "source": "docs/PLANNING.md",
+          "test": "test/cases/386_a_plan_is_held_to_its_intent.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-in-session-context",
+        "kind": "claim",
+        "label": "intent-in-session-context",
+        "summary": "A session will load the intents its task serves when it starts",
+        "route": "/cockpit/objects/claim/intent-in-session-context",
+        "source": "docs/CLAIMS.yaml",
+        "status": "planned",
+        "facts": {
+          "claim": "A session will load the intents its task serves when it starts",
+          "implementation": "-",
+          "note": "`majordomus context` compiles rules, handovers, decisions and the plan, and no intent record is among them. A worker reaches an intent only by asking `majordomus intent` for it.",
+          "responsibility": "none",
+          "source": "docs/PLANNING.md",
+          "test": "-"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-links-resolve",
+        "kind": "claim",
+        "label": "intent-links-resolve",
+        "summary": "An intent whose criterion names evidence that resolves to nothing is refused by name",
+        "route": "/cockpit/objects/claim/intent-links-resolve",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "An intent whose criterion names evidence that resolves to nothing is refused by name",
+          "implementation": "apps/majordomus-cli/src/intent.rs",
+          "responsibility": "plan",
+          "source": "docs/PLANNING.md",
+          "test": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-plan-reviewed",
+        "kind": "claim",
+        "label": "intent-plan-reviewed",
+        "summary": "A gap that leaves a criterion unanswered is refused, and an issue serving an intent that started without a critique or while a blocking finding is open fails intent validation",
+        "route": "/cockpit/objects/claim/intent-plan-reviewed",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A gap that leaves a criterion unanswered is refused, and an issue serving an intent that started without a critique or while a blocking finding is open fails intent validation",
+          "implementation": "apps/majordomus-cli/src/intent_review.rs",
+          "responsibility": "plan",
+          "source": "docs/PLANNING.md",
+          "test": "test/cases/386_a_plan_is_held_to_its_intent.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-preflight-names-the-intent",
+        "kind": "claim",
+        "label": "intent-preflight-names-the-intent",
+        "summary": "Asked before work on an issue, `intent preflight` names the intent the issue serves with the governance that applies, or refuses naming the missing link",
+        "route": "/cockpit/objects/claim/intent-preflight-names-the-intent",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "Asked before work on an issue, `intent preflight` names the intent the issue serves with the governance that applies, or refuses naming the missing link",
+          "implementation": "apps/majordomus-cli/src/intent.rs",
+          "responsibility": "plan",
+          "source": "docs/PLANNING.md",
+          "test": "apps/majordomus-cli/tests/intent.rs"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-realization-held-to-evidence",
+        "kind": "claim",
+        "label": "intent-realization-held-to-evidence",
+        "summary": "The work realising an intent is joined across sessions, providers and handovers, and an intent whose milestones are all closed while a criterion's evidence fails is refused naming that criterion",
+        "route": "/cockpit/objects/claim/intent-realization-held-to-evidence",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "The work realising an intent is joined across sessions, providers and handovers, and an intent whose milestones are all closed while a criterion's evidence fails is refused naming that criterion",
+          "implementation": "apps/majordomus-cli/src/intent_realization.rs",
+          "responsibility": "plan",
+          "source": "docs/PLANNING.md",
+          "test": "test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-refused-at-plan-start",
+        "kind": "claim",
+        "label": "intent-refused-at-plan-start",
+        "summary": "Starting an issue that serves an intent with no critique, or with a blocking finding open, will be refused when it is started rather than reported afterwards",
+        "route": "/cockpit/objects/claim/intent-refused-at-plan-start",
+        "source": "docs/CLAIMS.yaml",
+        "status": "planned",
+        "facts": {
+          "claim": "Starting an issue that serves an intent with no critique, or with a blocking finding open, will be refused when it is started rather than reported afterwards",
+          "implementation": "-",
+          "note": "Today `plan start` succeeds, and `intent validate` names `executing_without_critique` or `executing_with_open_blocker` once the work has started. That half is intent-plan-reviewed.",
+          "responsibility": "none",
+          "source": "docs/PLANNING.md",
+          "test": "-"
+        }
+      },
+      {
+        "id": "majordomus://claim/intent-stage-derived",
+        "kind": "claim",
+        "label": "intent-stage-derived",
+        "summary": "An intent's stage is derived from the milestones that realise it and each criterion from the evidence ledger, and it is satisfied only while every criterion has a current passing run",
+        "route": "/cockpit/objects/claim/intent-stage-derived",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "An intent's stage is derived from the milestones that realise it and each criterion from the evidence ledger, and it is satisfied only while every criterion has a current passing run",
+          "implementation": "apps/majordomus-cli/src/intent.rs",
+          "responsibility": "plan",
+          "source": "docs/PLANNING.md",
+          "test": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh"
         }
       },
       {
@@ -11504,6 +11614,94 @@
         "source": "docs/claims/installer-verifies-before-installing.md"
       },
       {
+        "id": "majordomus://document/docs/claims/intent-closes-github-milestones.md",
+        "kind": "document",
+        "label": "docs/claims/intent-closes-github-milestones.md",
+        "summary": "A milestone will be closed on GitHub only once the intents it realises are satisfied",
+        "route": "/cockpit/objects/document/docs-claims-intent-closes-github-milestones-md",
+        "source": "docs/claims/intent-closes-github-milestones.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/intent-cockpit-pages.md",
+        "kind": "document",
+        "label": "docs/claims/intent-cockpit-pages.md",
+        "summary": "The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>",
+        "route": "/cockpit/objects/document/docs-claims-intent-cockpit-pages-md",
+        "source": "docs/claims/intent-cockpit-pages.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/intent-command-deployment-evidence.md",
+        "kind": "document",
+        "label": "docs/claims/intent-command-deployment-evidence.md",
+        "summary": "A criterion settled by a command or by a deployment will be met by recorded evidence",
+        "route": "/cockpit/objects/document/docs-claims-intent-command-deployment-evidence-md",
+        "source": "docs/claims/intent-command-deployment-evidence.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/intent-criteria-covered.md",
+        "kind": "document",
+        "label": "docs/claims/intent-criteria-covered.md",
+        "summary": "Once work exists under an intent, a criterion no issue serves, an issue under its milestones that serves nothing and a link to a criterion that does not exist are each refused by name",
+        "route": "/cockpit/objects/document/docs-claims-intent-criteria-covered-md",
+        "source": "docs/claims/intent-criteria-covered.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/intent-in-session-context.md",
+        "kind": "document",
+        "label": "docs/claims/intent-in-session-context.md",
+        "summary": "A session will load the intents its task serves when it starts",
+        "route": "/cockpit/objects/document/docs-claims-intent-in-session-context-md",
+        "source": "docs/claims/intent-in-session-context.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/intent-links-resolve.md",
+        "kind": "document",
+        "label": "docs/claims/intent-links-resolve.md",
+        "summary": "An intent whose criterion names evidence that resolves to nothing is refused by name",
+        "route": "/cockpit/objects/document/docs-claims-intent-links-resolve-md",
+        "source": "docs/claims/intent-links-resolve.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/intent-plan-reviewed.md",
+        "kind": "document",
+        "label": "docs/claims/intent-plan-reviewed.md",
+        "summary": "A gap that leaves a criterion unanswered is refused, and an issue serving an intent that started without a critique or while a blocking finding is open fails intent validation",
+        "route": "/cockpit/objects/document/docs-claims-intent-plan-reviewed-md",
+        "source": "docs/claims/intent-plan-reviewed.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/intent-preflight-names-the-intent.md",
+        "kind": "document",
+        "label": "docs/claims/intent-preflight-names-the-intent.md",
+        "summary": "Asked before work on an issue, `intent preflight` names the intent the issue serves with the governance that applies, or refuses naming the missing link",
+        "route": "/cockpit/objects/document/docs-claims-intent-preflight-names-the-intent-md",
+        "source": "docs/claims/intent-preflight-names-the-intent.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/intent-realization-held-to-evidence.md",
+        "kind": "document",
+        "label": "docs/claims/intent-realization-held-to-evidence.md",
+        "summary": "The work realising an intent is joined across sessions, providers and handovers, and an intent whose milestones are all closed while a criterion's evidence fails is refused naming that criterion",
+        "route": "/cockpit/objects/document/docs-claims-intent-realization-held-to-evidence-md",
+        "source": "docs/claims/intent-realization-held-to-evidence.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/intent-refused-at-plan-start.md",
+        "kind": "document",
+        "label": "docs/claims/intent-refused-at-plan-start.md",
+        "summary": "Starting an issue that serves an intent with no critique, or with a blocking finding open, will be refused when it is started rather than reported afterwards",
+        "route": "/cockpit/objects/document/docs-claims-intent-refused-at-plan-start-md",
+        "source": "docs/claims/intent-refused-at-plan-start.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/intent-stage-derived.md",
+        "kind": "document",
+        "label": "docs/claims/intent-stage-derived.md",
+        "summary": "An intent's stage is derived from the milestones that realise it and each criterion from the evidence ledger, and it is satisfied only while every criterion has a current passing run",
+        "route": "/cockpit/objects/document/docs-claims-intent-stage-derived-md",
+        "source": "docs/claims/intent-stage-derived.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/interfaces-are-projections.md",
         "kind": "document",
         "label": "docs/claims/interfaces-are-projections.md",
@@ -13912,7 +14110,14 @@
             "evidence-gates-done",
             "roadmap-derived",
             "github-projection",
-            "task-dependencies"
+            "task-dependencies",
+            "intent-stage-derived",
+            "intent-links-resolve",
+            "intent-criteria-covered",
+            "intent-plan-reviewed",
+            "intent-realization-held-to-evidence",
+            "intent-preflight-names-the-intent",
+            "intent-cockpit-pages"
           ],
           "cockpit": [
             "intents"
@@ -27692,10 +27897,6 @@
           ],
           "order": 96,
           "priority": "p1",
-          "risks": [
-            "An intent model that grows a status or a transition becomes a second lifecycle beside the plan, and the two would disagree the first time an issue is re-planned.",
-            "Satisfaction criteria backed by commands or deployments are not derivable from the ledger yet, so an intent resting only on them can never read satisfied; that is deliberate until slice 2."
-          ],
           "scope": [
             ".ai/repo/project",
             ".ai/repo/ci/gates.yaml",
@@ -27709,7 +27910,7 @@
             "test/cases"
           ],
           "slug": "intent-lifecycle",
-          "updated_at": "2026-09-15",
+          "updated_at": "2026-10-05",
           "validation": [
             "majordomus intent validate",
             "cargo test --test intent",
@@ -32769,12 +32970,12 @@
         }
       },
       {
-        "id": "majordomus://rule/project.an-intent-outlives-its-sessions@1",
+        "id": "majordomus://rule/project.an-intent-outlives-its-sessions@2",
         "kind": "rule",
-        "label": "project.an-intent-outlives-its-sessions@1",
+        "label": "project.an-intent-outlives-its-sessions@2",
         "summary": "An intent outlives the sessions and providers that realise it, and closed work does not outrank evidence",
-        "route": "/cockpit/objects/rule/project-an-intent-outlives-its-sessions-1",
-        "source": ".ai/repo/rules/project/an-intent-outlives-its-sessions.v1.md",
+        "route": "/cockpit/objects/rule/project-an-intent-outlives-its-sessions-2",
+        "source": ".ai/repo/rules/project/an-intent-outlives-its-sessions.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -32928,6 +33129,28 @@
             "shell",
             "process",
             "agents"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.completion-never-decides-satisfaction@2",
+        "kind": "rule",
+        "label": "project.completion-never-decides-satisfaction@2",
+        "summary": "Completion discharges obligations and never decides whether an intent is satisfied",
+        "route": "/cockpit/objects/rule/project-completion-never-decides-satisfaction-2",
+        "source": ".ai/repo/rules/project/completion-never-decides-satisfaction.v2.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.work-serves-a-declared-intent@1",
+            "project.derived-once@1"
+          ],
+          "tags": [
+            "intent",
+            "completion",
+            "evidence",
+            "governance"
           ]
         }
       },
@@ -39063,6 +39286,27 @@
         "source": "test/cases/88_rust_command_tested.sh"
       },
       {
+        "id": "majordomus://test/test/cases/892_what_is_said_of_intents_is_what_the_claims_matrix_says.sh",
+        "kind": "test",
+        "label": "test/cases/892_what_is_said_of_intents_is_what_the_claims_matrix_says.sh",
+        "route": "/cockpit/objects/test/test-cases-892-what-is-said-of-intents-is-what-the-claims-matrix-says-sh",
+        "source": "test/cases/892_what_is_said_of_intents_is_what_the_claims_matrix_says.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/893_preflight_follows_what_an_issue_serves.sh",
+        "kind": "test",
+        "label": "test/cases/893_preflight_follows_what_an_issue_serves.sh",
+        "route": "/cockpit/objects/test/test-cases-893-preflight-follows-what-an-issue-serves-sh",
+        "source": "test/cases/893_preflight_follows_what_an_issue_serves.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh",
+        "kind": "test",
+        "label": "test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh",
+        "route": "/cockpit/objects/test/test-cases-895-a-finished-task-does-not-satisfy-an-intent-sh",
+        "source": "test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/89_web_surface.sh",
         "kind": "test",
         "label": "test/cases/89_web_surface.sh",
@@ -40724,584 +40968,6 @@
         }
       },
       {
-        "id": "majordomus://use-case/read-the-rules-the-tool-applies",
-        "kind": "use-case",
-        "label": "read-the-rules-the-tool-applies",
-        "summary": "See which rules apply here and what enforces them",
-        "route": "/cockpit/objects/use-case/read-the-rules-the-tool-applies",
-        "source": ".ai/repo/use-cases/read-the-rules-the-tool-applies.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "maintainer",
-            "reviewer",
-            "agent"
-          ],
-          "applications": [
-            "repository-with-authored-governance",
-            "ci-gated-project"
-          ],
-          "category": "policy",
-          "claims": [
-            "rule-resolution",
-            "vendored-rule-package",
-            "doctrine-registry"
-          ],
-          "commands": [
-            "rules",
-            "doctrine"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.rule-package-integrity",
-            "majordomus.doctrine-wiring-integrity"
-          ],
-          "responsibilities": [
-            "doctor",
-            "policy"
-          ],
-          "summary": "List the effective rule set, read one rule as the tool reads it, and see which of them the tool enforces and from where.",
-          "target": "guaranteed"
-        }
-      },
-      {
-        "id": "majordomus://use-case/record-a-decision-before-it-is-forgotten",
-        "kind": "use-case",
-        "label": "record-a-decision-before-it-is-forgotten",
-        "summary": "Record a decision as data, and prove the tool cannot accept it for you",
-        "route": "/cockpit/objects/use-case/record-a-decision-before-it-is-forgotten",
-        "source": ".ai/repo/use-cases/record-a-decision-before-it-is-forgotten.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "maintainer",
-            "agent"
-          ],
-          "applications": [
-            "long-running-work"
-          ],
-          "category": "knowledge",
-          "claims": [
-            "adr-catalogue",
-            "adr-propose",
-            "adr-traceability"
-          ],
-          "commands": [
-            "adr",
-            "knowledge"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.adr-integrity"
-          ],
-          "responsibilities": [
-            "layer"
-          ],
-          "summary": "Read the decisions a repository holds, validate the whole set in one command, and watch the tool refuse to write the one status only a person may write.",
-          "target": "guaranteed"
-        }
-      },
-      {
-        "id": "majordomus://use-case/recover-an-episode-nobody-closed",
-        "kind": "use-case",
-        "label": "recover-an-episode-nobody-closed",
-        "summary": "Close an episode whose client never came back",
-        "route": "/cockpit/objects/use-case/recover-an-episode-nobody-closed",
-        "source": ".ai/repo/use-cases/recover-an-episode-nobody-closed.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "operator",
-            "agent"
-          ],
-          "applications": [
-            "long-running-work"
-          ],
-          "category": "continuity",
-          "claims": [],
-          "commands": [
-            "recover"
-          ],
-          "difficulty": "intermediate",
-          "doctrines": [],
-          "responsibilities": [
-            "state"
-          ],
-          "summary": "A killed provider sends no end event. Close the episode it left open by evidence, exactly once, without claiming work it did not do.",
-          "target": "guaranteed",
-          "weight": 5
-        }
-      },
-      {
-        "id": "majordomus://use-case/resume-from-a-prompt-asset",
-        "kind": "use-case",
-        "label": "resume-from-a-prompt-asset",
-        "summary": "Start a session from a rendered framing, not a pasted transcript",
-        "route": "/cockpit/objects/use-case/resume-from-a-prompt-asset",
-        "source": ".ai/repo/use-cases/resume-from-a-prompt-asset.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "agent"
-          ],
-          "applications": [
-            "long-running-work",
-            "several-agents-one-repository"
-          ],
-          "category": "continuity",
-          "claims": [
-            "prompt-asset",
-            "prompt-assets",
-            "context-assembly",
-            "minimum-context"
-          ],
-          "commands": [
-            "prompt",
-            "context"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.prompt-integrity",
-            "majordomus.context-budget"
-          ],
-          "responsibilities": [
-            "policy",
-            "profiles"
-          ],
-          "summary": "List the prompt assets the repository ships, render one against the durable state, and read the context it embeds.",
-          "target": "guaranteed"
-        }
-      },
-      {
-        "id": "majordomus://use-case/resume-in-the-right-worktree",
-        "kind": "use-case",
-        "label": "resume-in-the-right-worktree",
-        "summary": "Resume in the right worktree, never against somebody else’s task",
-        "route": "/cockpit/objects/use-case/resume-in-the-right-worktree",
-        "source": ".ai/repo/use-cases/resume-in-the-right-worktree.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "agent"
-          ],
-          "applications": [
-            "several-agents-one-repository"
-          ],
-          "category": "continuity",
-          "claims": [
-            "record-resolution",
-            "worktree-ownership",
-            "divergence-label",
-            "local-state-ignored"
-          ],
-          "commands": [
-            "handover",
-            "check",
-            "context"
-          ],
-          "difficulty": "intermediate",
-          "doctrines": [
-            "majordomus.handover-integrity",
-            "majordomus.state-consistency",
-            "majordomus.scope-integrity"
-          ],
-          "responsibilities": [
-            "handover",
-            "state",
-            "scope"
-          ],
-          "summary": "Find the handover that belongs to this worktree and branch, and see a task record from another checkout reported as foreign rather than enforced here.",
-          "target": "guaranteed",
-          "weight": 32
-        }
-      },
-      {
-        "id": "majordomus://use-case/run-several-workers-at-once",
-        "kind": "use-case",
-        "label": "run-several-workers-at-once",
-        "summary": "Run several workers in one repository without them colliding",
-        "route": "/cockpit/objects/use-case/run-several-workers-at-once",
-        "source": ".ai/repo/use-cases/run-several-workers-at-once.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "agent",
-            "operator"
-          ],
-          "applications": [
-            "several-agents-one-repository"
-          ],
-          "category": "workers",
-          "claims": [
-            "scope-enforcement",
-            "scoped-task",
-            "overlap-report",
-            "git-identity"
-          ],
-          "commands": [
-            "start",
-            "check",
-            "finish"
-          ],
-          "difficulty": "intermediate",
-          "doctrines": [
-            "majordomus.scope-integrity",
-            "majordomus.state-consistency"
-          ],
-          "responsibilities": [
-            "scope",
-            "state"
-          ],
-          "summary": "Give each worker a declared scope, and find out immediately when two of them claim the same paths.",
-          "target": "guaranteed",
-          "weight": 4
-        }
-      },
-      {
-        "id": "majordomus://use-case/say-what-reached-the-remote-and-what-did-not",
-        "kind": "use-case",
-        "label": "say-what-reached-the-remote-and-what-did-not",
-        "summary": "Say what reached the remote and what did not",
-        "route": "/cockpit/objects/use-case/say-what-reached-the-remote-and-what-did-not",
-        "source": ".ai/repo/use-cases/say-what-reached-the-remote-and-what-did-not.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "maintainer",
-            "agent"
-          ],
-          "applications": [],
-          "category": "completion",
-          "claims": [
-            "obligation-establishment"
-          ],
-          "commands": [
-            "evidence",
-            "check",
-            "finish"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.obligation-closure"
-          ],
-          "responsibilities": [
-            "finish"
-          ],
-          "summary": "The obligations that reach past the working tree are settled by asking git and the published site, so a report cannot call uncommitted work committed or unpushed work pushed.",
-          "target": "guaranteed",
-          "weight": 41
-        }
-      },
-      {
-        "id": "majordomus://use-case/say-what-the-tool-is-for",
-        "kind": "use-case",
-        "label": "say-what-the-tool-is-for",
-        "summary": "Say what your work is for, once, and have every surface say it",
-        "route": "/cockpit/objects/use-case/say-what-the-tool-is-for",
-        "source": ".ai/repo/use-cases/say-what-the-tool-is-for.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "maintainer",
-            "contributor"
-          ],
-          "applications": [
-            "repository-with-authored-governance",
-            "repository-opened-in-ai-clients"
-          ],
-          "category": "extension",
-          "claims": [
-            "why-catalogue-discovered",
-            "why-references-resolve",
-            "why-diagnosis-explainable",
-            "context-documents",
-            "schema-driven-kinds",
-            "interfaces-are-projections",
-            "mcp-data-driven",
-            "generated-projections-checked"
-          ],
-          "commands": [
-            "init",
-            "context",
-            "knowledge",
-            "doctor"
-          ],
-          "difficulty": "intermediate",
-          "doctrines": [
-            "majordomus.context-integrity",
-            "majordomus.ai-layout-integrity",
-            "majordomus.projection-integrity"
-          ],
-          "mcp_tools": [
-            "majordomus_why",
-            "majordomus_why_moment",
-            "majordomus_why_audiences",
-            "majordomus_why_areas",
-            "majordomus_why_diagnose",
-            "majordomus_why_validate"
-          ],
-          "responsibilities": [
-            "layer",
-            "projection",
-            "doctor"
-          ],
-          "summary": "Record an operational failure mode as one file and have the command line, the API, MCP and the website answer it without registering it anywhere.",
-          "target": "guaranteed",
-          "weight": 10
-        }
-      },
-      {
-        "id": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "kind": "use-case",
-        "label": "see-what-the-repository-holds-without-reading-it",
-        "summary": "See what the repository holds, and run one of its capabilities, without reading a file",
-        "route": "/cockpit/objects/use-case/see-what-the-repository-holds-without-reading-it",
-        "source": ".ai/repo/use-cases/see-what-the-repository-holds-without-reading-it.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "operator",
-            "reviewer",
-            "maintainer"
-          ],
-          "applications": [
-            "repository-opened-in-ai-clients",
-            "repository-with-authored-governance"
-          ],
-          "category": "mcp",
-          "claims": [
-            "interfaces-are-projections",
-            "capability-registry",
-            "mcp-shared-server"
-          ],
-          "commands": [
-            "doctor",
-            "knowledge"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.projection-integrity",
-            "majordomus.ai-layout-integrity"
-          ],
-          "mcp_tools": [
-            "majordomus_health",
-            "majordomus_graph",
-            "majordomus_graphs",
-            "majordomus_perf"
-          ],
-          "responsibilities": [
-            "projection",
-            "doctor"
-          ],
-          "summary": "Open the shared server in a browser and get the whole layer as pages: what exists, where each thing came from, what depends on what, what is failing, and a form that runs any capability.",
-          "target": "guaranteed",
-          "weight": 6
-        }
-      },
-      {
-        "id": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "kind": "use-case",
-        "label": "serve-the-layer-to-ai-clients",
-        "summary": "Serve the repository's AI layer to every AI client through one shared server",
-        "route": "/cockpit/objects/use-case/serve-the-layer-to-ai-clients",
-        "source": ".ai/repo/use-cases/serve-the-layer-to-ai-clients.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "operator",
-            "agent"
-          ],
-          "applications": [
-            "repository-opened-in-ai-clients",
-            "several-agents-one-repository"
-          ],
-          "category": "mcp",
-          "claims": [
-            "mcp-client-autostart",
-            "mcp-shared-server",
-            "mcp-peers",
-            "mcp-lease-resilience",
-            "mcp-stdio-surface",
-            "mcp-uri-resolution",
-            "mcp-degraded-not-silent"
-          ],
-          "commands": [
-            "init",
-            "doctor"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.ai-layout-integrity",
-            "majordomus.projection-integrity",
-            "majordomus.scope-integrity"
-          ],
-          "mcp_tools": [
-            "majordomus_repository",
-            "majordomus_list",
-            "majordomus_get",
-            "majordomus_peers",
-            "majordomus_announce"
-          ],
-          "responsibilities": [
-            "layer",
-            "scope",
-            "doctor"
-          ],
-          "target": "guaranteed",
-          "weight": 7
-        }
-      },
-      {
-        "id": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "kind": "use-case",
-        "label": "trace-a-change-to-the-context-it-affects",
-        "summary": "Trace a change to the context documents it affects",
-        "route": "/cockpit/objects/use-case/trace-a-change-to-the-context-it-affects",
-        "source": ".ai/repo/use-cases/trace-a-change-to-the-context-it-affects.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "maintainer",
-            "reviewer"
-          ],
-          "applications": [
-            "repository-with-authored-governance",
-            "repository-opened-in-ai-clients"
-          ],
-          "category": "knowledge",
-          "claims": [
-            "context-documents",
-            "context-impact",
-            "ai-layer-manifest"
-          ],
-          "commands": [
-            "context",
-            "doctor"
-          ],
-          "difficulty": "intermediate",
-          "doctrines": [
-            "majordomus.context-integrity",
-            "majordomus.ai-layout-integrity"
-          ],
-          "responsibilities": [
-            "layer"
-          ],
-          "summary": "List the scoped context documents, resolve which apply to a path and why, and find out which documents a change set touches before it lands.",
-          "target": "guaranteed",
-          "weight": 72
-        }
-      },
-      {
-        "id": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "kind": "use-case",
-        "label": "trust-the-policy-before-reading-it",
-        "summary": "Trust the policy and the profiles only after they are validated",
-        "route": "/cockpit/objects/use-case/trust-the-policy-before-reading-it",
-        "source": ".ai/repo/use-cases/trust-the-policy-before-reading-it.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "maintainer"
-          ],
-          "applications": [
-            "repository-with-authored-governance",
-            "ci-gated-project"
-          ],
-          "category": "policy",
-          "claims": [
-            "policy-parse",
-            "profile-validate",
-            "wiring-reconciliation",
-            "exit-code-contract"
-          ],
-          "commands": [
-            "doctor",
-            "check"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.policy-integrity",
-            "majordomus.policy-completeness",
-            "majordomus.profile-requirements",
-            "majordomus.enforcement-wiring"
-          ],
-          "responsibilities": [
-            "policy",
-            "profiles",
-            "doctor"
-          ],
-          "summary": "Prove that the canonical policy parses with every key it needs declared, that every profile parses and the default exists, and that what the policy declares as enforced is what actually runs.",
-          "target": "guaranteed",
-          "weight": 41
-        }
-      },
-      {
-        "id": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "kind": "use-case",
-        "label": "work-on-a-branch-in-its-canonical-worktree",
-        "summary": "Work on a branch in the one worktree it belongs to",
-        "route": "/cockpit/objects/use-case/work-on-a-branch-in-its-canonical-worktree",
-        "source": ".ai/repo/use-cases/work-on-a-branch-in-its-canonical-worktree.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "agent",
-            "maintainer"
-          ],
-          "applications": [
-            "long-running-work",
-            "repository-opened-in-ai-clients"
-          ],
-          "category": "workers",
-          "claims": [
-            "worktree-topology-derived",
-            "worktree-migration-lossless",
-            "worktree-ownership"
-          ],
-          "commands": [
-            "doctor",
-            "context"
-          ],
-          "difficulty": "intermediate",
-          "doctrines": [
-            "majordomus.enforcement-wiring",
-            "majordomus.scope-integrity"
-          ],
-          "mcp_tools": [
-            "majordomus_worktrees",
-            "majordomus_worktree_status",
-            "majordomus_worktree_inspect",
-            "majordomus_worktree_migration_plan"
-          ],
-          "responsibilities": [
-            "doctor"
-          ],
-          "summary": "Start a branch without choosing a path, find every checkout of the repository from any of them, and bring a stray one home with its uncommitted work intact.",
-          "target": "guaranteed",
-          "weight": 7
-        }
-      },
-      {
-        "id": "majordomus://workspace/chatgpt-majordomus",
-        "kind": "workspace",
-        "label": "chatgpt-majordomus",
-        "summary": "The Majordomus project in ChatGPT",
-        "route": "/cockpit/objects/workspace/chatgpt-majordomus",
-        "source": ".ai/repo/workspaces/chatgpt-majordomus.yaml",
-        "status": "declared",
-        "facts": {
-          "capabilities": [
-            "workspace.read",
-            "conversations.read",
-            "messages.read",
-            "instructions.read",
-            "files.read"
-          ],
-          "created_at": "2026-09-09",
-          "updated_at": "2026-09-09"
-        }
-      },
-      {
         "id": "module:artifacts",
         "kind": "module",
         "label": "artifacts"
@@ -41579,14 +41245,6 @@
         "kind": "projection",
         "label": "mcp",
         "summary": "the mcp projection of the registry"
-      },
-      {
-        "id": "test:apps/majordomus-cli/tests/cockpit.rs",
-        "kind": "test",
-        "label": "cockpit.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/tests/cockpit.rs",
-        "external": true
       }
     ],
     "edges": [
@@ -44592,28 +44250,8 @@
       },
       {
         "source": "majordomus://adr/adr-0010",
-        "target": "file:.ai/repo/knowledge/sources.yaml",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0010",
-        "target": "file:share/kinds.yaml",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0010",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0010",
-        "target": "majordomus://test/test/cases/64_knowledge_discovery.sh",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0010",
-        "target": "majordomus://test/test/cases/73_knowledge_nodes.sh",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0011",
@@ -44647,43 +44285,8 @@
       },
       {
         "source": "majordomus://adr/adr-0012",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/graph.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0012",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/health.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0012",
-        "target": "file:apps/majordomus-cli/src/cockpit/mod.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0012",
-        "target": "file:apps/majordomus-cli/src/graph.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0012",
-        "target": "file:scripts/cockpit-probe",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0012",
-        "target": "file:share/cockpit/src/cockpit.css",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0012",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0012",
-        "target": "majordomus://document/docs/COCKPIT.md",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0012",
@@ -44703,21 +44306,6 @@
       {
         "source": "majordomus://adr/adr-0012",
         "target": "majordomus://rule/project.rust-canonical-declaration@1",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0012",
-        "target": "test:apps/majordomus-cli/tests/cockpit.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0013",
-        "target": "file:.ai/repo/ci/pages.yaml",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0013",
-        "target": "file:apps/majordomus-cli/src/http/router.rs",
         "kind": "put_in_force"
       },
       {
@@ -44757,18 +44345,8 @@
       },
       {
         "source": "majordomus://adr/adr-0018",
-        "target": "file:apps/majordomus-cli/src/why.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0018",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0018",
-        "target": "majordomus://context/ai.repo.why",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0018",
@@ -44781,39 +44359,14 @@
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0018",
-        "target": "majordomus://test/test/cases/98_why_catalogue.sh",
-        "kind": "put_in_force"
-      },
-      {
         "source": "majordomus://adr/adr-0019",
         "target": "kind:adr",
         "kind": "is_a"
       },
       {
         "source": "majordomus://adr/adr-0020",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/graph.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0020",
-        "target": "file:apps/majordomus-cli/src/cockpit/mod.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0020",
-        "target": "file:apps/majordomus-cli/src/graph.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0020",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0020",
-        "target": "majordomus://document/docs/COCKPIT.md",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0020",
@@ -44833,11 +44386,6 @@
       {
         "source": "majordomus://adr/adr-0020",
         "target": "majordomus://rule/project.no-new-nouns@1",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0021",
-        "target": "file:apps/majordomus-cli/src/worktree/mod.rs",
         "kind": "put_in_force"
       },
       {
@@ -45832,7 +45380,7 @@
       },
       {
         "source": "majordomus://adr/adr-0075",
-        "target": "majordomus://rule/project.an-intent-outlives-its-sessions@1",
+        "target": "majordomus://rule/project.an-intent-outlives-its-sessions@2",
         "kind": "put_in_force"
       },
       {
@@ -46368,6 +45916,31 @@
       {
         "source": "majordomus://adr/adr-0104",
         "target": "majordomus://rule/project.product-surface-derived@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0107",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0107",
+        "target": "majordomus://adr/adr-0070",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0107",
+        "target": "majordomus://rule/project.completion-never-decides-satisfaction@2",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0107",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0107",
+        "target": "majordomus://rule/project.work-serves-a-declared-intent@1",
         "kind": "put_in_force"
       },
       {
@@ -47019,11 +46592,6 @@
         "source": "majordomus://claim/cli-documentation-executable",
         "target": "majordomus://rule/project.rust-cli-evidence@1",
         "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/cockpit-is-a-projection-of-the-registry",
-        "target": "file:apps/majordomus-cli/src/cockpit/mod.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/cockpit-is-a-projection-of-the-registry",
@@ -48073,6 +47641,141 @@
       {
         "source": "majordomus://claim/installer-verifies-before-installing",
         "target": "majordomus://test/test/cases/85_installer.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/intent-closes-github-milestones",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-closes-github-milestones",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-cockpit-pages",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-cockpit-pages",
+        "target": "majordomus://document/docs/COCKPIT.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-command-deployment-evidence",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-command-deployment-evidence",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-criteria-covered",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-criteria-covered",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-criteria-covered",
+        "target": "majordomus://test/test/cases/386_a_plan_is_held_to_its_intent.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/intent-in-session-context",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-in-session-context",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-links-resolve",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-links-resolve",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-links-resolve",
+        "target": "majordomus://test/test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/intent-plan-reviewed",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-plan-reviewed",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-plan-reviewed",
+        "target": "majordomus://test/test/cases/386_a_plan_is_held_to_its_intent.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/intent-preflight-names-the-intent",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-preflight-names-the-intent",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-realization-held-to-evidence",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-realization-held-to-evidence",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-realization-held-to-evidence",
+        "target": "majordomus://test/test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/intent-refused-at-plan-start",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-refused-at-plan-start",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-stage-derived",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/intent-stage-derived",
+        "target": "majordomus://document/docs/PLANNING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/intent-stage-derived",
+        "target": "majordomus://test/test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
         "kind": "tested_by"
       },
       {
@@ -50067,11 +49770,6 @@
       },
       {
         "source": "majordomus://claim/why-catalogue-discovered",
-        "target": "file:apps/majordomus-cli/src/why.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/why-catalogue-discovered",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -50082,11 +49780,6 @@
       },
       {
         "source": "majordomus://claim/why-diagnosis-explainable",
-        "target": "file:apps/majordomus-cli/src/why.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/why-diagnosis-explainable",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -50094,11 +49787,6 @@
         "source": "majordomus://claim/why-diagnosis-explainable",
         "target": "majordomus://document/docs/WHY.md",
         "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/why-references-resolve",
-        "target": "file:apps/majordomus-cli/src/why.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/why-references-resolve",
@@ -51507,6 +51195,61 @@
       },
       {
         "source": "majordomus://document/docs/claims/installer-verifies-before-installing.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/intent-closes-github-milestones.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/intent-cockpit-pages.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/intent-command-deployment-evidence.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/intent-criteria-covered.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/intent-in-session-context.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/intent-links-resolve.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/intent-plan-reviewed.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/intent-preflight-names-the-intent.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/intent-realization-held-to-evidence.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/intent-refused-at-plan-start.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/intent-stage-derived.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -57961,17 +57704,17 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@1",
+        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@1",
+        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@2",
         "target": "majordomus://rule/project.derived-once@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@1",
+        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@2",
         "target": "majordomus://rule/project.work-serves-a-declared-intent@1",
         "kind": "depends_on"
       },
@@ -58053,6 +57796,21 @@
       {
         "source": "majordomus://rule/project.commands-run-non-interactively@2",
         "target": "majordomus://rule/project.portable-shell@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.completion-never-decides-satisfaction@2",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.completion-never-decides-satisfaction@2",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.completion-never-decides-satisfaction@2",
+        "target": "majordomus://rule/project.work-serves-a-declared-intent@1",
         "kind": "depends_on"
       },
       {
@@ -60906,6 +60664,21 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/892_what_is_said_of_intents_is_what_the_claims_matrix_says.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/893_preflight_follows_what_an_issue_serves.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/895_a_finished_task_does_not_satisfy_an_intent.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/89_web_surface.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -62596,641 +62369,6 @@
         "kind": "exercises"
       },
       {
-        "source": "majordomus://use-case/read-the-rules-the-tool-applies",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/read-the-rules-the-tool-applies",
-        "target": "majordomus://application/ci-gated-project",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/read-the-rules-the-tool-applies",
-        "target": "majordomus://application/repository-with-authored-governance",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/read-the-rules-the-tool-applies",
-        "target": "majordomus://claim/doctrine-registry",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/read-the-rules-the-tool-applies",
-        "target": "majordomus://claim/rule-resolution",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/read-the-rules-the-tool-applies",
-        "target": "majordomus://claim/vendored-rule-package",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/read-the-rules-the-tool-applies",
-        "target": "majordomus://rule/majordomus.doctrine-wiring-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/read-the-rules-the-tool-applies",
-        "target": "majordomus://rule/majordomus.rule-package-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/record-a-decision-before-it-is-forgotten",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/record-a-decision-before-it-is-forgotten",
-        "target": "majordomus://application/long-running-work",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/record-a-decision-before-it-is-forgotten",
-        "target": "majordomus://claim/adr-catalogue",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/record-a-decision-before-it-is-forgotten",
-        "target": "majordomus://claim/adr-propose",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/record-a-decision-before-it-is-forgotten",
-        "target": "majordomus://claim/adr-traceability",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/record-a-decision-before-it-is-forgotten",
-        "target": "majordomus://rule/majordomus.adr-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/recover-an-episode-nobody-closed",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/recover-an-episode-nobody-closed",
-        "target": "majordomus://application/long-running-work",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/resume-from-a-prompt-asset",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/resume-from-a-prompt-asset",
-        "target": "majordomus://application/long-running-work",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/resume-from-a-prompt-asset",
-        "target": "majordomus://application/several-agents-one-repository",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/resume-from-a-prompt-asset",
-        "target": "majordomus://claim/context-assembly",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/resume-from-a-prompt-asset",
-        "target": "majordomus://claim/minimum-context",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/resume-from-a-prompt-asset",
-        "target": "majordomus://claim/prompt-asset",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/resume-from-a-prompt-asset",
-        "target": "majordomus://claim/prompt-assets",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/resume-from-a-prompt-asset",
-        "target": "majordomus://rule/majordomus.context-budget@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/resume-from-a-prompt-asset",
-        "target": "majordomus://rule/majordomus.prompt-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/resume-in-the-right-worktree",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/resume-in-the-right-worktree",
-        "target": "majordomus://application/several-agents-one-repository",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/resume-in-the-right-worktree",
-        "target": "majordomus://claim/divergence-label",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/resume-in-the-right-worktree",
-        "target": "majordomus://claim/local-state-ignored",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/resume-in-the-right-worktree",
-        "target": "majordomus://claim/record-resolution",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/resume-in-the-right-worktree",
-        "target": "majordomus://claim/worktree-ownership",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/resume-in-the-right-worktree",
-        "target": "majordomus://rule/majordomus.handover-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/resume-in-the-right-worktree",
-        "target": "majordomus://rule/majordomus.scope-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/resume-in-the-right-worktree",
-        "target": "majordomus://rule/majordomus.state-consistency@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/run-several-workers-at-once",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/run-several-workers-at-once",
-        "target": "majordomus://application/several-agents-one-repository",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/run-several-workers-at-once",
-        "target": "majordomus://claim/git-identity",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/run-several-workers-at-once",
-        "target": "majordomus://claim/overlap-report",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/run-several-workers-at-once",
-        "target": "majordomus://claim/scope-enforcement",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/run-several-workers-at-once",
-        "target": "majordomus://claim/scoped-task",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/run-several-workers-at-once",
-        "target": "majordomus://rule/majordomus.scope-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/run-several-workers-at-once",
-        "target": "majordomus://rule/majordomus.state-consistency@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/say-what-reached-the-remote-and-what-did-not",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/say-what-reached-the-remote-and-what-did-not",
-        "target": "majordomus://claim/obligation-establishment",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/say-what-reached-the-remote-and-what-did-not",
-        "target": "majordomus://rule/majordomus.obligation-closure@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "capability:why.areas",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "capability:why.audiences",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "capability:why.diagnose",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "capability:why.list",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "capability:why.moment",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "capability:why.validate",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "majordomus://application/repository-opened-in-ai-clients",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "majordomus://application/repository-with-authored-governance",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "majordomus://claim/context-documents",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "majordomus://claim/generated-projections-checked",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "majordomus://claim/interfaces-are-projections",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "majordomus://claim/mcp-data-driven",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "majordomus://claim/schema-driven-kinds",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "majordomus://claim/why-catalogue-discovered",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "majordomus://claim/why-diagnosis-explainable",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "majordomus://claim/why-references-resolve",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "majordomus://rule/majordomus.ai-layout-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "majordomus://rule/majordomus.context-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "majordomus://rule/majordomus.projection-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "capability:graph.get",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "capability:graph.list",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "capability:health.report",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "capability:perf.counters",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "majordomus://application/repository-opened-in-ai-clients",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "majordomus://application/repository-with-authored-governance",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "majordomus://claim/capability-registry",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "majordomus://claim/interfaces-are-projections",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "majordomus://claim/mcp-shared-server",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "majordomus://rule/majordomus.ai-layout-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "majordomus://rule/majordomus.projection-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "capability:objects.get",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "capability:objects.list",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "capability:peers.announce",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "capability:peers.list",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "capability:repository.info",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://application/repository-opened-in-ai-clients",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://application/several-agents-one-repository",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-client-autostart",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-degraded-not-silent",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-lease-resilience",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-peers",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-shared-server",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-stdio-surface",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-uri-resolution",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://rule/majordomus.ai-layout-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://rule/majordomus.projection-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://rule/majordomus.scope-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://application/repository-opened-in-ai-clients",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://application/repository-with-authored-governance",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://claim/ai-layer-manifest",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://claim/context-documents",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://claim/context-impact",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://rule/majordomus.ai-layout-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://rule/majordomus.context-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://application/ci-gated-project",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://application/repository-with-authored-governance",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://claim/exit-code-contract",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://claim/policy-parse",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://claim/profile-validate",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://claim/wiring-reconciliation",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://rule/majordomus.enforcement-wiring@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://rule/majordomus.policy-completeness@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://rule/majordomus.policy-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://rule/majordomus.profile-requirements@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "capability:worktree.inspect",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "capability:worktree.migration_plan",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "capability:worktree.status",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "capability:worktree.topology",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://application/long-running-work",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://application/repository-opened-in-ai-clients",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://claim/worktree-migration-lossless",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://claim/worktree-ownership",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://claim/worktree-topology-derived",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://rule/majordomus.enforcement-wiring@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://rule/majordomus.scope-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://workspace/chatgpt-majordomus",
-        "target": "kind:workspace",
-        "kind": "is_a"
-      },
-      {
         "source": "module:artifacts",
         "target": "capability:artifacts.list",
         "kind": "composes"
@@ -64083,7 +63221,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4498,
+      "edges": 4394,
       "acyclic": true,
       "truncated": true
     }

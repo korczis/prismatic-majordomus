@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 80,
+      "count": 81,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 159,
+      "count": 160,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 80
+      "count": 81
     },
     {
       "kind": "application",
@@ -69,7 +69,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 222
+      "count": 233
     },
     {
       "kind": "command",
@@ -92,7 +92,7 @@
       "projection": "none",
       "route": null,
       "title": null,
-      "reason": "A critique is the adversarial pass over one intent's plan, written for the worker who must resolve its findings before work starts (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
+      "reason": "A critique is the adversarial pass over one intent's plan, written by a worker, and work started under the intent without it or with a blocking finding open fails intent validation (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
       "count": 1
     },
     {
@@ -117,7 +117,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 310
+      "count": 321
     },
     {
       "kind": "domain",
@@ -156,7 +156,7 @@
       "projection": "none",
       "route": null,
       "title": null,
-      "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` answers for the intent itself.",
+      "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` and the Cockpit's /cockpit/intents answer for the intent itself.",
       "count": 2
     },
     {
@@ -237,7 +237,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 159
+      "count": 160
     },
     {
       "kind": "scope",
@@ -277,7 +277,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 350
+      "count": 353
     },
     {
       "kind": "use-case",
@@ -285,7 +285,7 @@
       "route": "/use-cases/",
       "title": null,
       "reason": null,
-      "count": 48
+      "count": 35
     },
     {
       "kind": "workspace",
@@ -293,7 +293,7 @@
       "route": null,
       "title": null,
       "reason": "A workspace records an external place work is done (a ChatGPT project, an issue tracker). It names accounts and surfaces of the people working here, not of the product.",
-      "count": 1
+      "count": 0
     }
   ],
   "entities": [
@@ -519,36 +519,7 @@
         "knowledge"
       ],
       "source": ".ai/repo/adrs/0010-curated-knowledge-is-one-kind-with-a-class-not-a-second-stor.md",
-      "references": [
-        {
-          "edge": "put_in_force",
-          "label": ".ai/repo/knowledge/sources.yaml",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "share/kinds.yaml",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "test/cases/64_knowledge_discovery.sh",
-          "kind": "test",
-          "route": null,
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "test/cases/73_knowledge_nodes.sh",
-          "kind": "test",
-          "route": null,
-          "external": false
-        }
-      ],
+      "references": [],
       "referenced_by": []
     },
     {
@@ -621,55 +592,6 @@
       "references": [
         {
           "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/capability/builtin/graph.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/capability/builtin/health.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/cockpit/mod.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/graph.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "scripts/cockpit-probe",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "share/cockpit/src/cockpit.css",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "docs/COCKPIT.md",
-          "kind": "document",
-          "route": null,
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
           "label": "project.interfaces-are-projections@1",
           "kind": "rule",
           "route": "/rules/project-interfaces-are-projections-1/",
@@ -695,13 +617,6 @@
           "kind": "rule",
           "route": "/rules/project-rust-canonical-declaration-1/",
           "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/tests/cockpit.rs",
-          "kind": "test",
-          "route": null,
-          "external": true
         }
       ],
       "referenced_by": [
@@ -741,22 +656,7 @@
         "web"
       ],
       "source": ".ai/repo/adrs/0013-every-web-surface-is-discovered-from-its-producer-resolved-o.md",
-      "references": [
-        {
-          "edge": "put_in_force",
-          "label": ".ai/repo/ci/pages.yaml",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/http/router.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        }
-      ],
+      "references": [],
       "referenced_by": [
         {
           "edge": "put_in_force",
@@ -887,20 +787,6 @@
       "references": [
         {
           "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/why.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "ai.repo.why",
-          "kind": "context",
-          "route": "/context/",
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
           "label": "project.interfaces-are-projections@1",
           "kind": "rule",
           "route": "/rules/project-interfaces-are-projections-1/",
@@ -911,13 +797,6 @@
           "label": "project.why-catalogue-is-canonical@1",
           "kind": "rule",
           "route": "/rules/project-why-catalogue-is-canonical-1/",
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "test/cases/98_why_catalogue.sh",
-          "kind": "test",
-          "route": null,
           "external": false
         }
       ],
@@ -955,34 +834,6 @@
       ],
       "source": ".ai/repo/adrs/0020-the-capability-graph-is-composed-not-centralised-and-projecte.md",
       "references": [
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/capability/builtin/graph.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/cockpit/mod.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/graph.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "docs/COCKPIT.md",
-          "kind": "document",
-          "route": null,
-          "external": false
-        },
         {
           "edge": "put_in_force",
           "label": "project.derived-once@1",
@@ -1031,13 +882,6 @@
       ],
       "source": ".ai/repo/adrs/0021-the-branch-to-worktree-topology-is-derived-from-git-identity-and-enfor.md",
       "references": [
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/worktree/mod.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
         {
           "edge": "put_in_force",
           "label": "project.interfaces-are-projections@1",
@@ -2974,6 +2818,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0075/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0107",
+          "kind": "adr",
+          "route": "/adrs/adr-0107/",
+          "external": false
         }
       ]
     },
@@ -3075,9 +2926,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.an-intent-outlives-its-sessions@1",
+          "label": "project.an-intent-outlives-its-sessions@2",
           "kind": "rule",
-          "route": "/rules/project-an-intent-outlives-its-sessions-1/",
+          "route": "/rules/project-an-intent-outlives-its-sessions-2/",
           "external": false
         },
         {
@@ -4024,6 +3875,53 @@
       "referenced_by": []
     },
     {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0107",
+      "identity": "adr-0107",
+      "slug": "adr-0107",
+      "cockpit": "/cockpit/objects/adr/adr-0107",
+      "title": "Completion discharges obligations and never decides whether an intent is satisfied",
+      "status": "proposed",
+      "tags": [
+        "intent",
+        "completion",
+        "evidence",
+        "governance"
+      ],
+      "source": ".ai/repo/adrs/0107-completion-discharges-obligations-and-never-decides-whether-an-intent-is-satisfied.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0070",
+          "kind": "adr",
+          "route": "/adrs/adr-0070/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.completion-never-decides-satisfaction@2",
+          "kind": "rule",
+          "route": "/rules/project-completion-never-decides-satisfaction-2/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.derived-once@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-once-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.work-serves-a-declared-intent@1",
+          "kind": "rule",
+          "route": "/rules/project-work-serves-a-declared-intent-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
       "kind": "rule",
       "id": "majordomus://rule/majordomus.adr-integrity@1",
       "identity": "majordomus.adr-integrity@1",
@@ -4058,13 +3956,6 @@
           "label": "majordomus.decision-threshold@1",
           "kind": "rule",
           "route": "/rules/majordomus-decision-threshold-1/",
-          "external": false
-        },
-        {
-          "edge": "exercises",
-          "label": "record-a-decision-before-it-is-forgotten",
-          "kind": "use-case",
-          "route": "/use-cases/",
           "external": false
         }
       ]
@@ -4144,34 +4035,6 @@
         {
           "edge": "exercises",
           "label": "migrate-from-the-old-layout",
-          "kind": "use-case",
-          "route": "/use-cases/",
-          "external": false
-        },
-        {
-          "edge": "exercises",
-          "label": "say-what-the-tool-is-for",
-          "kind": "use-case",
-          "route": "/use-cases/",
-          "external": false
-        },
-        {
-          "edge": "exercises",
-          "label": "see-what-the-repository-holds-without-reading-it",
-          "kind": "use-case",
-          "route": "/use-cases/",
-          "external": false
-        },
-        {
-          "edge": "exercises",
-          "label": "serve-the-layer-to-ai-clients",
-          "kind": "use-case",
-          "route": "/use-cases/",
-          "external": false
-        },
-        {
-          "edge": "exercises",
-          "label": "trace-a-change-to-the-context-it-affects",
           "kind": "use-case",
           "route": "/use-cases/",
           "external": false
@@ -4528,13 +4391,6 @@
           "kind": "use-case",
           "route": "/use-cases/",
           "external": false
-        },
-        {
-          "edge": "exercises",
-          "label": "resume-from-a-prompt-asset",
-          "kind": "use-case",
-          "route": "/use-cases/",
-          "external": false
         }
       ]
     },
@@ -4586,20 +4442,6 @@
         {
           "edge": "exercises",
           "label": "read-only-the-context-that-fits",
-          "kind": "use-case",
-          "route": "/use-cases/",
-          "external": false
-        },
-        {
-          "edge": "exercises",
-          "label": "say-what-the-tool-is-for",
-          "kind": "use-case",
-          "route": "/use-cases/",
-          "external": false
-        },
-        {
-          "edge": "exercises",
-          "label": "trace-a-change-to-the-context-it-affects",
           "kind": "use-case",
           "route": "/use-cases/",
           "external": false
@@ -4865,13 +4707,6 @@
           "kind": "use-case",
           "route": "/use-cases/",
           "external": false
-        },
-        {
-          "edge": "exercises",
-          "label": "read-the-rules-the-tool-applies",
-          "kind": "use-case",
-          "route": "/use-cases/",
-          "external": false
         }
       ]
     },
@@ -4935,20 +4770,6 @@
         {
           "edge": "exercises",
           "label": "prove-performance-with-benchmarks",
-          "kind": "use-case",
-          "route": "/use-cases/",
-          "external": false
-        },
-        {
-          "edge": "exercises",
-          "label": "trust-the-policy-before-reading-it",
-          "kind": "use-case",
-          "route": "/use-cases/",
-          "external": false
-        },
-        {
-          "edge": "exercises",
-          "label": "work-on-a-branch-in-its-canonical-worktree",
           "kind": "use-case",
           "route": "/use-cases/",
           "external": false
@@ -5074,13 +4895,6 @@
         {
           "edge": "exercises",
           "label": "hand-work-between-sessions",
-          "kind": "use-case",
-          "route": "/use-cases/",
-          "external": false
-        },
-        {
-          "edge": "exercises",
-          "label": "resume-in-the-right-worktree",
           "kind": "use-case",
           "route": "/use-cases/",
           "external": false
@@ -5527,13 +5341,6 @@
           "kind": "use-case",
           "route": "/use-cases/",
           "external": false
-        },
-        {
-          "edge": "exercises",
-          "label": "say-what-reached-the-remote-and-what-did-not",
-          "kind": "use-case",
-          "route": "/use-cases/",
-          "external": false
         }
       ]
     },
@@ -5602,13 +5409,6 @@
           "kind": "use-case",
           "route": "/use-cases/",
           "external": false
-        },
-        {
-          "edge": "exercises",
-          "label": "trust-the-policy-before-reading-it",
-          "kind": "use-case",
-          "route": "/use-cases/",
-          "external": false
         }
       ]
     },
@@ -5655,13 +5455,6 @@
           "kind": "use-case",
           "route": "/use-cases/",
           "external": false
-        },
-        {
-          "edge": "exercises",
-          "label": "trust-the-policy-before-reading-it",
-          "kind": "use-case",
-          "route": "/use-cases/",
-          "external": false
         }
       ]
     },
@@ -5698,13 +5491,6 @@
         {
           "edge": "exercises",
           "label": "read-only-the-context-that-fits",
-          "kind": "use-case",
-          "route": "/use-cases/",
-          "external": false
-        },
-        {
-          "edge": "exercises",
-          "label": "trust-the-policy-before-reading-it",
           "kind": "use-case",
           "route": "/use-cases/",
           "external": false
@@ -5833,27 +5619,6 @@
           "kind": "use-case",
           "route": "/use-cases/",
           "external": false
-        },
-        {
-          "edge": "exercises",
-          "label": "say-what-the-tool-is-for",
-          "kind": "use-case",
-          "route": "/use-cases/",
-          "external": false
-        },
-        {
-          "edge": "exercises",
-          "label": "see-what-the-repository-holds-without-reading-it",
-          "kind": "use-case",
-          "route": "/use-cases/",
-          "external": false
-        },
-        {
-          "edge": "exercises",
-          "label": "serve-the-layer-to-ai-clients",
-          "kind": "use-case",
-          "route": "/use-cases/",
-          "external": false
         }
       ]
     },
@@ -5962,13 +5727,6 @@
         {
           "edge": "exercises",
           "label": "find-an-object-without-reading-everything",
-          "kind": "use-case",
-          "route": "/use-cases/",
-          "external": false
-        },
-        {
-          "edge": "exercises",
-          "label": "resume-from-a-prompt-asset",
           "kind": "use-case",
           "route": "/use-cases/",
           "external": false
@@ -6164,15 +5922,7 @@
           "external": false
         }
       ],
-      "referenced_by": [
-        {
-          "edge": "exercises",
-          "label": "read-the-rules-the-tool-applies",
-          "kind": "use-case",
-          "route": "/use-cases/",
-          "external": false
-        }
-      ]
+      "referenced_by": []
     },
     {
       "kind": "rule",
@@ -6247,34 +5997,6 @@
         {
           "edge": "exercises",
           "label": "know-whether-this-work-is-finished",
-          "kind": "use-case",
-          "route": "/use-cases/",
-          "external": false
-        },
-        {
-          "edge": "exercises",
-          "label": "resume-in-the-right-worktree",
-          "kind": "use-case",
-          "route": "/use-cases/",
-          "external": false
-        },
-        {
-          "edge": "exercises",
-          "label": "run-several-workers-at-once",
-          "kind": "use-case",
-          "route": "/use-cases/",
-          "external": false
-        },
-        {
-          "edge": "exercises",
-          "label": "serve-the-layer-to-ai-clients",
-          "kind": "use-case",
-          "route": "/use-cases/",
-          "external": false
-        },
-        {
-          "edge": "exercises",
-          "label": "work-on-a-branch-in-its-canonical-worktree",
           "kind": "use-case",
           "route": "/use-cases/",
           "external": false
@@ -6581,20 +6303,6 @@
         {
           "edge": "exercises",
           "label": "know-whether-this-work-is-finished",
-          "kind": "use-case",
-          "route": "/use-cases/",
-          "external": false
-        },
-        {
-          "edge": "exercises",
-          "label": "resume-in-the-right-worktree",
-          "kind": "use-case",
-          "route": "/use-cases/",
-          "external": false
-        },
-        {
-          "edge": "exercises",
-          "label": "run-several-workers-at-once",
           "kind": "use-case",
           "route": "/use-cases/",
           "external": false
@@ -7181,10 +6889,10 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.an-intent-outlives-its-sessions@1",
-      "identity": "project.an-intent-outlives-its-sessions@1",
-      "slug": "project-an-intent-outlives-its-sessions-1",
-      "cockpit": "/cockpit/objects/rule/project-an-intent-outlives-its-sessions-1",
+      "id": "majordomus://rule/project.an-intent-outlives-its-sessions@2",
+      "identity": "project.an-intent-outlives-its-sessions@2",
+      "slug": "project-an-intent-outlives-its-sessions-2",
+      "cockpit": "/cockpit/objects/rule/project-an-intent-outlives-its-sessions-2",
       "title": "An intent outlives the sessions and providers that realise it, and closed work does not outrank evidence",
       "status": "active",
       "tags": [
@@ -7194,7 +6902,7 @@
         "provenance",
         "evidence"
       ],
-      "source": ".ai/repo/rules/project/an-intent-outlives-its-sessions.v1.md",
+      "source": ".ai/repo/rules/project/an-intent-outlives-its-sessions.v2.md",
       "references": [
         {
           "edge": "depends_on",
@@ -7474,6 +7182,47 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.completion-never-decides-satisfaction@2",
+      "identity": "project.completion-never-decides-satisfaction@2",
+      "slug": "project-completion-never-decides-satisfaction-2",
+      "cockpit": "/cockpit/objects/rule/project-completion-never-decides-satisfaction-2",
+      "title": "Completion discharges obligations and never decides whether an intent is satisfied",
+      "status": "active",
+      "tags": [
+        "intent",
+        "completion",
+        "evidence",
+        "governance"
+      ],
+      "source": ".ai/repo/rules/project/completion-never-decides-satisfaction.v2.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.derived-once@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-once-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.work-serves-a-declared-intent@1",
+          "kind": "rule",
+          "route": "/rules/project-work-serves-a-declared-intent-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0107",
+          "kind": "adr",
+          "route": "/adrs/adr-0107/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.context-locality@1",
       "identity": "project.context-locality@1",
       "slug": "project-context-locality-1",
@@ -7701,6 +7450,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0107",
+          "kind": "adr",
+          "route": "/adrs/adr-0107/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.a-diagram-is-drawn-not-typed@1",
           "kind": "rule",
@@ -7716,9 +7472,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.an-intent-outlives-its-sessions@1",
+          "label": "project.an-intent-outlives-its-sessions@2",
           "kind": "rule",
-          "route": "/rules/project-an-intent-outlives-its-sessions-1/",
+          "route": "/rules/project-an-intent-outlives-its-sessions-2/",
           "external": false
         },
         {
@@ -7726,6 +7482,13 @@
           "label": "project.cache-is-invisible@1",
           "kind": "rule",
           "route": "/rules/project-cache-is-invisible-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.completion-never-decides-satisfaction@2",
+          "kind": "rule",
+          "route": "/rules/project-completion-never-decides-satisfaction-2/",
           "external": false
         },
         {
@@ -11690,6 +11453,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0107",
+          "kind": "adr",
+          "route": "/adrs/adr-0107/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.a-plan-carries-the-intent-it-serves@1",
           "kind": "rule",
@@ -11698,9 +11468,16 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.an-intent-outlives-its-sessions@1",
+          "label": "project.an-intent-outlives-its-sessions@2",
           "kind": "rule",
-          "route": "/rules/project-an-intent-outlives-its-sessions-1/",
+          "route": "/rules/project-an-intent-outlives-its-sessions-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.completion-never-decides-satisfaction@2",
+          "kind": "rule",
+          "route": "/rules/project-completion-never-decides-satisfaction-2/",
           "external": false
         }
       ]

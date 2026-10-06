@@ -1244,7 +1244,7 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intents.rs",
       "tests": [],
-      "title": "Every intent, with its derived stage",
+      "title": "Every intent, with its derived stage and verdict",
       "tool": "majordomus_intents"
     },
     {
@@ -1261,7 +1261,7 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intents.rs",
       "tests": [],
-      "title": "Which intent a piece of work serves",
+      "title": "Which intent a piece of work serves, or why it may not proceed",
       "tool": "majordomus_intent_preflight"
     },
     {
@@ -3107,6 +3107,55 @@
         "test": "test/cases/431_economics_claims_gated.sh"
       },
       {
+        "id": "intent-stage-derived",
+        "implementation": "apps/majordomus-cli/src/intent.rs",
+        "route": "/guarantees/intent-stage-derived/",
+        "status": "guaranteed",
+        "test": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh"
+      },
+      {
+        "id": "intent-links-resolve",
+        "implementation": "apps/majordomus-cli/src/intent.rs",
+        "route": "/guarantees/intent-links-resolve/",
+        "status": "guaranteed",
+        "test": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh"
+      },
+      {
+        "id": "intent-criteria-covered",
+        "implementation": "apps/majordomus-cli/src/intent_plan.rs",
+        "route": "/guarantees/intent-criteria-covered/",
+        "status": "guaranteed",
+        "test": "test/cases/386_a_plan_is_held_to_its_intent.sh"
+      },
+      {
+        "id": "intent-plan-reviewed",
+        "implementation": "apps/majordomus-cli/src/intent_review.rs",
+        "route": "/guarantees/intent-plan-reviewed/",
+        "status": "guaranteed",
+        "test": "test/cases/386_a_plan_is_held_to_its_intent.sh"
+      },
+      {
+        "id": "intent-realization-held-to-evidence",
+        "implementation": "apps/majordomus-cli/src/intent_realization.rs",
+        "route": "/guarantees/intent-realization-held-to-evidence/",
+        "status": "guaranteed",
+        "test": "test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh"
+      },
+      {
+        "id": "intent-preflight-names-the-intent",
+        "implementation": "apps/majordomus-cli/src/intent.rs",
+        "route": "/guarantees/intent-preflight-names-the-intent/",
+        "status": "guaranteed",
+        "test": "apps/majordomus-cli/tests/intent.rs"
+      },
+      {
+        "id": "intent-cockpit-pages",
+        "implementation": "apps/majordomus-cli/src/cockpit/intents.rs",
+        "route": "/guarantees/intent-cockpit-pages/",
+        "status": "guaranteed",
+        "test": "apps/majordomus-cli/tests/intent_realization.rs"
+      },
+      {
         "id": "mcp-data-driven",
         "implementation": "apps/majordomus-cli/src/index.rs",
         "route": "/guarantees/mcp-data-driven/",
@@ -3576,7 +3625,7 @@
   },
   "counts": {
     "capabilities": 170,
-    "claims": 77,
+    "claims": 84,
     "modules": 51
   },
   "generator": "majordomus-cli 0.13.2",
