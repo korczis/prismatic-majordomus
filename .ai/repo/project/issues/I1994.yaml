@@ -1,0 +1,30 @@
+id: I1994
+milestone: adopter-upgrades
+title: "The Rust executable applies the manifest's JSON Schema it already ships"
+slug: the-rust-executable-applies-the-manifest-schema
+priority: p1
+profile: deep-work
+parallel_safe: true
+objective: "Make App::load validate .ai/manifest.yaml against the distribution's manifest schema, as its code intends, so the Rust executable refuses what the shell refuses: a section, or any other key or value, the schema does not declare. A layer that names a newer tool (written_for, I1980) is then refused with that reason and both versions on the Rust side too."
+why: "App::load looks the schema up as `schema.schema(\"manifest\")` (apps/majordomus-cli/src/app.rs), but schemas are registered by identity, `majordomus.manifest/v1` (share.rs schema_identity; metadata/mod.rs asserts that key), so the lookup returns None and the check never runs. Verified on 2026-10-06 while building I1980: a manifest with `sections: future: repo/future` is read by the Rust executable (`majordomus capabilities list` exits 0) whatever its written_for says, while the shell refuses it (`unknown key(s): sections.future`, or the newer-tool sentence when written_for is newer). The two readers of one file disagree, and the Rust one silently ignores a section it cannot honour."
+current_state: "Manifest::parse (repository.rs) refuses unknown top-level keys through deny_unknown_fields and an unsupported schema, and names both versions for a newer layer in those cases. Constraints only the JSON Schema expresses (sections' additionalProperties, written_for's pattern) are enforced by the shell's allow-list and checks, never by Rust."
+desired_state: "App::load finds the manifest schema by its identity and applies it. A violation is refused naming the key, or, when written_for names a newer tool, with LayerFromNewerTool. A test proves the Rust executable refuses an unknown section, and that a layer from the future gets the both-versions refusal from Rust as from the shell."
+risk: "Turning the check on validates every manifest the Rust executable reads, including the inline fixtures under apps/majordomus-cli (synthetic.rs, tests/common/mod.rs, devcontext and about 25 others) and every adopter's. Any fixture or real manifest that violates the schema today starts failing: count them before switching it on, and fix the fixtures or the schema in the same change."
+scope:
+  - "apps/majordomus-cli/src/app.rs"
+  - "apps/majordomus-cli/src/repository.rs"
+  - "apps/majordomus-cli/tests"
+  - "share/schemas/majordomus/manifest"
+  - "test/cases"
+acceptance_criteria:
+  - "A manifest with a section the schema does not declare is refused by a Rust command, naming the key, as the shell refuses it"
+  - "The same manifest naming a newer written_for is refused by a Rust command with the both-versions sentence"
+  - "Every manifest fixture in the crate validates against the schema, or the change says which it fixed"
+validation:
+  - "bin/majordomus plan validate"
+  - "cargo test --manifest-path apps/majordomus-cli/Cargo.toml"
+evidence_required:
+  - "rust_refuses_unknown_section_test"
+  - "rust_names_newer_tool_test"
+created_at: 2026-10-06
+updated_at: 2026-10-06

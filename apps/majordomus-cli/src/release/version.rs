@@ -912,26 +912,22 @@ pub fn write(root: &Path, to: &str) -> std::io::Result<Vec<String>> {
         let mut out = String::with_capacity(text.len() + stamp.len() + 1);
         let mut done = false;
         for line in text.lines() {
-            if line.starts_with("written_for:") {
-                // the first is replaced, and a second would be a second answer
-                if !done {
-                    out.push_str(&stamp);
-                    out.push('\n');
-                }
-                done = true;
-                continue;
+            // every written_for line is dropped, and the stamp stands where the first was, or
+            // after the schema line: a second would be a second answer
+            let replaced = line.starts_with("written_for:");
+            if !replaced {
+                out.push_str(line);
+                out.push('\n');
             }
-            out.push_str(line);
-            out.push('\n');
-            if !done && line.starts_with("schema:") {
+            if !done && (replaced || line.starts_with("schema:")) {
                 out.push_str(&stamp);
                 out.push('\n');
                 done = true;
             }
         }
         if out != text {
-            std::fs::write(&layer, out)?;
             written.push(LAYER_MANIFEST.to_string());
+            return std::fs::write(&layer, out).map(|()| written);
         }
     }
 
@@ -1635,5 +1631,12 @@ mod tests {
         );
         // a layer already stamped with the version is not written again
         assert_eq!(write(root, "1.0.0").unwrap(), Vec::<String>::new());
+        // a stamp written above the schema line is replaced where it stands
+        std::fs::write(&layer, "written_for: \"0.1.0\"\nschema: ai-repository/v1\n").unwrap();
+        write(root, "1.0.0").unwrap();
+        assert_eq!(
+            std::fs::read_to_string(&layer).unwrap(),
+            "written_for: \"1.0.0\"\nschema: ai-repository/v1\n"
+        );
     }
 }

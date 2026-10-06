@@ -26876,6 +26876,43 @@
         }
       },
       {
+        "id": "majordomus://issue/I1994",
+        "kind": "issue",
+        "label": "I1994",
+        "summary": "The Rust executable applies the manifest's JSON Schema it already ships",
+        "route": "/cockpit/objects/issue/i1994",
+        "source": ".ai/repo/project/issues/I1994.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A manifest with a section the schema does not declare is refused by a Rust command, naming the key, as the shell refuses it",
+            "The same manifest naming a newer written_for is refused by a Rust command with the both-versions sentence",
+            "Every manifest fixture in the crate validates against the schema, or the change says which it fixed"
+          ],
+          "created_at": "2026-10-06",
+          "evidence_required": [
+            "rust_refuses_unknown_section_test",
+            "rust_names_newer_tool_test"
+          ],
+          "milestone": "adopter-upgrades",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "deep-work",
+          "scope": [
+            "apps/majordomus-cli/src/app.rs",
+            "apps/majordomus-cli/src/repository.rs",
+            "apps/majordomus-cli/tests",
+            "share/schemas/majordomus/manifest",
+            "test/cases"
+          ],
+          "slug": "the-rust-executable-applies-the-manifest-schema",
+          "updated_at": "2026-10-06",
+          "validation": [
+            "bin/majordomus plan validate",
+            "cargo test --manifest-path apps/majordomus-cli/Cargo.toml"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -41183,59 +41220,6 @@
           "summary": "Open the shared server in a browser and get the whole layer as pages: what exists, where each thing came from, what depends on what, what is failing, and a form that runs any capability.",
           "target": "guaranteed",
           "weight": 6
-        }
-      },
-      {
-        "id": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "kind": "use-case",
-        "label": "serve-the-layer-to-ai-clients",
-        "summary": "Serve the repository's AI layer to every AI client through one shared server",
-        "route": "/cockpit/objects/use-case/serve-the-layer-to-ai-clients",
-        "source": ".ai/repo/use-cases/serve-the-layer-to-ai-clients.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "operator",
-            "agent"
-          ],
-          "applications": [
-            "repository-opened-in-ai-clients",
-            "several-agents-one-repository"
-          ],
-          "category": "mcp",
-          "claims": [
-            "mcp-client-autostart",
-            "mcp-shared-server",
-            "mcp-peers",
-            "mcp-lease-resilience",
-            "mcp-stdio-surface",
-            "mcp-uri-resolution",
-            "mcp-degraded-not-silent"
-          ],
-          "commands": [
-            "init",
-            "doctor"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.ai-layout-integrity",
-            "majordomus.projection-integrity",
-            "majordomus.scope-integrity"
-          ],
-          "mcp_tools": [
-            "majordomus_repository",
-            "majordomus_list",
-            "majordomus_get",
-            "majordomus_peers",
-            "majordomus_announce"
-          ],
-          "responsibilities": [
-            "layer",
-            "scope",
-            "doctor"
-          ],
-          "target": "guaranteed",
-          "weight": 7
         }
       },
       {
@@ -56605,6 +56589,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I1994",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1994",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -62895,96 +62889,6 @@
         "kind": "exercises"
       },
       {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "capability:objects.get",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "capability:objects.list",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "capability:peers.announce",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "capability:peers.list",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "capability:repository.info",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://application/repository-opened-in-ai-clients",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://application/several-agents-one-repository",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-client-autostart",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-degraded-not-silent",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-lease-resilience",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-peers",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-shared-server",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-stdio-surface",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://claim/mcp-uri-resolution",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://rule/majordomus.ai-layout-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://rule/majordomus.projection-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/serve-the-layer-to-ai-clients",
-        "target": "majordomus://rule/majordomus.scope-integrity@1",
-        "kind": "exercises"
-      },
-      {
         "source": "module:artifacts",
         "target": "capability:artifacts.list",
         "kind": "composes"
@@ -63847,7 +63751,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4465,
+      "edges": 4449,
       "acyclic": true,
       "truncated": true
     }

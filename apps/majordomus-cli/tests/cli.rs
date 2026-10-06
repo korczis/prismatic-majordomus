@@ -478,6 +478,33 @@ fn release_version_and_bump_take_the_contracts_answer_over_the_commits() {
     );
     assert!(layer().contains("written_for: \"0.2.0\""), "{}", layer());
 
+    // a dry run at the version that stands writes nothing, a stale record included
+    f.write(
+        ".ai/manifest.yaml",
+        &layer().replace("written_for: \"0.2.0\"", "written_for: \"0.1.0\""),
+    );
+    let (code, out) = release(&f, &["bump", "--dry-run"]);
+    assert_eq!(code, 0, "{out}");
+    assert!(out.contains("nothing written"), "{out}");
+    assert!(layer().contains("written_for: \"0.1.0\""), "{}", layer());
+    // a layer the writer cannot write is an error, never a record left silently behind
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let path = f.path(".ai/manifest.yaml");
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o444)).unwrap();
+        let (code, out) = release(&f, &["bump"]);
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o644)).unwrap();
+        assert_ne!(
+            code, 0,
+            "an unwritable layer was reported as stamped: {out}"
+        );
+        assert!(layer().contains("written_for: \"0.1.0\""), "{}", layer());
+    }
+    let (code, out) = release(&f, &["bump"]);
+    assert_eq!(code, 0, "{out}");
+    assert!(layer().contains("written_for: \"0.2.0\""), "{}", layer());
+
     // and again: the version already covers what the contract requires
     let (code, out) = release(&f, &["bump"]);
     assert_eq!(code, 0, "{out}");
