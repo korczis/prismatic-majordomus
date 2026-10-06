@@ -1,11 +1,258 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.12.0 -->
+     Generator: majordomus-cli 0.14.0 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **0.12.0**
+Current version: **0.14.0**
+
+## v0.14.0 — 2026-10-06
+
+### Added
+
+- **integration**: one executor per repository across machines, and its throughput is seen (`9272aaf79`)
+- **integration**: an overlap names its kind, and risk reads what a merge changes (WP16) (`46d40ac7f`)
+- **integration**: a dependency is satisfied by a merge alone (WP14) (`83f35ec7f`)
+- **integration**: continuous mode is gated by the trail's record of verified merges (WP21) (`3ba8aa2a1`)
+- **integration**: an offline cleanup read, and Obsolete only from a person's label (WP23) (`85ca02dbf`)
+- **integration**: every assessment names its issue and milestone (WP24) (`1e3317556`)
+- **integration**: a rank names its factors; dependents and size order equals (`b4f0befd3`)
+- **integration**: prs repair brings master into one named pull request; scripts/unblock retired (`2c241c981`)
+- **integration**: cleanup reports the branches merged pull requests left on origin (WP22) (`3b2de048e`)
+- **integration**: cleanup closes only what it decided, at the head it decided on (`239cfb2e4`)
+- **integration**: a refused candidate does not block the queue (`fbbc05546`)
+- **integration**: redundant work and a landed successor are told apart (WP13) (`e9c33d54b`)
+- **integration**: a merge is proved where it landed; an unverified merge holds the drains (`60267eae0`)
+- **integration**: auto-merge is Unsafe, only a merge commit merges, one label policy (WP12) (`34c521981`)
+- **integration**: reasons, evidence and gates are typed, and every gate is reported (WP11) (`76e19e1d0`)
+- **integration**: the integrator's throughput is folded from its trail (`d2eabd65d`)
+- **integration**: a dry run is proved to move nothing (WP29) (`429b08201`)
+- **integration**: required checks and reviews are authoritative (`2c8f32e8d`)
+
+### Fixed
+
+- **site**: a feature's capability row wraps a long tool name (`193a8ff7e`)
+- **integration**: the proof's listings take the canonical order; a long tool name wraps (`5b5e2d9e4`)
+- **test**: every scratch clone the executor merges in names its own identity (`9ac18b1d5`)
+- **integration**: a branch that moved since it was observed is a stale refusal (`cc02c9a41`)
+- **integration**: repair pushes without a lease; case 720 stays strict (`44ece5bf4`)
+- **test**: cases 720 and 850 follow repair's pinned lease and the dependency read (`c6d71803b`)
+- **integration**: the leftover claims are released through the claim the lease holds (`38eda121e`)
+- **integration**: the private module's doc examples are text, as its convention says (`7fc1edd73`)
+- **integration**: repaired heads hold the pipeline; a diagnosed repair dry run exits 10 (`1ccf07926`)
+- **integration**: the dry-run proof reads the repository's trail, and a Rust test measures it (`16a73a02d`)
+- **integration**: the dry-run proof judges only the mirrors it observed (`705920d5f`)
+- **integration**: reads write nothing; an aged observation is said (`137b80590`)
+- **integration**: a lease is renewed or lost, and taken for the observed base (`655ff9238`)
+- **integration**: racing executors merge once; the lease is a held flock (`c75f2b201`)
+- **integration**: every destructive act is on one shared trail before it happens (`e27f2aabb`)
+- **ci**: nothing merges a pull request around the integrator (`701cda1e9`)
+- **integration**: check-attr's paths are written while its answer is read (`62b7fec4d`)
+- **integration**: a ref-keyed relation is dropped while master stands still (`c061ea5d5`)
+- **integration**: the executor's own head holds the pipeline while its check is unreported (`11800aa4f`)
+- **integration**: every changed line of the relation path is reached by a test (`f661feb39`)
+- **integration**: a relation is decided on the observed head, and only facts are kept (`b8b270b00`)
+- **integration**: the classifier reads what the forge and the trail say, not prose (`b9c8334c9`)
+
+### Changed
+
+- **integration**: the dry-run proof has no failure branch it cannot reach (`b7aeebd55`)
+- **integration**: what merged pull requests left is read by cleanup, not refresh (WP22) (`e0b2908b5`)
+- **integration**: a marker's word boundary is the number list's own (`2f062f215`)
+
+### Documentation
+
+- **integration**: review states, dependency markers and relation freshness (`e515d9ee3`)
+
+### Tests
+
+- **prs**: explain says a dependency that landed as well as one still open (`5ccc6fc2a`)
+- **integration**: every changed path of prs repair is driven; unreachable arms are folded (`e350e5292`)
+- **integration**: the reconciler, a squash landing, explain and a failed proof are driven (`6d901dc37`)
+- **integration**: the model, the classifier, the relation, the queue and the metrics owe nothing (`9eec14527`)
+- **integration**: every changed path of the executor is driven; unreachable arms are folded (`72d8b44dd`)
+- **integration**: the executor runs against a scripted forge; a declared test module is test code (`7cb724e95`)
+- **integration**: the trail harness answers the read before a closure; a silent refusal is named (`9d0dc8df1`)
+- **integration**: case 850 names the strong case redundant, after the D2 rename (`756ab3597`)
+- **integration**: every scripted forge answers the ruleset read, and 850 reads the shared trail (`e99fc7012`)
+- **integration**: required checks and reviews, end to end; ADR 0101 item 3 (`dc5a363a6`)
+- **integration**: the drain re-plans after every merge, across five drains (`f6d8b2310`)
+- **integration**: what the trail must refuse and keep, stated before it is fixed (`51c559aa7`)
+- **integration**: the bounded hold's trail lines without a time or a head are tested (`edb04cfcf`)
+- **integration**: the fork filter, the base guard and the pending-only hold each have a test (`77fe089cb`)
+- **integration**: a relation is the observed head's, stated before it is fixed (`bb1a0a44c`)
+- **integration**: what the classifier misreads, stated before it is fixed (`26ff31abd`)
+- **integration**: the harness scripts what changes between two observations (`4f655e79a`)
+
+### Housekeeping
+
+- **release**: record v0.13.2 and the metadata it publishes (`20ad547fd`)
+- **release**: n6 is 0.14.0; a branch that cannot be listed is refused as such (`e49456930`)
+- **derive**: regenerate batch-n6 on master 9a31fed5e5 (release 0.13.2) (`88f097dc2`)
+- **derive**: regenerate the composed batch-n6 on master b557ab1c8c (`14dbff991`)
+- **derive**: WP22 derived after merging batch-n6 1d6e1c9 (`26d1f4aae`)
+- **derive**: batch-n6 derived after WP12 (`141c5b39f`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.14.0-aarch64-apple-darwin.tar.gz (`6bd455c540bf`)
+- `macos-x86_64` — majordomus-v0.14.0-x86_64-apple-darwin.tar.gz (`af3392bb8e73`)
+- `linux-x86_64-gnu` — majordomus-v0.14.0-x86_64-unknown-linux-gnu.tar.gz (`4338a4643f69`)
+- `linux-x86_64-musl` — majordomus-v0.14.0-x86_64-unknown-linux-musl.tar.gz (`84bfd813eb4b`)
+- `linux-aarch64-gnu` — majordomus-v0.14.0-aarch64-unknown-linux-gnu.tar.gz (`91e824614e48`)
+- `linux-aarch64-musl` — majordomus-v0.14.0-aarch64-unknown-linux-musl.tar.gz (`460f9a8b56d3`)
+
+
+## v0.13.2 — 2026-10-06
+
+### Fixed
+
+- **providers**: the worktree guard is said in as many lines as before (`65940e375`)
+- **context**: a path not created yet resolves from its ancestors (`e7e032f02`)
+- **decision**: a supersession names one recorded decision, and list marks it (`261cc27a7`)
+- **cli**: an installed majordomus runs the commands its bootstraps name (`ed11f797c`)
+- **check**: scope leaves out the commits a fast-forward or rebase brought from the trunk (`5f42631e7`)
+- **doctor**: the lifecycle doctrine counts the episodes of the branch it judges (`3f2076d13`)
+- **doctor**: a linked worktree's hooks are found where git keeps them (`e39a83664`)
+
+### Tests
+
+- **cli**: the forwarding case accepts the executable under either name (`25313dbc9`)
+- **doctor**: the linked-worktree case leaves when it cannot enter the worktree (`aa652b90a`)
+
+### Housekeeping
+
+- **release**: release 0.13.2 (`b0944db92`)
+- **derive**: the batch follows #783 at its budget-sized worktree paragraph (`515bd83c3`)
+- **derive**: the batch's projections follow master with the v0.13.1 record (`84a324cfa`)
+- **release**: record v0.13.1 and the metadata it publishes (`35535728e`)
+- **derive**: the batch's projections follow master at v0.13.1 (`3419a1c1f`)
+- **derive**: the batch's projections follow its seven members (`3abde34fb`)
+- **plan**: an adopter's upgrade is a planned outcome, I1980-I1991 (`1aaf9f86d`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.13.2-aarch64-apple-darwin.tar.gz (`5e98d56a3e2e`)
+- `macos-x86_64` — majordomus-v0.13.2-x86_64-apple-darwin.tar.gz (`02cd63725644`)
+- `linux-x86_64-gnu` — majordomus-v0.13.2-x86_64-unknown-linux-gnu.tar.gz (`60280e182b2d`)
+- `linux-x86_64-musl` — majordomus-v0.13.2-x86_64-unknown-linux-musl.tar.gz (`3a55f5dda405`)
+- `linux-aarch64-gnu` — majordomus-v0.13.2-aarch64-unknown-linux-gnu.tar.gz (`3903322ee961`)
+- `linux-aarch64-musl` — majordomus-v0.13.2-aarch64-unknown-linux-musl.tar.gz (`4e1c67dd8d30`)
+
+
+## v0.13.1 — 2026-10-04
+
+### Fixed
+
+- **site**: the domain page's prose reads its headings as headings (`8294cc6d3`)
+- **rules**: a unit-test module in its own file is proof the crate gate runs (`185a30977`)
+- **release**: the installer reads /proc where the system has no ps (`4122d3192`)
+- **install**: an upgrade keeps a superseded tree a running process uses (`fa305ca91`)
+- **live**: a write this process made is a move, on every path that can make one (`7dfba01a8`)
+- **pages**: a rebuild is chosen only for the trunk's own tree (`901a146c2`)
+- **test**: CI fails on a skip, and a skip is excused only where another job holds it (`f04717040`)
+- **reap**: a server that holds its checkout's lease is not abandoned (`849d314b0`)
+- **site**: a prose heading reads as a heading, not as a link (`d5ba8abeb`)
+
+### Documentation
+
+- **how-it-works**: every claim the independent audit refuted or overstated is corrected (`456e42fe6`)
+- **how-it-works**: the architecture as the code ships it, mapped and audited (`3facc7974`)
+
+### Tests
+
+- **batch-n2**: cover the batch's changed lines, refreshed against master (`d33d51e1c`)
+- **rules**: a unit-test module in its own file is run by the crate gate (`104593bdf`)
+- **site**: a prose heading reads as a heading, held by case 820 (`46e26b295`)
+
+### Housekeeping
+
+- **ci**: the suite's total budget follows its measured cost under load (`99d7196d6`)
+- **ci**: the slowest case's budget follows its measured cost under load (`8bf38314f`)
+- **ci**: the coverage job's bound leaves room for contended runners (`dc8c42ecc`)
+- **plan**: close what master already holds, retire the manifest nobody can sync (`02706daea`)
+- **release**: record v0.13.0 and the metadata it publishes (`a14e24542`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.13.1-aarch64-apple-darwin.tar.gz (`d74c537a9aeb`)
+- `macos-x86_64` — majordomus-v0.13.1-x86_64-apple-darwin.tar.gz (`cbb7e7988cbd`)
+- `linux-x86_64-gnu` — majordomus-v0.13.1-x86_64-unknown-linux-gnu.tar.gz (`37adf8949714`)
+- `linux-x86_64-musl` — majordomus-v0.13.1-x86_64-unknown-linux-musl.tar.gz (`1ff8628b3944`)
+- `linux-aarch64-gnu` — majordomus-v0.13.1-aarch64-unknown-linux-gnu.tar.gz (`cba95ca7d885`)
+- `linux-aarch64-musl` — majordomus-v0.13.1-aarch64-unknown-linux-musl.tar.gz (`0815c41b152a`)
+
+
+## v0.13.0 — 2026-10-04
+
+### Decisions
+
+- **ADR-0104** The product is filed under a few domains, and a feature names its one _(proposed)_
+- **ADR-0077** Published content may be written in the reader's language; the repository's own artifacts may not _(proposed)_
+
+### Added
+
+- **site**: the homepage is told overview first, and the product map is its domains (`b9f476920`)
+- **product**: the product is filed under a few domains, and a feature names its one (`6de049eae`)
+- **site**: two articles from one evidence base, and the rule change they needed (`d8c97273f`)
+- **serve**: what a lease contest is judged by is declared, not compiled (`64143f0ed`)
+- **ci**: the queue measures itself, and still cannot merge (`ab06f4382`)
+
+### Fixed
+
+- **site-check**: the homepage's navigation is read by landmark, not by its first 80 links (`b9a9a0e6b`)
+- **batch-n1**: the product-domains claim page carries the five sections (`c4557bc0f`)
+- **batch-n1**: the four CI findings on 487cedf (`70862769f`)
+- **site**: the bar lights the group that holds the section a page lives in (`d5051df78`)
+- **product**: what the product surface claims is what the model can back (`b1555082b`)
+- **rules**: land-and-publish describes the serialised pages group, not push cancellation (`98e7fd9ae`)
+- **lease**: the declared lease timings carry examples of what they answer (`7d8e0dde2`)
+- **env**: publish the server after startup and show one entry heading (`48f13f3a0`)
+- **site-data**: exit 13 names every internal step, and case 593 asserts what can fail (`bc2df49ff`)
+- **site-data**: a read that failed is not an empty repository (`fc885ff63`)
+- **serve**: a slow but live owner keeps its lease; a wedged one is still replaced (`48ce13299`)
+- **pages**: a deploy is not cancelled by the next merge (`ffb62646f`)
+
+### Performance
+
+- **site**: the navbar needs no Flowbite; its collapse and dropdowns are site/nav.js (`edeb6ec0a`)
+
+### Documentation
+
+- **product**: every public domain type carries an executable example (`cd7caaa1e`)
+- **cockpit**: the feature record states what the Cockpit can write (`f769f0d70`)
+
+### Tests
+
+- **env**: the entry's episode and checks are covered, not only their doc example (`487cedf6f`)
+- **product**: every changed line of the domain model is covered (`d00baded7`)
+- **shared**: a stopped server's listener is awaited, bounded, not probed once (`074b40046`)
+- **coverage**: a replacement that cannot be started is an error, not a ready server (`17a4fe283`)
+- **coverage**: the declared lease timings and the replaced-executable take-over are exercised (`86f785d5e`)
+- **reasoning**: a linked mesh runtime advises, and its absence leaves reasoning intact (`bd9026db3`)
+- **site**: the published pair must state the same figures (`1863e82ae`)
+- **serve**: the lease-declaration case is 354, not 349 (`e46c62acf`)
+
+### Housekeeping
+
+- **derive**: the projections follow the merge with the v0.12.0 record (`b40738da8`)
+- **release**: record v0.12.0 and the metadata it publishes (`a570e5c7b`)
+- **derive**: regenerate after merging master (`ec462fb4a`)
+- **derive**: the projections follow the merge with batch L (`0ddc56041`)
+- **derive**: re-derive after merging the Cockpit record fix (`9e4e6a47b`)
+- the lease branch follows master (`8980326f7`)
+- **derive**: the projections follow the merge with master (`9c7733cf2`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.13.0-aarch64-apple-darwin.tar.gz (`a556d96fcd8b`)
+- `macos-x86_64` — majordomus-v0.13.0-x86_64-apple-darwin.tar.gz (`08a686e7a082`)
+- `linux-x86_64-gnu` — majordomus-v0.13.0-x86_64-unknown-linux-gnu.tar.gz (`6c828fe60b3f`)
+- `linux-x86_64-musl` — majordomus-v0.13.0-x86_64-unknown-linux-musl.tar.gz (`71fd00c91e1b`)
+- `linux-aarch64-gnu` — majordomus-v0.13.0-aarch64-unknown-linux-gnu.tar.gz (`84ad1c317e21`)
+- `linux-aarch64-musl` — majordomus-v0.13.0-aarch64-unknown-linux-musl.tar.gz (`52038e7a81d4`)
+
 
 ## v0.12.0 — 2026-10-03
 

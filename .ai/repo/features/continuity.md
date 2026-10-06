@@ -8,6 +8,7 @@ headline: A session ends and the work does not: what the next worker needs is a 
 summary: Task state, checkpoints, handovers, decisions and open questions live in files outside every conversation; a session opens and closes into an immutable record; the person's prompts are captured by the provider's own hooks; and the next episode is briefed from those records, labelled by how far git has moved since.
 status: stable
 weight: 50
+domain: context
 featured: true
 areas: [context, coordination]
 modules: [continuity, lifecycle, session_domain, recover]

@@ -11,9 +11,11 @@
 #   1. nothing observed yet: status says so (exit 10) and asks for a refresh
 #   2. refresh observes; status, plan and explain answer offline (the log does not grow)
 #   3. #1 contains master and passed ci: ready; #2 is behind master: needs_refresh
-#   4. a dry run says it would merge #1 and changes nothing, records nothing
+#   4. a dry run says it would merge #1 and changes nothing, records nothing but what it
+#      observed
 #   5. drain --max 1 merges exactly #1, with --match-head-commit and never --admin, verifies
-#      that master contains its head, and records the merge
+#      that master contains its head, and records the merge — the attempt, with its
+#      evidence, before it, inside the lease
 #   6. after the merge the old observation is stale and says so; a refresh re-plans
 #   7. the source never names --admin or a force push, and never reads the forge's mergeable
 . "$ROOT/test/lib.sh"
@@ -54,6 +56,8 @@ case "\$1 \$2" in
   "api repos/o/r") echo '{"allow_merge_commit":true,"allow_squash_merge":true,"allow_rebase_merge":false}' ;;
   "api repos/o/r/commits/master") printf '{"sha":"%s"}\n' "\$(git -C "$ORIGIN" rev-parse master)" ;;
   "api repos/o/r/branches/master/protection") echo '{"required_status_checks":{"contexts":["ci"]}}' ;;
+  # the rulesets that apply to master: none, as a branch with only a protection answers
+  "api repos/o/r/rules/branches/master") echo '[]' ;;
   "pr list")
     if [ -f "$STATE/merged-1" ]; then sed 's/^\[.*},{/[{/' "$STATE/prs.json"; else cat "$STATE/prs.json"; fi ;;
   "pr merge")
@@ -103,10 +107,16 @@ exp="$("$RB" run integration.explain --repo "$W" --input '{"number":2}' --format
 [ "$(printf '%s' "$exp" | jq -r '.output.assessment.disposition')" = needs_refresh ] || { echo "    integration.explain does not say needs_refresh for #2"; exit 1; }
 
 # ---------------------------------------------------------------- 4. a dry run
+# the trail is the repository's, under the common git directory; a dry run's observations are
+# recorded as `observed`, and nothing else is
+ev="$W/.git/majordomus/integration/events.jsonl"
+acts() { grep -vc '"action":"observed"' "$ev" 2>/dev/null || true; }
+acts_before="$(acts)"
 out="$(prs drain --dry-run --max 3)"
 case "$out" in *"would merge #1"*) ;; *) echo "    the dry run did not say it would merge #1: $out"; exit 1 ;; esac
 grep -q "^pr merge" "$STATE/log" && { echo "    the dry run merged"; exit 1; }
-[ ! -e "$W/.ai/local/state/integration/events.jsonl" ] || { echo "    the dry run recorded an action"; exit 1; }
+[ "$(acts)" = "$acts_before" ] || { echo "    the dry run recorded an action:"; cat "$ev"; exit 1; }
+grep -q '"action":"observed"' "$ev" || { echo "    an observation is not in the trail"; exit 1; }
 
 # ---------------------------------------------------------------- 5. one merge
 out="$(prs drain --max 1)" || { echo "    drain failed: $out"; cat "$STATE/log"; exit 1; }
@@ -119,9 +129,20 @@ git -C "$ORIGIN" merge-base --is-ancestor "$H1" master || { echo "    master doe
 # the merge was decided twice: two pr list calls between the dry run and the merge
 n_list="$(sed -n '/^pr list/p' "$STATE/log" | wc -l | tr -d ' ')"
 [ "$n_list" -ge 4 ] || { echo "    the executor did not observe again before merging ($n_list observations)"; exit 1; }
-ev="$W/.ai/local/state/integration/events.jsonl"
 jq -e 'select(.action == "merge_succeeded" and .pr == 1 and .master_after != null)' "$ev" >/dev/null \
   || { echo "    the merge is not in the audit trail"; cat "$ev"; exit 1; }
+# proved where it landed: the trail names the merge commit, whose parents are the decided
+# master and the decided head (ADR 0101 §4)
+mc="$(jq -r 'select(.action == "merge_succeeded" and .pr == 1) | .merge_commit // empty' "$ev" | tail -n 1)"
+[ -n "$mc" ] || { echo "    merge_succeeded names no merge_commit"; exit 1; }
+[ "$(git -C "$ORIGIN" rev-parse "$mc^2")" = "$H1" ] || { echo "    the recorded merge commit $mc does not merge #1's head"; exit 1; }
+git -C "$ORIGIN" merge-base --is-ancestor "$mc" master || { echo "    the recorded merge commit is not on master"; exit 1; }
+# every act was on the trail before it was taken, and the lease that covered them with it
+order="$(jq -r '.action' "$ev" | grep -v '^observed$' | tr '\n' ' ')"
+case "$order" in *"lease_acquired "*"selected "*"merge_attempted merge_succeeded "*"lease_released "*) ;;
+  *) echo "    the trail does not hold the acts in order: $order"; exit 1 ;; esac
+jq -e 'select(.action == "merge_attempted" and (.evidence | length) > 0)' "$ev" >/dev/null \
+  || { echo "    the merge attempt does not name its evidence"; exit 1; }
 prs events | grep merge_succeeded >/dev/null || { echo "    prs events does not show the merge"; exit 1; }
 
 # ---------------------------------------------------------------- 6. the old plan is void

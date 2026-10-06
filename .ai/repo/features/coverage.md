@@ -4,10 +4,11 @@ id: coverage
 kind: feature
 title: New code is covered, measured once and asked two questions
 short_title: Coverage
-headline: One coverage measurement, test code out of the denominator, holds a crate floor, a floor over the session/continuity domain, and — the invariant of #214 — every executable line a change touches.
+headline: "One coverage measurement, test code out of the denominator, holds a crate floor, a floor over the session/continuity domain, and — the invariant of #214 — every executable line a change touches."
 summary: scripts/rust-coverage is the one coverage authority: a single cargo-llvm-cov export, test code excluded from both sides of every fraction, one rule for lines, functions and regions. Three questions read that judgment — a crate-wide line floor, a floor over the session/continuity domain, and the changed-code differential gate that refuses new debt while leaving untouched legacy debt alone. The differential intersects the export with the lines git says a change touched against the branch's merge-base, working tree included, and distinguishes PASS, FAIL, UNKNOWN and BLOCKED so a crashed tool or an unresolvable base is never a silent green.
 status: stable
 weight: 72
+domain: completion
 featured: false
 areas: [verification]
 modules: []

@@ -107,6 +107,21 @@ MJ_ROOT="$W" expect_exit 10 "$W/scripts/ci/backlog-check"
 expect_grep 'instructs a reader to merge on the forge'
 rm "$W/docs/HOWTO.md"
 
+# a route to master around the integrator. Each runs; each must be refused. A comment that
+# names one, and a force push of a branch that is not the trunk, are not routes and pass.
+mkdir -p "$W/.github/workflows"
+for bypass in 'gh pr merge "$n" --merge' 'gh api -X PUT "repos/o/r/pulls/$n/merge"' \
+              'gh pr merge --admin "$n"' 'git push --force origin master' \
+              'git push origin +master'; do
+  printf '#!/bin/sh\n%s\n' "$bypass" > "$W/scripts/land"
+  MJ_ROOT="$W" expect_exit 10 "$W/scripts/ci/backlog-check"
+  expect_grep 'merges around the integrator'
+done
+printf '#!/bin/sh\n# never: gh pr merge --admin; land with majordomus prs drain\n' > "$W/scripts/land"
+printf 'jobs:\n  r:\n    steps:\n      - run: git push -f origin "release/record-$v"\n' > "$W/.github/workflows/rel.yml"
+MJ_ROOT="$W" expect_exit 0 "$W/scripts/ci/backlog-check"
+rm -f "$W/scripts/land" "$W/.github/workflows/rel.yml"
+
 # a case that backgrounds a server without bounding its life — the shape that actually
 # leaked here: `serve`'s --idle defaults to 0, so an interrupted run abandons the server
 mkdir -p "$W/test/cases"

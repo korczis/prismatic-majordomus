@@ -1,0 +1,26 @@
+id: I1987
+milestone: adopter-upgrades
+title: "A knowledge record's file provenance survives the file's deletion"
+slug: knowledge-file-provenance-survives-deletion
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Let derived_from name a file at a commit (`file:<path>@<commit>`), or resolve `file:` at the record's own commit, so that deleting a cited file does not break knowledge check."
+why: "OSCILLA 5467193: derived_from file:tests/engine.cjs and file:tests/smoke.cjs dangled after its V2 removed those files; under 0.12 knowledge check failed and knowledge edges exited 10, and the only fix was to cite a commit instead."
+current_state: "file: references are resolved against the working tree only."
+desired_state: "A historical file reference resolves through git; knowledge check reports it as historical, not dangling."
+scope:
+  - "lib/knowledge.sh"
+  - "share/schemas"
+  - "docs/KNOWLEDGE.md"
+  - "test/cases"
+acceptance_criteria:
+  - "A record citing a since-deleted file at its commit passes knowledge check"
+  - "A file reference that never existed still fails"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "historical_file_reference_case"
+created_at: 2026-10-04
+updated_at: 2026-10-04

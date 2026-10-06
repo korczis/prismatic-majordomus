@@ -8,6 +8,7 @@ headline: The port, the routes, the resources and the build inputs of a hosted e
 summary: One deployment object per hosted instance of the executable, validated against the registry this process built; the container image definition, the provider configuration and the smoke expectations are generated from it and checked for drift.
 status: draft
 weight: 200
+domain: surfaces
 featured: false
 areas: [governance]
 modules: [deploy, delivery]

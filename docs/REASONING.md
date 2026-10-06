@@ -195,6 +195,10 @@ Linked mesh runtimes carrying the `reviews` feature are advisors too, discovered
 mesh by the shared server and never listed in the catalogue. A request reaches one as a mesh
 review request (ADR 0067), through the server named by `MAJORDOMUS_SERVER_URL`; its answer is
 the first review answer replicated back. No peer is needed, as no advisor is.
+`apps/majordomus-cli/tests/reasoning_mesh.rs` proves both halves with two real runtimes and
+every catalogue advisor disabled: the linked runtime is an advisor, a code-review plan
+selects it, a review sent through the mesh is answered and read back, and once the runtime
+is gone the advisor disappears and the same plan decides locally.
 
 ## Offline and CI
 

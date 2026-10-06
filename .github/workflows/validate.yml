@@ -253,12 +253,17 @@ jobs:
       # The one canonical validation surface. Every behavioural, negative and integration
       # case runs here; nothing is skipped, and no failure is swallowed. test/run.sh exits
       # non-zero when any case fails, and this step has no `|| true` to hide it.
+      # 102_completion_shell reads the completion zsh loads, and skipped "no zsh" on every run.
+      - run: sudo apt-get install -y zsh >/dev/null
+      # --no-skips: a case that declines fails the job. The one excuse is a case whose subject
+      # only another job has, declared in its header ("# majordomus-skip-runs-in: <job>") and
+      # run there with --runs-in, where no skip is excused (409's rendered half, in the site job).
       - name: behavioural tests
         env:
           MJ_TEST_JOBS: 4
           MJ_TEST_SHARD: ${{ matrix.shard }}/4
           MJ_TEST_REPORT: suite.tsv
-        run: bash test/run.sh
+        run: bash test/run.sh --no-skips
       # The tree the suite ran in, measured here, right after its run: the evidence job records
       # the suite's report against this measurement, never against its own fresh checkout
       # (ADR 0087 decision 6). The one output the run names, its report, is excluded by name,
@@ -498,10 +503,15 @@ jobs:
   # file as the code it tests, so its denominator contained the tests and the number moved
   # whenever a test was added or deleted. scripts/rust-coverage is the same measurement with
   # that subtracted; it runs the same suite once and post-processes the JSON export.
+  #
+  # Its bound is measured, not guessed: the job took 23 min on 2026-10-04 (run 37195144596)
+  # and was killed at its old bound of 25 min on the next run of the same batch (37199016404),
+  # while two master runs shared the runners. A kill by the job bound reads as `cancelled`,
+  # not as a failure (scripts/ci/step-bound-check), so the bound leaves room for contention.
   coverage:
     needs: plan
     if: needs.plan.outputs.rust_coverage == 'true' || needs.plan.outputs.coverage_differential == 'true'
-    timeout-minutes: 25
+    timeout-minutes: 40
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -686,6 +696,12 @@ jobs:
       - name: check the site
         if: needs.plan.outputs.site_build == 'true'
         run: scripts/ci/timed --bound 2700 site-build site-check timings.tsv scripts/site-check --no-sync
+      # The cases whose subject is the built site, which the suite runners do not have when they
+      # run: each declares "# majordomus-skip-runs-in: site" and is excused there only because it
+      # is held here, after the build, with no skip excused.
+      - name: the cases that read the built site
+        if: needs.plan.outputs.site_build == 'true'
+        run: bash test/run.sh --no-skips --runs-in site
       # Browser-measured: no horizontal overflow at 320/390/1280 on every route, the mobile
       # menu, the dropdowns, the theme toggle, Mermaid rendering. The full sweep, deliberately:
       # every overflow this site has produced came from canonical data rendered into a shared

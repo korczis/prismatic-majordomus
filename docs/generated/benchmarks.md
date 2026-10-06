@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.12.0 -->
+     Generator: majordomus-cli 0.14.0 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 169 | 151 | 0 | 18 |
-| http | 167 | 151 | 0 | 16 |
-| mcp | 163 | 147 | 0 | 16 |
+| direct | 172 | 153 | 0 | 19 |
+| http | 170 | 153 | 0 | 17 |
+| mcp | 166 | 149 | 0 | 17 |
 | system | 13 | 13 | 0 | 0 |
-| total | 512 | 462 | 0 | 50 |
+| total | 521 | 468 | 0 | 53 |
 
 ## Capabilities
 
@@ -83,8 +83,10 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `health.live` | health | query | — | covered | — | covered | `default` |
 | `health.ready` | health | query | — | covered | — | covered | `default` |
 | `health.report` | health | query | process, 4 entries, 5s | covered | covered | covered | `default` |
+| `integration.cleanup` | integration | query | — | covered | covered | covered | `default` |
 | `integration.events` | integration | query | — | covered | covered | covered | `default` |
 | `integration.explain` | integration | query | — | covered | covered | covered | `a-number` |
+| `integration.prove_dry_run` | integration | query | — | waived | waived | waived | — |
 | `integration.queue` | integration | query | — | covered | covered | covered | `default` |
 | `intent_realization.explain` | intent_realization | query | — | covered | covered | covered | `first-intent` |
 | `intent_realization.work` | intent_realization | query | — | covered | covered | covered | `every-intent`, `first-intent` |
@@ -142,8 +144,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `plan.transition` | plan | command | — | covered | covered | covered | `refused-by-status` |
 | `plan.validate` | plan | query | — | covered | covered | covered | `default` |
 | `plan.waves` | plan | query | — | covered | covered | covered | `whole-plan`, `one-milestone` |
+| `product.domains` | product | query | process, 4 entries | covered | covered | covered | `stable`, `any` |
 | `product.feature` | product | query | process, 64 entries | covered | covered | covered | `first-feature` |
-| `product.features` | product | query | process, 32 entries | covered | covered | covered | `all`, `featured`, `by-area` |
+| `product.features` | product | query | process, 32 entries | covered | covered | covered | `all`, `featured`, `by-area`, `by-domain` |
 | `product.matrix` | product | query | process, 2 entries | covered | covered | covered | `default` |
 | `product.providers` | product | query | process, 2 entries | covered | covered | covered | `default` |
 | `product.validate` | product | query | process, 2 entries | covered | covered | covered | `default` |

@@ -8,6 +8,7 @@ headline: The same server that answers agents renders every capability, object, 
 summary: At /cockpit the shared server lays out what a capability answered — the registry explorer, every object of the layer, the derived graphs, the directory contracts, the continuity of this checkout, the worktree topology, one health report naming the engine behind every check — and every page is complete HTML before any script runs.
 status: stable
 weight: 100
+domain: surfaces
 featured: true
 areas: [observability]
 modules: [health, design]

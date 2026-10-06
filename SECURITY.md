@@ -40,14 +40,22 @@ it is described as real.
   runs the executable's `mesh doctor`, which asks the server on loopback, so the hook library
   itself still sends no request (ADR 0059; `test/cases/494_the_mesh_is_declared_and_held.sh`).
 - **Pull-request integration reaches the forge only when asked to.** The Rust executable's
-  second declared exception (ADR 0101): `majordomus prs refresh`, `prs drain` and
-  `prs cleanup` run the GitHub CLI (`gh`) and `git fetch` against this repository's own
-  `origin`, with the person's own `gh` credentials. Nothing else does. `prs status`, `plan`,
-  `explain`, `events`, the HTTP routes under `/api/v1/pull-requests`, the MCP tools and the
-  Cockpit render the observation last recorded under `.ai/local/state/integration/`, with its
-  moment, and never reach the network. The executor never passes `--admin`, never force-pushes
-  and never closes a pull request without `--apply` and proof that its work is on master
-  (`test/cases/720_integration_follows_the_current_master.sh`).
+  second declared exception (ADR 0101): `majordomus prs refresh`, `prs drain`,
+  `prs cleanup` and `prs repair --apply` run the GitHub CLI (`gh`), `git fetch` and
+  `git ls-remote` against this repository's own `origin`, with the person's own `gh` credentials. Nothing else does.
+  `prs status`, `plan`, `explain`, `events`, `repair` without `--apply`, the HTTP routes
+  under `/api/v1/pull-requests`, the MCP tools and the Cockpit render the observation last
+  recorded under `.ai/local/state/integration/`, with its moment, and never reach the
+  network. The executor never passes `--admin` and never rewrites a branch: the one push it
+  makes, bringing master into a pull request's branch, is a plain (never forced) push of a
+  fast-forward of the head it observed, made only while origin still serves that head
+  (`test/cases/912_repair_acts_under_the_lease_and_the_trail.sh`).
+  It never closes a pull request without `--apply` and proof that its work is on master, or
+  that a declared successor landed (`test/cases/720_integration_follows_the_current_master.sh`).
+  Nothing outside it merges: `scripts/ci/backlog-check` refuses a `gh pr merge`, a REST or
+  GraphQL merge, an auto-merge action and the retired `scripts/unblock` anywhere in the
+  scripts, recipes, workflows, libraries and shared assets
+  (`test/cases/910_nothing_merges_around_the_integrator.sh`).
 - **No evaluation of generated text.** Nothing that came from a worker, a model, a
   handover body, or a policy file is ever passed to `eval`, a shell, or a template
   engine that executes.

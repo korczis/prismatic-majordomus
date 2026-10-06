@@ -8,6 +8,7 @@ headline: A rule is enforced when a validator decides it, a command runs it, a t
 summary: Every rule is a portable Markdown object with front matter, and it is enforced in one of three declared modes: a validator the dispatcher runs, a gate or case that proves it, or a stated reason why no program can express it. Doctor walks the dispatch chain from the source, refusing a validator nobody declares and a declaration nothing runs; the proof graph walks the other relation, joining each rule to the tree and to the runs recorded against it, so that a rule naming a case which was deleted is reported as reading enforced rather than being it.
 status: stable
 weight: 70
+domain: governance
 featured: true
 areas: [governance, verification]
 modules: [health, rules]

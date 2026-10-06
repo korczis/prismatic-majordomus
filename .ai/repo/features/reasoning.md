@@ -8,6 +8,7 @@ headline: Material uncertainty becomes an evidence-backed decision — reviewed 
 summary: share/advisors.yaml declares advisory roles by reference to the provider table and the model catalogue; availability is derived from presence and recorded outcomes, with no network; a pure policy plans review by capability and treats no advisor as a structured local review; one writer records assessments, consultations, disagreements settled by experiment, conclusions with computed review counts, and validations; and the state reaches the command line, HTTP, MCP, the Cockpit, the environment banner, doctor, the context briefing and the derived handover.
 status: stable
 weight: 47
+domain: coordination
 featured: true
 areas: [coordination]
 modules: [reasoning]

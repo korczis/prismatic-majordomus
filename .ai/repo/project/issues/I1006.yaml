@@ -29,4 +29,25 @@ evidence_required:
   - runtime_overlay
 risk: "Serving the whole graph on every Cockpit load is a cost on the hot path. It is measured, and paged or filtered if the measurement says so."
 created_at: 2026-09-06
-updated_at: 2026-09-06
+updated_at: 2026-10-04T10:11:46Z
+started_at: 2026-10-04T10:11:17Z
+started_event: sha256:463264f9562133c078de77b0f39c00f92a1744fbfade547ea3b07bf7a4b02577
+verified_at: 2026-10-04T10:11:35Z
+verified_event: sha256:f7748bbfa37ff77a1a89c2d8931ba91927ff8683c31fcc72a7bde1de5697c4aa
+completed_at: 2026-10-04T10:11:46Z
+completed_event: sha256:af8b77f1ed46772ea458a809b1415c9e0f7852db8407bb8ebffd3b5020dc8837
+evidence:
+  - covers: capability_declared
+    type: test
+    command: "cargo test --lib -- graph:: && cargo test --test cockpit a_graph_page_lists_every_node_and_edge"
+    result: "86 passed (graph:: incl. the_declaration_yields_the_projections_it_claims); cockpit test 1 passed: GET /api/v1/graph?id=registry on a running server answers 200 with the typed graph. graph.list and graph.get are one declaration each in capability/builtin/graph.rs and appear in /openapi.json (operationId graph.get, graph.list), docs/generated/capabilities.md, docs/generated/modules/graph.md and docs/generated/benchmarks.*"
+    artifact: "apps/majordomus-cli/src/capability/builtin/graph.rs"
+    commit: f075170530ac32cb634a514eb35e970c8a9412e9
+    recorded_at: 2026-10-04T10:11:26Z
+  - covers: runtime_overlay
+    type: test
+    command: "cargo test --lib -- graph::tests::the_runtime_projection_is_the_static_one_with_an_overlay_beside_it graph::tests::the_graph_holds_definitions_and_the_overlay_holds_what_a_process_saw"
+    result: "ObservedGraph keeps graph (byte-for-byte the derived definitions) and runtime (the overlay) as separate fields; stripping runtime yields the static projection. graph.get answers the definitions only; the Cockpit graph page (cockpit/pages.rs observed_now) applies the overlay beside them, so runtime state is distinguishable in the response the Cockpit serves and absent from the static one"
+    artifact: "apps/majordomus-cli/src/graph.rs"
+    commit: f075170530ac32cb634a514eb35e970c8a9412e9
+    recorded_at: 2026-10-04T10:11:31Z

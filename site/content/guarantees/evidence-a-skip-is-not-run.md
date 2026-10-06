@@ -1,7 +1,7 @@
 +++
 title = "A test that declined to run reads not_run with a detail saying it declined, never proven and never failing, and a test that errored or timed out reads failing"
 description = "A recorded skip is a test that declined to run: it measured nothing, so it proves nothing,"
-weight = 199
+weight = 200
 [extra]
 claim_id = "evidence-a-skip-is-not-run"
 status = "guaranteed"

@@ -143,6 +143,13 @@ mj_derive_sec_current_state() {
   fi
   printf '\nRecorded in this episode: %s checkpoint(s), %s decision(s), %s question(s) opened, %s handover(s).\n' \
     "$MJ_DV_N_CHECK" "$MJ_DV_N_DEC" "$MJ_DV_N_Q" "$MJ_DV_N_HAND"
+  # the integration queue as this checkout last recorded it, so a session resuming a drain
+  # reads what was merged, what holds the lease and how the last step went (ADR 0101)
+  local prs
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  prs="$(mj_rust_prs_brief "$MJ_ROOT" "$MJ_HOME")"
+  [ -z "$prs" ] || printf '\nIntegration: %s\n' "$prs"
   if [ -n "$MJ_DV_LAST_CHECKPOINT" ]; then
     printf '\nThe newest checkpoint (%s), quoted whole:\n\n' "$MJ_DV_LAST_CHECKPOINT_AGE"
     mj_record_body "$MJ_DV_LAST_CHECKPOINT" | sed '/^$/d' | sed 's/^/> /' \
