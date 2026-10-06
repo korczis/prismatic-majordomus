@@ -27,6 +27,12 @@ H
     *) mj_die "$MJ_EX_USAGE" "update: unknown option $1" ;;
   esac; done
   mj_require_installed
+  # a layer written for a newer tool is not this one's to bring up to date: it would generate
+  # projections by rules it does not know and lower the version the layer records
+  local wf; wf="$(mj_man written_for)"
+  if mj_is_version "$wf" && [ "$(mj_version_cmp "$wf" "$MJ_VERSION")" = 1 ]; then
+    mj_die "$MJ_EX_REFUSED" "update: $(mj_rel "$MJ_AI_MANIFEST") was written for majordomus $wf, newer than this executable ($MJ_VERSION); upgrade the tool"
+  fi
   mj_load_policy || mj_die "$MJ_EX_CONTRACT" "policy does not parse (run: majordomus doctor)"
   [ "$dry" = 1 ] || mj_ensure_layout
 
@@ -111,6 +117,9 @@ H
 
   local p
   for p in $plan; do printf '%s %s\n' "${p%%:*}" "${p#*:}"; done
+  # the layer then records that it was brought up to this version (`doctor` reads it)
+  local stamp=0; [ "$wf" = "$MJ_VERSION" ] || stamp=1
+  [ "$stamp" = 1 ] && printf 'stamp %s written_for %s -> %s\n' "$(mj_rel "$MJ_AI_MANIFEST")" "${wf:-(none)}" "$MJ_VERSION"
   if [ "$dry" = 1 ]; then rm -rf "$tmp"; return 0; fi
 
   # write atomically, every target
@@ -130,6 +139,9 @@ H
   # existing repository is fixed by the command it already runs, rather than by reading a
   # finding and retyping a chmod.
   [ -d "$MJ_AI_LOCAL_DIR/prompts" ] && chmod 700 "$MJ_AI_LOCAL_DIR/prompts" 2>/dev/null
+  # last, once every projection is written: a layer never claims a version it was not
+  # brought up to
+  [ "$stamp" = 1 ] && mj_manifest_stamp "$MJ_AI_MANIFEST" "$MJ_VERSION"
   mj_ledger_append projections.updated "\"policy_sha256\":\"$psha\",\"targets\":$i"
   rm -rf "$tmp"
   printf 'generated %s target(s) from policy %s; each carries its own stamp\n' "$i" "${psha:0:12}"

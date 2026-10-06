@@ -41,6 +41,7 @@ use serde::Deserialize;
 
 use crate::error::{Error, Result};
 use crate::metadata::yaml;
+use crate::release::version::Version;
 
 /// The file whose presence makes a directory the root of a Majordomus repository.
 pub const MANIFEST: &str = ".ai/manifest.yaml";
@@ -93,6 +94,19 @@ pub struct Manifest {
     /// Optional: absent in a layer written before context documents existed.
     #[serde(default)]
     pub context: Option<ContextConventions>,
+    /// The tool version the layer was last written for: `init` and `migrate` stamp it and
+    /// `update` advances it. Absent in a layer written before it existed.
+    #[serde(default)]
+    pub written_for: Option<String>,
+}
+
+/// `written_for` when it names a tool newer than this executable. A suffix after the three
+/// numbers (`-rc.1`, `+build`) does not order; a value that is not a version names nothing.
+fn newer_than_this(written_for: Option<&str>) -> Option<String> {
+    let core = |v: &str| Version::parse(v.split(['-', '+']).next().unwrap_or(v));
+    written_for
+        .filter(|w| core(w) > core(crate::VERSION))
+        .map(str::to_string)
 }
 
 impl Manifest {
@@ -109,16 +123,27 @@ impl Manifest {
             .and_then(|v| v.as_str())
             .unwrap_or_default()
             .to_string();
+        // a layer written for a newer tool says so, and that is the reason a schema or a key
+        // is not one this executable reads: said once, with both versions
+        let newer = newer_than_this(map.get("written_for").and_then(|v| v.as_str()));
+        let refuse = |e: Error| match &newer {
+            Some(written_for) => Error::LayerFromNewerTool {
+                path: path.to_path_buf(),
+                written_for: written_for.clone(),
+                tool: crate::VERSION.to_string(),
+            },
+            None => e,
+        };
         if schema != LAYER_SCHEMA {
-            return Err(Error::UnsupportedSchema {
+            return Err(refuse(Error::UnsupportedSchema {
                 path: path.to_path_buf(),
                 found: schema,
                 supported: LAYER_SCHEMA.to_string(),
-            });
+            }));
         }
         serde_json::from_value(serde_json::Value::Object(map)).map_err(|e| {
             let reason = e.to_string();
-            match reason.strip_prefix("unknown field `") {
+            refuse(match reason.strip_prefix("unknown field `") {
                 Some(rest) => Error::UnknownKeys {
                     path: path.to_path_buf(),
                     keys: vec![rest.split('`').next().unwrap_or(rest).to_string()],
@@ -127,7 +152,7 @@ impl Manifest {
                     path: path.to_path_buf(),
                     reason,
                 },
-            }
+            })
         })
     }
 }
@@ -402,6 +427,47 @@ mod tests {
         let with_context = format!("{MANIFEST_TEXT}context:\n  documents: [README.md]\n");
         let m = Manifest::parse(Path::new("m"), &with_context).unwrap();
         assert_eq!(m.context.unwrap().documents, vec!["README.md"]);
+    }
+
+    #[test]
+    fn a_layer_written_for_a_newer_tool_is_refused_naming_both_versions() {
+        let tool = crate::VERSION;
+        let v = Version::parse(tool.split(['-', '+']).next().unwrap()).unwrap();
+        let newer = format!("{}.{}.{}", v.major, v.minor + 1, 0);
+        // a key this executable does not know, from a layer that names the newer tool
+        let future = format!("{MANIFEST_TEXT}written_for: \"{newer}\"\nfuture_key: 1\n");
+        match Manifest::parse(Path::new("m"), &future) {
+            Err(e @ Error::LayerFromNewerTool { .. }) => {
+                let said = e.to_string();
+                assert!(said.contains(&newer) && said.contains(tool), "{said}");
+                assert_eq!(e.exit_code(), 10);
+            }
+            other => panic!("{other:?}"),
+        }
+        // a schema it does not read, from the same layer
+        let schema = future.replace("v1", "v2");
+        assert!(matches!(
+            Manifest::parse(Path::new("m"), &schema),
+            Err(Error::LayerFromNewerTool { .. })
+        ));
+        // a manifest it reads whole is read, whatever version it names
+        let readable = format!("{MANIFEST_TEXT}written_for: \"{newer}-rc.1\"\n");
+        let m = Manifest::parse(Path::new("m"), &readable).unwrap();
+        assert_eq!(
+            m.written_for.as_deref(),
+            Some(format!("{newer}-rc.1").as_str())
+        );
+        // an older or unreadable version leaves the reason as it was
+        for named in ["0.0.1", "not-a-version"] {
+            let old = format!("{MANIFEST_TEXT}written_for: \"{named}\"\nfuture_key: 1\n");
+            assert!(
+                matches!(
+                    Manifest::parse(Path::new("m"), &old),
+                    Err(Error::UnknownKeys { .. })
+                ),
+                "{named}"
+            );
+        }
     }
 
     #[test]

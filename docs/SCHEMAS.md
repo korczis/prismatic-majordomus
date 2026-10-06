@@ -31,6 +31,7 @@ checks before reading anything else, and one it does not read is refused with th
 
 ```yaml
 schema: ai-repository/v1
+written_for: "1.2.3"      # the tool version the layer was written for; optional
 
 repo:
   path: repo              # tracked canonical context
@@ -51,8 +52,17 @@ sections:                 # relative to .ai/; each one resolves to a path the to
   project: repo/project
 ```
 
-Every key is required except that `project` may resolve to a directory that does not
-exist, which is a repository with no plan. Unknown keys are errors (`share/allow/manifest.txt`).
+Every key is required except `written_for`, and except that `project` may resolve to a
+directory that does not exist, which is a repository with no plan. Unknown keys are errors
+(`share/allow/manifest.txt`).
+
+`written_for` is the tool version the layer was last written for, `X.Y.Z`, quoted: `init`
+and `migrate` stamp it with their own version, `update` advances it once it has brought the
+layer up, and `release bump` stamps this repository's own beside the version it raises. A
+layer written before it existed names none. `doctor` grades it against the executable that
+runs: older or absent is version skew (`WARN`, naming `majordomus update`), the same is `OK`,
+newer is a `FAIL` naming the upgrade. A manifest an executable cannot read and that names a
+newer tool is refused with that reason and both versions, not with the key it meets first.
 `doctor` fails when a section the manifest names is absent, when `local/` is not ignored
 or carries a tracked file, or when pre-.ai project data still sits under `.majordomus/`.
 

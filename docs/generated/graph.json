@@ -9001,7 +9001,8 @@
           "reads": [
             ".ai/repo/policy.yaml",
             ".ai/repo/profiles/",
-            "share/providers/"
+            "share/providers/",
+            ".ai/manifest.yaml"
           ],
           "requires_installed": true,
           "requires_repository": true,
@@ -9012,7 +9013,8 @@
           "visibility": "public",
           "writes": [
             "projections[].target",
-            ".ai/local/state/ledger.jsonl"
+            ".ai/local/state/ledger.jsonl",
+            ".ai/manifest.yaml"
           ]
         }
       },
@@ -26835,6 +26837,45 @@
         }
       },
       {
+        "id": "majordomus://issue/I1993",
+        "kind": "issue",
+        "label": "I1993",
+        "summary": "A finding a newer tool adds is graded by the version that introduced its check",
+        "route": "/cockpit/objects/issue/i1993",
+        "source": ".ai/repo/project/issues/I1993.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fixture layer whose written_for is older than a check's introduced_in reports that check's failures as WARN naming the clearing command, and doctor exits 0 when they are the only findings",
+            "The same layer at or above that version, or a check without introduced_in, reports the same failures with their own class",
+            "Every check whose behaviour a release changed since I1980 declares introduced_in, which a gate verifies"
+          ],
+          "created_at": "2026-10-06",
+          "evidence_required": [
+            "skew_graded_per_check_case",
+            "defect_kept_case"
+          ],
+          "milestone": "adopter-upgrades",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "deep-work",
+          "scope": [
+            "lib/doctor.sh",
+            "lib/doctrine.sh",
+            "share/standard",
+            "share/schemas",
+            "docs/DOCTRINE.md",
+            "docs/CLI.md",
+            "test/cases"
+          ],
+          "slug": "a-finding-is-graded-by-the-version-that-introduced-its-check",
+          "updated_at": "2026-10-06",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -39095,6 +39136,27 @@
         "source": "test/cases/912_repair_acts_under_the_lease_and_the_trail.sh"
       },
       {
+        "id": "majordomus://test/test/cases/913_an_older_layer_is_version_skew_not_a_defect.sh",
+        "kind": "test",
+        "label": "test/cases/913_an_older_layer_is_version_skew_not_a_defect.sh",
+        "route": "/cockpit/objects/test/test-cases-913-an-older-layer-is-version-skew-not-a-defect-sh",
+        "source": "test/cases/913_an_older_layer_is_version_skew_not_a_defect.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/914_a_layer_from_a_newer_tool_is_refused_naming_both_versions.sh",
+        "kind": "test",
+        "label": "test/cases/914_a_layer_from_a_newer_tool_is_refused_naming_both_versions.sh",
+        "route": "/cockpit/objects/test/test-cases-914-a-layer-from-a-newer-tool-is-refused-naming-both-versions-sh",
+        "source": "test/cases/914_a_layer_from_a_newer_tool_is_refused_naming_both_versions.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/915_init_and_migrate_stamp_the_layer.sh",
+        "kind": "test",
+        "label": "test/cases/915_init_and_migrate_stamp_the_layer.sh",
+        "route": "/cockpit/objects/test/test-cases-915-init-and-migrate-stamp-the-layer-sh",
+        "source": "test/cases/915_init_and_migrate_stamp_the_layer.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/91_canonical_architecture.sh",
         "kind": "test",
         "label": "test/cases/91_canonical_architecture.sh",
@@ -41174,156 +41236,6 @@
           ],
           "target": "guaranteed",
           "weight": 7
-        }
-      },
-      {
-        "id": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "kind": "use-case",
-        "label": "trace-a-change-to-the-context-it-affects",
-        "summary": "Trace a change to the context documents it affects",
-        "route": "/cockpit/objects/use-case/trace-a-change-to-the-context-it-affects",
-        "source": ".ai/repo/use-cases/trace-a-change-to-the-context-it-affects.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "maintainer",
-            "reviewer"
-          ],
-          "applications": [
-            "repository-with-authored-governance",
-            "repository-opened-in-ai-clients"
-          ],
-          "category": "knowledge",
-          "claims": [
-            "context-documents",
-            "context-impact",
-            "ai-layer-manifest"
-          ],
-          "commands": [
-            "context",
-            "doctor"
-          ],
-          "difficulty": "intermediate",
-          "doctrines": [
-            "majordomus.context-integrity",
-            "majordomus.ai-layout-integrity"
-          ],
-          "responsibilities": [
-            "layer"
-          ],
-          "summary": "List the scoped context documents, resolve which apply to a path and why, and find out which documents a change set touches before it lands.",
-          "target": "guaranteed",
-          "weight": 72
-        }
-      },
-      {
-        "id": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "kind": "use-case",
-        "label": "trust-the-policy-before-reading-it",
-        "summary": "Trust the policy and the profiles only after they are validated",
-        "route": "/cockpit/objects/use-case/trust-the-policy-before-reading-it",
-        "source": ".ai/repo/use-cases/trust-the-policy-before-reading-it.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "maintainer"
-          ],
-          "applications": [
-            "repository-with-authored-governance",
-            "ci-gated-project"
-          ],
-          "category": "policy",
-          "claims": [
-            "policy-parse",
-            "profile-validate",
-            "wiring-reconciliation",
-            "exit-code-contract"
-          ],
-          "commands": [
-            "doctor",
-            "check"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.policy-integrity",
-            "majordomus.policy-completeness",
-            "majordomus.profile-requirements",
-            "majordomus.enforcement-wiring"
-          ],
-          "responsibilities": [
-            "policy",
-            "profiles",
-            "doctor"
-          ],
-          "summary": "Prove that the canonical policy parses with every key it needs declared, that every profile parses and the default exists, and that what the policy declares as enforced is what actually runs.",
-          "target": "guaranteed",
-          "weight": 41
-        }
-      },
-      {
-        "id": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "kind": "use-case",
-        "label": "work-on-a-branch-in-its-canonical-worktree",
-        "summary": "Work on a branch in the one worktree it belongs to",
-        "route": "/cockpit/objects/use-case/work-on-a-branch-in-its-canonical-worktree",
-        "source": ".ai/repo/use-cases/work-on-a-branch-in-its-canonical-worktree.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "agent",
-            "maintainer"
-          ],
-          "applications": [
-            "long-running-work",
-            "repository-opened-in-ai-clients"
-          ],
-          "category": "workers",
-          "claims": [
-            "worktree-topology-derived",
-            "worktree-migration-lossless",
-            "worktree-ownership"
-          ],
-          "commands": [
-            "doctor",
-            "context"
-          ],
-          "difficulty": "intermediate",
-          "doctrines": [
-            "majordomus.enforcement-wiring",
-            "majordomus.scope-integrity"
-          ],
-          "mcp_tools": [
-            "majordomus_worktrees",
-            "majordomus_worktree_status",
-            "majordomus_worktree_inspect",
-            "majordomus_worktree_migration_plan"
-          ],
-          "responsibilities": [
-            "doctor"
-          ],
-          "summary": "Start a branch without choosing a path, find every checkout of the repository from any of them, and bring a stray one home with its uncommitted work intact.",
-          "target": "guaranteed",
-          "weight": 7
-        }
-      },
-      {
-        "id": "majordomus://workspace/chatgpt-majordomus",
-        "kind": "workspace",
-        "label": "chatgpt-majordomus",
-        "summary": "The Majordomus project in ChatGPT",
-        "route": "/cockpit/objects/workspace/chatgpt-majordomus",
-        "source": ".ai/repo/workspaces/chatgpt-majordomus.yaml",
-        "status": "declared",
-        "facts": {
-          "capabilities": [
-            "workspace.read",
-            "conversations.read",
-            "messages.read",
-            "instructions.read",
-            "files.read"
-          ],
-          "created_at": "2026-09-09",
-          "updated_at": "2026-09-09"
         }
       },
       {
@@ -56683,6 +56595,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I1993",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1993",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -60888,6 +60810,21 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/913_an_older_layer_is_version_skew_not_a_defect.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/914_a_layer_from_a_newer_tool_is_refused_naming_both_versions.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/915_init_and_migrate_stamp_the_layer.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/91_canonical_architecture.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -63048,166 +62985,6 @@
         "kind": "exercises"
       },
       {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://application/repository-opened-in-ai-clients",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://application/repository-with-authored-governance",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://claim/ai-layer-manifest",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://claim/context-documents",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://claim/context-impact",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://rule/majordomus.ai-layout-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://rule/majordomus.context-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://application/ci-gated-project",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://application/repository-with-authored-governance",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://claim/exit-code-contract",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://claim/policy-parse",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://claim/profile-validate",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://claim/wiring-reconciliation",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://rule/majordomus.enforcement-wiring@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://rule/majordomus.policy-completeness@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://rule/majordomus.policy-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://rule/majordomus.profile-requirements@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "capability:worktree.inspect",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "capability:worktree.migration_plan",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "capability:worktree.status",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "capability:worktree.topology",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://application/long-running-work",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://application/repository-opened-in-ai-clients",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://claim/worktree-migration-lossless",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://claim/worktree-ownership",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://claim/worktree-topology-derived",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://rule/majordomus.enforcement-wiring@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://rule/majordomus.scope-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://workspace/chatgpt-majordomus",
-        "target": "kind:workspace",
-        "kind": "is_a"
-      },
-      {
         "source": "module:artifacts",
         "target": "capability:artifacts.list",
         "kind": "composes"
@@ -64070,7 +63847,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4492,
+      "edges": 4465,
       "acyclic": true,
       "truncated": true
     }

@@ -260,10 +260,11 @@ mj_load_manifest() {
     MJ_MANIFEST_ERROR="does not parse"; return 1
   fi
   if [ "$(mj_yget "$MJ_MAN_FLAT" schema)" != "$MJ_MANIFEST_SCHEMA" ]; then
-    MJ_MANIFEST_ERROR="schema '$(mj_yget "$MJ_MAN_FLAT" schema)' is not $MJ_MANIFEST_SCHEMA (this executable reads $MJ_MANIFEST_SCHEMA)"; return 1
+    MJ_MANIFEST_ERROR="schema '$(mj_yget "$MJ_MAN_FLAT" schema)' is not $MJ_MANIFEST_SCHEMA (this executable reads $MJ_MANIFEST_SCHEMA)"
+    mj_manifest_from_newer_tool; return 1
   fi
   k="$(mj_yaml_unknown_keys "$MJ_MAN_FLAT" "$MJ_ALLOW_DIR/manifest.txt" || true)"
-  [ -z "$k" ] || { MJ_MANIFEST_ERROR="unknown key(s): $(printf '%s' "$k" | tr '\n' ' ')"; return 1; }
+  [ -z "$k" ] || { MJ_MANIFEST_ERROR="unknown key(s): $(printf '%s' "$k" | tr '\n' ' ')"; mj_manifest_from_newer_tool; return 1; }
   for k in repo.path local.path sections.policy sections.profiles sections.rules sections.prompts \
            sections.skills sections.workflows sections.knowledge sections.adrs sections.project; do
     [ -n "$(mj_yget "$MJ_MAN_FLAT" "$k")" ] || { MJ_MANIFEST_ERROR="missing key $k"; return 1; }
@@ -271,6 +272,45 @@ mj_load_manifest() {
   return 0
 }
 mj_man() { [ -n "${MJ_MAN_FLAT:-}" ] || return 0; mj_yget "$MJ_MAN_FLAT" "$1"; }
+
+# A manifest this executable cannot read, written for a newer tool: the layer says which, and
+# that is the reason, said once with both versions, rather than the keys or the schema a newer
+# tool introduced. An older or unnamed version leaves the reason as it was.
+mj_manifest_from_newer_tool() {
+  local wf; wf="$(mj_yget "$MJ_MAN_FLAT" written_for)"
+  mj_is_version "$wf" && [ "$(mj_version_cmp "$wf" "$MJ_VERSION")" = 1 ] || return 0
+  MJ_MANIFEST_ERROR="it was written for majordomus $wf, newer than this executable ($MJ_VERSION); upgrade the tool"
+}
+
+# A tool version: X.Y.Z, optionally followed by a pre-release or build suffix.
+mj_is_version() { printf '%s' "$1" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.-]+)?$'; }
+
+# Compare two versions by their X.Y.Z: prints -1, 0 or 1 as the first is older than, the same
+# as or newer than the second. Both must satisfy mj_is_version.
+mj_version_cmp() {
+  local a b i x y
+  IFS=. read -r -a a <<< "${1%%[-+]*}"; IFS=. read -r -a b <<< "${2%%[-+]*}"
+  for i in 0 1 2; do
+    x=$((10#${a[$i]})); y=$((10#${b[$i]}))
+    [ "$x" -lt "$y" ] && { echo -1; return 0; }
+    [ "$x" -gt "$y" ] && { echo 1; return 0; }
+  done
+  echo 0
+}
+
+# Record in a manifest the tool version its layer was written for: the `written_for` line is
+# replaced where there is one, and inserted after `schema:` where there is none. Every other
+# byte of the file is kept, comments and key order with it.
+mj_manifest_stamp() {
+  local file="$1" version="$2" tmp
+  tmp="$(mktemp "${TMPDIR:-/tmp}/mj.stamp.XXXXXX")"
+  awk -v line="written_for: \"$version\"" '
+    /^written_for:/ { if (!done) print line; done = 1; next }
+    { print }
+    /^schema:/ && !done { print line; done = 1 }
+  ' "$file" > "$tmp" && cat "$tmp" > "$file"
+  rm -f "$tmp"
+}
 
 # The provider template for a projection: the repository's own override under its AI
 # layer when it has one, otherwise the adapter the distribution ships.

@@ -60,7 +60,9 @@ the tool stays wherever it was run from, no hook and no shell file is touched, a
 **Reads:** the skeleton under `share/skeleton/` and the standard rule package under
 `share/standard/majordomus/`.
 **Writes:** `.ai/README.md` (the protocol, readable without the tool) and
-`.ai/manifest.yaml` (the section registry, `ai-repository/v1`); under `.ai/repo/`, the
+`.ai/manifest.yaml` (the section registry, `ai-repository/v1`, stamped with
+`written_for`, this executable's version: the tool version the layer is written for);
+under `.ai/repo/`, the
 tracked half: its `README.md`, `policy.yaml`, `profiles/`, `prompts/`, `rules/` with its
 `README.md`, the vendored baseline `rules/vendor/majordomus/` (manifest and rule files,
 byte for byte the package the tool ships) and an empty `rules/project/`,
@@ -117,7 +119,8 @@ portable AI layer under `.ai/`, once and explicitly. No ordinary command migrate
 
 **Reads:** every file under `.majordomus/`, the skeleton manifest (the destinations come
 from it), the tool's templates (to tell an unchanged template from a customised one).
-**Writes:** `.ai/README.md`, `.ai/manifest.yaml`; the canonical files moved into
+**Writes:** `.ai/README.md`, `.ai/manifest.yaml` (stamped with `written_for`, as `init`
+stamps it); the canonical files moved into
 `.ai/repo/` (`git mv` where tracked, so history follows); `.ai/local/state/` moved to
 `.ai/local/state/` and taken out of the index; the rest of the layer seeded from the
 skeleton without overwriting anything that moved; one `.ai/local/` line in `.gitignore`;
@@ -229,6 +232,16 @@ from a pre-commit hook and from CI.
 **Checks, in order:**
 
 1. `policy.yaml` parses; `version` supported; no unknown keys at any level.
+   The manifest's `written_for`, the tool version the layer was written for, is graded
+   against this executable's. **Older, or absent** (a layer written before it was recorded)
+   is version skew: a newer tool judges the layer by rules its own release added, so what it
+   finds may be the upgrade and not a defect. It is a `WARN` naming `majordomus update`, which
+   a pre-commit hook does not refuse. **The same** is `OK`. **Newer** is a `FAIL` naming the
+   upgrade: this executable does not know the rules the layer was written for. A value that
+   is not a version is a `FAIL`. A manifest this executable cannot read at all, because a
+   newer tool added a key or a schema, is refused by every command with one sentence naming
+   both versions (`written for majordomus X, newer than this executable (Y); upgrade the
+   tool`), not with the key it meets first.
 2. Every `profiles/*.yaml` parses; every profile referenced by policy exists; no unknown
    keys.
 3. **Enforcement wiring.** For every entry in `policy.enforcement`: `path` resolves (on
@@ -368,11 +381,18 @@ watch: 3 findings
 Regenerate provider projections from policy. Deterministic: same policy, same output,
 byte for byte.
 
-**Reads:** policy, profiles, `providers/*.tmpl`.
-**Writes:** every `projections[].target`, one `projections.updated` ledger line. Nothing
+**Reads:** policy, profiles, `providers/*.tmpl`, `.ai/manifest.yaml`.
+**Writes:** every `projections[].target`, one `projections.updated` ledger line, and the
+manifest's `written_for` when it names another version than this executable's. Nothing
 else: each target carries its own provenance.
 
 **Behaviour:**
+- `update` is what brings a layer up to the tool that runs it: once every projection is
+  written it stamps `written_for` with this executable's version (inserted after `schema:`
+  where the manifest names none), and `doctor` stops reading the layer as version skew. A
+  dry run prints the stamp it would write (`stamp .ai/manifest.yaml written_for <old> ->
+  <new>`) and writes nothing. A layer written for a **newer** tool is refused (`15`) before
+  anything is written: this executable does not know its rules, and would lower the version.
 - `--dry-run` prints what would change; `--diff <target>` shows the diff for one. For a
   region projection the diff is of the region, not of the host document.
 - Refuses (`15`) to overwrite content whose current hash matches neither the stamp it

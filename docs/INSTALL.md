@@ -119,6 +119,18 @@ Run the same command again. The installer is idempotent:
 - a newer version installed and no version pinned — it refuses to move you backwards, and
   says how to do it anyway (`--force`, or `--version`).
 
+Every repository's layer names the tool version it was written for (`written_for` in
+`.ai/manifest.yaml`). After an upgrade, `majordomus doctor` reads a layer written for an
+older version as **version skew**: a warning naming `majordomus update`, which a pre-commit
+hook does not refuse, because a newer release judges the layer by rules it added and what it
+finds may be the upgrade rather than a defect. Bring each repository up on a branch of its
+own before its other work moves on: run `majordomus doctor` and read what the new version
+says, run `majordomus update`, which regenerates the projections and records the new version
+in the manifest, then commit and land that branch. A layer written for a newer version than
+the one installed is refused, naming both versions: upgrade the tool rather than editing the
+layer. A tool released before the layer recorded its version refuses such a manifest as one
+with a key it does not know.
+
 ## Uninstalling
 
 ```bash

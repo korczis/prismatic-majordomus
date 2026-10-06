@@ -42,7 +42,12 @@ H
   MJ_INIT_CREATED=""
   # the protocol and the registry, then every tracked section
   mj_init_file "$skel/ai/README.md" "$MJ_AI_DIR/README.md"
-  mj_init_file "$skel/ai/manifest.yaml" "$MJ_AI_MANIFEST"
+  if [ ! -e "$MJ_AI_MANIFEST" ]; then
+    mj_init_file "$skel/ai/manifest.yaml" "$MJ_AI_MANIFEST"
+    # the version the new layer is written for: this executable's, which the skeleton cannot
+    # carry (a version is written by hand in one place only)
+    mj_manifest_stamp "$MJ_AI_MANIFEST" "$MJ_VERSION"
+  fi
   mj_init_file "$skel/ai/repo/README.md" "$MJ_AI_REPO_DIR/README.md"
   mj_init_file "$skel/policy.yaml" "$MJ_POLICY_FILE"
   # the scope: seeded beside the policy; an --extend on a layer whose manifest predates

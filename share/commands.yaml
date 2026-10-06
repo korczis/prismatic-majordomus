@@ -77,8 +77,8 @@ commands:
     requires_task: none
     json: false
     syntax: majordomus update [--dry-run] [--diff <target>] [--force]
-    reads: [.ai/repo/policy.yaml, .ai/repo/profiles/, share/providers/]
-    writes: ["projections[].target", .ai/local/state/ledger.jsonl]
+    reads: [.ai/repo/policy.yaml, .ai/repo/profiles/, share/providers/, .ai/manifest.yaml]
+    writes: ["projections[].target", .ai/local/state/ledger.jsonl, .ai/manifest.yaml]
     exit_codes: [0, 2, 10, 12, 15]
     demo: projection-fingerprint
     note: Running it twice leaves the byte-identical file. Each projection carries its own stamp, and a target whose content matches neither its stamp nor the new output is a hand edit, refused rather than overwritten.

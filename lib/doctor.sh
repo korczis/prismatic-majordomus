@@ -468,6 +468,32 @@ mj_validate_policy_defaults() {
   return 0
 }
 
+# The tool version the layer was written for (the manifest's `written_for`), against this
+# executable's. Three answers, and only one of them blocks:
+#   older, or unnamed: version skew. A newer tool judges the layer by rules its own release
+#     added, so what it finds may be the upgrade and not a defect; a warning, which a
+#     pre-commit hook does not refuse, naming `majordomus update`, which records the version.
+#     A layer written before the key existed names none and is read the same way.
+#   the same: the layer is judged by the rules it was written for.
+#   newer: this executable does not know the rules the layer was written for, and every
+#     finding it makes is suspect; a failure, naming the upgrade.
+# A value that is not a version is a defect of the manifest.
+mj_layer_version_grade() {
+  local wf rel; wf="$(mj_man written_for)"; rel="$(mj_rel "$MJ_AI_MANIFEST")"
+  if [ -z "$wf" ]; then
+    mj_warn layout "$rel" "names no tool version (written_for): it was written before a layer recorded one, so a finding majordomus $MJ_VERSION adds may be version skew, not a defect" "majordomus update"
+  elif ! mj_is_version "$wf"; then
+    mj_doctrine_fail layout "$rel" "written_for '$wf' is not a version (X.Y.Z)" "majordomus update"; return 1
+  else
+    case "$(mj_version_cmp "$wf" "$MJ_VERSION")" in
+      -1) mj_warn layout "$rel" "written for majordomus $wf, older than this executable ($MJ_VERSION): a finding this version adds may be version skew, not a defect" "majordomus update" ;;
+      0) mj_doctrine_ok layout "$rel" "written for majordomus $wf, this executable" ;;
+      *) mj_doctrine_fail layout "$rel" "written for majordomus $wf, newer than this executable ($MJ_VERSION): upgrade the tool before trusting any other finding" "majordomus version"; return 1 ;;
+    esac
+  fi
+  return 0
+}
+
 # The AI layer as a whole: the manifest is one this executable reads and names sections
 # that exist; the local half is ignored and nothing under it is tracked; no project data
 # is left under the pre-.ai path. This is the check a fresh clone is judged by before any
@@ -479,6 +505,7 @@ mj_validate_ai_layout() {
     return 0
   fi
   mj_doctrine_ok layout "$(mj_rel "$MJ_AI_MANIFEST")" "schema $(mj_man schema)"
+  mj_layer_version_grade || bad=1
   for k in policy:MJ_POLICY_FILE profiles:MJ_PROFILES_DIR rules:MJ_RULES_DIR prompts:MJ_PROMPTS_DIR knowledge:MJ_KNOWLEDGE_DIR workflows:MJ_WORKFLOWS_DIR skills:MJ_SKILLS_DIR adrs:MJ_ADRS_DIR; do
     d="${k#*:}"; d="${!d}"
     [ -e "$d" ] || { mj_doctrine_fail layout "$(mj_rel "$d")" "named by the manifest as section '${k%%:*}' but absent" "majordomus init --extend"; bad=1; }

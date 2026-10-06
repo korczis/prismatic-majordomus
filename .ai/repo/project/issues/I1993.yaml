@@ -1,0 +1,31 @@
+id: I1993
+milestone: adopter-upgrades
+title: "A finding a newer tool adds is graded by the version that introduced its check"
+slug: a-finding-is-graded-by-the-version-that-introduced-its-check
+priority: p1
+profile: deep-work
+parallel_safe: true
+objective: "Give each doctor check that a release adds or tightens the tool version that introduced it, so that a layer written for an older version (its `written_for`, I1980) sees exactly those findings as version skew, a warning naming the migration that clears them, while every finding an older tool would also have made stays a defect and blocks."
+why: "I1980 records the version a layer was written for and grades that version itself: older or absent is a warning, newer is a failure. It deliberately does not downgrade any other finding, because telling skew from a defect per finding needs to know which release introduced each check, and a blanket downgrade on an older layer would hide real defects until someone ran update. The case that motivated it, OSCILLA's 433 failures after installing 0.12, came from validators whose behaviour changed (plan stamps sealed, use-case steps reclassified), not from new rules; the next such release would block adopters the same way."
+current_state: "doctor grades the layer's written_for (I1980) and reports every other finding by its doctrine's class: blocking is FAIL whatever the layer's version. No check states the version that introduced or tightened it."
+desired_state: "A check that a release adds or tightens declares the version (`introduced_in`, on the rule's x-majordomus block or beside the validator) and the command that clears it. When the layer's written_for is older than that version, doctor reports the check's failures as WARN with that command and says they are version skew; otherwise they keep their class. A test proves both, and that a check without the declaration keeps its class."
+scope:
+  - "lib/doctor.sh"
+  - "lib/doctrine.sh"
+  - "share/standard"
+  - "share/schemas"
+  - "docs/DOCTRINE.md"
+  - "docs/CLI.md"
+  - "test/cases"
+acceptance_criteria:
+  - "A fixture layer whose written_for is older than a check's introduced_in reports that check's failures as WARN naming the clearing command, and doctor exits 0 when they are the only findings"
+  - "The same layer at or above that version, or a check without introduced_in, reports the same failures with their own class"
+  - "Every check whose behaviour a release changed since I1980 declares introduced_in, which a gate verifies"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "skew_graded_per_check_case"
+  - "defect_kept_case"
+created_at: 2026-10-06
+updated_at: 2026-10-06

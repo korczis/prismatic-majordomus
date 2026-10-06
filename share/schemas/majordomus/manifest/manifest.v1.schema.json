@@ -16,6 +16,11 @@
     "schema": {
       "const": "ai-repository/v1"
     },
+    "written_for": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([-+][0-9A-Za-z.-]+)?$",
+      "description": "The tool version the layer was last written for: stamped by init and migrate, advanced by update. Absent in a layer written before it existed. doctor grades an older or absent version as version skew (a warning) and a newer one as a failure."
+    },
     "repo": {
       "type": "object",
       "additionalProperties": false,

@@ -171,6 +171,7 @@ mj_migrate_apply() {
   mkdir -p "$MJ_ROOT/.ai"
   cp "$MJ_SKELETON_DIR/ai/README.md" "$MJ_ROOT/.ai/README.md"
   cp "$MJ_SKELETON_DIR/ai/manifest.yaml" "$MJ_ROOT/.ai/manifest.yaml"
+  mj_manifest_stamp "$MJ_ROOT/.ai/manifest.yaml" "$MJ_VERSION"
   # shellcheck disable=SC2034  # the manifest cache is read by mj_load_manifest; cleared so it reloads
   MJ_MAN_FLAT=""; mj_resolve_layout
   [ "$MJ_LAYOUT" = ai ] || mj_die "$MJ_EX_INTERNAL" "the layout did not resolve as .ai after the manifest was written"

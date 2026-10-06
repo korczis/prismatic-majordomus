@@ -36,6 +36,20 @@ pub enum Error {
         reason: String,
     },
 
+    /// The manifest cannot be read by this executable, and the layer says it was written for
+    /// a newer tool: the upgrade is the remedy, not the keys or the schema it introduced.
+    #[error(
+        "{path}: written for majordomus {written_for}, newer than this executable ({tool}); upgrade the tool"
+    )]
+    LayerFromNewerTool {
+        /// The manifest.
+        path: PathBuf,
+        /// The version the layer names.
+        written_for: String,
+        /// This executable's version.
+        tool: String,
+    },
+
     /// The manifest declares a layer schema this executable does not read.
     #[error("{path}: unsupported schema '{found}'; this executable reads {supported}")]
     UnsupportedSchema {
@@ -273,6 +287,7 @@ impl Error {
             | Error::LegacyLayout { .. }
             | Error::ShareNotFound { .. } => 12,
             Error::InvalidManifest { .. }
+            | Error::LayerFromNewerTool { .. }
             | Error::UnsupportedSchema { .. }
             | Error::InvalidSources { .. }
             | Error::InvalidScope { .. }

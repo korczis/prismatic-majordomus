@@ -13,7 +13,13 @@
 //!   apps/majordomus-cli/Cargo.lock   derived     cargo's record; the writer keeps it in step
 //!   generator stamps, the changelog  generated   `majordomus generate`
 //!   .ai/repo/releases/*.yaml         records     the release pipeline, after publication
+//!   .ai/manifest.yaml written_for    stamped     `release bump`, beside the authority
 //! ```
+//!
+//! The repository's own layer names the tool version it was written for, as every adopter's
+//! does (`init` stamps it, `update` advances it). Here the layer is written *by* the version
+//! being released, so the writer that raises the authority stamps it in the same commit, and
+//! `scripts/ci/release-check` refuses a tree whose layer names another.
 //!
 //! The shell tool used to state the version a second time, by hand, because an installed
 //! tree has no `Cargo.toml` and the tool cannot read one at run time. It reads
@@ -56,6 +62,9 @@ pub const PROJECTION: &str = "share/version.txt";
 /// until something rebuilds without `--locked`. So the writer keeps the crate's own entry
 /// in step, by cargo's rule, in the same command that raises the manifest.
 pub const LOCK: &str = "apps/majordomus-cli/Cargo.lock";
+
+/// The repository's own AI layer manifest, whose `written_for` the writer stamps.
+pub const LAYER_MANIFEST: &str = ".ai/manifest.yaml";
 
 /// Where the tool's own files live, and so where a version written by hand is refused.
 ///
@@ -825,12 +834,13 @@ pub fn diagnose(root: &Path) -> Vec<Diagnostic> {
 }
 
 /// Write `to` into the one place the version is authored, keep the lock's record of it in
-/// step, and say which files changed.
+/// step, stamp the layer's `written_for` with it, and say which files changed.
 ///
-/// Byte-exact and narrow: the manifest's `version` line inside `[package]`, and the `version`
-/// line of the lock's own `majordomus-cli` entry — the one line cargo would rewrite. Nothing
-/// else in either file is read or rewritten, so a dependency at the same version is
-/// untouched. [`PROJECTION`], the generator stamps and the changelog are not written here:
+/// Byte-exact and narrow: the manifest's `version` line inside `[package]`, the `version`
+/// line of the lock's own `majordomus-cli` entry — the one line cargo would rewrite — and the
+/// `written_for` line of [`LAYER_MANIFEST`], inserted after its `schema:` line where it has
+/// none. Nothing else in any of them is read or rewritten, so a dependency at the same
+/// version is untouched. [`PROJECTION`], the generator stamps and the changelog are not written here:
 /// they are derived, and `scripts/derive` derives them.
 ///
 /// ```
@@ -892,6 +902,36 @@ pub fn write(root: &Path, to: &str) -> std::io::Result<Vec<String>> {
         if out != text {
             std::fs::write(&lock, out)?;
             written.push(LOCK.to_string());
+        }
+    }
+
+    // The layer this tree is: written for the version it releases.
+    let layer = root.join(LAYER_MANIFEST);
+    if let Ok(text) = std::fs::read_to_string(&layer) {
+        let stamp = format!("written_for: \"{to}\"");
+        let mut out = String::with_capacity(text.len() + stamp.len() + 1);
+        let mut done = false;
+        for line in text.lines() {
+            if line.starts_with("written_for:") {
+                // the first is replaced, and a second would be a second answer
+                if !done {
+                    out.push_str(&stamp);
+                    out.push('\n');
+                }
+                done = true;
+                continue;
+            }
+            out.push_str(line);
+            out.push('\n');
+            if !done && line.starts_with("schema:") {
+                out.push_str(&stamp);
+                out.push('\n');
+                done = true;
+            }
+        }
+        if out != text {
+            std::fs::write(&layer, out)?;
+            written.push(LAYER_MANIFEST.to_string());
         }
     }
 
@@ -1556,5 +1596,44 @@ mod tests {
             default_target(&report(None, DecidedBy::Contract, None), current),
             Ok(current)
         );
+    }
+
+    /// The writer stamps the repository's own layer with the version it raises to: inserted
+    /// after `schema:` where the layer names none, the old one replaced where it does, a
+    /// second line dropped, and every other byte kept.
+    #[test]
+    fn the_writer_stamps_the_layer_with_the_version_it_raises_to() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        std::fs::create_dir_all(root.join("apps/majordomus-cli")).unwrap();
+        std::fs::create_dir_all(root.join(".ai")).unwrap();
+        std::fs::write(root.join(MANIFEST), "[package]\nversion = \"0.8.0\"\n").unwrap();
+        let layer = root.join(LAYER_MANIFEST);
+        std::fs::write(
+            &layer,
+            "# kept\nschema: ai-repository/v1\nrepo:\n  path: repo\n",
+        )
+        .unwrap();
+        assert_eq!(
+            write(root, "0.9.0").unwrap(),
+            vec![MANIFEST.to_string(), LAYER_MANIFEST.to_string()]
+        );
+        assert_eq!(
+            std::fs::read_to_string(&layer).unwrap(),
+            "# kept\nschema: ai-repository/v1\nwritten_for: \"0.9.0\"\nrepo:\n  path: repo\n"
+        );
+        // a stale stamp is replaced, and a duplicate is dropped
+        std::fs::write(
+            &layer,
+            "schema: ai-repository/v1\nwritten_for: \"0.1.0\"\nrepo:\n  path: repo\nwritten_for: \"0.2.0\"\n",
+        )
+        .unwrap();
+        write(root, "1.0.0").unwrap();
+        assert_eq!(
+            std::fs::read_to_string(&layer).unwrap(),
+            "schema: ai-repository/v1\nwritten_for: \"1.0.0\"\nrepo:\n  path: repo\n"
+        );
+        // a layer already stamped with the version is not written again
+        assert_eq!(write(root, "1.0.0").unwrap(), Vec::<String>::new());
     }
 }
