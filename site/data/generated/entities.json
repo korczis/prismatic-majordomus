@@ -277,7 +277,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 350
+      "count": 360
     },
     {
       "kind": "use-case",
@@ -522,31 +522,10 @@
       "references": [
         {
           "edge": "put_in_force",
-          "label": ".ai/repo/knowledge/sources.yaml",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
           "label": "share/kinds.yaml",
           "kind": "file",
           "route": null,
           "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "test/cases/64_knowledge_discovery.sh",
-          "kind": "test",
-          "route": null,
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "test/cases/73_knowledge_nodes.sh",
-          "kind": "test",
-          "route": null,
-          "external": false
         }
       ],
       "referenced_by": []
@@ -621,55 +600,6 @@
       "references": [
         {
           "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/capability/builtin/graph.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/capability/builtin/health.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/cockpit/mod.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/graph.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "scripts/cockpit-probe",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "share/cockpit/src/cockpit.css",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "docs/COCKPIT.md",
-          "kind": "document",
-          "route": null,
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
           "label": "project.interfaces-are-projections@1",
           "kind": "rule",
           "route": "/rules/project-interfaces-are-projections-1/",
@@ -695,13 +625,6 @@
           "kind": "rule",
           "route": "/rules/project-rust-canonical-declaration-1/",
           "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/tests/cockpit.rs",
-          "kind": "test",
-          "route": null,
-          "external": true
         }
       ],
       "referenced_by": [
@@ -741,22 +664,7 @@
         "web"
       ],
       "source": ".ai/repo/adrs/0013-every-web-surface-is-discovered-from-its-producer-resolved-o.md",
-      "references": [
-        {
-          "edge": "put_in_force",
-          "label": ".ai/repo/ci/pages.yaml",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/http/router.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        }
-      ],
+      "references": [],
       "referenced_by": [
         {
           "edge": "put_in_force",
@@ -887,20 +795,6 @@
       "references": [
         {
           "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/why.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "ai.repo.why",
-          "kind": "context",
-          "route": "/context/",
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
           "label": "project.interfaces-are-projections@1",
           "kind": "rule",
           "route": "/rules/project-interfaces-are-projections-1/",
@@ -911,13 +805,6 @@
           "label": "project.why-catalogue-is-canonical@1",
           "kind": "rule",
           "route": "/rules/project-why-catalogue-is-canonical-1/",
-          "external": false
-        },
-        {
-          "edge": "put_in_force",
-          "label": "test/cases/98_why_catalogue.sh",
-          "kind": "test",
-          "route": null,
           "external": false
         }
       ],
@@ -955,34 +842,6 @@
       ],
       "source": ".ai/repo/adrs/0020-the-capability-graph-is-composed-not-centralised-and-projecte.md",
       "references": [
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/capability/builtin/graph.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/cockpit/mod.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/graph.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
-        {
-          "edge": "put_in_force",
-          "label": "docs/COCKPIT.md",
-          "kind": "document",
-          "route": null,
-          "external": false
-        },
         {
           "edge": "put_in_force",
           "label": "project.derived-once@1",
@@ -1031,13 +890,6 @@
       ],
       "source": ".ai/repo/adrs/0021-the-branch-to-worktree-topology-is-derived-from-git-identity-and-enfor.md",
       "references": [
-        {
-          "edge": "put_in_force",
-          "label": "apps/majordomus-cli/src/worktree/mod.rs",
-          "kind": "file",
-          "route": null,
-          "external": true
-        },
         {
           "edge": "put_in_force",
           "label": "project.interfaces-are-projections@1",
@@ -3892,9 +3744,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.integration-follows-the-current-master@1",
+          "label": "project.integration-follows-the-current-master@2",
           "kind": "rule",
-          "route": "/rules/project-integration-follows-the-current-master-1/",
+          "route": "/rules/project-integration-follows-the-current-master-2/",
           "external": false
         },
         {
@@ -7138,9 +6990,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.integration-follows-the-current-master@1",
+          "label": "project.integration-follows-the-current-master@2",
           "kind": "rule",
-          "route": "/rules/project-integration-follows-the-current-master-1/",
+          "route": "/rules/project-integration-follows-the-current-master-2/",
           "external": false
         }
       ]
@@ -8953,10 +8805,10 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.integration-follows-the-current-master@1",
-      "identity": "project.integration-follows-the-current-master@1",
-      "slug": "project-integration-follows-the-current-master-1",
-      "cockpit": "/cockpit/objects/rule/project-integration-follows-the-current-master-1",
+      "id": "majordomus://rule/project.integration-follows-the-current-master@2",
+      "identity": "project.integration-follows-the-current-master@2",
+      "slug": "project-integration-follows-the-current-master-2",
+      "cockpit": "/cockpit/objects/rule/project-integration-follows-the-current-master-2",
       "title": "Pull requests are integrated one at a time, each decided against the current master, never around the branch protection",
       "status": "active",
       "tags": [
@@ -8967,7 +8819,7 @@
         "governance",
         "evidence"
       ],
-      "source": ".ai/repo/rules/project/integration-follows-the-current-master.v1.md",
+      "source": ".ai/repo/rules/project/integration-follows-the-current-master.v2.md",
       "references": [
         {
           "edge": "depends_on",
@@ -9375,9 +9227,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.integration-follows-the-current-master@1",
+          "label": "project.integration-follows-the-current-master@2",
           "kind": "rule",
-          "route": "/rules/project-integration-follows-the-current-master-1/",
+          "route": "/rules/project-integration-follows-the-current-master-2/",
           "external": false
         },
         {

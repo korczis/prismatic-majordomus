@@ -3,9 +3,9 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.13.2"
+    "version": "0.14.0"
   },
-  "fingerprint": "7d334edba58eedf9951102a562204f792521d0aef4ddc348b8e5cb3eeca1783e",
+  "fingerprint": "77f4535c4c16440b21468fdf1bc7c5ee2c4638c4f81395e1bf17e7b25288aecb",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -1120,7 +1120,7 @@
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
-        "capabilities": 60,
+        "capabilities": 62,
         "moments": 17
       },
       "evidence": {
@@ -4613,10 +4613,18 @@
         {
           "id": "integration",
           "title": "Pull-request integration",
-          "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network.",
+          "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), redundant (its work is on master already), superseded (by a declared successor that landed, named in superseded_by), possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing.",
           "stability": "experimental",
           "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs",
           "capabilities": [
+            {
+              "id": "integration.cleanup",
+              "title": "What cleanup would do",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_pull_requests_cleanup",
+              "route": "GET /api/v1/pull-requests/cleanup"
+            },
             {
               "id": "integration.events",
               "title": "The integration audit trail",
@@ -4634,6 +4642,15 @@
               "tool": "majordomus_pull_request_explain",
               "route": "GET /api/v1/pull-requests/explain",
               "cli": "majordomus prs explain"
+            },
+            {
+              "id": "integration.prove_dry_run",
+              "title": "Proof that a dry run moves nothing",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_pull_requests_prove_dry_run",
+              "route": "GET /api/v1/pull-requests/prove-dry-run",
+              "cli": "majordomus prs prove-dry-run"
             },
             {
               "id": "integration.queue",
@@ -4905,11 +4922,11 @@
         "worktrees"
       ],
       "counts": {
-        "capabilities": 10,
-        "mcp_tools": 10,
+        "capabilities": 12,
+        "mcp_tools": 12,
         "mcp_resources": 2,
-        "http_routes": 10,
-        "cli_paths": 8,
+        "http_routes": 12,
+        "cli_paths": 9,
         "commands": 3,
         "objects": 0,
         "rules": 5,
@@ -15114,17 +15131,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1899,
-    "builtin": 170,
-    "declarative": 1729,
+    "capabilities": 1911,
+    "builtin": 172,
+    "declarative": 1739,
     "modules": 51,
-    "mcp_tools": 164,
-    "mcp_resources": 1782,
-    "http_routes": 168,
-    "cli_commands": 176,
+    "mcp_tools": 166,
+    "mcp_resources": 1792,
+    "http_routes": 170,
+    "cli_commands": 178,
     "shell_commands": 30,
     "kinds": 33,
-    "objects": 1729,
+    "objects": 1739,
     "by_kind": {
       "adr": 80,
       "application": 5,
@@ -15156,7 +15173,7 @@
       "session": 22,
       "skill": 6,
       "taxonomy": 10,
-      "test": 350,
+      "test": 360,
       "use-case": 48,
       "workspace": 1
     },

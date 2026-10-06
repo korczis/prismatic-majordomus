@@ -317,10 +317,38 @@ def test_lines(path):
         i = k + 1
     return out
 
+def declared_test_module(rel):
+    # A unit-test module kept in a file of its own: `src/<dir>/tests.rs`, declared by its
+    # parent (`<dir>/mod.rs` or `<dir>.rs`, or lib.rs/main.rs for `src/tests.rs`) as
+    # `#[cfg(test)] mod tests;`. It is compiled only into the test build, as an inline
+    # `#[cfg(test)] mod tests { ... }` is, and is test code by the same rule; the attribute
+    # sits in the parent, so reading the file alone cannot see it. The same declaration test
+    # the rule proofs use (src/rules/mod.rs, declares_test_module): the nearest non-blank line
+    # above `mod tests;` is `#[cfg(test)]`.
+    if os.path.basename(rel) != "tests.rs":
+        return False
+    d = os.path.dirname(rel)
+    parents = ([os.path.join(d, "mod.rs"), d + ".rs"]
+               if os.path.basename(d) != "src" else
+               [os.path.join(d, "lib.rs"), os.path.join(d, "main.rs")])
+    for parent in parents:
+        try:
+            text = read(os.path.join(root, parent))
+        except OSError:
+            continue
+        under = False
+        for line in (l.strip() for l in text):
+            if not line:
+                continue
+            if under and (line == "mod tests;" or line.endswith(" mod tests;")):
+                return True
+            under = line == "#[cfg(test)]"
+    return False
+
 def whole_file_is_test(rel):
     parts = rel.split("/")
     return ("tests" in parts or "benches" in parts or "examples" in parts
-            or rel.endswith("build.rs"))
+            or rel.endswith("build.rs") or declared_test_module(rel))
 
 _cache = {}
 def skip_for(abs_path, rel):

@@ -1,30 +1,30 @@
 {
   "schema": "majordomus/benchmark-matrix/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.13.2",
+  "generator": "majordomus-cli 0.14.0",
   "coverage": [
     {
       "scope": "direct",
-      "required": 170,
-      "covered": 152,
+      "required": 172,
+      "covered": 153,
       "missing": 0,
-      "waived": 18,
+      "waived": 19,
       "inapplicable": 0
     },
     {
       "scope": "http",
-      "required": 168,
-      "covered": 152,
+      "required": 170,
+      "covered": 153,
       "missing": 0,
-      "waived": 16,
+      "waived": 17,
       "inapplicable": 0
     },
     {
       "scope": "mcp",
-      "required": 164,
-      "covered": 148,
+      "required": 166,
+      "covered": 149,
       "missing": 0,
-      "waived": 16,
+      "waived": 17,
       "inapplicable": 0
     },
     {
@@ -37,10 +37,10 @@
     },
     {
       "scope": "total",
-      "required": 515,
-      "covered": 465,
+      "required": 521,
+      "covered": 468,
       "missing": 0,
-      "waived": 50,
+      "waived": 53,
       "inapplicable": 0
     }
   ],
@@ -833,6 +833,18 @@
       ]
     },
     {
+      "id": "integration.cleanup",
+      "module": "integration",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
       "id": "integration.events",
       "module": "integration",
       "kind": "query",
@@ -855,6 +867,16 @@
       "cases": [
         "a-number"
       ]
+    },
+    {
+      "id": "integration.prove_dry_run",
+      "module": "integration",
+      "kind": "query",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
     },
     {
       "id": "integration.queue",

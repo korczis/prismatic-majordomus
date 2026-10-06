@@ -53,7 +53,7 @@
               <a href="{{ get_url(path='/registry/capabilities/' ~ cref[0].slug ~ '/', trailing_slash=true) }}" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">{{ c.title }}</a>
               <span class="font-mono text-xs text-body-subtle">{{ c.kind }}</span>
             </p>
-            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body">
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 wrap-anywhere font-mono text-xs text-body">
               {%- if c.cli %}<span class="text-heading">$ {{ c.cli }}</span>{% endif -%}
               {%- if c.route %}<span>{{ c.route }}</span>{% endif -%}
               {%- if c.tool %}<span>{{ c.tool }}</span>{% endif -%}
