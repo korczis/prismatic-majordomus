@@ -124,9 +124,10 @@ expect_exit 0 "$RB" release bump --exact 4.6.0
 expect_grep 'apps/majordomus-cli/Cargo\.toml now declares 4\.6\.0'
 expect_grep 'share/version\.txt and every generator stamp state 4\.6\.0 once scripts/derive has run'
 git status --porcelain > "$S/status"
-[ "$(cat "$S/status")" = " M apps/majordomus-cli/Cargo.lock
+[ "$(cat "$S/status")" = " M .ai/manifest.yaml
+ M apps/majordomus-cli/Cargo.lock
  M apps/majordomus-cli/Cargo.toml" ] || {
-  echo "    the bump wrote more than the manifest and the lock:"; cat "$S/status"; exit 1; }
+  echo "    the bump wrote more than the manifest, the lock and the layer's written_for:"; cat "$S/status"; exit 1; }
 git diff --numstat > "$S/numstat"
 while read -r added removed path; do
   [ "$added" = 1 ] && [ "$removed" = 1 ] || {

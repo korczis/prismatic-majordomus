@@ -64,6 +64,7 @@ else:
 | `crate::VERSION` and everything the executable prints | compiled | cargo |
 | `share/version.txt` | generated projection, read by `bin/majordomus` at start-up | `majordomus generate` |
 | `apps/majordomus-cli/Cargo.lock`, the crate's own entry | derived by cargo's rule | the writer, beside the manifest |
+| `.ai/manifest.yaml` `written_for` | the layer's record of the tool version it is written for | the writer, beside the manifest |
 | generator stamps, the changelog, the site's version | generated | `majordomus generate`, `scripts/derive` |
 | `.ai/repo/releases/*.yaml`, `latest.json`, `RELEASE.json` | records of a released version | the release pipeline |
 
@@ -76,9 +77,13 @@ else:
 - **One reader of the authority per language:** `release::version::declared` in Rust and
   `scripts/release-version` in shell. A gate, a script or a case that needs the version asks
   one of them, or asks `bin/majordomus version`; none parses the manifest again.
-- `majordomus release bump` is the one writer. It rewrites the manifest's version line and
-  the lock's own `majordomus-cli` entry — cargo's record, kept in step so the next
-  `--locked` build survives — and nothing else; it is idempotent, reads both back, and
+- `majordomus release bump` is the one writer. It rewrites the manifest's version line, the
+  lock's own `majordomus-cli` entry — cargo's record, kept in step so the next `--locked`
+  build survives — and the `written_for` line of this repository's own `.ai/manifest.yaml`,
+  the tool version its layer is written for, which every layer records (`init` stamps it,
+  `update` advances it, `doctor` grades it); and nothing else. A bump to the version that
+  already stands still stamps a layer whose record fell behind it. It is idempotent, reads
+  the manifest and the lock back, and
   declines to invent a version it was not given or cannot derive. The projection and every
   stamp follow from `scripts/derive`. What version it writes is not its own judgement:
   `project.the-version-is-measured` decides that from the public contract.
@@ -109,6 +114,8 @@ The gate `release-check` (`scripts/ci/release-check`) fails, exit 10, when:
 - (2) `bin/majordomus version` does not print what the manifest declares
   (`scripts/release-version --check`);
 - (2b) the lock records a different version for this crate than the manifest declares;
+- (2c) this repository's `.ai/manifest.yaml` is written for another version than the one the
+  manifest declares;
 - (3) a changelog is authored at the repository root or under `docs/` outside
   `docs/generated/`;
 - (4) the version the tree declares is behind the newest release the layer records;

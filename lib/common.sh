@@ -267,7 +267,7 @@ mj_load_manifest() {
   [ -z "$k" ] || { MJ_MANIFEST_ERROR="unknown key(s): $(printf '%s' "$k" | tr '\n' ' ')"; mj_manifest_from_newer_tool; return 1; }
   for k in repo.path local.path sections.policy sections.profiles sections.rules sections.prompts \
            sections.skills sections.workflows sections.knowledge sections.adrs sections.project; do
-    [ -n "$(mj_yget "$MJ_MAN_FLAT" "$k")" ] || { MJ_MANIFEST_ERROR="missing key $k"; return 1; }
+    [ -n "$(mj_yget "$MJ_MAN_FLAT" "$k")" ] || { MJ_MANIFEST_ERROR="missing key $k"; mj_manifest_from_newer_tool; return 1; }
   done
   return 0
 }

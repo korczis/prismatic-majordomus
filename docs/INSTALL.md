@@ -127,9 +127,10 @@ finds may be the upgrade rather than a defect. Bring each repository up on a bra
 own before its other work moves on: run `majordomus doctor` and read what the new version
 says, run `majordomus update`, which regenerates the projections and records the new version
 in the manifest, then commit and land that branch. A layer written for a newer version than
-the one installed is refused, naming both versions: upgrade the tool rather than editing the
-layer. A tool released before the layer recorded its version refuses such a manifest as one
-with a key it does not know.
+the one installed fails `doctor` and is refused by `update`, each naming both versions, and
+a command that cannot read such a manifest at all says the same instead of naming the key it
+does not know: upgrade the tool rather than editing the layer. A tool released before layers
+recorded their version refuses a stamped manifest as one with a key it does not know.
 
 ## Uninstalling
 

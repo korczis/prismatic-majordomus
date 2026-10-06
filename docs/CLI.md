@@ -225,9 +225,9 @@ from a pre-commit hook and from CI.
    finds may be the upgrade and not a defect. It is a `WARN` naming `majordomus update`, which
    a pre-commit hook does not refuse. **The same** is `OK`. **Newer** is a `FAIL` naming the
    upgrade: this executable does not know the rules the layer was written for. A value that
-   is not a version is a `FAIL`. A manifest this executable cannot read at all, because a
-   newer tool added a key or a schema, is refused by every command with one sentence naming
-   both versions (`written for majordomus X, newer than this executable (Y); upgrade the
+   is not a version is a `FAIL`. A manifest this executable cannot read, because a newer
+   tool added a key, a required key or a schema, is refused with one sentence naming both
+   versions (`written for majordomus X, newer than this executable (Y); upgrade the
    tool`), not with the key it meets first.
 2. Every `profiles/*.yaml` parses; every profile referenced by policy exists; no unknown
    keys.

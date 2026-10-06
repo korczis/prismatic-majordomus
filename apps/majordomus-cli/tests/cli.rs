@@ -427,6 +427,11 @@ fn release_version_and_bump_take_the_contracts_answer_over_the_commits() {
         "{out}"
     );
     assert!(out.contains("(unwritten)"), "{out}");
+    // the layer's record of the version is part of what the writer would write
+    assert!(
+        out.contains(".ai/manifest.yaml written_for (unwritten)"),
+        "{out}"
+    );
     assert!(!out.contains("explicit override"), "{out}");
 
     // an override under the contract's floor is refused, and nothing is written
@@ -451,6 +456,27 @@ fn release_version_and_bump_take_the_contracts_answer_over_the_commits() {
     assert!(out.contains("now declares 0.2.0"), "{out}");
     let manifest = std::fs::read_to_string(f.path("apps/majordomus-cli/Cargo.toml")).unwrap();
     assert!(manifest.contains("version = \"0.2.0\""), "{manifest}");
+    // the layer is written for the version it now declares, stamped beside its schema
+    let layer = || std::fs::read_to_string(f.path(".ai/manifest.yaml")).unwrap();
+    assert!(
+        layer().contains("schema: ai-repository/v1\nwritten_for: \"0.2.0\"\n"),
+        "{}",
+        layer()
+    );
+    assert!(out.contains(".ai/manifest.yaml written"), "{out}");
+
+    // a layer whose record fell behind a version that stands is stamped again, and only it
+    f.write(
+        ".ai/manifest.yaml",
+        &layer().replace("written_for: \"0.2.0\"", "written_for: \"0.1.0\""),
+    );
+    let (code, out) = release(&f, &["bump"]);
+    assert_eq!(code, 0, "{out}");
+    assert!(
+        out.contains("the version is already 0.2.0; .ai/manifest.yaml stamped with it"),
+        "{out}"
+    );
+    assert!(layer().contains("written_for: \"0.2.0\""), "{}", layer());
 
     // and again: the version already covers what the contract requires
     let (code, out) = release(&f, &["bump"]);

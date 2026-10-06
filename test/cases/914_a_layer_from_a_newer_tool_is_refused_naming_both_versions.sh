@@ -36,6 +36,14 @@ for cmd in doctor check "plan status"; do
   expect_no_grep 'unknown key'
 done
 
+echo "    a newer layer that dropped a key this executable requires: the same one message"
+kept="$(mktemp "${TMPDIR:-/tmp}/mj-914.XXXXXX")"; cp .ai/manifest.yaml "$kept"
+sed -i.bak '/^future_section:/d; /^  policy:/d' .ai/manifest.yaml && rm -f .ai/manifest.yaml.bak
+expect_exit 10 "$MJ" doctor
+expect_grep "written for majordomus $future, newer than this executable \($tool\); upgrade the tool"
+expect_no_grep 'missing key'
+cp "$kept" .ai/manifest.yaml && rm -f "$kept"
+
 echo "    the same manifest named for an older tool is refused for its key, as before"
 stamp "0.0.0"
 expect_exit 10 "$MJ" doctor

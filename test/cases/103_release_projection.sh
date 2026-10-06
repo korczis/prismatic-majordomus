@@ -325,6 +325,7 @@ expect_exit 2 "$RB" release bump --level enormous
 expect_exit 0 "$RB" release bump --exact 9.9.9
 expect_grep '1\.0\.0 -> 9\.9\.9'
 expect_grep "$MANIFEST written"
+expect_grep '\.ai/manifest\.yaml written'
 expect_grep "$MANIFEST now declares 9\.9\.9"
 expect_grep 'once scripts/derive has run'
 expect_no_grep "$PROJECTION written"
@@ -335,16 +336,18 @@ expect_grep 'tool         1\.0\.0'
 expect_grep 'agree        NO'
 expect_grep 'WARNING projection-stale'
 
-# and nothing else moved: one line in one file, the decoy untouched, the projection
-# byte-identical — the writer writes the authority and derivation writes the rest
+# and nothing else moved: one line in the manifest and the layer's one written_for line
+# (I1980), the decoy untouched, the projection byte-identical — the writer writes the
+# authority and the layer's record of it, and derivation writes the rest
 git diff --numstat > "$S/numstat"
-[ "$(wc -l < "$S/numstat" | tr -d ' ')" = 1 ] || {
-  echo "    the bump touched files other than the manifest:"; cat "$S/numstat"; exit 1; }
+[ "$(wc -l < "$S/numstat" | tr -d ' ')" = 2 ] || {
+  echo "    the bump touched files other than the manifest and the layer's record:"; cat "$S/numstat"; exit 1; }
 while read -r added removed path; do
-  [ "$path" = "$MANIFEST" ] && [ "$added" = 1 ] && [ "$removed" = 1 ] || {
-    echo "    the bump rewrote $path ($added added, $removed removed) instead of the manifest's one version line"
+  case "$path" in "$MANIFEST"|.ai/manifest.yaml) ;; *) false ;; esac && [ "$added" = 1 ] && [ "$removed" = 1 ] || {
+    echo "    the bump rewrote $path ($added added, $removed removed) instead of one line"
     git diff -- "$path" | head -20; exit 1; }
 done < "$S/numstat"
+grep -q '^written_for: "9\.9\.9"$' .ai/manifest.yaml || { echo "    the layer is not written for 9.9.9:"; cat .ai/manifest.yaml; exit 1; }
 grep -q 'serde = { version = "1.0.0" }' "$MANIFEST" || { echo "    a dependency pinned at the old version was rewritten"; exit 1; }
 [ "$(sha256_of_file "$PROJECTION")" = "$before_projection" ] || { echo "    the writer wrote the projection"; exit 1; }
 
@@ -353,7 +356,7 @@ grep -q 'serde = { version = "1.0.0" }' "$MANIFEST" || { echo "    a dependency 
 expect_exit 0 "$RB" release bump --exact 9.9.9
 expect_grep 'already 9\.9\.9; nothing written'
 
-git checkout -- "$MANIFEST"
+git checkout -- "$MANIFEST" .ai/manifest.yaml
 
 # ---------------------------------------------------------------- adding a release edits nothing
 #

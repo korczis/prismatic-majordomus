@@ -594,6 +594,21 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
     let to = to.to_string();
     let declared = current.to_string();
     if to == declared {
+        // the version stands; the layer's record of it may not (a merge, a hand edit, an
+        // update by another tool), and the writer is what puts it beside the version
+        if !dry_run {
+            let written = version::write(&root, &to).map_err(|e| Error::io(root.clone(), e))?;
+            for f in &written {
+                writeln!(
+                    out,
+                    "release: the version is already {to}; {f} stamped with it"
+                )
+                .map_err(Error::Transport)?;
+            }
+            if !written.is_empty() {
+                return Ok(0);
+            }
+        }
         match plan {
             Some(p) => writeln!(
                 out,
@@ -643,6 +658,14 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
     if dry_run {
         writeln!(out, "         {} (unwritten)", version::MANIFEST).map_err(Error::Transport)?;
         writeln!(out, "         {} (unwritten)", version::LOCK).map_err(Error::Transport)?;
+        if root.join(version::LAYER_MANIFEST).is_file() {
+            writeln!(
+                out,
+                "         {} written_for (unwritten)",
+                version::LAYER_MANIFEST
+            )
+            .map_err(Error::Transport)?;
+        }
         writeln!(out, "         {}", derived_after(&to)).map_err(Error::Transport)?;
         return Ok(0);
     }

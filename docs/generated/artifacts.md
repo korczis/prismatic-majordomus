@@ -169,7 +169,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `apps/majordomus-cli/src/design/tokens.yaml` | `design-declaration` | yaml | 21258 | `ddc581fe4486c89f` |
 | `apps/majordomus-cli/src/web/tokens.css` | `design-tokens` | text | 9320 | `d5f31d0ba8d163da` |
 | `deploy/Dockerfile` | `deployment` | text | 1866 | `05e4fe64011ca785` |
-| `docs/INSTALL.md` | `install-guide` | markdown | 11397 | `ac100032ef450440` |
+| `docs/INSTALL.md` | `install-guide` | markdown | 11547 | `cec2c29b4141e386` |
 | `docs/generated/artifacts.json` | `artifacts` | json | — | — (this file) |
 | `docs/generated/artifacts.md` | `artifacts` | markdown | — | — (this file) |
 | `docs/generated/artifacts.yaml` | `artifacts` | yaml | — | — (this file) |
@@ -309,7 +309,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 676951 | `df84b6ae51aa23c6` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 92055 | `d55db265634facac` |
 | `site/data/registry/product.json` | `site-product` | json | 617300 | `fa0c711121ee916f` |
-| `site/data/registry/registry.json` | `site-registry` | json | 5600718 | `c45d161afc84a8f8` |
+| `site/data/registry/registry.json` | `site-registry` | json | 5600718 | `09c662943e4dc508` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180163 | `6f42fc51539f1df8` |
 | `site/data/registry/why.json` | `site-why` | json | 349952 | `777f1ad36429510e` |
 | `site/static/favicon.svg` | `design-mark` | text | 904 | `a371db82756accd2` |
