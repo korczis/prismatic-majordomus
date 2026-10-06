@@ -66,7 +66,7 @@ verdict() { "$RB" intent show probe --format json | jq -r '.verdict.state'; }
 same() { [ "$2" = "$3" ] || { printf '    %s: expected %s, got %s\n' "$1" "$2" "$3"; exit 1; }; }
 D="$(mktemp -d "${TMPDIR:-/tmp}/mj-895.XXXXXX")"; trap 'rm -rf "$D"' EXIT
 intents_digest() { # every intent file, names and contents, as one digest
-  find .ai/repo/project/intents -type f | sort | while read -r f; do echo "$f"; cat "$f"; done \
+  find .ai/repo/project/intents -type f | LC_ALL=C sort | while read -r f; do echo "$f"; cat "$f"; done \
     > "$D/intents"
   sha256_of_file "$D/intents"
 }

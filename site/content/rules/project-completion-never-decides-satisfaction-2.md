@@ -26,8 +26,8 @@ satisfaction a completion-policy question.
 - A criterion's verdict and an intent's satisfaction are computed by the intent engine
   (`apps/majordomus-cli/src/intent.rs`) over the evidence ledger and the claim join, and by
   nothing else.
-- Completion policy (`share/completion.yaml` where it exists) declares no question whose answer
-  is that an intent is satisfied. A question may read an intent's derived standing as an input.
+- Completion policy, wherever a repository declares one, declares no question whose answer is
+  that an intent is satisfied. A question may read an intent's derived standing as an input.
 - `majordomus finish`, with any outcome, writes no file under `.ai/repo/project/intents/` and
   stores no intent stage or verdict anywhere.
 - An intent's `verdict` — `satisfied` when every criterion is met, `unsatisfied` when a `test`
