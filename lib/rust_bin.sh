@@ -386,3 +386,21 @@ mj_rust_reasoning_report() {
     "$mj_rr_bin" reasoning status --report --repo "$mj_rr_root" ) 2>/dev/null || true
   return 0
 }
+
+# The pull-request integration queue in one line, as `majordomus prs brief` renders it from
+# what this checkout last recorded: the queue summary, the lease and how far it reaches, the
+# last merge and the last outcome. It decides no relation and reaches no network, and it
+# degrades to nothing: no executable, or a checkout whose forge was never observed. One
+# renderer, the executable's, so that `context` and a derived handover say the same line.
+# Never a build, as for the peer board. Prints the line or nothing; always returns 0.
+#
+# mj_rust_prs_brief <repository-root> [<tool-root>]
+mj_rust_prs_brief() {
+  mj_pb_root="$1"
+  mj_pb_bin="$(mj_rust_bin "${2:-$1}")"
+  [ -x "$mj_pb_bin" ] || return 0
+  mj_pb_share="$(mj_rust_share "${2:-$1}")"
+  ( [ -z "$mj_pb_share" ] || export MAJORDOMUS_SHARE="$mj_pb_share"
+    "$mj_pb_bin" prs brief --repo "$mj_pb_root" ) 2>/dev/null || true
+  return 0
+}

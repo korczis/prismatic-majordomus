@@ -108,6 +108,12 @@ section="$(printf '%s\n' "$ctx" | sed -n '/^## INTEGRATION/,/^## /p')"
 for want in "1 open" "lease free" "last merge #1" "$(printf '%s' "$line" | sed 's/ observed .*//')"; do
   printf '%s\n' "$section" | grep -qF "$want" || { echo "    context's INTEGRATION lacks '$want':"; printf '%s\n' "$section"; exit 1; }
 done
+# a derived handover carries the same line under its current state, for a session resuming
+derived="$("$MJ" handover --derive --no-task 2>/dev/null)" && [ -f "$derived" ] \
+  || { echo "    handover --derive wrote no record: $derived"; exit 1; }
+grep -qF "Integration: $(printf '%s' "$line" | sed 's/ observed .*//')" "$derived" \
+  || { echo "    the derived handover lacks the integration line:"; cat "$derived"; exit 1; }
+grep -q "last merge #1" "$derived" || { echo "    the derived handover lacks the last merge"; exit 1; }
 [ "$(wc -l < "$STATE/log" | tr -d ' ')" = "$calls_before" ] || { echo "    a read reached the forge"; exit 1; }
 # a checkout that never observed the forge: no line, no section
 E="$T/../empty-740"; rm -rf "$E"; mkdir -p "$E"; ( cd "$E" && gitq init -q && echo x > x && gitq add x && gitq commit -qm x && "$MJ" init >/dev/null 2>&1 )

@@ -1681,14 +1681,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/product.rs",
-        "kind": "file",
-        "label": "product.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/product.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/web/report/ui.rs",
         "kind": "file",
         "label": "ui.rs",
@@ -3979,6 +3971,7 @@
             "file:apps/majordomus-cli/src/integration/mod.rs",
             "file:apps/majordomus-cli/src/integration/classify.rs",
             "file:apps/majordomus-cli/src/integration/drain.rs",
+            "file:apps/majordomus-cli/src/integration/exclusive.rs",
             "file:apps/majordomus-cli/src/capability/builtin/integration.rs",
             "file:apps/majordomus-cli/src/integration/tests.rs",
             "file:apps/majordomus-cli/src/integration/retry.rs",
@@ -38624,6 +38617,13 @@
         "source": "test/cases/91_canonical_architecture.sh"
       },
       {
+        "id": "majordomus://test/test/cases/924_one_executor_across_machines.sh",
+        "kind": "test",
+        "label": "test/cases/924_one_executor_across_machines.sh",
+        "route": "/cockpit/objects/test/test-cases-924-one-executor-across-machines-sh",
+        "source": "test/cases/924_one_executor_across_machines.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/92_openapi_reference.sh",
         "kind": "test",
         "label": "test/cases/92_openapi_reference.sh",
@@ -44522,11 +44522,6 @@
       },
       {
         "source": "majordomus://adr/adr-0023",
-        "target": "file:apps/majordomus-cli/src/product.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0023",
         "target": "kind:adr",
         "kind": "is_a"
       },
@@ -44573,11 +44568,6 @@
       {
         "source": "majordomus://adr/adr-0025",
         "target": "majordomus://rule/project.no-new-nouns@1",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0026",
-        "target": "file:apps/majordomus-cli/src/product.rs",
         "kind": "put_in_force"
       },
       {
@@ -45988,11 +45978,6 @@
       {
         "source": "majordomus://adr/adr-0103",
         "target": "majordomus://rule/project.a-provider-capability-cites-its-evidence@1",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0104",
-        "target": "file:apps/majordomus-cli/src/product.rs",
         "kind": "put_in_force"
       },
       {
@@ -48532,11 +48517,6 @@
       },
       {
         "source": "majordomus://claim/product-domains-derived",
-        "target": "file:apps/majordomus-cli/src/product.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/product-domains-derived",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -48549,11 +48529,6 @@
         "source": "majordomus://claim/product-domains-derived",
         "target": "majordomus://test/test/cases/800_product_domains.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/product-features-discovered",
-        "target": "file:apps/majordomus-cli/src/product.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/product-features-discovered",
@@ -48582,11 +48557,6 @@
       },
       {
         "source": "majordomus://claim/product-references-resolve",
-        "target": "file:apps/majordomus-cli/src/product.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/product-references-resolve",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -48594,11 +48564,6 @@
         "source": "majordomus://claim/product-references-resolve",
         "target": "majordomus://document/docs/PRODUCT.md",
         "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/product-surfaces-derived",
-        "target": "file:apps/majordomus-cli/src/product.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/product-surfaces-derived",
@@ -50082,18 +50047,8 @@
       },
       {
         "source": "majordomus://context/ai.repo.features",
-        "target": "file:apps/majordomus-cli/src/product.rs",
-        "kind": "tracks"
-      },
-      {
-        "source": "majordomus://context/ai.repo.features",
         "target": "kind:context",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://context/ai.repo.features.domains",
-        "target": "file:apps/majordomus-cli/src/product.rs",
-        "kind": "tracks"
       },
       {
         "source": "majordomus://context/ai.repo.features.domains",
@@ -60461,6 +60416,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/924_one_executor_across_machines.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/92_openapi_reference.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -63633,7 +63593,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4500,
+      "edges": 4492,
       "acyclic": true,
       "truncated": true
     }

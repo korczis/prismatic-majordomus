@@ -21,6 +21,7 @@ related:
   - file:apps/majordomus-cli/src/integration/mod.rs
   - file:apps/majordomus-cli/src/integration/classify.rs
   - file:apps/majordomus-cli/src/integration/drain.rs
+  - file:apps/majordomus-cli/src/integration/exclusive.rs
   - file:apps/majordomus-cli/src/capability/builtin/integration.rs
   - file:apps/majordomus-cli/src/integration/tests.rs
   - file:apps/majordomus-cli/src/integration/retry.rs
@@ -217,6 +218,19 @@ with one canonical state, one classification and one executor.
    once cannot both win, and a holder that ends, even by a crash, releases it at once; a
    live holder is never taken over, however old its record. The staleness bound is what an
    observer reports, not a licence to take the lease. Observers never take it.
+
+   The lease guards one clone: every worktree shares its common git directory, and a second
+   clone on another machine has its own. The repository is guarded by the mesh (ADR 0067)
+   when this checkout's shared server runs it: before the lease, an executor takes an
+   exclusive mesh claim on `integration/<repository>/<base>` as its checkout's session, which
+   every linked runtime admits against. A second machine's executor is refused with exit 12,
+   naming the holding session and what it said it was for, before it takes its lease or acts.
+   The claim's key is written in the lease record and released after the lease. A mesh that
+   is not running here refuses nothing: the lease alone guards, and the record, `prs brief`
+   and the Cockpit say so ("per-clone guard only"). A claim an executor left behind when it
+   was killed is its checkout's own session, which the mesh never refuses to that session;
+   the next executor there takes the lease and releases the leftover, so a crash costs the
+   other machines a wait, never a claim nobody can release.
 8. **The network is declared, not tolerated.** `prs refresh`, `prs drain`, `prs cleanup`
    and `prs repair --apply` run the GitHub CLI and `git fetch`. Every other surface renders the recorded observation
    with its age. SECURITY.md names the exception. Besides the open pull requests, an

@@ -43,6 +43,7 @@
 
 pub mod classify;
 pub mod drain;
+pub mod exclusive;
 pub mod forge;
 pub mod metrics;
 pub mod model;

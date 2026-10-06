@@ -250,6 +250,15 @@ impl Forge {
         (code, failed)
     }
 
+    /// The record that unlocks continuous mode (ADR 0101 §13): five merges earlier bounded
+    /// drains made and proved, in the words the executor writes to the clone's one trail.
+    fn seed_verified_merges(&self) {
+        let trail = self.work.join(".git/majordomus/integration");
+        std::fs::create_dir_all(&trail).unwrap();
+        let merged = r#"{"at":"2026-10-05T00:00:00Z","actor":"seed","action":"merge_succeeded","pr":null,"reasons":[],"detail":"an earlier bounded merge"}"#;
+        std::fs::write(trail.join("events.jsonl"), format!("{merged}\n").repeat(5)).unwrap();
+    }
+
     fn log(&self) -> String {
         std::fs::read_to_string(self.state.join("log")).unwrap_or_default()
     }
@@ -472,6 +481,8 @@ fn what_the_base_requires_is_read_from_protection_and_rulesets() {
 fn a_forge_that_cannot_be_read_leaves_every_executor_command_unusable() {
     let f = Forge::new();
     f.set("down", "");
+    // continuous mode's record, so that it too reaches the forge it cannot read
+    f.seed_verified_merges();
     for args in [
         &["refresh"][..],
         &["drain", "--max", "1"],
@@ -528,15 +539,23 @@ fn a_continuous_drain_stops_on_a_merge_it_cannot_prove_and_resumes_when_told() {
     let head = f.branch(1);
     f.open(&[(1, &head)]);
     f.set("merge-mode", "foreign");
+    f.seed_verified_merges();
     let (code, out, err) = f.prs(&["drain", "--continuous"]);
     assert_eq!(code, 10, "{out}{err}");
     assert!(out.contains("cycle 1:"), "{out}");
     assert!(out.contains("could not be verified"), "{out}");
-    // resumed: the failure is acknowledged under the lease, and the next one is merged —
-    // onto a master that moves again, so this run ends the same way
+    // the merge it could not prove ended the record that unlocked continuous mode (ADR 0101
+    // §13): resuming continuously is refused before the lease, acknowledging nothing
     let head = f.branch(2);
     f.open(&[(2, &head)]);
     let (code, out, err) = f.prs(&["drain", "--continuous", "--resume-after-failure"]);
+    assert_eq!(code, 10, "{out}{err}");
+    assert!(err.contains("verified merges"), "{err}");
+    assert!(f.last("failure_acknowledged").is_none());
+    assert!(!f.log().contains("pr merge 2 "), "{}", f.log());
+    // resumed by a bounded drain: the failure is acknowledged under the lease, and the next
+    // one is merged — onto a master that moves again, so this run ends the same way
+    let (code, out, err) = f.prs(&["drain", "--max", "1", "--resume-after-failure"]);
     assert_eq!(code, 10, "{out}{err}");
     assert!(f.last("failure_acknowledged").is_some());
     assert!(f.log().contains("pr merge 2 "), "{}", f.log());

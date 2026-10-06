@@ -25563,6 +25563,13 @@
           "refs": [],
           "required": true,
           "type": "integer (uint64)"
+        },
+        {
+          "description": "The mesh claim that makes it exclusive across machines, `<stream>/<claim>`; absent\nwhen the lease guards this clone alone (`super::exclusive`).",
+          "name": "mesh_claim",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         }
       ],
       "type": "object",

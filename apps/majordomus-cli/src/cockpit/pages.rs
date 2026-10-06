@@ -5083,6 +5083,69 @@ fn disposition_label(a: &crate::integration::PullRequestAssessment) -> String {
 /// taken against, the lease, the starving, and the executor's recent actions — all of it
 /// `integration.queue` and `integration.events`, the answers the command line and MCP give.
 /// Read from the last recorded observation, so a page load never reaches the forge.
+/// How fast the executor turned work into master over the trail's recent window, as
+/// `integration.queue` folds it: a median nobody measured says so instead of reading as zero.
+fn throughput_card(t: &crate::integration::metrics::IntegrationThroughput) -> El {
+    const SOURCE: &str = "integration.queue";
+    let seconds = |v: Option<u64>| match v {
+        Some(s) if s >= 3600 => format!("{:.1} h", s as f64 / 3600.0),
+        Some(s) if s >= 60 => format!("{} min", s / 60),
+        Some(s) => format!("{s} s"),
+        None => "no merge measured".to_string(),
+    };
+    let strip = el("div")
+        .class("mj-stats")
+        .child(statistic(t.merges.to_string(), "merges", SOURCE))
+        .child(statistic(
+            format!("{:.1}", t.merges_per_day),
+            "merges per day",
+            SOURCE,
+        ))
+        .child(statistic(
+            seconds(t.median_actionable_to_merged_secs),
+            "actionable to merged (median)",
+            SOURCE,
+        ))
+        .child(statistic(
+            t.ci_rounds_per_merge
+                .map_or_else(|| "no merge measured".to_string(), |n| n.to_string()),
+            "CI rounds per merge (median)",
+            SOURCE,
+        ))
+        .child(statistic(
+            seconds(t.median_cycle_secs),
+            "selection to outcome (median)",
+            SOURCE,
+        ))
+        .child(statistic(
+            t.stale_decisions.to_string(),
+            "stale decisions",
+            SOURCE,
+        ))
+        .child(statistic(
+            t.merge_failures.to_string(),
+            "failed merges",
+            SOURCE,
+        ))
+        .child(statistic(
+            t.verification_failures.to_string(),
+            "unverified merges",
+            SOURCE,
+        ));
+    card_with(
+        format!("Throughput — last {} days", t.window_days),
+        badge(
+            if t.verification_failures > 0 {
+                "fail"
+            } else {
+                "info"
+            },
+            format!("{} merged", t.merges),
+        ),
+        strip,
+    )
+}
+
 pub fn integration(ctx: &Context) -> Page {
     use crate::capability::builtin::integration::{IntegrationEvents, IntegrationStatus};
     use crate::integration::IntegrationLane;
@@ -5143,6 +5206,8 @@ pub fn integration(ctx: &Context) -> Page {
         "integration.queue",
     );
 
+    let throughput = throughput_card(&status.throughput);
+
     let lease = match &status.lease {
         None => badge("ok", "free"),
         Some(l) if l.stale => badge(
@@ -5156,8 +5221,14 @@ pub fn integration(ctx: &Context) -> Page {
             Some(h) => badge(
                 "info",
                 format!(
-                    "held by pid {} on {}, renewed {} s ago",
-                    h.pid, h.host, l.renewed_seconds_ago
+                    "held by pid {} on {}, renewed {} s ago — {}",
+                    h.pid,
+                    h.host,
+                    l.renewed_seconds_ago,
+                    match &h.mesh_claim {
+                        Some(key) => format!("across machines by mesh claim {key}"),
+                        None => "this clone only".to_string(),
+                    }
                 ),
             ),
             None => badge("info", "held (holder unreadable)"),
@@ -5408,6 +5479,7 @@ pub fn integration(ctx: &Context) -> Page {
     let mut grid = el("div")
         .class("mj-grid")
         .child(statistics)
+        .child(throughput)
         .child(identity)
         .child(diagnostics);
     for c in lane_cards {
@@ -7392,7 +7464,85 @@ mod tests {
             !html.contains("prs refresh records one"),
             "an observed queue says nothing is observed"
         );
+        // the throughput card counts the merge the trail recorded, inside its window
+        assert!(html.contains("Throughput — last 7 days"), "{html}");
+        // a lease without a mesh claim says it guards this clone only
+        assert!(html.contains("this clone only"), "{html}");
         drop(lease);
+
+        // a lease taken with a claim across machines names the claim
+        struct Granting;
+        impl crate::integration::exclusive::Mesh for Granting {
+            fn ask(&self, _: &str, target: &str, _: Option<Value>) -> Result<(u16, Value), String> {
+                Ok(match target {
+                    "/api/v1/mesh/claims" => (200, json!({ "key": "s1/c-page" })),
+                    _ => (200, json!({})),
+                })
+            }
+        }
+        let lease = crate::integration::exclusive::acquire_through(
+            &root,
+            "master",
+            Some(Box::new(Granting)),
+        )
+        .expect("the lease with a claim");
+        let html = integration(&repo.context().expect("a context"))
+            .main
+            .render();
+        assert!(
+            html.contains("across machines by mesh claim s1/c-page"),
+            "{html}"
+        );
+        drop(lease);
+    }
+
+    /// The throughput card renders every figure the fold measured, and a median nobody could
+    /// measure as such — never as a zero; an unverified merge turns its badge red.
+    #[test]
+    fn the_throughput_card_says_what_it_measured_and_what_it_could_not() {
+        use crate::integration::metrics::IntegrationThroughput;
+        let measured = IntegrationThroughput {
+            window_days: 7,
+            merges: 3,
+            merges_per_day: 3.0 / 7.0,
+            median_actionable_to_merged_secs: Some(7200),
+            ci_rounds_per_merge: Some(2),
+            median_cycle_secs: Some(90),
+            stale_decisions: 1,
+            merge_failures: 0,
+            verification_failures: 1,
+            unreadable_events: 0,
+        };
+        let html = throughput_card(&measured).render();
+        for said in [
+            "Throughput — last 7 days",
+            "3 merged",
+            "0.4",
+            "2.0 h",
+            "1 min",
+            "stale decisions",
+            "unverified merges",
+        ] {
+            assert!(html.contains(said), "{said}: {html}");
+        }
+        assert!(html.contains("mj-badge--fail"), "{html}");
+
+        let quiet = IntegrationThroughput {
+            merges: 0,
+            merges_per_day: 0.0,
+            median_actionable_to_merged_secs: None,
+            ci_rounds_per_merge: None,
+            median_cycle_secs: Some(42),
+            verification_failures: 0,
+            ..measured
+        };
+        let html = throughput_card(&quiet).render();
+        assert!(html.contains("no merge measured"), "{html}");
+        assert!(html.contains("42 s"), "{html}");
+        assert!(
+            html.contains("mj-badge--info") && !html.contains("mj-badge--fail"),
+            "{html}"
+        );
     }
 
     #[test]

@@ -532,14 +532,10 @@ EOF
 # repository that does not integrate pull requests here must not grow a section about it.
 # Never a build, for the reason `mj_peer_board` gives.
 mj_context_integration() {
-  local bin share line
+  local line
   # shellcheck source=rust_bin.sh
   . "$MJ_LIB_DIR/rust_bin.sh"
-  bin="$(mj_rust_bin "$MJ_HOME")"
-  [ -x "$bin" ] || return 0
-  share="$(mj_rust_share "$MJ_HOME")"
-  line="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
-             "$bin" prs brief --repo "$MJ_ROOT" ) 2>/dev/null )" || return 0
+  line="$(mj_rust_prs_brief "$MJ_ROOT" "$MJ_HOME")"
   [ -n "$line" ] || return 0
   {
     printf '## INTEGRATION\n'
