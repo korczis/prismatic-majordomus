@@ -52,7 +52,7 @@
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
       
       
-      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.13.2</span>
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.14.0</span>
       
     </a>
     <div class="flex items-center gap-2 md:order-2">
@@ -171,7 +171,7 @@
 
 <div class="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
-    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/815b96b5a12be1bb255060f06f5a02a2882ad742/apps/majordomus-cli/README.md" class="font-mono underline">apps/majordomus-cli/README.md</a> — the same Markdown GitHub shows. The command line, the capabilities, the MCP and HTTP surfaces and the benchmarks are not written there: they are generated from the registry, and their pages are the row of links above.</p>
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/5908234ce001f521e22c2534f837ee939b70a7c6/apps/majordomus-cli/README.md" class="font-mono underline">apps/majordomus-cli/README.md</a> — the same Markdown GitHub shows. The command line, the capabilities, the MCP and HTTP surfaces and the benchmarks are not written there: they are generated from the registry, and their pages are the row of links above.</p>
     <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline" tabindex="0"><p>The Rust executable of Majordomus. It builds a binary named <code>majordomus</code> that reads the
 repository's provider-neutral AI layer under <code>.ai/</code>, composes one capability registry from
 its own executable capabilities and the layer's objects, and serves that registry through
@@ -241,10 +241,10 @@ wired the same way in the script, the workflow and the justfile (rule
 <code>rust-hot-path-benchmarks</code>).</p>
 <p>The binary shares its name with the shell tool on purpose. Put one or the other on <code>PATH</code>,
 or call this one by path. An MCP client is configured once, at the repository root, and
-this repository ships those files: <a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/815b96b5a12be1bb255060f06f5a02a2882ad742/.mcp.json"><code>.mcp.json</code></a> for Claude Code,
-<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/815b96b5a12be1bb255060f06f5a02a2882ad742/.gemini/settings.json"><code>.gemini/settings.json</code></a> for Gemini CLI and
-<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/815b96b5a12be1bb255060f06f5a02a2882ad742/.codex/config.toml"><code>.codex/config.toml</code></a> for Codex all start
-<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/815b96b5a12be1bb255060f06f5a02a2882ad742/bin/majordomus-mcp"><code>bin/majordomus-mcp</code></a>, which builds this crate when the
+this repository ships those files: <a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/5908234ce001f521e22c2534f837ee939b70a7c6/.mcp.json"><code>.mcp.json</code></a> for Claude Code,
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/5908234ce001f521e22c2534f837ee939b70a7c6/.gemini/settings.json"><code>.gemini/settings.json</code></a> for Gemini CLI and
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/5908234ce001f521e22c2534f837ee939b70a7c6/.codex/config.toml"><code>.codex/config.toml</code></a> for Codex all start
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/5908234ce001f521e22c2534f837ee939b70a7c6/bin/majordomus-mcp"><code>bin/majordomus-mcp</code></a>, which builds this crate when the
 executable is missing or older than its sources, sets <code>MAJORDOMUS_SHARE</code>, and <code>exec</code>s
 <code>majordomus mcp</code>. To name the executable directly:</p>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="json"><span class="giallo-l"><span>{</span><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">mcpServers</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span> {</span><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">majordomus</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span> {</span><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">command</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">/path/to/apps/majordomus-cli/target/debug/majordomus</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">args</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">mcp</span><span class="z-l-8 z-d-8">&quot;</span><span>]</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">env</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span> {</span><span class="z-l-4 z-d-1"> &quot;</span><span class="z-l-4 z-d-1">MAJORDOMUS_SHARE</span><span class="z-l-4 z-d-1">&quot;</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">/path/to/prismatic-majordomus/share</span><span class="z-l-8 z-d-8">&quot;</span><span> }</span><span> }</span><span> }</span><span> }</span></span></code></pre><h2 id="the-share-directory-kinds-and-schemas-at-run-time"><a class="zola-anchor" href="#the-share-directory-kinds-and-schemas-at-run-time" aria-label="Anchor link for: the-share-directory-kinds-and-schemas-at-run-time">The share directory: kinds and schemas at run time</a></h2>
@@ -265,15 +265,15 @@ distribution already declares is an error naming both files.</p>
 <p>The command line is declared once, in <code>src/cli.rs</code>: clap for the structure, and typed
 Rust metadata beside it (<code>EXAMPLES</code>) for the examples clap cannot carry. Every reference is
 generated from that one declaration and never written by hand — <code>majordomus --help</code> at a
-terminal, <a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/815b96b5a12be1bb255060f06f5a02a2882ad742/docs/generated/cli.md"><code>docs/generated/cli.md</code></a> for a reader on GitHub,
-<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/815b96b5a12be1bb255060f06f5a02a2882ad742/docs/generated/cli.json"><code>docs/generated/cli.json</code></a> and its YAML sibling for the website's generator and for a reader of configuration, the
+terminal, <a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/5908234ce001f521e22c2534f837ee939b70a7c6/docs/generated/cli.md"><code>docs/generated/cli.md</code></a> for a reader on GitHub,
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/5908234ce001f521e22c2534f837ee939b70a7c6/docs/generated/cli.json"><code>docs/generated/cli.json</code></a> and its YAML sibling for the website's generator and for a reader of configuration, the
 site's <a rel="external" href="https://majordomus.dev/docs/cli/">reference under <code>/docs/cli/</code></a>
 with one page per command, and the <a rel="external" href="https://majordomus.dev/registry/cli/">command line page</a>
 of the registry. <code>majordomus generate</code> writes the files and <code>majordomus generate --check</code>
 refuses a stale one in CI. Every artifact it writes declares the document it projects, its
 encoding, the schema its content satisfies and its source, and a structured document is
 written in every encoding it is committed in from one value;
-<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/815b96b5a12be1bb255060f06f5a02a2882ad742/docs/generated/artifacts.md"><code>docs/generated/artifacts.md</code></a> is the generated index
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/5908234ce001f521e22c2534f837ee939b70a7c6/docs/generated/artifacts.md"><code>docs/generated/artifacts.md</code></a> is the generated index
 of the whole set, and <code>artifacts.list</code> reads it back reconciled with the working tree. Every command starts from the same options (<code>--repo</code>,
 <code>--discovery</code>, <code>--strict</code>, <code>--share</code>); the reference lists them on each command that
 accepts them.</p>
@@ -528,10 +528,10 @@ memory; the task record and scope of the shell tool are the durable form).</p>
       <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">at a glance</span>
       <dl class="space-y-2">
         <div><dt class="text-body-subtle">version</dt><dd class="font-mono text-heading">majordomus-cli 0.14.0</dd></div>
-        <div><dt class="text-body-subtle">capabilities</dt><dd class="text-heading">172 builtin in 51 modules, 1739 declarative</dd></div>
+        <div><dt class="text-body-subtle">capabilities</dt><dd class="text-heading">172 builtin in 51 modules, 1740 declarative</dd></div>
         <div><dt class="text-body-subtle">surfaces</dt><dd class="text-heading">166 MCP tools · 170 HTTP routes · 37 commands</dd></div>
-        <div><dt class="text-body-subtle">crate</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/tree/815b96b5a12be1bb255060f06f5a02a2882ad742/apps/majordomus-cli" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">apps/majordomus-cli</a></dd></div>
-        <div><dt class="text-body-subtle">generated reference</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/tree/815b96b5a12be1bb255060f06f5a02a2882ad742/docs/generated" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/</a></dd></div>
+        <div><dt class="text-body-subtle">crate</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/tree/5908234ce001f521e22c2534f837ee939b70a7c6/apps/majordomus-cli" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">apps/majordomus-cli</a></dd></div>
+        <div><dt class="text-body-subtle">generated reference</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/tree/5908234ce001f521e22c2534f837ee939b70a7c6/docs/generated" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/</a></dd></div>
       </dl>
     </div>
   </aside>
@@ -594,7 +594,7 @@ memory; the task record and scope of the shell tool are the durable form).</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.14.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/815b96b5a12be1bb255060f06f5a02a2882ad742" class="font-mono underline">815b96b</a> · inputs <span class="font-mono">fdb50c3e26bc</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.14.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5908234ce001f521e22c2534f837ee939b70a7c6" class="font-mono underline">5908234</a> · inputs <span class="font-mono">73437917943b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>
