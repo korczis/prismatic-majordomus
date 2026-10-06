@@ -176,8 +176,17 @@ frame 4 | jq -e '.result.isError == false and (.result.structuredContent | tostr
 
 # ---------------------------------------------------------------- 7. the source
 src="$ROOT/apps/majordomus-cli/src"
-# a push is only ever a fast-forward: no force flag on any line that pushes
-if grep -nE '"--admin"|force-with-lease|"push"[^;]*"(--force|-f|\+)' "$src/integration/"*.rs "$src/commands/prs.rs"; then
+# a push is only ever a fast-forward: no force flag on any line that pushes. The one lease
+# allowed is repair's compare-and-swap pinned to the exact head it observed, which it pushes
+# only after proving the new head descends from it (ADR 0101, case 912): a bare lease, or one
+# naming anything but that observed commit, could overwrite what it did not decide on.
+forced="$( {
+  grep -nE '"--admin"|"push"[^;]*"(--force|-f|\+)' "$src/integration/"*.rs "$src/commands/prs.rs"
+  grep -nE 'force-with-lease' "$src/integration/"*.rs "$src/commands/prs.rs" \
+    | grep -vF -- '"--force-with-lease=refs/heads/{}:{head}"'
+} || true )"
+if [ -n "$forced" ]; then
+  printf '%s\n' "$forced"
   echo "    integration code names --admin or a force push"; exit 1
 fi
 grep -n '"mergeable' "$src/integration/forge.rs" && { echo "    the forge adapter reads mergeable"; exit 1; }

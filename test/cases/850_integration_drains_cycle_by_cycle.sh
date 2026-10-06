@@ -116,7 +116,15 @@ case "\$1 \$2" in
       git -c user.email=f@example.com -c user.name=forge merge -q --no-ff FETCH_HEAD -m "Merge pull request #\$n" &&
       git push -q origin HEAD:master && touch "$STATE/merged-\$n" ;;
   "pr view")
-    if [ -f "$STATE/merged-\$3" ]; then echo MERGED; else echo OPEN; fi ;;
+    case " \$* " in
+      # the refresh's read of a declared dependency that is no longer open (ADR 0101: it is
+      # satisfied by a merge alone), as the forge's JSON
+      *" --json number,state,headRefOid,body "*)
+        [ -f "$STATE/merged-\$3" ] || { echo "UNEXPECTED" >> "$STATE/log"; exit 1; }
+        printf '{"number":%s,"state":"MERGED","headRefOid":"%s","body":""}\n' \
+          "\$3" "\$(git -C "$ORIGIN" rev-parse "refs/pull/\$3/head")" ;;
+      *) if [ -f "$STATE/merged-\$3" ]; then echo MERGED; else echo OPEN; fi ;;
+    esac ;;
   *) echo "UNEXPECTED" >> "$STATE/log"; exit 1 ;;
 esac
 EOF
