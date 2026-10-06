@@ -224,7 +224,45 @@ $ majordomus plan validate
 `test/cases/133_plan_transition.sh`, `test/cases/99_plan_capabilities.sh` (the Rust reader is
 byte-identical to the shell engine).
 
-**Maturity.** On master. Intent, a typed record the plan serves, is branch only.
+**Maturity.** On master.
+
+### Intents: what the plan is for
+
+**How it works.** An intent is a record under `.ai/repo/project/intents/`: what must become
+true, the invariants that must stay true, the milestones that realise it and the criteria
+that settle it, each naming its evidence. Nothing about it is stored but that. Its stage is
+derived from the plan and each criterion from the evidence ledger, so finished work
+satisfies nothing until every criterion has a current passing run. An issue names the
+criterion it serves in `serves`, and coverage is derived from it. The gap a worker observed
+and the critique of the plan are typed records the plan is refused against. Which work
+realises an intent, across sessions, providers and handovers, is joined on every read, and
+closed work the evidence contradicts is refused. [`PLANNING.md`](PLANNING.md) has the whole
+model.
+
+**Try it.**
+
+```console
+$ majordomus-cli intent list
+$ majordomus-cli intent validate
+$ majordomus-cli intent coverage
+$ majordomus-cli intent preflight --issue <id>
+$ majordomus-cli intent realization
+$ majordomus-cli intent explain <id>
+```
+
+The Cockpit shows the same answers at `/cockpit/intents` and `/cockpit/intents/<id>`.
+
+**Proved by.** `test/cases/367_an_intent_is_satisfied_only_by_evidence.sh`,
+`test/cases/386_a_plan_is_held_to_its_intent.sh`,
+`test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh`;
+`apps/majordomus-cli/tests/intent.rs` for the preflight, and
+`apps/majordomus-cli/tests/intent_realization.rs` for the HTTP, MCP and Cockpit surfaces.
+
+**Maturity.** On master, and partial. `plan start` does not refuse work that starts before the
+plan was critiqued: `intent validate` and the `intent-check` gate name it afterwards. A session
+does not load intents when it starts, the GitHub projection closes a milestone without reading
+its intents, and a `command` or `deployment` criterion is never met. Each of these is a planned
+claim in [`CLAIMS.yaml`](CLAIMS.yaml).
 
 ### Worktrees
 
@@ -479,8 +517,10 @@ $ majordomus-cli evidence show
 - The mesh has no Tailscale or mDNS provider.
 - Overlap is reported, never enforced. The only refusal is a task's own scope.
 - Automatic session capture exists for Claude Code only.
-- Intent as a typed record, plan and board views in the Cockpit, and a richer entry preflight are
-  open pull requests.
+- Plan and board views in the Cockpit, and a richer entry preflight, are open pull requests.
+- Intents are judged, not enforced at the moment work starts: `plan start` lets an issue start
+  before its intent's plan was critiqued, a session does not load intents, GitHub milestones
+  close without reading them, and a `command` or `deployment` criterion is never met.
 - The command line and the Cockpit's area list are written by hand, checked against the
   registry rather than generated from it. [`HOW_IT_WORKS.md`](HOW_IT_WORKS.md) lists every such
   place.

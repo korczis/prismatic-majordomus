@@ -201,6 +201,8 @@ fn critiqued(f: &Fixture) {
     f.commit("the plan is critiqued");
 }
 
+/// Which intent the work on an issue serves, or the link that is missing: the claim
+/// `intent-preflight-names-the-intent` of docs/CLAIMS.yaml.
 #[test]
 fn preflight_names_the_intent_the_work_serves_or_why_it_may_not_proceed() {
     let f = Fixture::new();

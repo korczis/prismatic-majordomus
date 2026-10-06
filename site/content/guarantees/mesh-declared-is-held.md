@@ -1,7 +1,7 @@
 +++
 title = "An enabled mesh declaration whose shared server did not activate the mesh is a failed `runtime` check of `mesh doctor` (exit 10) carrying the server's reason, and a `Mesh: DECLARED ENABLED BUT NOT ACTIVE` line in the session-start briefing — never a quiet off; and this repository's committed declaration is tracked, enabled, allowlists the fleet and names a hub"
 description = "The mesh has two truths that can drift apart: what the repository declares, and what the"
-weight = 212
+weight = 223
 [extra]
 claim_id = "mesh-declared-is-held"
 status = "guaranteed"

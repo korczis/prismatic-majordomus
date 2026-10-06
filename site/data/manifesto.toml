@@ -53,7 +53,7 @@ id = "capture"
 name = "Intent capture"
 verb = "capture"
 summary = "The statement, and what would settle it."
-note = "not built"
+note = "partly: the intent record, written by hand"
 items = ["desired outcomes", "constraints", "invariants", "acceptance criteria", "provenance"]
 
 [[pipeline.stages]]
@@ -69,7 +69,7 @@ id = "plan"
 name = "Plan"
 verb = "resolve"
 summary = "Ambiguity named, impact derived, strategy chosen against the architecture."
-note = "not built; the authored work model is"
+note = "partly: coverage, gap and critique are judged; no plan is derived"
 items = ["ambiguity detection", "impact analysis", "architectural constraints", "capability mapping", "source, tests, docs, schemas", "integration surfaces and deployment"]
 
 [[pipeline.stages]]
@@ -85,7 +85,7 @@ id = "verify"
 name = "Verify"
 verb = "verify"
 summary = "Against the acceptance criteria, not against the diff."
-note = "shipped, against the finish contract, not against criteria"
+note = "shipped: the finish contract, and each intent criterion from evidence; finish does not ask the intent"
 items = ["acceptance criteria", "invariants", "regression checks", "claims against implementation", "runtime evidence"]
 
 [[pipeline.stages]]
@@ -93,7 +93,7 @@ id = "proof"
 name = "Proof"
 verb = "prove"
 summary = "An inspectable bundle, not the word success."
-note = "partly: evidence discharges obligations"
+note = "partly: evidence discharges obligations and settles criteria"
 items = ["requirements and changed code", "tests and runtime checks", "governance that applied", "commits, artifacts, API and deployment state", "remaining limitations"]
 
 [compiled]
@@ -111,16 +111,16 @@ closing = "Intent plus repository governance is what produces the effective requ
 [graph]
 kicker = "provenance"
 title = "Every significant change should be explainable"
-lead = "An intent should carry its origin, its governance, its constraints, its realisation, its verification and the interfaces it reached. That is what turns development history into something you can ask a question of — and it is the shape of the record, not one this repository writes yet."
+lead = "An intent should carry its origin, its governance, its constraints, its realisation, its verification and the interfaces it reached. That is what turns development history into something you can ask a question of. Part of that record exists here: an intent's governance and criteria are declared, and the work realising it and whether the evidence agrees are derived on every read. Its origin and the interfaces it reached are not recorded yet."
 bad_question = "Why does this code exist?"
 bad_answer = "fix stuff"
-good_answer = "This subsystem exists because an intent required automatic worker bootstrap. It was introduced in these commits, under this doctrine, verified by this test, exposed on these interfaces, and its verification status is current. Commit to issue, this repository already answers; the intent above them is what is missing."
+good_answer = "This subsystem exists because an intent required automatic worker bootstrap. It was introduced in these commits, under this doctrine, verified by this test, exposed on these interfaces, and its verification status is current. Commit to issue, and issue to the intent criterion it serves, this repository already answers; one answer from a line of code to its intent is what is missing."
 
 [projections]
 kicker = "issues are a projection"
 title = "The tracker stops pretending to be the semantic model"
-lead = "Issues stay useful. Milestones stay useful. In this model they become projections of intent rather than the place intent is kept. Commit to issue is already traceable in both directions here; the intent above them is not, which is why the questions below are still unanswerable."
-closing = "None of these are questions a tracker can answer, and none of them are questions this repository can answer today. They are the reason the intent object is worth building."
+lead = "Issues stay useful. Milestones stay useful. In this model they become projections of intent rather than the place intent is kept. Commit to issue is traceable in both directions here, and an issue names the intent criterion it serves, so most of the questions below are findings this repository already reports."
+closing = "None of these are questions a tracker can answer. Work that serves no intent, an intent with no work, an issue closed while its criterion is unmet and a milestone closed while the evidence contradicts it are reported here today. A commit is traced to its issue and not yet to the intent the issue serves, and code is not traced to an intent at all."
 
 [[projections.detects]]
 text = "implementation with no active intent behind it"
@@ -167,7 +167,7 @@ text = "Can this regress silently later?"
 [loop]
 kicker = "a control loop — mostly not built"
 title = "An agent does not get to declare success because its patch applied"
-lead = "Close the same stages and you have a control system rather than an assistant: context would observe, the plan would compute the difference, execution would act, verification would measure, and the result would be compared against the intent rather than against the diff — replanning until it is satisfied. Only the last of those runs here today. Majordomus never invokes a model and never writes the code; it decides what a worker is told and whether its claim of being done can be believed, and that comparator is the part of the loop that exists."
+lead = "Close the same stages and you have a control system rather than an assistant: context would observe, the plan would compute the difference, execution would act, verification would measure, and the result would be compared against the intent rather than against the diff — replanning until it is satisfied. The comparator runs here today: the evidence settles each criterion of an intent, and closed work the evidence contradicts is refused. Nothing replans, and nothing returns a worker to the plan when an intent is not satisfied. Majordomus never invokes a model and never writes the code; it decides what a worker is told and whether its claim of being done can be believed."
 closing = "The repository, the tests, the runtime, governance and evidence all get a vote. Evidence gets the final one."
 diagram_caption = "the control loop, drawn from the stages above"
 
@@ -186,8 +186,12 @@ kicker = "direction"
 title = "What is shipped, and what this is becoming"
 lead = "The argument above is a doctrine and a design. Parts of it run today; more of it does not. The feature matrix is the shipped half, feature by feature and interface by interface. The unshipped half is named here rather than left for a reader to assume."
 shipped_title = "Shipped: the commands behind Context, Verify and Proof"
-planned_title = "Partly built: the intent record; not built: everything above it"
-planned_lead = "An intent is now a typed record under the project model: a statement, its invariants, the milestones that realise it and the evidence that settles each criterion. Its stage is derived from the plan and each criterion from the evidence ledger, `majordomus-cli intent validate` refuses one whose links do not resolve, and `intent preflight` names the intent an issue serves or the link that is missing. An issue names the criteria it serves, so `intent coverage` says which work carries which criterion and why every issue exists, and a criterion with no work under an intent that has work is refused; the gap a worker observed and the critique of its plan are typed records, and work that starts before the critique is refused. That is the whole of what exists. The session does not load an intent when it starts, completion policy does not yet decide satisfaction, the Cockpit has no intent view, GitHub milestones are not reconciled against intents, and nothing derives a plan from a desired outcome. Majordomus does not run the opposition pass either: a worker writes the critique and the repository refuses a plan that was executed without one. Every sentence on this page written in the conditional is one of these, and this section will shrink as each one lands."
+planned_title = "Built: the intent record and its judgment. Not built: what acts on it"
+planned_lead = "An intent is a typed record and the repository judges it: what is built is listed below from the claims that name the test proving each, and what is not from the claims still planned, so neither list is written here. Beyond them, nothing derives a plan from a desired outcome, finishing a task does not ask whether an intent is satisfied, and Majordomus does not run the opposition pass: a worker writes the critique, and intent validation fails work that started without one. Every sentence on this page written in the conditional is one of these, and this section will shrink as each one lands."
+# The claims listed under that lead are the ones of docs/CLAIMS.yaml whose id starts with this,
+# grouped by their declared status. A claim promoted from planned to guaranteed moves between
+# the lists with no edit here.
+claim_prefix = "intent-"
 
 [doctrine]
 kicker = "the doctrine"
