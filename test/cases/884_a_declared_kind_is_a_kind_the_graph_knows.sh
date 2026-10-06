@@ -38,6 +38,8 @@ schema: domain/v1
 id: a-domain
 kind: domain
 title: One area of the product
+headline: One area of the product, in a line
+problem: What this area exists to solve
 status: stable
 ---
 
@@ -49,6 +51,8 @@ schema: feature/v1
 id: a-feature
 kind: feature
 title: One thing the product does
+headline: One thing the product does, in a line
+summary: What the feature gives a person
 status: stable
 domain: a-domain
 rules: [majordomus.roadmap-integrity]
