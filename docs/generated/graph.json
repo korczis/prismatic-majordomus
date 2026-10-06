@@ -10681,6 +10681,14 @@
         "source": "docs/INTEGRATION.md"
       },
       {
+        "id": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
+        "kind": "document",
+        "label": "docs/INTEGRATION_ROLLOUT.md",
+        "summary": "Integration rollout record",
+        "route": "/cockpit/objects/document/docs-integration-rollout-md",
+        "source": "docs/INTEGRATION_ROLLOUT.md"
+      },
+      {
         "id": "majordomus://document/docs/KNOWLEDGE.md",
         "kind": "document",
         "label": "docs/KNOWLEDGE.md",
@@ -40414,52 +40422,6 @@
         }
       },
       {
-        "id": "majordomus://use-case/hand-work-between-sessions",
-        "kind": "use-case",
-        "label": "hand-work-between-sessions",
-        "summary": "Hand unfinished work to the next session",
-        "route": "/cockpit/objects/use-case/hand-work-between-sessions",
-        "source": ".ai/repo/use-cases/hand-work-between-sessions.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "agent",
-            "contributor"
-          ],
-          "applications": [
-            "several-agents-one-repository",
-            "long-running-work"
-          ],
-          "category": "continuity",
-          "claims": [
-            "handover-record",
-            "no-transcripts",
-            "divergence-label",
-            "minimum-context"
-          ],
-          "commands": [
-            "checkpoint",
-            "handover",
-            "context",
-            "check"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.handover-integrity",
-            "majordomus.note-integrity",
-            "majordomus.task-continuity",
-            "majordomus.context-budget"
-          ],
-          "responsibilities": [
-            "handover",
-            "state"
-          ],
-          "summary": "Stop mid-task and leave the next worker something to act on that is not a transcript.",
-          "target": "guaranteed",
-          "weight": 2
-        }
-      },
-      {
         "id": "module:artifacts",
         "kind": "module",
         "label": "artifacts"
@@ -50122,6 +50084,11 @@
       },
       {
         "source": "majordomus://document/docs/INTEGRATION.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -61246,61 +61213,6 @@
         "kind": "evidences"
       },
       {
-        "source": "majordomus://use-case/hand-work-between-sessions",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/hand-work-between-sessions",
-        "target": "majordomus://application/long-running-work",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/hand-work-between-sessions",
-        "target": "majordomus://application/several-agents-one-repository",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/hand-work-between-sessions",
-        "target": "majordomus://claim/divergence-label",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/hand-work-between-sessions",
-        "target": "majordomus://claim/handover-record",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/hand-work-between-sessions",
-        "target": "majordomus://claim/minimum-context",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/hand-work-between-sessions",
-        "target": "majordomus://claim/no-transcripts",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/hand-work-between-sessions",
-        "target": "majordomus://rule/majordomus.context-budget@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/hand-work-between-sessions",
-        "target": "majordomus://rule/majordomus.handover-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/hand-work-between-sessions",
-        "target": "majordomus://rule/majordomus.note-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/hand-work-between-sessions",
-        "target": "majordomus://rule/majordomus.task-continuity@1",
-        "kind": "exercises"
-      },
-      {
         "source": "module:artifacts",
         "target": "capability:artifacts.list",
         "kind": "composes"
@@ -62163,7 +62075,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4284,
+      "edges": 4274,
       "acyclic": true,
       "truncated": true
     }
