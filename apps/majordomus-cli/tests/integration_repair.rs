@@ -121,6 +121,10 @@ impl Forge {
             &["init", "-q", "--bare", "-b", "master", "origin.git"],
         );
         git(&base, &["clone", "-q", "origin.git", "work"]);
+        // the person's identity, in the clone: the executor's own merges and commits run here,
+        // and a machine with none configured (a CI runner) must not decide the outcome
+        git(&work, &["config", "user.email", "t@example.com"]);
+        git(&work, &["config", "user.name", "t"]);
         std::fs::write(work.join("a.txt"), "base\n").unwrap();
         git(&work, &["add", "a.txt"]);
         git(&work, &["commit", "-q", "-m", "base"]);

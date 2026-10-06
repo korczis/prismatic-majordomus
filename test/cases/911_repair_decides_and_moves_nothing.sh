@@ -28,6 +28,9 @@ ORIGIN="$T/../origin-911.git"; W="$T/../work-911"; STATE="$T/../forge-911"; BIN=
 rm -rf "$ORIGIN" "$ORIGIN.away" "$W" "$STATE" "$BIN"; mkdir -p "$STATE" "$BIN"
 gitq init -q --bare -b master "$ORIGIN"
 gitq clone -q "$ORIGIN" "$W" 2>/dev/null
+# the person's identity, in the clone: the executor merges and commits here, and a machine
+# with none configured (a CI runner) must not decide the outcome
+git -C "$W" config user.email t@example.com; git -C "$W" config user.name t
 cd "$W" || exit 1
 mkdir -p scripts
 cp "$ROOT/scripts/merge-derived" scripts/merge-derived

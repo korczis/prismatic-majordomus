@@ -48,6 +48,9 @@ ORIGIN="$T/../origin-850.git"; W="$T/../work-850"; STATE="$T/../forge-850"; BIN=
 rm -rf "$ORIGIN" "$W" "$STATE" "$BIN"; mkdir -p "$STATE/ci" "$BIN"
 gitq init -q --bare -b master "$ORIGIN"
 gitq clone -q "$ORIGIN" "$W" 2>/dev/null
+# the person's identity, in the clone: the executor merges and commits here, and a machine
+# with none configured (a CI runner) must not decide the outcome
+git -C "$W" config user.email t@example.com; git -C "$W" config user.name t
 cd "$W" || exit 1
 # drain --refresh regenerates the derived artifacts with the repository's own scripts/derive, as
 # this repository's is; the fixture carries one that has nothing to derive
