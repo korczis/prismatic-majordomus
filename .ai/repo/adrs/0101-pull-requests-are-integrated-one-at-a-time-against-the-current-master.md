@@ -23,8 +23,16 @@ related:
   - file:apps/majordomus-cli/src/integration/drain.rs
   - file:apps/majordomus-cli/src/capability/builtin/integration.rs
   - file:apps/majordomus-cli/src/integration/tests.rs
+  - file:apps/majordomus-cli/src/integration/retry.rs
+  - file:apps/majordomus-cli/src/integration/wait.rs
+  - file:apps/majordomus-cli/src/integration/relation.rs
+  - file:apps/majordomus-cli/src/integration/forge.rs
+  - file:apps/majordomus-cli/src/commands/prs.rs
   - file:docs/INTEGRATION.md
   - test:test/cases/720_integration_follows_the_current_master.sh
+  - test:test/cases/740_integration_is_visible_where_a_person_looks.sh
+  - test:test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh
+  - test:test/cases/742_only_an_outage_is_asked_again.sh
   - test:test/cases/861_a_successor_that_landed_supersedes.sh
 ---
 # 101. Pull requests are integrated one at a time, each against a master observed a moment before
@@ -234,6 +242,31 @@ with one canonical state, one classification and one executor.
    forge is asked again only on an outage (`crate::integration::retry`, case 742), a merge
    never; a continuous drain waits out up to `CONTINUOUS_TRANSIENT_LIMIT` consecutive
    outages, each recorded as `observe_failed`, before it ends.
+
+11. **Continuous mode is a bounded loop of bounded drains.** `prs drain --continuous` holds
+   the lease for its whole run and repeats one bounded drain per cycle, so every action is
+   still preceded by a fresh observation and no plan outlives a merge. Between cycles it
+   waits an interval inside `INTERVAL_SECONDS` (30 to 900 s: the floor spares the forge, the
+   ceiling keeps a waiting worker well inside `LEASE_STALE_AFTER`), in one-second slices so a
+   signal is honoured within a second of the step in progress finishing. It stops on a
+   signal, on a merge that could not be verified, and after `CONTINUOUS_TRANSIENT_LIMIT`
+   consecutive outages. A dry run is never continuous.
+12. **Waiting is a fact, and starvation is shown, not traded for.** The trail records when
+   a pull request becomes actionable and stops being so, and, on every selection, the
+   actionable pull requests passed over; `crate::integration::wait` folds those into how long
+   each has waited and how often another was chosen. A pull request passed over
+   `STARVING_AFTER` times is named as starving. The rank is not changed by it: its tie-break
+   already prefers the older of two otherwise equal candidates, and a long wait is never a
+   reason to merge something less safe sooner.
+13. **The rollout is staged, and the trail is its record.** Stage 1 is a dry run against the
+   real repository (`prs refresh`, `prs status`, `prs drain --dry-run`), which moves nothing.
+   Stage 2 is one bounded merge (`prs drain --max 1`), stage 3 small bounded drains
+   (`--max 3`, then `--max 5`). Stage 4, continuous mode, is refused (exit 10, before the
+   lease, the base or the forge) until the trail holds `ROLLOUT_MERGES_BEFORE_CONTINUOUS`
+   (five) verified merges since the last merge that could not be verified; such a merge
+   starts the count again, acknowledged or not, because the record it ends was the evidence.
+   The defaults are the safe ones: `prs status`, `plan` and `explain` read; a drain merges
+   only when asked to; cleanup closes nothing without `--apply`.
 
 ## Consequences
 

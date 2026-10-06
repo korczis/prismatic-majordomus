@@ -3981,8 +3981,16 @@
             "file:apps/majordomus-cli/src/integration/drain.rs",
             "file:apps/majordomus-cli/src/capability/builtin/integration.rs",
             "file:apps/majordomus-cli/src/integration/tests.rs",
+            "file:apps/majordomus-cli/src/integration/retry.rs",
+            "file:apps/majordomus-cli/src/integration/wait.rs",
+            "file:apps/majordomus-cli/src/integration/relation.rs",
+            "file:apps/majordomus-cli/src/integration/forge.rs",
+            "file:apps/majordomus-cli/src/commands/prs.rs",
             "file:docs/INTEGRATION.md",
             "test:test/cases/720_integration_follows_the_current_master.sh",
+            "test:test/cases/740_integration_is_visible_where_a_person_looks.sh",
+            "test:test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
+            "test:test/cases/742_only_an_outage_is_asked_again.sh",
             "test:test/cases/861_a_successor_that_landed_supersedes.sh"
           ],
           "tags": [
@@ -33016,12 +33024,12 @@
         }
       },
       {
-        "id": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "id": "majordomus://rule/project.integration-follows-the-current-master@2",
         "kind": "rule",
-        "label": "project.integration-follows-the-current-master@1",
+        "label": "project.integration-follows-the-current-master@2",
         "summary": "Pull requests are integrated one at a time, each decided against the current master, never around the branch protection",
-        "route": "/cockpit/objects/rule/project-integration-follows-the-current-master-1",
-        "source": ".ai/repo/rules/project/integration-follows-the-current-master.v1.md",
+        "route": "/cockpit/objects/rule/project-integration-follows-the-current-master-2",
+        "source": ".ai/repo/rules/project/integration-follows-the-current-master.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -45939,7 +45947,7 @@
       },
       {
         "source": "majordomus://adr/adr-0101",
-        "target": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "target": "majordomus://rule/project.integration-follows-the-current-master@2",
         "kind": "put_in_force"
       },
       {
@@ -57953,17 +57961,17 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "source": "majordomus://rule/project.integration-follows-the-current-master@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "source": "majordomus://rule/project.integration-follows-the-current-master@2",
         "target": "majordomus://rule/project.accumulation-is-measured@2",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "source": "majordomus://rule/project.integration-follows-the-current-master@2",
         "target": "majordomus://rule/project.land-and-publish@1",
         "kind": "depends_on"
       },

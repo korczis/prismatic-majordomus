@@ -1191,6 +1191,42 @@ pub fn halted_by(root: &Path) -> Option<(Option<u64>, String)> {
         .map(|e| (e.pr, e.detail))
 }
 
+/// How many verified merges the trail must hold, since the last merge that could not be
+/// verified, before a continuous drain may start (ADR 0101 §13).
+///
+/// The rollout is staged and the trail is its record: a dry run first, then one bounded
+/// merge (`--max 1`), then small bounded drains, and continuous mode only once this many
+/// merges have been made and proved where they landed. A merge that could not be verified
+/// starts the count again, because the record it ends was the evidence.
+pub const ROLLOUT_MERGES_BEFORE_CONTINUOUS: usize = 5;
+
+/// The verified merges recorded since the last `verification_failed`, or in the whole trail
+/// when none failed: the record continuous mode is unlocked by.
+///
+/// `merge_succeeded` is recorded only for a merge proved where it landed, so the count is
+/// of proved merges and not of attempts.
+pub fn verified_merges_since_failure(events: &[IntegrationEvent]) -> usize {
+    events
+        .iter()
+        .rev()
+        .take_while(|e| e.action != IntegrationAction::VerificationFailed)
+        .filter(|e| e.action == IntegrationAction::MergeSucceeded)
+        .count()
+}
+
+/// Why a continuous drain may not start yet, or nothing when the trail's record allows it.
+pub fn continuous_refused(events: &[IntegrationEvent]) -> Option<String> {
+    let record = verified_merges_since_failure(events);
+    (record < ROLLOUT_MERGES_BEFORE_CONTINUOUS).then(|| {
+        format!(
+            "a continuous drain needs {ROLLOUT_MERGES_BEFORE_CONTINUOUS} verified merges on the \
+             trail since the last one that could not be verified, and it holds {record}: \
+             land them with bounded drains first (`prs drain --max 1`, then `--max 3`) \
+             (ADR 0101 §13)"
+        )
+    })
+}
+
 /// Let drains merge again after a person looked at the merge that could not be verified.
 pub fn acknowledge_failure(root: &Path, by: &str) -> Result<IntegrationEvent, String> {
     record(
@@ -2747,5 +2783,57 @@ mod obsolete_and_plan_tests {
         let items = cleanup(dir.path(), &mut w, true).unwrap();
         assert_eq!(items.len(), 1);
         assert_eq!(items[0].action, LEFT_FOR_A_PERSON);
+    }
+}
+
+#[cfg(test)]
+mod rollout_tests {
+    use super::*;
+
+    fn trail(actions: &[IntegrationAction]) -> Vec<IntegrationEvent> {
+        actions.iter().map(|a| IntegrationEvent::of(*a)).collect()
+    }
+
+    #[test]
+    fn the_record_counts_verified_merges_since_the_last_unverified_one() {
+        use IntegrationAction::*;
+        assert_eq!(verified_merges_since_failure(&[]), 0);
+        let t = trail(&[MergeSucceeded, MergeAttempted, MergeFailed, MergeSucceeded]);
+        assert_eq!(
+            verified_merges_since_failure(&t),
+            2,
+            "attempts and failures are not merges"
+        );
+        let t = trail(&[
+            MergeSucceeded,
+            MergeSucceeded,
+            VerificationFailed,
+            FailureAcknowledged,
+            MergeSucceeded,
+        ]);
+        assert_eq!(
+            verified_merges_since_failure(&t),
+            1,
+            "an unverified merge starts the count again, acknowledged or not"
+        );
+    }
+
+    #[test]
+    fn continuous_mode_is_refused_until_the_record_holds() {
+        use IntegrationAction::*;
+        let short = trail(&[MergeSucceeded; ROLLOUT_MERGES_BEFORE_CONTINUOUS - 1]);
+        let why = continuous_refused(&short).expect("one merge short is refused");
+        assert!(
+            why.contains(&format!("holds {}", ROLLOUT_MERGES_BEFORE_CONTINUOUS - 1)),
+            "{why}"
+        );
+        let enough = trail(&[MergeSucceeded; ROLLOUT_MERGES_BEFORE_CONTINUOUS]);
+        assert_eq!(continuous_refused(&enough), None);
+        let mut lost = enough.clone();
+        lost.push(IntegrationEvent::of(VerificationFailed));
+        assert!(
+            continuous_refused(&lost).is_some(),
+            "a failure after the record ends it"
+        );
     }
 }

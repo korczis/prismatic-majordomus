@@ -6,7 +6,7 @@
     "version": "0.13.0"
   },
   "registry": {
-    "fingerprint": "3a5f5389a25428fad3af13a06061db4993ba831f6653ccef42024e2672aa297d",
+    "fingerprint": "a0b76a01eef354adeaf22b9098b951c02626b65723def6f341390c86d7b25175",
     "summary": {
       "total": 1887,
       "builtin": 172,
@@ -68292,7 +68292,7 @@
     ]
   },
   "index": {
-    "fingerprint": "663c0df6bffd794c7a5f8698b9e8a5bc248d123032a19cbf6af49565a99b36df",
+    "fingerprint": "81e1b877bd41723d0598b019c9c425f8b8f07c9cb4bab32060b27b3edf4fc809",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -69622,7 +69622,7 @@
         "path": ".ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 19226,
+        "bytes": 21752,
         "tags": [
           "integration",
           "git",
@@ -73464,7 +73464,7 @@
         "title": "Pull-request integration",
         "path": "docs/INTEGRATION.md",
         "source_class": "document",
-        "bytes": 38778
+        "bytes": 39132
       },
       {
         "uri": "majordomus://document/docs/KNOWLEDGE.md",
@@ -82097,15 +82097,15 @@
         ]
       },
       {
-        "uri": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "uri": "majordomus://rule/project.integration-follows-the-current-master@2",
         "kind": "rule",
-        "identity": "project.integration-follows-the-current-master@1",
+        "identity": "project.integration-follows-the-current-master@2",
         "title": "Pull requests are integrated one at a time, each decided against the current master, never around the branch protection",
         "description": "An integration decision names the master and head it was taken against and is acted on only while a fresh observation still says the same; a merge invalidates every earlier plan; required checks, reviews and branch protection are never bypassed; closure demands stronger evidence than merging; one executor mutates a base branch at a time; and every act is recorded.",
-        "path": ".ai/repo/rules/project/integration-follows-the-current-master.v1.md",
+        "path": ".ai/repo/rules/project/integration-follows-the-current-master.v2.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 3572,
+        "bytes": 6241,
         "tags": [
           "integration",
           "git",
@@ -85717,7 +85717,7 @@
         "identity": "test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
         "path": "test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
         "source_class": "case",
-        "bytes": 6980
+        "bytes": 7775
       },
       {
         "uri": "majordomus://test/test/cases/742_only_an_outage_is_asked_again.sh",
@@ -99555,7 +99555,7 @@
                 "name": "continuous",
                 "long": "continuous",
                 "positional": false,
-                "help": "Drain, wait `--interval` seconds, and drain again until stopped, holding the lease throughout; each cycle is bounded by `--max` and observes before every step. Ctrl-C or SIGTERM lets the step in progress finish, then releases the lease; a second signal ends it at once. Never with `--dry-run`",
+                "help": "Drain, wait `--interval` seconds, and drain again until stopped, holding the lease throughout; each cycle is bounded by `--max` and observes before every step. Ctrl-C or SIGTERM lets the step in progress finish, then releases the lease; a second signal ends it at once. Never with `--dry-run`, and refused (exit 10) until the audit trail holds five verified merges since the last one that could not be verified: the last stage of the rollout (ADR 0101 §13)",
                 "value_name": "CONTINUOUS",
                 "takes_value": false,
                 "required": false,
