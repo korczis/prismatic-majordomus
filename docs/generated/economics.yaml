@@ -154,23 +154,23 @@ metrics:
     unit: ratio
     formula: "median over seeds of 1 - selected_tokens / candidate_tokens, where candidates are the distinct files the compiler judged relevant to the work (selected, or left out only for budget) and selected are those it put in the budget, counted with the named tokenizer; files it judged irrelevant are reported, never divided by"
     not: "not total token savings: it says what the compiler selected from what it found relevant, not what a session consumed, and a session remains free to read anything"
-    value: 0.973524956013
+    value: 0.974860762138
     status: measured
-    n: 244
+    n: 257
     distribution:
-      n: 244
-      mean: 0.975477441801
-      median: 0.973524956013
-      p25: 0.972147546616
-      p75: 0.98013670582
-      p95: 0.981590955941
-      min: 0.968009571491
-      max: 0.982013527641
-      sd: 0.004141690795
+      n: 257
+      mean: 0.976677072644
+      median: 0.974860762138
+      p25: 0.973547190071
+      p75: 0.981400956293
+      p95: 0.982277309852
+      min: 0.969696594358
+      max: 0.982758254897
+      sd: 0.004013373038
     interval:
       level_bp: 9500
-      low: 0.97321695715
-      high: 0.974095236327
+      low: 0.97410467539
+      high: 0.975407840541
       method: "percentile bootstrap of the median, each value resampled independently with replacement"
       resamples: 10000
       seed: 20260924
@@ -420,11 +420,22 @@ metrics:
       - I1964
       - I1965
       - I1966
+      - I1967
+      - I1980
+      - I1981
+      - I1982
+      - I1983
+      - I1984
+      - I1985
+      - I1986
+      - I1987
+      - I1988
+      - I1989
+      - I1990
+      - I1991
     warnings:
       - "tokens counted with o200k_base (tiktoken-rs 0.12.0), which is not the tokenizer of every model"
       - "the candidates are what the compiler's own graph walk judged relevant; a worker without the compiler would not necessarily have read them, so this ratio describes the selection, not a session's saving"
-      - "stale: a measured mechanism changed since this record"
-      - "dirty: this record was measured from a working tree with uncommitted changes"
   - id: context_cost_model_error
     title: "Error of the compiler's bytes-over-four cost model"
     class: derived
@@ -432,9 +443,9 @@ metrics:
     unit: ratio
     formula: "counted selected tokens / the compiler's own estimate of them - 1, over all seeds"
     not: "not a saving: it says how far the budget's unit is from counted tokens"
-    value: -0.028112817838
+    value: -0.024948912311
     status: measured
-    n: 244
+    n: 257
     suite: context
     evidence:
       - I0001
@@ -681,17 +692,27 @@ metrics:
       - I1964
       - I1965
       - I1966
-    warnings:
-      - "stale: a measured mechanism changed since this record"
-      - "dirty: this record was measured from a working tree with uncommitted changes"
+      - I1967
+      - I1980
+      - I1981
+      - I1982
+      - I1983
+      - I1984
+      - I1985
+      - I1986
+      - I1987
+      - I1988
+      - I1989
+      - I1990
+      - I1991
+    warnings: []
 suites:
   - id: context
     kind: context
     version: 1
     title: "Context selection, counted"
-    freshness: stale
-    freshness_detail: "1 record(s) were measured against inputs that have changed since: .ai/repo/benchmarks/economics/methodology.yaml, .ai/repo/benchmarks/economics/suites/context.yaml, apps/majordomus-cli/src/devcontext, .ai/repo/knowledge/sources.yaml"
-    runs: 7
+    freshness: current
+    runs: 8
     pairs:
       declared: 0
       attempted: 0
@@ -708,6 +729,7 @@ suites:
       - 8d4486c1a9dfaa8a45e56cb57887a77b82106a7d
       - 94c51548080463f2b51245560041723b755ca253
       - a588b8eb5facf487dfae08d6204e583eb1e1f25d
+      - d446499470fecdc3454c1d04297bf3f4b706b5ec
     harnesses: []
     models_reported: []
   - id: pilot
@@ -843,20 +865,20 @@ pairs:
       - the control run is not recorded
 segments: []
 context:
-  revision: 487cedf6f5a36eed7d0f6b3f5f0ad08bfcb176fe
-  measured_at: "2026-10-04T02:41:01Z"
+  revision: d446499470fecdc3454c1d04297bf3f4b706b5ec
+  measured_at: "2026-10-06T19:36:53Z"
   tokenizer:
     encoding: o200k_base
     implementation: tiktoken-rs 0.12.0
-  seeds: 244
-  candidate_tokens: 243181067
-  considered_tokens: 243181067
-  selected_tokens: 5790498
-  estimated_selected_tokens: 5957994
+  seeds: 257
+  candidate_tokens: 271218473
+  considered_tokens: 271218473
+  selected_tokens: 6145161
+  estimated_selected_tokens: 6302399
   excluded_tokens:
-    budget: 237390569
+    budget: 265073312
     unresolved: 0
-  seeds_over_budget_counted: 94
+  seeds_over_budget_counted: 126
   budget_tokens: 24000
 history:
   - suite: context
@@ -908,6 +930,13 @@ history:
     metric: context_reduction_ratio
     value: 0.973524956013
     n: 244
+  - suite: context
+    methodology: 1
+    revision: d446499470fecdc3454c1d04297bf3f4b706b5ec
+    at: "2026-10-06T19:36:53Z"
+    metric: context_reduction_ratio
+    value: 0.974860762138
+    n: 257
 variants:
   - id: baseline
     role: control
