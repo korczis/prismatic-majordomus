@@ -333,16 +333,7 @@ fn report_path(root: &Path, report: &Path) -> (String, bool) {
 /// The toolchain `producer`'s run used: the repository's Rust pin for a crate or coverage
 /// run, else what `rustc` answers; `bash` for the suite.
 fn toolchain(root: &Path, producer: EvidenceProducer) -> Option<EvidenceToolchain> {
-    use crate::environment::{probe::bounded_output, toolchain as tc};
-    let ask = |exe: &str| {
-        let out = bounded_output(
-            std::process::Command::new(exe).arg("--version"),
-            tc::VERSION_TIMEOUT,
-        )?;
-        out.status
-            .success()
-            .then(|| String::from_utf8_lossy(&out.stdout).into_owned())
-    };
+    use crate::environment::toolchain as tc;
     let measured = |name: &str, version: String| EvidenceToolchain {
         name: name.into(),
         version,
@@ -364,22 +355,41 @@ fn toolchain(root: &Path, producer: EvidenceProducer) -> Option<EvidenceToolchai
                     source: EvidenceToolchainSource::Pinned,
                 });
             }
-            let text = ask("rustc")?;
-            Some(measured(
-                "rustc",
-                text.split_whitespace().nth(1)?.to_string(),
-            ))
+            version_of("rustc")
+                .as_deref()
+                .and_then(rustc_version)
+                .map(|v| measured("rustc", v))
         }
-        EvidenceProducer::Suite => {
-            let text = ask("bash")?;
-            let first = text.lines().next()?;
-            let (_, rest) = first.split_once("version ")?;
-            Some(measured(
-                "bash",
-                rest.split_whitespace().next()?.to_string(),
-            ))
-        }
+        EvidenceProducer::Suite => version_of("bash")
+            .as_deref()
+            .and_then(bash_version)
+            .map(|v| measured("bash", v)),
     }
+}
+
+/// What `<exe> --version` printed, within the toolchain probe's bound; `None` when it could
+/// not be run, outlived the bound or failed.
+fn version_of(exe: &str) -> Option<String> {
+    use crate::environment::{probe::bounded_output, toolchain as tc};
+    let out = bounded_output(
+        std::process::Command::new(exe).arg("--version"),
+        tc::VERSION_TIMEOUT,
+    )?;
+    out.status
+        .success()
+        .then(|| String::from_utf8_lossy(&out.stdout).into_owned())
+}
+
+/// The version `rustc --version` states: its second word (`rustc 1.89.0 (...)`).
+fn rustc_version(text: &str) -> Option<String> {
+    text.split_whitespace().nth(1).map(str::to_string)
+}
+
+/// The version `bash --version` states on its first line, after `version `.
+fn bash_version(text: &str) -> Option<String> {
+    let first = text.lines().next()?;
+    let (_, rest) = first.split_once("version ")?;
+    rest.split_whitespace().next().map(str::to_string)
 }
 
 impl EvidenceProvenance {
@@ -839,5 +849,66 @@ mod tests {
             err.contains("the suite report was given two measurements"),
             "{err}"
         );
+    }
+
+    /// A measurement that states no tree at all is not one: the tree is what it measures.
+    #[test]
+    fn a_measurement_without_a_tree_is_refused() {
+        let dir = tempfile::tempdir().unwrap();
+        let f = dir.path().join("p.json");
+        std::fs::write(&f, r#"{"commit":"c"}"#).unwrap();
+        let err = EvidenceProvenance::read(&f).unwrap_err();
+        assert!(err.contains("is not one"), "{err}");
+    }
+
+    /// A value whose `=` names no producer is a file name that holds one, read whole.
+    #[test]
+    fn a_value_whose_key_is_no_producer_is_read_as_a_file_name() {
+        let dir = tempfile::tempdir().unwrap();
+        let value = format!("{}/nightly=p.json", dir.path().display());
+        let err = EvidenceProvenance::resolve(std::slice::from_ref(&value), &[]).unwrap_err();
+        assert!(
+            err.contains("cannot be read") && err.contains("nightly=p.json"),
+            "{err}"
+        );
+    }
+
+    /// A report outside the checkout, or one that does not exist, is named by its file name
+    /// alone and is not one of the run's outputs.
+    #[test]
+    fn a_report_outside_the_checkout_is_named_by_its_file_name() {
+        let dir = repo(&["a.md"]);
+        let elsewhere = tempfile::tempdir().unwrap();
+        let outside = elsewhere.path().join("suite.tsv");
+        std::fs::write(&outside, "x").unwrap();
+        assert_eq!(
+            report_path(dir.path(), &outside),
+            ("suite.tsv".to_string(), false)
+        );
+        assert_eq!(
+            report_path(dir.path(), &elsewhere.path().join("absent.tsv")),
+            ("absent.tsv".to_string(), false)
+        );
+    }
+
+    /// A toolchain that cannot be asked, or whose answer states no version, measures nothing.
+    #[test]
+    fn a_toolchain_that_states_no_version_measures_nothing() {
+        assert_eq!(
+            version_of("majordomus-no-such-executable-on-any-path"),
+            None
+        );
+        assert_eq!(
+            rustc_version("rustc 1.89.0 (abc 2025-01-01)"),
+            Some("1.89.0".into())
+        );
+        assert_eq!(rustc_version("rustc"), None);
+        assert_eq!(
+            bash_version("GNU bash, version 5.2.37(1)-release (aarch64)\nmore"),
+            Some("5.2.37(1)-release".into())
+        );
+        assert_eq!(bash_version(""), None);
+        assert_eq!(bash_version("GNU bash"), None);
+        assert_eq!(bash_version("GNU bash, version "), None);
     }
 }

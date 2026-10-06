@@ -517,4 +517,24 @@ mod tests {
             Vec::<&str>::new()
         );
     }
+
+    /// A threshold file that holds only comments and blank lines states no floor.
+    #[test]
+    fn a_threshold_file_of_comments_states_no_floor() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(dir.path().join("scripts")).unwrap();
+        std::fs::write(
+            dir.path().join("scripts/rust-coverage-threshold"),
+            "# the floor\n\n   # moved\n",
+        )
+        .unwrap();
+        std::fs::write(
+            dir.path().join("scripts/session-coverage-threshold"),
+            "90 # ok\n",
+        )
+        .unwrap();
+        let floors = EvidenceCoverageFloors::read(dir.path());
+        assert_eq!(floors.crate_lines, None);
+        assert_eq!(floors.domain_lines, Some(90.0));
+    }
 }

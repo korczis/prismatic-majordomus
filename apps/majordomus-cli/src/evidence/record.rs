@@ -769,16 +769,19 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
         ));
     }
 
-    let commit = match crate::git::inspect(root) {
+    // the commit as a full id, once: every row and the coverage record carry this one
+    let commit_id = match crate::git::inspect(root) {
         crate::git::GitState::Available(i) => i.head,
         crate::git::GitState::Unavailable { .. } => None,
     }
+    .and_then(|h| CommitId::parse(&h).ok())
     .ok_or_else(|| {
         refused(
             "this is not a git work tree with a commit, so a run recorded here would carry no \
              provenance and prove nothing",
         )
     })?;
+    let commit = commit_id.as_str().to_string();
 
     let report_of = |p: EvidenceProducer| match p {
         P::Suite => req.suite.as_deref(),
@@ -905,11 +908,11 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
     let coverage = match &req.coverage {
         Some(p) => {
             let bytes = read_report(P::Coverage, p)?;
-            let id = CommitId::parse(&commit).map_err(refused)?;
             let floors = EvidenceCoverageFloors::read(root);
             let text = String::from_utf8_lossy(&bytes);
-            let cov = EvidenceCoverage::from_summary(&text, id, tree_of(P::Coverage), floors)
-                .map_err(|e| refused(format!("{}: {e}", p.display())))?;
+            let cov =
+                EvidenceCoverage::from_summary(&text, commit_id, tree_of(P::Coverage), floors)
+                    .map_err(|e| refused(format!("{}: {e}", p.display())))?;
             Some(cov)
         }
         None => {
@@ -1047,11 +1050,11 @@ fn digest_ran(root: &Path, commit: &str, source: &str, tree: TreeState) -> Strin
     if tree == TreeState::Clean {
         let blob = crate::git::read_only(root)
             .args(["cat-file", "blob", &format!("{commit}:{source}")])
-            .output();
-        if let Ok(out) = blob {
-            if out.status.success() {
-                return digest_of(&out.stdout);
-            }
+            .output()
+            .ok()
+            .filter(|out| out.status.success());
+        if let Some(out) = blob {
+            return digest_of(&out.stdout);
         }
     }
     std::fs::read(root.join(source))
@@ -1060,10 +1063,10 @@ fn digest_ran(root: &Path, commit: &str, source: &str, tree: TreeState) -> Strin
 }
 
 fn write_run_record(out: &Path, run_record: &EvidenceRunRecord) -> std::io::Result<()> {
-    if let Some(dir) = out.parent().filter(|d| !d.as_os_str().is_empty()) {
-        std::fs::create_dir_all(dir)?;
-    }
-    let mut text = serde_json::to_string_pretty(run_record)?;
+    // a bare file name's parent is the empty path, which create_dir_all accepts as is
+    out.parent().map_or(Ok(()), std::fs::create_dir_all)?;
+    // plain data with string keys: serialising it cannot fail, so there is no error to carry
+    let mut text = serde_json::to_string_pretty(run_record).unwrap_or_default();
     text.push('\n');
     std::fs::write(out, text)
 }
@@ -2134,5 +2137,101 @@ mod tests {
             got.run_record.absent[1].reason,
             "the output named no integration test binary"
         );
+    }
+
+    /// A schema-1 coverage summary as `scripts/rust-coverage --summary-json` writes it.
+    const COVERAGE_SUMMARY: &str = r#"{"schema":1,"measurement":"scripts/rust-coverage",
+        "test_code":"excluded",
+        "crate":{"lines":{"covered":1,"total":2,"percent":50.0},
+                 "functions":{"covered":1,"total":2,"percent":50.0},
+                 "regions":{"covered":1,"total":2,"percent":50.0}},
+        "domain":{"lines":{"covered":1,"total":2,"percent":50.0},
+                  "functions":{"covered":1,"total":2,"percent":50.0},
+                  "regions":{"covered":1,"total":2,"percent":50.0},
+                  "files":["src/a.rs"],"missing":[]},
+        "files":{}}"#;
+
+    /// A crate output or a coverage summary that cannot be read is refused, as a suite
+    /// report is, before anything is written.
+    #[test]
+    fn an_unreadable_crate_output_or_coverage_summary_is_refused() {
+        let d = repo();
+        let reports = tempfile::tempdir().unwrap();
+        let missing = reports.path().join("absent.txt");
+        for req in [
+            RecordRequest {
+                crate_output: Some(missing.clone()),
+                ..RecordRequest::new(Origin::Local)
+            },
+            RecordRequest {
+                coverage: Some(missing.clone()),
+                ..RecordRequest::new(Origin::Local)
+            },
+        ] {
+            assert!(record(d.path(), &req).is_err());
+            assert!(ledger_bytes(d.path()).is_none());
+        }
+    }
+
+    /// A coverage summary is bound to the checkout's commit in the run record; one that is
+    /// not a schema-1 summary is refused and names the file.
+    #[test]
+    fn a_coverage_summary_is_bound_to_the_commit_and_a_malformed_one_is_refused() {
+        let d = repo();
+        let reports = tempfile::tempdir().unwrap();
+        let good = report(&reports, "coverage.json", COVERAGE_SUMMARY);
+        let req = RecordRequest {
+            coverage: Some(good),
+            ..RecordRequest::new(Origin::Local)
+        };
+        let got = record(d.path(), &req).unwrap();
+        let cov = got.run_record.coverage.expect("the coverage record");
+        assert_eq!(cov.commit.as_str(), got.commit);
+        assert_eq!(cov.working_tree, TreeState::Unknown);
+
+        let bad = report(&reports, "bad.json", r#"{"schema":2}"#);
+        let req = RecordRequest {
+            coverage: Some(bad),
+            ..RecordRequest::new(Origin::Local)
+        };
+        assert!(refusal(d.path(), &req).contains("bad.json"));
+    }
+
+    /// A run record that would land on the ledger is refused however its path is spelled.
+    #[test]
+    fn a_run_record_spelled_as_another_path_to_the_ledger_is_refused() {
+        let d = repo();
+        let reports = tempfile::tempdir().unwrap();
+        let tsv = report(&reports, "run.tsv", "07_scope\tok\t1\tparallel\n");
+        record(d.path(), &measured(d.path(), Origin::Local, &tsv)).unwrap();
+        let ledger = d.path().join(".ai/repo/evidence/../evidence/ledger.json");
+        let req = RecordRequest {
+            run_record: Some(ledger),
+            ..measured(d.path(), Origin::Local, &tsv)
+        };
+        assert!(
+            refusal(d.path(), &req).contains("cannot hold a run record"),
+            "the ledger, reached through `..`, was accepted as a run record"
+        );
+    }
+
+    /// A ledger that cannot be read, or cannot be written, fails the recording.
+    #[test]
+    fn a_ledger_that_cannot_be_read_or_written_fails_the_recording() {
+        let reports = tempfile::tempdir().unwrap();
+        let tsv = report(&reports, "run.tsv", "07_scope\tok\t1\tparallel\n");
+
+        let unreadable = repo();
+        std::fs::create_dir_all(unreadable.path().join(LEDGER_PATH)).unwrap();
+        let req = RecordRequest {
+            suite: Some(tsv.clone()),
+            ..RecordRequest::new(Origin::Local)
+        };
+        assert!(record(unreadable.path(), &req).is_err());
+
+        let unwritable = repo();
+        std::fs::create_dir_all(unwritable.path().join(".ai/repo")).unwrap();
+        std::fs::write(unwritable.path().join(".ai/repo/evidence"), "a file").unwrap();
+        assert!(record(unwritable.path(), &req).is_err());
     }
 }
