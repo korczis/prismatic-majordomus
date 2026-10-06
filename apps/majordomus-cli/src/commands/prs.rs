@@ -429,12 +429,12 @@ pub fn run(args: PrsArgs) -> Result<u8> {
             let report =
                 drain::drain_until(&root, &mut integrator, max, dry_run, refresh, Some(stop))
                     .map_err(unusable)?;
-            if format == OutputFormat::Json {
-                json(&mut out, &report)?;
+            let printed = if format == OutputFormat::Json {
+                json(&mut out, &report)
             } else {
-                w(&mut out, drain_lines(&report).join("\n"))?;
-            }
-            Ok(drain_exit(&report))
+                w(&mut out, drain_lines(&report).join("\n"))
+            };
+            printed.map(|()| drain_exit(&report))
         }
         PrsCommand::Cleanup { apply, .. } => {
             let lease = if apply {

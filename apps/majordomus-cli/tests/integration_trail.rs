@@ -219,4 +219,15 @@ fn an_observation_the_trail_cannot_record_is_refused() {
     // it says why it stopped, once: the idle step is the reason and nothing repeats it
     assert_eq!(out.matches("nothing is ready").count(), 1, "{out}");
     assert!(!out.contains("stopped:"), "{out}");
+    // the report as JSON keeps both: the step's reason and why the drain stopped
+    let (code, out, err) = prs(&f, &f.work, &["drain", "--dry-run", "--format", "json"]);
+    assert_eq!(code, 0, "dry run as JSON: {out}{err}");
+    let report: Value = serde_json::from_str(&out).expect("the report as JSON");
+    assert_eq!(report["dry_run"], true);
+    assert!(
+        report["stopped"]
+            .as_str()
+            .is_some_and(|s| s.contains("nothing is ready")),
+        "{out}"
+    );
 }
