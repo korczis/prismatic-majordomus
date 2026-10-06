@@ -2,12 +2,16 @@
 # majordomus-timeout: 600
 # `prs drain --continuous` runs alone, refreshes before every action, and stops cleanly:
 #
-#   1. it refuses a dry run and an interval outside 30–900 s before anything happens
+#   1. it refuses a dry run and an interval outside 30–900 s before anything happens, and
+#      without a record of verified merges on the trail it is refused too (ADR 0101 §13):
+#      continuous mode is the last stage of the rollout, unlocked by bounded merges
 #   2. running, it merges the ready pull request in its first cycle and then waits
 #   3. while it runs, a second executor is refused by the base branch's lease — and an
 #      observer is not: `prs status` still answers
 #   4. SIGTERM lets the step in progress finish: it exits 0, says it was asked to stop,
 #      merged exactly once, and the lease file is gone
+#   5. a drain killed outright (SIGKILL) leaves its record behind, and the next executor
+#      takes the lease at once: the kernel released the lock with the process
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null 2>&1 || skip "no jq"
 RB="$(rust_bin)" || rust_bin_exit $?
@@ -35,6 +39,7 @@ case "\$1 \$2" in
   "api repos/o/r") echo '{"allow_merge_commit":true}' ;;
   "api repos/o/r/commits/master") printf '{"sha":"%s"}\n' "\$(git -C "$ORIGIN" rev-parse master)" ;;
   "api repos/o/r/branches/master/protection") echo '{"required_status_checks":{"contexts":["ci"]}}' ;;
+  "api repos/o/r/rules/branches/master") echo '[]' ;;
   "pr list") if [ -f "$STATE/merged-1" ]; then echo '[]'; else cat "$STATE/prs.json"; fi ;;
   "pr merge")
     t="\$(mktemp -d)"
@@ -56,7 +61,16 @@ LOCK="$(git rev-parse --path-format=absolute --git-common-dir)/majordomus/locks/
 # ---------------------------------------------------------------- 1. refused before acting
 expect_exit 2 "$RB" prs --repo "$W" drain --continuous --dry-run
 expect_exit 2 "$RB" prs --repo "$W" drain --continuous --interval 5
+expect_exit 10 "$RB" prs --repo "$W" drain --continuous --interval 30
 grep -q '^pr merge' "$STATE/log" && { echo "    a refused invocation merged"; exit 1; }
+[ -e "$LOCK" ] && { echo "    the rollout refusal took the lease"; exit 1; }
+# the record that unlocks it: five merges earlier bounded drains made and proved, in the words
+# the executor writes to the repository's one trail
+TRAIL="$(git rev-parse --path-format=absolute --git-common-dir)/majordomus/integration/events.jsonl"
+mkdir -p "$(dirname "$TRAIL")"
+for _ in 1 2 3 4 5; do
+  printf '%s\n' '{"at":"2026-10-05T00:00:00Z","actor":"seed","action":"merge_succeeded","pr":null,"reasons":[],"detail":"an earlier bounded merge"}' >> "$TRAIL"
+done
 
 # ---------------------------------------------------------------- 2. running
 # the executable itself in the background, not the `prs` function: `$!` of a function is the
@@ -90,5 +104,20 @@ rc=0; wait "$PID" || rc=$?; PID=""
 grep -q 'stopped after 1 cycle(s), 1 merge(s): asked to stop' "$STATE/run.out" \
   || { echo "    the drain does not say why it stopped:"; tail -3 "$STATE/run.out"; exit 1; }
 [ ! -e "$LOCK" ] || { echo "    the lease was left behind: $(cat "$LOCK")"; exit 1; }
+[ "$(grep -c '^pr merge' "$STATE/log")" = 1 ] || { echo "    merged more than once"; exit 1; }
+
+# ---------------------------------------------------------------- 5. a crash
+"$RB" prs --repo "$W" drain --continuous --interval 30 > "$STATE/crash.out" 2> "$STATE/crash.err" & PID=$!
+i=0
+until grep -q '^cycle 1:' "$STATE/crash.out" 2>/dev/null; do
+  kill -0 "$PID" 2>/dev/null || { echo "    the second continuous drain exited early:"; cat "$STATE/crash.out" "$STATE/crash.err"; exit 1; }
+  i=$((i + 1)); [ "$i" -lt 600 ] || { echo "    no cycle ended within 60 s"; exit 1; }
+  sleep 0.1
+done
+kill -9 "$PID"; wait "$PID" 2>/dev/null || :; PID=""
+[ -f "$LOCK" ] || { echo "    a killed drain left no record: the case cannot tell a takeover from a free lease"; exit 1; }
+rc=0; out="$(prs drain --max 1 2>&1)" || rc=$?
+[ "$rc" = 0 ] || { echo "    the lease of a killed drain was not taken at once (exit $rc): $out"; exit 1; }
+[ ! -e "$LOCK" ] || { echo "    the executor that took over left the lease behind"; exit 1; }
 [ "$(grep -c '^pr merge' "$STATE/log")" = 1 ] || { echo "    merged more than once"; exit 1; }
 exit 0

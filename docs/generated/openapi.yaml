@@ -1,11 +1,11 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.13.2
+# Generator: majordomus-cli 0.14.0
 openapi: "3.1.0"
 jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
 info:
   title: Majordomus
-  version: "0.13.2"
+  version: "0.14.0"
   summary: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry."
   description: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document."
   license:
@@ -68,7 +68,7 @@ tags:
   - name: health
     description: "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own."
   - name: integration
-    description: "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network."
+    description: "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), redundant (its work is on master already), superseded (by a declared successor that landed, named in superseded_by), possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing."
   - name: intent_realization
     description: "Which work realises which intent: every task of this checkout's ledger with the episodes, providers and handovers that carried it, every closed session record and every claim on the peer board, joined through the plan to the intents they serve, each link marked declared, observed, derived or inferred; each intent's unmet criteria with the issues serving them; and the drift between closed work and current evidence. Derived on every read and stored nowhere, so an intent outlives every session and provider that worked on it."
   - name: intents
@@ -8141,7 +8141,7 @@ paths:
     get:
       operationId: integration.queue
       summary: The integration queue
-      description: "The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection's required checks and reviews, the blocking labels, the merge method), every open pull request's assessment in rank order — an actionable one with how long it has waited for the executor and how often another was chosen instead — the next merge, the pull requests that need master brought in, the starving ones, the tallies by disposition and lane, and the diagnostics, a stale observation first; beside it, who holds the base branch's integration lease and the last merge the executor recorded. `observed: false` with the reason when this checkout has recorded no observation."
+      description: "The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection's required checks and reviews, the label policy, the merge method: a merge commit, or none when the repository allows none), every open pull request's assessment in rank order — an actionable one with how long it has waited for the executor and how often another was chosen instead — the next merge, the pull requests that need master brought in, the starving ones, the tallies by disposition and lane, and the diagnostics, a stale observation first; beside it, who holds the base branch's integration lease and the last merge the executor recorded. `observed: false` with the reason when this checkout has recorded no observation."
       tags:
         - integration
       parameters: []
@@ -8190,11 +8190,63 @@ paths:
       x-majordomus-mcp:
         tool: majordomus_pull_requests
       x-majordomus-cli: prs status
+  "/api/v1/pull-requests/cleanup":
+    get:
+      operationId: integration.cleanup
+      summary: What cleanup would do
+      description: "The cleanup plan, decided offline from the recorded observation: every open pull request cleanup would close — redundant (its work is on master already) or superseded (by a declared successor that landed) — and every one it leaves for a person — possibly redundant (weak evidence) or obsolete (a person marked it, owner decision D3) — each with its disposition and the reasons that decided it, in rank order; beside it, the branches merged pull requests left on origin as `majordomus prs cleanup` last read them, with when and how long ago. A read: it closes, deletes and asks the forge for nothing — `majordomus prs cleanup` reads the forge and `--apply` closes. `observed: false` with the reason when this checkout has recorded no observation."
+      tags:
+        - integration
+      parameters: []
+      responses:
+        "200":
+          description: "What cleanup would do: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/IntegrationCleanup"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: integration.cleanup
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::integration
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_pull_requests_cleanup
   "/api/v1/pull-requests/events":
     get:
       operationId: integration.events
       summary: The integration audit trail
-      description: "Every action this checkout's executor recorded, oldest first: selections, stale decisions, merge attempts, merges with the master before and after, refusals, refreshes, verification failures and closures, each with its actor, the pull request, the head and the decision's reasons."
+      description: "Every action the repository's executors recorded, from any of its worktrees, oldest first: the lease taken and given back, observations, selections, stale decisions, each act's attempt before it and its outcome after — merges with the master before and after, refusals, refreshes, verification failures and closures — each with a typed action, its actor, the pull request, the head, the decision's reasons and, on an act, the evidence it was decided on. The trail is one file under the common git directory, so every worktree reads the same one."
       tags:
         - integration
       parameters: []
@@ -8247,7 +8299,7 @@ paths:
     get:
       operationId: integration.explain
       summary: Why one pull request is where it is
-      description: "One pull request's assessment — disposition, lane, reasons, next action, the master and head it was decided against, required checks, review, relation to master, dependencies, overlaps, risk with its factors, and every piece of evidence — with its rank in the queue. `found: false` with the reason when it is not open or nothing is observed."
+      description: "One pull request's assessment — disposition, lane, reasons, every gate of the policy with whether it passed, next action, the master and head it was decided against and when the forge was observed, required checks, review, relation to master, dependencies, overlaps, risk with its factors, and every piece of evidence — with its rank in the queue. `found: false` with the reason when it is not open or nothing is observed."
       tags:
         - integration
       parameters:
@@ -8307,6 +8359,60 @@ paths:
       x-majordomus-mcp:
         tool: majordomus_pull_request_explain
       x-majordomus-cli: prs explain
+  "/api/v1/pull-requests/prove-dry-run":
+    get:
+      operationId: integration.prove_dry_run
+      summary: Proof that a dry run moves nothing
+      description: "Runs the executor's non-mutating cycle — refresh, plan, drain --dry-run and cleanup without --apply — between two snapshots of everything it could move if it were wrong: every ref origin serves, every open pull request's number, head, state and labels, the integration audit trail, the executor's lease, and every local ref outside the two namespaces the refresh mirrors. `ok` is true exactly when the snapshots are equal and refs/remotes/origin/<base> and every refs/majordomus/prs/<n> equal what origin serves. A read that reaches the network: the refresh asks the forge through the GitHub CLI and fetches the base and the pull-request heads, and like every read it rewrites the observation, relation and summary caches. It merges, closes and pushes nothing, and takes no input that could make it."
+      tags:
+        - integration
+      parameters: []
+      responses:
+        "200":
+          description: "Proof that a dry run moves nothing: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/DryRunProof"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: integration.prove_dry_run
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::integration
+      x-majordomus-benchmark:
+        policy: waived
+        reason: external_dependency
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_pull_requests_prove_dry_run
+      x-majordomus-cli: prs prove-dry-run
   "/api/v1/quality":
     get:
       operationId: quality.report
@@ -12780,6 +12886,28 @@ components:
           description: Patterns matched against the file name alone.
           default: []
       description: "One category of `out`: pathspecs and file-name patterns."
+    ChangeShape:
+      type: object
+      properties:
+        authored:
+          type: array
+          items:
+            type: string
+          description: "Authored (non-derived) paths the merge changes or conflicts on, in path order."
+        derived:
+          type: array
+          items:
+            type: string
+          description: "Derived paths the merge changes or conflicts on, in path order."
+        version_bump:
+          type:
+            - string
+            - "null"
+          description: "The version the head declares in the crate manifest, when it is not the one its merge\nbase declares: the head raises the version."
+      required:
+        - authored
+        - derived
+      description: "What a head's merge into master changes, by kind: the authored paths a person wrote, the\nderived paths a generator writes (by the repository's `merge=derived` attributes on master),\nand the version the head declares when it raises the crate's. Decided from the same pair\nof commits as the relation to master, and cached under the same key beside it, so a change\nof either commit — a `.gitattributes` change on master is one — makes both stale together."
     ChangeStage:
       oneOf:
         - type: string
@@ -13150,6 +13278,32 @@ components:
         - exists
         - directory
       description: "One path, judged."
+    CleanupItem:
+      type: object
+      properties:
+        pr:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: The pull request.
+        disposition:
+          "$ref": "#/components/schemas/PullRequestDisposition"
+          description: Its disposition when decided.
+        reasons:
+          type: array
+          items:
+            description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. A code outside this list (an older trail's) is carried verbatim."
+            type: string
+          description: "The evidence, as reason codes."
+        action:
+          type: string
+          description: "`would_close`, `closed`, `left_for_a_person`, or `close_failed: <why>`."
+      required:
+        - pr
+        - disposition
+        - reasons
+        - action
+      description: "What cleanup would do, or did, for one pull request."
     CliExposure:
       type: object
       properties:
@@ -15769,6 +15923,21 @@ components:
           const: inferred
           description: "Inferred: the head contains the other's head commit. Evidence, never a block."
       description: How a dependency is known. Only a declared one blocks.
+    DependencyState:
+      oneOf:
+        - type: string
+          const: open
+          description: Still open.
+        - type: string
+          const: merged
+          description: "Merged: the only state that satisfies it."
+        - type: string
+          const: closed_unmerged
+          description: "Closed without a merge: its work never landed, so a person decides."
+        - type: string
+          const: unread
+          description: "Not open, and the forge could not say what became of it — refused, or not a pull\nrequest at all: unknown, never satisfied."
+      description: What became of a pull request another one depends on.
     DeploymentCheck:
       type: object
       properties:
@@ -17149,6 +17318,51 @@ components:
         - example_uri
         - detail
       description: One file of the layer that is no longer what the index read.
+    DryRunProof:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          description: True exactly when nothing moved and every mirror equals what origin serves.
+        base:
+          type: string
+          description: The base branch the executor works on.
+        steps:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ProofStep"
+          description: "The cycle, step by step."
+        moved:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Moved"
+          description: Every line that differs between the snapshots; empty when nothing moved.
+        mirrors:
+          type: array
+          items:
+            type: string
+          description: Every mirrored ref that is not what origin serves; empty when they all are.
+        before:
+          "$ref": "#/components/schemas/Snapshot"
+          description: The snapshot before the cycle.
+        after:
+          "$ref": "#/components/schemas/Snapshot"
+          description: The snapshot after it.
+        classification:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ObservedClassification"
+          description: "Every open pull request as the cycle classified it, in rank order."
+      required:
+        - ok
+        - base
+        - steps
+        - moved
+        - mirrors
+        - before
+        - after
+        - classification
+      description: "The verdict: what was compared, what moved, and what the cycle observed."
     EconomicsCheck:
       type: object
       properties:
@@ -18886,10 +19100,14 @@ components:
         head_sha:
           type: string
           description: "The pull request's head commit."
+        observed_at:
+          type: string
+          description: "When the forge was observed, RFC 3339; empty in a value written before it was named."
+          default: ""
       required:
         - master_sha
         - head_sha
-      description: "The revisions a decision was taken against. A decision is valid only while both still\nhold: the executor compares them with what it re-reads before it acts."
+      description: "The revisions a decision was taken against, and when the forge was observed. A decision is\nvalid only while both revisions still hold: the executor compares them with what it\nre-reads before it acts."
     EventHistory:
       type: object
       properties:
@@ -19132,6 +19350,45 @@ components:
         - state
         - reason
       description: "A claim whose declared status the evidence does not support.\n\nOnly a `guaranteed` claim can produce one: the other statuses already say that a current\nproof is not what they are claiming. A finding says what was claimed, what the evidence\nsupports instead, and — where running something would settle it — what to run.\n\n```\nuse majordomus_cli::evidence::{Finding, ProofState};\n\nlet finding = Finding {\n    claim: \"scope-integrity\".into(),\n    status: \"guaranteed\".into(),\n    state: ProofState::NotRun,\n    reason: \"the claim guarantees a behaviour and names a test, and no run of that \\\n             test has ever been recorded\"\n        .into(),\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n};\n\n// the gap is the finding: what the matrix declares against what the ledger holds\nassert_ne!(finding.status, finding.state.label());\nassert!(finding.reproduce.unwrap().starts_with(\"bash test/run.sh\"));\n```\n# Example\n\n```\nuse majordomus_cli::evidence::{Finding, ProofState};\nlet f = Finding {\n    claim: \"some-claim\".into(),\n    status: \"guaranteed\".into(),\n    state: ProofState::NotRun,\n    reason: \"the claim names a test nobody has run\".into(),\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n};\nassert_eq!(f.state, ProofState::NotRun);\n```"
+    EvidenceKind:
+      oneOf:
+        - type: string
+          const: required_check
+          description: "One required check's state on the head: one entry per context the base requires."
+        - type: string
+          const: required_checks
+          description: "The required checks together: their verdict, and each context's state."
+        - type: string
+          const: review
+          description: "The review policy and the forge's decision, or one reviewer's latest review."
+        - type: string
+          const: relation_to_master
+          description: "What the head is to master, as git decided it."
+        - type: string
+          const: dependency
+          description: One declared dependency.
+        - type: string
+          const: label
+          description: One label whose policy is to hold.
+        - type: string
+          const: draft
+          description: Whether it is a draft; always emitted.
+        - type: string
+          const: base
+          description: The branch it targets; always emitted.
+        - type: string
+          const: freshness
+          description: How old the observation is. Declared so the vocabulary is settled; nothing emits it yet.
+        - type: string
+          const: auto_merge
+          description: The forge has auto-merge armed; emitted whenever it is.
+        - type: string
+          const: supersession
+          description: "One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per successor declared."
+        - type: string
+          const: repository_settings
+          description: "What the repository's settings allow the executor; emitted when they allow no merge\ncommit."
+      description: "What kind of fact a piece of evidence is. The wire words are the ones the evidence carried\nwhile its kind was a string, so a trail written then still reads."
     EvidenceLedgerSummary:
       type: object
       properties:
@@ -19296,6 +19553,37 @@ components:
           const: crate
           description: "An integration test binary under `apps/majordomus-cli/tests/`, run by `cargo test`."
       description: "Which runner produced a result, and therefore how the test is named and re-run.\n\nThe repository has exactly two that a claim may name today. A third would be a variant\nhere and a branch in `TestId::of`; a claim naming something neither runner produces is\nreported as `ProofState::Unrunnable` rather than silently counted as covered.\n\n```\nuse majordomus_cli::evidence::{Runner, TestId};\n\n// which runner owns a test is read off where the test lives, never declared\nassert_eq!(TestId::of(\"test/cases/07_scope.sh\").unwrap().runner, Runner::Suite);\nassert_eq!(\n    TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap().runner,\n    Runner::Crate\n);\n// and a path under neither directory belongs to no runner at all\nassert!(TestId::of(\"test/lib.sh\").is_none());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Runner;\nassert_eq!(Runner::Suite.prefix(), \"suite\");\nassert_eq!(Runner::Crate.prefix(), \"crate\");\n```"
+    EvidenceSource:
+      oneOf:
+        - type: object
+          properties:
+            observed_at:
+              type: string
+              description: "When the forge was observed, RFC 3339."
+            kind:
+              type: string
+              const: forge
+          required:
+            - kind
+            - observed_at
+          description: "The forge observation, at its moment."
+        - type: object
+          properties:
+            master_sha:
+              type: string
+              description: The master commit.
+            head_sha:
+              type: string
+              description: The head commit.
+            kind:
+              type: string
+              const: git
+          required:
+            - kind
+            - master_sha
+            - head_sha
+          description: "Git, on this pair of commits."
+      description: Where a piece of evidence was read.
     EvidenceSubject:
       type: object
       properties:
@@ -20206,6 +20494,33 @@ components:
             type: string
           description: Several short values.
       description: "One fact a node carries from its object's front matter, in the shapes a node can hold."
+    FailureClass:
+      oneOf:
+        - type: string
+          const: stale
+          description: Master or the head moved since the decision.
+        - type: string
+          const: conflict
+          description: The merge of master conflicts.
+        - type: string
+          const: new_failing_check
+          description: A required check failed that had passed.
+        - type: string
+          const: review_revoked
+          description: An approval was withdrawn.
+        - type: string
+          const: transient
+          description: The forge or the network failed in a way that passes.
+        - type: string
+          const: policy_violation
+          description: The branch protection refused it.
+        - type: string
+          const: verification_failed
+          description: What landed could not be verified.
+        - type: string
+          const: unreadable
+          description: The forge or git could not be read.
+      description: "Why an act failed, as one class a person and a retry policy can act on. Every failed act\non the trail carries one (`class`), and the drain decides from it whether the next\ncandidate may be tried (`FailureClass::recoverable`) or the drain must stop."
     Feature:
       oneOf:
         - type: string
@@ -20869,6 +21184,19 @@ components:
           const: full
           description: "Every gate but the on-demand ones: asked for, or escalated to."
       description: "```\nuse majordomus_cli::gates::GatePlanMode;\n\n// a plan is either the gates the change selects, or everything the runners allow\nassert_eq!(GatePlanMode::Affected.as_str(), \"affected\");\nassert_eq!(GatePlanMode::Full.as_str(), \"full\");\nassert_ne!(GatePlanMode::Affected, GatePlanMode::Full);\n```\nWhy the plan selects what it selects."
+    GateResult:
+      type: object
+      properties:
+        gate:
+          "$ref": "#/components/schemas/IntegrationGate"
+          description: The gate.
+        passed:
+          type: boolean
+          description: "Whether it passed. A gate that fails only because an earlier one did (the head is not\nfresh when its merge conflicts) fails without a reason of its own."
+      required:
+        - gate
+        - passed
+      description: How one gate answered.
     GateRun:
       type: object
       properties:
@@ -21828,6 +22156,130 @@ components:
           const: unknown
           description: "The trunk is unknown, so there is nothing to measure the branch against."
       description: "How a branch stands to the trunk, which is what decides which commits are its own."
+    IntegrationAction:
+      oneOf:
+        - type: string
+          const: lease_acquired
+          description: "The executor took the base branch's lease."
+        - type: string
+          const: lease_released
+          description: It gave the lease back.
+        - type: string
+          const: continuous_started
+          description: A continuous drain started.
+        - type: string
+          const: continuous_stopped
+          description: A continuous drain stopped; the detail says why.
+        - type: string
+          const: observed
+          description: The forge was observed and the observation recorded.
+        - type: string
+          const: became_actionable
+          description: A pull request became actionable (ready or refreshable).
+        - type: string
+          const: left_actionable
+          description: A pull request stopped being actionable.
+        - type: string
+          const: selected
+          description: The first ready pull request was chosen to merge.
+        - type: string
+          const: refresh_selected
+          description: The first refreshable pull request was chosen to bring master into.
+        - type: string
+          const: stale_decision
+          description: The decision went stale between planning and acting; nothing was done.
+        - type: string
+          const: merge_attempted
+          description: A merge is about to be asked of the forge.
+        - type: string
+          const: merge_succeeded
+          description: The merge landed and was verified.
+        - type: string
+          const: merge_failed
+          description: The forge refused the merge.
+        - type: string
+          const: verification_failed
+          description: What landed could not be verified.
+        - type: string
+          const: failure_acknowledged
+          description: "A person looked at a merge that could not be verified and lets drains merge again\n(`prs drain --resume-after-failure`)."
+        - type: string
+          const: refresh_attempted
+          description: Master is about to be merged into a branch and pushed.
+        - type: string
+          const: refreshed
+          description: Master was brought into the branch and pushed.
+        - type: string
+          const: refresh_failed
+          description: Bringing master in failed.
+        - type: string
+          const: close_attempted
+          description: A redundant or superseded pull request is about to be closed.
+        - type: string
+          const: closed_redundant
+          description: A redundant one was closed.
+        - type: string
+          const: closed_superseded
+          description: "A superseded one was closed (before 0.13, a line with this word recorded what is now\n`closed_redundant`)."
+        - type: string
+          const: close_failed
+          description: Closing it failed.
+        - type: string
+          const: repair_selected
+          description: "A person named a pull request to repair (`prs repair --apply`) and its classification\nmakes it eligible: master is what it lacks, and nothing authored conflicts."
+        - type: string
+          const: repair_attempted
+          description: Master is about to be merged into the named branch and pushed.
+        - type: string
+          const: repaired
+          description: Master was brought into the named branch and pushed.
+        - type: string
+          const: repair_refused
+          description: "The repair was refused — by the classification (an authored conflict, a fork, armed\nauto-merge, another base, an undecidable relation) or by the act (a merge, derive,\ncommit or push that failed) — and nothing reached the branch; `class` says why."
+        - type: string
+          const: idle
+          description: Nothing was ready.
+        - type: string
+          const: observe_failed
+          description: "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+      description: "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
+    IntegrationCleanup:
+      type: object
+      properties:
+        observed:
+          type: boolean
+          description: Whether a forge observation is recorded in this checkout.
+        reason:
+          type:
+            - string
+            - "null"
+          description: "Why there is no plan, when there is none."
+        observed_at:
+          type:
+            - string
+            - "null"
+          description: "When the forge was observed, when it was."
+        items:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CleanupItem"
+          description: "The plan, in rank order: `would_close` for what is provably on master or superseded by\na successor that landed, `left_for_a_person` for weak evidence and for what a person\nmarked obsolete. Nothing here closes anything."
+        branches:
+          anyOf:
+            - "$ref": "#/components/schemas/LeftBranchReport"
+            - type: "null"
+          description: "The branches merged pull requests left on origin, as `prs cleanup` last read them;\n`None` when it never ran in this checkout. Never read from the network here."
+        branches_age_seconds:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "How old that report is, in seconds, when its time reads."
+      required:
+        - observed
+        - items
+      description: "What cleanup would do, decided offline: the pull requests it would close or leave for a\nperson, from the recorded observation, and the last branch report `prs cleanup` recorded."
     IntegrationEvent:
       type: object
       properties:
@@ -21838,8 +22290,8 @@ components:
           type: string
           description: "Who: the git identity, the process and the machine."
         action:
-          type: string
-          description: "What (`selected`, `refresh_selected`, `stale_decision`, `merge_attempted`,\n`merge_succeeded`, `merge_failed`, `verification_failed`, `refreshed`,\n`refresh_failed`, `closed_superseded`, `idle`, and the two transitions the wait is\nfolded from: `became_actionable`, `left_actionable`)."
+          "$ref": "#/components/schemas/IntegrationAction"
+          description: "What (`IntegrationAction`)."
         pr:
           type:
             - integer
@@ -21865,8 +22317,9 @@ components:
         reasons:
           type: array
           items:
+            description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. A code outside this list (an older trail's) is carried verbatim."
             type: string
-          description: "The decision's reason codes."
+          description: "The decision's reasons; a code an older executor wrote reads back verbatim."
         detail:
           type: string
           description: "What happened, for a person."
@@ -21877,6 +22330,26 @@ components:
             format: uint64
             minimum: 0
           description: "On a selection: the other actionable pull requests the executor chose this one over,\nin rank order. The wait of each is folded from it (`super::wait`)."
+        head_after:
+          type:
+            - string
+            - "null"
+          description: "On `refreshed`: the head the executor pushed. The refresh pipeline waits only for\nthe checks of a head named here."
+        evidence:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IntegrationEvidence"
+          description: "On `merge_attempted`, `merge_succeeded`, `refresh_selected` and the closures:\nthe assessment's evidence the act was decided on."
+        class:
+          anyOf:
+            - "$ref": "#/components/schemas/FailureClass"
+            - type: "null"
+          description: "On a failure: its class, once one is decided."
+        merge_commit:
+          type:
+            - string
+            - "null"
+          description: "On `merge_succeeded`: the merge commit, once it is read."
       required:
         - at
         - actor
@@ -21899,19 +22372,24 @@ components:
       type: object
       properties:
         kind:
-          type: string
-          description: "What kind of fact (`required_checks`, `relation_to_master`, `review`, `label`,\n`dependency`, `draft`, `base`)."
+          "$ref": "#/components/schemas/EvidenceKind"
+          description: What kind of fact.
         status:
           type: string
           description: "What it said, as a word."
         detail:
           type: string
           description: The detail a person reads.
+        source:
+          anyOf:
+            - "$ref": "#/components/schemas/EvidenceSource"
+            - type: "null"
+          description: "Where it was read. Every assessment names it; a trail line written before evidence\ncarried it has none."
       required:
         - kind
         - status
         - detail
-      description: "One piece of evidence behind a disposition: what was read, and what it said."
+      description: "One piece of evidence behind a disposition: what was read, where, and what it said."
     IntegrationExplanation:
       type: object
       properties:
@@ -21949,6 +22427,45 @@ components:
         - found
         - of
       description: "One pull request's assessment and rank, or why it has none."
+    IntegrationGate:
+      oneOf:
+        - type: string
+          const: base
+          description: It targets the integration base.
+        - type: string
+          const: draft
+          description: It is not a draft.
+        - type: string
+          const: label
+          description: It carries no label whose policy is to hold.
+        - type: string
+          const: auto_merge
+          description: The forge has no auto-merge armed on it.
+        - type: string
+          const: supersession
+          description: "No successor is declared to replace it. Asked before the relation to master, because\na pull request whose successor landed usually conflicts with what the successor\nbrought, and is superseded rather than conflicting."
+        - type: string
+          const: relation_to_master
+          description: "Its head is not on master already, and git could say that it merges cleanly."
+        - type: string
+          const: merge_method
+          description: "The repository allows a merge commit, the only way the executor merges. Asked after\nthe relation, so work already on master is still `redundant` and may be closed."
+        - type: string
+          const: dependency
+          description: Every declared dependency has landed.
+        - type: string
+          const: review
+          description: The review policy is satisfied on the head.
+        - type: string
+          const: no_failing_check
+          description: No required check failed on the head.
+        - type: string
+          const: freshness
+          description: The head contains the current master.
+        - type: string
+          const: required_checks
+          description: Every required check passed on the head.
+      description: "One question of the policy, in the order `IntegrationGate::ALL` asks them. The\ndisposition is the first that fails; every one is answered."
     IntegrationLane:
       oneOf:
         - type: string
@@ -21962,10 +22479,10 @@ components:
           description: A person must change the branch.
         - type: string
           const: cleanup
-          description: Its work is on master already.
+          description: "Its work is on master already, or a successor that landed replaced it."
         - type: string
           const: held
-          description: "Not asking to be merged, or undecidable."
+          description: "Not asking to be merged, held by a label or a setting, unsafe for the executor, or\nundecidable."
       description: The queues the Cockpit and the status table group pull requests into.
     IntegrationLeaseState:
       type: object
@@ -21998,25 +22515,38 @@ components:
             - array
             - "null"
           items:
-            type: string
-          description: "The status contexts the branch protection requires, as read from the forge.\n`None` when the protection could not be read: every required-check verdict is then\n`unknown`, never `passed`."
-        reviews_required:
-          type:
-            - boolean
-            - "null"
-          description: "Whether the branch protection requires an approving review; `None` when unread."
-        blocking_labels:
+            "$ref": "#/components/schemas/RequiredCheck"
+          description: "The checks the base requires, from its branch protection and rulesets, each with the\napp bound to it. `None` when they could not be read: every required-check verdict is\nthen `unknown`, never `passed`. An empty set is unknown too (owner decision D5): a\nbase that requires nothing proves nothing about a head, so nothing merges onto it."
+        review_policy:
+          anyOf:
+            - "$ref": "#/components/schemas/ReviewPolicy"
+            - type: "null"
+          description: "What the base requires of reviews; `None` when unread."
+        skipped_permitted:
           type: array
           items:
             type: string
-          description: Labels that hold a pull request whatever else is true.
+          description: "Contexts whose skip counts as a pass. Empty unless a repository says otherwise: a\nskipped required check is otherwise `missing`."
+          default: []
+        labels:
+          type: array
+          items:
+            "$ref": "#/components/schemas/LabelPolicy"
+          description: "The labels that have an effect, each with its effect: `LABEL_POLICY`, copied."
         merge_method:
-          type: string
-          description: The merge method the executor asks the forge for.
+          type:
+            - string
+            - "null"
+          description: "The merge method the executor asks the forge for: `merge` when the repository allows a\nmerge commit, and `None` when it does not. There is no other: the derived-file driver\nresolves merges, and a squash or rebase would replay commits it never saw, so with\n`None` every pull request the relation to master does not already decide is held\n(`merge_commit_not_allowed`), never merged otherwise."
+        up_to_date_required:
+          type:
+            - boolean
+            - "null"
+          description: "Whether the base requires a branch to be up to date before it merges (the\nprotection's `required_status_checks.strict`, or a ruleset's): the forge-side half of\nthe guard against a merge onto a master nobody tested with the change. The executor's\nhalf is its parent check after every merge. `Some(false)` is the owner's to change\n(decision D8) and decides no disposition; `None` when unread."
+          default: null
       required:
         - base
-        - blocking_labels
-        - merge_method
+        - labels
       description: "What the repository requires before a merge, as observed from the forge and the\nrepository — never a list kept here beside it."
     IntegrationQueue:
       type: object
@@ -22126,9 +22656,80 @@ components:
             - type: "null"
           description: "The last merge the executor recorded, from the audit trail."
           default: null
+        throughput:
+          "$ref": "#/components/schemas/IntegrationThroughput"
+          description: "How fast the executor has turned work into master over the last\n`THROUGHPUT_WINDOW_DAYS` days, folded from the same trail."
       required:
         - observed
+        - throughput
       description: "The queue, or why there is none."
+    IntegrationThroughput:
+      type: object
+      properties:
+        window_days:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "The window, in days, ending at the time the fold was asked for."
+        merges:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Pull requests merged in the window.
+        merges_per_day:
+          type: number
+          format: double
+          description: "`merges / window_days`."
+        median_actionable_to_merged_secs:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "Median seconds from becoming actionable to being merged; `None` when no merge in the\nwindow had a recorded `became_actionable` before it."
+        ci_rounds_per_merge:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "Median `refreshed` events between one merge and the next; `None` without a merge."
+        median_cycle_secs:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "Median seconds from a selection to its outcome; `None` when no selection in the window\nreached one."
+        stale_decisions:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Decisions refused because master or the head moved after they were taken.
+        merge_failures:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Merge attempts that failed.
+        verification_failures:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Merges whose resulting master failed verification.
+        unreadable_events:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Events in the trail whose time could not be read; they count toward nothing.
+      required:
+        - window_days
+        - merges
+        - merges_per_day
+        - stale_decisions
+        - merge_failures
+        - verification_failures
+        - unreadable_events
+      description: "The integrator's throughput over a window of the trail."
     IntentCoverage:
       type: object
       properties:
@@ -23325,6 +23926,28 @@ components:
         - knowledge_on_end
         - knowledge_on_compact
       description: "Whether the deriver is still writing, and what it last wrote.\n\nThe judgement is ADR 0052's, applied to this writer: while episodes keep closing, a\nderivation follows every close. It compares episode ids, never line order or timestamps\nbetween the two events, because the close derives before it appends `session.closed`.\nIt is the freshness half of the judgement only; whether the close path and the\ncompaction adapter still call the deriver is read from the source by the shell\nvalidator, which is where the source is.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::KnowledgeStatus;\nlet fresh: KnowledgeStatus = serde_json::from_str(r#\"{\n  \"present\": false, \"branch\": \"master\", \"closed_without_derivation\": 0, \"candidates\": 0,\n  \"on_this_branch\": 0, \"freshness\": \"unknown\", \"freshness_reason\": \"no episode has closed here\",\n  \"judged\": false, \"stopped_writer\": false, \"knowledge_on_end\": true, \"knowledge_on_compact\": true\n}\"#).unwrap();\nassert!(!fresh.present, \"a fresh clone has no ledger, and that is not a fault\");\nassert!(!fresh.stopped_writer);\n```"
+    LabelEffect:
+      oneOf:
+        - type: string
+          const: hold
+          description: "It holds the pull request whatever else is true: `blocked`, with `label:NAME`."
+        - type: string
+          const: obsolete
+          description: "A person marked the work obsolete (owner decision D3): `obsolete`, with\n`label_obsolete:NAME`, listed by cleanup for a person and never closed automatically."
+      description: What a label does to a pull request that carries it.
+    LabelPolicy:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "The label, lower-case."
+        effect:
+          "$ref": "#/components/schemas/LabelEffect"
+          description: What it does.
+      required:
+        - name
+        - effect
+      description: "One label with an effect. The forge's label names are compared with `name`\ncase-insensitively."
     LayerSummary:
       type: object
       properties:
@@ -23389,6 +24012,11 @@ components:
           format: uint64
           minimum: 0
           description: "When it was taken, seconds since the epoch."
+        mesh_claim:
+          type:
+            - string
+            - "null"
+          description: "The mesh claim that makes it exclusive across machines, `<stream>/<claim>`; absent\nwhen the lease guards this clone alone (`super::exclusive`)."
       required:
         - pid
         - host
@@ -23437,6 +24065,66 @@ components:
       required:
         - ts
       description: "One ledger line that matters to the judgement: when, and which episode.\n\n```\nuse majordomus_cli::capability::builtin::knowledge_base::LedgerMark;\nlet m: LedgerMark = serde_json::from_str(r#\"{\"ts\":\"2026-09-12T10:00:00Z\",\"episode\":\"e1\"}\"#).unwrap();\nassert_eq!(m.episode, \"e1\");\n```"
+    LeftBranch:
+      type: object
+      properties:
+        branch:
+          type: string
+          description: The branch on origin.
+        tip:
+          type: string
+          description: "Its tip: the head that merged."
+        pr:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: The pull request that merged it.
+        merged_at:
+          type: string
+          description: When that pull request merged.
+        action:
+          type: string
+          description: "`left_for_a_person`, or `kept: checked out at <path>` when a worktree of this\nrepository has the branch checked out: somebody may still be standing on it."
+        next_step:
+          type: string
+          description: "What would clear it, in the setting's own terms."
+      required:
+        - branch
+        - tip
+        - pr
+        - merged_at
+        - action
+        - next_step
+      description: "A branch a merged pull request left on origin, as cleanup reports it. Reported, never\ndeleted: the forge's `delete_branch_on_merge` decides deletion (owner decision D4), so the\nexecutor holds no branch-deleting write at all."
+    LeftBranchReport:
+      type: object
+      properties:
+        read_at:
+          type: string
+          description: When cleanup read origin and the merged pull requests.
+        base:
+          type: string
+          description: The base the report excludes.
+        delete_branch_on_merge:
+          type:
+            - boolean
+            - "null"
+          description: "The forge's `delete_branch_on_merge`, from the observation; `None` when unread."
+        branches:
+          type:
+            - array
+            - "null"
+          items:
+            "$ref": "#/components/schemas/LeftBranch"
+          description: "The branches, or `None` when origin or the merged pull requests could not be read:\nunread is not \"nothing left behind\"."
+        refreshed_by:
+          type: string
+          description: The command that reads it afresh.
+      required:
+        - read_at
+        - base
+        - refreshed_by
+      description: "The last report of the branches merged pull requests left on origin, as `prs cleanup`\nread it. Written by `prs cleanup` alone — the one place that asks the forge for them —\nand rendered offline, with its age, by every surface that cannot reach the network."
     Libc:
       oneOf:
         - type: string
@@ -24936,6 +25624,23 @@ components:
     Mount:
       type: string
       description: "An absolute mount path, without a trailing slash."
+    Moved:
+      type: object
+      properties:
+        section:
+          type: string
+          description: The section it belongs to.
+        change:
+          type: string
+          description: "`added` (present only after the cycle) or `removed` (present only before)."
+        line:
+          type: string
+          description: The line itself.
+      required:
+        - section
+        - change
+        - line
+      description: One line that differs between the two snapshots.
     Node:
       type: object
       properties:
@@ -25376,6 +26081,30 @@ components:
         - reason
         - at
       description: "One observation of one deployment, as recorded: what was asked, what was served, what\nwas judged and when. Everything needed to judge it again later is in the record, which\nis what lets `Observation::rejudge` answer without probing.\n\n```\nuse majordomus_cli::served::{observe, Fetch, Fetched, GitAncestry, Observation, OBSERVATION_SCHEMA};\nuse std::{path::Path, time::SystemTime};\nstruct None_;\nimpl Fetch for None_ {\n    fn fetch(&self, _: &str) -> Fetched { Fetched::Unreachable(\"no route\".into()) }\n}\nlet git = GitAncestry { root: Path::new(env!(\"CARGO_MANIFEST_DIR\")) };\nlet o: Observation = observe(\"pages\", \"https://s\", \"build.json\", &\"a\".repeat(40), &None_,\n                              &git, SystemTime::UNIX_EPOCH);\nassert_eq!(o.schema, OBSERVATION_SCHEMA);\nassert_eq!(o.url, \"https://s/build.json\");\nassert_eq!(o.at, \"1970-01-01T00:00:00Z\");\n```"
+    ObservedClassification:
+      type: object
+      properties:
+        number:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: The pull request.
+        head_sha:
+          type: string
+          description: The head it was decided against.
+        disposition:
+          type: string
+          description: "Its disposition, as the queue names it."
+        next_action:
+          type:
+            - string
+            - "null"
+          description: "What the executor would do with it, when anything."
+      required:
+        - number
+        - head_sha
+        - disposition
+      description: One open pull request as the cycle classified it.
     OpenSession:
       type: object
       properties:
@@ -25608,6 +26337,18 @@ components:
         - intent
         - paths
       description: "Two peers that claimed the same ground.\n\nReported when the second of them announces, so that a collision is known at the moment\nit is created rather than discovered afterwards in the history of a branch."
+    OverlapKind:
+      oneOf:
+        - type: string
+          const: authored
+          description: Authored paths both change.
+        - type: string
+          const: version_bump
+          description: "Both raise the crate's version: whichever lands second must be re-derived on the first."
+        - type: string
+          const: release
+          description: "Both change the release records under `.ai/repo/releases/`."
+      description: What two open pull requests have in common that makes landing one change the other.
     OverlapPath:
       type: object
       properties:
@@ -25673,7 +26414,7 @@ components:
           minimum: 0
           description: The pull request chosen instead.
         action:
-          type: string
+          "$ref": "#/components/schemas/IntegrationAction"
           description: "What it was chosen for (`selected` to merge, `refresh_selected` to bring master in)."
       required:
         - at
@@ -25713,6 +26454,10 @@ components:
           items:
             type: string
           description: The paths both change.
+        kind:
+          "$ref": "#/components/schemas/OverlapKind"
+          description: "What the two share. `authored` in a record written before it was said."
+          default: authored
       required:
         - number
         - paths
@@ -27226,6 +27971,19 @@ components:
           const: no_test
           description: "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
       description: "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven < ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
+    ProofStep:
+      type: object
+      properties:
+        step:
+          type: string
+          description: "`refresh`, `plan`, `drain --dry-run` or `cleanup`."
+        summary:
+          type: string
+          description: "What it reported, in one line."
+      required:
+        - step
+        - summary
+      description: One step of the cycle and what it said.
     ProtocolReport:
       type: object
       properties:
@@ -27629,14 +28387,38 @@ components:
         disposition:
           "$ref": "#/components/schemas/PullRequestDisposition"
           description: The classification.
+        superseded_by:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "The successor that landed and replaces it, exactly when the disposition is\n`superseded`: the disposition stays one word on the wire, and this is its `by`.\nAbsent otherwise; a successor still open, or closed without landing, is in the\n`supersession` evidence and the reasons instead."
+        issue:
+          type:
+            - string
+            - "null"
+          description: "The issue of `.ai/repo/project/issues/` its head branch names — a path component equal\nto the id, or the id followed by `-`, the form `majordomus worktree create --issue`\ngives — when it names one. Derived, never declared here: the issue record and the\nbranch name are the two sources, and nothing else."
+        milestone:
+          type:
+            - string
+            - "null"
+          description: "The milestone that issue's record declares, when it declares one."
         lane:
           "$ref": "#/components/schemas/IntegrationLane"
           description: The queue it is in.
         reasons:
           type: array
           items:
+            description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. A code outside this list (an older trail's) is carried verbatim."
             type: string
-          description: "Machine-readable reason codes, most decisive first."
+          description: "Machine-readable reasons, one for every failing gate's every finding, in policy order:\nthe first is the decisive one. A ready pull request carries why it is ready."
+        gates:
+          type: array
+          items:
+            "$ref": "#/components/schemas/GateResult"
+          description: "Every gate of the policy, in order, and whether it passed."
+          default: []
         next_action:
           type:
             - string
@@ -27687,6 +28469,16 @@ components:
             - "$ref": "#/components/schemas/ExecutorWait"
             - type: "null"
           description: "How long it has been the executor's to act on, and how often another was chosen\ninstead — derived from the audit trail (`super::wait`), present only while it is\nready or refreshable."
+        rank_factors:
+          anyOf:
+            - "$ref": "#/components/schemas/RankFactors"
+            - type: "null"
+          description: "Why it stands where it does in the rank: every component the order compares, in the\norder it compares them. Set by the planner; absent on an assessment never ranked."
+        change_shape:
+          anyOf:
+            - "$ref": "#/components/schemas/ChangeShape"
+            - type: "null"
+          description: "What its merge into master changes, by kind (`ChangeShape`): read beside the\nrelation, from the same pair of commits. Absent when it could not be read."
       required:
         - number
         - title
@@ -27721,7 +28513,11 @@ components:
           description: How it is known.
         satisfied:
           type: boolean
-          description: "Whether it is satisfied: that pull request has landed (or is not open any more)."
+          description: "Whether it is satisfied: that pull request merged. Closed without a merge, or not\nread, it is not — a dependency that never landed is no less a dependency."
+        state:
+          "$ref": "#/components/schemas/DependencyState"
+          description: "What the forge says became of it. `open` in a record written before it was read."
+          default: open
       required:
         - number
         - certainty
@@ -27755,19 +28551,28 @@ components:
           description: "Conflicts on authored paths: a person resolves them."
         - type: string
           const: blocked
-          description: A blocking label holds it.
+          description: "A label whose policy is to hold holds it, or the repository allows no merge commit,\nwhich is the only way the executor merges."
+        - type: string
+          const: unsafe
+          description: "The forge has auto-merge armed on it: the forge would merge it on its own, outside the\nexecutor and against whatever master is then. Held until a person disarms it."
+        - type: string
+          const: redundant
+          description: "Its head already landed, its merge changes nothing, or every one of its commits is on\nmaster as an equal patch: strong evidence from git, eligible for closure under policy.\n(Before 0.13 this was the word `superseded`.)"
         - type: string
           const: superseded
-          description: "Its head already landed, or its patch is already fully on master: strong evidence,\neligible for closure under policy."
+          description: "Its body, or the body of another pull request, declares that a successor replaces it,\nand that successor landed: no longer open, its head contained in master. The successor\nis `PullRequestAssessment::superseded_by`. Eligible for closure under policy."
         - type: string
           const: possibly_redundant
-          description: "Only derived artifacts would change: the authored change appears to be on master\nalready. Surfaced for a person; never closed automatically."
+          description: "Weak evidence: only derived artifacts would change, or its declared successor was closed\nwithout its head landing. Surfaced for a person; never closed automatically."
         - type: string
           const: other_base
           description: Targets a branch other than the integration base.
         - type: string
           const: unknown
           description: Something needed to decide could not be observed.
+        - type: string
+          const: obsolete
+          description: "A person marked it obsolete with a label the label policy declares (owner decision\nD3): the only evidence that reaches this word. Listed for a person by cleanup and\nnever closed automatically; age, shared paths or a similar title never make one."
       description: "The one classification of an open pull request. Every value carries a machine-readable\nreason in `PullRequestAssessment::reasons`; there is no `mergeable: bool`."
     PullRequestReview:
       oneOf:
@@ -27783,6 +28588,12 @@ components:
         - type: string
           const: pending
           description: A required review has not been given.
+        - type: string
+          const: stale
+          description: "The approvals were given on another commit than the head: an approval is of one\ncommit, and these are not of this one."
+        - type: string
+          const: code_owners_pending
+          description: "The approvals are there, but a code owner's is still required."
         - type: string
           const: unknown
           description: The protection could not be read.
@@ -27882,6 +28693,51 @@ components:
         - by_disposition
         - by_lane
       description: How many pull requests are in each disposition and lane.
+    RankFactors:
+      type: object
+      properties:
+        lane:
+          "$ref": "#/components/schemas/IntegrationLane"
+          description: "The lane: what kind of work the executor does with it."
+        disposition:
+          "$ref": "#/components/schemas/PullRequestDisposition"
+          description: "The disposition, within the lane."
+        risk:
+          "$ref": "#/components/schemas/IntegrationRisk"
+          description: "The planning risk: lower first."
+        contention:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many other ready or refreshable pull requests it overlaps (`PathOverlap`): an\nauthored path, a version bump or a release in common. Fewer first, because landing it\ninvalidates less."
+        dependents:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many open pull requests declare that they wait for this one and are not yet\nsatisfied: more first, because landing it unblocks them."
+        authored_paths:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many authored paths it changes: fewer first, a smaller change is cheaper to land\nand to undo."
+        created_at:
+          type: string
+          description: "When it was opened: older first, so easy new work cannot starve old work."
+        number:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "The number: the last tie-break, total."
+      required:
+        - lane
+        - disposition
+        - risk
+        - contention
+        - dependents
+        - authored_paths
+        - created_at
+        - number
+      description: "What the rank compares, in order: the first component that differs between two pull\nrequests decides which comes first. Each is a value of the assessment or of the queue\naround it, so the order can be explained and is the same whatever order the forge listed\nthe pull requests in."
     Readiness:
       type: object
       properties:
@@ -29455,6 +30311,20 @@ components:
           description: "Merging the head into master changes nothing: its patch is already fully there."
         - type: object
           properties:
+            commits:
+              type: integer
+              format: uint64
+              minimum: 0
+              description: "How many commits, every one of them already on master."
+            kind:
+              type: string
+              const: patch_ids_upstream
+          required:
+            - kind
+            - commits
+          description: "The merge would conflict or change only derived output, but every commit the head has\nand master lacks is on master already as an equal patch (`git cherry` marks each `-`):\nthe change landed, and master moved on past it. Never a partial match, and never a\nhead that carries a merge commit of its own, whose resolution has no patch to compare."
+        - type: object
+          properties:
             paths:
               type: array
               items:
@@ -30562,11 +31432,30 @@ components:
         - git_common_dir
         - name
       description: "The repository's identity, as the topology reports it."
+    RequiredCheck:
+      type: object
+      properties:
+        context:
+          type: string
+          description: "The status context, or the check run's name."
+        app_id:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "The app bound to it, when the protection names one."
+      required:
+        - context
+      description: "One check the base requires: a status context, and the app that must write it when the\nprotection binds it to one. A check of that name from any other writer is not this one."
     RequiredCheckState:
       oneOf:
         - type: string
           const: passed
           description: Every required check passed on this head.
+        - type: string
+          const: skipped
+          description: "Every required check passed, at least one of them by a skip the policy permits for\nthat context. A skip the policy does not permit is not a pass: it is `missing`."
         - type: string
           const: pending
           description: A required check is queued or running.
@@ -31110,6 +31999,25 @@ components:
         - excluded
         - available
       description: "The plan: the decision with its reasons attached. It carries what it answered (mode,\nmateriality, confidence, capabilities), the budget, the outcome with one sentence of\nwhy, every advisor selected or excluded, and the local review when one is due.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, ReviewPlan, LOCAL_REVIEW};\n\nlet mode = ModeResolution { mode: ReasoningMode::Offline, source: \"MAJORDOMUS_REASONING_MODE\".into() };\nlet request = PlanRequest { materiality: Materiality::Material, ..Default::default() };\nlet p: ReviewPlan = plan(&request, &mode, &[]);\nassert_eq!(p.mode_source, \"MAJORDOMUS_REASONING_MODE\");\nassert_eq!(p.capabilities, [\"independent_reasoning\"]);\nassert_eq!((p.budget, p.available), (1, 0));\nassert_eq!(p.local_review.len(), LOCAL_REVIEW.len());\nassert!(p.reason.starts_with(\"no available advisor offers\"));\n```"
+    ReviewPolicy:
+      type: object
+      properties:
+        approvals:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: How many approving reviews a merge needs; 0 when none.
+        code_owners:
+          type: boolean
+          description: "Whether a code owner's approval is required."
+        dismiss_stale:
+          type: boolean
+          description: Whether the forge dismisses an approval when the head moves.
+      required:
+        - approvals
+        - code_owners
+        - dismiss_stale
+      description: "What the base requires of reviews, read from its protection and rulesets together."
     ReviewRequestInput:
       type: object
       additionalProperties: false
@@ -33344,6 +34252,32 @@ components:
         - warnings
         - findings
       description: "The verdict over every skill: valid when no finding refuses.\n\n```\nuse majordomus_cli::capability::builtin::skills::SkillVerification;\nlet v = SkillVerification { valid: true, skills: 3, failures: 0, warnings: 2, findings: vec![] };\n// warnings are debts, reported; they do not make the verdict false\nassert!(v.valid);\n```"
+    Snapshot:
+      type: object
+      properties:
+        sections:
+          type: array
+          items:
+            "$ref": "#/components/schemas/SnapshotSection"
+          description: "The sections, always in the order `remote`, `forge`, `trail`, `lease`, `local`."
+      required:
+        - sections
+      description: "Everything the cycle could move, at one moment."
+    SnapshotSection:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "`remote`, `forge`, `trail`, `lease` or `local`."
+        lines:
+          type: array
+          items:
+            type: string
+          description: "What the section holds, one fact per line, sorted where order carries no meaning."
+      required:
+        - name
+        - lines
+      description: "One section of a snapshot: a name and its lines, in a stable order."
     Source:
       type: object
       properties:
@@ -35634,7 +36568,7 @@ components:
         - lamport
       description: "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```"
 x-majordomus:
-  generator: majordomus-cli 0.13.2
+  generator: majordomus-cli 0.14.0
   infrastructure:
     - id: home
       path: /
@@ -35679,4 +36613,4 @@ x-majordomus:
       code: internal
       reason: The capability failed for a reason of its own; the message names it.
 x-majordomus-generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical Majordomus capability registry; regenerate with `majordomus generate`"
-x-majordomus-generator: majordomus-cli 0.13.2
+x-majordomus-generator: majordomus-cli 0.14.0

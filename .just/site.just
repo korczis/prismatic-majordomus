@@ -73,7 +73,3 @@ derive-merge-driver:
     git config merge.derived.driver "{{root}}/scripts/merge-derived %O %A %B %P"
     @echo "merge.derived wired; .gitattributes now resolves the derived artifacts on merge"
 
-# Take the conflict off a branch GitHub reports as CONFLICTING over derived files alone: merge master in where the driver exists, derive, commit, push the branch (scripts/unblock). `just unblock 137`, `just unblock feature/x --dry-run`.
-[group('site')]
-unblock *args:
-    scripts/unblock {{args}}

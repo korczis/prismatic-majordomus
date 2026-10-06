@@ -1,7 +1,7 @@
 +++
 title = "majordomus served show"
 description = "Each deployment's newest record, re-judged against a commit"
-weight = 162
+weight = 164
 [extra]
 route = "/docs/cli/served/show/"
 command = "majordomus served show"

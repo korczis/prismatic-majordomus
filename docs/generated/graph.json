@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.13.2",
+  "generator": "majordomus-cli 0.14.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -645,6 +645,15 @@
         "status": "query"
       },
       {
+        "id": "capability:integration.cleanup",
+        "kind": "capability",
+        "label": "integration.cleanup",
+        "summary": "What cleanup would do",
+        "route": "/cockpit/capabilities/integration.cleanup",
+        "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:integration.events",
         "kind": "capability",
         "label": "integration.events",
@@ -659,6 +668,15 @@
         "label": "integration.explain",
         "summary": "Why one pull request is where it is",
         "route": "/cockpit/capabilities/integration.explain",
+        "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:integration.prove_dry_run",
+        "kind": "capability",
+        "label": "integration.prove_dry_run",
+        "summary": "Proof that a dry run moves nothing",
+        "route": "/cockpit/capabilities/integration.prove_dry_run",
         "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
         "status": "query"
       },
@@ -1597,70 +1615,6 @@
         "route": "/cockpit/capabilities/worktree.topology",
         "source": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
         "status": "query"
-      },
-      {
-        "id": "file:.ai/repo/knowledge/sources.yaml",
-        "kind": "file",
-        "label": "sources.yaml",
-        "summary": "named by the layer; not an object of this index",
-        "source": ".ai/repo/knowledge/sources.yaml",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/capability/builtin/graph.rs",
-        "kind": "file",
-        "label": "graph.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/capability/builtin/graph.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/capability/builtin/health.rs",
-        "kind": "file",
-        "label": "health.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/capability/builtin/health.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/cockpit/mod.rs",
-        "kind": "file",
-        "label": "mod.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/cockpit/mod.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/graph.rs",
-        "kind": "file",
-        "label": "graph.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/graph.rs",
-        "external": true
-      },
-      {
-        "id": "file:scripts/cockpit-probe",
-        "kind": "file",
-        "label": "cockpit-probe",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/cockpit-probe",
-        "external": true
-      },
-      {
-        "id": "file:share/cockpit/src/cockpit.css",
-        "kind": "file",
-        "label": "cockpit.css",
-        "summary": "named by the layer; not an object of this index",
-        "source": "share/cockpit/src/cockpit.css",
-        "external": true
-      },
-      {
-        "id": "file:share/kinds.yaml",
-        "kind": "file",
-        "label": "kinds.yaml",
-        "summary": "named by the layer; not an object of this index",
-        "source": "share/kinds.yaml",
-        "external": true
       },
       {
         "id": "kind:adr",
@@ -3833,10 +3787,20 @@
             "file:apps/majordomus-cli/src/integration/mod.rs",
             "file:apps/majordomus-cli/src/integration/classify.rs",
             "file:apps/majordomus-cli/src/integration/drain.rs",
+            "file:apps/majordomus-cli/src/integration/exclusive.rs",
             "file:apps/majordomus-cli/src/capability/builtin/integration.rs",
             "file:apps/majordomus-cli/src/integration/tests.rs",
+            "file:apps/majordomus-cli/src/integration/retry.rs",
+            "file:apps/majordomus-cli/src/integration/wait.rs",
+            "file:apps/majordomus-cli/src/integration/relation.rs",
+            "file:apps/majordomus-cli/src/integration/forge.rs",
+            "file:apps/majordomus-cli/src/commands/prs.rs",
             "file:docs/INTEGRATION.md",
-            "test:test/cases/720_integration_follows_the_current_master.sh"
+            "test:test/cases/720_integration_follows_the_current_master.sh",
+            "test:test/cases/740_integration_is_visible_where_a_person_looks.sh",
+            "test:test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
+            "test:test/cases/742_only_an_outage_is_asked_again.sh",
+            "test:test/cases/861_a_successor_that_landed_supersedes.sh"
           ],
           "tags": [
             "integration",
@@ -31218,6 +31182,29 @@
         }
       },
       {
+        "id": "majordomus://release-record/v0.13.2",
+        "kind": "release-record",
+        "label": "v0.13.2",
+        "summary": "v0.13.2",
+        "route": "/cockpit/objects/release-record/v0-13-2",
+        "source": ".ai/repo/releases/v0.13.2.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "9a31fed5e576f4e2f33ddf1dd5b5df7abfdd5497",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.13.2",
+          "published_at": "2026-10-06T03:14:58Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.13.2"
+        }
+      },
+      {
         "id": "majordomus://release-record/v0.3.1",
         "kind": "release-record",
         "label": "v0.3.1",
@@ -33443,12 +33430,12 @@
         }
       },
       {
-        "id": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "id": "majordomus://rule/project.integration-follows-the-current-master@2",
         "kind": "rule",
-        "label": "project.integration-follows-the-current-master@1",
+        "label": "project.integration-follows-the-current-master@2",
         "summary": "Pull requests are integrated one at a time, each decided against the current master, never around the branch protection",
-        "route": "/cockpit/objects/rule/project-integration-follows-the-current-master-1",
-        "source": ".ai/repo/rules/project/integration-follows-the-current-master.v1.md",
+        "route": "/cockpit/objects/rule/project-integration-follows-the-current-master-2",
+        "source": ".ai/repo/rules/project/integration-follows-the-current-master.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -36978,13 +36965,6 @@
         "source": "test/cases/111_session_per_provider.sh"
       },
       {
-        "id": "majordomus://test/test/cases/111_unblock.sh",
-        "kind": "test",
-        "label": "test/cases/111_unblock.sh",
-        "route": "/cockpit/objects/test/test-cases-111-unblock-sh",
-        "source": "test/cases/111_unblock.sh"
-      },
-      {
         "id": "majordomus://test/test/cases/112_version_matches_surface.sh",
         "kind": "test",
         "label": "test/cases/112_version_matches_surface.sh",
@@ -38987,6 +38967,48 @@
         "source": "test/cases/84_web_surfaces.sh"
       },
       {
+        "id": "majordomus://test/test/cases/850_integration_drains_cycle_by_cycle.sh",
+        "kind": "test",
+        "label": "test/cases/850_integration_drains_cycle_by_cycle.sh",
+        "route": "/cockpit/objects/test/test-cases-850-integration-drains-cycle-by-cycle-sh",
+        "source": "test/cases/850_integration_drains_cycle_by_cycle.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/852_a_dry_run_moves_nothing.sh",
+        "kind": "test",
+        "label": "test/cases/852_a_dry_run_moves_nothing.sh",
+        "route": "/cockpit/objects/test/test-cases-852-a-dry-run-moves-nothing-sh",
+        "source": "test/cases/852_a_dry_run_moves_nothing.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/855_racing_executors_merge_once.sh",
+        "kind": "test",
+        "label": "test/cases/855_racing_executors_merge_once.sh",
+        "route": "/cockpit/objects/test/test-cases-855-racing-executors-merge-once-sh",
+        "source": "test/cases/855_racing_executors_merge_once.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/856_racing_worktrees_share_one_lease.sh",
+        "kind": "test",
+        "label": "test/cases/856_racing_worktrees_share_one_lease.sh",
+        "route": "/cockpit/objects/test/test-cases-856-racing-worktrees-share-one-lease-sh",
+        "source": "test/cases/856_racing_worktrees_share_one_lease.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/857_required_checks_are_authoritative.sh",
+        "kind": "test",
+        "label": "test/cases/857_required_checks_are_authoritative.sh",
+        "route": "/cockpit/objects/test/test-cases-857-required-checks-are-authoritative-sh",
+        "source": "test/cases/857_required_checks_are_authoritative.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/858_reviews_are_authoritative.sh",
+        "kind": "test",
+        "label": "test/cases/858_reviews_are_authoritative.sh",
+        "route": "/cockpit/objects/test/test-cases-858-reviews-are-authoritative-sh",
+        "source": "test/cases/858_reviews_are_authoritative.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/85_deployment_bind.sh",
         "kind": "test",
         "label": "test/cases/85_deployment_bind.sh",
@@ -39006,6 +39028,13 @@
         "label": "test/cases/85_ui_conformance.sh",
         "route": "/cockpit/objects/test/test-cases-85-ui-conformance-sh",
         "source": "test/cases/85_ui_conformance.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/861_a_successor_that_landed_supersedes.sh",
+        "kind": "test",
+        "label": "test/cases/861_a_successor_that_landed_supersedes.sh",
+        "route": "/cockpit/objects/test/test-cases-861-a-successor-that-landed-supersedes-sh",
+        "source": "test/cases/861_a_successor_that_landed_supersedes.sh"
       },
       {
         "id": "majordomus://test/test/cases/86_deployment_projections.sh",
@@ -39071,11 +39100,39 @@
         "source": "test/cases/90_mcp_shared_server.sh"
       },
       {
+        "id": "majordomus://test/test/cases/910_nothing_merges_around_the_integrator.sh",
+        "kind": "test",
+        "label": "test/cases/910_nothing_merges_around_the_integrator.sh",
+        "route": "/cockpit/objects/test/test-cases-910-nothing-merges-around-the-integrator-sh",
+        "source": "test/cases/910_nothing_merges_around_the_integrator.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/911_repair_decides_and_moves_nothing.sh",
+        "kind": "test",
+        "label": "test/cases/911_repair_decides_and_moves_nothing.sh",
+        "route": "/cockpit/objects/test/test-cases-911-repair-decides-and-moves-nothing-sh",
+        "source": "test/cases/911_repair_decides_and_moves_nothing.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/912_repair_acts_under_the_lease_and_the_trail.sh",
+        "kind": "test",
+        "label": "test/cases/912_repair_acts_under_the_lease_and_the_trail.sh",
+        "route": "/cockpit/objects/test/test-cases-912-repair-acts-under-the-lease-and-the-trail-sh",
+        "source": "test/cases/912_repair_acts_under_the_lease_and_the_trail.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/91_canonical_architecture.sh",
         "kind": "test",
         "label": "test/cases/91_canonical_architecture.sh",
         "route": "/cockpit/objects/test/test-cases-91-canonical-architecture-sh",
         "source": "test/cases/91_canonical_architecture.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/924_one_executor_across_machines.sh",
+        "kind": "test",
+        "label": "test/cases/924_one_executor_across_machines.sh",
+        "route": "/cockpit/objects/test/test-cases-924-one-executor-across-machines-sh",
+        "source": "test/cases/924_one_executor_across_machines.sh"
       },
       {
         "id": "majordomus://test/test/cases/92_openapi_reference.sh",
@@ -41146,156 +41203,6 @@
         }
       },
       {
-        "id": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "kind": "use-case",
-        "label": "trace-a-change-to-the-context-it-affects",
-        "summary": "Trace a change to the context documents it affects",
-        "route": "/cockpit/objects/use-case/trace-a-change-to-the-context-it-affects",
-        "source": ".ai/repo/use-cases/trace-a-change-to-the-context-it-affects.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "maintainer",
-            "reviewer"
-          ],
-          "applications": [
-            "repository-with-authored-governance",
-            "repository-opened-in-ai-clients"
-          ],
-          "category": "knowledge",
-          "claims": [
-            "context-documents",
-            "context-impact",
-            "ai-layer-manifest"
-          ],
-          "commands": [
-            "context",
-            "doctor"
-          ],
-          "difficulty": "intermediate",
-          "doctrines": [
-            "majordomus.context-integrity",
-            "majordomus.ai-layout-integrity"
-          ],
-          "responsibilities": [
-            "layer"
-          ],
-          "summary": "List the scoped context documents, resolve which apply to a path and why, and find out which documents a change set touches before it lands.",
-          "target": "guaranteed",
-          "weight": 72
-        }
-      },
-      {
-        "id": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "kind": "use-case",
-        "label": "trust-the-policy-before-reading-it",
-        "summary": "Trust the policy and the profiles only after they are validated",
-        "route": "/cockpit/objects/use-case/trust-the-policy-before-reading-it",
-        "source": ".ai/repo/use-cases/trust-the-policy-before-reading-it.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "maintainer"
-          ],
-          "applications": [
-            "repository-with-authored-governance",
-            "ci-gated-project"
-          ],
-          "category": "policy",
-          "claims": [
-            "policy-parse",
-            "profile-validate",
-            "wiring-reconciliation",
-            "exit-code-contract"
-          ],
-          "commands": [
-            "doctor",
-            "check"
-          ],
-          "difficulty": "basic",
-          "doctrines": [
-            "majordomus.policy-integrity",
-            "majordomus.policy-completeness",
-            "majordomus.profile-requirements",
-            "majordomus.enforcement-wiring"
-          ],
-          "responsibilities": [
-            "policy",
-            "profiles",
-            "doctor"
-          ],
-          "summary": "Prove that the canonical policy parses with every key it needs declared, that every profile parses and the default exists, and that what the policy declares as enforced is what actually runs.",
-          "target": "guaranteed",
-          "weight": 41
-        }
-      },
-      {
-        "id": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "kind": "use-case",
-        "label": "work-on-a-branch-in-its-canonical-worktree",
-        "summary": "Work on a branch in the one worktree it belongs to",
-        "route": "/cockpit/objects/use-case/work-on-a-branch-in-its-canonical-worktree",
-        "source": ".ai/repo/use-cases/work-on-a-branch-in-its-canonical-worktree.md",
-        "status": "active",
-        "facts": {
-          "actors": [
-            "agent",
-            "maintainer"
-          ],
-          "applications": [
-            "long-running-work",
-            "repository-opened-in-ai-clients"
-          ],
-          "category": "workers",
-          "claims": [
-            "worktree-topology-derived",
-            "worktree-migration-lossless",
-            "worktree-ownership"
-          ],
-          "commands": [
-            "doctor",
-            "context"
-          ],
-          "difficulty": "intermediate",
-          "doctrines": [
-            "majordomus.enforcement-wiring",
-            "majordomus.scope-integrity"
-          ],
-          "mcp_tools": [
-            "majordomus_worktrees",
-            "majordomus_worktree_status",
-            "majordomus_worktree_inspect",
-            "majordomus_worktree_migration_plan"
-          ],
-          "responsibilities": [
-            "doctor"
-          ],
-          "summary": "Start a branch without choosing a path, find every checkout of the repository from any of them, and bring a stray one home with its uncommitted work intact.",
-          "target": "guaranteed",
-          "weight": 7
-        }
-      },
-      {
-        "id": "majordomus://workspace/chatgpt-majordomus",
-        "kind": "workspace",
-        "label": "chatgpt-majordomus",
-        "summary": "The Majordomus project in ChatGPT",
-        "route": "/cockpit/objects/workspace/chatgpt-majordomus",
-        "source": ".ai/repo/workspaces/chatgpt-majordomus.yaml",
-        "status": "declared",
-        "facts": {
-          "capabilities": [
-            "workspace.read",
-            "conversations.read",
-            "messages.read",
-            "instructions.read",
-            "files.read"
-          ],
-          "created_at": "2026-09-09",
-          "updated_at": "2026-09-09"
-        }
-      },
-      {
         "id": "module:artifacts",
         "kind": "module",
         "label": "artifacts"
@@ -41573,14 +41480,6 @@
         "kind": "projection",
         "label": "mcp",
         "summary": "the mcp projection of the registry"
-      },
-      {
-        "id": "test:apps/majordomus-cli/tests/cockpit.rs",
-        "kind": "test",
-        "label": "cockpit.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/tests/cockpit.rs",
-        "external": true
       }
     ],
     "edges": [
@@ -42710,6 +42609,21 @@
         "kind": "projects"
       },
       {
+        "source": "capability:integration.cleanup",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.cleanup",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.cleanup",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:integration.events",
         "target": "projection:cli",
         "kind": "projects"
@@ -42746,6 +42660,26 @@
       },
       {
         "source": "capability:integration.explain",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.prove_dry_run",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.prove_dry_run",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.prove_dry_run",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.prove_dry_run",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -44586,28 +44520,8 @@
       },
       {
         "source": "majordomus://adr/adr-0010",
-        "target": "file:.ai/repo/knowledge/sources.yaml",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0010",
-        "target": "file:share/kinds.yaml",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0010",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0010",
-        "target": "majordomus://test/test/cases/64_knowledge_discovery.sh",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0010",
-        "target": "majordomus://test/test/cases/73_knowledge_nodes.sh",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0011",
@@ -44641,43 +44555,8 @@
       },
       {
         "source": "majordomus://adr/adr-0012",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/graph.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0012",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/health.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0012",
-        "target": "file:apps/majordomus-cli/src/cockpit/mod.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0012",
-        "target": "file:apps/majordomus-cli/src/graph.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0012",
-        "target": "file:scripts/cockpit-probe",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0012",
-        "target": "file:share/cockpit/src/cockpit.css",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0012",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0012",
-        "target": "majordomus://document/docs/COCKPIT.md",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0012",
@@ -44697,11 +44576,6 @@
       {
         "source": "majordomus://adr/adr-0012",
         "target": "majordomus://rule/project.rust-canonical-declaration@1",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0012",
-        "target": "test:apps/majordomus-cli/tests/cockpit.rs",
         "kind": "put_in_force"
       },
       {
@@ -44761,28 +44635,8 @@
       },
       {
         "source": "majordomus://adr/adr-0020",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/graph.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0020",
-        "target": "file:apps/majordomus-cli/src/cockpit/mod.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0020",
-        "target": "file:apps/majordomus-cli/src/graph.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0020",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0020",
-        "target": "majordomus://document/docs/COCKPIT.md",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0020",
@@ -46261,7 +46115,7 @@
       },
       {
         "source": "majordomus://adr/adr-0101",
-        "target": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "target": "majordomus://rule/project.integration-follows-the-current-master@2",
         "kind": "put_in_force"
       },
       {
@@ -46983,11 +46837,6 @@
         "source": "majordomus://claim/cli-documentation-executable",
         "target": "majordomus://rule/project.rust-cli-evidence@1",
         "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/cockpit-is-a-projection-of-the-registry",
-        "target": "file:apps/majordomus-cli/src/cockpit/mod.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/cockpit-is-a-projection-of-the-registry",
@@ -57155,6 +57004,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://release-record/v0.13.2",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://release-record/v0.3.1",
         "target": "kind:release-record",
         "kind": "is_a"
@@ -58375,17 +58229,17 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "source": "majordomus://rule/project.integration-follows-the-current-master@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "source": "majordomus://rule/project.integration-follows-the-current-master@2",
         "target": "majordomus://rule/project.accumulation-is-measured@2",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "source": "majordomus://rule/project.integration-follows-the-current-master@2",
         "target": "majordomus://rule/project.land-and-publish@1",
         "kind": "depends_on"
       },
@@ -59391,11 +59245,6 @@
       },
       {
         "source": "majordomus://test/test/cases/111_session_per_provider.sh",
-        "target": "kind:test",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://test/test/cases/111_unblock.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -60830,6 +60679,36 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/850_integration_drains_cycle_by_cycle.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/852_a_dry_run_moves_nothing.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/855_racing_executors_merge_once.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/856_racing_worktrees_share_one_lease.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/857_required_checks_are_authoritative.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/858_reviews_are_authoritative.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/85_deployment_bind.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -60841,6 +60720,11 @@
       },
       {
         "source": "majordomus://test/test/cases/85_ui_conformance.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/861_a_successor_that_landed_supersedes.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -60890,7 +60774,27 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/910_nothing_merges_around_the_integrator.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/911_repair_decides_and_moves_nothing.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/912_repair_acts_under_the_lease_and_the_trail.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/91_canonical_architecture.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/924_one_executor_across_machines.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -63045,166 +62949,6 @@
         "kind": "exercises"
       },
       {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://application/repository-opened-in-ai-clients",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://application/repository-with-authored-governance",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://claim/ai-layer-manifest",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://claim/context-documents",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://claim/context-impact",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://rule/majordomus.ai-layout-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/trace-a-change-to-the-context-it-affects",
-        "target": "majordomus://rule/majordomus.context-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://application/ci-gated-project",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://application/repository-with-authored-governance",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://claim/exit-code-contract",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://claim/policy-parse",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://claim/profile-validate",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://claim/wiring-reconciliation",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://rule/majordomus.enforcement-wiring@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://rule/majordomus.policy-completeness@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://rule/majordomus.policy-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/trust-the-policy-before-reading-it",
-        "target": "majordomus://rule/majordomus.profile-requirements@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "capability:worktree.inspect",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "capability:worktree.migration_plan",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "capability:worktree.status",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "capability:worktree.topology",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "kind:use-case",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://application/long-running-work",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://application/repository-opened-in-ai-clients",
-        "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://claim/worktree-migration-lossless",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://claim/worktree-ownership",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://claim/worktree-topology-derived",
-        "kind": "evidences"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://rule/majordomus.enforcement-wiring@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
-        "target": "majordomus://rule/majordomus.scope-integrity@1",
-        "kind": "exercises"
-      },
-      {
-        "source": "majordomus://workspace/chatgpt-majordomus",
-        "target": "kind:workspace",
-        "kind": "is_a"
-      },
-      {
         "source": "module:artifacts",
         "target": "capability:artifacts.list",
         "kind": "composes"
@@ -63526,12 +63270,22 @@
       },
       {
         "source": "module:integration",
+        "target": "capability:integration.cleanup",
+        "kind": "composes"
+      },
+      {
+        "source": "module:integration",
         "target": "capability:integration.events",
         "kind": "composes"
       },
       {
         "source": "module:integration",
         "target": "capability:integration.explain",
+        "kind": "composes"
+      },
+      {
+        "source": "module:integration",
+        "target": "capability:integration.prove_dry_run",
         "kind": "composes"
       },
       {
@@ -64057,7 +63811,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4494,
+      "edges": 4465,
       "acyclic": true,
       "truncated": true
     }
