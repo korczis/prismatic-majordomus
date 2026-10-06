@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "b59eda550a324126d25e6d6a322dabd061e00040",
-  "source_version": "0.13.2",
-  "registry_fingerprint": "b38461640b0b0b77475c64ab604177eb218db0eae6623afd0db4a356497977e3"
+  "commit": "815b96b5a12be1bb255060f06f5a02a2882ad742",
+  "source_version": "0.14.0",
+  "registry_fingerprint": "656d5de37677668592769b2f90ef4703ad4bbf0b7dc059bb8fb69ce33216ee31"
  },
  "counts": {
-  "pages": 1845,
-  "capabilities": 1899,
-  "cli_commands": 89,
-  "http_routes": 168,
-  "mcp_tools": 164,
-  "mcp_resources": 1782,
+  "pages": 1849,
+  "capabilities": 1911,
+  "cli_commands": 90,
+  "http_routes": 170,
+  "mcp_tools": 166,
+  "mcp_resources": 1792,
   "modules": 84
  },
  "kinds": [
@@ -262,7 +262,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 350
+   "count": 360
   },
   {
    "kind": "use-case",
@@ -1280,7 +1280,7 @@
   {
    "route": "/docs/api/integration/",
    "title": "HTTP API: integration",
-   "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network."
+   "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), redundant (its work is on master already), superseded (by a declared successor that landed, named in superseded_by), possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing."
   },
   {
    "route": "/docs/api/intent-realization/",
@@ -2075,7 +2075,7 @@
   {
    "route": "/docs/cli/prs/brief/",
    "title": "majordomus prs brief",
-   "description": "One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease, and the last merge. Offline, decides no relation, and prints nothing where the forge was never observed"
+   "description": "One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease and whether it reaches across machines, the last merge, and the last refresh, failure or stale decision. Offline, decides no relation, and prints nothing where the forge was never observed"
   },
   {
    "route": "/docs/cli/prs/cleanup/",
@@ -2103,9 +2103,19 @@
    "description": "What the executor would do next: the next merge, the pull requests that need master brought in, and the lanes; nothing is changed"
   },
   {
+   "route": "/docs/cli/prs/prove-dry-run/",
+   "title": "majordomus prs prove-dry-run",
+   "description": "Prove the non-mutating cycle moves nothing: snapshot origin's refs, the open pull requests, the audit trail, the lease and the local refs, run refresh, plan, drain --dry-run and cleanup (listing), snapshot again and compare; the refresh's fetched mirrors must equal what origin serves. Exit 10 naming what moved. Takes no flag: there is nothing to turn on"
+  },
+  {
    "route": "/docs/cli/prs/refresh/",
    "title": "majordomus prs refresh",
    "description": "Observe the forge now (the GitHub CLI and one `git fetch`) and record the observation; the only read that reaches the network"
+  },
+  {
+   "route": "/docs/cli/prs/repair/",
+   "title": "majordomus prs repair",
+   "description": "Bring master into one named pull request whose only conflict with it is over derived (`merge=derived`) files. Eligible only when the classification says it is behind master and its merge conflicts on no authored path; an authored conflict is refused, naming the files. A dry run by default, decided offline on the last recorded observation, like `status`. With `--apply` it takes the integration lease, observes the forge again, records the act on the trail first, and merges master in a scratch worktree, derives, commits and pushes a fast-forward leased on the observed head; it never merges into master. Exit 10 on a refusal or an absent observation, 12 when it could not act"
   },
   {
    "route": "/docs/cli/prs/status/",
@@ -2600,7 +2610,7 @@
   {
    "route": "/docs/integration/",
    "title": "Pull-request integration",
-   "description": "pull-request integration: every open pull request classified against the current master with its evidence, the thirteen dispositions, the deterministic rank, one merge at a time with a re-plan after each, refreshing a branch, the cleanup threshold, the lease and the audit trail (ADR 0101)"
+   "description": "pull-request integration: every open pull request classified against the current master with its evidence, the fourteen dispositions, the deterministic rank, one merge at a time with a re-plan after each, refreshing a branch, the cleanup threshold, the lease and the audit trail (ADR 0101)"
   },
   {
    "route": "/docs/knowledge/",
@@ -6173,19 +6183,29 @@
    "description": "Every dimension of what this process serves — the layer as it was read, the registry, the scope, version control, benchmark coverage, the committed registry manifest, the shared server of this checkout and the attached peers — each decided by the engine that owns it, with the command that reproduces the verdict."
   },
   {
+   "route": "/registry/capabilities/integration-cleanup/",
+   "title": "integration.cleanup",
+   "description": "The cleanup plan, decided offline from the recorded observation: every open pull request cleanup would close — redundant (its work is on master already) or superseded (by a declared successor that landed) — and every one it leaves for a person — possibly redundant (weak evidence) or obsolete (a person marked it, owner decision D3) — each with its disposition and the reasons that decided it, in rank order; beside it, the branches merged pull requests left on origin as `majordomus prs cleanup` last read them, with when and how long ago. A read: it closes, deletes and asks the forge for nothing — `majordomus prs cleanup` reads the forge and `--apply` closes. `observed: false` with the reason when this checkout has recorded no observation."
+  },
+  {
    "route": "/registry/capabilities/integration-events/",
    "title": "integration.events",
-   "description": "Every action this checkout's executor recorded, oldest first: selections, stale decisions, merge attempts, merges with the master before and after, refusals, refreshes, verification failures and closures, each with its actor, the pull request, the head and the decision's reasons."
+   "description": "Every action the repository's executors recorded, from any of its worktrees, oldest first: the lease taken and given back, observations, selections, stale decisions, each act's attempt before it and its outcome after — merges with the master before and after, refusals, refreshes, verification failures and closures — each with a typed action, its actor, the pull request, the head, the decision's reasons and, on an act, the evidence it was decided on. The trail is one file under the common git directory, so every worktree reads the same one."
   },
   {
    "route": "/registry/capabilities/integration-explain/",
    "title": "integration.explain",
-   "description": "One pull request's assessment — disposition, lane, reasons, next action, the master and head it was decided against, required checks, review, relation to master, dependencies, overlaps, risk with its factors, and every piece of evidence — with its rank in the queue. `found: false` with the reason when it is not open or nothing is observed."
+   "description": "One pull request's assessment — disposition, lane, reasons, every gate of the policy with whether it passed, next action, the master and head it was decided against and when the forge was observed, required checks, review, relation to master, dependencies, overlaps, risk with its factors, and every piece of evidence — with its rank in the queue. `found: false` with the reason when it is not open or nothing is observed."
+  },
+  {
+   "route": "/registry/capabilities/integration-prove-dry-run/",
+   "title": "integration.prove_dry_run",
+   "description": "Runs the executor's non-mutating cycle — refresh, plan, drain --dry-run and cleanup without --apply — between two snapshots of everything it could move if it were wrong: every ref origin serves, every open pull request's number, head, state and labels, the integration audit trail, the executor's lease, and every local ref outside the two namespaces the refresh mirrors. `ok` is true exactly when the snapshots are equal and refs/remotes/origin/<base> and every refs/majordomus/prs/<n> equal what origin serves. A read that reaches the network: the refresh asks the forge through the GitHub CLI and fetches the base and the pull-request heads, and like every read it rewrites the observation, relation and summary caches. It merges, closes and pushes nothing, and takes no input that could make it."
   },
   {
    "route": "/registry/capabilities/integration-queue/",
    "title": "integration.queue",
-   "description": "The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection's required checks and reviews, the blocking labels, the merge method), every open pull request's assessment in rank order — an actionable one with how long it has waited for the executor and how often another was chosen instead — the next merge, the pull requests that need master brought in, the starving ones, the tallies by disposition and lane, and the diagnostics, a stale observation first; beside it, who holds the base branch's integration lease and the last merge the executor recorded. `observed: false` with the reason when this checkout has recorded no observation."
+   "description": "The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection's required checks and reviews, the label policy, the merge method: a merge commit, or none when the repository allows none), every open pull request's assessment in rank order — an actionable one with how long it has waited for the executor and how often another was chosen instead — the next merge, the pull requests that need master brought in, the starving ones, the tallies by disposition and lane, and the diagnostics, a stale observation first; beside it, who holds the base branch's integration lease and the last merge the executor recorded. `observed: false` with the reason when this checkout has recorded no observation."
   },
   {
    "route": "/registry/capabilities/intent-realization-explain/",
@@ -6840,7 +6860,7 @@
   {
    "route": "/registry/modules/integration/",
    "title": "Pull-request integration",
-   "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network."
+   "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), redundant (its work is on master already), superseded (by a declared successor that landed, named in superseded_by), possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing."
   },
   {
    "route": "/registry/modules/intent-realization/",
@@ -7825,12 +7845,12 @@
    "source": ".ai/repo/rules/project/independent-of-prismatic.v1.md"
   },
   {
-   "route": "/rules/project-integration-follows-the-current-master-1/",
+   "route": "/rules/project-integration-follows-the-current-master-2/",
    "title": "Pull requests are integrated one at a time, each decided against the current master, never around the branch protection",
    "description": "Pull requests are integrated one at a time, each decided against the current master, never around the branch protection",
    "kind": "rule",
-   "id": "majordomus://rule/project.integration-follows-the-current-master@1",
-   "source": ".ai/repo/rules/project/integration-follows-the-current-master.v1.md"
+   "id": "majordomus://rule/project.integration-follows-the-current-master@2",
+   "source": ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
   },
   {
    "route": "/rules/project-interfaces-are-projections-1/",
@@ -8266,8 +8286,8 @@
   },
   {
    "route": "/rustdoc/",
-   "title": "majordomus-cli 0.13.2 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.13.2, built from commit b59eda550a324126d25e6d6a322dabd061e00040: the public items of the library and of the executable, and the source they were built from."
+   "title": "majordomus-cli 0.14.0 — Rust API reference",
+   "description": "The rustdoc reference of majordomus-cli 0.14.0, built from commit 815b96b5a12be1bb255060f06f5a02a2882ad742: the public items of the library and of the executable, and the source they were built from."
   },
   {
    "route": "/rustdoc/majordomus/",

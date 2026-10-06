@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HTTP API: integration — Prismatic Majordomus</title>
-<meta name="description" content="Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository&#39;s own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network.">
+<meta name="description" content="Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), redundant (its work is on master already), superseded (by a declared successor that landed, named in superseded_by), possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository&#39;s own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing.">
 <link rel="canonical" href="https://majordomus.dev/docs/api/integration/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
 <meta property="og:title" content="HTTP API: integration — Prismatic Majordomus">
-<meta property="og:description" content="Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository&#39;s own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network.">
+<meta property="og:description" content="Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), redundant (its work is on master already), superseded (by a declared successor that landed, named in superseded_by), possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository&#39;s own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing.">
 <meta property="og:url" content="https://majordomus.dev/docs/api/integration/">
 <meta property="og:image" content="https://majordomus.dev/images/social-card.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -29,7 +29,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.13.2 -->
+     Generator: majordomus-cli 0.14.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -153,7 +153,7 @@
 </nav>
 
     <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">HTTP API: integration</h1>
-    <p class="mt-3 max-w-3xl break-words text-lg text-body">Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository&#39;s own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network.</p>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), redundant (its work is on master already), superseded (by a declared successor that landed, named in superseded_by), possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository&#39;s own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing.</p>
   </div>
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
@@ -161,27 +161,27 @@
   <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="API sections">
     <p class="mb-2"><a href="https://majordomus.dev/docs/api/" class="font-mono text-xs uppercase tracking-wide text-fg-brand hover:underline">HTTP API index</a></p>
     <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">on this page</p>
-    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="#op-integration-queue" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">integration.queue</a></li><li><a href="#op-integration-events" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">integration.events</a></li><li><a href="#op-integration-explain" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">integration.explain</a></li><li><a href="#schemas" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Schemas</a></li>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="#op-integration-queue" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">integration.queue</a></li><li><a href="#op-integration-cleanup" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">integration.cleanup</a></li><li><a href="#op-integration-events" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">integration.events</a></li><li><a href="#op-integration-explain" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">integration.explain</a></li><li><a href="#op-integration-prove_dry_run" class="block truncate rounded px-2 py-1 font-mono text-xs text-body hover:bg-neutral-secondary-medium hover:text-heading">integration.prove_dry_run</a></li><li><a href="#schemas" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Schemas</a></li>
     </ul>
   </nav>
   <div class="min-w-0">
-    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/b59eda550a324126d25e6d6a322dabd061e00040/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p><section id="tag-integration" class="scroll-mt-24">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/815b96b5a12be1bb255060f06f5a02a2882ad742/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p><section id="tag-integration" class="scroll-mt-24">
       <h2 class="font-mono text-xl font-semibold tracking-tight text-heading">integration</h2>
-      <p class="mt-2 max-w-3xl text-sm text-body">Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository&#39;s own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network.</p><article id="op-integration-queue" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+      <p class="mt-2 max-w-3xl text-sm text-body">Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), redundant (its work is on master already), superseded (by a declared successor that landed, named in superseded_by), possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository&#39;s own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing.</p><article id="op-integration-queue" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-center gap-2">
     <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
     <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/pull-requests</code>
     <a href="#op-integration-queue" class="font-mono text-xs text-body-subtle hover:underline">integration.queue</a>
   </div>
   <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">The integration queue</h3>
-  <p class="mt-1 break-words text-sm text-body">The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection&#39;s required checks and reviews, the blocking labels, the merge method), every open pull request&#39;s assessment in rank order — an actionable one with how long it has waited for the executor and how often another was chosen instead — the next merge, the pull requests that need master brought in, the starving ones, the tallies by disposition and lane, and the diagnostics, a stale observation first; beside it, who holds the base branch&#39;s integration lease and the last merge the executor recorded. `observed: false` with the reason when this checkout has recorded no observation.</p>
+  <p class="mt-1 break-words text-sm text-body">The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection&#39;s required checks and reviews, the label policy, the merge method: a merge commit, or none when the repository allows none), every open pull request&#39;s assessment in rank order — an actionable one with how long it has waited for the executor and how often another was chosen instead — the next merge, the pull requests that need master brought in, the starving ones, the tallies by disposition and lane, and the diagnostics, a stale observation first; beside it, who holds the base branch&#39;s integration lease and the last merge the executor recorded. `observed: false` with the reason when this checkout has recorded no observation.</p>
   <ul class="mt-3 flex flex-wrap gap-2 text-xs">
     <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">experimental</span></li>
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">MCP tool majordomus_pull_requests</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">$ prs status</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
   <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
-  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/pull-requests&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Verified by <a href="https://github.com/korczis/prismatic-majordomus/blob/b59eda550a324126d25e6d6a322dabd061e00040/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/pull-requests&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Verified by <a href="https://github.com/korczis/prismatic-majordomus/blob/815b96b5a12be1bb255060f06f5a02a2882ad742/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
 
   <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
   <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -211,6 +211,50 @@
     </table>
   </div>
 </article>
+<article id="op-integration-cleanup" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/pull-requests/cleanup</code>
+    <a href="#op-integration-cleanup" class="font-mono text-xs text-body-subtle hover:underline">integration.cleanup</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">What cleanup would do</h3>
+  <p class="mt-1 break-words text-sm text-body">The cleanup plan, decided offline from the recorded observation: every open pull request cleanup would close — redundant (its work is on master already) or superseded (by a declared successor that landed) — and every one it leaves for a person — possibly redundant (weak evidence) or obsolete (a person marked it, owner decision D3) — each with its disposition and the reasons that decided it, in rank order; beside it, the branches merged pull requests left on origin as `majordomus prs cleanup` last read them, with when and how long ago. A read: it closes, deletes and asks the forge for nothing — `majordomus prs cleanup` reads the forge and `--apply` closes. `observed: false` with the reason when this checkout has recorded no observation.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">experimental</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">MCP tool majordomus_pull_requests_cleanup</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/pull-requests/cleanup&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Verified by <a href="https://github.com/korczis/prismatic-majordomus/blob/815b96b5a12be1bb255060f06f5a02a2882ad742/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationCleanup" class="text-fg-brand hover:underline">IntegrationCleanup</a></td>
+          <td class="px-3 py-2 text-body">What cleanup would do: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
 <article id="op-integration-events" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-center gap-2">
     <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
@@ -218,14 +262,14 @@
     <a href="#op-integration-events" class="font-mono text-xs text-body-subtle hover:underline">integration.events</a>
   </div>
   <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">The integration audit trail</h3>
-  <p class="mt-1 break-words text-sm text-body">Every action this checkout&#39;s executor recorded, oldest first: selections, stale decisions, merge attempts, merges with the master before and after, refusals, refreshes, verification failures and closures, each with its actor, the pull request, the head and the decision&#39;s reasons.</p>
+  <p class="mt-1 break-words text-sm text-body">Every action the repository&#39;s executors recorded, from any of its worktrees, oldest first: the lease taken and given back, observations, selections, stale decisions, each act&#39;s attempt before it and its outcome after — merges with the master before and after, refusals, refreshes, verification failures and closures — each with a typed action, its actor, the pull request, the head, the decision&#39;s reasons and, on an act, the evidence it was decided on. The trail is one file under the common git directory, so every worktree reads the same one.</p>
   <ul class="mt-3 flex flex-wrap gap-2 text-xs">
     <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">experimental</span></li>
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark required</span></li>
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">MCP tool majordomus_integration_events</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">$ prs events</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
   <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
-  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/pull-requests/events&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Verified by <a href="https://github.com/korczis/prismatic-majordomus/blob/b59eda550a324126d25e6d6a322dabd061e00040/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/pull-requests/events&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Verified by <a href="https://github.com/korczis/prismatic-majordomus/blob/815b96b5a12be1bb255060f06f5a02a2882ad742/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
 
   <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
   <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -262,7 +306,7 @@
     <a href="#op-integration-explain" class="font-mono text-xs text-body-subtle hover:underline">integration.explain</a>
   </div>
   <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">Why one pull request is where it is</h3>
-  <p class="mt-1 break-words text-sm text-body">One pull request&#39;s assessment — disposition, lane, reasons, next action, the master and head it was decided against, required checks, review, relation to master, dependencies, overlaps, risk with its factors, and every piece of evidence — with its rank in the queue. `found: false` with the reason when it is not open or nothing is observed.</p>
+  <p class="mt-1 break-words text-sm text-body">One pull request&#39;s assessment — disposition, lane, reasons, every gate of the policy with whether it passed, next action, the master and head it was decided against and when the forge was observed, required checks, review, relation to master, dependencies, overlaps, risk with its factors, and every piece of evidence — with its rank in the queue. `found: false` with the reason when it is not open or nothing is observed.</p>
   <ul class="mt-3 flex flex-wrap gap-2 text-xs">
     <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">experimental</span></li>
@@ -281,7 +325,7 @@
     </table>
   </div><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
   <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
-  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/pull-requests/explain?number=1&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Verified by <a href="https://github.com/korczis/prismatic-majordomus/blob/b59eda550a324126d25e6d6a322dabd061e00040/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/pull-requests/explain?number=1&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Verified by <a href="https://github.com/korczis/prismatic-majordomus/blob/815b96b5a12be1bb255060f06f5a02a2882ad742/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
 
   <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
   <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
@@ -311,20 +355,181 @@
     </table>
   </div>
 </article>
+<article id="op-integration-prove_dry_run" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-center gap-2">
+    <span class="rounded px-2 py-0.5 font-mono text-xs font-bold bg-success-soft text-fg-success-strong border border-success-subtle">GET</span>
+    <code class="break-all font-mono text-base font-semibold text-heading">/api/v1/pull-requests/prove-dry-run</code>
+    <a href="#op-integration-prove_dry_run" class="font-mono text-xs text-body-subtle hover:underline">integration.prove_dry_run</a>
+  </div>
+  <h3 class="mt-3 text-lg font-semibold tracking-tight text-heading">Proof that a dry run moves nothing</h3>
+  <p class="mt-1 break-words text-sm text-body">Runs the executor&#39;s non-mutating cycle — refresh, plan, drain --dry-run and cleanup without --apply — between two snapshots of everything it could move if it were wrong: every ref origin serves, every open pull request&#39;s number, head, state and labels, the integration audit trail, the executor&#39;s lease, and every local ref outside the two namespaces the refresh mirrors. `ok` is true exactly when the snapshots are equal and refs/remotes/origin/&lt;base&gt; and every refs/majordomus/prs/&lt;n&gt; equal what origin serves. A read that reaches the network: the refresh asks the forge through the GitHub CLI and fetches the base and the pull-request heads, and like every read it rewrites the observation, relation and summary caches. It merges, closes and pushes nothing, and takes no input that could make it.</p>
+  <ul class="mt-3 flex flex-wrap gap-2 text-xs">
+    <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-heading">query</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">experimental</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark waived: external_dependency</span></li>
+    <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache disabled</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">MCP tool majordomus_pull_requests_prove_dry_run</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">$ prs prove-dry-run</span></li></ul><p class="mt-5 text-sm text-body-subtle">No parameters.</p><h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Try it</h4>
+  <p class="mt-1 text-xs text-body-subtle">The port is whatever the server logged; 8741 is the one it asks for first. The values are the operation's first example.</p>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0"><pre class="m-0 p-3 font-mono text-xs leading-relaxed text-heading" tabindex="0">curl -s &quot;http://127.0.0.1:8741/api/v1/pull-requests/prove-dry-run&quot;</pre></div><p class="mt-1 text-xs text-body-subtle">Verified by <a href="https://github.com/korczis/prismatic-majordomus/blob/815b96b5a12be1bb255060f06f5a02a2882ad742/apps/majordomus-cli/tests/http_serve.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/http_serve.rs</a>, which replays the route with these values against a server on a real socket.</p>
+
+  <h4 class="mt-5 font-mono text-xs uppercase tracking-wide text-body-subtle">Responses</h4>
+  <div class="mt-2 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">status</th><th class="px-3 py-2">body</th><th class="px-3 py-2">meaning</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-fg-success-strong">200</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/integration/#schema-DryRunProof" class="text-fg-brand hover:underline">DryRunProof</a></td>
+          <td class="px-3 py-2 text-body">Proof that a dry run moves nothing: the result.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">400</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>invalid_input</code>: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">404</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>not_found</code>: The input names something the repository does not hold.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">500</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body"><code>internal</code>: The capability failed for a reason of its own; the message names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">default</td>
+          <td class="px-3 py-2 font-mono"><a href="https://majordomus.dev/docs/api/shared/#schema-ErrorBody" class="text-fg-brand hover:underline">ErrorBody</a></td>
+          <td class="px-3 py-2 text-body">Any other failure the transport reports: 405 <code>method_not_allowed</code> for another method on this path, 400 <code>invalid_input</code> for a body that is not a JSON object.</td>
+        </tr></tbody>
+    </table>
+  </div>
+</article>
 </section><section id="schemas" class="mt-12 scroll-mt-24">
       <h2 class="text-xl font-semibold tracking-tight text-heading">Schemas</h2>
-      <p class="mt-2 text-sm text-body">The components only this tag's operations use. Each row is the type's own field, its doc comment the description; a type another page owns links there.</p><article id="schema-DependencyCertainty" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+      <p class="mt-2 text-sm text-body">The components only this tag's operations use. Each row is the type's own field, its doc comment the description; a type another page owns links there.</p><article id="schema-ChangeShape" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">ChangeShape</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What a head's merge into master changes, by kind: the authored paths a person wrote, the
+derived paths a generator writes (by the repository's <code>merge=derived</code> attributes on master),
+and the version the head declares when it raises the crate's. Decided from the same pair
+of commits as the relation to master, and cached under the same key beside it, so a change
+of either commit — a <code>.gitattributes</code> change on master is one — makes both stale together.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">authored</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Authored (non-derived) paths the merge changes or conflicts on, in path order.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">derived</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Derived paths the merge changes or conflicts on, in path order.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">version_bump</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The version the head declares in the crate manifest, when it is not the one its merge
+base declares: the head raises the version.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-PullRequestAssessment" class="font-mono text-fg-brand underline">PullRequestAssessment</a></p></article>
+<article id="schema-CleanupItem" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">CleanupItem</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What cleanup would do, or did, for one pull request.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">pr</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The pull request.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">disposition</td>
+          <td class="px-3 py-2 font-mono text-body">PullRequestDisposition <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-PullRequestDisposition" class="text-fg-brand underline">PullRequestDisposition</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Its disposition when decided.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">reasons</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The evidence, as reason codes.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">action</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><code>would_close</code>, <code>closed</code>, <code>left_for_a_person</code>, or <code>close_failed: &lt;why&gt;</code>.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationCleanup" class="font-mono text-fg-brand underline">IntegrationCleanup</a></p></article>
+<article id="schema-DependencyCertainty" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">DependencyCertainty</h3>
     <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;confirmed&quot; | &quot;inferred&quot;</span>
   </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">How a dependency is known. Only a declared one blocks.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">confirmed</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Declared: a <code>Depends on #N</code> / <code>Stacked on #N</code> line in the body, or a base branch
 that is another open pull request's head.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">inferred</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Inferred: the head contains the other's head commit. Evidence, never a block.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-PullRequestDependency" class="font-mono text-fg-brand underline">PullRequestDependency</a></p></article>
+<article id="schema-DependencyState" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">DependencyState</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;open&quot; | &quot;merged&quot; | &quot;closed_unmerged&quot; | &quot;unread&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What became of a pull request another one depends on.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">open</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Still open.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">merged</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Merged: the only state that satisfies it.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">closed_unmerged</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Closed without a merge: its work never landed, so a person decides.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unread</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Not open, and the forge could not say what became of it — refused, or not a pull
+request at all: unknown, never satisfied.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-PullRequestDependency" class="font-mono text-fg-brand underline">PullRequestDependency</a></p></article>
+<article id="schema-DryRunProof" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">DryRunProof</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The verdict: what was compared, what moved, and what the cycle observed.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">ok</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">True exactly when nothing moved and every mirror equals what origin serves.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">base</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The base branch the executor works on.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">steps</td>
+          <td class="px-3 py-2 font-mono text-body">array of ProofStep <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-ProofStep" class="text-fg-brand underline">ProofStep</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The cycle, step by step.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">moved</td>
+          <td class="px-3 py-2 font-mono text-body">array of Moved <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-Moved" class="text-fg-brand underline">Moved</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Every line that differs between the snapshots; empty when nothing moved.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">mirrors</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Every mirrored ref that is not what origin serves; empty when they all are.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">before</td>
+          <td class="px-3 py-2 font-mono text-body">Snapshot <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-Snapshot" class="text-fg-brand underline">Snapshot</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The snapshot before the cycle.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">after</td>
+          <td class="px-3 py-2 font-mono text-body">Snapshot <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-Snapshot" class="text-fg-brand underline">Snapshot</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The snapshot after it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">classification</td>
+          <td class="px-3 py-2 font-mono text-body">array of ObservedClassification <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-ObservedClassification" class="text-fg-brand underline">ObservedClassification</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Every open pull request as the cycle classified it, in rank order.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#op-integration-prove_dry_run" class="font-mono text-fg-brand hover:underline">integration.prove_dry_run</a></p></article>
 <article id="schema-EvaluatedAgainst" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">EvaluatedAgainst</h3>
     <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
-  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The revisions a decision was taken against. A decision is valid only while both still
-hold: the executor compares them with what it re-reads before it acts.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The revisions a decision was taken against, and when the forge was observed. A decision is
+valid only while both revisions still hold: the executor compares them with what it
+re-reads before it acts.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
@@ -337,9 +542,37 @@ hold: the executor compares them with what it re-reads before it acts.</div><div
           <td class="px-3 py-2 font-mono text-body">string</td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
           <td class="px-3 py-2 text-body">The pull request's head commit.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">observed_at</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">When the forge was observed, RFC 3339; empty in a value written before it was named.</td>
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-PullRequestAssessment" class="font-mono text-fg-brand underline">PullRequestAssessment</a></p></article>
+<article id="schema-EvidenceKind" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">EvidenceKind</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;required_check&quot; | &quot;required_checks&quot; | &quot;review&quot; | &quot;relation_to_master&quot; | &quot;dependency&quot; | &quot;label&quot; | &quot;draft&quot; | &quot;base&quot; | &quot;freshness&quot; | &quot;auto_merge&quot; | &quot;supersession&quot; | &quot;repository_settings&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What kind of fact a piece of evidence is. The wire words are the ones the evidence carried
+while its kind was a string, so a trail written then still reads.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">required_check</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">One required check's state on the head: one entry per context the base requires.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">required_checks</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The required checks together: their verdict, and each context's state.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">review</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The review policy and the forge's decision, or one reviewer's latest review.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">relation_to_master</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">What the head is to master, as git decided it.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">dependency</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">One declared dependency.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">label</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">One label whose policy is to hold.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">draft</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Whether it is a draft; always emitted.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">base</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The branch it targets; always emitted.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">freshness</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">How old the observation is. Declared so the vocabulary is settled; nothing emits it yet.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">auto_merge</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The forge has auto-merge armed; emitted whenever it is.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">supersession</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">One declared successor: which pull request replaces this one, whose body said so, and
+whether it landed. One entry per successor declared.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">repository_settings</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">What the repository's settings allow the executor; emitted when they allow no merge
+commit.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationEvidence" class="font-mono text-fg-brand underline">IntegrationEvidence</a></p></article>
+<article id="schema-EvidenceSource" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">EvidenceSource</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">one of 2 variants</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Where a piece of evidence was read.</div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> The forge observation, at its moment.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">observed_at</td><td class="px-3 py-2 font-mono text-body">string</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">When the forge was observed, RFC 3339.</td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">kind</td><td class="px-3 py-2 font-mono text-body">&quot;forge&quot;</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> Git, on this pair of commits.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">master_sha</td><td class="px-3 py-2 font-mono text-body">string</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The master commit.</td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">head_sha</td><td class="px-3 py-2 font-mono text-body">string</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The head commit.</td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">kind</td><td class="px-3 py-2 font-mono text-body">&quot;git&quot;</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationEvidence" class="font-mono text-fg-brand underline">IntegrationEvidence</a></p></article>
 <article id="schema-ExecutorWait" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">ExecutorWait</h3>
@@ -370,6 +603,91 @@ or refreshable.</td>
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-PullRequestAssessment" class="font-mono text-fg-brand underline">PullRequestAssessment</a></p></article>
+<article id="schema-FailureClass" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">FailureClass</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;stale&quot; | &quot;conflict&quot; | &quot;new_failing_check&quot; | &quot;review_revoked&quot; | &quot;transient&quot; | &quot;policy_violation&quot; | &quot;verification_failed&quot; | &quot;unreadable&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Why an act failed, as one class a person and a retry policy can act on. Every failed act
+on the trail carries one (<code>class</code>), and the drain decides from it whether the next
+candidate may be tried (<code>FailureClass::recoverable</code>) or the drain must stop.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">stale</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Master or the head moved since the decision.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">conflict</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The merge of master conflicts.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">new_failing_check</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A required check failed that had passed.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">review_revoked</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">An approval was withdrawn.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">transient</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The forge or the network failed in a way that passes.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">policy_violation</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The branch protection refused it.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">verification_failed</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">What landed could not be verified.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unreadable</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The forge or git could not be read.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationEvent" class="font-mono text-fg-brand underline">IntegrationEvent</a></p></article>
+<article id="schema-GateResult" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">GateResult</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">How one gate answered.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">gate</td>
+          <td class="px-3 py-2 font-mono text-body">IntegrationGate <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationGate" class="text-fg-brand underline">IntegrationGate</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The gate.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">passed</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether it passed. A gate that fails only because an earlier one did (the head is not
+fresh when its merge conflicts) fails without a reason of its own.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-PullRequestAssessment" class="font-mono text-fg-brand underline">PullRequestAssessment</a></p></article>
+<article id="schema-IntegrationAction" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">IntegrationAction</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;lease_acquired&quot; | &quot;lease_released&quot; | &quot;continuous_started&quot; | &quot;continuous_stopped&quot; | &quot;observed&quot; | &quot;became_actionable&quot; | &quot;left_actionable&quot; | &quot;selected&quot; | &quot;refresh_selected&quot; | &quot;stale_decision&quot; | &quot;merge_attempted&quot; | &quot;merge_succeeded&quot; | &quot;merge_failed&quot; | &quot;verification_failed&quot; | &quot;failure_acknowledged&quot; | &quot;refresh_attempted&quot; | &quot;refreshed&quot; | &quot;refresh_failed&quot; | &quot;close_attempted&quot; | &quot;closed_redundant&quot; | &quot;closed_superseded&quot; | &quot;close_failed&quot; | &quot;repair_selected&quot; | &quot;repair_attempted&quot; | &quot;repaired&quot; | &quot;repair_refused&quot; | &quot;idle&quot; | &quot;observe_failed&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What one line of the audit trail records. The wire word is the variant's <code>snake_case</code>
+name — the same word each was written as while the action was a string — so every line
+written before still parses, and a word nobody writes is not an action.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">lease_acquired</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The executor took the base branch's lease.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">lease_released</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">It gave the lease back.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">continuous_started</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A continuous drain started.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">continuous_stopped</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A continuous drain stopped; the detail says why.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">observed</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The forge was observed and the observation recorded.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">became_actionable</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A pull request became actionable (ready or refreshable).</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">left_actionable</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A pull request stopped being actionable.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">selected</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The first ready pull request was chosen to merge.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">refresh_selected</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The first refreshable pull request was chosen to bring master into.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">stale_decision</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The decision went stale between planning and acting; nothing was done.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">merge_attempted</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A merge is about to be asked of the forge.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">merge_succeeded</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The merge landed and was verified.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">merge_failed</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The forge refused the merge.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">verification_failed</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">What landed could not be verified.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">failure_acknowledged</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A person looked at a merge that could not be verified and lets drains merge again
+(<code>prs drain --resume-after-failure</code>).</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">refresh_attempted</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Master is about to be merged into a branch and pushed.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">refreshed</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Master was brought into the branch and pushed.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">refresh_failed</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Bringing master in failed.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">close_attempted</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A redundant or superseded pull request is about to be closed.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">closed_redundant</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A redundant one was closed.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">closed_superseded</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A superseded one was closed (before 0.13, a line with this word recorded what is now
+<code>closed_redundant</code>).</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">close_failed</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Closing it failed.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">repair_selected</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A person named a pull request to repair (<code>prs repair --apply</code>) and its classification
+makes it eligible: master is what it lacks, and nothing authored conflicts.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">repair_attempted</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Master is about to be merged into the named branch and pushed.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">repaired</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Master was brought into the named branch and pushed.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">repair_refused</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The repair was refused — by the classification (an authored conflict, a fork, armed
+auto-merge, another base, an undecidable relation) or by the act (a merge, derive,
+commit or push that failed) — and nothing reached the branch; <code>class</code> says why.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">idle</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Nothing was ready.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">observe_failed</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A continuous drain's cycle could not observe the forge, and the outage was short
+enough to wait out (<code>CONTINUOUS_TRANSIENT_LIMIT</code>).</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationEvent" class="font-mono text-fg-brand underline">IntegrationEvent</a> <a href="https://majordomus.dev/docs/api/integration/#schema-PassedOver" class="font-mono text-fg-brand underline">PassedOver</a></p></article>
+<article id="schema-IntegrationCleanup" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">IntegrationCleanup</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What cleanup would do, decided offline: the pull requests it would close or leave for a
+person, from the recorded observation, and the last branch report <code>prs cleanup</code> recorded.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">observed</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether a forge observation is recorded in this checkout.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">reason</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Why there is no plan, when there is none.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">observed_at</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">When the forge was observed, when it was.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">items</td>
+          <td class="px-3 py-2 font-mono text-body">array of CleanupItem <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-CleanupItem" class="text-fg-brand underline">CleanupItem</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The plan, in rank order: <code>would_close</code> for what is provably on master or superseded by
+a successor that landed, <code>left_for_a_person</code> for weak evidence and for what a person
+marked obsolete. Nothing here closes anything.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">branches</td>
+          <td class="px-3 py-2 font-mono text-body">LeftBranchReport | null <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-LeftBranchReport" class="text-fg-brand underline">LeftBranchReport</a></td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The branches merged pull requests left on origin, as <code>prs cleanup</code> last read them;
+<code>None</code> when it never ran in this checkout. Never read from the network here.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">branches_age_seconds</td>
+          <td class="px-3 py-2 font-mono text-body">integer | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">How old that report is, in seconds, when its time reads.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#op-integration-cleanup" class="font-mono text-fg-brand hover:underline">integration.cleanup</a></p></article>
 <article id="schema-IntegrationEvent" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">IntegrationEvent</h3>
@@ -389,12 +707,9 @@ or refreshable.</td>
           <td class="px-3 py-2 text-body">Who: the git identity, the process and the machine.</td>
         </tr><tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold text-heading">action</td>
-          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">IntegrationAction <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationAction" class="text-fg-brand underline">IntegrationAction</a></td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">What (<code>selected</code>, <code>refresh_selected</code>, <code>stale_decision</code>, <code>merge_attempted</code>,
-<code>merge_succeeded</code>, <code>merge_failed</code>, <code>verification_failed</code>, <code>refreshed</code>,
-<code>refresh_failed</code>, <code>closed_superseded</code>, <code>idle</code>, and the two transitions the wait is
-folded from: <code>became_actionable</code>, <code>left_actionable</code>).</td>
+          <td class="px-3 py-2 text-body">What (<code>IntegrationAction</code>).</td>
         </tr><tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold text-heading">pr</td>
           <td class="px-3 py-2 font-mono text-body">integer | null</td>
@@ -419,7 +734,7 @@ folded from: <code>became_actionable</code>, <code>left_actionable</code>).</td>
           <td class="px-3 py-2 font-mono font-semibold text-heading">reasons</td>
           <td class="px-3 py-2 font-mono text-body">array of string</td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">The decision's reason codes.</td>
+          <td class="px-3 py-2 text-body">The decision's reasons; a code an older executor wrote reads back verbatim.</td>
         </tr><tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold text-heading">detail</td>
           <td class="px-3 py-2 font-mono text-body">string</td>
@@ -431,6 +746,28 @@ folded from: <code>became_actionable</code>, <code>left_actionable</code>).</td>
           <td class="px-3 py-2 font-mono text-body">no</td>
           <td class="px-3 py-2 text-body">On a selection: the other actionable pull requests the executor chose this one over,
 in rank order. The wait of each is folded from it (<code>super::wait</code>).</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">head_after</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">On <code>refreshed</code>: the head the executor pushed. The refresh pipeline waits only for
+the checks of a head named here.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">evidence</td>
+          <td class="px-3 py-2 font-mono text-body">array of IntegrationEvidence <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationEvidence" class="text-fg-brand underline">IntegrationEvidence</a></td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">On <code>merge_attempted</code>, <code>merge_succeeded</code>, <code>refresh_selected</code> and the closures:
+the assessment's evidence the act was decided on.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">class</td>
+          <td class="px-3 py-2 font-mono text-body">FailureClass | null <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-FailureClass" class="text-fg-brand underline">FailureClass</a></td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">On a failure: its class, once one is decided.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">merge_commit</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">On <code>merge_succeeded</code>: the merge commit, once it is read.</td>
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationEvents" class="font-mono text-fg-brand underline">IntegrationEvents</a> <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationStatus" class="font-mono text-fg-brand underline">IntegrationStatus</a></p></article>
@@ -453,15 +790,14 @@ in rank order. The wait of each is folded from it (<code>super::wait</code>).</t
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">IntegrationEvidence</h3>
     <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
-  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One piece of evidence behind a disposition: what was read, and what it said.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One piece of evidence behind a disposition: what was read, where, and what it said.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold text-heading">kind</td>
-          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">EvidenceKind <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-EvidenceKind" class="text-fg-brand underline">EvidenceKind</a></td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">What kind of fact (<code>required_checks</code>, <code>relation_to_master</code>, <code>review</code>, <code>label</code>,
-<code>dependency</code>, <code>draft</code>, <code>base</code>).</td>
+          <td class="px-3 py-2 text-body">What kind of fact.</td>
         </tr><tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold text-heading">status</td>
           <td class="px-3 py-2 font-mono text-body">string</td>
@@ -472,9 +808,15 @@ in rank order. The wait of each is folded from it (<code>super::wait</code>).</t
           <td class="px-3 py-2 font-mono text-body">string</td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
           <td class="px-3 py-2 text-body">The detail a person reads.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">source</td>
+          <td class="px-3 py-2 font-mono text-body">EvidenceSource | null <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-EvidenceSource" class="text-fg-brand underline">EvidenceSource</a></td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Where it was read. Every assessment names it; a trail line written before evidence
+carried it has none.</td>
         </tr></tbody>
     </table>
-  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-PullRequestAssessment" class="font-mono text-fg-brand underline">PullRequestAssessment</a></p></article>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationEvent" class="font-mono text-fg-brand underline">IntegrationEvent</a> <a href="https://majordomus.dev/docs/api/integration/#schema-PullRequestAssessment" class="font-mono text-fg-brand underline">PullRequestAssessment</a></p></article>
 <article id="schema-IntegrationExplanation" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">IntegrationExplanation</h3>
@@ -515,11 +857,21 @@ in rank order. The wait of each is folded from it (<code>super::wait</code>).</t
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#op-integration-explain" class="font-mono text-fg-brand hover:underline">integration.explain</a></p></article>
+<article id="schema-IntegrationGate" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">IntegrationGate</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;base&quot; | &quot;draft&quot; | &quot;label&quot; | &quot;auto_merge&quot; | &quot;supersession&quot; | &quot;relation_to_master&quot; | &quot;merge_method&quot; | &quot;dependency&quot; | &quot;review&quot; | &quot;no_failing_check&quot; | &quot;freshness&quot; | &quot;required_checks&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One question of the policy, in the order <code>IntegrationGate::ALL</code> asks them. The
+disposition is the first that fails; every one is answered.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">base</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">It targets the integration base.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">draft</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">It is not a draft.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">label</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">It carries no label whose policy is to hold.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">auto_merge</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The forge has no auto-merge armed on it.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">supersession</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">No successor is declared to replace it. Asked before the relation to master, because
+a pull request whose successor landed usually conflicts with what the successor
+brought, and is superseded rather than conflicting.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">relation_to_master</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Its head is not on master already, and git could say that it merges cleanly.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">merge_method</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The repository allows a merge commit, the only way the executor merges. Asked after
+the relation, so work already on master is still <code>redundant</code> and may be closed.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">dependency</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Every declared dependency has landed.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">review</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The review policy is satisfied on the head.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">no_failing_check</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">No required check failed on the head.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">freshness</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The head contains the current master.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">required_checks</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Every required check passed on the head.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-GateResult" class="font-mono text-fg-brand underline">GateResult</a></p></article>
 <article id="schema-IntegrationLane" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">IntegrationLane</h3>
     <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;ready&quot; | &quot;waiting&quot; | &quot;repair&quot; | &quot;cleanup&quot; | &quot;held&quot;</span>
-  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The queues the Cockpit and the status table group pull requests into.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">ready</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The executor may merge it now.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">waiting</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Something will happen without a person: a refresh, a check, a dependency.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">repair</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A person must change the branch.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">cleanup</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Its work is on master already.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">held</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Not asking to be merged, or undecidable.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-PullRequestAssessment" class="font-mono text-fg-brand underline">PullRequestAssessment</a></p></article>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The queues the Cockpit and the status table group pull requests into.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">ready</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The executor may merge it now.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">waiting</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Something will happen without a person: a refresh, a check, a dependency.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">repair</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A person must change the branch.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">cleanup</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Its work is on master already, or a successor that landed replaced it.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">held</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Not asking to be merged, held by a label or a setting, unsafe for the executor, or
+undecidable.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-PullRequestAssessment" class="font-mono text-fg-brand underline">PullRequestAssessment</a> <a href="https://majordomus.dev/docs/api/integration/#schema-RankFactors" class="font-mono text-fg-brand underline">RankFactors</a></p></article>
 <article id="schema-IntegrationLeaseState" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">IntegrationLeaseState</h3>
@@ -561,26 +913,46 @@ repository — never a list kept here beside it.</div><div class="mt-3 overflow-
           <td class="px-3 py-2 text-body">The branch integrated into.</td>
         </tr><tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold text-heading">required_checks</td>
-          <td class="px-3 py-2 font-mono text-body">array | null</td>
+          <td class="px-3 py-2 font-mono text-body">array | null <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-RequiredCheck" class="text-fg-brand underline">RequiredCheck</a></td>
           <td class="px-3 py-2 font-mono text-body">no</td>
-          <td class="px-3 py-2 text-body">The status contexts the branch protection requires, as read from the forge.
-<code>None</code> when the protection could not be read: every required-check verdict is then
-<code>unknown</code>, never <code>passed</code>.</td>
+          <td class="px-3 py-2 text-body">The checks the base requires, from its branch protection and rulesets, each with the
+app bound to it. <code>None</code> when they could not be read: every required-check verdict is
+then <code>unknown</code>, never <code>passed</code>. An empty set is unknown too (owner decision D5): a
+base that requires nothing proves nothing about a head, so nothing merges onto it.</td>
         </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">reviews_required</td>
-          <td class="px-3 py-2 font-mono text-body">boolean | null</td>
+          <td class="px-3 py-2 font-mono font-semibold text-heading">review_policy</td>
+          <td class="px-3 py-2 font-mono text-body">ReviewPolicy | null <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-ReviewPolicy" class="text-fg-brand underline">ReviewPolicy</a></td>
           <td class="px-3 py-2 font-mono text-body">no</td>
-          <td class="px-3 py-2 text-body">Whether the branch protection requires an approving review; <code>None</code> when unread.</td>
+          <td class="px-3 py-2 text-body">What the base requires of reviews; <code>None</code> when unread.</td>
         </tr><tr class="border-t border-default align-top">
-          <td class="px-3 py-2 font-mono font-semibold text-heading">blocking_labels</td>
+          <td class="px-3 py-2 font-mono font-semibold text-heading">skipped_permitted</td>
           <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Contexts whose skip counts as a pass. Empty unless a repository says otherwise: a
+skipped required check is otherwise <code>missing</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">labels</td>
+          <td class="px-3 py-2 font-mono text-body">array of LabelPolicy <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-LabelPolicy" class="text-fg-brand underline">LabelPolicy</a></td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">Labels that hold a pull request whatever else is true.</td>
+          <td class="px-3 py-2 text-body">The labels that have an effect, each with its effect: <code>LABEL_POLICY</code>, copied.</td>
         </tr><tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold text-heading">merge_method</td>
-          <td class="px-3 py-2 font-mono text-body">string</td>
-          <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">The merge method the executor asks the forge for.</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The merge method the executor asks the forge for: <code>merge</code> when the repository allows a
+merge commit, and <code>None</code> when it does not. There is no other: the derived-file driver
+resolves merges, and a squash or rebase would replay commits it never saw, so with
+<code>None</code> every pull request the relation to master does not already decide is held
+(<code>merge_commit_not_allowed</code>), never merged otherwise.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">up_to_date_required</td>
+          <td class="px-3 py-2 font-mono text-body">boolean | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Whether the base requires a branch to be up to date before it merges (the
+protection's <code>required_status_checks.strict</code>, or a ruleset's): the forge-side half of
+the guard against a merge onto a master nobody tested with the change. The executor's
+half is its parent check after every merge. <code>Some(false)</code> is the owner's to change
+(decision D8) and decides no disposition; <code>None</code> when unread.</td>
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationQueue" class="font-mono text-fg-brand underline">IntegrationQueue</a></p></article>
@@ -661,7 +1033,7 @@ promoted: see <code>wait</code>.</td>
     <h3 class="font-mono text-base font-semibold text-heading">IntegrationRisk</h3>
     <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;low&quot; | &quot;medium&quot; | &quot;high&quot;</span>
   </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">How much could go wrong if this lands and something was missed. Planning information:
-it orders work and it never relaxes a policy.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">low</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Documentation, tests, content.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">medium</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Code of the executable or the tool.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">high</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">CI, release, governance, schemas, or a large change.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-PullRequestAssessment" class="font-mono text-fg-brand underline">PullRequestAssessment</a></p></article>
+it orders work and it never relaxes a policy.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">low</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Documentation, tests, content.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">medium</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Code of the executable or the tool.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">high</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">CI, release, governance, schemas, or a large change.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-PullRequestAssessment" class="font-mono text-fg-brand underline">PullRequestAssessment</a> <a href="https://majordomus.dev/docs/api/integration/#schema-RankFactors" class="font-mono text-fg-brand underline">RankFactors</a></p></article>
 <article id="schema-IntegrationStatus" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">IntegrationStatus</h3>
@@ -695,9 +1067,104 @@ holds it (or nothing is observed, so no base is known).</td>
           <td class="px-3 py-2 font-mono text-body">IntegrationEvent | null <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationEvent" class="text-fg-brand underline">IntegrationEvent</a></td>
           <td class="px-3 py-2 font-mono text-body">no</td>
           <td class="px-3 py-2 text-body">The last merge the executor recorded, from the audit trail.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">throughput</td>
+          <td class="px-3 py-2 font-mono text-body">IntegrationThroughput <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationThroughput" class="text-fg-brand underline">IntegrationThroughput</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How fast the executor has turned work into master over the last
+<code>THROUGHPUT_WINDOW_DAYS</code> days, folded from the same trail.</td>
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#op-integration-queue" class="font-mono text-fg-brand hover:underline">integration.queue</a></p></article>
+<article id="schema-IntegrationThroughput" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">IntegrationThroughput</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The integrator's throughput over a window of the trail.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">window_days</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The window, in days, ending at the time the fold was asked for.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">merges</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Pull requests merged in the window.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">merges_per_day</td>
+          <td class="px-3 py-2 font-mono text-body">number (double)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><code>merges / window_days</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">median_actionable_to_merged_secs</td>
+          <td class="px-3 py-2 font-mono text-body">integer | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Median seconds from becoming actionable to being merged; <code>None</code> when no merge in the
+window had a recorded <code>became_actionable</code> before it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">ci_rounds_per_merge</td>
+          <td class="px-3 py-2 font-mono text-body">integer | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Median <code>refreshed</code> events between one merge and the next; <code>None</code> without a merge.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">median_cycle_secs</td>
+          <td class="px-3 py-2 font-mono text-body">integer | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Median seconds from a selection to its outcome; <code>None</code> when no selection in the window
+reached one.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">stale_decisions</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Decisions refused because master or the head moved after they were taken.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">merge_failures</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Merge attempts that failed.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">verification_failures</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Merges whose resulting master failed verification.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">unreadable_events</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Events in the trail whose time could not be read; they count toward nothing.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationStatus" class="font-mono text-fg-brand underline">IntegrationStatus</a></p></article>
+<article id="schema-LabelEffect" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">LabelEffect</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;hold&quot; | &quot;obsolete&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What a label does to a pull request that carries it.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">hold</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">It holds the pull request whatever else is true: <code>blocked</code>, with <code>label:NAME</code>.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">obsolete</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A person marked the work obsolete (owner decision D3): <code>obsolete</code>, with
+<code>label_obsolete:NAME</code>, listed by cleanup for a person and never closed automatically.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-LabelPolicy" class="font-mono text-fg-brand underline">LabelPolicy</a></p></article>
+<article id="schema-LabelPolicy" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">LabelPolicy</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One label with an effect. The forge's label names are compared with <code>name</code>
+case-insensitively.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">name</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The label, lower-case.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">effect</td>
+          <td class="px-3 py-2 font-mono text-body">LabelEffect <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-LabelEffect" class="text-fg-brand underline">LabelEffect</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What it does.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationPolicy" class="font-mono text-fg-brand underline">IntegrationPolicy</a></p></article>
 <article id="schema-LeaseHolder" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">LeaseHolder</h3>
@@ -725,9 +1192,156 @@ holds it (or nothing is observed, so no base is known).</td>
           <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
           <td class="px-3 py-2 text-body">When it was taken, seconds since the epoch.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">mesh_claim</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The mesh claim that makes it exclusive across machines, <code>&lt;stream&gt;/&lt;claim&gt;</code>; absent
+when the lease guards this clone alone (<code>super::exclusive</code>).</td>
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationLeaseState" class="font-mono text-fg-brand underline">IntegrationLeaseState</a></p></article>
+<article id="schema-LeftBranch" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">LeftBranch</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">A branch a merged pull request left on origin, as cleanup reports it. Reported, never
+deleted: the forge's <code>delete_branch_on_merge</code> decides deletion (owner decision D4), so the
+executor holds no branch-deleting write at all.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">branch</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The branch on origin.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">tip</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Its tip: the head that merged.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">pr</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The pull request that merged it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">merged_at</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">When that pull request merged.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">action</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><code>left_for_a_person</code>, or <code>kept: checked out at &lt;path&gt;</code> when a worktree of this
+repository has the branch checked out: somebody may still be standing on it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">next_step</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What would clear it, in the setting's own terms.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-LeftBranchReport" class="font-mono text-fg-brand underline">LeftBranchReport</a></p></article>
+<article id="schema-LeftBranchReport" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">LeftBranchReport</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The last report of the branches merged pull requests left on origin, as <code>prs cleanup</code>
+read it. Written by <code>prs cleanup</code> alone — the one place that asks the forge for them —
+and rendered offline, with its age, by every surface that cannot reach the network.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">read_at</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">When cleanup read origin and the merged pull requests.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">base</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The base the report excludes.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">delete_branch_on_merge</td>
+          <td class="px-3 py-2 font-mono text-body">boolean | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The forge's <code>delete_branch_on_merge</code>, from the observation; <code>None</code> when unread.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">branches</td>
+          <td class="px-3 py-2 font-mono text-body">array | null <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-LeftBranch" class="text-fg-brand underline">LeftBranch</a></td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The branches, or <code>None</code> when origin or the merged pull requests could not be read:
+unread is not "nothing left behind".</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">refreshed_by</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The command that reads it afresh.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationCleanup" class="font-mono text-fg-brand underline">IntegrationCleanup</a></p></article>
+<article id="schema-Moved" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">Moved</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One line that differs between the two snapshots.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">section</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The section it belongs to.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">change</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><code>added</code> (present only after the cycle) or <code>removed</code> (present only before).</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">line</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The line itself.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-DryRunProof" class="font-mono text-fg-brand underline">DryRunProof</a></p></article>
+<article id="schema-ObservedClassification" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">ObservedClassification</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One open pull request as the cycle classified it.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">number</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The pull request.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">head_sha</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The head it was decided against.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">disposition</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Its disposition, as the queue names it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">next_action</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">What the executor would do with it, when anything.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-DryRunProof" class="font-mono text-fg-brand underline">DryRunProof</a></p></article>
+<article id="schema-OverlapKind" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">OverlapKind</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;authored&quot; | &quot;version_bump&quot; | &quot;release&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What two open pull requests have in common that makes landing one change the other.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">authored</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Authored paths both change.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">version_bump</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Both raise the crate's version: whichever lands second must be re-derived on the first.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">release</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Both change the release records under <code>.ai/repo/releases/</code>.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-PathOverlap" class="font-mono text-fg-brand underline">PathOverlap</a></p></article>
 <article id="schema-PassedOver" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">PassedOver</h3>
@@ -747,7 +1361,7 @@ holds it (or nothing is observed, so no base is known).</td>
           <td class="px-3 py-2 text-body">The pull request chosen instead.</td>
         </tr><tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold text-heading">action</td>
-          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">IntegrationAction <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationAction" class="text-fg-brand underline">IntegrationAction</a></td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
           <td class="px-3 py-2 text-body">What it was chosen for (<code>selected</code> to merge, <code>refresh_selected</code> to bring master in).</td>
         </tr></tbody>
@@ -770,9 +1384,34 @@ holds it (or nothing is observed, so no base is known).</td>
           <td class="px-3 py-2 font-mono text-body">array of string</td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
           <td class="px-3 py-2 text-body">The paths both change.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">kind</td>
+          <td class="px-3 py-2 font-mono text-body">OverlapKind <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-OverlapKind" class="text-fg-brand underline">OverlapKind</a></td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">What the two share. <code>authored</code> in a record written before it was said.</td>
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-PullRequestAssessment" class="font-mono text-fg-brand underline">PullRequestAssessment</a></p></article>
+<article id="schema-ProofStep" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">ProofStep</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One step of the cycle and what it said.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">step</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><code>refresh</code>, <code>plan</code>, <code>drain --dry-run</code> or <code>cleanup</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">summary</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What it reported, in one line.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-DryRunProof" class="font-mono text-fg-brand underline">DryRunProof</a></p></article>
 <article id="schema-PullRequestAssessment" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">PullRequestAssessment</h3>
@@ -817,6 +1456,27 @@ how it is classified and why. The one value every surface renders.</div><div cla
           <td class="px-3 py-2 font-mono text-body">yes</td>
           <td class="px-3 py-2 text-body">The classification.</td>
         </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">superseded_by</td>
+          <td class="px-3 py-2 font-mono text-body">integer | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The successor that landed and replaces it, exactly when the disposition is
+<code>superseded</code>: the disposition stays one word on the wire, and this is its <code>by</code>.
+Absent otherwise; a successor still open, or closed without landing, is in the
+<code>supersession</code> evidence and the reasons instead.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">issue</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The issue of <code>.ai/repo/project/issues/</code> its head branch names — a path component equal
+to the id, or the id followed by <code>-</code>, the form <code>majordomus worktree create --issue</code>
+gives — when it names one. Derived, never declared here: the issue record and the
+branch name are the two sources, and nothing else.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">milestone</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The milestone that issue's record declares, when it declares one.</td>
+        </tr><tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold text-heading">lane</td>
           <td class="px-3 py-2 font-mono text-body">IntegrationLane <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationLane" class="text-fg-brand underline">IntegrationLane</a></td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
@@ -825,7 +1485,13 @@ how it is classified and why. The one value every surface renders.</div><div cla
           <td class="px-3 py-2 font-mono font-semibold text-heading">reasons</td>
           <td class="px-3 py-2 font-mono text-body">array of string</td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">Machine-readable reason codes, most decisive first.</td>
+          <td class="px-3 py-2 text-body">Machine-readable reasons, one for every failing gate's every finding, in policy order:
+the first is the decisive one. A ready pull request carries why it is ready.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">gates</td>
+          <td class="px-3 py-2 font-mono text-body">array of GateResult <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-GateResult" class="text-fg-brand underline">GateResult</a></td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Every gate of the policy, in order, and whether it passed.</td>
         </tr><tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold text-heading">next_action</td>
           <td class="px-3 py-2 font-mono text-body">string | null</td>
@@ -888,6 +1554,18 @@ how it is classified and why. The one value every surface renders.</div><div cla
           <td class="px-3 py-2 text-body">How long it has been the executor's to act on, and how often another was chosen
 instead — derived from the audit trail (<code>super::wait</code>), present only while it is
 ready or refreshable.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">rank_factors</td>
+          <td class="px-3 py-2 font-mono text-body">RankFactors | null <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-RankFactors" class="text-fg-brand underline">RankFactors</a></td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Why it stands where it does in the rank: every component the order compares, in the
+order it compares them. Set by the planner; absent on an assessment never ranked.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">change_shape</td>
+          <td class="px-3 py-2 font-mono text-body">ChangeShape | null <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-ChangeShape" class="text-fg-brand underline">ChangeShape</a></td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">What its merge into master changes, by kind (<code>ChangeShape</code>): read beside the
+relation, from the same pair of commits. Absent when it could not be read.</td>
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationExplanation" class="font-mono text-fg-brand underline">IntegrationExplanation</a> <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationQueue" class="font-mono text-fg-brand underline">IntegrationQueue</a></p></article>
@@ -912,25 +1590,39 @@ ready or refreshable.</td>
           <td class="px-3 py-2 font-mono font-semibold text-heading">satisfied</td>
           <td class="px-3 py-2 font-mono text-body">boolean</td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
-          <td class="px-3 py-2 text-body">Whether it is satisfied: that pull request has landed (or is not open any more).</td>
+          <td class="px-3 py-2 text-body">Whether it is satisfied: that pull request merged. Closed without a merge, or not
+read, it is not — a dependency that never landed is no less a dependency.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
+          <td class="px-3 py-2 font-mono text-body">DependencyState <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-DependencyState" class="text-fg-brand underline">DependencyState</a></td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">What the forge says became of it. <code>open</code> in a record written before it was read.</td>
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-PullRequestAssessment" class="font-mono text-fg-brand underline">PullRequestAssessment</a></p></article>
 <article id="schema-PullRequestDisposition" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">PullRequestDisposition</h3>
-    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;ready&quot; | &quot;needs_refresh&quot; | &quot;waiting_for_checks&quot; | &quot;waiting_for_review&quot; | &quot;waiting_for_dependency&quot; | &quot;draft&quot; | &quot;needs_repair&quot; | &quot;conflicting&quot; | &quot;blocked&quot; | &quot;superseded&quot; | &quot;possibly_redundant&quot; | &quot;other_base&quot; | &quot;unknown&quot;</span>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;ready&quot; | &quot;needs_refresh&quot; | &quot;waiting_for_checks&quot; | &quot;waiting_for_review&quot; | &quot;waiting_for_dependency&quot; | &quot;draft&quot; | &quot;needs_repair&quot; | &quot;conflicting&quot; | &quot;blocked&quot; | &quot;unsafe&quot; | &quot;redundant&quot; | &quot;superseded&quot; | &quot;possibly_redundant&quot; | &quot;other_base&quot; | &quot;unknown&quot; | &quot;obsolete&quot;</span>
   </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The one classification of an open pull request. Every value carries a machine-readable
 reason in <code>PullRequestAssessment::reasons</code>; there is no <code>mergeable: bool</code>.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">ready</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Contains the current master, every required check passed on its head, nothing
 blocks it: the executor may merge it.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">needs_refresh</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Merges cleanly but does not contain master: the executor may bring master in (a
-merge commit on the branch, never a rewrite), after which CI must run again.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">waiting_for_checks</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Contains master; a required check has not finished on this head.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">waiting_for_review</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A required review is missing or changes were requested.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">waiting_for_dependency</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A declared dependency has not landed.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">draft</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A draft.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">needs_repair</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A required check failed on this head.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">conflicting</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Conflicts on authored paths: a person resolves them.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">blocked</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A blocking label holds it.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">superseded</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Its head already landed, or its patch is already fully on master: strong evidence,
-eligible for closure under policy.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">possibly_redundant</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Only derived artifacts would change: the authored change appears to be on master
-already. Surfaced for a person; never closed automatically.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">other_base</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Targets a branch other than the integration base.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unknown</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Something needed to decide could not be observed.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-PullRequestAssessment" class="font-mono text-fg-brand underline">PullRequestAssessment</a></p></article>
+merge commit on the branch, never a rewrite), after which CI must run again.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">waiting_for_checks</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Contains master; a required check has not finished on this head.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">waiting_for_review</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A required review is missing or changes were requested.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">waiting_for_dependency</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A declared dependency has not landed.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">draft</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A draft.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">needs_repair</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A required check failed on this head.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">conflicting</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Conflicts on authored paths: a person resolves them.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">blocked</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A label whose policy is to hold holds it, or the repository allows no merge commit,
+which is the only way the executor merges.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unsafe</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The forge has auto-merge armed on it: the forge would merge it on its own, outside the
+executor and against whatever master is then. Held until a person disarms it.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">redundant</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Its head already landed, its merge changes nothing, or every one of its commits is on
+master as an equal patch: strong evidence from git, eligible for closure under policy.
+(Before 0.13 this was the word <code>superseded</code>.)</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">superseded</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Its body, or the body of another pull request, declares that a successor replaces it,
+and that successor landed: no longer open, its head contained in master. The successor
+is <code>PullRequestAssessment::superseded_by</code>. Eligible for closure under policy.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">possibly_redundant</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Weak evidence: only derived artifacts would change, or its declared successor was closed
+without its head landing. Surfaced for a person; never closed automatically.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">other_base</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Targets a branch other than the integration base.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unknown</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Something needed to decide could not be observed.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">obsolete</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A person marked it obsolete with a label the label policy declares (owner decision
+D3): the only evidence that reaches this word. Listed for a person by cleanup and
+never closed automatically; age, shared paths or a similar title never make one.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-CleanupItem" class="font-mono text-fg-brand underline">CleanupItem</a> <a href="https://majordomus.dev/docs/api/integration/#schema-PullRequestAssessment" class="font-mono text-fg-brand underline">PullRequestAssessment</a> <a href="https://majordomus.dev/docs/api/integration/#schema-RankFactors" class="font-mono text-fg-brand underline">RankFactors</a></p></article>
 <article id="schema-PullRequestReview" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">PullRequestReview</h3>
-    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;not_required&quot; | &quot;approved&quot; | &quot;changes_requested&quot; | &quot;pending&quot; | &quot;unknown&quot;</span>
-  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Where the forge's review policy stands.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">not_required</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The branch protection requires no review.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">approved</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Approved.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">changes_requested</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A reviewer asked for changes.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">pending</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A required review has not been given.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unknown</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The protection could not be read.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-PullRequestAssessment" class="font-mono text-fg-brand underline">PullRequestAssessment</a></p></article>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;not_required&quot; | &quot;approved&quot; | &quot;changes_requested&quot; | &quot;pending&quot; | &quot;stale&quot; | &quot;code_owners_pending&quot; | &quot;unknown&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Where the forge's review policy stands.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">not_required</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The branch protection requires no review.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">approved</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Approved.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">changes_requested</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A reviewer asked for changes.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">pending</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A required review has not been given.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">stale</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The approvals were given on another commit than the head: an approval is of one
+commit, and these are not of this one.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">code_owners_pending</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The approvals are there, but a code owner's is still required.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unknown</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The protection could not be read.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-PullRequestAssessment" class="font-mono text-fg-brand underline">PullRequestAssessment</a></p></article>
 <article id="schema-QueueTallies" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">QueueTallies</h3>
@@ -956,10 +1648,67 @@ already. Surfaced for a person; never closed automatically.</span></li><li class
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationQueue" class="font-mono text-fg-brand underline">IntegrationQueue</a></p></article>
+<article id="schema-RankFactors" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RankFactors</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What the rank compares, in order: the first component that differs between two pull
+requests decides which comes first. Each is a value of the assessment or of the queue
+around it, so the order can be explained and is the same whatever order the forge listed
+the pull requests in.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">lane</td>
+          <td class="px-3 py-2 font-mono text-body">IntegrationLane <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationLane" class="text-fg-brand underline">IntegrationLane</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The lane: what kind of work the executor does with it.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">disposition</td>
+          <td class="px-3 py-2 font-mono text-body">PullRequestDisposition <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-PullRequestDisposition" class="text-fg-brand underline">PullRequestDisposition</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The disposition, within the lane.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">risk</td>
+          <td class="px-3 py-2 font-mono text-body">IntegrationRisk <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationRisk" class="text-fg-brand underline">IntegrationRisk</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The planning risk: lower first.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">contention</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many other ready or refreshable pull requests it overlaps (<code>PathOverlap</code>): an
+authored path, a version bump or a release in common. Fewer first, because landing it
+invalidates less.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">dependents</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many open pull requests declare that they wait for this one and are not yet
+satisfied: more first, because landing it unblocks them.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">authored_paths</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many authored paths it changes: fewer first, a smaller change is cheaper to land
+and to undo.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">created_at</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">When it was opened: older first, so easy new work cannot starve old work.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">number</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The number: the last tie-break, total.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-PullRequestAssessment" class="font-mono text-fg-brand underline">PullRequestAssessment</a></p></article>
 <article id="schema-RelationToMaster" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">RelationToMaster</h3>
-    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">one of 7 variants</span>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">one of 8 variants</span>
   </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What the pull request's head is to the current master, decided locally by git with
 this repository's own merge drivers — never by the forge's <code>mergeable</code>, which cannot
 run the derived-file driver and calls nearly every pull request here conflicting.</div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> The head is an ancestor of master: every commit already landed.</div>
@@ -971,6 +1720,14 @@ run the derived-file driver and calls nearly every pull request here conflicting
   <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
       <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">kind</td><td class="px-3 py-2 font-mono text-body">&quot;superseded&quot;</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
+    </table>
+  </div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> The merge would conflict or change only derived output, but every commit the head has
+and master lacks is on master already as an equal patch (<code>git cherry</code> marks each <code>-</code>):
+the change landed, and master moved on past it. Never a partial match, and never a
+head that carries a merge commit of its own, whose resolution has no patch to compare.</div>
+  <div class="mt-1 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">commits</td><td class="px-3 py-2 font-mono text-body">integer (uint64)</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">How many commits, every one of them already on master.</td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">kind</td><td class="px-3 py-2 font-mono text-body">&quot;patch_ids_upstream&quot;</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
     </table>
   </div><div class="mt-3 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_pre]:max-w-full [&_pre]:overflow-x-auto [&_p]:m-0"><span class="font-mono text-xs uppercase tracking-wide text-body-subtle">variant</span> Merging changes only derived artifacts: the authored change is already on master,
 and what differs is output the generators rewrite.</div>
@@ -999,13 +1756,95 @@ and what differs is output the generators rewrite.</div>
       <tbody><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">reason</td><td class="px-3 py-2 font-mono text-body">string</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Why.</td></tr><tr class="border-t border-default align-top first:border-0"><td class="px-3 py-2 font-mono font-semibold text-heading">kind</td><td class="px-3 py-2 font-mono text-body">&quot;unknown&quot;</td><td class="px-3 py-2 font-mono text-body">yes</td><td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"></td></tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-PullRequestAssessment" class="font-mono text-fg-brand underline">PullRequestAssessment</a></p></article>
+<article id="schema-RequiredCheck" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">RequiredCheck</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One check the base requires: a status context, and the app that must write it when the
+protection binds it to one. A check of that name from any other writer is not this one.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">context</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The status context, or the check run's name.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">app_id</td>
+          <td class="px-3 py-2 font-mono text-body">integer | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">The app bound to it, when the protection names one.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationPolicy" class="font-mono text-fg-brand underline">IntegrationPolicy</a></p></article>
 <article id="schema-RequiredCheckState" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">RequiredCheckState</h3>
-    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;passed&quot; | &quot;pending&quot; | &quot;failed&quot; | &quot;missing&quot; | &quot;unknown&quot;</span>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;passed&quot; | &quot;skipped&quot; | &quot;pending&quot; | &quot;failed&quot; | &quot;missing&quot; | &quot;unknown&quot;</span>
   </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The state of the repository's <em>required</em> checks on one head, which is the only check
 state a merge decision reads. A visible green check that is not required proves nothing,
-and a required check that is absent is not a pass.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">passed</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Every required check passed on this head.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">pending</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A required check is queued or running.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">failed</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A required check failed.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">missing</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A required check has not reported on this head at all.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unknown</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The repository's required checks could not be read.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-PullRequestAssessment" class="font-mono text-fg-brand underline">PullRequestAssessment</a></p></article>
+and a required check that is absent is not a pass.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">passed</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Every required check passed on this head.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">skipped</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Every required check passed, at least one of them by a skip the policy permits for
+that context. A skip the policy does not permit is not a pass: it is <code>missing</code>.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">pending</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A required check is queued or running.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">failed</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A required check failed.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">missing</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A required check has not reported on this head at all.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unknown</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The repository's required checks could not be read.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-PullRequestAssessment" class="font-mono text-fg-brand underline">PullRequestAssessment</a></p></article>
+<article id="schema-ReviewPolicy" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">ReviewPolicy</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What the base requires of reviews, read from its protection and rulesets together.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">approvals</td>
+          <td class="px-3 py-2 font-mono text-body">integer (uint64)</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">How many approving reviews a merge needs; 0 when none.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">code_owners</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether a code owner's approval is required.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">dismiss_stale</td>
+          <td class="px-3 py-2 font-mono text-body">boolean</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Whether the forge dismisses an approval when the head moves.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-IntegrationPolicy" class="font-mono text-fg-brand underline">IntegrationPolicy</a></p></article>
+<article id="schema-Snapshot" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">Snapshot</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Everything the cycle could move, at one moment.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">sections</td>
+          <td class="px-3 py-2 font-mono text-body">array of SnapshotSection <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/integration/#schema-SnapshotSection" class="text-fg-brand underline">SnapshotSection</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The sections, always in the order <code>remote</code>, <code>forge</code>, <code>trail</code>, <code>lease</code>, <code>local</code>.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-DryRunProof" class="font-mono text-fg-brand underline">DryRunProof</a></p></article>
+<article id="schema-SnapshotSection" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">SnapshotSection</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One section of a snapshot: a name and its lines, in a stable order.</div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">name</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body"><code>remote</code>, <code>forge</code>, <code>trail</code>, <code>lease</code> or <code>local</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">lines</td>
+          <td class="px-3 py-2 font-mono text-body">array of string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What the section holds, one fact per line, sorted where order carries no meaning.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/integration/#schema-Snapshot" class="font-mono text-fg-brand underline">Snapshot</a></p></article>
 </section>
   </div>
 </div>
@@ -1067,7 +1906,7 @@ and a required check that is absent is not a pass.</div><ul class="mt-3 space-y-
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.13.2 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/b59eda550a324126d25e6d6a322dabd061e00040" class="font-mono underline">b59eda5</a> · inputs <span class="font-mono">7f147bdc589b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.14.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/815b96b5a12be1bb255060f06f5a02a2882ad742" class="font-mono underline">815b96b</a> · inputs <span class="font-mono">fdb50c3e26bc</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

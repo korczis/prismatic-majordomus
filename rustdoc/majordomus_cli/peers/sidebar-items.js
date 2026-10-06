@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Transport"],"fn":["claims_meet","epoch_seconds","overlaps_among","rfc3339"],"struct":["Announced","Announcement","ClientInfo","Overlap","OverlapPath","Peer","PeerBoard","PeerCheckout","PeerId"]};
+window.SIDEBAR_ITEMS = {"enum":["Transport"],"fn":["claims_meet","epoch_seconds","overlaps_among","parse_rfc3339","rfc3339"],"struct":["Announced","Announcement","ClientInfo","Overlap","OverlapPath","Peer","PeerBoard","PeerCheckout","PeerId"]};

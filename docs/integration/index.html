@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pull-request integration — Prismatic Majordomus</title>
-<meta name="description" content="pull-request integration: every open pull request classified against the current master with its evidence, the thirteen dispositions, the deterministic rank, one merge at a time with a re-plan after each, refreshing a branch, the cleanup threshold, the lease and the audit trail (ADR 0101)">
+<meta name="description" content="pull-request integration: every open pull request classified against the current master with its evidence, the fourteen dispositions, the deterministic rank, one merge at a time with a re-plan after each, refreshing a branch, the cleanup threshold, the lease and the audit trail (ADR 0101)">
 <link rel="canonical" href="https://majordomus.dev/docs/integration/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
 <meta property="og:title" content="Pull-request integration — Prismatic Majordomus">
-<meta property="og:description" content="pull-request integration: every open pull request classified against the current master with its evidence, the thirteen dispositions, the deterministic rank, one merge at a time with a re-plan after each, refreshing a branch, the cleanup threshold, the lease and the audit trail (ADR 0101)">
+<meta property="og:description" content="pull-request integration: every open pull request classified against the current master with its evidence, the fourteen dispositions, the deterministic rank, one merge at a time with a re-plan after each, refreshing a branch, the cleanup threshold, the lease and the audit trail (ADR 0101)">
 <meta property="og:url" content="https://majordomus.dev/docs/integration/">
 <meta property="og:image" content="https://majordomus.dev/images/social-card.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -29,7 +29,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.13.2 -->
+     Generator: majordomus-cli 0.14.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -153,7 +153,7 @@
 </nav>
 
     <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Pull-request integration</h1>
-    <p class="mt-3 max-w-3xl break-words text-lg text-body">pull-request integration: every open pull request classified against the current master with its evidence, the thirteen dispositions, the deterministic rank, one merge at a time with a re-plan after each, refreshing a branch, the cleanup threshold, the lease and the audit trail (ADR 0101)</p>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">pull-request integration: every open pull request classified against the current master with its evidence, the fourteen dispositions, the deterministic rank, one merge at a time with a re-plan after each, refreshing a branch, the cleanup threshold, the lease and the audit trail (ADR 0101)</p>
   </div>
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
@@ -164,7 +164,7 @@
     <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Prismatic Majordomus</a></li><li><a href="https://majordomus.dev/docs/how-it-works/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">How Majordomus works</a></li><li><a href="https://majordomus.dev/docs/guide/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Guide</a></li><li><a href="https://majordomus.dev/docs/two-folder-consolidation/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Two-folder consolidation</a></li><li><a href="https://majordomus.dev/docs/cli-specification/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">CLI specification</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Concepts</a></li><li><a href="https://majordomus.dev/docs/context/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Scoped context</a></li><li><a href="https://majordomus.dev/docs/doctrine/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/docs/continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuity</a></li><li><a href="https://majordomus.dev/docs/knowledge/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Knowledge</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Planning</a></li><li><a href="https://majordomus.dev/docs/performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Performance truth</a></li><li><a href="https://majordomus.dev/docs/roadmap/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The roadmap</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Dogfooding</a></li><li><a href="https://majordomus.dev/docs/launch/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Launch kit</a></li><li><a href="https://majordomus.dev/docs/archive/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Archiving the repository</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Installing Majordomus</a></li><li><a href="https://majordomus.dev/docs/distribution/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Distribution</a></li><li><a href="https://majordomus.dev/docs/commit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The commit</a></li><li><a href="https://majordomus.dev/docs/release/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The release</a></li><li><a href="https://majordomus.dev/docs/catalogue/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The catalogue</a></li><li><a href="https://majordomus.dev/docs/adoption/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Adoption</a></li><li><a href="https://majordomus.dev/docs/adoption-first-run/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">First run in a foreign repository</a></li><li><a href="https://majordomus.dev/docs/entry/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Entering the repository</a></li><li><a href="https://majordomus.dev/docs/entry-audit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository entry: what is automatic, what is decorative, and where it breaks</a></li><li><a href="https://majordomus.dev/docs/economics/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Economics</a></li><li><a href="https://majordomus.dev/docs/extraction-report/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Extraction Report</a></li><li><a href="https://majordomus.dev/docs/commands/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The command graph</a></li><li><a href="https://majordomus.dev/docs/dynamicity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Canonical ownership and derivation</a></li><li><a href="https://majordomus.dev/docs/cockpit-ide-audit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The Cockpit as a development surface: baseline, archaeology and gap matrix</a></li><li><a href="https://majordomus.dev/docs/development-runtime/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The development runtime</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/docs/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Capabilities</a></li><li><a href="https://majordomus.dev/docs/surfaces/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">How Majordomus derives its surfaces</a></li><li><a href="https://majordomus.dev/docs/use-cases/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Executable use cases</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Product</a></li><li><a href="https://majordomus.dev/docs/why/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Why</a></li><li><a href="https://majordomus.dev/docs/scope/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository scope</a></li><li><a href="https://majordomus.dev/docs/executions/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Executions</a></li><li><a href="https://majordomus.dev/docs/cockpit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The Cockpit</a></li><li><a href="https://majordomus.dev/docs/web/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The web surface</a></li><li><a href="https://majordomus.dev/docs/environment/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository environment</a></li><li><a href="https://majordomus.dev/docs/preflight/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The preflight</a></li><li><a href="https://majordomus.dev/docs/backlog/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Backlog</a></li><li><a href="https://majordomus.dev/docs/integration/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">Pull-request integration</a></li><li><a href="https://majordomus.dev/docs/worktrees/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Worktrees</a></li><li><a href="https://majordomus.dev/docs/mcp/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/mesh/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Majordomus Mesh</a></li><li><a href="https://majordomus.dev/docs/models/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The model catalogue</a></li><li><a href="https://majordomus.dev/docs/reasoning/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Reasoning</a></li><li><a href="https://majordomus.dev/docs/coverage/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Coverage: one measurement, two questions</a></li><li><a href="https://majordomus.dev/docs/design-system/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The design system</a></li><li><a href="https://majordomus.dev/docs/ui/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">UI conformance</a></li><li><a href="https://majordomus.dev/docs/github-pages-architecture/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages architecture</a></li><li><a href="https://majordomus.dev/docs/quality/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Public API quality</a></li><li><a href="https://majordomus.dev/docs/rustdoc/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The crate&#39;s reference</a></li><li><a href="https://majordomus.dev/docs/evidence/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Evidence</a></li><li><a href="https://majordomus.dev/docs/delivery/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Delivery</a></li><li><a href="https://majordomus.dev/docs/ci/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuous integration</a></li><li><a href="https://majordomus.dev/docs/shell/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Shell automation</a></li><li><a href="https://majordomus.dev/docs/github-pages-performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance</a></li><li><a href="https://majordomus.dev/docs/pages-status/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance status</a></li><li><a href="https://majordomus.dev/docs/site-review/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Site review</a></li><li><a href="https://majordomus.dev/docs/contract/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository contract</a></li><li><a href="https://majordomus.dev/docs/web-surface/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Web surface</a></li><li><a href="https://majordomus.dev/docs/api/artifacts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: artifacts</a></li><li><a href="https://majordomus.dev/docs/api/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: capabilities</a></li><li><a href="https://majordomus.dev/docs/api/commands/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: commands</a></li><li><a href="https://majordomus.dev/docs/api/commit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: commit</a></li><li><a href="https://majordomus.dev/docs/api/continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: continuity</a></li><li><a href="https://majordomus.dev/docs/api/convergence/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: convergence</a></li><li><a href="https://majordomus.dev/docs/api/dashboard/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: dashboard</a></li><li><a href="https://majordomus.dev/docs/api/delivery/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: delivery</a></li><li><a href="https://majordomus.dev/docs/api/deploy/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: deploy</a></li><li><a href="https://majordomus.dev/docs/api/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: design</a></li><li><a href="https://majordomus.dev/docs/api/devcontext/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: devcontext</a></li><li><a href="https://majordomus.dev/docs/api/devtask/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: devtask</a></li><li><a href="https://majordomus.dev/docs/api/directories/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: directories</a></li><li><a href="https://majordomus.dev/docs/api/distribution/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: distribution</a></li><li><a href="https://majordomus.dev/docs/api/economics/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: economics</a></li><li><a href="https://majordomus.dev/docs/api/entity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: entity</a></li><li><a href="https://majordomus.dev/docs/api/environment/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: environment</a></li><li><a href="https://majordomus.dev/docs/api/episodes/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: episodes</a></li><li><a href="https://majordomus.dev/docs/api/evidence/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: evidence</a></li><li><a href="https://majordomus.dev/docs/api/executions/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: executions</a></li><li><a href="https://majordomus.dev/docs/api/gates/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: gates</a></li><li><a href="https://majordomus.dev/docs/api/graph/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: graph</a></li><li><a href="https://majordomus.dev/docs/api/health/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: health</a></li><li><a href="https://majordomus.dev/docs/api/integration/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: integration</a></li><li><a href="https://majordomus.dev/docs/api/intent-realization/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: intent_realization</a></li><li><a href="https://majordomus.dev/docs/api/intents/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: intents</a></li><li><a href="https://majordomus.dev/docs/api/knowledge-base/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: knowledge_base</a></li><li><a href="https://majordomus.dev/docs/api/lifecycle/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: lifecycle</a></li><li><a href="https://majordomus.dev/docs/api/mesh/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: mesh</a></li><li><a href="https://majordomus.dev/docs/api/models/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: models</a></li><li><a href="https://majordomus.dev/docs/api/objects/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: objects</a></li><li><a href="https://majordomus.dev/docs/api/obligations/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: obligations</a></li><li><a href="https://majordomus.dev/docs/api/peers/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: peers</a></li><li><a href="https://majordomus.dev/docs/api/perf/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: perf</a></li><li><a href="https://majordomus.dev/docs/api/plan/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: plan</a></li><li><a href="https://majordomus.dev/docs/api/product/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: product</a></li><li><a href="https://majordomus.dev/docs/api/quality/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: quality</a></li><li><a href="https://majordomus.dev/docs/api/reasoning/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: reasoning</a></li><li><a href="https://majordomus.dev/docs/api/recover/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: recover</a></li><li><a href="https://majordomus.dev/docs/api/release/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: release</a></li><li><a href="https://majordomus.dev/docs/api/repository/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: repository</a></li><li><a href="https://majordomus.dev/docs/api/rules/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: rules</a></li><li><a href="https://majordomus.dev/docs/api/served/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: served</a></li><li><a href="https://majordomus.dev/docs/api/server/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: server</a></li><li><a href="https://majordomus.dev/docs/api/session-domain/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: session_domain</a></li><li><a href="https://majordomus.dev/docs/api/shell/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: shell</a></li><li><a href="https://majordomus.dev/docs/api/skills/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: skills</a></li><li><a href="https://majordomus.dev/docs/api/trace/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: trace</a></li><li><a href="https://majordomus.dev/docs/api/web/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: web</a></li><li><a href="https://majordomus.dev/docs/api/why/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: why</a></li><li><a href="https://majordomus.dev/docs/api/worktree/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: worktree</a></li><li><a href="https://majordomus.dev/docs/api/shared/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: shared types</a></li></ul>
   </nav>
   <div class="min-w-0">
-    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/b59eda550a324126d25e6d6a322dabd061e00040/docs/INTEGRATION.md" class="font-mono underline">docs/INTEGRATION.md</a> — the same Markdown GitHub shows.</p>
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/815b96b5a12be1bb255060f06f5a02a2882ad742/docs/INTEGRATION.md" class="font-mono underline">docs/INTEGRATION.md</a> — the same Markdown GitHub shows.</p>
     <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline" tabindex="0"><p>Majordomus does not merge a list of pull requests. It integrates the next provably safe
 change into the current master, verifies that it landed, discards what it assumed, and
 decides again from what is there now. The decision is recorded in ADR 0101, the rule is
@@ -185,22 +185,42 @@ flowchart TD
 per-clone merge driver (<code>merge=derived</code>) that the forge cannot run, so the forge calls nearly
 every pull request conflicting. The relation to master is decided by git: <code>git merge-tree --write-tree</code> with the drivers, and <code>git check-attr merge</code> for which paths are derived,
 according to master's own <code>.gitattributes</code>.</p>
+<p>The relation is decided on exactly the head the forge reported, the one the assessment names
+as evaluated. A head that moved during the refresh is not in the clone, and its relation is
+<code>unknown</code> until the next refresh. It is never decided on whatever a fetched ref holds now.
+When git cannot say which paths are derived, because <code>git check-attr</code> failed, the relation is
+<code>unknown</code> too, never "nothing is derived". A relation is cached only under a pair of full
+commit ids, and an <code>unknown</code> is never cached.</p>
+<p>Where the merge would conflict, or would change only derived output, <code>git cherry</code> is asked as
+well. When every commit the head has and master lacks is on master already as an equal patch,
+the relation is <code>patch_ids_upstream</code>: the change landed, by a cherry-pick say, and master moved
+past it. A partial match never gives it. Neither does a head with a merge commit of its own in
+that range, because a merge's resolution has no patch to compare, nor a clean merge that
+changes authored paths: there master lacks something the head carries, such as a landed change
+that master has reverted since.</p>
 <h2 id="dispositions"><a class="zola-anchor" href="#dispositions" aria-label="Anchor link for: dispositions">Dispositions</a></h2>
 <p>Every open pull request has exactly one. They are decided in the order below, so an earlier
 answer wins. <code>ready</code> is reached only after every other question is answered in its favour.</p>
 <div class="overflow-x-auto" tabindex="0">
 <table tabindex="0"><thead><tr><th>Disposition</th><th>Lane</th><th>When</th><th>Next</th></tr></thead><tbody>
 <tr><td><code>other_base</code></td><td>held</td><td>targets a branch other than the base, and no open pull request's head</td><td>—</td></tr>
-<tr><td><code>waiting_for_dependency</code></td><td>waiting</td><td>stacked on another open pull request, or declares <code>Depends on #N</code>/<code>Stacked on #N</code>/<code>Requires #N</code>/<code>After #N</code> on an open one</td><td>land that one first</td></tr>
+<tr><td><code>waiting_for_dependency</code></td><td>waiting</td><td>stacked on another open pull request of this repository, or declares a dependency on an open one (see below)</td><td>land that one first</td></tr>
 <tr><td><code>draft</code></td><td>held</td><td>a draft</td><td>mark it ready</td></tr>
-<tr><td><code>blocked</code></td><td>held</td><td>carries a blocking label (<code>do-not-merge</code>, <code>blocked</code>, <code>hold</code>, <code>on-hold</code>, <code>wip</code>, <code>manual-merge</code>)</td><td>remove it</td></tr>
-<tr><td><code>superseded</code></td><td>cleanup</td><td>its head is an ancestor of master, or merging it changes no file</td><td><code>prs cleanup --apply</code> closes it</td></tr>
+<tr><td><code>obsolete</code></td><td>cleanup</td><td>carries a label that marks it obsolete (owner decision D3; see the label policy below); checked before the hold labels, after <code>draft</code></td><td>a person closes it, or removes the label</td></tr>
+<tr><td><code>blocked</code></td><td>held</td><td>carries a label that holds it (see the label policy below)</td><td>remove it</td></tr>
+<tr><td><code>unsafe</code></td><td>held</td><td>the forge has auto-merge armed on it, so the forge would merge it on its own</td><td>disarm it: <code>gh pr merge &lt;n&gt; --disable-auto</code></td></tr>
+<tr><td><code>superseded</code></td><td>cleanup</td><td>a declared successor landed: it is not open, and master contains its head (see supersession markers below); <code>superseded_by</code> names it</td><td><code>prs cleanup --apply</code> closes it</td></tr>
+<tr><td><code>waiting_for_dependency</code></td><td>waiting</td><td>a declared successor is still open</td><td>land the successor; this one is then closed, never merged</td></tr>
+<tr><td><code>possibly_redundant</code></td><td>cleanup</td><td>a declared successor was closed without its head landing</td><td>a person decides</td></tr>
+<tr><td><code>unknown</code></td><td>held</td><td>a declared successor is not open and could not be read</td><td><code>prs refresh</code></td></tr>
+<tr><td><code>redundant</code></td><td>cleanup</td><td>its head is an ancestor of master, merging it changes no file, or every one of its commits is on master as an equal patch</td><td><code>prs cleanup --apply</code> closes it</td></tr>
 <tr><td><code>possibly_redundant</code></td><td>cleanup</td><td>merging it changes only derived artifacts</td><td>a person decides</td></tr>
 <tr><td><code>unknown</code></td><td>held</td><td>its head is not fetched, git failed, or the branch protection could not be read</td><td><code>prs refresh</code></td></tr>
 <tr><td><code>conflicting</code></td><td>repair</td><td>the merge conflicts on an authored path</td><td>the author resolves it</td></tr>
-<tr><td><code>waiting_for_review</code></td><td>waiting</td><td>a required review is missing or changes were requested</td><td>a reviewer</td></tr>
+<tr><td><code>blocked</code></td><td>held</td><td>the repository's settings allow no merge commit (see the merge method below)</td><td>allow merge commits</td></tr>
+<tr><td><code>waiting_for_review</code></td><td>waiting</td><td>a required review is missing or changes were requested (see below)</td><td>a reviewer</td></tr>
 <tr><td><code>needs_repair</code></td><td>repair</td><td>a required check failed on its head, or it is behind master from a fork</td><td>the author</td></tr>
-<tr><td><code>needs_refresh</code></td><td>waiting</td><td>merges cleanly but does not contain master</td><td><code>prs drain --refresh</code></td></tr>
+<tr><td><code>needs_refresh</code></td><td>waiting</td><td>merges cleanly but does not contain master</td><td><code>prs drain --refresh</code>, or <code>prs repair &lt;n&gt; --apply</code> for one</td></tr>
 <tr><td><code>waiting_for_checks</code></td><td>waiting</td><td>contains master; a required check is pending or missing on this head</td><td>wait</td></tr>
 <tr><td><code>ready</code></td><td>ready</td><td>contains master, and every required check passed on this head</td><td><code>prs drain</code></td></tr>
 </tbody></table>
@@ -208,13 +228,197 @@ answer wins. <code>ready</code> is reached only after every other question is an
 <p>A required check that is pending, missing, skipped or unreadable is not passed. The required
 checks are read from the base's branch protection, never listed here. A green check that is
 not required proves nothing.</p>
+<h3 id="gates-reasons-and-evidence"><a class="zola-anchor" href="#gates-reasons-and-evidence" aria-label="Anchor link for: gates-reasons-and-evidence">Gates, reasons and evidence</a></h3>
+<p>The order above is a list of gates, and every gate is asked whatever the others answer:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Gate</th><th>Passes when</th><th>A failure's reasons</th></tr></thead><tbody>
+<tr><td><code>base</code></td><td>it targets the base</td><td><code>stacked_on:#N</code>, or <code>base_is:BRANCH</code></td></tr>
+<tr><td><code>draft</code></td><td>it is not a draft</td><td><code>draft</code></td></tr>
+<tr><td><code>label</code></td><td>no label that holds it</td><td><code>label:NAME</code>, one per label</td></tr>
+<tr><td><code>auto_merge</code></td><td>the forge has no auto-merge armed on it</td><td><code>auto_merge_armed</code></td></tr>
+<tr><td><code>supersession</code></td><td>no successor is declared</td><td><code>superseded_by:#N</code>, <code>successor_open:#N</code>, <code>successor_not_landed:#N</code>, <code>successor_unread:#N</code>, one per successor</td></tr>
+<tr><td><code>relation_to_master</code></td><td>its merge is clean and changes something</td><td><code>head_reachable_from_master</code>, <code>merge_changes_nothing</code>, <code>patch_ids_upstream</code>, <code>only_derived_artifacts_differ</code>, <code>relation_unknown:WHY</code>, <code>conflicts_on:COUNT</code></td></tr>
+<tr><td><code>merge_method</code></td><td>the repository allows a merge commit</td><td><code>merge_commit_not_allowed</code></td></tr>
+<tr><td><code>dependency</code></td><td>every declared dependency landed</td><td><code>depends_on:#N</code>, one per open dependency</td></tr>
+<tr><td><code>review</code></td><td>the review policy is satisfied on the head</td><td><code>review:STATE</code>, or <code>review_policy_unread</code></td></tr>
+<tr><td><code>no_failing_check</code></td><td>no required check failed</td><td><code>required_check_failed</code></td></tr>
+<tr><td><code>freshness</code></td><td>the head contains master</td><td><code>behind_master:COMMITS</code>, with <code>fork_head</code> for a fork</td></tr>
+<tr><td><code>required_checks</code></td><td>every required check passed</td><td><code>required_checks:STATE</code>, <code>no_required_checks</code>, <code>required_checks_unread</code></td></tr>
+</tbody></table>
+</div>
+<p>The assessment's <code>gates</code> lists every gate with whether it passed. Its <code>reasons</code> hold every
+failing gate's reasons in this order, and the first is the decisive one: the disposition is
+the first failing gate's. A draft that also conflicts and fails its check is <code>draft</code>, with
+<code>draft</code>, <code>conflicts_on:1</code> and <code>required_check_failed</code>. A gate that fails only because an
+earlier one did, such as <code>freshness</code> when the merge conflicts, adds no reason of its own. A
+ready pull request has <code>contains_master</code> with <code>required_checks_passed</code> or
+<code>required_checks_skipped</code>. The reasons are typed (<code>ReasonCode</code>), but on the wire they are the
+same strings as before. A code that an older trail line carries and this list does not name
+is kept verbatim.</p>
+<p>Each piece of evidence has a <code>kind</code>, a <code>status</code>, a <code>detail</code> and a <code>source</code>. The source is the
+forge observation at its moment, or git on the named master and head. Evidence for <code>base</code> and
+<code>draft</code> is always there. So is <code>required_checks</code>, with one <code>required_check</code> per context the
+base requires, and <code>review</code> and <code>relation_to_master</code>. <code>dependency</code> appears per declared
+dependency, <code>label</code> per label that holds it, <code>auto_merge</code> whenever the forge has auto-merge
+armed, <code>repository_settings</code> when the settings allow no merge commit, and <code>supersession</code> per
+declared successor (<code>open</code>, <code>landed</code>, <code>not_landed</code> or <code>unread</code>; that one <code>landed</code> is git's, on
+master and the successor's head). <code>freshness</code> is a reserved kind. <code>evaluated_against</code> names the master, the head and the moment of the
+observation; two decisions are the same when the master and head are.</p>
+<h3 id="label-policy"><a class="zola-anchor" href="#label-policy" aria-label="Anchor link for: label-policy">Label policy</a></h3>
+<p>The labels that have an effect are one table, <code>LABEL_POLICY</code> in
+<code>src/integration/classify.rs</code>. Each label has an effect; the policy in force copies the table
+(<code>policy.labels</code> in <code>prs status --json</code> and <code>integration.queue</code>) and the classifier reads that
+copy. No other list of labels exists. A label is compared case-insensitively.</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Label</th><th>Effect</th></tr></thead><tbody>
+<tr><td><code>do-not-merge</code></td><td>hold</td></tr>
+<tr><td><code>do not merge</code></td><td>hold</td></tr>
+<tr><td><code>blocked</code></td><td>hold</td></tr>
+<tr><td><code>hold</code></td><td>hold</td></tr>
+<tr><td><code>on-hold</code></td><td>hold</td></tr>
+<tr><td><code>wip</code></td><td>hold</td></tr>
+<tr><td><code>manual-merge</code></td><td>hold</td></tr>
+<tr><td><code>obsolete</code></td><td>obsolete</td></tr>
+</tbody></table>
+</div>
+<p><code>hold</code> makes the pull request <code>blocked</code>, with <code>label:NAME</code>. <code>obsolete</code> makes it <code>obsolete</code>,
+with <code>label_obsolete:NAME</code> in the forge's spelling (owner decision D3): a person's mark is the
+only evidence that reaches the word — age, shared paths and a similar title never do — and it
+is never closed automatically. A pull request carrying both is <code>obsolete</code>, since a person acts
+on it either way; a draft carrying it stays <code>draft</code>, because the draft gate is asked first.
+There is no label that opts a pull request out of the executor's refresh (owner decision D11).</p>
+<h3 id="auto-merge-and-the-merge-method"><a class="zola-anchor" href="#auto-merge-and-the-merge-method" aria-label="Anchor link for: auto-merge-and-the-merge-method">Auto-merge and the merge method</a></h3>
+<p>A pull request on which the forge has auto-merge armed is <code>unsafe</code>. The forge would merge it
+on its own once its own conditions hold, outside the executor and against whatever master is
+then, and refreshing it would only hand the forge a head to merge. Nothing acts on it until a
+person disarms it, and the queue lists every such pull request in a diagnostic.</p>
+<p>The executor merges only with a merge commit, because the derived-file driver resolves merges
+and a squash or a rebase would replay commits it never saw. The merge method
+(<code>policy.merge_method</code>) is <code>merge</code> when the repository's settings allow a merge commit
+(<code>allow_merge_commit</code>, read with <code>gh api repos/OWNER/NAME</code>), and none otherwise. With none,
+every pull request the relation to master does not already decide is <code>blocked</code> with
+<code>merge_commit_not_allowed</code> and <code>repository_settings</code> evidence, and the queue says why. The
+executor never falls back to a squash or a rebase. The <code>merge_method</code> gate comes after
+<code>relation_to_master</code> because closing work that is already on master does not depend on the
+merge setting: a <code>redundant</code> pull request stays <code>redundant</code>, lists
+<code>merge_commit_not_allowed</code> after its own reason, and <code>prs cleanup --apply</code> still closes it. So
+does a <code>superseded</code> one.</p>
+<h3 id="review-states"><a class="zola-anchor" href="#review-states" aria-label="Anchor link for: review-states">Review states</a></h3>
+<p>The forge's review decision comes first, and the branch protection's requirement second:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>The forge says</th><th>The protection requires a review</th><th>Review</th><th>Disposition, if nothing earlier decided</th></tr></thead><tbody>
+<tr><td><code>CHANGES_REQUESTED</code></td><td>any</td><td><code>changes_requested</code></td><td><code>waiting_for_review</code></td></tr>
+<tr><td><code>APPROVED</code></td><td>any</td><td><code>approved</code></td><td>goes on to the checks</td></tr>
+<tr><td><code>REVIEW_REQUIRED</code></td><td>any</td><td><code>pending</code></td><td><code>waiting_for_review</code></td></tr>
+<tr><td>nothing</td><td>yes</td><td><code>pending</code></td><td><code>waiting_for_review</code></td></tr>
+<tr><td>nothing</td><td>no</td><td><code>not_required</code></td><td>goes on to the checks</td></tr>
+<tr><td>nothing</td><td>unread</td><td><code>unknown</code></td><td><code>unknown</code></td></tr>
+</tbody></table>
+</div>
+<p><code>REVIEW_REQUIRED</code> is pending even when the branch protection requires no review. A ruleset or
+code owners can require one that the protection does not, and the forge's word is that a
+review is still owed.</p>
+<h3 id="dependency-markers"><a class="zola-anchor" href="#dependency-markers" aria-label="Anchor link for: dependency-markers">Dependency markers</a></h3>
+<p>A pull request depends on another when a line of its body opens with one of these markers,
+in any case, followed by one or more numbers:</p>
+<ul>
+<li><code>Depends on #N</code></li>
+<li><code>Stacked on #N</code></li>
+<li><code>Requires #N</code></li>
+<li><code>Land after #N</code></li>
+</ul>
+<p>Only a bullet (<code>-</code>, <code>*</code>, <code>+</code>, <code>1.</code>), quote marks (<code>&gt;</code>) and emphasis (<code>*</code>, <code>_</code>) may come before
+the marker, so <code>- **Depends on:** #7</code> declares a dependency. More numbers follow with commas,
+<code>and</code> or <code>&amp;</code>: <code>Stacked on #644 and #645</code>. The same words anywhere else in a line are prose:
+<code>a regression introduced after #540</code> and <code>thereafter #5</code> declare nothing, and neither does a
+bare <code>After #N</code>.</p>
+<p>A dependency is satisfied only when that pull request <strong>merged</strong>. The refresh reads every
+declared dependency that is not open (<code>gh pr view</code>, with the successors), so the queue knows
+what became of it:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>The dependency</th><th>The pull request</th><th>Reason</th></tr></thead><tbody>
+<tr><td>open</td><td><code>waiting_for_dependency</code></td><td><code>depends_on:#N</code></td></tr>
+<tr><td>merged</td><td>not held by it</td><td>—</td></tr>
+<tr><td>closed without a merge</td><td><code>blocked</code>: its work never landed, so a person reopens it or removes the declaration</td><td><code>dependency_closed_unmerged:#N</code></td></tr>
+<tr><td>not open, and the forge could not say — refused, or not a pull request at all</td><td><code>unknown</code>, never satisfied</td><td><code>dependency_unread:#N</code></td></tr>
+<tr><td>part of a cycle of declared dependencies between open pull requests</td><td><code>blocked</code>: none of them can land first</td><td><code>dependency_cycle:#N</code>, one per other member</td></tr>
+</tbody></table>
+</div>
+<p>A cycle is said before anything else about the dependencies, then a closed one, then an
+unread one, then an open one. Git also implies dependencies: a pull request whose observed
+head contains another's observed head carries its commits, so landing it lands both. Each
+such pair is an <code>inferred</code> dependency with <code>inferred</code> evidence — never a block, never a
+change of disposition or rank; only a declaration holds a pull request back. The refresh lists
+at most 500 open pull requests; a forge with as many says so in the queue's diagnostics,
+because a dependency on one beyond them would read as unread.</p>
+<h3 id="supersession-markers"><a class="zola-anchor" href="#supersession-markers" aria-label="Anchor link for: supersession-markers">Supersession markers</a></h3>
+<p>A pull request is replaced by another when a line of a body declares it, read by the same
+line-anchored parser as a dependency:</p>
+<ul>
+<li><code>Superseded by #N</code> in its own body names N as its successor;</li>
+<li><code>Supersedes #M</code> in N's body names N as the successor of M, from the other side.</li>
+</ul>
+<p>The <code>supersession</code> gate is asked before <code>relation_to_master</code>, because a pull request whose
+successor landed usually conflicts with what the successor brought, and it is superseded, not
+conflicting. What became of the successor decides:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>The successor</th><th>Disposition</th><th>Reason</th></tr></thead><tbody>
+<tr><td>is no longer open, and master contains its head: it landed</td><td><code>superseded</code>, with <code>superseded_by: N</code></td><td><code>superseded_by:#N</code></td></tr>
+<tr><td>is still open</td><td><code>waiting_for_dependency</code></td><td><code>successor_open:#N</code></td></tr>
+<tr><td>is no longer open, and master does not contain its head (closed unmerged, or merged by a squash or a rebase)</td><td><code>possibly_redundant</code></td><td><code>successor_not_landed:#N</code></td></tr>
+<tr><td>is not open and could not be read</td><td><code>unknown</code></td><td><code>successor_unread:#N</code></td></tr>
+</tbody></table>
+</div>
+<p>Of several successors, one that landed decides, then one still open, then one that did not
+land. On the wire the disposition stays one word, and <code>superseded_by</code> (present only with
+<code>superseded</code>) is its successor. A successor that is no longer open is not among the open pull
+requests, so the observation also reads the closed pull requests whose body declares a
+supersession (one search, newest 200) and each named successor that is not open (<code>gh pr view</code>),
+and fetches their heads; git, not the forge's <code>merged</code>, says whether a head landed. The search
+index can lag a merge by a moment: until it catches up, the replaced pull request is decided by
+its relation alone, which after its successor's merge is no longer <code>ready</code>.</p>
+<p>A pull request that targets another branch is stacked on the open pull request whose head is
+that branch. Only branches of this repository count. A fork's branch says nothing about a
+branch here, whatever it is called, so a fork whose branch is named <code>master</code> stacks nothing.</p>
+<h3 id="issue-and-milestone"><a class="zola-anchor" href="#issue-and-milestone" aria-label="Anchor link for: issue-and-milestone">Issue and milestone</a></h3>
+<p>Each assessment names the issue its head branch names, when it names one, and that issue's
+milestone: <code>issue</code> and <code>milestone</code>, absent otherwise. The branch is the link, in the form
+<code>majordomus worktree create --issue &lt;id&gt;</code> gives it (<code>feature/&lt;id&gt;-&lt;slug&gt;</code>): a path component
+equal to an issue id of <code>.ai/repo/project/issues/</code>, or the id followed by <code>-</code>, and nothing
+else counts — a branch <code>feature/I10030</code> does not name <code>I1003</code>. The milestone is the one the
+issue's record declares. Both are derived on every read of the queue from the recorded
+observation and this checkout's project model, never stored beside them; neither decides a
+disposition or a rank. <code>prs explain</code> prints them (<code>issue:        I0810 · milestone M003</code>),
+the Cockpit shows them beside the title, and <code>prs status --format json</code>, the HTTP API and MCP
+carry them on each assessment.</p>
+<h2 id="what-a-change-touches"><a class="zola-anchor" href="#what-a-change-touches" aria-label="Anchor link for: what-a-change-touches">What a change touches</a></h2>
+<p>Beside each head's relation, from the same pair of commits and cached under the same key in
+<code>relations.json</code>, the queue reads what its merge changes by kind (<code>change_shape</code> on the
+assessment): its authored paths, its derived paths, and <code>version_bump</code>, the version it
+declares in <code>apps/majordomus-cli/Cargo.toml</code> when that is not the one its merge base declares.
+The authored paths are the whole change, a conflicting head's included, and they decide:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>What two open pull requests share</th><th><code>overlaps[].kind</code></th><th>Risk factor</th></tr></thead><tbody>
+<tr><td>both raise the crate's version</td><td><code>version_bump</code></td><td><code>overlapping_version_bump:#N</code></td></tr>
+<tr><td>both change a record under <code>.ai/repo/releases/</code></td><td><code>release</code></td><td><code>overlapping_release:#N</code></td></tr>
+<tr><td>an authored path</td><td><code>authored</code></td><td>none</td></tr>
+</tbody></table>
+</div>
+<p>Risk is low, medium or high from the paths touched. A head that raises the version
+(<code>version_bump:V</code>), a shared version bump or release, and a relation git could not decide
+(<code>paths_unknown</code>) are high: whichever of two version bumps lands second has to be
+re-derived on the first, and a change nobody could read is never "documentation only".</p>
 <h2 id="the-rank"><a class="zola-anchor" href="#the-rank" aria-label="Anchor link for: the-rank">The rank</a></h2>
-<p>The queue is ordered by lane, disposition, risk (low, medium, high, from the paths touched),
-how many other ready or refreshable pull requests share an authored path (fewer first,
-because landing it invalidates less), age (older first, so new easy work cannot starve old
-work) and number. Every key is a value of the assessment, so the order is total and does
-not depend on the order the forge listed them. <code>src/integration/tests.rs</code> proves this as a
-property.</p>
+<p>The queue is ordered by lane, disposition, risk (low, medium, high, as above), how many
+other ready or refreshable pull requests it overlaps (fewer first, because landing it
+invalidates less), how many open pull requests declare that they wait for
+it and are not yet satisfied (more first, because landing it unblocks them), how many
+authored paths it changes (fewer first: a smaller change is cheaper to land and to undo), age
+(older first, so new easy work cannot starve old work) and number. Every key is a value of
+the assessment or of the queue around it, so the order is total and does not depend on the
+order the forge listed them; <code>src/integration/tests.rs</code> proves this as a property. Each
+assessment carries the factors it was ranked by (<code>rank_factors</code>), and <code>prs explain</code> prints
+them, so a rank is never a number without its reasons.</p>
 <h2 id="waiting-and-starvation"><a class="zola-anchor" href="#waiting-and-starvation" aria-label="Anchor link for: waiting-and-starvation">Waiting and starvation</a></h2>
 <p>Every <code>ready</code> or <code>needs_refresh</code> pull request carries how long it has been the executor's to
 act on, and how often the executor chose another instead (<code>wait</code> on the assessment). Both
@@ -239,72 +443,304 @@ executor first sees the pull request as actionable, not when the forge was first
 <li>observe again and rebuild the queue;</li>
 <li>act only if the second decision names the same master and head and still says <code>ready</code>,
 and otherwise record <code>stale_decision</code> and start again;</li>
-<li>merge with the repository's merge method and <code>--match-head-commit &lt;head&gt;</code>, never <code>--admin</code>;</li>
+<li>merge with a merge commit (<code>--merge</code>) and <code>--match-head-commit &lt;head&gt;</code>, never <code>--admin</code>,
+a squash or a rebase;</li>
 <li>verify that the forge shows it merged and that the fetched master contains its head;</li>
 <li>record the merge with the master before and after.</li>
 </ol>
 <p>A merge moves every other pull request behind master, so the next step always starts from a
 new observation.</p>
 <p>When nothing is ready, <code>prs drain --refresh</code> brings master into the first <code>needs_refresh</code>
-pull request. It uses a scratch worktree under the common git directory, runs <code>git merge --no-commit</code> with the derived driver, runs <code>scripts/derive</code>, commits with the hooks running,
-and pushes a plain fast-forward to the pull request's branch. That is a merge commit and never
-a rewrite, as <code>project.land-and-publish</code> prescribes. The pipeline is one deep: while a
+pull request. It uses a scratch worktree under the common git directory, runs <code>git merge --no-commit</code> with the derived driver (rerere off, so no remembered resolution decides a path
+nobody looked at), runs <code>scripts/derive</code>, commits with the hooks running, and pushes a
+fast-forward to the pull request's branch with a plain push, never a forced one. It first
+checks that what it pushes descends from the head it observed, and that origin still serves
+that head (<code>git ls-remote</code>): a branch its author moved since, forward, sideways or back, is
+refused and nothing is pushed. Between that check and the push, git itself refuses a branch
+moved forward or sideways, since the push is then no fast-forward. A rewind in that window,
+the author force-pushing the branch back to an ancestor of the observed head, is the one move
+that slips through: the push is then a fast-forward that restores the commits the author
+removed. That window is accepted; no history is ever overwritten. That is a merge commit and
+never a rewrite, as <code>project.land-and-publish</code> prescribes. The pipeline is one deep: while a
 refreshed pull request waits for its checks, no other is refreshed, because merging the first
 would put the second behind again. Throughput is therefore one pull request per run of the
 required check, which is the true cost of this repository's mechanics.</p>
+<p>Only a run the executor started holds the pipeline: the required check of the head a
+<code>refreshed</code> event recorded as pushed (<code>head_after</code>), while it is <em>pending</em> or <em>missing</em>. Both
+count, because the forge creates no check run for an aggregate job such as this repository's
+<code>ci</code> until every job it needs has finished, so the executor's own head reads as <code>missing</code> for
+most of its run. A <code>missing</code> check holds the pipeline only for <code>REFRESHED_HEAD_REPORTS_WITHIN</code>
+(four hours) after that event. Past it, the check is taken never to report and the next pull
+request is refreshed, so one silent check cannot stop every refresh. A check running on a head
+the author pushed holds nothing. A <code>refreshed</code> event recorded before <code>head_after</code> existed names
+no head, so a pull request refreshed by an older executor does not hold the pipeline.</p>
+<h2 id="repair"><a class="zola-anchor" href="#repair" aria-label="Anchor link for: repair">Repair</a></h2>
+<p>The <code>repair</code> lane is a person's. Most pull requests here go <code>CONFLICTING</code> on the forge within
+minutes of any merge to master, and nearly always over <code>merge=derived</code> files the forge cannot
+resolve, because the derived driver is per-clone configuration. <code>prs repair &lt;n&gt;</code> (or the head
+branch's name) brings master into one named pull request, whatever lane it waits in, by the
+same act as <code>prs drain --refresh</code>. It replaces <code>scripts/unblock</code>, which did this outside the
+integrator, without the lease or the trail.</p>
+<p>It decides nothing of its own. It reads the named pull request's assessment and acts only
+when the classification says the head lacks master and git's merge with the derived
+attribute conflicts on no authored path, the relation <code>behind</code>. Every conflict the forge
+reports is then on a <code>merge=derived</code> path, which the regeneration settles.</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>The assessment says</th><th><code>prs repair</code></th></tr></thead><tbody>
+<tr><td>relation <code>behind</code></td><td>eligible: master is merged in, derived, committed and pushed</td></tr>
+<tr><td>relation <code>conflicting</code></td><td>refused with exit 10, naming every authored file that conflicts: they are the owner's to settle</td></tr>
+<tr><td>relation <code>up_to_date</code></td><td>nothing to repair: the head already contains master</td></tr>
+<tr><td><code>redundant</code>, <code>superseded</code>, relation <code>contained</code>, <code>superseded</code>, <code>patch_ids_upstream</code> or <code>derived_only</code></td><td>nothing to repair: cleanup's lane, or a person's</td></tr>
+<tr><td>relation <code>unknown</code>, a fork's head, armed auto-merge, another base, not open</td><td>refused with exit 10</td></tr>
+</tbody></table>
+</div>
+<p>Without <code>--apply</code>, which is the default and is also spelled <code>--dry-run</code>, it is a read. It
+decides on the queue of the last recorded observation, as <code>prs status</code> and <code>prs explain</code> do.
+It reaches no network, takes no lease, writes nothing to the trail, and exits 10 when nothing
+was ever observed. <code>prs refresh</code> observes again. With <code>--apply</code> it follows the drain's rules:</p>
+<ol>
+<li>it takes the base branch's integration lease and holds it until the act is over, so a
+drain cannot race it, and a second executor started meanwhile is refused (exit 12);</li>
+<li>it observes the forge again, exactly as a drain step does, and decides again on that;</li>
+<li>it records <code>repair_selected</code> and then <code>repair_attempted</code> before anything reaches the
+remote, and does nothing when either line cannot be written;</li>
+<li>in a scratch worktree under the common git directory, never the branch's own, it merges
+the master it decided on, runs <code>scripts/derive</code>, and commits with the hooks running;</li>
+<li>it pushes a fast-forward of the head it observed, with a plain push and only while origin
+still serves that head, then records <code>repaired</code> with the
+head it pushed, or <code>repair_refused</code> with the failure's class.</li>
+</ol>
+<p>A merge, derive, commit or push that fails leaves nothing on the branch and is
+<code>repair_refused</code>. A branch that moved is classed <code>stale</code>. It never merges into master, never
+asks the forge to merge, and never touches a person's checkout. A refusal decided from the
+classification is recorded too when <code>--apply</code> was given, so the trail says why a requested
+repair did not happen.</p>
 <h2 id="cleanup"><a class="zola-anchor" href="#cleanup" aria-label="Anchor link for: cleanup">Cleanup</a></h2>
 <p>Closing a pull request requires more evidence than merging one. <code>prs cleanup</code> lists the
-<code>superseded</code> ones and closes them only with <code>--apply</code>, with a comment that names the master
-and head that proved it. <code>possibly_redundant</code> is listed and left for a person. Age, shared
-paths and similar titles are not evidence of anything. Branches are not deleted. The
-repository's own setting decides that.</p>
+<code>redundant</code> and <code>superseded</code> ones and closes them only with <code>--apply</code> (<code>--dry-run</code> spells
+out the default), with a comment that names the reason that decided it, the base, and the
+master and head that proved it; a superseded one's comment opens with its successor
+(<code>Superseded by #N, which landed.</code>). A closure is taken the way a merge is: the forge is
+observed again first, and the pull request is closed only if the second decision still says
+the same thing against the same master and head, or the trail records a <code>stale_decision</code> and
+nothing is closed. The forge is asked for the pull request's state and head just before, and
+a head that moved is never closed. <code>possibly_redundant</code> is listed and left for a person,
+whether its evidence is derived output or a successor that did not land. Age, shared paths
+and similar titles are not evidence of anything.</p>
+<p>Before 0.13 (owner decision D2) the word <code>superseded</code> meant what <code>redundant</code> means now, and its
+closure was recorded as <code>closed_superseded</code>. The strong case is <code>redundant</code> now, closed as
+<code>closed_redundant</code>; <code>superseded</code> and <code>closed_superseded</code> mean only a declared successor that
+landed. Older trail lines still read: a <code>closed_superseded</code> line written before carries
+<code>head_reachable_from_master</code> or <code>merge_changes_nothing</code>, never <code>superseded_by:#N</code>.</p>
+<h3 id="branches-merged-pull-requests-leave-behind"><a class="zola-anchor" href="#branches-merged-pull-requests-leave-behind" aria-label="Anchor link for: branches-merged-pull-requests-leave-behind">Branches merged pull requests leave behind</a></h3>
+<p>Branches are never deleted here: the forge's <code>delete_branch_on_merge</code> decides that (owner
+decision D4), so the executor holds no write that removes a branch. What the forge left
+behind is reported instead, by <code>prs cleanup</code> alone: it reads origin's branches
+(<code>git ls-remote --heads</code>) and the newest 1000 merged pull requests on demand, and keeps every
+branch of this repository that origin still serves at the exact head that merged. <code>prs refresh</code> never asks — the executor runs it before every decision, and a report-only fact
+that decides no merge stays off that path; it reads only the setting, from the repository
+settings it already asks for. A branch whose tip moved after its merge carries newer work and
+is never listed; neither is a fork's branch, whatever it is called, or the base. Cleanup
+prints the list after the pull requests and records it as <code>left-branches.json</code> beside the
+observation, with when it was read, so the surfaces that never reach the network render the
+last report with its age:</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>merged branches left on origin (2); the forge decides deletion, so none is deleted here:</span></span>
+<span class="giallo-l"><span>  fix/left                                         #1     3f2a9c1d0b7e  left_for_a_person</span></span>
+<span class="giallo-l"><span>  fix/here                                         #3     9c0d4e5f6a7b  kept: checked out at /…/here-wt</span></span>
+<span class="giallo-l"><span>  next: the forge keeps merged branches: enable delete_branch_on_merge, and delete this one with git push origin --delete fix/left</span></span></code></pre>
+<p>A branch checked out in a worktree of this repository is listed as <code>kept</code>, with its path:
+somebody may still be standing on it. A read that fails leaves the list unread
+(<code>merged branches: unread</code>), recorded as unread and never as empty. <code>prs cleanup --format json</code> stays the list of pull requests to close.</p>
 <h2 id="safety"><a class="zola-anchor" href="#safety" aria-label="Anchor link for: safety">Safety</a></h2>
 <ul>
-<li>One executor per base branch: <code>drain</code> and <code>cleanup --apply</code> hold an exclusive lease at
-<code>&lt;git-common-dir&gt;/majordomus/locks/integration-&lt;base&gt;.lock</code>, with the holder recorded. A
-lease untouched for 30 minutes is reclaimed. Observers never take it.</li>
-<li>Every act is appended to <code>.ai/local/state/integration/events.jsonl</code>: <code>selected</code>,
-<code>stale_decision</code>, <code>merge_attempted</code>, <code>merge_succeeded</code>, <code>merge_failed</code>,
-<code>verification_failed</code>, <code>refresh_selected</code>, <code>refreshed</code>, <code>refresh_failed</code>,
-<code>closed_superseded</code>, <code>idle</code>, and the two transitions of a wait, <code>became_actionable</code> and
-<code>left_actionable</code>.</li>
-<li>A dry run observes and decides, and changes and records nothing.</li>
-<li>A refused merge and a stale decision are specific to the candidate: the next step
-re-plans. A verification failure stops the drain.</li>
-<li>Transient failures of the forge are asked again (<code>crate::integration::retry</code>): a timeout,
+<li>
+<p>One executor per base branch: <code>drain</code>, <code>cleanup --apply</code> and <code>repair --apply</code> hold an
+exclusive lease at <code>&lt;git-common-dir&gt;/majordomus/locks/integration-&lt;base&gt;.lock</code>, with the
+holder recorded. Holding it is holding an exclusive <code>flock</code> on that file for the
+executor's life, so the kernel decides who holds it: of executors started at the same
+instant, in one checkout or in several worktrees of the repository, exactly one holds it
+and no pull request is merged twice. The integration unit tests race eight executors per
+round, and cases 855 and 856 race separate processes through the command line. A holder
+that ends, even by a crash, releases the lease at once; a live holder is never taken over.
+A record untouched for 30 minutes is reported stale to observers (<code>prs brief</code>,
+<code>prs status</code>), which never take the lease. The executor renews its record before every
+observation, and a refresh keeps it fresh while the branch's derive runs. When the path no
+longer names the file the executor locked, or the record names another holder, the lease
+is lost: the drain stops as on any systemic failure (<code>prs drain</code> exits 12) and acts on
+nothing. The lease is taken for the base the forge was last observed to name, observed
+first when this checkout never asked, never for a guessed <code>master</code>.</p>
+</li>
+<li>
+<p>One executor per repository, across machines: the lease guards one clone, since every
+worktree shares its common git directory and another clone has its own. When this
+checkout's shared server runs the repository's mesh (ADR 0067), the executor first takes
+an exclusive mesh claim on <code>integration/&lt;repository&gt;/&lt;base&gt;</code> as its checkout's session, and
+every linked runtime admits against it: a second machine's <code>prs drain</code> exits 12 naming the
+holding session and what it said it was for, before it takes its own lease. The claim's key
+is in the lease record; it is released after the lease. Where no mesh runs, the lease alone
+guards, and <code>prs brief</code> and the Cockpit say "per-clone guard only". An executor killed
+outright leaves its claim held — its session belongs to its checkout, which the mesh never
+refuses to itself — and the next executor of that checkout releases the leftover, so a
+crash costs other machines a wait, never a claim nobody can give back
+(<code>integration::exclusive</code>, <code>tests/integration_across_machines.rs</code>, case 924).</p>
+</li>
+<li>
+<p>Every act is appended to the audit trail before it happens. The trail is one file per
+repository, <code>&lt;git-common-dir&gt;/majordomus/integration/events.jsonl</code>, beside the lease, so
+every worktree writes the same trail and <code>prs events</code>, <code>prs brief</code>, <code>prs status</code>, the
+<code>integration.*</code> capabilities and the Cockpit read it from any of them. The last queue's
+summary (<code>summary.json</code>) sits beside it. The observation and the relation cache stay in
+the checkout, under <code>.ai/local/state/integration/</code>.</p>
+</li>
+<li>
+<p>A read writes nothing. <code>prs status</code>, <code>plan</code>, <code>explain</code>, the <code>integration.*</code> capabilities
+and the Cockpit build the queue from the recorded observation and leave the checkout as
+they found it; only <code>prs refresh</code> and the executor, which have just observed the forge,
+keep the relations they decided and the summary a briefing reads. An observation older
+than an hour is said in the queue's diagnostics, and every reading of a queue with a
+diagnostic — <code>status</code>, <code>plan</code> and <code>explain</code> alike — exits 10.</p>
+</li>
+<li>
+<p>The trail is written first. A merge is asked of the forge only after <code>merge_attempted</code> is
+on the trail, a refresh is pushed only after <code>refresh_attempted</code>, a repair only after
+<code>repair_attempted</code>, and a pull request is closed only after <code>close_attempted</code>. When that
+line cannot be written, the act is not taken: the step reports <code>trail_unwritable</code>, the
+drain stops, and <code>prs drain</code> exits 12 (<code>prs repair --apply</code> exits 12 too). A lease the
+trail cannot record is given back and refused. Any other write the trail refuses ends the
+run with the error rather than continuing unrecorded.</p>
+</li>
+<li>
+<p>The events, each a typed <code>action</code> on one JSON line:</p>
+<table tabindex="0"><thead><tr><th>Event</th><th>When</th></tr></thead><tbody>
+<tr><td><code>lease_acquired</code>, <code>lease_released</code></td><td>the executor takes and gives back the base branch's lease</td></tr>
+<tr><td><code>continuous_started</code>, <code>continuous_stopped</code></td><td>a continuous drain starts, and stops with its reason</td></tr>
+<tr><td><code>observed</code></td><td><code>prs refresh</code>, or an executor step, observed the forge</td></tr>
+<tr><td><code>became_actionable</code>, <code>left_actionable</code></td><td>the two transitions a wait is folded from</td></tr>
+<tr><td><code>selected</code></td><td>the first ready pull request is chosen, with those passed over</td></tr>
+<tr><td><code>refresh_selected</code></td><td>the first refreshable one is chosen, with its evidence</td></tr>
+<tr><td><code>stale_decision</code></td><td>master or the head moved between the decision and the act</td></tr>
+<tr><td><code>merge_attempted</code></td><td>before the merge, with its evidence</td></tr>
+<tr><td><code>merge_succeeded</code>, <code>merge_failed</code>, <code>verification_failed</code></td><td>after it</td></tr>
+<tr><td><code>failure_acknowledged</code></td><td>a person looked at a merge that could not be verified (<code>prs drain --resume-after-failure</code>)</td></tr>
+<tr><td><code>refresh_attempted</code></td><td>before master is merged into the branch and pushed</td></tr>
+<tr><td><code>refreshed</code> (with the head it pushed), <code>refresh_failed</code></td><td>after it</td></tr>
+<tr><td><code>repair_selected</code>, <code>repair_attempted</code></td><td><code>prs repair --apply</code> chose the named pull request, and is about to merge master into it and push</td></tr>
+<tr><td><code>repaired</code> (with the head it pushed), <code>repair_refused</code> (with its class)</td><td>after it, or when the classification refused it</td></tr>
+<tr><td><code>close_attempted</code></td><td>before a redundant or superseded pull request is closed</td></tr>
+<tr><td><code>closed_redundant</code>, <code>closed_superseded</code> (with its evidence), <code>close_failed</code></td><td>after it</td></tr>
+<tr><td><code>idle</code></td><td>nothing was ready</td></tr>
+<tr><td><code>observe_failed</code></td><td>a continuous drain's cycle met an outage short enough to wait out</td></tr>
+</tbody></table>
+<p>An event may also carry <code>evidence</code> (the assessment's, on the acts named above as carrying it),
+<code>class</code> (why it failed, once classified) and <code>merge_commit</code>. Each is left out when empty,
+and a line written before they existed reads with them empty.</p>
+</li>
+<li>
+<p>A checkout that kept its own trail under <code>.ai/local/state/integration/events.jsonl</code> has
+it appended to the repository's trail the first time the trail is read while the
+repository has none. The marker <code>events.moved-from</code> beside the trail keeps that from
+happening twice. Old trails of other worktrees are left in place, because appending one
+after another would fold their lines out of order.</p>
+</li>
+<li>
+<p>A dry run observes and decides and changes nothing. It records only what it observed
+(<code>observed</code>).</p>
+</li>
+<li>
+<p>A refused merge and a stale decision are specific to the candidate: the next step
+re-plans. A verification failure stops the drain.</p>
+</li>
+<li>
+<p>Every failed act on the trail carries its <code>class</code>: <code>stale</code>, <code>conflict</code>,
+<code>new_failing_check</code>, <code>review_revoked</code>, <code>transient</code> or <code>policy_violation</code> are one
+candidate's, and the drain goes on with the next; <code>verification_failed</code> and <code>unreadable</code>
+stop it. A pull request the forge refused to merge, or whose refresh failed, is shown as
+<code>needs_repair</code> with <code>executor_merge_refused:&lt;head&gt;</code> or <code>executor_refresh_failed:&lt;master&gt;</code>
+for as long as its head and master are the ones that were refused, so the next ready
+change merges instead of the same refusal repeating. A push to the branch or a new master
+clears it; a transient failure never holds a change back.</p>
+</li>
+<li>
+<p>A signal stops a one-shot drain as it stops a continuous one: the step in progress
+finishes, and no other starts. A continuous drain waits out a short outage of the forge
+(<code>observe_failed</code>, at most three consecutive cycles) before it ends.</p>
+</li>
+<li>
+<p>A merge is verified where it landed, not where the forge says it is. The base is fetched,
+and the commit right after the decision's master on master's first-parent line must be
+this merge: its first parent the master the decision was taken against and, for a merge
+commit, its second parent the head that was decided on. A merge that landed on top of
+another one, onto a master nobody tested with it, fails as <code>unexpected_master</code> even
+though the forge calls it merged. The commit is recorded as <code>merge_commit</code> on
+<code>merge_succeeded</code>. This is the executor's half of the guard; the forge's half is the
+protection's "require branches to be up to date" (<code>required_status_checks.strict</code>). The
+queue's policy says whether the base requires it (<code>up_to_date_required</code>), and <code>prs status</code>
+and the Cockpit show it; it decides no disposition, and turning it on is the owner's act
+(decision D8).</p>
+</li>
+<li>
+<p>A merge whose answer was lost (a timeout, a dropped connection) is asked whether it
+landed, never asked to merge again: landed and proved, it is <code>merge_succeeded</code>; not
+landed, <code>merge_failed</code>.</p>
+</li>
+<li>
+<p>An executor that stopped between asking for a merge and verifying it leaves a
+<code>merge_attempted</code> with no end. The next drain verifies that merge first and records how
+it ended, before it decides anything.</p>
+</li>
+<li>
+<p>A verification failure holds every later drain (owner decision D7). Until a person has
+looked and run <code>prs drain --resume-after-failure</code>, which records <code>failure_acknowledged</code>,
+a drain merges nothing, says why, and exits 10; <code>--continuous</code> stops. A dry run still
+plans.</p>
+</li>
+<li>
+<p>Transient failures of the forge are asked again (<code>crate::integration::retry</code>): a timeout,
 a 5xx, a rate limit or a dropped connection, at most four attempts with waits of 2, 4 and
 8 seconds. Anything else, such as a refusal, a 401, a 404 or a moved head, is the answer and
 is returned at once. The observation, the fetch and the post-merge verification are
 retried. The merge itself is never retried: a merge that timed out may have landed, and
 the verification is what finds out. A drain that decides again after a refused merge is
-taking a new decision from a new observation, within its step bound, and is not retrying.</li>
+taking a new decision from a new observation, within its step bound, and is not retrying.</p>
+</li>
 </ul>
 <h2 id="commands"><a class="zola-anchor" href="#commands" aria-label="Anchor link for: commands">Commands</a></h2>
 <div class="overflow-x-auto" tabindex="0">
 <table tabindex="0"><thead><tr><th>Command</th><th>Network</th><th>What</th></tr></thead><tbody>
 <tr><td><code>majordomus prs</code> / <code>prs status</code></td><td>no</td><td>the ranked queue; exit 10 when the observation is stale or absent</td></tr>
 <tr><td><code>majordomus prs plan</code></td><td>no</td><td>the next merge, the next refresh, and the other lanes</td></tr>
-<tr><td><code>majordomus prs explain &lt;n&gt;</code></td><td>no</td><td>one pull request's evidence and rank</td></tr>
-<tr><td><code>majordomus prs events</code></td><td>no</td><td>the audit trail</td></tr>
-<tr><td><code>majordomus prs brief</code></td><td>no</td><td>one line for a briefing: the last queue built here, the lease, the last merge; nothing where the forge was never observed</td></tr>
+<tr><td><code>majordomus prs explain &lt;n&gt;</code></td><td>no</td><td>one pull request's gates, reasons, evidence and rank</td></tr>
+<tr><td><code>majordomus prs events</code></td><td>no</td><td>the repository's audit trail, the same from every worktree</td></tr>
+<tr><td><code>majordomus prs brief</code></td><td>no</td><td>one line for a briefing: the last queue built in the repository, the lease and how far it reaches, the last merge, the last refresh, failure or stale decision; nothing in a checkout that never observed the forge</td></tr>
 <tr><td><code>majordomus prs refresh</code></td><td>yes</td><td>observe the forge and fetch every open head</td></tr>
 <tr><td><code>majordomus prs drain [--max N] [--dry-run] [--refresh]</code></td><td>yes</td><td>integrate, one merge at a time</td></tr>
+<tr><td><code>majordomus prs drain --resume-after-failure</code></td><td>yes</td><td>record that a person looked at an unverified merge, then drain</td></tr>
 <tr><td><code>majordomus prs drain --continuous [--interval S] [--max N] [--refresh]</code></td><td>yes</td><td>drain, wait, drain again until stopped</td></tr>
-<tr><td><code>majordomus prs cleanup [--apply]</code></td><td>yes</td><td>close what is provably on master</td></tr>
+<tr><td><code>majordomus prs cleanup [--apply]</code></td><td>yes</td><td>close what is provably on master, or superseded by a successor that landed; list what is a person's (possibly redundant, obsolete) and the branches merged pull requests left on origin</td></tr>
+<tr><td><code>majordomus prs repair &lt;n|branch&gt;</code></td><td>no</td><td>whether master may be brought into that pull request, from the last observation (a dry run)</td></tr>
+<tr><td><code>majordomus prs repair &lt;n|branch&gt; --apply</code></td><td>yes</td><td>bring master into it, under the lease, as <code>drain --refresh</code> does</td></tr>
 </tbody></table>
 </div>
 <p>The same queue is <code>GET /api/v1/pull-requests</code> (MCP <code>majordomus_pull_requests</code>), with the
 lease and the last merge beside it. One pull request is
 <code>GET /api/v1/pull-requests/explain?number=</code> (<code>majordomus_pull_request_explain</code>), and the
-trail is <code>GET /api/v1/pull-requests/events</code> (<code>majordomus_integration_events</code>). All three are
+trail is <code>GET /api/v1/pull-requests/events</code> (<code>majordomus_integration_events</code>). What cleanup
+would do is <code>GET /api/v1/pull-requests/cleanup</code> (<code>majordomus_pull_requests_cleanup</code>): the plan
+decided offline from the recorded observation — <code>would_close</code> or <code>left_for_a_person</code> for each
+pull request, the same table <code>prs cleanup</code> acts on — beside the branch report <code>prs cleanup</code>
+last recorded, with its age. It closes, deletes and asks the forge for nothing. All four are
 declared once in <code>capability/builtin/integration.rs</code>.</p>
 <p>The Cockpit renders those two answers at <code>/cockpit/integration</code>. It shows the counts by lane,
-the master every decision was taken against, the next merge, who holds the lease, the last
-merge, a table per lane with each pull request's reasons, next action and wait, and the
+the executor's throughput over the last seven days (merges, merges per day, the median wait
+from actionable to merged, CI rounds per merge, the median cycle, stale decisions, failed and
+unverified merges — a median nothing measured is said, not shown as zero), the master every
+decision was taken against, the next merge, who holds the lease and how far it reaches, the
+last merge, a table per lane with each pull request's reasons, next action and wait, and the
 executor's recent actions. With nothing observed, it says so and names <code>prs refresh</code>.
-<code>majordomus context</code> carries <code>prs brief</code> under <code>INTEGRATION</code>, so a session that continues
-drain work starts knowing what was merged, what remains, and whether an executor is
-running.</p>
+<code>majordomus context</code> carries <code>prs brief</code> under <code>INTEGRATION</code>, and a handover derived with
+<code>majordomus handover --derive</code> carries the same line under <code># Current State</code>, so a session
+that continues drain work starts knowing what was merged, what remains, how the last step
+went, and whether an executor is running.</p>
 <h2 id="continuous-mode"><a class="zola-anchor" href="#continuous-mode" aria-label="Anchor link for: continuous-mode">Continuous mode</a></h2>
 <p><code>prs drain --continuous</code> drains, waits <code>--interval</code> seconds (300 by default, 30 to 900),
 and drains again. It holds the base branch's lease for the whole run, so a second executor is
@@ -313,16 +749,20 @@ which a lease is called stale. Every cycle is an ordinary bounded drain: <code>-
 from a fresh observation, and nothing is carried between cycles. Ctrl-C or SIGTERM lets the
 step in progress finish, then the drain stops and releases the lease. A second signal ends
 it at once. A verification failure stops it for a person, and so does a forge or git that
-cannot be read after its retries. It never runs with <code>--dry-run</code>.</p>
+cannot be read after its retries. It never runs with <code>--dry-run</code>, and it does not start before
+the rollout's record allows it (see below).</p>
 <h2 id="rollout"><a class="zola-anchor" href="#rollout" aria-label="Anchor link for: rollout">Rollout</a></h2>
 <ol>
 <li><strong>Dry run.</strong> <code>prs refresh &amp;&amp; prs status &amp;&amp; prs drain --dry-run</code> against the real
 repository. The classification was checked on 2026-09-30 against 70 open pull requests.</li>
 <li><strong>One merge.</strong> <code>prs drain --max 1</code> once a pull request is <code>ready</code>.</li>
 <li><strong>Bounded.</strong> <code>prs drain --refresh --max 3</code>.</li>
-<li><strong>Continuous.</strong> <code>prs drain --continuous</code> exists and is gated by its own explicit flag;
-it is to be run only after the audit trail shows several verified bounded cycles. It
-has not been run against this repository yet.</li>
+<li><strong>Continuous.</strong> <code>prs drain --continuous</code> is refused, with exit 10 and before the lease,
+the base or the forge is touched, until the audit trail holds five verified merges
+(<code>ROLLOUT_MERGES_BEFORE_CONTINUOUS</code>) since the last merge that could not be verified. A
+merge that could not be verified starts the count again, even after
+<code>--resume-after-failure</code>, because the record it ends was the evidence. The gate reads
+the trail and nothing else: stages 2 and 3 are what fill it (ADR 0101 §13).</li>
 </ol>
 </article></div>
 </div>
@@ -384,7 +824,7 @@ has not been run against this repository yet.</li>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.13.2 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/b59eda550a324126d25e6d6a322dabd061e00040" class="font-mono underline">b59eda5</a> · inputs <span class="font-mono">7f147bdc589b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.14.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/815b96b5a12be1bb255060f06f5a02a2882ad742" class="font-mono underline">815b96b</a> · inputs <span class="font-mono">fdb50c3e26bc</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

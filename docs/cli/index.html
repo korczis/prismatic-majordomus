@@ -29,7 +29,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.13.2 -->
+     Generator: majordomus-cli 0.14.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -156,16 +156,16 @@
 </div></div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">200</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">202</p>
       <p class="mt-1 text-sm text-body-subtle">commands</p>
     </div><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">176</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">178</p>
       <p class="mt-1 text-sm text-body-subtle">of them you can run</p>
     </div><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">1360</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">1375</p>
       <p class="mt-1 text-sm text-body-subtle">documented arguments</p>
     </div><div class="rounded-base border border-default bg-neutral-primary-soft p-4">
-      <p class="text-2xl font-semibold tracking-tight text-heading">202</p>
+      <p class="text-2xl font-semibold tracking-tight text-heading">204</p>
       <p class="mt-1 text-sm text-body-subtle">executed examples</p>
     </div></div>
 
@@ -525,13 +525,21 @@ Most of the task lifecycle (init, start, check, finish, doctor, ...) is the shel
       <span class="break-words font-mono text-sm text-heading">majordomus prs cleanup</span>
       <span class="break-words text-sm text-body sm:flex-1">Close the pull requests whose work is provably on master already; without `--apply` it only lists them</span>
       <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/prs/repair/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus prs repair</span>
+      <span class="break-words text-sm text-body sm:flex-1">Bring master into one named pull request whose only conflict with it is over derived (`merge=derived`) files. Eligible only when the classification says it is behind master and its merge conflicts on no authored path; an authored conflict is refused, naming the files. A dry run by default, decided offline on the last recorded observation, like `status`. With `--apply` it takes the integration lease, observes the forge again, records the act on the trail first, and merges master in a scratch worktree, derives, commits and pushes a fast-forward leased on the observed head; it never merges into master. Exit 10 on a refusal or an absent observation, 12 when it could not act</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
     </a></li><li><a href="https://majordomus.dev/docs/cli/prs/events/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
       <span class="break-words font-mono text-sm text-heading">majordomus prs events</span>
       <span class="break-words text-sm text-body sm:flex-1">The audit trail: every selection, merge, refusal, stale decision and closure this checkout&#39;s executor recorded</span>
       <span class="font-mono text-xs text-body-subtle">1 example</span>
     </a></li><li><a href="https://majordomus.dev/docs/cli/prs/brief/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
       <span class="break-words font-mono text-sm text-heading">majordomus prs brief</span>
-      <span class="break-words text-sm text-body sm:flex-1">One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease, and the last merge. Offline, decides no relation, and prints nothing where the forge was never observed</span>
+      <span class="break-words text-sm text-body sm:flex-1">One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease and whether it reaches across machines, the last merge, and the last refresh, failure or stale decision. Offline, decides no relation, and prints nothing where the forge was never observed</span>
+      <span class="font-mono text-xs text-body-subtle">1 example</span>
+    </a></li><li><a href="https://majordomus.dev/docs/cli/prs/prove-dry-run/" class="flex flex-col gap-1 px-4 py-3 sm:pl-8 hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
+      <span class="break-words font-mono text-sm text-heading">majordomus prs prove-dry-run</span>
+      <span class="break-words text-sm text-body sm:flex-1">Prove the non-mutating cycle moves nothing: snapshot origin&#39;s refs, the open pull requests, the audit trail, the lease and the local refs, run refresh, plan, drain --dry-run and cleanup (listing), snapshot again and compare; the refresh&#39;s fetched mirrors must equal what origin serves. Exit 10 naming what moved. Takes no flag: there is nothing to turn on</span>
       <span class="font-mono text-xs text-body-subtle">1 example</span>
     </a></li><li><a href="https://majordomus.dev/docs/cli/convergence/" class="flex flex-col gap-1 px-4 py-3  hover:bg-neutral-secondary-medium sm:flex-row sm:items-baseline sm:gap-4">
       <span class="break-words font-mono text-sm text-heading">majordomus convergence</span>
@@ -972,7 +980,7 @@ Most of the task lifecycle (init, start, check, finish, doctor, ...) is the shel
     </a></li></ul>
 
   <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What makes this true</h2>
-  <p class="mt-2 max-w-3xl break-words text-sm text-body">Every command above is declared once, in <a href="https://github.com/korczis/prismatic-majordomus/blob/b59eda550a324126d25e6d6a322dabd061e00040/apps/majordomus-cli/src/cli.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/src/cli.rs</a>, together with its examples. The executable walks that declaration into <a href="https://github.com/korczis/prismatic-majordomus/blob/b59eda550a324126d25e6d6a322dabd061e00040/docs/generated/cli.json" class="break-all font-mono text-fg-brand underline inline-block py-1">docs/generated/cli.json</a>, and these pages, <code class="font-mono">--help</code> and <a href="https://github.com/korczis/prismatic-majordomus/blob/b59eda550a324126d25e6d6a322dabd061e00040/docs/generated/cli.md" class="break-all font-mono text-fg-brand underline inline-block py-1">docs/generated/cli.md</a> render it. A command a person can run cannot exist without an example: the executable's own validator refuses it, and the examples shown here are the argument vectors the crate's example tests execute against the built binary.</p>
+  <p class="mt-2 max-w-3xl break-words text-sm text-body">Every command above is declared once, in <a href="https://github.com/korczis/prismatic-majordomus/blob/815b96b5a12be1bb255060f06f5a02a2882ad742/apps/majordomus-cli/src/cli.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/src/cli.rs</a>, together with its examples. The executable walks that declaration into <a href="https://github.com/korczis/prismatic-majordomus/blob/815b96b5a12be1bb255060f06f5a02a2882ad742/docs/generated/cli.json" class="break-all font-mono text-fg-brand underline inline-block py-1">docs/generated/cli.json</a>, and these pages, <code class="font-mono">--help</code> and <a href="https://github.com/korczis/prismatic-majordomus/blob/815b96b5a12be1bb255060f06f5a02a2882ad742/docs/generated/cli.md" class="break-all font-mono text-fg-brand underline inline-block py-1">docs/generated/cli.md</a> render it. A command a person can run cannot exist without an example: the executable's own validator refuses it, and the examples shown here are the argument vectors the crate's example tests execute against the built binary.</p>
   <p class="mt-3 max-w-3xl text-sm text-body">The whole command line on one page: <a href="https://majordomus.dev/registry/cli/" class="text-fg-brand underline">the registry's command-line page</a>. The task lifecycle (<code class="font-mono">init</code>, <code class="font-mono">start</code>, <code class="font-mono">check</code>, <code class="font-mono">finish</code>, <code class="font-mono">doctor</code>, ...) belongs to the <em>shell</em> tool <code class="font-mono">bin/majordomus</code>, a different program: see <a href="https://majordomus.dev/commands/" class="text-fg-brand underline">Commands</a> and its <a href="https://majordomus.dev/docs/cli-specification/" class="text-fg-brand underline">specification</a>.</p>
 </div>
 
@@ -1031,7 +1039,7 @@ Most of the task lifecycle (init, start, check, finish, doctor, ...) is the shel
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.13.2 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/b59eda550a324126d25e6d6a322dabd061e00040" class="font-mono underline">b59eda5</a> · inputs <span class="font-mono">7f147bdc589b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.14.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/815b96b5a12be1bb255060f06f5a02a2882ad742" class="font-mono underline">815b96b</a> · inputs <span class="font-mono">fdb50c3e26bc</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

@@ -29,7 +29,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.13.2 -->
+     Generator: majordomus-cli 0.14.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -167,7 +167,7 @@
         <h2 class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">it references</h2>
         <ul class="space-y-1.5 text-sm">
           <li class="min-w-0"><span class="font-mono text-xs text-body-subtle">put_in_force</span> <a class="break-all font-mono text-fg-brand hover:underline" href="https://majordomus.dev/rules/project-accumulation-is-measured-2/">project.accumulation-is-measured@2</a></li>
-          <li class="min-w-0"><span class="font-mono text-xs text-body-subtle">put_in_force</span> <a class="break-all font-mono text-fg-brand hover:underline" href="https://majordomus.dev/rules/project-integration-follows-the-current-master-1/">project.integration-follows-the-current-master@1</a></li>
+          <li class="min-w-0"><span class="font-mono text-xs text-body-subtle">put_in_force</span> <a class="break-all font-mono text-fg-brand hover:underline" href="https://majordomus.dev/rules/project-integration-follows-the-current-master-2/">project.integration-follows-the-current-master@2</a></li>
           <li class="min-w-0"><span class="font-mono text-xs text-body-subtle">put_in_force</span> <a class="break-all font-mono text-fg-brand hover:underline" href="https://majordomus.dev/rules/project-land-and-publish-1/">project.land-and-publish@1</a></li>
           <li class="min-w-0"><span class="font-mono text-xs text-body-subtle">put_in_force</span> <a class="break-all font-mono text-fg-brand hover:underline" href="https://majordomus.dev/rules/project-no-network-no-eval-1/">project.no-network-no-eval@1</a></li>
         </ul>
@@ -197,41 +197,263 @@ derived data stale. The required check (<code>ci</code>) takes hours.</p>
 <p>Pull-request integration is a typed subsystem of the executable (<code>crate::integration</code>),
 with one canonical state, one classification and one executor.</p>
 <ol>
-<li><strong>One canonical state.</strong> A <code>PullRequestAssessment</code> per open pull request: what the forge
+<li>
+<p><strong>One canonical state.</strong> A <code>PullRequestAssessment</code> per open pull request: what the forge
 observed, what its head is to master, its disposition, its reasons, its evidence, its
-risk, its overlaps, and the master and head it was decided against. The command line, the
-HTTP route, the MCP tool and the Cockpit render that value and nothing else.</li>
-<li><strong>The relation to master is git's.</strong> <code>git merge-tree --write-tree</code> with this clone's
+risk, its overlaps, and the master and head it was decided against, with the moment the
+forge was observed. The command line, the HTTP route, the MCP tool and the Cockpit render
+that value and nothing else. Its vocabulary is typed, so no client parses prose. A reason
+is a <code>ReasonCode</code> whose wire form is the <code>code</code> or <code>code:payload</code> string it always was:
+<code>stacked_on:#N</code>, <code>base_is:BRANCH</code>, <code>draft</code>, <code>label:NAME</code>, <code>auto_merge_armed</code>,
+<code>merge_commit_not_allowed</code>, <code>superseded_by:#N</code>, <code>successor_open:#N</code>,
+<code>successor_not_landed:#N</code>, <code>successor_unread:#N</code>, <code>head_reachable_from_master</code>,
+<code>merge_changes_nothing</code>, <code>patch_ids_upstream</code>, <code>only_derived_artifacts_differ</code>,
+<code>relation_unknown:WHY</code>, <code>conflicts_on:COUNT</code>,
+<code>depends_on:#N</code>, <code>review:STATE</code>, <code>review_policy_unread</code>, <code>required_check_failed</code>,
+<code>behind_master:COMMITS</code>, <code>fork_head</code>, <code>required_checks:STATE</code>, <code>no_required_checks</code>,
+<code>required_checks_unread</code>, <code>dependency_cycle:#N</code>, <code>dependency_closed_unmerged:#N</code>,
+<code>dependency_unread:#N</code>, and, on a ready one, <code>contains_master</code> with
+<code>required_checks_passed</code> or <code>required_checks_skipped</code>. The trail, the OpenAPI string
+arrays and the Cockpit read the same strings as before, and a code an older trail carries
+that this list does not name is kept verbatim. Evidence has a typed kind, with the wire
+words it had (<code>required_checks</code>, <code>review</code>, <code>relation_to_master</code>, <code>dependency</code>, <code>label</code>,
+<code>draft</code>, <code>base</code>, plus <code>required_check</code>, one per required context, <code>auto_merge</code> whenever
+the forge has auto-merge armed, <code>repository_settings</code> when the settings allow no merge
+commit, and <code>supersession</code>, one per declared successor; <code>freshness</code> is reserved), and a
+source: the forge observation at its moment, or git on a named master and head.</p>
+</li>
+<li>
+<p><strong>The relation to master is git's.</strong> <code>git merge-tree --write-tree</code> with this clone's
 drivers, and <code>git check-attr merge</code> for which paths are derived, from master's own
 <code>.gitattributes</code>. A conflict on a derived path is the regeneration's, not a person's. The
-result is cached by the pair of SHAs, which are immutable.</li>
-<li><strong>Thirteen dispositions, decided in one order.</strong> <code>ready</code> is reached only when the pull
-request targets the base, is not a draft, carries no blocking label, contains the
-current master, has its declared dependencies landed, satisfies the review policy, and
-has every <em>required</em> check passed on its current head. A required check that is pending,
-missing, skipped or unreadable is not passed.</li>
-<li><strong>One merge at a time, and no plan survives it.</strong> The executor's step takes no plan. It
+result is cached by the pair of SHAs, which are immutable. It is decided on exactly the
+head the assessment names as evaluated: a head that is not in the clone, because it moved
+during the refresh, is <code>unknown</code>, never the relation of whatever a fetched ref holds now.
+An attribute read that fails is <code>unknown</code>, never "nothing is derived". Only a pair of full
+commit ids is a cache key, and an <code>unknown</code> is never cached. Where the merge would conflict
+or change only derived output, <code>git cherry</code> is asked too: when every commit the head has
+and master lacks is on master already as an equal patch, the relation is
+<code>patch_ids_upstream</code>, the change landed and master moved past it. A partial match never
+gives it, nor a head with a merge commit of its own in that range (a merge's resolution has
+no patch to compare), nor a clean merge that changes authored paths, where master lacks
+something the head carries, such as a landed change master reverted since.
+Beside the relation, from the same pair of commits and cached under the same key, is what
+the merge changes by kind (<code>ChangeShape</code>): every authored path it changes or conflicts on,
+the derived ones, and the version the head declares in the crate manifest when it raises
+the one its merge base declares. The relation's variants stay as they are; the shape is
+what overlaps and risk read, so a conflicting head overlaps others over its whole change
+and not only over the paths it conflicts on. An overlap names its kind: <code>version_bump</code>
+when both raise the version, <code>release</code> when both change a record under
+<code>.ai/repo/releases/</code>, and <code>authored</code> for shared authored paths. Risk is <code>high</code> with
+<code>paths_unknown</code> when the relation is <code>unknown</code>, never "documentation only"; a version bump
+(<code>version_bump:V</code>), a shared one (<code>overlapping_version_bump:#N</code>) and a shared release
+(<code>overlapping_release:#N</code>) are <code>high</code> factors; and <code>.ai/repo/releases/</code> replaces the
+derived <code>share/version.txt</code>, which the authored paths never contained.</p>
+</li>
+<li>
+<p><strong>Fifteen dispositions, decided in one order.</strong> They are <code>ready</code> (lane ready);
+<code>needs_refresh</code>, <code>waiting_for_checks</code>, <code>waiting_for_review</code> and <code>waiting_for_dependency</code>
+(waiting); <code>needs_repair</code> and <code>conflicting</code> (repair); <code>redundant</code>, <code>superseded</code> and
+<code>possibly_redundant</code> (cleanup); and <code>draft</code>, <code>blocked</code>, <code>unsafe</code>, <code>other_base</code> and
+<code>unknown</code> (held). The list is a runtime value (<code>PullRequestDisposition::ALL</code>), so a
+surface that names the dispositions of a lane derives them rather than copying them.
+<code>ready</code> is reached only when the pull request targets the base, is not a draft, carries
+no label that holds it, has no auto-merge armed, has no declared successor, is not on
+master already, the repository
+allows a merge commit, it contains the current master, has its declared dependencies
+landed, satisfies the review policy, and has every <em>required</em> check passed on its current
+head. These are gates, asked in this order: <code>base</code>, <code>draft</code>, <code>label</code>, <code>auto_merge</code>,
+<code>supersession</code>, <code>relation_to_master</code>, <code>merge_method</code>, <code>dependency</code>, <code>review</code>,
+<code>no_failing_check</code>, <code>freshness</code>, <code>required_checks</code>. The labels that hold are one table, <code>LABEL_POLICY</code>, each
+with its effect; the policy copies it and the classifier reads that copy, and no other
+list of labels exists. Today every effect is <code>hold</code>, compared case-insensitively:
+<code>do-not-merge</code>, <code>do not merge</code>, <code>blocked</code>, <code>hold</code>, <code>on-hold</code>, <code>wip</code>, <code>manual-merge</code>. No
+label opts a pull request out of the executor's refresh (owner decision D11). A pull
+request on which the forge has auto-merge armed is <code>unsafe</code> (<code>auto_merge_armed</code>): the
+forge would merge it on its own, outside the executor and against whatever master is
+then, and a refresh would only hand it a head to merge, so nothing acts on it until a
+person disarms it; the queue names every such pull request in a diagnostic. The executor
+merges only with a merge commit, because the derived-file driver resolves merges and a
+squash or a rebase would replay commits it never saw. The merge method is therefore
+<code>merge</code> when the repository's settings allow a merge commit (<code>allow_merge_commit</code>), and
+none otherwise; with none, every pull request the relation does not already decide is
+<code>blocked</code> (<code>merge_commit_not_allowed</code>, with <code>repository_settings</code> evidence) and the queue
+says why. The gate is asked after <code>relation_to_master</code> because closing work that is
+already on master does not depend on the merge setting: a <code>redundant</code> pull request stays
+<code>redundant</code>, says <code>merge_commit_not_allowed</code> after its own reason, and <code>prs cleanup --apply</code> still closes it; so does a <code>superseded</code> one. It never falls back to a squash or a rebase. Every gate is
+asked whatever the others answered. The assessment's <code>gates</code> lists each with whether it
+passed, and its <code>reasons</code> hold every failing gate's findings in the same order. The
+disposition is the first failing gate's, so a draft that also conflicts and fails its
+check is <code>draft</code> and says all three. A failed required check is asked before freshness
+and a pending one after it: a head behind master needs a refresh, which runs its checks
+again, unless a check already failed. A gate that fails only because an earlier one did,
+such as freshness when the merge conflicts, fails without a reason of its own. The
+required checks are the base's branch protection and the rulesets that apply to it,
+together; if either cannot be read, nothing is ready. A check bound to an app (<code>app_id</code>
+in the protection, <code>integration_id</code> in a ruleset) is only that app's check run: a commit
+status of the same name is not it. Of a context's reports, one still running makes it
+pending, and otherwise the newest completed report is its verdict, so a failure a re-run
+fixed has passed. A required check that is pending, missing or unreadable is not passed,
+and neither is a skip, unless the policy permits that context's skip. A base that
+requires no check proves nothing about a head: an empty set after a successful read is
+<code>unknown</code> (<code>no_required_checks</code>), never ready (owner decision D5). The review policy is
+read from the protection and rulesets the same way (approvals, code owners, stale
+dismissal), and an approval counts only on the commit it was given on: approvals of an
+earlier head are <code>stale</code>, and enough of them on the head with a code owner's still owed
+is <code>code_owners_pending</code>. The forge's review decision comes before the policy:
+<code>REVIEW_REQUIRED</code> is a pending review even where the policy requires none, because a rule
+this policy does not list can. A dependency is declared only by a line that opens with
+<code>Depends on</code>, <code>Stacked on</code>, <code>Requires</code> or <code>Land after</code> and a number; the same words
+mid-sentence are prose. It is satisfied by a merge alone: one closed without a merge holds
+the pull request <code>blocked</code> (<code>dependency_closed_unmerged:#N</code>), one the forge cannot account
+for is <code>unknown</code> (<code>dependency_unread:#N</code>), and declared dependencies that form a cycle
+among open pull requests block every member (<code>dependency_cycle:#N</code>). A head that contains
+another open one's head is an inferred dependency: evidence, never a block. A pull request is stacked only on a branch of this repository,
+never on a fork's branch of the same name. A successor is declared the same way, by the
+same parser: a line of a pull request's body that opens with <code>Superseded by #N</code> names N
+as its successor, and a line of N's body that opens with <code>Supersedes #M</code> names N as M's,
+from the other side. The <code>supersession</code> gate is asked before <code>relation_to_master</code>, because
+a pull request whose successor landed usually conflicts with what the successor brought,
+and is superseded rather than conflicting. A successor that is no longer open and whose
+head git finds in master landed: the pull request is <code>superseded</code>
+(<code>superseded_by:#N</code>), and the assessment names N in <code>superseded_by</code>. A successor still
+open makes it <code>waiting_for_dependency</code> (<code>successor_open:#N</code>): it must not land while its
+successor may, and once the successor lands it is closed rather than merged. A successor
+closed without its head landing, closed unmerged or merged by a squash or a rebase, leaves
+it <code>possibly_redundant</code> (<code>successor_not_landed:#N</code>) for a person; one that cannot be read
+is <code>unknown</code> (<code>successor_unread:#N</code>). Of several successors, one that landed decides,
+then one still open, then one that did not land.</p>
+</li>
+<li>
+<p><strong>One merge at a time, and no plan survives it.</strong> The executor's step takes no plan. It
 observes the forge, decides, observes again, and acts only if the second decision names
 the same master and head and still says <code>ready</code>. <code>drain</code> is a loop over that step. There
-is no variable in which a candidate list could survive a merge.</li>
-<li><strong>Refreshing is a separate, bounded act.</strong> When nothing is ready, <code>drain --refresh</code> brings
+is no variable in which a candidate list could survive a merge. A merge is then proved
+where it landed: the first-parent successor of the decided master must be this merge,
+with the decided head as its second parent; anything else is <code>unexpected_master</code>, even
+when the forge calls the pull request merged. The forge-side half of that guard is the
+protection's <code>required_status_checks.strict</code>; the executor reports a base without it
+and cannot set it (D8). An unverified merge holds every later drain until a person
+acknowledges it (D7); an interrupted merge is verified, never repeated, before the next
+decision.</p>
+</li>
+<li>
+<p><strong>Refreshing is a separate, bounded act.</strong> When nothing is ready, <code>drain --refresh</code> brings
 master into the first pull request that needs it: a merge commit with the derived driver
-and a fresh derive, pushed as a plain fast-forward, never a rewrite. This is what
-<code>project.land-and-publish</code> already prescribes. The pipeline is one deep: while a
+and a fresh derive, pushed as a plain fast-forward while origin still serves the head
+that was observed, never forced and never a rewrite. This is what <code>project.land-and-publish</code> already prescribes, and <code>prs repair &lt;n&gt; --apply</code> is the same act for one pull request a person names, under the same lease
+and trail; its dry run decides offline on the recorded observation. The pipeline is one deep: while a
 refreshed pull request waits for its checks, no other is refreshed, because merging the
-first would put the second behind again and waste its CI run.</li>
-<li><strong>Cleanup demands more than merging.</strong> Only a pull request whose head is an ancestor of
-master, or whose merge changes no file, is closed, and only with <code>--apply</code>. One that
-differs only in derived output is <code>possibly_redundant</code> and is left for a person. Age,
-shared paths and similar titles are not evidence.</li>
-<li><strong>One executor per base branch.</strong> An exclusive lease under the common git directory, with
-its holder recorded and a staleness bound. Observers never take it.</li>
-<li><strong>The network is declared, not tolerated.</strong> <code>prs refresh</code>, <code>prs drain</code> and <code>prs cleanup</code>
-run the GitHub CLI and <code>git fetch</code>. Every other surface renders the recorded observation
-with its age. SECURITY.md names the exception.</li>
-<li><strong>Every act is recorded.</strong> Selections, stale decisions, merge attempts, merges with the
+first would put the second behind again and waste its CI run. Only a run the executor
+started holds it: the required check of the head a <code>refreshed</code> event recorded as pushed,
+while it is pending or missing. Missing counts because an aggregate check is not created
+until the jobs it needs finish, but it holds only for a bound after the push (four hours),
+so a check that never reports cannot freeze every refresh. A check on a head the author
+pushed holds nothing.</p>
+</li>
+<li>
+<p><strong>Cleanup demands more than merging.</strong> Only two dispositions are closed, and only with
+<code>--apply</code>. A <code>redundant</code> pull request is closed on git's strong evidence: its head is an
+ancestor of master (<code>head_reachable_from_master</code>), its merge changes no file
+(<code>merge_changes_nothing</code>), or every commit it has and master lacks is on master as an
+equal patch (<code>patch_ids_upstream</code>). A <code>superseded</code> pull request is closed because a
+declared successor landed, and the closing comment names that successor. Weak evidence is
+never closed: one that differs only in derived output, or whose successor did not land, is
+<code>possibly_redundant</code> and is left for a person. Age, shared paths and similar titles are
+not evidence. The trail records the closure as <code>closed_redundant</code> or <code>closed_superseded</code>.</p>
+<p><em>Wire change (owner decision D2, shipped with the 0.13 minor).</em> Before it, the word
+<code>superseded</code> meant what <code>redundant</code> means now: the strong relation to master, closed by
+cleanup with the action <code>closed_superseded</code>. The strong case was renamed <code>redundant</code>, its
+closure <code>closed_redundant</code>, and <code>superseded</code> now means only an explicitly declared
+successor that landed, with <code>closed_superseded</code> as its closure. A client that matched
+<code>superseded</code> to find work already on master matches <code>redundant</code> now. Every older line still
+reads: a trail line with <code>closed_superseded</code> parses, and its reasons
+(<code>head_reachable_from_master</code>, <code>merge_changes_nothing</code>) say which meaning it carried,
+since a closure of a declared successor always carries <code>superseded_by:#N</code>. The relation to
+master keeps its own word, <code>superseded</code> (<code>merge_changes_nothing</code>), which is git's fact,
+not a disposition.</p>
+</li>
+<li>
+<p><strong>One executor per base branch.</strong> An exclusive lease under the common git directory: an
+exclusive <code>flock</code> on its file, held for the executor's life, with the holder recorded
+beside it for whoever reads. The kernel decides who holds it, so executors started at
+once cannot both win, and a holder that ends, even by a crash, releases it at once; a
+live holder is never taken over, however old its record. The staleness bound is what an
+observer reports, not a licence to take the lease. Observers never take it.</p>
+<p>The lease guards one clone: every worktree shares its common git directory, and a second
+clone on another machine has its own. The repository is guarded by the mesh (ADR 0067)
+when this checkout's shared server runs it: before the lease, an executor takes an
+exclusive mesh claim on <code>integration/&lt;repository&gt;/&lt;base&gt;</code> as its checkout's session, which
+every linked runtime admits against. A second machine's executor is refused with exit 12,
+naming the holding session and what it said it was for, before it takes its lease or acts.
+The claim's key is written in the lease record and released after the lease. A mesh that
+is not running here refuses nothing: the lease alone guards, and the record, <code>prs brief</code>
+and the Cockpit say so ("per-clone guard only"). A claim an executor left behind when it
+was killed is its checkout's own session, which the mesh never refuses to that session;
+the next executor there takes the lease and releases the leftover, so a crash costs the
+other machines a wait, never a claim nobody can release.</p>
+</li>
+<li>
+<p><strong>The network is declared, not tolerated.</strong> <code>prs refresh</code>, <code>prs drain</code>, <code>prs cleanup</code>
+and <code>prs repair --apply</code> run the GitHub CLI and <code>git fetch</code>. Every other surface renders the recorded observation
+with its age. SECURITY.md names the exception. Besides the open pull requests, an
+observation reads the closed ones whose body declares a supersession (one search, newest
+first, bounded) and each successor an open one names that is not open (<code>gh pr view</code>), and
+fetches their heads, so that git can say whether a successor landed after it stopped being
+listed as open.</p>
+</li>
+<li>
+<p><strong>Every act is recorded.</strong> Selections, stale decisions, merge attempts, merges with the
 master before and after, refusals, refreshes and closures go to an append-only trail that
-the <code>integration.events</code> capability serves.</li>
+the <code>integration.events</code> capability serves. The trail is the repository's, not a
+checkout's: one file under the common git directory,
+<code>&lt;git-common-dir&gt;/majordomus/integration/events.jsonl</code>, beside the lease, so every
+worktree writes and reads the same one. Each act is appended before it is taken, and an
+act the trail cannot record is not taken.</p>
+</li>
+<li>
+<p><strong>Failure classes and retry.</strong> Every failed act is recorded with its class: <code>stale</code>,
+<code>conflict</code>, <code>new_failing_check</code>, <code>review_revoked</code>, <code>transient</code>, <code>policy_violation</code>,
+<code>verification_failed</code> or <code>unreadable</code>. The first six belong to one candidate, and the
+drain goes on with the next; the last two belong to the repository or the executor, and
+the drain stops. A candidate the forge refused to merge, or whose refresh failed, is
+held back as <code>needs_repair</code> (<code>executor_merge_refused</code>, <code>executor_refresh_failed</code>) while
+its head and master are the ones refused — folded from the trail, never from a plan — so
+one refused change does not block the queue. A transient failure holds nothing back. The
+forge is asked again only on an outage (<code>crate::integration::retry</code>, case 742), a merge
+never; a continuous drain waits out up to <code>CONTINUOUS_TRANSIENT_LIMIT</code> consecutive
+outages, each recorded as <code>observe_failed</code>, before it ends.</p>
+</li>
+<li>
+<p><strong>Continuous mode is a bounded loop of bounded drains.</strong> <code>prs drain --continuous</code> holds
+the lease for its whole run and repeats one bounded drain per cycle, so every action is
+still preceded by a fresh observation and no plan outlives a merge. Between cycles it
+waits an interval inside <code>INTERVAL_SECONDS</code> (30 to 900 s: the floor spares the forge, the
+ceiling keeps a waiting worker well inside <code>LEASE_STALE_AFTER</code>), in one-second slices so a
+signal is honoured within a second of the step in progress finishing. It stops on a
+signal, on a merge that could not be verified, and after <code>CONTINUOUS_TRANSIENT_LIMIT</code>
+consecutive outages. A dry run is never continuous.</p>
+</li>
+<li>
+<p><strong>Waiting is a fact, and starvation is shown, not traded for.</strong> The trail records when
+a pull request becomes actionable and stops being so, and, on every selection, the
+actionable pull requests passed over; <code>crate::integration::wait</code> folds those into how long
+each has waited and how often another was chosen. A pull request passed over
+<code>STARVING_AFTER</code> times is named as starving. The rank is not changed by it: its tie-break
+already prefers the older of two otherwise equal candidates, and a long wait is never a
+reason to merge something less safe sooner.</p>
+</li>
+<li>
+<p><strong>The rollout is staged, and the trail is its record.</strong> Stage 1 is a dry run against the
+real repository (<code>prs refresh</code>, <code>prs status</code>, <code>prs drain --dry-run</code>), which moves nothing.
+Stage 2 is one bounded merge (<code>prs drain --max 1</code>), stage 3 small bounded drains
+(<code>--max 3</code>, then <code>--max 5</code>). Stage 4, continuous mode, is refused (exit 10, before the
+lease, the base or the forge) until the trail holds <code>ROLLOUT_MERGES_BEFORE_CONTINUOUS</code>
+(five) verified merges since the last merge that could not be verified; such a merge
+starts the count again, acknowledged or not, because the record it ends was the evidence.
+The defaults are the safe ones: <code>prs status</code>, <code>plan</code> and <code>explain</code> read; a drain merges
+only when asked to; cleanup closes nothing without <code>--apply</code>.</p>
+</li>
 </ol>
 <h3 id="consequences"><a class="zola-anchor" href="#consequences" aria-label="Anchor link for: consequences">Consequences</a></h3>
 <p>Throughput is bounded by the required check: one pull request lands per CI run of its
@@ -256,7 +478,7 @@ bisection. They remain a person's decision, not the executor's.</li>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where this comes from</h2>
     <dl class="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
-      <dt class="text-body-subtle">canonical file</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/b59eda550a324126d25e6d6a322dabd061e00040/.ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md">.ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md</a></dd>
+      <dt class="text-body-subtle">canonical file</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="https://github.com/korczis/prismatic-majordomus/blob/815b96b5a12be1bb255060f06f5a02a2882ad742/.ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md">.ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md</a></dd>
       <dt class="text-body-subtle">identity</dt><dd class="min-w-0 break-all font-mono text-heading">adr-0101</dd>
       <dt class="text-body-subtle">also served as</dt><dd class="min-w-0 break-all font-mono text-heading">MCP resource <code>majordomus://adr/adr-0101</code> · <code>majordomus entity show adr/adr-0101</code> · <code>GET /api/v1/entity?uri=majordomus://adr/adr-0101</code></dd>
       <dt class="text-body-subtle">in the Cockpit</dt><dd class="min-w-0 break-all font-mono text-heading">/cockpit/objects/adr/adr-0101</dd>
@@ -323,7 +545,7 @@ bisection. They remain a person's decision, not the executor's.</li>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.13.2 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/b59eda550a324126d25e6d6a322dabd061e00040" class="font-mono underline">b59eda5</a> · inputs <span class="font-mono">7f147bdc589b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.14.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/815b96b5a12be1bb255060f06f5a02a2882ad742" class="font-mono underline">815b96b</a> · inputs <span class="font-mono">fdb50c3e26bc</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>
