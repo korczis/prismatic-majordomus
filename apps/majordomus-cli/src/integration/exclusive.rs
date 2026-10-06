@@ -298,9 +298,11 @@ pub fn acquire_through(
     match reach {
         Reach::Repository(claim) => {
             let lease = IntegrationLease::acquire_holding(root, base, Some(claim))?;
-            if let Some(claim) = lease.mesh_claim() {
-                claim.release_leftovers();
-            }
+            // the lease holds the claim it was given, so this releases exactly once
+            lease
+                .mesh_claim()
+                .into_iter()
+                .for_each(MeshClaim::release_leftovers);
             Ok(lease)
         }
         Reach::CloneOnly => IntegrationLease::acquire(root, base),
