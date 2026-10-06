@@ -2177,10 +2177,11 @@ impl Integrator for ForgeIntegrator<'_> {
                 ));
             }
             // the branch must still be the head that was decided on: one its author moved since
-            // — forward, sideways or back — is refused here. A branch git cannot list is
-            // refused the same way, as one nobody can vouch for.
+            // — forward, sideways or back, or deleted — is refused here. A listing that fails is
+            // its own refusal, in git's words, so an outage is classed as one (transient) and
+            // never reported as a branch that moved.
             let listed = git_in(&["ls-remote", "origin", &format!("refs/heads/{}", a.head_ref)])
-                .unwrap_or_default();
+                .map_err(|e| format!("the branch could not be listed: {e}"))?;
             let remote = listed.split_whitespace().next().unwrap_or("nothing");
             if remote != head {
                 return Err(format!(

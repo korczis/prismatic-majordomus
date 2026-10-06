@@ -678,3 +678,36 @@ fn a_branch_rewound_during_the_act_is_refused_and_nothing_is_pushed() {
         git(&f.work, &["rev-parse", &format!("{head}^")])
     });
 }
+
+/// Origin cannot be listed during the act: the refusal says so in git's words, never that the
+/// branch moved, and nothing is pushed. A remote that is no repository at all is a fault of
+/// configuration, which no retry fixes, so it is classed `policy_violation`; an outage (a host
+/// that does not resolve, a refused connection, a 5xx) is classed `transient` by the same
+/// classifier (`FailureClass::of_refresh_failure`, unit-tested on those words).
+#[test]
+fn a_branch_that_cannot_be_listed_is_refused_as_such_and_nothing_is_pushed() {
+    let f = Forge::new();
+    f.derives();
+    f.derive_script("git remote set-url origin /nonexistent");
+    let head = f.branch(1);
+    f.advance();
+    f.open(&[(1, &head)]);
+    let (code, out, err) = f.prs(&["repair", "1", "--apply"]);
+    assert_eq!(code, 10, "{out}{err}");
+    let refused = f
+        .last("repair_refused")
+        .expect("repair_refused on the trail");
+    let detail = refused["detail"].as_str().unwrap_or_default();
+    assert!(
+        detail.contains("the branch could not be listed: "),
+        "{detail}"
+    );
+    assert!(detail.contains("/nonexistent"), "{detail}");
+    assert!(!detail.contains("moved since it was observed"), "{detail}");
+    assert_eq!(refused["class"], "policy_violation", "{refused}");
+    assert_eq!(
+        f.origin_ref("refs/heads/feature/1"),
+        head,
+        "a refused repair pushed"
+    );
+}

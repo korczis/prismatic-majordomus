@@ -6266,6 +6266,16 @@ fn every_failure_is_classed_from_the_forges_own_words() {
         ),
         ("hint: updates were rejected", C::Stale),
         ("scripts/derive failed: exit 1", C::PolicyViolation),
+        // the repair push's listing of the branch: an outage is transient, a branch that moved
+        // is stale
+        (
+            "the branch could not be listed: git ls-remote origin refs/heads/f: fatal: unable to access: Could not resolve host: github.com",
+            C::Transient,
+        ),
+        (
+            "the branch moved since it was observed: nothing is not abc; nothing was pushed",
+            C::Stale,
+        ),
     ] {
         assert_eq!(C::of_refresh_failure(said), class, "{said}");
     }
