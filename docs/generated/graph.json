@@ -10476,6 +10476,14 @@
         "source": "docs/INTEGRATION.md"
       },
       {
+        "id": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
+        "kind": "document",
+        "label": "docs/INTEGRATION_ROLLOUT.md",
+        "summary": "Integration rollout record",
+        "route": "/cockpit/objects/document/docs-integration-rollout-md",
+        "source": "docs/INTEGRATION_ROLLOUT.md"
+      },
+      {
         "id": "majordomus://document/docs/KNOWLEDGE.md",
         "kind": "document",
         "label": "docs/KNOWLEDGE.md",
@@ -41307,26 +41315,6 @@
         }
       },
       {
-        "id": "majordomus://workspace/chatgpt-majordomus",
-        "kind": "workspace",
-        "label": "chatgpt-majordomus",
-        "summary": "The Majordomus project in ChatGPT",
-        "route": "/cockpit/objects/workspace/chatgpt-majordomus",
-        "source": ".ai/repo/workspaces/chatgpt-majordomus.yaml",
-        "status": "declared",
-        "facts": {
-          "capabilities": [
-            "workspace.read",
-            "conversations.read",
-            "messages.read",
-            "instructions.read",
-            "files.read"
-          ],
-          "created_at": "2026-09-09",
-          "updated_at": "2026-09-09"
-        }
-      },
-      {
         "id": "module:artifacts",
         "kind": "module",
         "label": "artifacts"
@@ -50829,6 +50817,11 @@
       },
       {
         "source": "majordomus://document/docs/INTEGRATION.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/INTEGRATION_ROLLOUT.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -63201,11 +63194,6 @@
         "source": "majordomus://use-case/work-on-a-branch-in-its-canonical-worktree",
         "target": "majordomus://rule/majordomus.scope-integrity@1",
         "kind": "exercises"
-      },
-      {
-        "source": "majordomus://workspace/chatgpt-majordomus",
-        "target": "kind:workspace",
-        "kind": "is_a"
       },
       {
         "source": "module:artifacts",
