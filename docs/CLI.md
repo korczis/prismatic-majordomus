@@ -528,8 +528,9 @@ majordomus context check-sync [--base <ref>]  validate, projections up to date, 
 ```
 
 The target of `resolve`, `explain` and the bare briefing is a repository-relative
-directory (a file resolves to its own); a path that does not exist, or a symlink or `..`
-that escapes the repository, is refused (`15`, `refused-path`). Inside the `.ai/` tree
+directory (a file resolves to its own); a path that does not exist yet resolves from its
+ancestors, as a file in its parent unless written with a trailing `/`, and says so; a
+symlink or `..` that escapes the repository is refused (`15`, `refused-path`). Inside the `.ai/` tree
 the result is the ancestor chain admitted by each document's scope; outside it, the root
 chain plus every document whose `tracks` matches the target. Order is depth, then
 `order`, then path. The briefing gains a `CONTEXT DOCUMENTS` section listing the
@@ -888,8 +889,10 @@ computed. `--why` is required: a decision with no recorded reason cannot be revi
 only re-argued. `--rejected` and `--evidence` are optional and default to `-`.
 
 An entry is never edited or deleted. `--supersedes "<text>"` records that a later decision
-replaced an earlier one and refuses text that matches no recorded decision, so a
-supersession always points at something real.
+replaced an earlier one. The text is matched against the titles of the recorded decisions
+only, must identify exactly one of them, and that title is what is recorded; text matching
+no title, or more than one, is refused, so a supersession always points at one real
+decision. `decision list` marks a replaced entry with `Superseded by: <title>`.
 
 `decision list [--task <id>] [--limit <n>]` prints entries newest first; `decision show
 "<text>"` prints the first entry whose title contains that text, or exits `12`.

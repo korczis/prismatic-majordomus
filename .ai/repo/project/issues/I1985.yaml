@@ -1,0 +1,26 @@
+id: I1985
+milestone: adopter-upgrades
+title: "A knowledge candidate relates to its own decision and commit, not to the whole episode"
+slug: a-candidate-relates-to-its-own-commit
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Derive each candidate's relates_to and derived_from from the decision or event it records, deduplicate against facts the ledger already states, and skip decisions a later decision superseded."
+why: "In OSCILLA every candidate of one episode carries the same 52 relates_to targets and the same derived_from commits, so a decision of 10-01 cites commits from 10-04. Fact candidates restate a ledger line ('Task ... completed; verified by ...'), and a decision a later one superseded is copied verbatim."
+current_state: "lib/knowledge.sh relates each candidate to the episode's whole footprint."
+desired_state: "Each candidate cites what it is about. Superseded decisions and pure ledger echoes produce no candidate."
+scope:
+  - "lib/knowledge.sh"
+  - "test/cases"
+depends_on:
+  - "I1984"
+acceptance_criteria:
+  - "A fixture episode with two decisions at two commits yields two candidates, each citing only its own commit"
+  - "A superseded decision yields no candidate"
+validation:
+  - "bin/majordomus plan validate"
+  - "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+evidence_required:
+  - "candidate_provenance_case"
+created_at: 2026-10-04
+updated_at: 2026-10-04

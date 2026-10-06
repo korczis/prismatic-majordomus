@@ -25,7 +25,7 @@
         {%- for a in m.audiences %}<dd><a href="{{ get_url(path='/why/audiences/' ~ a ~ '/', trailing_slash=true) }}" class="text-fg-brand hover:underline">{{ a }}</a></dd>{% endfor %}</div>
     </dl>
 
-    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto">{{ page.content | safe }}</article>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline">{{ page.content | safe }}</article>
 
     {#- ------------------------------------------------------------- the examples -#}
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What this looks like</h2>
