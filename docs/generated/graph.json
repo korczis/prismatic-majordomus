@@ -1617,14 +1617,6 @@
         "status": "query"
       },
       {
-        "id": "file:.ai/repo/knowledge/sources.yaml",
-        "kind": "file",
-        "label": "sources.yaml",
-        "summary": "named by the layer; not an object of this index",
-        "source": ".ai/repo/knowledge/sources.yaml",
-        "external": true
-      },
-      {
         "id": "file:share/kinds.yaml",
         "kind": "file",
         "label": "kinds.yaml",
@@ -31198,6 +31190,29 @@
         }
       },
       {
+        "id": "majordomus://release-record/v0.13.2",
+        "kind": "release-record",
+        "label": "v0.13.2",
+        "summary": "v0.13.2",
+        "route": "/cockpit/objects/release-record/v0-13-2",
+        "source": ".ai/repo/releases/v0.13.2.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "9a31fed5e576f4e2f33ddf1dd5b5df7abfdd5497",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.13.2",
+          "published_at": "2026-10-06T03:14:58Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.13.2"
+        }
+      },
+      {
         "id": "majordomus://release-record/v0.3.1",
         "kind": "release-record",
         "label": "v0.3.1",
@@ -44614,11 +44629,6 @@
       },
       {
         "source": "majordomus://adr/adr-0010",
-        "target": "file:.ai/repo/knowledge/sources.yaml",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0010",
         "target": "file:share/kinds.yaml",
         "kind": "put_in_force"
       },
@@ -44626,16 +44636,6 @@
         "source": "majordomus://adr/adr-0010",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0010",
-        "target": "majordomus://test/test/cases/64_knowledge_discovery.sh",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0010",
-        "target": "majordomus://test/test/cases/73_knowledge_nodes.sh",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0011",
@@ -57118,6 +57118,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://release-record/v0.13.2",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://release-record/v0.3.1",
         "target": "kind:release-record",
         "kind": "is_a"
@@ -64050,7 +64055,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4494,
+      "edges": 4492,
       "acyclic": true,
       "truncated": true
     }

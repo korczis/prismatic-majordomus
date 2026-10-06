@@ -131,16 +131,32 @@ fn common_dir(root: &Path) -> Result<PathBuf, String> {
     ))
 }
 
-/// `<sha> <ref>` lines from `git ls-remote` or `for-each-ref` output, sorted by ref.
-fn ref_lines(text: &str) -> Vec<(String, String)> {
-    let mut refs: Vec<(String, String)> = text
+/// One `<sha> <ref>` line of `git ls-remote` or `for-each-ref` output.
+struct RefLine {
+    sha: String,
+    reference: String,
+}
+
+/// A listing is ordered by its ref names, which git keeps unique within one listing.
+impl crate::order::Ordered for RefLine {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.reference, &self.reference)
+    }
+}
+
+/// The `<sha> <ref>` lines of `git ls-remote` or `for-each-ref` output, in canonical order.
+fn ref_lines(text: &str) -> Vec<RefLine> {
+    let mut refs: Vec<RefLine> = text
         .lines()
         .filter_map(|l| {
             let mut parts = l.split_whitespace();
-            Some((parts.next()?.to_string(), parts.next()?.to_string()))
+            Some(RefLine {
+                sha: parts.next()?.to_string(),
+                reference: parts.next()?.to_string(),
+            })
         })
         .collect();
-    refs.sort_by(|a, b| a.1.cmp(&b.1).then(a.0.cmp(&b.0)));
+    crate::order::canonical(&mut refs);
     refs
 }
 
@@ -168,14 +184,14 @@ struct ListedLabel {
 }
 
 fn forge_lines(json: &str) -> Result<Vec<String>, String> {
-    let mut prs: Vec<ListedPullRequest> = serde_json::from_str(json)
+    let prs: Vec<ListedPullRequest> = serde_json::from_str(json)
         .map_err(|e| format!("gh pr list did not answer a list of pull requests: {e}"))?;
-    prs.sort_by_key(|p| p.number);
-    Ok(prs
+    // in canonical order once rendered: `#9` before `#10`, by number
+    let mut lines: Vec<String> = prs
         .into_iter()
         .map(|p| {
             let mut labels: Vec<String> = p.labels.into_iter().map(|l| l.name).collect();
-            labels.sort();
+            crate::order::canonical_strings(&mut labels);
             format!(
                 "#{} {} {} [{}]",
                 p.number,
@@ -184,7 +200,9 @@ fn forge_lines(json: &str) -> Result<Vec<String>, String> {
                 labels.join(",")
             )
         })
-        .collect())
+        .collect();
+    crate::order::canonical_strings(&mut lines);
+    Ok(lines)
 }
 
 /// The trail as the proof compares it: its acts — every line but an `observed` one — counted
@@ -227,7 +245,7 @@ pub fn snapshot(root: &Path, common: &Path, base: &str) -> Result<Snapshot, Stri
     let (remote, local) = refs(root)?;
     let remote: Vec<String> = ref_lines(&remote)
         .into_iter()
-        .map(|(sha, r)| format!("{sha} {r}"))
+        .map(|r| format!("{} {}", r.sha, r.reference))
         .collect();
     let forge = forge_lines(&run(
         root,
@@ -269,14 +287,14 @@ pub fn snapshot(root: &Path, common: &Path, base: &str) -> Result<Snapshot, Stri
             .collect(),
         Err(_) => Vec::new(),
     };
-    lease.sort();
+    crate::order::canonical_strings(&mut lease);
     if lease.is_empty() {
         lease.push("absent".into());
     }
     let local: Vec<String> = ref_lines(&local)
         .into_iter()
-        .filter(|(_, r)| !mirrored(r, base))
-        .map(|(sha, r)| format!("{sha} {r}"))
+        .filter(|r| !mirrored(&r.reference, base))
+        .map(|r| format!("{} {}", r.sha, r.reference))
         .collect();
     let section = |name: &str, lines: Vec<String>| SnapshotSection {
         name: name.into(),
@@ -348,9 +366,14 @@ pub fn mirror_mismatches(
     observed: &std::collections::BTreeSet<u64>,
 ) -> Vec<String> {
     let served = ref_lines(remote);
-    let serves = |r: &str| served.iter().find(|(_, x)| x == r).map(|(s, _)| s.clone());
+    let serves = |r: &str| {
+        served
+            .iter()
+            .find(|l| l.reference == r)
+            .map(|l| l.sha.clone())
+    };
     let mut found = Vec::new();
-    for (sha, r) in ref_lines(local) {
+    for RefLine { sha, reference: r } in ref_lines(local) {
         let wanted = if r == format!("refs/remotes/origin/{base}") {
             serves(&format!("refs/heads/{base}"))
         } else if let Some(n) = r.strip_prefix("refs/majordomus/prs/") {
@@ -605,12 +628,26 @@ mod trail_and_helper_tests {
 
     #[test]
     fn the_helpers_refuse_what_they_cannot_read() {
+        let pairs = |text: &str| -> Vec<(String, String)> {
+            ref_lines(text)
+                .into_iter()
+                .map(|l| (l.sha, l.reference))
+                .collect()
+        };
         assert_eq!(
-            ref_lines("aa refs/heads/x\nlonely\n\nbb refs/heads/a\n"),
+            pairs("aa refs/heads/x\nlonely\n\nbb refs/heads/a\n"),
             [
                 ("bb".to_string(), "refs/heads/a".to_string()),
                 ("aa".to_string(), "refs/heads/x".to_string())
             ]
+        );
+        // in canonical order: a pull request's number by value, not by its digits
+        assert_eq!(
+            pairs("c refs/majordomus/prs/10\nd refs/majordomus/prs/9\n")
+                .iter()
+                .map(|(s, _)| s.as_str())
+                .collect::<Vec<_>>(),
+            ["d", "c"]
         );
         let dir = tempfile::tempdir().unwrap();
         let none = run(dir.path(), "majordomus-no-such-program", &[]).unwrap_err();

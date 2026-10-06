@@ -91,8 +91,9 @@ fn median(mut v: Vec<u64>) -> Option<u64> {
     if v.is_empty() {
         return None;
     }
-    v.sort_unstable();
-    Some(v[(v.len() - 1) / 2])
+    // the middle element alone, selected: a median needs no ordered collection
+    let middle = (v.len() - 1) / 2;
+    Some(*v.select_nth_unstable(middle).1)
 }
 
 /// Fold `trail` (oldest first, as [`super::drain::events`] returns it) over the `window_days`
