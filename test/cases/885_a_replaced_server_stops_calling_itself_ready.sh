@@ -46,10 +46,10 @@ start() {
 stop() { kill "$PID" 2>/dev/null || true; wait "$PID" 2>/dev/null || true; PID=""; }
 
 start || exit 1
-curl -s "$U/api/v1/ready" > "$S/ready1.json"
+curl -fsS --max-time 30 "$U/api/v1/ready" > "$S/ready1.json"
 jq -e '.ready == true and (has("stale") | not)' "$S/ready1.json" >/dev/null \
   || { echo "    a current server is not ready"; cat "$S/ready1.json"; exit 1; }
-curl -s -H 'Accept: application/json' "$U/" > "$S/root1.json"
+curl -fsS --max-time 30 -H 'Accept: application/json' "$U/" > "$S/root1.json"
 jq -e '.stale == null' "$S/root1.json" >/dev/null \
   || { echo "    the root document of a current server names a staleness"; jq '{stale}' "$S/root1.json"; exit 1; }
 
@@ -59,10 +59,10 @@ cp "$RB" "$S/majordomus.new"
 touch -t 202001010000 "$S/majordomus.new"
 mv "$S/majordomus.new" "$S/majordomus"
 
-curl -s "$U/api/v1/ready" > "$S/ready2.json"
+curl -fsS --max-time 30 "$U/api/v1/ready" > "$S/ready2.json"
 jq -e '.ready == false and (.stale | test("replaced"))' "$S/ready2.json" >/dev/null \
   || { echo "    a server whose executable was replaced still calls itself ready"; cat "$S/ready2.json"; exit 1; }
-curl -s -H 'Accept: application/json' "$U/" > "$S/root2.json"
+curl -fsS --max-time 30 -H 'Accept: application/json' "$U/" > "$S/root2.json"
 jq -e '.stale | type == "string" and test("replaced")' "$S/root2.json" >/dev/null \
   || { echo "    the root document does not say the code is gone"; jq '{stale}' "$S/root2.json"; exit 1; }
 # the reason is served to anyone who can reach the socket: it names no path of the host
@@ -73,7 +73,7 @@ fi
 # a fresh start from the new file is current again
 stop
 start || exit 1
-curl -s "$U/api/v1/ready" > "$S/ready3.json"
+curl -fsS --max-time 30 "$U/api/v1/ready" > "$S/ready3.json"
 jq -e '.ready == true and (has("stale") | not)' "$S/ready3.json" >/dev/null \
   || { echo "    a fresh start from the new file is reported stale"; cat "$S/ready3.json"; exit 1; }
 exit 0

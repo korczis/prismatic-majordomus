@@ -3,7 +3,7 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.12.0"
+    "version": "0.14.0"
   },
   "route": "/evidence/",
   "kinds": [
@@ -364,6 +364,11 @@
     },
     {
       "kind": "capability",
+      "subject": "capability:integration.cleanup",
+      "path": "/evidence/capabilities/integration-cleanup/"
+    },
+    {
+      "kind": "capability",
       "subject": "capability:integration.events",
       "path": "/evidence/capabilities/integration-events/"
     },
@@ -371,6 +376,11 @@
       "kind": "capability",
       "subject": "capability:integration.explain",
       "path": "/evidence/capabilities/integration-explain/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:integration.prove_dry_run",
+      "path": "/evidence/capabilities/integration-prove-dry-run/"
     },
     {
       "kind": "capability",
@@ -656,6 +666,11 @@
       "kind": "capability",
       "subject": "capability:plan.waves",
       "path": "/evidence/capabilities/plan-waves/"
+    },
+    {
+      "kind": "capability",
+      "subject": "capability:product.domains",
+      "path": "/evidence/capabilities/product-domains/"
     },
     {
       "kind": "capability",
@@ -1591,6 +1606,11 @@
       "kind": "claim",
       "subject": "claim:policy-parse",
       "path": "/evidence/claims/policy-parse/"
+    },
+    {
+      "kind": "claim",
+      "subject": "claim:product-domains-derived",
+      "path": "/evidence/claims/product-domains-derived/"
     },
     {
       "kind": "claim",
@@ -2574,6 +2594,11 @@
     },
     {
       "kind": "command",
+      "subject": "command:product domains",
+      "path": "/evidence/commands/product-domains/"
+    },
+    {
+      "kind": "command",
       "subject": "command:product list",
       "path": "/evidence/commands/product-list/"
     },
@@ -2639,8 +2664,18 @@
     },
     {
       "kind": "command",
+      "subject": "command:prs prove-dry-run",
+      "path": "/evidence/commands/prs-prove-dry-run/"
+    },
+    {
+      "kind": "command",
       "subject": "command:prs refresh",
       "path": "/evidence/commands/prs-refresh/"
+    },
+    {
+      "kind": "command",
+      "subject": "command:prs repair",
+      "path": "/evidence/commands/prs-repair/"
     },
     {
       "kind": "command",
@@ -4107,6 +4142,16 @@
       "mechanisms": [],
       "findings": []
     },
+    "capability:integration.cleanup": {
+      "kind": "capability",
+      "id": "integration.cleanup",
+      "page": "/evidence/capabilities/integration-cleanup/",
+      "programs": [],
+      "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "capability:integration.events": {
       "kind": "capability",
       "id": "integration.events",
@@ -4126,6 +4171,18 @@
       "programs": [],
       "members": [
         "command:prs explain"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:integration.prove_dry_run": {
+      "kind": "capability",
+      "id": "integration.prove_dry_run",
+      "page": "/evidence/capabilities/integration-prove-dry-run/",
+      "programs": [],
+      "members": [
+        "command:prs prove-dry-run"
       ],
       "routes": [],
       "mechanisms": [],
@@ -4748,6 +4805,18 @@
       "page": "/evidence/capabilities/plan-waves/",
       "programs": [],
       "members": [],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "capability:product.domains": {
+      "kind": "capability",
+      "id": "product.domains",
+      "page": "/evidence/capabilities/product-domains/",
+      "programs": [],
+      "members": [
+        "command:product domains"
+      ],
       "routes": [],
       "mechanisms": [],
       "findings": []
@@ -8513,6 +8582,29 @@
       "mechanisms": [],
       "findings": []
     },
+    "claim:product-domains-derived": {
+      "kind": "claim",
+      "id": "product-domains-derived",
+      "status": "guaranteed",
+      "page": "/evidence/claims/product-domains-derived/",
+      "programs": [],
+      "members": [],
+      "routes": [
+        {
+          "via": "claim",
+          "test": "suite:800_product_domains",
+          "path": "test/cases/800_product_domains.sh",
+          "category": "e2e",
+          "inputs": [
+            "docs/PRODUCT.md",
+            "apps/majordomus-cli/src/product.rs",
+            "test/cases/800_product_domains.sh"
+          ]
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "claim:product-features-discovered": {
       "kind": "claim",
       "id": "product-features-discovered",
@@ -10769,6 +10861,12 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:108b_scope_after_trunk_fast_forward",
+          "path": "test/cases/108b_scope_after_trunk_fast_forward.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:131_completion_gates",
           "path": "test/cases/131_completion_gates.sh",
           "category": "e2e"
@@ -10831,6 +10929,12 @@
           "via": "negative",
           "test": "suite:108_scope_after_trunk_merge",
           "path": "test/cases/108_scope_after_trunk_merge.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:108b_scope_after_trunk_fast_forward",
+          "path": "test/cases/108b_scope_after_trunk_fast_forward.sh",
           "category": "e2e"
         },
         {
@@ -11731,8 +11835,20 @@
         },
         {
           "via": "behaviour",
+          "test": "suite:132b_a_new_branch_owes_no_records_yet",
+          "path": "test/cases/132b_a_new_branch_owes_no_records_yet.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
           "test": "suite:14_wiring_dispatcher",
           "path": "test/cases/14_wiring_dispatcher.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "behaviour",
+          "test": "suite:14c_wiring_from_a_linked_worktree",
+          "path": "test/cases/14c_wiring_from_a_linked_worktree.sh",
           "category": "e2e"
         },
         {
@@ -11835,6 +11951,12 @@
           "via": "negative",
           "test": "suite:132_health_sees_a_stopped_writer",
           "path": "test/cases/132_health_sees_a_stopped_writer.sh",
+          "category": "e2e"
+        },
+        {
+          "via": "negative",
+          "test": "suite:132b_a_new_branch_owes_no_records_yet",
+          "path": "test/cases/132b_a_new_branch_owes_no_records_yet.sh",
           "category": "e2e"
         },
         {
@@ -13738,6 +13860,25 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:product domains": {
+      "kind": "command",
+      "id": "product domains",
+      "page": "/evidence/commands/product-domains/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:product list": {
       "kind": "command",
       "id": "product list",
@@ -13997,10 +14138,48 @@
       "mechanisms": [],
       "findings": []
     },
+    "command:prs prove-dry-run": {
+      "kind": "command",
+      "id": "prs prove-dry-run",
+      "page": "/evidence/commands/prs-prove-dry-run/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
     "command:prs refresh": {
       "kind": "command",
       "id": "prs refresh",
       "page": "/evidence/commands/prs-refresh/",
+      "programs": [
+        "native"
+      ],
+      "members": [],
+      "routes": [
+        {
+          "via": "example",
+          "test": "crate:cli_examples",
+          "path": "apps/majordomus-cli/tests/cli_examples.rs",
+          "category": "integration"
+        }
+      ],
+      "mechanisms": [],
+      "findings": []
+    },
+    "command:prs repair": {
+      "kind": "command",
+      "id": "prs repair",
+      "page": "/evidence/commands/prs-repair/",
       "programs": [
         "native"
       ],
@@ -17981,6 +18160,18 @@
       "mechanisms": [],
       "findings": []
     },
+    "mcp:majordomus_product_domains": {
+      "kind": "mcp",
+      "id": "majordomus_product_domains",
+      "alias_of": "capability:product.domains",
+      "programs": [],
+      "members": [
+        "capability:product.domains"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
     "mcp:majordomus_product_matrix": {
       "kind": "mcp",
       "id": "majordomus_product_matrix",
@@ -18048,6 +18239,30 @@
       "programs": [],
       "members": [
         "capability:integration.queue"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_pull_requests_cleanup": {
+      "kind": "mcp",
+      "id": "majordomus_pull_requests_cleanup",
+      "alias_of": "capability:integration.cleanup",
+      "programs": [],
+      "members": [
+        "capability:integration.cleanup"
+      ],
+      "routes": [],
+      "mechanisms": [],
+      "findings": []
+    },
+    "mcp:majordomus_pull_requests_prove_dry_run": {
+      "kind": "mcp",
+      "id": "majordomus_pull_requests_prove_dry_run",
+      "alias_of": "capability:integration.prove_dry_run",
+      "programs": [],
+      "members": [
+        "capability:integration.prove_dry_run"
       ],
       "routes": [],
       "mechanisms": [],
@@ -20929,18 +21144,136 @@
       "routes": [
         {
           "via": "rule",
+          "test": "crate:integration_rollout",
+          "path": "apps/majordomus-cli/tests/integration_rollout.rs",
+          "category": "integration",
+          "inputs": [
+            "apps/majordomus-cli/tests/integration_rollout.rs",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "crate:integration_trail",
+          "path": "apps/majordomus-cli/tests/integration_trail.rs",
+          "category": "integration",
+          "inputs": [
+            "apps/majordomus-cli/tests/integration_trail.rs",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
           "test": "suite:720_integration_follows_the_current_master",
           "path": "test/cases/720_integration_follows_the_current_master.sh",
           "category": "e2e",
           "inputs": [
             "test/cases/720_integration_follows_the_current_master.sh",
-            ".ai/repo/rules/project/integration-follows-the-current-master.v1.md"
+            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:740_integration_is_visible_where_a_person_looks",
+          "path": "test/cases/740_integration_is_visible_where_a_person_looks.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/740_integration_is_visible_where_a_person_looks.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:741_a_continuous_drain_stops_cleanly_and_alone",
+          "path": "test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:742_only_an_outage_is_asked_again",
+          "path": "test/cases/742_only_an_outage_is_asked_again.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/742_only_an_outage_is_asked_again.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:850_integration_drains_cycle_by_cycle",
+          "path": "test/cases/850_integration_drains_cycle_by_cycle.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/850_integration_drains_cycle_by_cycle.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:852_a_dry_run_moves_nothing",
+          "path": "test/cases/852_a_dry_run_moves_nothing.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/852_a_dry_run_moves_nothing.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:855_racing_executors_merge_once",
+          "path": "test/cases/855_racing_executors_merge_once.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/855_racing_executors_merge_once.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:856_racing_worktrees_share_one_lease",
+          "path": "test/cases/856_racing_worktrees_share_one_lease.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/856_racing_worktrees_share_one_lease.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:857_required_checks_are_authoritative",
+          "path": "test/cases/857_required_checks_are_authoritative.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/857_required_checks_are_authoritative.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:858_reviews_are_authoritative",
+          "path": "test/cases/858_reviews_are_authoritative.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/858_reviews_are_authoritative.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:861_a_successor_that_landed_supersedes",
+          "path": "test/cases/861_a_successor_that_landed_supersedes.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/861_a_successor_that_landed_supersedes.sh",
+            ".ai/repo/rules/project/integration-follows-the-current-master.v2.md"
           ]
         }
       ],
-      "mechanisms": [
-        "apps/majordomus-cli/src/integration/tests.rs"
-      ],
+      "mechanisms": [],
       "findings": []
     },
     "rule:project.interfaces-are-projections": {
@@ -20996,21 +21329,31 @@
         },
         {
           "via": "rule",
-          "test": "suite:111_unblock",
-          "path": "test/cases/111_unblock.sh",
-          "category": "e2e",
-          "inputs": [
-            "test/cases/111_unblock.sh",
-            ".ai/repo/rules/project/land-and-publish.v1.md"
-          ]
-        },
-        {
-          "via": "rule",
           "test": "suite:57_derived_merge_driver",
           "path": "test/cases/57_derived_merge_driver.sh",
           "category": "e2e",
           "inputs": [
             "test/cases/57_derived_merge_driver.sh",
+            ".ai/repo/rules/project/land-and-publish.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:911_repair_decides_and_moves_nothing",
+          "path": "test/cases/911_repair_decides_and_moves_nothing.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/911_repair_decides_and_moves_nothing.sh",
+            ".ai/repo/rules/project/land-and-publish.v1.md"
+          ]
+        },
+        {
+          "via": "rule",
+          "test": "suite:912_repair_acts_under_the_lease_and_the_trail",
+          "path": "test/cases/912_repair_acts_under_the_lease_and_the_trail.sh",
+          "category": "e2e",
+          "inputs": [
+            "test/cases/912_repair_acts_under_the_lease_and_the_trail.sh",
             ".ai/repo/rules/project/land-and-publish.v1.md"
           ]
         },
@@ -23711,8 +24054,16 @@
     "crate:health_server",
     "crate:hot_path",
     "crate:index_behavior",
+    "crate:integration_across_machines",
+    "crate:integration_cleanup_read",
+    "crate:integration_dry_run_proof",
+    "crate:integration_executor",
+    "crate:integration_merged_branches",
+    "crate:integration_refresh_trail",
+    "crate:integration_repair",
     "crate:lease_busy",
     "crate:lease_declared",
+    "crate:live_own_writes",
     "crate:mcp_stdio",
     "crate:mesh_compaction",
     "crate:metadata_contract",
@@ -23720,6 +24071,7 @@
     "crate:peer_claims",
     "crate:properties",
     "crate:providers_projection",
+    "crate:reasoning_mesh",
     "crate:redaction",
     "crate:repository_discovery",
     "crate:response_schema",
@@ -23747,6 +24099,7 @@
     "suite:131_freshness_has_an_age",
     "suite:133_plan_transition",
     "suite:139_release_record_schema",
+    "suite:15b_an_installed_tool_runs_what_its_bootstrap_names",
     "suite:180_publication_is_observed",
     "suite:181_local_is_never_published",
     "suite:182_sessions_published_are_the_records",
@@ -23827,9 +24180,6 @@
     "suite:71_context_sync",
     "suite:721_the_suite_shards_are_the_whole_suite",
     "suite:73_knowledge_nodes",
-    "suite:740_integration_is_visible_where_a_person_looks",
-    "suite:741_a_continuous_drain_stops_cleanly_and_alone",
-    "suite:742_only_an_outage_is_asked_again",
     "suite:743_release_version_answers_with_the_contract",
     "suite:744_an_installed_tool_finds_its_own_executable",
     "suite:74_knowledge_edges",
@@ -23838,9 +24188,14 @@
     "suite:763_a_tag_older_than_the_record_practice_is_a_note",
     "suite:790_the_kit_is_one_vocabulary_and_its_page_renders_all_of_it",
     "suite:791_a_screen_is_composed_of_the_kit_and_of_real_data",
+    "suite:820_a_prose_heading_reads_as_a_heading",
+    "suite:828_a_server_holding_its_lease_is_not_reaped",
+    "suite:829_ci_fails_on_a_skip",
     "suite:85_deployment_bind",
     "suite:86_deployment_projections",
     "suite:885_a_replaced_server_stops_calling_itself_ready",
+    "suite:910_nothing_merges_around_the_integrator",
+    "suite:924_one_executor_across_machines",
     "suite:93_schema_integrity",
     "suite:93_workspace_kind",
     "suite:97_development_semantics_gate",

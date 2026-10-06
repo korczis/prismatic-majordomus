@@ -634,13 +634,7 @@ pub fn executable_identity() -> Option<ExecutableIdentity> {
     })
 }
 
-/// Has the executable behind a lease been replaced since that server started?
-///
-/// Only a lease naming *this process's own* executable path can answer: same path, a file
-/// that is now a different file, and the server on the other end is provably running code
-/// that no longer exists on disk. A lease naming some other path — a release install next
-/// to a debug build — makes no claim either way and is left alone, so two legitimate
-/// binaries never fight over the lease.
+/// The identity [`started_as`] pins: set once, by the first caller, and never again.
 static STARTED_AS: OnceLock<Option<ExecutableIdentity>> = OnceLock::new();
 
 /// The executable this process was started from, as it stood on disk when first asked.
@@ -669,10 +663,17 @@ pub fn started_as() -> Option<&'static ExecutableIdentity> {
 /// assert!(serving_replaced_code().is_none(), "a test binary has not been replaced under it");
 /// ```
 pub fn serving_replaced_code() -> Option<String> {
-    let me = started_as()?;
+    started_as().and_then(stale_reason)
+}
+
+/// The judgement [`serving_replaced_code`] makes, over an identity it is handed rather than
+/// the one this process pinned, so that each of its answers — unchanged, replaced, removed —
+/// can be shown against a file a test controls.
+///
+/// The reason is served to whoever can reach the socket, so it says what happened and not
+/// where the file is: the host's paths are of no use to a client and of some use to others.
+fn stale_reason(me: &ExecutableIdentity) -> Option<String> {
     me.replaced()?;
-    // the reason is served to whoever can reach the socket, so it says what happened and not
-    // where the file is: the host's paths are of no use to a client and of some use to others
     Some(if me.path.exists() {
         "the executable this process was started from has been replaced since it started: \
          it is serving code that is no longer on disk"
@@ -684,6 +685,13 @@ pub fn serving_replaced_code() -> Option<String> {
     })
 }
 
+/// Has the executable behind a lease been replaced since that server started?
+///
+/// Only a lease naming *this process's own* executable path can answer: same path, a file
+/// that is now a different file, and the server on the other end is provably running code
+/// that no longer exists on disk. A lease naming some other path — a release install next
+/// to a debug build — makes no claim either way and is left alone, so two legitimate
+/// binaries never fight over the lease.
 fn superseded(doc: &LeaseDocument) -> Option<String> {
     let recorded = doc.executable.as_ref()?;
     let mine = executable_identity()?;
@@ -1210,4 +1218,73 @@ mod signals {
     pub fn hold(_: &Path) {}
 
     pub fn release() {}
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The identity of `path` as it stands now, the way [`executable_identity`] records the
+    /// running executable.
+    fn identity_of(path: &Path) -> ExecutableIdentity {
+        let meta = fs::metadata(path).unwrap();
+        let mtime = meta
+            .modified()
+            .unwrap()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_secs();
+        ExecutableIdentity {
+            path: path.to_path_buf(),
+            mtime,
+            size: meta.len(),
+        }
+    }
+
+    #[test]
+    fn an_unchanged_executable_is_not_stale() {
+        let dir = tempfile::tempdir().unwrap();
+        let exe = dir.path().join("majordomus");
+        fs::write(&exe, b"the code that was loaded").unwrap();
+        assert_eq!(stale_reason(&identity_of(&exe)), None);
+    }
+
+    #[test]
+    fn a_replaced_executable_is_stale_and_says_replaced() {
+        let dir = tempfile::tempdir().unwrap();
+        let exe = dir.path().join("majordomus");
+        fs::write(&exe, b"the code that was loaded").unwrap();
+        let pinned = identity_of(&exe);
+        // a rebuild writes a different file over the same path; the size alone differs,
+        // whatever the clock's resolution makes of the mtime
+        fs::write(&exe, b"the code a rebuild put there afterwards").unwrap();
+        let reason = stale_reason(&pinned).expect("a replaced executable is stale");
+        assert!(reason.contains("has been replaced"), "{reason}");
+        assert!(reason.contains("no longer on disk"), "{reason}");
+        assert!(
+            !reason.contains(&exe.display().to_string()),
+            "the reason names no path: {reason}"
+        );
+    }
+
+    #[test]
+    fn a_removed_executable_is_stale_and_says_removed() {
+        let dir = tempfile::tempdir().unwrap();
+        let exe = dir.path().join("majordomus");
+        fs::write(&exe, b"the code that was loaded").unwrap();
+        let pinned = identity_of(&exe);
+        fs::remove_file(&exe).unwrap();
+        let reason = stale_reason(&pinned).expect("a removed executable is stale");
+        assert!(reason.contains("has been removed"), "{reason}");
+        assert!(
+            !reason.contains(&exe.display().to_string()),
+            "the reason names no path: {reason}"
+        );
+    }
+
+    #[test]
+    fn this_process_is_not_serving_replaced_code() {
+        assert!(started_as().is_some(), "a test binary knows where it is");
+        assert_eq!(serving_replaced_code(), None);
+    }
 }

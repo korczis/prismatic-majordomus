@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.12.0",
+  "generator": "majordomus-cli 0.14.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -21,6 +21,7 @@
       "distribution-model": "an object of kind `distribution-model`",
       "doctrine": "a doctrine a scenario exercises",
       "document": "an object of kind `document`",
+      "domain": "an object of kind `domain`",
       "feature": "an object of kind `feature`",
       "file": "a file the layer names and does not hold as an object",
       "gap": "an object of kind `gap`",
@@ -644,6 +645,15 @@
         "status": "query"
       },
       {
+        "id": "capability:integration.cleanup",
+        "kind": "capability",
+        "label": "integration.cleanup",
+        "summary": "What cleanup would do",
+        "route": "/cockpit/capabilities/integration.cleanup",
+        "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:integration.events",
         "kind": "capability",
         "label": "integration.events",
@@ -658,6 +668,15 @@
         "label": "integration.explain",
         "summary": "Why one pull request is where it is",
         "route": "/cockpit/capabilities/integration.explain",
+        "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:integration.prove_dry_run",
+        "kind": "capability",
+        "label": "integration.prove_dry_run",
+        "summary": "Proof that a dry run moves nothing",
+        "route": "/cockpit/capabilities/integration.prove_dry_run",
         "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
         "status": "query"
       },
@@ -1175,6 +1194,15 @@
         "status": "query"
       },
       {
+        "id": "capability:product.domains",
+        "kind": "capability",
+        "label": "product.domains",
+        "summary": "The domains",
+        "route": "/cockpit/capabilities/product.domains",
+        "source": "apps/majordomus-cli/src/capability/builtin/product.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:product.feature",
         "kind": "capability",
         "label": "product.feature",
@@ -1589,390 +1617,6 @@
         "status": "query"
       },
       {
-        "id": "file:.ai/repo/ci/pages.yaml",
-        "kind": "file",
-        "label": "pages.yaml",
-        "summary": "named by the layer; not an object of this index",
-        "source": ".ai/repo/ci/pages.yaml",
-        "external": true
-      },
-      {
-        "id": "file:.ai/repo/knowledge/sources.yaml",
-        "kind": "file",
-        "label": "sources.yaml",
-        "summary": "named by the layer; not an object of this index",
-        "source": ".ai/repo/knowledge/sources.yaml",
-        "external": true
-      },
-      {
-        "id": "file:.ai/repo/order-baseline.txt",
-        "kind": "file",
-        "label": "order-baseline.txt",
-        "summary": "named by the layer; not an object of this index",
-        "source": ".ai/repo/order-baseline.txt",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/capability/builtin/graph.rs",
-        "kind": "file",
-        "label": "graph.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/capability/builtin/graph.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/capability/builtin/health.rs",
-        "kind": "file",
-        "label": "health.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/capability/builtin/health.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/capability/builtin/product.rs",
-        "kind": "file",
-        "label": "product.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/capability/builtin/product.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/capability/builtin/quality.rs",
-        "kind": "file",
-        "label": "quality.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/capability/builtin/quality.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/capability/builtin/release.rs",
-        "kind": "file",
-        "label": "release.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/capability/builtin/release.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/capability/builtin/worktree.rs",
-        "kind": "file",
-        "label": "worktree.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/capability/builtin/worktree.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/cli/local.rs",
-        "kind": "file",
-        "label": "local.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/cli/local.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/cockpit/mod.rs",
-        "kind": "file",
-        "label": "mod.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/cockpit/mod.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/cockpit/nav.rs",
-        "kind": "file",
-        "label": "nav.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/cockpit/nav.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/command_graph/semantics.rs",
-        "kind": "file",
-        "label": "semantics.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/command_graph/semantics.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/design/render.rs",
-        "kind": "file",
-        "label": "render.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/design/render.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/execution/engine.rs",
-        "kind": "file",
-        "label": "engine.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/execution/engine.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/execution/event.rs",
-        "kind": "file",
-        "label": "event.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/execution/event.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/execution/mod.rs",
-        "kind": "file",
-        "label": "mod.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/execution/mod.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/graph.rs",
-        "kind": "file",
-        "label": "graph.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/graph.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/http/events.rs",
-        "kind": "file",
-        "label": "events.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/http/events.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/http/router.rs",
-        "kind": "file",
-        "label": "router.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/http/router.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/http/swagger.rs",
-        "kind": "file",
-        "label": "swagger.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/http/swagger.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/order.rs",
-        "kind": "file",
-        "label": "order.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/order.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/product.rs",
-        "kind": "file",
-        "label": "product.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/product.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/quality/mod.rs",
-        "kind": "file",
-        "label": "mod.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/quality/mod.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/quality/parity.rs",
-        "kind": "file",
-        "label": "parity.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/quality/parity.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/quality/policy.rs",
-        "kind": "file",
-        "label": "policy.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/quality/policy.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/quality/source.rs",
-        "kind": "file",
-        "label": "source.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/quality/source.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/web/html.rs",
-        "kind": "file",
-        "label": "html.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/web/html.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/web/report/ui.rs",
-        "kind": "file",
-        "label": "ui.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/web/report/ui.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/web/validate.rs",
-        "kind": "file",
-        "label": "validate.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/web/validate.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/why.rs",
-        "kind": "file",
-        "label": "why.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/why.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/worktree/migrate.rs",
-        "kind": "file",
-        "label": "migrate.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/worktree/migrate.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/worktree/mod.rs",
-        "kind": "file",
-        "label": "mod.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/worktree/mod.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/src/worktree/path.rs",
-        "kind": "file",
-        "label": "path.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/worktree/path.rs",
-        "external": true
-      },
-      {
-        "id": "file:scripts/ci/design-check",
-        "kind": "file",
-        "label": "design-check",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/ci/design-check",
-        "external": true
-      },
-      {
-        "id": "file:scripts/ci/order-check",
-        "kind": "file",
-        "label": "order-check",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/ci/order-check",
-        "external": true
-      },
-      {
-        "id": "file:scripts/cockpit-probe",
-        "kind": "file",
-        "label": "cockpit-probe",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/cockpit-probe",
-        "external": true
-      },
-      {
-        "id": "file:scripts/lib/ui-audit.mjs",
-        "kind": "file",
-        "label": "ui-audit.mjs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/lib/ui-audit.mjs",
-        "external": true
-      },
-      {
-        "id": "file:scripts/lib/ui-contrast.mjs",
-        "kind": "file",
-        "label": "ui-contrast.mjs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/lib/ui-contrast.mjs",
-        "external": true
-      },
-      {
-        "id": "file:scripts/lib/ui-discover.mjs",
-        "kind": "file",
-        "label": "ui-discover.mjs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/lib/ui-discover.mjs",
-        "external": true
-      },
-      {
-        "id": "file:scripts/lib/ui-routes.mjs",
-        "kind": "file",
-        "label": "ui-routes.mjs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/lib/ui-routes.mjs",
-        "external": true
-      },
-      {
-        "id": "file:scripts/lib/ui-static.mjs",
-        "kind": "file",
-        "label": "ui-static.mjs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/lib/ui-static.mjs",
-        "external": true
-      },
-      {
-        "id": "file:scripts/release-version",
-        "kind": "file",
-        "label": "release-version",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/release-version",
-        "external": true
-      },
-      {
-        "id": "file:scripts/ui",
-        "kind": "file",
-        "label": "ui",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/ui",
-        "external": true
-      },
-      {
-        "id": "file:share/cockpit/src/cockpit.css",
-        "kind": "file",
-        "label": "cockpit.css",
-        "summary": "named by the layer; not an object of this index",
-        "source": "share/cockpit/src/cockpit.css",
-        "external": true
-      },
-      {
-        "id": "file:share/design/tokens.yaml",
-        "kind": "file",
-        "label": "tokens.yaml",
-        "summary": "named by the layer; not an object of this index",
-        "source": "share/design/tokens.yaml",
-        "external": true
-      },
-      {
-        "id": "file:share/kinds.yaml",
-        "kind": "file",
-        "label": "kinds.yaml",
-        "summary": "named by the layer; not an object of this index",
-        "source": "share/kinds.yaml",
-        "external": true
-      },
-      {
-        "id": "file:site/templates/index.html",
-        "kind": "file",
-        "label": "index.html",
-        "summary": "named by the layer; not an object of this index",
-        "source": "site/templates/index.html",
-        "external": true
-      },
-      {
         "id": "kind:adr",
         "kind": "kind",
         "label": "adr",
@@ -2037,6 +1681,12 @@
         "kind": "kind",
         "label": "document",
         "summary": "every object of kind `document`"
+      },
+      {
+        "id": "kind:domain",
+        "kind": "kind",
+        "label": "domain",
+        "summary": "every object of kind `domain`"
       },
       {
         "id": "kind:feature",
@@ -4137,10 +3787,20 @@
             "file:apps/majordomus-cli/src/integration/mod.rs",
             "file:apps/majordomus-cli/src/integration/classify.rs",
             "file:apps/majordomus-cli/src/integration/drain.rs",
+            "file:apps/majordomus-cli/src/integration/exclusive.rs",
             "file:apps/majordomus-cli/src/capability/builtin/integration.rs",
             "file:apps/majordomus-cli/src/integration/tests.rs",
+            "file:apps/majordomus-cli/src/integration/retry.rs",
+            "file:apps/majordomus-cli/src/integration/wait.rs",
+            "file:apps/majordomus-cli/src/integration/relation.rs",
+            "file:apps/majordomus-cli/src/integration/forge.rs",
+            "file:apps/majordomus-cli/src/commands/prs.rs",
             "file:docs/INTEGRATION.md",
-            "test:test/cases/720_integration_follows_the_current_master.sh"
+            "test:test/cases/720_integration_follows_the_current_master.sh",
+            "test:test/cases/740_integration_is_visible_where_a_person_looks.sh",
+            "test:test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh",
+            "test:test/cases/742_only_an_outage_is_asked_again.sh",
+            "test:test/cases/861_a_successor_that_landed_supersedes.sh"
           ],
           "tags": [
             "integration",
@@ -4178,6 +3838,35 @@
             "providers",
             "mcp",
             "governance"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0104",
+        "kind": "adr",
+        "label": "adr-0104",
+        "summary": "The product is filed under a few domains, and a feature names its one",
+        "route": "/cockpit/objects/adr/adr-0104",
+        "source": ".ai/repo/adrs/0104-the-product-is-filed-under-a-few-domains-and-a-feature-names-its-one.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-03",
+          "related": [
+            "file:.ai/repo/adrs/0023-product-features-are-objects-of-the-layer-and-the-landing-page-is-a-projection.md",
+            "file:.ai/repo/adrs/0026-a-capability-modules-area-is-derived-from-the-features-that-name-it.md",
+            "rule:project.no-new-nouns",
+            "rule:project.product-surface-derived",
+            "rule:project.homepage-tells-a-declared-story",
+            "file:apps/majordomus-cli/src/product.rs",
+            "test:apps/majordomus-cli/tests/product.rs",
+            "file:.ai/repo/features/README.md",
+            "file:share/schemas/majordomus/domain/domain.v1.schema.json"
+          ],
+          "tags": [
+            "architecture",
+            "taxonomy",
+            "projections",
+            "product"
           ]
         }
       },
@@ -6992,6 +6681,21 @@
         }
       },
       {
+        "id": "majordomus://claim/product-domains-derived",
+        "kind": "claim",
+        "label": "product-domains-derived",
+        "summary": "The product is filed under a few domains declared once as files of the layer; a feature names exactly one, and every domain's members, interfaces, guarantees and use cases are derived from the features that name it, so a stable feature cannot be left out of the product map without the model refusing it",
+        "route": "/cockpit/objects/claim/product-domains-derived",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/product.rs",
+          "responsibility": "layer",
+          "source": "docs/PRODUCT.md",
+          "test": "test/cases/800_product_domains.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/product-features-discovered",
         "kind": "claim",
         "label": "product-features-discovered",
@@ -9714,6 +9418,33 @@
         }
       },
       {
+        "id": "majordomus://context/ai.repo.features.domains",
+        "kind": "context",
+        "label": "ai.repo.features.domains",
+        "summary": "Product domains",
+        "route": "/cockpit/objects/context/ai-repo-features-domains",
+        "source": ".ai/repo/features/domains/README.md",
+        "status": "active",
+        "facts": {
+          "audience": [
+            "human",
+            "agent"
+          ],
+          "composition": "extend",
+          "order": 110,
+          "providers": [
+            "*"
+          ],
+          "scope": "subtree",
+          "tracks": [
+            "apps/majordomus-cli/src/product.rs",
+            "site/templates/domain.html",
+            "site/templates/domains-section.html",
+            "site/templates/partials/domain-map.html"
+          ]
+        }
+      },
+      {
         "id": "majordomus://context/ai.repo.knowledge",
         "kind": "context",
         "label": "ai.repo.knowledge",
@@ -12105,6 +11836,14 @@
         "source": "docs/claims/policy-parse.md"
       },
       {
+        "id": "majordomus://document/docs/claims/product-domains-derived.md",
+        "kind": "document",
+        "label": "docs/claims/product-domains-derived.md",
+        "summary": "The product is filed under domains, and the domain lists nothing",
+        "route": "/cockpit/objects/document/docs-claims-product-domains-derived-md",
+        "source": "docs/claims/product-domains-derived.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/product-features-discovered.md",
         "kind": "document",
         "label": "docs/claims/product-features-discovered.md",
@@ -12745,6 +12484,120 @@
         "source": "docs/claims/worktree-topology-derived.md"
       },
       {
+        "id": "majordomus://domain/completion",
+        "kind": "domain",
+        "label": "completion",
+        "summary": "Completion",
+        "route": "/cockpit/objects/domain/completion",
+        "source": ".ai/repo/features/domains/completion.md",
+        "status": "stable",
+        "facts": {
+          "headline": "Done is a contract the repository evaluates line by line. Work is not accepted while any line fails, and a refusal stays on the record.",
+          "problem": "Done is cheap. A worker can report success before the repository's own checks hold.",
+          "tags": [
+            "completion",
+            "finish",
+            "verification"
+          ],
+          "weight": 50
+        }
+      },
+      {
+        "id": "majordomus://domain/context",
+        "kind": "domain",
+        "label": "context",
+        "summary": "Context",
+        "route": "/cockpit/objects/domain/context",
+        "source": ".ai/repo/features/domains/context.md",
+        "status": "stable",
+        "facts": {
+          "headline": "Every worker starts from what the repository already knows: the context that applies to its path, the handover the last session left, and the decisions already made.",
+          "problem": "Agents forget. What one session learned dies with its conversation, and the next one starts over.",
+          "tags": [
+            "context",
+            "continuity",
+            "knowledge"
+          ],
+          "weight": 10
+        }
+      },
+      {
+        "id": "majordomus://domain/coordination",
+        "kind": "domain",
+        "label": "coordination",
+        "summary": "Coordination",
+        "route": "/cockpit/objects/domain/coordination",
+        "source": ".ai/repo/features/domains/coordination.md",
+        "status": "stable",
+        "facts": {
+          "headline": "Every worker declares the paths it will touch, sees who else is working and where, and hears about a collision before it is committed.",
+          "problem": "Agents collide. Parallel workers edit the same paths, or build the same thing twice, without knowing about each other.",
+          "tags": [
+            "coordination",
+            "scope",
+            "worktrees"
+          ],
+          "weight": 20
+        }
+      },
+      {
+        "id": "majordomus://domain/evidence",
+        "kind": "domain",
+        "label": "evidence",
+        "summary": "Evidence",
+        "route": "/cockpit/objects/domain/evidence",
+        "source": ".ai/repo/features/domains/evidence.md",
+        "status": "stable",
+        "facts": {
+          "headline": "A claim names the test that settles it, a recorded run is judged against the commit it ran at, and a claim with no recorded run says so.",
+          "problem": "Claims outrun proof. The documentation says one thing, the runtime does another, and nobody can show which is true.",
+          "tags": [
+            "evidence",
+            "provenance",
+            "claims"
+          ],
+          "weight": 40
+        }
+      },
+      {
+        "id": "majordomus://domain/governance",
+        "kind": "domain",
+        "label": "governance",
+        "summary": "Governance",
+        "route": "/cockpit/objects/domain/governance",
+        "source": ".ai/repo/features/domains/governance.md",
+        "status": "stable",
+        "facts": {
+          "headline": "The rules are written once, in the repository, projected into every tool's instructions, and a blocking rule stops the command instead of advising it.",
+          "problem": "Rules drift. Each tool keeps its own instruction file, and a rule nobody wired into enforcement is only a suggestion.",
+          "tags": [
+            "governance",
+            "policy",
+            "rules"
+          ],
+          "weight": 30
+        }
+      },
+      {
+        "id": "majordomus://domain/surfaces",
+        "kind": "domain",
+        "label": "surfaces",
+        "summary": "Surfaces",
+        "route": "/cockpit/objects/domain/surfaces",
+        "source": ".ai/repo/features/domains/surfaces.md",
+        "status": "stable",
+        "facts": {
+          "headline": "One declaration in the repository becomes the command line, the HTTP API, MCP, the Cockpit, the documentation and this site, and a projection that disagrees with it fails the build.",
+          "problem": "Interfaces disagree. The command line, the API, the docs and the website each keep a copy, and the copies drift.",
+          "tags": [
+            "surfaces",
+            "interfaces",
+            "projection"
+          ],
+          "weight": 60
+        }
+      },
+      {
         "id": "majordomus://feature/benchmarks",
         "kind": "feature",
         "label": "benchmarks",
@@ -12774,6 +12627,7 @@
           "docs": [
             "docs/PERFORMANCE.md"
           ],
+          "domain": "evidence",
           "featured": false,
           "headline": "Every externally callable operation is timed directly, over MCP and over HTTP, the denominator is generated from the registry, and a regression against the accepted baseline fails the check.",
           "modules": [
@@ -12833,6 +12687,7 @@
             "docs/CI.md",
             "docs/GITHUB_PAGES_PERFORMANCE.md"
           ],
+          "domain": "completion",
           "featured": false,
           "headline": "A change runs the gates its paths can affect, every gate is the same script a person runs, and the public site is published only from a commit whose derived data proved current.",
           "related": [
@@ -12891,6 +12746,7 @@
           "docs": [
             "docs/COCKPIT.md"
           ],
+          "domain": "surfaces",
           "featured": true,
           "modules": [
             "health",
@@ -12938,6 +12794,7 @@
           "docs": [
             "docs/COMMIT.md"
           ],
+          "domain": "governance",
           "featured": true,
           "modules": [
             "commit"
@@ -13000,6 +12857,7 @@
             "docs/CONTEXT.md",
             "docs/SCOPE.md"
           ],
+          "domain": "context",
           "featured": false,
           "kinds": [
             "context",
@@ -13084,6 +12942,7 @@
             "docs/CONTINUITY.md",
             "docs/CONTEXT.md"
           ],
+          "domain": "context",
           "featured": true,
           "headline": "A session ends and the work does not: what the next worker needs is a typed record checked against git, not a transcript somebody hopes to find.",
           "kinds": [
@@ -13172,6 +13031,7 @@
             "docs/ADOPTION.md",
             "docs/INTEGRATION.md"
           ],
+          "domain": "coordination",
           "featured": true,
           "headline": "Every worker declares the paths it may touch, every session can see who else is attached and what they announced, and a collision is reported before it is committed.",
           "modules": [
@@ -13227,8 +13087,9 @@
           "docs": [
             "docs/COVERAGE.md"
           ],
+          "domain": "completion",
           "featured": false,
-          "headline": "One coverage measurement, test code out of the denominator, holds a crate floor, a floor over the session/continuity domain, and — the invariant of",
+          "headline": "One coverage measurement, test code out of the denominator, holds a crate floor, a floor over the session/continuity domain, and — the invariant of #214 — every executable line a change touches.",
           "modules": [],
           "related": [
             "doctrine",
@@ -13289,10 +13150,12 @@
             "docs/DYNAMICITY.md",
             "docs/GITHUB_PAGES_ARCHITECTURE.md"
           ],
+          "domain": "surfaces",
           "featured": true,
           "headline": "A capability is written in one place, and the command line, the HTTP API, the OpenAPI document, MCP, the Cockpit, the reference and this website are projections of it.",
           "kinds": [
             "feature",
+            "domain",
             "command",
             "claim"
           ],
@@ -13348,6 +13211,7 @@
           "docs": [
             "docs/DELIVERY.md"
           ],
+          "domain": "surfaces",
           "featured": false,
           "headline": "The port, the routes, the resources and the build inputs of a hosted executable are stated once, and the container definition and the provider configuration are projections that cannot drift from it.",
           "kinds": [
@@ -13408,6 +13272,7 @@
             "docs/DOCTRINE.md",
             "docs/DOGFOODING.md"
           ],
+          "domain": "governance",
           "featured": true,
           "headline": "A rule is enforced when a validator decides it, a command runs it, a test proves it and CI blocks on it; anything less is documentation, and the tool knows the difference.",
           "kinds": [
@@ -13472,6 +13337,7 @@
           "docs": [
             "docs/ECONOMICS.md"
           ],
+          "domain": "evidence",
           "featured": false,
           "modules": [
             "economics"
@@ -13524,6 +13390,7 @@
           "docs": [
             "docs/EVIDENCE.md"
           ],
+          "domain": "evidence",
           "featured": true,
           "modules": [
             "evidence"
@@ -13577,6 +13444,7 @@
             "docs/CLI.md",
             "docs/DESIGN.md"
           ],
+          "domain": "completion",
           "featured": true,
           "modules": [
             "gates",
@@ -13648,6 +13516,7 @@
             "docs/INSTALL.md",
             "docs/DISTRIBUTION.md"
           ],
+          "domain": "surfaces",
           "featured": false,
           "headline": "The installer downloads one archive for your machine, verifies its digest against the release metadata before unpacking anything, and installs atomically; no git, no Rust, no Node, no root.",
           "kinds": [
@@ -13721,6 +13590,7 @@
             "docs/WEB.md",
             "docs/CAPABILITIES.md"
           ],
+          "domain": "surfaces",
           "featured": false,
           "headline": "Every agent, script and person reads the same repository through the interface it already speaks, and none of the interfaces is maintained by hand.",
           "modules": [
@@ -13809,6 +13679,7 @@
             "docs/CONTINUITY.md",
             "docs/CONCEPTS.md"
           ],
+          "domain": "context",
           "featured": true,
           "headline": "What was decided, why, and what was rejected is recorded where the next session reads it, and a durable decision becomes an architecture record with typed links to what it put in force.",
           "kinds": [
@@ -13879,6 +13750,7 @@
           "docs": [
             "docs/MESH.md"
           ],
+          "domain": "coordination",
           "featured": true,
           "kinds": [
             "mesh-declaration"
@@ -13932,6 +13804,7 @@
           "docs": [
             "docs/MODELS.md"
           ],
+          "domain": "coordination",
           "featured": true,
           "headline": "One declared catalogue of vendors and models — capabilities, context, lifecycle, no fabricated facts — and a routing answer that names why every candidate was chosen or excluded.",
           "modules": [
@@ -13983,6 +13856,7 @@
             "docs/PLANNING.md",
             "docs/ROADMAP.md"
           ],
+          "domain": "coordination",
           "featured": false,
           "headline": "An issue records what happened to it and the engine derives whether it is blocked, ready, active, verifying or done from the dependency graph, so the roadmap cannot disagree with the plan.",
           "kinds": [
@@ -14061,6 +13935,7 @@
             "docs/SCHEMAS.md",
             "docs/ADOPTION.md"
           ],
+          "domain": "governance",
           "featured": false,
           "kinds": [
             "policy",
@@ -14138,6 +14013,7 @@
             "docs/CONTINUITY.md",
             "docs/ECONOMICS.md"
           ],
+          "domain": "evidence",
           "featured": true,
           "headline": "Who did what, under which task, at which commit, in which session is a ledger the tool writes and a person can read back, not a memory of a conversation.",
           "kinds": [
@@ -14196,6 +14072,7 @@
           "docs": [
             "docs/REASONING.md"
           ],
+          "domain": "coordination",
           "featured": true,
           "headline": "Material uncertainty becomes an evidence-backed decision — reviewed by whichever optional advisors are available, decided locally when none are, and carried to the next session as a record.",
           "modules": [
@@ -14245,6 +14122,7 @@
           "docs": [
             "docs/CONCEPTS.md"
           ],
+          "domain": "context",
           "featured": false,
           "headline": "A skill is one directory under the layer; adding it is the whole act, and the command line, the website and MCP all read it from the same file.",
           "kinds": [
@@ -14296,6 +14174,7 @@
             "docs/USE_CASES.md",
             "docs/CATALOGUE.md"
           ],
+          "domain": "evidence",
           "featured": false,
           "headline": "What a person does with the tool is one file with a scenario the tool runs against itself; the page shows that execution, and a public command no use case runs is a gap the tool reports.",
           "kinds": [
@@ -14346,6 +14225,7 @@
           "docs": [
             "docs/WHY.md"
           ],
+          "domain": "surfaces",
           "featured": false,
           "kinds": [
             "moment",
@@ -14400,6 +14280,7 @@
           "docs": [
             "docs/WORKTREES.md"
           ],
+          "domain": "coordination",
           "featured": true,
           "headline": "A branch's worktree is where git says it is, never where somebody chose to put it, and a misplaced one is a diagnostic with a remedy rather than a mystery.",
           "modules": [
@@ -17505,6 +17386,7 @@
             "The extractor version is part of the manifest, so a change to the extractor invalidates it",
             "The measured cost of a no-op sync and of a cold sync on this repository is recorded as evidence"
           ],
+          "cancelled": true,
           "created_at": "2026-09-04",
           "current_state": "Nothing is generated and nothing is cached. The site generator's --check mode is the precedent for a command that reports drift between canonical input and derived output without regenerating it.",
           "depends_on": [
@@ -17530,7 +17412,7 @@
             "test/cases/68_knowledge_manifest.sh"
           ],
           "slug": "knowledge-manifest",
-          "updated_at": "2026-09-04",
+          "updated_at": "2026-10-04",
           "validation": [
             "bash test/run.sh 68_knowledge_manifest"
           ]
@@ -17554,7 +17436,7 @@
           "created_at": "2026-09-04",
           "current_state": "`majordomus search` is a literal grep over the six operational record kinds and must keep that contract unchanged. Nothing searches the repository's canonical artifacts.",
           "depends_on": [
-            "I0810"
+            "I0809"
           ],
           "evidence_required": [
             "query_explainable",
@@ -19105,6 +18987,8 @@
         "route": "/cockpit/objects/issue/i0901",
         "source": ".ai/repo/project/issues/I0901.yaml",
         "facts": {
+          "completed_at": "2026-10-04T10:00:11Z",
+          "completed_event": "sha256:b99ecd9dd4aebe3dcdfc21578309bbe5e10827ea7b476cab602f930f2ea194d7",
           "created_at": "2026-09-06",
           "depends_on": [],
           "evidence_required": [
@@ -19129,11 +19013,15 @@
             "share/schemas"
           ],
           "slug": "deployment-kind",
-          "updated_at": "2026-09-10",
+          "started_at": "2026-10-04T09:55:21Z",
+          "started_event": "sha256:3123ebbc178cc682288eec0f9735a2ae28e4974ab4874911313c5b23c08673ea",
+          "updated_at": "2026-10-04T10:00:11Z",
           "validation": [
             "bash test/run.sh",
             "bin/majordomus doctor"
-          ]
+          ],
+          "verified_at": "2026-10-04T09:59:52Z",
+          "verified_event": "sha256:257f73020c90af8cfd27a4ce7eac9f497c0ee1c64fe49043e12865d7d4b9e2b4"
         }
       },
       {
@@ -20842,6 +20730,8 @@
             "Runtime state is an overlay over the definitions, distinguishable in the response",
             "A test exercises the operation against a running server rather than a mock"
           ],
+          "completed_at": "2026-10-04T10:11:46Z",
+          "completed_event": "sha256:af8b77f1ed46772ea458a809b1415c9e0f7852db8407bb8ebffd3b5020dc8837",
           "created_at": "2026-09-06",
           "current_state": "The Cockpit renders in-process. No capability serves the aggregate graph.",
           "depends_on": [
@@ -20866,11 +20756,15 @@
             "apps/majordomus-cli/src/capability/builtin/graph.rs"
           ],
           "slug": "runtime-graph-read",
-          "updated_at": "2026-09-06",
+          "started_at": "2026-10-04T10:11:17Z",
+          "started_event": "sha256:463264f9562133c078de77b0f39c00f92a1744fbfade547ea3b07bf7a4b02577",
+          "updated_at": "2026-10-04T10:11:46Z",
           "validation": [
             "cargo test --workspace --all-features",
             "majordomus generate --check"
           ],
+          "verified_at": "2026-10-04T10:11:35Z",
+          "verified_event": "sha256:f7748bbfa37ff77a1a89c2d8931ba91927ff8683c31fcc72a7bde1de5697c4aa",
           "why": "A route added by hand for the Cockpit would be the one endpoint missing from OpenAPI, from the reference and from the smoke suite. The registry exists precisely so that does not happen."
         }
       },
@@ -26445,6 +26339,502 @@
         }
       },
       {
+        "id": "majordomus://issue/I1967",
+        "kind": "issue",
+        "label": "I1967",
+        "summary": "A reporter that sets a flag is a reporter",
+        "route": "/cockpit/objects/issue/i1967",
+        "source": ".ai/repo/project/issues/I1967.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A function that sets a flag rather than incrementing a counter is discovered as a reporter",
+            "A call to such a reporter inside a pipeline-fed loop is refused, with the file and line",
+            "The known-answer fixture holds a flag-setting reporter, and the guard refuses itself when it does not find it"
+          ],
+          "created_at": "2026-10-04",
+          "depends_on": [],
+          "evidence_required": [
+            "a_flag_setting_reporter_is_discovered"
+          ],
+          "milestone": "development-runtime",
+          "non_scope": [
+            "Rewriting gates that are already correct: the guard names what is lost, not what offends taste",
+            "A check assembled from another program's output that dies silently, which I1513 named as its third face and test/cases/341 covers on its own"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "risk": "Low. The guard can only refuse shapes that already lose a verdict; a false alarm on a flag nobody reads is answered by naming the reporter it found.",
+          "scope": [
+            "scripts/lib/counting-functions.awk",
+            "scripts/ci/shell-lint",
+            "test/cases"
+          ],
+          "slug": "a-flag-setting-reporter-is-a-reporter",
+          "updated_at": "2026-10-04",
+          "validation": [
+            "bash scripts/ci/shell-lint"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1980",
+        "kind": "issue",
+        "label": "I1980",
+        "summary": "A layer names the tool version it was written for, and doctor tells version skew from defects",
+        "route": "/cockpit/objects/issue/i1980",
+        "source": ".ai/repo/project/issues/I1980.yaml",
+        "facts": {
+          "created_at": "2026-10-04",
+          "evidence_required": [
+            "version_skew_case",
+            "newer_layer_refused_case",
+            "install_docs_upgrade_step"
+          ],
+          "milestone": "adopter-upgrades",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "deep-work",
+          "scope": [
+            "share/schemas",
+            "share/skeleton",
+            ".ai/manifest.yaml",
+            "lib/doctor.sh",
+            "lib/migrate.sh",
+            "lib/init.sh",
+            "docs/INSTALL.md",
+            "share/install",
+            "test/cases"
+          ],
+          "slug": "a-layer-names-the-tool-version-it-was-written-for",
+          "updated_at": "2026-10-04",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1981",
+        "kind": "issue",
+        "label": "I1981",
+        "summary": "A command's effect class is declared per subcommand and flag, and live scenarios judge the whole argv",
+        "route": "/cockpit/objects/issue/i1981",
+        "source": ".ai/repo/project/issues/I1981.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A live scenario step `knowledge edges` validates and runs",
+            "A live scenario step `check --checkpoint` is refused at validate time, naming the flag",
+            "The command-registry reconciliation in doctor covers the new per-subcommand declarations"
+          ],
+          "created_at": "2026-10-04",
+          "current_state": "lib/usecase.sh:383-386 admits a live step when the top-level command's class is read-only (commands.sh:27). The registry has no per-subcommand or per-flag effect.",
+          "evidence_required": [
+            "live_scenario_reads_knowledge",
+            "live_scenario_refuses_writing_flag"
+          ],
+          "milestone": "adopter-upgrades",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "scope": [
+            "share/commands.yaml",
+            "lib/usecase.sh",
+            "lib/commands.sh",
+            "docs/CLI.md",
+            "test/cases/359_live_scenarios.sh",
+            "test/fixtures/commands"
+          ],
+          "slug": "the-effect-class-is-judged-per-subcommand",
+          "updated_at": "2026-10-04",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1982",
+        "kind": "issue",
+        "label": "I1982",
+        "summary": "Plan stamps written before seals existed are re-sealed by a command that keeps their original times",
+        "route": "/cockpit/objects/issue/i1982",
+        "source": ".ai/repo/project/issues/I1982.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fixture with stamps written before sealing passes plan validate after the backfill, with every stamp's time unchanged",
+            "Both engines agree on the cutoff read from the repository; case 582_the_done_guard_holds_in_both_engines still passes"
+          ],
+          "created_at": "2026-10-04",
+          "current_state": "No command seals or excuses existing stamps; both engines share a fixed cutoff.",
+          "depends_on": [
+            "I1980"
+          ],
+          "desired_state": "One command, run by `migrate --layer` from I1980, that seals or excuses every unsealed stamp with provenance and leaves the times unchanged. Both engines read the cutoff from the repository.",
+          "evidence_required": [
+            "reseal_keeps_times_case",
+            "cutoff_per_repository"
+          ],
+          "milestone": "adopter-upgrades",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/plan.sh",
+            "lib/project.awk",
+            "apps/majordomus-cli/src/plan.rs",
+            "docs/PLANNING.md",
+            "test/cases"
+          ],
+          "slug": "old-plan-stamps-are-resealed-with-their-times",
+          "updated_at": "2026-10-04",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1983",
+        "kind": "issue",
+        "label": "I1983",
+        "summary": "Upgrading the vendored rules reports or applies the policy and source keys those rules depend on",
+        "route": "/cockpit/objects/issue/i1983",
+        "source": ".ai/repo/project/issues/I1983.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Vendoring a newer package into a fixture with an older skeleton prints the missing keys with their defaults",
+            "doctor names the same missing keys"
+          ],
+          "created_at": "2026-10-04",
+          "current_state": "rules vendor update copies the package and its manifest only.",
+          "depends_on": [
+            "I1980"
+          ],
+          "desired_state": "The update names every skeleton key the new rules read and the adopter lacks, and doctor reports the same list until it is resolved.",
+          "evidence_required": [
+            "vendor_update_names_missing_keys"
+          ],
+          "milestone": "adopter-upgrades",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "lib/rules.sh",
+            "lib/doctor.sh",
+            "share/standard/majordomus",
+            "share/skeleton",
+            "docs",
+            "test/cases"
+          ],
+          "slug": "rules-vendor-upgrade-carries-the-keys-its-rules-need",
+          "updated_at": "2026-10-04",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1984",
+        "kind": "issue",
+        "label": "I1984",
+        "summary": "Knowledge candidates never leave untracked files on a trunk that only pull requests change",
+        "route": "/cockpit/objects/issue/i1984",
+        "source": ".ai/repo/project/issues/I1984.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Closing an episode on the trunk leaves `git status --porcelain` empty",
+            "Candidates derived on a branch are still offered for review and promotion as today"
+          ],
+          "created_at": "2026-10-04",
+          "current_state": "lib/knowledge.sh (~626, 839-897) writes candidates under .ai/repo/knowledge/candidates/ in whichever checkout closes the episode; ADR 0091 intends the tracked path.",
+          "desired_state": "Candidates derived on the trunk are staged under .ai/local, or derivation is skipped there, until a branch promotes them. The decision is recorded against ADR 0091.",
+          "evidence_required": [
+            "trunk_stays_clean_case",
+            "decision_recorded"
+          ],
+          "milestone": "adopter-upgrades",
+          "objective": "Decide and implement where knowledge candidates are written so that deriving them at an episode boundary on the trunk never leaves the trunk's working tree dirty.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "deep-work",
+          "scope": [
+            "lib/knowledge.sh",
+            "lib/capture.sh",
+            "share/standard/majordomus/rules",
+            "docs/KNOWLEDGE.md",
+            ".ai/repo/adrs",
+            "test/cases"
+          ],
+          "slug": "knowledge-candidates-never-dirty-a-trunk",
+          "updated_at": "2026-10-04",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1985",
+        "kind": "issue",
+        "label": "I1985",
+        "summary": "A knowledge candidate relates to its own decision and commit, not to the whole episode",
+        "route": "/cockpit/objects/issue/i1985",
+        "source": ".ai/repo/project/issues/I1985.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fixture episode with two decisions at two commits yields two candidates, each citing only its own commit",
+            "A superseded decision yields no candidate"
+          ],
+          "created_at": "2026-10-04",
+          "current_state": "lib/knowledge.sh relates each candidate to the episode's whole footprint.",
+          "depends_on": [
+            "I1984"
+          ],
+          "desired_state": "Each candidate cites what it is about. Superseded decisions and pure ledger echoes produce no candidate.",
+          "evidence_required": [
+            "candidate_provenance_case"
+          ],
+          "milestone": "adopter-upgrades",
+          "objective": "Derive each candidate's relates_to and derived_from from the decision or event it records, deduplicate against facts the ledger already states, and skip decisions a later decision superseded.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/knowledge.sh",
+            "test/cases"
+          ],
+          "slug": "a-candidate-relates-to-its-own-commit",
+          "updated_at": "2026-10-04",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1986",
+        "kind": "issue",
+        "label": "I1986",
+        "summary": "The vendored rule package says nothing that is only true of this repository",
+        "route": "/cockpit/objects/issue/i1986",
+        "source": ".ai/repo/project/issues/I1986.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "No vendored rule's text names this repository's own incidents as the adopter's",
+            "scripts/rules-package write stamps the producing release as source_revision"
+          ],
+          "created_at": "2026-10-04",
+          "current_state": "As above at e08aec8651.",
+          "desired_state": "Adopter-neutral rule text; tests resolvable or explicitly upstream; source_revision equals the release that produced the package.",
+          "evidence_required": [
+            "neutral_rule_text",
+            "source_revision_stamped"
+          ],
+          "milestone": "adopter-upgrades",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "share/standard/majordomus",
+            "scripts/rules-package",
+            "test/cases"
+          ],
+          "slug": "vendored-rules-are-adopter-neutral",
+          "updated_at": "2026-10-04",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1987",
+        "kind": "issue",
+        "label": "I1987",
+        "summary": "A knowledge record's file provenance survives the file's deletion",
+        "route": "/cockpit/objects/issue/i1987",
+        "source": ".ai/repo/project/issues/I1987.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A record citing a since-deleted file at its commit passes knowledge check",
+            "A file reference that never existed still fails"
+          ],
+          "created_at": "2026-10-04",
+          "current_state": "file: references are resolved against the working tree only.",
+          "desired_state": "A historical file reference resolves through git; knowledge check reports it as historical, not dangling.",
+          "evidence_required": [
+            "historical_file_reference_case"
+          ],
+          "milestone": "adopter-upgrades",
+          "objective": "Let derived_from name a file at a commit (`file:<path>@<commit>`), or resolve `file:` at the record's own commit, so that deleting a cited file does not break knowledge check.",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/knowledge.sh",
+            "share/schemas",
+            "docs/KNOWLEDGE.md",
+            "test/cases"
+          ],
+          "slug": "knowledge-file-provenance-survives-deletion",
+          "updated_at": "2026-10-04",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1988",
+        "kind": "issue",
+        "label": "I1988",
+        "summary": "A use case's setup scripts live where the adopter declares, and its scenarios may run the adopter's own commands",
+        "route": "/cockpit/objects/issue/i1988",
+        "source": ".ai/repo/project/issues/I1988.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A fixture adopter with setup scripts under its declared path runs its scenarios",
+            "A scenario step running an undeclared external command is refused"
+          ],
+          "created_at": "2026-10-04",
+          "current_state": "lib/usecase.sh resolves setup scripts under a fixed path and runs only the tool.",
+          "depends_on": [
+            "I1981"
+          ],
+          "desired_state": "A manifest key names the setup directory; declared external commands are allowed in scenarios under the effect rules.",
+          "evidence_required": [
+            "declared_setup_path_case"
+          ],
+          "milestone": "adopter-upgrades",
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "lib/usecase.sh",
+            "share/schemas",
+            "share/skeleton",
+            "docs",
+            "test/cases"
+          ],
+          "slug": "a-use-case-setup-path-is-declared",
+          "updated_at": "2026-10-04",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1989",
+        "kind": "issue",
+        "label": "I1989",
+        "summary": "init seeds a scope for the stack it finds, not for this repository's",
+        "route": "/cockpit/objects/issue/i1989",
+        "source": ".ai/repo/project/issues/I1989.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "init in a fixture JavaScript repository writes no Elixir or Rust paths into its scope"
+          ],
+          "created_at": "2026-10-04",
+          "current_state": "share/skeleton scope is stack-specific.",
+          "desired_state": "init writes a scope that names what the adopter's tree contains, and says what it guessed.",
+          "evidence_required": [
+            "init_scope_detected_case"
+          ],
+          "milestone": "adopter-upgrades",
+          "objective": "Make the scope skeleton neutral, or detected from the adopter's files, rather than seeded with Elixir and Rust paths and a size cap that excludes committed build output.",
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            "share/skeleton",
+            "lib/init.sh",
+            "test/cases"
+          ],
+          "slug": "init-seeds-a-scope-for-the-stack-it-finds",
+          "updated_at": "2026-10-04",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1990",
+        "kind": "issue",
+        "label": "I1990",
+        "summary": "The pre-push check judges the refs being pushed, or says why the checkout's task binds them",
+        "route": "/cockpit/objects/issue/i1990",
+        "source": ".ai/repo/project/issues/I1990.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Pushing a ref other than the task's branch is judged by the recorded rule, proven by a case"
+          ],
+          "created_at": "2026-10-04",
+          "current_state": "lib/finish.sh ignores the hook's stdin; mj_validate_state compares the checkout's branch with the task's.",
+          "desired_state": "The decision recorded (decision or ADR) and the hook's behaviour matching it, with a case.",
+          "evidence_required": [
+            "prepush_refs_case",
+            "decision_recorded"
+          ],
+          "milestone": "adopter-upgrades",
+          "objective": "Decide whether `finish --check` in the pre-push hook should read the refs git passes on stdin and judge only those carrying the active task's branch, and implement or document the decision.",
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "deep-work",
+          "scope": [
+            "lib/finish.sh",
+            "share/skeleton",
+            "docs/CLI.md",
+            "test/cases"
+          ],
+          "slug": "pre-push-judges-the-pushed-refs",
+          "updated_at": "2026-10-04",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1991",
+        "kind": "issue",
+        "label": "I1991",
+        "summary": "A comment-only edit of the policy regenerates no bootstrap",
+        "route": "/cockpit/objects/issue/i1991",
+        "source": ".ai/repo/project/issues/I1991.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Adding a comment to policy.yaml leaves `majordomus update --check` clean"
+          ],
+          "created_at": "2026-10-04",
+          "current_state": "The stamp hashes the file's bytes (lib/update.sh, apps/majordomus-cli/src/providers.rs).",
+          "desired_state": "Both renderers hash the same canonical form; a comment edit is a no-op for update.",
+          "evidence_required": [
+            "comment_edit_noop_case"
+          ],
+          "milestone": "adopter-upgrades",
+          "objective": "Derive the policy fingerprint stamped into generated bootstraps from the parsed policy rather than its bytes, so that editing a comment does not rewrite AGENTS.md, CLAUDE.md and GEMINI.md.",
+          "parallel_safe": true,
+          "priority": "p3",
+          "profile": "implementation",
+          "scope": [
+            "lib/update.sh",
+            "apps/majordomus-cli/src/providers.rs",
+            "test/cases"
+          ],
+          "slug": "a-comment-in-the-policy-moves-no-bootstrap",
+          "updated_at": "2026-10-04",
+          "validation": [
+            "bin/majordomus plan validate",
+            "MJ_TEST_JOBS=4 bash test/run.sh <the case this issue adds>"
+          ],
+          "why": "OSCILLA db62a1f: a comment-only edit of policy.yaml moved the policy hash (ca779e02f878 to 9535da72e6a6) and rewrote all three bootstraps."
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -26759,6 +27149,48 @@
             "bin/majordomus bench --check",
             "scripts/generate-site-data --check",
             "shellcheck -x -s bash bin/majordomus lib/*.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/adopter-upgrades",
+        "kind": "milestone",
+        "label": "adopter-upgrades",
+        "summary": "An adopting repository survives a Majordomus upgrade, and what the tool vendors into it is adopter-neutral",
+        "route": "/cockpit/objects/milestone/adopter-upgrades",
+        "source": ".ai/repo/project/milestones/adopter-upgrades.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Upgrading the tool over a layer written by the previous minor version yields a doctor report that names version skew and the migration command, not defects; proven by the case I1980 adds",
+            "A live use-case scenario may run a read-only subcommand of a command that also writes, and may not run a writing flag of a read-only command; proven by the case I1981 adds",
+            "Every issue of this milestone is DONE or CANCELLED with its reason"
+          ],
+          "created_at": "2026-10-04",
+          "evidence_required": [
+            "version_skew_is_named",
+            "effect_class_per_subcommand"
+          ],
+          "non_scope": [
+            "OSCILLA itself: it is the evidence, read only",
+            "Fixes already in flight: #780-#784, fix/context-resolves-a-path-not-yet-created, #746 and 9030dc4795",
+            "Accepting any ADR these issues propose; acceptance is the owner's act"
+          ],
+          "order": 115,
+          "priority": "p0",
+          "scope": [
+            ".ai/repo/project",
+            "lib",
+            "share",
+            "apps/majordomus-cli/src/plan.rs",
+            "docs",
+            "test/cases"
+          ],
+          "slug": "adopter-upgrades",
+          "updated_at": "2026-10-04",
+          "validation": [
+            "bin/majordomus plan validate",
+            "bin/majordomus usecase validate",
+            "scripts/derive-check"
           ]
         }
       },
@@ -30704,6 +31136,98 @@
         }
       },
       {
+        "id": "majordomus://release-record/v0.13.0",
+        "kind": "release-record",
+        "label": "v0.13.0",
+        "summary": "v0.13.0",
+        "route": "/cockpit/objects/release-record/v0-13-0",
+        "source": ".ai/repo/releases/v0.13.0.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "f075170530ac32cb634a514eb35e970c8a9412e9",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.13.0",
+          "published_at": "2026-10-04T09:29:13Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.13.0"
+        }
+      },
+      {
+        "id": "majordomus://release-record/v0.13.1",
+        "kind": "release-record",
+        "label": "v0.13.1",
+        "summary": "v0.13.1",
+        "route": "/cockpit/objects/release-record/v0-13-1",
+        "source": ".ai/repo/releases/v0.13.1.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "2a4fe055b8b101ed2d2ac61fc0e8cb22ff5392e5",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.13.1",
+          "published_at": "2026-10-04T21:52:31Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.13.1"
+        }
+      },
+      {
+        "id": "majordomus://release-record/v0.13.2",
+        "kind": "release-record",
+        "label": "v0.13.2",
+        "summary": "v0.13.2",
+        "route": "/cockpit/objects/release-record/v0-13-2",
+        "source": ".ai/repo/releases/v0.13.2.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "9a31fed5e576f4e2f33ddf1dd5b5df7abfdd5497",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.13.2",
+          "published_at": "2026-10-06T03:14:58Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.13.2"
+        }
+      },
+      {
+        "id": "majordomus://release-record/v0.14.0",
+        "kind": "release-record",
+        "label": "v0.14.0",
+        "summary": "v0.14.0",
+        "route": "/cockpit/objects/release-record/v0-14-0",
+        "source": ".ai/repo/releases/v0.14.0.yaml",
+        "facts": {
+          "channel": "stable",
+          "commit": "815b96b5a12be1bb255060f06f5a02a2882ad742",
+          "notes_url": "https://github.com/korczis/prismatic-majordomus/releases/tag/v0.14.0",
+          "published_at": "2026-10-06T13:30:57Z",
+          "required_targets": [
+            "macos-aarch64",
+            "macos-x86_64",
+            "linux-x86_64-gnu",
+            "linux-x86_64-musl",
+            "linux-aarch64-gnu",
+            "linux-aarch64-musl"
+          ],
+          "tag": "v0.14.0"
+        }
+      },
+      {
         "id": "majordomus://release-record/v0.3.1",
         "kind": "release-record",
         "label": "v0.3.1",
@@ -32929,12 +33453,12 @@
         }
       },
       {
-        "id": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "id": "majordomus://rule/project.integration-follows-the-current-master@2",
         "kind": "rule",
-        "label": "project.integration-follows-the-current-master@1",
+        "label": "project.integration-follows-the-current-master@2",
         "summary": "Pull requests are integrated one at a time, each decided against the current master, never around the branch protection",
-        "route": "/cockpit/objects/rule/project-integration-follows-the-current-master-1",
-        "source": ".ai/repo/rules/project/integration-follows-the-current-master.v1.md",
+        "route": "/cockpit/objects/rule/project-integration-follows-the-current-master-2",
+        "source": ".ai/repo/rules/project/integration-follows-the-current-master.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -36408,6 +36932,13 @@
         "source": "test/cases/108_scope_after_trunk_merge.sh"
       },
       {
+        "id": "majordomus://test/test/cases/108b_scope_after_trunk_fast_forward.sh",
+        "kind": "test",
+        "label": "test/cases/108b_scope_after_trunk_fast_forward.sh",
+        "route": "/cockpit/objects/test/test-cases-108b-scope-after-trunk-fast-forward-sh",
+        "source": "test/cases/108b_scope_after_trunk_fast_forward.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/109_design_system.sh",
         "kind": "test",
         "label": "test/cases/109_design_system.sh",
@@ -36434,13 +36965,6 @@
         "label": "test/cases/111_session_per_provider.sh",
         "route": "/cockpit/objects/test/test-cases-111-session-per-provider-sh",
         "source": "test/cases/111_session_per_provider.sh"
-      },
-      {
-        "id": "majordomus://test/test/cases/111_unblock.sh",
-        "kind": "test",
-        "label": "test/cases/111_unblock.sh",
-        "route": "/cockpit/objects/test/test-cases-111-unblock-sh",
-        "source": "test/cases/111_unblock.sh"
       },
       {
         "id": "majordomus://test/test/cases/112_version_matches_surface.sh",
@@ -36646,6 +37170,13 @@
         "source": "test/cases/132_health_sees_a_stopped_writer.sh"
       },
       {
+        "id": "majordomus://test/test/cases/132b_a_new_branch_owes_no_records_yet.sh",
+        "kind": "test",
+        "label": "test/cases/132b_a_new_branch_owes_no_records_yet.sh",
+        "route": "/cockpit/objects/test/test-cases-132b-a-new-branch-owes-no-records-yet-sh",
+        "source": "test/cases/132b_a_new_branch_owes_no_records_yet.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/133_plan_transition.sh",
         "kind": "test",
         "label": "test/cases/133_plan_transition.sh",
@@ -36709,6 +37240,13 @@
         "source": "test/cases/14_wiring_dispatcher.sh"
       },
       {
+        "id": "majordomus://test/test/cases/14c_wiring_from_a_linked_worktree.sh",
+        "kind": "test",
+        "label": "test/cases/14c_wiring_from_a_linked_worktree.sh",
+        "route": "/cockpit/objects/test/test-cases-14c-wiring-from-a-linked-worktree-sh",
+        "source": "test/cases/14c_wiring_from_a_linked_worktree.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/150_server_sees_the_current_tree.sh",
         "kind": "test",
         "label": "test/cases/150_server_sees_the_current_tree.sh",
@@ -36721,6 +37259,13 @@
         "label": "test/cases/15_command_surface.sh",
         "route": "/cockpit/objects/test/test-cases-15-command-surface-sh",
         "source": "test/cases/15_command_surface.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/15b_an_installed_tool_runs_what_its_bootstrap_names.sh",
+        "kind": "test",
+        "label": "test/cases/15b_an_installed_tool_runs_what_its_bootstrap_names.sh",
+        "route": "/cockpit/objects/test/test-cases-15b-an-installed-tool-runs-what-its-bootstrap-names-sh",
+        "source": "test/cases/15b_an_installed_tool_runs_what_its_bootstrap_names.sh"
       },
       {
         "id": "majordomus://test/test/cases/16_profiles.sh",
@@ -38333,6 +38878,13 @@
         "source": "test/cases/79_bench_command.sh"
       },
       {
+        "id": "majordomus://test/test/cases/800_product_domains.sh",
+        "kind": "test",
+        "label": "test/cases/800_product_domains.sh",
+        "route": "/cockpit/objects/test/test-cases-800-product-domains-sh",
+        "source": "test/cases/800_product_domains.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/80_bench_persistence.sh",
         "kind": "test",
         "label": "test/cases/80_bench_persistence.sh",
@@ -38345,6 +38897,27 @@
         "label": "test/cases/81_bench_baseline.sh",
         "route": "/cockpit/objects/test/test-cases-81-bench-baseline-sh",
         "source": "test/cases/81_bench_baseline.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/820_a_prose_heading_reads_as_a_heading.sh",
+        "kind": "test",
+        "label": "test/cases/820_a_prose_heading_reads_as_a_heading.sh",
+        "route": "/cockpit/objects/test/test-cases-820-a-prose-heading-reads-as-a-heading-sh",
+        "source": "test/cases/820_a_prose_heading_reads_as_a_heading.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/828_a_server_holding_its_lease_is_not_reaped.sh",
+        "kind": "test",
+        "label": "test/cases/828_a_server_holding_its_lease_is_not_reaped.sh",
+        "route": "/cockpit/objects/test/test-cases-828-a-server-holding-its-lease-is-not-reaped-sh",
+        "source": "test/cases/828_a_server_holding_its_lease_is_not_reaped.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/829_ci_fails_on_a_skip.sh",
+        "kind": "test",
+        "label": "test/cases/829_ci_fails_on_a_skip.sh",
+        "route": "/cockpit/objects/test/test-cases-829-ci-fails-on-a-skip-sh",
+        "source": "test/cases/829_ci_fails_on_a_skip.sh"
       },
       {
         "id": "majordomus://test/test/cases/82_bench_check.sh",
@@ -38382,6 +38955,48 @@
         "source": "test/cases/84_web_surfaces.sh"
       },
       {
+        "id": "majordomus://test/test/cases/850_integration_drains_cycle_by_cycle.sh",
+        "kind": "test",
+        "label": "test/cases/850_integration_drains_cycle_by_cycle.sh",
+        "route": "/cockpit/objects/test/test-cases-850-integration-drains-cycle-by-cycle-sh",
+        "source": "test/cases/850_integration_drains_cycle_by_cycle.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/852_a_dry_run_moves_nothing.sh",
+        "kind": "test",
+        "label": "test/cases/852_a_dry_run_moves_nothing.sh",
+        "route": "/cockpit/objects/test/test-cases-852-a-dry-run-moves-nothing-sh",
+        "source": "test/cases/852_a_dry_run_moves_nothing.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/855_racing_executors_merge_once.sh",
+        "kind": "test",
+        "label": "test/cases/855_racing_executors_merge_once.sh",
+        "route": "/cockpit/objects/test/test-cases-855-racing-executors-merge-once-sh",
+        "source": "test/cases/855_racing_executors_merge_once.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/856_racing_worktrees_share_one_lease.sh",
+        "kind": "test",
+        "label": "test/cases/856_racing_worktrees_share_one_lease.sh",
+        "route": "/cockpit/objects/test/test-cases-856-racing-worktrees-share-one-lease-sh",
+        "source": "test/cases/856_racing_worktrees_share_one_lease.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/857_required_checks_are_authoritative.sh",
+        "kind": "test",
+        "label": "test/cases/857_required_checks_are_authoritative.sh",
+        "route": "/cockpit/objects/test/test-cases-857-required-checks-are-authoritative-sh",
+        "source": "test/cases/857_required_checks_are_authoritative.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/858_reviews_are_authoritative.sh",
+        "kind": "test",
+        "label": "test/cases/858_reviews_are_authoritative.sh",
+        "route": "/cockpit/objects/test/test-cases-858-reviews-are-authoritative-sh",
+        "source": "test/cases/858_reviews_are_authoritative.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/85_deployment_bind.sh",
         "kind": "test",
         "label": "test/cases/85_deployment_bind.sh",
@@ -38401,6 +39016,13 @@
         "label": "test/cases/85_ui_conformance.sh",
         "route": "/cockpit/objects/test/test-cases-85-ui-conformance-sh",
         "source": "test/cases/85_ui_conformance.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/861_a_successor_that_landed_supersedes.sh",
+        "kind": "test",
+        "label": "test/cases/861_a_successor_that_landed_supersedes.sh",
+        "route": "/cockpit/objects/test/test-cases-861-a-successor-that-landed-supersedes-sh",
+        "source": "test/cases/861_a_successor_that_landed_supersedes.sh"
       },
       {
         "id": "majordomus://test/test/cases/86_deployment_projections.sh",
@@ -38459,11 +39081,39 @@
         "source": "test/cases/90_mcp_shared_server.sh"
       },
       {
+        "id": "majordomus://test/test/cases/910_nothing_merges_around_the_integrator.sh",
+        "kind": "test",
+        "label": "test/cases/910_nothing_merges_around_the_integrator.sh",
+        "route": "/cockpit/objects/test/test-cases-910-nothing-merges-around-the-integrator-sh",
+        "source": "test/cases/910_nothing_merges_around_the_integrator.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/911_repair_decides_and_moves_nothing.sh",
+        "kind": "test",
+        "label": "test/cases/911_repair_decides_and_moves_nothing.sh",
+        "route": "/cockpit/objects/test/test-cases-911-repair-decides-and-moves-nothing-sh",
+        "source": "test/cases/911_repair_decides_and_moves_nothing.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/912_repair_acts_under_the_lease_and_the_trail.sh",
+        "kind": "test",
+        "label": "test/cases/912_repair_acts_under_the_lease_and_the_trail.sh",
+        "route": "/cockpit/objects/test/test-cases-912-repair-acts-under-the-lease-and-the-trail-sh",
+        "source": "test/cases/912_repair_acts_under_the_lease_and_the_trail.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/91_canonical_architecture.sh",
         "kind": "test",
         "label": "test/cases/91_canonical_architecture.sh",
         "route": "/cockpit/objects/test/test-cases-91-canonical-architecture-sh",
         "source": "test/cases/91_canonical_architecture.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/924_one_executor_across_machines.sh",
+        "kind": "test",
+        "label": "test/cases/924_one_executor_across_machines.sh",
+        "route": "/cockpit/objects/test/test-cases-924-one-executor-across-machines-sh",
+        "source": "test/cases/924_one_executor_across_machines.sh"
       },
       {
         "id": "majordomus://test/test/cases/92_openapi_reference.sh",
@@ -40664,26 +41314,6 @@
         }
       },
       {
-        "id": "majordomus://workspace/chatgpt-majordomus",
-        "kind": "workspace",
-        "label": "chatgpt-majordomus",
-        "summary": "The Majordomus project in ChatGPT",
-        "route": "/cockpit/objects/workspace/chatgpt-majordomus",
-        "source": ".ai/repo/workspaces/chatgpt-majordomus.yaml",
-        "status": "declared",
-        "facts": {
-          "capabilities": [
-            "workspace.read",
-            "conversations.read",
-            "messages.read",
-            "instructions.read",
-            "files.read"
-          ],
-          "created_at": "2026-09-09",
-          "updated_at": "2026-09-09"
-        }
-      },
-      {
         "id": "module:artifacts",
         "kind": "module",
         "label": "artifacts"
@@ -40961,14 +41591,6 @@
         "kind": "projection",
         "label": "mcp",
         "summary": "the mcp projection of the registry"
-      },
-      {
-        "id": "test:apps/majordomus-cli/tests/cockpit.rs",
-        "kind": "test",
-        "label": "cockpit.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/tests/cockpit.rs",
-        "external": true
       }
     ],
     "edges": [
@@ -42098,6 +42720,21 @@
         "kind": "projects"
       },
       {
+        "source": "capability:integration.cleanup",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.cleanup",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.cleanup",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:integration.events",
         "target": "projection:cli",
         "kind": "projects"
@@ -42134,6 +42771,26 @@
       },
       {
         "source": "capability:integration.explain",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.prove_dry_run",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.prove_dry_run",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.prove_dry_run",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.prove_dry_run",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -43054,6 +43711,26 @@
       },
       {
         "source": "capability:plan.waves",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:product.domains",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:product.domains",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:product.domains",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:product.domains",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -43954,28 +44631,8 @@
       },
       {
         "source": "majordomus://adr/adr-0010",
-        "target": "file:.ai/repo/knowledge/sources.yaml",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0010",
-        "target": "file:share/kinds.yaml",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0010",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0010",
-        "target": "majordomus://test/test/cases/64_knowledge_discovery.sh",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0010",
-        "target": "majordomus://test/test/cases/73_knowledge_nodes.sh",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0011",
@@ -44009,43 +44666,8 @@
       },
       {
         "source": "majordomus://adr/adr-0012",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/graph.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0012",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/health.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0012",
-        "target": "file:apps/majordomus-cli/src/cockpit/mod.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0012",
-        "target": "file:apps/majordomus-cli/src/graph.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0012",
-        "target": "file:scripts/cockpit-probe",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0012",
-        "target": "file:share/cockpit/src/cockpit.css",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0012",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0012",
-        "target": "majordomus://document/docs/COCKPIT.md",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0012",
@@ -44065,21 +44687,6 @@
       {
         "source": "majordomus://adr/adr-0012",
         "target": "majordomus://rule/project.rust-canonical-declaration@1",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0012",
-        "target": "test:apps/majordomus-cli/tests/cockpit.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0013",
-        "target": "file:.ai/repo/ci/pages.yaml",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0013",
-        "target": "file:apps/majordomus-cli/src/http/router.rs",
         "kind": "put_in_force"
       },
       {
@@ -44119,18 +44726,8 @@
       },
       {
         "source": "majordomus://adr/adr-0018",
-        "target": "file:apps/majordomus-cli/src/why.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0018",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0018",
-        "target": "majordomus://context/ai.repo.why",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0018",
@@ -44143,39 +44740,14 @@
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0018",
-        "target": "majordomus://test/test/cases/98_why_catalogue.sh",
-        "kind": "put_in_force"
-      },
-      {
         "source": "majordomus://adr/adr-0019",
         "target": "kind:adr",
         "kind": "is_a"
       },
       {
         "source": "majordomus://adr/adr-0020",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/graph.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0020",
-        "target": "file:apps/majordomus-cli/src/cockpit/mod.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0020",
-        "target": "file:apps/majordomus-cli/src/graph.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0020",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0020",
-        "target": "majordomus://document/docs/COCKPIT.md",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0020",
@@ -44199,33 +44771,8 @@
       },
       {
         "source": "majordomus://adr/adr-0021",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/worktree.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0021",
-        "target": "file:apps/majordomus-cli/src/worktree/migrate.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0021",
-        "target": "file:apps/majordomus-cli/src/worktree/mod.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0021",
-        "target": "file:apps/majordomus-cli/src/worktree/path.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0021",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0021",
-        "target": "majordomus://document/docs/WORKTREES.md",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0021",
@@ -44249,46 +44796,6 @@
       },
       {
         "source": "majordomus://adr/adr-0022",
-        "target": "file:apps/majordomus-cli/src/web/report/ui.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0022",
-        "target": "file:apps/majordomus-cli/src/web/validate.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0022",
-        "target": "file:scripts/lib/ui-audit.mjs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0022",
-        "target": "file:scripts/lib/ui-contrast.mjs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0022",
-        "target": "file:scripts/lib/ui-discover.mjs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0022",
-        "target": "file:scripts/lib/ui-routes.mjs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0022",
-        "target": "file:scripts/lib/ui-static.mjs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0022",
-        "target": "file:scripts/ui",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0022",
         "target": "kind:adr",
         "kind": "is_a"
       },
@@ -44303,39 +44810,9 @@
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0022",
-        "target": "majordomus://test/test/cases/85_ui_conformance.sh",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0023",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/product.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0023",
-        "target": "file:apps/majordomus-cli/src/product.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0023",
-        "target": "file:site/templates/index.html",
-        "kind": "put_in_force"
-      },
-      {
         "source": "majordomus://adr/adr-0023",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0023",
-        "target": "majordomus://context/ai.repo.features",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0023",
-        "target": "majordomus://document/docs/PRODUCT.md",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0023",
@@ -44358,29 +44835,9 @@
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0023",
-        "target": "majordomus://test/test/cases/97_product_features.sh",
-        "kind": "put_in_force"
-      },
-      {
         "source": "majordomus://adr/adr-0024",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0025",
-        "target": "file:.ai/repo/order-baseline.txt",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0025",
-        "target": "file:apps/majordomus-cli/src/order.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0025",
-        "target": "file:scripts/ci/order-check",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0025",
@@ -44404,28 +44861,8 @@
       },
       {
         "source": "majordomus://adr/adr-0026",
-        "target": "file:apps/majordomus-cli/src/cockpit/nav.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0026",
-        "target": "file:apps/majordomus-cli/src/product.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0026",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0026",
-        "target": "majordomus://context/ai.repo.features",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0026",
-        "target": "majordomus://context/ai.repo.why",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0026",
@@ -44449,43 +44886,8 @@
       },
       {
         "source": "majordomus://adr/adr-0028",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/quality.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0028",
-        "target": "file:apps/majordomus-cli/src/cli/local.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0028",
-        "target": "file:apps/majordomus-cli/src/quality/mod.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0028",
-        "target": "file:apps/majordomus-cli/src/quality/parity.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0028",
-        "target": "file:apps/majordomus-cli/src/quality/policy.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0028",
-        "target": "file:apps/majordomus-cli/src/quality/source.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0028",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0028",
-        "target": "majordomus://document/docs/QUALITY.md",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0028",
@@ -44514,33 +44916,8 @@
       },
       {
         "source": "majordomus://adr/adr-0029",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/release.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0029",
-        "target": "file:apps/majordomus-cli/src/command_graph/semantics.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0029",
-        "target": "file:scripts/release-version",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0029",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0029",
-        "target": "majordomus://document/docs/DISTRIBUTION.md",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0029",
-        "target": "majordomus://document/docs/RELEASE.md",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0029",
@@ -44569,31 +44946,6 @@
       },
       {
         "source": "majordomus://adr/adr-0031",
-        "target": "file:apps/majordomus-cli/src/design/render.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0031",
-        "target": "file:apps/majordomus-cli/src/http/swagger.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0031",
-        "target": "file:apps/majordomus-cli/src/web/html.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0031",
-        "target": "file:scripts/ci/design-check",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0031",
-        "target": "file:share/design/tokens.yaml",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0031",
         "target": "kind:adr",
         "kind": "is_a"
       },
@@ -44618,34 +44970,9 @@
         "kind": "put_in_force"
       },
       {
-        "source": "majordomus://adr/adr-0031",
-        "target": "majordomus://test/test/cases/107_design_tokens.sh",
-        "kind": "put_in_force"
-      },
-      {
         "source": "majordomus://adr/adr-0032",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/execution/engine.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/execution/event.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/execution/mod.rs",
-        "kind": "put_in_force"
-      },
-      {
-        "source": "majordomus://adr/adr-0033",
-        "target": "file:apps/majordomus-cli/src/http/events.rs",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0033",
@@ -44701,11 +45028,6 @@
         "source": "majordomus://adr/adr-0035",
         "target": "kind:adr",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://adr/adr-0036",
-        "target": "file:share/design/tokens.yaml",
-        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0036",
@@ -45904,7 +46226,7 @@
       },
       {
         "source": "majordomus://adr/adr-0101",
-        "target": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "target": "majordomus://rule/project.integration-follows-the-current-master@2",
         "kind": "put_in_force"
       },
       {
@@ -45945,6 +46267,36 @@
       {
         "source": "majordomus://adr/adr-0103",
         "target": "majordomus://rule/project.a-provider-capability-cites-its-evidence@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0104",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0104",
+        "target": "majordomus://adr/adr-0023",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0104",
+        "target": "majordomus://adr/adr-0026",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0104",
+        "target": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0104",
+        "target": "majordomus://rule/project.no-new-nouns@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0104",
+        "target": "majordomus://rule/project.product-surface-derived@1",
         "kind": "put_in_force"
       },
       {
@@ -46596,11 +46948,6 @@
         "source": "majordomus://claim/cli-documentation-executable",
         "target": "majordomus://rule/project.rust-cli-evidence@1",
         "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/cockpit-is-a-projection-of-the-registry",
-        "target": "file:apps/majordomus-cli/src/cockpit/mod.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/cockpit-is-a-projection-of-the-registry",
@@ -47799,11 +48146,6 @@
       },
       {
         "source": "majordomus://claim/landing-page-is-a-projection",
-        "target": "file:site/templates/index.html",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/landing-page-is-a-projection",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -48458,9 +48800,19 @@
         "kind": "tested_by"
       },
       {
-        "source": "majordomus://claim/product-features-discovered",
-        "target": "file:apps/majordomus-cli/src/product.rs",
-        "kind": "implemented_by"
+        "source": "majordomus://claim/product-domains-derived",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/product-domains-derived",
+        "target": "majordomus://document/docs/PRODUCT.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/product-domains-derived",
+        "target": "majordomus://test/test/cases/800_product_domains.sh",
+        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/product-features-discovered",
@@ -48489,11 +48841,6 @@
       },
       {
         "source": "majordomus://claim/product-references-resolve",
-        "target": "file:apps/majordomus-cli/src/product.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/product-references-resolve",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -48501,11 +48848,6 @@
         "source": "majordomus://claim/product-references-resolve",
         "target": "majordomus://document/docs/PRODUCT.md",
         "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/product-surfaces-derived",
-        "target": "file:apps/majordomus-cli/src/product.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/product-surfaces-derived",
@@ -49649,11 +49991,6 @@
       },
       {
         "source": "majordomus://claim/why-catalogue-discovered",
-        "target": "file:apps/majordomus-cli/src/why.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/why-catalogue-discovered",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -49664,11 +50001,6 @@
       },
       {
         "source": "majordomus://claim/why-diagnosis-explainable",
-        "target": "file:apps/majordomus-cli/src/why.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/why-diagnosis-explainable",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -49676,11 +50008,6 @@
         "source": "majordomus://claim/why-diagnosis-explainable",
         "target": "majordomus://document/docs/WHY.md",
         "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/why-references-resolve",
-        "target": "file:apps/majordomus-cli/src/why.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/why-references-resolve",
@@ -49711,11 +50038,6 @@
         "source": "majordomus://claim/wiring-reconciliation",
         "target": "majordomus://test/test/cases/03_update.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/worktree-migration-lossless",
-        "target": "file:apps/majordomus-cli/src/worktree/migrate.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/worktree-migration-lossless",
@@ -49751,11 +50073,6 @@
         "source": "majordomus://claim/worktree-ownership",
         "target": "majordomus://test/test/cases/27_foreign_task.sh",
         "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/worktree-topology-derived",
-        "target": "file:apps/majordomus-cli/src/worktree/path.rs",
-        "kind": "implemented_by"
       },
       {
         "source": "majordomus://claim/worktree-topology-derived",
@@ -49989,21 +50306,11 @@
       },
       {
         "source": "majordomus://context/ai.repo.features",
-        "target": "file:apps/majordomus-cli/src/capability/builtin/product.rs",
-        "kind": "tracks"
+        "target": "kind:context",
+        "kind": "is_a"
       },
       {
-        "source": "majordomus://context/ai.repo.features",
-        "target": "file:apps/majordomus-cli/src/product.rs",
-        "kind": "tracks"
-      },
-      {
-        "source": "majordomus://context/ai.repo.features",
-        "target": "file:site/templates/index.html",
-        "kind": "tracks"
-      },
-      {
-        "source": "majordomus://context/ai.repo.features",
+        "source": "majordomus://context/ai.repo.features.domains",
         "target": "kind:context",
         "kind": "is_a"
       },
@@ -51363,6 +51670,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/product-domains-derived.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/product-features-discovered.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -51760,6 +52072,36 @@
       {
         "source": "majordomus://document/docs/claims/worktree-topology-derived.md",
         "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://domain/completion",
+        "target": "kind:domain",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://domain/context",
+        "target": "kind:domain",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://domain/coordination",
+        "target": "kind:domain",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://domain/evidence",
+        "target": "kind:domain",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://domain/governance",
+        "target": "kind:domain",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://domain/surfaces",
+        "target": "kind:domain",
         "kind": "is_a"
       },
       {
@@ -52999,7 +53341,7 @@
       },
       {
         "source": "majordomus://issue/I0811",
-        "target": "majordomus://issue/I0810",
+        "target": "majordomus://issue/I0809",
         "kind": "depends_on"
       },
       {
@@ -56178,6 +56520,156 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I1967",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1967",
+        "target": "majordomus://milestone/development-runtime",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1980",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1980",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1981",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1981",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1982",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1982",
+        "target": "majordomus://issue/I1980",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1982",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1983",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1983",
+        "target": "majordomus://issue/I1980",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1983",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1984",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1984",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1985",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1985",
+        "target": "majordomus://issue/I1984",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1985",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1986",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1986",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1987",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1987",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1988",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1988",
+        "target": "majordomus://issue/I1981",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1988",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1989",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1989",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1990",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1990",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1991",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1991",
+        "target": "majordomus://milestone/adopter-upgrades",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -56209,6 +56701,11 @@
       },
       {
         "source": "majordomus://milestone/M004",
+        "target": "kind:milestone",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://milestone/adopter-upgrades",
         "target": "kind:milestone",
         "kind": "is_a"
       },
@@ -56604,6 +57101,26 @@
       },
       {
         "source": "majordomus://release-record/v0.12.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://release-record/v0.13.0",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://release-record/v0.13.1",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://release-record/v0.13.2",
+        "target": "kind:release-record",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://release-record/v0.14.0",
         "target": "kind:release-record",
         "kind": "is_a"
       },
@@ -57828,17 +58345,17 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "source": "majordomus://rule/project.integration-follows-the-current-master@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "source": "majordomus://rule/project.integration-follows-the-current-master@2",
         "target": "majordomus://rule/project.accumulation-is-measured@2",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "source": "majordomus://rule/project.integration-follows-the-current-master@2",
         "target": "majordomus://rule/project.land-and-publish@1",
         "kind": "depends_on"
       },
@@ -58813,6 +59330,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/108b_scope_after_trunk_fast_forward.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/109_design_system.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -58829,11 +59351,6 @@
       },
       {
         "source": "majordomus://test/test/cases/111_session_per_provider.sh",
-        "target": "kind:test",
-        "kind": "is_a"
-      },
-      {
-        "source": "majordomus://test/test/cases/111_unblock.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -58983,6 +59500,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/132b_a_new_branch_owes_no_records_yet.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/133_plan_transition.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -59028,12 +59550,22 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/14c_wiring_from_a_linked_worktree.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/150_server_sees_the_current_tree.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
       {
         "source": "majordomus://test/test/cases/15_command_surface.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/15b_an_installed_tool_runs_what_its_bootstrap_names.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -60188,12 +60720,32 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/800_product_domains.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/80_bench_persistence.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
       {
         "source": "majordomus://test/test/cases/81_bench_baseline.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/820_a_prose_heading_reads_as_a_heading.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/828_a_server_holding_its_lease_is_not_reaped.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/829_ci_fails_on_a_skip.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -60223,6 +60775,36 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/850_integration_drains_cycle_by_cycle.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/852_a_dry_run_moves_nothing.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/855_racing_executors_merge_once.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/856_racing_worktrees_share_one_lease.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/857_required_checks_are_authoritative.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/858_reviews_are_authoritative.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/85_deployment_bind.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -60234,6 +60816,11 @@
       },
       {
         "source": "majordomus://test/test/cases/85_ui_conformance.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/861_a_successor_that_landed_supersedes.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -60278,7 +60865,27 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/910_nothing_merges_around_the_integrator.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/911_repair_decides_and_moves_nothing.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/912_repair_acts_under_the_lease_and_the_trail.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/91_canonical_architecture.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/924_one_executor_across_machines.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -62588,11 +63195,6 @@
         "kind": "exercises"
       },
       {
-        "source": "majordomus://workspace/chatgpt-majordomus",
-        "target": "kind:workspace",
-        "kind": "is_a"
-      },
-      {
         "source": "module:artifacts",
         "target": "capability:artifacts.list",
         "kind": "composes"
@@ -62914,12 +63516,22 @@
       },
       {
         "source": "module:integration",
+        "target": "capability:integration.cleanup",
+        "kind": "composes"
+      },
+      {
+        "source": "module:integration",
         "target": "capability:integration.events",
         "kind": "composes"
       },
       {
         "source": "module:integration",
         "target": "capability:integration.explain",
+        "kind": "composes"
+      },
+      {
+        "source": "module:integration",
+        "target": "capability:integration.prove_dry_run",
         "kind": "composes"
       },
       {
@@ -63209,6 +63821,11 @@
       },
       {
         "source": "module:product",
+        "target": "capability:product.domains",
+        "kind": "composes"
+      },
+      {
+        "source": "module:product",
         "target": "capability:product.feature",
         "kind": "composes"
       },
@@ -63440,7 +64057,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4493,
+      "edges": 4492,
       "acyclic": true,
       "truncated": true
     }

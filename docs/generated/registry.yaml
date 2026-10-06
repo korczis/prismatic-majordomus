@@ -1,9 +1,9 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.12.0
+# Generator: majordomus-cli 0.14.0
 schema: majordomus/capability-registry/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.12.0
+generator: majordomus-cli 0.14.0
 modules:
   - id: artifacts
     title: Generated artifacts
@@ -145,10 +145,10 @@ modules:
     capabilities: 3
   - id: integration
     title: Pull-request integration
-    description: "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network."
+    description: "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, unsafe (auto-merge armed), redundant (its work is on master already), superseded (by a declared successor that landed, named in superseded_by), possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation; the one exception is the dry-run proof, which observes the forge itself because the observation is part of what it proves moves nothing."
     stability: experimental
     source: builtin
-    capabilities: 3
+    capabilities: 5
   - id: intent_realization
     title: Intent realization
     description: "Which work realises which intent: every task of this checkout's ledger with the episodes, providers and handovers that carried it, every closed session record and every claim on the peer board, joined through the plan to the intents they serve, each link marked declared, observed, derived or inferred; each intent's unmet criteria with the issues serving them; and the drift between closed work and current evidence. Derived on every read and stored nowhere, so an intent outlives every session and provider that worked on it."
@@ -220,7 +220,7 @@ modules:
     description: "What this repository's product does for a person, as the features under the layer's features section declare it: each feature made of modules, commands, kinds, rules, documents, decisions, claims, use cases, Cockpit areas and web surfaces it names, with the interfaces it is exposed through, every count, the moments it answers and what is guaranteed derived from those references. The matrix of features against interfaces, the providers the tool has an adapter for, and the model's own validation. The homepage is a reader of this module and holds no inventory of its own."
     stability: behaviorally_verified
     source: builtin
-    capabilities: 5
+    capabilities: 6
   - id: quality
     title: Public API quality
     description: "What this executable's own public surface is held to, measured from its syntax tree: documentation that says more than the signature, an executable example on everything that carries behaviour, a module boundary something exercises, and every command of the command line accounted for against the capability registry. The rules are project.rust-public-api-quality and project.operation-transport-parity; this is the measurement of them."
@@ -18370,11 +18370,226 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/health.rs
+  - id: integration.cleanup
+    module: integration
+    kind: query
+    title: What cleanup would do
+    description: "The cleanup plan, decided offline from the recorded observation: every open pull request cleanup would close — redundant (its work is on master already) or superseded (by a declared successor that landed) — and every one it leaves for a person — possibly redundant (weak evidence) or obsolete (a person marked it, owner decision D3) — each with its disposition and the reasons that decided it, in rank order; beside it, the branches merged pull requests left on origin as `majordomus prs cleanup` last read them, with when and how long ago. A read: it closes, deletes and asks the forge for nothing — `majordomus prs cleanup` reads the forge and `--apply` closes. `observed: false` with the reason when this checkout has recorded no observation."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: IntegrationCleanup
+      schema:
+        type: object
+        properties:
+          observed:
+            type: boolean
+            description: Whether a forge observation is recorded in this checkout.
+          reason:
+            type:
+              - string
+              - "null"
+            description: "Why there is no plan, when there is none."
+          observed_at:
+            type:
+              - string
+              - "null"
+            description: "When the forge was observed, when it was."
+          items:
+            type: array
+            items:
+              "$ref": "#/$defs/CleanupItem"
+            description: "The plan, in rank order: `would_close` for what is provably on master or superseded by\na successor that landed, `left_for_a_person` for weak evidence and for what a person\nmarked obsolete. Nothing here closes anything."
+          branches:
+            anyOf:
+              - "$ref": "#/$defs/LeftBranchReport"
+              - type: "null"
+            description: "The branches merged pull requests left on origin, as `prs cleanup` last read them;\n`None` when it never ran in this checkout. Never read from the network here."
+          branches_age_seconds:
+            type:
+              - integer
+              - "null"
+            format: uint64
+            minimum: 0
+            description: "How old that report is, in seconds, when its time reads."
+        required:
+          - observed
+          - items
+        description: "What cleanup would do, decided offline: the pull requests it would close or leave for a\nperson, from the recorded observation, and the last branch report `prs cleanup` recorded."
+        title: IntegrationCleanup
+        "$defs":
+          CleanupItem:
+            type: object
+            properties:
+              pr:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: The pull request.
+              disposition:
+                "$ref": "#/$defs/PullRequestDisposition"
+                description: Its disposition when decided.
+              reasons:
+                type: array
+                items:
+                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. A code outside this list (an older trail's) is carried verbatim."
+                  type: string
+                description: "The evidence, as reason codes."
+              action:
+                type: string
+                description: "`would_close`, `closed`, `left_for_a_person`, or `close_failed: <why>`."
+            required:
+              - pr
+              - disposition
+              - reasons
+              - action
+            description: "What cleanup would do, or did, for one pull request."
+          PullRequestDisposition:
+            oneOf:
+              - type: string
+                const: ready
+                description: "Contains the current master, every required check passed on its head, nothing\nblocks it: the executor may merge it."
+              - type: string
+                const: needs_refresh
+                description: "Merges cleanly but does not contain master: the executor may bring master in (a\nmerge commit on the branch, never a rewrite), after which CI must run again."
+              - type: string
+                const: waiting_for_checks
+                description: Contains master; a required check has not finished on this head.
+              - type: string
+                const: waiting_for_review
+                description: A required review is missing or changes were requested.
+              - type: string
+                const: waiting_for_dependency
+                description: A declared dependency has not landed.
+              - type: string
+                const: draft
+                description: A draft.
+              - type: string
+                const: needs_repair
+                description: A required check failed on this head.
+              - type: string
+                const: conflicting
+                description: "Conflicts on authored paths: a person resolves them."
+              - type: string
+                const: blocked
+                description: "A label whose policy is to hold holds it, or the repository allows no merge commit,\nwhich is the only way the executor merges."
+              - type: string
+                const: unsafe
+                description: "The forge has auto-merge armed on it: the forge would merge it on its own, outside the\nexecutor and against whatever master is then. Held until a person disarms it."
+              - type: string
+                const: redundant
+                description: "Its head already landed, its merge changes nothing, or every one of its commits is on\nmaster as an equal patch: strong evidence from git, eligible for closure under policy.\n(Before 0.13 this was the word `superseded`.)"
+              - type: string
+                const: superseded
+                description: "Its body, or the body of another pull request, declares that a successor replaces it,\nand that successor landed: no longer open, its head contained in master. The successor\nis `PullRequestAssessment::superseded_by`. Eligible for closure under policy."
+              - type: string
+                const: possibly_redundant
+                description: "Weak evidence: only derived artifacts would change, or its declared successor was closed\nwithout its head landing. Surfaced for a person; never closed automatically."
+              - type: string
+                const: other_base
+                description: Targets a branch other than the integration base.
+              - type: string
+                const: unknown
+                description: Something needed to decide could not be observed.
+              - type: string
+                const: obsolete
+                description: "A person marked it obsolete with a label the label policy declares (owner decision\nD3): the only evidence that reaches this word. Listed for a person by cleanup and\nnever closed automatically; age, shared paths or a similar title never make one."
+            description: "The one classification of an open pull request. Every value carries a machine-readable\nreason in `PullRequestAssessment::reasons`; there is no `mergeable: bool`."
+          LeftBranchReport:
+            type: object
+            properties:
+              read_at:
+                type: string
+                description: When cleanup read origin and the merged pull requests.
+              base:
+                type: string
+                description: The base the report excludes.
+              delete_branch_on_merge:
+                type:
+                  - boolean
+                  - "null"
+                description: "The forge's `delete_branch_on_merge`, from the observation; `None` when unread."
+              branches:
+                type:
+                  - array
+                  - "null"
+                items:
+                  "$ref": "#/$defs/LeftBranch"
+                description: "The branches, or `None` when origin or the merged pull requests could not be read:\nunread is not \"nothing left behind\"."
+              refreshed_by:
+                type: string
+                description: The command that reads it afresh.
+            required:
+              - read_at
+              - base
+              - refreshed_by
+            description: "The last report of the branches merged pull requests left on origin, as `prs cleanup`\nread it. Written by `prs cleanup` alone — the one place that asks the forge for them —\nand rendered offline, with its age, by every surface that cannot reach the network."
+          LeftBranch:
+            type: object
+            properties:
+              branch:
+                type: string
+                description: The branch on origin.
+              tip:
+                type: string
+                description: "Its tip: the head that merged."
+              pr:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: The pull request that merged it.
+              merged_at:
+                type: string
+                description: When that pull request merged.
+              action:
+                type: string
+                description: "`left_for_a_person`, or `kept: checked out at <path>` when a worktree of this\nrepository has the branch checked out: somebody may still be standing on it."
+              next_step:
+                type: string
+                description: "What would clear it, in the setting's own terms."
+            required:
+              - branch
+              - tip
+              - pr
+              - merged_at
+              - action
+              - next_step
+            description: "A branch a merged pull request left on origin, as cleanup reports it. Reported, never\ndeleted: the forge's `delete_branch_on_merge` decides deletion (owner decision D4), so the\nexecutor holds no branch-deleting write at all."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::integration
+    exposure:
+      mcp:
+        tool: majordomus_pull_requests_cleanup
+      http:
+        method: GET
+        path: /api/v1/pull-requests/cleanup
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - integration
+      - pull-requests
+      - cleanup
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/integration.rs
   - id: integration.events
     module: integration
     kind: query
     title: The integration audit trail
-    description: "Every action this checkout's executor recorded, oldest first: selections, stale decisions, merge attempts, merges with the master before and after, refusals, refreshes, verification failures and closures, each with its actor, the pull request, the head and the decision's reasons."
+    description: "Every action the repository's executors recorded, from any of its worktrees, oldest first: the lease taken and given back, observations, selections, stale decisions, each act's attempt before it and its outcome after — merges with the master before and after, refusals, refreshes, verification failures and closures — each with a typed action, its actor, the pull request, the head, the decision's reasons and, on an act, the evidence it was decided on. The trail is one file under the common git directory, so every worktree reads the same one."
     input:
       name: Empty
       schema:
@@ -18407,8 +18622,8 @@ capabilities:
                 type: string
                 description: "Who: the git identity, the process and the machine."
               action:
-                type: string
-                description: "What (`selected`, `refresh_selected`, `stale_decision`, `merge_attempted`,\n`merge_succeeded`, `merge_failed`, `verification_failed`, `refreshed`,\n`refresh_failed`, `closed_superseded`, `idle`, and the two transitions the wait is\nfolded from: `became_actionable`, `left_actionable`)."
+                "$ref": "#/$defs/IntegrationAction"
+                description: "What (`IntegrationAction`)."
               pr:
                 type:
                   - integer
@@ -18434,8 +18649,9 @@ capabilities:
               reasons:
                 type: array
                 items:
+                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. A code outside this list (an older trail's) is carried verbatim."
                   type: string
-                description: "The decision's reason codes."
+                description: "The decision's reasons; a code an older executor wrote reads back verbatim."
               detail:
                 type: string
                 description: "What happened, for a person."
@@ -18446,6 +18662,26 @@ capabilities:
                   format: uint64
                   minimum: 0
                 description: "On a selection: the other actionable pull requests the executor chose this one over,\nin rank order. The wait of each is folded from it (`super::wait`)."
+              head_after:
+                type:
+                  - string
+                  - "null"
+                description: "On `refreshed`: the head the executor pushed. The refresh pipeline waits only for\nthe checks of a head named here."
+              evidence:
+                type: array
+                items:
+                  "$ref": "#/$defs/IntegrationEvidence"
+                description: "On `merge_attempted`, `merge_succeeded`, `refresh_selected` and the closures:\nthe assessment's evidence the act was decided on."
+              class:
+                anyOf:
+                  - "$ref": "#/$defs/FailureClass"
+                  - type: "null"
+                description: "On a failure: its class, once one is decided."
+              merge_commit:
+                type:
+                  - string
+                  - "null"
+                description: "On `merge_succeeded`: the merge commit, once it is read."
             required:
               - at
               - actor
@@ -18453,6 +18689,212 @@ capabilities:
               - reasons
               - detail
             description: One entry of the audit trail.
+          IntegrationAction:
+            oneOf:
+              - type: string
+                const: lease_acquired
+                description: "The executor took the base branch's lease."
+              - type: string
+                const: lease_released
+                description: It gave the lease back.
+              - type: string
+                const: continuous_started
+                description: A continuous drain started.
+              - type: string
+                const: continuous_stopped
+                description: A continuous drain stopped; the detail says why.
+              - type: string
+                const: observed
+                description: The forge was observed and the observation recorded.
+              - type: string
+                const: became_actionable
+                description: A pull request became actionable (ready or refreshable).
+              - type: string
+                const: left_actionable
+                description: A pull request stopped being actionable.
+              - type: string
+                const: selected
+                description: The first ready pull request was chosen to merge.
+              - type: string
+                const: refresh_selected
+                description: The first refreshable pull request was chosen to bring master into.
+              - type: string
+                const: stale_decision
+                description: The decision went stale between planning and acting; nothing was done.
+              - type: string
+                const: merge_attempted
+                description: A merge is about to be asked of the forge.
+              - type: string
+                const: merge_succeeded
+                description: The merge landed and was verified.
+              - type: string
+                const: merge_failed
+                description: The forge refused the merge.
+              - type: string
+                const: verification_failed
+                description: What landed could not be verified.
+              - type: string
+                const: failure_acknowledged
+                description: "A person looked at a merge that could not be verified and lets drains merge again\n(`prs drain --resume-after-failure`)."
+              - type: string
+                const: refresh_attempted
+                description: Master is about to be merged into a branch and pushed.
+              - type: string
+                const: refreshed
+                description: Master was brought into the branch and pushed.
+              - type: string
+                const: refresh_failed
+                description: Bringing master in failed.
+              - type: string
+                const: close_attempted
+                description: A redundant or superseded pull request is about to be closed.
+              - type: string
+                const: closed_redundant
+                description: A redundant one was closed.
+              - type: string
+                const: closed_superseded
+                description: "A superseded one was closed (before 0.13, a line with this word recorded what is now\n`closed_redundant`)."
+              - type: string
+                const: close_failed
+                description: Closing it failed.
+              - type: string
+                const: repair_selected
+                description: "A person named a pull request to repair (`prs repair --apply`) and its classification\nmakes it eligible: master is what it lacks, and nothing authored conflicts."
+              - type: string
+                const: repair_attempted
+                description: Master is about to be merged into the named branch and pushed.
+              - type: string
+                const: repaired
+                description: Master was brought into the named branch and pushed.
+              - type: string
+                const: repair_refused
+                description: "The repair was refused — by the classification (an authored conflict, a fork, armed\nauto-merge, another base, an undecidable relation) or by the act (a merge, derive,\ncommit or push that failed) — and nothing reached the branch; `class` says why."
+              - type: string
+                const: idle
+                description: Nothing was ready.
+              - type: string
+                const: observe_failed
+                description: "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+            description: "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
+          IntegrationEvidence:
+            type: object
+            properties:
+              kind:
+                "$ref": "#/$defs/EvidenceKind"
+                description: What kind of fact.
+              status:
+                type: string
+                description: "What it said, as a word."
+              detail:
+                type: string
+                description: The detail a person reads.
+              source:
+                anyOf:
+                  - "$ref": "#/$defs/EvidenceSource"
+                  - type: "null"
+                description: "Where it was read. Every assessment names it; a trail line written before evidence\ncarried it has none."
+            required:
+              - kind
+              - status
+              - detail
+            description: "One piece of evidence behind a disposition: what was read, where, and what it said."
+          EvidenceKind:
+            oneOf:
+              - type: string
+                const: required_check
+                description: "One required check's state on the head: one entry per context the base requires."
+              - type: string
+                const: required_checks
+                description: "The required checks together: their verdict, and each context's state."
+              - type: string
+                const: review
+                description: "The review policy and the forge's decision, or one reviewer's latest review."
+              - type: string
+                const: relation_to_master
+                description: "What the head is to master, as git decided it."
+              - type: string
+                const: dependency
+                description: One declared dependency.
+              - type: string
+                const: label
+                description: One label whose policy is to hold.
+              - type: string
+                const: draft
+                description: Whether it is a draft; always emitted.
+              - type: string
+                const: base
+                description: The branch it targets; always emitted.
+              - type: string
+                const: freshness
+                description: How old the observation is. Declared so the vocabulary is settled; nothing emits it yet.
+              - type: string
+                const: auto_merge
+                description: The forge has auto-merge armed; emitted whenever it is.
+              - type: string
+                const: supersession
+                description: "One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per successor declared."
+              - type: string
+                const: repository_settings
+                description: "What the repository's settings allow the executor; emitted when they allow no merge\ncommit."
+            description: "What kind of fact a piece of evidence is. The wire words are the ones the evidence carried\nwhile its kind was a string, so a trail written then still reads."
+          EvidenceSource:
+            oneOf:
+              - type: object
+                properties:
+                  observed_at:
+                    type: string
+                    description: "When the forge was observed, RFC 3339."
+                  kind:
+                    type: string
+                    const: forge
+                required:
+                  - kind
+                  - observed_at
+                description: "The forge observation, at its moment."
+              - type: object
+                properties:
+                  master_sha:
+                    type: string
+                    description: The master commit.
+                  head_sha:
+                    type: string
+                    description: The head commit.
+                  kind:
+                    type: string
+                    const: git
+                required:
+                  - kind
+                  - master_sha
+                  - head_sha
+                description: "Git, on this pair of commits."
+            description: Where a piece of evidence was read.
+          FailureClass:
+            oneOf:
+              - type: string
+                const: stale
+                description: Master or the head moved since the decision.
+              - type: string
+                const: conflict
+                description: The merge of master conflicts.
+              - type: string
+                const: new_failing_check
+                description: A required check failed that had passed.
+              - type: string
+                const: review_revoked
+                description: An approval was withdrawn.
+              - type: string
+                const: transient
+                description: The forge or the network failed in a way that passes.
+              - type: string
+                const: policy_violation
+                description: The branch protection refused it.
+              - type: string
+                const: verification_failed
+                description: What landed could not be verified.
+              - type: string
+                const: unreadable
+                description: The forge or git could not be read.
+            description: "Why an act failed, as one class a person and a retry policy can act on. Every failed act\non the trail carries one (`class`), and the drain decides from it whether the next\ncandidate may be tried (`FailureClass::recoverable`) or the drain must stop."
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::integration
@@ -18486,7 +18928,7 @@ capabilities:
     module: integration
     kind: query
     title: Why one pull request is where it is
-    description: "One pull request's assessment — disposition, lane, reasons, next action, the master and head it was decided against, required checks, review, relation to master, dependencies, overlaps, risk with its factors, and every piece of evidence — with its rank in the queue. `found: false` with the reason when it is not open or nothing is observed."
+    description: "One pull request's assessment — disposition, lane, reasons, every gate of the policy with whether it passed, next action, the master and head it was decided against and when the forge was observed, required checks, review, relation to master, dependencies, overlaps, risk with its factors, and every piece of evidence — with its rank in the queue. `found: false` with the reason when it is not open or nothing is observed."
     input:
       name: PullRequestExplainInput
       schema:
@@ -18569,14 +19011,38 @@ capabilities:
               disposition:
                 "$ref": "#/$defs/PullRequestDisposition"
                 description: The classification.
+              superseded_by:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "The successor that landed and replaces it, exactly when the disposition is\n`superseded`: the disposition stays one word on the wire, and this is its `by`.\nAbsent otherwise; a successor still open, or closed without landing, is in the\n`supersession` evidence and the reasons instead."
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: "The issue of `.ai/repo/project/issues/` its head branch names — a path component equal\nto the id, or the id followed by `-`, the form `majordomus worktree create --issue`\ngives — when it names one. Derived, never declared here: the issue record and the\nbranch name are the two sources, and nothing else."
+              milestone:
+                type:
+                  - string
+                  - "null"
+                description: "The milestone that issue's record declares, when it declares one."
               lane:
                 "$ref": "#/$defs/IntegrationLane"
                 description: The queue it is in.
               reasons:
                 type: array
                 items:
+                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. A code outside this list (an older trail's) is carried verbatim."
                   type: string
-                description: "Machine-readable reason codes, most decisive first."
+                description: "Machine-readable reasons, one for every failing gate's every finding, in policy order:\nthe first is the decisive one. A ready pull request carries why it is ready."
+              gates:
+                type: array
+                items:
+                  "$ref": "#/$defs/GateResult"
+                description: "Every gate of the policy, in order, and whether it passed."
+                default: []
               next_action:
                 type:
                   - string
@@ -18627,6 +19093,16 @@ capabilities:
                   - "$ref": "#/$defs/ExecutorWait"
                   - type: "null"
                 description: "How long it has been the executor's to act on, and how often another was chosen\ninstead — derived from the audit trail (`super::wait`), present only while it is\nready or refreshable."
+              rank_factors:
+                anyOf:
+                  - "$ref": "#/$defs/RankFactors"
+                  - type: "null"
+                description: "Why it stands where it does in the rank: every component the order compares, in the\norder it compares them. Set by the planner; absent on an assessment never ranked."
+              change_shape:
+                anyOf:
+                  - "$ref": "#/$defs/ChangeShape"
+                  - type: "null"
+                description: "What its merge into master changes, by kind (`ChangeShape`): read beside the\nrelation, from the same pair of commits. Absent when it could not be read."
             required:
               - number
               - title
@@ -18657,10 +19133,14 @@ capabilities:
               head_sha:
                 type: string
                 description: "The pull request's head commit."
+              observed_at:
+                type: string
+                description: "When the forge was observed, RFC 3339; empty in a value written before it was named."
+                default: ""
             required:
               - master_sha
               - head_sha
-            description: "The revisions a decision was taken against. A decision is valid only while both still\nhold: the executor compares them with what it re-reads before it acts."
+            description: "The revisions a decision was taken against, and when the forge was observed. A decision is\nvalid only while both revisions still hold: the executor compares them with what it\nre-reads before it acts."
           PullRequestDisposition:
             oneOf:
               - type: string
@@ -18689,19 +19169,28 @@ capabilities:
                 description: "Conflicts on authored paths: a person resolves them."
               - type: string
                 const: blocked
-                description: A blocking label holds it.
+                description: "A label whose policy is to hold holds it, or the repository allows no merge commit,\nwhich is the only way the executor merges."
+              - type: string
+                const: unsafe
+                description: "The forge has auto-merge armed on it: the forge would merge it on its own, outside the\nexecutor and against whatever master is then. Held until a person disarms it."
+              - type: string
+                const: redundant
+                description: "Its head already landed, its merge changes nothing, or every one of its commits is on\nmaster as an equal patch: strong evidence from git, eligible for closure under policy.\n(Before 0.13 this was the word `superseded`.)"
               - type: string
                 const: superseded
-                description: "Its head already landed, or its patch is already fully on master: strong evidence,\neligible for closure under policy."
+                description: "Its body, or the body of another pull request, declares that a successor replaces it,\nand that successor landed: no longer open, its head contained in master. The successor\nis `PullRequestAssessment::superseded_by`. Eligible for closure under policy."
               - type: string
                 const: possibly_redundant
-                description: "Only derived artifacts would change: the authored change appears to be on master\nalready. Surfaced for a person; never closed automatically."
+                description: "Weak evidence: only derived artifacts would change, or its declared successor was closed\nwithout its head landing. Surfaced for a person; never closed automatically."
               - type: string
                 const: other_base
                 description: Targets a branch other than the integration base.
               - type: string
                 const: unknown
                 description: Something needed to decide could not be observed.
+              - type: string
+                const: obsolete
+                description: "A person marked it obsolete with a label the label policy declares (owner decision\nD3): the only evidence that reaches this word. Listed for a person by cleanup and\nnever closed automatically; age, shared paths or a similar title never make one."
             description: "The one classification of an open pull request. Every value carries a machine-readable\nreason in `PullRequestAssessment::reasons`; there is no `mergeable: bool`."
           IntegrationLane:
             oneOf:
@@ -18716,16 +19205,71 @@ capabilities:
                 description: A person must change the branch.
               - type: string
                 const: cleanup
-                description: Its work is on master already.
+                description: "Its work is on master already, or a successor that landed replaced it."
               - type: string
                 const: held
-                description: "Not asking to be merged, or undecidable."
+                description: "Not asking to be merged, held by a label or a setting, unsafe for the executor, or\nundecidable."
             description: The queues the Cockpit and the status table group pull requests into.
+          GateResult:
+            type: object
+            properties:
+              gate:
+                "$ref": "#/$defs/IntegrationGate"
+                description: The gate.
+              passed:
+                type: boolean
+                description: "Whether it passed. A gate that fails only because an earlier one did (the head is not\nfresh when its merge conflicts) fails without a reason of its own."
+            required:
+              - gate
+              - passed
+            description: How one gate answered.
+          IntegrationGate:
+            oneOf:
+              - type: string
+                const: base
+                description: It targets the integration base.
+              - type: string
+                const: draft
+                description: It is not a draft.
+              - type: string
+                const: label
+                description: It carries no label whose policy is to hold.
+              - type: string
+                const: auto_merge
+                description: The forge has no auto-merge armed on it.
+              - type: string
+                const: supersession
+                description: "No successor is declared to replace it. Asked before the relation to master, because\na pull request whose successor landed usually conflicts with what the successor\nbrought, and is superseded rather than conflicting."
+              - type: string
+                const: relation_to_master
+                description: "Its head is not on master already, and git could say that it merges cleanly."
+              - type: string
+                const: merge_method
+                description: "The repository allows a merge commit, the only way the executor merges. Asked after\nthe relation, so work already on master is still `redundant` and may be closed."
+              - type: string
+                const: dependency
+                description: Every declared dependency has landed.
+              - type: string
+                const: review
+                description: The review policy is satisfied on the head.
+              - type: string
+                const: no_failing_check
+                description: No required check failed on the head.
+              - type: string
+                const: freshness
+                description: The head contains the current master.
+              - type: string
+                const: required_checks
+                description: Every required check passed on the head.
+            description: "One question of the policy, in the order `IntegrationGate::ALL` asks them. The\ndisposition is the first that fails; every one is answered."
           RequiredCheckState:
             oneOf:
               - type: string
                 const: passed
                 description: Every required check passed on this head.
+              - type: string
+                const: skipped
+                description: "Every required check passed, at least one of them by a skip the policy permits for\nthat context. A skip the policy does not permit is not a pass: it is `missing`."
               - type: string
                 const: pending
                 description: A required check is queued or running.
@@ -18754,6 +19298,12 @@ capabilities:
                 const: pending
                 description: A required review has not been given.
               - type: string
+                const: stale
+                description: "The approvals were given on another commit than the head: an approval is of one\ncommit, and these are not of this one."
+              - type: string
+                const: code_owners_pending
+                description: "The approvals are there, but a code owner's is still required."
+              - type: string
                 const: unknown
                 description: The protection could not be read.
             description: "Where the forge's review policy stands."
@@ -18775,6 +19325,20 @@ capabilities:
                 required:
                   - kind
                 description: "Merging the head into master changes nothing: its patch is already fully there."
+              - type: object
+                properties:
+                  commits:
+                    type: integer
+                    format: uint64
+                    minimum: 0
+                    description: "How many commits, every one of them already on master."
+                  kind:
+                    type: string
+                    const: patch_ids_upstream
+                required:
+                  - kind
+                  - commits
+                description: "The merge would conflict or change only derived output, but every commit the head has\nand master lacks is on master already as an equal patch (`git cherry` marks each `-`):\nthe change landed, and master moved on past it. Never a partial match, and never a\nhead that carries a merge commit of its own, whose resolution has no patch to compare."
               - type: object
                 properties:
                   paths:
@@ -18863,7 +19427,11 @@ capabilities:
                 description: How it is known.
               satisfied:
                 type: boolean
-                description: "Whether it is satisfied: that pull request has landed (or is not open any more)."
+                description: "Whether it is satisfied: that pull request merged. Closed without a merge, or not\nread, it is not — a dependency that never landed is no less a dependency."
+              state:
+                "$ref": "#/$defs/DependencyState"
+                description: "What the forge says became of it. `open` in a record written before it was read."
+                default: open
             required:
               - number
               - certainty
@@ -18878,6 +19446,21 @@ capabilities:
                 const: inferred
                 description: "Inferred: the head contains the other's head commit. Evidence, never a block."
             description: How a dependency is known. Only a declared one blocks.
+          DependencyState:
+            oneOf:
+              - type: string
+                const: open
+                description: Still open.
+              - type: string
+                const: merged
+                description: "Merged: the only state that satisfies it."
+              - type: string
+                const: closed_unmerged
+                description: "Closed without a merge: its work never landed, so a person decides."
+              - type: string
+                const: unread
+                description: "Not open, and the forge could not say what became of it — refused, or not a pull\nrequest at all: unknown, never satisfied."
+            description: What became of a pull request another one depends on.
           PathOverlap:
             type: object
             properties:
@@ -18891,10 +19474,26 @@ capabilities:
                 items:
                   type: string
                 description: The paths both change.
+              kind:
+                "$ref": "#/$defs/OverlapKind"
+                description: "What the two share. `authored` in a record written before it was said."
+                default: authored
             required:
               - number
               - paths
             description: Shared authored paths with one other open pull request.
+          OverlapKind:
+            oneOf:
+              - type: string
+                const: authored
+                description: Authored paths both change.
+              - type: string
+                const: version_bump
+                description: "Both raise the crate's version: whichever lands second must be re-derived on the first."
+              - type: string
+                const: release
+                description: "Both change the release records under `.ai/repo/releases/`."
+            description: What two open pull requests have in common that makes landing one change the other.
           IntegrationRisk:
             oneOf:
               - type: string
@@ -18911,19 +19510,94 @@ capabilities:
             type: object
             properties:
               kind:
-                type: string
-                description: "What kind of fact (`required_checks`, `relation_to_master`, `review`, `label`,\n`dependency`, `draft`, `base`)."
+                "$ref": "#/$defs/EvidenceKind"
+                description: What kind of fact.
               status:
                 type: string
                 description: "What it said, as a word."
               detail:
                 type: string
                 description: The detail a person reads.
+              source:
+                anyOf:
+                  - "$ref": "#/$defs/EvidenceSource"
+                  - type: "null"
+                description: "Where it was read. Every assessment names it; a trail line written before evidence\ncarried it has none."
             required:
               - kind
               - status
               - detail
-            description: "One piece of evidence behind a disposition: what was read, and what it said."
+            description: "One piece of evidence behind a disposition: what was read, where, and what it said."
+          EvidenceKind:
+            oneOf:
+              - type: string
+                const: required_check
+                description: "One required check's state on the head: one entry per context the base requires."
+              - type: string
+                const: required_checks
+                description: "The required checks together: their verdict, and each context's state."
+              - type: string
+                const: review
+                description: "The review policy and the forge's decision, or one reviewer's latest review."
+              - type: string
+                const: relation_to_master
+                description: "What the head is to master, as git decided it."
+              - type: string
+                const: dependency
+                description: One declared dependency.
+              - type: string
+                const: label
+                description: One label whose policy is to hold.
+              - type: string
+                const: draft
+                description: Whether it is a draft; always emitted.
+              - type: string
+                const: base
+                description: The branch it targets; always emitted.
+              - type: string
+                const: freshness
+                description: How old the observation is. Declared so the vocabulary is settled; nothing emits it yet.
+              - type: string
+                const: auto_merge
+                description: The forge has auto-merge armed; emitted whenever it is.
+              - type: string
+                const: supersession
+                description: "One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per successor declared."
+              - type: string
+                const: repository_settings
+                description: "What the repository's settings allow the executor; emitted when they allow no merge\ncommit."
+            description: "What kind of fact a piece of evidence is. The wire words are the ones the evidence carried\nwhile its kind was a string, so a trail written then still reads."
+          EvidenceSource:
+            oneOf:
+              - type: object
+                properties:
+                  observed_at:
+                    type: string
+                    description: "When the forge was observed, RFC 3339."
+                  kind:
+                    type: string
+                    const: forge
+                required:
+                  - kind
+                  - observed_at
+                description: "The forge observation, at its moment."
+              - type: object
+                properties:
+                  master_sha:
+                    type: string
+                    description: The master commit.
+                  head_sha:
+                    type: string
+                    description: The head commit.
+                  kind:
+                    type: string
+                    const: git
+                required:
+                  - kind
+                  - master_sha
+                  - head_sha
+                description: "Git, on this pair of commits."
+            description: Where a piece of evidence was read.
           ExecutorWait:
             type: object
             properties:
@@ -18956,13 +19630,167 @@ capabilities:
                 minimum: 0
                 description: The pull request chosen instead.
               action:
-                type: string
+                "$ref": "#/$defs/IntegrationAction"
                 description: "What it was chosen for (`selected` to merge, `refresh_selected` to bring master in)."
             required:
               - at
               - for_pr
               - action
             description: One time the executor chose another pull request.
+          IntegrationAction:
+            oneOf:
+              - type: string
+                const: lease_acquired
+                description: "The executor took the base branch's lease."
+              - type: string
+                const: lease_released
+                description: It gave the lease back.
+              - type: string
+                const: continuous_started
+                description: A continuous drain started.
+              - type: string
+                const: continuous_stopped
+                description: A continuous drain stopped; the detail says why.
+              - type: string
+                const: observed
+                description: The forge was observed and the observation recorded.
+              - type: string
+                const: became_actionable
+                description: A pull request became actionable (ready or refreshable).
+              - type: string
+                const: left_actionable
+                description: A pull request stopped being actionable.
+              - type: string
+                const: selected
+                description: The first ready pull request was chosen to merge.
+              - type: string
+                const: refresh_selected
+                description: The first refreshable pull request was chosen to bring master into.
+              - type: string
+                const: stale_decision
+                description: The decision went stale between planning and acting; nothing was done.
+              - type: string
+                const: merge_attempted
+                description: A merge is about to be asked of the forge.
+              - type: string
+                const: merge_succeeded
+                description: The merge landed and was verified.
+              - type: string
+                const: merge_failed
+                description: The forge refused the merge.
+              - type: string
+                const: verification_failed
+                description: What landed could not be verified.
+              - type: string
+                const: failure_acknowledged
+                description: "A person looked at a merge that could not be verified and lets drains merge again\n(`prs drain --resume-after-failure`)."
+              - type: string
+                const: refresh_attempted
+                description: Master is about to be merged into a branch and pushed.
+              - type: string
+                const: refreshed
+                description: Master was brought into the branch and pushed.
+              - type: string
+                const: refresh_failed
+                description: Bringing master in failed.
+              - type: string
+                const: close_attempted
+                description: A redundant or superseded pull request is about to be closed.
+              - type: string
+                const: closed_redundant
+                description: A redundant one was closed.
+              - type: string
+                const: closed_superseded
+                description: "A superseded one was closed (before 0.13, a line with this word recorded what is now\n`closed_redundant`)."
+              - type: string
+                const: close_failed
+                description: Closing it failed.
+              - type: string
+                const: repair_selected
+                description: "A person named a pull request to repair (`prs repair --apply`) and its classification\nmakes it eligible: master is what it lacks, and nothing authored conflicts."
+              - type: string
+                const: repair_attempted
+                description: Master is about to be merged into the named branch and pushed.
+              - type: string
+                const: repaired
+                description: Master was brought into the named branch and pushed.
+              - type: string
+                const: repair_refused
+                description: "The repair was refused — by the classification (an authored conflict, a fork, armed\nauto-merge, another base, an undecidable relation) or by the act (a merge, derive,\ncommit or push that failed) — and nothing reached the branch; `class` says why."
+              - type: string
+                const: idle
+                description: Nothing was ready.
+              - type: string
+                const: observe_failed
+                description: "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+            description: "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
+          RankFactors:
+            type: object
+            properties:
+              lane:
+                "$ref": "#/$defs/IntegrationLane"
+                description: "The lane: what kind of work the executor does with it."
+              disposition:
+                "$ref": "#/$defs/PullRequestDisposition"
+                description: "The disposition, within the lane."
+              risk:
+                "$ref": "#/$defs/IntegrationRisk"
+                description: "The planning risk: lower first."
+              contention:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "How many other ready or refreshable pull requests it overlaps (`PathOverlap`): an\nauthored path, a version bump or a release in common. Fewer first, because landing it\ninvalidates less."
+              dependents:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "How many open pull requests declare that they wait for this one and are not yet\nsatisfied: more first, because landing it unblocks them."
+              authored_paths:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "How many authored paths it changes: fewer first, a smaller change is cheaper to land\nand to undo."
+              created_at:
+                type: string
+                description: "When it was opened: older first, so easy new work cannot starve old work."
+              number:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "The number: the last tie-break, total."
+            required:
+              - lane
+              - disposition
+              - risk
+              - contention
+              - dependents
+              - authored_paths
+              - created_at
+              - number
+            description: "What the rank compares, in order: the first component that differs between two pull\nrequests decides which comes first. Each is a value of the assessment or of the queue\naround it, so the order can be explained and is the same whatever order the forge listed\nthe pull requests in."
+          ChangeShape:
+            type: object
+            properties:
+              authored:
+                type: array
+                items:
+                  type: string
+                description: "Authored (non-derived) paths the merge changes or conflicts on, in path order."
+              derived:
+                type: array
+                items:
+                  type: string
+                description: "Derived paths the merge changes or conflicts on, in path order."
+              version_bump:
+                type:
+                  - string
+                  - "null"
+                description: "The version the head declares in the crate manifest, when it is not the one its merge\nbase declares: the head raises the version."
+            required:
+              - authored
+              - derived
+            description: "What a head's merge into master changes, by kind: the authored paths a person wrote, the\nderived paths a generator writes (by the repository's `merge=derived` attributes on master),\nand the version the head declares when it raises the crate's. Decided from the same pair\nof commits as the relation to master, and cached under the same key beside it, so a change\nof either commit — a `.gitattributes` change on master is one — makes both stale together."
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::integration
@@ -18992,11 +19820,183 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/integration.rs
+  - id: integration.prove_dry_run
+    module: integration
+    kind: query
+    title: Proof that a dry run moves nothing
+    description: "Runs the executor's non-mutating cycle — refresh, plan, drain --dry-run and cleanup without --apply — between two snapshots of everything it could move if it were wrong: every ref origin serves, every open pull request's number, head, state and labels, the integration audit trail, the executor's lease, and every local ref outside the two namespaces the refresh mirrors. `ok` is true exactly when the snapshots are equal and refs/remotes/origin/<base> and every refs/majordomus/prs/<n> equal what origin serves. A read that reaches the network: the refresh asks the forge through the GitHub CLI and fetches the base and the pull-request heads, and like every read it rewrites the observation, relation and summary caches. It merges, closes and pushes nothing, and takes no input that could make it."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: DryRunProof
+      schema:
+        type: object
+        properties:
+          ok:
+            type: boolean
+            description: True exactly when nothing moved and every mirror equals what origin serves.
+          base:
+            type: string
+            description: The base branch the executor works on.
+          steps:
+            type: array
+            items:
+              "$ref": "#/$defs/ProofStep"
+            description: "The cycle, step by step."
+          moved:
+            type: array
+            items:
+              "$ref": "#/$defs/Moved"
+            description: Every line that differs between the snapshots; empty when nothing moved.
+          mirrors:
+            type: array
+            items:
+              type: string
+            description: Every mirrored ref that is not what origin serves; empty when they all are.
+          before:
+            "$ref": "#/$defs/Snapshot"
+            description: The snapshot before the cycle.
+          after:
+            "$ref": "#/$defs/Snapshot"
+            description: The snapshot after it.
+          classification:
+            type: array
+            items:
+              "$ref": "#/$defs/ObservedClassification"
+            description: "Every open pull request as the cycle classified it, in rank order."
+        required:
+          - ok
+          - base
+          - steps
+          - moved
+          - mirrors
+          - before
+          - after
+          - classification
+        description: "The verdict: what was compared, what moved, and what the cycle observed."
+        title: DryRunProof
+        "$defs":
+          ProofStep:
+            type: object
+            properties:
+              step:
+                type: string
+                description: "`refresh`, `plan`, `drain --dry-run` or `cleanup`."
+              summary:
+                type: string
+                description: "What it reported, in one line."
+            required:
+              - step
+              - summary
+            description: One step of the cycle and what it said.
+          Moved:
+            type: object
+            properties:
+              section:
+                type: string
+                description: The section it belongs to.
+              change:
+                type: string
+                description: "`added` (present only after the cycle) or `removed` (present only before)."
+              line:
+                type: string
+                description: The line itself.
+            required:
+              - section
+              - change
+              - line
+            description: One line that differs between the two snapshots.
+          Snapshot:
+            type: object
+            properties:
+              sections:
+                type: array
+                items:
+                  "$ref": "#/$defs/SnapshotSection"
+                description: "The sections, always in the order `remote`, `forge`, `trail`, `lease`, `local`."
+            required:
+              - sections
+            description: "Everything the cycle could move, at one moment."
+          SnapshotSection:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "`remote`, `forge`, `trail`, `lease` or `local`."
+              lines:
+                type: array
+                items:
+                  type: string
+                description: "What the section holds, one fact per line, sorted where order carries no meaning."
+            required:
+              - name
+              - lines
+            description: "One section of a snapshot: a name and its lines, in a stable order."
+          ObservedClassification:
+            type: object
+            properties:
+              number:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: The pull request.
+              head_sha:
+                type: string
+                description: The head it was decided against.
+              disposition:
+                type: string
+                description: "Its disposition, as the queue names it."
+              next_action:
+                type:
+                  - string
+                  - "null"
+                description: "What the executor would do with it, when anything."
+            required:
+              - number
+              - head_sha
+              - disposition
+            description: One open pull request as the cycle classified it.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::integration
+    exposure:
+      mcp:
+        tool: majordomus_pull_requests_prove_dry_run
+      http:
+        method: GET
+        path: /api/v1/pull-requests/prove-dry-run
+      cli:
+        path:
+          - prs
+          - prove-dry-run
+    availability: runtime
+    visibility: public
+    stability: experimental
+    tags:
+      - integration
+      - pull-requests
+      - proof
+      - live
+    benchmark:
+      policy: waived
+      reason: external_dependency
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/integration.rs
   - id: integration.queue
     module: integration
     kind: query
     title: The integration queue
-    description: "The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection's required checks and reviews, the blocking labels, the merge method), every open pull request's assessment in rank order — an actionable one with how long it has waited for the executor and how often another was chosen instead — the next merge, the pull requests that need master brought in, the starving ones, the tallies by disposition and lane, and the diagnostics, a stale observation first; beside it, who holds the base branch's integration lease and the last merge the executor recorded. `observed: false` with the reason when this checkout has recorded no observation."
+    description: "The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection's required checks and reviews, the label policy, the merge method: a merge commit, or none when the repository allows none), every open pull request's assessment in rank order — an actionable one with how long it has waited for the executor and how often another was chosen instead — the next merge, the pull requests that need master brought in, the starving ones, the tallies by disposition and lane, and the diagnostics, a stale observation first; beside it, who holds the base branch's integration lease and the last merge the executor recorded. `observed: false` with the reason when this checkout has recorded no observation."
     input:
       name: Empty
       schema:
@@ -19034,8 +20034,12 @@ capabilities:
               - type: "null"
             description: "The last merge the executor recorded, from the audit trail."
             default: null
+          throughput:
+            "$ref": "#/$defs/IntegrationThroughput"
+            description: "How fast the executor has turned work into master over the last\n`THROUGHPUT_WINDOW_DAYS` days, folded from the same trail."
         required:
           - observed
+          - throughput
         description: "The queue, or why there is none."
         title: IntegrationStatus
         "$defs":
@@ -19118,26 +20122,96 @@ capabilities:
                   - array
                   - "null"
                 items:
-                  type: string
-                description: "The status contexts the branch protection requires, as read from the forge.\n`None` when the protection could not be read: every required-check verdict is then\n`unknown`, never `passed`."
-              reviews_required:
-                type:
-                  - boolean
-                  - "null"
-                description: "Whether the branch protection requires an approving review; `None` when unread."
-              blocking_labels:
+                  "$ref": "#/$defs/RequiredCheck"
+                description: "The checks the base requires, from its branch protection and rulesets, each with the\napp bound to it. `None` when they could not be read: every required-check verdict is\nthen `unknown`, never `passed`. An empty set is unknown too (owner decision D5): a\nbase that requires nothing proves nothing about a head, so nothing merges onto it."
+              review_policy:
+                anyOf:
+                  - "$ref": "#/$defs/ReviewPolicy"
+                  - type: "null"
+                description: "What the base requires of reviews; `None` when unread."
+              skipped_permitted:
                 type: array
                 items:
                   type: string
-                description: Labels that hold a pull request whatever else is true.
+                description: "Contexts whose skip counts as a pass. Empty unless a repository says otherwise: a\nskipped required check is otherwise `missing`."
+                default: []
+              labels:
+                type: array
+                items:
+                  "$ref": "#/$defs/LabelPolicy"
+                description: "The labels that have an effect, each with its effect: `LABEL_POLICY`, copied."
               merge_method:
-                type: string
-                description: The merge method the executor asks the forge for.
+                type:
+                  - string
+                  - "null"
+                description: "The merge method the executor asks the forge for: `merge` when the repository allows a\nmerge commit, and `None` when it does not. There is no other: the derived-file driver\nresolves merges, and a squash or rebase would replay commits it never saw, so with\n`None` every pull request the relation to master does not already decide is held\n(`merge_commit_not_allowed`), never merged otherwise."
+              up_to_date_required:
+                type:
+                  - boolean
+                  - "null"
+                description: "Whether the base requires a branch to be up to date before it merges (the\nprotection's `required_status_checks.strict`, or a ruleset's): the forge-side half of\nthe guard against a merge onto a master nobody tested with the change. The executor's\nhalf is its parent check after every merge. `Some(false)` is the owner's to change\n(decision D8) and decides no disposition; `None` when unread."
+                default: null
             required:
               - base
-              - blocking_labels
-              - merge_method
+              - labels
             description: "What the repository requires before a merge, as observed from the forge and the\nrepository — never a list kept here beside it."
+          RequiredCheck:
+            type: object
+            properties:
+              context:
+                type: string
+                description: "The status context, or the check run's name."
+              app_id:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "The app bound to it, when the protection names one."
+            required:
+              - context
+            description: "One check the base requires: a status context, and the app that must write it when the\nprotection binds it to one. A check of that name from any other writer is not this one."
+          ReviewPolicy:
+            type: object
+            properties:
+              approvals:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: How many approving reviews a merge needs; 0 when none.
+              code_owners:
+                type: boolean
+                description: "Whether a code owner's approval is required."
+              dismiss_stale:
+                type: boolean
+                description: Whether the forge dismisses an approval when the head moves.
+            required:
+              - approvals
+              - code_owners
+              - dismiss_stale
+            description: "What the base requires of reviews, read from its protection and rulesets together."
+          LabelPolicy:
+            type: object
+            properties:
+              name:
+                type: string
+                description: "The label, lower-case."
+              effect:
+                "$ref": "#/$defs/LabelEffect"
+                description: What it does.
+            required:
+              - name
+              - effect
+            description: "One label with an effect. The forge's label names are compared with `name`\ncase-insensitively."
+          LabelEffect:
+            oneOf:
+              - type: string
+                const: hold
+                description: "It holds the pull request whatever else is true: `blocked`, with `label:NAME`."
+              - type: string
+                const: obsolete
+                description: "A person marked the work obsolete (owner decision D3): `obsolete`, with\n`label_obsolete:NAME`, listed by cleanup for a person and never closed automatically."
+            description: What a label does to a pull request that carries it.
           PullRequestAssessment:
             type: object
             properties:
@@ -19164,14 +20238,38 @@ capabilities:
               disposition:
                 "$ref": "#/$defs/PullRequestDisposition"
                 description: The classification.
+              superseded_by:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "The successor that landed and replaces it, exactly when the disposition is\n`superseded`: the disposition stays one word on the wire, and this is its `by`.\nAbsent otherwise; a successor still open, or closed without landing, is in the\n`supersession` evidence and the reasons instead."
+              issue:
+                type:
+                  - string
+                  - "null"
+                description: "The issue of `.ai/repo/project/issues/` its head branch names — a path component equal\nto the id, or the id followed by `-`, the form `majordomus worktree create --issue`\ngives — when it names one. Derived, never declared here: the issue record and the\nbranch name are the two sources, and nothing else."
+              milestone:
+                type:
+                  - string
+                  - "null"
+                description: "The milestone that issue's record declares, when it declares one."
               lane:
                 "$ref": "#/$defs/IntegrationLane"
                 description: The queue it is in.
               reasons:
                 type: array
                 items:
+                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. A code outside this list (an older trail's) is carried verbatim."
                   type: string
-                description: "Machine-readable reason codes, most decisive first."
+                description: "Machine-readable reasons, one for every failing gate's every finding, in policy order:\nthe first is the decisive one. A ready pull request carries why it is ready."
+              gates:
+                type: array
+                items:
+                  "$ref": "#/$defs/GateResult"
+                description: "Every gate of the policy, in order, and whether it passed."
+                default: []
               next_action:
                 type:
                   - string
@@ -19222,6 +20320,16 @@ capabilities:
                   - "$ref": "#/$defs/ExecutorWait"
                   - type: "null"
                 description: "How long it has been the executor's to act on, and how often another was chosen\ninstead — derived from the audit trail (`super::wait`), present only while it is\nready or refreshable."
+              rank_factors:
+                anyOf:
+                  - "$ref": "#/$defs/RankFactors"
+                  - type: "null"
+                description: "Why it stands where it does in the rank: every component the order compares, in the\norder it compares them. Set by the planner; absent on an assessment never ranked."
+              change_shape:
+                anyOf:
+                  - "$ref": "#/$defs/ChangeShape"
+                  - type: "null"
+                description: "What its merge into master changes, by kind (`ChangeShape`): read beside the\nrelation, from the same pair of commits. Absent when it could not be read."
             required:
               - number
               - title
@@ -19252,10 +20360,14 @@ capabilities:
               head_sha:
                 type: string
                 description: "The pull request's head commit."
+              observed_at:
+                type: string
+                description: "When the forge was observed, RFC 3339; empty in a value written before it was named."
+                default: ""
             required:
               - master_sha
               - head_sha
-            description: "The revisions a decision was taken against. A decision is valid only while both still\nhold: the executor compares them with what it re-reads before it acts."
+            description: "The revisions a decision was taken against, and when the forge was observed. A decision is\nvalid only while both revisions still hold: the executor compares them with what it\nre-reads before it acts."
           PullRequestDisposition:
             oneOf:
               - type: string
@@ -19284,19 +20396,28 @@ capabilities:
                 description: "Conflicts on authored paths: a person resolves them."
               - type: string
                 const: blocked
-                description: A blocking label holds it.
+                description: "A label whose policy is to hold holds it, or the repository allows no merge commit,\nwhich is the only way the executor merges."
+              - type: string
+                const: unsafe
+                description: "The forge has auto-merge armed on it: the forge would merge it on its own, outside the\nexecutor and against whatever master is then. Held until a person disarms it."
+              - type: string
+                const: redundant
+                description: "Its head already landed, its merge changes nothing, or every one of its commits is on\nmaster as an equal patch: strong evidence from git, eligible for closure under policy.\n(Before 0.13 this was the word `superseded`.)"
               - type: string
                 const: superseded
-                description: "Its head already landed, or its patch is already fully on master: strong evidence,\neligible for closure under policy."
+                description: "Its body, or the body of another pull request, declares that a successor replaces it,\nand that successor landed: no longer open, its head contained in master. The successor\nis `PullRequestAssessment::superseded_by`. Eligible for closure under policy."
               - type: string
                 const: possibly_redundant
-                description: "Only derived artifacts would change: the authored change appears to be on master\nalready. Surfaced for a person; never closed automatically."
+                description: "Weak evidence: only derived artifacts would change, or its declared successor was closed\nwithout its head landing. Surfaced for a person; never closed automatically."
               - type: string
                 const: other_base
                 description: Targets a branch other than the integration base.
               - type: string
                 const: unknown
                 description: Something needed to decide could not be observed.
+              - type: string
+                const: obsolete
+                description: "A person marked it obsolete with a label the label policy declares (owner decision\nD3): the only evidence that reaches this word. Listed for a person by cleanup and\nnever closed automatically; age, shared paths or a similar title never make one."
             description: "The one classification of an open pull request. Every value carries a machine-readable\nreason in `PullRequestAssessment::reasons`; there is no `mergeable: bool`."
           IntegrationLane:
             oneOf:
@@ -19311,16 +20432,71 @@ capabilities:
                 description: A person must change the branch.
               - type: string
                 const: cleanup
-                description: Its work is on master already.
+                description: "Its work is on master already, or a successor that landed replaced it."
               - type: string
                 const: held
-                description: "Not asking to be merged, or undecidable."
+                description: "Not asking to be merged, held by a label or a setting, unsafe for the executor, or\nundecidable."
             description: The queues the Cockpit and the status table group pull requests into.
+          GateResult:
+            type: object
+            properties:
+              gate:
+                "$ref": "#/$defs/IntegrationGate"
+                description: The gate.
+              passed:
+                type: boolean
+                description: "Whether it passed. A gate that fails only because an earlier one did (the head is not\nfresh when its merge conflicts) fails without a reason of its own."
+            required:
+              - gate
+              - passed
+            description: How one gate answered.
+          IntegrationGate:
+            oneOf:
+              - type: string
+                const: base
+                description: It targets the integration base.
+              - type: string
+                const: draft
+                description: It is not a draft.
+              - type: string
+                const: label
+                description: It carries no label whose policy is to hold.
+              - type: string
+                const: auto_merge
+                description: The forge has no auto-merge armed on it.
+              - type: string
+                const: supersession
+                description: "No successor is declared to replace it. Asked before the relation to master, because\na pull request whose successor landed usually conflicts with what the successor\nbrought, and is superseded rather than conflicting."
+              - type: string
+                const: relation_to_master
+                description: "Its head is not on master already, and git could say that it merges cleanly."
+              - type: string
+                const: merge_method
+                description: "The repository allows a merge commit, the only way the executor merges. Asked after\nthe relation, so work already on master is still `redundant` and may be closed."
+              - type: string
+                const: dependency
+                description: Every declared dependency has landed.
+              - type: string
+                const: review
+                description: The review policy is satisfied on the head.
+              - type: string
+                const: no_failing_check
+                description: No required check failed on the head.
+              - type: string
+                const: freshness
+                description: The head contains the current master.
+              - type: string
+                const: required_checks
+                description: Every required check passed on the head.
+            description: "One question of the policy, in the order `IntegrationGate::ALL` asks them. The\ndisposition is the first that fails; every one is answered."
           RequiredCheckState:
             oneOf:
               - type: string
                 const: passed
                 description: Every required check passed on this head.
+              - type: string
+                const: skipped
+                description: "Every required check passed, at least one of them by a skip the policy permits for\nthat context. A skip the policy does not permit is not a pass: it is `missing`."
               - type: string
                 const: pending
                 description: A required check is queued or running.
@@ -19349,6 +20525,12 @@ capabilities:
                 const: pending
                 description: A required review has not been given.
               - type: string
+                const: stale
+                description: "The approvals were given on another commit than the head: an approval is of one\ncommit, and these are not of this one."
+              - type: string
+                const: code_owners_pending
+                description: "The approvals are there, but a code owner's is still required."
+              - type: string
                 const: unknown
                 description: The protection could not be read.
             description: "Where the forge's review policy stands."
@@ -19370,6 +20552,20 @@ capabilities:
                 required:
                   - kind
                 description: "Merging the head into master changes nothing: its patch is already fully there."
+              - type: object
+                properties:
+                  commits:
+                    type: integer
+                    format: uint64
+                    minimum: 0
+                    description: "How many commits, every one of them already on master."
+                  kind:
+                    type: string
+                    const: patch_ids_upstream
+                required:
+                  - kind
+                  - commits
+                description: "The merge would conflict or change only derived output, but every commit the head has\nand master lacks is on master already as an equal patch (`git cherry` marks each `-`):\nthe change landed, and master moved on past it. Never a partial match, and never a\nhead that carries a merge commit of its own, whose resolution has no patch to compare."
               - type: object
                 properties:
                   paths:
@@ -19458,7 +20654,11 @@ capabilities:
                 description: How it is known.
               satisfied:
                 type: boolean
-                description: "Whether it is satisfied: that pull request has landed (or is not open any more)."
+                description: "Whether it is satisfied: that pull request merged. Closed without a merge, or not\nread, it is not — a dependency that never landed is no less a dependency."
+              state:
+                "$ref": "#/$defs/DependencyState"
+                description: "What the forge says became of it. `open` in a record written before it was read."
+                default: open
             required:
               - number
               - certainty
@@ -19473,6 +20673,21 @@ capabilities:
                 const: inferred
                 description: "Inferred: the head contains the other's head commit. Evidence, never a block."
             description: How a dependency is known. Only a declared one blocks.
+          DependencyState:
+            oneOf:
+              - type: string
+                const: open
+                description: Still open.
+              - type: string
+                const: merged
+                description: "Merged: the only state that satisfies it."
+              - type: string
+                const: closed_unmerged
+                description: "Closed without a merge: its work never landed, so a person decides."
+              - type: string
+                const: unread
+                description: "Not open, and the forge could not say what became of it — refused, or not a pull\nrequest at all: unknown, never satisfied."
+            description: What became of a pull request another one depends on.
           PathOverlap:
             type: object
             properties:
@@ -19486,10 +20701,26 @@ capabilities:
                 items:
                   type: string
                 description: The paths both change.
+              kind:
+                "$ref": "#/$defs/OverlapKind"
+                description: "What the two share. `authored` in a record written before it was said."
+                default: authored
             required:
               - number
               - paths
             description: Shared authored paths with one other open pull request.
+          OverlapKind:
+            oneOf:
+              - type: string
+                const: authored
+                description: Authored paths both change.
+              - type: string
+                const: version_bump
+                description: "Both raise the crate's version: whichever lands second must be re-derived on the first."
+              - type: string
+                const: release
+                description: "Both change the release records under `.ai/repo/releases/`."
+            description: What two open pull requests have in common that makes landing one change the other.
           IntegrationRisk:
             oneOf:
               - type: string
@@ -19506,19 +20737,94 @@ capabilities:
             type: object
             properties:
               kind:
-                type: string
-                description: "What kind of fact (`required_checks`, `relation_to_master`, `review`, `label`,\n`dependency`, `draft`, `base`)."
+                "$ref": "#/$defs/EvidenceKind"
+                description: What kind of fact.
               status:
                 type: string
                 description: "What it said, as a word."
               detail:
                 type: string
                 description: The detail a person reads.
+              source:
+                anyOf:
+                  - "$ref": "#/$defs/EvidenceSource"
+                  - type: "null"
+                description: "Where it was read. Every assessment names it; a trail line written before evidence\ncarried it has none."
             required:
               - kind
               - status
               - detail
-            description: "One piece of evidence behind a disposition: what was read, and what it said."
+            description: "One piece of evidence behind a disposition: what was read, where, and what it said."
+          EvidenceKind:
+            oneOf:
+              - type: string
+                const: required_check
+                description: "One required check's state on the head: one entry per context the base requires."
+              - type: string
+                const: required_checks
+                description: "The required checks together: their verdict, and each context's state."
+              - type: string
+                const: review
+                description: "The review policy and the forge's decision, or one reviewer's latest review."
+              - type: string
+                const: relation_to_master
+                description: "What the head is to master, as git decided it."
+              - type: string
+                const: dependency
+                description: One declared dependency.
+              - type: string
+                const: label
+                description: One label whose policy is to hold.
+              - type: string
+                const: draft
+                description: Whether it is a draft; always emitted.
+              - type: string
+                const: base
+                description: The branch it targets; always emitted.
+              - type: string
+                const: freshness
+                description: How old the observation is. Declared so the vocabulary is settled; nothing emits it yet.
+              - type: string
+                const: auto_merge
+                description: The forge has auto-merge armed; emitted whenever it is.
+              - type: string
+                const: supersession
+                description: "One declared successor: which pull request replaces this one, whose body said so, and\nwhether it landed. One entry per successor declared."
+              - type: string
+                const: repository_settings
+                description: "What the repository's settings allow the executor; emitted when they allow no merge\ncommit."
+            description: "What kind of fact a piece of evidence is. The wire words are the ones the evidence carried\nwhile its kind was a string, so a trail written then still reads."
+          EvidenceSource:
+            oneOf:
+              - type: object
+                properties:
+                  observed_at:
+                    type: string
+                    description: "When the forge was observed, RFC 3339."
+                  kind:
+                    type: string
+                    const: forge
+                required:
+                  - kind
+                  - observed_at
+                description: "The forge observation, at its moment."
+              - type: object
+                properties:
+                  master_sha:
+                    type: string
+                    description: The master commit.
+                  head_sha:
+                    type: string
+                    description: The head commit.
+                  kind:
+                    type: string
+                    const: git
+                required:
+                  - kind
+                  - master_sha
+                  - head_sha
+                description: "Git, on this pair of commits."
+            description: Where a piece of evidence was read.
           ExecutorWait:
             type: object
             properties:
@@ -19551,13 +20857,167 @@ capabilities:
                 minimum: 0
                 description: The pull request chosen instead.
               action:
-                type: string
+                "$ref": "#/$defs/IntegrationAction"
                 description: "What it was chosen for (`selected` to merge, `refresh_selected` to bring master in)."
             required:
               - at
               - for_pr
               - action
             description: One time the executor chose another pull request.
+          IntegrationAction:
+            oneOf:
+              - type: string
+                const: lease_acquired
+                description: "The executor took the base branch's lease."
+              - type: string
+                const: lease_released
+                description: It gave the lease back.
+              - type: string
+                const: continuous_started
+                description: A continuous drain started.
+              - type: string
+                const: continuous_stopped
+                description: A continuous drain stopped; the detail says why.
+              - type: string
+                const: observed
+                description: The forge was observed and the observation recorded.
+              - type: string
+                const: became_actionable
+                description: A pull request became actionable (ready or refreshable).
+              - type: string
+                const: left_actionable
+                description: A pull request stopped being actionable.
+              - type: string
+                const: selected
+                description: The first ready pull request was chosen to merge.
+              - type: string
+                const: refresh_selected
+                description: The first refreshable pull request was chosen to bring master into.
+              - type: string
+                const: stale_decision
+                description: The decision went stale between planning and acting; nothing was done.
+              - type: string
+                const: merge_attempted
+                description: A merge is about to be asked of the forge.
+              - type: string
+                const: merge_succeeded
+                description: The merge landed and was verified.
+              - type: string
+                const: merge_failed
+                description: The forge refused the merge.
+              - type: string
+                const: verification_failed
+                description: What landed could not be verified.
+              - type: string
+                const: failure_acknowledged
+                description: "A person looked at a merge that could not be verified and lets drains merge again\n(`prs drain --resume-after-failure`)."
+              - type: string
+                const: refresh_attempted
+                description: Master is about to be merged into a branch and pushed.
+              - type: string
+                const: refreshed
+                description: Master was brought into the branch and pushed.
+              - type: string
+                const: refresh_failed
+                description: Bringing master in failed.
+              - type: string
+                const: close_attempted
+                description: A redundant or superseded pull request is about to be closed.
+              - type: string
+                const: closed_redundant
+                description: A redundant one was closed.
+              - type: string
+                const: closed_superseded
+                description: "A superseded one was closed (before 0.13, a line with this word recorded what is now\n`closed_redundant`)."
+              - type: string
+                const: close_failed
+                description: Closing it failed.
+              - type: string
+                const: repair_selected
+                description: "A person named a pull request to repair (`prs repair --apply`) and its classification\nmakes it eligible: master is what it lacks, and nothing authored conflicts."
+              - type: string
+                const: repair_attempted
+                description: Master is about to be merged into the named branch and pushed.
+              - type: string
+                const: repaired
+                description: Master was brought into the named branch and pushed.
+              - type: string
+                const: repair_refused
+                description: "The repair was refused — by the classification (an authored conflict, a fork, armed\nauto-merge, another base, an undecidable relation) or by the act (a merge, derive,\ncommit or push that failed) — and nothing reached the branch; `class` says why."
+              - type: string
+                const: idle
+                description: Nothing was ready.
+              - type: string
+                const: observe_failed
+                description: "A continuous drain's cycle could not observe the forge, and the outage was short\nenough to wait out (`CONTINUOUS_TRANSIENT_LIMIT`)."
+            description: "What one line of the audit trail records. The wire word is the variant's `snake_case`\nname — the same word each was written as while the action was a string — so every line\nwritten before still parses, and a word nobody writes is not an action."
+          RankFactors:
+            type: object
+            properties:
+              lane:
+                "$ref": "#/$defs/IntegrationLane"
+                description: "The lane: what kind of work the executor does with it."
+              disposition:
+                "$ref": "#/$defs/PullRequestDisposition"
+                description: "The disposition, within the lane."
+              risk:
+                "$ref": "#/$defs/IntegrationRisk"
+                description: "The planning risk: lower first."
+              contention:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "How many other ready or refreshable pull requests it overlaps (`PathOverlap`): an\nauthored path, a version bump or a release in common. Fewer first, because landing it\ninvalidates less."
+              dependents:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "How many open pull requests declare that they wait for this one and are not yet\nsatisfied: more first, because landing it unblocks them."
+              authored_paths:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "How many authored paths it changes: fewer first, a smaller change is cheaper to land\nand to undo."
+              created_at:
+                type: string
+                description: "When it was opened: older first, so easy new work cannot starve old work."
+              number:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "The number: the last tie-break, total."
+            required:
+              - lane
+              - disposition
+              - risk
+              - contention
+              - dependents
+              - authored_paths
+              - created_at
+              - number
+            description: "What the rank compares, in order: the first component that differs between two pull\nrequests decides which comes first. Each is a value of the assessment or of the queue\naround it, so the order can be explained and is the same whatever order the forge listed\nthe pull requests in."
+          ChangeShape:
+            type: object
+            properties:
+              authored:
+                type: array
+                items:
+                  type: string
+                description: "Authored (non-derived) paths the merge changes or conflicts on, in path order."
+              derived:
+                type: array
+                items:
+                  type: string
+                description: "Derived paths the merge changes or conflicts on, in path order."
+              version_bump:
+                type:
+                  - string
+                  - "null"
+                description: "The version the head declares in the crate manifest, when it is not the one its merge\nbase declares: the head raises the version."
+            required:
+              - authored
+              - derived
+            description: "What a head's merge into master changes, by kind: the authored paths a person wrote, the\nderived paths a generator writes (by the repository's `merge=derived` attributes on master),\nand the version the head declares when it raises the crate's. Decided from the same pair\nof commits as the relation to master, and cached under the same key beside it, so a change\nof either commit — a `.gitattributes` change on master is one — makes both stale together."
           QueueTallies:
             type: object
             properties:
@@ -19624,6 +21084,11 @@ capabilities:
                 format: uint64
                 minimum: 0
                 description: "When it was taken, seconds since the epoch."
+              mesh_claim:
+                type:
+                  - string
+                  - "null"
+                description: "The mesh claim that makes it exclusive across machines, `<stream>/<claim>`; absent\nwhen the lease guards this clone alone (`super::exclusive`)."
             required:
               - pid
               - host
@@ -19640,8 +21105,8 @@ capabilities:
                 type: string
                 description: "Who: the git identity, the process and the machine."
               action:
-                type: string
-                description: "What (`selected`, `refresh_selected`, `stale_decision`, `merge_attempted`,\n`merge_succeeded`, `merge_failed`, `verification_failed`, `refreshed`,\n`refresh_failed`, `closed_superseded`, `idle`, and the two transitions the wait is\nfolded from: `became_actionable`, `left_actionable`)."
+                "$ref": "#/$defs/IntegrationAction"
+                description: "What (`IntegrationAction`)."
               pr:
                 type:
                   - integer
@@ -19667,8 +21132,9 @@ capabilities:
               reasons:
                 type: array
                 items:
+                  description: "A reason code, `code` or `code:payload`, one of: `stacked_on:#N`, `base_is:BRANCH`, `draft`, `label:NAME`, `auto_merge_armed`, `merge_commit_not_allowed`, `superseded_by:#N`, `successor_open:#N`, `successor_not_landed:#N`, `successor_unread:#N`, `head_reachable_from_master`, `merge_changes_nothing`, `patch_ids_upstream`, `only_derived_artifacts_differ`, `relation_unknown:WHY`, `conflicts_on:COUNT`, `depends_on:#N`, `review:STATE`, `review_policy_unread`, `required_check_failed`, `behind_master:COMMITS`, `fork_head`, `required_checks:STATE`, `no_required_checks`, `required_checks_unread`, `contains_master`, `required_checks_passed`, `required_checks_skipped`, `executor_merge_refused:HEAD`, `executor_refresh_failed:MASTER`, `label_obsolete:NAME`, `dependency_cycle:#N`, `dependency_closed_unmerged:#N`, `dependency_unread:#N`. A code outside this list (an older trail's) is carried verbatim."
                   type: string
-                description: "The decision's reason codes."
+                description: "The decision's reasons; a code an older executor wrote reads back verbatim."
               detail:
                 type: string
                 description: "What happened, for a person."
@@ -19679,6 +21145,26 @@ capabilities:
                   format: uint64
                   minimum: 0
                 description: "On a selection: the other actionable pull requests the executor chose this one over,\nin rank order. The wait of each is folded from it (`super::wait`)."
+              head_after:
+                type:
+                  - string
+                  - "null"
+                description: "On `refreshed`: the head the executor pushed. The refresh pipeline waits only for\nthe checks of a head named here."
+              evidence:
+                type: array
+                items:
+                  "$ref": "#/$defs/IntegrationEvidence"
+                description: "On `merge_attempted`, `merge_succeeded`, `refresh_selected` and the closures:\nthe assessment's evidence the act was decided on."
+              class:
+                anyOf:
+                  - "$ref": "#/$defs/FailureClass"
+                  - type: "null"
+                description: "On a failure: its class, once one is decided."
+              merge_commit:
+                type:
+                  - string
+                  - "null"
+                description: "On `merge_succeeded`: the merge commit, once it is read."
             required:
               - at
               - actor
@@ -19686,6 +21172,100 @@ capabilities:
               - reasons
               - detail
             description: One entry of the audit trail.
+          FailureClass:
+            oneOf:
+              - type: string
+                const: stale
+                description: Master or the head moved since the decision.
+              - type: string
+                const: conflict
+                description: The merge of master conflicts.
+              - type: string
+                const: new_failing_check
+                description: A required check failed that had passed.
+              - type: string
+                const: review_revoked
+                description: An approval was withdrawn.
+              - type: string
+                const: transient
+                description: The forge or the network failed in a way that passes.
+              - type: string
+                const: policy_violation
+                description: The branch protection refused it.
+              - type: string
+                const: verification_failed
+                description: What landed could not be verified.
+              - type: string
+                const: unreadable
+                description: The forge or git could not be read.
+            description: "Why an act failed, as one class a person and a retry policy can act on. Every failed act\non the trail carries one (`class`), and the drain decides from it whether the next\ncandidate may be tried (`FailureClass::recoverable`) or the drain must stop."
+          IntegrationThroughput:
+            type: object
+            properties:
+              window_days:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "The window, in days, ending at the time the fold was asked for."
+              merges:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Pull requests merged in the window.
+              merges_per_day:
+                type: number
+                format: double
+                description: "`merges / window_days`."
+              median_actionable_to_merged_secs:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "Median seconds from becoming actionable to being merged; `None` when no merge in the\nwindow had a recorded `became_actionable` before it."
+              ci_rounds_per_merge:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "Median `refreshed` events between one merge and the next; `None` without a merge."
+              median_cycle_secs:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "Median seconds from a selection to its outcome; `None` when no selection in the window\nreached one."
+              stale_decisions:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Decisions refused because master or the head moved after they were taken.
+              merge_failures:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Merge attempts that failed.
+              verification_failures:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Merges whose resulting master failed verification.
+              unreadable_events:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Events in the trail whose time could not be read; they count toward nothing.
+            required:
+              - window_days
+              - merges
+              - merges_per_day
+              - stale_decisions
+              - merge_failures
+              - verification_failures
+              - unreadable_events
+            description: "The integrator's throughput over a window of the trail."
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::integration
@@ -31145,6 +32725,382 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/plan.rs
+  - id: product.domains
+    module: product
+    kind: query
+    title: The domains
+    description: "The few things the product controls, each declared once under the layer's features section with its promise and the failure it answers, and each holding the stable features that name it: their interfaces, the distinct claims, use cases, rules and capabilities behind them, and the operational moments they answer, all derived. A domain lists no features; a feature names its domain. The default is the stable set; pass status=any for every domain."
+    input:
+      name: DomainQuery
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          status:
+            type:
+              - string
+              - "null"
+            description: "Only domains of this status. Absent means the stable ones; pass `any` for every\ndomain the model holds."
+            default: null
+        description: Which domains to list.
+        title: DomainQuery
+    output:
+      name: DomainList
+      schema:
+        type: object
+        properties:
+          schema:
+            type: string
+            description: "`SCHEMA`."
+          fingerprint:
+            type: string
+            description: "The hash of the model's sources and derived facts."
+          count:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many domains are listed.
+          domains:
+            type: array
+            items:
+              "$ref": "#/$defs/ResolvedDomain"
+            description: "The domains, in presentation order: the stable ones, or every one with status=any."
+        required:
+          - schema
+          - fingerprint
+          - count
+          - domains
+        description: "Every domain of the product, each with what its features add up to."
+        title: DomainList
+        "$defs":
+          ResolvedDomain:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The identity, the slug and the file name."
+              title:
+                type: string
+                description: "The domain as a heading: one word or two."
+              headline:
+                type: string
+                description: "What the product does about this domain, in one sentence."
+              problem:
+                type: string
+                description: "The operational failure this domain answers, in one sentence."
+              status:
+                type: string
+                description: "`stable`, `draft` or `deprecated`."
+              weight:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: "Presentation order, lowest first."
+                default: 0
+              tags:
+                type: array
+                items:
+                  type: string
+                description: Free tags.
+                default: []
+              route:
+                type: string
+                description: "Derived: `/domains/<id>/`. Never authored; the schema refuses a `route` key."
+                default: ""
+              source:
+                type: string
+                description: "Derived: the repository-relative file the record came from."
+                default: ""
+              body:
+                type: string
+                description: "The Markdown body, without its front matter."
+              features:
+                type: array
+                items:
+                  "$ref": "#/$defs/DomainMember"
+                description: "Derived: the stable features that name it, in presentation order."
+              surfaces:
+                "$ref": "#/$defs/Surfaces"
+                description: "Derived: the interfaces any of its features is exposed through."
+              moments:
+                type: array
+                items:
+                  "$ref": "#/$defs/MomentRef"
+                description: "Derived: the operational moments its features answer, in the catalogue's order."
+              claim_refs:
+                type: array
+                items:
+                  "$ref": "#/$defs/ClaimRef"
+                description: "Derived: the distinct claims its features name, with their status and test."
+              use_case_refs:
+                type: array
+                items:
+                  "$ref": "#/$defs/UseCaseRef"
+                description: "Derived: the distinct use cases its features name."
+              counts:
+                "$ref": "#/$defs/DomainCounts"
+                description: "Derived: how much stands behind it."
+              evidence:
+                "$ref": "#/$defs/FeatureEvidence"
+                description: "Derived: what is guaranteed, by claim status."
+            required:
+              - id
+              - title
+              - headline
+              - problem
+              - status
+              - features
+              - surfaces
+              - moments
+              - claim_refs
+              - use_case_refs
+              - counts
+              - evidence
+            description: "One domain, resolved: the record as its file declares it, and everything derived from\nthe stable features that name it.\n\nThe declared record is flattened, so a reader sees one object: the domain's own fields\nbeside its derived members and counts.\n\n```\nuse majordomus_cli::product::{Domain, DomainCounts, FeatureEvidence, ResolvedDomain, Surfaces};\nlet domain: Domain = serde_json::from_value(serde_json::json!({\n    \"id\": \"context\", \"title\": \"Context\", \"status\": \"stable\",\n    \"headline\": \"h\", \"problem\": \"p\",\n}))\n.unwrap();\nlet resolved = ResolvedDomain {\n    domain,\n    features: vec![],\n    surfaces: Surfaces::default(),\n    moments: vec![],\n    claim_refs: vec![],\n    use_case_refs: vec![],\n    counts: DomainCounts::default(),\n    evidence: FeatureEvidence::default(),\n};\nlet v = serde_json::to_value(&resolved).unwrap();\nassert_eq!(v[\"id\"], \"context\", \"the record is flattened into the resolved view\");\nassert_eq!(v[\"counts\"][\"features\"], 0);\n```"
+          DomainMember:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The feature id.
+              label:
+                type: string
+                description: "The name a narrow column shows: the short title, or the title."
+              title:
+                type: string
+                description: The feature as a heading.
+              headline:
+                type: string
+                description: "The feature's promise."
+              route:
+                type: string
+                description: "`/features/<id>/`."
+              featured:
+                type: boolean
+                description: Whether the homepage shows it as a chapter.
+              surfaces:
+                "$ref": "#/$defs/Surfaces"
+                description: The interfaces it is exposed through.
+              claims:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many claims it names.
+              tested:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many of them are guaranteed and name the test that settles them.
+              use_cases:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many use cases show it in use.
+            required:
+              - id
+              - label
+              - title
+              - headline
+              - route
+              - featured
+              - surfaces
+              - claims
+              - tested
+              - use_cases
+            description: "One stable feature of a domain, as a card shows it.\n\n```\nuse majordomus_cli::product::{DomainMember, Surfaces};\nlet m = DomainMember {\n    id: \"finish-contract\".into(),\n    label: \"Finish contract\".into(),\n    title: \"Done is a contract\".into(),\n    headline: \"A worker does not define its own completion.\".into(),\n    route: \"/features/finish-contract/\".into(),\n    featured: true,\n    surfaces: Surfaces::default(),\n    claims: 3,\n    tested: 2,\n    use_cases: 1,\n};\nlet v = serde_json::to_value(&m).unwrap();\nassert_eq!(v[\"tested\"], 2);\nassert_eq!(v[\"surfaces\"][\"cli\"], false);\n```"
+          Surfaces:
+            type: object
+            properties:
+              cli:
+                type: boolean
+                description: "The command line: the executable's own, or the shell tool's."
+              api:
+                type: boolean
+                description: "The HTTP routes under `/api/v1/`, and the OpenAPI document over them."
+              mcp:
+                type: boolean
+                description: "MCP: a tool, or a resource."
+              cockpit:
+                type: boolean
+                description: The Cockpit.
+              docs:
+                type: boolean
+                description: The documentation.
+            required:
+              - cli
+              - api
+              - mcp
+              - cockpit
+              - docs
+            description: "The interfaces a feature is exposed through, decided from what its references project\nand from nothing a file says. Each is a fact with a reason a reader can check: `cli` is\ntrue when a module of the feature has a capability with a command-line path or the\nfeature names a shell command; `api` when a module has an HTTP route; `mcp` when a module\nhas an MCP tool or resource, or the feature names a kind, since every object of the layer\nis an MCP resource; `cockpit` when the feature names a Cockpit area or a module, since\nevery capability has a Cockpit page; `docs` when it names a document."
+          MomentRef:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The moment id.
+              title:
+                type: string
+                description: The title.
+              hook:
+                type: string
+                description: The first-person line an index shows.
+              route:
+                type: string
+                description: "`/why/<id>/`."
+            required:
+              - id
+              - title
+              - hook
+              - route
+            description: "One operational moment the feature answers: derived from the moments that name any of\nthe feature's commands, capabilities, claims or rules."
+          ClaimRef:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The claim id.
+              claim:
+                type: string
+                description: The sentence.
+              status:
+                type: string
+                description: "`guaranteed`, `advisory`, `planned` or `rejected`."
+              test:
+                type:
+                  - string
+                  - "null"
+                description: "The test that settles it, as `docs/CLAIMS.yaml` records it — the one field that makes a\nclaim checkable rather than stated. Absent where the claim declares none, and where it\ndeclares `-`: a planned or rejected claim has nothing to run yet, and rendering a dash\nas a test would be a projection inventing evidence."
+            required:
+              - id
+              - claim
+              - status
+            description: "One claim the feature names, with the status the matrix gives it."
+          UseCaseRef:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The use case id.
+              title:
+                type: string
+                description: The title.
+              category:
+                type:
+                  - string
+                  - "null"
+                description: The category it is filed under.
+            required:
+              - id
+              - title
+            description: One use case the feature names.
+          DomainCounts:
+            type: object
+            properties:
+              features:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Stable features filed under it.
+              claims:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Distinct claims its features name.
+              tested:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Distinct claims that are guaranteed and name the test that settles them: what the\nclaims declare, not whether a recorded run supports them (that verdict is the\nevidence ledger's)."
+              use_cases:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Distinct use cases its features name.
+              rules:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Distinct rules its features name.
+              enforced_rules:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Distinct rules among them the tool enforces.
+              capabilities:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Distinct capabilities behind its features.
+              moments:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Distinct operational moments its features answer.
+            required:
+              - features
+              - claims
+              - tested
+              - use_cases
+              - rules
+              - enforced_rules
+              - capabilities
+              - moments
+            description: "How much stands behind a domain: sums and distinct counts over its stable features.\n\n```\nuse majordomus_cli::product::DomainCounts;\nlet empty = DomainCounts::default();\nassert_eq!(empty.features, 0);\nlet v = serde_json::to_value(&empty).unwrap();\nfor key in [\"features\", \"claims\", \"tested\", \"use_cases\", \"rules\", \"enforced_rules\", \"capabilities\", \"moments\"] {\n    assert_eq!(v[key], 0, \"{key} is published, and zero for a domain nothing names\");\n}\n```"
+          FeatureEvidence:
+            type: object
+            properties:
+              claims:
+                type: object
+                additionalProperties:
+                  type: integer
+                  format: uint
+                  minimum: 0
+                description: "Claims by status: `guaranteed`, `advisory`, `planned`, `rejected`."
+              modules:
+                type: object
+                additionalProperties:
+                  type: integer
+                  format: uint
+                  minimum: 0
+                description: The modules it names by stability.
+            required:
+              - claims
+              - modules
+            description: "What is guaranteed about a feature, counted from the claims it names: never a word a\nperson wrote about the feature's maturity."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::product
+    exposure:
+      mcp:
+        tool: majordomus_product_domains
+        resource:
+          uri: majordomus://product/domains
+          name: product-domains
+      http:
+        method: GET
+        path: /api/v1/product/domains
+      cli:
+        path:
+          - product
+          - domains
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - product
+      - domains
+      - introspection
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 4
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/product.rs
   - id: product.feature
     module: product
     kind: query
@@ -31198,6 +33154,11 @@ capabilities:
             type: boolean
             description: Whether the homepage shows it as a chapter.
             default: false
+          domain:
+            type:
+              - string
+              - "null"
+            description: "The product domain it belongs to, by id: exactly one. Editorial; the domain's\nmembers are derived from this field and listed nowhere else."
           areas:
             type: array
             items:
@@ -31362,6 +33323,11 @@ capabilities:
           evidence:
             "$ref": "#/$defs/FeatureEvidence"
             description: "Derived: what is guaranteed."
+          domain_ref:
+            anyOf:
+              - "$ref": "#/$defs/DomainRef"
+              - type: "null"
+            description: "Derived: the domain its `domain` names, with its title and route, when that\nresolves. Absent for a feature that names none or names one that does not exist."
         required:
           - id
           - title
@@ -31538,7 +33504,7 @@ capabilities:
                 description: "`blocking` or `advisory`."
               enforced:
                 type: boolean
-                description: "Whether the tool enforces it: the rule carries an `x-majordomus` block."
+                description: "Whether a machine decides it: the block names a validator or tests, not only a reason\na person reviews it."
               path:
                 type: string
                 description: Repository-relative path.
@@ -31794,6 +33760,23 @@ capabilities:
               - claims
               - modules
             description: "What is guaranteed about a feature, counted from the claims it names: never a word a\nperson wrote about the feature's maturity."
+          DomainRef:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The domain id.
+              title:
+                type: string
+                description: The domain as a heading.
+              route:
+                type: string
+                description: "`/domains/<id>/`."
+            required:
+              - id
+              - title
+              - route
+            description: "A domain as a feature points at it: enough for a breadcrumb.\n\n```\nuse majordomus_cli::product::DomainRef;\nlet crumb = DomainRef {\n    id: \"context\".into(),\n    title: \"Context\".into(),\n    route: \"/domains/context/\".into(),\n};\nlet v = serde_json::to_value(&crumb).unwrap();\nassert_eq!(v[\"route\"], \"/domains/context/\");\nassert_eq!(serde_json::from_value::<DomainRef>(v).unwrap(), crumb);\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::product
@@ -31827,7 +33810,7 @@ capabilities:
     module: product
     kind: query
     title: The features
-    description: "Every product feature this repository declares, narrowed by any of the facets the model derives — featured, area, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too."
+    description: "Every product feature this repository declares, narrowed by any of the facets the model derives — featured, area, domain, module, command, surface, text — with the interfaces each is exposed through, the counts behind it and what is guaranteed about it, none of which its file states. The default is the stable set; pass status=any for the drafts too."
     input:
       name: ProductQuery
       schema:
@@ -31851,6 +33834,12 @@ capabilities:
               - string
               - "null"
             description: Only features serving this operational area.
+            default: null
+          domain:
+            type:
+              - string
+              - "null"
+            description: Only features filed under this product domain.
             default: null
           module:
             type:
@@ -32028,6 +34017,11 @@ capabilities:
               featured:
                 type: boolean
                 description: Whether the homepage shows it.
+              domain:
+                type:
+                  - string
+                  - "null"
+                description: "The product domain it belongs to, when it names one."
               areas:
                 type: array
                 items:
@@ -39461,11 +41455,11 @@ capabilities:
                 description: A behavioural case a runner drives; executions of it are recorded.
               - type: string
                 const: gate
-                description: An executable check a CI gate runs as its own command.
+                description: "An executable check a CI gate runs as its own command, or a unit-test module the\ngate running the crate's `cargo test` compiles."
               - type: string
                 const: unknown
                 description: "Neither. Nothing can run it, so nothing can ever record it."
-            description: "What a path a rule names actually is, decided by what drives it rather than by where it\nsits.\n\nThe corpus names two kinds and this distinction is the difference between a verdict and\na mechanism. A **case** is driven by a runner, so an execution of it can be recorded and\nthe repository can show that it passed. A **gate** is an executable check a CI gate runs\nas its own command: it refuses violations on every run, and this repository records no\nverdict for it, so what can be shown is the mechanism and not the result. Anything else\na rule names is proof only in prose.\n# Example\n\n```\nuse majordomus_cli::rules::ArtifactKind;\nassert_eq!(ArtifactKind::Case.label(), \"case\");\nassert_eq!(ArtifactKind::Gate.label(), \"gate\");\n```"
+            description: "What a path a rule names actually is, decided by what drives it rather than by where it\nsits.\n\nThe corpus names two kinds and this distinction is the difference between a verdict and\na mechanism. A **case** is driven by a runner, so an execution of it can be recorded and\nthe repository can show that it passed. A **gate** is an executable check a CI gate runs\nas its own command, or a unit-test module (`src/<module>/tests.rs`) the gate running the\ncrate's `cargo test` compiles: it refuses violations on every run, and this repository\nrecords no verdict for it, so what can be shown is the mechanism and not the result.\nAnything else a rule names is proof only in prose.\n# Example\n\n```\nuse majordomus_cli::rules::ArtifactKind;\nassert_eq!(ArtifactKind::Case.label(), \"case\");\nassert_eq!(ArtifactKind::Gate.label(), \"gate\");\n```"
           ProofState:
             oneOf:
               - type: string
@@ -40082,11 +42076,11 @@ capabilities:
                 description: A behavioural case a runner drives; executions of it are recorded.
               - type: string
                 const: gate
-                description: An executable check a CI gate runs as its own command.
+                description: "An executable check a CI gate runs as its own command, or a unit-test module the\ngate running the crate's `cargo test` compiles."
               - type: string
                 const: unknown
                 description: "Neither. Nothing can run it, so nothing can ever record it."
-            description: "What a path a rule names actually is, decided by what drives it rather than by where it\nsits.\n\nThe corpus names two kinds and this distinction is the difference between a verdict and\na mechanism. A **case** is driven by a runner, so an execution of it can be recorded and\nthe repository can show that it passed. A **gate** is an executable check a CI gate runs\nas its own command: it refuses violations on every run, and this repository records no\nverdict for it, so what can be shown is the mechanism and not the result. Anything else\na rule names is proof only in prose.\n# Example\n\n```\nuse majordomus_cli::rules::ArtifactKind;\nassert_eq!(ArtifactKind::Case.label(), \"case\");\nassert_eq!(ArtifactKind::Gate.label(), \"gate\");\n```"
+            description: "What a path a rule names actually is, decided by what drives it rather than by where it\nsits.\n\nThe corpus names two kinds and this distinction is the difference between a verdict and\na mechanism. A **case** is driven by a runner, so an execution of it can be recorded and\nthe repository can show that it passed. A **gate** is an executable check a CI gate runs\nas its own command, or a unit-test module (`src/<module>/tests.rs`) the gate running the\ncrate's `cargo test` compiles: it refuses violations on every run, and this repository\nrecords no verdict for it, so what can be shown is the mechanism and not the result.\nAnything else a rule names is proof only in prose.\n# Example\n\n```\nuse majordomus_cli::rules::ArtifactKind;\nassert_eq!(ArtifactKind::Case.label(), \"case\");\nassert_eq!(ArtifactKind::Gate.label(), \"gate\");\n```"
           ProofState:
             oneOf:
               - type: string
@@ -46291,6 +48285,7 @@ declarative_kinds:
   - deployment
   - distribution-model
   - document
+  - domain
   - feature
   - gap
   - implementation
