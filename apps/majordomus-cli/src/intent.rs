@@ -611,9 +611,11 @@ impl EvidenceLookup for RepositoryEvidence<'_> {
         // served by is a change to `.ai/repo/project/`, and it must not stale the pass that
         // proves the criterion, whether or not the repository declares the code under test
         let mut comparison = self.comparison(&e.commit);
-        if let Some(changed) = comparison.changed.as_mut() {
-            changed.retain(|p| !within(p, PLAN_RECORDS));
-        }
+        // a comparison git could not make has no list to filter, and stays unknown
+        comparison
+            .changed
+            .iter_mut()
+            .for_each(|changed| changed.retain(|p| !within(p, PLAN_RECORDS)));
         let inputs = self.inputs(id, scope, comparison.changed.as_ref());
         let judgement = freshness(
             Recorded::Ran(e),
