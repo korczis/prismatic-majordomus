@@ -45,6 +45,9 @@
 # the deployment contract: the section's own closure, read without a Rust toolchain
 # shellcheck source=deployment.sh
 . "$MJ_LIB_DIR/deployment.sh"
+# the bootstrap validator asks what update would render now, through update's own renderer
+# shellcheck source=update.sh
+. "$MJ_LIB_DIR/update.sh"
 
 MJ_DOCTOR_MISSING=0
 mj_cmd_doctor() {
@@ -248,22 +251,88 @@ mj_validate_projection() {
 # exists in one provider's file and nowhere else is the two-rulebooks failure this tool was
 # distilled from, so a generated target that holds a rule corpus fails here.
 mj_validate_bootstrap() {
-  local j=0 tgt bad=0
+  local j=0 tgt mode bad=0
   if [ -f "$MJ_ROOT/README.md" ]; then
     if grep -q 'AGENTS\.md' "$MJ_ROOT/README.md"; then mj_doctrine_ok bootstrap "README.md" "names AGENTS.md"
     else mj_doctrine_fail bootstrap "README.md" "does not name AGENTS.md; a reader cannot find the agent bootstrap" "grep -n AGENTS.md README.md"; bad=1; fi
   fi
   while [ -n "$(mj_pol "projections.$j.target")" ]; do
-    tgt="$(mj_pol "projections.$j.target")"; j=$((j+1))
+    tgt="$(mj_pol "projections.$j.target")"; mode="$(mj_projection_mode "$j")"; j=$((j+1))
     [ -f "$MJ_ROOT/$tgt" ] || continue   # projection_integrity reports absence
     if ! grep -q '\.ai/README\.md' "$MJ_ROOT/$tgt"; then
       mj_doctrine_fail bootstrap "$tgt" "does not point at .ai/README.md; a worker reading it never reaches the layer" "grep -n '.ai/README.md' $tgt"; bad=1
     elif grep -qE '^\| *`?(profile|routine|implementation)`? *\||^- \*\*[A-Za-z].*\*\*|^### (Rules|Ten rules|Lifecycle|Finish contract)' "$MJ_ROOT/$tgt"; then
       mj_doctrine_fail bootstrap "$tgt" "carries a rule corpus of its own (a profile table, rule bullets or a rules section); rules live under .ai/repo/rules/" "grep -nE '^- \*\*|^### ' $tgt"; bad=1
     fi
+    mj_bootstrap_rule_refs "$tgt" "$mode" "$(mj_pol "projections.$((j-1)).provider")" || bad=1
   done
-  [ "$bad" = 0 ] && [ "$j" -gt 0 ] && mj_doctrine_ok bootstrap "$j projection(s)" "each points at .ai/README.md and carries no rule of its own"
+  [ "$bad" = 0 ] && [ "$j" -gt 0 ] && mj_doctrine_ok bootstrap "$j projection(s)" "each points at .ai/README.md, carries no rule of its own and names only rules in force"
   return 0
+}
+
+# A generated file that names a rule the repository does not have fails for the reason one
+# that carries a rule of its own does: the rule exists in that file and nowhere else, and a
+# worker who reads it goes looking for a rule that is not there. So every rule id the
+# generated content names resolves in the effective set, as `majordomus rules list` lists it.
+# The links check beside the budget is the same guard for paths; this one is for rule ids,
+# which are not links and which it therefore never saw.
+#
+# The generated content only — the whole file in file mode, the region in region mode. The
+# host document around a region is the repository's own prose, which no generator promised
+# anything about (the budget doctrine judges the same span for the same reason), and prose
+# says `project.json` often enough that reading it would teach people to ignore the finding.
+# A malformed region is the projection doctrine's finding and is not read here. Line numbers
+# are the file's, so a reader can go to them.
+#
+# The grade is whether `majordomus update` fixes it, because in an adopter the pre-commit
+# hook is doctor, and a FAIL that appears on upgrade would refuse every commit until the
+# person found out what to run:
+#   WARN  the content still matches its stamp — an older template wrote it — and what update
+#         renders from the current template no longer names the id: a stale bootstrap, and
+#         `majordomus update` is the whole fix. Under watch, drift.
+#   FAIL  the current template names the id itself, so update would write it again; or the
+#         content no longer matches its stamp, so somebody wrote the line and update refuses
+#         to replace it.
+# What update would render is asked of update's own renderer (mj_render_current), never
+# rebuilt here.
+#
+# mj_bootstrap_rule_refs TARGET MODE PROVIDER -> 0 when every reference resolves, 1 after
+# reporting each
+mj_bootstrap_rule_refs() {
+  local tgt="$1" mode="$2" prov="$3" line ref found rendered current="" st tpl lvl bad=0
+  [ "$mode" = region ] && { mj_region_extract "$MJ_ROOT/$tgt" >/dev/null 2>&1 || return 0; }
+  found="$(mj_rule_refs_unresolved "$MJ_ROOT/$tgt" "$mode")"
+  [ -n "$found" ] || return 0
+  # the ids the current template would write again, each once, space-delimited; in a
+  # subshell, because the renderer loads every profile and doctor keeps its own state
+  rendered="$(mktemp "${TMPDIR:-/tmp}/mj.rr.XXXXXX")"
+  if ( mj_render_current "$prov" ) > "$rendered" 2>/dev/null; then
+    current=" $(mj_rule_refs_unresolved "$rendered" file | cut -f2 | LC_ALL=C sort -u | tr '\n' ' ')"
+  fi
+  rm -f "$rendered"
+  st="$(mj_projection_status "$tgt" "$mode" "$prov")"; st="${st%% *}"
+  tpl="$(mj_provider_template "$prov" 2>/dev/null || true)"; tpl="$(mj_rel "$tpl")"
+  while IFS="$MJ_TAB" read -r line ref; do
+    bad=1
+    case "$current" in
+      *" $ref "*)
+        mj_doctrine_fail rule-refs "$tgt" \
+          "$tgt line $line names rule $ref, which is not in the effective rule set, and the current template $tpl names it too, so majordomus update would write it again (add the rule under .ai/repo/rules/project/, or drop it from the template)" \
+          "sed -n '${line}p' $tgt; majordomus rules show ${ref%@*}"
+        continue ;;
+    esac
+    if [ "$st" = ok ]; then
+      if [ "$MJ_DOCTRINE_CMD" = watch ]; then lvl=mj_drift; else lvl=mj_warn; fi
+      "$lvl" rule-refs "$tgt" \
+        "stale bootstrap: $tgt line $line names rule $ref, which is not in the effective rule set; an older template wrote it and the current one does not, so run majordomus update" \
+        "majordomus update"
+    else
+      mj_doctrine_fail rule-refs "$tgt" \
+        "$tgt line $line names rule $ref, which is not in the effective rule set, in content that no longer matches its stamp, so somebody wrote it and majordomus update will not replace it (add the rule under .ai/repo/rules/project/, or remove the line)" \
+        "sed -n '${line}p' $tgt; majordomus rules show ${ref%@*}"
+    fi
+  done <<< "$found"
+  return "$bad"
 }
 
 mj_validate_budget() {

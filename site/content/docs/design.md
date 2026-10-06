@@ -518,7 +518,9 @@ flowchart TD
   rule of its own. The rules are read from `.ai/repo/rules/` by every worker alike, so a
   rule that exists for one provider and not another cannot happen; `doctor` fails a
   projection that carries a rule corpus of its own (a profile table, rule bullets, a
-  rules, lifecycle or finish-contract heading), and a `README.md` that does not name
+  rules, lifecycle or finish-contract heading), one whose generated content names a rule
+  id the effective rule set does not provide (a warning instead when an older template
+  wrote it and `majordomus update` would remove it), and a `README.md` that does not name
   `AGENTS.md`.
 - Adapters translate that bootstrap into a provider's format and nothing more. The
   templates ship with the tool; a repository that needs a different adapter overrides
