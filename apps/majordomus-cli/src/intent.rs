@@ -1808,16 +1808,40 @@ pub struct IntentPreflight {
     pub refusal: Option<String>,
 }
 
+/// The coverage codes of the failures about an issue's own link, each as the preflight cause it
+/// is. These are every `FAIL` finding coverage makes with an issue as its subject (its other
+/// failure, `criterion_uncovered`, is about a criterion), so every broken link validation
+/// reports is refused here. A failure coverage learns to make about an issue belongs in this
+/// table too, or the preflight would let that broken link through.
+const LINK_CAUSES: [(&str, IntentPreflightCause); 5] = [
+    (
+        "issue_without_purpose",
+        IntentPreflightCause::IssueServesNothing,
+    ),
+    (
+        "serves_outside_milestone",
+        IntentPreflightCause::ServesAnotherIntent,
+    ),
+    (
+        "malformed_serves",
+        IntentPreflightCause::ServesUnknownCriterion,
+    ),
+    (
+        "serves_unknown_intent",
+        IntentPreflightCause::ServesUnknownCriterion,
+    ),
+    (
+        "serves_unknown_criterion",
+        IntentPreflightCause::ServesUnknownCriterion,
+    ),
+];
+
 /// The coverage code of a finding about an issue's own link, as the preflight cause it is.
 fn link_cause(code: &str) -> Option<IntentPreflightCause> {
-    Some(match code {
-        "issue_without_purpose" => IntentPreflightCause::IssueServesNothing,
-        "serves_outside_milestone" => IntentPreflightCause::ServesAnotherIntent,
-        "malformed_serves" | "serves_unknown_intent" | "serves_unknown_criterion" => {
-            IntentPreflightCause::ServesUnknownCriterion
-        }
-        _ => return None,
-    })
+    LINK_CAUSES
+        .iter()
+        .find(|(c, _)| *c == code)
+        .map(|(_, cause)| *cause)
 }
 
 impl Intents {
@@ -1925,20 +1949,20 @@ impl Intents {
         let mut reached: Vec<(String, BTreeSet<String>)> = Vec::new();
 
         for i in &issues {
-            let mut mine = Vec::new();
-            for f in cov
+            let mut mine: Vec<IntentPreflightRefusal> = cov
                 .findings
                 .iter()
                 .filter(|f| f.level == FAIL && f.subject == i.id)
-            {
-                if let Some(cause) = link_cause(&f.code) {
-                    mine.push(IntentPreflightRefusal::new(
-                        Some(&i.id),
-                        cause,
-                        format!("{} {}", i.id, f.message),
-                    ));
-                }
-            }
+                .filter_map(|f| {
+                    link_cause(&f.code).map(|cause| {
+                        IntentPreflightRefusal::new(
+                            Some(&i.id),
+                            cause,
+                            format!("{} {}", i.id, f.message),
+                        )
+                    })
+                })
+                .collect();
             let under: Vec<String> = cov
                 .purpose(&i.id)
                 .map(|p| p.intents.clone())
@@ -1995,10 +2019,12 @@ impl Intents {
                     None => by_intent.push((*iid, vec![(*cid).to_string()])),
                 }
             }
-            for (iid, criteria) in by_intent {
-                let Some(view) = self.intent(iid) else {
-                    continue;
-                };
+            // every intent reached is one of these intents: coverage lists criteria only of the
+            // outlines built from them, and a cancelled issue's links are filtered by the same
+            for (iid, view, criteria) in by_intent
+                .into_iter()
+                .filter_map(|(iid, criteria)| self.intent(iid).map(|view| (iid, view, criteria)))
+            {
                 matches.push(IntentPreflightMatch {
                     intent: view.id.clone(),
                     title: view.title.clone(),
@@ -2055,8 +2081,8 @@ impl Intents {
         let intents: Vec<IntentPreflightIntent> = reached
             .iter()
             .filter_map(|(id, criteria)| {
-                let view = self.intent(id)?;
-                Some(self.held_to(view, criteria, gaps, critiques))
+                self.intent(id)
+                    .map(|view| self.held_to(view, criteria, gaps, critiques))
             })
             .collect();
         let mut governance: Vec<String> = Vec::new();
@@ -2796,6 +2822,60 @@ mod tests {
         let closed = i.preflight(&p, &[], &reviewed, None, &["site/x.md".into()]);
         assert_eq!(causes(&closed), [("", NoIssueCoversPaths)]);
         assert!(closed.refusal.unwrap().contains("no open issue"));
+    }
+
+    #[test]
+    fn preflight_keeps_a_cancelled_issues_links_and_gathers_the_criteria_of_one_intent() {
+        use IntentPreflightCause::*;
+        let cancelled = |i: PlanIssue| PlanIssue {
+            status: "CANCELLED".into(),
+            ..i
+        };
+        let p = plan(
+            vec![milestone("m", "ACTIVE")],
+            vec![
+                serving("I1", "m", &["lib"], &["x#case", "x#other"]),
+                cancelled(serving("I2", "m", &["docs"], &["x#case"])),
+                cancelled(serving("I3", "m", &["site"], &[])),
+                serving("I4", "m", &["lib/x"], &["x#other"]),
+            ],
+        );
+        let x = record("x", &["m"], &[CASE, ("other", "test", "test/cases/2_y.sh")]);
+        let i = Intents::derive(vec![x], &p, &Table::new());
+        let reviewed = [critique("x", &[])];
+        let one = |id: &str| i.preflight(&p, &[], &reviewed, Some(id), &[]);
+
+        // two criteria of one intent are one match carrying both
+        let both = one("I1");
+        assert_eq!(both.verdict, IntentPreflightVerdict::Serves);
+        assert_eq!(both.matches.len(), 1, "{:?}", both.matches);
+        assert_eq!(both.matches[0].criteria, ["case", "other"]);
+        assert_eq!(both.intents.len(), 1);
+
+        // a cancelled issue is not live, so coverage lists it under no criterion: what it
+        // declared it served is still what it was for
+        let gone = one("I2");
+        assert_eq!(
+            gone.verdict,
+            IntentPreflightVerdict::Serves,
+            "{:?}",
+            gone.refusals
+        );
+        assert_eq!(gone.matches[0].criteria, ["case"]);
+        // and a cancelled issue that served nothing under the milestone of x is refused
+        assert_eq!(causes(&one("I3")), [("I3", IssueServesNothing)]);
+
+        // by path, two issues reach the same intent: it is held to once, with both criteria
+        let by_path = i.preflight(&p, &[], &reviewed, None, &["lib/x/a.rs".into()]);
+        assert_eq!(by_path.verdict, IntentPreflightVerdict::Serves);
+        assert_eq!(by_path.issues.len(), 2);
+        assert_eq!(by_path.intents.len(), 1);
+        let held: Vec<&str> = by_path.intents[0]
+            .criteria
+            .iter()
+            .map(|c| c.id.as_str())
+            .collect();
+        assert_eq!(held, ["case", "other"]);
     }
 
     #[test]

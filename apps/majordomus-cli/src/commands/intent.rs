@@ -467,6 +467,60 @@ mod tests {
     use super::*;
     use crate::synthetic::SyntheticRepository;
 
+    /// Every part of an answer has its line: an issue serving nothing, an intent with
+    /// non-goals, an open blocking finding and a recorded gap, one with no critique at all,
+    /// the governance and each refusal with its cause.
+    #[test]
+    fn the_preflight_text_says_every_part_of_the_answer() {
+        let answer = json!({
+            "verdict": "refused",
+            "issues": [
+                {"issue": "I1", "verdict": "serves", "milestone": "m", "serves": ["x#case"]},
+                {"issue": "I2", "verdict": "refused", "milestone": "m", "serves": []}
+            ],
+            "intents": [
+                {"id": "x", "stage": "active", "title": "The x", "statement": "x holds",
+                 "criteria": [{"id": "case", "state": "current"}],
+                 "invariants": ["never y"], "non_goals": ["not z"],
+                 "critique": {"reviewed_at": "c0ffee", "reviewed_by": "a reviewer",
+                              "open_blocking": [{"id": "F1"}, {"id": "F2"}]},
+                 "gap": {"observed_at": "2026-10-06T00:00:00Z",
+                         "conditions": [{"criterion": "case", "state_text": "not met"}]}},
+                {"id": "w", "stage": "active", "title": "The w", "statement": "w holds",
+                 "criteria": [], "invariants": [], "non_goals": [], "critique": null,
+                 "gap": null}
+            ],
+            "governance": ["rule:project.alpha"],
+            "refusals": [{"cause": "issue_serves_nothing", "message": "I2 serves nothing"}]
+        });
+        let text = preflight_text(&answer);
+        for line in [
+            "verdict     refused",
+            "issue       I1  serves  milestone m  serves x#case",
+            "issue       I2  refused  milestone m",
+            "intent      x  active  The x",
+            "  statement   x holds",
+            "  criterion   case  current",
+            "  invariant   never y",
+            "  non-goal    not z",
+            "  critique    reviewed at c0ffee by a reviewer; open blocking: F1, F2",
+            "  gap         observed at 2026-10-06T00:00:00Z: case not met",
+            "intent      w  active  The w",
+            "  critique    none recorded",
+            "governance  rule:project.alpha",
+            "refusal     issue_serves_nothing  I2 serves nothing",
+        ] {
+            assert!(
+                text.lines().any(|l| l == line),
+                "{line:?} missing from\n{text}"
+            );
+        }
+        // an issue that serves nothing says no `serves` at all
+        assert!(text
+            .lines()
+            .any(|l| l.ends_with("milestone m") && l.contains("I2")));
+    }
+
     #[test]
     fn each_verb_reaches_its_capability_and_an_unexposed_one_is_named() {
         let repo = SyntheticRepository::small().unwrap();
