@@ -370,6 +370,7 @@ A run measures the checkout it left with `evidence stamp`, and `evidence record`
 the run wrote, carries that measurement into each result with the digest, the time and the
 origin, and merges it into the ledger.
 
+<!-- majordomus:unrun each pair follows a whole suite run and a whole crate run, which no documentation check repeats; case 505 runs `evidence stamp` and `evidence record --provenance` for both producers over a fixture report -->
 ```sh
 MJ_TEST_REPORT=suite.tsv bash test/run.sh
 majordomus evidence stamp --producer suite --report suite.tsv --out suite.provenance.json
