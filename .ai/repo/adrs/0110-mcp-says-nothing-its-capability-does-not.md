@@ -132,11 +132,14 @@ which is exactly what the annotations exist to inform.
 The conformance suite written beside this decision (`tests/mcp_conformance.rs`) swept every
 resource and every read tool for a secret planted in the environment and the repository.
 One reached a client: a credential embedded in the `origin` remote's URL was answered
-verbatim by `session.identity`, over MCP and over HTTP, and the shell tool wrote the same
+verbatim by `session_domain.identity`, over MCP and over HTTP, and the shell tool wrote the same
 string as the repository's identity into shared records, which are tracked and pushed.
-The URL is now reported and written without its credentials (`session::public_url`,
-`mj_url_public`), and a record written before is still recognised as this repository's.
-Records already on disk are not rewritten by anything here.
+That is fixed where it was made and not here: on its own branch
+(`fix/a-remote-url-is-published-without-its-credential`, `test/cases/941`), ahead of this
+decision, because a credential does not wait for an architecture. Until that branch is in
+the history this one is merged with, the suite's test
+`no_secret_in_the_environment_or_the_repository_reaches_a_client` fails here, and is left
+failing rather than ignored.
 
 It also measured a gap this decision does not close. The registry cannot say that a
 capability's answer is a function of its input and the repository alone: `properties.rs`
