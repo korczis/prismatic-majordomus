@@ -1033,9 +1033,73 @@ mj_load_profile() {
 }
 mj_pro() { [ -n "${MJ_PRO_FLAT:-}" ] || return 0; mj_yget "$MJ_PRO_FLAT" "$1"; }
 
+# ---------------------------------------------------------------- temporary files
+# Every temporary file a command makes lives under one directory of the process's own, and
+# the exit trap removes that directory. Before this, the trap removed the four files it knew
+# by name while some hundred and fifty `mktemp` call sites made others: the manifest and
+# event flattenings, the session and context-document workspaces, the project model's
+# directory of two hundred and sixty files, and everything made inside a command
+# substitution, whose subshell has no exit trap to run. One session start left 25 entries
+# and 1335 files in TMPDIR; a provider hook runs the tool on every prompt, so the pile grew
+# for as long as the machine stayed up, and on 2026-10-07 macOS spent 7 min 38 s of a login
+# deleting it, because it empties TMPDIR at boot before anything else may start.
+#
+# The call sites are not rewritten. They ask for "${TMPDIR:-/tmp}/<name>", and the function
+# below answers that request under the root instead; a template anywhere else — beside a
+# record about to be published, inside a workspace already under the root, in any directory
+# below TMPDIR rather than in it — is passed through untouched, because that location is the
+# point of it. TMPDIR itself is not moved:
+# a verify command, an editor or a server this process starts inherits the environment and
+# may outlive the directory.
+#
+# The root is made by the entry point, once, before a command runs, and not on first use: a
+# first use inside a command substitution would name a root only that subshell knows. A
+# script that sources this library without asking for a root gets `mktemp` unchanged.
+MJ_TMP_ROOT=""
+mj_tmp_root_init() {
+  local base="${TMPDIR:-/tmp}"
+  MJ_TMP_ROOT="$(command mktemp -d "${base%/}/mj.$$.XXXXXX")"
+  # A root whose process is gone is removed by the next process to start. The exit trap
+  # cannot be the only remover: a shell that dies of PIPE runs none, and
+  # `majordomus doctor | grep -q OK` — a reader that closes the pipe once it has its
+  # answer — is how half the cases ask a question, so each such command left its root
+  # behind whole, as does a KILL. Trapping PIPE would remove it, and would also put a
+  # "write error: Broken pipe" line on stderr that was never there. So the root carries its
+  # process id, and here every root of this user's whose process no longer exists goes. A
+  # process id that has been reused keeps a dead root until that process ends too; nothing
+  # living is removed, since `kill -0` answers for a process this user can signal.
+  local stale pid
+  for stale in "${base%/}"/mj.[0-9]*.??????; do
+    [ -d "$stale" ] && [ -O "$stale" ] || continue
+    pid="${stale##*/mj.}"; pid="${pid%.*}"
+    case "$pid" in ''|*[!0-9]*) continue ;; esac
+    kill -0 "$pid" 2>/dev/null || rm -rf "$stale" 2>/dev/null || true
+  done
+}
+mktemp() {
+  [ -n "$MJ_TMP_ROOT" ] || { command mktemp "$@"; return; }
+  local base="${TMPDIR:-/tmp}" a rest; local -a args=()
+  base="${base%/}"
+  for a in "$@"; do
+    # only a name directly in TMPDIR is moved. A path that merely lies below it is somewhere
+    # in particular: a workspace under the root, or a repository that itself lives in /tmp,
+    # as every fixture does on a machine where TMPDIR is unset, and there a template beside
+    # a record was sent to a directory that did not exist.
+    case "$a" in
+      "$base"/*)
+        rest="${a#"$base"/}"; rest="${rest#/}"
+        case "$rest" in */*) ;; *) a="$MJ_TMP_ROOT/$rest" ;; esac ;;
+    esac
+    args+=("$a")
+  done
+  command mktemp "${args[@]+"${args[@]}"}"
+}
+
 mj_cleanup() {
   mj_timing_report
   rm -f "${MJ_CUR_FLAT:-}" "${MJ_POL_FLAT:-}" "${MJ_PRO_FLAT:-}" "${MJ_REC_TMP:-}" 2>/dev/null
+  # MJ_REC_TMP above is not under the root: it is made beside the record it becomes.
+  [ -n "${MJ_TMP_ROOT:-}" ] && rm -rf "$MJ_TMP_ROOT" 2>/dev/null
   # A lock this process is holding goes with it. Releasing here and not only at the end of
   # the critical section is what makes the lock crash-safe for every exit a command has:
   # mj_die, a failed `set -e` command, an interrupt from the test runner's bound.
