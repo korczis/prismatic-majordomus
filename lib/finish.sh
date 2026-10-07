@@ -65,6 +65,15 @@ H
     "") mj_die "$MJ_EX_USAGE" "finish: --outcome is required (completed|partial|blocked|no_match|failed)" ;;
     *) mj_die "$MJ_EX_USAGE" "finish: unknown outcome '$outcome'" ;; esac
 
+  # The note is read once, here, and every later reader takes the copy. `--note` may be a pipe,
+  # /dev/stdin or a process substitution: the doctrine's read used to drain it, and the record's
+  # `cp` then failed (macOS refuses to fcopyfile /dev/stdin) after the outcome was written, so
+  # the task stood completed with an empty note and no task.finished line. A note that cannot
+  # be read is left as given, and the note doctrine refuses it as before (a recorded refusal).
+  if [ -n "$note" ] && [ -r "$note" ] && [ ! -d "$note" ]; then
+    local staged="$MJ_STATE_DIR/completed/$id.md.pending"
+    mkdir -p "$MJ_STATE_DIR/completed" && cat "$note" > "$staged" && note="$staged"
+  fi
   MJ_FINISH_OUTCOME="$outcome"; MJ_FINISH_VERIFY="$verify"; MJ_FINISH_NOTE="$note"
   MJ_FINISH_VEXIT=""; MJ_FINISH_VSECS=""; MJ_FINISH_VTREE=""
   mj_doctrine_dispatch finish
@@ -101,9 +110,16 @@ H
     exit "$MJ_EX_CONTRACT"
   fi
 
+  # the note is in place before the outcome says so: nothing records completion it cannot keep
+  # (the staged copy is moved; a note that could not be staged is copied, never moved away)
+  if [ -n "$note" ]; then
+    local kept="$MJ_STATE_DIR/completed/$id.md"
+    if [ "$note" = "$kept.pending" ]; then mv "$note" "$kept"
+    else mkdir -p "$MJ_STATE_DIR/completed" && cat "$note" > "$kept"; fi \
+      || mj_die "$MJ_EX_INTERNAL" "finish: the note could not be recorded; task $id stays active"
+  fi
   local now; now="$(mj_now)"
   sed -e "s/^outcome: .*/outcome: $outcome/" -e "s/^checkpoint_at: .*/checkpoint_at: $now/" "$MJ_CUR" > "$MJ_CUR.mj-tmp" && mv "$MJ_CUR.mj-tmp" "$MJ_CUR"
-  [ -n "$note" ] && { mkdir -p "$MJ_STATE_DIR/completed"; cp "$note" "$MJ_STATE_DIR/completed/$id.md"; }
   local vj=null; [ -n "$MJ_FINISH_VEXIT" ] && vj="{\"command\":\"$(mj_json_esc "$verify")\",\"exit\":$MJ_FINISH_VEXIT,\"seconds\":$MJ_FINISH_VSECS${MJ_FINISH_VTREE:+,\"tree\":\"$MJ_FINISH_VTREE\"}}"
   local cps=0; cps="$(find "$MJ_STATE_DIR/checkpoints" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')"
   mj_ledger_append task.finished "\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"contract\":$contract,\"verify\":$vj,\"checkpoints\":$cps"
