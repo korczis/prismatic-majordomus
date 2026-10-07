@@ -4,18 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Limitations — Prismatic Majordomus</title>
-<meta name="description" content="What v0.1 does not do, stated as plainly as what it does. Rendered from the README.">
+<meta name="description" content="What Majordomus does not do, stated as plainly as what it does. Rendered from the README.">
 <link rel="canonical" href="https://majordomus.dev/limitations/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
 <meta property="og:title" content="Limitations — Prismatic Majordomus">
-<meta property="og:description" content="What v0.1 does not do, stated as plainly as what it does. Rendered from the README.">
+<meta property="og:description" content="What Majordomus does not do, stated as plainly as what it does. Rendered from the README.">
 <meta property="og:url" content="https://majordomus.dev/limitations/">
 <meta property="og:image" content="https://majordomus.dev/images/social-card.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=f132cc838205a6f386c7">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=953d937c85074ef0cda8">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -146,14 +146,13 @@
     <nav class="flex" aria-label="Breadcrumb">
   <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
     <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
-    
     <li aria-hidden="true">/</li>
     <li aria-current="page" class="font-medium text-heading">Limitations</li>
   </ol>
 </nav>
 
     <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Limitations</h1>
-    <p class="mt-3 max-w-3xl break-words text-lg text-body">What v0.1 does not do, stated as plainly as what it does. Rendered from the README.</p>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">What Majordomus does not do, stated as plainly as what it does. Rendered from the README.</p>
   </div>
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
@@ -161,19 +160,28 @@
   <div class="min-w-0">
     <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline" tabindex="0"><p>Every limitation below is a fact about the current implementation, not a disclaimer. Several are the reason a claim is marked advisory or planned in the <a href="https://majordomus.dev/guarantees/">guarantees matrix</a>.</p>
 <ul>
-<li>Majordomus is invoked by a person, a git hook, or a worker following its
-instructions. It does not hook the worker's runtime.</li>
-<li>It measures no tokens and no cost. <a rel="external" href="https://majordomus.dev/docs/economics/"><code>docs/ECONOMICS.md</code></a> says what
-it would take.</li>
-<li>Scope overlap is reported, never blocked, and only across worktrees of one repository
-on one machine.</li>
-<li>The regression-test check in <code>finish</code> is a path heuristic (<code>test/</code>, <code>spec/</code>, <code>_test.</code>)
-and says so in its message.</li>
+<li>Majordomus is invoked by a person, a git hook, a worker following its instructions, or
+the worker's own session hooks. Those hooks run only at session and prompt boundaries,
+to record the session and hand it its briefing, and always let the worker continue:
+nothing inspects or refuses a tool call. Only Claude Code's hooks are wired; Codex and
+Gemini have hooks this tool has no adapter for yet.</li>
+<li>It does not meter the tokens or the cost of a working session. <code>majordomus economics</code>
+counts what the context compiler selects with a pinned tokenizer and records what the
+provider reports for matched benchmark runs; it states no total-token saving until those
+runs meet the publication rule of <a rel="external" href="https://majordomus.dev/docs/economics/"><code>docs/ECONOMICS.md</code></a>.</li>
+<li>Scope overlap between worktrees is reported, never blocked. Where a repository opts
+into the mesh, an exclusive claim refuses an overlapping one on every linked machine;
+that is a lease, not a lock, and during a network split both sides can claim.</li>
+<li>Where a profile requires a regression test, <code>finish</code> checks only whether a test-shaped
+path was touched (a <code>test</code> or <code>spec</code> directory, a <code>_test.</code> or <code>.spec.</code> file name), not
+what the test proves.</li>
 <li>The YAML subset is deliberately small: maps, lists, lists of maps, inline lists,
-quotes, comments. Anchors, multi-line scalars, and flow maps are rejected.</li>
+quotes, comments. Tabs and odd indentation are refused; the Rust reader also refuses
+anchors, aliases and block scalars, which the shell reader takes as text. A flow map is
+not parsed as a map.</li>
 </ul>
 </article>
-    <p class="mt-6 text-xs text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/5908234ce001f521e22c2534f837ee939b70a7c6/README.md" class="font-mono underline">README.md</a>; a renamed heading fails the build rather than emptying this page.</p>
+    <p class="mt-6 text-xs text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/d60dc64910c235ab453a9075e1ebbf378e723b8d/README.md" class="font-mono underline">README.md</a>; a renamed heading fails the build rather than emptying this page.</p>
   </div>
   <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5"><h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">next</h2><ul class="space-y-1 text-sm"><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Roadmap →</a></li><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Guarantees →</a></li><li><a href="https://majordomus.dev/docs/extraction-report/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Extraction report →</a></li></ul></div></aside>
 </div>
@@ -235,7 +243,7 @@ quotes, comments. Anchors, multi-line scalars, and flow maps are rejected.</li>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.14.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5908234ce001f521e22c2534f837ee939b70a7c6" class="font-mono underline">5908234</a> · inputs <span class="font-mono">73437917943b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.14.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d60dc64910c235ab453a9075e1ebbf378e723b8d" class="font-mono underline">d60dc64</a> · inputs <span class="font-mono">553b5bdf221a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

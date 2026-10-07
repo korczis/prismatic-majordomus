@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=f132cc838205a6f386c7">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=953d937c85074ef0cda8">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -145,8 +145,7 @@
   <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
     <nav class="flex" aria-label="Breadcrumb">
   <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
-    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
-    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/guarantees/" class="font-medium text-body hover:text-fg-brand">Guaranteed, advisory, planned</a></li>
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li><li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/guarantees/" class="font-medium text-body hover:text-fg-brand">Guaranteed, advisory, planned</a></li>
     <li aria-hidden="true">/</li>
     <li aria-current="page" class="font-medium text-heading">Identity fields on every state record are computed from git and never authored</li>
   </ol>
@@ -159,9 +158,10 @@
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
-    <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+    <p class="flex flex-wrap items-center gap-3"><span class="text-xs font-semibold uppercase tracking-wide text-body-subtle">declared status</span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">declared status: </span>guaranteed</span>
 <span class="text-sm text-body">Declared deterministic and blocking, implemented, and naming the behavioural test that is to prove it. Whether a recorded run supports it is the evidence verdict, shown beside it.</span></p>
-    <p class="mt-3 flex flex-wrap items-center gap-3"><span class="text-xs font-semibold uppercase tracking-wide text-body-subtle">recorded evidence</span><span class="mj-badge mj-badge--not-run" data-claim="git-identity">not run</span><span class="text-sm text-body">Declared guaranteed, and not supported by a recorded run: the test is named, and no passing run of the current inputs is recorded. <a href="https://majordomus.dev/evidence/" class="text-fg-brand underline">how evidence is recorded</a></span></p>
+    <p class="mt-3 flex flex-wrap items-center gap-3"><span class="text-xs font-semibold uppercase tracking-wide text-body-subtle">recorded evidence</span><span class="mj-badge mj-badge--not-run relative" data-status="not-run" data-status-kind="proof" data-claim="git-identity"><span aria-hidden="true">○</span><span class="sr-only">recorded evidence: </span>not run</span>
+<span class="text-sm text-body">Declared guaranteed, and not supported by a recorded run: the test is named, and no passing run of the current inputs is recorded. <a href="https://majordomus.dev/evidence/" class="text-fg-brand underline">how evidence is recorded</a></span></p>
     <p class="mt-6 max-w-3xl break-words text-base leading-relaxed text-heading">A handover body that tries to set one is rejected rather than merged.</p>
     <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-8 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline" tabindex="0"><h2 id="what-it-means"><a class="zola-anchor" href="#what-it-means" aria-label="Anchor link for: what-it-means">What it means</a></h2>
 <p><code>repository_id</code>, <code>branch</code>, <code>head</code>, <code>working_tree</code> and <code>changed_files</code> on the task record and on every handover are computed from <code>git rev-parse</code> and <code>git status</code> at the moment of writing. The worker cannot set them, and a handover body that contains a line looking like one of these fields is rejected. A model will confidently invent a branch name; git will not.</p>
@@ -176,27 +176,45 @@
 <h2 id="why-it-exists"><a class="zola-anchor" href="#why-it-exists" aria-label="Anchor link for: why-it-exists">Why it exists</a></h2>
 <p>The most valuable rule found in the source environment's handover protocol: the writer captured repository, worktree, branch, head and changed files deterministically and the worker's instructions forbade inventing them. Everything else about trusting state follows from it.</p>
 </article>
-    <p class="mt-2 text-xs text-body-subtle">Detail rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/5908234ce001f521e22c2534f837ee939b70a7c6/docs/claims/git-identity.md" class="font-mono underline">docs/claims/git-identity.md</a>.</p>
-
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Provenance</h2>
-    <dl class="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-[auto_1fr]">
-      <dt class="text-body-subtle">defined in</dt><dd class="min-w-0 break-all"><a href="https://majordomus.dev/docs/schemas/" class="font-medium text-fg-brand hover:underline">read it on this site</a> · <a href="https://github.com/korczis/prismatic-majordomus/blob/5908234ce001f521e22c2534f837ee939b70a7c6/docs/SCHEMAS.md" class="font-mono text-fg-brand hover:underline">docs/SCHEMAS.md</a></dd>
-      <dt class="text-body-subtle">implemented in</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/5908234ce001f521e22c2534f837ee939b70a7c6/lib/start.sh" class="font-mono text-fg-brand hover:underline">lib/start.sh</a> · <a href="https://majordomus.dev/commands/start/" class="font-medium text-fg-brand hover:underline">majordomus start</a></dd>
-      <dt class="text-body-subtle">test it names</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/5908234ce001f521e22c2534f837ee939b70a7c6/test/cases/04_start_check.sh" class="font-mono text-fg-brand hover:underline">test/cases/04_start_check.sh</a></dd>
-      <dt class="text-body-subtle">claim id</dt><dd class="font-mono text-heading">git-identity</dd>
-    </dl>
+    <p class="mt-2 text-xs text-body-subtle">Detail rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/d60dc64910c235ab453a9075e1ebbf378e723b8d/docs/claims/git-identity.md" class="font-mono underline">docs/claims/git-identity.md</a>.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading" id="chain">From the statement to the proof</h2>
+    <ol class="mt-4 grid list-none gap-3 p-0 text-sm" data-claim-chain="git-identity">
+      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">1 &middot; the public statement</p>
+        <p class="mt-1 mb-0 text-heading">Identity fields on every state record are computed from git and never authored</p>
+        <p class="mt-1 mb-0 text-body">Made on <a href="https://majordomus.dev/features/provenance/" class="font-medium text-fg-brand hover:underline">Provenance</a>, <a href="https://majordomus.dev/supervises/state/" class="font-medium text-fg-brand hover:underline">State</a>.</p>
+      </li>
+      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">2 &middot; the canonical claim</p>
+        <p class="mt-1 mb-0 flex flex-wrap items-center gap-2"><code class="font-mono text-heading">git-identity</code><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">declared status: </span>guaranteed</span>
+<span class="text-body">in <a href="https://github.com/korczis/prismatic-majordomus/blob/d60dc64910c235ab453a9075e1ebbf378e723b8d/docs/CLAIMS.yaml" class="font-mono text-fg-brand hover:underline">docs/CLAIMS.yaml</a></span></p>
+        <p class="mt-1 mb-0 min-w-0 break-all text-body">Defined in <a href="https://majordomus.dev/docs/schemas/" class="font-medium text-fg-brand hover:underline">read it on this site</a> · <a href="https://github.com/korczis/prismatic-majordomus/blob/d60dc64910c235ab453a9075e1ebbf378e723b8d/docs/SCHEMAS.md" class="font-mono text-fg-brand hover:underline">docs/SCHEMAS.md</a></p>
+      </li>
+      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">3 &middot; the implementation</p>
+        <p class="mt-1 mb-0 min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/d60dc64910c235ab453a9075e1ebbf378e723b8d/lib/start.sh" class="font-mono text-fg-brand hover:underline">lib/start.sh</a> · <a href="https://majordomus.dev/commands/start/" class="font-medium text-fg-brand hover:underline">majordomus start</a></p>
+      </li>
+      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">4 &middot; the test and the scenarios</p><p class="mt-1 mb-0 min-w-0 break-all">Test: <a href="https://github.com/korczis/prismatic-majordomus/blob/d60dc64910c235ab453a9075e1ebbf378e723b8d/test/cases/04_start_check.sh" class="font-mono text-fg-brand hover:underline">test/cases/04_start_check.sh</a></p><p class="mt-1 mb-0 text-body">Executed in <a href="https://majordomus.dev/use-cases/run-several-workers-at-once/" class="font-medium text-fg-brand hover:underline">Run several workers in one repository without them colliding</a>, <a href="https://majordomus.dev/use-cases/checkpoint-long-work/" class="font-medium text-fg-brand hover:underline">Checkpoint long work so a stop costs minutes, not the day</a>.</p>
+      </li>
+      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">5 &middot; the recorded runs</p>
+        <p class="mt-1 mb-0 flex flex-wrap items-center gap-2"><span class="mj-badge mj-badge--not-run relative" data-status="not-run" data-status-kind="proof" data-claim="git-identity"><span aria-hidden="true">○</span><span class="sr-only">recorded evidence: </span>not run</span>
+<a href="https://majordomus.dev/evidence/" class="text-fg-brand underline">how evidence is recorded</a></p>
+      </li>
+    </ol>
 
     
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Verify it yourself</h2>
     <p class="mt-2 text-sm text-body">The test runs in a disposable temporary repository and asserts the behaviour, not a string in the source.</p>
     <div class="mt-3 max-w-2xl">
-<figure class="not-format overflow-hidden rounded-base border border-default bg-neutral-primary-soft" x-data="{ copied: false }">
+<figure class="not-format overflow-hidden rounded-base border border-default bg-neutral-primary-soft" x-data="{ said: '' }">
   <figcaption class="flex items-center justify-between border-b border-default px-4 py-2">
     <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">from a clone of the repository</span>
-    <button type="button" x-cloak x-on:click="navigator.clipboard.writeText($refs.src.innerText).then(() => { copied = true; setTimeout(() => copied = false, 1600) })" class="inline-flex items-center gap-1.5 rounded-base px-2 py-1 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="copied ? 'Copied' : 'Copy to clipboard'">
+    <button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1.5 rounded-base px-2 py-1 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy to clipboard'">
       <svg class="h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V5a2 2 0 012-2h9a2 2 0 012 2v9a2 2 0 01-2 2h-2M5 9h9a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9a2 2 0 012-2z"/></svg>
-      <span x-text="copied ? 'Copied' : 'Copy'">Copy</span>
+      <span x-text="said || 'Copy'">Copy</span>
     </button>
+    <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
   </figcaption><div class="overflow-x-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading" x-ref="src" tabindex="0"><code class="language-bash">bash test/run.sh 04_start_check</code></pre></div>
 </figure>
 </div>
@@ -212,7 +230,7 @@
 
     
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Related claims <span class="font-mono text-sm font-normal text-body-subtle">same implementation</span></h2>
-    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://majordomus.dev/guarantees/scoped-task/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://majordomus.dev/guarantees/scoped-task/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">declared status: </span>guaranteed</span>
 </span><span class="text-sm text-heading">A task is started with a declared file scope and a profile, and only one task is active per checkout</span></a></li></ul>
     
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The moments this answers</h2>
@@ -301,7 +319,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.14.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5908234ce001f521e22c2534f837ee939b70a7c6" class="font-mono underline">5908234</a> · inputs <span class="font-mono">73437917943b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.14.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d60dc64910c235ab453a9075e1ebbf378e723b8d" class="font-mono underline">d60dc64</a> · inputs <span class="font-mono">553b5bdf221a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

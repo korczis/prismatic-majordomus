@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=f132cc838205a6f386c7">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=953d937c85074ef0cda8">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -145,8 +145,7 @@
   <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
     <nav class="flex" aria-label="Breadcrumb">
   <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
-    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
-    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/guarantees/" class="font-medium text-body hover:text-fg-brand">Guaranteed, advisory, planned</a></li>
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li><li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/guarantees/" class="font-medium text-body hover:text-fg-brand">Guaranteed, advisory, planned</a></li>
     <li aria-hidden="true">/</li>
     <li aria-current="page" class="font-medium text-heading">The site&#39;s Registry page is rendered from site/data/registry/registry.json, a dataset majordomus generate site derives from the registry and the index with their fingerprints, and generate --check refuses a stale one in CI</li>
   </ol>
@@ -159,9 +158,10 @@
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
-    <p class="flex flex-wrap items-center gap-3"><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+    <p class="flex flex-wrap items-center gap-3"><span class="text-xs font-semibold uppercase tracking-wide text-body-subtle">declared status</span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">declared status: </span>guaranteed</span>
 <span class="text-sm text-body">Declared deterministic and blocking, implemented, and naming the behavioural test that is to prove it. Whether a recorded run supports it is the evidence verdict, shown beside it.</span></p>
-    <p class="mt-3 flex flex-wrap items-center gap-3"><span class="text-xs font-semibold uppercase tracking-wide text-body-subtle">recorded evidence</span><span class="mj-badge mj-badge--not-run" data-claim="site-registry-dataset">not run</span><span class="text-sm text-body">Declared guaranteed, and not supported by a recorded run: the test is named, and no passing run of the current inputs is recorded. <a href="https://majordomus.dev/evidence/" class="text-fg-brand underline">how evidence is recorded</a></span></p>
+    <p class="mt-3 flex flex-wrap items-center gap-3"><span class="text-xs font-semibold uppercase tracking-wide text-body-subtle">recorded evidence</span><span class="mj-badge mj-badge--not-run relative" data-status="not-run" data-status-kind="proof" data-claim="site-registry-dataset"><span aria-hidden="true">○</span><span class="sr-only">recorded evidence: </span>not run</span>
+<span class="text-sm text-body">Declared guaranteed, and not supported by a recorded run: the test is named, and no passing run of the current inputs is recorded. <a href="https://majordomus.dev/evidence/" class="text-fg-brand underline">how evidence is recorded</a></span></p>
     <p class="mt-6 max-w-3xl break-words text-base leading-relaxed text-heading">Every builtin descriptor in full with the file it was composed in, every module with its ids, every object of the layer without its content, every kind with its schema, the declared provider projections, the command line as clap declares it, the MCP tools and resources, the HTTP routes, the benchmark targets, coverage, policy and accepted baselines, and the registry and index fingerprints (majordomus-site-registry/v2); no timestamps of its own, no absolute paths, no git state. The directory is the Rust executable&#39;s alone, the shell site generator owns site/data/generated/ wholesale, so no directory has two writers. A canonical object added to the layer changes the fingerprint and the dataset and leaves the bootstraps alone; an exposure removed from a descriptor moves the routes and the coverage and nothing else; the test follows each mutation to exactly the projection it concerns.</p>
     <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-8 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full [&_.zola-anchor]:text-inherit [&_.zola-anchor]:no-underline [&_.zola-anchor:hover]:underline" tabindex="0"><h2 id="what-it-means"><a class="zola-anchor" href="#what-it-means" aria-label="Anchor link for: what-it-means">What it means</a></h2>
 <p>GitHub Pages has no content model of its own for the registry. <code>/registry/</code> reads <code>site/data/registry/registry.json</code>; the Rust executable writes that file from the capability registry and the index (<code>majordomus generate site</code>), and <code>majordomus generate --check</code>, which CI runs on every push, derives it again and exits 10 when the committed file differs. A number on that page that disagrees with the executable is a stale generated file, and the build refuses it.</p>
@@ -178,27 +178,45 @@
 <h2 id="why-it-exists"><a class="zola-anchor" href="#why-it-exists" aria-label="Anchor link for: why-it-exists">Why it exists</a></h2>
 <p>The repository's rule that interfaces are projections of the registry (<code>project.interfaces-are-projections</code>) applied to the site: before this the pages showed nothing of the registry, and a page that did would have had to hand-maintain a second list of operations and kinds. <code>apps/majordomus-cli/tests/projections.rs</code> builds the whole plan twice over a fixture and compares, refuses the checkout path in any artifact, adds one rule to the layer and sees the dataset's fingerprint move and the bootstraps stay, changes the policy and sees the opposite, and sees <code>check</code> name exactly the artifact each change concerns.</p>
 </article>
-    <p class="mt-2 text-xs text-body-subtle">Detail rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/5908234ce001f521e22c2534f837ee939b70a7c6/docs/claims/site-registry-dataset.md" class="font-mono underline">docs/claims/site-registry-dataset.md</a>.</p>
-
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Provenance</h2>
-    <dl class="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-[auto_1fr]">
-      <dt class="text-body-subtle">defined in</dt><dd class="min-w-0 break-all"><a href="https://majordomus.dev/docs/capabilities/" class="font-medium text-fg-brand hover:underline">read it on this site</a> · <a href="https://github.com/korczis/prismatic-majordomus/blob/5908234ce001f521e22c2534f837ee939b70a7c6/docs/CAPABILITIES.md" class="font-mono text-fg-brand hover:underline">docs/CAPABILITIES.md</a></dd>
-      <dt class="text-body-subtle">implemented in</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/5908234ce001f521e22c2534f837ee939b70a7c6/apps/majordomus-cli/src/site.rs" class="font-mono text-fg-brand hover:underline">apps/majordomus-cli/src/site.rs</a></dd>
-      <dt class="text-body-subtle">test it names</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/5908234ce001f521e22c2534f837ee939b70a7c6/apps/majordomus-cli/tests/projections.rs" class="font-mono text-fg-brand hover:underline">apps/majordomus-cli/tests/projections.rs</a></dd>
-      <dt class="text-body-subtle">claim id</dt><dd class="font-mono text-heading">site-registry-dataset</dd>
-    </dl>
+    <p class="mt-2 text-xs text-body-subtle">Detail rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/d60dc64910c235ab453a9075e1ebbf378e723b8d/docs/claims/site-registry-dataset.md" class="font-mono underline">docs/claims/site-registry-dataset.md</a>.</p><h2 class="mt-10 text-xl font-semibold tracking-tight text-heading" id="chain">From the statement to the proof</h2>
+    <ol class="mt-4 grid list-none gap-3 p-0 text-sm" data-claim-chain="site-registry-dataset">
+      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">1 &middot; the public statement</p>
+        <p class="mt-1 mb-0 text-heading">The site&#39;s Registry page is rendered from site/data/registry/registry.json, a dataset majordomus generate site derives from the registry and the index with their fingerprints, and generate --check refuses a stale one in CI</p>
+        <p class="mt-1 mb-0 text-body">Made on <a href="https://majordomus.dev/features/declare-once/" class="font-medium text-fg-brand hover:underline">Declare once</a>.</p>
+      </li>
+      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">2 &middot; the canonical claim</p>
+        <p class="mt-1 mb-0 flex flex-wrap items-center gap-2"><code class="font-mono text-heading">site-registry-dataset</code><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">declared status: </span>guaranteed</span>
+<span class="text-body">in <a href="https://github.com/korczis/prismatic-majordomus/blob/d60dc64910c235ab453a9075e1ebbf378e723b8d/docs/CLAIMS.yaml" class="font-mono text-fg-brand hover:underline">docs/CLAIMS.yaml</a></span></p>
+        <p class="mt-1 mb-0 min-w-0 break-all text-body">Defined in <a href="https://majordomus.dev/docs/capabilities/" class="font-medium text-fg-brand hover:underline">read it on this site</a> · <a href="https://github.com/korczis/prismatic-majordomus/blob/d60dc64910c235ab453a9075e1ebbf378e723b8d/docs/CAPABILITIES.md" class="font-mono text-fg-brand hover:underline">docs/CAPABILITIES.md</a></p>
+      </li>
+      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">3 &middot; the implementation</p>
+        <p class="mt-1 mb-0 min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/d60dc64910c235ab453a9075e1ebbf378e723b8d/apps/majordomus-cli/src/site.rs" class="font-mono text-fg-brand hover:underline">apps/majordomus-cli/src/site.rs</a></p>
+      </li>
+      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">4 &middot; the test and the scenarios</p><p class="mt-1 mb-0 min-w-0 break-all">Test: <a href="https://github.com/korczis/prismatic-majordomus/blob/d60dc64910c235ab453a9075e1ebbf378e723b8d/apps/majordomus-cli/tests/projections.rs" class="font-mono text-fg-brand hover:underline">apps/majordomus-cli/tests/projections.rs</a></p>
+      </li>
+      <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="m-0 font-mono text-xs uppercase tracking-wide text-body-subtle">5 &middot; the recorded runs</p>
+        <p class="mt-1 mb-0 flex flex-wrap items-center gap-2"><span class="mj-badge mj-badge--not-run relative" data-status="not-run" data-status-kind="proof" data-claim="site-registry-dataset"><span aria-hidden="true">○</span><span class="sr-only">recorded evidence: </span>not run</span>
+<a href="https://majordomus.dev/evidence/" class="text-fg-brand underline">how evidence is recorded</a></p>
+      </li>
+    </ol>
 
     
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Verify it yourself</h2>
     <p class="mt-2 text-sm text-body">The test runs in a disposable temporary repository and asserts the behaviour, not a string in the source.</p>
     <div class="mt-3 max-w-2xl">
-<figure class="not-format overflow-hidden rounded-base border border-default bg-neutral-primary-soft" x-data="{ copied: false }">
+<figure class="not-format overflow-hidden rounded-base border border-default bg-neutral-primary-soft" x-data="{ said: '' }">
   <figcaption class="flex items-center justify-between border-b border-default px-4 py-2">
     <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">from a clone of the repository</span>
-    <button type="button" x-cloak x-on:click="navigator.clipboard.writeText($refs.src.innerText).then(() => { copied = true; setTimeout(() => copied = false, 1600) })" class="inline-flex items-center gap-1.5 rounded-base px-2 py-1 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="copied ? 'Copied' : 'Copy to clipboard'">
+    <button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1.5 rounded-base px-2 py-1 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy to clipboard'">
       <svg class="h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V5a2 2 0 012-2h9a2 2 0 012 2v9a2 2 0 01-2 2h-2M5 9h9a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9a2 2 0 012-2z"/></svg>
-      <span x-text="copied ? 'Copied' : 'Copy'">Copy</span>
+      <span x-text="said || 'Copy'">Copy</span>
     </button>
+    <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
   </figcaption><div class="overflow-x-auto" tabindex="0"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading" x-ref="src" tabindex="0"><code class="language-bash">bash test/run.sh apps/majordomus-cli/tests/projections.rs</code></pre></div>
 </figure>
 </div>
@@ -214,8 +232,8 @@
 
     
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Related claims <span class="font-mono text-sm font-normal text-body-subtle">same implementation</span></h2>
-    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://majordomus.dev/guarantees/rustdoc-referenced/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
-</span><span class="text-sm text-heading">Every builtin module&#39;s page on the site links the page the crate&#39;s reference documents that module on, from the one module-to-page mapping the rustdoc check holds the published tree to, and only in a build that composed the reference</span></a></li><li><a href="https://majordomus.dev/guarantees/product-projection-public-safe/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://majordomus.dev/guarantees/rustdoc-referenced/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">declared status: </span>guaranteed</span>
+</span><span class="text-sm text-heading">Every builtin module&#39;s page on the site links the page the crate&#39;s reference documents that module on, from the one module-to-page mapping the rustdoc check holds the published tree to, and only in a build that composed the reference</span></a></li><li><a href="https://majordomus.dev/guarantees/product-projection-public-safe/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">declared status: </span>guaranteed</span>
 </span><span class="text-sm text-heading">The dataset the website is rendered from carries only fields an allow-list names, so a feature&#39;s prose, a machine path or a field nobody allowed cannot reach a published page</span></a></li></ul>
     
 <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The moments this answers</h2>
@@ -296,7 +314,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.14.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5908234ce001f521e22c2534f837ee939b70a7c6" class="font-mono underline">5908234</a> · inputs <span class="font-mono">73437917943b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.14.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d60dc64910c235ab453a9075e1ebbf378e723b8d" class="font-mono underline">d60dc64</a> · inputs <span class="font-mono">553b5bdf221a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

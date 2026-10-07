@@ -21,7 +21,7 @@ policy and the scope apply to everything, so they are reached without a seed.</p
 
 <span class="kw">let </span>repo = SyntheticRepository::small().unwrap();
 <span class="kw">let </span>ctx = repo.context().unwrap();
-<span class="kw">let </span>composed = graph::derive(graph::COMPOSED, <span class="kw-2">&amp;</span>ctx.registry, ctx.index.as_ref()).unwrap();
+<span class="kw">let </span>composed = graph::composed_complete(<span class="kw-2">&amp;</span>ctx.registry, ctx.index.as_ref());
 
 <span class="comment">// a request that names nothing at all
 </span><span class="kw">let </span>empty = Request {

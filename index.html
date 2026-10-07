@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=f132cc838205a6f386c7">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=953d937c85074ef0cda8">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -156,13 +156,14 @@
         <a href="#install" data-cta="install" class="inline-flex items-center justify-center rounded-base border border-default bg-neutral-primary-soft px-6 py-3.5 text-base font-semibold text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">Install</a>
       </div>
       <div class="mt-6 max-w-xl">
-<figure class="not-format overflow-hidden rounded-base border border-default bg-neutral-primary-soft" x-data="{ copied: false }">
+<figure class="not-format overflow-hidden rounded-base border border-default bg-neutral-primary-soft" x-data="{ said: '' }">
   <figcaption class="flex items-center justify-between border-b border-default px-4 py-2">
     <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">install</span>
-    <button type="button" x-cloak x-on:click="navigator.clipboard.writeText($refs.src.innerText).then(() => { copied = true; setTimeout(() => copied = false, 1600) })" class="inline-flex items-center gap-1.5 rounded-base px-2 py-1 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="copied ? 'Copied' : 'Copy to clipboard'">
+    <button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1.5 rounded-base px-2 py-1 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy to clipboard'">
       <svg class="h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V5a2 2 0 012-2h9a2 2 0 012 2v9a2 2 0 01-2 2h-2M5 9h9a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9a2 2 0 012-2z"/></svg>
-      <span x-text="copied ? 'Copied' : 'Copy'">Copy</span>
+      <span x-text="said || 'Copy'">Copy</span>
     </button>
+    <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
   </figcaption><div class="overflow-hidden"><pre class="m-0 p-4 font-mono text-sm leading-relaxed text-heading whitespace-pre-wrap break-all" x-ref="src" tabindex="0"><code class="language-bash">curl -fsSL https://majordomus.dev/install.sh | sh</code></pre></div>
 </figure>
 </div>
@@ -176,27 +177,27 @@
         <p class="break-all font-mono text-xs text-body-subtle">$ majordomus finish --outcome completed --verify-command &#39;sh test/parse.sh&#39;</p>
         <ul class="mt-3 space-y-1.5" aria-label="The finish contract, line by line">
           <li class="flex items-center gap-3 font-mono text-sm">
-            <span class="inline-flex w-14 shrink-0 justify-center"><span class="mj-badge mj-badge--pass">pass</span>
+            <span class="inline-flex w-14 shrink-0 justify-center"><span class="mj-badge mj-badge--pass relative" data-status="pass"><span aria-hidden="true">✓</span>pass</span>
 </span>
             <span class="text-heading">blockers</span>
           </li>
           <li class="flex items-center gap-3 font-mono text-sm">
-            <span class="inline-flex w-14 shrink-0 justify-center"><span class="mj-badge mj-badge--fail">fail</span>
+            <span class="inline-flex w-14 shrink-0 justify-center"><span class="mj-badge mj-badge--fail relative" data-status="fail"><span aria-hidden="true">✕</span>fail</span>
 </span>
             <span class="text-heading">note</span>
           </li>
           <li class="flex items-center gap-3 font-mono text-sm">
-            <span class="inline-flex w-14 shrink-0 justify-center"><span class="mj-badge mj-badge--fail">fail</span>
+            <span class="inline-flex w-14 shrink-0 justify-center"><span class="mj-badge mj-badge--fail relative" data-status="fail"><span aria-hidden="true">✕</span>fail</span>
 </span>
             <span class="text-heading">scope</span>
           </li>
           <li class="flex items-center gap-3 font-mono text-sm">
-            <span class="inline-flex w-14 shrink-0 justify-center"><span class="mj-badge mj-badge--pass">pass</span>
+            <span class="inline-flex w-14 shrink-0 justify-center"><span class="mj-badge mj-badge--pass relative" data-status="pass"><span aria-hidden="true">✓</span>pass</span>
 </span>
             <span class="text-heading">state</span>
           </li>
           <li class="flex items-center gap-3 font-mono text-sm">
-            <span class="inline-flex w-14 shrink-0 justify-center"><span class="mj-badge mj-badge--fail">fail</span>
+            <span class="inline-flex w-14 shrink-0 justify-center"><span class="mj-badge mj-badge--fail relative" data-status="fail"><span aria-hidden="true">✕</span>fail</span>
 </span>
             <span class="text-heading">verification</span>
           </li>
@@ -489,28 +490,28 @@
       x-on:click="t = 5" :aria-selected="t === 5 ? 'true' : 'false'"
       class="rounded-base border px-2.5 py-1 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
       :class="t === 5 ? 'border-brand-subtle bg-brand-softer text-fg-brand-strong font-medium' : 'border-default bg-neutral-primary-soft text-body hover:bg-neutral-secondary-medium hover:text-heading'">finish</button></div><figure x-show="t === 0" id="how-term-panel-0" role="tabpanel" aria-labelledby="how-term-tab-0"
-    class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs">
-    <figcaption class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-default px-4 py-2">
-      <span class="min-w-0 break-all font-mono text-xs text-heading">$ majordomus start &#39;the follow-up&#39; --scope lib</span>
-      <span class="shrink-0 font-mono text-xs">
-        <span class="text-body-subtle">exit</span>
-        <span class="ms-1 rounded px-1.5 py-0.5 font-semibold bg-success-soft text-fg-success-strong">0</span>
-      </span>
-    </figcaption><div class="h-80 overflow-x-auto overflow-y-auto sm:h-96" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">started t-&lt;id&gt;  profile=implementation  scope=lib
+    class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs"><div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-default bg-neutral-primary-soft px-4 py-2.5" x-data="{ said: '' }">
+  <p class="m-0 min-w-0 flex-1 break-all font-mono text-xs leading-relaxed text-heading"><span class="select-none text-body-subtle" aria-hidden="true">$</span> <code x-ref="src">majordomus start &#39;the follow-up&#39; --scope lib</code></p>
+  <span class="flex shrink-0 items-center gap-2"><span class="mj-badge mj-badge--ok relative" data-status="ok"><span aria-hidden="true">✓</span>exit 0</span>
+<button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy the command'"><span x-text="said || 'Copy'">Copy</span></button>
+    <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
+  </span>
+</div><pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">started t-&lt;id&gt;  profile=implementation  scope=lib
 INFO handover    .ai/local/state/handovers/&lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md — prior record, same_worktree_same_branch, exact, &lt;age&gt; ago  [reproduce: majordomus handover --resolve]
-next: majordomus context; checkpoint every 15m; majordomus check before claiming anything</pre></div><div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-default px-4 py-2 text-xs">
+next: majordomus context; checkpoint every 15m; majordomus check before claiming anything
+</pre>
+<div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-default px-4 py-2 text-xs">
       <span class="text-body-subtle">begin a scoped task under a profile</span>
       <a href="https://majordomus.dev/use-cases/carry-a-blocker-across-a-handover/" class="text-fg-brand hover:underline">Hand work over with a question still open, and keep it blocking &rarr;</a>
     </div>
   </figure><figure x-show="t === 1" id="how-term-panel-1" role="tabpanel" aria-labelledby="how-term-tab-1"
-    class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs">
-    <figcaption class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-default px-4 py-2">
-      <span class="min-w-0 break-all font-mono text-xs text-heading">$ majordomus context</span>
-      <span class="shrink-0 font-mono text-xs">
-        <span class="text-body-subtle">exit</span>
-        <span class="ms-1 rounded px-1.5 py-0.5 font-semibold bg-success-soft text-fg-success-strong">0</span>
-      </span>
-    </figcaption><div class="h-80 overflow-x-auto overflow-y-auto sm:h-96" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0"># Majordomus context — &lt;time&gt;
+    class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs"><div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-default bg-neutral-primary-soft px-4 py-2.5" x-data="{ said: '' }">
+  <p class="m-0 min-w-0 flex-1 break-all font-mono text-xs leading-relaxed text-heading"><span class="select-none text-body-subtle" aria-hidden="true">$</span> <code x-ref="src">majordomus context</code></p>
+  <span class="flex shrink-0 items-center gap-2"><span class="mj-badge mj-badge--ok relative" data-status="ok"><span aria-hidden="true">✓</span>exit 0</span>
+<button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy the command'"><span x-text="said || 'Copy'">Copy</span></button>
+    <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
+  </span>
+</div><pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body" tabindex="0"># Majordomus context — &lt;time&gt;
 # a projection of durable state, not a source of truth: validate every line against git
 
 ## GIT
@@ -522,7 +523,10 @@ task_record  exact (recorded head &lt;head&gt;)
 
 ## TASK
 id           t-&lt;id&gt;
-task         narrow the parser
+</pre>
+<details class="border-t border-default bg-neutral-primary">
+  <summary class="cursor-pointer px-4 py-2 text-xs font-medium text-fg-brand hover:underline focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">The remaining 48 lines of the output</summary>
+  <pre class="m-0 whitespace-pre-wrap break-words border-t border-default p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">task         narrow the parser
 profile      implementation
 owner        &lt;owner&gt;
 outcome      active
@@ -569,31 +573,34 @@ lib/a
 - history — profile implementation sets context.recent_history_depth: 0
 
 ## BUDGET
-60 of 300 lines</pre></div><div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-default px-4 py-2 text-xs">
+60 of 300 lines
+</pre>
+</details>
+<div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-default px-4 py-2 text-xs">
       <span class="text-body-subtle">what the next worker needs to know now, within budget</span>
       <a href="https://majordomus.dev/use-cases/hand-work-between-sessions/" class="text-fg-brand hover:underline">Hand unfinished work to the next session &rarr;</a>
     </div>
   </figure><figure x-show="t === 2" id="how-term-panel-2" role="tabpanel" aria-labelledby="how-term-tab-2"
-    class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs">
-    <figcaption class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-default px-4 py-2">
-      <span class="min-w-0 break-all font-mono text-xs text-heading">$ majordomus checkpoint</span>
-      <span class="shrink-0 font-mono text-xs">
-        <span class="text-body-subtle">exit</span>
-        <span class="ms-1 rounded px-1.5 py-0.5 font-semibold bg-success-soft text-fg-success-strong">0</span>
-      </span>
-    </figcaption><div class="h-80 overflow-x-auto overflow-y-auto sm:h-96" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">.ai/local/state/checkpoints/&lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md</pre></div><div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-default px-4 py-2 text-xs">
+    class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs"><div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-default bg-neutral-primary-soft px-4 py-2.5" x-data="{ said: '' }">
+  <p class="m-0 min-w-0 flex-1 break-all font-mono text-xs leading-relaxed text-heading"><span class="select-none text-body-subtle" aria-hidden="true">$</span> <code x-ref="src">majordomus checkpoint</code></p>
+  <span class="flex shrink-0 items-center gap-2"><span class="mj-badge mj-badge--ok relative" data-status="ok"><span aria-hidden="true">✓</span>exit 0</span>
+<button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy the command'"><span x-text="said || 'Copy'">Copy</span></button>
+    <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
+  </span>
+</div><pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">.ai/local/state/checkpoints/&lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md
+</pre>
+<div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-default px-4 py-2 text-xs">
       <span class="text-body-subtle">record compact progress inside the active task</span>
       <a href="https://majordomus.dev/use-cases/checkpoint-long-work/" class="text-fg-brand hover:underline">Checkpoint long work so a stop costs minutes, not the day &rarr;</a>
     </div>
   </figure><figure x-show="t === 3" id="how-term-panel-3" role="tabpanel" aria-labelledby="how-term-tab-3"
-    class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs">
-    <figcaption class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-default px-4 py-2">
-      <span class="min-w-0 break-all font-mono text-xs text-heading">$ majordomus check --explain</span>
-      <span class="shrink-0 font-mono text-xs">
-        <span class="text-body-subtle">exit</span>
-        <span class="ms-1 rounded px-1.5 py-0.5 font-semibold bg-success-soft text-fg-success-strong">0</span>
-      </span>
-    </figcaption><div class="h-80 overflow-x-auto overflow-y-auto sm:h-96" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0"># task
+    class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs"><div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-default bg-neutral-primary-soft px-4 py-2.5" x-data="{ said: '' }">
+  <p class="m-0 min-w-0 flex-1 break-all font-mono text-xs leading-relaxed text-heading"><span class="select-none text-body-subtle" aria-hidden="true">$</span> <code x-ref="src">majordomus check --explain</code></p>
+  <span class="flex shrink-0 items-center gap-2"><span class="mj-badge mj-badge--ok relative" data-status="ok"><span aria-hidden="true">✓</span>exit 0</span>
+<button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy the command'"><span x-text="said || 'Copy'">Copy</span></button>
+    <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
+  </span>
+</div><pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body" tabindex="0"># task
   id=t-&lt;id&gt;
   task=narrow the parser
   profile=implementation
@@ -605,7 +612,10 @@ lib/a
   repository_id=&lt;repo&gt;/.git
   worktree=&lt;repo&gt;
   branch=main
-  head=&lt;sha&gt;
+</pre>
+<details class="border-t border-default bg-neutral-primary">
+  <summary class="cursor-pointer px-4 py-2 text-xs font-medium text-fg-brand hover:underline focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">The remaining 56 lines of the output</summary>
+  <pre class="m-0 whitespace-pre-wrap break-words border-t border-default p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">  head=&lt;sha&gt;
   working_tree=clean
 # profile implementation
   name=implementation
@@ -660,19 +670,21 @@ lib/a
   majordomus.state-consistency (blocking)
   majordomus.use-case-coverage (blocking)
   majordomus.obligation-closure (blocking)
-  majordomus.completion-gates (blocking)</pre></div><div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-default px-4 py-2 text-xs">
+  majordomus.completion-gates (blocking)
+</pre>
+</details>
+<div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-default px-4 py-2 text-xs">
       <span class="text-body-subtle">is the current task consistent with policy, scope, state?</span>
       <a href="https://majordomus.dev/use-cases/read-only-the-context-that-fits/" class="text-fg-brand hover:underline">Read only the context that fits the budget, and know what was dropped &rarr;</a>
     </div>
   </figure><figure x-show="t === 4" id="how-term-panel-4" role="tabpanel" aria-labelledby="how-term-tab-4"
-    class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs">
-    <figcaption class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-default px-4 py-2">
-      <span class="min-w-0 break-all font-mono text-xs text-heading">$ majordomus handover --resolve</span>
-      <span class="shrink-0 font-mono text-xs">
-        <span class="text-body-subtle">exit</span>
-        <span class="ms-1 rounded px-1.5 py-0.5 font-semibold bg-success-soft text-fg-success-strong">0</span>
-      </span>
-    </figcaption><div class="h-80 overflow-x-auto overflow-y-auto sm:h-96" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">Handover: .ai/local/state/handovers/&lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md
+    class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs"><div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-default bg-neutral-primary-soft px-4 py-2.5" x-data="{ said: '' }">
+  <p class="m-0 min-w-0 flex-1 break-all font-mono text-xs leading-relaxed text-heading"><span class="select-none text-body-subtle" aria-hidden="true">$</span> <code x-ref="src">majordomus handover --resolve</code></p>
+  <span class="flex shrink-0 items-center gap-2"><span class="mj-badge mj-badge--ok relative" data-status="ok"><span aria-hidden="true">✓</span>exit 0</span>
+<button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy the command'"><span x-text="said || 'Copy'">Copy</span></button>
+    <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
+  </span>
+</div><pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">Handover: .ai/local/state/handovers/&lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md
 Match: same_worktree_same_branch
 Git state: exact
 Created: &lt;time&gt; (&lt;age&gt; ago)
@@ -684,7 +696,10 @@ Freshness: fresh — &lt;age&gt; ago
 
 Prove the lifecycle runs itself
 
-Profile implementation. Declared scope: lib.
+</pre>
+<details class="border-t border-default bg-neutral-primary">
+  <summary class="cursor-pointer px-4 py-2 text-xs font-medium text-fg-brand hover:underline focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">The remaining 41 lines of the output</summary>
+  <pre class="m-0 whitespace-pre-wrap break-words border-t border-default p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">Profile implementation. Declared scope: lib.
 
 # Current State
 
@@ -724,19 +739,21 @@ Not run by this record. Nothing here asserts a test result; `majordomus finish -
 
 ---
 
-Derived by `majordomus handover --derive` from the task record, the ledger, git and the open questions. It asserts nothing that is not in one of those, and no model wrote it.</pre></div><div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-default px-4 py-2 text-xs">
+Derived by `majordomus handover --derive` from the task record, the ledger, git and the open questions. It asserts nothing that is not in one of those, and no model wrote it.
+</pre>
+</details>
+<div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-default px-4 py-2 text-xs">
       <span class="text-body-subtle">write an append-only continuation record (body on stdin)</span>
       <a href="https://majordomus.dev/use-cases/let-the-provider-draw-the-episode-boundary/" class="text-fg-brand hover:underline">Have the session opened and closed without anybody remembering to &rarr;</a>
     </div>
   </figure><figure x-show="t === 5" id="how-term-panel-5" role="tabpanel" aria-labelledby="how-term-tab-5"
-    class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs">
-    <figcaption class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-default px-4 py-2">
-      <span class="min-w-0 break-all font-mono text-xs text-heading">$ majordomus finish --outcome completed --verify-command &#39;test -d .ai&#39;</span>
-      <span class="shrink-0 font-mono text-xs">
-        <span class="text-body-subtle">exit</span>
-        <span class="ms-1 rounded px-1.5 py-0.5 font-semibold bg-success-soft text-fg-success-strong">0</span>
-      </span>
-    </figcaption><div class="h-80 overflow-x-auto overflow-y-auto sm:h-96" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">OK   blockers    t-&lt;id&gt; — none open
+    class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs"><div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-default bg-neutral-primary-soft px-4 py-2.5" x-data="{ said: '' }">
+  <p class="m-0 min-w-0 flex-1 break-all font-mono text-xs leading-relaxed text-heading"><span class="select-none text-body-subtle" aria-hidden="true">$</span> <code x-ref="src">majordomus finish --outcome completed --verify-command &#39;test -d .ai&#39;</code></p>
+  <span class="flex shrink-0 items-center gap-2"><span class="mj-badge mj-badge--ok relative" data-status="ok"><span aria-hidden="true">✓</span>exit 0</span>
+<button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy the command'"><span x-text="said || 'Copy'">Copy</span></button>
+    <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
+  </span>
+</div><pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">OK   blockers    t-&lt;id&gt; — none open
 OK   note        t-&lt;id&gt; — &lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md
 INFO regression  t-&lt;id&gt; — profile implementation adds no requirement beyond the shared contract
 OK   scope       t-&lt;id&gt; — 1 touched file(s), all within scope
@@ -748,7 +765,13 @@ OK   verification t-&lt;id&gt; — test -d .ai — exit 0, &lt;s&gt;s, tree &lt;
 INFO obligation  t-&lt;id&gt; — the task declares no obligations
 INFO gate        t-&lt;id&gt; — this repository declares no CI model at .ai/repo/ci/gates.yaml; nothing can be planned
 INFO gate        t-&lt;id&gt; — not in verification.finish_requires
-finish: t-&lt;id&gt; completed</pre></div><div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-default px-4 py-2 text-xs">
+</pre>
+<details class="border-t border-default bg-neutral-primary">
+  <summary class="cursor-pointer px-4 py-2 text-xs font-medium text-fg-brand hover:underline focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">The remaining 1 lines of the output</summary>
+  <pre class="m-0 whitespace-pre-wrap break-words border-t border-default p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">finish: t-&lt;id&gt; completed
+</pre>
+</details>
+<div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-default px-4 py-2 text-xs">
       <span class="text-body-subtle">evaluate the finish contract; refuse if unmet</span>
       <a href="https://majordomus.dev/use-cases/accept-or-refuse-finished-work/" class="text-fg-brand hover:underline">Decide whether finished work is actually finished &rarr;</a>
     </div>
@@ -772,12 +795,12 @@ finish: t-&lt;id&gt; completed</pre></div><div class="flex flex-wrap items-cente
           <span class="min-w-0 text-sm leading-relaxed text-heading">The worker makes the change it was asked for, and also edits a note under docs, which the task never claimed.</span>
         </li>
         <li class="flex min-w-0 gap-3">
-          <span class="mt-0.5 inline-flex w-20 shrink-0 justify-center"><span class="mj-badge mj-badge--refused">refused</span>
+          <span class="mt-0.5 inline-flex w-20 shrink-0 justify-center"><span class="mj-badge mj-badge--refused relative" data-status="refused"><span aria-hidden="true">✕</span>refused</span>
 </span>
           <span class="min-w-0 text-sm leading-relaxed text-heading">check names the file outside the claimed scope and exits non-zero. It is a failure, not a warning.</span>
         </li>
         <li class="flex min-w-0 gap-3">
-          <span class="mt-0.5 inline-flex w-20 shrink-0 justify-center"><span class="mj-badge mj-badge--refused">refused</span>
+          <span class="mt-0.5 inline-flex w-20 shrink-0 justify-center"><span class="mj-badge mj-badge--refused relative" data-status="refused"><span aria-hidden="true">✕</span>refused</span>
 </span>
           <span class="min-w-0 text-sm leading-relaxed text-heading">The worker reports the task finished. finish evaluates the contract instead of believing it, and refuses.</span>
         </li>
@@ -786,16 +809,16 @@ finish: t-&lt;id&gt; completed</pre></div><div class="flex flex-wrap items-cente
           <span class="min-w-0 text-sm leading-relaxed text-heading">The stray edit is taken back.</span>
         </li>
         <li class="flex min-w-0 gap-3">
-          <span class="mt-0.5 inline-flex w-20 shrink-0 justify-center"><span class="mj-badge mj-badge--refused">refused</span>
+          <span class="mt-0.5 inline-flex w-20 shrink-0 justify-center"><span class="mj-badge mj-badge--refused relative" data-status="refused"><span aria-hidden="true">✕</span>refused</span>
 </span>
-          <span class="min-w-0 text-sm leading-relaxed text-heading">Scope is clean now, but the repository&#39;&#39;s own test still fails. finish runs it and refuses again.</span>
+          <span class="min-w-0 text-sm leading-relaxed text-heading">Scope is clean now, but the repository&#39;s own test still fails. finish runs it and refuses again.</span>
         </li>
         <li class="flex min-w-0 gap-3">
           <span class="mt-0.5 inline-flex w-20 shrink-0 justify-center"><span class="font-mono text-xs text-body-subtle">worker</span></span>
           <span class="min-w-0 text-sm leading-relaxed text-heading">The worker does what the handover said was left.</span>
         </li>
         <li class="flex min-w-0 gap-3">
-          <span class="mt-0.5 inline-flex w-20 shrink-0 justify-center"><span class="mj-badge mj-badge--accepted">accepted</span>
+          <span class="mt-0.5 inline-flex w-20 shrink-0 justify-center"><span class="mj-badge mj-badge--accepted relative" data-status="accepted"><span aria-hidden="true">✓</span>accepted</span>
 </span>
           <span class="min-w-0 text-sm leading-relaxed text-heading">Every line of the contract passes, so the outcome is recorded, with the verification that proved it.</span>
         </li>
@@ -805,44 +828,44 @@ finish: t-&lt;id&gt; completed</pre></div><div class="flex flex-wrap items-cente
     <div role="tablist" aria-label="Steps of the recorded run" class="flex min-w-0 flex-wrap gap-1.5"><button type="button" role="tab" id="home-replay-tab-0" aria-controls="home-replay-panel-0"
         x-on:click="s = 0" :aria-selected="s === 0 ? 'true' : 'false'"
         class="inline-flex items-center gap-1.5 rounded-base border border-default bg-neutral-primary-soft px-2 py-1 font-mono text-xs text-body hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
-        :class="s === 0 ? 'ring-2 ring-brand text-heading' : ''">
-        <span aria-hidden="true" class="h-2 w-2 shrink-0 rounded-full bg-success"></span>start</button><button type="button" role="tab" id="home-replay-tab-1" aria-controls="home-replay-panel-1"
+        :class="s === 0 ? 'ring-2 ring-brand text-heading' : ''"><span aria-hidden="true" class="font-semibold mj-status mj-status--accepted">✓</span>start<span class="sr-only">, accepted</span>
+      </button><button type="button" role="tab" id="home-replay-tab-1" aria-controls="home-replay-panel-1"
         x-on:click="s = 1" :aria-selected="s === 1 ? 'true' : 'false'"
         class="inline-flex items-center gap-1.5 rounded-base border border-default bg-neutral-primary-soft px-2 py-1 font-mono text-xs text-body hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
-        :class="s === 1 ? 'ring-2 ring-brand text-heading' : ''">
-        <span aria-hidden="true" class="h-2 w-2 shrink-0 rounded-full bg-neutral-tertiary"></span>worker</button><button type="button" role="tab" id="home-replay-tab-2" aria-controls="home-replay-panel-2"
+        :class="s === 1 ? 'ring-2 ring-brand text-heading' : ''"><span aria-hidden="true" class="font-semibold">•</span>worker<span class="sr-only">, change</span>
+      </button><button type="button" role="tab" id="home-replay-tab-2" aria-controls="home-replay-panel-2"
         x-on:click="s = 2" :aria-selected="s === 2 ? 'true' : 'false'"
         class="inline-flex items-center gap-1.5 rounded-base border border-default bg-neutral-primary-soft px-2 py-1 font-mono text-xs text-body hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
-        :class="s === 2 ? 'ring-2 ring-brand text-heading' : ''">
-        <span aria-hidden="true" class="h-2 w-2 shrink-0 rounded-full bg-danger"></span>check</button><button type="button" role="tab" id="home-replay-tab-3" aria-controls="home-replay-panel-3"
+        :class="s === 2 ? 'ring-2 ring-brand text-heading' : ''"><span aria-hidden="true" class="font-semibold mj-status mj-status--refused">✕</span>check<span class="sr-only">, refused</span>
+      </button><button type="button" role="tab" id="home-replay-tab-3" aria-controls="home-replay-panel-3"
         x-on:click="s = 3" :aria-selected="s === 3 ? 'true' : 'false'"
         class="inline-flex items-center gap-1.5 rounded-base border border-default bg-neutral-primary-soft px-2 py-1 font-mono text-xs text-body hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
-        :class="s === 3 ? 'ring-2 ring-brand text-heading' : ''">
-        <span aria-hidden="true" class="h-2 w-2 shrink-0 rounded-full bg-danger"></span>finish</button><button type="button" role="tab" id="home-replay-tab-4" aria-controls="home-replay-panel-4"
+        :class="s === 3 ? 'ring-2 ring-brand text-heading' : ''"><span aria-hidden="true" class="font-semibold mj-status mj-status--refused">✕</span>finish<span class="sr-only">, refused</span>
+      </button><button type="button" role="tab" id="home-replay-tab-4" aria-controls="home-replay-panel-4"
         x-on:click="s = 4" :aria-selected="s === 4 ? 'true' : 'false'"
         class="inline-flex items-center gap-1.5 rounded-base border border-default bg-neutral-primary-soft px-2 py-1 font-mono text-xs text-body hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
-        :class="s === 4 ? 'ring-2 ring-brand text-heading' : ''">
-        <span aria-hidden="true" class="h-2 w-2 shrink-0 rounded-full bg-neutral-tertiary"></span>worker</button><button type="button" role="tab" id="home-replay-tab-5" aria-controls="home-replay-panel-5"
+        :class="s === 4 ? 'ring-2 ring-brand text-heading' : ''"><span aria-hidden="true" class="font-semibold">•</span>worker<span class="sr-only">, change</span>
+      </button><button type="button" role="tab" id="home-replay-tab-5" aria-controls="home-replay-panel-5"
         x-on:click="s = 5" :aria-selected="s === 5 ? 'true' : 'false'"
         class="inline-flex items-center gap-1.5 rounded-base border border-default bg-neutral-primary-soft px-2 py-1 font-mono text-xs text-body hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
-        :class="s === 5 ? 'ring-2 ring-brand text-heading' : ''">
-        <span aria-hidden="true" class="h-2 w-2 shrink-0 rounded-full bg-success"></span>handover</button><button type="button" role="tab" id="home-replay-tab-6" aria-controls="home-replay-panel-6"
+        :class="s === 5 ? 'ring-2 ring-brand text-heading' : ''"><span aria-hidden="true" class="font-semibold mj-status mj-status--accepted">✓</span>handover<span class="sr-only">, accepted</span>
+      </button><button type="button" role="tab" id="home-replay-tab-6" aria-controls="home-replay-panel-6"
         x-on:click="s = 6" :aria-selected="s === 6 ? 'true' : 'false'"
         class="inline-flex items-center gap-1.5 rounded-base border border-default bg-neutral-primary-soft px-2 py-1 font-mono text-xs text-body hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
-        :class="s === 6 ? 'ring-2 ring-brand text-heading' : ''">
-        <span aria-hidden="true" class="h-2 w-2 shrink-0 rounded-full bg-success"></span>context</button><button type="button" role="tab" id="home-replay-tab-7" aria-controls="home-replay-panel-7"
+        :class="s === 6 ? 'ring-2 ring-brand text-heading' : ''"><span aria-hidden="true" class="font-semibold mj-status mj-status--accepted">✓</span>context<span class="sr-only">, accepted</span>
+      </button><button type="button" role="tab" id="home-replay-tab-7" aria-controls="home-replay-panel-7"
         x-on:click="s = 7" :aria-selected="s === 7 ? 'true' : 'false'"
         class="inline-flex items-center gap-1.5 rounded-base border border-default bg-neutral-primary-soft px-2 py-1 font-mono text-xs text-body hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
-        :class="s === 7 ? 'ring-2 ring-brand text-heading' : ''">
-        <span aria-hidden="true" class="h-2 w-2 shrink-0 rounded-full bg-danger"></span>finish</button><button type="button" role="tab" id="home-replay-tab-8" aria-controls="home-replay-panel-8"
+        :class="s === 7 ? 'ring-2 ring-brand text-heading' : ''"><span aria-hidden="true" class="font-semibold mj-status mj-status--refused">✕</span>finish<span class="sr-only">, refused</span>
+      </button><button type="button" role="tab" id="home-replay-tab-8" aria-controls="home-replay-panel-8"
         x-on:click="s = 8" :aria-selected="s === 8 ? 'true' : 'false'"
         class="inline-flex items-center gap-1.5 rounded-base border border-default bg-neutral-primary-soft px-2 py-1 font-mono text-xs text-body hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
-        :class="s === 8 ? 'ring-2 ring-brand text-heading' : ''">
-        <span aria-hidden="true" class="h-2 w-2 shrink-0 rounded-full bg-neutral-tertiary"></span>worker</button><button type="button" role="tab" id="home-replay-tab-9" aria-controls="home-replay-panel-9"
+        :class="s === 8 ? 'ring-2 ring-brand text-heading' : ''"><span aria-hidden="true" class="font-semibold">•</span>worker<span class="sr-only">, change</span>
+      </button><button type="button" role="tab" id="home-replay-tab-9" aria-controls="home-replay-panel-9"
         x-on:click="s = 9" :aria-selected="s === 9 ? 'true' : 'false'"
         class="inline-flex items-center gap-1.5 rounded-base border border-default bg-neutral-primary-soft px-2 py-1 font-mono text-xs text-body hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary"
-        :class="s === 9 ? 'ring-2 ring-brand text-heading' : ''">
-        <span aria-hidden="true" class="h-2 w-2 shrink-0 rounded-full bg-success"></span>finish</button></div>
+        :class="s === 9 ? 'ring-2 ring-brand text-heading' : ''"><span aria-hidden="true" class="font-semibold mj-status mj-status--accepted">✓</span>finish<span class="sr-only">, accepted</span>
+      </button></div>
     <div class="flex shrink-0 gap-1.5" x-cloak><button type="button" data-replay-move="-1" x-on:click="s = Math.max(0, s - 1)" :aria-disabled="s === 0 ? 'true' : 'false'"
         class="rounded-base border border-default bg-neutral-primary-soft px-2.5 py-1 text-xs font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary aria-disabled:opacity-50">&larr; Back</button>
       <button type="button" data-replay-move="1" x-on:click="s = Math.min(9, s + 1)" :aria-disabled="s === 9 ? 'true' : 'false'"
@@ -854,16 +877,21 @@ finish: t-&lt;id&gt; completed</pre></div><div class="flex flex-wrap items-cente
     class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs">
     <figcaption class="border-b border-default px-4 py-3">
       <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-        <span class="font-mono text-xs text-body-subtle">step 1 of 10 &middot; Majordomus</span>
-        <span class="rounded bg-success-soft px-1.5 py-0.5 font-mono text-xs font-semibold text-fg-success-strong">ok &middot; exit 0</span>
-      </div><p class="mt-2 text-sm leading-relaxed text-heading">The task claims lib. Another worker already claims lib in a second worktree, and start says so before any file is touched.</p>
-    </figcaption><div class="h-56 overflow-y-auto sm:h-64" tabindex="0">
-      <pre class="m-0 whitespace-pre-wrap break-words p-4 font-mono text-xs leading-relaxed text-body" tabindex="0"><span class="text-heading">$ majordomus start &#39;refuse tabs in the parser&#39; --scope lib</span>
-started t-&lt;id&gt;  profile=implementation  scope=lib
+        <span class="font-mono text-xs text-body-subtle">step 1 of 10 &middot; Majordomus</span><span class="mj-badge mj-badge--accepted relative" data-status="accepted"><span aria-hidden="true">✓</span>accepted</span>
+
+      </div><p class="mt-2 mb-0 text-sm leading-relaxed text-heading">The task claims lib. Another worker already claims lib in a second worktree, and start says so before any file is touched.</p>
+    </figcaption><div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-default bg-neutral-primary-soft px-4 py-2.5" x-data="{ said: '' }">
+  <p class="m-0 min-w-0 flex-1 break-all font-mono text-xs leading-relaxed text-heading"><span class="select-none text-body-subtle" aria-hidden="true">$</span> <code x-ref="src">majordomus start &#39;refuse tabs in the parser&#39; --scope lib</code></p>
+  <span class="flex shrink-0 items-center gap-2"><span class="mj-badge mj-badge--ok relative" data-status="ok"><span aria-hidden="true">✓</span>exit 0</span>
+<button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy the command'"><span x-text="said || 'Copy'">Copy</span></button>
+    <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
+  </span>
+</div><pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">started t-&lt;id&gt;  profile=implementation  scope=lib
 INFO overlap     repo-other — claims lib — contains your lib  [reproduce: majordomus check --overlap]
+next: majordomus context; checkpoint every 15m; majordomus check before claiming anything
 </pre>
-    </div><p class="border-t border-default px-4 py-2 text-xs">
-      <a href="https://majordomus.dev/use-cases/catch-an-agent-that-says-it-is-done/#step-claim-the-work" class="font-medium text-fg-brand hover:underline">The whole output of this step, and what was asserted &rarr;</a>
+<p class="m-0 border-t border-default px-4 py-2 text-xs">
+      <a href="https://majordomus.dev/use-cases/catch-an-agent-that-says-it-is-done/#step-claim-the-work" class="font-medium text-fg-brand hover:underline">What the scenario asserted at this step &rarr;</a>
     </p>
   </figure><figure x-show="s === 1" id="home-replay-panel-1" role="tabpanel" aria-labelledby="home-replay-tab-1"
     data-step="the-worker-strays" data-outcome="change"
@@ -871,54 +899,118 @@ INFO overlap     repo-other — claims lib — contains your lib  [reproduce: ma
     <figcaption class="border-b border-default px-4 py-3">
       <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
         <span class="font-mono text-xs text-body-subtle">step 2 of 10 &middot; the worker</span>
-        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">change &middot; exit 0</span>
-      </div><p class="mt-2 text-sm leading-relaxed text-heading">The worker makes the change it was asked for, and also edits a note under docs, which the task never claimed.</p>
-    </figcaption><div class="h-56 overflow-y-auto sm:h-64" tabindex="0">
-      <pre class="m-0 whitespace-pre-wrap break-words p-4 font-mono text-xs leading-relaxed text-body" tabindex="0"><span class="text-heading">$ echo &quot;tabs are refused&quot; &gt;&gt; lib/a &amp;&amp; echo &quot;parser notes&quot; &gt;&gt; docs/d</span>
-</pre>
-    </div><p class="border-t border-default px-4 py-2 text-xs">
-      <a href="https://majordomus.dev/use-cases/catch-an-agent-that-says-it-is-done/#step-the-worker-strays" class="font-medium text-fg-brand hover:underline">The whole output of this step, and what was asserted &rarr;</a>
+        <span class="font-mono text-xs text-heading"><span aria-hidden="true">•</span> the change being judged</span>
+      </div><p class="mt-2 mb-0 text-sm leading-relaxed text-heading">The worker makes the change it was asked for, and also edits a note under docs, which the task never claimed.</p>
+    </figcaption><div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-default bg-neutral-primary-soft px-4 py-2.5" x-data="{ said: '' }">
+  <p class="m-0 min-w-0 flex-1 break-all font-mono text-xs leading-relaxed text-heading"><span class="select-none text-body-subtle" aria-hidden="true">$</span> <code x-ref="src">echo &quot;tabs are refused&quot; &gt;&gt; lib/a &amp;&amp; echo &quot;parser notes&quot; &gt;&gt; docs/d</code></p>
+  <span class="flex shrink-0 items-center gap-2"><span class="mj-badge mj-badge--ok relative" data-status="ok"><span aria-hidden="true">✓</span>exit 0</span>
+<button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy the command'"><span x-text="said || 'Copy'">Copy</span></button>
+    <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
+  </span>
+</div>
+<p class="m-0 border-t border-default px-4 py-2 text-xs">
+      <a href="https://majordomus.dev/use-cases/catch-an-agent-that-says-it-is-done/#step-the-worker-strays" class="font-medium text-fg-brand hover:underline">What the scenario asserted at this step &rarr;</a>
     </p>
   </figure><figure x-show="s === 2" id="home-replay-panel-2" role="tabpanel" aria-labelledby="home-replay-tab-2"
     data-step="check-refuses-the-stray-file" data-outcome="refused"
     class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs">
     <figcaption class="border-b border-default px-4 py-3">
       <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-        <span class="font-mono text-xs text-body-subtle">step 3 of 10 &middot; Majordomus</span>
-        <span class="rounded bg-danger-soft px-1.5 py-0.5 font-mono text-xs font-semibold text-fg-danger-strong">refused &middot; exit 10</span>
-      </div><p class="mt-2 text-sm leading-relaxed text-heading">check names the file outside the claimed scope and exits non-zero. It is a failure, not a warning.</p>
-    </figcaption><div class="h-56 overflow-y-auto sm:h-64" tabindex="0">
-      <pre class="m-0 whitespace-pre-wrap break-words p-4 font-mono text-xs leading-relaxed text-body" tabindex="0"><span class="text-heading">$ majordomus check</span>
-<span class="text-fg-success-strong">OK   knowledge   records — 0 record(s) valid against knowledge/v1; every reference resolves  [reproduce: majordomus knowledge check]</span>
-<span class="text-fg-success-strong">OK   records     ledger.jsonl — every line is a well-formed event</span>
-<span class="text-fg-success-strong">OK   blockers    t-&lt;id&gt; — none open</span>
-<span class="text-fg-success-strong">OK   records     decisions.md — every entry is attributable</span>
-<span class="font-semibold text-fg-danger-strong">FAIL scope       docs/d — outside claimed scope (lib)  [reproduce: git status --porcelain; git log --first-parent --no-merges --name-only --format= &lt;sha&gt;..HEAD]</span>
-<span class="text-fg-success-strong">OK   state       t-&lt;id&gt; — exact (head &lt;head&gt;)</span>
+        <span class="font-mono text-xs text-body-subtle">step 3 of 10 &middot; Majordomus</span><span class="mj-badge mj-badge--refused relative" data-status="refused"><span aria-hidden="true">✕</span>refused</span>
+
+      </div><p class="mt-2 mb-0 text-sm leading-relaxed text-heading">check names the file outside the claimed scope and exits non-zero. It is a failure, not a warning.</p>
+    </figcaption><div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-default bg-neutral-primary-soft px-4 py-2.5" x-data="{ said: '' }">
+  <p class="m-0 min-w-0 flex-1 break-all font-mono text-xs leading-relaxed text-heading"><span class="select-none text-body-subtle" aria-hidden="true">$</span> <code x-ref="src">majordomus check</code></p>
+  <span class="flex shrink-0 items-center gap-2"><span class="mj-badge mj-badge--fail relative" data-status="fail"><span aria-hidden="true">✕</span>exit 10</span>
+<button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy the command'"><span x-text="said || 'Copy'">Copy</span></button>
+    <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
+  </span>
+</div><div class="bg-neutral-primary px-4 py-3">
+  <ul class="m-0 flex list-none flex-wrap gap-1.5 p-0" aria-label="What the run checked">
+    <li><span class="mj-badge mj-badge--pass relative" data-status="pass"><span aria-hidden="true">✓</span>knowledge</span>
+<span class="sr-only"> passed</span></li>
+    <li><span class="mj-badge mj-badge--pass relative" data-status="pass"><span aria-hidden="true">✓</span>records</span>
+<span class="sr-only"> passed</span></li>
+    <li><span class="mj-badge mj-badge--pass relative" data-status="pass"><span aria-hidden="true">✓</span>blockers</span>
+<span class="sr-only"> passed</span></li>
+    <li><span class="mj-badge mj-badge--pass relative" data-status="pass"><span aria-hidden="true">✓</span>records</span>
+<span class="sr-only"> passed</span></li>
+    <li><span class="mj-badge mj-badge--fail relative" data-status="fail"><span aria-hidden="true">✕</span>scope</span>
+<span class="sr-only"> failed</span></li>
+    <li><span class="mj-badge mj-badge--pass relative" data-status="pass"><span aria-hidden="true">✓</span>state</span>
+<span class="sr-only"> passed</span></li>
+  </ul><p class="mt-2 mb-0 font-mono text-xs font-semibold text-heading">&rarr; check: 11 finding(s), 1 failing</p>
+</div>
+<details class="border-t border-default bg-neutral-primary">
+  <summary class="cursor-pointer px-4 py-2 text-xs font-medium text-fg-brand hover:underline focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">The whole recorded output, 12 lines</summary>
+  <pre class="m-0 whitespace-pre-wrap break-words border-t border-default p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">OK   knowledge   records — 0 record(s) valid against knowledge/v1; every reference resolves  [reproduce: majordomus knowledge check]
+·    checkpoint  t-&lt;id&gt; — &lt;timed against the checkpoint interval&gt;
+OK   records     ledger.jsonl — every line is a well-formed event
+OK   blockers    t-&lt;id&gt; — none open
+OK   records     decisions.md — every entry is attributable
+<span class="font-semibold text-heading">FAIL scope       docs/d — outside claimed scope (lib)  [reproduce: git status --porcelain; git log --first-parent --no-merges --name-only --format= &lt;sha&gt;..HEAD]</span>
+OK   state       t-&lt;id&gt; — exact (head &lt;head&gt;)
+INFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]
+OK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
+INFO obligation  t-&lt;id&gt; — the task declares no obligations
+INFO gate        t-&lt;id&gt; — this repository declares no CI model at .ai/repo/ci/gates.yaml; nothing can be planned
 check: 11 finding(s), 1 failing
 </pre>
-    </div><p class="border-t border-default px-4 py-2 text-xs">
-      <a href="https://majordomus.dev/use-cases/catch-an-agent-that-says-it-is-done/#step-check-refuses-the-stray-file" class="font-medium text-fg-brand hover:underline">The whole output of this step, and what was asserted &rarr;</a>
+</details>
+<p class="m-0 border-t border-default px-4 py-2 text-xs">
+      <a href="https://majordomus.dev/use-cases/catch-an-agent-that-says-it-is-done/#step-check-refuses-the-stray-file" class="font-medium text-fg-brand hover:underline">What the scenario asserted at this step &rarr;</a>
     </p>
   </figure><figure x-show="s === 3" id="home-replay-panel-3" role="tabpanel" aria-labelledby="home-replay-tab-3"
     data-step="the-worker-says-it-is-done" data-outcome="refused"
     class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs">
     <figcaption class="border-b border-default px-4 py-3">
       <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-        <span class="font-mono text-xs text-body-subtle">step 4 of 10 &middot; Majordomus</span>
-        <span class="rounded bg-danger-soft px-1.5 py-0.5 font-mono text-xs font-semibold text-fg-danger-strong">refused &middot; exit 10</span>
-      </div><p class="mt-2 text-sm leading-relaxed text-heading">The worker reports the task finished. finish evaluates the contract instead of believing it, and refuses.</p>
-    </figcaption><div class="h-56 overflow-y-auto sm:h-64" tabindex="0">
-      <pre class="m-0 whitespace-pre-wrap break-words p-4 font-mono text-xs leading-relaxed text-body" tabindex="0"><span class="text-heading">$ majordomus finish --outcome completed --verify-command &#39;sh test/parse.sh&#39;</span>
-<span class="text-fg-success-strong">OK   blockers    t-&lt;id&gt; — none open</span>
-<span class="font-semibold text-fg-danger-strong">FAIL note        t-&lt;id&gt; — no --note file and no handover for this task  [reproduce: majordomus handover &lt; note.md]</span>
-<span class="font-semibold text-fg-danger-strong">FAIL scope       docs/d — outside claimed scope (lib)  [reproduce: git status --porcelain; git log --first-parent --no-merges --name-only --format= &lt;sha&gt;..HEAD]</span>
-<span class="text-fg-success-strong">OK   state       t-&lt;id&gt; — exact (head &lt;head&gt;)</span>
-<span class="font-semibold text-fg-danger-strong">FAIL verification t-&lt;id&gt; — sh test/parse.sh — exit 1, &lt;s&gt;s  [reproduce: sh test/parse.sh]</span>
+        <span class="font-mono text-xs text-body-subtle">step 4 of 10 &middot; Majordomus</span><span class="mj-badge mj-badge--refused relative" data-status="refused"><span aria-hidden="true">✕</span>refused</span>
+
+      </div><p class="mt-2 mb-0 text-sm leading-relaxed text-heading">The worker reports the task finished. finish evaluates the contract instead of believing it, and refuses.</p>
+    </figcaption><div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-default bg-neutral-primary-soft px-4 py-2.5" x-data="{ said: '' }">
+  <p class="m-0 min-w-0 flex-1 break-all font-mono text-xs leading-relaxed text-heading"><span class="select-none text-body-subtle" aria-hidden="true">$</span> <code x-ref="src">majordomus finish --outcome completed --verify-command &#39;sh test/parse.sh&#39;</code></p>
+  <span class="flex shrink-0 items-center gap-2"><span class="mj-badge mj-badge--fail relative" data-status="fail"><span aria-hidden="true">✕</span>exit 10</span>
+<button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy the command'"><span x-text="said || 'Copy'">Copy</span></button>
+    <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
+  </span>
+</div><div class="bg-neutral-primary px-4 py-3">
+  <ul class="m-0 flex list-none flex-wrap gap-1.5 p-0" aria-label="What the run checked">
+    <li><span class="mj-badge mj-badge--pass relative" data-status="pass"><span aria-hidden="true">✓</span>blockers</span>
+<span class="sr-only"> passed</span></li>
+    <li><span class="mj-badge mj-badge--fail relative" data-status="fail"><span aria-hidden="true">✕</span>note</span>
+<span class="sr-only"> failed</span></li>
+    <li><span class="mj-badge mj-badge--fail relative" data-status="fail"><span aria-hidden="true">✕</span>scope</span>
+<span class="sr-only"> failed</span></li>
+    <li><span class="mj-badge mj-badge--pass relative" data-status="pass"><span aria-hidden="true">✓</span>state</span>
+<span class="sr-only"> passed</span></li>
+    <li><span class="mj-badge mj-badge--fail relative" data-status="fail"><span aria-hidden="true">✕</span>verification</span>
+<span class="sr-only"> failed</span></li>
+  </ul><p class="mt-2 mb-0 font-mono text-xs font-semibold text-heading">&rarr; finish: refused, 3 unmet</p>
+</div>
+<details class="border-t border-default bg-neutral-primary">
+  <summary class="cursor-pointer px-4 py-2 text-xs font-medium text-fg-brand hover:underline focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">The whole recorded output, 17 lines</summary>
+  <pre class="m-0 whitespace-pre-wrap break-words border-t border-default p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">OK   blockers    t-&lt;id&gt; — none open
+<span class="font-semibold text-heading">FAIL note        t-&lt;id&gt; — no --note file and no handover for this task  [reproduce: majordomus handover &lt; note.md]</span>
+INFO regression  t-&lt;id&gt; — profile implementation adds no requirement beyond the shared contract
+<span class="font-semibold text-heading">FAIL scope       docs/d — outside claimed scope (lib)  [reproduce: git status --porcelain; git log --first-parent --no-merges --name-only --format= &lt;sha&gt;..HEAD]</span>
+OK   state       t-&lt;id&gt; — exact (head &lt;head&gt;)
+INFO continuity  t-&lt;id&gt; — applies to partial and blocked
+INFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]
+OK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
+<span class="font-semibold text-heading">FAIL verification t-&lt;id&gt; — sh test/parse.sh — exit 1, &lt;s&gt;s  [reproduce: sh test/parse.sh]</span>
+INFO obligation  t-&lt;id&gt; — the task declares no obligations
+INFO gate        t-&lt;id&gt; — this repository declares no CI model at .ai/repo/ci/gates.yaml; nothing can be planned
+INFO gate        t-&lt;id&gt; — not in verification.finish_requires
 finish: refused, 3 unmet
+blocking doctrines:
+- majordomus.note-integrity
+- majordomus.scope-integrity
+- majordomus.verification-integrity
 </pre>
-    </div><p class="border-t border-default px-4 py-2 text-xs">
-      <a href="https://majordomus.dev/use-cases/catch-an-agent-that-says-it-is-done/#step-the-worker-says-it-is-done" class="font-medium text-fg-brand hover:underline">The whole output of this step, and what was asserted &rarr;</a>
+</details>
+<p class="m-0 border-t border-default px-4 py-2 text-xs">
+      <a href="https://majordomus.dev/use-cases/catch-an-agent-that-says-it-is-done/#step-the-worker-says-it-is-done" class="font-medium text-fg-brand hover:underline">What the scenario asserted at this step &rarr;</a>
     </p>
   </figure><figure x-show="s === 4" id="home-replay-panel-4" role="tabpanel" aria-labelledby="home-replay-tab-4"
     data-step="the-worker-reverts-the-stray-file" data-outcome="change"
@@ -926,56 +1018,74 @@ finish: refused, 3 unmet
     <figcaption class="border-b border-default px-4 py-3">
       <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
         <span class="font-mono text-xs text-body-subtle">step 5 of 10 &middot; the worker</span>
-        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">change &middot; exit 0</span>
-      </div><p class="mt-2 text-sm leading-relaxed text-heading">The stray edit is taken back.</p>
-    </figcaption><div class="h-56 overflow-y-auto sm:h-64" tabindex="0">
-      <pre class="m-0 whitespace-pre-wrap break-words p-4 font-mono text-xs leading-relaxed text-body" tabindex="0"><span class="text-heading">$ git checkout -- docs/d</span>
-</pre>
-    </div><p class="border-t border-default px-4 py-2 text-xs">
-      <a href="https://majordomus.dev/use-cases/catch-an-agent-that-says-it-is-done/#step-the-worker-reverts-the-stray-file" class="font-medium text-fg-brand hover:underline">The whole output of this step, and what was asserted &rarr;</a>
+        <span class="font-mono text-xs text-heading"><span aria-hidden="true">•</span> the change being judged</span>
+      </div><p class="mt-2 mb-0 text-sm leading-relaxed text-heading">The stray edit is taken back.</p>
+    </figcaption><div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-default bg-neutral-primary-soft px-4 py-2.5" x-data="{ said: '' }">
+  <p class="m-0 min-w-0 flex-1 break-all font-mono text-xs leading-relaxed text-heading"><span class="select-none text-body-subtle" aria-hidden="true">$</span> <code x-ref="src">git checkout -- docs/d</code></p>
+  <span class="flex shrink-0 items-center gap-2"><span class="mj-badge mj-badge--ok relative" data-status="ok"><span aria-hidden="true">✓</span>exit 0</span>
+<button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy the command'"><span x-text="said || 'Copy'">Copy</span></button>
+    <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
+  </span>
+</div>
+<p class="m-0 border-t border-default px-4 py-2 text-xs">
+      <a href="https://majordomus.dev/use-cases/catch-an-agent-that-says-it-is-done/#step-the-worker-reverts-the-stray-file" class="font-medium text-fg-brand hover:underline">What the scenario asserted at this step &rarr;</a>
     </p>
   </figure><figure x-show="s === 5" id="home-replay-panel-5" role="tabpanel" aria-labelledby="home-replay-tab-5"
     data-step="hand-over" data-outcome="accepted"
     class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs">
     <figcaption class="border-b border-default px-4 py-3">
       <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-        <span class="font-mono text-xs text-body-subtle">step 6 of 10 &middot; Majordomus</span>
-        <span class="rounded bg-success-soft px-1.5 py-0.5 font-mono text-xs font-semibold text-fg-success-strong">ok &middot; exit 0</span>
-      </div><p class="mt-2 text-sm leading-relaxed text-heading">The session ends. What the next one needs is written into the repository, not left in a transcript.</p>
-    </figcaption><div class="h-56 overflow-y-auto sm:h-64" tabindex="0">
-      <pre class="m-0 whitespace-pre-wrap break-words p-4 font-mono text-xs leading-relaxed text-body" tabindex="0"><span class="text-heading">$ majordomus handover</span><span class="text-body-subtle"> &lt; challenge-handover.md</span>
-.ai/local/state/handovers/&lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md
+        <span class="font-mono text-xs text-body-subtle">step 6 of 10 &middot; Majordomus</span><span class="mj-badge mj-badge--accepted relative" data-status="accepted"><span aria-hidden="true">✓</span>accepted</span>
+
+      </div><p class="mt-2 mb-0 text-sm leading-relaxed text-heading">The session ends. What the next one needs is written into the repository, not left in a transcript.</p>
+    </figcaption><div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-default bg-neutral-primary-soft px-4 py-2.5" x-data="{ said: '' }">
+  <p class="m-0 min-w-0 flex-1 break-all font-mono text-xs leading-relaxed text-heading"><span class="select-none text-body-subtle" aria-hidden="true">$</span> <code x-ref="src">majordomus handover</code><span class="text-body-subtle"> &lt; challenge-handover.md</span></p>
+  <span class="flex shrink-0 items-center gap-2"><span class="mj-badge mj-badge--ok relative" data-status="ok"><span aria-hidden="true">✓</span>exit 0</span>
+<button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy the command'"><span x-text="said || 'Copy'">Copy</span></button>
+    <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
+  </span>
+</div><pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">.ai/local/state/handovers/&lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md
 </pre>
-    </div><p class="border-t border-default px-4 py-2 text-xs">
-      <a href="https://majordomus.dev/use-cases/catch-an-agent-that-says-it-is-done/#step-hand-over" class="font-medium text-fg-brand hover:underline">The whole output of this step, and what was asserted &rarr;</a>
+<p class="m-0 border-t border-default px-4 py-2 text-xs">
+      <a href="https://majordomus.dev/use-cases/catch-an-agent-that-says-it-is-done/#step-hand-over" class="font-medium text-fg-brand hover:underline">What the scenario asserted at this step &rarr;</a>
     </p>
   </figure><figure x-show="s === 6" id="home-replay-panel-6" role="tabpanel" aria-labelledby="home-replay-tab-6"
     data-step="the-next-session-resumes" data-outcome="accepted"
     class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs">
     <figcaption class="border-b border-default px-4 py-3">
       <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-        <span class="font-mono text-xs text-body-subtle">step 7 of 10 &middot; Majordomus</span>
-        <span class="rounded bg-success-soft px-1.5 py-0.5 font-mono text-xs font-semibold text-fg-success-strong">ok &middot; exit 0</span>
-      </div><p class="mt-2 text-sm leading-relaxed text-heading">A new session asks the repository what it needs to know, and gets the task, its scope and the handover back.</p>
-    </figcaption><div class="h-56 overflow-y-auto sm:h-64" tabindex="0">
-      <pre class="m-0 whitespace-pre-wrap break-words p-4 font-mono text-xs leading-relaxed text-body" tabindex="0"><span class="text-heading">$ majordomus context</span>
-# Majordomus context — &lt;time&gt;
+        <span class="font-mono text-xs text-body-subtle">step 7 of 10 &middot; Majordomus</span><span class="mj-badge mj-badge--accepted relative" data-status="accepted"><span aria-hidden="true">✓</span>accepted</span>
+
+      </div><p class="mt-2 mb-0 text-sm leading-relaxed text-heading">A new session asks the repository what it needs to know, and gets the task, its scope and the handover back.</p>
+    </figcaption><div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-default bg-neutral-primary-soft px-4 py-2.5" x-data="{ said: '' }">
+  <p class="m-0 min-w-0 flex-1 break-all font-mono text-xs leading-relaxed text-heading"><span class="select-none text-body-subtle" aria-hidden="true">$</span> <code x-ref="src">majordomus context</code></p>
+  <span class="flex shrink-0 items-center gap-2"><span class="mj-badge mj-badge--ok relative" data-status="ok"><span aria-hidden="true">✓</span>exit 0</span>
+<button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy the command'"><span x-text="said || 'Copy'">Copy</span></button>
+    <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
+  </span>
+</div><pre class="m-0 whitespace-pre-wrap break-words bg-neutral-primary p-4 font-mono text-xs leading-relaxed text-body" tabindex="0"># Majordomus context — &lt;time&gt;
 # a projection of durable state, not a source of truth: validate every line against git
+
 ## GIT
 repository   &lt;repo&gt;
 branch       main
 head         &lt;sha&gt;
 working_tree dirty
 task_record  exact (recorded head &lt;head&gt;)
+
 ## TASK
 id           t-&lt;id&gt;
-task         refuse tabs in the parser
+</pre>
+<details class="border-t border-default bg-neutral-primary">
+  <summary class="cursor-pointer px-4 py-2 text-xs font-medium text-fg-brand hover:underline focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">The remaining 45 lines of the output</summary>
+  <pre class="m-0 whitespace-pre-wrap break-words border-t border-default p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">task         refuse tabs in the parser
 profile      implementation
 owner        &lt;owner&gt;
 outcome      active
 scope        lib
 started      &lt;time&gt; (&lt;age&gt; ago)
 checkpoint   &lt;time&gt; (&lt;age&gt; ago, interval 15m)
+
 ## PROFILE implementation
 capability   standard
 effort       medium
@@ -983,12 +1093,16 @@ verbosity    concise
 presentation engineering
 verification verify command
 output       outcome, changes, verification, blockers, next_action
+
 ## CONTEXT DOCUMENTS (for the scope, root first; majordomus context explain &lt;path&gt;)
 lib  ai.layer
+
 ## KNOWLEDGE (candidates awaiting review on this branch; majordomus knowledge candidates)
 No knowledge candidates await review on this branch. That is an answer, not a gap: `majordomus knowledge candidates` lists every branch.
+
 ## DECISIONS (5 most recent for this task)
 (none)
+
 ## LATEST COMPATIBLE HANDOVER (.ai/local/state/handovers/&lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md)
 match        same_worktree_same_branch
 git state    exact
@@ -1000,35 +1114,69 @@ refuse tabs in the parser
 tabs are refused; the stray note under docs is reverted; the parser&#39;s test still fails
 # Next Action
 make the message name the column, then run the parser&#39;s test again
+
 ## FILES TOUCHED IN SCOPE (1)
 lib/a
+
 ## EXCLUDED
 - history — profile implementation sets context.recent_history_depth: 0
+
 ## BUDGET
 57 of 300 lines
 </pre>
-    </div><p class="border-t border-default px-4 py-2 text-xs">
-      <a href="https://majordomus.dev/use-cases/catch-an-agent-that-says-it-is-done/#step-the-next-session-resumes" class="font-medium text-fg-brand hover:underline">The whole output of this step, and what was asserted &rarr;</a>
+</details>
+<p class="m-0 border-t border-default px-4 py-2 text-xs">
+      <a href="https://majordomus.dev/use-cases/catch-an-agent-that-says-it-is-done/#step-the-next-session-resumes" class="font-medium text-fg-brand hover:underline">What the scenario asserted at this step &rarr;</a>
     </p>
   </figure><figure x-show="s === 7" id="home-replay-panel-7" role="tabpanel" aria-labelledby="home-replay-tab-7"
     data-step="finish-refuses-a-failing-verification" data-outcome="refused"
     class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs">
     <figcaption class="border-b border-default px-4 py-3">
       <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-        <span class="font-mono text-xs text-body-subtle">step 8 of 10 &middot; Majordomus</span>
-        <span class="rounded bg-danger-soft px-1.5 py-0.5 font-mono text-xs font-semibold text-fg-danger-strong">refused &middot; exit 10</span>
-      </div><p class="mt-2 text-sm leading-relaxed text-heading">Scope is clean now, but the repository&#39;&#39;s own test still fails. finish runs it and refuses again.</p>
-    </figcaption><div class="h-56 overflow-y-auto sm:h-64" tabindex="0">
-      <pre class="m-0 whitespace-pre-wrap break-words p-4 font-mono text-xs leading-relaxed text-body" tabindex="0"><span class="text-heading">$ majordomus finish --outcome completed --verify-command &#39;sh test/parse.sh&#39;</span>
-<span class="text-fg-success-strong">OK   blockers    t-&lt;id&gt; — none open</span>
-<span class="text-fg-success-strong">OK   note        t-&lt;id&gt; — &lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md</span>
-<span class="text-fg-success-strong">OK   scope       t-&lt;id&gt; — 1 touched file(s), all within scope</span>
-<span class="text-fg-success-strong">OK   state       t-&lt;id&gt; — exact (head &lt;head&gt;)</span>
-<span class="font-semibold text-fg-danger-strong">FAIL verification t-&lt;id&gt; — sh test/parse.sh — exit 1, &lt;s&gt;s  [reproduce: sh test/parse.sh]</span>
+        <span class="font-mono text-xs text-body-subtle">step 8 of 10 &middot; Majordomus</span><span class="mj-badge mj-badge--refused relative" data-status="refused"><span aria-hidden="true">✕</span>refused</span>
+
+      </div><p class="mt-2 mb-0 text-sm leading-relaxed text-heading">Scope is clean now, but the repository&#39;s own test still fails. finish runs it and refuses again.</p>
+    </figcaption><div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-default bg-neutral-primary-soft px-4 py-2.5" x-data="{ said: '' }">
+  <p class="m-0 min-w-0 flex-1 break-all font-mono text-xs leading-relaxed text-heading"><span class="select-none text-body-subtle" aria-hidden="true">$</span> <code x-ref="src">majordomus finish --outcome completed --verify-command &#39;sh test/parse.sh&#39;</code></p>
+  <span class="flex shrink-0 items-center gap-2"><span class="mj-badge mj-badge--fail relative" data-status="fail"><span aria-hidden="true">✕</span>exit 10</span>
+<button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy the command'"><span x-text="said || 'Copy'">Copy</span></button>
+    <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
+  </span>
+</div><div class="bg-neutral-primary px-4 py-3">
+  <ul class="m-0 flex list-none flex-wrap gap-1.5 p-0" aria-label="What the run checked">
+    <li><span class="mj-badge mj-badge--pass relative" data-status="pass"><span aria-hidden="true">✓</span>blockers</span>
+<span class="sr-only"> passed</span></li>
+    <li><span class="mj-badge mj-badge--pass relative" data-status="pass"><span aria-hidden="true">✓</span>note</span>
+<span class="sr-only"> passed</span></li>
+    <li><span class="mj-badge mj-badge--pass relative" data-status="pass"><span aria-hidden="true">✓</span>scope</span>
+<span class="sr-only"> passed</span></li>
+    <li><span class="mj-badge mj-badge--pass relative" data-status="pass"><span aria-hidden="true">✓</span>state</span>
+<span class="sr-only"> passed</span></li>
+    <li><span class="mj-badge mj-badge--fail relative" data-status="fail"><span aria-hidden="true">✕</span>verification</span>
+<span class="sr-only"> failed</span></li>
+  </ul><p class="mt-2 mb-0 font-mono text-xs font-semibold text-heading">&rarr; finish: refused, 1 unmet</p>
+</div>
+<details class="border-t border-default bg-neutral-primary">
+  <summary class="cursor-pointer px-4 py-2 text-xs font-medium text-fg-brand hover:underline focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">The whole recorded output, 15 lines</summary>
+  <pre class="m-0 whitespace-pre-wrap break-words border-t border-default p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">OK   blockers    t-&lt;id&gt; — none open
+OK   note        t-&lt;id&gt; — &lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md
+INFO regression  t-&lt;id&gt; — profile implementation adds no requirement beyond the shared contract
+OK   scope       t-&lt;id&gt; — 1 touched file(s), all within scope
+OK   state       t-&lt;id&gt; — exact (head &lt;head&gt;)
+INFO continuity  t-&lt;id&gt; — applies to partial and blocked
+INFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]
+OK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
+<span class="font-semibold text-heading">FAIL verification t-&lt;id&gt; — sh test/parse.sh — exit 1, &lt;s&gt;s  [reproduce: sh test/parse.sh]</span>
+INFO obligation  t-&lt;id&gt; — the task declares no obligations
+INFO gate        t-&lt;id&gt; — this repository declares no CI model at .ai/repo/ci/gates.yaml; nothing can be planned
+INFO gate        t-&lt;id&gt; — not in verification.finish_requires
 finish: refused, 1 unmet
+blocking doctrines:
+- majordomus.verification-integrity
 </pre>
-    </div><p class="border-t border-default px-4 py-2 text-xs">
-      <a href="https://majordomus.dev/use-cases/catch-an-agent-that-says-it-is-done/#step-finish-refuses-a-failing-verification" class="font-medium text-fg-brand hover:underline">The whole output of this step, and what was asserted &rarr;</a>
+</details>
+<p class="m-0 border-t border-default px-4 py-2 text-xs">
+      <a href="https://majordomus.dev/use-cases/catch-an-agent-that-says-it-is-done/#step-finish-refuses-a-failing-verification" class="font-medium text-fg-brand hover:underline">What the scenario asserted at this step &rarr;</a>
     </p>
   </figure><figure x-show="s === 8" id="home-replay-panel-8" role="tabpanel" aria-labelledby="home-replay-tab-8"
     data-step="the-worker-finishes-the-work" data-outcome="change"
@@ -1036,33 +1184,65 @@ finish: refused, 1 unmet
     <figcaption class="border-b border-default px-4 py-3">
       <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
         <span class="font-mono text-xs text-body-subtle">step 9 of 10 &middot; the worker</span>
-        <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">change &middot; exit 0</span>
-      </div><p class="mt-2 text-sm leading-relaxed text-heading">The worker does what the handover said was left.</p>
-    </figcaption><div class="h-56 overflow-y-auto sm:h-64" tabindex="0">
-      <pre class="m-0 whitespace-pre-wrap break-words p-4 font-mono text-xs leading-relaxed text-body" tabindex="0"><span class="text-heading">$ echo &quot;the message names the column&quot; &gt;&gt; lib/a</span>
-</pre>
-    </div><p class="border-t border-default px-4 py-2 text-xs">
-      <a href="https://majordomus.dev/use-cases/catch-an-agent-that-says-it-is-done/#step-the-worker-finishes-the-work" class="font-medium text-fg-brand hover:underline">The whole output of this step, and what was asserted &rarr;</a>
+        <span class="font-mono text-xs text-heading"><span aria-hidden="true">•</span> the change being judged</span>
+      </div><p class="mt-2 mb-0 text-sm leading-relaxed text-heading">The worker does what the handover said was left.</p>
+    </figcaption><div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-default bg-neutral-primary-soft px-4 py-2.5" x-data="{ said: '' }">
+  <p class="m-0 min-w-0 flex-1 break-all font-mono text-xs leading-relaxed text-heading"><span class="select-none text-body-subtle" aria-hidden="true">$</span> <code x-ref="src">echo &quot;the message names the column&quot; &gt;&gt; lib/a</code></p>
+  <span class="flex shrink-0 items-center gap-2"><span class="mj-badge mj-badge--ok relative" data-status="ok"><span aria-hidden="true">✓</span>exit 0</span>
+<button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy the command'"><span x-text="said || 'Copy'">Copy</span></button>
+    <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
+  </span>
+</div>
+<p class="m-0 border-t border-default px-4 py-2 text-xs">
+      <a href="https://majordomus.dev/use-cases/catch-an-agent-that-says-it-is-done/#step-the-worker-finishes-the-work" class="font-medium text-fg-brand hover:underline">What the scenario asserted at this step &rarr;</a>
     </p>
   </figure><figure x-show="s === 9" id="home-replay-panel-9" role="tabpanel" aria-labelledby="home-replay-tab-9"
     data-step="finish-accepts" data-outcome="accepted"
     class="mt-3 overflow-hidden rounded-base border border-default bg-neutral-primary-soft shadow-xs">
     <figcaption class="border-b border-default px-4 py-3">
       <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-        <span class="font-mono text-xs text-body-subtle">step 10 of 10 &middot; Majordomus</span>
-        <span class="rounded bg-success-soft px-1.5 py-0.5 font-mono text-xs font-semibold text-fg-success-strong">ok &middot; exit 0</span>
-      </div><p class="mt-2 text-sm leading-relaxed text-heading">Every line of the contract passes, so the outcome is recorded, with the verification that proved it.</p>
-    </figcaption><div class="h-56 overflow-y-auto sm:h-64" tabindex="0">
-      <pre class="m-0 whitespace-pre-wrap break-words p-4 font-mono text-xs leading-relaxed text-body" tabindex="0"><span class="text-heading">$ majordomus finish --outcome completed --verify-command &#39;sh test/parse.sh&#39;</span>
-<span class="text-fg-success-strong">OK   blockers    t-&lt;id&gt; — none open</span>
-<span class="text-fg-success-strong">OK   note        t-&lt;id&gt; — &lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md</span>
-<span class="text-fg-success-strong">OK   scope       t-&lt;id&gt; — 1 touched file(s), all within scope</span>
-<span class="text-fg-success-strong">OK   state       t-&lt;id&gt; — exact (head &lt;head&gt;)</span>
-<span class="text-fg-success-strong">OK   verification t-&lt;id&gt; — sh test/parse.sh — exit 0, &lt;s&gt;s, tree &lt;tree&gt;</span>
+        <span class="font-mono text-xs text-body-subtle">step 10 of 10 &middot; Majordomus</span><span class="mj-badge mj-badge--accepted relative" data-status="accepted"><span aria-hidden="true">✓</span>accepted</span>
+
+      </div><p class="mt-2 mb-0 text-sm leading-relaxed text-heading">Every line of the contract passes, so the outcome is recorded, with the verification that proved it.</p>
+    </figcaption><div class="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-b border-default bg-neutral-primary-soft px-4 py-2.5" x-data="{ said: '' }">
+  <p class="m-0 min-w-0 flex-1 break-all font-mono text-xs leading-relaxed text-heading"><span class="select-none text-body-subtle" aria-hidden="true">$</span> <code x-ref="src">majordomus finish --outcome completed --verify-command &#39;sh test/parse.sh&#39;</code></p>
+  <span class="flex shrink-0 items-center gap-2"><span class="mj-badge mj-badge--ok relative" data-status="ok"><span aria-hidden="true">✓</span>exit 0</span>
+<button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1 rounded-base px-1.5 py-0.5 text-xs font-medium text-body hover:bg-neutral-secondary-medium hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary" :aria-label="said || 'Copy the command'"><span x-text="said || 'Copy'">Copy</span></button>
+    <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
+  </span>
+</div><div class="bg-neutral-primary px-4 py-3">
+  <ul class="m-0 flex list-none flex-wrap gap-1.5 p-0" aria-label="What the run checked">
+    <li><span class="mj-badge mj-badge--pass relative" data-status="pass"><span aria-hidden="true">✓</span>blockers</span>
+<span class="sr-only"> passed</span></li>
+    <li><span class="mj-badge mj-badge--pass relative" data-status="pass"><span aria-hidden="true">✓</span>note</span>
+<span class="sr-only"> passed</span></li>
+    <li><span class="mj-badge mj-badge--pass relative" data-status="pass"><span aria-hidden="true">✓</span>scope</span>
+<span class="sr-only"> passed</span></li>
+    <li><span class="mj-badge mj-badge--pass relative" data-status="pass"><span aria-hidden="true">✓</span>state</span>
+<span class="sr-only"> passed</span></li>
+    <li><span class="mj-badge mj-badge--pass relative" data-status="pass"><span aria-hidden="true">✓</span>verification</span>
+<span class="sr-only"> passed</span></li>
+  </ul><p class="mt-2 mb-0 font-mono text-xs font-semibold text-heading">&rarr; finish: t-&lt;id&gt; completed</p>
+</div>
+<details class="border-t border-default bg-neutral-primary">
+  <summary class="cursor-pointer px-4 py-2 text-xs font-medium text-fg-brand hover:underline focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">The whole recorded output, 13 lines</summary>
+  <pre class="m-0 whitespace-pre-wrap break-words border-t border-default p-4 font-mono text-xs leading-relaxed text-body" tabindex="0">OK   blockers    t-&lt;id&gt; — none open
+OK   note        t-&lt;id&gt; — &lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md
+INFO regression  t-&lt;id&gt; — profile implementation adds no requirement beyond the shared contract
+OK   scope       t-&lt;id&gt; — 1 touched file(s), all within scope
+OK   state       t-&lt;id&gt; — exact (head &lt;head&gt;)
+INFO continuity  t-&lt;id&gt; — applies to partial and blocked
+INFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]
+OK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
+OK   verification t-&lt;id&gt; — sh test/parse.sh — exit 0, &lt;s&gt;s, tree &lt;tree&gt;
+INFO obligation  t-&lt;id&gt; — the task declares no obligations
+INFO gate        t-&lt;id&gt; — this repository declares no CI model at .ai/repo/ci/gates.yaml; nothing can be planned
+INFO gate        t-&lt;id&gt; — not in verification.finish_requires
 finish: t-&lt;id&gt; completed
 </pre>
-    </div><p class="border-t border-default px-4 py-2 text-xs">
-      <a href="https://majordomus.dev/use-cases/catch-an-agent-that-says-it-is-done/#step-finish-accepts" class="font-medium text-fg-brand hover:underline">The whole output of this step, and what was asserted &rarr;</a>
+</details>
+<p class="m-0 border-t border-default px-4 py-2 text-xs">
+      <a href="https://majordomus.dev/use-cases/catch-an-agent-that-says-it-is-done/#step-finish-accepts" class="font-medium text-fg-brand hover:underline">What the scenario asserted at this step &rarr;</a>
     </p>
   </figure></div>
 
@@ -1402,10 +1582,10 @@ blocking doctrines:
           </ul></li>
         </ol>
         <dl class="mt-5 grid grid-cols-2 gap-3 border-t border-default pt-4 sm:grid-cols-4">
-          <div class="min-w-0"><dt class="text-xs text-body">capabilities in the registry</dt><dd class="mt-1 font-mono text-xl font-bold text-heading">1912</dd></div>
+          <div class="min-w-0"><dt class="text-xs text-body">capabilities in the registry</dt><dd class="mt-1 font-mono text-xl font-bold text-heading">1917</dd></div>
           <div class="min-w-0"><dt class="text-xs text-body">MCP tools</dt><dd class="mt-1 font-mono text-xl font-bold text-heading">166</dd></div>
           <div class="min-w-0"><dt class="text-xs text-body">HTTP routes</dt><dd class="mt-1 font-mono text-xl font-bold text-heading">170</dd></div>
-          <div class="min-w-0"><dt class="text-xs text-body">objects of the layer</dt><dd class="mt-1 font-mono text-xl font-bold text-heading">1740</dd></div>
+          <div class="min-w-0"><dt class="text-xs text-body">objects of the layer</dt><dd class="mt-1 font-mono text-xl font-bold text-heading">1745</dd></div>
         </dl>
       </div>
       <div class="min-w-0 rounded-xl border border-brand-subtle bg-brand-softer p-5">
@@ -1451,7 +1631,7 @@ blocking doctrines:
     </dl><dl class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-trust>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="release"><dt class="text-xs text-body">latest release the installer resolves</dt><dd class="mt-1 font-mono text-2xl font-bold text-heading"><a href="https://github.com/korczis/prismatic-majordomus/releases/tag/v0.14.0" class="hover:underline">0.14.0</a></dd><dd class="mt-1 text-xs text-body">published 2026-10-06</dd></div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="verify"><dt class="text-xs text-body">confirm what you installed</dt><dd class="mt-2 break-all font-mono text-sm text-heading">majordomus --version</dd></div>
-      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="commit"><dt class="text-xs text-body">commit this page was built from</dt><dd class="mt-1 font-mono text-2xl font-bold text-heading"><a href="https://github.com/korczis/prismatic-majordomus/commit/5908234ce001f521e22c2534f837ee939b70a7c6" class="hover:underline">5908234</a></dd><dd class="mt-1 text-xs text-body"><a href="https://majordomus.dev/build.json" class="text-fg-brand underline">served as build.json</a></dd></div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="commit"><dt class="text-xs text-body">commit this page was built from</dt><dd class="mt-1 font-mono text-2xl font-bold text-heading"><a href="https://github.com/korczis/prismatic-majordomus/commit/d60dc64910c235ab453a9075e1ebbf378e723b8d" class="hover:underline">d60dc64</a></dd><dd class="mt-1 text-xs text-body"><a href="https://majordomus.dev/build.json" class="text-fg-brand underline">served as build.json</a></dd></div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="use-cases"><dt class="text-xs text-body">executable use cases, across areas of work</dt><dd class="mt-1 font-mono text-2xl font-bold text-heading"><a href="https://majordomus.dev/use-cases/" class="hover:underline">48</a></dd><dd class="mt-1 text-xs text-body">10 areas</dd></div>
     </dl>
     <div class="mt-6 min-w-0 rounded-base border border-warning-subtle bg-warning-soft p-5">
@@ -1481,13 +1661,14 @@ blocking doctrines:
     <p class="font-mono text-xs uppercase tracking-widest text-fg-brand">install · one command</p>
     <h2 class="mt-2 text-3xl font-extrabold tracking-tight text-heading sm:text-4xl">Install majordomus in one command</h2>
     <p class="mt-3 max-w-2xl text-base leading-relaxed text-body sm:text-lg">No git, no Rust, no Node, no root. One archive for your machine, its digest verified before anything is unpacked, into <code class="font-mono text-heading">$HOME/.local/bin</code>.</p>
-    <div class="mt-5 rounded-base border border-brand bg-neutral-primary-soft" x-data="{ copied: false }">
+    <div class="mt-5 rounded-base border border-brand bg-neutral-primary-soft" x-data="{ said: '' }">
       <div class="flex items-center justify-between gap-3 border-b border-brand-subtle px-4 py-2">
         <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">1 · paste into a terminal</span>
-        <button type="button" x-cloak x-on:click="navigator.clipboard.writeText($refs.src.innerText).then(() => { copied = true; setTimeout(() => copied = false, 1600) })" class="inline-flex items-center gap-1.5 rounded-base bg-brand px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium" :aria-label="copied ? 'Copied' : 'Copy the install command'">
+        <button type="button" x-cloak x-on:click="Promise.resolve(said = '').then(() => navigator.clipboard.writeText($refs.src.innerText)).then(() => { said = 'Copied'; setTimeout(() => { if (said === 'Copied') said = '' }, 1600) }, () => { said = 'Copy failed — select the text' })" class="inline-flex items-center gap-1.5 rounded-base bg-brand px-3 py-1.5 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium" :aria-label="said || 'Copy the install command'">
           <svg class="h-4 w-4" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V5a2 2 0 012-2h9a2 2 0 012 2v9a2 2 0 01-2 2h-2M5 9h9a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2v-9a2 2 0 012-2z"/></svg>
-          <span x-text="copied ? 'Copied' : 'Copy'">Copy</span>
+          <span x-text="said || 'Copy'">Copy</span>
         </button>
+        <span class="sr-only" role="status" aria-live="polite" x-text="said"></span>
       </div>
       <pre class="m-0 whitespace-pre-wrap break-all px-4 py-4 font-mono text-base font-semibold leading-relaxed text-heading sm:px-5 sm:text-lg" x-ref="src" tabindex="0"><code class="language-bash">curl -fsSL https://majordomus.dev/install.sh | sh</code></pre>
     </div>
@@ -1575,7 +1756,7 @@ blocking doctrines:
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.14.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5908234ce001f521e22c2534f837ee939b70a7c6" class="font-mono underline">5908234</a> · inputs <span class="font-mono">73437917943b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.14.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d60dc64910c235ab453a9075e1ebbf378e723b8d" class="font-mono underline">d60dc64</a> · inputs <span class="font-mono">553b5bdf221a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

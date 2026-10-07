@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=f132cc838205a6f386c7">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=953d937c85074ef0cda8">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -145,8 +145,7 @@
   <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
     <nav class="flex" aria-label="Breadcrumb">
   <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
-    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
-    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/features/" class="font-medium text-body hover:text-fg-brand">Features</a></li>
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li><li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/features/" class="font-medium text-body hover:text-fg-brand">Features</a></li>
     <li aria-hidden="true">/</li>
     <li aria-current="page" class="font-medium text-heading">Every feature against every interface</li>
   </ol>
@@ -159,7 +158,7 @@
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <p class="max-w-3xl text-body">Every mark is derived. A feature is on an interface because a capability module, a shell command or an object kind it names is projected there — a command-line path, an HTTP route, an MCP tool or resource, a Cockpit area, a document. No page and no file says so.</p><div class="relative mt-8 min-w-0 overflow-x-auto rounded-base border border-default" tabindex="0">
   <table class="w-full min-w-[36rem] border-collapse text-sm" tabindex="0">
-    <caption class="sr-only">Features against the interfaces they are exposed through, and how much of each is proven</caption>
+    <caption class="sr-only">Features against the interfaces they are exposed through, how many of the claims each names are declared guaranteed with a test, and how many a recorded run supports</caption>
     <thead class="bg-neutral-primary-soft">
       <tr>
         <th scope="col" class="border-b border-default px-4 py-3 text-start font-semibold text-heading">Feature</th>
@@ -167,8 +166,8 @@
         <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/docs/api/" class="hover:text-fg-brand hover:underline">api</a></th>
         <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/registry/mcp/" class="hover:text-fg-brand hover:underline">mcp</a></th>
         <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/docs/cockpit/" class="hover:text-fg-brand hover:underline">cockpit</a></th>
-        <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/docs/" class="hover:text-fg-brand hover:underline">docs</a></th>
-        <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle" title="claims this feature names that are guaranteed and name the test that settles them">proven</th>
+        <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/docs/" class="hover:text-fg-brand hover:underline">docs</a></th><th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="#declared-with-test" class="hover:text-fg-brand hover:underline">declared + test</a></th>
+        <th scope="col" class="border-b border-default px-3 py-3 text-center font-mono text-xs font-medium uppercase tracking-wide text-body-subtle"><a href="#supported-by-a-run" class="hover:text-fg-brand hover:underline">supported by a run</a></th>
       </tr>
     </thead>
     <tbody class="divide-y divide-default">
@@ -179,7 +178,8 @@
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Declare once is exposed on MCP">✓</span><span class="sr-only">on MCP</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Declare once is exposed on Cockpit">✓</span><span class="sr-only">on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Declare once is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs"><span class="text-fg-success-strong" title="9 of 9 claim(s) guaranteed with a test">9/9</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">9/9<span class="sr-only"> claims declared guaranteed with a test</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="declare-once">0/9<span class="sr-only"> claims supported by a recorded run</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/features/interfaces/" class="text-heading hover:text-fg-brand hover:underline">Interfaces</a></th>
@@ -188,7 +188,8 @@
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Interfaces is exposed on MCP">✓</span><span class="sr-only">on MCP</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Interfaces is exposed on Cockpit">✓</span><span class="sr-only">on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Interfaces is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs"><span class="text-fg-success-strong" title="11 of 11 claim(s) guaranteed with a test">11/11</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">11/11<span class="sr-only"> claims declared guaranteed with a test</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="interfaces">0/11<span class="sr-only"> claims supported by a recorded run</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/features/coordination/" class="text-heading hover:text-fg-brand hover:underline">Coordination</a></th>
@@ -197,7 +198,8 @@
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Coordination is exposed on MCP">✓</span><span class="sr-only">on MCP</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Coordination is exposed on Cockpit">✓</span><span class="sr-only">on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Coordination is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs"><span class="text-fg-success-strong" title="5 of 5 claim(s) guaranteed with a test">5/5</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">5/5<span class="sr-only"> claims declared guaranteed with a test</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="coordination">0/5<span class="sr-only"> claims supported by a recorded run</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/features/worktrees/" class="text-heading hover:text-fg-brand hover:underline">Worktrees</a></th>
@@ -206,7 +208,8 @@
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Worktrees is exposed on MCP">✓</span><span class="sr-only">on MCP</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Worktrees is exposed on Cockpit">✓</span><span class="sr-only">on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Worktrees is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs"><span class="text-fg-success-strong" title="3 of 3 claim(s) guaranteed with a test">3/3</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">3/3<span class="sr-only"> claims declared guaranteed with a test</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="worktrees">0/3<span class="sr-only"> claims supported by a recorded run</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/features/mesh/" class="text-heading hover:text-fg-brand hover:underline">Mesh</a></th>
@@ -215,7 +218,8 @@
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Mesh is exposed on MCP">✓</span><span class="sr-only">on MCP</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Mesh is exposed on Cockpit">✓</span><span class="sr-only">on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Mesh is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs"><span class="text-fg-success-strong" title="9 of 9 claim(s) guaranteed with a test">9/9</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">9/9<span class="sr-only"> claims declared guaranteed with a test</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="mesh">0/9<span class="sr-only"> claims supported by a recorded run</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/features/models/" class="text-heading hover:text-fg-brand hover:underline">Models</a></th>
@@ -224,7 +228,8 @@
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Models is exposed on MCP">✓</span><span class="sr-only">on MCP</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Models is exposed on Cockpit">✓</span><span class="sr-only">on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Models is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs"><span class="text-fg-success-strong" title="3 of 3 claim(s) guaranteed with a test">3/3</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">3/3<span class="sr-only"> claims declared guaranteed with a test</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="models">0/3<span class="sr-only"> claims supported by a recorded run</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/features/economics/" class="text-heading hover:text-fg-brand hover:underline">Economics</a></th>
@@ -233,7 +238,8 @@
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Economics is exposed on MCP">✓</span><span class="sr-only">on MCP</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Economics is exposed on Cockpit">✓</span><span class="sr-only">on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Economics is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs"><span class="text-body-subtle" title="2 of 3 claim(s) guaranteed with a test">2/3</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">2/3<span class="sr-only"> claims declared guaranteed with a test</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="economics">0/3<span class="sr-only"> claims supported by a recorded run</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/features/reasoning/" class="text-heading hover:text-fg-brand hover:underline">Reasoning</a></th>
@@ -242,7 +248,8 @@
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Reasoning is exposed on MCP">✓</span><span class="sr-only">on MCP</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Reasoning is exposed on Cockpit">✓</span><span class="sr-only">on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Reasoning is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs"><span class="text-fg-success-strong" title="7 of 7 claim(s) guaranteed with a test">7/7</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">7/7<span class="sr-only"> claims declared guaranteed with a test</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="reasoning">0/7<span class="sr-only"> claims supported by a recorded run</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/features/continuity/" class="text-heading hover:text-fg-brand hover:underline">Continuity</a></th>
@@ -251,7 +258,8 @@
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Continuity is exposed on MCP">✓</span><span class="sr-only">on MCP</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Continuity is exposed on Cockpit">✓</span><span class="sr-only">on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Continuity is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs"><span class="text-fg-success-strong" title="11 of 11 claim(s) guaranteed with a test">11/11</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">11/11<span class="sr-only"> claims declared guaranteed with a test</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="continuity">0/11<span class="sr-only"> claims supported by a recorded run</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/features/knowledge/" class="text-heading hover:text-fg-brand hover:underline">Knowledge</a></th>
@@ -260,7 +268,8 @@
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Knowledge is exposed on MCP">✓</span><span class="sr-only">on MCP</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Knowledge is exposed on Cockpit">✓</span><span class="sr-only">on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Knowledge is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs"><span class="text-body-subtle" title="7 of 9 claim(s) guaranteed with a test">7/9</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">7/9<span class="sr-only"> claims declared guaranteed with a test</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="knowledge">0/9<span class="sr-only"> claims supported by a recorded run</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/features/doctrine/" class="text-heading hover:text-fg-brand hover:underline">Doctrine</a></th>
@@ -269,7 +278,8 @@
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Doctrine is exposed on MCP">✓</span><span class="sr-only">on MCP</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Doctrine is exposed on Cockpit">✓</span><span class="sr-only">on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Doctrine is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs"><span class="text-fg-success-strong" title="12 of 12 claim(s) guaranteed with a test">12/12</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">12/12<span class="sr-only"> claims declared guaranteed with a test</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="doctrine">0/12<span class="sr-only"> claims supported by a recorded run</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/features/coverage/" class="text-heading hover:text-fg-brand hover:underline">Coverage</a></th>
@@ -278,7 +288,8 @@
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-body-subtle" aria-hidden="true">·</span><span class="sr-only">not on MCP</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-body-subtle" aria-hidden="true">·</span><span class="sr-only">not on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Coverage is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs"><span class="text-fg-success-strong" title="1 of 1 claim(s) guaranteed with a test">1/1</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">1/1<span class="sr-only"> claims declared guaranteed with a test</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="coverage">0/1<span class="sr-only"> claims supported by a recorded run</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/features/finish-contract/" class="text-heading hover:text-fg-brand hover:underline">Finish contract</a></th>
@@ -287,7 +298,8 @@
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Finish contract is exposed on MCP">✓</span><span class="sr-only">on MCP</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Finish contract is exposed on Cockpit">✓</span><span class="sr-only">on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Finish contract is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs"><span class="text-fg-success-strong" title="9 of 9 claim(s) guaranteed with a test">9/9</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">9/9<span class="sr-only"> claims declared guaranteed with a test</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="finish-contract">0/9<span class="sr-only"> claims supported by a recorded run</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/features/policy/" class="text-heading hover:text-fg-brand hover:underline">Policy</a></th>
@@ -296,7 +308,8 @@
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Policy is exposed on MCP">✓</span><span class="sr-only">on MCP</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-body-subtle" aria-hidden="true">·</span><span class="sr-only">not on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Policy is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs"><span class="text-body-subtle" title="10 of 14 claim(s) guaranteed with a test">10/14</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">10/14<span class="sr-only"> claims declared guaranteed with a test</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="policy">0/14<span class="sr-only"> claims supported by a recorded run</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/features/cockpit/" class="text-heading hover:text-fg-brand hover:underline">Cockpit</a></th>
@@ -305,7 +318,8 @@
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Cockpit is exposed on MCP">✓</span><span class="sr-only">on MCP</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Cockpit is exposed on Cockpit">✓</span><span class="sr-only">on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Cockpit is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs"><span class="text-fg-success-strong" title="1 of 1 claim(s) guaranteed with a test">1/1</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">1/1<span class="sr-only"> claims declared guaranteed with a test</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="cockpit">0/1<span class="sr-only"> claims supported by a recorded run</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/features/provenance/" class="text-heading hover:text-fg-brand hover:underline">Provenance</a></th>
@@ -314,7 +328,8 @@
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Provenance is exposed on MCP">✓</span><span class="sr-only">on MCP</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Provenance is exposed on Cockpit">✓</span><span class="sr-only">on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Provenance is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs"><span class="text-body-subtle" title="6 of 9 claim(s) guaranteed with a test">6/9</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">6/9<span class="sr-only"> claims declared guaranteed with a test</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="provenance">0/9<span class="sr-only"> claims supported by a recorded run</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/features/install/" class="text-heading hover:text-fg-brand hover:underline">Install</a></th>
@@ -323,7 +338,8 @@
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Install is exposed on MCP">✓</span><span class="sr-only">on MCP</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Install is exposed on Cockpit">✓</span><span class="sr-only">on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Install is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs"><span class="text-fg-success-strong" title="8 of 8 claim(s) guaranteed with a test">8/8</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">8/8<span class="sr-only"> claims declared guaranteed with a test</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="install">0/8<span class="sr-only"> claims supported by a recorded run</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/features/planning/" class="text-heading hover:text-fg-brand hover:underline">Planning</a></th>
@@ -332,7 +348,8 @@
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Planning is exposed on MCP">✓</span><span class="sr-only">on MCP</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Planning is exposed on Cockpit">✓</span><span class="sr-only">on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Planning is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs"><span class="text-body-subtle" title="7 of 8 claim(s) guaranteed with a test">7/8</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">7/8<span class="sr-only"> claims declared guaranteed with a test</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="planning">0/8<span class="sr-only"> claims supported by a recorded run</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/features/context/" class="text-heading hover:text-fg-brand hover:underline">Context</a></th>
@@ -341,7 +358,8 @@
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Context is exposed on MCP">✓</span><span class="sr-only">on MCP</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Context is exposed on Cockpit">✓</span><span class="sr-only">on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Context is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs"><span class="text-body-subtle" title="8 of 9 claim(s) guaranteed with a test">8/9</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">8/9<span class="sr-only"> claims declared guaranteed with a test</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="context">0/9<span class="sr-only"> claims supported by a recorded run</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/features/use-cases/" class="text-heading hover:text-fg-brand hover:underline">Use cases</a></th>
@@ -350,7 +368,8 @@
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Use cases is exposed on MCP">✓</span><span class="sr-only">on MCP</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-body-subtle" aria-hidden="true">·</span><span class="sr-only">not on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Use cases is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs"><span class="text-fg-success-strong" title="4 of 4 claim(s) guaranteed with a test">4/4</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">4/4<span class="sr-only"> claims declared guaranteed with a test</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="use-cases">0/4<span class="sr-only"> claims supported by a recorded run</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/features/skills/" class="text-heading hover:text-fg-brand hover:underline">Skills</a></th>
@@ -359,7 +378,8 @@
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Skills is exposed on MCP">✓</span><span class="sr-only">on MCP</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-body-subtle" aria-hidden="true">·</span><span class="sr-only">not on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Skills is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs"><span class="text-fg-success-strong" title="3 of 3 claim(s) guaranteed with a test">3/3</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">3/3<span class="sr-only"> claims declared guaranteed with a test</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="skills">0/3<span class="sr-only"> claims supported by a recorded run</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/features/why/" class="text-heading hover:text-fg-brand hover:underline">Why</a></th>
@@ -368,7 +388,8 @@
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Why is exposed on MCP">✓</span><span class="sr-only">on MCP</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Why is exposed on Cockpit">✓</span><span class="sr-only">on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Why is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs"><span class="text-fg-success-strong" title="3 of 3 claim(s) guaranteed with a test">3/3</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">3/3<span class="sr-only"> claims declared guaranteed with a test</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="why">0/3<span class="sr-only"> claims supported by a recorded run</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/features/evidence/" class="text-heading hover:text-fg-brand hover:underline">Evidence</a></th>
@@ -377,7 +398,8 @@
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Evidence is exposed on MCP">✓</span><span class="sr-only">on MCP</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Evidence is exposed on Cockpit">✓</span><span class="sr-only">on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Evidence is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs"><span class="text-fg-success-strong" title="8 of 8 claim(s) guaranteed with a test">8/8</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">8/8<span class="sr-only"> claims declared guaranteed with a test</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="evidence">0/8<span class="sr-only"> claims supported by a recorded run</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/features/benchmarks/" class="text-heading hover:text-fg-brand hover:underline">Benchmarks</a></th>
@@ -386,7 +408,8 @@
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Benchmarks is exposed on MCP">✓</span><span class="sr-only">on MCP</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Benchmarks is exposed on Cockpit">✓</span><span class="sr-only">on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Benchmarks is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs"><span class="text-fg-success-strong" title="6 of 6 claim(s) guaranteed with a test">6/6</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">6/6<span class="sr-only"> claims declared guaranteed with a test</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="benchmarks">0/6<span class="sr-only"> claims supported by a recorded run</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/features/ci/" class="text-heading hover:text-fg-brand hover:underline">CI</a></th>
@@ -395,7 +418,8 @@
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-body-subtle" aria-hidden="true">·</span><span class="sr-only">not on MCP</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-body-subtle" aria-hidden="true">·</span><span class="sr-only">not on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="CI is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs"><span class="text-fg-success-strong" title="6 of 6 claim(s) guaranteed with a test">6/6</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">6/6<span class="sr-only"> claims declared guaranteed with a test</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="ci">0/6<span class="sr-only"> claims supported by a recorded run</span></td>
       </tr>
       <tr class="hover:bg-neutral-primary-soft">
         <th scope="row" class="px-4 py-2.5 text-start font-medium"><a href="https://majordomus.dev/features/commit/" class="text-heading hover:text-fg-brand hover:underline">Commits</a></th>
@@ -404,11 +428,19 @@
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Commits is exposed on MCP">✓</span><span class="sr-only">on MCP</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Commits is exposed on Cockpit">✓</span><span class="sr-only">on Cockpit</span></td>
         <td class="px-3 py-2.5 text-center"><span class="font-mono text-fg-success-strong" title="Commits is exposed on Documentation">✓</span><span class="sr-only">on Documentation</span></td>
-        <td class="px-3 py-2.5 text-center font-mono text-xs"><span class="text-fg-success-strong" title="3 of 3 claim(s) guaranteed with a test">3/3</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading">3/3<span class="sr-only"> claims declared guaranteed with a test</span></td>
+        <td class="px-3 py-2.5 text-center font-mono text-xs text-heading" data-supported="commit">0/3<span class="sr-only"> claims supported by a recorded run</span></td>
       </tr>
     </tbody>
   </table>
-</div><h2 class="mt-14 text-2xl font-bold tracking-tight text-heading">What every part of the product belongs to</h2>
+</div>
+
+<dl class="mt-6 grid max-w-3xl gap-x-6 gap-y-3 text-sm sm:grid-cols-[auto_1fr]">
+  <dt id="declared-with-test" class="font-mono text-xs uppercase tracking-wide text-heading">declared + test</dt>
+  <dd class="text-body">Of the claims a feature names, how many <code>docs/CLAIMS.yaml</code> declares <code>guaranteed</code>, each naming the test that is to prove it. A declaration, not a verdict: nothing here says the test ran.</dd>
+  <dt id="supported-by-a-run" class="font-mono text-xs uppercase tracking-wide text-heading">supported by a run</dt>
+  <dd class="text-body">Of the same claims, how many a recorded run supports, as <code>majordomus evidence show</code> derives it from the ledger; <code>unknown</code> when no evidence reached this build. <a href="https://majordomus.dev/evidence/" class="text-fg-brand underline">How evidence is recorded</a>.</dd>
+</dl><h2 class="mt-14 text-2xl font-bold tracking-tight text-heading">What every part of the product belongs to</h2>
 <p class="mt-2 max-w-3xl text-body">The other direction: each capability module of the executable, each public command of the shell tool and each kind of object of the layer, with the features that name it. A row with no feature is a gap this page shows rather than hides, and closing it is one reference in one file.</p>
 <section class="mt-8">
   <h3 class="text-lg font-semibold tracking-tight text-heading">Capability modules</h3>
@@ -1063,7 +1095,7 @@
       </span>
     </li>
     <li class="flex flex-wrap items-baseline gap-x-3 gap-y-2 p-3">
-      <span class="min-w-0 text-sm font-medium text-heading">rule (159)</span>
+      <span class="min-w-0 text-sm font-medium text-heading">rule (160)</span>
       <code class="font-mono text-xs text-body-subtle">rule</code>
       <span class="ms-auto flex flex-wrap justify-end gap-1.5"><a href="https://majordomus.dev/features/doctrine/" class="rounded border border-default bg-neutral-primary px-1.5 py-0.5 font-mono text-xs text-heading hover:bg-neutral-secondary-medium">Doctrine</a>
       </span>
@@ -1171,7 +1203,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.14.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5908234ce001f521e22c2534f837ee939b70a7c6" class="font-mono underline">5908234</a> · inputs <span class="font-mono">73437917943b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.14.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/d60dc64910c235ab453a9075e1ebbf378e723b8d" class="font-mono underline">d60dc64</a> · inputs <span class="font-mono">553b5bdf221a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>
