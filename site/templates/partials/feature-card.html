@@ -1,0 +1,77 @@
+{#- The feature card: the one way the site shows a feature in a list. Every place that lists
+    features by card includes this file, so a feature reads the same on every page.
+
+    The caller sets, before the include:
+      f             a feature of data/registry/product.json (`features[]`), or a member of a
+                    domain there (`domains[].features[]`: id, label, title, headline, route,
+                    featured, surfaces, claims, tested, use_cases)
+      surfaces      the dataset's surface list (`model.surfaces`)
+      card_level    optional: the heading level the name takes in the page's outline ("h3")
+      card_compact  optional: true drops the interfaces and the evidence line, for a block of
+                    neighbours under another feature (false)
+
+    Nothing here names a feature, a domain, an interface or a count. The name, the promise
+    and the status are the feature's own file; the interfaces are the executable's derived
+    marks; the evidence line is counted from the claims and use cases the feature names. The
+    card renders the feature as the dataset holds it, whichever of the two shapes the caller
+    passed: a domain member is resolved to its feature by id, so the status, which a member
+    does not carry, is the feature's own and never assumed. A count the data does not carry
+    is left out rather than printed as a zero; a zero the data does carry is said in words.
+
+    It needs no script: the name and the closing link are plain links to the feature's page,
+    every mark is text, and nothing is shown only on hover. -#}
+{%- set base = config.base_url | trim_end(pat="/") -%}
+{%- set fc_model = load_data(path="data/registry/product.json") -%}
+{%- set fc_hit = [x for x in fc_model.features if x.id == f.id] -%}
+{%- set fc_full = fc_hit[0] if fc_hit | length > 0 else f -%}
+{%- set fc_level = card_level | default(value="h3") -%}
+{%- set fc_compact = card_compact | default(value=false) -%}
+{%- set fc_name = f.label | default(value=fc_full.short_title | default(value=fc_full.title)) -%}
+{%- set fc_name = fc_name if fc_name else fc_full.title -%}
+{%- set fc_status = fc_full.status | default(value="") -%}
+{#- the evidence line: a domain member carries its counts; a full feature carries the claims
+    it names, with the status and the test of each, and its counts -#}
+{%- set fc_counts = fc_full.counts | default(value=false) -%}
+{%- set fc_refs = fc_full.claim_refs | default(value=false) -%}
+{%- if fc_counts -%}
+  {%- set fc_claims = fc_counts.claims -%}
+  {%- set fc_uses = fc_counts.use_cases -%}
+{%- else -%}
+  {%- set fc_claims = f.claims | default(value=-1) -%}
+  {%- set fc_uses = f.use_cases | default(value=-1) -%}
+{%- endif -%}
+{%- if fc_refs -%}
+  {%- set fc_tested = [c for c in fc_refs if c.status == "guaranteed" and c.test] | length -%}
+{%- else -%}
+  {%- set fc_tested = f.tested | default(value=-1) -%}
+{%- endif -%}
+<article class="flex h-full min-w-0 flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 focus-within:border-brand-subtle" data-feature-card="{{ f.id }}">
+  <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+    <{{ fc_level }} class="min-w-0 text-base font-semibold tracking-tight text-heading"><a href="{{ base }}{{ f.route }}" class="rounded-sm hover:text-fg-brand hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-medium">{{ fc_name }}</a></{{ fc_level }}>
+    {#- The one status primitive (slice E), filed under the feature vocabulary. -#}
+    {%- if fc_status %}{% set status = fc_status %}{% set status_kind = "feature" %}{% include "partials/status-badge.html" %}{% endif %}
+  </div>
+  {%- if fc_full.headline %}
+  <p class="text-sm leading-relaxed text-body">{{ fc_full.headline }}</p>
+  {%- endif %}
+  {%- if not fc_compact %}
+  {%- set surfaces_actual_only = true %}
+  <div class="mt-1">{% include "partials/feature-surfaces.html" %}</div>
+  {%- if fc_claims >= 0 or fc_uses >= 0 %}
+  <p class="font-mono text-xs text-body-subtle" data-feature-evidence>
+    {%- if fc_claims > 0 -%}
+      {{ fc_claims }} claim{% if fc_claims != 1 %}s{% endif %}{% if fc_tested >= 0 %}, {{ fc_tested }} naming {% if fc_tested == 1 %}its{% else %}their{% endif %} test{% endif %}
+    {%- elif fc_claims == 0 -%}
+      no claim linked
+    {%- endif -%}
+    {%- if fc_claims >= 0 and fc_uses >= 0 %} &middot; {% endif -%}
+    {%- if fc_uses > 0 -%}
+      {{ fc_uses }} use case{% if fc_uses != 1 %}s{% endif %}
+    {%- elif fc_uses == 0 -%}
+      no use case linked
+    {%- endif -%}
+  </p>
+  {%- endif %}
+  {%- endif %}
+  <a href="{{ base }}{{ f.route }}" class="mt-auto pt-1 text-sm font-medium text-fg-brand hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-medium">Explore<span class="sr-only"> {{ fc_name }}</span> &rarr;</a>
+</article>

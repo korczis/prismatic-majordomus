@@ -28,7 +28,7 @@ majordomus finish --outcome no_match --note n.md
 
 ## What it does not cover
 
-The vocabulary is fixed in v0.1; adding an outcome is a contract change to `finish`, not a configuration option.
+The vocabulary is fixed; adding an outcome is a contract change to `finish`, not a configuration option.
 
 ## Why it exists
 

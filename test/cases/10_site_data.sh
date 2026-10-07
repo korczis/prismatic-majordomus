@@ -40,6 +40,14 @@ s=s.replace("    test: test/cases/01_init.sh\n    status: guaranteed","    test:
 PY
 expect_exit 10 "$T/scripts/generate-site-data"
 expect_grep 'guaranteed claim .* has no test'
+# a claim whose status is not one the file declares under `statuses` is refused, by id and word
+git -C "$T" checkout -q -- docs
+python3 - "$T/docs/CLAIMS.yaml" <<'PY'
+import sys; p=sys.argv[1]; s=open(p).read()
+s=s.replace("    test: test/cases/01_init.sh\n    status: guaranteed","    test: test/cases/01_init.sh\n    status: proven",1); open(p,'w').write(s)
+PY
+expect_exit 10 "$T/scripts/generate-site-data"
+expect_grep 'carry a status docs/CLAIMS.yaml does not declare under statuses: .*[(]proven[)]'
 
 # --- doctrines.json: the chain is resolved from the source, not copied from the rule objects
 git -C "$T" checkout -q -- docs share

@@ -671,7 +671,7 @@ gates:
     job: structure
     always: true
     runs: bin/majordomus-cli release version
-    summary: the version is authored in one place — share/version.txt, the projection the shell tool reads, states what the crate manifest declares, and no version is written by hand in bin/, lib/, scripts/ or share/ outside a generated artifact
+    summary: the version is authored in one place — share/version.txt, the projection the shell tool reads, states what the crate manifest declares, no version is written by hand in bin/, lib/, scripts/ or share/ outside a generated artifact, and no hand-written prose names a version label (a major and a minor with no patch) outside the declared history (project.prose-states-no-version)
 
   # A page's link into its own source names the commit the site was built from, not master:
   # a link to master points at whatever the file says today, and the page beside it says

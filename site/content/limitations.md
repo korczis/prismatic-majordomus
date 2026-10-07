@@ -1,6 +1,6 @@
 +++
 title = "Limitations"
-description = "What v0.1 does not do, stated as plainly as what it does. Rendered from the README."
+description = "What Majordomus does not do, stated as plainly as what it does. Rendered from the README."
 template = "readme-section.html"
 [extra]
 section = "limitations_md"
