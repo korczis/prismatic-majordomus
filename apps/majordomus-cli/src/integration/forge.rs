@@ -6,6 +6,12 @@
 //! [`ForgeObservation`] recorded under `.ai/local/state/integration/`, with its age, so a
 //! page load can never reach the network. The observation is plain data, so every test
 //! builds one by hand and no test needs the forge.
+//!
+//! A required check the base binds to an app is only that app's check run, and `gh pr list`
+//! does not say which app wrote a check run. So when a context is bound, the refresh reads
+//! every open pull request's checks once more, from the forge's GraphQL rollup
+//! ([`WRITERS_QUERY`]), with the app of each ([`attributed_checks()`], [`attribute()`]). A
+//! base that binds nothing asks nothing more.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
@@ -42,7 +48,9 @@ pub struct ForgeObservation {
     pub observed_at: String,
     /// The checks the base requires, from its branch protection and its rulesets together,
     /// each with the app bound to it; `None` when either could not be read (every
-    /// required-check verdict is then unknown, never passed).
+    /// required-check verdict is then unknown, never passed). When one of them is bound to
+    /// an app, every pull request's checks were read with the app that wrote each
+    /// ([`attributed_checks()`]).
     pub required_checks: Option<Vec<RequiredCheck>>,
     /// What the base requires of reviews, from its protection and rulesets together; `None`
     /// when either could not be read.
@@ -350,6 +358,52 @@ pub fn check_state(entry: &Value) -> CheckRunState {
     }
 }
 
+/// One check from a rollup entry: `gh pr list --json statusCheckRollup` output, or a node of
+/// the GraphQL rollup [`WRITERS_QUERY`] reads. The two have one shape, but for the app: only
+/// the GraphQL node carries `checkSuite.app.databaseId`, so a check run read from `gh pr list`
+/// names no app, and neither does a status context, which no app writes.
+///
+/// The module is private, so the example is text; the unit tests run the same assertions.
+///
+/// ```text
+/// use majordomus_cli::integration::forge::check_of;
+/// let run = serde_json::json!({"__typename": "CheckRun", "name": "ci", "status": "COMPLETED",
+///     "conclusion": "SUCCESS", "completedAt": "2026-09-01T00:05:00Z",
+///     "checkSuite": {"app": {"databaseId": 15368}}});
+/// assert_eq!(check_of(&run).app_id, Some(15368));
+/// let listed = serde_json::json!({"__typename": "CheckRun", "name": "ci", "status": "COMPLETED"});
+/// assert_eq!(check_of(&listed).app_id, None, "gh pr list does not say who wrote it");
+/// ```
+pub fn check_of(entry: &Value) -> CheckObservation {
+    let text = |k: &str| entry.get(k).and_then(Value::as_str).unwrap_or("");
+    let kind = if text("__typename") == "StatusContext" {
+        CheckKind::StatusContext
+    } else {
+        CheckKind::CheckRun
+    };
+    CheckObservation {
+        name: entry
+            .get("name")
+            .or_else(|| entry.get("context"))
+            .and_then(Value::as_str)
+            .unwrap_or("")
+            .to_string(),
+        state: check_state(entry),
+        kind,
+        // the app of the suite the run belongs to: the one writer a forge read names
+        app_id: entry
+            .pointer("/checkSuite/app/databaseId")
+            .and_then(Value::as_u64),
+        completed_at: match text("completedAt") {
+            // a check run's zero time means it has not completed
+            "" | "0001-01-01T00:00:00Z" => text("startedAt")
+                .trim_start_matches("0001-01-01T00:00:00Z")
+                .to_string(),
+            t => t.to_string(),
+        },
+    }
+}
+
 /// One pull request from `gh pr list --json` output.
 pub fn pull_request_of(v: &Value) -> Option<PullRequestObservation> {
     let s = |k: &str| v.get(k).and_then(Value::as_str).unwrap_or("").to_string();
@@ -380,40 +434,7 @@ pub fn pull_request_of(v: &Value) -> Option<PullRequestObservation> {
         checks: v
             .get("statusCheckRollup")
             .and_then(Value::as_array)
-            .map(|a| {
-                a.iter()
-                    .map(|c| {
-                        let text = |k: &str| c.get(k).and_then(Value::as_str).unwrap_or("");
-                        let kind = if text("__typename") == "StatusContext" {
-                            CheckKind::StatusContext
-                        } else {
-                            CheckKind::CheckRun
-                        };
-                        CheckObservation {
-                            name: c
-                                .get("name")
-                                .or_else(|| c.get("context"))
-                                .and_then(Value::as_str)
-                                .unwrap_or("")
-                                .to_string(),
-                            state: check_state(c),
-                            kind,
-                            // the app, where the forge names it (a check run's suite's app)
-                            app_id: c
-                                .pointer("/app/databaseId")
-                                .or_else(|| c.pointer("/checkSuite/app/databaseId"))
-                                .and_then(Value::as_u64),
-                            completed_at: match text("completedAt") {
-                                // a check run's zero time means it has not completed
-                                "" | "0001-01-01T00:00:00Z" => text("startedAt")
-                                    .trim_start_matches("0001-01-01T00:00:00Z")
-                                    .to_string(),
-                                t => t.to_string(),
-                            },
-                        }
-                    })
-                    .collect()
-            })
+            .map(|a| a.iter().map(check_of).collect())
             .unwrap_or_default(),
         review_decision: s("reviewDecision"),
         auto_merge: v
@@ -468,19 +489,18 @@ pub fn pull_request_of(v: &Value) -> Option<PullRequestObservation> {
 }
 
 /// Union two readings of the required checks: a context required by either is required,
-/// once, bound to an app when either source binds it.
+/// once for each app it is bound to. Two sources that bind one context to two apps require
+/// both apps' check runs, as the forge does; an unbound entry of a context is the same
+/// requirement as a bound one and is dropped beside it. In context order, then app order.
 fn union_checks(a: Vec<RequiredCheck>, b: Vec<RequiredCheck>) -> Vec<RequiredCheck> {
-    let mut by_context: std::collections::BTreeMap<String, Option<u64>> =
-        std::collections::BTreeMap::new();
-    for c in a.into_iter().chain(b) {
-        let slot = by_context.entry(c.context).or_insert(None);
-        if slot.is_none() {
-            *slot = c.app_id;
-        }
-    }
-    by_context
-        .into_iter()
-        .map(|(context, app_id)| RequiredCheck { context, app_id })
+    let all: BTreeSet<RequiredCheck> = a.into_iter().chain(b).collect();
+    let bound: BTreeSet<String> = all
+        .iter()
+        .filter(|c| c.app_id.is_some())
+        .map(|c| c.context.clone())
+        .collect();
+    all.into_iter()
+        .filter(|c| c.app_id.is_some() || !bound.contains(&c.context))
         .collect()
 }
 
@@ -606,6 +626,353 @@ pub fn protection_of(v: &Value) -> (Vec<RequiredCheck>, ReviewPolicy) {
     (union_checks(bound, listed), reviews)
 }
 
+/// How many open pull requests one page of the writers read asks for.
+pub const WRITERS_PAGE: usize = 50;
+
+/// How many pages of one head's contexts are read, a hundred contexts each. A head carrying
+/// more is left unattributed, and a context bound to an app is then `unknown` on it.
+pub const CONTEXT_PAGES: usize = 10;
+
+/// The GraphQL read of who wrote each check: the open pull requests, newest first as
+/// `gh pr list` lists them, each with its head and the first hundred contexts of its rollup.
+/// A context node has the shape of a `gh pr list` rollup entry plus `checkSuite.app`, so
+/// [`check_of()`] reads both; a status context's `createdAt` is asked for as `startedAt`, the
+/// name the rollup entry gives the time it was set. Variables: `owner`, `name`, `n` (the page
+/// size) and `after` (the cursor of the page before, absent for the first).
+pub const WRITERS_QUERY: &str = "query($owner:String!,$name:String!,$n:Int!,$after:String){\
+repository(owner:$owner,name:$name){\
+pullRequests(states:OPEN,first:$n,after:$after,orderBy:{field:CREATED_AT,direction:DESC}){\
+pageInfo{hasNextPage endCursor}\
+nodes{number headRefOid statusCheckRollup{contexts(first:100){\
+pageInfo{hasNextPage endCursor}\
+nodes{__typename \
+...on CheckRun{name status conclusion startedAt completedAt checkSuite{app{databaseId}}}\
+...on StatusContext{context state startedAt:createdAt}}}}}}}}";
+
+/// The GraphQL read of one pull request's contexts, a page at a time: what
+/// [`WRITERS_QUERY`] asks of every open pull request, asked of the one whose contexts did
+/// not fit a page. Variables: `owner`, `name`, `number` and `after` (the cursor of the page of
+/// contexts before, absent for the first).
+pub const WRITERS_OF_QUERY: &str =
+    "query($owner:String!,$name:String!,$number:Int!,$after:String){\
+repository(owner:$owner,name:$name){\
+pullRequest(number:$number){number headRefOid statusCheckRollup{contexts(first:100,after:$after){\
+pageInfo{hasNextPage endCursor}\
+nodes{__typename \
+...on CheckRun{name status conclusion startedAt completedAt checkSuite{app{databaseId}}}\
+...on StatusContext{context state startedAt:createdAt}}}}}}}";
+
+/// The checks read with their writers, by pull request number: the head they are of, and
+/// the checks. What [`attributed_checks()`] answers and [`attribute()`] applies.
+pub type AttributedChecks = BTreeMap<u64, (String, Vec<CheckObservation>)>;
+
+/// One page of one pull request's rollup, as a writers answer gave it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RollupPage {
+    /// The head the rollup is of.
+    pub head: String,
+    /// The checks on this page, each with the app that wrote it where the forge named one.
+    pub checks: Vec<CheckObservation>,
+    /// Whether these are all of them: `false` when the forge says more contexts follow, and
+    /// when it listed contexts without saying whether more do.
+    pub complete: bool,
+    /// Where the next page of contexts starts, when the forge named a cursor.
+    pub cursor: Option<String>,
+}
+
+/// One pull request node of a writers answer, read as a [`RollupPage`]. A head without a
+/// rollup (`statusCheckRollup: null`) has no check, and that is all of them.
+///
+/// The module is private, so the example is text; the unit tests run the same assertions.
+///
+/// ```text
+/// use majordomus_cli::integration::forge::rollup_page_of;
+/// let node = serde_json::json!({"number": 1, "headRefOid": "h1", "statusCheckRollup": {"contexts": {
+///     "pageInfo": {"hasNextPage": true, "endCursor": "c1"},
+///     "nodes": [{"__typename": "CheckRun", "name": "ci", "status": "COMPLETED",
+///                "conclusion": "SUCCESS", "checkSuite": {"app": {"databaseId": 15368}}}]}}});
+/// let page = rollup_page_of(&node);
+/// assert_eq!((page.head.as_str(), page.checks[0].app_id), ("h1", Some(15368)));
+/// assert_eq!((page.complete, page.cursor.as_deref()), (false, Some("c1")));
+/// assert!(rollup_page_of(&serde_json::json!({"headRefOid": "h1", "statusCheckRollup": null})).complete);
+/// ```
+pub fn rollup_page_of(node: &Value) -> RollupPage {
+    let contexts = node.pointer("/statusCheckRollup/contexts");
+    let info = |k: &str| contexts.and_then(|c| c.pointer(k));
+    RollupPage {
+        head: node
+            .get("headRefOid")
+            .and_then(Value::as_str)
+            .unwrap_or("")
+            .to_string(),
+        checks: contexts
+            .and_then(|c| c.get("nodes"))
+            .and_then(Value::as_array)
+            .map(|a| a.iter().map(check_of).collect())
+            .unwrap_or_default(),
+        complete: contexts.is_none()
+            || info("/pageInfo/hasNextPage").and_then(Value::as_bool) == Some(false),
+        cursor: info("/pageInfo/endCursor")
+            .and_then(Value::as_str)
+            .map(str::to_string),
+    }
+}
+
+/// Every numbered pull request node of one [`WRITERS_QUERY`] answer, with its rollup page.
+fn rollups_of(page: &Value) -> Vec<(u64, RollupPage)> {
+    page.pointer("/data/repository/pullRequests/nodes")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(|node| {
+            node.get("number")
+                .and_then(Value::as_u64)
+                .map(|number| (number, rollup_page_of(node)))
+        })
+        .collect()
+}
+
+/// The pull requests one [`WRITERS_QUERY`] answer read whole: number → (head, checks). One
+/// whose contexts did not fit the page is left out ([`truncated_of()`] names it): a rollup
+/// read in part is not read, and a failure on the page that was not read must not go unseen.
+///
+/// The module is private, so the example is text; the unit tests run the same assertions.
+///
+/// ```text
+/// use majordomus_cli::integration::forge::attributed_checks_of;
+/// let page = serde_json::json!({"data": {"repository": {"pullRequests": {"nodes": [
+///   {"number": 1, "headRefOid": "h1", "statusCheckRollup": {"contexts": {
+///      "pageInfo": {"hasNextPage": false}, "nodes": [{"__typename": "CheckRun", "name": "ci",
+///        "status": "COMPLETED", "conclusion": "SUCCESS", "checkSuite": {"app": {"databaseId": 15368}}}]}}},
+///   {"number": 2, "headRefOid": "h2", "statusCheckRollup": {"contexts": {
+///      "pageInfo": {"hasNextPage": true, "endCursor": "c"}, "nodes": []}}}
+/// ]}}}});
+/// let read = attributed_checks_of(&page);
+/// assert_eq!(read[&1].0, "h1");
+/// assert_eq!(read[&1].1[0].app_id, Some(15368));
+/// assert!(!read.contains_key(&2), "a truncated rollup is unread");
+/// ```
+pub fn attributed_checks_of(page: &Value) -> AttributedChecks {
+    rollups_of(page)
+        .into_iter()
+        .filter(|(_, rollup)| rollup.complete)
+        .map(|(number, rollup)| (number, (rollup.head, rollup.checks)))
+        .collect()
+}
+
+/// The pull requests of one [`WRITERS_QUERY`] answer whose contexts did not fit the page:
+/// what [`attributed_checks_of()`] leaves out, and [`attributed_checks()`] reads again a page
+/// of contexts at a time.
+///
+/// The module is private, so the example is text; the unit tests run the same assertions.
+///
+/// ```text
+/// use majordomus_cli::integration::forge::truncated_of;
+/// let page = serde_json::json!({"data": {"repository": {"pullRequests": {"nodes": [
+///   {"number": 2, "headRefOid": "h2", "statusCheckRollup": {"contexts": {
+///      "pageInfo": {"hasNextPage": true, "endCursor": "c"}, "nodes": []}}}
+/// ]}}}});
+/// assert_eq!(truncated_of(&page).into_iter().collect::<Vec<_>>(), [2]);
+/// ```
+pub fn truncated_of(page: &Value) -> BTreeSet<u64> {
+    rollups_of(page)
+        .into_iter()
+        .filter(|(_, rollup)| !rollup.complete)
+        .map(|(number, _)| number)
+        .collect()
+}
+
+/// The cursor the next page of pull requests starts after, when one [`WRITERS_QUERY`]
+/// answer says there is one and names it.
+///
+/// The module is private, so the example is text; the unit tests run the same assertions.
+///
+/// ```text
+/// use majordomus_cli::integration::forge::next_cursor;
+/// let more = serde_json::json!({"data": {"repository": {"pullRequests": {
+///     "pageInfo": {"hasNextPage": true, "endCursor": "c1"}, "nodes": []}}}});
+/// assert_eq!(next_cursor(&more).as_deref(), Some("c1"));
+/// assert_eq!(next_cursor(&serde_json::json!({})), None);
+/// ```
+pub fn next_cursor(page: &Value) -> Option<String> {
+    let info = page.pointer("/data/repository/pullRequests/pageInfo");
+    let said = |k: &str| info.and_then(|i| i.get(k));
+    let more = said("hasNextPage").and_then(Value::as_bool) == Some(true);
+    said("endCursor")
+        .and_then(Value::as_str)
+        .filter(|_| more)
+        .map(str::to_string)
+}
+
+/// One pull request's whole rollup, read a page of contexts at a time with
+/// [`WRITERS_OF_QUERY`]: `ask` answers the page after a cursor (`None` first). `None` when it
+/// cannot be read whole: the head moved between two pages, a page says more follow and names
+/// no cursor, or [`CONTEXT_PAGES`] pages were not enough. Unread is never a shorter list.
+///
+/// The module is private, so the example is text; the unit tests run the same assertions.
+///
+/// ```text
+/// use majordomus_cli::integration::forge::whole_rollup;
+/// let page = |more: bool, name: &str| serde_json::json!({"data": {"repository": {"pullRequest": {
+///     "number": 1, "headRefOid": "h1", "statusCheckRollup": {"contexts": {
+///       "pageInfo": {"hasNextPage": more, "endCursor": "c1"},
+///       "nodes": [{"__typename": "CheckRun", "name": name, "status": "COMPLETED"}]}}}}}});
+/// let whole = whole_rollup(|after| Ok(page(after.is_none(), after.unwrap_or("ci")))).unwrap();
+/// let (head, checks) = whole.expect("two pages");
+/// assert_eq!((head.as_str(), checks.len()), ("h1", 2));
+/// ```
+pub fn whole_rollup(
+    mut ask: impl FnMut(Option<&str>) -> Result<Value, ForgeError>,
+) -> Result<Option<(String, Vec<CheckObservation>)>, ForgeError> {
+    let mut read: Option<(String, Vec<CheckObservation>)> = None;
+    let mut cursor: Option<String> = None;
+    for _ in 0..CONTEXT_PAGES {
+        let answer = ask(cursor.as_deref())?;
+        let page = rollup_page_of(
+            answer
+                .pointer("/data/repository/pullRequest")
+                .unwrap_or(&Value::Null),
+        );
+        let complete = page.complete;
+        let (head, mut checks) = read
+            .take()
+            .unwrap_or_else(|| (page.head.clone(), Vec::new()));
+        // a rollup is of one head: pages of two heads are not one rollup
+        let same_head = head == page.head;
+        checks.extend(page.checks);
+        if complete || !same_head || page.cursor.is_none() {
+            return Ok((complete && same_head).then_some((head, checks)));
+        }
+        read = Some((head, checks));
+        cursor = page.cursor;
+    }
+    Ok(None)
+}
+
+/// The checks of the open pull requests `wanted` names, each read with the app that wrote
+/// it. `page` answers one [`WRITERS_QUERY`] page after a cursor (`None` first); pages are
+/// asked for until every wanted pull request was seen, the forge has no more, or `limit`
+/// pull requests' worth of pages were asked for. A wanted one whose contexts did not fit its
+/// page is read again whole with `rest` ([`whole_rollup()`]: its number, then the cursor). One
+/// that stays unread is absent from the answer, and [`attribute()`] leaves it unattributed. A
+/// read that fails fails the whole: a writer is read or the observation is not made.
+///
+/// The module is private, so the example is text; the unit tests run the same assertions.
+///
+/// ```text
+/// use majordomus_cli::integration::forge::attributed_checks;
+/// let page = serde_json::json!({"data": {"repository": {"pullRequests": {
+///   "pageInfo": {"hasNextPage": false}, "nodes": [
+///     {"number": 1, "headRefOid": "h1", "statusCheckRollup": null}]}}}});
+/// let wanted = [1].into_iter().collect();
+/// let read = attributed_checks(&wanted, 500, |_| Ok(page.clone()), |_, _| unreachable!()).unwrap();
+/// assert_eq!(read[&1], ("h1".to_string(), vec![]));
+/// ```
+pub fn attributed_checks(
+    wanted: &BTreeSet<u64>,
+    limit: usize,
+    mut page: impl FnMut(Option<&str>) -> Result<Value, ForgeError>,
+    mut rest: impl FnMut(u64, Option<&str>) -> Result<Value, ForgeError>,
+) -> Result<AttributedChecks, ForgeError> {
+    let mut read = AttributedChecks::new();
+    let mut truncated: BTreeSet<u64> = BTreeSet::new();
+    let mut cursor: Option<String> = None;
+    for _ in 0..limit.div_ceil(WRITERS_PAGE) {
+        if wanted
+            .iter()
+            .all(|n| read.contains_key(n) || truncated.contains(n))
+        {
+            break;
+        }
+        let answer = page(cursor.as_deref())?;
+        read.extend(attributed_checks_of(&answer));
+        truncated.extend(truncated_of(&answer));
+        cursor = next_cursor(&answer);
+        if cursor.is_none() {
+            break;
+        }
+    }
+    for number in truncated.intersection(wanted) {
+        let whole = whole_rollup(|after| rest(*number, after))?;
+        read.extend(whole.map(|rollup| (*number, rollup)));
+    }
+    Ok(read)
+}
+
+/// Give each observed pull request the checks read with their writers. Only a read of the
+/// head that was observed counts: a pull request the read does not name, or names at another
+/// head (it moved between the two reads), keeps the checks `gh pr list` gave it, none of
+/// which names an app, so a context bound to an app is `unknown` on it and never passed. A
+/// head that was not observed is never matched, whatever the read says of it.
+///
+/// The module is private, so the example is text; the unit tests run the same assertions.
+///
+/// ```text
+/// use majordomus_cli::integration::forge::{attribute, pull_request_of, AttributedChecks};
+/// let mut prs = vec![pull_request_of(&serde_json::json!({"number": 1, "headRefOid": "h1"})).unwrap()];
+/// let mut read = AttributedChecks::new();
+/// read.insert(1, ("moved".to_string(), vec![Default::default()]));
+/// attribute(&mut prs, &read);
+/// assert!(prs[0].checks.is_empty(), "another head's checks are not this head's");
+/// ```
+pub fn attribute(prs: &mut [PullRequestObservation], read: &AttributedChecks) {
+    for pr in prs.iter_mut() {
+        let checks = read
+            .get(&pr.number)
+            .filter(|(head, _)| !head.is_empty() && *head == pr.head_sha)
+            .map(|(_, checks)| checks.clone());
+        if let Some(checks) = checks {
+            pr.checks = checks;
+        }
+    }
+}
+
+/// The `gh api graphql` arguments of one writers read: `query`, the repository's `owner` and
+/// `name`, one typed variable (`n=50` or `number=7`) and the cursor to read after. Everything
+/// but the number goes with `-f`, as the string it is: `-F` would read an owner or a
+/// repository called `2048`, `true` or `null` as a number, a boolean or nothing, and one
+/// starting with `@` as a file.
+///
+/// The module is private, so the example is text; the unit tests run the same assertions.
+///
+/// ```text
+/// use majordomus_cli::integration::forge::writers_args;
+/// let args = writers_args("query{}", "2048", "true", "n=50", Some("c1"));
+/// assert_eq!(args, ["api", "graphql", "-f", "query=query{}", "-f", "owner=2048", "-f",
+///     "name=true", "-F", "n=50", "-f", "after=c1"]);
+/// ```
+pub fn writers_args(
+    query: &str,
+    owner: &str,
+    name: &str,
+    typed: &str,
+    after: Option<&str>,
+) -> Vec<String> {
+    let mut args = vec![
+        "api".to_string(),
+        "graphql".to_string(),
+        "-f".to_string(),
+        format!("query={query}"),
+        "-f".to_string(),
+        format!("owner={owner}"),
+        "-f".to_string(),
+        format!("name={name}"),
+        "-F".to_string(),
+        typed.to_string(),
+    ];
+    args.extend(
+        after
+            .into_iter()
+            .flat_map(|cursor| ["-f".to_string(), format!("after={cursor}")]),
+    );
+    args
+}
+
+/// One GraphQL read through `gh`, with the arguments [`writers_args()`] built.
+fn gh_graphql(root: &Path, args: &[String]) -> Result<Value, ForgeError> {
+    gh_json(root, &args.iter().map(String::as_str).collect::<Vec<_>>())
+}
+
 impl Forge for GhForge<'_> {
     fn observe(&self) -> Result<ForgeObservation, ForgeError> {
         let root = self.root;
@@ -705,7 +1072,7 @@ impl Forge for GhForge<'_> {
             ],
         )?;
         // keyed by number, so the observation is in number order whatever the forge listed
-        let pull_requests: Vec<PullRequestObservation> = list
+        let mut pull_requests: Vec<PullRequestObservation> = list
             .as_array()
             .map(|a| {
                 a.iter()
@@ -716,6 +1083,29 @@ impl Forge for GhForge<'_> {
                     .collect()
             })
             .unwrap_or_default();
+        // a context bound to an app is only that app's check run, and the list above does not
+        // say who wrote one: the writers are read, or the observation is not made. A base that
+        // binds nothing needs no writer and asks nothing more.
+        let bound = required_checks
+            .as_ref()
+            .is_some_and(|r| r.iter().any(|c| c.app_id.is_some()));
+        if bound {
+            let (owner, name) = repository
+                .split_once('/')
+                .unwrap_or((repository.as_str(), ""));
+            let wanted: BTreeSet<u64> = pull_requests.iter().map(|p| p.number).collect();
+            let size = format!("n={WRITERS_PAGE}");
+            let ask = |query: &str, typed: &str, after: Option<&str>| {
+                gh_graphql(root, &writers_args(query, owner, name, typed, after))
+            };
+            let read = attributed_checks(
+                &wanted,
+                OPEN_LIMIT,
+                |after| ask(WRITERS_QUERY, &size, after),
+                |number, after| ask(WRITERS_OF_QUERY, &format!("number={number}"), after),
+            )?;
+            attribute(&mut pull_requests, &read);
+        }
         // a successor that landed is no longer listed among the open ones: closed pull requests
         // whose body declares a supersession are read with their heads, so the one they
         // replace is still known to be replaced once they are gone
@@ -1154,6 +1544,8 @@ mod tests {
         );
     }
 
+    /// The app is read where a forge read names it, and nowhere else: `gh pr list` names
+    /// none, so a check run it lists has no writer, and neither has a status context.
     #[test]
     fn a_check_entry_records_what_wrote_it_and_when_it_completed() {
         let p = pull_request_of(&json!({
@@ -1161,11 +1553,21 @@ mod tests {
             "statusCheckRollup": [
                 {"__typename": "CheckRun", "name": "ci", "status": "COMPLETED", "conclusion": "SUCCESS",
                  "startedAt": "2026-09-01T00:00:00Z", "completedAt": "2026-09-01T00:05:00Z",
-                 "app": {"databaseId": 15368}},
+                 "checkSuite": {"app": {"databaseId": 15368}}},
                 {"__typename": "CheckRun", "name": "ci", "status": "IN_PROGRESS",
                  "startedAt": "2026-09-01T00:06:00Z", "completedAt": "0001-01-01T00:00:00Z"},
                 {"__typename": "StatusContext", "context": "ci", "state": "SUCCESS",
-                 "startedAt": "2026-09-01T00:07:00Z"}
+                 "startedAt": "2026-09-01T00:07:00Z"},
+                // exactly the keys gh's own projection of the rollup carries
+                {"__typename": "CheckRun", "completedAt": "2026-09-01T00:05:00Z",
+                 "conclusion": "SUCCESS", "detailsUrl": "https://example.com/run/1", "name": "ci",
+                 "startedAt": "2026-09-01T00:00:00Z", "status": "COMPLETED",
+                 "workflowName": "validate"},
+                {"__typename": "CheckRun", "name": "ci", "status": "COMPLETED", "conclusion": "SUCCESS",
+                 "checkSuite": {"app": null}},
+                // a shape no forge read produces names no writer
+                {"__typename": "CheckRun", "name": "ci", "status": "COMPLETED", "conclusion": "SUCCESS",
+                 "app": {"databaseId": 15368}}
             ]
         }))
         .unwrap();
@@ -1179,6 +1581,390 @@ mod tests {
         assert_eq!(p.checks[2].kind, CheckKind::StatusContext);
         assert_eq!(p.checks[2].app_id, None);
         assert_eq!(p.checks[2].completed_at, "2026-09-01T00:07:00Z");
+        assert_eq!(p.checks[3].state, CheckRunState::Passed);
+        assert_eq!(
+            p.checks[3].app_id, None,
+            "gh pr list does not say who wrote a check run"
+        );
+        assert_eq!(p.checks[4].app_id, None, "a suite without an app");
+        assert_eq!(
+            p.checks[5].app_id, None,
+            "the app is the suite's, or unread"
+        );
+        let alone = check_of(&json!({
+            "__typename": "CheckRun", "name": "ci", "status": "COMPLETED", "conclusion": "SUCCESS",
+            "completedAt": "2026-09-01T00:05:00Z", "checkSuite": {"app": {"databaseId": 15368}}
+        }));
+        assert_eq!(p.checks[0], alone, "one parser reads both rollups");
+    }
+
+    /// Two sources binding one context to two apps require both apps' runs; an unbound entry
+    /// beside a bound one is the same requirement, and stands alone only when nothing binds it.
+    #[test]
+    fn a_context_bound_to_two_apps_is_two_requirements() {
+        let bound = |app: u64| RequiredCheck {
+            context: "ci".into(),
+            app_id: Some(app),
+        };
+        let (pc, _) = protection_of(&json!({
+            "required_status_checks": {
+                "contexts": ["ci", "lint"],
+                "checks": [{"context": "ci", "app_id": 15368}, {"context": "lint", "app_id": -1}]
+            }
+        }));
+        assert_eq!(pc, vec![bound(15368), RequiredCheck::from("lint")]);
+        let (rc, _) = rules_of(&json!([
+            {"type": "required_status_checks", "parameters": {"required_status_checks": [
+                {"context": "ci", "integration_id": 99},
+                {"context": "ci", "integration_id": 15368},
+                {"context": "lint"}
+            ]}}
+        ]));
+        assert_eq!(
+            rc,
+            vec![bound(99), bound(15368), RequiredCheck::from("lint")]
+        );
+        assert_eq!(
+            union_checks(pc, rc),
+            vec![bound(99), bound(15368), RequiredCheck::from("lint")],
+            "each app once, and the unbound context once"
+        );
+        assert_eq!(
+            union_checks(vec!["ci".into()], vec![bound(7)]),
+            vec![bound(7)],
+            "a source that names no app does not unbind the other's"
+        );
+    }
+
+    fn run_node(name: &str, conclusion: &str, app: Value) -> Value {
+        json!({"__typename": "CheckRun", "name": name, "status": "COMPLETED",
+               "conclusion": conclusion, "startedAt": "2026-09-01T00:00:00Z",
+               "completedAt": "2026-09-01T00:05:00Z", "checkSuite": {"app": app}})
+    }
+
+    fn pr_node(number: u64, head: &str, more: Value, cursor: Value, nodes: Vec<Value>) -> Value {
+        json!({"number": number, "headRefOid": head, "statusCheckRollup": {"contexts": {
+            "pageInfo": {"hasNextPage": more, "endCursor": cursor}, "nodes": nodes}}})
+    }
+
+    fn writers_page(more: bool, cursor: Value, nodes: Vec<Value>) -> Value {
+        json!({"data": {"repository": {"pullRequests": {
+            "pageInfo": {"hasNextPage": more, "endCursor": cursor}, "nodes": nodes}}}})
+    }
+
+    fn rest_page(head: &str, more: Value, cursor: Value, nodes: Vec<Value>) -> Value {
+        json!({"data": {"repository": {"pullRequest": pr_node(1, head, more, cursor, nodes)}}})
+    }
+
+    #[test]
+    fn the_writers_page_is_read_per_pull_request() {
+        let page = writers_page(
+            false,
+            Value::Null,
+            vec![
+                pr_node(
+                    1,
+                    "h1",
+                    json!(false),
+                    Value::Null,
+                    vec![
+                        run_node("ci", "SUCCESS", json!({"databaseId": 15368})),
+                        run_node("ci", "FAILURE", json!({"databaseId": 99})),
+                        json!({"__typename": "StatusContext", "context": "legacy",
+                               "state": "SUCCESS", "startedAt": "2026-09-01T00:07:00Z"}),
+                    ],
+                ),
+                json!({"number": 2, "headRefOid": "h2", "statusCheckRollup": null}),
+                pr_node(3, "h3", json!(true), json!("c3"), vec![]),
+                json!({"headRefOid": "h4", "statusCheckRollup": null}),
+                // contexts listed without a word on whether more follow are not all of them
+                json!({"number": 5, "headRefOid": "h5", "statusCheckRollup": {"contexts": {"nodes": []}}}),
+            ],
+        );
+        let read = attributed_checks_of(&page);
+        assert_eq!(read.keys().copied().collect::<Vec<_>>(), [1, 2]);
+        let (head, checks) = &read[&1];
+        assert_eq!(head, "h1");
+        assert_eq!(
+            checks.iter().map(|c| c.app_id).collect::<Vec<_>>(),
+            [Some(15368), Some(99), None],
+            "the app is on the runs only"
+        );
+        assert_eq!(checks[1].state, CheckRunState::Failed);
+        assert_eq!(
+            (checks[2].name.as_str(), checks[2].kind),
+            ("legacy", CheckKind::StatusContext)
+        );
+        assert_eq!(
+            checks[2].completed_at, "2026-09-01T00:07:00Z",
+            "a status context keeps the time it was set"
+        );
+        assert_eq!(
+            read[&2],
+            ("h2".to_string(), Vec::new()),
+            "no rollup: no check"
+        );
+        assert_eq!(truncated_of(&page).into_iter().collect::<Vec<_>>(), [3, 5]);
+        assert!(attributed_checks_of(&json!({})).is_empty());
+        assert!(truncated_of(&json!({})).is_empty());
+
+        let third = rollup_page_of(&pr_node(3, "h3", json!(true), json!("c3"), vec![]));
+        assert_eq!(
+            (third.complete, third.cursor.as_deref()),
+            (false, Some("c3"))
+        );
+        assert!(rollup_page_of(&Value::Null).complete, "nothing listed");
+        assert_eq!(rollup_page_of(&Value::Null).head, "");
+
+        assert_eq!(
+            next_cursor(&writers_page(true, json!("c1"), vec![])).as_deref(),
+            Some("c1")
+        );
+        assert_eq!(next_cursor(&writers_page(false, json!("c1"), vec![])), None);
+        assert_eq!(next_cursor(&writers_page(true, Value::Null, vec![])), None);
+        assert_eq!(next_cursor(&json!({"data": {}})), None);
+    }
+
+    #[test]
+    fn every_page_of_writers_is_asked_for_once() {
+        let ci = || vec![run_node("ci", "SUCCESS", json!({"databaseId": 15368}))];
+        let wanted: BTreeSet<u64> = [1, 2].into_iter().collect();
+        let none = |_: u64, _: Option<&str>| -> Result<Value, ForgeError> {
+            Err(ForgeError("no rollup was truncated".into()))
+        };
+        let pages = |after: Option<&str>| match after {
+            None => writers_page(
+                true,
+                json!("c1"),
+                vec![pr_node(2, "h2", json!(false), Value::Null, ci())],
+            ),
+            _ => writers_page(
+                false,
+                Value::Null,
+                vec![pr_node(1, "h1", json!(false), Value::Null, ci())],
+            ),
+        };
+        let mut asked: Vec<Option<String>> = Vec::new();
+        let read = attributed_checks(
+            &wanted,
+            OPEN_LIMIT,
+            |after| {
+                asked.push(after.map(str::to_string));
+                Ok(pages(after))
+            },
+            none,
+        )
+        .unwrap();
+        assert_eq!(asked, [None, Some("c1".to_string())]);
+        assert_eq!(read.keys().copied().collect::<Vec<_>>(), [1, 2]);
+        assert_eq!(read[&1].1[0].app_id, Some(15368));
+
+        // the newest are listed first: once every observed number was seen, nothing more is asked
+        let mut calls = 0;
+        let newest: BTreeSet<u64> = [2].into_iter().collect();
+        let read = attributed_checks(
+            &newest,
+            OPEN_LIMIT,
+            |after| {
+                calls += 1;
+                Ok(pages(after))
+            },
+            none,
+        )
+        .unwrap();
+        assert_eq!((calls, read.contains_key(&2)), (1, true));
+
+        // nothing observed, nothing asked
+        let read = attributed_checks(
+            &BTreeSet::new(),
+            OPEN_LIMIT,
+            |_| Err(ForgeError("asked".into())),
+            none,
+        )
+        .unwrap();
+        assert!(read.is_empty());
+
+        // a page the forge refuses fails the read, whatever the pages before it said
+        let refused = attributed_checks(
+            &wanted,
+            OPEN_LIMIT,
+            |after| match after {
+                None => Ok(pages(None)),
+                _ => Err(ForgeError("HTTP 403".into())),
+            },
+            none,
+        )
+        .unwrap_err();
+        assert_eq!(refused.0, "HTTP 403");
+
+        // a limit of one page stops after it, though the forge has more
+        let mut calls = 0;
+        let read = attributed_checks(
+            &wanted,
+            1,
+            |after| {
+                calls += 1;
+                Ok(pages(after))
+            },
+            none,
+        )
+        .unwrap();
+        assert_eq!(calls, 1);
+        assert_eq!(
+            read.keys().copied().collect::<Vec<_>>(),
+            [2],
+            "#1 is unread"
+        );
+    }
+
+    #[test]
+    fn a_rollup_that_does_not_fit_a_page_is_read_whole_or_not_at_all() {
+        let ci = |app: u64| run_node("ci", "SUCCESS", json!({"databaseId": app}));
+        let wanted: BTreeSet<u64> = [1].into_iter().collect();
+        // #1's contexts did not fit; #7 is truncated too, and nobody observed it
+        let first = || {
+            writers_page(
+                false,
+                Value::Null,
+                vec![
+                    pr_node(1, "h1", json!(true), json!("x1"), vec![ci(15368)]),
+                    pr_node(7, "h7", json!(true), json!("x7"), vec![]),
+                ],
+            )
+        };
+        let mut asked: Vec<(u64, Option<String>)> = Vec::new();
+        let read = attributed_checks(
+            &wanted,
+            OPEN_LIMIT,
+            |_| Ok(first()),
+            |number, after| {
+                asked.push((number, after.map(str::to_string)));
+                Ok(match after {
+                    None => rest_page("h1", json!(true), json!("x1"), vec![ci(15368)]),
+                    _ => rest_page("h1", json!(false), Value::Null, vec![ci(99)]),
+                })
+            },
+        )
+        .unwrap();
+        assert_eq!(asked, [(1, None), (1, Some("x1".to_string()))]);
+        let (head, checks) = &read[&1];
+        assert_eq!(head, "h1");
+        assert_eq!(
+            checks.iter().map(|c| c.app_id).collect::<Vec<_>>(),
+            [Some(15368), Some(99)],
+            "every page of its contexts, in order"
+        );
+
+        // each way the whole cannot be read leaves it unread, never shorter
+        let unread = |answer: &dyn Fn(Option<&str>) -> Value| {
+            attributed_checks(
+                &wanted,
+                OPEN_LIMIT,
+                |_| Ok(first()),
+                |_, after| Ok(answer(after)),
+            )
+            .unwrap()
+        };
+        let moved = unread(&|after: Option<&str>| match after {
+            None => rest_page("h1", json!(true), json!("x1"), vec![ci(15368)]),
+            _ => rest_page("h1b", json!(false), Value::Null, vec![]),
+        });
+        assert!(moved.is_empty(), "the head moved between two pages");
+        let no_cursor = unread(&|_| rest_page("h1", json!(true), Value::Null, vec![ci(15368)]));
+        assert!(
+            no_cursor.is_empty(),
+            "more follow, and no cursor says where"
+        );
+        let endless = unread(&|_| rest_page("h1", json!(true), json!("x"), vec![ci(15368)]));
+        assert!(endless.is_empty(), "more pages than are read");
+        let gone = unread(&|_| json!({"data": {"repository": {"pullRequest": null}}}));
+        assert_eq!(
+            gone[&1],
+            (String::new(), Vec::new()),
+            "no head: nothing to match"
+        );
+
+        // a page of contexts the forge refuses fails the read
+        let refused = attributed_checks(
+            &wanted,
+            OPEN_LIMIT,
+            |_| Ok(first()),
+            |_, _| Err(ForgeError("HTTP 502".into())),
+        )
+        .unwrap_err();
+        assert_eq!(refused.0, "HTTP 502");
+
+        let mut pages = 0;
+        let whole = whole_rollup(|_| {
+            pages += 1;
+            Ok(rest_page("h1", json!(true), json!("x"), vec![]))
+        })
+        .unwrap();
+        assert_eq!((whole, pages), (None, CONTEXT_PAGES));
+    }
+
+    #[test]
+    fn only_the_observed_head_is_attributed() {
+        let listed = |number: u64, head: &str| {
+            pull_request_of(&json!({
+                "number": number, "headRefOid": head,
+                "statusCheckRollup": [{"__typename": "CheckRun", "name": "ci",
+                    "status": "COMPLETED", "conclusion": "SUCCESS"}]
+            }))
+            .unwrap()
+        };
+        let mut prs = vec![
+            listed(1, "h1"),
+            listed(2, "h2"),
+            listed(3, "h3"),
+            listed(4, ""),
+        ];
+        let its = |app: u64| {
+            vec![check_of(&run_node(
+                "ci",
+                "SUCCESS",
+                json!({"databaseId": app}),
+            ))]
+        };
+        let mut read = AttributedChecks::new();
+        read.insert(1, ("h1".to_string(), its(15368)));
+        // #2 moved between the two reads; #3 was not read; #4 was listed without a head
+        read.insert(2, ("h2-moved".to_string(), its(15368)));
+        read.insert(4, (String::new(), its(15368)));
+        attribute(&mut prs, &read);
+        assert_eq!(prs[0].checks[0].app_id, Some(15368));
+        for unattributed in &prs[1..] {
+            assert_eq!(unattributed.checks.len(), 1, "#{}", unattributed.number);
+            assert_eq!(
+                unattributed.checks[0].app_id, None,
+                "#{} keeps the checks it was listed with",
+                unattributed.number
+            );
+        }
+    }
+
+    /// The owner, the name and the cursor go as strings, whatever they look like: only the
+    /// number is typed.
+    #[test]
+    fn the_writers_read_passes_names_as_strings() {
+        let first = writers_args(WRITERS_QUERY, "2048", "true", "n=50", None);
+        assert_eq!(first[..3], ["api", "graphql", "-f"]);
+        assert_eq!(first[3], format!("query={WRITERS_QUERY}"));
+        assert_eq!(
+            first[4..],
+            ["-f", "owner=2048", "-f", "name=true", "-F", "n=50"]
+        );
+        let next = writers_args(WRITERS_OF_QUERY, "o", "r", "number=7", Some("@c1"));
+        assert_eq!(next[8..], ["-F", "number=7", "-f", "after=@c1"]);
+        assert!(next[3].starts_with("query=query($owner:String!,$name:String!,$number:Int!"));
+        // the list this read attributes is newest first, and so is the read
+        assert!(WRITERS_QUERY.contains("orderBy:{field:CREATED_AT,direction:DESC}"));
+        assert!(!WRITERS_QUERY.contains('\n') && !WRITERS_OF_QUERY.contains('\n'));
+        for query in [WRITERS_QUERY, WRITERS_OF_QUERY] {
+            assert!(query.contains("checkSuite{app{databaseId}}"), "{query}");
+            assert!(query.contains("startedAt:createdAt"), "{query}");
+            assert!(query.contains("__typename ...on CheckRun"), "{query}");
+        }
     }
 
     #[test]

@@ -70,7 +70,7 @@ answer wins. `ready` is reached only after every other question is answered in i
 | `unknown` | held | a declared successor is not open and could not be read | `prs refresh` |
 | `redundant` | cleanup | its head is an ancestor of master, merging it changes no file, or every one of its commits is on master as an equal patch | `prs cleanup --apply` closes it |
 | `possibly_redundant` | cleanup | merging it changes only derived artifacts | a person decides |
-| `unknown` | held | its head is not fetched, git failed, or the branch protection could not be read | `prs refresh` |
+| `unknown` | held | its head is not fetched, git failed, the branch protection could not be read, or a check run of an app-bound context names no app | `prs refresh` |
 | `conflicting` | repair | the merge conflicts on an authored path | the author resolves it |
 | `blocked` | held | the repository's settings allow no merge commit (see the merge method below) | allow merge commits |
 | `waiting_for_review` | waiting | a required review is missing or changes were requested (see below) | a reviewer |
@@ -83,8 +83,30 @@ answer wins. `ready` is reached only after every other question is answered in i
 
 
 A required check that is pending, missing, skipped or unreadable is not passed. The required
-checks are read from the base's branch protection, never listed here. A green check that is
-not required proves nothing.
+checks are read from the base's branch protection and rulesets, each with the app bound to
+it, never listed here. A green check that is not required proves nothing.
+
+A check bound to an app is only that app's check run. A commit status of the same name is
+not it, and neither is another app's check run of that name: it cannot pass the check, fail
+it or hold it pending. A context two sources bind to two apps is required of both. `gh pr
+list` does not say which app wrote a check run, so when a context is bound the refresh asks
+the forge who wrote each one: one GraphQL read (`gh api graphql`, a query, never a mutation)
+for every 50 open pull requests, and one more for each page of a head that carries more
+than 100 checks. A base that binds nothing asks nothing more. A writer read that fails
+fails the refresh, as a failed list does.
+
+A check run of a bound context whose app was not read is never taken for the bound app's:
+the check is `unknown` (`required_checks:unknown`), never passed, and the queue says which
+pull requests carry one. This happens when the head moved between the list and the writer
+read, which the next refresh clears, and when a check suite names no app or a head carries
+more than 1000 checks, which no refresh clears: a person looks. An observation recorded
+before writers were read has none, so every bound check reads `unknown` until one `prs
+refresh`.
+
+The binding names the app, not the workflow. Every workflow of a repository writes as the
+same app (GitHub Actions is one app), a workflow a pull request's own head defines or
+rewrites included: a head that changes `.github/workflows/` decides what its own check
+named `ci` runs. The binding keeps another app out. It does not prove which workflow ran.
 
 ### Gates, reasons and evidence
 
@@ -105,7 +127,7 @@ The order above is a list of gates, and every gate is asked whatever the others 
 | `review` | the review policy is satisfied on the head | `review:STATE`, or `review_policy_unread` |
 | `no_failing_check` | no required check failed | `required_check_failed` |
 | `freshness` | the head contains master | `behind_master:COMMITS`, with `fork_head` for a fork |
-| `required_checks` | every required check passed | `required_checks:STATE`, `no_required_checks`, `required_checks_unread` |
+| `required_checks` | every required check passed | `required_checks:STATE` (`pending`, `missing`, or `unknown` when a check run of an app-bound context names no app), `no_required_checks`, `required_checks_unread` |
 
 </div>
 
