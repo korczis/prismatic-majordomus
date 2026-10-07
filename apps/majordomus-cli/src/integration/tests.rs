@@ -2292,9 +2292,15 @@ fn a_relayed_error_is_recorded_without_the_credential_in_its_url() {
         },
     )
     .unwrap();
-    assert!(!written.detail.contains("ghs_trailsecret0001"), "{}", written.detail);
     assert!(
-        written.detail.contains("'https://example.invalid/o/r.git/'"),
+        !written.detail.contains("ghs_trailsecret0001"),
+        "{}",
+        written.detail
+    );
+    assert!(
+        written
+            .detail
+            .contains("'https://example.invalid/o/r.git/'"),
         "the URL itself is kept, so the event still says which remote: {}",
         written.detail
     );
