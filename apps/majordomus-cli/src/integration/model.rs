@@ -600,6 +600,11 @@ pub enum IntegrationGate {
     Review,
     /// No required check failed on the head.
     NoFailingCheck,
+    /// The executor was not refused on this head against this master: the trail holds no
+    /// merge of it the forge refused, and no refresh of it that failed, that was not an
+    /// outage. Asked before freshness, so a branch whose refresh failed is the author's to
+    /// repair and is not offered for the same refresh again.
+    Executor,
     /// The head contains the current master.
     Freshness,
     /// Every required check passed on the head.
@@ -608,7 +613,7 @@ pub enum IntegrationGate {
 
 impl IntegrationGate {
     /// Every gate, in policy order.
-    pub const ALL: [IntegrationGate; 12] = [
+    pub const ALL: [IntegrationGate; 13] = [
         IntegrationGate::Base,
         IntegrationGate::Draft,
         IntegrationGate::Label,
@@ -619,6 +624,7 @@ impl IntegrationGate {
         IntegrationGate::Dependency,
         IntegrationGate::Review,
         IntegrationGate::NoFailingCheck,
+        IntegrationGate::Executor,
         IntegrationGate::Freshness,
         IntegrationGate::RequiredChecks,
     ];
@@ -636,10 +642,16 @@ impl IntegrationGate {
             IntegrationGate::Dependency => "dependency",
             IntegrationGate::Review => "review",
             IntegrationGate::NoFailingCheck => "no_failing_check",
+            IntegrationGate::Executor => "executor",
             IntegrationGate::Freshness => "freshness",
             IntegrationGate::RequiredChecks => "required_checks",
         }
     }
+}
+
+/// A string that an older record may hold as `null`: read as empty.
+fn nothing_as_empty<'de, D: serde::Deserializer<'de>>(d: D) -> Result<String, D::Error> {
+    Option::<String>::deserialize(d).map(Option::unwrap_or_default)
 }
 
 /// How one gate answered.
@@ -1104,8 +1116,12 @@ pub struct PullRequestAssessment {
     /// Every gate of the policy, in order, and whether it passed.
     #[serde(default)]
     pub gates: Vec<GateResult>,
-    /// What a person or the executor does next, when anything.
-    pub next_action: Option<String>,
+    /// What a person or the executor does next. Every disposition names one, so it is never
+    /// empty; the published schema still admits `null`, which an older record may hold and
+    /// which reads as nothing said.
+    #[serde(default, deserialize_with = "nothing_as_empty")]
+    #[schemars(with = "Option<String>")]
+    pub next_action: String,
     /// The required checks on the head.
     pub required_checks: RequiredCheckState,
     /// The review state.

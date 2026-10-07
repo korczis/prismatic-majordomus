@@ -124,7 +124,7 @@ with one canonical state, one classification and one executor.
    landed, satisfies the review policy, and has every *required* check passed on its current
    head. These are gates, asked in this order: `base`, `draft`, `label`, `auto_merge`,
    `supersession`, `relation_to_master`, `merge_method`, `dependency`, `review`,
-   `no_failing_check`, `freshness`, `required_checks`. The labels that hold are one table, `LABEL_POLICY`, each
+   `no_failing_check`, `executor`, `freshness`, `required_checks`. The labels that hold are one table, `LABEL_POLICY`, each
    with its effect; the policy copies it and the classifier reads that copy, and no other
    list of labels exists. Today every effect is `hold`, compared case-insensitively:
    `do-not-merge`, `do not merge`, `blocked`, `hold`, `on-hold`, `wip`, `manual-merge`. No
@@ -269,7 +269,9 @@ with one canonical state, one classification and one executor.
    the drain stops. A candidate the forge refused to merge, or whose refresh failed, is
    held back as `needs_repair` (`executor_merge_refused`, `executor_refresh_failed`) while
    its head and master are the ones refused — folded from the trail, never from a plan — so
-   one refused change does not block the queue. A transient failure holds nothing back. The
+   one refused change does not block the queue. The hold is the `executor` gate's answer:
+   the classifier reads the refusals when it builds the queue, and nothing after it changes
+   a disposition. A transient failure holds nothing back. The
    forge is asked again only on an outage (`crate::integration::retry`, case 742), a merge
    never; a continuous drain waits out up to `CONTINUOUS_TRANSIENT_LIMIT` consecutive
    outages, each recorded as `observe_failed`, before it ends.

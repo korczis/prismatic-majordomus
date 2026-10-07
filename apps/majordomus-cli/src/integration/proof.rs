@@ -489,7 +489,7 @@ pub fn prove_dry_run(root: &Path) -> Result<DryRunProof, String> {
                 .ok()
                 .and_then(|v| v.as_str().map(str::to_string))
                 .unwrap_or_default(),
-            next_action: a.next_action.clone(),
+            next_action: Some(a.next_action.clone()),
         })
         .collect();
     Ok(DryRunProof {

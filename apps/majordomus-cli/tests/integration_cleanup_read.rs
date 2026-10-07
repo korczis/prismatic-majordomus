@@ -40,6 +40,11 @@ struct Forge {
 }
 
 fn forge() -> Forge {
+    forge_on("fix/one")
+}
+
+/// [`forge`], with the open pull request's head branch named `branch`.
+fn forge_on(branch: &str) -> Forge {
     let f = common::Fixture::new();
     let root = f.root();
     let outside = f.container();
@@ -64,7 +69,7 @@ fn forge() -> Forge {
             "push",
             "-q",
             "origin",
-            "HEAD:refs/heads/fix/one",
+            &format!("HEAD:refs/heads/{branch}"),
             "HEAD:refs/pull/1/head",
         ],
     );
@@ -75,7 +80,7 @@ fn forge() -> Forge {
     git(&root, &["reset", "-q", "--hard", "HEAD~2"]);
     let open = json!([{
         "number": 1, "title": "change 1", "author": {"login": "someone"},
-        "headRefName": "fix/one", "headRefOid": head, "baseRefName": "master",
+        "headRefName": branch, "headRefOid": head, "baseRefName": "master",
         "isDraft": false, "labels": [{"name": "obsolete"}],
         "createdAt": "2026-10-01T00:00:00Z", "updatedAt": "2026-10-01T00:00:00Z",
         "body": "", "statusCheckRollup": [], "reviewDecision": "",
@@ -219,4 +224,49 @@ fn the_cleanup_read_renders_the_plan_and_the_recorded_branches_offline() {
         "an obsolete pull request was closed:\n{log}"
     );
     assert!(!log.contains("UNEXPECTED"), "{log}");
+}
+
+/// A pull request's issue and milestone are named on every surface that serves the queue. The
+/// fixture's plan holds issue I0001 under `fixture-milestone`, and the open pull request's
+/// head branch names that issue: the queue joins the two, and the command line, MCP and HTTP
+/// all serve what it joined, offline, from the recorded observation.
+#[test]
+fn the_queue_names_the_issue_and_milestone_on_every_surface() {
+    let fg = forge_on("fix/I0001-one");
+    let (code, out, err) = prs(&fg, &["refresh"]);
+    assert_eq!(code, 0, "refresh: {out}{err}");
+    let asked = std::fs::read_to_string(&fg.log).unwrap();
+    let linked = |a: &Value, how: &str| {
+        assert_eq!(a["number"], 1, "{how}: {a}");
+        assert_eq!(a["issue"], "I0001", "{how}: {a}");
+        assert_eq!(a["milestone"], "fixture-milestone", "{how}: {a}");
+    };
+
+    // the command line, as data and as the sentence a person reads
+    let (_, out, err) = prs(&fg, &["status", "--format", "json"]);
+    let status: Value = serde_json::from_str(&out).unwrap_or_else(|e| panic!("{e}: {out}{err}"));
+    linked(&status["assessments"][0], "prs status");
+    let (_, out, _) = prs(&fg, &["explain", "1"]);
+    assert!(
+        out.contains("I0001") && out.contains("fixture-milestone"),
+        "{out}"
+    );
+
+    // MCP
+    let r = mcp_call(&fg, "majordomus_pull_requests");
+    assert_eq!(r["observed"], Value::Bool(true), "{r}");
+    linked(&r["queue"]["assessments"][0], "mcp");
+
+    // HTTP
+    let served = common::Served::start_with_env(&fg.f.root(), &[], &[("PATH", &path(&fg))]);
+    let (status, v) = served.get("/api/v1/pull-requests");
+    assert_eq!(status, 200, "{v}");
+    linked(&v["queue"]["assessments"][0], "http");
+
+    // none of the reads asked the forge anything
+    assert_eq!(
+        std::fs::read_to_string(&fg.log).unwrap(),
+        asked,
+        "a read reached the forge"
+    );
 }

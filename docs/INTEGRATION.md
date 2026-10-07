@@ -47,7 +47,7 @@ answer wins. `ready` is reached only after every other question is answered in i
 
 | Disposition | Lane | When | Next |
 |---|---|---|---|
-| `other_base` | held | targets a branch other than the base, and no open pull request's head | — |
+| `other_base` | held | targets a branch other than the base, and no open pull request's head | retarget it onto the base, if it is meant for it |
 | `waiting_for_dependency` | waiting | stacked on another open pull request of this repository, or declares a dependency on an open one (see below) | land that one first |
 | `draft` | held | a draft | mark it ready |
 | `obsolete` | cleanup | carries a label that marks it obsolete (owner decision D3; see the label policy below); checked before the hold labels, after `draft` | a person closes it, or removes the label |
@@ -63,7 +63,7 @@ answer wins. `ready` is reached only after every other question is answered in i
 | `conflicting` | repair | the merge conflicts on an authored path | the author resolves it |
 | `blocked` | held | the repository's settings allow no merge commit (see the merge method below) | allow merge commits |
 | `waiting_for_review` | waiting | a required review is missing or changes were requested (see below) | a reviewer |
-| `needs_repair` | repair | a required check failed on its head, or it is behind master from a fork | the author |
+| `needs_repair` | repair | a required check failed on its head, it is behind master from a fork, or the executor was refused on this head against this master (the forge refused its merge, or its refresh failed) | the author |
 | `needs_refresh` | waiting | merges cleanly but does not contain master | `prs drain --refresh`, or `prs repair <n> --apply` for one |
 | `waiting_for_checks` | waiting | contains master; a required check is pending or missing on this head | wait |
 | `ready` | ready | contains master, and every required check passed on this head | `prs drain` |
@@ -88,6 +88,7 @@ The order above is a list of gates, and every gate is asked whatever the others 
 | `dependency` | every declared dependency landed | `depends_on:#N`, one per open dependency |
 | `review` | the review policy is satisfied on the head | `review:STATE`, or `review_policy_unread` |
 | `no_failing_check` | no required check failed | `required_check_failed` |
+| `executor` | the executor was not refused on this head against this master | `executor_merge_refused:HEAD`, or `executor_refresh_failed:MASTER` |
 | `freshness` | the head contains master | `behind_master:COMMITS`, with `fork_head` for a fork |
 | `required_checks` | every required check passed | `required_checks:STATE`, `no_required_checks`, `required_checks_unread` |
 
@@ -530,7 +531,11 @@ json` stays the list of pull requests to close.
   `needs_repair` with `executor_merge_refused:<head>` or `executor_refresh_failed:<master>`
   for as long as its head and master are the ones that were refused, so the next ready
   change merges instead of the same refusal repeating. A push to the branch or a new master
-  clears it; a transient failure never holds a change back.
+  clears it; a transient failure never holds a change back. The hold is the `executor`
+  gate's answer, read from the trail when the queue is built: the classifier decides it like
+  every other disposition, so a held pull request says which gate held it and what is done
+  next, and nothing after the classifier changes a disposition. Every disposition names its
+  next action.
 - A signal stops a one-shot drain as it stops a continuous one: the step in progress
   finishes, and no other starts. A continuous drain waits out a short outage of the forge
   (`observe_failed`, at most three consecutive cycles) before it ends.
@@ -562,6 +567,16 @@ json` stays the list of pull requests to close.
   retried. The merge itself is never retried: a merge that timed out may have landed, and
   the verification is what finds out. A drain that decides again after a refused merge is
   taking a new decision from a new observation, within its step bound, and is not retrying.
+- A drain is bounded in steps as well as in merges: three steps for each merge asked for,
+  and never fewer than three. A queue that keeps moving under the executor, or a candidate
+  refused again and again, ends the drain at that bound, and the drain says the bound is what
+  ended it.
+- A call that reaches the network cannot hang the executor (`crate::integration::bounded`).
+  A read of the forge or of the remote's refs is given 60 seconds, an act on the forge (a
+  merge, a closure) 120 seconds, and a fetch or a push 300 seconds. Past its limit the call
+  is killed and fails saying it timed out, which is a transient failure: a read is asked
+  again, and a merge whose answer was lost is verified, never repeated. Local git, a commit
+  and `scripts/derive` are not bounded; the lease is kept alive while they run.
 
 ## Commands
 
@@ -579,6 +594,35 @@ json` stays the list of pull requests to close.
 | `majordomus prs cleanup [--apply]` | yes | close what is provably on master, or superseded by a successor that landed; list what is a person's (possibly redundant, obsolete) and the branches merged pull requests left on origin |
 | `majordomus prs repair <n\|branch>` | no | whether master may be brought into that pull request, from the last observation (a dry run) |
 | `majordomus prs repair <n\|branch> --apply` | yes | bring master into it, under the lease, as `drain --refresh` does |
+| `majordomus prs prove-dry-run` | yes | run the whole dry cycle (refresh, plan, drain, cleanup) and prove that nothing moved: the remote, the forge, the trail, the lease and the local refs |
+
+The reading commands, as the command line's own examples run them, in a checkout that never
+observed a forge:
+
+```bash
+majordomus prs status --format json
+majordomus prs plan
+majordomus prs explain 1
+majordomus prs events
+majordomus prs brief
+majordomus prs repair 1
+majordomus prs refresh
+majordomus prs drain --dry-run
+majordomus prs cleanup
+majordomus prs prove-dry-run
+```
+
+The acting commands:
+
+<!-- majordomus:unrun each of these merges into, pushes to or closes pull requests on the real forge, under the integration lease; the integration tests and cases 741, 850 and 912 run them against a scripted forge, and the rollout below is where they run for real -->
+```bash
+majordomus prs drain --max 1
+majordomus prs drain --refresh --max 3
+majordomus prs drain --resume-after-failure
+majordomus prs drain --continuous --interval 300
+majordomus prs cleanup --apply
+majordomus prs repair 1 --apply
+```
 
 The same queue is `GET /api/v1/pull-requests` (MCP `majordomus_pull_requests`), with the
 lease and the last merge beside it. One pull request is

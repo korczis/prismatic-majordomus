@@ -283,6 +283,19 @@ impl World {
         build_queue(&obs, &master_sha(self.master), |p| self.relation(p.number))
     }
 
+    /// The queue as a checkout whose trail is `trail` builds it: the executor's refusals
+    /// against this master are what its `executor` gate answers from.
+    fn queue_held(&self, trail: &[drain::IntegrationEvent]) -> IntegrationQueue {
+        let master = master_sha(self.master);
+        super::build_queue_held(
+            &self.observation(),
+            &master,
+            |p| self.relation(p.number),
+            |_| None,
+            super::executor_refusals(trail, &master),
+        )
+    }
+
     /// `n` stops being open, as `how` says.
     fn gone_as(&mut self, n: u64, how: Gone) {
         if let Some(i) = self.open.iter().position(|s| s.number == n) {
@@ -392,10 +405,11 @@ impl Integrator for World {
         if !self.outages.is_empty() {
             return Err(self.outages.remove(0));
         }
-        let mut q = self.queue();
-        if let Some(root) = &self.trail_root {
-            super::executor_feedback(&mut q, &drain::events(root));
-        }
+        // what the executor was refused on is a gate's answer, read from the trail it writes
+        let mut q = match &self.trail_root {
+            Some(root) => self.queue_held(&drain::events(root)),
+            None => self.queue(),
+        };
         if self.no_method_on == Some(self.observations) {
             q.policy.merge_method = None;
         }
@@ -4079,15 +4093,58 @@ fn the_same_revisions_observed_later_are_the_same_decision() {
 }
 
 proptest! {
-    /// Over any world: every gate is answered in policy order, the disposition is `ready`
-    /// exactly when every gate passed, every failing gate but a derivative one contributes a
-    /// reason, the first reason is the decisive gate's, and nothing the classifier says falls
-    /// outside the vocabulary.
+    /// Over any world, and over the same world after any refusals of the executor: every
+    /// gate is answered in policy order, the disposition is `ready` exactly when every gate
+    /// passed, every failing gate but a derivative one contributes a reason, the first reason
+    /// is the decisive gate's, every disposition names what is done next, and nothing the
+    /// classifier says falls outside the vocabulary. A refusal is a gate's answer like any
+    /// other, so a refused head is never ready and the next merge is the first ready one.
     #[test]
-    fn the_first_failing_gate_decides_and_every_reason_is_in_the_vocabulary(w in arb_world()) {
+    fn the_first_failing_gate_decides_and_every_reason_is_in_the_vocabulary(
+        w in arb_world(),
+        refused in any::<u32>(),
+    ) {
         use crate::integration::{IntegrationGate as G, ReasonCode};
-        let q = w.queue();
-        for a in &q.assessments {
+        // bit i: the forge refused to merge the i-th open pull request at its head; bit i+16:
+        // its refresh failed. Both against the master the queue is built for.
+        let master = master_sha(w.master);
+        let trail: Vec<drain::IntegrationEvent> = w
+            .open
+            .iter()
+            .enumerate()
+            .flat_map(|(i, s)| {
+                let event = |action| drain::IntegrationEvent {
+                    pr: Some(s.number),
+                    head_sha: Some(s.head.clone()),
+                    master_before: Some(master.clone()),
+                    class: Some(drain::FailureClass::PolicyViolation),
+                    ..drain::IntegrationEvent::of(action)
+                };
+                let bit = |b: usize| refused & (1 << (b % 32)) != 0;
+                [
+                    bit(i).then(|| event(drain::IntegrationAction::MergeFailed)),
+                    bit(i + 16).then(|| event(drain::IntegrationAction::RefreshFailed)),
+                ]
+            })
+            .flatten()
+            .collect();
+        let held = w.queue_held(&trail);
+        let refusals = crate::integration::executor_refusals(&trail, &master);
+        for a in &held.assessments {
+            let key = (a.number, a.evaluated_against.head_sha.clone());
+            if refusals.merges.contains(&key) || refusals.refreshes.contains(&key) {
+                prop_assert_ne!(a.disposition, PullRequestDisposition::Ready, "#{} is held", a.number);
+                prop_assert!(a.gates.iter().any(|g| g.gate == G::Executor && !g.passed));
+            }
+        }
+        let first_ready = held
+            .assessments
+            .iter()
+            .find(|a| a.disposition == PullRequestDisposition::Ready)
+            .map(|a| a.number);
+        prop_assert_eq!(held.next_merge, first_ready);
+        for a in w.queue().assessments.iter().chain(&held.assessments) {
+            prop_assert!(!a.next_action.is_empty(), "#{} {:?} names nothing to do", a.number, a.disposition);
             let order: Vec<G> = a.gates.iter().map(|g| g.gate).collect();
             prop_assert_eq!(&order[..], &G::ALL[..]);
             let ready = a.disposition == PullRequestDisposition::Ready;
@@ -4113,6 +4170,7 @@ proptest! {
                         "successor_unread",
                     ],
                     G::MergeMethod => &["merge_commit_not_allowed"],
+                    G::Executor => &["executor_merge_refused", "executor_refresh_failed"],
                     G::RelationToMaster => &[
                         "head_reachable_from_master",
                         "merge_changes_nothing",
@@ -4215,10 +4273,7 @@ fn auto_merge_armed_is_unsafe_and_every_later_failing_gate_is_still_said() {
             observed_at: "t0".into()
         })
     );
-    assert!(a
-        .next_action
-        .as_deref()
-        .is_some_and(|n| n.contains("--disable-auto")));
+    assert!(a.next_action.contains("--disable-auto"));
 
     // an armed one is never refreshed: a refreshed head would be merged by the forge
     assert_eq!(disposition(&q, 2), PullRequestDisposition::Unsafe);
@@ -5356,11 +5411,143 @@ fn a_refused_candidate_is_held_until_its_head_or_master_moves() {
         a.reasons
     );
     assert_eq!(q.next_merge, None);
+    // it is held by a gate, and says so: the one gate that failed, with what is done next,
+    // never "every gate passed" beside a disposition another writer changed
+    let failed: Vec<_> = a
+        .gates
+        .iter()
+        .filter(|g| !g.passed)
+        .map(|g| g.gate)
+        .collect();
+    assert_eq!(failed, [crate::integration::IntegrationGate::Executor]);
+    assert!(
+        a.next_action.contains("refused the executor's merge"),
+        "{}",
+        a.next_action
+    );
     // the author pushes: a new head clears the hold, and the forge now accepts it
     w.merge_refuses.clear();
     w.open[0].head = "h1.1".into();
     let report = drain::drain(&root, &mut w, 1, false, false).unwrap();
     assert_eq!(report.merged, vec![1]);
+}
+
+/// Only the classifier decides a disposition. Outside `integration/classify.rs` no shipped
+/// source assigns one, builds an assessment by hand, or moves one between lanes: the
+/// executor's refusals and the merge method are gates the classifier answers, so "ready
+/// exactly when every gate passed" has no second writer to break it.
+#[test]
+fn only_the_classifier_writes_a_disposition() {
+    fn sources(dir: &std::path::Path, out: &mut Vec<std::path::PathBuf>) {
+        for entry in std::fs::read_dir(dir).unwrap().flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                sources(&path, out);
+            } else if path.extension().is_some_and(|e| e == "rs") {
+                out.push(path);
+            }
+        }
+    }
+    let src = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
+    let mut files = Vec::new();
+    sources(&src, &mut files);
+    assert!(
+        files.len() > 50,
+        "the crate's sources were not found under {}",
+        src.display()
+    );
+    let mut writers = Vec::new();
+    for file in files {
+        let rel = file.strip_prefix(&src).unwrap().display().to_string();
+        // the classifier is the writer; this file is test code throughout
+        if rel == "integration/classify.rs" || rel == "integration/tests.rs" {
+            continue;
+        }
+        let text = std::fs::read_to_string(&file).unwrap();
+        // only a source that handles an assessment can write one; another subsystem's field
+        // of the same name is not this one
+        if !rel.starts_with("integration/") && !text.contains("PullRequestAssessment") {
+            continue;
+        }
+        // what ships: everything above a file's own test module
+        let shipped = text.split("\n#[cfg(test)]\nmod ").next().unwrap_or(&text);
+        for (n, line) in shipped.lines().enumerate() {
+            let code = line.trim_start();
+            if code.starts_with("//") {
+                continue;
+            }
+            let assigns = [".disposition = ", ".lane = ", ".gates = "]
+                .iter()
+                .any(|w| code.contains(w));
+            let builds = code.contains("PullRequestAssessment {")
+                && !code.contains("struct PullRequestAssessment")
+                && !code.contains("impl ");
+            if assigns || builds {
+                writers.push(format!("{rel}:{}: {code}", n + 1));
+            }
+        }
+    }
+    assert!(
+        writers.is_empty(),
+        "a disposition is written outside the classifier:\n{}",
+        writers.join("\n")
+    );
+    let module = std::fs::read_to_string(src.join("integration/mod.rs")).unwrap();
+    assert!(
+        !module.contains("fn executor_feedback"),
+        "the second writer is back"
+    );
+}
+
+/// A branch whose refresh failed, at the head and master it still has, is the author's to
+/// repair and is not offered for the same refresh again: the `executor` gate decides it ahead
+/// of freshness, and both say what they found.
+#[test]
+fn a_failed_refresh_is_held_by_the_executor_gate_ahead_of_freshness() {
+    use crate::integration::{IntegrationGate as G, ReasonCode as R};
+    let root = scratch();
+    let mut w = World {
+        master: 1,
+        open: vec![sim(1)],
+        refresh_fails: true,
+        trail_root: Some(root.clone()),
+        ..Default::default()
+    };
+    drain::drain(&root, &mut w, 1, false, true).unwrap();
+    assert_eq!(w.refresh_calls, 1);
+    let q = w.observe().unwrap();
+    let a = q.get(1).unwrap();
+    assert_eq!(
+        a.disposition,
+        PullRequestDisposition::NeedsRepair,
+        "{:?}",
+        a.reasons
+    );
+    let failed: Vec<_> = a
+        .gates
+        .iter()
+        .filter(|g| !g.passed)
+        .map(|g| g.gate)
+        .collect();
+    assert_eq!(failed[..2], [G::Executor, G::Freshness], "{failed:?}");
+    assert!(
+        matches!(&a.reasons[0], R::ExecutorRefreshFailed { master } if master == "m1"),
+        "{:?}",
+        a.reasons
+    );
+    assert!(
+        a.next_action.contains("bringing master in failed"),
+        "{}",
+        a.next_action
+    );
+    assert!(
+        q.next_refresh.is_empty(),
+        "it is offered for the same refresh again"
+    );
+    // master moves: the key no longer matches, and it is a refresh candidate again
+    w.master = 2;
+    let q = w.observe().unwrap();
+    assert_eq!(disposition(&q, 1), PullRequestDisposition::NeedsRefresh);
 }
 
 #[test]
@@ -5661,6 +5848,62 @@ fn a_read_of_the_queue_writes_nothing() {
         cache.exists() && summary.exists(),
         "the recording path keeps nothing"
     );
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// The queue names the issue a head branch belongs to, and that issue's milestone, on the read
+/// path and on the recording path: `computed` is where the plan's records are joined to the
+/// pull requests, and every surface (`prs status`, HTTP, MCP) serves what it joined.
+#[test]
+fn the_queue_names_the_issue_and_milestone_a_branch_belongs_to() {
+    let dir = unique_temp("mj-integration-issue-link");
+    git(&dir, &["init", "-q", "-b", "master"]);
+    git(&dir, &["commit", "-q", "--allow-empty", "-m", "base"]);
+    let master = git(&dir, &["rev-parse", "HEAD"]);
+    let issues = dir.join(".ai/repo/project/issues");
+    std::fs::create_dir_all(&issues).unwrap();
+    std::fs::write(issues.join("I0810.yaml"), "id: I0810\nmilestone: M003\n").unwrap();
+    std::fs::write(issues.join("I0901.yaml"), "id: I0901\n").unwrap();
+    let on = |n: u64, branch: &str| {
+        let mut p = observed_pr(n, &master);
+        p.head_ref = branch.into();
+        p
+    };
+    observed(
+        &dir,
+        &master,
+        vec![
+            on(1, "feature/I0810-manifest"),
+            on(2, "fix/I0901"),
+            on(3, "fix/plain"),
+        ],
+    );
+    let named = |q: &IntegrationQueue, n: u64| {
+        let a = q.get(n).unwrap();
+        (a.issue.clone(), a.milestone.clone())
+    };
+    let read = crate::integration::queue_of(&dir).unwrap();
+    let recorded = crate::integration::queue_and_record(&dir).unwrap();
+    for q in [&read, &recorded] {
+        assert_eq!(named(q, 1), (Some("I0810".into()), Some("M003".into())));
+        // an issue whose record names no milestone still links
+        assert_eq!(named(q, 2), (Some("I0901".into()), None));
+        assert_eq!(named(q, 3), (None, None));
+    }
+    // and on the wire: named where there is one, absent where there is none
+    let wire = serde_json::to_value(&read).unwrap();
+    let of = |n: u64| {
+        wire["assessments"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|a| a["number"] == n)
+            .unwrap()
+            .clone()
+    };
+    assert_eq!(of(1)["issue"], "I0810");
+    assert_eq!(of(1)["milestone"], "M003");
+    assert!(of(3).get("issue").is_none(), "{}", of(3));
     let _ = std::fs::remove_dir_all(&dir);
 }
 
@@ -6050,6 +6293,10 @@ fn only_a_closed_or_merged_pull_request_with_a_head_is_resolved() {
 
 // ---------------------------------------------------------------- what every path says
 
+/// Whether a pull request may merge is decided by the classifier's `merge_method` gate and
+/// nowhere after. A queue that offers a ready one under a policy naming no method cannot come
+/// from the classifier; the step calls it what it is, an error of the queue, and merges
+/// nothing, rather than taking a second decision of its own.
 #[test]
 fn a_ready_pull_request_on_an_observation_that_allows_no_merge_commit_is_not_merged() {
     let root = scratch();
@@ -6058,9 +6305,23 @@ fn a_ready_pull_request_on_an_observation_that_allows_no_merge_commit_is_not_mer
         no_method_on: Some(2),
         ..Default::default()
     };
-    let out = drain::step(&root, &mut w, false, false).unwrap();
-    assert!(stale_with(&out, 1, "allows no merge commit"), "{out:?}");
+    let err = drain::step(&root, &mut w, false, false).unwrap_err();
+    assert!(
+        err.contains("#1 is ready under a policy that names no merge method"),
+        "{err}"
+    );
     assert_eq!(w.merge_calls, 0);
+    assert!(
+        !trail_actions(&root).iter().any(|a| a == "merge_attempted"),
+        "a merge was announced"
+    );
+    // and the classifier itself never offers one: with no merge commit allowed, nothing is ready
+    let obs = ForgeObservation {
+        merge_methods: vec![],
+        ..w.observation()
+    };
+    let q2 = build_queue(&obs, &master_sha(w.master), |p| w.relation(p.number));
+    assert_eq!(q2.next_merge, None, "{q2:?}");
 }
 
 #[test]
@@ -6203,6 +6464,61 @@ fn a_stale_decision_is_not_the_end_of_a_drain_and_an_outage_on_a_merge_is() {
         w.merge_calls, 1,
         "the forge was asked again during an outage"
     );
+}
+
+/// A queue that keeps moving under the executor does not hold a drain for ever: the steps
+/// are bounded at three per merge asked for (and never fewer than three), and the drain says
+/// that the bound is what ended it.
+#[test]
+fn a_queue_that_flaps_ends_the_drain_at_its_step_bound() {
+    // the author pushes between the executor's two looks, every time: each step's decision
+    // goes stale, nothing merges, and the third step is the last
+    let flapping = |max: usize| {
+        let root = scratch();
+        let mut w = World {
+            open: vec![sim(1)],
+            meanwhile: (1..=3 * max.max(1))
+                .map(|step| (2 * step, Meanwhile::HeadMoves(1)))
+                .collect(),
+            ..Default::default()
+        };
+        let r = drain::drain(&root, &mut w, max, false, false).unwrap();
+        (r, w)
+    };
+    let (r, w) = flapping(1);
+    assert_eq!(r.steps.len(), 3, "{r:?}");
+    assert!(
+        r.steps
+            .iter()
+            .all(|s| matches!(s, DrainStepOutcome::StaleDecision { pr: 1, .. })),
+        "{r:?}"
+    );
+    assert!(r.merged.is_empty() && w.merge_calls == 0, "{r:?}");
+    assert_eq!(r.stopped, "3 steps without reaching 1 merge(s)");
+    // the bound follows what was asked for: three steps per merge
+    let (r, w) = flapping(2);
+    assert_eq!(r.steps.len(), 6, "{r:?}");
+    assert_eq!(r.stopped, "6 steps without reaching 2 merge(s)");
+    assert_eq!(w.merge_calls, 0);
+
+    // a merge the forge refuses for the candidate's own reasons is tried again, where the
+    // queue does not hold the candidate back (no trail here), and the bound ends that too
+    let root = scratch();
+    let mut w = World {
+        open: vec![sim(1)],
+        merge_refuses: [1].into_iter().collect(),
+        ..Default::default()
+    };
+    let r = drain::drain(&root, &mut w, 1, false, false).unwrap();
+    assert_eq!(r.steps.len(), 3, "{r:?}");
+    assert!(
+        r.steps
+            .iter()
+            .all(|s| matches!(s, DrainStepOutcome::MergeRefused { pr: 1, .. })),
+        "{r:?}"
+    );
+    assert_eq!(w.merge_calls, 3);
+    assert_eq!(r.stopped, "3 steps without reaching 1 merge(s)");
 }
 
 #[test]

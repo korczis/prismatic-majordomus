@@ -41,6 +41,7 @@
 //! run, so the forge calls nearly every pull request conflicting. The relation to master is
 //! decided here, by git, with the drivers ([`relation`]).
 
+pub mod bounded;
 pub mod classify;
 pub mod drain;
 pub mod exclusive;
@@ -435,11 +436,25 @@ pub fn build_queue(
 /// by kind ([`ChangeShape`]): its authored paths decide overlaps and risk, and two that raise
 /// the version or change a release overlap as such. A pull request it does not answer is
 /// assessed on its relation's paths alone.
+#[cfg(test)]
 pub fn build_queue_shaped(
+    obs: &ForgeObservation,
+    master_sha: &str,
+    relation: impl FnMut(&PullRequestObservation) -> RelationToMaster,
+    shape: impl FnMut(&PullRequestObservation) -> Option<ChangeShape>,
+) -> IntegrationQueue {
+    build_queue_held(obs, master_sha, relation, shape, Default::default())
+}
+
+/// [`build_queue_shaped`] with what the executor was refused on against this master
+/// ([`executor_refusals`]), which the `executor` gate answers from: the queue a checkout with
+/// a trail builds.
+pub fn build_queue_held(
     obs: &ForgeObservation,
     master_sha: &str,
     mut relation: impl FnMut(&PullRequestObservation) -> RelationToMaster,
     shape: impl FnMut(&PullRequestObservation) -> Option<ChangeShape>,
+    refusals: classify::ExecutorRefusals,
 ) -> IntegrationQueue {
     let policy = policy_of(obs);
     let mut diagnostics = Vec::new();
@@ -526,6 +541,7 @@ pub fn build_queue_shaped(
             })
             .collect(),
         cycles: BTreeMap::new(),
+        refusals,
     };
     queue.cycles = dependency_cycles(obs, &queue.heads);
     if obs.pull_requests.len() >= forge::OPEN_LIMIT {
@@ -714,54 +730,30 @@ fn derive_heads(queue: &mut IntegrationQueue) {
         .collect();
 }
 
-/// The executor's own refusals, folded from the trail: a candidate the forge refused to
-/// merge, or whose refresh failed, at the head and master it still has, is held back as
-/// `needs_repair` instead of being chosen again, so one refused change does not block the
-/// queue. A new head or a new master clears it, because the key no longer matches; a
-/// transient failure never holds anything back, because it says nothing about the change.
-/// No plan survives: the trail is the only memory, and every queue is folded from it again.
-pub fn executor_feedback(queue: &mut IntegrationQueue, trail: &[drain::IntegrationEvent]) {
+/// The executor's own refusals against `master_sha`, folded from the trail: each pull request
+/// and head whose merge the forge refused, and each whose refresh failed. The `executor` gate
+/// reads them ([`classify::ExecutorRefusals`]), so a refused candidate is held back as
+/// `needs_repair` instead of being chosen again and one refused change does not block the
+/// queue. A new head or a new master clears it, because the key no longer matches; a transient
+/// failure never holds anything back, because it says nothing about the change; and an event
+/// that names too little to be a key holds nothing. No plan survives: the trail is the only
+/// memory, and every queue is folded from it again.
+pub fn executor_refusals(
+    trail: &[drain::IntegrationEvent],
+    master_sha: &str,
+) -> classify::ExecutorRefusals {
     use drain::{FailureClass, IntegrationAction};
-    let refused = |action: IntegrationAction| -> BTreeSet<(u64, String, String)> {
+    let refused = |action: IntegrationAction| -> BTreeSet<(u64, String)> {
         trail
             .iter()
             .filter(|e| e.action == action && e.class != Some(FailureClass::Transient))
-            .filter_map(|e| Some((e.pr?, e.head_sha.clone()?, e.master_before.clone()?)))
+            .filter(|e| e.master_before.as_deref() == Some(master_sha))
+            .filter_map(|e| Some((e.pr?, e.head_sha.clone()?)))
             .collect()
     };
-    let merges = refused(IntegrationAction::MergeFailed);
-    let refreshes = refused(IntegrationAction::RefreshFailed);
-    let master = queue.master_sha.clone();
-    let mut changed = false;
-    for a in &mut queue.assessments {
-        let key = (
-            a.number,
-            a.evaluated_against.head_sha.clone(),
-            master.clone(),
-        );
-        let held = match a.disposition {
-            PullRequestDisposition::Ready if merges.contains(&key) => {
-                Some(ReasonCode::ExecutorMergeRefused {
-                    head: key.1.clone(),
-                })
-            }
-            PullRequestDisposition::NeedsRefresh if refreshes.contains(&key) => {
-                Some(ReasonCode::ExecutorRefreshFailed {
-                    master: master.clone(),
-                })
-            }
-            _ => None,
-        };
-        if let Some(reason) = held {
-            a.disposition = PullRequestDisposition::NeedsRepair;
-            a.lane = a.disposition.lane();
-            a.reasons.insert(0, reason);
-            changed = true;
-        }
-    }
-    if changed {
-        queue.assessments = rank(std::mem::take(&mut queue.assessments));
-        derive_heads(queue);
+    classify::ExecutorRefusals {
+        merges: refused(IntegrationAction::MergeFailed),
+        refreshes: refused(IntegrationAction::RefreshFailed),
     }
 }
 
@@ -951,7 +943,9 @@ fn computed(
     cache.shapes.retain(|k, _| current(k));
     // the relation and the shape share the cache, and each is asked from its own closure
     let cell = std::cell::RefCell::new(cache);
-    let mut queue = build_queue_shaped(
+    // read before the queue is built: what the executor was refused on is a gate's answer
+    let trail = drain::events(root);
+    let mut queue = build_queue_held(
         &obs,
         &master,
         |p| {
@@ -969,6 +963,7 @@ fn computed(
             relation_cached(root, &mut cell.borrow_mut(), &master, &p.head_sha)
         },
         |p| shape_cached(root, &mut cell.borrow_mut(), &master, &p.head_sha),
+        executor_refusals(&trail, &master),
     );
     let cache = cell.into_inner();
     infer_dependencies(&mut queue, |head| relation::containing(root, head));
@@ -986,8 +981,6 @@ fn computed(
             obs.observed_at
         ));
     }
-    let trail = drain::events(root);
-    executor_feedback(&mut queue, &trail);
     wait::annotate(&mut queue, &trail);
     Ok((queue, cache))
 }
@@ -1113,8 +1106,6 @@ mod queue_branches {
 
     #[test]
     fn a_failure_that_names_too_little_holds_nothing_back() {
-        let mut q = build_queue(&observation("", BTreeMap::new()), "m", unknown);
-        let before = q.clone();
         let event =
             |pr: Option<u64>, head: Option<&str>, master: Option<&str>| drain::IntegrationEvent {
                 pr,
@@ -1127,8 +1118,14 @@ mod queue_branches {
             event(Some(1), None, Some("m")),
             event(Some(1), Some("h1"), None),
         ];
-        executor_feedback(&mut q, &trail);
-        assert_eq!(q, before);
+        assert_eq!(executor_refusals(&trail, "m"), Default::default());
+        // one that names all three is a key against its own master, and no other
+        let whole = vec![event(Some(1), Some("h1"), Some("m"))];
+        assert_eq!(
+            executor_refusals(&whole, "m").merges,
+            BTreeSet::from([(1, "h1".to_string())])
+        );
+        assert_eq!(executor_refusals(&whole, "m2"), Default::default());
     }
 
     #[test]

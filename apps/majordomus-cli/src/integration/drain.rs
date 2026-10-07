@@ -37,6 +37,7 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use super::bounded::Bounded;
 use super::{
     at, events_path, local_master, refresh, EvaluatedAgainst, IntegrationEvidence,
     IntegrationQueue, PullRequestAssessment, PullRequestDisposition,
@@ -1010,22 +1011,16 @@ pub fn step(
             what,
         });
     }
-    // no merge commit allowed holds every pull request, so a ready one has one; never another
-    let Some(method) = second.policy.merge_method.clone() else {
-        let what = "the repository allows no merge commit".to_string();
-        record(
-            root,
-            event(
-                IntegrationAction::StaleDecision,
-                Some(&candidate),
-                what.clone(),
-            ),
-        )?;
-        return Ok(DrainStepOutcome::StaleDecision {
-            pr: candidate.number,
-            what,
-        });
-    };
+    // A ready pull request is one the classifier found a merge method for (its merge_method
+    // gate): whether it may merge is decided there and nowhere after. A queue that offers a
+    // ready one under a policy naming no method contradicts itself, which is an error of the
+    // queue and never a second decision taken here.
+    let method = second.policy.merge_method.clone().ok_or_else(|| {
+        format!(
+            "#{} is ready under a policy that names no merge method: the queue contradicts itself, and nothing is merged",
+            candidate.number
+        )
+    })?;
     // on the trail before it reaches the forge: a merge the trail cannot name is not asked for
     let attempted = event(
         IntegrationAction::MergeAttempted,
@@ -1799,11 +1794,20 @@ pub struct ForgeIntegrator<'a> {
 }
 
 fn gh(root: &Path, args: &[&str]) -> Result<String, String> {
-    let out = Command::new("gh")
-        .current_dir(root)
-        .args(args)
-        .output()
-        .map_err(|e| format!("gh could not run: {e}"))?;
+    // an act on the forge is given longer than a read of it, and neither may hang: a call
+    // that never returns would hold the lease and say nothing (super::bounded)
+    let acts = matches!(args.get(1), Some(&"merge") | Some(&"close"));
+    let limit = [super::bounded::FORGE_READ, super::bounded::FORGE_WRITE][usize::from(acts)];
+    let what = format!(
+        "gh {}",
+        args.iter().take(3).copied().collect::<Vec<_>>().join(" ")
+    );
+    let out = super::bounded::output_within(
+        Command::new("gh").current_dir(root).args(args),
+        &what,
+        limit,
+    )
+    .map_err(|e| format!("gh could not run: {e}"))?;
     if out.status.success() {
         Ok(String::from_utf8_lossy(&out.stdout).into_owned())
     } else {
@@ -2020,7 +2024,7 @@ impl Integrator for ForgeIntegrator<'_> {
                     "origin",
                     &format!("+refs/heads/{0}:refs/remotes/origin/{0}", obs.base),
                 ])
-                .output()
+                .output_within_transfer("git fetch")
                 .map_err(|e| e.to_string())?;
             if fetch.status.success() {
                 Ok(())
@@ -2220,7 +2224,7 @@ impl Integrator for ForgeIntegrator<'_> {
                     &format!("{new_head}:refs/heads/{}", a.head_ref),
                 ])
                 .env_remove("MAJORDOMUS_SHARE")
-                .output()
+                .output_within_transfer("git push")
                 .map_err(|e| e.to_string())?;
             if !push.status.success() {
                 return Err(format!(
@@ -2758,10 +2762,7 @@ mod obsolete_and_plan_tests {
             },
             "the deciding reason first, in the forge's spelling"
         );
-        assert_eq!(
-            one.next_action.as_deref(),
-            Some("a person closes it, or removes the label")
-        );
+        assert_eq!(one.next_action, "a person closes it, or removes the label");
         assert_eq!(one.lane, crate::integration::IntegrationLane::Cleanup);
         assert_eq!(PullRequestDisposition::Obsolete.as_str(), "obsolete");
         assert!(PullRequestDisposition::ALL.contains(&PullRequestDisposition::Obsolete));

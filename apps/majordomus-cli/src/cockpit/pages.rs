@@ -5499,7 +5499,7 @@ pub fn integration(ctx: &Context) -> Page {
                     )),
                     text_cell(word(&a.risk)),
                     text_cell(crate::integration::reason_list(&a.reasons, ", ")),
-                    text_cell(a.next_action.clone().unwrap_or_default()),
+                    text_cell(a.next_action.clone()),
                     text_cell(waited.unwrap_or_default()),
                     text_cell(titled(a)),
                 ])

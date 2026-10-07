@@ -972,8 +972,9 @@ fn explain(
         })
         .collect();
     lines.push(format!("  gates:        {}", gates.join(", ")));
-    if let Some(n) = &a.next_action {
-        lines.push(format!("  next:         {n}"));
+    // every disposition names one; an assessment recorded before that was so may hold none
+    if !a.next_action.is_empty() {
+        lines.push(format!("  next:         {}", a.next_action));
     }
     if let Some(line) = issue_line(a) {
         lines.push(format!("  issue:        {line}"));
@@ -1263,7 +1264,6 @@ mod tests {
         };
         let mut a = q.assessments[0].clone();
         a.superseded_by = Some(9);
-        a.next_action = None;
         a.dependencies = [
             (5, DependencyState::Open),
             (4, DependencyState::Merged),
@@ -1292,7 +1292,15 @@ mod tests {
         ];
         let t = text(|o| explain(&q, &a, 1, OutputFormat::Text, o));
         assert!(t.contains("superseded:   by #9, which landed"), "{t}");
-        assert!(!t.contains("  next:"), "{t}");
+        // what is done next is said, as the classifier gave it
+        assert!(
+            t.contains(&format!("  next:         {}", a.next_action)) && !a.next_action.is_empty(),
+            "{t}"
+        );
+        // an assessment recorded before every disposition named one says no next action
+        a.next_action = String::new();
+        let old = text(|o| explain(&q, &a, 1, OutputFormat::Text, o));
+        assert!(!old.contains("  next:"), "{old}");
         assert!(t.contains("depends on:   #5 (confirmed, open)"), "{t}");
         assert!(t.contains("depends on:   #4 (confirmed, landed)"), "{t}");
         assert!(

@@ -538,6 +538,18 @@ pub fn overlaps(
         .collect()
 }
 
+/// What the executor was refused on against one master, folded from its trail
+/// ([`super::executor_refusals`]): each pull request and head whose merge the forge refused,
+/// and each whose refresh failed, for a reason that was not an outage. A new head or a new
+/// master is another key, so neither is held: the trail is the only memory.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct ExecutorRefusals {
+    /// (number, head) the forge refused to merge.
+    pub merges: BTreeSet<(u64, String)>,
+    /// (number, head) whose refresh failed.
+    pub refreshes: BTreeSet<(u64, String)>,
+}
+
 /// Everything [`classify`] reads about the rest of the queue.
 #[derive(Debug, Clone, Default)]
 pub struct QueueContext {
@@ -560,6 +572,8 @@ pub struct QueueContext {
     /// The open pull requests caught in a cycle of confirmed dependencies, each with the
     /// others of its cycle: none of them can ever land first.
     pub cycles: BTreeMap<u64, Vec<u64>>,
+    /// What the executor was refused on against this master, which the `executor` gate reads.
+    pub refusals: ExecutorRefusals,
 }
 
 /// The pull requests `pr` is confirmed to depend on: those its body declares
@@ -974,7 +988,8 @@ pub fn classify(
     }
 
     // every gate, in policy order; each answers whatever the others said
-    let answers: [(IntegrationGate, Option<Failure>); 12] = [
+    let at_head = (pr.number, pr.head_sha.clone());
+    let answers: [(IntegrationGate, Option<Failure>); 13] = [
         (
             IntegrationGate::Base,
             match stacked_on {
@@ -992,7 +1007,11 @@ pub fn classify(
                     vec![ReasonCode::BaseIs {
                         base: pr.base_ref.clone(),
                     }],
-                    None,
+                    Some(format!(
+                        "retarget it onto {} if it is meant for it; the executor integrates \
+                         only {} and leaves it alone",
+                        policy.base, policy.base
+                    )),
                 ),
             },
         ),
@@ -1205,6 +1224,39 @@ pub fn classify(
             },
         ),
         (
+            // The executor's own refusals hold a candidate back so that it is not chosen
+            // again and one refused change does not block the queue. They are answered here,
+            // as a gate, and nowhere after: a held pull request says which gate held it.
+            IntegrationGate::Executor,
+            if queue.refusals.merges.contains(&at_head) {
+                fails(
+                    PullRequestDisposition::NeedsRepair,
+                    vec![ReasonCode::ExecutorMergeRefused {
+                        head: pr.head_sha.clone(),
+                    }],
+                    Some(
+                        "the forge refused the executor's merge of this head; the author pushes \
+                         a fix, or it is tried again when master moves"
+                            .into(),
+                    ),
+                )
+            } else if queue.refusals.refreshes.contains(&at_head) {
+                fails(
+                    PullRequestDisposition::NeedsRepair,
+                    vec![ReasonCode::ExecutorRefreshFailed {
+                        master: master_sha.to_string(),
+                    }],
+                    Some(format!(
+                        "bringing {} in failed; the author merges {} into the branch, or it is \
+                         tried again when master moves",
+                        policy.base, policy.base
+                    )),
+                )
+            } else {
+                None
+            },
+        ),
+        (
             IntegrationGate::Freshness,
             match relation {
                 RelationToMaster::UpToDate { .. } => None,
@@ -1313,7 +1365,8 @@ pub fn classify(
         disposition,
         reasons,
         gates,
-        next_action: next,
+        // every gate that decides names what is done next, and so does a ready one
+        next_action: next.unwrap_or_default(),
         required_checks: checks,
         review,
         relation: relation.clone(),
@@ -1732,10 +1785,7 @@ mod dependency_resolution {
         let unread = decided(&with(None));
         assert_eq!(unread.disposition, PullRequestDisposition::Unknown);
         assert_eq!(unread.reasons[0].to_string(), "dependency_unread:#7");
-        assert!(unread
-            .next_action
-            .as_deref()
-            .is_some_and(|n| n.contains("not a pull request")));
+        assert!(unread.next_action.contains("not a pull request"));
 
         let mut open = with(None);
         open.open.insert(7);
@@ -1768,9 +1818,6 @@ mod dependency_resolution {
         let a = decided(&ctx);
         assert_eq!(a.disposition, PullRequestDisposition::Blocked);
         assert_eq!(a.reasons[0].to_string(), "dependency_cycle:#7");
-        assert!(a
-            .next_action
-            .as_deref()
-            .is_some_and(|n| n.contains("break the cycle")));
+        assert!(a.next_action.contains("break the cycle"));
     }
 }

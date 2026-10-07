@@ -15,6 +15,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use super::bounded::Bounded;
 use super::model::{
     CheckKind, CheckObservation, CheckRunState, PullRequestObservation, RequiredCheck,
     ReviewObservation, ReviewPolicy,
@@ -285,11 +286,17 @@ pub struct GhForge<'a> {
 }
 
 fn gh(root: &Path, args: &[&str]) -> Result<(bool, String, String), ForgeError> {
-    let out = Command::new("gh")
-        .current_dir(root)
-        .args(args)
-        .output()
-        .map_err(|e| ForgeError(format!("the GitHub CLI (gh) could not run: {e}")))?;
+    // a read that never returns would hold every reader behind it (super::bounded)
+    let what = format!(
+        "gh {}",
+        args.iter().take(3).copied().collect::<Vec<_>>().join(" ")
+    );
+    let out = super::bounded::output_within(
+        Command::new("gh").current_dir(root).args(args),
+        &what,
+        super::bounded::FORGE_READ,
+    )
+    .map_err(|e| ForgeError(format!("the GitHub CLI (gh) could not run: {e}")))?;
     Ok((
         out.status.success(),
         String::from_utf8_lossy(&out.stdout).into_owned(),
@@ -815,7 +822,7 @@ fn origin_heads(root: &Path) -> Option<BTreeMap<String, String>> {
             .arg("-C")
             .arg(root)
             .args(["ls-remote", "--heads", "origin"])
-            .output()
+            .output_within_read("git ls-remote")
             .map_err(ls_remote_could_not_run)
             .and_then(heads_of_output)
     })
@@ -926,7 +933,7 @@ pub fn fetch(root: &Path, obs: &ForgeObservation) -> Result<(), ForgeError> {
     super::retry::forge(|| {
         let out = Command::new("git")
             .args(&args)
-            .output()
+            .output_within_transfer("git fetch")
             .map_err(|e| format!("git fetch could not run: {e}"))?;
         if out.status.success() {
             Ok(())
