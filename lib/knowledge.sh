@@ -308,8 +308,11 @@ mj_knowledge_rows() {
       # is read the way a rule or an ADR is: the node is knowledge:<id>, and every
       # derived_from and relation it states becomes an edge (ADR 0091). The section's
       # README is a context document, reclassified above, and is still read as prose.
-      session|handover|checkpoint|prompt|rule|adr|skill|use-case|application|knowledge) nf=$((nf + 1)); printf '%s\t%s\n' "$nf" "$path" >> "$tmp/front.map"; printf '%s\n' "$abs" >> "$tmp/front.list" ;;
-      policy|scope|profile|milestone|issue|claim|doctrine) ny=$((ny + 1)); printf '%s\t%s\n' "$ny" "$path" >> "$tmp/yaml.map"; printf '%s\n' "$abs" >> "$tmp/yaml.list" ;;
+      # A feature, a moment, an area and an audience are Markdown objects that declare their
+      # identity in front matter, exactly as an ADR does; a feature also names what it is
+      # made of there, and those references are its edges. A domain is the same shape.
+      session|handover|checkpoint|prompt|rule|adr|skill|use-case|application|knowledge|feature|moment|area|audience|domain) nf=$((nf + 1)); printf '%s\t%s\n' "$nf" "$path" >> "$tmp/front.map"; printf '%s\n' "$abs" >> "$tmp/front.list" ;;
+      policy|scope|profile|milestone|issue|claim|doctrine|deployment|intent|mesh-declaration|workspace|release-record) ny=$((ny + 1)); printf '%s\t%s\n' "$ny" "$path" >> "$tmp/yaml.map"; printf '%s\n' "$abs" >> "$tmp/yaml.list" ;;
       *) ;;   # a kind this reader has no rule for gets no content rows; the extractor says so once
     esac
   done < "$src"

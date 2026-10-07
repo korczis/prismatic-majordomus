@@ -1416,11 +1416,9 @@ pub fn graph_document(ctx: &Context, version: &str) -> Result<String> {
                 .collect(),
         });
     }
-    let graph = crate::graph::derive(crate::graph::COMPOSED, &ctx.registry, &ctx.index).ok_or(
-        Error::Http {
-            reason: format!("no graph with the id `{}`", crate::graph::COMPOSED),
-        },
-    )?;
+    // whole: the site's entity pages and its catalogue counts are read off this document,
+    // and a prefix of the repository would drop what sorts past MAX_NODES without a word
+    let graph = crate::graph::composed_complete(&ctx.registry, &ctx.index);
     let doc = serde_json::json!({
         "schema": GRAPH_SCHEMA,
         "generated": format!("{HEADER}; source: the capability registry and every object of the index; regenerate with `majordomus generate`"),

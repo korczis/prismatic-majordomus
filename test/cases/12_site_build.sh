@@ -22,7 +22,12 @@ done
 # the matrix shows exactly the marks the model derived, on the homepage and on its own page
 # the matrix says what is proven, not only where a feature is reachable: one column with its
 # denominator, derived from the claims each feature names and the test each claim settles on
-expect_grep '>proven<' "$P/features/matrix/index.html"
+# Two defined columns (slice E): what is declared with a test, and what a recorded run supports;
+# the ambiguous "proven" header is gone, and each column is defined in the page's legend.
+expect_grep '>declared [+] test<' "$P/features/matrix/index.html"
+expect_grep '>supported by a run<' "$P/features/matrix/index.html"
+expect_grep 'id="declared-with-test"' "$P/features/matrix/index.html"
+expect_grep 'id="supported-by-a-run"' "$P/features/matrix/index.html"
 pr="$(jq -r '[.matrix.rows[] | select(.proven != null)] | length' "$PD")"
 [ "$pr" -gt 0 ] || { echo "    no matrix row carries a proven count; the column would render nothing"; exit 1; }
 # and a feature page names the case that settles each claim it guarantees, rather than only

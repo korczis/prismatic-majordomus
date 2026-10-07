@@ -6,23 +6,23 @@
     "version": "0.14.0"
   },
   "registry": {
-    "fingerprint": "2ba6b8d7157e3835e189df900033d3e9f6f3e9a0fdc66d7b0a15c592dc834c48",
+    "fingerprint": "15f5b36051962d09584485db99833e2eaa468b260c430afa207232c5f9e6a991",
     "summary": {
-      "total": 1912,
+      "total": 1917,
       "builtin": 172,
-      "declarative": 1740,
+      "declarative": 1745,
       "by_kind": {
         "command": 22,
         "query": 150,
-        "resource": 1740
+        "resource": 1745
       },
       "by_stability": {
         "behaviorally_verified": 128,
         "experimental": 36,
-        "implemented": 1748
+        "implemented": 1753
       },
       "mcp_tools": 166,
-      "mcp_resources": 1793,
+      "mcp_resources": 1798,
       "http_routes": 170,
       "cli_commands": 90,
       "modules": 84,
@@ -68260,7 +68260,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 159,
+        "capabilities": 160,
         "capability_ids": []
       },
       {
@@ -68403,7 +68403,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 360,
+        "capabilities": 364,
         "capability_ids": []
       },
       {
@@ -68493,7 +68493,7 @@
     ]
   },
   "index": {
-    "fingerprint": "f41fe9eddf9c82200ae4a1f79bce40ad5479cb4dd6c38be36e629c8636e3b45c",
+    "fingerprint": "5ed94935d24127d45c549d572cafac7949351d26e6dd41186007de99d075441e",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -68541,12 +68541,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 13,
-      "rule": 159,
+      "rule": 160,
       "scope": 1,
       "session": 22,
       "skill": 6,
       "taxonomy": 10,
-      "test": 360,
+      "test": 364,
       "use-case": 48,
       "workspace": 1
     },
@@ -70199,7 +70199,7 @@
         "kind": "claim",
         "identity": "a-finding-names-how-to-see-it-again",
         "title": "Every finding a command reports names the command that reproduces it",
-        "description": "`mj_finding` takes the reproduce command as its fifth argument and prints the finding without it when it is absent, so a caller that forgot one produced a finding that read exactly like a finding that could not have one. The gate counts the arguments of every call to the reporting helpers, treating a forwarding call as the caller''s business and reporting a call it cannot parse as unreadable rather than passing it silently. It landed with an empty baseline: the nine violations it found were fixed rather than recorded.",
+        "description": "`mj_finding` takes the reproduce command as its fifth argument and prints the finding without it when it is absent, so a caller that forgot one produced a finding that read exactly like a finding that could not have one. The gate counts the arguments of every call to the reporting helpers, treating a forwarding call as the caller's business and reporting a call it cannot parse as unreadable rather than passing it silently. It landed with an empty baseline: the nine violations it found were fixed rather than recorded.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
         "bytes": 169361
@@ -70834,7 +70834,7 @@
         "kind": "claim",
         "identity": "evidence-currency-is-not-collapsed",
         "title": "A run recorded against this commit and a run whose inputs merely have not changed since are reported as different states, never as one",
-        "description": "`proven` means the diff between the execution''s own commit and the working tree is empty, excluding the ledger''s own row — the tree in front of you is the tree the run measured. `inputs_unchanged` is a passing run where nothing the claim names differs from the working tree — the absence of a known invalidation, not proof at HEAD, because a change the claim does not name could have broken it. Collapsing the two is how a badge stops meaning anything, so the states are distinct in the model, in every projection and in the gate.",
+        "description": "`proven` means the diff between the execution's own commit and the working tree is empty, excluding the ledger's own row — the tree in front of you is the tree the run measured. `inputs_unchanged` is a passing run where nothing the claim names differs from the working tree — the absence of a known invalidation, not proof at HEAD, because a change the claim does not name could have broken it. Collapsing the two is how a badge stops meaning anything, so the states are distinct in the model, in every projection and in the gate.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
         "bytes": 169361
@@ -70904,7 +70904,7 @@
         "kind": "claim",
         "identity": "evidence-subject-commands-agree-with-the-command-pages",
         "title": "The behavioural and negative tests the subject index names for a command are exactly the ones its command page lists, both read from the first coverage and negative header of each case",
-        "description": "The case headers had several readers before the index: the site generator''s command pages, the command-coverage doctrine, the command-furnished gate and the use-case impact trace, and the last two match a command anywhere in any covers line between word boundaries rather than as a word of the first. The index reads the first line word for word, as the page does. The case holds the two equal, holds every case to one header of each kind, and holds each covers line to naming the same public commands under both readings, so the readers cannot yet disagree; the gate slice moves them onto the index. Two more shell derivations reach tests through declarations rather than headers: the capability pages give every capability the claims implemented in its module''s file, and the doctrine pages name the first test of each rule. The same case holds each of them equal to the index.",
+        "description": "The case headers had several readers before the index: the site generator's command pages, the command-coverage doctrine, the command-furnished gate and the use-case impact trace, and the last two match a command anywhere in any covers line between word boundaries rather than as a word of the first. The index reads the first line word for word, as the page does. The case holds the two equal, holds every case to one header of each kind, and holds each covers line to naming the same public commands under both readings, so the readers cannot yet disagree; the gate slice moves them onto the index. Two more shell derivations reach tests through declarations rather than headers: the capability pages give every capability the claims implemented in its module's file, and the doctrine pages name the first test of each rule. The same case holds each of them equal to the index.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
         "bytes": 169361
@@ -71764,7 +71764,7 @@
         "kind": "claim",
         "identity": "published-translation-is-declared",
         "title": "A page of the published site written in a reader's language is declared with that language and a reason, and is refused unless the page declares the same language itself",
-        "description": "project.english-only v2 (ADR 0077) keeps the repository''s own artifacts English with no exceptions and names one population apart: content published for a reader in that reader''s language. The permission costs three declarations that must agree — the path is under site/content-src/ or its projection, the allow list carries the language and a required reason, and the page itself declares the same language. The third is what stops an allow list from being a file an entry can be appended to in order to silence a finding.",
+        "description": "project.english-only v2 (ADR 0077) keeps the repository's own artifacts English with no exceptions and names one population apart: content published for a reader in that reader's language. The permission costs three declarations that must agree — the path is under site/content-src/ or its projection, the allow list carries the language and a required reason, and the page itself declares the same language. The third is what stops an allow list from being a file an entry can be appended to in order to silence a finding.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
         "bytes": 169361
@@ -71932,7 +71932,7 @@
         "kind": "claim",
         "identity": "rule-state-is-derived-from-what-ran",
         "title": "A rule's proof state is derived from the tree and the ledger together, and a mechanism that refuses violations is never reported as a run that passed",
-        "description": "`majordomus doctrine` asks whether the repository satisfies a rule now; the proof graph asks whether the rule is in a state where it could be satisfied at all. Ten states, and the ones that must not collapse are `proven` (a passing run and nothing changed since), `gated` (an executable check a CI gate runs, with no verdict recorded here) and `reviewed` (a declared exemption). A rule''s state is the weakest of its parts, so one dangling case makes the rule dangling however many others pass.",
+        "description": "`majordomus doctrine` asks whether the repository satisfies a rule now; the proof graph asks whether the rule is in a state where it could be satisfied at all. Ten states, and the ones that must not collapse are `proven` (a passing run and nothing changed since), `gated` (an executable check a CI gate runs, with no verdict recorded here) and `reviewed` (a declared exemption). A rule's state is the weakest of its parts, so one dangling case makes the rule dangling however many others pass.",
         "path": "docs/CLAIMS.yaml",
         "source_class": "claims",
         "bytes": 169361
@@ -73323,7 +73323,7 @@
         "title": "Prismatic Majordomus",
         "path": "README.md",
         "source_class": "readme",
-        "bytes": 36604
+        "bytes": 37476
       },
       {
         "uri": "majordomus://document/SECURITY.md",
@@ -73404,7 +73404,7 @@
         "title": "CLI specification — `majordomus`",
         "path": "docs/CLI.md",
         "source_class": "document",
-        "bytes": 129047
+        "bytes": 129039
       },
       {
         "uri": "majordomus://document/docs/COCKPIT.md",
@@ -73764,7 +73764,7 @@
         "title": "Product — the features, and the landing page as a projection of them",
         "path": "docs/PRODUCT.md",
         "source_class": "document",
-        "bytes": 16944
+        "bytes": 18587
       },
       {
         "uri": "majordomus://document/docs/QUALITY.md",
@@ -73782,7 +73782,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 22515
+        "bytes": 22490
       },
       {
         "uri": "majordomus://document/docs/REASONING.md",
@@ -73800,7 +73800,7 @@
         "title": "The release — a changelog nobody writes, and one writer for the version",
         "path": "docs/RELEASE.md",
         "source_class": "document",
-        "bytes": 39635
+        "bytes": 40181
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -73827,7 +73827,7 @@
         "title": "File schemas — every file Majordomus reads or writes",
         "path": "docs/SCHEMAS.md",
         "source_class": "document",
-        "bytes": 76812
+        "bytes": 76776
       },
       {
         "uri": "majordomus://document/docs/SCOPE.md",
@@ -74475,7 +74475,7 @@
         "title": "Escalating reasoning effort after repeated blocked attempts is recorded rather than assumed",
         "path": "docs/claims/effort-escalation.md",
         "source_class": "claim_page",
-        "bytes": 1201
+        "bytes": 1205
       },
       {
         "uri": "majordomus://document/docs/claims/event-vocabulary.md",
@@ -75060,7 +75060,7 @@
         "title": "A profile declares which context a worker should load and no more",
         "path": "docs/claims/minimum-context.md",
         "source_class": "claim_page",
-        "bytes": 1414
+        "bytes": 1406
       },
       {
         "uri": "majordomus://document/docs/claims/models-no-secret-fields.md",
@@ -75294,7 +75294,7 @@
         "title": "Provider instruction files are generated from the one policy, deterministically",
         "path": "docs/claims/projection-generation.md",
         "source_class": "claim_page",
-        "bytes": 1957
+        "bytes": 1972
       },
       {
         "uri": "majordomus://document/docs/claims/prompt-asset.md",
@@ -75807,7 +75807,7 @@
         "title": "An outcome is a value from a closed vocabulary, not free text",
         "path": "docs/claims/typed-outcome.md",
         "source_class": "claim_page",
-        "bytes": 1710
+        "bytes": 1702
       },
       {
         "uri": "majordomus://document/docs/claims/use-case-coverage.md",
@@ -76234,7 +76234,7 @@
         "path": ".ai/repo/features/finish-contract.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 3361,
+        "bytes": 3406,
         "tags": [
           "verification",
           "contract"
@@ -76365,7 +76365,7 @@
         "path": ".ai/repo/features/provenance.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2510,
+        "bytes": 2552,
         "tags": [
           "audit",
           "ledger",
@@ -76560,7 +76560,7 @@
         "identity": "lib/common.sh",
         "path": "lib/common.sh",
         "source_class": "library",
-        "bytes": 81364
+        "bytes": 81513
       },
       {
         "uri": "majordomus://implementation/lib/context.sh",
@@ -76688,7 +76688,7 @@
         "identity": "lib/knowledge.awk",
         "path": "lib/knowledge.awk",
         "source_class": "engine",
-        "bytes": 27384
+        "bytes": 30021
       },
       {
         "uri": "majordomus://implementation/lib/knowledge.sh",
@@ -76696,7 +76696,7 @@
         "identity": "lib/knowledge.sh",
         "path": "lib/knowledge.sh",
         "source_class": "library",
-        "bytes": 87608
+        "bytes": 87974
       },
       {
         "uri": "majordomus://implementation/lib/mermaid.awk",
@@ -80140,7 +80140,7 @@
         "path": ".ai/repo/why/moments/done-because-the-model-said-so.md",
         "section": "why",
         "source_class": "moment",
-        "bytes": 5591,
+        "bytes": 5621,
         "tags": [
           "verification",
           "evidence",
@@ -82835,6 +82835,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.prose-states-no-version@1",
+        "kind": "rule",
+        "identity": "project.prose-states-no-version@1",
+        "title": "Prose describes the tool as it stands, without a version label",
+        "description": "Hand-written prose that describes what the tool does or does not do names no version label such as v0.1; the label stays where it was typed while the version moves on, so the sentence beside it goes stale without anything that derives the version being able to reach it. A document about a past version is declared, with its reason.",
+        "path": ".ai/repo/rules/project/prose-states-no-version.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4084,
+        "tags": [
+          "release",
+          "version",
+          "documentation",
+          "claims"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.provider-support-is-declared@1",
         "kind": "rule",
         "identity": "project.provider-support-is-declared@1",
@@ -83838,7 +83855,7 @@
         "identity": "test/cases/00_yaml_flatten.sh",
         "path": "test/cases/00_yaml_flatten.sh",
         "source_class": "case",
-        "bytes": 2162
+        "bytes": 2708
       },
       {
         "uri": "majordomus://test/test/cases/01_init.sh",
@@ -84038,7 +84055,7 @@
         "identity": "test/cases/10_site_data.sh",
         "path": "test/cases/10_site_data.sh",
         "source_class": "case",
-        "bytes": 6615
+        "bytes": 7119
       },
       {
         "uri": "majordomus://test/test/cases/110_lease_reader.sh",
@@ -84190,7 +84207,7 @@
         "identity": "test/cases/12_site_build.sh",
         "path": "test/cases/12_site_build.sh",
         "source_class": "case",
-        "bytes": 11479
+        "bytes": 11884
       },
       {
         "uri": "majordomus://test/test/cases/12b_site_data_transactional.sh",
@@ -85630,7 +85647,7 @@
         "identity": "test/cases/545_every_answer_says_when_it_was_observed.sh",
         "path": "test/cases/545_every_answer_says_when_it_was_observed.sh",
         "source_class": "case",
-        "bytes": 6133
+        "bytes": 6868
       },
       {
         "uri": "majordomus://test/test/cases/546_a_statistic_names_the_capability_it_asked.sh",
@@ -86249,12 +86266,28 @@
         "bytes": 5289
       },
       {
+        "uri": "majordomus://test/test/cases/805_a_status_speaks_the_vocabulary_of_its_kind.sh",
+        "kind": "test",
+        "identity": "test/cases/805_a_status_speaks_the_vocabulary_of_its_kind.sh",
+        "path": "test/cases/805_a_status_speaks_the_vocabulary_of_its_kind.sh",
+        "source_class": "case",
+        "bytes": 8063
+      },
+      {
         "uri": "majordomus://test/test/cases/80_bench_persistence.sh",
         "kind": "test",
         "identity": "test/cases/80_bench_persistence.sh",
         "path": "test/cases/80_bench_persistence.sh",
         "source_class": "case",
         "bytes": 3106
+      },
+      {
+        "uri": "majordomus://test/test/cases/810_a_feature_is_explored_under_its_domain.sh",
+        "kind": "test",
+        "identity": "test/cases/810_a_feature_is_explored_under_its_domain.sh",
+        "path": "test/cases/810_a_feature_is_explored_under_its_domain.sh",
+        "source_class": "case",
+        "bytes": 9470
       },
       {
         "uri": "majordomus://test/test/cases/81_bench_baseline.sh",
@@ -86441,6 +86474,14 @@
         "bytes": 4987
       },
       {
+        "uri": "majordomus://test/test/cases/884_a_declared_kind_is_a_kind_the_graph_knows.sh",
+        "kind": "test",
+        "identity": "test/cases/884_a_declared_kind_is_a_kind_the_graph_knows.sh",
+        "path": "test/cases/884_a_declared_kind_is_a_kind_the_graph_knows.sh",
+        "source_class": "case",
+        "bytes": 3580
+      },
+      {
         "uri": "majordomus://test/test/cases/88_rust_command_tested.sh",
         "kind": "test",
         "identity": "test/cases/88_rust_command_tested.sh",
@@ -86455,6 +86496,14 @@
         "path": "test/cases/89_web_surface.sh",
         "source_class": "case",
         "bytes": 11344
+      },
+      {
+        "uri": "majordomus://test/test/cases/900_prose_states_no_version.sh",
+        "kind": "test",
+        "identity": "test/cases/900_prose_states_no_version.sh",
+        "path": "test/cases/900_prose_states_no_version.sh",
+        "source_class": "case",
+        "bytes": 5078
       },
       {
         "uri": "majordomus://test/test/cases/90_mcp_shared_server.sh",
@@ -86783,7 +86832,7 @@
         "kind": "use-case",
         "identity": "catch-an-agent-that-says-it-is-done",
         "title": "Catch an agent that says it is done when it is not",
-        "description": "One task, start to finish: a worker strays outside its scope, claims it is finished, hands over, and is accepted only once the repository''s own verification passes.",
+        "description": "One task, start to finish: a worker strays outside its scope, claims it is finished, hands over, and is accepted only once the repository's own verification passes.",
         "path": ".ai/repo/use-cases/catch-an-agent-that-says-it-is-done.md",
         "section": "use-cases",
         "source_class": "use_case",
@@ -86882,7 +86931,7 @@
         "kind": "use-case",
         "identity": "follow-a-skill-the-repository-defines",
         "title": "Follow a procedure the repository defines, and add another one",
-        "description": "Read the repository''s skills, take one as it is written, and add a new one by writing its file — no registry, no code, and a check that says what it examined.",
+        "description": "Read the repository's skills, take one as it is written, and add a new one by writing its file — no registry, no code, and a check that says what it examined.",
         "path": ".ai/repo/use-cases/follow-a-skill-the-repository-defines.md",
         "section": "use-cases",
         "source_class": "use_case",
@@ -86992,7 +87041,7 @@
         "kind": "use-case",
         "identity": "let-the-provider-draw-the-episode-boundary",
         "title": "Have the session opened and closed without anybody remembering to",
-        "description": "Wire the provider''s own session events, and the episode opens when the sitting begins, hands the worker what the last one left, records what a compaction is about to discard, and closes with a continuation record beside its envelope.",
+        "description": "Wire the provider's own session events, and the episode opens when the sitting begins, hands the worker what the last one left, records what a compaction is about to discard, and closes with a continuation record beside its envelope.",
         "path": ".ai/repo/use-cases/let-the-provider-draw-the-episode-boundary.md",
         "section": "use-cases",
         "source_class": "use_case",
@@ -87511,7 +87560,7 @@
         "id",
         "version"
       ],
-      "objects": 159
+      "objects": 160
     },
     {
       "name": "scope",
@@ -87566,7 +87615,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 360
+      "objects": 364
     },
     {
       "name": "use-case",

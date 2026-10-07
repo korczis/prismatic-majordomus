@@ -373,7 +373,7 @@ covers the distribution side. There is one reader of the authority per language:
 
 `majordomus release version` answers what the manifest declares, whether the projection the
 tool prints is current, and whether anybody wrote a version down by hand where the tool's own
-files live. It exits 10 when anything is wrong — the same exit code
+files live or typed a version label into prose. It exits 10 when anything is wrong — the same exit code
 `scripts/release-version --check` gives — and it is what the `version-authored-once` gate
 runs. The findings come from `release::version::diagnose`, and `release analyze` carries the
 same ones in its plan:
@@ -385,6 +385,8 @@ same ones in its plan:
 | `version-stated-by-hand` | error | an assignment to a name ending in `version` (shell, TOML, JavaScript or Python), a `version:` or `"version":` member, or `majordomus X.Y.Z`, written by hand in `bin/`, `lib/`, `scripts/` or `share/` outside a generated artifact |
 | `projection-stale` | warning | `share/version.txt` is behind the manifest or missing — the state every bump leaves until `scripts/derive`, refused by `generate --check` |
 | `writers-disagree` | error | `share/version.txt` is ahead of the manifest or unrelated to it — a version no derivation writes |
+| `version-label-in-prose` | error | hand-written prose names a version label — `v`, a major and a minor, no patch, like the one the limitations page carried long after the version had moved on — outside the documents `.ai/repo/version-label-history.txt` declares about a past version (`project.prose-states-no-version`) |
+| `version-label-history-invalid` | error | a history entry gives no reason, names a path that is not tracked hand-written prose, or names a document that carries no label any more |
 
 </div>
 

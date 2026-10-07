@@ -44,6 +44,9 @@ pub struct MulticastProvider {
     config: MulticastConfig,
     counters: Arc<Counters>,
     state: Arc<Mutex<(MeshProviderState, Option<String>)>>,
+    /// The port the socket is bound to once started: the declared one, or the one the
+    /// system chose for a declared `0`.
+    bound: std::sync::atomic::AtomicU16,
 }
 
 impl MulticastProvider {
@@ -54,7 +57,26 @@ impl MulticastProvider {
             config,
             counters: Arc::new(Counters::default()),
             state: Arc::new(Mutex::new((MeshProviderState::Stopped, None))),
+            bound: std::sync::atomic::AtomicU16::new(0),
         }
+    }
+
+    /// The port the provider listens and announces on: the declared port, or — when the
+    /// declaration says `0` — the free one the system chose at the bind, so nothing races
+    /// between finding a port and taking it. `0` before the provider has started.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::config::MulticastConfig;
+    /// use majordomus_cli::mesh::multicast::MulticastProvider;
+    ///
+    /// let provider = MulticastProvider::new(MulticastConfig {
+    ///     port: 0,
+    ///     ..MulticastConfig::default()
+    /// });
+    /// assert_eq!(provider.port(), 0, "nothing is bound before the provider starts");
+    /// ```
+    pub fn port(&self) -> u16 {
+        self.bound.load(Ordering::SeqCst)
     }
 
     fn open(&self) -> Result<(UdpSocket, Ipv4Addr), MeshError> {
@@ -157,7 +179,10 @@ impl MeshProvider for MulticastProvider {
                 return Err(e);
             }
         };
-        let destination = SocketAddrV4::new(group, self.config.port);
+        // the port the bind took: the declared one, or the system's choice for a declared 0
+        let port = socket.local_addr().map_or(self.config.port, |a| a.port());
+        self.bound.store(port, Ordering::SeqCst);
+        let destination = SocketAddrV4::new(group, port);
         *self.state.lock().expect("multicast state") = (
             MeshProviderState::Running,
             Some(format!("group {destination}, ttl {}", self.config.ttl)),
@@ -324,19 +349,16 @@ mod tests {
         // the two-runtime rendezvous test in tests/mesh.rs; here they are a best-effort
         // observation, reported, never a failure.
         //
-        // The probe binds the wildcard the provider binds (bind_shared), so the port it
-        // offers is free on every local address. A loopback probe may offer a port another
-        // socket holds on a host address: macOS lets the provider's SO_REUSEADDR wildcard
-        // bind share it, Linux refuses unless that other socket set SO_REUSEADDR too.
-        let port = {
-            let probe = UdpSocket::bind((Ipv4Addr::UNSPECIFIED, 0)).unwrap();
-            probe.local_addr().unwrap().port()
-        };
+        // Port 0: the provider's own bind takes whatever port is free, and the test reads it
+        // back. A port found by binding and dropping a probe socket first was free only at
+        // that moment: another process (a parallel run in another worktree) could take it
+        // before the provider's bind, which then failed — `cannot bind udp port 53402`.
         let mut provider = MulticastProvider::new(MulticastConfig {
-            port,
+            port: 0,
             interval_seconds: 1,
             ..MulticastConfig::default()
         });
+        assert_eq!(provider.port(), 0, "no port before the provider starts");
         let (tx, rx) = std::sync::mpsc::channel();
         let stop = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
         let ctx = crate::mesh::provider::ProviderContext {
@@ -356,6 +378,13 @@ mod tests {
         provider.start(&ctx).unwrap();
         assert_eq!(provider.status().state, MeshProviderState::Running);
         assert_eq!(provider.id(), "udp_multicast");
+        let port = provider.port();
+        assert_ne!(port, 0, "the bind chose a port");
+        let detail = provider.status().detail.unwrap_or_default();
+        assert!(
+            detail.contains(&format!(":{port}, ttl")),
+            "the status names the bound port: {detail}"
+        );
 
         // Best-effort: aim a datagram at the port and see whether the listener hands it
         // up. On a host that delivers it, assert it is well-formed; on one that does not,
