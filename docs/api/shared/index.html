@@ -29,7 +29,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.14.0 -->
+     Generator: majordomus-cli 0.15.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -164,7 +164,7 @@
     </ul>
   </nav>
   <div class="min-w-0">
-    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/3ede593c0eaf722c607a51070e959f88b7820834/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p><section id="schemas" class="mt-12 scroll-mt-24">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/76a7a2340ab76fcef5de24d379abfeaf93000636/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p><section id="schemas" class="mt-12 scroll-mt-24">
       <h2 class="text-xl font-semibold tracking-tight text-heading">Schemas</h2>
       <p class="mt-2 text-sm text-body">The components more than one tag's operations use, or none does. Each row is the type's own field, its doc comment the description; a type another page owns links there.</p><article id="schema-ActiveTask" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -965,7 +965,8 @@ decides the whole.</div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-
     <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
   </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One criterion with the evidence behind it: what the record declared, what the ledger says
 about it, whether that meets it, and the command that would produce the evidence again.</p>
-<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::intent::{IntentCriterion, IntentEvidenceState};</span></span>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::evidence::ProofState;</span></span>
+<span class="giallo-l"><span>use majordomus_cli::intent::{IntentCriterion, IntentEvidenceState};</span></span>
 <span class="giallo-l"><span>let c = IntentCriterion {</span></span>
 <span class="giallo-l"><span>    id: &quot;stage-is-derived&quot;.into(),</span></span>
 <span class="giallo-l"><span>    criterion: &quot;the stage follows the plan&quot;.into(),</span></span>
@@ -973,6 +974,7 @@ about it, whether that meets it, and the command that would produce the evidence
 <span class="giallo-l"><span>    reference: &quot;apps/majordomus-cli/tests/intent.rs&quot;.into(),</span></span>
 <span class="giallo-l"><span>    state: IntentEvidenceState::NotRun,</span></span>
 <span class="giallo-l"><span>    met: false,</span></span>
+<span class="giallo-l"><span>    proof: Some(ProofState::NotRun),</span></span>
 <span class="giallo-l"><span>    reproduce: None,</span></span>
 <span class="giallo-l"><span>};</span></span>
 <span class="giallo-l"><span>// nothing recorded is not a pass</span></span>
@@ -1010,13 +1012,22 @@ about it, whether that meets it, and the command that would produce the evidence
           <td class="px-3 py-2 font-mono text-body">yes</td>
           <td class="px-3 py-2 text-body">Derived: the state is <code>current</code>.</td>
         </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">proof</td>
+          <td class="px-3 py-2 font-mono text-body">ProofState | null <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/shared/#schema-ProofState" class="text-fg-brand underline">ProofState</a></td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">Derived: the evidence module's own verdict behind <code>state</code>, for a <code>test</code> or <code>claim</code>
+criterion whose reference resolves. A met criterion rests on <code>proven</code> (a pass at this
+revision) or <code>inputs_unchanged</code> (a pass whose named inputs have not moved since, which
+is not proof at this revision), and every surface shows which, so <code>met</code> is never the
+one tick for both.</td>
+        </tr><tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold text-heading">reproduce</td>
           <td class="px-3 py-2 font-mono text-body">string | null</td>
           <td class="px-3 py-2 font-mono text-body">no</td>
           <td class="px-3 py-2 text-body">The command that produces the evidence again, when one is known.</td>
         </tr></tbody>
     </table>
-  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/shared/#schema-IntentView" class="font-mono text-fg-brand underline">IntentView</a></p></article>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/intents/#schema-IntentPreflightIntent" class="font-mono text-fg-brand underline">IntentPreflightIntent</a> <a href="https://majordomus.dev/docs/api/shared/#schema-IntentView" class="font-mono text-fg-brand underline">IntentView</a></p></article>
 <article id="schema-IntentEvidenceState" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">IntentEvidenceState</h3>
@@ -1024,12 +1035,30 @@ about it, whether that meets it, and the command that would produce the evidence
   </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What the evidence behind one criterion says, as a word. Only <code>Current</code> meets a criterion:
 a stale, failing, unrecorded or underivable reference never does, and neither does one that
 resolves to nothing.</p>
+<p>Whether a recorded run is current is not decided here. A <code>test</code> or <code>claim</code> criterion is
+judged by the evidence module's one truth table (<code>evidence::freshness()</code>) at the working
+tree and read through <code>evidence::current</code>, the same judgement the claim report and the
+subject pages make; <code>IntentEvidenceState::judged</code> is the whole of the translation. So
+the state follows the evidence both ways: a criterion met today reads stale or failing
+the moment the ledger or the tree says so, and met again once a current pass is recorded.</p>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::intent::IntentEvidenceState;</span></span>
 <span class="giallo-l"><span>assert_eq!(serde_json::to_string(&amp;IntentEvidenceState::NotRun).unwrap(), &quot;\&quot;not_run\&quot;&quot;);</span></span>
-<span class="giallo-l"><span>assert_ne!(IntentEvidenceState::Stale, IntentEvidenceState::Current);</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">current</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A passing run of the test that is in the tree now, or a claim proven or with its
-inputs unchanged since its passing run. The only state that meets a criterion.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">stale</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A passing run of a test whose source has changed since, or a claim whose inputs
-have.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">failing</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The latest recorded run did not pass.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">not_run</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The reference resolves and nothing has been recorded for it.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">not_derivable</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The reference resolves, and this kind of evidence (<code>command</code>, <code>deployment</code>) is not
-derivable from the ledger, so it never meets a criterion by itself.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unresolved</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The reference is empty or names nothing this repository holds.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/shared/#schema-IntentCriterion" class="font-mono text-fg-brand underline">IntentCriterion</a> <a href="https://majordomus.dev/docs/api/intent-realization/#schema-IntentUnmetCriterion" class="font-mono text-fg-brand underline">IntentUnmetCriterion</a></p></article>
+<span class="giallo-l"><span>assert_ne!(IntentEvidenceState::Stale, IntentEvidenceState::Current);</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">current</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A passing run that is current evidence at the working tree: its commit is in this
+history, it measured a tree that was its commit, the test still hashes to what ran,
+and nothing the criterion names has changed since — for a test, its source and the
+source and implementation of every claim that test proves; for a claim, what the
+claim names. A change the criterion does not name, the evidence ledger's own included,
+leaves it current. A test that proves no claim naming an implementation names no code
+under test, so for it nothing but the ledger may have changed since the run. The only
+state that meets a criterion; the criterion's <code>proof</code> says whether it rests on
+<code>proven</code> or on <code>inputs_unchanged</code>.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">stale</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A pass that is not current evidence: something the criterion names has changed since
+it, it names no code under test and anything but the ledger and the plan's own records
+has changed since, the
+test no longer hashes to what ran, the run's commit is not in this history (or git
+could not compare it), or the run measured a tree that was not its commit — a run on a
+dirty tree, which no later tree can be matched against.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">failing</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The latest recorded run failed, timed out or errored.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">not_run</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The reference resolves and no run counts for it: none was recorded, the latest run
+declined to run (a skip), or the claim names no test a runner drives.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">not_derivable</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The reference resolves, and this kind of evidence (<code>command</code>, <code>deployment</code>) is not
+derivable from the ledger, so it never meets a criterion by itself.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unresolved</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The reference is empty or names nothing this repository holds.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/shared/#schema-IntentCriterion" class="font-mono text-fg-brand underline">IntentCriterion</a> <a href="https://majordomus.dev/docs/api/intent-realization/#schema-IntentUnmetCriterion" class="font-mono text-fg-brand underline">IntentUnmetCriterion</a> <a href="https://majordomus.dev/docs/api/shared/#schema-IntentVerdictReason" class="font-mono text-fg-brand underline">IntentVerdictReason</a></p></article>
 <article id="schema-IntentFinding" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">IntentFinding</h3>
@@ -1115,15 +1144,87 @@ a finding and not an absence.</p>
 <pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::intent::IntentStage;</span></span>
 <span class="giallo-l"><span>// one word every surface prints, and an order that follows the work</span></span>
 <span class="giallo-l"><span>assert_eq!(IntentStage::Executing.as_str(), &quot;executing&quot;);</span></span>
-<span class="giallo-l"><span>assert!(IntentStage::Declared &lt; IntentStage::Satisfied);</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">declared</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A named milestone does not resolve, or none is named.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">planned</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Every milestone resolves and none has started.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">executing</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A milestone is under way.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">verifying</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Every milestone that counts is DONE; satisfaction is not yet evidenced.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">satisfied</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Verifying, and every criterion has current evidence.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">cancelled</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The record says it was abandoned.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">superseded</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The record names the intent that replaced it.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/intent-realization/#schema-IntentLink" class="font-mono text-fg-brand underline">IntentLink</a> <a href="https://majordomus.dev/docs/api/intents/#schema-IntentPreflightMatch" class="font-mono text-fg-brand underline">IntentPreflightMatch</a> <a href="https://majordomus.dev/docs/api/intent-realization/#schema-IntentRealizationView" class="font-mono text-fg-brand underline">IntentRealizationView</a> <a href="https://majordomus.dev/docs/api/shared/#schema-IntentView" class="font-mono text-fg-brand underline">IntentView</a></p></article>
+<span class="giallo-l"><span>assert!(IntentStage::Declared &lt; IntentStage::Satisfied);</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">declared</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A named milestone does not resolve, or none is named.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">planned</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Every milestone resolves and none has started.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">executing</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A milestone is under way.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">verifying</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Every milestone that counts is DONE; satisfaction is not yet evidenced.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">satisfied</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Verifying, and every criterion has current evidence.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">cancelled</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The record says it was abandoned.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">superseded</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The record names the intent that replaced it.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/intent-realization/#schema-IntentLink" class="font-mono text-fg-brand underline">IntentLink</a> <a href="https://majordomus.dev/docs/api/intents/#schema-IntentPreflightIntent" class="font-mono text-fg-brand underline">IntentPreflightIntent</a> <a href="https://majordomus.dev/docs/api/intents/#schema-IntentPreflightMatch" class="font-mono text-fg-brand underline">IntentPreflightMatch</a> <a href="https://majordomus.dev/docs/api/intent-realization/#schema-IntentRealizationView" class="font-mono text-fg-brand underline">IntentRealizationView</a> <a href="https://majordomus.dev/docs/api/shared/#schema-IntentView" class="font-mono text-fg-brand underline">IntentView</a></p></article>
+<article id="schema-IntentVerdict" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">IntentVerdict</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Whether the evidence alone settles an intent, and which criteria hold it back: every
+unmet criterion, in the order the record declares them. Empty when the verdict is
+<code>satisfied</code>, and when it is <code>unknown</code> because the intent declares no criterion.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::intent::{verdict, IntentVerdict, IntentVerdictState};</span></span>
+<span class="giallo-l"><span>// an intent that declares no criterion cannot be settled by evidence</span></span>
+<span class="giallo-l"><span>let v: IntentVerdict = verdict(&amp;[]);</span></span>
+<span class="giallo-l"><span>assert_eq!(v.state, IntentVerdictState::Unknown);</span></span>
+<span class="giallo-l"><span>assert!(v.reasons.is_empty());</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
+          <td class="px-3 py-2 font-mono text-body">IntentVerdictState <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/shared/#schema-IntentVerdictState" class="text-fg-brand underline">IntentVerdictState</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Derived: what the evidence says.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">reasons</td>
+          <td class="px-3 py-2 font-mono text-body">array of IntentVerdictReason <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/shared/#schema-IntentVerdictReason" class="text-fg-brand underline">IntentVerdictReason</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Every criterion that is not met, with the state of its evidence.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/shared/#schema-IntentView" class="font-mono text-fg-brand underline">IntentView</a></p></article>
+<article id="schema-IntentVerdictReason" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">IntentVerdictReason</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One criterion that holds a verdict back from <code>satisfied</code>: which one, the kind of evidence
+it names, and the state that evidence is in — the criterion's own words, not new ones.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::intent::{IntentEvidenceState, IntentVerdictReason};</span></span>
+<span class="giallo-l"><span>let r = IntentVerdictReason {</span></span>
+<span class="giallo-l"><span>    criterion: &quot;probe-passes&quot;.into(),</span></span>
+<span class="giallo-l"><span>    evidence: &quot;test&quot;.into(),</span></span>
+<span class="giallo-l"><span>    state: IntentEvidenceState::NotRun,</span></span>
+<span class="giallo-l"><span>};</span></span>
+<span class="giallo-l"><span>assert_eq!(r.state, IntentEvidenceState::NotRun);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">criterion</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The criterion's id.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">evidence</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Its kind of evidence: <code>test</code>, <code>claim</code>, <code>command</code> or <code>deployment</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">state</td>
+          <td class="px-3 py-2 font-mono text-body">IntentEvidenceState <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/shared/#schema-IntentEvidenceState" class="text-fg-brand underline">IntentEvidenceState</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">The state of that evidence, as the criterion reports it.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/shared/#schema-IntentVerdict" class="font-mono text-fg-brand underline">IntentVerdict</a></p></article>
+<article id="schema-IntentVerdictState" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">IntentVerdictState</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">&quot;satisfied&quot; | &quot;unsatisfied&quot; | &quot;unknown&quot;</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">What the evidence alone says about an intent, as a word: derived from its criteria and
+never from the plan, so it can read <code>satisfied</code> while a milestone is still open (ADR 0107).</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::intent::IntentVerdictState;</span></span>
+<span class="giallo-l"><span>let word = serde_json::to_string(&amp;IntentVerdictState::Unsatisfied).unwrap();</span></span>
+<span class="giallo-l"><span>assert_eq!(word, &quot;\&quot;unsatisfied\&quot;&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(IntentVerdictState::Satisfied.as_str(), &quot;satisfied&quot;);</span></span></code></pre></div><ul class="mt-3 space-y-1 text-sm"><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">satisfied</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Every criterion has current evidence.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unsatisfied</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A criterion the ledger or the claim join can settle (<code>test</code>, <code>claim</code>) is not met.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unknown</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">Every unmet criterion is of a kind the ledger cannot yet settle (<code>command</code>,
+<code>deployment</code>), or the intent declares no criterion: the evidence cannot answer.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/shared/#schema-IntentVerdict" class="font-mono text-fg-brand underline">IntentVerdict</a></p></article>
 <article id="schema-IntentView" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">IntentView</h3>
     <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
   </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One intent, as its record declares it and as the plan and the ledger derive it: the
 statement and invariants as authored, each milestone with its derived status, each criterion
-with the state of its evidence, and the stage that follows from both.</p>
-<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::intent::{IntentStage, IntentView};</span></span>
+with the state of its evidence, the stage that follows from both, and the verdict that
+follows from the evidence alone.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::intent::{verdict, IntentStage, IntentVerdictState, IntentView};</span></span>
 <span class="giallo-l"><span>let view = IntentView {</span></span>
 <span class="giallo-l"><span>    id: &quot;intent-lifecycle&quot;.into(),</span></span>
 <span class="giallo-l"><span>    title: &quot;Work is traceable to the intent it serves&quot;.into(),</span></span>
@@ -1133,13 +1234,16 @@ with the state of its evidence, and the stage that follows from both.</p>
 <span class="giallo-l"><span>    milestones: vec![],</span></span>
 <span class="giallo-l"><span>    satisfaction: vec![],</span></span>
 <span class="giallo-l"><span>    met: 0,</span></span>
+<span class="giallo-l"><span>    verdict: verdict(&amp;[]),</span></span>
 <span class="giallo-l"><span>    governance: vec![&quot;adr:adr-0070&quot;.into()],</span></span>
 <span class="giallo-l"><span>    non_goals: vec![],</span></span>
 <span class="giallo-l"><span>    superseded_by: None,</span></span>
 <span class="giallo-l"><span>    source: &quot;.ai/repo/project/intents/intent-lifecycle.yaml&quot;.into(),</span></span>
 <span class="giallo-l"><span>};</span></span>
 <span class="giallo-l"><span>// a record naming no milestone that resolves has not been planned</span></span>
-<span class="giallo-l"><span>assert_eq!(view.stage, IntentStage::Declared);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+<span class="giallo-l"><span>assert_eq!(view.stage, IntentStage::Declared);</span></span>
+<span class="giallo-l"><span>// and one declaring no criterion cannot be settled by evidence</span></span>
+<span class="giallo-l"><span>assert_eq!(view.verdict.state, IntentVerdictState::Unknown);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
       <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
       <tbody><tr class="border-t border-default align-top">
@@ -1182,6 +1286,12 @@ with the state of its evidence, and the stage that follows from both.</p>
           <td class="px-3 py-2 font-mono text-body">integer (uint)</td>
           <td class="px-3 py-2 font-mono text-body">yes</td>
           <td class="px-3 py-2 text-body">Derived: how many criteria are met.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">verdict</td>
+          <td class="px-3 py-2 font-mono text-body">IntentVerdict <span class="text-body-subtle">→</span> <a href="https://majordomus.dev/docs/api/shared/#schema-IntentVerdict" class="text-fg-brand underline">IntentVerdict</a></td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">Derived from the criteria alone, never from the plan: whether the evidence settles the
+intent, and which criteria hold it back.</td>
         </tr><tr class="border-t border-default align-top">
           <td class="px-3 py-2 font-mono font-semibold text-heading">governance</td>
           <td class="px-3 py-2 font-mono text-body">array of string</td>
@@ -1327,7 +1437,7 @@ own commit is empty but for the ledger. Proof of the tree in front of you.</span
 something the claim does not name may have broken it.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">stale</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">A passing run, but something this claim names has changed since. The proof is older
 than its subject.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">failing</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The latest run of this claim's test did not pass.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">not_run</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The claim names a test a runner owns, and no run of it has ever been recorded.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">unrunnable</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The claim names a path no runner in this repository drives. Nothing can record it,
 so nothing can prove it this way.</span></li><li class="flex flex-wrap gap-x-3"><code class="break-all font-mono text-heading">no_test</code><span class="min-w-0 basis-full break-words text-body [&_:not(pre)>code]:break-words [&_p]:m-0">The claim names no test at all. Correct for a <code>planned</code> or <code>rejected</code> claim, and a
-defect for any other.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/evidence/#op-evidence-report" class="font-mono text-fg-brand hover:underline">evidence.report</a> <a href="https://majordomus.dev/docs/api/evidence/#schema-ClaimEvidence" class="font-mono text-fg-brand underline">ClaimEvidence</a> <a href="https://majordomus.dev/docs/api/evidence/#schema-EvidenceClaimProof" class="font-mono text-fg-brand underline">EvidenceClaimProof</a> <a href="https://majordomus.dev/docs/api/evidence/#schema-EvidenceFinding" class="font-mono text-fg-brand underline">EvidenceFinding</a> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleTestProof" class="font-mono text-fg-brand underline">RuleTestProof</a> <a href="https://majordomus.dev/docs/api/skills/#schema-SkillTest" class="font-mono text-fg-brand underline">SkillTest</a></p></article>
+defect for any other.</span></li></ul><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/evidence/#op-evidence-report" class="font-mono text-fg-brand hover:underline">evidence.report</a> <a href="https://majordomus.dev/docs/api/evidence/#schema-ClaimEvidence" class="font-mono text-fg-brand underline">ClaimEvidence</a> <a href="https://majordomus.dev/docs/api/evidence/#schema-EvidenceClaimProof" class="font-mono text-fg-brand underline">EvidenceClaimProof</a> <a href="https://majordomus.dev/docs/api/evidence/#schema-EvidenceFinding" class="font-mono text-fg-brand underline">EvidenceFinding</a> <a href="https://majordomus.dev/docs/api/shared/#schema-IntentCriterion" class="font-mono text-fg-brand underline">IntentCriterion</a> <a href="https://majordomus.dev/docs/api/rules/#schema-RuleTestProof" class="font-mono text-fg-brand underline">RuleTestProof</a> <a href="https://majordomus.dev/docs/api/skills/#schema-SkillTest" class="font-mono text-fg-brand underline">SkillTest</a></p></article>
 <article id="schema-ReleaseChangeKind" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">ReleaseChangeKind</h3>
@@ -1508,7 +1618,7 @@ projection; the registry refuses to build otherwise.</div><ul class="mt-3 space-
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.14.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3ede593c0eaf722c607a51070e959f88b7820834" class="font-mono underline">3ede593</a> · inputs <span class="font-mono">16e742a839a4</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.15.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/76a7a2340ab76fcef5de24d379abfeaf93000636" class="font-mono underline">76a7a23</a> · inputs <span class="font-mono">f3e68aed5d9c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

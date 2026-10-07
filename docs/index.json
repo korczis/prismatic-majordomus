@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "3ede593c0eaf722c607a51070e959f88b7820834",
-  "source_version": "0.14.0",
-  "registry_fingerprint": "ac19ffc888efbd6ac4cc2bb460c24a16e3e6fb2ffac3b2843af8f8d04a49f885"
+  "commit": "76a7a2340ab76fcef5de24d379abfeaf93000636",
+  "source_version": "0.15.0",
+  "registry_fingerprint": "9eee91ed411403e3bf8ff1a846ac55f8e36c36801b9036a36b5c9d621ceb784e"
  },
  "counts": {
-  "pages": 1912,
-  "capabilities": 1980,
+  "pages": 1926,
+  "capabilities": 2011,
   "cli_commands": 90,
   "http_routes": 170,
   "mcp_tools": 166,
-  "mcp_resources": 1861,
+  "mcp_resources": 1892,
   "modules": 84
  },
  "kinds": [
@@ -22,7 +22,7 @@
    "route": "/adrs/",
    "title": "Decisions",
    "reason": null,
-   "count": 80
+   "count": 81
   },
   {
    "kind": "application",
@@ -54,7 +54,7 @@
    "route": "/guarantees/",
    "title": null,
    "reason": null,
-   "count": 222
+   "count": 233
   },
   {
    "kind": "command",
@@ -77,7 +77,7 @@
    "projection": "none",
    "route": null,
    "title": null,
-   "reason": "A critique is the adversarial pass over one intent's plan, written for the worker who must resolve its findings before work starts (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
+   "reason": "A critique is the adversarial pass over one intent's plan, written by a worker, and work started under the intent without it or with a blocking finding open fails intent validation (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/.",
    "count": 1
   },
   {
@@ -102,7 +102,7 @@
    "route": null,
    "title": null,
    "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-   "count": 310
+   "count": 322
   },
   {
    "kind": "domain",
@@ -141,7 +141,7 @@
    "projection": "none",
    "route": null,
    "title": null,
-   "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` answers for the intent itself.",
+   "reason": "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` and the Cockpit's /cockpit/intents answer for the intent itself.",
    "count": 2
   },
   {
@@ -222,7 +222,7 @@
    "route": "/rules/",
    "title": "Rules",
    "reason": null,
-   "count": 160
+   "count": 161
   },
   {
    "kind": "scope",
@@ -262,7 +262,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 365
+   "count": 371
   },
   {
    "kind": "use-case",
@@ -933,6 +933,14 @@
    "source": ".ai/repo/adrs/0104-the-product-is-filed-under-a-few-domains-and-a-feature-names-its-one.md"
   },
   {
+   "route": "/adrs/adr-0107/",
+   "title": "Completion discharges obligations and never decides whether an intent is satisfied",
+   "description": "Completion discharges obligations and never decides whether an intent is satisfied",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0107",
+   "source": ".ai/repo/adrs/0107-completion-discharges-obligations-and-never-decides-whether-an-intent-is-satisfied.md"
+  },
+  {
    "route": "/applications/",
    "title": "Applications",
    "description": "Where it fits, and where it does not. Every entry declares both, because a catalogue that only lists fits is not a description."
@@ -1290,7 +1298,7 @@
   {
    "route": "/docs/api/intents/",
    "title": "HTTP API: intents",
-   "description": "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, and each criterion's state derived from the evidence ledger. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere."
+   "description": "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, each criterion's state derived from the evidence ledger, and its verdict derived from those criteria alone. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere."
   },
   {
    "route": "/docs/api/knowledge-base/",
@@ -1870,7 +1878,7 @@
   {
    "route": "/docs/cli/intent/preflight/",
    "title": "majordomus intent preflight",
-   "description": "Which intent the work on an issue, or on some paths, serves; exit 10 when it serves none"
+   "description": "Which intent the work on an issue, or on some paths, serves, whether it is maintenance, or why it may not proceed; exit 10 when refused"
   },
   {
    "route": "/docs/cli/intent/realization/",
@@ -2606,6 +2614,11 @@
    "route": "/docs/install/",
    "title": "Installing Majordomus",
    "description": "installing the tool: the one-line installer, pinning a version, choosing where it goes, the supported platforms, upgrading, uninstalling, CI use, the security model and troubleshooting"
+  },
+  {
+   "route": "/docs/integration-rollout/",
+   "title": "Integration rollout record",
+   "description": "the record of each integration rollout stage of ADR 0101 §13: what was run against the real repository, with which released executable and under which rule and ADR versions, what it answered, and that nothing moved"
   },
   {
    "route": "/docs/integration/",
@@ -3656,6 +3669,61 @@
    "route": "/guarantees/installer-verifies-before-installing/",
    "title": "The installer verifies an artifact's digest and inspects its archive before anything is unpacked, and any failure leaves the previous installation working",
    "description": "curl … | sh is only as good as what the script does with what it downloads. This one, in"
+  },
+  {
+   "route": "/guarantees/intent-closes-github-milestones/",
+   "title": "A milestone will be closed on GitHub only once the intents it realises are satisfied",
+   "description": "**This is not implemented.** It is published so that a known gap is visible rather than assumed to be covered."
+  },
+  {
+   "route": "/guarantees/intent-cockpit-pages/",
+   "title": "The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>",
+   "description": "The intent model has a view in the Cockpit. /cockpit/intents lists every intent with its stage, the criteria with current evidence, the providers realising it and its findings. /cockpit/intents/<id> shows one intent: each criterion with its evidence state, linked to the test object it names and to the issues serving it, the command that reproduces it, and every unit of work realising it with the provenance of its link."
+  },
+  {
+   "route": "/guarantees/intent-command-deployment-evidence/",
+   "title": "A criterion settled by a command or by a deployment will be met by recorded evidence",
+   "description": "**This is not implemented.** It is published so that a known gap is visible rather than assumed to be covered."
+  },
+  {
+   "route": "/guarantees/intent-criteria-covered/",
+   "title": "Once work exists under an intent, a criterion no issue serves, an issue under its milestones that serves nothing and a link to a criterion that does not exist are each refused by name",
+   "description": "An issue names the criterion it serves in serves (ADR 0073). From those links the coverage of every criterion is derived, and every issue under an intent's milestones answers why it exists. Once an intent has work, a criterion nothing serves is criterion_uncovered, an issue that serves nothing is issue_without_purpose, and a link to an unknown intent or criterion is refused."
+  },
+  {
+   "route": "/guarantees/intent-in-session-context/",
+   "title": "A session will load the intents its task serves when it starts",
+   "description": "**This is not implemented.** It is published so that a known gap is visible rather than assumed to be covered."
+  },
+  {
+   "route": "/guarantees/intent-links-resolve/",
+   "title": "An intent whose criterion names evidence that resolves to nothing is refused by name",
+   "description": "Every reference an intent makes has to land on something the repository holds: each milestone in the plan, each governance entry among the rules and decisions, and each criterion's evidence — a test file, a claim of docs/CLAIMS.yaml, a deployment object. A reference to nothing is a failure named after the intent, not an intent that silently stays unmet."
+  },
+  {
+   "route": "/guarantees/intent-plan-reviewed/",
+   "title": "A gap that leaves a criterion unanswered is refused, and an issue serving an intent that started without a critique or while a blocking finding is open fails intent validation",
+   "description": "Planning starts from two records a worker writes: a gap, which answers every criterion of the intent with what was observed at a commit, and a critique, the adversarial pass over the plan with each finding resolved. A gap that skips a criterion is refused. Work under an intent that is ACTIVE, VERIFY or DONE while the intent has no critique is executing_without_critique, and while a blocking finding is open, executing_with_open_blocker."
+  },
+  {
+   "route": "/guarantees/intent-preflight-names-the-intent/",
+   "title": "Asked before work on an issue, `intent preflight` names the intents the issue serves with the governance that applies, or refuses naming the cause",
+   "description": "A worker about to take an issue can ask which intent the work serves and whether it may"
+  },
+  {
+   "route": "/guarantees/intent-realization-held-to-evidence/",
+   "title": "The work realising an intent is joined across sessions, providers and handovers, and an intent whose milestones are all closed while a criterion's evidence fails is refused naming that criterion",
+   "description": "Which work realises an intent is never written into a task, a session or a handover. It is joined on every read from the records the lifecycle already keeps: each task with every episode that worked on it and the provider of each, the handovers between them, closed session records and the peer board's claims. When the plan says every milestone of an intent is DONE and a criterion's recorded run fails, or is stale against a case that has changed, the intent is closed_work_contradicted and the realization exits 10 naming the criterion."
+  },
+  {
+   "route": "/guarantees/intent-refused-at-plan-start/",
+   "title": "Starting an issue that serves an intent with no critique, or with a blocking finding open, will be refused when it is started rather than reported afterwards",
+   "description": "**This is not implemented.** It is published so that a known gap is visible rather than assumed to be covered."
+  },
+  {
+   "route": "/guarantees/intent-stage-derived/",
+   "title": "An intent's stage is derived from the milestones that realise it and each criterion from the evidence ledger, and it is satisfied only while every criterion has a current passing run",
+   "description": "An intent under .ai/repo/project/intents/ states what must become true, the invariants that must stay true, the milestones that realise it and the criteria that settle it, each criterion naming the evidence that decides it. That statement is all it stores. Its stage — declared, planned, executing, verifying, satisfied — is read from the plan, and each criterion from the evidence ledger, on every read. Finished work satisfies nothing: an intent whose milestones are all DONE is verifying until every criterion has a current passing run."
   },
   {
    "route": "/guarantees/interfaces-are-projections/",
@@ -6215,7 +6283,7 @@
   {
    "route": "/registry/capabilities/intent-realization-work/",
    "title": "intent_realization.work",
-   "description": "Every unit of work this checkout can see — ledger tasks with their episodes, providers and handovers, closed session records, peer claims — with every intent it realises through issue, milestone and criterion, each link's provenance (declared: the work cites the issue; observed: its episode moved the issue; derived: its branch names the issue; inferred: only an open issue's scope overlaps) or the first missing link; every intent with its unmet criteria and the issues serving each, the work and providers realising it, and its drift: closed_work_contradicted when every milestone is DONE and a criterion's evidence is stale or failing, closed_work_unproven when it never existed, criterion_closed_unmet when every serving issue is DONE and the criterion is not met. Live work serving no intent is a warning."
+   "description": "Every unit of work this checkout can see — ledger tasks with their episodes, providers and handovers, closed session records, peer claims — with every intent it realises through issue, milestone and criterion, each link's provenance (declared: the work cites the issue; observed: its episode moved the issue; derived: its branch names the issue; inferred: only an open issue's scope overlaps) or the first missing link; every intent with its unmet criteria and the issues serving each, the work and providers realising it, and its drift: closed_work_contradicted when every milestone is DONE and a criterion's evidence is stale or failing, closed_work_unproven when it never existed, criterion_closed_unmet when every serving issue is DONE and the criterion is not met; and where the stage and the verdict disagree (ADR 0107), evidence_ahead_of_plan when the verdict is satisfied while the stage is planned or executing, closed_work_not_satisfied when every milestone is DONE and the verdict is unsatisfied or unknown. Live work serving no intent is a warning."
   },
   {
    "route": "/registry/capabilities/intents-coverage/",
@@ -6225,17 +6293,17 @@
   {
    "route": "/registry/capabilities/intents-list/",
    "title": "intents.list",
-   "description": "Every intent the project model declares, each with the status the plan derives for its milestones, the state of the evidence behind each satisfaction criterion, and the stage those two derive: declared, planned, executing, verifying or satisfied — or cancelled or superseded, when the record says so."
+   "description": "Every intent the project model declares, each with the status the plan derives for its milestones, the state of the evidence behind each satisfaction criterion, the stage those two derive — declared, planned, executing, verifying or satisfied, or cancelled or superseded when the record says so — and the verdict the criteria alone derive (ADR 0107): satisfied when every criterion is met, unsatisfied when a test or claim criterion is not, unknown when only command or deployment criteria are unmet or none is declared, with the criteria holding it back."
   },
   {
    "route": "/registry/capabilities/intents-preflight/",
    "title": "intents.preflight",
-   "description": "Given the issue a piece of work executes, or the paths it will touch, the intents it serves — issue to milestone to intent, each link named — and the governance those intents load; or a refusal naming the first link that is missing: an issue that does not exist, paths no open issue covers, a milestone no intent names."
+   "description": "Given the issue a piece of work executes, or the paths it will touch, one verdict: `serves` when no issue is refused and at least one serves a criterion of a live intent through a link that holds, the plan of each such intent critiqued with no blocking finding open (issues judged maintenance beside it do not change the verdict); `maintenance` when the issues sit under milestones no live intent names and serve nothing, as `intent validate` allows; `refused` otherwise, each refusal with its issue, a cause — unknown_issue, no_issue_covers_paths, issue_serves_nothing, serves_another_intent, serves_unknown_criterion, intent_not_critiqued, open_blocking_finding — in path mode every issue judged and the worst verdict answered. The answer carries, for the intents reached and no others, the statement, the served criteria with the live state of their evidence, the invariants, non-goals and governance, the critique with its open blocking findings, and the recorded gap bounded to those criteria."
   },
   {
    "route": "/registry/capabilities/intents-record/",
    "title": "intents.record",
-   "description": "One intent in full: its statement and invariants as authored, each milestone with the status the plan derives, each satisfaction criterion with the state of its evidence and the command that reproduces it, and the stage. The record's own file stays at `majordomus://intent/<id>`."
+   "description": "One intent in full: its statement and invariants as authored, each milestone with the status the plan derives, each satisfaction criterion with the state of its evidence and the command that reproduces it, the stage, and the verdict the criteria alone derive with the criteria holding it back. The record's own file stays at `majordomus://intent/<id>`."
   },
   {
    "route": "/registry/capabilities/intents-validate/",
@@ -6870,7 +6938,7 @@
   {
    "route": "/registry/modules/intents/",
    "title": "Intent",
-   "description": "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, and each criterion's state derived from the evidence ledger. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere."
+   "description": "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, each criterion's state derived from the evidence ledger, and its verdict derived from those criteria alone. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere."
   },
   {
    "route": "/registry/modules/knowledge-base/",
@@ -7565,12 +7633,12 @@
    "source": ".ai/repo/rules/project/advisors-are-optional.v1.md"
   },
   {
-   "route": "/rules/project-an-intent-outlives-its-sessions-1/",
+   "route": "/rules/project-an-intent-outlives-its-sessions-2/",
    "title": "An intent outlives the sessions and providers that realise it, and closed work does not outrank evidence",
    "description": "An intent outlives the sessions and providers that realise it, and closed work does not outrank evidence",
    "kind": "rule",
-   "id": "majordomus://rule/project.an-intent-outlives-its-sessions@1",
-   "source": ".ai/repo/rules/project/an-intent-outlives-its-sessions.v1.md"
+   "id": "majordomus://rule/project.an-intent-outlives-its-sessions@2",
+   "source": ".ai/repo/rules/project/an-intent-outlives-its-sessions.v2.md"
   },
   {
    "route": "/rules/project-benchmarkable-commands-1/",
@@ -7627,6 +7695,14 @@
    "kind": "rule",
    "id": "majordomus://rule/project.commands-run-non-interactively@2",
    "source": ".ai/repo/rules/project/commands-run-non-interactively.v2.md"
+  },
+  {
+   "route": "/rules/project-completion-never-decides-satisfaction-2/",
+   "title": "Completion discharges obligations and never decides whether an intent is satisfied",
+   "description": "Completion discharges obligations and never decides whether an intent is satisfied",
+   "kind": "rule",
+   "id": "majordomus://rule/project.completion-never-decides-satisfaction@2",
+   "source": ".ai/repo/rules/project/completion-never-decides-satisfaction.v2.md"
   },
   {
    "route": "/rules/project-context-locality-1/",
@@ -8294,8 +8370,8 @@
   },
   {
    "route": "/rustdoc/",
-   "title": "majordomus-cli 0.14.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.14.0, built from commit 3ede593c0eaf722c607a51070e959f88b7820834: the public items of the library and of the executable, and the source they were built from."
+   "title": "majordomus-cli 0.15.0 — Rust API reference",
+   "description": "The rustdoc reference of majordomus-cli 0.15.0, built from commit 76a7a2340ab76fcef5de24d379abfeaf93000636: the public items of the library and of the executable, and the source they were built from."
   },
   {
    "route": "/rustdoc/majordomus/",

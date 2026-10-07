@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>majordomus intent preflight — Prismatic Majordomus</title>
-<meta name="description" content="Which intent the work on an issue, or on some paths, serves; exit 10 when it serves none">
+<meta name="description" content="Which intent the work on an issue, or on some paths, serves, whether it is maintenance, or why it may not proceed; exit 10 when refused">
 <link rel="canonical" href="https://majordomus.dev/docs/cli/intent/preflight/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
 <meta property="og:title" content="majordomus intent preflight — Prismatic Majordomus">
-<meta property="og:description" content="Which intent the work on an issue, or on some paths, serves; exit 10 when it serves none">
+<meta property="og:description" content="Which intent the work on an issue, or on some paths, serves, whether it is maintenance, or why it may not proceed; exit 10 when refused">
 <meta property="og:url" content="https://majordomus.dev/docs/cli/intent/preflight/">
 <meta property="og:image" content="https://majordomus.dev/images/social-card.png">
 <meta name="twitter:card" content="summary_large_image">
@@ -29,7 +29,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.14.0 -->
+     Generator: majordomus-cli 0.15.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -152,7 +152,7 @@
 </nav>
 
     <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">majordomus intent preflight</h1>
-    <p class="mt-3 max-w-3xl break-words text-lg text-body">Which intent the work on an issue, or on some paths, serves; exit 10 when it serves none</p>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">Which intent the work on an issue, or on some paths, serves, whether it is maintenance, or why it may not proceed; exit 10 when refused</p>
   </div>
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
@@ -205,16 +205,16 @@
 </div>
     <h3 class="mt-6 text-base font-semibold tracking-tight text-heading">Examples</h3>
 <ul class="mt-3 space-y-5"><li id="example-intent-preflight" class="scroll-mt-24">
-    <p class="text-sm font-medium text-heading">Which intent the work on an issue serves</p>
-    <p class="mt-1 text-sm text-body">Issue to milestone to intent, each link named, with the governance the intent loads. A missing link is a refusal naming it, and exit 10.</p>
+    <p class="text-sm font-medium text-heading">Which intent the work on an issue serves, or why it may not proceed</p>
+    <p class="mt-1 text-sm text-body">The issue followed through the criteria it declares it serves to the intent each belongs to, with what that intent asks of the worker: its statement, the served criteria and their evidence, invariants, non-goals, governance, critique and gap. A broken link, or an intent whose plan was never critiqued or has a blocking finding open, is a refusal naming its cause, and exit 10; the example fixture&#39;s intent has no critique, so this is that refusal. Work under milestones no intent names is maintenance, and exits 0.</p>
     <div class="mt-2 overflow-x-auto rounded-base border border-default bg-neutral-secondary-medium" tabindex="0">
       <pre class="px-3 py-2 text-xs leading-relaxed text-body" tabindex="0"><code>$ majordomus intent preflight --issue I0001</code></pre>
     </div>
-    <p class="mt-1 text-xs text-body-subtle">What it asserts: exits 0; prints serves, fixture-intent.</p><p class="mt-1 text-xs text-body-subtle">Tested by <a href="https://github.com/korczis/prismatic-majordomus/blob/3ede593c0eaf722c607a51070e959f88b7820834/apps/majordomus-cli/tests/cli_examples.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/cli_examples.rs</a>, which runs the command against the built executable and asserts what the page states.</p>
+    <p class="mt-1 text-xs text-body-subtle">What it asserts: exits 10.</p><p class="mt-1 text-xs text-body-subtle">Tested by <a href="https://github.com/korczis/prismatic-majordomus/blob/76a7a2340ab76fcef5de24d379abfeaf93000636/apps/majordomus-cli/tests/cli_examples.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/tests/cli_examples.rs</a>, which runs the command against the built executable and asserts what the page states.</p>
   </li></ul>
 
     <h2 class="mt-10 text-lg font-semibold tracking-tight text-heading">Where this comes from</h2>
-    <p class="mt-2 break-words text-sm text-body">Declared once in <a href="https://github.com/korczis/prismatic-majordomus/blob/3ede593c0eaf722c607a51070e959f88b7820834/apps/majordomus-cli/src/cli.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/src/cli.rs</a>: clap for the structure, typed Rust metadata beside it for the examples. This page, <code class="font-mono">majordomus intent preflight --help</code>, <a href="https://github.com/korczis/prismatic-majordomus/blob/3ede593c0eaf722c607a51070e959f88b7820834/docs/generated/cli.md" class="break-all font-mono text-fg-brand underline inline-block py-1">docs/generated/cli.md</a> and <a href="https://github.com/korczis/prismatic-majordomus/blob/3ede593c0eaf722c607a51070e959f88b7820834/docs/generated/cli.json" class="break-all font-mono text-fg-brand underline inline-block py-1">docs/generated/cli.json</a> are projections of that one declaration.</p>
+    <p class="mt-2 break-words text-sm text-body">Declared once in <a href="https://github.com/korczis/prismatic-majordomus/blob/76a7a2340ab76fcef5de24d379abfeaf93000636/apps/majordomus-cli/src/cli.rs" class="break-all font-mono text-fg-brand underline inline-block py-1">apps/majordomus-cli/src/cli.rs</a>: clap for the structure, typed Rust metadata beside it for the examples. This page, <code class="font-mono">majordomus intent preflight --help</code>, <a href="https://github.com/korczis/prismatic-majordomus/blob/76a7a2340ab76fcef5de24d379abfeaf93000636/docs/generated/cli.md" class="break-all font-mono text-fg-brand underline inline-block py-1">docs/generated/cli.md</a> and <a href="https://github.com/korczis/prismatic-majordomus/blob/76a7a2340ab76fcef5de24d379abfeaf93000636/docs/generated/cli.json" class="break-all font-mono text-fg-brand underline inline-block py-1">docs/generated/cli.json</a> are projections of that one declaration.</p>
     <p class="mt-2 text-sm text-body">The whole command line on one page: <a href="https://majordomus.dev/registry/cli/" class="text-fg-brand underline">the registry's command-line page</a>. The task lifecycle (<code class="font-mono">init</code>, <code class="font-mono">start</code>, <code class="font-mono">finish</code>, <code class="font-mono">doctor</code>, ...) belongs to the <em>shell</em> tool, a different program: <a href="https://majordomus.dev/commands/" class="text-fg-brand underline">Commands</a> and its <a href="https://majordomus.dev/docs/cli-specification/" class="text-fg-brand underline">specification</a>.</p>
   </div>
 </div>
@@ -277,7 +277,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.14.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3ede593c0eaf722c607a51070e959f88b7820834" class="font-mono underline">3ede593</a> · inputs <span class="font-mono">16e742a839a4</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.15.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/76a7a2340ab76fcef5de24d379abfeaf93000636" class="font-mono underline">76a7a23</a> · inputs <span class="font-mono">f3e68aed5d9c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

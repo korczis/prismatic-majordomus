@@ -1240,160 +1240,162 @@
 <a href=#1240 id=1240 data-nosnippet>1240</a>        <span class="string">"features"</span>: list[<span class="string">"counts"</span>][<span class="string">"features"</span>],
 <a href=#1241 id=1241 data-nosnippet>1241</a>        <span class="comment">// the domains a reader is shown: stable, and named by a stable feature
 <a href=#1242 id=1242 data-nosnippet>1242</a>        </span><span class="string">"domains"</span>: ctx.product.public_domains().iter().filter(|d| !d.features.is_empty()).count(),
-<a href=#1243 id=1243 data-nosnippet>1243</a>        <span class="string">"web_surfaces"</span>: ctx.web.surfaces.len(),
-<a href=#1244 id=1244 data-nosnippet>1244</a>    });
-<a href=#1245 id=1245 data-nosnippet>1245</a>
-<a href=#1246 id=1246 data-nosnippet>1246</a>    <span class="comment">// The doctrine the product rests on: every rule a public feature names, once, carrying the
-<a href=#1247 id=1247 data-nosnippet>1247</a>    // class and the enforcement the rule itself declares. Deduplicated here and not in a
-<a href=#1248 id=1248 data-nosnippet>1248</a>    // template, because which rules the product rests on is a fact of the model, and a page
-<a href=#1249 id=1249 data-nosnippet>1249</a>    // that had to work it out would be a page inferring domain structure.
-<a href=#1250 id=1250 data-nosnippet>1250</a>    </span><span class="kw">let </span><span class="kw-2">mut </span>by_rule: BTreeMap&lt;String, serde_json::Value&gt; = BTreeMap::new();
-<a href=#1251 id=1251 data-nosnippet>1251</a>    <span class="kw">for </span>f <span class="kw">in </span><span class="kw-2">&amp;</span>features {
-<a href=#1252 id=1252 data-nosnippet>1252</a>        <span class="kw">if </span>f[<span class="string">"status"</span>].as_str() == <span class="prelude-val">Some</span>(<span class="string">"draft"</span>) {
-<a href=#1253 id=1253 data-nosnippet>1253</a>            <span class="kw">continue</span>;
-<a href=#1254 id=1254 data-nosnippet>1254</a>        }
-<a href=#1255 id=1255 data-nosnippet>1255</a>        <span class="kw">for </span>r <span class="kw">in </span>f[<span class="string">"rule_refs"</span>].as_array().into_iter().flatten() {
-<a href=#1256 id=1256 data-nosnippet>1256</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(id) = r[<span class="string">"id"</span>].as_str() {
-<a href=#1257 id=1257 data-nosnippet>1257</a>                by_rule.entry(id.to_string()).or_insert_with(|| r.clone());
-<a href=#1258 id=1258 data-nosnippet>1258</a>            }
-<a href=#1259 id=1259 data-nosnippet>1259</a>        }
-<a href=#1260 id=1260 data-nosnippet>1260</a>    }
-<a href=#1261 id=1261 data-nosnippet>1261</a>    <span class="kw">let </span>rules: Vec&lt;serde_json::Value&gt; = by_rule.into_values().collect();
-<a href=#1262 id=1262 data-nosnippet>1262</a>
-<a href=#1263 id=1263 data-nosnippet>1263</a>    <span class="kw">let </span>cockpit_areas: Vec&lt;serde_json::Value&gt; = <span class="kw">crate</span>::cockpit::nav::areas()
-<a href=#1264 id=1264 data-nosnippet>1264</a>        .iter()
-<a href=#1265 id=1265 data-nosnippet>1265</a>        .map(|a| <span class="macro">serde_json::json!</span>({ <span class="string">"id"</span>: a.id, <span class="string">"title"</span>: a.label, <span class="string">"route"</span>: a.href }))
-<a href=#1266 id=1266 data-nosnippet>1266</a>        .collect();
-<a href=#1267 id=1267 data-nosnippet>1267</a>
-<a href=#1268 id=1268 data-nosnippet>1268</a>    <span class="comment">// What the recorded evidence says about each claim, from the one derivation of it
-<a href=#1269 id=1269 data-nosnippet>1269</a>    // (`majordomus evidence show`), so that a page can put the declared status beside the
-<a href=#1270 id=1270 data-nosnippet>1270</a>    // verdict and never render the first as the second.
-<a href=#1271 id=1271 data-nosnippet>1271</a>    </span><span class="kw">let </span>evidence = claim_evidence(<span class="kw-2">&amp;</span>run(<span class="kw-2">&amp;</span>[<span class="string">"evidence"</span>, <span class="string">"show"</span>], <span class="macro">serde_json::json!</span>({}))<span class="question-mark">?</span>);
-<a href=#1272 id=1272 data-nosnippet>1272</a>
-<a href=#1273 id=1273 data-nosnippet>1273</a>    <span class="kw">let </span>document = <span class="macro">serde_json::json!</span>({
-<a href=#1274 id=1274 data-nosnippet>1274</a>        <span class="string">"schema"</span>: PRODUCT_SCHEMA,
-<a href=#1275 id=1275 data-nosnippet>1275</a>        <span class="string">"generated"</span>: <span class="kw">crate</span>::generate::json_banner(PRODUCT_SOURCE),
-<a href=#1276 id=1276 data-nosnippet>1276</a>        <span class="string">"generator"</span>: { <span class="string">"id"</span>: <span class="string">"majordomus-cli"</span>, <span class="string">"version"</span>: <span class="kw">crate</span>::VERSION },
-<a href=#1277 id=1277 data-nosnippet>1277</a>        <span class="string">"fingerprint"</span>: list[<span class="string">"fingerprint"</span>],
-<a href=#1278 id=1278 data-nosnippet>1278</a>        <span class="string">"route"</span>: <span class="kw">crate</span>::product::ROUTE,
-<a href=#1279 id=1279 data-nosnippet>1279</a>        <span class="string">"domain_route"</span>: <span class="kw">crate</span>::product::DOMAIN_ROUTE,
-<a href=#1280 id=1280 data-nosnippet>1280</a>        <span class="string">"counts"</span>: list[<span class="string">"counts"</span>],
-<a href=#1281 id=1281 data-nosnippet>1281</a>        <span class="string">"surfaces"</span>: list[<span class="string">"surfaces"</span>],
-<a href=#1282 id=1282 data-nosnippet>1282</a>        <span class="string">"domains"</span>: domains,
-<a href=#1283 id=1283 data-nosnippet>1283</a>        <span class="string">"features"</span>: features,
-<a href=#1284 id=1284 data-nosnippet>1284</a>        <span class="string">"matrix"</span>: { <span class="string">"rows"</span>: matrix[<span class="string">"rows"</span>], <span class="string">"modules"</span>: matrix[<span class="string">"modules"</span>], <span class="string">"commands"</span>: matrix[<span class="string">"commands"</span>], <span class="string">"kinds"</span>: matrix[<span class="string">"kinds"</span>] },
-<a href=#1285 id=1285 data-nosnippet>1285</a>        <span class="string">"providers"</span>: providers[<span class="string">"providers"</span>],
-<a href=#1286 id=1286 data-nosnippet>1286</a>        <span class="string">"rules"</span>: rules,
-<a href=#1287 id=1287 data-nosnippet>1287</a>        <span class="string">"cockpit_areas"</span>: cockpit_areas,
-<a href=#1288 id=1288 data-nosnippet>1288</a>        <span class="string">"telemetry"</span>: telemetry,
-<a href=#1289 id=1289 data-nosnippet>1289</a>        <span class="string">"evidence"</span>: evidence,
-<a href=#1290 id=1290 data-nosnippet>1290</a>        <span class="string">"valid"</span>: validation[<span class="string">"valid"</span>],
-<a href=#1291 id=1291 data-nosnippet>1291</a>    });
-<a href=#1292 id=1292 data-nosnippet>1292</a>
-<a href=#1293 id=1293 data-nosnippet>1293</a>    graph_artifact(
-<a href=#1294 id=1294 data-nosnippet>1294</a>        ctx,
-<a href=#1295 id=1295 data-nosnippet>1295</a>        <span class="string">"product"</span>,
-<a href=#1296 id=1296 data-nosnippet>1296</a>        <span class="string">"product-graph.json"</span>,
-<a href=#1297 id=1297 data-nosnippet>1297</a>        <span class="string">"site-product-graph"</span>,
-<a href=#1298 id=1298 data-nosnippet>1298</a>        <span class="string">"the features, what they are made of, and the interfaces that follow, as the derived `product` graph"</span>,
-<a href=#1299 id=1299 data-nosnippet>1299</a>    )
-<a href=#1300 id=1300 data-nosnippet>1300</a>    .map(|graph| {
-<a href=#1301 id=1301 data-nosnippet>1301</a>        <span class="macro">vec!</span>[
-<a href=#1302 id=1302 data-nosnippet>1302</a>            <span class="kw">crate</span>::generate::Artifact::verbatim(
-<a href=#1303 id=1303 data-nosnippet>1303</a>                <span class="macro">format!</span>(<span class="string">"{}/product.json"</span>, <span class="kw">crate</span>::generate::SITE_DATA_DIR),
-<a href=#1304 id=1304 data-nosnippet>1304</a>                <span class="string">"site-product"</span>,
-<a href=#1305 id=1305 data-nosnippet>1305</a>                <span class="kw">crate</span>::generate::ArtifactFormat::Json,
-<a href=#1306 id=1306 data-nosnippet>1306</a>                <span class="prelude-val">Some</span>(PRODUCT_SCHEMA.to_string()),
-<a href=#1307 id=1307 data-nosnippet>1307</a>                PRODUCT_SOURCE,
-<a href=#1308 id=1308 data-nosnippet>1308</a>                render_json(<span class="kw-2">&amp;</span>document),
-<a href=#1309 id=1309 data-nosnippet>1309</a>            ),
-<a href=#1310 id=1310 data-nosnippet>1310</a>            graph,
-<a href=#1311 id=1311 data-nosnippet>1311</a>        ]
-<a href=#1312 id=1312 data-nosnippet>1312</a>    })
-<a href=#1313 id=1313 data-nosnippet>1313</a>}
-<a href=#1314 id=1314 data-nosnippet>1314</a>
-<a href=#1315 id=1315 data-nosnippet>1315</a><span class="attr">#[cfg(test)]
-<a href=#1316 id=1316 data-nosnippet>1316</a></span><span class="kw">mod </span>tests {
-<a href=#1317 id=1317 data-nosnippet>1317</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#1318 id=1318 data-nosnippet>1318</a>
-<a href=#1319 id=1319 data-nosnippet>1319</a>    <span class="attr">#[test]
-<a href=#1320 id=1320 data-nosnippet>1320</a>    </span><span class="kw">fn </span>a_committed_graph_is_derived_whole_or_refused() {
-<a href=#1321 id=1321 data-nosnippet>1321</a>        <span class="kw">let </span>repo = <span class="kw">crate</span>::synthetic::SyntheticRepository::small().unwrap();
-<a href=#1322 id=1322 data-nosnippet>1322</a>        <span class="kw">let </span>ctx = repo.context().unwrap();
-<a href=#1323 id=1323 data-nosnippet>1323</a>        <span class="kw">let </span>why = graph_artifact(<span class="kw-2">&amp;</span>ctx, <span class="string">"why"</span>, <span class="string">"w.json"</span>, <span class="string">"w"</span>, <span class="string">"the why graph"</span>).unwrap();
-<a href=#1324 id=1324 data-nosnippet>1324</a>        <span class="macro">assert_eq!</span>(
-<a href=#1325 id=1325 data-nosnippet>1325</a>            why.path,
-<a href=#1326 id=1326 data-nosnippet>1326</a>            <span class="macro">format!</span>(<span class="string">"{}/w.json"</span>, <span class="kw">crate</span>::generate::SITE_DATA_DIR)
-<a href=#1327 id=1327 data-nosnippet>1327</a>        );
-<a href=#1328 id=1328 data-nosnippet>1328</a>        <span class="kw">let </span>refused = graph_artifact(<span class="kw-2">&amp;</span>ctx, <span class="string">"no-such-graph"</span>, <span class="string">"n.json"</span>, <span class="string">"n"</span>, <span class="string">"nothing"</span>)
-<a href=#1329 id=1329 data-nosnippet>1329</a>            .map(|<span class="kw">_</span>| ())
-<a href=#1330 id=1330 data-nosnippet>1330</a>            .unwrap_err()
-<a href=#1331 id=1331 data-nosnippet>1331</a>            .to_string();
-<a href=#1332 id=1332 data-nosnippet>1332</a>        <span class="macro">assert!</span>(
-<a href=#1333 id=1333 data-nosnippet>1333</a>            refused.contains(<span class="string">"derives no `no-such-graph` graph"</span>),
-<a href=#1334 id=1334 data-nosnippet>1334</a>            <span class="string">"{refused}"
-<a href=#1335 id=1335 data-nosnippet>1335</a>        </span>);
-<a href=#1336 id=1336 data-nosnippet>1336</a>    }
-<a href=#1337 id=1337 data-nosnippet>1337</a>
-<a href=#1338 id=1338 data-nosnippet>1338</a>    <span class="doccomment">/// A repository holding the crate at the path this repository's crate lives, with the
-<a href=#1339 id=1339 data-nosnippet>1339</a>    /// given sources under `src/`.
-<a href=#1340 id=1340 data-nosnippet>1340</a>    </span><span class="kw">fn </span>repository_with(files: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str)]) -&gt; tempfile::TempDir {
-<a href=#1341 id=1341 data-nosnippet>1341</a>        <span class="kw">let </span>root = tempfile::tempdir().unwrap();
-<a href=#1342 id=1342 data-nosnippet>1342</a>        <span class="kw">let </span>dir = root.path().join(<span class="kw">crate</span>::capability::model::CRATE_DIR);
-<a href=#1343 id=1343 data-nosnippet>1343</a>        std::fs::create_dir_all(dir.join(<span class="string">"src"</span>)).unwrap();
-<a href=#1344 id=1344 data-nosnippet>1344</a>        std::fs::write(
-<a href=#1345 id=1345 data-nosnippet>1345</a>            dir.join(<span class="string">"Cargo.toml"</span>),
-<a href=#1346 id=1346 data-nosnippet>1346</a>            <span class="string">"[package]\nname = \"majordomus-cli\"\nversion = \"0.1.0\"\n"</span>,
-<a href=#1347 id=1347 data-nosnippet>1347</a>        )
-<a href=#1348 id=1348 data-nosnippet>1348</a>        .unwrap();
-<a href=#1349 id=1349 data-nosnippet>1349</a>        <span class="kw">for </span>(path, text) <span class="kw">in </span>files {
-<a href=#1350 id=1350 data-nosnippet>1350</a>            <span class="kw">let </span>p = dir.join(<span class="string">"src"</span>).join(path);
-<a href=#1351 id=1351 data-nosnippet>1351</a>            std::fs::create_dir_all(p.parent().unwrap()).unwrap();
-<a href=#1352 id=1352 data-nosnippet>1352</a>            std::fs::write(p, text).unwrap();
-<a href=#1353 id=1353 data-nosnippet>1353</a>        }
-<a href=#1354 id=1354 data-nosnippet>1354</a>        root
-<a href=#1355 id=1355 data-nosnippet>1355</a>    }
-<a href=#1356 id=1356 data-nosnippet>1356</a>
-<a href=#1357 id=1357 data-nosnippet>1357</a>    <span class="attr">#[test]
-<a href=#1358 id=1358 data-nosnippet>1358</a>    </span><span class="kw">fn </span>a_module_links_the_reference_page_only_when_the_crate_exports_it() {
-<a href=#1359 id=1359 data-nosnippet>1359</a>        <span class="kw">let </span>repo = repository_with(<span class="kw-2">&amp;</span>[
-<a href=#1360 id=1360 data-nosnippet>1360</a>            (<span class="string">"lib.rs"</span>, <span class="string">"//! Root.\npub mod capability;\n"</span>),
-<a href=#1361 id=1361 data-nosnippet>1361</a>            (<span class="string">"capability/mod.rs"</span>, <span class="string">"//! Capabilities.\npub mod builtin;\n"</span>),
-<a href=#1362 id=1362 data-nosnippet>1362</a>            (
-<a href=#1363 id=1363 data-nosnippet>1363</a>                <span class="string">"capability/builtin/mod.rs"</span>,
-<a href=#1364 id=1364 data-nosnippet>1364</a>                <span class="string">"//! Builtin.\npub mod open;\npub(crate) mod crated;\nmod closed;\n"</span>,
-<a href=#1365 id=1365 data-nosnippet>1365</a>            ),
-<a href=#1366 id=1366 data-nosnippet>1366</a>            (<span class="string">"capability/builtin/open.rs"</span>, <span class="string">"//! Open.\n"</span>),
-<a href=#1367 id=1367 data-nosnippet>1367</a>            (<span class="string">"capability/builtin/crated.rs"</span>, <span class="string">"//! Crate-visible.\n"</span>),
-<a href=#1368 id=1368 data-nosnippet>1368</a>            (<span class="string">"capability/builtin/closed.rs"</span>, <span class="string">"//! Private.\n"</span>),
-<a href=#1369 id=1369 data-nosnippet>1369</a>        ]);
-<a href=#1370 id=1370 data-nosnippet>1370</a>        <span class="kw">let </span>pages = reference_pages(repo.path()).unwrap();
-<a href=#1371 id=1371 data-nosnippet>1371</a>        <span class="comment">// a module the crate exports is linked at the page rustdoc documents it on, under the
-<a href=#1372 id=1372 data-nosnippet>1372</a>        // surface the topology publishes the reference as
-<a href=#1373 id=1373 data-nosnippet>1373</a>        </span><span class="kw">let </span>open = <span class="kw-2">&amp;</span>pages[<span class="string">"majordomus_cli::capability::builtin::open"</span>];
-<a href=#1374 id=1374 data-nosnippet>1374</a>        <span class="macro">assert_eq!</span>(
-<a href=#1375 id=1375 data-nosnippet>1375</a>            open.path,
-<a href=#1376 id=1376 data-nosnippet>1376</a>            <span class="string">"majordomus_cli/capability/builtin/open/index.html"
-<a href=#1377 id=1377 data-nosnippet>1377</a>        </span>);
-<a href=#1378 id=1378 data-nosnippet>1378</a>        <span class="macro">assert_eq!</span>(open.module, <span class="string">"majordomus_cli::capability::builtin::open"</span>);
-<a href=#1379 id=1379 data-nosnippet>1379</a>        <span class="macro">assert_eq!</span>(open.surface, <span class="kw">crate</span>::web::discover::RUSTDOC);
-<a href=#1380 id=1380 data-nosnippet>1380</a>        <span class="comment">// one rustdoc gives no page is never linked: `pub(crate)` and private alike
-<a href=#1381 id=1381 data-nosnippet>1381</a>        </span><span class="macro">assert!</span>(!pages.contains_key(<span class="string">"majordomus_cli::capability::builtin::crated"</span>));
-<a href=#1382 id=1382 data-nosnippet>1382</a>        <span class="macro">assert!</span>(!pages.contains_key(<span class="string">"majordomus_cli::capability::builtin::closed"</span>));
-<a href=#1383 id=1383 data-nosnippet>1383</a>
-<a href=#1384 id=1384 data-nosnippet>1384</a>        <span class="comment">// a repository without the crate has no reference and links nothing
-<a href=#1385 id=1385 data-nosnippet>1385</a>        </span><span class="kw">let </span>bare = tempfile::tempdir().unwrap();
-<a href=#1386 id=1386 data-nosnippet>1386</a>        <span class="macro">assert!</span>(reference_pages(bare.path()).unwrap().is_empty());
-<a href=#1387 id=1387 data-nosnippet>1387</a>    }
-<a href=#1388 id=1388 data-nosnippet>1388</a>
-<a href=#1389 id=1389 data-nosnippet>1389</a>    <span class="attr">#[test]
-<a href=#1390 id=1390 data-nosnippet>1390</a>    </span><span class="kw">fn </span>a_crate_that_cannot_be_read_is_an_error_and_never_an_empty_mapping() {
-<a href=#1391 id=1391 data-nosnippet>1391</a>        <span class="comment">// half a crate would drop modules without saying so
-<a href=#1392 id=1392 data-nosnippet>1392</a>        </span><span class="kw">let </span>repo = repository_with(<span class="kw-2">&amp;</span>[
-<a href=#1393 id=1393 data-nosnippet>1393</a>            (<span class="string">"lib.rs"</span>, <span class="string">"//! Root.\npub mod broken;\n"</span>),
-<a href=#1394 id=1394 data-nosnippet>1394</a>            (<span class="string">"broken.rs"</span>, <span class="string">"pub fn ("</span>),
-<a href=#1395 id=1395 data-nosnippet>1395</a>        ]);
-<a href=#1396 id=1396 data-nosnippet>1396</a>        <span class="macro">assert!</span>(reference_pages(repo.path()).is_err());
-<a href=#1397 id=1397 data-nosnippet>1397</a>    }
-<a href=#1398 id=1398 data-nosnippet>1398</a>}
+<a href=#1243 id=1243 data-nosnippet>1243</a>        <span class="comment">// what every checkout has, as web.json lists it: a report a producer wrote here is
+<a href=#1244 id=1244 data-nosnippet>1244</a>        // served here and counted nowhere, or the count would follow who ran the suite
+<a href=#1245 id=1245 data-nosnippet>1245</a>        </span><span class="string">"web_surfaces"</span>: <span class="kw">crate</span>::generate::surfaces_every_checkout_has(<span class="kw-2">&amp;</span>ctx.web).count(),
+<a href=#1246 id=1246 data-nosnippet>1246</a>    });
+<a href=#1247 id=1247 data-nosnippet>1247</a>
+<a href=#1248 id=1248 data-nosnippet>1248</a>    <span class="comment">// The doctrine the product rests on: every rule a public feature names, once, carrying the
+<a href=#1249 id=1249 data-nosnippet>1249</a>    // class and the enforcement the rule itself declares. Deduplicated here and not in a
+<a href=#1250 id=1250 data-nosnippet>1250</a>    // template, because which rules the product rests on is a fact of the model, and a page
+<a href=#1251 id=1251 data-nosnippet>1251</a>    // that had to work it out would be a page inferring domain structure.
+<a href=#1252 id=1252 data-nosnippet>1252</a>    </span><span class="kw">let </span><span class="kw-2">mut </span>by_rule: BTreeMap&lt;String, serde_json::Value&gt; = BTreeMap::new();
+<a href=#1253 id=1253 data-nosnippet>1253</a>    <span class="kw">for </span>f <span class="kw">in </span><span class="kw-2">&amp;</span>features {
+<a href=#1254 id=1254 data-nosnippet>1254</a>        <span class="kw">if </span>f[<span class="string">"status"</span>].as_str() == <span class="prelude-val">Some</span>(<span class="string">"draft"</span>) {
+<a href=#1255 id=1255 data-nosnippet>1255</a>            <span class="kw">continue</span>;
+<a href=#1256 id=1256 data-nosnippet>1256</a>        }
+<a href=#1257 id=1257 data-nosnippet>1257</a>        <span class="kw">for </span>r <span class="kw">in </span>f[<span class="string">"rule_refs"</span>].as_array().into_iter().flatten() {
+<a href=#1258 id=1258 data-nosnippet>1258</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(id) = r[<span class="string">"id"</span>].as_str() {
+<a href=#1259 id=1259 data-nosnippet>1259</a>                by_rule.entry(id.to_string()).or_insert_with(|| r.clone());
+<a href=#1260 id=1260 data-nosnippet>1260</a>            }
+<a href=#1261 id=1261 data-nosnippet>1261</a>        }
+<a href=#1262 id=1262 data-nosnippet>1262</a>    }
+<a href=#1263 id=1263 data-nosnippet>1263</a>    <span class="kw">let </span>rules: Vec&lt;serde_json::Value&gt; = by_rule.into_values().collect();
+<a href=#1264 id=1264 data-nosnippet>1264</a>
+<a href=#1265 id=1265 data-nosnippet>1265</a>    <span class="kw">let </span>cockpit_areas: Vec&lt;serde_json::Value&gt; = <span class="kw">crate</span>::cockpit::nav::areas()
+<a href=#1266 id=1266 data-nosnippet>1266</a>        .iter()
+<a href=#1267 id=1267 data-nosnippet>1267</a>        .map(|a| <span class="macro">serde_json::json!</span>({ <span class="string">"id"</span>: a.id, <span class="string">"title"</span>: a.label, <span class="string">"route"</span>: a.href }))
+<a href=#1268 id=1268 data-nosnippet>1268</a>        .collect();
+<a href=#1269 id=1269 data-nosnippet>1269</a>
+<a href=#1270 id=1270 data-nosnippet>1270</a>    <span class="comment">// What the recorded evidence says about each claim, from the one derivation of it
+<a href=#1271 id=1271 data-nosnippet>1271</a>    // (`majordomus evidence show`), so that a page can put the declared status beside the
+<a href=#1272 id=1272 data-nosnippet>1272</a>    // verdict and never render the first as the second.
+<a href=#1273 id=1273 data-nosnippet>1273</a>    </span><span class="kw">let </span>evidence = claim_evidence(<span class="kw-2">&amp;</span>run(<span class="kw-2">&amp;</span>[<span class="string">"evidence"</span>, <span class="string">"show"</span>], <span class="macro">serde_json::json!</span>({}))<span class="question-mark">?</span>);
+<a href=#1274 id=1274 data-nosnippet>1274</a>
+<a href=#1275 id=1275 data-nosnippet>1275</a>    <span class="kw">let </span>document = <span class="macro">serde_json::json!</span>({
+<a href=#1276 id=1276 data-nosnippet>1276</a>        <span class="string">"schema"</span>: PRODUCT_SCHEMA,
+<a href=#1277 id=1277 data-nosnippet>1277</a>        <span class="string">"generated"</span>: <span class="kw">crate</span>::generate::json_banner(PRODUCT_SOURCE),
+<a href=#1278 id=1278 data-nosnippet>1278</a>        <span class="string">"generator"</span>: { <span class="string">"id"</span>: <span class="string">"majordomus-cli"</span>, <span class="string">"version"</span>: <span class="kw">crate</span>::VERSION },
+<a href=#1279 id=1279 data-nosnippet>1279</a>        <span class="string">"fingerprint"</span>: list[<span class="string">"fingerprint"</span>],
+<a href=#1280 id=1280 data-nosnippet>1280</a>        <span class="string">"route"</span>: <span class="kw">crate</span>::product::ROUTE,
+<a href=#1281 id=1281 data-nosnippet>1281</a>        <span class="string">"domain_route"</span>: <span class="kw">crate</span>::product::DOMAIN_ROUTE,
+<a href=#1282 id=1282 data-nosnippet>1282</a>        <span class="string">"counts"</span>: list[<span class="string">"counts"</span>],
+<a href=#1283 id=1283 data-nosnippet>1283</a>        <span class="string">"surfaces"</span>: list[<span class="string">"surfaces"</span>],
+<a href=#1284 id=1284 data-nosnippet>1284</a>        <span class="string">"domains"</span>: domains,
+<a href=#1285 id=1285 data-nosnippet>1285</a>        <span class="string">"features"</span>: features,
+<a href=#1286 id=1286 data-nosnippet>1286</a>        <span class="string">"matrix"</span>: { <span class="string">"rows"</span>: matrix[<span class="string">"rows"</span>], <span class="string">"modules"</span>: matrix[<span class="string">"modules"</span>], <span class="string">"commands"</span>: matrix[<span class="string">"commands"</span>], <span class="string">"kinds"</span>: matrix[<span class="string">"kinds"</span>] },
+<a href=#1287 id=1287 data-nosnippet>1287</a>        <span class="string">"providers"</span>: providers[<span class="string">"providers"</span>],
+<a href=#1288 id=1288 data-nosnippet>1288</a>        <span class="string">"rules"</span>: rules,
+<a href=#1289 id=1289 data-nosnippet>1289</a>        <span class="string">"cockpit_areas"</span>: cockpit_areas,
+<a href=#1290 id=1290 data-nosnippet>1290</a>        <span class="string">"telemetry"</span>: telemetry,
+<a href=#1291 id=1291 data-nosnippet>1291</a>        <span class="string">"evidence"</span>: evidence,
+<a href=#1292 id=1292 data-nosnippet>1292</a>        <span class="string">"valid"</span>: validation[<span class="string">"valid"</span>],
+<a href=#1293 id=1293 data-nosnippet>1293</a>    });
+<a href=#1294 id=1294 data-nosnippet>1294</a>
+<a href=#1295 id=1295 data-nosnippet>1295</a>    graph_artifact(
+<a href=#1296 id=1296 data-nosnippet>1296</a>        ctx,
+<a href=#1297 id=1297 data-nosnippet>1297</a>        <span class="string">"product"</span>,
+<a href=#1298 id=1298 data-nosnippet>1298</a>        <span class="string">"product-graph.json"</span>,
+<a href=#1299 id=1299 data-nosnippet>1299</a>        <span class="string">"site-product-graph"</span>,
+<a href=#1300 id=1300 data-nosnippet>1300</a>        <span class="string">"the features, what they are made of, and the interfaces that follow, as the derived `product` graph"</span>,
+<a href=#1301 id=1301 data-nosnippet>1301</a>    )
+<a href=#1302 id=1302 data-nosnippet>1302</a>    .map(|graph| {
+<a href=#1303 id=1303 data-nosnippet>1303</a>        <span class="macro">vec!</span>[
+<a href=#1304 id=1304 data-nosnippet>1304</a>            <span class="kw">crate</span>::generate::Artifact::verbatim(
+<a href=#1305 id=1305 data-nosnippet>1305</a>                <span class="macro">format!</span>(<span class="string">"{}/product.json"</span>, <span class="kw">crate</span>::generate::SITE_DATA_DIR),
+<a href=#1306 id=1306 data-nosnippet>1306</a>                <span class="string">"site-product"</span>,
+<a href=#1307 id=1307 data-nosnippet>1307</a>                <span class="kw">crate</span>::generate::ArtifactFormat::Json,
+<a href=#1308 id=1308 data-nosnippet>1308</a>                <span class="prelude-val">Some</span>(PRODUCT_SCHEMA.to_string()),
+<a href=#1309 id=1309 data-nosnippet>1309</a>                PRODUCT_SOURCE,
+<a href=#1310 id=1310 data-nosnippet>1310</a>                render_json(<span class="kw-2">&amp;</span>document),
+<a href=#1311 id=1311 data-nosnippet>1311</a>            ),
+<a href=#1312 id=1312 data-nosnippet>1312</a>            graph,
+<a href=#1313 id=1313 data-nosnippet>1313</a>        ]
+<a href=#1314 id=1314 data-nosnippet>1314</a>    })
+<a href=#1315 id=1315 data-nosnippet>1315</a>}
+<a href=#1316 id=1316 data-nosnippet>1316</a>
+<a href=#1317 id=1317 data-nosnippet>1317</a><span class="attr">#[cfg(test)]
+<a href=#1318 id=1318 data-nosnippet>1318</a></span><span class="kw">mod </span>tests {
+<a href=#1319 id=1319 data-nosnippet>1319</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#1320 id=1320 data-nosnippet>1320</a>
+<a href=#1321 id=1321 data-nosnippet>1321</a>    <span class="attr">#[test]
+<a href=#1322 id=1322 data-nosnippet>1322</a>    </span><span class="kw">fn </span>a_committed_graph_is_derived_whole_or_refused() {
+<a href=#1323 id=1323 data-nosnippet>1323</a>        <span class="kw">let </span>repo = <span class="kw">crate</span>::synthetic::SyntheticRepository::small().unwrap();
+<a href=#1324 id=1324 data-nosnippet>1324</a>        <span class="kw">let </span>ctx = repo.context().unwrap();
+<a href=#1325 id=1325 data-nosnippet>1325</a>        <span class="kw">let </span>why = graph_artifact(<span class="kw-2">&amp;</span>ctx, <span class="string">"why"</span>, <span class="string">"w.json"</span>, <span class="string">"w"</span>, <span class="string">"the why graph"</span>).unwrap();
+<a href=#1326 id=1326 data-nosnippet>1326</a>        <span class="macro">assert_eq!</span>(
+<a href=#1327 id=1327 data-nosnippet>1327</a>            why.path,
+<a href=#1328 id=1328 data-nosnippet>1328</a>            <span class="macro">format!</span>(<span class="string">"{}/w.json"</span>, <span class="kw">crate</span>::generate::SITE_DATA_DIR)
+<a href=#1329 id=1329 data-nosnippet>1329</a>        );
+<a href=#1330 id=1330 data-nosnippet>1330</a>        <span class="kw">let </span>refused = graph_artifact(<span class="kw-2">&amp;</span>ctx, <span class="string">"no-such-graph"</span>, <span class="string">"n.json"</span>, <span class="string">"n"</span>, <span class="string">"nothing"</span>)
+<a href=#1331 id=1331 data-nosnippet>1331</a>            .map(|<span class="kw">_</span>| ())
+<a href=#1332 id=1332 data-nosnippet>1332</a>            .unwrap_err()
+<a href=#1333 id=1333 data-nosnippet>1333</a>            .to_string();
+<a href=#1334 id=1334 data-nosnippet>1334</a>        <span class="macro">assert!</span>(
+<a href=#1335 id=1335 data-nosnippet>1335</a>            refused.contains(<span class="string">"derives no `no-such-graph` graph"</span>),
+<a href=#1336 id=1336 data-nosnippet>1336</a>            <span class="string">"{refused}"
+<a href=#1337 id=1337 data-nosnippet>1337</a>        </span>);
+<a href=#1338 id=1338 data-nosnippet>1338</a>    }
+<a href=#1339 id=1339 data-nosnippet>1339</a>
+<a href=#1340 id=1340 data-nosnippet>1340</a>    <span class="doccomment">/// A repository holding the crate at the path this repository's crate lives, with the
+<a href=#1341 id=1341 data-nosnippet>1341</a>    /// given sources under `src/`.
+<a href=#1342 id=1342 data-nosnippet>1342</a>    </span><span class="kw">fn </span>repository_with(files: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str)]) -&gt; tempfile::TempDir {
+<a href=#1343 id=1343 data-nosnippet>1343</a>        <span class="kw">let </span>root = tempfile::tempdir().unwrap();
+<a href=#1344 id=1344 data-nosnippet>1344</a>        <span class="kw">let </span>dir = root.path().join(<span class="kw">crate</span>::capability::model::CRATE_DIR);
+<a href=#1345 id=1345 data-nosnippet>1345</a>        std::fs::create_dir_all(dir.join(<span class="string">"src"</span>)).unwrap();
+<a href=#1346 id=1346 data-nosnippet>1346</a>        std::fs::write(
+<a href=#1347 id=1347 data-nosnippet>1347</a>            dir.join(<span class="string">"Cargo.toml"</span>),
+<a href=#1348 id=1348 data-nosnippet>1348</a>            <span class="string">"[package]\nname = \"majordomus-cli\"\nversion = \"0.1.0\"\n"</span>,
+<a href=#1349 id=1349 data-nosnippet>1349</a>        )
+<a href=#1350 id=1350 data-nosnippet>1350</a>        .unwrap();
+<a href=#1351 id=1351 data-nosnippet>1351</a>        <span class="kw">for </span>(path, text) <span class="kw">in </span>files {
+<a href=#1352 id=1352 data-nosnippet>1352</a>            <span class="kw">let </span>p = dir.join(<span class="string">"src"</span>).join(path);
+<a href=#1353 id=1353 data-nosnippet>1353</a>            std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+<a href=#1354 id=1354 data-nosnippet>1354</a>            std::fs::write(p, text).unwrap();
+<a href=#1355 id=1355 data-nosnippet>1355</a>        }
+<a href=#1356 id=1356 data-nosnippet>1356</a>        root
+<a href=#1357 id=1357 data-nosnippet>1357</a>    }
+<a href=#1358 id=1358 data-nosnippet>1358</a>
+<a href=#1359 id=1359 data-nosnippet>1359</a>    <span class="attr">#[test]
+<a href=#1360 id=1360 data-nosnippet>1360</a>    </span><span class="kw">fn </span>a_module_links_the_reference_page_only_when_the_crate_exports_it() {
+<a href=#1361 id=1361 data-nosnippet>1361</a>        <span class="kw">let </span>repo = repository_with(<span class="kw-2">&amp;</span>[
+<a href=#1362 id=1362 data-nosnippet>1362</a>            (<span class="string">"lib.rs"</span>, <span class="string">"//! Root.\npub mod capability;\n"</span>),
+<a href=#1363 id=1363 data-nosnippet>1363</a>            (<span class="string">"capability/mod.rs"</span>, <span class="string">"//! Capabilities.\npub mod builtin;\n"</span>),
+<a href=#1364 id=1364 data-nosnippet>1364</a>            (
+<a href=#1365 id=1365 data-nosnippet>1365</a>                <span class="string">"capability/builtin/mod.rs"</span>,
+<a href=#1366 id=1366 data-nosnippet>1366</a>                <span class="string">"//! Builtin.\npub mod open;\npub(crate) mod crated;\nmod closed;\n"</span>,
+<a href=#1367 id=1367 data-nosnippet>1367</a>            ),
+<a href=#1368 id=1368 data-nosnippet>1368</a>            (<span class="string">"capability/builtin/open.rs"</span>, <span class="string">"//! Open.\n"</span>),
+<a href=#1369 id=1369 data-nosnippet>1369</a>            (<span class="string">"capability/builtin/crated.rs"</span>, <span class="string">"//! Crate-visible.\n"</span>),
+<a href=#1370 id=1370 data-nosnippet>1370</a>            (<span class="string">"capability/builtin/closed.rs"</span>, <span class="string">"//! Private.\n"</span>),
+<a href=#1371 id=1371 data-nosnippet>1371</a>        ]);
+<a href=#1372 id=1372 data-nosnippet>1372</a>        <span class="kw">let </span>pages = reference_pages(repo.path()).unwrap();
+<a href=#1373 id=1373 data-nosnippet>1373</a>        <span class="comment">// a module the crate exports is linked at the page rustdoc documents it on, under the
+<a href=#1374 id=1374 data-nosnippet>1374</a>        // surface the topology publishes the reference as
+<a href=#1375 id=1375 data-nosnippet>1375</a>        </span><span class="kw">let </span>open = <span class="kw-2">&amp;</span>pages[<span class="string">"majordomus_cli::capability::builtin::open"</span>];
+<a href=#1376 id=1376 data-nosnippet>1376</a>        <span class="macro">assert_eq!</span>(
+<a href=#1377 id=1377 data-nosnippet>1377</a>            open.path,
+<a href=#1378 id=1378 data-nosnippet>1378</a>            <span class="string">"majordomus_cli/capability/builtin/open/index.html"
+<a href=#1379 id=1379 data-nosnippet>1379</a>        </span>);
+<a href=#1380 id=1380 data-nosnippet>1380</a>        <span class="macro">assert_eq!</span>(open.module, <span class="string">"majordomus_cli::capability::builtin::open"</span>);
+<a href=#1381 id=1381 data-nosnippet>1381</a>        <span class="macro">assert_eq!</span>(open.surface, <span class="kw">crate</span>::web::discover::RUSTDOC);
+<a href=#1382 id=1382 data-nosnippet>1382</a>        <span class="comment">// one rustdoc gives no page is never linked: `pub(crate)` and private alike
+<a href=#1383 id=1383 data-nosnippet>1383</a>        </span><span class="macro">assert!</span>(!pages.contains_key(<span class="string">"majordomus_cli::capability::builtin::crated"</span>));
+<a href=#1384 id=1384 data-nosnippet>1384</a>        <span class="macro">assert!</span>(!pages.contains_key(<span class="string">"majordomus_cli::capability::builtin::closed"</span>));
+<a href=#1385 id=1385 data-nosnippet>1385</a>
+<a href=#1386 id=1386 data-nosnippet>1386</a>        <span class="comment">// a repository without the crate has no reference and links nothing
+<a href=#1387 id=1387 data-nosnippet>1387</a>        </span><span class="kw">let </span>bare = tempfile::tempdir().unwrap();
+<a href=#1388 id=1388 data-nosnippet>1388</a>        <span class="macro">assert!</span>(reference_pages(bare.path()).unwrap().is_empty());
+<a href=#1389 id=1389 data-nosnippet>1389</a>    }
+<a href=#1390 id=1390 data-nosnippet>1390</a>
+<a href=#1391 id=1391 data-nosnippet>1391</a>    <span class="attr">#[test]
+<a href=#1392 id=1392 data-nosnippet>1392</a>    </span><span class="kw">fn </span>a_crate_that_cannot_be_read_is_an_error_and_never_an_empty_mapping() {
+<a href=#1393 id=1393 data-nosnippet>1393</a>        <span class="comment">// half a crate would drop modules without saying so
+<a href=#1394 id=1394 data-nosnippet>1394</a>        </span><span class="kw">let </span>repo = repository_with(<span class="kw-2">&amp;</span>[
+<a href=#1395 id=1395 data-nosnippet>1395</a>            (<span class="string">"lib.rs"</span>, <span class="string">"//! Root.\npub mod broken;\n"</span>),
+<a href=#1396 id=1396 data-nosnippet>1396</a>            (<span class="string">"broken.rs"</span>, <span class="string">"pub fn ("</span>),
+<a href=#1397 id=1397 data-nosnippet>1397</a>        ]);
+<a href=#1398 id=1398 data-nosnippet>1398</a>        <span class="macro">assert!</span>(reference_pages(repo.path()).is_err());
+<a href=#1399 id=1399 data-nosnippet>1399</a>    }
+<a href=#1400 id=1400 data-nosnippet>1400</a>}
 </code></pre></div></section></main></body></html>

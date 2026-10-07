@@ -29,7 +29,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.14.0 -->
+     Generator: majordomus-cli 0.15.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -273,7 +273,7 @@ the argument.</p>
             <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">1 / 6 &middot; capture</span>
             <span class="mt-1 text-base font-semibold tracking-tight text-heading">Intent capture</span>
             <span class="mt-1 text-sm leading-relaxed text-body">The statement, and what would settle it.</span><span class="mt-2 font-mono text-xs leading-relaxed text-body">desired outcomes · constraints · invariants · acceptance criteria · provenance</span>
-            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">here today: not built</span>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">here today: partly: the intent record, written by hand</span>
           </li>
           <li class="flex min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4">
             <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">2 / 6 &middot; discover</span>
@@ -285,7 +285,7 @@ the argument.</p>
             <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">3 / 6 &middot; resolve</span>
             <span class="mt-1 text-base font-semibold tracking-tight text-heading">Plan</span>
             <span class="mt-1 text-sm leading-relaxed text-body">Ambiguity named, impact derived, strategy chosen against the architecture.</span><span class="mt-2 font-mono text-xs leading-relaxed text-body">ambiguity detection · impact analysis · architectural constraints · capability mapping · source, tests, docs, schemas · integration surfaces and deployment</span>
-            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">here today: not built; the authored work model is</span>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">here today: partly: coverage, gap and critique are judged; no plan is derived</span>
           </li>
           <li class="flex min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4">
             <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">4 / 6 &middot; execute</span>
@@ -297,19 +297,19 @@ the argument.</p>
             <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">5 / 6 &middot; verify</span>
             <span class="mt-1 text-base font-semibold tracking-tight text-heading">Verify</span>
             <span class="mt-1 text-sm leading-relaxed text-body">Against the acceptance criteria, not against the diff.</span><span class="mt-2 font-mono text-xs leading-relaxed text-body">acceptance criteria · invariants · regression checks · claims against implementation · runtime evidence</span>
-            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">here today: shipped, against the finish contract, not against criteria</span>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">here today: shipped: the finish contract, and each intent criterion from evidence; finish does not ask the intent</span>
           </li>
           <li class="flex min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4">
             <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">6 / 6 &middot; prove</span>
             <span class="mt-1 text-base font-semibold tracking-tight text-heading">Proof</span>
             <span class="mt-1 text-sm leading-relaxed text-body">An inspectable bundle, not the word success.</span><span class="mt-2 font-mono text-xs leading-relaxed text-body">requirements and changed code · tests and runtime checks · governance that applied · commits, artifacts, API and deployment state · remaining limitations</span>
-            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">here today: partly: evidence discharges obligations</span>
+            <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">here today: partly: evidence discharges obligations and settles criteria</span>
           </li>
         </ol>
         <div class="mt-5 rounded-base border border-brand-subtle bg-brand-softer p-5">
           <p class="font-mono text-xs uppercase tracking-widest text-fg-brand">a control loop — mostly not built</p>
           <h3 class="mt-1 text-lg font-bold leading-snug tracking-tight text-heading sm:text-xl">An agent does not get to declare success because its patch applied</h3>
-          <p class="mt-3 text-base leading-relaxed text-heading">Close the same stages and you have a control system rather than an assistant: context would observe, the plan would compute the difference, execution would act, verification would measure, and the result would be compared against the intent rather than against the diff — replanning until it is satisfied. Only the last of those runs here today. Majordomus never invokes a model and never writes the code; it decides what a worker is told and whether its claim of being done can be believed, and that comparator is the part of the loop that exists.</p>
+          <p class="mt-3 text-base leading-relaxed text-heading">Close the same stages and you have a control system rather than an assistant: context would observe, the plan would compute the difference, execution would act, verification would measure, and the result would be compared against the intent rather than against the diff — replanning until it is satisfied. The comparator runs here today: the evidence settles each criterion of an intent, and closed work the evidence contradicts is refused. Nothing replans, and nothing returns a worker to the plan when an intent is not satisfied. Majordomus never invokes a model and never writes the code; it decides what a worker is told and whether its claim of being done can be believed.</p>
           <p class="mt-3 text-lg font-bold leading-snug tracking-tight text-fg-brand-strong">The repository, the tests, the runtime, governance and evidence all get a vote. Evidence gets the final one.</p>
         </div>
       </div>
@@ -528,16 +528,16 @@ the argument.</p>
         <details class="min-w-0">
           <summary class="cursor-pointer px-4 py-3 text-base font-medium text-heading">Every significant change should be explainable</summary>
           <div class="border-t border-default px-4 py-4">
-            <p class="text-sm leading-relaxed text-body">An intent should carry its origin, its governance, its constraints, its realisation, its verification and the interfaces it reached. That is what turns development history into something you can ask a question of — and it is the shape of the record, not one this repository writes yet.</p>
+            <p class="text-sm leading-relaxed text-body">An intent should carry its origin, its governance, its constraints, its realisation, its verification and the interfaces it reached. That is what turns development history into something you can ask a question of. Part of that record exists here: an intent&#39;s governance and criteria are declared, and the work realising it and whether the evidence agrees are derived on every read. Its origin and the interfaces it reached are not recorded yet.</p>
             <p class="mt-4 text-sm font-semibold uppercase tracking-wide text-body-subtle">Instead of &ldquo;Why does this code exist?&rdquo; &mdash; &ldquo;fix stuff&rdquo;, an answerable history says</p>
-            <p class="mt-2 rounded-base border border-brand-subtle bg-brand-softer p-4 text-sm leading-relaxed text-heading">This subsystem exists because an intent required automatic worker bootstrap. It was introduced in these commits, under this doctrine, verified by this test, exposed on these interfaces, and its verification status is current. Commit to issue, this repository already answers; the intent above them is what is missing.</p>
+            <p class="mt-2 rounded-base border border-brand-subtle bg-brand-softer p-4 text-sm leading-relaxed text-heading">This subsystem exists because an intent required automatic worker bootstrap. It was introduced in these commits, under this doctrine, verified by this test, exposed on these interfaces, and its verification status is current. Commit to issue, and issue to the intent criterion it serves, this repository already answers; one answer from a line of code to its intent is what is missing.</p>
             <p class="mt-4 text-sm"><a href="https://majordomus.dev/evidence/" class="font-medium text-fg-brand underline">What this repository already records, and what reads it back &rarr;</a></p>
           </div>
         </details>
         <details class="min-w-0">
           <summary class="cursor-pointer px-4 py-3 text-base font-medium text-heading">The tracker stops pretending to be the semantic model</summary>
           <div class="border-t border-default px-4 py-4">
-            <p class="text-sm leading-relaxed text-body">Issues stay useful. Milestones stay useful. In this model they become projections of intent rather than the place intent is kept. Commit to issue is already traceable in both directions here; the intent above them is not, which is why the questions below are still unanswerable.</p>
+            <p class="text-sm leading-relaxed text-body">Issues stay useful. Milestones stay useful. In this model they become projections of intent rather than the place intent is kept. Commit to issue is traceable in both directions here, and an issue names the intent criterion it serves, so most of the questions below are findings this repository already reports.</p>
             <ul class="mt-4 grid gap-2 sm:grid-cols-2">
               <li class="flex gap-3 rounded-base border border-default bg-neutral-primary px-3 py-2 text-sm leading-relaxed text-body"><span aria-hidden="true" class="font-mono text-fg-brand">?</span><span class="min-w-0">implementation with no active intent behind it</span></li>
               <li class="flex gap-3 rounded-base border border-default bg-neutral-primary px-3 py-2 text-sm leading-relaxed text-body"><span aria-hidden="true" class="font-mono text-fg-brand">?</span><span class="min-w-0">intent with no implementation</span></li>
@@ -545,7 +545,7 @@ the argument.</p>
               <li class="flex gap-3 rounded-base border border-default bg-neutral-primary px-3 py-2 text-sm leading-relaxed text-body"><span aria-hidden="true" class="font-mono text-fg-brand">?</span><span class="min-w-0">a commit not linked to the intent it serves</span></li>
               <li class="flex gap-3 rounded-base border border-default bg-neutral-primary px-3 py-2 text-sm leading-relaxed text-body"><span aria-hidden="true" class="font-mono text-fg-brand">?</span><span class="min-w-0">a milestone claiming completion while dependent intents are unresolved</span></li>
             </ul>
-            <p class="mt-4 text-sm leading-relaxed text-body">None of these are questions a tracker can answer, and none of them are questions this repository can answer today. They are the reason the intent object is worth building.</p>
+            <p class="mt-4 text-sm leading-relaxed text-body">None of these are questions a tracker can answer. Work that serves no intent, an intent with no work, an issue closed while its criterion is unmet and a milestone closed while the evidence contradicts it are reported here today. A commit is traced to its issue and not yet to the intent the issue serves, and code is not traced to an intent at all.</p>
             <p class="mt-4 text-sm"><a href="https://majordomus.dev/plan/" class="font-medium text-fg-brand underline">The work graph this repository keeps, issue by issue and milestone by milestone &rarr;</a></p>
           </div>
         </details>
@@ -554,7 +554,7 @@ the argument.</p>
           <div class="border-t border-default px-4 py-4">
             <p class="text-sm leading-relaxed text-body">Repositories accumulate words like these, and they are surprisingly dangerous. A claim is worth having only when something connects it to evidence. Here every claim names the source, the implementation and the test that settle it, and a claim whose evidence no longer resolves fails the build.</p>
             <p class="mt-4 text-sm leading-relaxed text-body">Then either the implementation changes or the claim does. Reality wins — an unusual policy for software documentation, admittedly.</p>
-            <p class="mt-4 rounded-base border border-brand-subtle bg-brand-softer p-4 text-sm leading-relaxed text-heading">This repository's index holds <span class="font-mono font-bold text-fg-brand-strong">222</span> of them, each naming the source, the implementation and the test that settle it. A claim whose evidence no longer resolves fails the build before the site can be published; comparing a claim's wording to the behaviour it describes is still a person's job here.</p>
+            <p class="mt-4 rounded-base border border-brand-subtle bg-brand-softer p-4 text-sm leading-relaxed text-heading">This repository's index holds <span class="font-mono font-bold text-fg-brand-strong">233</span> of them, each naming the source, the implementation and the test that settle it. A claim whose evidence no longer resolves fails the build before the site can be published; comparing a claim's wording to the behaviour it describes is still a person's job here.</p>
             <p class="mt-4 text-sm"><a href="https://majordomus.dev/guarantees/" class="font-medium text-fg-brand underline">Every claim, with its evidence and the command that verifies it &rarr;</a></p>
           </div>
         </details>
@@ -635,17 +635,17 @@ the argument.</p>
           <div class="border-t border-default px-4 py-4">
             <p class="text-sm leading-relaxed text-body">A rule, a skill, a decision, a use case, an operational moment, a feature: each is one file under the layer with a schema. Discovery finds it, the schema validates it, the index holds it, and every interface reads the index. Nothing registers anything.</p>
             <ul class="mt-4 flex flex-wrap gap-2">
-              <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">adr</code><span class="font-mono text-xs text-body-subtle">80</span></li>
+              <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">adr</code><span class="font-mono text-xs text-body-subtle">81</span></li>
               <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">application</code><span class="font-mono text-xs text-body-subtle">5</span></li>
               <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">area</code><span class="font-mono text-xs text-body-subtle">9</span></li>
               <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">audience</code><span class="font-mono text-xs text-body-subtle">8</span></li>
-              <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">claim</code><span class="font-mono text-xs text-body-subtle">222</span></li>
+              <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">claim</code><span class="font-mono text-xs text-body-subtle">233</span></li>
               <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">command</code><span class="font-mono text-xs text-body-subtle">31</span></li>
               <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">context</code><span class="font-mono text-xs text-body-subtle">36</span></li>
               <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">critique</code><span class="font-mono text-xs text-body-subtle">1</span></li>
               <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">deployment</code><span class="font-mono text-xs text-body-subtle">1</span></li>
               <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">distribution-model</code><span class="font-mono text-xs text-body-subtle">1</span></li>
-              <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">document</code><span class="font-mono text-xs text-body-subtle">310</span></li>
+              <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">document</code><span class="font-mono text-xs text-body-subtle">322</span></li>
               <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">domain</code><span class="font-mono text-xs text-body-subtle">6</span></li>
               <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">feature</code><span class="font-mono text-xs text-body-subtle">27</span></li>
               <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">gap</code><span class="font-mono text-xs text-body-subtle">1</span></li>
@@ -660,12 +660,12 @@ the argument.</p>
               <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">profile</code><span class="font-mono text-xs text-body-subtle">4</span></li>
               <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">prompt</code><span class="font-mono text-xs text-body-subtle">4</span></li>
               <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">release-record</code><span class="font-mono text-xs text-body-subtle">13</span></li>
-              <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">rule</code><span class="font-mono text-xs text-body-subtle">160</span></li>
+              <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">rule</code><span class="font-mono text-xs text-body-subtle">161</span></li>
               <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">scope</code><span class="font-mono text-xs text-body-subtle">1</span></li>
               <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">session</code><span class="font-mono text-xs text-body-subtle">84</span></li>
               <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">skill</code><span class="font-mono text-xs text-body-subtle">6</span></li>
               <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">taxonomy</code><span class="font-mono text-xs text-body-subtle">10</span></li>
-              <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">test</code><span class="font-mono text-xs text-body-subtle">365</span></li>
+              <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">test</code><span class="font-mono text-xs text-body-subtle">371</span></li>
               <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">use-case</code><span class="font-mono text-xs text-body-subtle">48</span></li>
               <li class="inline-flex items-baseline gap-2 rounded-base border border-default bg-neutral-primary px-2.5 py-1"><code class="font-mono text-sm text-heading">workspace</code><span class="font-mono text-xs text-body-subtle">1</span></li>
             </ul>
@@ -751,7 +751,7 @@ the argument.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.14.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3ede593c0eaf722c607a51070e959f88b7820834" class="font-mono underline">3ede593</a> · inputs <span class="font-mono">16e742a839a4</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.15.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/76a7a2340ab76fcef5de24d379abfeaf93000636" class="font-mono underline">76a7a23</a> · inputs <span class="font-mono">f3e68aed5d9c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

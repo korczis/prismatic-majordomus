@@ -29,7 +29,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.14.0 -->
+     Generator: majordomus-cli 0.15.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -172,10 +172,18 @@ both directions and stored nowhere: the <code>trace</code> capability module der
 branches and commits from git, <code>scripts/traceability</code> joins the pull requests GitHub holds,
 and a commit no execution contract accounts for is reported as unattributed rather than
 quietly left out.</p>
+<p>Above the milestones, an intent states what must become true and the evidence that settles
+it. <code>majordomus intent</code> derives its stage from the plan and each criterion from the evidence
+ledger, answers which intent the work on an issue serves when a worker asks, refuses a
+criterion no issue serves and work that started before its plan was critiqued, and joins the
+work realising it across sessions and providers; the Cockpit shows the same answers at
+<code>/cockpit/intents</code>.</p>
 <h2 id="what-it-does-not-do"><a class="zola-anchor" href="#what-it-does-not-do" aria-label="Anchor link for: what-it-does-not-do">What it does not do</a></h2>
 <p>It does not talk to GitHub on its own: the projection of issues and milestones is rendered
 offline and applied only when a person runs the sync with a token. Nothing here estimates
-effort or schedules dates.</p>
+effort or schedules dates. An intent is judged after the fact, not enforced when work
+starts: <code>plan start</code> does not refuse an issue whose intent has no critique, a session does not
+load intents, and the GitHub projection closes a milestone without reading them.</p>
 </article>
     <section id="why" class="mt-12 scroll-mt-24" aria-labelledby="why-h">
       <h2 id="why-h" class="text-xl font-semibold tracking-tight text-heading">Why it exists</h2>
@@ -285,18 +293,18 @@ effort or schedules dates.</p>
             <code class="font-mono text-xs text-body-subtle">intents</code>
             <span class="ms-auto font-mono text-xs text-body-subtle">behaviorally verified</span>
           </p>
-          <p class="mt-2 text-sm text-body">What must become true above the milestones that realise it: each intent&#39;s statement, invariants and satisfaction criteria, its stage derived from the plan&#39;s milestone status, and each criterion&#39;s state derived from the evidence ledger. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere.</p>
+          <p class="mt-2 text-sm text-body">What must become true above the milestones that realise it: each intent&#39;s statement, invariants and satisfaction criteria, its stage derived from the plan&#39;s milestone status, each criterion&#39;s state derived from the evidence ledger, and its verdict derived from those criteria alone. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere.</p>
           <ul class="mt-3 divide-y divide-default border-t border-default">
             <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
               <a href="https://majordomus.dev/registry/capabilities/intents-coverage/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Which work carries which criterion, and why each issue exists</a>
               <span class="font-mono text-xs text-body-subtle">query</span>
             </li>
             <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
-              <a href="https://majordomus.dev/registry/capabilities/intents-list/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Every intent, with its derived stage</a>
+              <a href="https://majordomus.dev/registry/capabilities/intents-list/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Every intent, with its derived stage and verdict</a>
               <span class="font-mono text-xs text-body-subtle">query</span>
             </li>
             <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
-              <a href="https://majordomus.dev/registry/capabilities/intents-preflight/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Which intent a piece of work serves</a>
+              <a href="https://majordomus.dev/registry/capabilities/intents-preflight/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Which intent a piece of work serves, or why it may not proceed</a>
               <span class="font-mono text-xs text-body-subtle">query</span>
             </li>
             <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2">
@@ -562,6 +570,55 @@ effort or schedules dates.</p>
 </span>
           <a href="https://majordomus.dev/guarantees/task-dependencies/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">A task record has no dependencies; sequencing between sessions is not represented</a>
         </li>
+        <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          <span class="inline-flex gap-1"><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">declared status: </span>guaranteed</span>
+<span class="mj-badge mj-badge--stale relative" data-status="stale" data-status-kind="proof" data-claim="intent-stage-derived"><span aria-hidden="true">!</span><span class="sr-only">recorded evidence: </span>stale</span>
+</span>
+          <a href="https://majordomus.dev/guarantees/intent-stage-derived/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">An intent&#39;s stage is derived from the milestones that realise it and each criterion from the evidence ledger, and it is satisfied only while every criterion has a current passing run</a>
+          <span class="ml-auto min-w-0 break-all font-mono text-xs text-body-subtle" title="the test that settles this claim">test/cases/367_an_intent_is_satisfied_only_by_evidence.sh</span>
+        </li>
+        <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          <span class="inline-flex gap-1"><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">declared status: </span>guaranteed</span>
+<span class="mj-badge mj-badge--stale relative" data-status="stale" data-status-kind="proof" data-claim="intent-links-resolve"><span aria-hidden="true">!</span><span class="sr-only">recorded evidence: </span>stale</span>
+</span>
+          <a href="https://majordomus.dev/guarantees/intent-links-resolve/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">An intent whose criterion names evidence that resolves to nothing is refused by name</a>
+          <span class="ml-auto min-w-0 break-all font-mono text-xs text-body-subtle" title="the test that settles this claim">test/cases/367_an_intent_is_satisfied_only_by_evidence.sh</span>
+        </li>
+        <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          <span class="inline-flex gap-1"><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">declared status: </span>guaranteed</span>
+<span class="mj-badge mj-badge--stale relative" data-status="stale" data-status-kind="proof" data-claim="intent-criteria-covered"><span aria-hidden="true">!</span><span class="sr-only">recorded evidence: </span>stale</span>
+</span>
+          <a href="https://majordomus.dev/guarantees/intent-criteria-covered/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">Once work exists under an intent, a criterion no issue serves, an issue under its milestones that serves nothing and a link to a criterion that does not exist are each refused by name</a>
+          <span class="ml-auto min-w-0 break-all font-mono text-xs text-body-subtle" title="the test that settles this claim">test/cases/386_a_plan_is_held_to_its_intent.sh</span>
+        </li>
+        <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          <span class="inline-flex gap-1"><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">declared status: </span>guaranteed</span>
+<span class="mj-badge mj-badge--stale relative" data-status="stale" data-status-kind="proof" data-claim="intent-plan-reviewed"><span aria-hidden="true">!</span><span class="sr-only">recorded evidence: </span>stale</span>
+</span>
+          <a href="https://majordomus.dev/guarantees/intent-plan-reviewed/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">A gap that leaves a criterion unanswered is refused, and an issue serving an intent that started without a critique or while a blocking finding is open fails intent validation</a>
+          <span class="ml-auto min-w-0 break-all font-mono text-xs text-body-subtle" title="the test that settles this claim">test/cases/386_a_plan_is_held_to_its_intent.sh</span>
+        </li>
+        <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          <span class="inline-flex gap-1"><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">declared status: </span>guaranteed</span>
+<span class="mj-badge mj-badge--stale relative" data-status="stale" data-status-kind="proof" data-claim="intent-realization-held-to-evidence"><span aria-hidden="true">!</span><span class="sr-only">recorded evidence: </span>stale</span>
+</span>
+          <a href="https://majordomus.dev/guarantees/intent-realization-held-to-evidence/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">The work realising an intent is joined across sessions, providers and handovers, and an intent whose milestones are all closed while a criterion&#39;s evidence fails is refused naming that criterion</a>
+          <span class="ml-auto min-w-0 break-all font-mono text-xs text-body-subtle" title="the test that settles this claim">test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh</span>
+        </li>
+        <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          <span class="inline-flex gap-1"><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">declared status: </span>guaranteed</span>
+<span class="mj-badge mj-badge--stale relative" data-status="stale" data-status-kind="proof" data-claim="intent-preflight-names-the-intent"><span aria-hidden="true">!</span><span class="sr-only">recorded evidence: </span>stale</span>
+</span>
+          <a href="https://majordomus.dev/guarantees/intent-preflight-names-the-intent/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">Asked before work on an issue, `intent preflight` names the intents the issue serves with the governance that applies, or refuses naming the cause</a>
+          <span class="ml-auto min-w-0 break-all font-mono text-xs text-body-subtle" title="the test that settles this claim">apps/majordomus-cli/tests/intent.rs</span>
+        </li>
+        <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+          <span class="inline-flex gap-1"><span class="mj-badge mj-badge--guaranteed relative" data-status="guaranteed" data-status-kind="claim"><span aria-hidden="true">○</span><span class="sr-only">declared status: </span>guaranteed</span>
+<span class="mj-badge mj-badge--stale relative" data-status="stale" data-status-kind="proof" data-claim="intent-cockpit-pages"><span aria-hidden="true">!</span><span class="sr-only">recorded evidence: </span>stale</span>
+</span>
+          <a href="https://majordomus.dev/guarantees/intent-cockpit-pages/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent&#39;s criteria, evidence, serving issues and realising work at /cockpit/intents/&lt;id&gt;</a>
+          <span class="ml-auto min-w-0 break-all font-mono text-xs text-body-subtle" title="the test that settles this claim">apps/majordomus-cli/tests/intent_realization.rs</span>
+        </li>
       </ul>
       <h3 class="mt-6 text-base font-semibold text-heading">Executable use cases</h3>
       <ul class="mt-3 grid gap-3 sm:grid-cols-2">
@@ -616,7 +673,7 @@ effort or schedules dates.</p>
           <a href="https://majordomus.dev/docs/cli/intent/coverage/" class="break-words font-mono text-sm text-heading hover:text-fg-brand hover:underline">majordomus intent coverage [OPTIONS]</a><p class="mt-1 text-sm text-body">Which work carries which criterion, and the reason every issue exists</p>
         </li>
         <li class="p-3">
-          <a href="https://majordomus.dev/docs/cli/intent/preflight/" class="break-words font-mono text-sm text-heading hover:text-fg-brand hover:underline">majordomus intent preflight [OPTIONS]</a><p class="mt-1 text-sm text-body">Which intent the work on an issue, or on some paths, serves; exit 10 when it serves none</p>
+          <a href="https://majordomus.dev/docs/cli/intent/preflight/" class="break-words font-mono text-sm text-heading hover:text-fg-brand hover:underline">majordomus intent preflight [OPTIONS]</a><p class="mt-1 text-sm text-body">Which intent the work on an issue, or on some paths, serves, whether it is maintenance, or why it may not proceed; exit 10 when refused</p>
         </li>
         <li class="p-3">
           <a href="https://majordomus.dev/docs/cli/intent/realization/" class="break-words font-mono text-sm text-heading hover:text-fg-brand hover:underline">majordomus intent realization [OPTIONS]</a><p class="mt-1 text-sm text-body">Which work realises which intent — tasks, episodes, providers, handovers, peer claims — each link with its provenance, and each intent&#39;s unmet criteria and drift; exit 10 when an intent whose milestones are all DONE is contradicted by its evidence</p>
@@ -723,7 +780,7 @@ effort or schedules dates.</p>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">command-line paths</dt><dd class="font-mono text-sm text-heading">9</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">objects of its kinds</dt><dd class="font-mono text-sm text-heading">283</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">rules</dt><dd class="font-mono text-sm text-heading">3</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">claims</dt><dd class="font-mono text-sm text-heading">8</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">claims</dt><dd class="font-mono text-sm text-heading">15</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">use cases</dt><dd class="font-mono text-sm text-heading">3</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">moments answered</dt><dd class="font-mono text-sm text-heading">6</dd></div>
     </dl>
@@ -786,7 +843,7 @@ effort or schedules dates.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.14.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/3ede593c0eaf722c607a51070e959f88b7820834" class="font-mono underline">3ede593</a> · inputs <span class="font-mono">16e742a839a4</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.15.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/76a7a2340ab76fcef5de24d379abfeaf93000636" class="font-mono underline">76a7a23</a> · inputs <span class="font-mono">f3e68aed5d9c</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>
