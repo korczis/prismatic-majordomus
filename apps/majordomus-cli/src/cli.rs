@@ -3067,9 +3067,11 @@ pub struct McpArgs {
     #[arg(long)]
     pub standalone: bool,
 
-    /// Interface the shared server binds when this process is the one that starts it
-    #[arg(long, default_value = "127.0.0.1", value_name = "HOST")]
-    pub http_host: String,
+    /// Interface the shared server binds when this process is the one that starts it;
+    /// without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, and loopback
+    /// (`127.0.0.1`) when that is unset
+    #[arg(long, value_name = "HOST")]
+    pub http_host: Option<String>,
 
     /// Port the shared server binds when this process starts it; when it is taken, a free
     /// port is used instead and the URL is logged on stderr either way
@@ -3079,6 +3081,76 @@ pub struct McpArgs {
 
 /// The default port of the HTTP projection: `serve`, and the shared server `mcp` starts.
 pub const DEFAULT_PORT: u16 = 8741;
+
+/// The interface a local server binds when nothing says otherwise.
+pub const LOOPBACK_HOST: &str = "127.0.0.1";
+
+/// The variable that names, for one machine, the interface a local server binds.
+///
+/// It is the machine's fact and not the repository's: a tracked setting would make every
+/// clone of a public repository listen on its network, and a flag would have to be repeated
+/// by every caller that starts a server — the session-start hook, `serve ensure`, each
+/// client's `majordomus mcp`. A variable is inherited by all of them, and an environment
+/// that does not set it keeps loopback.
+pub const HTTP_HOST_ENV: &str = "MAJORDOMUS_HTTP_HOST";
+
+/// Where the interface a local server binds came from.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HostOrigin {
+    /// `--host` or `--http-host` on this command line.
+    Flag,
+    /// [`HTTP_HOST_ENV`] in this process's environment.
+    Environment,
+    /// Neither: [`LOOPBACK_HOST`].
+    Default,
+}
+
+/// The interface a local server binds: the flag when one was given, else what
+/// [`HTTP_HOST_ENV`] names, else loopback. A variable that is set and blank is unset.
+///
+/// ```
+/// use majordomus_cli::cli::{resolve_http_host, HostOrigin};
+/// assert_eq!(
+///     resolve_http_host(Some("10.0.0.1"), Some("0.0.0.0")),
+///     ("10.0.0.1".to_string(), HostOrigin::Flag)
+/// );
+/// assert_eq!(
+///     resolve_http_host(None, Some(" 0.0.0.0 ")),
+///     ("0.0.0.0".to_string(), HostOrigin::Environment)
+/// );
+/// assert_eq!(
+///     resolve_http_host(None, Some("  ")),
+///     ("127.0.0.1".to_string(), HostOrigin::Default)
+/// );
+/// assert_eq!(
+///     resolve_http_host(None, None),
+///     ("127.0.0.1".to_string(), HostOrigin::Default)
+/// );
+/// ```
+pub fn resolve_http_host(flag: Option<&str>, environment: Option<&str>) -> (String, HostOrigin) {
+    if let Some(host) = flag {
+        return (host.to_string(), HostOrigin::Flag);
+    }
+    match environment.map(str::trim).filter(|h| !h.is_empty()) {
+        Some(host) => (host.to_string(), HostOrigin::Environment),
+        None => (LOOPBACK_HOST.to_string(), HostOrigin::Default),
+    }
+}
+
+/// [`resolve_http_host`] against this process's environment: what `serve`, `mcp` and
+/// `server.status` all read, so that the address a server binds and the address the status
+/// calls desired cannot disagree.
+pub fn local_http_host(flag: Option<&str>) -> (String, HostOrigin) {
+    let environment = std::env::var(HTTP_HOST_ENV).ok();
+    let (host, origin) = resolve_http_host(flag, environment.as_deref());
+    if origin == HostOrigin::Environment {
+        tracing::info!(
+            host = %host,
+            "binding {host}: {HTTP_HOST_ENV} names it for this machine"
+        );
+    }
+    (host, origin)
+}
 
 #[derive(Debug, Args)]
 /// `majordomus serve`.
@@ -3091,9 +3163,10 @@ pub struct ServeArgs {
     /// `status`, `ensure` or `stop`; none serves.
     pub command: Option<ServeCommand>,
 
-    /// Interface to bind; loopback unless you say otherwise
-    #[arg(long, default_value = "127.0.0.1")]
-    pub host: String,
+    /// Interface to bind; without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine,
+    /// and loopback (`127.0.0.1`) when that is unset
+    #[arg(long, value_name = "HOST")]
+    pub host: Option<String>,
 
     /// Port to bind; 0 picks a free one and the address is logged on stderr
     #[arg(long, default_value_t = DEFAULT_PORT)]

@@ -542,7 +542,10 @@ page at `/`, the documentation at `/docs/`, the Cockpit at `/cockpit`, Swagger U
 `/swagger`, the OpenAPI document, MCP over HTTP at `/mcp`); every later `majordomus mcp` in the same repository
 attaches to it instead of starting another, and the server ends when its last client
 leaves. It writes one file, a lease under `.ai/local/state/mcp/`, and nothing under the
-tracked tree.
+tracked tree. Loopback is the default and no tracked file can move it; a machine that
+should be reachable from another exports `MAJORDOMUS_HTTP_HOST=0.0.0.0` in its own
+environment, and every server started there binds it
+([`docs/MCP.md`](docs/MCP.md#the-interface-is-the-machines-to-name)).
 
 **One web surface, discovered from its producer.** What the server serves is not a list
 anybody keeps. A *surface* — the home page, the documentation, the Cockpit, Swagger UI, the

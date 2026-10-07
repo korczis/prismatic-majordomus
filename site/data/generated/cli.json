@@ -383,11 +383,9 @@
           "value_name": "STANDALONE"
         },
         {
-          "defaults": [
-            "127.0.0.1"
-          ],
+          "defaults": [],
           "global": false,
-          "help": "Interface the shared server binds when this process is the one that starts it",
+          "help": "Interface the shared server binds when this process is the one that starts it; without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, and loopback (`127.0.0.1`) when that is unset",
           "long": "http-host",
           "name": "http_host",
           "positional": false,
@@ -537,11 +535,9 @@
           "value_name": "DIR"
         },
         {
-          "defaults": [
-            "127.0.0.1"
-          ],
+          "defaults": [],
           "global": false,
-          "help": "Interface to bind; loopback unless you say otherwise",
+          "help": "Interface to bind; without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, and loopback (`127.0.0.1`) when that is unset",
           "long": "host",
           "name": "host",
           "positional": false,

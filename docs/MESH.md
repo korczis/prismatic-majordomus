@@ -384,6 +384,12 @@ variables for it. To be dialed from other machines, the server must listen beyon
 `majordomus serve --host 0.0.0.0` (or a deployment object). A server on loopback can still dial
 out, and a link, once dialed, replicates both ways.
 
+`--host` lasts as long as that one process. For a machine that should always be dialable,
+export `MAJORDOMUS_HTTP_HOST=0.0.0.0` in the shell's startup file: it is not mesh
+configuration — it names the interface every local server of this machine binds, whoever
+starts it — and [`MCP.md`](MCP.md#the-interface-is-the-machines-to-name) says what it
+exposes.
+
 ## This repository's mesh
 
 This repository runs its own mesh: `.ai/repo/mesh/majordomus.yaml` is committed with

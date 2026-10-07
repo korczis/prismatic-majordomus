@@ -44,7 +44,7 @@ registry entry, none declared in the MCP code. The decision is
 | | |
 |---|---|
 | election | the first process to create `.ai/local/state/mcp/server.json` (atomically) is the server; it binds, writes its URL into the file, and logs it |
-| port | `--http-port` (default `8741`) on `--http-host` (default `127.0.0.1`); a taken port is replaced by a free one and both are logged, so a second repository or a stray process never stops a client from starting |
+| port | `--http-port` (default `8741`) on `--http-host` (default: the interface `MAJORDOMUS_HTTP_HOST` names on this machine, and `127.0.0.1` when it names none — [below](#the-interface-is-the-machines-to-name)); a taken port is replaced by a free one and both are logged, so a second repository or a stray process never stops a client from starting |
 | attaching | a later `majordomus mcp` reads the lease, checks that the server answers for this root, and bridges its stdio to `/mcp`: one HTTP request per message, a ping every twenty seconds, no index and no registry of its own, so it starts in milliseconds |
 | stale lease | a lease whose server does not answer for this root (the process was killed), a file that is not a lease document, an empty one, or one whose owner published no URL within the **bind grace** is taken over by the next process, and the log says which of these it was; nothing a client leaves behind can lock the others out |
 | lifetime | the server serves while its own client is attached or any peer is; when the owner's client goes first, the log says `serving until the last peer leaves`; when the last peer goes, the server stops, closes the port and removes the lease |
@@ -216,6 +216,65 @@ somebody else's — serves the peers it has, and ends with them. The server's ow
 forgets the HTTP sessions that stopped pinging on every path, not only while the owner
 waits for peers to leave, so a dead peer never stays `attached` on the board.
 
+
+### The interface is the machine's to name
+
+A local server binds loopback. That default does not move: the layer, its diagnostics, its
+peers and the two tools that answer about `.ai/local/` are not for every host on the
+network a laptop happens to be on.
+
+One machine may still want to be reached — a second machine attaching over the LAN, a mesh
+peer dialing in, a phone opening the Cockpit — and until 0.14 the only way to say so was
+`majordomus serve --host 0.0.0.0`, typed by hand. That lasted exactly as long as the
+process: `serve ensure`, which is what a session start and a shell entry run, starts a
+server with no host at all, so the next idle stop or the next session put the checkout back
+on loopback without a word, and `serve status` had been reporting `desired 127.0.0.1` the
+whole time.
+
+So the interface is read from one place every starter inherits:
+
+```sh
+export MAJORDOMUS_HTTP_HOST=0.0.0.0     # every interface; or one address of this machine
+```
+
+| who starts the server | what it binds |
+|---|---|
+| `majordomus serve` | `--host` when given; else `MAJORDOMUS_HTTP_HOST`; else `127.0.0.1` |
+| `majordomus mcp` (a client electing itself) | `--http-host` when given; else `MAJORDOMUS_HTTP_HOST`; else `127.0.0.1` |
+| `majordomus serve ensure` (session start, shell entry) | it passes no host; the server it starts inherits the variable |
+| `majordomus serve --deployment <id>` | the deployment object's `listen` block, and nothing else: a declared address is not overridden by a machine's environment |
+
+Four things follow from it being a variable and not a setting:
+
+- **It is the machine's, never the repository's.** Nothing tracked can set it. A key in
+  `.ai/repo/policy.yaml` would make every clone of a public repository listen on whatever
+  network it woke up in.
+- **The command line wins**, a blank value is no value, and a value nothing can bind
+  refuses to start, naming the address.
+- **The warning stands.** A bind the variable chose still logs that every host reaching the
+  interface can read the layer; the log line before it says the variable named the address,
+  so a bind is never untraceable. Only a deployment object *declares* an exposure, and only
+  a declared one is silent.
+- **`server.status` answers for the environment it is asked in.** `desired.host` is what a
+  server started from that environment would bind, so the address a server binds and the
+  address the status calls desired are one resolution (`cli::resolve_http_host`) and cannot
+  disagree. A running server answers `serve status`, and it answers for the environment it
+  was started in.
+
+Set it where every starter will see it — the shell's own startup file (`~/.zshenv`,
+`~/.profile`). `.envrc.local` is too late for one of them: `.envrc` evaluates
+`majordomus-env enter`, which ensures the server, *before* it sources `.envrc.local`, so
+the server a first `cd` starts would not have the variable while everything started from
+that shell afterwards would.
+
+A server already running keeps the address it bound. After setting the variable,
+`majordomus serve stop` and the next `serve ensure` — or the next session — brings it up
+on the named interface.
+
+There is no authentication on this surface. Binding beyond loopback hands every reachable
+host the read surface and the commands the registry declares as writing; do it on a
+network you would hand that to, or reach the loopback server through an SSH tunnel
+instead (`ssh -L 8741:127.0.0.1:8741 <machine>`).
 
 ### What a contest is judged by
 
@@ -558,7 +617,8 @@ carries the canonical id in `_meta.majordomus.id` and its `inputSchema` and
 | the lease file is corrupt, empty, or has had no URL for longer than the bind grace | it is taken over; `corrupt lease`, `empty lease` or `abandoned lease` is logged with the path |
 | the lease cannot be created, joined or replaced (a filesystem refusing writes under `.ai/local/`), or the shared server cannot start | the client is served alone, as `--standalone` would: `cannot use the shared server` is logged with the path and the reason, then `serving this client alone`; no port, no lease, no peers; the layer's own errors still exit as above |
 | the server gets `SIGTERM`, `SIGINT` or `SIGHUP` | the lease is removed inside the handler and the process dies of the signal; its bridges elect again on their next message |
-| `--http-host` is not a loopback address | served, with a warning that every host reaching that interface can read the layer, its diagnostics and its peers |
+| `--http-host`, `--host` or `MAJORDOMUS_HTTP_HOST` names an address that is not loopback | served, with a warning that every host reaching that interface can read the layer, its diagnostics and its peers; when the variable supplied it, the line before says so |
+| `MAJORDOMUS_HTTP_HOST` names an address nothing can bind | the process exits non-zero with `cannot bind <address>`, and leaves no lease behind |
 | an HTTP client leaves without `DELETE /mcp` | its session expires after ninety seconds of silence; a server whose owner has already left ends then, never later |
 
 Two files of one kind claiming one identity are both excluded and both named, as the
@@ -606,7 +666,11 @@ failure table is the rule `project.shared-server-resilience`. `tests/server_stat
 the two-worktree case and the stale-lease case; `tests/health_server.rs` holds the `server`
 check of `health.report` against a real server, a checkout nobody serves and a lease naming
 an address nobody answers at, and asserts that the check and the status say one word about
-one lease. `tests/hot_path.rs` sends
+one lease. `test/cases/992_the_local_bind_is_the_machines_to_name.sh` holds the interface:
+loopback when nothing names one, the variable followed by `serve`, by the server
+`serve ensure` starts and by the one `mcp` elects, the flag winning, a blank value ignored,
+the warning kept, `desired.host` agreeing, and an unbindable address refused without a
+lease; `85_deployment_bind.sh` holds the declared address beside it. `tests/hot_path.rs` sends
 hundreds of frames and requires the startup counters (`majordomus_perf`) unchanged;
 `majordomus bench` times every tool through a real child process
 ([`CAPABILITIES.md`](CAPABILITIES.md)). The claims are in [`CLAIMS.yaml`](CLAIMS.yaml)

@@ -162,15 +162,13 @@
             "name": "http_host",
             "long": "http-host",
             "positional": false,
-            "help": "Interface the shared server binds when this process is the one that starts it",
+            "help": "Interface the shared server binds when this process is the one that starts it; without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, and loopback (`127.0.0.1`) when that is unset",
             "value_name": "HOST",
             "takes_value": true,
             "required": false,
             "global": false,
             "possible_values": [],
-            "defaults": [
-              "127.0.0.1"
-            ]
+            "defaults": []
           },
           {
             "name": "http_port",
@@ -304,15 +302,13 @@
             "name": "host",
             "long": "host",
             "positional": false,
-            "help": "Interface to bind; loopback unless you say otherwise",
+            "help": "Interface to bind; without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, and loopback (`127.0.0.1`) when that is unset",
             "value_name": "HOST",
             "takes_value": true,
             "required": false,
             "global": false,
             "possible_values": [],
-            "defaults": [
-              "127.0.0.1"
-            ]
+            "defaults": []
           },
           {
             "name": "port",

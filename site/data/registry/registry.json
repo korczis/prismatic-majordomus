@@ -6,23 +6,23 @@
     "version": "0.14.0"
   },
   "registry": {
-    "fingerprint": "ac19ffc888efbd6ac4cc2bb460c24a16e3e6fb2ffac3b2843af8f8d04a49f885",
+    "fingerprint": "a7063d48bdb89438802192608ad39b187c95b7beba1c7e991ab9eab8b58a6a3e",
     "summary": {
-      "total": 1980,
+      "total": 1981,
       "builtin": 172,
-      "declarative": 1808,
+      "declarative": 1809,
       "by_kind": {
         "command": 22,
         "query": 150,
-        "resource": 1808
+        "resource": 1809
       },
       "by_stability": {
         "behaviorally_verified": 128,
         "experimental": 36,
-        "implemented": 1816
+        "implemented": 1817
       },
       "mcp_tools": 166,
-      "mcp_resources": 1861,
+      "mcp_resources": 1862,
       "http_routes": 170,
       "cli_commands": 90,
       "modules": 84,
@@ -59647,7 +59647,7 @@
                 "properties": {
                   "host": {
                     "type": "string",
-                    "description": "The interface the shared server binds by default."
+                    "description": "The interface a server started here would bind: what `MAJORDOMUS_HTTP_HOST` names\nin this process's environment, and loopback when it names nothing."
                   },
                   "port": {
                     "type": "integer",
@@ -68403,7 +68403,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 365,
+        "capabilities": 366,
         "capability_ids": []
       },
       {
@@ -68493,7 +68493,7 @@
     ]
   },
   "index": {
-    "fingerprint": "7cee35b7a060c8bbf9c63e17815cb1f301c07904188d423e2706795fcf77ab12",
+    "fingerprint": "b11715e86990e8a915fd1e61dbbbd5ad0b55520153f98dbe196a067403e5920a",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -68546,7 +68546,7 @@
       "session": 84,
       "skill": 6,
       "taxonomy": 10,
-      "test": 365,
+      "test": 366,
       "use-case": 48,
       "workspace": 1
     },
@@ -73323,7 +73323,7 @@
         "title": "Prismatic Majordomus",
         "path": "README.md",
         "source_class": "readme",
-        "bytes": 37476
+        "bytes": 37754
       },
       {
         "uri": "majordomus://document/SECURITY.md",
@@ -73332,7 +73332,7 @@
         "title": "Security",
         "path": "SECURITY.md",
         "source_class": "readme",
-        "bytes": 8081
+        "bytes": 8963
       },
       {
         "uri": "majordomus://document/docs/ADOPTION.md",
@@ -73584,7 +73584,7 @@
         "title": "The repository environment — one snapshot, every surface a rendering",
         "path": "docs/ENVIRONMENT.md",
         "source_class": "document",
-        "bytes": 6925
+        "bytes": 7384
       },
       {
         "uri": "majordomus://document/docs/EVIDENCE.md",
@@ -73692,7 +73692,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 49823
+        "bytes": 54104
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -73701,7 +73701,7 @@
         "title": "Majordomus Mesh",
         "path": "docs/MESH.md",
         "source_class": "document",
-        "bytes": 41859
+        "bytes": 42220
       },
       {
         "uri": "majordomus://document/docs/MODELS.md",
@@ -76568,7 +76568,7 @@
         "identity": "lib/context.sh",
         "path": "lib/context.sh",
         "source_class": "library",
-        "bytes": 45794
+        "bytes": 46321
       },
       {
         "uri": "majordomus://implementation/lib/context_docs.sh",
@@ -84681,7 +84681,7 @@
         "identity": "test/cases/106_context_peers.sh",
         "path": "test/cases/106_context_peers.sh",
         "source_class": "case",
-        "bytes": 7527
+        "bytes": 8903
       },
       {
         "uri": "majordomus://test/test/cases/107_design_tokens.sh",
@@ -87420,6 +87420,14 @@
         "bytes": 7369
       },
       {
+        "uri": "majordomus://test/test/cases/992_the_local_bind_is_the_machines_to_name.sh",
+        "kind": "test",
+        "identity": "test/cases/992_the_local_bind_is_the_machines_to_name.sh",
+        "path": "test/cases/992_the_local_bind_is_the_machines_to_name.sh",
+        "source_class": "case",
+        "bytes": 7653
+      },
+      {
         "uri": "majordomus://test/test/cases/99_adr.sh",
         "kind": "test",
         "identity": "test/cases/99_adr.sh",
@@ -88305,7 +88313,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 365
+      "objects": 366
     },
     {
       "name": "use-case",
@@ -88505,15 +88513,13 @@
             "name": "http_host",
             "long": "http-host",
             "positional": false,
-            "help": "Interface the shared server binds when this process is the one that starts it",
+            "help": "Interface the shared server binds when this process is the one that starts it; without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, and loopback (`127.0.0.1`) when that is unset",
             "value_name": "HOST",
             "takes_value": true,
             "required": false,
             "global": false,
             "possible_values": [],
-            "defaults": [
-              "127.0.0.1"
-            ]
+            "defaults": []
           },
           {
             "name": "http_port",
@@ -88647,15 +88653,13 @@
             "name": "host",
             "long": "host",
             "positional": false,
-            "help": "Interface to bind; loopback unless you say otherwise",
+            "help": "Interface to bind; without it, the one `MAJORDOMUS_HTTP_HOST` names on this machine, and loopback (`127.0.0.1`) when that is unset",
             "value_name": "HOST",
             "takes_value": true,
             "required": false,
             "global": false,
             "possible_values": [],
-            "defaults": [
-              "127.0.0.1"
-            ]
+            "defaults": []
           },
           {
             "name": "port",

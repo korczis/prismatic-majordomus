@@ -112,6 +112,27 @@ expect_grep 'p3   here'
 expect_grep '(said nothing)'
 expect_grep '^## TASK'
 
+# --- a server bound to every interface is asked on loopback. A machine that names
+# 0.0.0.0 in MAJORDOMUS_HTTP_HOST, so that a second machine can reach its server, publishes
+# the unspecified address in its lease; before this was held, the guard below refused it as
+# "not loopback" and the board vanished from `context` on exactly the machines that had the
+# most peers to collide with. The stub listens on 127.0.0.1 alone, so the section appearing
+# is also the proof that the request went to loopback and nowhere else.
+printf '{"schema":"majordomus-mcp-lease/v1","url":"http://0.0.0.0:%s"}\n' "$(cat "$T/port3")" > .ai/local/state/mcp/server.json
+expect_exit 0 "$MJ" context
+expect_grep '^## PEERS'
+expect_grep 'p3   here'
+
+# --- and any other address is still refused: the one request this tool makes does not
+# leave the machine, whatever a lease says. The board is up and would answer; it is the
+# address that is not asked. 192.0.2.0/24 is reserved for documentation and routes nowhere.
+printf '{"schema":"majordomus-mcp-lease/v1","url":"http://192.0.2.1:%s"}\n' "$(cat "$T/port3")" > .ai/local/state/mcp/server.json
+expect_exit 0 "$MJ" context
+expect_no_grep '^## PEERS'
+printf '{"schema":"majordomus-mcp-lease/v1","url":"http://0.0.0.0.example.org:%s"}\n' "$(cat "$T/port3")" > .ai/local/state/mcp/server.json
+expect_exit 0 "$MJ" context
+expect_no_grep '^## PEERS'
+
 # --- a board nobody is on says nothing at all
 printf '{"count":0,"peers":[]}\n' > "$board"
 kill "$stub" 2>/dev/null || true; wait "$stub" 2>/dev/null || true
