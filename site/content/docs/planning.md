@@ -147,6 +147,30 @@ that must stay true, and the satisfaction criteria that settle it, each naming t
 that decides it. An intent names the milestones that realise it. It stores no status: its
 stage follows the plan and its satisfaction follows the evidence ledger.
 
+Beside the stage, every surface carries the intent's **verdict** (ADR 0107), which the criteria
+derive alone and the plan never touches: `satisfied` when every criterion is met, `unsatisfied`
+when a `test` or `claim` criterion — a kind the ledger or the claim join can settle — is not,
+and `unknown` when only `command` or `deployment` criteria are unmet, or none is declared. Its
+`reasons` name each unmet criterion with its evidence kind and state. The stage keeps its
+meaning, so `satisfied` still requires every milestone DONE; the verdict can read `satisfied`
+while a milestone is open, and nothing a finished task does moves it.
+
+A criterion is met only by evidence that is *current*, and current is the evidence module's
+own judgement at the working tree (`evidence::freshness`, read through `evidence::current`),
+the one the claim report and the evidence pages make: a passing run whose commit is in this
+history, that measured a tree that was its commit, whose test still hashes to what ran, and
+since which nothing the criterion names has changed — for a test, its source and the source
+and implementation of every claim that test proves; for a claim, what the claim names. A
+change the criterion does not name, the evidence ledger's own included, leaves it met. A test
+that proves no claim naming an implementation names no code under test, so for it any change
+since the run but the ledger's is one nothing rules out: such a criterion is met only by a run
+at the checkout's own commit. To keep a criterion met across unrelated work, name its test in
+a claim of `docs/CLAIMS.yaml` that names the implementation. A pass recorded on a dirty tree,
+or one whose inputs moved, is `stale`; a failed run is `failing`; either un-meets a criterion
+that was met, and recording a current pass meets it again. Each criterion carries `proof`,
+the evidence module's verdict behind its state, so a met criterion still says whether it is
+`proven` at this revision or rests on `inputs_unchanged`.
+
 That relates an intent to milestones and to evidence. What relates a *criterion* to the work
 meant to make it true is `serves` on the issue (ADR 0073):
 
@@ -207,13 +231,59 @@ over the plan: findings classed by the question asked — `missed_requirement`,
 `planned` into an issue that serves the intent, or `rejected` with a reason. A dismissal
 nobody can read is not a resolution.
 
-Work does not start before the plan has been reviewed: an issue serving an intent that is
+Work is held to the review of its plan once it has started: an issue serving an intent that is
 `ACTIVE`, `VERIFY` or `DONE` while the intent has no critique is `executing_without_critique`,
-and while a blocking finding is open, `executing_with_open_blocker`. Both are failures.
+and while a blocking finding is open, `executing_with_open_blocker`. Both are failures of
+`intent validate` and the `intent-check` gate. `plan start` itself does not refuse the start;
+refusing it there is planned (`intent-refused-at-plan-start` in [`CLAIMS.yaml`](@/guarantees/_index.md)).
 
 **Majordomus judges these records; it does not write them.** A person or a worker — Claude,
 Codex, Gemini — does the observing and the criticising, and the repository refuses the result
 when it does not hold together. Nothing here derives a plan from an intent automatically.
+
+### Preflight: may this work proceed, and what is it held to
+
+`majordomus intent preflight --issue <id>` (or `--path <p>`, repeated) is the one join a session
+or a transition consumes before work begins; the `intents.preflight` capability answers the
+same value over HTTP and MCP. An issue is followed through the criteria it declares in `serves`
+— never through its milestone alone — and its links are judged by the coverage `intent
+validate` reports from, so the two cannot disagree about which link is broken. The verdict is
+one of three:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| verdict | when | exit |
+|---|---|---|
+| `serves` | every link holds, and each intent served has a critique with no blocking finding open | `0` |
+| `maintenance` | the issue serves nothing under a milestone no live intent names, where validation allows it | `0` |
+| `refused` | any cause below | `10` |
+
+</div>
+
+
+<div class="overflow-x-auto" tabindex="0">
+
+| cause | what it means |
+|---|---|
+| `unknown_issue` | the issue named is not in the plan |
+| `no_issue_covers_paths` | no open issue's scope covers any of the paths |
+| `issue_serves_nothing` | the issue's milestone realises a live intent and the issue serves none of its criteria |
+| `serves_another_intent` | it serves a criterion of an intent that does not name its milestone |
+| `serves_unknown_criterion` | it serves an intent or a criterion that does not exist, or a malformed reference |
+| `intent_not_critiqued` | an intent it serves has no critique |
+| `open_blocking_finding` | the critique of an intent it serves has a blocking finding still `open` |
+
+</div>
+
+
+With paths, every open issue whose scope covers one is judged and listed with its own
+verdict; the answer is the worst of them, so one served issue never vouches for another that
+serves nothing. Served work beside maintenance answers `serves`.
+
+The answer carries the intents the work serves and no other: each with its statement, the
+served criteria with the live state of their evidence, its invariants, non-goals and
+governance, its critique with the blocking findings still open, and its recorded gap bounded
+to the served criteria.
 
 ### Realization: who is making it true, and whether reality agrees
 
@@ -248,13 +318,17 @@ of work with two episodes and both providers, and the intent it serves lists bot
 `session.started` ledger line names its provider, so the lineage survives the episode's end.
 
 Closed work does not outrank evidence. When every milestone of an intent is DONE and a
-criterion's recorded run is failing, or stale against a case that has changed since, the
+criterion's latest recorded run is failing, or stale (no longer current, as above), the
 realization reports `closed_work_contradicted` naming the criterion, and exits 10; the
 `intent-realization` gate runs it. An intent that was satisfied and regresses lands exactly
 there: its stage falls back to `verifying`, and nothing about the intent was written for it to.
 `closed_work_unproven` (every milestone DONE, a criterion never evidenced) and
 `criterion_closed_unmet` (every issue serving a criterion DONE, the criterion unmet) are
-warnings, as is live work that serves no intent (`work_serves_no_intent`).
+warnings, as is live work that serves no intent (`work_serves_no_intent`). Where the stage and
+the verdict disagree, two more warnings name it once per intent: `evidence_ahead_of_plan` (the
+verdict is `satisfied` while the stage is `planned` or `executing`) and
+`closed_work_not_satisfied` (every milestone DONE, the verdict `unsatisfied` or `unknown`, with
+the criteria holding it back).
 
 In the Cockpit, `/cockpit/intents` lists every intent with its stage and the work realising it,
 and `/cockpit/intents/<id>` shows one: each criterion with its evidence state, linked to the test
@@ -264,6 +338,21 @@ link. Both pages render the capabilities above and decide nothing themselves.
 `test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh` is the loop end
 to end: declared, realised across two providers and a handover, closed while one case fails,
 fixed, satisfied, broken again and repaired — with the intent file byte-identical throughout.
+
+### What intents do not do yet
+
+Each of these is a `planned` claim in [`CLAIMS.yaml`](@/guarantees/_index.md), and the homepage lists them
+from there:
+
+- `intent-in-session-context` — a session does not load the intents its task serves; a worker
+  reaches one only by asking `majordomus intent` for it.
+- `intent-refused-at-plan-start` — `plan start` lets an issue start before its intent's plan was
+  critiqued; `intent validate` names it afterwards.
+- `intent-closes-github-milestones` — the GitHub projection closes a milestone from its derived
+  plan status alone and reads no intent.
+- `intent-command-deployment-evidence` — a criterion settled by a `command` or a `deployment`
+  resolves and reads `not_derivable`; the ledger records runs of tests and claims only, so such
+  a criterion is never met.
 
 ## Traceability: what realised an issue, and what an issue realised
 

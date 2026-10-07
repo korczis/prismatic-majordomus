@@ -3,9 +3,9 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.14.0"
+    "version": "0.15.0"
   },
-  "fingerprint": "668844fe71ef039d4fafcd1ddfcf251cf7a4665ba8492446e73b5bdc01b00ada",
+  "fingerprint": "32b078f3129cfd16751cc0d4f2f0cdd10db12ca8e7684a8a07f6c3475721b87c",
   "route": "/features/",
   "domain_route": "/domains/",
   "counts": {
@@ -760,8 +760,8 @@
             "cockpit": true,
             "docs": true
           },
-          "claims": 8,
-          "tested": 7,
+          "claims": 15,
+          "tested": 14,
           "use_cases": 3
         }
       ],
@@ -924,6 +924,48 @@
           "claim": "GitHub milestones and issues are generated from the canonical model, and a hand-edited generated region is reported rather than overwritten",
           "status": "guaranteed",
           "test": "test/cases/45_github_projection.sh"
+        },
+        {
+          "id": "intent-cockpit-pages",
+          "claim": "The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/intent_realization.rs"
+        },
+        {
+          "id": "intent-criteria-covered",
+          "claim": "Once work exists under an intent, a criterion no issue serves, an issue under its milestones that serves nothing and a link to a criterion that does not exist are each refused by name",
+          "status": "guaranteed",
+          "test": "test/cases/386_a_plan_is_held_to_its_intent.sh"
+        },
+        {
+          "id": "intent-links-resolve",
+          "claim": "An intent whose criterion names evidence that resolves to nothing is refused by name",
+          "status": "guaranteed",
+          "test": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh"
+        },
+        {
+          "id": "intent-plan-reviewed",
+          "claim": "A gap that leaves a criterion unanswered is refused, and an issue serving an intent that started without a critique or while a blocking finding is open fails intent validation",
+          "status": "guaranteed",
+          "test": "test/cases/386_a_plan_is_held_to_its_intent.sh"
+        },
+        {
+          "id": "intent-preflight-names-the-intent",
+          "claim": "Asked before work on an issue, `intent preflight` names the intents the issue serves with the governance that applies, or refuses naming the cause",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/intent.rs"
+        },
+        {
+          "id": "intent-realization-held-to-evidence",
+          "claim": "The work realising an intent is joined across sessions, providers and handovers, and an intent whose milestones are all closed while a criterion's evidence fails is refused naming that criterion",
+          "status": "guaranteed",
+          "test": "test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh"
+        },
+        {
+          "id": "intent-stage-derived",
+          "claim": "An intent's stage is derived from the milestones that realise it and each criterion from the evidence ledger, and it is satisfied only while every criterion has a current passing run",
+          "status": "guaranteed",
+          "test": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh"
         },
         {
           "id": "mcp-peers",
@@ -1115,8 +1157,8 @@
       ],
       "counts": {
         "features": 6,
-        "claims": 34,
-        "tested": 33,
+        "claims": 41,
+        "tested": 40,
         "use_cases": 6,
         "rules": 13,
         "enforced_rules": 11,
@@ -1125,7 +1167,7 @@
       },
       "evidence": {
         "claims": {
-          "guaranteed": 33,
+          "guaranteed": 40,
           "rejected": 1
         },
         "modules": {}
@@ -3384,7 +3426,7 @@
         },
         {
           "name": "claim",
-          "objects": 222
+          "objects": 233
         }
       ],
       "rule_refs": [
@@ -3657,11 +3699,11 @@
       "counts": {
         "capabilities": 12,
         "mcp_tools": 12,
-        "mcp_resources": 293,
+        "mcp_resources": 304,
         "http_routes": 12,
         "cli_paths": 11,
         "commands": 2,
-        "objects": 286,
+        "objects": 297,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -6435,7 +6477,7 @@
       "kind_refs": [
         {
           "name": "session",
-          "objects": 22
+          "objects": 84
         },
         {
           "name": "prompt",
@@ -6789,11 +6831,11 @@
       "counts": {
         "capabilities": 9,
         "mcp_tools": 9,
-        "mcp_resources": 31,
+        "mcp_resources": 93,
         "http_routes": 9,
         "cli_paths": 0,
         "commands": 7,
-        "objects": 26,
+        "objects": 88,
         "rules": 8,
         "enforced_rules": 7,
         "docs": 2,
@@ -7011,7 +7053,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 80
+          "objects": 81
         },
         {
           "name": "knowledge",
@@ -7019,7 +7061,7 @@
         },
         {
           "name": "document",
-          "objects": 310
+          "objects": 322
         }
       ],
       "rule_refs": [
@@ -7292,11 +7334,11 @@
       "counts": {
         "capabilities": 5,
         "mcp_tools": 5,
-        "mcp_resources": 394,
+        "mcp_resources": 407,
         "http_routes": 5,
         "cli_paths": 3,
         "commands": 6,
-        "objects": 391,
+        "objects": 404,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -7512,7 +7554,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 160
+          "objects": 161
         }
       ],
       "rule_refs": [
@@ -7888,11 +7930,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 162,
+        "mcp_resources": 163,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 160,
+        "objects": 161,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -9413,7 +9455,7 @@
       "kind_refs": [
         {
           "name": "session",
-          "objects": 22
+          "objects": 84
         }
       ],
       "rule_refs": [
@@ -9646,11 +9688,11 @@
       "counts": {
         "capabilities": 0,
         "mcp_tools": 0,
-        "mcp_resources": 22,
+        "mcp_resources": 84,
         "http_routes": 0,
         "cli_paths": 0,
         "commands": 4,
-        "objects": 22,
+        "objects": 84,
         "rules": 4,
         "enforced_rules": 4,
         "docs": 2,
@@ -10085,7 +10127,14 @@
         "evidence-gates-done",
         "roadmap-derived",
         "github-projection",
-        "task-dependencies"
+        "task-dependencies",
+        "intent-stage-derived",
+        "intent-links-resolve",
+        "intent-criteria-covered",
+        "intent-plan-reviewed",
+        "intent-realization-held-to-evidence",
+        "intent-preflight-names-the-intent",
+        "intent-cockpit-pages"
       ],
       "use_cases": [
         "plan-the-work-as-data",
@@ -10261,7 +10310,7 @@
         {
           "id": "intents",
           "title": "Intent",
-          "description": "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, and each criterion's state derived from the evidence ledger. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere.",
+          "description": "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, each criterion's state derived from the evidence ledger, and its verdict derived from those criteria alone. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere.",
           "stability": "behaviorally_verified",
           "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs",
           "capabilities": [
@@ -10276,7 +10325,7 @@
             },
             {
               "id": "intents.list",
-              "title": "Every intent, with its derived stage",
+              "title": "Every intent, with its derived stage and verdict",
               "kind": "query",
               "stability": "behaviorally_verified",
               "tool": "majordomus_intents",
@@ -10286,7 +10335,7 @@
             },
             {
               "id": "intents.preflight",
-              "title": "Which intent a piece of work serves",
+              "title": "Which intent a piece of work serves, or why it may not proceed",
               "kind": "query",
               "stability": "behaviorally_verified",
               "tool": "majordomus_intent_preflight",
@@ -10447,6 +10496,48 @@
           "id": "task-dependencies",
           "claim": "A task record has no dependencies; sequencing between sessions is not represented",
           "status": "rejected"
+        },
+        {
+          "id": "intent-stage-derived",
+          "claim": "An intent's stage is derived from the milestones that realise it and each criterion from the evidence ledger, and it is satisfied only while every criterion has a current passing run",
+          "status": "guaranteed",
+          "test": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh"
+        },
+        {
+          "id": "intent-links-resolve",
+          "claim": "An intent whose criterion names evidence that resolves to nothing is refused by name",
+          "status": "guaranteed",
+          "test": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh"
+        },
+        {
+          "id": "intent-criteria-covered",
+          "claim": "Once work exists under an intent, a criterion no issue serves, an issue under its milestones that serves nothing and a link to a criterion that does not exist are each refused by name",
+          "status": "guaranteed",
+          "test": "test/cases/386_a_plan_is_held_to_its_intent.sh"
+        },
+        {
+          "id": "intent-plan-reviewed",
+          "claim": "A gap that leaves a criterion unanswered is refused, and an issue serving an intent that started without a critique or while a blocking finding is open fails intent validation",
+          "status": "guaranteed",
+          "test": "test/cases/386_a_plan_is_held_to_its_intent.sh"
+        },
+        {
+          "id": "intent-realization-held-to-evidence",
+          "claim": "The work realising an intent is joined across sessions, providers and handovers, and an intent whose milestones are all closed while a criterion's evidence fails is refused naming that criterion",
+          "status": "guaranteed",
+          "test": "test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh"
+        },
+        {
+          "id": "intent-preflight-names-the-intent",
+          "claim": "Asked before work on an issue, `intent preflight` names the intents the issue serves with the governance that applies, or refuses naming the cause",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/intent.rs"
+        },
+        {
+          "id": "intent-cockpit-pages",
+          "claim": "The Cockpit shows every intent with its derived stage at /cockpit/intents, and one intent's criteria, evidence, serving issues and realising work at /cockpit/intents/<id>",
+          "status": "guaranteed",
+          "test": "apps/majordomus-cli/tests/intent_realization.rs"
         }
       ],
       "use_case_refs": [
@@ -10525,13 +10616,13 @@
         "enforced_rules": 3,
         "docs": 2,
         "adrs": 0,
-        "claims": 8,
+        "claims": 15,
         "use_cases": 3,
         "moments": 6
       },
       "evidence": {
         "claims": {
-          "guaranteed": 7,
+          "guaranteed": 14,
           "rejected": 1
         },
         "modules": {
@@ -13287,8 +13378,8 @@
           "cockpit",
           "docs"
         ],
-        "proven": 7,
-        "claims": 8
+        "proven": 14,
+        "claims": 15
       },
       {
         "id": "context",
@@ -14057,7 +14148,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (80)",
+        "title": "adr (81)",
         "features": [
           "knowledge"
         ]
@@ -14085,7 +14176,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (222)",
+        "title": "claim (233)",
         "features": [
           "declare-once"
         ]
@@ -14212,7 +14303,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (160)",
+        "title": "rule (161)",
         "features": [
           "doctrine"
         ]
@@ -14226,7 +14317,7 @@
       },
       {
         "id": "session",
-        "title": "session (22)",
+        "title": "session (84)",
         "features": [
           "continuity",
           "provenance"
@@ -15131,29 +15222,29 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1932,
+    "capabilities": 2026,
     "builtin": 172,
-    "declarative": 1760,
+    "declarative": 1854,
     "modules": 51,
     "mcp_tools": 166,
-    "mcp_resources": 1813,
+    "mcp_resources": 1907,
     "http_routes": 170,
     "cli_commands": 178,
     "shell_commands": 30,
     "kinds": 33,
-    "objects": 1760,
+    "objects": 1854,
     "by_kind": {
-      "adr": 80,
+      "adr": 81,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 222,
+      "claim": 233,
       "command": 31,
       "context": 36,
       "critique": 1,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 310,
+      "document": 322,
       "domain": 6,
       "feature": 27,
       "gap": 1,
@@ -15168,12 +15259,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 13,
-      "rule": 160,
+      "rule": 161,
       "scope": 1,
-      "session": 22,
+      "session": 84,
       "skill": 6,
       "taxonomy": 10,
-      "test": 379,
+      "test": 386,
       "use-case": 48,
       "workspace": 1
     },
@@ -15191,7 +15282,7 @@
       "executions": 14,
       "newest": "2026-09-17T01:14:59Z"
     },
-    "declared": 206,
+    "declared": 213,
     "supported": 0,
     "claims": {
       "a-finding-names-how-to-see-it-again": {
@@ -15738,6 +15829,72 @@
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",
+        "supported": false
+      },
+      "intent-closes-github-milestones": {
+        "status": "planned",
+        "state": "no-test",
+        "label": "no test",
+        "supported": false
+      },
+      "intent-cockpit-pages": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "intent-command-deployment-evidence": {
+        "status": "planned",
+        "state": "no-test",
+        "label": "no test",
+        "supported": false
+      },
+      "intent-criteria-covered": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "intent-in-session-context": {
+        "status": "planned",
+        "state": "no-test",
+        "label": "no test",
+        "supported": false
+      },
+      "intent-links-resolve": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "intent-plan-reviewed": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "intent-preflight-names-the-intent": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "intent-realization-held-to-evidence": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "intent-refused-at-plan-start": {
+        "status": "planned",
+        "state": "no-test",
+        "label": "no test",
+        "supported": false
+      },
+      "intent-stage-derived": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
         "supported": false
       },
       "interfaces-are-projections": {

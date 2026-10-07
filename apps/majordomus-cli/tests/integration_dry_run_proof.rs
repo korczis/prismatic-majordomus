@@ -457,6 +457,18 @@ fn an_empty_forge_has_nothing_to_merge_or_close() {
     assert!(steps.contains("nothing is ready to merge"), "{steps}");
     assert!(steps.contains("idle"), "{steps}");
     assert!(steps.contains("nothing to close"), "{steps}");
+    // the drain line is the drain's own lines: the idle step's reason, said once
+    let drain = p["steps"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|s| s["step"] == "drain --dry-run")
+        .unwrap()["summary"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    assert!(drain.starts_with("idle: "), "{drain}");
+    assert!(!drain.contains("; "), "the reason is repeated: {drain}");
 }
 
 fn prs_cmd(fg: &Forge, args: &[&str]) -> (i32, String, String) {

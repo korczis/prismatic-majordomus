@@ -34,7 +34,7 @@ it is described as real.
   `test/mesh-lab/run` hold it; `docs/MESH.md` has the threat model. The skeleton a new
   repository starts from ships no declaration. This repository commits its own enabled:
   multicast on the local segment only, rendezvous hubs on the owner's private network and
-  tailnet, and `deny_unknown` trust listing the owner's three machines' keys and no other
+  tailnet, and `deny_unknown` trust listing the owner's five machines' keys and no other
   (`docs/MESH.md`, "This repository's mesh"; `test/cases/491_the_mesh_is_on_here.sh`).
   Every session start says whether this checkout's server holds that declaration: the hook
   runs the executable's `mesh doctor`, which asks the server on loopback, so the hook library

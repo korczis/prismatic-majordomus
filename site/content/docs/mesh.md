@@ -1,7 +1,7 @@
 +++
 title = "Majordomus Mesh"
 description = "the mesh: how running Majordomus instances discover each other — Ed25519 node identity, one signed bounded envelope over multicast, broadcast and rendezvous, one registry, deny-unknown trust, the off-by-default declaration, the threat model, and how to operate and extend it"
-weight = 56
+weight = 57
 [extra]
 source = "docs/MESH.md"
 +++
@@ -427,26 +427,28 @@ starts from ships no declaration, and nothing opens there until its own operator
 |---|---|
 | multicast | `239.255.77.77:7741`, TTL 1 — the local segment only; the sockets are bound with `SO_REUSEADDR` and `SO_REUSEPORT`, so every server on a machine hears the group |
 | broadcast | disabled |
-| rendezvous hubs | jetson (`192.168.100.30`, tailnet `100.92.246.32`) and lundra (`192.168.100.10`, tailnet `100.65.22.118`), port 8791, every 30 s |
+| rendezvous hubs | jetson (`192.168.100.30`, tailnet `100.92.246.32`), lundra (`192.168.100.10`, tailnet `100.65.22.118`) and the owner's MacBook Pro (`192.168.100.93`), port 8791, every 30 s |
 | seeds | none |
 | cooperation | the defaults: heartbeat 5 s, expiry 30 s |
-| trust | `deny_unknown` with three keys: `641bdb94` (the owner's MacBook Pro), `9d652b2c` (jetson), `25c9758f` (lundra) |
+| trust | `deny_unknown` with five keys: `641bdb94` (the owner's MacBook Pro), `5d81b5c9` (the owner's second MacBook Pro), `aaba18ea` (the owner's iMac), `9d652b2c` (jetson), `25c9758f` (lundra) |
 
 </div>
 
 
-**Who is trusted.** The owner's three machines and nothing else. The worktrees of one machine
+**Who is trusted.** The owner's five machines and nothing else. The worktrees of one machine
 share that machine's key and link as itself; two machines link only when both keys are listed,
 which is why the MacBook's own key is on the list. Any other key on the segment is observed,
 trusted for nothing, and refused `untrusted` if it dials.
 
-**Where the hubs are.** A hub is a server of this repository on jetson or lundra, listening
+**Where the hubs are.** A hub is a server of this repository on jetson, lundra or the owner's
+MacBook Pro (its LAN address only: the hub the Macs of one segment reach when the other two
+are off, and an address its router must keep handing it), listening
 beyond loopback on port 8791, listed by its LAN and its tailnet address. Multicast cannot cross
 the tailnet, and the macOS firewall drops it inbound, so the hubs are how machines on different
 segments find each other. Every server registers with every hub it can reach, one thread per
 hub with a 5-second bound per request. A hub that does not answer is asked less and less often
 — the 30-second interval doubles per failure, up to eight times — and delays nothing else: a
-server whose four hubs are all unreachable starts, discovers and links over multicast, and
+server whose five hub addresses are all unreachable starts, discovers and links over multicast, and
 answers requests, exactly as one with none (`mesh status` shows the `rendezvous` provider
 `running` with `sent 0`).
 

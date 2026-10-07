@@ -84,7 +84,7 @@ every file it writes, uses these words and no others.
 | **effect** | what running a capability changes: `read`, `process_state` or `repository_mutation`; the last is always a command reached by `POST`, named in the MCP instructions and in OpenAPI's `x-majordomus-effect` | `docs/generated/registry.json` |
 | **feature** | a product capability as an object of the layer, naming the modules, commands, kinds, rules, claims and use cases it is made of; the site's feature pages and the interface matrix are derived from it | `.ai/repo/features/`, `majordomus-cli product matrix` |
 | **domain** | one of the few things the product controls, as an object of the layer with its promise and the failure it answers; a feature names exactly one, and the domain's members, surfaces and evidence are derived from the features that name it | `.ai/repo/features/domains/`, `majordomus-cli product domains` |
-| **intent** | what a person wants, as a typed record whose stage is derived and whose criteria are met only by evidence — not on the default branch yet | open pull requests; not a shipped concept |
+| **intent** | what must become true, as a typed record above the milestones that realise it; its stage is derived from the plan, each criterion is met only by current evidence, an issue names the criterion it serves, and closed work the evidence contradicts is refused | `majordomus intent list`, `intent validate`, `intent realization`, `/cockpit/intents`, `.ai/repo/project/intents/` |
 
 </div>
 

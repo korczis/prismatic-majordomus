@@ -254,7 +254,8 @@ fn live_work_that_serves_no_intent_is_named_with_the_missing_link() {
 
 /// The Cockpit's intent page is a projection of `intent_realization.explain`: each criterion
 /// links to the test object it names and to the issue serving it, the work realising the intent
-/// carries its providers and the provenance of its link, and an unknown intent is a 404.
+/// carries its providers and the provenance of its link, and an unknown intent is a 404: the
+/// claim `intent-cockpit-pages` of docs/CLAIMS.yaml.
 #[test]
 fn the_cockpit_links_each_criterion_to_its_test_and_the_issue_serving_it() {
     let f = Fixture::new();

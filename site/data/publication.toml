@@ -145,7 +145,7 @@ route = "/use-cases/"
 [[kinds]]
 kind = "critique"
 projection = "none"
-reason = "A critique is the adversarial pass over one intent's plan, written for the worker who must resolve its findings before work starts (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/."
+reason = "A critique is the adversarial pass over one intent's plan, written by a worker, and work started under the intent without it or with a blocking finding open fails intent validation (ADR 0073). It is planning state of this repository; what the plan became is published on /plan/."
 
 [[kinds]]
 kind = "deployment"
@@ -175,7 +175,7 @@ reason = "An implementation object is a source file a claim names. It is reachab
 [[kinds]]
 kind = "intent"
 projection = "none"
-reason = "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` answers for the intent itself."
+reason = "An intent's stage and criteria are derived on every read from the plan and the evidence ledger (ADR 0070); a static page would freeze a derivation at the commit the site was built from. The milestones that realise an intent are published on /plan/, and `majordomus intent show` and the Cockpit's /cockpit/intents answer for the intent itself."
 
 [[kinds]]
 kind = "knowledge"

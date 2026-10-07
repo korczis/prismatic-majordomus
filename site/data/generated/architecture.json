@@ -470,6 +470,16 @@
       "external": false
     },
     {
+      "id": "lib/update.sh",
+      "kind": "module",
+      "label": "update",
+      "command": "update",
+      "summary": "regenerate provider projections from policy",
+      "read_only": null,
+      "route": "/commands/update/",
+      "external": false
+    },
+    {
       "id": ".ai/README.md",
       "kind": "artifact",
       "label": "README.md",
@@ -847,16 +857,6 @@
       "summary": null,
       "read_only": null,
       "route": null,
-      "external": false
-    },
-    {
-      "id": "lib/update.sh",
-      "kind": "module",
-      "label": "update",
-      "command": "update",
-      "summary": "regenerate provider projections from policy",
-      "read_only": null,
-      "route": "/commands/update/",
       "external": false
     },
     {
@@ -1464,6 +1464,11 @@
     {
       "source": "lib/doctor.sh",
       "target": "lib/skills.sh",
+      "kind": "sources"
+    },
+    {
+      "source": "lib/doctor.sh",
+      "target": "lib/update.sh",
       "kind": "sources"
     },
     {

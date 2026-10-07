@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# sourced by doctor as well, for the renderer; guard against re-sourcing
+[ -n "${MJ_LIB_update:-}" ] && return 0 || MJ_LIB_update=1
 # update — regenerate provider projections from policy. Deterministic. Refuses to clobber hand edits.
 #
 # Every target it writes is self-describing: a file-mode target starts with a stamp naming
@@ -184,6 +186,19 @@ mj_expand_blocks() {
 }
 mj_render() { # template, fragment dir, policy sha
   mj_render_tokens "$1" | sed -e "s|{{POLICY_SHA}}|${3:0:12}|g" | mj_expand_blocks "$2"
+}
+# What update would render for PROVIDER now — the body a stamp covers — by update's own
+# path: the same template lookup, the same fragments, the same policy hash, the same
+# renderer. For a reader that must know what update would write without writing it.
+# mj_render_current PROVIDER -> stdout; 1 when the provider has no template
+mj_render_current() {
+  local tpl tmp psha
+  tpl="$(mj_provider_template "$1")" || return 1
+  tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj.rc.XXXXXX")"
+  mj_policy_cat > "$tmp/policy.cat"; psha="$(mj_sha256 "$tmp/policy.cat")"
+  mj_build_fragments "$tmp"
+  mj_render "$tpl" "$tmp" "$psha"
+  rm -rf "$tmp"
 }
 
 # Bring an installation created by an older version up to the current layout: create the

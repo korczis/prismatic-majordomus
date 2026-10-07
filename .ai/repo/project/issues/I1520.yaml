@@ -31,7 +31,24 @@ evidence_required:
   - no_step_can_be_killed_by_its_job_first
 risk: "This makes the site job red rather than cancelled, loudly and on every run, until the UI audit finishes inside its bound or somebody raises the bound with a reason. That is the intended effect and it is worth saying plainly: a silent kill is exchanged for a visible failure, not for a fix."
 created_at: 2026-09-15
-updated_at: 2026-09-15
+updated_at: 2026-10-07T13:27:30Z
 started_at: 2026-09-15
 unsealed_stamps:
   - started_at 2026-09-15
+verified_at: 2026-10-07T13:27:27Z
+verified_event: sha256:d90dbecdf487af108e6c4292708bcc3e82ea6b141ceaee8d4796349d2faf3686
+completed_at: 2026-10-07T13:27:30Z
+completed_event: sha256:ca5757a3574eba152e77982307642f7bc9f584a04e7a77408824c1d2efc14dc5
+evidence:
+  - covers: a_step_over_its_bound_reports_it
+    type: test
+    command: "bash test/run.sh 349_a_step_reports_its_own_time"
+    result: "ok at b4a781c668: a step that runs out of time reports it and its timing row is written; the fix is b3e261428b"
+    commit: b4a781c668b5a2a9a8614f3ef934c21af50c0701
+    recorded_at: 2026-10-07T13:27:17Z
+  - covers: no_step_can_be_killed_by_its_job_first
+    type: test
+    command: "scripts/ci/step-bound-check"
+    result: "exit 0 at b4a781c668: every timed step is bounded under its job"
+    commit: b4a781c668b5a2a9a8614f3ef934c21af50c0701
+    recorded_at: 2026-10-07T13:27:18Z

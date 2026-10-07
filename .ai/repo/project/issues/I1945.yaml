@@ -38,7 +38,24 @@ evidence_required:
   - plan_valid
 risk: "The ADR names proposed pull requests (#577, #578, #597, #600, #629) whose content may still change. It cites them by number and quotes only what it amends, so a later change to one of them shows as a quotation that no longer matches."
 created_at: 2026-09-26
-updated_at: 2026-09-26
+updated_at: 2026-10-07T13:27:35Z
 started_at: 2026-09-26
 unsealed_stamps:
   - started_at 2026-09-26
+verified_at: 2026-10-07T13:27:32Z
+verified_event: sha256:7f7346343e9c7902ec00b0d58b845cdda087e8563905c63760b41c6c251e0226
+completed_at: 2026-10-07T13:27:35Z
+completed_event: sha256:ab04e651371b491bacb0541bf586a05c96916cf4566cfcd1b37207b230de6b3e
+evidence:
+  - covers: adr_proposed
+    type: manual
+    command: "bin/majordomus adr check; grep -m1 '^status' .ai/repo/adrs/0087-*.md"
+    result: "exit 0 at b4a781c668: 80 decisions examined, every reference resolves; ADR 0087 is status: proposed (bea35d4489)"
+    commit: b4a781c668b5a2a9a8614f3ef934c21af50c0701
+    recorded_at: 2026-10-07T13:27:19Z
+  - covers: plan_valid
+    type: test
+    command: "bin/majordomus plan validate"
+    result: "exit 0 at b4a781c668: 24 milestone(s), 257 issue(s), 0 failure(s)"
+    commit: b4a781c668b5a2a9a8614f3ef934c21af50c0701
+    recorded_at: 2026-10-07T13:27:21Z

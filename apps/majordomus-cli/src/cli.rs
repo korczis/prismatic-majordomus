@@ -165,7 +165,8 @@ pub enum IntentCommand {
     Validate,
     /// Which work carries which criterion, and the reason every issue exists
     Coverage,
-    /// Which intent the work on an issue, or on some paths, serves; exit 10 when it serves none
+    /// Which intent the work on an issue, or on some paths, serves, whether it is maintenance,
+    /// or why it may not proceed; exit 10 when refused
     Preflight {
         /// The issue the work executes
         #[arg(long)]
@@ -5213,11 +5214,11 @@ pub const EXAMPLES: &[CommandExamples] = &[
         command: "intent preflight",
         examples: &[ExampleDoc {
             id: "intent-preflight",
-            title: "Which intent the work on an issue serves",
-            description: "Issue to milestone to intent, each link named, with the governance the intent loads. A missing link is a refusal naming it, and exit 10.",
+            title: "Which intent the work on an issue serves, or why it may not proceed",
+            description: "The issue followed through the criteria it declares it serves to the intent each belongs to, with what that intent asks of the worker: its statement, the served criteria and their evidence, invariants, non-goals, governance, critique and gap. A broken link, or an intent whose plan was never critiqued or has a blocking finding open, is a refusal naming its cause, and exit 10; the example fixture's intent has no critique, so this is that refusal. Work under milestones no intent names is maintenance, and exits 0.",
             argv: &["intent", "preflight", "--issue", "I0001"],
             setup: &[],
-            expect: Expect::StdoutContains(&["serves", "fixture-intent"]),
+            expect: Expect::ExitCode(10),
         }],
     },
     CommandExamples {

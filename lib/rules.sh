@@ -24,6 +24,11 @@ MJ_RULES_ERROR=""         # why the last load failed
 MJ_RULES_LOADED=0
 MJ_RULES_FORMAT="ai-rules/v1"
 MJ_RULES_VENDOR_NS="majordomus"   # the namespace a project rule may not claim
+MJ_RULES_PROJECT_NS="project"     # the namespace the skeleton gives a project's own rules
+# The characters a rule id is made of: `<namespace>.<slug>`, refused by the loader when it
+# carries any other. The one definition — the loader checks ids with it, and the reader of
+# rule references in prose (mj_rule_refs_unresolved) cuts a slug from it, minus the dot.
+MJ_RULE_ID_CHARS='A-Za-z0-9._-'
 
 mj_rules_vendor_dir()  { printf '%s' "$MJ_RULES_DIR/vendor/$MJ_RULES_VENDOR_NS"; }
 mj_rules_project_dir() { printf '%s' "$MJ_RULES_DIR/project"; }
@@ -45,7 +50,7 @@ mj_rule_scan() {
           NR > 1 { n++; print }
           END { if (!c) exit (n ? 4 : 2); if (!n) exit 2 }' "$f" \
     | mj_yaml_flatten - 2>/dev/null \
-    | awk -v prov="$prov" -v file="$rel" -v path="$f" -v n="$n" -v ns="$MJ_RULES_VENDOR_NS" \
+    | awk -v prov="$prov" -v file="$rel" -v path="$f" -v n="$n" -v ns="$MJ_RULES_VENDOR_NS" -v idchars="$MJ_RULE_ID_CHARS" \
           -v flat="$tmp/$n.flat" -v graph="$tmp/graph.tsv" '
       function fail(m) { print m > "/dev/stderr"; exit 1 }
       FNR == NR { if ($0 !~ /^#/ && $0 != "") pat[++np] = $0; next }   # the allow-list banner is comments
@@ -64,7 +69,7 @@ mj_rule_scan() {
         if (first["version"] !~ /^[0-9]+$/) fail("version " first["version"] " is not an integer")
         if (first["status"] != "active" && first["status"] != "deprecated") fail("status \047" first["status"] "\047 is neither active nor deprecated")
         if (first["class"] != "blocking" && first["class"] != "advisory") fail("class \047" first["class"] "\047 is neither blocking nor advisory")
-        if (first["id"] ~ /[^A-Za-z0-9._-]/) fail("id \047" first["id"] "\047 is not a dotted identifier")
+        if (first["id"] ~ ("[^" idchars "]")) fail("id \047" first["id"] "\047 is not a dotted identifier")
         bad = ""
         for (i = 1; i <= nl; i++) {
           ok = 0; for (p = 1; p <= np; p++) if (keys[i] ~ pat[p]) { ok = 1; break }
@@ -255,6 +260,57 @@ mj_rules_blocking_unenforced() {
 mj_rule_index() {
   awk -v id="$1" 'index($0, "rules.") == 1 && $0 ~ /^rules\.[0-9]+\.id=/ && substr($0, index($0, "=") + 1) == id { split($0, p, "."); printf "%s", p[2]; f = 1; exit } END { exit !f }' "$MJ_RULES_FLAT"
 }
+# mj_rule_refs_unresolved FILE MODE -> "<line>\t<reference>" for every rule FILE names that
+# the effective set does not provide, in file order; MODE `region` reads only the lines
+# between the generation markers, anything else the whole file. Line numbers are the file's.
+#
+# A reference is `<namespace>.<slug>` or `<namespace>.<slug>@<version>`, cut from the
+# loader's own id characters, in a namespace a rule can be in: every namespace the effective
+# set uses, the vendored one, and the one the skeleton gives a project's rules — so a
+# bootstrap naming `project.x` in a repository with no project rules at all is still read.
+# It resolves as `rules list` would list it: the bare id against every rule in force, a
+# versioned one against that exact identity. A deprecated rule is not in force.
+#
+# What is not read as a claim: a fenced block (an example is quoted, not promised, which is
+# also how the knowledge reader treats a link in one), and a match that is part of a larger
+# token — preceded by a letter, digit or one of `._-/:@`, or followed by `/` or by a dot and
+# a letter or digit — because that is a path, a file name, a host or an address.
+mj_rule_refs_unresolved() {
+  mj_rules_load || return 1
+  awk -v mode="$2" -v slug="${MJ_RULE_ID_CHARS/./}" -v vns="$MJ_RULES_VENDOR_NS" -v pns="$MJ_RULES_PROJECT_NS" \
+      -v b="$MJ_REGION_BEGIN_RE" -v e="$MJ_REGION_END_RE" '
+    FNR == NR {
+      eq = index($0, "="); k = substr($0, 1, eq - 1); v = substr($0, eq + 1)
+      if (split(k, p, ".") != 3 || p[1] != "rules") next
+      if (p[3] == "id") { id[p[2]] = v; inforce[v] = 1; d = index(v, "."); if (d > 1) ns[substr(v, 1, d - 1)] = 1 }
+      else if (p[3] == "version") ver[p[2]] = v
+      next
+    }
+    !ready {
+      for (i in id) inforce[id[i] "@" ver[i]] = 1
+      ns[vns] = 1; ns[pns] = 1; alt = ""
+      for (n in ns) alt = alt (alt == "" ? "" : "|") n
+      re = "(" alt ")\\.[" slug "]+(@[0-9]+)?"; ready = 1
+    }
+    mode == "region" && $0 ~ b { inside = 1; next }
+    mode == "region" && $0 ~ e { inside = 0; next }
+    mode == "region" && !inside { next }
+    /^ ? ? ?(```|~~~)/ { fenced = !fenced; next }
+    fenced { next }
+    {
+      s = $0; off = 0
+      while (match(s, re)) {
+        at = off + RSTART; ref = substr(s, RSTART, RLENGTH)
+        off += RSTART + RLENGTH - 1; s = substr(s, RSTART + RLENGTH)
+        before = (at > 1) ? substr($0, at - 1, 1) : ""
+        after = substr($0, at + RLENGTH, 2)
+        if (before ~ /[A-Za-z0-9._\/:@-]/) continue
+        if (substr(after, 1, 1) == "/" || after ~ /^\.[A-Za-z0-9]/) continue
+        if (!(ref in inforce)) printf "%d\t%s\n", FNR, ref
+      }
+    }' "$MJ_RULES_FLAT" "$1"
+}
+
 # one pass over the registry: every rule's row for `rules list`, text or JSON
 mj_rules_render() {
   awk -v json="$1" '
