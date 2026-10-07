@@ -22,6 +22,10 @@
 #      exits 12 without a merge. A read that failed is never replaced by the list's checks
 #   4. the writers answered whole, for the head the list gave: #1 is ready and next, and the
 #      queue says nothing of unread writers. The state heals on a refresh; nothing sticks
+#   5. the protection binds `ci` to an app id that is not an integer (a string, a fraction,
+#      a negative number other than -1), and then a ruleset does: the requirement is unread,
+#      #1 is unknown and nothing merges, though every writer answer that passed it stands.
+#      Unreadable is not unbound. The binding readable again, #1 is ready on the next refresh
 #
 # The scripted forge answers the writers read only as the adapter calls it: owner, name and
 # the query as raw strings (-f), the page size or the number typed (-F), newest first.
@@ -92,7 +96,7 @@ case "$1 $2" in
   "api repos/o/r") echo '{"allow_merge_commit":true,"allow_squash_merge":true,"allow_rebase_merge":false}' ;;
   "api repos/o/r/commits/master") printf '{"sha":"%s"}\n' "$(git -C "$O" rev-parse master)" ;;
   "api repos/o/r/branches/master/protection") cat "$S/protection.json" ;;
-  "api repos/o/r/rules/branches/master") echo '[]' ;;
+  "api repos/o/r/rules/branches/master") if [ -f "$S/rules.json" ]; then cat "$S/rules.json"; else echo '[]'; fi ;;
   "pr list")
     case " $* " in
       *" --state open "*) cat "$S/prs.json" ;;
@@ -221,8 +225,38 @@ if said | grep -q "was not read"; then echo "    the queue still speaks of an un
 [ "$rc" = 0 ] || { echo "    status exited $rc over a queue with every writer read:"; said | cut -c1-200; exit 1; }
 [ "$(asked ' -F number=')" = 0 ] || { echo "    a pull request was read alone though every rollup fitted the page"; exit 1; }
 
+# ---------------------------------------------------------------- 5. a binding the forge spelled unreadably
+# every answer that passed #1 a section ago is still in place; only the protection changed. An
+# app id that is not an integer is not "bound to no app": read so, any app's `ci` would stand
+# for the bound one's. The requirement is unread, #1 is unknown, and nothing merges.
+for spelled in '"15368"' '15368.5' '-2'; do
+  printf '{"required_status_checks":{"checks":[{"context":"ci","app_id":%s}],"contexts":["ci"]}}\n' "$spelled" > "$STATE/protection.json"
+  look
+  [ "$(field 1 .disposition)" = unknown ] \
+    || { echo "    app_id $spelled: #1 is $(field 1 .disposition), not unknown"; field 1 '{reasons, evidence}'; exit 1; }
+  [ "$(field 1 .required_checks)" = unknown ] \
+    || { echo "    app_id $spelled: #1's required checks are $(field 1 .required_checks), not unknown"; exit 1; }
+  [ "$(printf '%s' "$q" | jq -r .next_merge)" = null ] \
+    || { echo "    app_id $spelled: #$(printf '%s' "$q" | jq -r .next_merge) is next under a requirement that was not read"; exit 1; }
+  unmerged "an app id spelled $spelled"
+done
+# the rulesets' spelling of the same binding, with the protection readable again
+echo '{"required_status_checks":{"checks":[{"context":"ci","app_id":15368}],"contexts":["ci"]}}' > "$STATE/protection.json"
+echo '[{"type":"required_status_checks","parameters":{"required_status_checks":[{"context":"ci","integration_id":"15368"}]}}]' > "$STATE/rules.json"
+look
+[ "$(field 1 .disposition)" = unknown ] \
+  || { echo "    a ruleset's integration_id spelled as a string: #1 is $(field 1 .disposition), not unknown"; field 1 '{reasons, evidence}'; exit 1; }
+[ "$(printf '%s' "$q" | jq -r .next_merge)" = null ] || { echo "    a ruleset's unreadable binding left #1 next"; exit 1; }
+unmerged "a ruleset's integration_id spelled as a string"
+# and it heals as every other unread requirement does: on the next refresh that reads it
+rm -f "$STATE/rules.json"
+look
+[ "$(field 1 .disposition)" = ready ] \
+  || { echo "    the binding readable again: #1 is $(field 1 .disposition), not ready"; field 1 '{reasons, evidence}'; exit 1; }
+[ "$(printf '%s' "$q" | jq -r .next_merge)" = 1 ] || { echo "    the next merge is not #1 once the binding was read"; exit 1; }
+
 if grep -q '^pr merge' "$STATE/log.all"; then echo "    a merge reached the forge:"; grep '^pr merge' "$STATE/log.all"; exit 1; fi
 if grep -q UNEXPECTED "$STATE/log.all"; then
   echo "    the forge was asked something this harness does not answer:"; grep -B1 UNEXPECTED "$STATE/log.all" | cut -c1-160 | head -6; exit 1
 fi
-echo "    a head that moved, contexts that did not fit, a refused read: unknown, never merged; healed by one refresh"
+echo "    a head that moved, contexts that did not fit, a refused read, an unreadable binding: unknown, never merged; healed by one refresh"

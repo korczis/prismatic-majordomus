@@ -70,7 +70,7 @@ answer wins. `ready` is reached only after every other question is answered in i
 | `unknown` | held | a declared successor is not open and could not be read | `prs refresh` |
 | `redundant` | cleanup | its head is an ancestor of master, merging it changes no file, or every one of its commits is on master as an equal patch | `prs cleanup --apply` closes it |
 | `possibly_redundant` | cleanup | merging it changes only derived artifacts | a person decides |
-| `unknown` | held | its head is not fetched, git failed, the branch protection could not be read, or a check run of an app-bound context names no app | `prs refresh` |
+| `unknown` | held | its head is not fetched, git failed, the branch protection could not be read or binds a check to an app id that is not an integer, or a check run of an app-bound context names no app | `prs refresh` |
 | `conflicting` | repair | the merge conflicts on an authored path | the author resolves it |
 | `blocked` | held | the repository's settings allow no merge commit (see the merge method below) | allow merge commits |
 | `waiting_for_review` | waiting | a required review is missing or changes were requested (see below) | a reviewer |
