@@ -14,7 +14,8 @@ Decisions recorded during this task:
 {{DECISIONS}}
 
 Follow the procedure majordomus://skill/repo-review. When the review has to happen outside
-this repository, pack it first with majordomus://skill/pack-for-review.
+this repository, pack it first with majordomus://skill/pack-for-review; when it happens in a
+ChatGPT project, with majordomus://skill/pack-for-chatgpt.
 
 Report, in this order, and nothing else:
 

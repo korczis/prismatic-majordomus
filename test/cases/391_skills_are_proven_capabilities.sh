@@ -1,6 +1,6 @@
 # majordomus-covers: skills
 # majordomus-negative: skills doctor
-# majordomus-skill: deploy-site implement repo-review assess-before-deleting report-verification-state pack-for-review
+# majordomus-skill: deploy-site implement repo-review assess-before-deleting report-verification-state pack-for-review pack-for-chatgpt
 # A skill is a capability only when something proves it (project.skills-are-proven-capabilities,
 # ADR 0076). This case drives the real commands over a disposable repository: a skill that a
 # test names and a workflow invokes stands as partial until a recorded passing run makes its

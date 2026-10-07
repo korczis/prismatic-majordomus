@@ -60,6 +60,7 @@ pub mod metadata;
 pub mod model;
 pub mod models;
 pub mod order;
+pub mod pack;
 pub mod peers;
 pub mod perf;
 pub mod plan;
