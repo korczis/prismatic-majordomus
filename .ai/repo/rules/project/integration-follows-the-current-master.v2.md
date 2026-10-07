@@ -10,7 +10,7 @@ class: blocking
 depends_on: [project.land-and-publish@1, project.accumulation-is-measured@2]
 tags: [integration, git, github, safety, governance, evidence]
 x-majordomus:
-  tests: [test/cases/720_integration_follows_the_current_master.sh, test/cases/740_integration_is_visible_where_a_person_looks.sh, test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh, test/cases/742_only_an_outage_is_asked_again.sh, test/cases/850_integration_drains_cycle_by_cycle.sh, test/cases/852_a_dry_run_moves_nothing.sh, test/cases/855_racing_executors_merge_once.sh, test/cases/856_racing_worktrees_share_one_lease.sh, test/cases/857_required_checks_are_authoritative.sh, test/cases/858_reviews_are_authoritative.sh, test/cases/861_a_successor_that_landed_supersedes.sh, apps/majordomus-cli/tests/integration_trail.rs, apps/majordomus-cli/tests/integration_rollout.rs]
+  tests: [test/cases/720_integration_follows_the_current_master.sh, test/cases/740_integration_is_visible_where_a_person_looks.sh, test/cases/741_a_continuous_drain_stops_cleanly_and_alone.sh, test/cases/742_only_an_outage_is_asked_again.sh, test/cases/850_integration_drains_cycle_by_cycle.sh, test/cases/852_a_dry_run_moves_nothing.sh, test/cases/855_racing_executors_merge_once.sh, test/cases/856_racing_worktrees_share_one_lease.sh, test/cases/857_required_checks_are_authoritative.sh, test/cases/858_reviews_are_authoritative.sh, test/cases/861_a_successor_that_landed_supersedes.sh, apps/majordomus-cli/tests/integration_trail.rs, apps/majordomus-cli/tests/integration_rollout.rs, test/cases/925_a_bound_check_is_only_its_apps_run.sh, test/cases/926_an_unread_writer_is_never_a_pass.sh, test/cases/927_an_unbound_base_asks_for_no_writer.sh]
 ---
 # Rationale
 
@@ -26,7 +26,9 @@ what keeps it from drifting back.
 - A pull request is `ready` only when it targets the base, is not a draft, carries no blocking
   label, contains the current master, has its declared dependencies landed, satisfies the
   review policy, and has every required check passed on its current head. Pending, missing,
-  skipped and unreadable are not passed.
+  skipped and unreadable are not passed, and a check the base binds to an app is passed only
+  by that app's own run: another writer's run of the name is not it, and a run whose writer
+  was not read is unknown.
 - The executor observes the forge before deciding and again before acting, and merges only
   when both decisions name the same master and head. It holds no plan across a merge.
 - No integration code passes `--admin`, force-pushes, or rewrites a branch. Bringing master
